@@ -1,0 +1,3 @@
+.alg-tag-label { display: inline-flex; align-items: center; vertical-align: middle; }
+.alg-tag-symbol { display: inline-flex; align-items: center; gap: 3px; font-size: 20px; line-height: 1; }
+.alg-tag-hand { order: -1; font-family: var(--font-sans, inherit); font-size: 10px; font-weight: 700; font-style: normal; line-height: 1; }

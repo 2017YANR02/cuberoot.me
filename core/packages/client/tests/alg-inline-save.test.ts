@@ -86,6 +86,16 @@ describe('inline case save pipeline', () => {
     expect(mocks.markInvalid).toHaveBeenCalledWith([{ oi: 0, ai: 2, reason: 'wrong case' }]);
     expect(mocks.update).not.toHaveBeenCalled();
   });
+  it('edits setup directly and sends the same draft through validation and saving', async () => {
+    await render();
+    const field = host.querySelector('.alg-admin-setup-textarea')!;
+    expect(field.closest('details')).toBeNull();
+    expect(host.querySelectorAll('.alg-admin-setup-textarea')).toHaveLength(1);
+    await fill('Setup', "F R U R' F'");
+    await click('Save');
+    expect(mocks.update.mock.calls[0][3].setup).toBe("F R U R' F'");
+    expect(mocks.validate.mock.calls[0][0]).toBe("F R U R' F'");
+  });
   it('honors advanced algorithm JSON even after collapsing the section', async () => {
     await render(); await click('Advanced');
     await fill('Algs 2D JSON', JSON.stringify([[{ alg: 'B', tags: ['oh'] }], [{ alg: 'D' }]]));

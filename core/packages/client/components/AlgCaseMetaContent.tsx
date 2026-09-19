@@ -27,7 +27,7 @@ import {
   SCRAMBLE_KINDS,
   type ScrambleKind,
 } from '@/lib/trainer-scramble';
-import { ALG_TAG_LABEL } from '@/lib/alg_tags';
+import { algTagLabel } from '@/lib/alg_tags';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import {
@@ -226,9 +226,8 @@ export default function AlgCaseMetaContent({
   }, [caseObj.id, caseObj.name]);
 
   /**
-   * 这一族:镜像 / 逆 / 镜像逆 连起来的那一小撮 case(含当前这张),拆成三堆。
-   *   `family`    有图可贴的。基准那张排头标「原始」,其余按 `meta.no` 排。
-   *   `selfNotes` 基准的某条关系指回它自己(自镜像 / 自逆),只标一句话。
+   * 这一族:镜像 / 逆 / 镜像逆 连起来的那一小撮 case(含当前这张)。
+   *   `family`    有图可贴的。基准那张排头标「原始」并附上自关系,其余按 `meta.no` 排。
    *   `missing`   编号在本 set 里查不到对应 case(数据缺口),只报编号。
    *
    * **基准不是「你正在看的那张」,是全族编号最小的那张。** 三条关系是一个交换群
@@ -240,7 +239,7 @@ export default function AlgCaseMetaContent({
    * 两个关系指到同一个编号是常事(PLL-L 的镜像和镜像逆都是 J):它们是**同一个 case**,
    * 贴两张一模一样的图只会让人以为有两个目标。合成一张,标签并列写(「镜像, 镜像逆」)。
    */
-  const { family, selfNotes, missing } = useMemo(() => {
+  const { family, missing } = useMemo(() => {
     /** 一个 case 的三条关系,相对它自己说的。 */
     const relsOf = (x: AlgCaseMeta) => ([
       { key: 'mirror', label: tr({ zh: '镜像', en: 'Mirror' }), self: tr({ zh: '自镜像', en: 'self-mirror' }), no: x.mirror },
@@ -260,10 +259,10 @@ export default function AlgCaseMetaContent({
     const origin = members.get(originNo)!;
 
     const labels = new Map<number, string[]>();
-    const notes: Array<{ key: string; text: string }> = [];
+    const originLabels = [tr({ zh: '原始', en: 'Origin' })];
     const gone = new Map<number, { key: string; labels: string[]; no: number }>();
     for (const r of relsOf((origin.meta ?? {}) as AlgCaseMeta)) {
-      if (r.no === originNo) { notes.push({ key: r.key, text: r.self }); continue; }
+      if (r.no === originNo) { originLabels.push(r.self); continue; }
       const t = byNo.get(r.no);
       if (!t) {
         const g = gone.get(r.no);
@@ -284,12 +283,12 @@ export default function AlgCaseMetaContent({
       .map(([no, c]) => ({ key: `no${no}`, labels: labels.get(no) ?? [`#${no}`], case: c, no, current: no === selfNo }));
     fam.unshift({
       key: `no${originNo}`,
-      labels: [tr({ zh: '原始', en: 'Origin' })],
+      labels: originLabels,
       case: origin,
       no: originNo,
       current: originNo === selfNo,
     });
-    return { family: fam, selfNotes: notes, missing: [...gone.values()] };
+    return { family: fam, missing: [...gone.values()] };
   }, [m, byNo, caseObj]);
 
   const scrambleKinds = useMemo(() => {
@@ -298,6 +297,8 @@ export default function AlgCaseMetaContent({
     return SCRAMBLE_KINDS.filter(kind => ids.has(kind.id));
   }, [caseObj, puzzle]);
   const selectedScrambleKind = scrambleKinds.some(kind => kind.id === scrambleKind) ? scrambleKind : 'inv';
+  const [showGeneratedScramble, setShowGeneratedScramble] = useState(false);
+  const editingSetup = !!setupEditor && editing && !showGeneratedScramble;
   const inverseScramble = useMemo(
     () => caseScramble(caseObj, byNo, puzzle, 'inv'),
     [caseObj, byNo, puzzle],
@@ -405,14 +406,6 @@ export default function AlgCaseMetaContent({
             </button>
           );
         })}
-        {/* 自镜像 / 自逆:那一项就是当前 case 本身,不重复贴一张一样的图,只标一句。
-            上面的空占位把这行文字压到与带图卡片的 label 行同一条水平线上。 */}
-        {selfNotes.map(n => (
-          <div key={n.key} className="alg-meta-related-card is-plain">
-            <span className="alg-meta-related-thumb-gap" aria-hidden="true" />
-            <span className="alg-meta-related-label">{n.text}</span>
-          </div>
-        ))}
         {/* 关联编号在本 set 里找不到对应 case(数据缺口),只报编号。 */}
         {missing.map(x => (
           <div key={x.key} className="alg-meta-related-card is-plain">
@@ -425,23 +418,29 @@ export default function AlgCaseMetaContent({
 
       {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
           排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
-      {(scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
+      {(setupEditor || scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
         <div className="alg-meta-section">
           <div className="alg-meta-scramble-row">
             <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
-            {onScrambleKindChange && scrambleKinds.length > 1 && (
+            {onScrambleKindChange && (scrambleKinds.length > 1 || (setupEditor && editing)) && (
               <select
                 className="alg-meta-scramble-kind"
-                value={selectedScrambleKind}
-                onChange={event => onScrambleKindChange(event.target.value as ScrambleKind)}
+                value={editingSetup ? 'setup' : selectedScrambleKind}
+                onChange={event => {
+                  const kind = event.target.value;
+                  setShowGeneratedScramble(kind !== 'setup');
+                  if (kind !== 'setup') onScrambleKindChange(kind as ScrambleKind);
+                }}
                 aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
               >
+                {setupEditor && editing && <option value="setup">{tr({ zh: '原始', en: 'Original' })}</option>}
                 {scrambleKinds.map(kind => (
                   <option key={kind.id} value={kind.id}>{kind.label()}</option>
                 ))}
               </select>
             )}
-            {scramble ? (
+            {setupEditor && <div className="alg-meta-setup-editor" hidden={!editingSetup}>{setupEditor}</div>}
+            {!editingSetup && (scramble ? (
               <AlgLine
                 label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
                   ? tr({ zh: '逆 case', en: 'Inv case' })
@@ -452,12 +451,11 @@ export default function AlgCaseMetaContent({
               <span className="alg-meta-scramble-loading">
                 {tr({ zh: '正在生成…', en: 'Generating…' })}
               </span>
-            )}
+            ))}
           </div>
         </div>
       )}
 
-      {setupEditor}
       <div className="alg-meta-case">
         {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms}{algsAfter}</div>}
         {!editing && (
@@ -483,7 +481,7 @@ export default function AlgCaseMetaContent({
               const isPreferred = a.ref === preferredRef;
               const label = [
                 isPreferred ? tr({ zh: '已置顶', en: 'Pinned' }) : '',
-                a.tags.map(t => ALG_TAG_LABEL[t]()).join(' '),
+                a.tags.map(t => algTagLabel(t)).join(' '),
               ].filter(Boolean).join(' ');
               const togglePreferred = () => setPreferred(
                 puzzle,

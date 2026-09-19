@@ -103,7 +103,7 @@ describe('algorithm player placement', () => {
     expect(modal).not.toMatch(/<AlgCaseMetaContent[\s\S]{0,500}?\bplayable\b/);
     expect(styles).toMatch(/\.alg-meta-related-grid\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;[^}]*gap:\s*10px;/);
     expect(styles).toMatch(/\.alg-meta-top-grid\s*\{[^}]*border-bottom:\s*1px solid var\(--border-default\);/);
-    expect(styles).toMatch(/\.alg-meta-case-player-layout\s*\{\s*flex:\s*1;\s*\}/);
+    expect(styles).toMatch(/\.alg-meta-case-player-layout\s*\{\s*flex:\s*1;\s*min-width:\s*0;\s*\}/);
   });
 
   it('preserves saved move marks on both lean and metadata-rich case details', () => {

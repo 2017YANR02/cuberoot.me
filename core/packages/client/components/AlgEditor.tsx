@@ -12,9 +12,10 @@
  */
 import { useState, useRef, useImperativeHandle, useMemo, forwardRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { X, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2 } from 'lucide-react';
+import { X, Plus, AlertTriangle, Copy, Check, Pin, FlipHorizontal2, Tags } from 'lucide-react';
 import type { AlgCase, AlgEntry, AlgPuzzle } from '@cuberoot/shared/alg';
 import { stm } from '@cuberoot/shared/alg-notation';
+import { resolveSimPreviewMoves } from '@/components/AlgPlayer/player-setup';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import SortableAlgRow from '@/components/SortableAlgRow';
@@ -23,7 +24,9 @@ import { useCopy } from '@/hooks/useCopy';
 import { editedAlgEntry } from '@/lib/alg_editor';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import { preferredAlgRef, preferredAlgSlot, usePreferredAlgs } from '@/lib/alg-preferred-algs';
-import { ALG_TAG_LABEL } from '@/lib/alg_tags';
+import { algTagLabel, ALG_TAGS } from '@/lib/alg_tags';
+import { CompactSelect } from '@/components/CompactSelect';
+import AlgTagLabel from '@/components/AlgTagLabel';
 import { sq1NotationText, type Sq1NotationMode } from '@/lib/sq1-pbl-notation';
 import { canonicalSq1Alg } from '@cuberoot/shared/sq1-notation';
 import { mirrorCascadeOnEdit, VIEWS, type MirrorCascadeEntry } from '@cuberoot/shared/alg-mirror';
@@ -61,6 +64,7 @@ export interface AlgEditorHandle {
 
 interface Props {
   initialValue: AlgEntry[][];
+  puzzle?: AlgPuzzle;
   /** 只格式化输入框的初始显示；未编辑的行保存时仍原样返回，避免无意改写数据库。 */
   formatInitialAlg?: (alg: string) => string;
   formatInitialHtml?: (html: string) => string;
@@ -79,12 +83,6 @@ interface Props {
   onCurrentAlgChange?: (alg: string, setup?: string, oi?: number) => void;
   /** 聚焦行内 caret 之前的 token 数(光标 sync 用) */
   onCursorMoveCount?: (n: number, oi?: number) => void;
-}
-
-/** caret 之前的 token 数(空白拆分,过滤空 token) */
-function tokenCountBeforeCaret(text: string, caret: number): number {
-  const prefix = text.slice(0, Math.max(0, caret));
-  return prefix.trim().split(/\s+/).filter(Boolean).length;
 }
 
 type Row = AlgEntry & { uid: string };
@@ -116,7 +114,6 @@ function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; tex
   const notation = puzzle === 'sq1' ? sq1NotationText(text, context.sq1NotationMode ?? 'compact', set === 'pbl' && canonicalSq1Alg(text) === canonicalSq1Alg(entry.alg) ? entry.note : undefined) : null;
   const shownText = notation ? tr(notation) : text;
   return <>
-    {(entry.tags ?? []).map(tag => <span key={tag} className="alg-alg-note">{ALG_TAG_LABEL[tag]()}</span>)}
     {entry.note && !(puzzle === 'sq1' && set === 'pbl') && <span className="alg-alg-note">{tr(entry.note)}</span>}
     {notation && <code className="alg-editor-notation">{shownText}</code>}
     {puzzle !== 'sq1' && <span className="alg-alg-len" title="STM">{stm(text)}</span>}
@@ -128,7 +125,7 @@ function RowActions({ entry, text, oi, context, mirror }: { entry: AlgEntry; tex
   </>;
 }
 
-const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
+const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '3x3', formatInitialAlg, formatInitialHtml, caseContext, renderOrientation = rows => rows, initialInvalid, oriNames, mirror, mirrorPending, mirrorError, onCurrentAlgChange, onCursorMoveCount }, ref) => {
   useTranslation(); // subscribe to language changes; text via tr()
   const [layout, setLayout] = useState<Row[][]>(() => {
     const src = initialValue.length === 0
@@ -142,6 +139,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
   const elements = useRef<Map<string, HTMLTextAreaElement | HTMLDivElement>>(new Map());
 
   const [focusedUid, setFocusedUid] = useState<string | null>(null);
+  const [keyboardToggleContainer, setKeyboardToggleContainer] = useState<HTMLSpanElement | null>(null);
   /** 校验没过的行:uid → 原因。按 uid 不按下标 —— 删一行下标就全串位了。 */
   const [invalid, setInvalid] = useState<Map<string, string>>(() => {
     // 挂载这一刻,layout 的行号和 initialValue 的下标还是一一对应的(空行是后来加的),
@@ -329,7 +327,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                   }}
                   onCaretChange={(text, caret) => {
                     if (focusedUid !== row.uid) return;
-                    onCursorMoveCount?.(tokenCountBeforeCaret(text, caret), oi);
+                    // 与播放器同源解析:连写、指法记号和重复组都不能按空格计步。
+                    onCursorMoveCount?.(resolveSimPreviewMoves(puzzle, text.slice(0, Math.max(0, caret))).length, oi);
                   }}
                   onKeyDown={e => {
                     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -338,11 +337,25 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                     }
                   }}
                 />
+                <div className="alg-editor-tools">
+                {isFocused && <span className="alg-input-keyboard-toggle" ref={setKeyboardToggleContainer} />}
+                <CompactSelect
+                  variant="plain"
+                  className="alg-tag-select"
+                  label={row.tags?.length ? <span className="alg-tag-symbol">{row.tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={algTagLabel(tag)} />)}</span> : <Tags size={13} />}
+                  ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
+                  title={row.tags?.length ? row.tags.map(algTagLabel).join(', ') : tr({ zh: '公式标签', en: 'Algorithm tags' })}
+                  selectedValues={row.tags ?? []}
+                  items={[...new Set([...ALG_TAGS, ...(row.tags ?? [])])].map(tag => ({ value: tag, label: <span className="alg-tag-label"><AlgTagLabel tag={tag} label={algTagLabel(tag)} />{row.tags?.includes(tag) && <Check size={12} aria-hidden="true" />}</span> }))}
+                  onChange={tag => setLayout(current => current.map(rows => rows.map(item => item.uid === row.uid
+                    ? { ...item, tags: item.tags?.includes(tag) ? item.tags.filter(value => value !== tag) : [...(item.tags ?? []), tag] }
+                    : item)))}
+                />
                 {caseContext && <RowActions entry={row} text={editedText[row.uid] ?? initialText} oi={oi} context={caseContext} mirror={mirror} />}
                 {ori.length > 1 && (
                   <button
                     type="button"
-                    className="alg-editor-del"
+                    className="alg-editor-del alg-editor-remove"
                     onClick={() => requestRemove(oi, row.uid)}
                     title={tr({ zh: '删此条', en: 'Remove' })}
                     tabIndex={-1}
@@ -350,6 +363,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                     <X size={12} />
                   </button>
                 )}
+                </div>
               </div>
                 {bad && (
                   <div className="alg-editor-row-error">
@@ -357,9 +371,10 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, formatInit
                     <span>{bad}</span>
                   </div>
                 )}
-                {(isFocused || (!focusedUid && oi === 0 && row === ori[0])) && (
+                {isFocused && (
                   <CubeKeyboardSection
                     target={keyboardTargetRef}
+                    toggleContainer={keyboardToggleContainer}
                     enableMarks
                     mobileVisible={isFocused}
                     onActivate={() => handles.current.get(row.uid)?.focus()}

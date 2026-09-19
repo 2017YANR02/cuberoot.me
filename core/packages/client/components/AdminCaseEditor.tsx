@@ -120,6 +120,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const algEditorRef = useRef<AlgEditorHandle>(null);
   const setupElRef = useRef<HTMLTextAreaElement | HTMLDivElement | null>(null);
   const [setupFocused, setSetupFocused] = useState(false);
+  const [setupKeyboardToggle, setSetupKeyboardToggle] = useState<HTMLSpanElement | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [standard, setStandard] = useState(initial.standard ?? '');
   const [stickerJson, setStickerJson] = useState(JSON.stringify(initial.sticker, null, 2));
@@ -447,12 +448,14 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
           </label>);
   const setupField = (<label className="alg-admin-setup-label">
               <span>{tr({ zh: '打乱', en: 'Setup' })}</span>
+            <span className="alg-admin-setup-input-row">
             <AlgInput
               className="alg-admin-setup-textarea"
               elementRef={setupElRef}
               initialText={initialSetupText}
               autoSpace
               multiline={false}
+              autoResize
               placeholder={tr({ zh: '把魔方变成此 case 的公式', en: 'scramble that produces this case' })}
               onChange={t => setSetup(t)}
               onFocus={() => setSetupFocused(true)}
@@ -462,16 +465,19 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                 setSetupFocused(false);
               }}
             />
+            <span className="alg-input-keyboard-toggle" ref={setSetupKeyboardToggle} />
+            </span>
             {setupFocused && (
-              <CubeKeyboardSection target={setupElRef} />
+              <CubeKeyboardSection target={setupElRef} toggleContainer={setupKeyboardToggle} />
             )}
           </label>);
   const algorithms = (<div className="alg-admin-algs-block">
-            <span className="alg-admin-algs-label">
-              {tr({ zh: '公式 (Enter 加新行,记号键 ✎ 切下划/波浪/删除)', en: 'Algs (Enter to add row; ✎ for marks)' })} *
-            </span>
+            {!children && <span className="alg-admin-algs-label" title={tr({ zh: 'Enter 加新行，记号键可添加下划线、波浪线和删除线', en: 'Enter adds a row; use the marks key for underline, wave and strikethrough' })}>
+              {tr({ zh: '公式', en: 'Algorithms' })}
+            </span>}
             <AlgEditor
               ref={algEditorRef}
+              puzzle={puzzle}
               initialValue={initial.algs}
               formatInitialAlg={alg => puzzle === 'sq1' ? formatSq1EditorAlg(alg) : displayCaseAlg(puzzle, setSlug, alg)}
               formatInitialHtml={html => displayCaseAlgHtml(puzzle, setSlug, html)}
