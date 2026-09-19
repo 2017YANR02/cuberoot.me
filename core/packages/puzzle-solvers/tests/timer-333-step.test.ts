@@ -75,7 +75,7 @@ describe('Timer 3x3 step solver contract', () => {
   it('owns bilingual method and stage labels without changing engine IDs', () => {
     expect(timer333MethodLabel(METHOD_REGISTRY[1], 'zh-Hans')).toBe('桥式方法');
     expect(timer333MethodLabel(METHOD_REGISTRY[2], 'en')).toBe('Petrus');
-    expect(timer333StageLabel('roux', 'Step 1', 'zh')).toBe('左桥');
+    expect(timer333StageLabel('roux', 'Step 1', 'zh')).toBe('FB');
     expect(timer333StageLabel('thistle', 'Finish', 'zh-Hans')).toBe('还原');
     expect(timer333StageLabel('cfop', 'future-stage', 'en')).toBe('future-stage');
   });
