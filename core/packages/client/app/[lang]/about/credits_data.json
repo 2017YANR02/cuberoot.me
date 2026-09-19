@@ -1,5 +1,11 @@
 [
   {
+    "name": "The Math Flow: Rubik’s Cube ring animation",
+    "url": "https://x.com/themathflow/status/2101154346583154801",
+    "zh": "魔方与图论页面的圆环布局视觉参考，扇形参考见 GitHub issue #81。位置映射和交互独立实现，未复制第三方源码或将原视频、图片用作运行资源；发布账号不作为原作者归属证明。",
+    "en": "Visual reference for the ring layout on the cube graph page; the sector reference is in GitHub issue #81. Coordinate mappings and interactions are independently implemented without copying third-party source or embedding the original media. The posting account is not verified as the original creator."
+  },
+  {
     "name": "Poly Haven: Tree Small 02 / Rico Cilliers",
     "space": true,
     "url": "https://polyhaven.com/a/tree_small_02",
