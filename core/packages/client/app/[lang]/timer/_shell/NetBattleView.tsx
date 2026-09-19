@@ -1057,8 +1057,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     <header className="shell-topbar surface-chrome">
       <CubeRootLogo className="shell-topbar-brand" />
       <div className="shell-topbar-left">
-        <VideoToggle video={video} />
-        {playersControl}
         {room && (
           // 我的项目:本轮未交卷时可改(每人独立选,默认房间项目);已交卷则显示为静态芯片。
           !myResult && inRoundRoster ? (
@@ -1076,6 +1074,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
             </span>
           )
         )}
+        <VideoToggle video={video} />
+        {playersControl}
         {room && (
           <span className="net-round-chip">
             {tr({ zh: `第 ${room.round} 把`, en: `Round ${room.round}` })}
@@ -1245,9 +1245,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           ) : (
             /* ───── 创建模式(直接进来)───── */
             <>
-              {/* 谁 + 练什么并排一行:两个都是一眼认得出的控件,各占一行只是把大厅拉长。 */}
+              {/* 项目与身份同行，项目在首位。 */}
               <div className="net-lobby-row">
-                {identityField}
                 <div className="net-field">
                   <EventSelect
                     events={NET_SELECTOR_EVENTS}
@@ -1258,6 +1257,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                     }}
                   />
                 </div>
+                {identityField}
               </div>
 
               {/* 开一间 or 进一间 —— 同一个决定的两个岔路,摆一行才看得出是二选一 */}

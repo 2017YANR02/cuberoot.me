@@ -1996,6 +1996,38 @@ function CalendarPageInner() {
   const monthMm = String(viewDate.getMonth() + 1).padStart(2, '0');
   const weekdays = (isZh ? WEEKDAY_ZH : WEEKDAY_EN);
 
+  const cycleEvent = (eid: string) => setEventFilters(prev => {
+    const next = { ...prev };
+    const current = prev[eid];
+    const max = maxRoundsByEid[eid] ?? 0;
+    if (current === undefined) next[eid] = 'any';
+    else if (current === 'any' && max >= 1) next[eid] = 1;
+    else if (typeof current === 'number' && current < max) next[eid] = (current + 1) as 1 | 2 | 3 | 4;
+    else delete next[eid];
+    return next;
+  });
+  const eventMenu = (
+    <PuzzlePicker
+      selectedEvents={new Set(Object.keys(eventFilters))}
+      onToggle={cycleEvent}
+      groups={[{
+        id: 'events', label: tr({ zh: '项目', en: 'Events' }),
+        items: EVENT_ORDER.map(id => ({
+          id, label: eventDisplayName(id, isZh), iconClass: `event-${id}`,
+          detail: eventFilters[id] === 'any'
+            ? tr({ zh: '任意轮数', en: 'Any rounds' })
+            : typeof eventFilters[id] === 'number'
+              ? tr({ zh: `${eventFilters[id]} 轮`, en: `${eventFilters[id]} rounds` })
+              : undefined,
+        })),
+      }]}
+      popupFooter={<>
+        <span>{tr({ zh: '重复点击：任意轮数 → 指定轮数 → 取消', en: 'Click again: any rounds → exact rounds → off' })}</span>
+        <ClearButton variant="standalone" isZh={isZh} onClick={() => setEventFilters({})} />
+      </>}
+    />
+  );
+
   return (
     <div
       ref={pageRef}
@@ -2032,6 +2064,7 @@ function CalendarPageInner() {
       </header>
 
       <div className="toolbar">
+        {eventMenu}
         <CompCuberPicker
           className="search-box-comp"
           query={compQuery}
@@ -2313,37 +2346,6 @@ function CalendarPageInner() {
               </span>
             </button>
           );
-          const cycleEvent = (eid: string) => setEventFilters(prev => {
-            const next = { ...prev };
-            const current = prev[eid];
-            const max = maxRoundsByEid[eid] ?? 0;
-            if (current === undefined) next[eid] = 'any';
-            else if (current === 'any' && max >= 1) next[eid] = 1;
-            else if (typeof current === 'number' && current < max) next[eid] = (current + 1) as 1 | 2 | 3 | 4;
-            else delete next[eid];
-            return next;
-          });
-          const menu = (
-            <PuzzlePicker
-              selectedEvents={new Set(Object.keys(eventFilters))}
-              onToggle={cycleEvent}
-              groups={[{
-                id: 'events', label: tr({ zh: '项目', en: 'Events' }),
-                items: EVENT_ORDER.map(id => ({
-                  id, label: eventDisplayName(id, isZh), iconClass: `event-${id}`,
-                  detail: eventFilters[id] === 'any'
-                    ? tr({ zh: '任意轮数', en: 'Any rounds' })
-                    : typeof eventFilters[id] === 'number'
-                      ? tr({ zh: `${eventFilters[id]} 轮`, en: `${eventFilters[id]} rounds` })
-                      : undefined,
-                })),
-              }]}
-              popupFooter={<>
-                <span>{tr({ zh: '重复点击：任意轮数 → 指定轮数 → 取消', en: 'Click again: any rounds → exact rounds → off' })}</span>
-                <ClearButton variant="standalone" isZh={isZh} onClick={() => setEventFilters({})} />
-              </>}
-            />
-          );
           const chips = EVENT_ORDER.map(eid => (
             <span key={eid} className={`event-chip ${eventFilters[eid] !== undefined ? 'is-active' : ''}`} title={eventDisplayName(eid, isZh)}>
               <CubingIcon icon={`event-${eid}`} />
@@ -2353,9 +2355,8 @@ function CalendarPageInner() {
             </span>
           ));
           // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 21 chip）。
-          if (viewMode !== 'list' || displayedComps.length === 0) return <div className="event-chips">{menu}{daysChip}</div>;
+          if (viewMode !== 'list' || displayedComps.length === 0) return <div className="event-chips">{daysChip}</div>;
           return (<>
-            <div className="event-chips">{menu}</div>
             <div className="event-chips event-chips--list-header" ref={chipsHeaderRef}>
             <div className="event-chips-grid">
               {/* 报名列头（最左）：文字「报名」+ 点击按下一个将发生的报名里程碑时刻排序（已截止/无数据沉底） */}

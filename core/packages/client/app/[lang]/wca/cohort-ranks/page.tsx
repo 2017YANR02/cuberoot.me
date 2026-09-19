@@ -92,14 +92,13 @@ function CohortRanksPageInner() {
         subtitle={{ zh: '按选手首次参赛年份分组,组内 PB 排名', en: 'PB ranking among cubers whose first WCA competition was in the chosen year' }}
       />
 
-      <WcaEventSelector
-        availableEvents={EVENTS_SET}
-        selectedEvent={event}
-        onSelect={v => update('event', v)}
-        isZh={isZh}
-      />
-
       <div className="wse-filters">
+        <WcaEventSelector
+          availableEvents={EVENTS_SET}
+          selectedEvent={event}
+          onSelect={v => update('event', v)}
+          isZh={isZh}
+        />
         <div className="wse-filter">
           <label>{tr({ zh: '届别(首参赛年)', en: 'Cohort year'
         })}</label>

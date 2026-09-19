@@ -64,22 +64,35 @@ describe('WCA event menus', () => {
     }
     act(() => root.render(createElement(Example)));
     expect(host.querySelector('.wca-event-multi-toolbar')).toBeNull();
+    expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3×3');
+    expect(host.querySelector('.pp-trigger')?.textContent).toBe('');
+    expect(host.querySelectorAll('.pp-trigger-selection .pp-trigger-icon')).toHaveLength(1);
     open();
     act(() => button('Clear').click());
     expect(changes).toHaveBeenLastCalledWith([]);
+    expect(host.querySelector('.pp-trigger-label')?.textContent).toBe('Puzzle');
     expect(host.querySelector('.pp-popup')).not.toBeNull();
     act(() => button('Blind').click());
     expect(changes).toHaveBeenLastCalledWith(['333bf']);
+    expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3BLD');
     act(() => button('All').click());
     expect(changes).toHaveBeenLastCalledWith(['333', '222', '333bf']);
+    expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3×3, 2×2, 3BLD');
+    expect(host.querySelector('.pp-trigger')?.textContent).toBe('');
+    expect([...host.querySelectorAll('.pp-trigger-selection > span')].map(node => node.getAttribute('title')))
+      .toEqual(['3×3', '2×2', '3BLD']);
     const cancelled = host.querySelector<HTMLButtonElement>('[role="switch"]')!;
     act(() => cancelled.click());
     expect(changes).toHaveBeenLastCalledWith(['333', '222', '333bf', '333ft']);
+    expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3×3, 2×2, 3BLD, Feet');
+    expect(host.querySelectorAll('.pp-trigger-selection .pp-trigger-icon')).toHaveLength(4);
     expect(host.querySelectorAll('[role="menuitemcheckbox"]')).toHaveLength(4);
     act(() => cancelled.click());
     expect(changes).toHaveBeenLastCalledWith(['333', '222', '333bf']);
     act(() => host.querySelector<HTMLButtonElement>('[role="menuitemcheckbox"]')!.click());
     expect(changes).toHaveBeenLastCalledWith(['222', '333bf']);
+    expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('2×2, 3BLD');
+    expect(host.querySelectorAll('.pp-trigger-selection .pp-trigger-icon')).toHaveLength(2);
     expect(host.querySelector('.pp-popup')).not.toBeNull();
   });
 

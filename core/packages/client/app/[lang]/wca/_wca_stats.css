@@ -44,8 +44,11 @@
 
 /* NOTE: Tab 按钮容器 — inline-flex 让多个 tab-bar 可在同一行流动 */
 .wca-stats-tab-bar {
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 100%;
   display: inline-flex;
-  gap: 0;
+  gap: 4px 8px;
   margin: 6px 12px 6px 0;
   vertical-align: middle;
 }
