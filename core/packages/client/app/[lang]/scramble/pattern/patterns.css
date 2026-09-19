@@ -52,7 +52,11 @@
 }
 
 .pat-puzzle-row {
-    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 1.25rem;
 }
 
 .pat-empty {
@@ -83,10 +87,7 @@
 }
 
 .pat-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 1.25rem;
+    display: contents;
 }
 
 .pat-filter {

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Pencil } from 'lucide-react';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import { loadPersonsIndex } from '@cuberoot/shared/persons-index';
@@ -1495,6 +1496,10 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
       return next;
     });
   };
+  const editLabel = tr({ zh: '编辑', en: 'Edit' });
+  const manageLabel = tr({ zh: '管理', en: 'Manage' });
+  const relationActionLabel = relations.length > 0 ? editLabel : tr({ zh: '填写', en: 'Add' });
+  const studentActionLabel = isMultiEditor ? manageLabel : relationActionLabel;
 
   return (
     <div className="wca-teacher-cell">
@@ -1523,24 +1528,20 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
         </span>
       )}
       {editorOnly && canOpenEditor ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {tr({ zh: '编辑', en: 'Edit' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={editLabel} aria-label={editLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && directory.isAdmin && teacherDataReady ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {relations.length > 0 ? tr({ zh: '编辑', en: 'Edit' }) : tr({ zh: '填写', en: 'Add' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={relationActionLabel} aria-label={relationActionLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && canStudentManageOwnTeachers && teacherDataReady ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {isMultiEditor
-            ? tr({ zh: '管理', en: 'Manage' })
-            : relations.length > 0
-              ? tr({ zh: '编辑', en: 'Edit' })
-              : tr({ zh: '填写', en: 'Add' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={studentActionLabel} aria-label={studentActionLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && isMultiEditor && canOpenEditor ? (
-        <button type="button" className="wca-teacher-action" onClick={() => openEditor()}>
-          {tr({ zh: '管理', en: 'Manage' })}
+        <button type="button" className="wca-teacher-action wca-teacher-edit-action" title={manageLabel} aria-label={manageLabel} onClick={() => openEditor()}>
+          <Pencil size={14} aria-hidden="true" />
         </button>
       ) : !editorOnly && teacherDataReady && !singleSelectedTeacher && directory.canSelfAssign ? (
         <button type="button" className="wca-teacher-action" disabled={saving} onClick={selfAssign}>
@@ -1585,6 +1586,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
                   value={selected}
                   onChange={changeSelectedTeacher}
                   isZh={isZh}
+                  autoOpen
                   placeholder={tr({ zh: '老师姓名或 WCA ID', en: 'Teacher name or WCA ID' })}
                 />
               </div>

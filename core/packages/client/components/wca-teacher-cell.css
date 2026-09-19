@@ -53,6 +53,16 @@
   white-space: nowrap;
 }
 
+.wca-teacher-edit-action {
+  order: -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+}
+
 .wca-teacher-action:disabled,
 .wca-teacher-dialog-action:disabled {
   color: var(--faint-foreground);

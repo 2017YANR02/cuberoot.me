@@ -4,11 +4,15 @@
 .pp {
   position: relative;
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .pp-trigger {
   appearance: none;
   display: inline-flex;
+  min-width: 0;
+  max-width: 100%;
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.25rem;
@@ -33,7 +37,23 @@
   color: var(--accent);
 }
 .pp-trigger-icon { flex-shrink: 0; font-size: 1.05rem; }
-.pp-trigger-label { font-weight: 600; }
+.pp-trigger-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+.pp-trigger-selection > span { display: inline-flex; }
+.pp-trigger-label {
+  min-width: 0;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 .pp-trigger-chevron { color: var(--muted-foreground); flex-shrink: 0; }
 
 .pp-popup {

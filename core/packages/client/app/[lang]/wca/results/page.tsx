@@ -581,12 +581,12 @@ function AllResultsPageInner() {
       </header>
 
       {/* ============ 指标视图:嵌入退役的 wr_metric;指标由「类型」下拉受控(隐藏其内置选择器)。
-          顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后 → 项目在类型上方 ============ */}
+          顶层「类型」下拉作为 afterEventSelector 插在 WcaStatView 的项目选择器之后，与类型同行 ============ */}
       {view === 'metric' && (
         <WcaStatView
           statId="wr_metric" headerMode="note" urlScope="m" metricId={metricId}
           afterEventSelector={(availableMetricIds) => (
-            <div className="wse-type-standalone">{renderTypeSelect(availableMetricIds)}</div>
+            renderTypeSelect(availableMetricIds)
           )}
         />
       )}
@@ -606,7 +606,7 @@ function AllResultsPageInner() {
 
       {/* 项目菜单在模式切换时保持挂载，与当前筛选共用一行。 */}
       <div className="wse-filters">
-        <div className="wse-filter" style={{ minWidth: 0, flex: '0 0 auto', alignSelf: 'flex-end' }}>
+        <div className="wse-filter" style={{ minWidth: 0, maxWidth: '100%', flex: '0 0 auto', alignSelf: 'flex-end' }}>
           <WcaEventMultiSelector
             availableEvents={RANK_EVENT_SET}
             selectedEvents={selectedSet}

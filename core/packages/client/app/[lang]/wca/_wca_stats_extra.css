@@ -26,10 +26,6 @@
   align-items: center;
   margin-bottom: 12px;
 }
-/* 「类型」下拉单独成行时(指标视图 / 空态:无同行 filter 可并)外层,轻量不套 .wse-filters 卡片 */
-.wse-type-standalone { margin: 0 0 16px; }
-/* 不被全宽容器拉满:filter 收内容宽,select 也贴合最长选项(别再钉死 160px) */
-.wse-type-standalone .wse-filter { width: fit-content; min-width: 0; }
 /* 嵌入「指标」视图时,wr_metric 的 note 段贴着类型下拉下方,留点呼吸 */
 .wca-stats-embedded-note { margin: 4px 0 16px; }
 /* 单项视图:排名表上方常显的「纪录走势」bar race 容器,留点上下间距 */
@@ -58,6 +54,7 @@
 .wse-filters {
   display: flex;
   flex-wrap: wrap;
+  align-items: flex-end;
   gap: 12px 16px;
   margin: 16px 0;
   padding: 0;

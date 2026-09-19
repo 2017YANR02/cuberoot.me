@@ -259,6 +259,26 @@ function FunStatsInner() {
 
           {/* 控件 */}
           <div className="fun-stats-controls">
+            {stat.eventMode === 'select' && (
+              <WcaEventSelector
+                availableEvents={availableEvents}
+                isZh={isZh}
+                selectedEvent={event}
+                onSelect={setEvent}
+              />
+            )}
+            {stat.eventMode === 'multi' && (
+              <WcaEventSelector
+                availableEvents={availableEvents}
+                isZh={isZh}
+                selectedEvents={selEvents.size ? selEvents : availableEvents}
+                onToggle={(id) => setSelEvents(prev => {
+                  const base = prev.size ? new Set(prev) : new Set(availableEvents);
+                  if (base.has(id)) base.delete(id); else base.add(id);
+                  return base;
+                })}
+              />
+            )}
             <RegionPicker isZh={isZh} value={region} onChange={setRegion} restrictTo={restrictTo} />
             {stat.typeToggle && !NO_AVERAGE.has(event) && (
               <PillToggle
@@ -273,27 +293,6 @@ function FunStatsInner() {
               </select>
             )}
           </div>
-
-          {stat.eventMode === 'select' && (
-            <WcaEventSelector
-              availableEvents={availableEvents}
-              isZh={isZh}
-              selectedEvent={event}
-              onSelect={setEvent}
-            />
-          )}
-          {stat.eventMode === 'multi' && (
-            <WcaEventSelector
-              availableEvents={availableEvents}
-              isZh={isZh}
-              selectedEvents={selEvents.size ? selEvents : availableEvents}
-              onToggle={(id) => setSelEvents(prev => {
-                const base = prev.size ? new Set(prev) : new Set(availableEvents);
-                if (base.has(id)) base.delete(id); else base.add(id);
-                return base;
-              })}
-            />
-          )}
 
           {err && <div className="fun-stats-error">{tr({ zh: '加载失败:', en: 'Error: '
         })}{err}</div>}
