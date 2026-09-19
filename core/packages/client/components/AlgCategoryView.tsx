@@ -15,7 +15,7 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, Pencil, ShieldCheck, AlertTriangle, FlipHorizontal2, HelpCircle, Pin } from 'lucide-react';
+import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, FlipHorizontal2, HelpCircle, Pin } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -1669,16 +1669,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         prefetch={false}
                         aria-label={cardName}
                       />
-                      {isAdmin && c.id != null && (
-                        <Link
-                          href={caseDetailHref(c)}
-                          prefetch={false}
-                          className="alg-admin-edit-btn alg-admin-edit-btn-corner"
-                          title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
-                        >
-                          <Pencil size={12} />
-                        </Link>
-                      )}
                       <div className="alg-case-head">
                         <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
                           {useSvDualThumb ? (
