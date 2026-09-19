@@ -3223,6 +3223,8 @@ CREATE TABLE auth_web_session_tickets (
     (purpose = 'mobile' AND user_id IS NOT NULL AND code_challenge ~ '^[A-Za-z0-9_-]{43}$')
     OR
     (purpose = 'wechat_browser' AND code_challenge ~ '^[A-Za-z0-9_-]{43}$')
+    OR
+    (purpose = 'wechat_wca_link' AND user_id IS NOT NULL AND code_challenge IS NULL)
   )
 );
 CREATE INDEX idx_auth_web_session_tickets_expires ON auth_web_session_tickets(expires_at);

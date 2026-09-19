@@ -18,13 +18,14 @@ import {
   loginErrorMessage,
   loginWithMiniProgram,
   previewIdentityLinkCode,
+  validateStoredSession,
   type SessionData,
 } from '../../lib/auth';
 import { cancelWebsiteNavigation, openWebsitePageOnce } from '../../lib/navigation';
 import { showPublicShareMenu, toTimelineShare } from '../../lib/share';
 import { resolveAccountPageShare } from '../../lib/web-routes';
 import { getMiniProgramLocale, tr } from '../../lib/i18n';
-import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
+import { isDouyinMiniProgram, isExternalHttpsUrl, miniProgramApi, openExternalUrl } from '../../lib/platform';
 import {
   getMiniProgramReleaseView,
   type MiniProgramReleaseView,
@@ -258,11 +259,14 @@ interface AccountPageData {
   uidText: string;
   wcaId: string;
   browserLoginPending: boolean;
+  wcaLinkPending: boolean;
 }
 
 interface AccountPageInstance {
   browserLoginApproval?: string;
   browserLoginExistingOnly?: boolean;
+  wcaLinkTicket?: string;
+  wcaLinkBaseline?: string;
   data: AccountPageData;
   setData(data: Partial<AccountPageData>): void;
 }
@@ -347,6 +351,22 @@ async function finishMiniProgramLogin(page: AccountPageInstance, session: Sessio
   if (disposedPages.has(page)) return;
   page.setData({ loginBusy: false });
   resumeRequiredSessionDestination();
+}
+
+async function refreshWcaLink(page: AccountPageInstance): Promise<void> {
+  const ticket = page.wcaLinkTicket;
+  if (!ticket || disposedPages.has(page)) return;
+  const snapshot = getStoredSessionSnapshot();
+  if (snapshot.status !== 'available' || !snapshot.session) return;
+  try {
+    const session = await validateStoredSession(snapshot.session);
+    if (disposedPages.has(page) || page.wcaLinkTicket !== ticket) return;
+    if (!session.user.wcaId || session.user.wcaId === page.wcaLinkBaseline) return;
+    page.wcaLinkTicket = undefined;
+    page.setData({ ...sessionView(session), wcaLinkPending: false, accountError: tr({ en: 'WCA linked.', zh: 'WCA 已绑定' }) });
+  } catch {
+    // The next onShow can retry; the browser flow remains independent.
+  }
 }
 
 const BROWSER_LOGIN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
@@ -550,6 +570,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     uidText: '',
     wcaId: '',
     browserLoginPending: false,
+    wcaLinkPending: false,
   },
 
   onLoad(options: Record<string, unknown> = {}) {
@@ -560,6 +581,19 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     }
     setNormalNavigationTitle();
     showPublicShareMenu();
+    const wcaLink = typeof options.wcaLink === 'string' && BROWSER_LOGIN_PATTERN.test(options.wcaLink)
+      ? options.wcaLink : '';
+    const wcaUrl = typeof options.wcaUrl === 'string' && isExternalHttpsUrl(options.wcaUrl)
+      ? options.wcaUrl : '';
+    if (wcaLink && wcaUrl) {
+      const snapshot = getStoredSessionSnapshot();
+      this.wcaLinkTicket = wcaLink;
+      this.wcaLinkBaseline = snapshot.status === 'available' ? snapshot.session?.user.wcaId ?? '' : '';
+      this.setData({ wcaLinkPending: true, accountError: '' });
+      let externalUrl = wcaUrl;
+      try { externalUrl = decodeURIComponent(wcaUrl); } catch { /* use the platform value */ }
+      void openExternalUrl(externalUrl);
+    }
     const browserLogin = typeof options.browserLogin === 'string'
       && BROWSER_LOGIN_PATTERN.test(options.browserLogin)
       && !isDouyinMiniProgram()
@@ -588,6 +622,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     if (shouldRetryAccountLink) clearPendingIdentity(this as unknown as AccountPageInstance);
     showPublicShareMenu();
     refreshStoredSession(this as unknown as AccountPageInstance);
+    if (this.wcaLinkTicket && this.data.wcaLinkPending) void refreshWcaLink(this as unknown as AccountPageInstance);
     currentPendingIdentity(this as unknown as AccountPageInstance);
     this.setData({
       accountLinkPending: false,
@@ -595,7 +630,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     });
     if (shouldRetryAccountLink) {
       void completeMiniProgramLogin(this as unknown as AccountPageInstance);
-    }
+}
   },
 
   onUnload() {

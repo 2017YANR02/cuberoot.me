@@ -4,6 +4,7 @@ import {
   loadWeChatJsSdk,
 } from '@/lib/wechat-js-sdk';
 import { MINI_PROGRAM_LOGOUT_MESSAGE } from '@cuberoot/shared/auth/web-session';
+import { apiUrl } from '@/lib/api-base';
 
 export interface MiniProgramNavigationApi {
   getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
@@ -157,6 +158,33 @@ export async function notifyMiniProgramLogout(): Promise<boolean> {
     miniProgram.postMessage({ data: MINI_PROGRAM_LOGOUT_MESSAGE });
     miniProgram.navigateBack?.({ delta: 1 });
     return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Start WCA linking in the system browser, then return to the native account page. */
+export async function openMiniProgramWcaLink(sessionToken: string | null): Promise<boolean> {
+  if (!sessionToken || !mayUseMiniProgramBridge()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  if (!miniProgram || !await confirmMiniProgramEnvironment(miniProgram)) return false;
+  try {
+    const response = await fetch(apiUrl('/v1/auth/wechat/wca-link/start'), {
+      method: 'POST',
+      cache: 'no-store',
+      headers: { Authorization: `Bearer ${sessionToken}` },
+    });
+    const data = await response.json().catch(() => ({})) as { ticket?: unknown; url?: unknown };
+    if (!response.ok || typeof data.ticket !== 'string' || typeof data.url !== 'string') return false;
+    const ticket = data.ticket;
+    const url = data.url;
+    return await new Promise<boolean>((resolve) => {
+      miniProgram.navigateTo({
+        url: `/pages/account/index?wcaLink=${encodeURIComponent(ticket)}&wcaUrl=${encodeURIComponent(url)}`,
+        success: () => resolve(true),
+        fail: () => resolve(false),
+      });
+    });
   } catch {
     return false;
   }

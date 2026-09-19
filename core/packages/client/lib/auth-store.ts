@@ -18,6 +18,7 @@ import { apiUrl } from './api-base';
 import { persistItem } from './safe-storage';
 import { resolveAccountAvatar } from './account-avatar';
 import { syncPageSessionCookie } from './home-card-access';
+import { isMiniProgramWebView, openMiniProgramWcaLink } from './miniprogram-bridge';
 
 export { ADMIN_WCA_IDS };
 export { safeNext } from './safe-next';
@@ -185,6 +186,14 @@ export const useAuthStore = create<AuthState & AuthActions>()((set) => ({
 
   loginWithWca: (returnTo?: string) => {
     if (typeof window === 'undefined') return;
+    let intent = '';
+    try { intent = sessionStorage.getItem('wca_oauth_intent') ?? ''; } catch { /* private mode */ }
+    if (intent === 'link' && isMiniProgramWebView()) {
+      void openMiniProgramWcaLink(getSessionToken()).then(() => {
+        try { sessionStorage.removeItem('wca_oauth_intent'); } catch { /* private mode */ }
+      });
+      return;
+    }
     const state = Math.random().toString(36).substring(2) + Date.now().toString(36);
     sessionStorage.setItem(STATE_KEY, state);
     sessionStorage.setItem(RETURN_URL_KEY, returnTo || window.location.href);

@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"d10e31680777f1b301de06c1c02be20f88f8bd81fa101af1b63383569faedc36","reason":"复核 MCP 授权页的三个按钮：本次只给同意、拒绝和撤销按钮添加专用样式类，回调、管理员判断、OAuth 请求参数及登录回跳均未改变；共享账户排序名单补齐 mcp 入口。现有图中的 S256 PKCE、单次授权码、令牌轮换、降权失效与撤销流程仍一致，无需变更节点。ChatGPT 真人连接仍待验收。"}
+{"fingerprint":"e263719dc893888a4c6239c9558c4c965af5bae2a55fdec4a5bac703c567fbb3","reason":"复核微信小程序 WCA 绑定流程：微信小程序 WebView 不再直接打开 WCA 外域，而是使用短期账号票据转到系统浏览器完成 WCA OAuth，由服务端直接绑定；小程序返回前台后刷新账号状态。普通微信登录、手机号授权和其他绑定流程未改变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -49,7 +49,7 @@ export default function AuthFlowPage() {
         <article><h3>{t('网站 / PWA', 'Website / PWA')}</h3><p>{t('打开「我的」→ 在网站登录。账号管理也在同一页。', 'Open My account → sign in on the website. Account management uses that same page.')}</p><AppLink href="#signin" prefetch={false}>{t('看网站登录流程 ↓', 'Website sign-in flow ↓')}</AppLink></article>
         <article><h3>iOS App</h3><p>{t('我的 → 系统浏览器完成网站登录 → 回到 App。凭据存入 Keychain；不是另建 Apple 账号。', 'My account → website sign-in in the system browser → return to the App. The session uses Keychain, not a separate Apple-only account.')}</p><AppLink href="#app-handoff" prefetch={false}>{t('看 App 回跳流程 ↓', 'App handoff flow ↓')}</AppLink></article>
         <article><h3>Android App</h3><p>{t('与 iOS 复用同一登录流程；由 Android 深链接回，凭据使用 Keystore 保护的存储。', 'Shares the iOS sign-in flow. An Android deep link returns to the App; session storage is protected by Keystore.')}</p><AppLink href="#app-handoff" prefetch={false}>{t('看 App 回跳流程 ↓', 'App handoff flow ↓')}</AppLink></article>
-        <article><h3>{t('微信小程序', 'WeChat Mini Program')}</h3><p>{t('已绑定微信直接登录；未绑定可授权实时验证手机号，确认原账号或明确创建。账号管理仍复用网站。本地接入不代表已发布。', 'Linked WeChat identities sign in directly. Unlinked users may authorize real-time phone verification, then confirm an existing account or explicitly create one. Account management reuses the website. Local integration is not a release.')}</p><AppLink href="#mini" prefetch={false}>{t('看手机号与旧号流程 ↓', 'Phone and existing-account flows ↓')}</AppLink></article>
+        <article><h3>{t('微信小程序', 'WeChat Mini Program')}</h3><p>{t('已绑定微信直接登录；未绑定可授权实时验证手机号，确认原账号或明确创建。账号管理仍复用网站；WCA 绑定从小程序跳到系统浏览器完成，返回小程序后刷新账号状态。本地接入不代表已发布。', 'Linked WeChat identities sign in directly. Unlinked users may authorize real-time phone verification, then confirm an existing account or explicitly create one. Account management reuses the website; WCA linking opens the system browser and refreshes the account when you return. Local integration is not a release.')}</p><AppLink href="#mini" prefetch={false}>{t('看手机号与旧号流程 ↓', 'Phone and existing-account flows ↓')}</AppLink></article>
       </div>
       <details className="auth-map-current"><summary>{t('其他平台：鸿蒙、Windows、macOS、抖音小程序', 'Other platforms: HarmonyOS, Windows, macOS, Douyin Mini Program')}</summary>
         <p>{t('HarmonyOS NEXT、Windows、macOS 共用 App 产品层和网站账号流程，只替换系统浏览器、深链与安全存储适配；每个平台的真实回跳仍须单独验收。', 'HarmonyOS NEXT, Windows, and macOS share the App product layer and website account flow, with platform browser, deep-link, and secure-storage adapters. Each platform still needs its own real handoff tests.')}</p>
@@ -175,7 +175,7 @@ export default function AuthFlowPage() {
 
     <section id="linking" className="auth-map-section" aria-labelledby="linking-title">
       <div className="auth-map-section-heading"><h2 id="linking-title">{t('绑定 / 解绑：还是一个账号，只改登录入口', 'Link / unlink: one account, different ways to sign in')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现', 'Implemented in source')}</span></div>
-      <p className="auth-map-note">{t('入口：网站「我的 → 齿轮 → 登录方式」；iOS / 安卓显示同一个账号页，小程序从「账号管理」进入网站。', 'Entry: website My account → settings gear → sign-in methods. iOS / Android display the same account page; Mini Program Account management opens the website.')}</p>
+      <p className="auth-map-note">{t('入口：网站「我的 → 齿轮 → 登录方式」；iOS / 安卓显示同一个账号页，小程序从「账号管理」进入网站。小程序内绑定 WCA 时，先用短期票据关联当前账号，再在系统浏览器完成 WCA 授权；绑定写入服务端后，小程序返回前台刷新账号，不把长期凭据放进小程序 URL。', 'Entry: website My account → settings gear → sign-in methods. iOS / Android display the same account page; Mini Program Account management opens the website. WCA linking from the Mini Program uses a short-lived ticket for the current account, completes WCA authorization in the system browser, then refreshes the account on return; long-lived credentials never enter the Mini Program URL.')}</p>
       <figure className="auth-map-figure" aria-labelledby="linking-title"><div className="auth-map-current-paths">
         <section><h3>{t('新增登录方式', 'Add a sign-in method')}</h3><Steps items={[
           t('先登录要保留的 CubeRoot 账号', 'Sign in to the CubeRoot account you want to keep'),

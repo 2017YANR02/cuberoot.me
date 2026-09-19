@@ -72,6 +72,31 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    if (intent === 'mini_wca_link') {
+      const ticket = sessionStorage.getItem('wca_mini_link_ticket');
+      sessionStorage.removeItem('wca_mini_link_ticket');
+      if (!ticket) {
+        setErrorMsg(tr({ zh: '小程序绑定请求已失效，请返回小程序重试', en: 'The Mini Program link request expired, please retry from the Mini Program' }));
+        return;
+      }
+      try {
+        const response = await fetch(apiUrl('/v1/auth/wechat/wca-link/complete'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticket, accessToken }),
+          signal,
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(typeof data.error === 'string' ? data.error : `HTTP ${response.status}`);
+        }
+        setErrorMsg(tr({ zh: 'WCA 已绑定。请返回小程序，账号页面会自动刷新。', en: 'WCA is linked. Return to the Mini Program and your account will refresh.' }));
+      } catch (error) {
+        setErrorMsg(tr({ zh: `绑定失败: ${(error as Error).message}`, en: `Link failed: ${(error as Error).message}` }));
+      }
+      return;
+    }
+
     // 「绑定 WCA」意图:当前已登录(邮箱/手机账号),把 WCA 加为身份而非重新登录。
     if (intent === 'link') {
       await handleWcaLink(accessToken, returnUrl, signal);
