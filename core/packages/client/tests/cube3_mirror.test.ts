@@ -159,6 +159,13 @@ describe('mirrorAlg', () => {
     expect(mirrorAlg('3Uw', 'E')).toBe("3Dw'");
   });
 
+  it('preserves grouping syntax while mirroring the moves inside it', () => {
+    expect(mirrorAlg("(R U R' U')2", 'M')).toBe("(L' U' L U)2");
+    expect(mirrorAlg("(R (U R')2)3", 'M')).toBe("(L' (U' L)2)3");
+    expect(mirrorAlg('[R, U] [F: (R U)2]', 'M')).toBe("[L', U'] [F': (L' U')2]");
+    expect(mirrorAlg('R . // keep this\n(U)2', 'M')).toBe("L' . // keep this\n(U')2");
+  });
+
   it('returns the input unchanged when it cannot be parsed', () => {
     expect(mirrorAlg('R (U', 'M')).toBe('R (U');
     expect(mirrorAlg('', 'M')).toBe('');
