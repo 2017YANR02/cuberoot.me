@@ -219,6 +219,8 @@ export default function SolverHintPanel({
   // 一按返回就重新打开。
   const pushedRef = useRef(false);
   useEffect(() => { if (!sheetOpen) pushedRef.current = false; }, [sheetOpen]);
+  const sheetOpenRef = useRef(sheetOpen);
+  useEffect(() => { sheetOpenRef.current = sheetOpen; }, [sheetOpen]);
   const closeSheet = useCallback(() => {
     if (pushedRef.current) { window.history.back(); return; }
     void setSheetOpen(null, { history: 'replace' });
@@ -240,19 +242,14 @@ export default function SolverHintPanel({
   useEffect(() => {
     if (!autoCollapseOnReady) return;
     setRailOpen(false);
-    if (sheetOpen) closeSheet();
-  }, [autoCollapseOnReady, closeSheet, sheetOpen]);
+    if (sheetOpenRef.current) closeSheet();
+  }, [autoCollapseOnReady, closeSheet]);
+  const openedSolveRequestRef = useRef(0);
   useEffect(() => {
-    if (autoOpenOnSolve <= 0) return;
-    if (isDesktopRail) {
-      setRailOpen(true);
-      return;
-    }
-    if (sheetOpen) return;
-    onOpen?.();
-    pushedRef.current = true;
-    void setSheetOpen(true);
-  }, [autoOpenOnSolve, isDesktopRail, onOpen, setSheetOpen, sheetOpen]);
+    if (autoOpenOnSolve <= 0 || openedSolveRequestRef.current === autoOpenOnSolve) return;
+    openedSolveRequestRef.current = autoOpenOnSolve;
+    if (isDesktopRail) setRailOpen(true);
+  }, [autoOpenOnSolve, isDesktopRail]);
   useEffect(() => {
     if (sheetOpen) onOpen?.();
   }, [onOpen, sheetOpen]);

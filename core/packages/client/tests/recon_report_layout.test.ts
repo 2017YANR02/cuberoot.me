@@ -37,6 +37,7 @@ const REPORT = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'ReconstructRe
 const STEP_LIST = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'StepMoveList.tsx');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
+const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
 const RECONSTRUCT_METRICS = join(TIMER_UI, 'TimerReconstructMetrics.tsx');
 
@@ -130,6 +131,37 @@ describe('回放进度条匀速走', () => {
     expect(pb).toMatch(/moves\[idx\]\.ts : totalMs/);
     expect(pb).toMatch(/\* 60\) \/\s*\(1000 \* speedMult\)/);
     expect(pb).toMatch(/moveDurationTicks=\{moveDurationTicks\}/);
+  });
+});
+
+describe('移动端自动打开的解法浮层可手动关闭', () => {
+  const panel = read(join(ROOT, 'app', '[lang]', 'timer', '_components', 'SolverHintPanel.tsx'));
+
+  it('每个自动打开请求只消费一次,关闭后不会被同一个请求重新打开', () => {
+    expect(panel).toMatch(/openedSolveRequestRef\.current === autoOpenOnSolve/);
+    expect(panel).toMatch(/openedSolveRequestRef\.current = autoOpenOnSolve/);
+  });
+
+  it('自动打开只在桌面左栏生效,移动端保留手动入口', () => {
+    expect(panel).toMatch(/if \(isDesktopRail\) setRailOpen\(true\);/);
+    expect(panel).not.toMatch(/void setSheetOpen\(true\);\s*\n\s*\}, \[autoOpenOnSolve/);
+  });
+
+  it('ready 收起只响应 ready 状态变化,不监听浮层自身开关', () => {
+    expect(panel).toMatch(/if \(sheetOpenRef\.current\) closeSheet\(\);/);
+    expect(panel).toMatch(/\}, \[autoCollapseOnReady, closeSheet\]\);/);
+  });
+});
+
+describe('移动端复盘不遮挡计时区关键信息', () => {
+  const shell = read(SHELL_CSS);
+
+  it('复盘在移动端使用更克制的高度预算', () => {
+    expect(shell).toMatch(/@media \(max-width: 1023px\) \{[\s\S]{0,220}--recap-h: clamp\(150px, calc\(100dvh - 610px\), 300px\)/);
+  });
+
+  it('打乱所属比赛固定在打乱滚动区底部', () => {
+    expect(shell).toMatch(/\.timing-surface-scramble-top \.scramble-src-row \{[\s\S]{0,180}position: sticky;[\s\S]{0,180}bottom: 0;/);
   });
 });
 
