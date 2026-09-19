@@ -224,6 +224,12 @@ export interface SimCubeViewProps {
    */
   animate?: boolean;
   /**
+   * Duration of the next appended move in the engine's nominal 60 Hz ticks.
+   * Replay uses this to match the interval until the following recorded move;
+   * live mirrors leave it unset and use their own catch-up timings.
+   */
+  moveDurationTicks?: number;
+  /**
    * Keep an actual smart-cube mirror close to the physical state. Normal turns
    * remain animated, but a growing BLE batch/queue snaps stale turns and plays
    * only the newest one. Replay callers leave this off and retain /sim timing.
@@ -273,6 +279,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     sensorBasis = sensorBasisForBrand(null),
     mirror = mirrorForBrand(null),
     animate = false,
+    moveDurationTicks,
     realtime = false,
     stickering = '',
     stickeringOrientation = '',
@@ -540,7 +547,9 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         plan.exp,
         false,
         1,
-        realtime ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS) : undefined,
+        realtime
+          ? (queued ? LIVE_QUEUED_TURN_TICKS : LIVE_TURN_TICKS)
+          : moveDurationTicks,
       );
     } else if (plan.mode === 'catch-up') {
       twister.catchUpRealtime(plan.exp, plan.fallbackExp, LIVE_QUEUED_TURN_TICKS);
