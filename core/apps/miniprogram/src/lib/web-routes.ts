@@ -202,15 +202,14 @@ export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata
 
   const routeKey = key as WebRouteKey;
   const route = WEB_ROUTES[routeKey];
-  if (!route.publicEntry) return null;
-
-  if (currentUrl !== undefined) {
-    const path = publicPageSharePath(currentUrl);
+  if (currentUrl !== undefined || !route.publicEntry) {
+    const path = publicPageSharePath(currentUrl ?? route.path);
     if (!path) return null;
     return {
       imageUrl: WEB_ROUTE_SHARE_IMAGE,
       title: metadata?.path === path ? metadata.title : tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
-      path: `/pages/web/index?key=${encodeURIComponent(routeKey)}&path=${encodeURIComponent(path)}`,
+      // A current destination is independent of the tab/entry used to reach it.
+      path: `/pages/web/index?key=home&path=${encodeURIComponent(path)}`,
     };
   }
 
@@ -242,7 +241,11 @@ export function resolveWebRoute(key: unknown, sharedPath?: unknown): {
     title: route.title,
     path,
     sessionHandoff: route.sessionHandoff !== false,
-    url: withMiniProgramRedirect(`${SITE_ORIGIN}${path}`),
+    // Do not prefix an actual page anchor with a bridge marker: browsers would
+    // look for an element named "wechat_redirect&section" instead of "section".
+    url: sharedPath !== undefined && path.includes('#')
+      ? `${SITE_ORIGIN}${path}`
+      : withMiniProgramRedirect(`${SITE_ORIGIN}${path}`),
   };
   if (route.loadFailureMessage) {
     return { ...resolved, loadFailureMessage: route.loadFailureMessage };

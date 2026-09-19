@@ -91,6 +91,8 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/harmony', 'entry/src/main/ets/bridge/SecureAuthStore.ets'],
     ['@cuberoot/miniprogram', 'src/lib/auth.ts'], ['@cuberoot/miniprogram', 'src/pages/account/index.wxml'],
     ['@cuberoot/miniprogram', 'src/lib/web-routes.ts'], ['@cuberoot/app-ui', 'src/App.tsx'],
+    ['@cuberoot/miniprogram', 'src/lib/web-view-page.ts'],
+    ['@cuberoot/shared', 'src/page_share.ts'], ['@cuberoot/client', 'lib/page-share.ts'],
     ['@cuberoot/mobile', 'ios/App/App/AppDelegate.swift'], ['@cuberoot/mobile', 'android/app/src/main/AndroidManifest.xml'],
   ])('covers lifecycle source %s/%s', (pkg, path) => {
     expect(isAuthDocSource(relative(CORE_ROOT, workspaceFixturePath(pkg, path)))).toBe(true);
