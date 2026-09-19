@@ -1,10 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, afterAll, describe, expect, it, vi } from 'vitest';
+import { Alg } from 'cubing/alg';
+import { puzzles } from 'cubing/puzzles';
 import type { AlgFile, AlgPuzzle } from '@cuberoot/shared/alg';
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
 import { loadAlg, alignAlgFile, alignCaseEntry, caseAlgIssue, caseCoepEntry, commonCaseSetup, sourceCaseAlg } from '@/lib/alg_case_alignment';
 import { allTargets, scanCases } from '@/lib/alg_validation_scan';
-import { validateStoredAlgCase } from '@/lib/alg_validation';
+import { orientCaseSetup, validateStoredAlgCase } from '@/lib/alg_validation';
 import { caseViewAlg, caseViewSetup, CASE_VIEW_ANGLES } from '@/lib/alg_display';
 import { algHtmlText } from '@/lib/alg_html';
 import { normalizeAlg } from '@/lib/alg_normalize';
@@ -37,23 +39,57 @@ describe('one public case state for every algorithm set', () => {
     const c = file.cases.find(c => c.id === 41)!;
     const original = JSON.stringify(c);
     const aligned = await alignAlgFile({ ...file, cases: [c] });
+    const prepared = aligned.cases[0];
+    expect(prepared.setup).toBe(`z2 ${c.setup}`);
+    expect(prepared.algs[0][0].alg).toBe(`${c.algs[0][0].alg} z2`);
     expect(aligned.cases[0].algs[0].slice(5).map(e => e.alg)).toEqual([
-      "U' B U' R2 F2 U' F",
-      "U R' F R2 U R' F' U' R U' R' U",
-      "L' U' L U' F' L' U L2 F L' U2",
-      "U L' U L2 F L' F' U' L F' L' U",
+      "U' B U' R2 F2 U' F z2",
+      "U R' F R2 U R' F' U' R U' R' U y2",
+      "L' U' L U' F' L' U L2 F L' U2 y2",
+      "U L' U L2 F L' F' U' L F' L' U y2",
     ]);
+    const kp = await puzzles['2x2x2'].kpuzzle();
+    const solved = kp.defaultPattern();
+    const startingCorners = solved.applyAlg(prepared.setup).patternData.CORNERS;
+    expect(startingCorners.pieces.slice(0, 4).toSorted()).toEqual([0, 1, 2, 3]);
+    expect(startingCorners.pieces.slice(4).toSorted()).toEqual([4, 5, 6, 7]);
+    expect(startingCorners.orientation.slice(4)).toEqual([0, 0, 0, 0]);
     for (const entry of aligned.cases[0].algs[0]) {
       expect(caseAlgIssue(entry)).toBeUndefined();
-      expect((await validateStoredAlgCase(c.setup, entry.alg, c.sticker, '2x2', 'eg1')).ok).toBe(true);
+      // Compare the actual frame, independently of the rotation-tolerant validator.
+      expect(solved.applyAlg(`${prepared.setup} ${entry.alg}`).patternData).toEqual(solved.patternData);
+      const twice = await alignCaseEntry('2x2', 'eg1', prepared, entry);
+      expect(twice.alg).toBe(entry.alg);
+      expect(twice.algHtml).toBe(entry.algHtml);
     }
+    expect((await validateStoredAlgCase(prepared.setup, c.algs[0][0].alg, c.sticker, '2x2', 'eg1',
+      { fixedOrientation: true })).ok).toBe(false);
+    expect(await orientCaseSetup('2x2', 'eg1', prepared.setup)).toBe(prepared.setup);
+    expect(await alignAlgFile(aligned)).toBe(aligned);
     const rich = { ...c.algs[0][5], algHtml: "<em>z2</em> y U2 <s>B</s> U' R2 F2 U' F" };
-    const entry = await alignCaseEntry('2x2', 'eg1', c, rich);
-    expect(entry.alg).toBe("U' B U' R2 F2 U' F");
+    const entry = await alignCaseEntry('2x2', 'eg1', prepared, rich);
+    expect(entry.alg).toBe("U' B U' R2 F2 U' F z2");
     expect(algHtmlText(entry.algHtml!)).toBe(entry.alg);
     expect(entry.algHtml).toContain('<s>B</s>');
     expect(sourceCaseAlg(entry)).toBe(rich.alg);
     expect(JSON.stringify(c)).toBe(original);
+  });
+
+  it.each(["x R U R'", "R x U x' R'"])(
+    'preserves necessary or internal rotations in %s', async alg => {
+      const c = { ...files.find(f => f.puzzle === '2x2' && f.set === 'eg1')!.cases[0],
+        setup: new Alg(alg).invert().toString() };
+      const entry = await alignCaseEntry('2x2', 'eg1', c, { alg });
+      expect(caseAlgIssue(entry)).toBeUndefined();
+      expect(entry.alg).toBe(alg);
+      expect((await validateStoredAlgCase(c.setup, alg, c.sticker, '2x2', 'eg1', { fixedOrientation: true })).ok).toBe(true);
+    },
+  );
+
+  it('does not reinterpret unfinished LS and TCLL bottom faces', async () => {
+    for (const file of files.filter(f => f.puzzle === '2x2' && /^(ls|tcll|teg2)/.test(f.set))) {
+      for (const c of file.cases) expect(await orientCaseSetup('2x2', file.set, c.setup)).toBe(c.setup);
+    }
   });
 
   it('covers every registered goal and every database set, without sampling', () => {
@@ -73,6 +109,12 @@ describe('one public case state for every algorithm set', () => {
     const unmatched: string[] = [];
     const angles = is3x3TopLayerSet(puzzle, file.set) ? CASE_VIEW_ANGLES : ['default'] as const;
     for (const c of aligned.cases) {
+      if (puzzle === '2x2' && ['cll', 'eg1', 'eg2', 'leg1', 'ortega-oll', 'ortega-pbl'].includes(file.set)) {
+        const kp = await puzzles['2x2x2'].kpuzzle();
+        const corners = kp.defaultPattern().applyAlg(c.setup).patternData.CORNERS;
+        expect(corners.pieces.slice(4).toSorted(), `${key} ${c.name}: bottom colour`).toEqual([4, 5, 6, 7]);
+        expect(corners.orientation.slice(4), `${key} ${c.name}: bottom face`).toEqual([0, 0, 0, 0]);
+      }
       const coep = caseCoepEntry(c);
       if (coep) {
         expect((await validateStoredAlgCase(c.setup, coep.alg, c.sticker, puzzle, file.set)).ok,
@@ -96,7 +138,8 @@ describe('one public case state for every algorithm set', () => {
           for (const angle of angles) {
             const displayedSetup = caseViewSetup(setup, angle);
             const displayedAlg = caseViewAlg(entry.alg, angle);
-            const result = await validateStoredAlgCase(displayedSetup, displayedAlg, c.sticker, puzzle, file.set);
+            const result = await validateStoredAlgCase(displayedSetup, displayedAlg, c.sticker, puzzle, file.set,
+              { fixedOrientation: ['2x2', '3x3', '4x4', '5x5'].includes(puzzle) });
             expect(result.ok, `${key} ${id} ${angle}: ${result.reason}`).toBe(true);
           }
         }

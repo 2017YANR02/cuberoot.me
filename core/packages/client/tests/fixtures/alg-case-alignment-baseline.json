@@ -1,14 +1,14 @@
 {
   "2x2/cll": {
     "total": 423,
-    "adjusted": 270,
+    "adjusted": 300,
     "unmatched": [
       "27:0:4"
     ]
   },
   "2x2/eg1": {
     "total": 329,
-    "adjusted": 221,
+    "adjusted": 231,
     "unmatched": [
       "42:0:2",
       "76:0:3",
@@ -19,31 +19,31 @@
   },
   "2x2/eg2": {
     "total": 275,
-    "adjusted": 168,
+    "adjusted": 207,
     "unmatched": []
   },
   "2x2/leg1": {
     "total": 155,
-    "adjusted": 77,
+    "adjusted": 83,
     "unmatched": [
       "6977:0:5"
     ]
   },
   "2x2/ls1": {
     "total": 165,
-    "adjusted": 62,
+    "adjusted": 89,
     "unmatched": []
   },
   "2x2/ls2": {
     "total": 180,
-    "adjusted": 76,
+    "adjusted": 100,
     "unmatched": [
       "7139:0:3"
     ]
   },
   "2x2/ls3": {
     "total": 151,
-    "adjusted": 54,
+    "adjusted": 75,
     "unmatched": [
       "7201:0:2",
       "7209:0:2",
@@ -54,38 +54,38 @@
   },
   "2x2/ls4": {
     "total": 159,
-    "adjusted": 67,
+    "adjusted": 93,
     "unmatched": [
       "7265:0:2"
     ]
   },
   "2x2/ls5": {
     "total": 169,
-    "adjusted": 76,
+    "adjusted": 96,
     "unmatched": []
   },
   "2x2/ls6": {
     "total": 185,
-    "adjusted": 93,
+    "adjusted": 120,
     "unmatched": [
       "7356:0:2"
     ]
   },
   "2x2/ls7": {
     "total": 153,
-    "adjusted": 64,
+    "adjusted": 89,
     "unmatched": []
   },
   "2x2/ls8": {
     "total": 175,
-    "adjusted": 72,
+    "adjusted": 102,
     "unmatched": [
       "7506:0:4"
     ]
   },
   "2x2/ls9": {
     "total": 163,
-    "adjusted": 78,
+    "adjusted": 92,
     "unmatched": [
       "7527:0:2",
       "7527:0:3"
@@ -93,17 +93,17 @@
   },
   "2x2/ortega-oll": {
     "total": 27,
-    "adjusted": 0,
+    "adjusted": 1,
     "unmatched": []
   },
   "2x2/ortega-pbl": {
     "total": 82,
-    "adjusted": 15,
+    "adjusted": 40,
     "unmatched": []
   },
   "2x2/tcll-minus": {
     "total": 155,
-    "adjusted": 68,
+    "adjusted": 88,
     "unmatched": [
       "7056:0:3",
       "7069:0:1"
@@ -111,19 +111,19 @@
   },
   "2x2/tcll-plus": {
     "total": 177,
-    "adjusted": 79,
+    "adjusted": 114,
     "unmatched": []
   },
   "2x2/teg2-plus": {
     "total": 176,
-    "adjusted": 51,
+    "adjusted": 56,
     "unmatched": [
       "7591:0:5"
     ]
   },
   "3x3/1lll": {
     "total": 7300,
-    "adjusted": 2571,
+    "adjusted": 2658,
     "unmatched": []
   },
   "3x3/2-look-cmll": {
@@ -143,17 +143,17 @@
   },
   "3x3/adv-f2l": {
     "total": 667,
-    "adjusted": 0,
+    "adjusted": 446,
     "unmatched": []
   },
   "3x3/anti-pll": {
     "total": 83,
-    "adjusted": 0,
+    "adjusted": 4,
     "unmatched": []
   },
   "3x3/cls": {
     "total": 187,
-    "adjusted": 0,
+    "adjusted": 63,
     "unmatched": []
   },
   "3x3/cmll": {
@@ -183,17 +183,17 @@
   },
   "3x3/eo4a": {
     "total": 43,
-    "adjusted": 0,
+    "adjusted": 2,
     "unmatched": []
   },
   "3x3/f2l": {
     "total": 786,
-    "adjusted": 0,
+    "adjusted": 605,
     "unmatched": []
   },
   "3x3/fruf": {
     "total": 113,
-    "adjusted": 0,
+    "adjusted": 9,
     "unmatched": []
   },
   "3x3/lse-eolr": {
@@ -208,7 +208,7 @@
   },
   "3x3/oll": {
     "total": 462,
-    "adjusted": 145,
+    "adjusted": 158,
     "unmatched": [
       "3929:0:3",
       "3930:0:3",
@@ -219,12 +219,12 @@
   },
   "3x3/ollcp": {
     "total": 1115,
-    "adjusted": 772,
+    "adjusted": 795,
     "unmatched": []
   },
   "3x3/pll": {
     "total": 217,
-    "adjusted": 27,
+    "adjusted": 52,
     "unmatched": []
   },
   "3x3/psf2l": {
@@ -234,7 +234,7 @@
   },
   "3x3/sbls": {
     "total": 223,
-    "adjusted": 0,
+    "adjusted": 1,
     "unmatched": []
   },
   "3x3/sv": {
@@ -244,32 +244,32 @@
   },
   "3x3/vls": {
     "total": 587,
-    "adjusted": 0,
+    "adjusted": 152,
     "unmatched": []
   },
   "3x3/wv": {
     "total": 392,
-    "adjusted": 4,
+    "adjusted": 295,
     "unmatched": []
   },
   "3x3/zbll": {
     "total": 2488,
-    "adjusted": 966,
+    "adjusted": 991,
     "unmatched": []
   },
   "3x3/zbls": {
     "total": 1890,
-    "adjusted": 0,
+    "adjusted": 1428,
     "unmatched": []
   },
   "4x4/oll-parity": {
     "total": 12,
-    "adjusted": 0,
+    "adjusted": 2,
     "unmatched": []
   },
   "4x4/pll-parity": {
     "total": 57,
-    "adjusted": 17,
+    "adjusted": 20,
     "unmatched": []
   },
   "5x5/l2c": {
@@ -279,7 +279,7 @@
   },
   "5x5/l2e": {
     "total": 31,
-    "adjusted": 0,
+    "adjusted": 5,
     "unmatched": []
   },
   "fto/1l3t": {
