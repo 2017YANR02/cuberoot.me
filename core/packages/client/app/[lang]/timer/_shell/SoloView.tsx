@@ -1553,8 +1553,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothCube = useBluetoothCube({
     allowSimulated: !competition.enabled,
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
-    // enable opcode), so only ask for it when the 3D view could use it.
-    onGyro: (settings.liveCubeView === '3d' || settings.recordGyro)
+    // enable opcode), so only ask for it when the live view or replay recording uses it.
+    onGyro: (settings.gyroEnabled || settings.recordGyro)
       ? (q) => {
         gyroQuatRef.current = q;
         // 只在真的在计时的时候录:观察阶段和拧完之后的姿态不属于这一把。
@@ -1758,7 +1758,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
             // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
             mode={settings.liveCubeView}
-            quatRef={gyroQuatRef}
+            useGyro={settings.gyroEnabled}
+            quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
             calibrateToken={calibrateNonce}
             sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
             mirror={mirrorForBrand(bluetoothCube.status.brand)}

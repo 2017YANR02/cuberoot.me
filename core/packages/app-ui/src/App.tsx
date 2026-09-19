@@ -3858,10 +3858,11 @@ export function App({ host }: { host: InstalledAppHost }) {
                         mode={store!.settings.liveCubeView}
                         moves={[...smartCubeAnchor.moves]}
                         onViewChange={setSmartCubeRenderedView}
-                        quatRef={smartCubeQuatRef}
+                        useGyro={store!.settings.gyroEnabled}
+                        quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                       />
                     </div>
-                    {smartCubeRenderedView === '3d' && smartCube.quaternion && (
+                    {smartCubeRenderedView === '3d' && store!.settings.gyroEnabled && smartCube.quaternion && (
                       <button type="button" className="live-cube-calibrate" onClick={() => setSmartCubeCalibration((value) => value + 1)}>
                         {{ en: 'Calibrate', zh: '校准' }[language]}
                       </button>
