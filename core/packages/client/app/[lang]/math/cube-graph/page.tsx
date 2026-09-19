@@ -170,7 +170,9 @@ export default function CubeGraphPage() {
         items={[{ value: 'rings', label: t('圆环', 'Rings') }, { value: 'sectors', label: t('扇形', 'Sectors') }]} />
     </div>
     <div className="cube-graph-pair">
-      <figure><CubeGraphCube moves={moves} animate={animate} locked={busy || playing || pending} onMove={turn} />
+      {/* Controller.lock cancels a dragged turn on release. The graph animation
+          may still be busy while the user starts the next legitimate turn. */}
+      <figure><CubeGraphCube moves={moves} animate={animate} locked={playing || pending} onMove={turn} />
         <figcaption>{t('三维魔方', '3D cube')}<span role="status" data-solved={solved}>{solved ? t('已还原', 'Solved') : t('未还原', 'Unsolved')}</span></figcaption>
       </figure>
       <figure><StickerGraph stickers={stickers} view={view} animate={animate} />
