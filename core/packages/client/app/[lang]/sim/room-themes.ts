@@ -1,6 +1,6 @@
 /** Artwork presets are local procedural geometry, not uploaded face textures. */
 export const ROOM_THEMES = [
-  { id: 'whimsy', zh: '奇想生活', en: 'Little daydreams' },
+  { id: 'whimsy', zh: '精装微缩住宅', en: 'Miniature residence' },
   { id: 'forest', zh: '森林秘境', en: 'Secret woodland' },
   { id: 'cosmos', zh: '星际漫游', en: 'Cosmic voyages' },
 ] as const;
