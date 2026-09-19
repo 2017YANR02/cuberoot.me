@@ -710,15 +710,17 @@ function SimilarCompList({ comps, isZh, lang, showPlace = true }: {
   return (
     <ul className="comp-similar-list">
       {comps.map(c => {
-        const name = localizeCompName(c.id, decodeEntities(c.name), isZh);
+        const name = localizeCompName(c.id, decodeEntities(c.name), isZh, { date: c.start });
         const date = formatDateRangeIso(c.start, c.end || c.start);
         return (
           <li key={c.id}>
             <Link {...compLinkProps(c.id, undefined, lang)} className="comp-similar-item">
-              <Flag iso2={c.country} className="comp-similar-flag" />
-              <span className="comp-similar-name">{name}</span>
-              {showPlace && <span className="comp-similar-place">{compPlace(c, isZh)}</span>}
+              <span className="comp-similar-name">
+                <Flag iso2={c.country} className="comp-similar-flag" />
+                <span>{name}</span>
+              </span>
               <span className="comp-similar-date">{date}</span>
+              {showPlace && <span className="comp-similar-place">{compPlace(c, isZh)}</span>}
             </Link>
           </li>
         );
@@ -1779,7 +1781,6 @@ export default function CompDetailPage() {
               // compFlagIso2 还没数据,会丢旗 + 丢 cubing.com 图标,故用 compInfo 兜底。
               const iso2 = compInfo?.country_iso2?.toLowerCase() || compFlagIso2(slug);
               const cubingSlug = data.cubingSlug || nameToCubingSlug(data.name) || wcaIdToCubingSlug(data.slug);
-              const cubingUrl = `https://cubing.com/competition/${cubingSlug}`;
               const wcaUrl = `https://www.worldcubeassociation.org/competitions/${data.slug}`;
               // WCA Live 链接用内部数字 id(不含比赛名):有比赛 id 时深链到当前选中的轮次
               // (/competitions/<compLiveId>/rounds/<roundLiveId>),否则回退首页。
@@ -1788,6 +1789,7 @@ export default function CompDetailPage() {
                 : 'https://live.worldcubeassociation.org/';
               // 未开始的比赛 WCA Live 上没有页面(404),已知 start_date 且晚于今天才隐藏。
               const notStartedYet = !!compInfo?.start_date && compInfo.start_date.slice(0, 10) > toIsoDate(new Date());
+              const cubingUrl = `https://cubing.com/competition/${cubingSlug}${notStartedYet ? '' : '/live'}`;
               return (
                 <>
                   {/* 旗+比赛名成组:窄屏 h1 flex-wrap 时整组占满第一行、图标落第二行,旗不与名分家 */}
@@ -2262,10 +2264,10 @@ function CompInfoPanel({
   // cubing.com 给的是 "2026-08-13 19:00:00" 原样串,展示统一剥秒(全站时间只到时分)
   const stripSec = (s: string) => s.replace(/(\d{2}:\d{2}):\d{2}\b/, '$1');
   if (cubingZh?.withdrawDeadline) {
-    rows.push({ label: '退赛截止', value: stripSec(cubingZh.withdrawDeadline), past: isPast(cubingZh.withdrawDeadline) });
+    rows.push({ label: tr({ zh: '退赛截止', en: 'Cancellation deadline' }), value: stripSec(cubingZh.withdrawDeadline), past: isPast(cubingZh.withdrawDeadline) });
   }
   if (cubingZh?.reopenAt) {
-    rows.push({ label: '重开报名', value: stripSec(cubingZh.reopenAt), past: isPast(cubingZh.reopenAt) });
+    rows.push({ label: tr({ zh: '重开报名', en: 'Registration reopens' }), value: stripSec(cubingZh.reopenAt), past: isPast(cubingZh.reopenAt) });
   }
   if (info.event_change_deadline_date) {
     const d = toIsoDate(new Date(info.event_change_deadline_date));
@@ -2279,8 +2281,8 @@ function CompInfoPanel({
   if (cityStr && !(isZh && cubingZh?.location)) {
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
-  if (cubingZh?.location) {
-    rows.push({ label: '地点', value: cubingZh.location });
+  if (isZh && cubingZh?.location) {
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), value: cubingZh.location });
   } else {
     if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderWcaText(info.venue_address) });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'

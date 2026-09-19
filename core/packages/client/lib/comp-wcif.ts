@@ -230,7 +230,7 @@ export interface CubingZhMeta {
   nameZh: string | null; // cubing.com 原始中文全名(含 WCA/魔方),localizeCompName 会 stripWcaPrefix
 }
 const EMPTY_ZH: CubingZhMeta = { location: null, withdrawDeadline: null, reopenAt: null, nameZh: null };
-const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v3-';
+const ZH_CACHE_PREFIX = 'wca-comp-cubing-zh-v4-';
 const ZH_EMPTY_TTL_MS = 60 * 60 * 1000;
 const ZH_FULL_TTL_MS = 7 * CACHE_TTL_MS;
 const zhInflight = new Map<string, Promise<CubingZhMeta>>();
@@ -255,7 +255,7 @@ export async function fetchCubingZh(wcaId: string): Promise<CubingZhMeta> {
   if (existing) return existing;
   const p = (async () => {
     try {
-      const res = await fetch(apiUrl(`/v1/cubing-zh/${encodeURIComponent(wcaId)}`));
+      const res = await fetch(apiUrl(`/v1/cubing-zh/${encodeURIComponent(wcaId)}?v=4`));
       if (!res.ok) return EMPTY_ZH;
       const data = await res.json() as Partial<CubingZhMeta>;
       const meta: CubingZhMeta = {
