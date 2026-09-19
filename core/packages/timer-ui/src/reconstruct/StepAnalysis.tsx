@@ -39,7 +39,7 @@ import { htmMoves } from '@cuberoot/shared/timer/reconstruct/htm';
 import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { ReferenceResult, SlotReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { gradeForDelta } from '@cuberoot/shared/timer/reconstruct/reference';
-import type { F2lSlotsResult, F2lStart } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
+import type { F2lSlotsResult } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import type { MethodWalkResult } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import { METHOD_ORDER, METHODS } from '@cuberoot/shared/timer/reconstruct/methods';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
@@ -126,29 +126,6 @@ function gradeTitle(tr: ReconstructLocalize): string {
   });
 }
 
-function startLabel(tr: ReconstructLocalize, s: F2lStart): string | null {
-  switch (s) {
-    case 'paired-top':     return tr({ zh: '顶层组好', en: 'paired on top' });
-    case 'split-top':      return null;
-    case 'corner-slotted': return tr({ zh: '角已入槽', en: 'corner in slot' });
-    case 'edge-slotted':   return tr({ zh: '棱已入槽', en: 'edge in slot' });
-    case 'both-slotted':   return tr({ zh: '角棱都在槽里', en: 'both in slot' });
-    case 'solved':         return tr({ zh: '白给', en: 'free' });
-    case 'unknown':        return null;
-  }
-}
-
-/** Slot name as the cuber sees it: front-right, back-left … */
-function slotLabel(tr: ReconstructLocalize, slot: string): string {
-  switch (slot) {
-    case 'FR': return tr({ zh: '前右', en: 'FR' });
-    case 'FL': return tr({ zh: '前左', en: 'FL' });
-    case 'BR': return tr({ zh: '后右', en: 'BR' });
-    case 'BL': return tr({ zh: '后左', en: 'BL' });
-    default:   return slot;
-  }
-}
-
 function buildCfopColumns(tr: ReconstructLocalize,
   segs: StageSegments,
   stepMetrics: StepMetricsResult | null,
@@ -166,7 +143,7 @@ function buildCfopColumns(tr: ReconstructLocalize,
   cols.push({
     key: 'cross',
     label: tr({ zh: '十字', en: 'Cross' }),
-    chip: segs.crossSide,
+    chip: null,
     tone: 0,
     recognitionMs: cross?.recognitionMs ?? null,
     executionMs: cross?.executionMs ?? null,
@@ -190,9 +167,8 @@ function buildCfopColumns(tr: ReconstructLocalize,
       const sr = slotReference?.[i] ?? null;
       cols.push({
         key: `slot-${s.slot}`,
-        label: tr({ zh: `第 ${i + 1} 组`, en: `Slot ${i + 1}` }),
-        chip: s.free ? startLabel(tr, 'solved') : `${slotLabel(tr, s.slot)}${
-          startLabel(tr, s.start) ? ` · ${startLabel(tr, s.start)}` : ''}`,
+        label: `F2L-${i + 1}`,
+        chip: null,
         tone: 1,
         recognitionMs: s.recognitionMs,
         executionMs: s.executionMs,
@@ -237,7 +213,7 @@ function buildCfopColumns(tr: ReconstructLocalize,
     cols.push({
       key: k,
       label: k.toUpperCase(),
-      chip: k === 'oll' ? segs.ollCase : segs.pllCase,
+      chip: null,
       tone: k === 'oll' ? 2 : 3,
       recognitionMs: st?.recognitionMs ?? null,
       executionMs: st?.executionMs ?? null,

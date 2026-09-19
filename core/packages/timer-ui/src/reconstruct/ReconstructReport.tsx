@@ -12,20 +12,19 @@
  *
  * 顺序:**先这把是怎么拧的,再这把拧得怎么样**(2026-08-03 用户提的)。
  *
- *   摘要 — 时间 / STM / TPS / 流畅,加上读完之后想做的那几件事。
+ *   摘要 — 时间 / STM / TPS,加上读完之后想做的那几件事。
  *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。默认展开:
  *     它是报告的主体。上面压着折叠起来的「参考解法」。
- *   数据 — 质量分、时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
+ *   数据 — 时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
  *     因为它们都在**归因**:不知道自己拧了什么的时候,一张 5×7 的表读不出东西。
  *   原始动作序列 — 折叠,收尾。
  *
  * 分区块而不是分标签页(研究文档原本画的是 tab):tab 把内容藏在一次点击**加**一次
  * 选择后面,而这几块常常要对着看。
  *
- * The reference lines and the score need an IDA* search (~80-110ms cold on a
- * desktop, more on a phone), so they are computed AFTER the modal paints and
- * the quality row holds its place with dashes meanwhile — opening the report
- * stays instant.
+ * The reference lines need an IDA* search (~80-110ms cold on a desktop, more
+ * on a phone), so they are computed AFTER the modal paints — opening the
+ * report stays instant.
  *
  * BLD solves keep their own shape: memo/execution split, letter pairs, and no
  * CFOP staging (the walker models a 3x3 speedsolve).
@@ -47,11 +46,10 @@ import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-
 import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detect';
 import { computeF2lSlotReferences, computeStageReferences } from '@cuberoot/shared/timer/reconstruct/reference';
 import type { ReferenceResult, SlotReference, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
-import { computeSolveQuality } from '@cuberoot/shared/timer/reconstruct/quality';
-import type { SolveQuality } from '@cuberoot/shared/timer/reconstruct/quality';
 import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { walkMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
+import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
@@ -67,6 +65,35 @@ import PlaybackPanel from './PlaybackPanel';
 import './reconstruct.css';
 import { ReconstructHostContext, useReconstructHost, type ReconstructHost, type ReconstructLocalize } from './ReconstructHost';
 export type { ReconstructHost } from './ReconstructHost';
+
+function methodPlaybackLines(
+  method: MethodId,
+  walk: ReturnType<typeof walkMethod>,
+  moves: readonly SolveMove[],
+  isZh: boolean,
+): ReconTextResult['lines'] {
+  if (method === 'cfop' || !walk) return [];
+
+  const kinds = ['cross', 'f2l', 'oll', 'pll'] as const;
+  const lines: ReconTextResult['lines'] = [];
+  let previousEnd = -1;
+  for (const [index, stage] of walk.stages.entries()) {
+    if (stage.endIdx === null || stage.endIdx <= previousEnd) continue;
+    lines.push({
+      kind: kinds[index] ?? 'pll',
+      key: stage.key,
+      moves: moves.slice(previousEnd + 1, stage.endIdx + 1).map(move => move.m),
+      fromIdx: previousEnd + 1,
+      toIdx: stage.endIdx,
+      label: isZh ? stage.zh : stage.en,
+      recognitionMs: stage.recognitionMs,
+      executionMs: stage.executionMs,
+      stepMs: stage.stepMs,
+    });
+    previousEnd = stage.endIdx;
+  }
+  return lines;
+}
 
 export interface ReconstructReportProps {
   solve: Solve;
@@ -204,14 +231,13 @@ function ReconstructReportBody({
     [stageSegs, solve.scramble, moves, solve.timeMs],
   );
 
-  // Per-stage reference lines + the quality score. Deferred to after the first
+  // Per-stage reference lines. Deferred to after the first
   // paint: the cross/F2L references are IDA* searches, and a report that takes
   // 100ms to appear feels broken in a way a number that lands 100ms late does
   // not. Recomputed whenever the solve changes; nothing is persisted.
   const [analysis, setAnalysis] = useState<{
     reference: ReferenceResult | null;
     slotReference: SlotReference[] | null;
-    quality: SolveQuality | null;
   } | null>(null);
   // Scoreable = the 3x3 model actually reached solved (putDownMs is null
   // otherwise), and the solve counts. That one test covers all the ways there
@@ -242,7 +268,6 @@ function ReconstructReportBody({
       setAnalysis({
         reference,
         slotReference,
-        quality: computeSolveQuality(moves, stepMx, reference, waste),
       });
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
@@ -300,6 +325,20 @@ function ReconstructReportBody({
     () => (method === 'cfop' ? null : walkMethod(method, solve.scramble, moves, solve.timeMs)),
     [method, solve.scramble, moves, solve.timeMs],
   );
+  const playbackLines = useMemo(() => {
+    if (method === 'cfop') return reconText?.lines ?? [];
+    return methodPlaybackLines(method, walk, moves, isZh);
+  }, [method, reconText, walk, moves, isZh]);
+  const playbackRecon = useMemo(() => {
+    if (!reconText || method === 'cfop') return reconText;
+    return {
+      ...reconText,
+      lines: playbackLines,
+      text: playbackLines
+        .map(line => `${line.moves.join(' ')}${line.label ? ` // ${line.label}` : ''}`)
+        .join('\n'),
+    };
+  }, [method, reconText, playbackLines]);
 
   const [copied, setCopied] = useState(false);
   // 默认展开:回放 + 分步动作现在是这份报告的主体,不是附录。折叠留给「原始动作
@@ -336,24 +375,17 @@ function ReconstructReportBody({
   // 见 `humanize.ts` 头注),所以那张表的步数会比这里多几个。
   const stmCount = reconText ? reconText.stm : slices.htmCount;
   const stmTps = slices.executionMs >= 1 ? stmCount / (slices.executionMs / 1000) : 0;
-
-  // 流畅那格的说明:先一句定义,再把拆出来的两段时间写出来。定义之外还要写原料,
-  // 是因为一个百分比本身说不出它为什么低 —— 「转了多久 / 停了多久 / 一下算多快」
-  // 三个数摆在一起,低是低在哪儿当场就看得出来。
-  const flowQ = analysis?.quality ?? null;
-  const flowHint = flowQ && flowQ.turningMs !== null && flowQ.pausingMs !== null && flowQ.turnMs !== null
-    ? tr({
-      zh: '这把里你有多大比例的时间在转，而不是在停。\n'
-        + `转 ${formatSec(flowQ.turningMs)}，停 ${formatSec(flowQ.pausingMs)}\n`
-        + `按一下 ${Math.round(flowQ.turnMs)} 毫秒算（你自己最快的那批手速）`,
-      en: 'What proportion of your solve you have been turning instead of pausing.\n'
-        + `Turning ${formatSec(flowQ.turningMs)}, paused ${formatSec(flowQ.pausingMs)}\n`
-        + `One turn costs ${Math.round(flowQ.turnMs)}ms (your own fastest quarter)`,
-    })
-    : tr({
-      zh: '这把里你有多大比例的时间在转，而不是在停。100% = 全程没停过。',
-      en: 'What proportion of your solve you have been turning instead of pausing. 100% = never paused.',
-    });
+  const executionMs = useMemo(() => {
+    if (method === 'cfop') {
+      if (!stepMx) return null;
+      return stepMx.steps.reduce((sum, step) => sum + (step.executionMs ?? 0), 0);
+    }
+    if (!walk) return null;
+    return walk.stages.reduce((sum, stage) => sum + (stage.executionMs ?? 0), 0);
+  }, [method, stepMx, walk]);
+  const fluency = executionMs !== null && solve.timeMs > 0
+    ? Math.round((executionMs / solve.timeMs) * 100)
+    : null;
 
   // Auto-detect memo pause for BLD-class solves that haven't had a memoMs
   // set manually. The hint surfaces at the top of the report; user can apply
@@ -380,7 +412,7 @@ function ReconstructReportBody({
   }, [solve.event, solve.scramble]);
 
   /**
-   * 数据那一半:质量分、时间轴、分步分析表、废步、四个总量。
+   * 数据那一半:时间轴、分步分析表、废步、四个总量。
    *
    * 摘出来是因为它排在**回放和谱子后面**(2026-08-03 用户提的顺序)。以前它是报告
    * 的第一屏,道理是「这把慢在哪」该一眼看到;但那是在假设读者已经知道自己拧了
@@ -389,10 +421,6 @@ function ReconstructReportBody({
    */
   const analysisBlock = (
     <>
-      {scoreable && (
-        <QualityRow quality={analysis?.quality ?? null} pending={analysis === null} />
-      )}
-
       {/* 这里以前还有一根 SolveTimeline(带阶段名的那条)。删了:回放那根进度条
           是同一根轴、同一份切分,只是多了个游标 —— 同一件事在一页上画两遍,读者
           第一反应是去找两者的区别。留下的是回放那根,并给它补上阶段名和阶段用时
@@ -414,7 +442,7 @@ function ReconstructReportBody({
           rotations={reconText?.rotations ?? []}
           // 有文字复盘时,阶段条由回放那根带游标的轴负责(同一份切分),这里不再
           // 画第二根;切不出谱子的那些把留着它,否则一根都没有。
-          hideBar={method === 'cfop' && !!reconText && reconText.lines.length > 0}
+          hideBar={playbackLines.length > 0}
           isZh={isZh}
         />
       )}
@@ -466,12 +494,8 @@ function ReconstructReportBody({
           <dd className="rc-summary-big">{stmTps.toFixed(2)}</dd>
         </div>
         <div className="rc-summary-cell">
-          <dt title={flowHint}>{tr({ zh: '流畅', en: 'Fluency' })}</dt>
-          <dd className="rc-summary-big">
-            {analysis?.quality?.flow !== null && analysis?.quality?.flow !== undefined
-              ? `${Math.round(analysis.quality.flow)}%`
-              : '–'}
-          </dd>
+          <dt>{tr({ zh: '流畅', en: 'Fluency' })}</dt>
+          <dd className="rc-summary-big">{fluency === null ? '–' : `${fluency}%`}</dd>
         </div>
         {!hideDate && (
           <div className="rc-summary-cell">
@@ -614,18 +638,18 @@ function ReconstructReportBody({
               viewRotation={view.rotation}
               totalMs={solve.timeMs}
               isZh={isZh}
-              lines={reconText?.lines ?? []}
+              lines={playbackLines}
               rotations={reconText?.rotations}
               gyro={solve.gyro ?? null}
               deviceModel={solve.device?.model ?? null}
-              side={reconText ? ({ idx, seek }) => (
+              side={playbackRecon ? ({ idx, seek }) => (
                 <StepMoveList
-                  recon={reconText}
+                  recon={playbackRecon}
                   reference={analysis?.reference ?? null}
                   slotReference={analysis?.slotReference ?? null}
                   currentIdx={idx}
                   onSeek={seek}
-                  notice={!solve.gyro && reconText.blindPairs > 0
+                  notice={!solve.gyro && playbackRecon.blindPairs > 0
                     ? <NoGyroNotice />
                     : undefined}
                   feedback={onReconFeedback
@@ -779,55 +803,6 @@ function ReconFeedback({
 
 /** 0-100 with its three components. Pending renders the same row with dashes
  *  so the report doesn't jump when the search lands. */
-function QualityRow({ quality, pending }: { quality: SolveQuality | null; pending: boolean }) {
-  const { localize: tr } = useReconstructHost();
-  if (!pending && !quality) return null;
-  const dash = '—';
-  const parts: Array<{ label: string; value: number | null; hint: string }> = quality ? [
-    {
-      label: tr({ zh: '效率', en: 'Efficiency' }),
-      value: quality.efficiency,
-      hint: quality.turnRatio !== null
-        ? tr({
-          zh: `比参考多 ${Math.round((quality.turnRatio - 1) * 100)}%`,
-          en: `${Math.round((quality.turnRatio - 1) * 100)}% over reference`,
-        })
-        : tr({ zh: '无参考', en: 'no reference' }),
-    },
-    {
-      label: tr({ zh: '无废步', en: 'Waste-free' }),
-      value: quality.wasteFree,
-      hint: quality.wastedMs > 0
-        ? tr({ zh: `废步 ${formatSec(quality.wastedMs, 1)}`, en: `${formatSec(quality.wastedMs, 1)} undone` })
-        : tr({ zh: '没有回退', en: 'nothing undone' }),
-    },
-  ] : [];
-
-  return (
-    <div className="reconstruct-quality">
-      <div className="reconstruct-quality-total">
-        <span className="reconstruct-quality-num">{quality ? quality.total : dash}</span>
-        <span className="reconstruct-quality-cap">{tr({ zh: '质量', en: 'Quality' })}</span>
-      </div>
-      <div className="reconstruct-quality-parts">
-        {parts.length === 0 ? (
-          <span className="reconstruct-quality-pending">
-            {tr({ zh: '正在算参考解法…', en: 'solving the reference lines…' })}
-          </span>
-        ) : parts.map(p => (
-          <div key={p.label} className="reconstruct-quality-part">
-            <span className="reconstruct-quality-part-label">{p.label}</span>
-            <span className="reconstruct-quality-part-num">
-              {p.value === null ? dash : Math.round(p.value)}
-            </span>
-            <span className="reconstruct-quality-part-hint">{p.hint}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /** Where a stage's reference came from — the honesty label. */
 function refKindLabel(tr: ReconstructLocalize, kind: NonNullable<StageReference['kind']>): string {
   switch (kind) {
