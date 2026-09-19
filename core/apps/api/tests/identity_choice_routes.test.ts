@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(), complete: vi.fn(), verifySession: vi.fn(), requireUid: vi.fn(),
   sign: vi.fn(), capture: vi.fn(), login: vi.fn(), verifyCode: vi.fn(), findUser: vi.fn(), douyinExchange: vi.fn(),
-  issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(),
+  issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(), transaction: { fixture: true },
   wechatPhoneBegin: vi.fn(), wechatExchange: vi.fn(), wechatPhoneExchange: vi.fn(),
 }));
 vi.mock('../src/db/connection.js', () => ({ query: vi.fn(), sql: {} }));
@@ -14,7 +14,11 @@ vi.mock('../src/utils/identity_choice.js', async (original) => {
 });
 vi.mock('../src/utils/account.js', async (original) => {
   const actual = await original<typeof import('../src/utils/account.js')>();
-  return { ...actual, loginWithIdentity: mocks.login, verifyCode: mocks.verifyCode, issueCode: mocks.issueCode, findUserByIdentity: mocks.findUser, publicUser: (u: unknown) => u };
+  return { ...actual, loginWithIdentity: mocks.login, verifyCode: mocks.verifyCode, issueCode: mocks.issueCode, findUserByIdentity: mocks.findUser, publicUser: (u: unknown) => u,
+    withVerifiedCode: async (...args: Parameters<typeof actual.withVerifiedCode>) => {
+      if (!await mocks.verifyCode(...args.slice(0, 4))) return { verified: false };
+      return { verified: true, value: await args[4](mocks.transaction as never) };
+    } };
 });
 vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.capture }));
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: mocks.requireUid }));
@@ -142,7 +146,8 @@ describe('unified provider account-choice routes', () => {
     expect(response.status).toBe(409);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await response.json()).toEqual(choice);
-    expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ provider }));
+    if (provider === 'email') expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ provider }), { transaction: mocks.transaction });
+    else expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ provider }));
     expect(mocks.login).not.toHaveBeenCalled();
     expect(mocks.sign).not.toHaveBeenCalled();
     expect(mocks.capture).not.toHaveBeenCalled();
@@ -203,7 +208,7 @@ describe('unified provider account-choice routes', () => {
     const response = await post(path as string, { ...body as object, existingOnly: true });
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'account not found' });
-    expect(mocks.login.mock.calls[0][4]).toEqual({ createIfMissing: false });
+    expect(mocks.login.mock.calls[0][4]).toEqual({ createIfMissing: false, ...(_provider === 'email' ? { transaction: mocks.transaction } : {}) });
     expect(mocks.sign).not.toHaveBeenCalled();
   });
   it.each([

@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"17a5c4c8b8237332d802376a457fdab01346e0e92b6947be4914af2f8826f090","reason":"复核合并后的微信小程序 WCA 绑定与全站原生分享流程：WCA 绑定使用短期账号票据转到系统浏览器完成 OAuth，返回小程序后刷新账号；分享由当前 webViewUrl 决定目的地，访问使用接收者自己的会话和权限，认证回调不可分享，票据与令牌被过滤。登录交换、手机号授权、其他绑定、退出和固定 tab 门禁未改变；文档已保留两条流程，部署与微信真机验收仍待完成。"}
+{"fingerprint": "52ff63a75075088248fba937ef9d3c3c5b47e28817507bdecd21e24c185b2349", "reason": "合并远端微信小程序 WCA 短期账号票据绑定及原生分享流程与本地邮箱验证码事务加固：保留系统浏览器 OAuth、返回刷新、分享目的地和会话过滤；邮箱 pending/sent/failed 仅成功发送后激活，发码串行，验证与登录、账号选择、绑定或换绑同事务，失败回滚核销。已核对两组流程节点及中英文说明，短信和账号合并保持原流程；本轮合并待发布和真实设备验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -32,7 +32,8 @@ export default function AuthFlowPage() {
       <h1>{t('账号全流程', 'Account lifecycle')}</h1>
       <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
       <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
-      <p className="auth-map-note">{t('源码核对：2026-09-11。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-11. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
+      <p className="auth-map-note">{t('源码核对：2026-09-19。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-19. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
+      <p className="auth-map-note">{t('本次邮箱发送状态与账号事务加固已完成本地隔离验证，尚未部署；短信发送生命周期与账号合并仍使用各自原有流程，不能由邮箱测试推断已完成同样改造。', 'Email delivery state and account transactions have passed isolated local checks and are not deployed. SMS delivery and account merging retain their existing flows; email tests do not prove those flows have received the same changes.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
         <AppLink href="#signin" prefetch={false}>{t('登录 / 注册', 'Sign in / register')}</AppLink>
@@ -75,7 +76,9 @@ export default function AuthFlowPage() {
         <div className="auth-map-current-paths">
           <section><h3>{t('邮箱 / 手机号 / 密码', 'Email / phone / password')}</h3><Steps items={[
             t('选择邮箱或手机号，使用验证码；已设密码也可用密码登录', 'Choose email or phone and verify a code; an existing password is another sign-in option'),
+            t('邮箱验证码：发送服务确认接受后才可验证；发送失败或结果未知时不能登录，不自动重发', 'Email codes become usable only after the delivery service confirms acceptance; failed or unknown sends cannot sign in and are not automatically retried'),
             t('验证通过 → 已有凭据直接进入原账号；陌生凭据先问是否已有账号，不自动注册', 'Verification succeeds → existing credentials sign in directly; unknown credentials ask whether you have an account, without automatic registration'),
+            t('邮箱验证与登录或账号选择票据一起保存；保存失败不消耗成功验证码，错误猜测仍计次', 'Email verification commits with sign-in or the account-choice ticket; a failed save preserves a correct code, while wrong guesses still count'),
             t('有旧号：验证原账号并确认绑定；没有：明确选择创建新账号', 'Existing account: authenticate and confirm linking. No account: explicitly choose to create one'),
           ]} /><p className="auth-map-note">{t('忘记密码时才走：验证原账号已绑定的邮箱或手机 → 设置新密码。不是每次登录都要重设。', 'Only if you forgot your password: verify the linked email or phone → set a new password. This is not required on every sign-in.')}</p><p className="auth-map-note">{t('密码登录不创建账号。「绑定已有账号」中的验证只认旧号，不会用陌生邮箱、手机号悄悄注册。', 'Password sign-in does not create accounts. Verification inside existing-account linking accepts existing accounts only; an unknown email or phone does not silently register.')}</p></section>
           <section><h3>{t('第三方登录', 'Provider sign-in')}</h3><Steps items={[
@@ -187,6 +190,7 @@ export default function AuthFlowPage() {
         <section><h3>{t('新增登录方式', 'Add a sign-in method')}</h3><Steps items={[
           t('先登录要保留的 CubeRoot 账号', 'Sign in to the CubeRoot account you want to keep'),
           t('选择绑定方式 → 验证新邮箱 / 手机号，或完成第三方授权', 'Choose a method → verify the new email / phone, or authorize the provider'),
+          t('邮箱绑定或换绑与验证码核销一起完成；冲突或保存失败时都不生效', 'Email linking or replacement commits together with code consumption; conflicts or save failures apply neither change'),
           t('归属检查通过 → 新登录方式挂到当前账号，会员不另开一份', 'Ownership checks pass → attach the method to this account, without creating a second membership'),
         ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link.')}</p></section>
         <section><h3>{t('解绑或换绑', 'Unlink or replace')}</h3><Steps items={[

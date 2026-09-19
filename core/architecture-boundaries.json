@@ -19,6 +19,24 @@
   },
   "manualContracts": [
     {
+      "id": "server-isolated-postgresql-test-runners",
+      "from": "apps/api authentication and membership regression runners",
+      "to": "disposable loopback PostgreSQL and local vitest processes",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free fixed initdb/pg_ctl/createdb/pnpm calls; random loopback ports and dedicated test databases",
+      "owner": "server",
+      "rationale": "Exercise actual migration, transaction rollback and concurrency without connecting to application databases or external providers.",
+      "replacement": "Keep test-only and local; do not accept remote databases or arbitrary executable arguments.",
+      "subprocessCalls": [
+        {"file":"apps/api/scripts/test-email-code-auth.mjs","mechanism":"execFileSync","target":"<dynamic>","count":1},
+        {"file":"apps/api/scripts/test-membership-settlement.mjs","mechanism":"execFileSync","target":"<dynamic>","count":1}
+      ],
+      "evidence": [
+        {"file":"core/apps/api/scripts/test-email-code-auth.mjs","contains":"EMAIL_CODE_PG_TEST: '1'"},
+        {"file":"core/apps/api/scripts/test-membership-settlement.mjs","contains":"MEMBERSHIP_TEST_DATABASE_URL:"}
+      ]
+    },
+    {
       "id": "stats-import-postgresql-regression",
       "from": "jobs/stats-build tests",
       "to": "loopback PostgreSQL test database via psql",

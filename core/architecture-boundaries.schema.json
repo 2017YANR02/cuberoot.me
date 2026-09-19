@@ -51,7 +51,7 @@
               "required": ["file", "mechanism", "target", "count"],
               "properties": {
                 "file": { "type": "string" },
-                "mechanism": { "enum": ["spawn", "execFile"] },
+                "mechanism": { "enum": ["spawn", "execFile", "execFileSync"] },
                 "target": { "type": "string" },
                 "count": { "type": "integer", "minimum": 1 }
               }

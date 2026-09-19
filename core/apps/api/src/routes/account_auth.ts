@@ -42,7 +42,8 @@ import {
 import { AccountHasMembershipContractError, AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
 import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../utils/account_merge.js';
 import { consumeWechatWcaLink, issueWechatWcaLink } from '../utils/web_session_ticket.js';
-import { emailConfigured, sendEmailCode } from '../utils/email.js';
+import { emailConfigured } from '../utils/email.js';
+import { EmailCodeActionError, issueEmailCode, loginWithEmailCode, bindEmailWithCode } from '../utils/email_code_auth.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
 import { AppleLoginError, appleAuthorize, appleCallbackUrl, appleConfigured, exchangeAppleCode } from '../utils/apple_login.js';
@@ -617,12 +618,11 @@ accountAuthRoutes.post('/auth/email/send', async (c) => {
   const { email } = await c.req.json<{ email?: string }>().catch(() => ({ email: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm)) return c.json({ error: 'invalid email' }, 400);
-  const issued = await issueCode('email', norm, 'login');
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendEmailCode(norm, issued.code, langOf(c));
-  } catch (e) {
-    console.error('[auth] email send failed:', e instanceof Error ? e.message : e);
+    const issued = await issueEmailCode(norm, 'login', langOf(c));
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch {
+    console.error('[auth] email send failed');
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -639,16 +639,13 @@ accountAuthRoutes.post('/auth/email/verify', async (c) => {
   if (existingOnly !== undefined && typeof existingOnly !== 'boolean') return c.json({ error: 'invalid input' }, 400);
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('email', norm, 'login', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const profile = { name: norm.split('@')[0] };
-  const result = await (existingOnly === true
-    ? loginWithIdentity('email', norm, profile, undefined, { createIfMissing: false })
-    : beginIdentityLogin({ provider: 'email', providerUid: norm, profile })).catch((error: unknown) => {
-      if (error instanceof IdentityNotFoundError) return null;
-      throw error;
-    });
-  if (!result) return c.json({ error: 'account not found' }, 400);
+  const checked = await loginWithEmailCode(norm, code, existingOnly === true).catch((error: unknown) => {
+    if (error instanceof IdentityNotFoundError) return null;
+    throw error;
+  });
+  if (!checked) return c.json({ error: 'account not found' }, 400);
+  if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  const result = checked.value;
   if ('pending' in result) return c.json(result, 409);
   const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
@@ -774,12 +771,11 @@ accountAuthRoutes.post('/auth/link/email/send', async (c) => {
   const { email } = await c.req.json<{ email?: string }>().catch(() => ({ email: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm)) return c.json({ error: 'invalid email' }, 400);
-  const issued = await issueCode('email', norm, 'link');
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendEmailCode(norm, issued.code, langOf(c));
-  } catch (e) {
-    console.error('[auth] email send failed:', e instanceof Error ? e.message : e);
+    const issued = await issueEmailCode(norm, 'link', langOf(c));
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch {
+    console.error('[auth] email send failed');
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -792,11 +788,14 @@ accountAuthRoutes.post('/auth/link/email/verify', async (c) => {
   const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('email', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await addIdentity(uid, 'email', norm);
-  if (r === 'has-email') return c.json({ error: 'account already has an email' }, 409);
-  if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+  try {
+    const checked = await bindEmailWithCode(uid, norm, code as string);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof EmailCodeActionError && error.code === 'has-email') return c.json({ error: 'account already has an email' }, 409);
+    if (error instanceof EmailCodeActionError && error.code === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -812,11 +811,14 @@ accountAuthRoutes.post('/auth/email/replace', async (c) => {
   const { email, code } = await c.req.json<{ email?: string; code?: string }>().catch(() => ({ email: undefined, code: undefined }));
   const norm = normalizeEmail(email ?? '');
   if (!isValidEmail(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('email', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await replaceCredentialIdentity(uid, 'email', norm);
-  if (r === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
-  if (r === 'none') return c.json({ error: 'no email to replace' }, 409);
+  try {
+    const checked = await bindEmailWithCode(uid, norm, code as string, true);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof EmailCodeActionError && error.code === 'conflict') return c.json({ error: 'email already linked to another account' }, 409);
+    if (error instanceof EmailCodeActionError && error.code === 'none') return c.json({ error: 'no email to replace' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 

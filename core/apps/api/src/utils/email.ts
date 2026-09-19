@@ -8,6 +8,8 @@
  * 需在 DNS 配好发信域名的 SPF/DKIM/DMARC(Gmail 2024 起强制,也是过 QQ/163 的前提),
  * 否则任何服务商都进垃圾箱。
  */
+import { createResendClient } from '@app-foundation/messaging';
+
 const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const MAIL_FROM = process.env.MAIL_FROM || 'cuberoot.me <noreply@cuberoot.me>';
 
@@ -27,26 +29,10 @@ export async function sendEmail(opts: {
   text: string;
   headers?: Record<string, string>;
 }): Promise<void> {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: MAIL_FROM,
-      to: [opts.to],
-      subject: opts.subject,
-      html: opts.html,
-      text: opts.text,
-      ...(opts.headers ? { headers: opts.headers } : {}),
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch(() => '');
-    throw new Error(`email send failed: ${res.status} ${body.slice(0, 200)}`);
-  }
+  // Keep application config/templates here; the released transport owns bounded I/O and sanitized errors.
+  await createResendClient({ apiKey: RESEND_API_KEY, from: MAIL_FROM }, {
+    fetch: (input, init) => fetch(input, init),
+  }).send(opts);
 }
 
 /** 发送验证码邮件(双语)。 */

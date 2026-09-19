@@ -7,6 +7,7 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import { generateNumericCode, constantTimeEqualHex, remainingCooldownMs } from '@app-foundation/verification';
 import type { TransactionSql } from 'postgres';
 import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/account';
 import type { AvatarSource, ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
@@ -105,16 +106,14 @@ const CODE_PEPPER = process.env.AUTH_CODE_PEPPER || JWT_SECRET;
 
 // ── 验证码 ──
 export function genCode(): string {
-  return String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+  return generateNumericCode();
 }
 function hashCode(channel: Channel, target: string, code: string): string {
   return crypto.createHash('sha256').update(`${CODE_PEPPER}:${channel}:${target}:${code}`).digest('hex');
 }
 function timingSafeEqualHex(a: string, b: string): boolean {
-  const ba = Buffer.from(a, 'hex');
-  const bb = Buffer.from(b, 'hex');
-  if (ba.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ba, bb);
+  if (!/^[a-f0-9]{64}$/i.test(a) || !/^[a-f0-9]{64}$/i.test(b)) return false;
+  return constantTimeEqualHex(a, b);
 }
 
 /**
@@ -125,28 +124,51 @@ export async function issueCode(
   channel: Channel,
   target: string,
   purpose: CodePurpose,
-  run: QueryRunner = query,
-): Promise<{ code: string } | { error: 'cooldown' }> {
-  const recent = await run<{ created_at: string | Date }>(
-    'SELECT created_at FROM auth_codes WHERE channel = ? AND target = ? ORDER BY created_at DESC LIMIT 1',
-    [channel, target],
+  run?: QueryRunner,
+  options: { deliveryStatus?: 'pending' | 'sent' } = {},
+): Promise<{ code: string; id: string } | { error: 'cooldown' }> {
+  // Explicit runners must belong to the caller's transaction (identity-choice already does).
+  const issue = async (transaction: QueryRunner): Promise<{ code: string; id: string } | { error: 'cooldown' }> => {
+    // Includes absent rows and serializes cooldown across purposes, matching the lookup scope.
+    await transaction('SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))', ['auth-code-issue', JSON.stringify([channel, target])]);
+    const recent = await transaction<{ now_ms: string; last_issued_ms: string }>(
+      'SELECT FLOOR(EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::text AS now_ms, FLOOR(EXTRACT(EPOCH FROM created_at) * 1000)::text AS last_issued_ms FROM auth_codes WHERE channel = ? AND target = ? ORDER BY created_at DESC, id DESC LIMIT 1',
+      [channel, target],
+    );
+    if (recent.length && remainingCooldownMs({ lastIssuedAtMs: Number(recent[0].last_issued_ms),
+      nowMs: Number(recent[0].now_ms), cooldownMs: SEND_COOLDOWN_MS }) > 0) return { error: 'cooldown' };
+    await transaction(
+      'UPDATE auth_codes SET consumed_at = clock_timestamp() WHERE channel = ? AND target = ? AND purpose = ? AND consumed_at IS NULL',
+      [channel, target, purpose],
+    );
+    const code = genCode();
+    const rows = await transaction<{ id: string }>(
+      `INSERT INTO auth_codes (channel, target, purpose, code_hash, delivery_status, expires_at, created_at)
+       VALUES (?, ?, ?, ?, ?, clock_timestamp() + make_interval(secs => ?), clock_timestamp()) RETURNING id::text`,
+      [channel, target, purpose, hashCode(channel, target, code), options.deliveryStatus ?? 'sent', CODE_TTL_MS / 1000],
+    );
+    if (!rows[0]?.id) throw new Error('code reservation unavailable');
+    return { code, id: rows[0].id };
+  };
+  return run ? issue(run) : sql.begin(tx => issue(transactionQuery(tx))) as Promise<{ code: string; id: string } | { error: 'cooldown' }>;
+}
+
+/** A late delivery result can only update its own still-current, unconsumed reservation. */
+export async function markCodeDelivery(id: string, status: 'sent' | 'failed'): Promise<boolean> {
+  const rows = await query<{ id: string }>(
+    `UPDATE auth_codes SET delivery_status = ? WHERE id = ? AND delivery_status = 'pending'
+      AND consumed_at IS NULL AND expires_at > clock_timestamp() RETURNING id::text`, [status, id],
   );
-  if (recent.length) {
-    const age = Date.now() - new Date(recent[0].created_at).getTime();
-    if (age < SEND_COOLDOWN_MS) return { error: 'cooldown' };
-  }
-  await run(
-    'UPDATE auth_codes SET consumed_at = NOW() WHERE channel = ? AND target = ? AND purpose = ? AND consumed_at IS NULL',
-    [channel, target, purpose],
-  );
-  const code = genCode();
-  const codeHash = hashCode(channel, target, code);
-  const expiresAt = new Date(Date.now() + CODE_TTL_MS).toISOString();
-  await run(
-    'INSERT INTO auth_codes (channel, target, purpose, code_hash, expires_at) VALUES (?, ?, ?, ?, ?)',
-    [channel, target, purpose, codeHash, expiresAt],
-  );
-  return { code };
+  return rows.length === 1;
+}
+
+/** Wrong guesses commit their counters; a failed protected action rolls back successful consumption. */
+export async function withVerifiedCode<T>(channel: Channel, target: string, purpose: CodePurpose, code: string,
+  action: (transaction: TransactionSql) => Promise<T>): Promise<{ verified: false } | { verified: true; value: T }> {
+  return await sql.begin(async tx => {
+    if (!await verifyCode(channel, target, purpose, code, { transaction: tx })) return { verified: false as const };
+    return { verified: true as const, value: await action(tx) };
+  }) as { verified: false } | { verified: true; value: T };
 }
 
 /**
@@ -166,21 +188,26 @@ export async function verifyCode(
     const rows = await tx`
       SELECT id, code_hash, attempts FROM auth_codes
       WHERE channel = ${channel} AND target = ${target} AND purpose = ${purpose}
-        AND consumed_at IS NULL AND expires_at > NOW()
-      ORDER BY created_at DESC LIMIT 1
+        AND delivery_status = 'sent' AND consumed_at IS NULL AND expires_at > clock_timestamp()
+      ORDER BY created_at DESC, id DESC LIMIT 1
       FOR UPDATE`;
     if (!rows.length) return false;
     const row = rows[0] as unknown as { id: number; code_hash: string; attempts: number };
+    // The SELECT predicate may precede a row-lock wait; recheck expiry after owning the lock.
+    const live = await tx`SELECT expires_at > clock_timestamp() AS unexpired FROM auth_codes WHERE id = ${row.id}`;
+    if (!live[0]?.unexpired) return false;
     if (row.attempts >= CODE_MAX_ATTEMPTS) {
-      await tx`UPDATE auth_codes SET consumed_at = NOW() WHERE id = ${row.id}`;
+      await tx`UPDATE auth_codes SET consumed_at = clock_timestamp() WHERE id = ${row.id}`;
       return false;
     }
     const expected = hashCode(channel, target, code);
     if (timingSafeEqualHex(expected, row.code_hash)) {
-      if (options.consume !== false) await tx`UPDATE auth_codes SET consumed_at = NOW() WHERE id = ${row.id}`;
+      if (options.consume !== false) await tx`UPDATE auth_codes SET consumed_at = clock_timestamp() WHERE id = ${row.id}`;
       return true;
     }
-    await tx`UPDATE auth_codes SET attempts = attempts + 1 WHERE id = ${row.id}`;
+    await tx`UPDATE auth_codes SET attempts = attempts + 1,
+      consumed_at = CASE WHEN attempts + 1 >= ${CODE_MAX_ATTEMPTS} THEN clock_timestamp() ELSE consumed_at END
+      WHERE id = ${row.id}`;
     return false;
   };
   return options.transaction ? run(options.transaction) : sql.begin(run) as Promise<boolean>;
@@ -665,11 +692,15 @@ export async function replaceCredentialIdentity(
   userId: number,
   provider: SingleProvider,
   newUid: string,
+  transaction?: TransactionSql,
 ): Promise<'ok' | 'conflict' | 'none'> {
-  const owner = await findUserByIdentity(provider, newUid);
+  const run = transaction ? transactionQuery(transaction) : query;
+  const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
+    (transaction ? transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
+  const owner = await findUserByIdentity(provider, newUid, run);
   if (owner && owner.id !== userId) return 'conflict';
   try {
-    return await sql.begin(async (tx) => {
+    return await begin(async (tx) => {
       // 锁住本账号那一行:并发两次换绑各读到旧值再各改一次,后写的赢且前一次静默丢失。
       const rows = await tx`
         SELECT id FROM auth_identities
