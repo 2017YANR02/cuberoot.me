@@ -1,4 +1,31 @@
 import { AllFaces, CubeData, parseAlgorithm } from '@cuberoot/visualcube';
+import { tokenizeMoves } from '@cuberoot/shared/alg-notation';
+
+/** Keep input within the move set shared by the sticker and 3D renderers. */
+export function parseGraphMoves(text: string): string[] | null {
+  if (text.length > 10000) return null;
+  const { moves, junk } = tokenizeMoves(text.replace(/[’′]/g, "'"));
+  if (junk.length || moves.length > 500 || moves.some(move => move.layer
+    || !['U', 'R', 'F', 'D', 'L', 'B', 'M', 'E', 'S', 'x', 'y', 'z', 'u', 'r', 'f', 'd', 'l', 'b', 'Uw', 'Rw', 'Fw', 'Dw', 'Lw', 'Bw'].includes(move.family)
+    || ![1, 2].includes(Math.abs(move.amount)))) return null;
+  return moves.map(move => move.raw);
+}
+
+/** Forward cycles: a sticker in cycle[i] moves to cycle[i + 1]. */
+export function turnCycles(face: string): number[][] {
+  const destinations = new Array<number>(54);
+  stickerPermutation([face]).forEach((id, slot) => { destinations[id] = slot; });
+  const seen = new Set<number>();
+  const cycles: number[][] = [];
+  destinations.forEach((to, from) => {
+    if (to === from || seen.has(from)) return;
+    const cycle: number[] = [];
+    let slot = from;
+    do { seen.add(slot); cycle.push(slot); slot = destinations[slot]; } while (slot !== from);
+    cycles.push(cycle);
+  });
+  return cycles;
+}
 
 export type Point = { x: number; y: number };
 export const RINGS = [
@@ -57,6 +84,7 @@ export function sectorPath(face: number, row: number, col: number): string {
   const a = -Math.PI / 2 + face * Math.PI / 3 + col * Math.PI / 9 + 0.016;
   const b = a + Math.PI / 9 - 0.032;
   const inner = 38 + row * 43, outer = inner + 40;
-  const p = (r: number, angle: number) => `${220 + r * Math.cos(angle)},${220 + r * Math.sin(angle)}`;
+  // Stable SVG serialization across server and browser Math implementations.
+  const p = (r: number, angle: number) => `${(220 + r * Math.cos(angle)).toFixed(3)},${(220 + r * Math.sin(angle)).toFixed(3)}`;
   return `M ${p(inner, a)} L ${p(outer, a)} A ${outer},${outer} 0 0 1 ${p(outer, b)} L ${p(inner, b)} A ${inner},${inner} 0 0 0 ${p(inner, a)} Z`;
 }

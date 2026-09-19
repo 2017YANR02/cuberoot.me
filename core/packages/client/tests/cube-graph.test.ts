@@ -3,9 +3,29 @@ import { applySequence, solvedCubie, MOVE_NAMES, invertSequence, parseMoves } fr
 import { cubieToFacelet, SOLVED_FACELET } from '@/lib/cube-facelet';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
 import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
-import { GRAPH_SLOTS, RINGS, graphPosition, sectorPath, stickerPermutation } from '@/app/[lang]/math/cube-graph/model';
+import { GRAPH_SLOTS, RINGS, graphPosition, sectorPath, stickerPermutation, parseGraphMoves, turnCycles } from '@/app/[lang]/math/cube-graph/model';
 
 describe('cube sticker graph', () => {
+  it('validates editor input without dropping unsupported moves or expanding unbounded groups', () => {
+    expect(parseGraphMoves('')).toEqual([]);
+    expect(parseGraphMoves('RU2 M′ Rw x')).toEqual(['R', 'U2', "M'", 'Rw', 'x']);
+    for (const text of ['R Q', '(R U)2', '[R,U]', 'R0', 'R3', '3Rw', '2-3r', 'Mw', 'R'.repeat(501), ' '.repeat(10001)]) {
+      expect(parseGraphMoves(text), text).toBeNull();
+    }
+    expect(parseGraphMoves('R '.repeat(500))).toHaveLength(500);
+  });
+  it('draws forward cycles whose successive frames match actual cube turns', () => {
+    for (const face of ['U', 'R', 'F', 'D', 'L', 'B']) {
+      const cycles = turnCycles(face);
+      expect(cycles.map(cycle => cycle.length)).toEqual([4, 4, 4, 4, 4]);
+      for (let turns = 0; turns <= 4; turns++) {
+        const permutation = stickerPermutation(Array(turns).fill(face));
+        for (const cycle of cycles) cycle.forEach((slot, index) => {
+          expect(cycle[(index - turns % 4 + 4) % 4]).toBe(permutation[slot]);
+        });
+      }
+    }
+  });
   it('places 54 distinct stickers exactly on their two layer circles', () => {
     expect(GRAPH_SLOTS).toHaveLength(54);
     expect(new Set(GRAPH_SLOTS.map(p => `${p.x.toFixed(6)},${p.y.toFixed(6)}`)).size).toBe(54);
@@ -87,8 +107,8 @@ describe('cube sticker graph', () => {
     expect(stickerPermutation(`${sequence} ${invertMoveString(sequence)}`.split(' '))).toEqual(stickerPermutation([]));
   });
   it('matches /sim for every outer, slice, wide and rotation token and a mixed sequence', () => {
-    const algorithms = ['U', 'R', 'F', 'D', 'L', 'B', 'M', 'E', 'S', 'Uw', 'Rw', 'Fw', 'Dw', 'Lw', 'Bw', 'x', 'y', 'z']
-      .flatMap(face => ['', "'", '2'].map(suffix => face + suffix));
+    const algorithms = ['U', 'R', 'F', 'D', 'L', 'B', 'M', 'E', 'S', 'Uw', 'Rw', 'Fw', 'Dw', 'Lw', 'Bw', 'u', 'r', 'f', 'd', 'l', 'b', 'x', 'y', 'z']
+      .flatMap(face => ['', "'", '2', "2'"].map(suffix => face + suffix));
     algorithms.push("R M' Uw2 z S E2 Fw' y2 L");
     const cube = new Cube(3);
     try {
