@@ -9,7 +9,7 @@ import { GOD_DIST_333, GOD_DIST_333_NORMALIZED, GOD_MEAN_HTM } from '@/lib/god-d
 const MEAN = GOD_MEAN_HTM.toFixed(1);
 
 // 全站单一源 lib/god-distance-333.ts —— d ≤ 15 精确,d = 16..19 是 cube20.org 的两位有效数字
-// 估计(这里取归一化档,Σ 恰为 |G|),d = 20 是「已找到 490,000,000 个」的下界。
+// 估计(这里取归一化档,Σ 恰为 |G|),d = 20 同样是估计值。
 const DIST_DATA_HTM = GOD_DIST_333.map((b, i) => ({
   d: b.d,
   count: BigInt(GOD_DIST_333_NORMALIZED[i]),
@@ -177,8 +177,8 @@ export default function DistanceDistribution() {
         </h3>
         <p>
           <L
-            zh={<>下表给出距离 d = 0 ~ 15 的<em>精确</em>计数 (穷举枚举)。 d ≥ 16 至今没有逐档精确值 —— cube20.org 只给到两位有效数字, 这里把它们等比缩到尾部真值 |G| − Σ<sub>d ≤ 15</sub>, 所以整列求和仍恰为 |G| = 43,252,003,274,489,856,000, 但 d = 16 ~ 19 各行只该当估计读。 d = 20 的 490,000,000 是「已经找到这么多个」的下界。</>}
-            en={<>The table gives <em>exact</em> counts for d = 0…15 (full enumeration). No per-depth exact values are known for d ≥ 16 — cube20.org publishes only two significant digits, and those four are rescaled here to the true tail |G| − Σ<sub>d ≤ 15</sub>, so the column still totals exactly |G| = 43,252,003,274,489,856,000 while each of d = 16…19 should be read as an estimate. The 490,000,000 at d = 20 is a lower bound: that many have been found.</>}
+            zh={<>下表给出距离 d = 0 ~ 15 的<em>精确</em>计数 (穷举枚举)。 d ≥ 16 至今没有逐档精确值 —— cube20.org 只给到两位有效数字, 这里把它们等比缩到尾部真值 |G| − Σ<sub>d ≤ 15</sub>, 所以整列求和仍恰为 |G| = 43,252,003,274,489,856,000, 但 d = 16 ~ 20 各行只该当估计读，包括 d = 20 的约 490,000,000。</>}
+            en={<>The table gives <em>exact</em> counts for d = 0…15 (full enumeration). No per-depth exact values are known for d ≥ 16 — cube20.org publishes only two significant digits, and those five are rescaled here to the true tail |G| − Σ<sub>d ≤ 15</sub>, so the column still totals exactly |G| = 43,252,003,274,489,856,000 while each of d = 16…20 should be read as an estimate, including the roughly 490,000,000 at d = 20.</>}
           />
         </p>
         <table className="gt-distance-tbl gt-distance-exact">

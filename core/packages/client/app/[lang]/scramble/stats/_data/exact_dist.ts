@@ -418,12 +418,12 @@ export const EXACT_DIST: Record<ExactStage, StageTable> = {
       total: CUBE3_STATES,
       counts: [...GOD_DIST_333_NORMALIZED],
       caveat: {
-        zh: '这一格只有 d ≤ 15 是穷举精确值(Rokicki 等人,2010)。d = 16..19 cube20.org 只公布两位'
-          + '有效数字,这里按「|G| − Σ(d ≤ 15)」这个精确的尾部总和等比归一化;d = 20 的 4.9 亿是'
-          + '「已经找到这么多个」的下界。别把这四档的位数当真。',
+        zh: '这一格只有 d ≤ 15 是穷举精确值(Rokicki 等人,2010)。d = 16..20 cube20.org 只公布两位'
+          + '有效数字,这里按「|G| − Σ(d ≤ 15)」这个精确的尾部总和等比归一化;d = 20 的 4.9 亿同样是'
+          + '估计值。别把这五档的位数当真。',
         en: 'Only d ≤ 15 is an exact enumeration here (Rokicki et al., 2010). cube20.org publishes '
-          + 'd = 16..19 to two significant figures; those four bins are scaled to the exact tail total '
-          + '|G| − Σ(d ≤ 15), and the 490 million at d = 20 is a lower bound, not a count.',
+          + 'd = 16..20 to two significant figures; those five bins are scaled to the exact tail total '
+          + '|G| − Σ(d ≤ 15), and the 490 million at d = 20 is an estimate, not an exact count.',
       },
     }),
   },

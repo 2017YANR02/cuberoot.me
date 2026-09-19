@@ -216,7 +216,7 @@ export default function GrowthOfGroups() {
             <strong style={{ color: COLOR_CUBE }}>魔方群 — 有限群的饱和</strong>。
             3×3×3 魔方群 <TeX src={String.raw`G`} />（阶 <TeX src={String.raw`\approx4.3\times10^{19}`} />）配 18 个 HTM 生成元（6 个面各 3 种转动：90° 顺/逆时针和 180°）。
             深度 0 到 15 的球面大小（元素个数）已由 Rokicki-Kociemba-Davidson-Dethridge（2013）精确枚举；深度 16–19 只公布到两位有效数字。
-            <strong>直径 = 20</strong>（HTM 度量，即「上帝算法」步数）：所有 <TeX src={String.raw`4.3\times10^{19}`} /> 个状态在 20 步内可解，且存在需要整整 20 步的状态（已找到 4.9 亿个，这是下界而非普查结果）。
+            <strong>直径 = 20</strong>（HTM 度量，即「上帝算法」步数）：所有 <TeX src={String.raw`4.3\times10^{19}`} /> 个状态在 20 步内可解，且存在需要整整 20 步的状态（估计约 4.9 亿个，并非精确计数）。
             <strong>众数距离约为 18</strong>，而非 20——距离 20 的状态极为稀少。
             因为 <TeX src={String.raw`G`} /> 有限，<TeX src={String.raw`\beta_S(r)=|G|`} /> 对所有 <TeX src={String.raw`r\ge20`} /> 成立，对数曲线在此处折平。
           </>}
@@ -224,7 +224,7 @@ export default function GrowthOfGroups() {
             <strong style={{ color: COLOR_CUBE }}>The Rubik&apos;s Cube group — saturation of a finite group</strong>.
             The 3×3×3 cube group <TeX src={String.raw`G`} /> (order <TeX src={String.raw`\approx4.3\times10^{19}`} />) uses 18 HTM generators (6 faces × 3 turns each: 90° CW, 90° CCW, 180°).
             Sphere sizes at depths 0–15 are <em>exact</em>, computed by Rokicki-Kociemba-Davidson-Dethridge (2013); depths 16–19 are published to <em>two significant figures</em> only.
-            <strong>Diameter = 20</strong> (half-turn metric, i.e. &ldquo;God&apos;s number&rdquo;): every one of the <TeX src={String.raw`4.3\times10^{19}`} /> states is solvable in at most 20 moves, and some require all 20 (490 million have been found — a lower bound, not a census).
+            <strong>Diameter = 20</strong> (half-turn metric, i.e. &ldquo;God&apos;s number&rdquo;): every one of the <TeX src={String.raw`4.3\times10^{19}`} /> states is solvable in at most 20 moves, and some require all 20 (an estimated 490 million, not an exact census).
             The <strong>modal distance is about 18</strong>, not 20 — distance-20 states are extremely rare.
             Since <TeX src={String.raw`G`} /> is finite, <TeX src={String.raw`\beta_S(r)=|G|`} /> for all <TeX src={String.raw`r\ge20`} />, so the log plot bends flat at that radius.
           </>}

@@ -8,9 +8,9 @@ import AlgInput, { type AlgInputHandle } from '@/components/AlgInput';
 import { ClearButton } from '@/components/ClearButton';
 import { TeX } from '@/components/math/Tex';
 import BackHome from '@/components/BackHome';
-import Link from '@/components/AppLink';
 import { CompactSelect } from '@/components/CompactSelect';
 import CubeGraphCube from './CubeGraphCube';
+import CayleyLesson from './CayleyLesson';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
 import { CUBE_FILL } from '@/lib/cube-colors';
 import { useT } from '@/hooks/useT';
@@ -194,7 +194,7 @@ export default function CubeGraphPage() {
             </label>
             {draft && <ClearButton variant="standalone" ariaLabel={isSetup ? t('清除打乱', 'Clear scramble') : t('清除解法', 'Clear solution')} onClick={() => { ref.current?.setText(''); change(''); }} />}
           </div>
-          {!valid && <p className="cube-graph-input-error" role="alert">{t('请输入面转、中层、宽层或转体（如 R U2 M′ Rw x），最多 500 步；暂不支持括号或交换子。', 'Use face, slice, wide or rotation moves (e.g. R U2 M′ Rw x), up to 500 moves. Groups and commutators are not supported here.')}</p>}
+          {!valid && <p className="cube-graph-input-error" role="alert">{t('请输入面转、中层、宽层或转体（如 R U2 M′ Rw x），最多 500 步；暂不支持括号或换位子。', 'Use face, slice, wide or rotation moves (e.g. R U2 M′ Rw x), up to 500 moves. Groups and commutators are not supported here.')}</p>}
         </div>;
       })}
     </div>
@@ -214,7 +214,7 @@ export default function CubeGraphPage() {
     <article className="cube-graph-article">
       <MappingLesson stickers={stickers} />
       <CycleLesson />
-      <p className="cube-graph-links"><Link href="/math/group/cayley" prefetch={false}>{t('凯莱图：把整个魔方状态作为一个顶点', 'Cayley graphs: one vertex per cube state')}</Link><Link href="/math/god" prefetch={false}>{t('上帝之数', 'God’s number')}</Link></p>
+      <CayleyLesson />
       <section><h2>{t('图形来源', 'Visual references')}</h2>
         <p><a href="https://x.com/themathflow/status/2101154346583154801" target="_blank" rel="noreferrer">{t('The Math Flow 发布的圆环动画', 'Ring animation posted by The Math Flow')}</a>{t('是圆环布局的视觉参考；', ' inspired the ring layout; ')}<a href="https://github.com/2017YANR02/cuberoot.me/issues/81" target="_blank" rel="noreferrer">{t('需求中的第二张图', 'the second image in the request')}</a>{t('提供了扇形布局的参考。本页独立实现交互与位置映射。', ' inspired the sector layout. The interaction and coordinate mapping are independently implemented.')}</p>
       </section>
