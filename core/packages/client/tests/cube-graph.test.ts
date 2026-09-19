@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { applySequence, solvedCubie, MOVE_NAMES, invertSequence, parseMoves } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { cubieToFacelet, SOLVED_FACELET } from '@/lib/cube-facelet';
+import { invertMoveString } from '@cuberoot/shared/alg-notation';
+import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import { GRAPH_SLOTS, RINGS, graphPosition, sectorPath, stickerPermutation } from '@/app/[lang]/math/cube-graph/model';
 
 describe('cube sticker graph', () => {
@@ -18,7 +20,7 @@ describe('cube sticker graph', () => {
   for (let move = 0; move < 18; move++) {
     it(`${MOVE_NAMES[move]} preserves identities, centers, colors and animation endpoints`, () => {
       const state = applySequence(solvedCubie(), [move]);
-      const stickers = stickerPermutation(state);
+      const stickers = stickerPermutation([MOVE_NAMES[move]]);
       expect(new Set(stickers).size).toBe(54);
       expect(stickers.map(i => SOLVED_FACELET[i]).join('')).toBe(cubieToFacelet(state));
       expect(stickers.filter((v, i) => v !== i)).toHaveLength(20);
@@ -28,15 +30,15 @@ describe('cube sticker graph', () => {
         expect(graphPosition(from, to, 1).x).toBeCloseTo(GRAPH_SLOTS[to].x, 8);
         expect(graphPosition(from, to, 1).y).toBeCloseTo(GRAPH_SLOTS[to].y, 8);
       });
-      expect(stickerPermutation(applySequence(state, invertSequence([move])))).toEqual(stickerPermutation(solvedCubie()));
+      expect(stickerPermutation([move, ...invertSequence([move])].map(i => MOVE_NAMES[i]))).toEqual(stickerPermutation([]));
     });
   }
   it('returns every labeled sticker after four quarter turns and after a mixed inverse replay', () => {
     for (let move = 0; move < 18; move += 3) {
-      expect(stickerPermutation(applySequence(solvedCubie(), [move, move, move, move]))).toEqual(stickerPermutation(solvedCubie()));
+      expect(stickerPermutation([move, move, move, move].map(i => MOVE_NAMES[i]))).toEqual(stickerPermutation([]));
     }
     const moves = parseMoves("R U F2 L' D B R2 U'");
-    expect(stickerPermutation(applySequence(solvedCubie(), [...moves, ...invertSequence(moves)]))).toEqual(stickerPermutation(solvedCubie()));
+    expect(stickerPermutation([...moves, ...invertSequence(moves)].map(i => MOVE_NAMES[i]))).toEqual(stickerPermutation([]));
   });
   it('assigns all 54 stickers distinct finite sector cells', () => {
     const paths = GRAPH_SLOTS.map(p => sectorPath(p.face, p.row, p.col));
@@ -45,7 +47,7 @@ describe('cube sticker graph', () => {
   });
   it('decomposes each quarter turn into five four-cycles and keeps adjacent strips on their layer circles', () => {
     for (let move = 0; move < 18; move += 3) {
-      const permutation = stickerPermutation(applySequence(solvedCubie(), [move]));
+      const permutation = stickerPermutation([MOVE_NAMES[move]]);
       const visited = new Set<number>();
       const cycles: number[] = [];
       permutation.forEach((from, to) => {
@@ -66,5 +68,34 @@ describe('cube sticker graph', () => {
         expect(Math.hypot(halfway.x - ring.x, halfway.y - ring.y)).toBeCloseTo(ring.r, 8);
       });
     }
+  });
+  it.each([
+    ['M', 12, "Lw L'"], ['E', 12, "Dw D'"], ['S', 12, "Fw F'"],
+    ['Rw', 32, "R M'"], ['Lw', 32, 'L M'], ['Uw', 32, "U E'"],
+    ['Dw', 32, 'D E'], ['Fw', 32, 'F S'], ['Bw', 32, "B S'"],
+    ['x', 52, "R M' L'"], ['y', 52, "U E' D'"], ['z', 52, "F S B'"],
+  ])('supports /sim move %s, including moving centers and inverse replay', (move, moved, equivalent) => {
+    const permutation = stickerPermutation([move]);
+    expect(new Set(permutation).size).toBe(54);
+    expect(permutation.filter((id, slot) => id !== slot).length).toBe(moved);
+    expect(permutation).toEqual(stickerPermutation(String(equivalent).split(' ')));
+    expect(stickerPermutation([move, invertMoveString(move)])).toEqual(stickerPermutation([]));
+    expect(stickerPermutation([move, move, move, move])).toEqual(stickerPermutation([]));
+  });
+  it('retraces mixed outer, slice, wide and whole-cube turns with every identity intact', () => {
+    const sequence = "R M' Uw2 z S E2 Fw' y2 L";
+    expect(stickerPermutation(`${sequence} ${invertMoveString(sequence)}`.split(' '))).toEqual(stickerPermutation([]));
+  });
+  it('matches /sim for every outer, slice, wide and rotation token and a mixed sequence', () => {
+    const algorithms = ['U', 'R', 'F', 'D', 'L', 'B', 'M', 'E', 'S', 'Uw', 'Rw', 'Fw', 'Dw', 'Lw', 'Bw', 'x', 'y', 'z']
+      .flatMap(face => ['', "'", '2'].map(suffix => face + suffix));
+    algorithms.push("R M' Uw2 z S E2 Fw' y2 L");
+    const cube = new Cube(3);
+    try {
+      for (const alg of algorithms) {
+        cube.twister.setup(alg);
+        expect(stickerPermutation(alg.split(' ')).map(id => SOLVED_FACELET[id]).join(''), alg).toBe(cube.serialize());
+      }
+    } finally { cube.dispose(); }
   });
 });

@@ -1,4 +1,4 @@
-import { CORNER_FACELET, EDGE_FACELET, type CubieCube } from '@/lib/cube-facelet';
+import { AllFaces, CubeData, parseAlgorithm } from '@cuberoot/visualcube';
 
 export type Point = { x: number; y: number };
 export const RINGS = [
@@ -33,15 +33,11 @@ export const GRAPH_SLOTS = Array.from({ length: 54 }, (_, index) => {
 });
 
 /** Slot -> original sticker identity; colors alone lose same-color motion. */
-export function stickerPermutation(state: CubieCube): number[] {
-  const stickers = Array.from({ length: 54 }, (_, i) => i);
-  CORNER_FACELET.forEach((slots, position) => slots.forEach((_, k) => {
-    stickers[slots[(k + state.co[position]) % 3]] = CORNER_FACELET[state.cp[position]][k];
-  }));
-  EDGE_FACELET.forEach((slots, position) => slots.forEach((_, k) => {
-    stickers[slots[(k + state.eo[position]) % 2]] = EDGE_FACELET[state.ep[position]][k];
-  }));
-  return stickers;
+export function stickerPermutation(moves: readonly string[]): number[] {
+  const initial = Object.fromEntries(AllFaces.map((face, i) => [face, Array.from({ length: 9 }, (_, k) => i * 9 + k)]));
+  const cube = new CubeData(3, initial);
+  for (const move of parseAlgorithm(moves.join(' '))) cube.turn(move);
+  return AllFaces.flatMap(face => cube.faces[face] as number[]);
 }
 
 /** Adjacent-face stickers follow their common layer circle; face stickers cross rings. */
