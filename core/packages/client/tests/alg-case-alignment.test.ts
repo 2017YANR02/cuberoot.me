@@ -6,8 +6,8 @@ import type { AlgFile, AlgPuzzle } from '@cuberoot/shared/alg';
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
 import { loadAlg, alignAlgFile, alignCaseEntry, caseAlgIssue, caseCoepEntry, commonCaseSetup, sourceCaseAlg } from '@/lib/alg_case_alignment';
 import { allTargets, scanCases } from '@/lib/alg_validation_scan';
-import { orientCaseSetup, validateStoredAlgCase } from '@/lib/alg_validation';
-import { caseViewAlg, caseViewSetup, CASE_VIEW_ANGLES } from '@/lib/alg_display';
+import { orientCaseSetup, validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
+import { caseViewAlg, caseViewSetup, CASE_VIEW_ANGLES, displayCaseAlg, displayCaseAlgHtml } from '@/lib/alg_display';
 import { algHtmlText } from '@/lib/alg_html';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
@@ -134,6 +134,8 @@ describe('one public case state for every algorithm set', () => {
           }
           if (entry.algHtml) {
             expect(normalizeAlg(puzzle, algHtmlText(entry.algHtml)), id).toBe(normalizeAlg(puzzle, entry.alg));
+            expect(normalizeAlg(puzzle, algHtmlText(displayCaseAlgHtml(puzzle, file.set, entry.algHtml))), id)
+              .toBe(normalizeAlg(puzzle, displayCaseAlg(puzzle, file.set, entry.alg)));
           }
           for (const angle of angles) {
             const displayedSetup = caseViewSetup(setup, angle);
@@ -141,6 +143,20 @@ describe('one public case state for every algorithm set', () => {
             const result = await validateStoredAlgCase(displayedSetup, displayedAlg, c.sticker, puzzle, file.set,
               { fixedOrientation: ['2x2', '3x3', '4x4', '5x5'].includes(puzzle) });
             expect(result.ok, `${key} ${id} ${angle}: ${result.reason}`).toBe(true);
+            if (is3x3TopLayerSet(puzzle, file.set)) {
+              const shown = displayCaseAlg(puzzle, file.set, displayedAlg);
+              expect(normalizeAlg(puzzle, shown), `${key} ${id} ${angle}: trailing AUF/y`)
+                .not.toMatch(/(?:^|\s)[Uy](?:2'?|')?\s*$/);
+              if (shown !== displayedAlg) {
+                expect((await validateAlgCase(displayedSetup, shown, c.sticker, puzzle, file.set)).ok,
+                  `${key} ${id} ${angle}: displayed stage solution`).toBe(true);
+                const solved = (await puzzles['3x3x3'].kpuzzle()).defaultPattern();
+                const before = solved.applyAlg(normalizeAlg(puzzle, displayedSetup));
+                expect(before.applyAlg(normalizeAlg(puzzle, shown)).patternData.CENTERS.pieces[0],
+                  `${key} ${id} ${angle}: top colour`)
+                  .toBe(before.applyAlg(normalizeAlg(puzzle, displayedAlg)).patternData.CENTERS.pieces[0]);
+              }
+            }
           }
         }
       }
@@ -180,7 +196,7 @@ describe('one public case state for every algorithm set', () => {
     expect(failures.map(f => f.algIdx)).toEqual([3, 9]);
     expect(failures[1].reason).toContain('Duplicate algorithm');
     const sheet = algSheetFromCases({ puzzle: '3x3', set: 'oll', cases: [t], title: '', filename: '', maxAlgs: 99 });
-    expect(sheet.cases[0].algs).toEqual(t.algs[0].filter(e => !caseAlgIssue(e)).map(e => e.alg));
+    expect(sheet.cases[0].algs).toEqual(t.algs[0].filter(e => !caseAlgIssue(e)).map(e => displayCaseAlg('3x3', 'oll', e.alg)));
     expect(sheet.subtitle).toContain('1 unverified algorithms omitted');
   });
 

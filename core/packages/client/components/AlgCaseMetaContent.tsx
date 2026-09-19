@@ -34,6 +34,8 @@ import {
   caseViewAlg,
   caseViewSetup,
   displayCaseScramble,
+  displayCaseAlg,
+  displayCaseAlgHtml,
   type CaseViewAngle,
 } from '@/lib/alg_display';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -191,26 +193,27 @@ export default function AlgCaseMetaContent({
 
   useEffect(() => { loadPreferred(puzzle, preferenceSet); }, [loadPreferred, preferenceSet, puzzle]);
 
-  /** 首个朝向的完整公式；文字、步数、复制和动画使用同一序列。 */
+  /** 文字、步数和复制使用显示式；动画保留公共 case 的完整收尾。 */
   const algs = useMemo(() => {
     const entries = preserveAlgOrder
       ? (caseObj.algs[0] ?? []).map((entry, originalIndex) => ({ entry, originalIndex }))
       : sortPreferredAlgs(caseObj.algs[0] ?? [], preferredRef);
     return entries.map(({ entry: a, originalIndex }) => {
-    const shown = caseViewAlg(a.alg, viewAngle);
+    const playbackAlg = caseViewAlg(a.alg, viewAngle);
+    const shown = displayCaseAlg(puzzle, set, playbackAlg);
     return {
       key: a.altId ?? shown,
       entry: a,
       originalIndex,
       ref: preferredAlgRef(a),
-      // The case player must demonstrate exactly the alg shown to the user.
-      playbackAlg: shown,
+      playbackAlg,
       text: formatScrambleForEvent(puzzle, shown),
+      html: a.algHtml ? displayCaseAlgHtml(puzzle, set, a.algHtml) : undefined,
       len: a.stm == null ? undefined : stm(shown),
       tags: a.tags ?? [],
     };
     });
-  }, [caseObj.algs, preferredRef, preserveAlgOrder, puzzle, viewAngle]);
+  }, [caseObj.algs, preferredRef, preserveAlgOrder, puzzle, set, viewAngle]);
   const selectedAlg = algs.find(a => !caseAlgIssue(a.entry) && `${a.key}:${a.originalIndex}` === selectedAlgKey)
     ?? algs.find(a => !caseAlgIssue(a.entry));
 
@@ -489,7 +492,7 @@ export default function AlgCaseMetaContent({
                     label={label}
                     alg={a.text}
                     issue={caseAlgIssue(a.entry)}
-                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.entry.algHtml : undefined}
+                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.html : undefined}
                     len={a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}
@@ -503,7 +506,7 @@ export default function AlgCaseMetaContent({
                     label={label}
                     alg={a.text}
                     issue={caseAlgIssue(a.entry)}
-                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.entry.algHtml : undefined}
+                    algHtml={viewAngle === 'default' && puzzle !== 'sq1' ? a.html : undefined}
                     len={a.len}
                     preferred={isPreferred}
                     onPreferredToggle={togglePreferred}
@@ -597,7 +600,7 @@ export default function AlgCaseMetaContent({
         <div className="alg-meta-section">
           <h3>COEP</h3>
           {m.coep.alg && <AlgLine label={tr({ zh: '公式', en: 'Alg' })}
-            alg={caseViewAlg(coep?.alg ?? m.coep.alg, viewAngle)}
+            alg={displayCaseAlg(puzzle, set, caseViewAlg(coep?.alg ?? m.coep.alg, viewAngle))}
             issue={coep ? caseAlgIssue(coep) : tr({ zh: '尚未校验', en: 'Not yet validated' })} />}
           {m.coep.scramble && metadataScramble(m.coep.scramble)}
         </div>
