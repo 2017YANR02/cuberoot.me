@@ -3185,6 +3185,7 @@ CREATE TABLE auth_codes (
   target      VARCHAR(320) NOT NULL,
   purpose     VARCHAR(16) NOT NULL DEFAULT 'login',
   code_hash   TEXT NOT NULL,
+  delivery_status TEXT NOT NULL DEFAULT 'sent' CHECK (delivery_status IN ('pending', 'sent', 'failed')),
   expires_at  TIMESTAMPTZ NOT NULL,
   attempts    INT NOT NULL DEFAULT 0,
   consumed_at TIMESTAMPTZ,

@@ -191,7 +191,7 @@ const TABLES: Table[] = [
   { name: 'vault_items', domain: 'storage', origin: '0192', purpose: { zh: '会员或管理员拥有的端到端加密文本、字段和备注密文及乐观并发版本', en: 'Member- or administrator-owned end-to-end encrypted text, fields, notes, and optimistic-concurrency versions' } },
   { name: 'vault_item_access', domain: 'storage', origin: '0192', purpose: { zh: '每条内容对所有者及指定好友分别封装的内容密钥；解除好友时撤销', en: 'Per-item content keys separately wrapped for the owner and selected friends, revoked when friendship ends' } },
   { name: 'auth_identities', domain: 'account', origin: '0064', evolved: [78, 103], purpose: { zh: '账号与外部身份的唯一映射；微信小程序与网站扫码登录共用 UnionID', en: 'Unique account-to-provider identity mappings; Mini Program and website QR sign-in share the Weixin UnionID' } },
-  { name: 'auth_codes', domain: 'account', origin: '0064', purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
+  { name: 'auth_codes', domain: 'account', origin: '0064', evolved: [240], purpose: { zh: '邮箱与手机登录、绑定使用的短时验证码及核销状态', en: 'Short-lived email and phone verification codes with consumption state' } },
   { name: 'auth_web_session_tickets', domain: 'account', origin: '0139', evolved: [179, 209, 232], purpose: { zh: '小程序、浏览器与原生 App 跨运行时换取会话的短时单次票据；只存密钥 SHA-256，移动端另绑 PKCE challenge，微信已有账号验证由 existing_only 限制新建账号回传', en: 'Short-lived single-use cross-runtime session tickets; hashes only, mobile PKCE binding, and existing_only to prevent a newly created WeChat account from completing existing-account authentication' } },
 
   // ── file storage ───────────────────────────────────────
@@ -780,6 +780,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 241, slug: 'fix_alg_grouping_parentheses', desc: { zh: '修正两条公式及关联打乱中缺失或多余的分组括号。', en: 'Fix missing or extra grouping parentheses in two algorithms and a related scramble.' } },
   { n: 241, slug: 'wechat_wca_link', desc: { zh: '增加微信内浏览器绑定 WCA 账号的专用会话票据用途。', en: 'Add a dedicated session-ticket purpose for linking WCA accounts inside WeChat.' } },
   { n: 242, slug: 'alg_submission_tags', desc: { zh: '为用户投稿公式增加单手、脚拧、最少步、高阶和键盘标签。', en: 'Add one-handed, feet, FMC, big-cube, and keyboard tags to user-submitted algorithms.' } },
+  { n: 243, slug: 'auth_code_delivery', desc: { zh: '验证码发送状态；旧码兼容，邮箱成功发送后才可验证。', en: 'Verification delivery state; preserve old codes and activate email codes only after acceptance.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -1,3 +1,4 @@
+import type { TransactionSql } from 'postgres';
 import crypto from 'node:crypto';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import { sql, transactionQuery } from '../db/connection.js';
@@ -77,14 +78,14 @@ export function startIdentityChoiceCleanup(): void {
 }
 
 /** Every login provider uses this gate after verifying its own credential. */
-export async function beginIdentityLogin(identity: VerifiedIdentity) {
+export async function beginIdentityLogin(identity: VerifiedIdentity, options: { transaction?: TransactionSql } = {}) {
   try {
     return await loginWithIdentity(identity.provider, identity.providerUid, identity.profile,
-      identity.appleCredential, { createIfMissing: false });
+      identity.appleCredential, { createIfMissing: false, transaction: options.transaction });
   } catch (error) {
     if (!(error instanceof IdentityNotFoundError)) throw new Error('account service unavailable; please retry');
   }
-  return queueIdentityChoice(identity);
+  return queueIdentityChoice(identity, options.transaction);
 }
 
 /** Both proofs are already checked against WeChat before reaching the account boundary. */
@@ -105,9 +106,10 @@ export async function beginWechatPhoneIdentityLogin(unionid: string, phone: stri
   } };
 }
 
-async function queueIdentityChoice(identity: VerifiedIdentity) {
+async function queueIdentityChoice(identity: VerifiedIdentity, transaction?: TransactionSql) {
+  const run = transaction ?? sql;
   const ticket = crypto.randomBytes(32).toString('base64url');
-  await sql`INSERT INTO auth_identity_pending (
+  await run`INSERT INTO auth_identity_pending (
     ticket_hash, provider, provider_uid, profile, apple_refresh_token_encrypted,
     apple_token_key_version, expires_at
   ) VALUES (

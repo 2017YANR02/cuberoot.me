@@ -103,3 +103,5 @@ psql "$DATABASE_URL" -c 'SELECT filename, applied_at FROM _schema_migrations ORD
 ```
 
 `0230_forum_bans.sql` adds an account-level forum ban. Existing accounts default to unbanned; bans survive account merges. Existing forum content is retained.
+
+邮箱验证码增量 `0243_auth_code_delivery.sql` 为 `auth_codes` 增加 pending/sent/failed 发送状态，旧行默认 sent，既有 hash 与有效期不变；新邮箱发送按原 challenge ID 激活。短信及内部合并/身份选择码暂保留原 sent 语义。迁移只随另行授权的发布执行，本地隔离测试不访问应用数据库。

@@ -50,6 +50,7 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
     await sql.unsafe(await readFile(new URL('../migrations/0231_auth_apple_token.sql', import.meta.url), 'utf8'));
     await sql.unsafe(await readFile(new URL('../migrations/0232_auth_identity_pending.sql', import.meta.url), 'utf8'));
     await sql.unsafe(await readFile(new URL('../migrations/0234_auth_identity_choice_providers.sql', import.meta.url), 'utf8'));
+    await sql.unsafe(await readFile(new URL('../migrations/0243_auth_code_delivery.sql', import.meta.url), 'utf8'));
     await sql`CREATE UNIQUE INDEX uq_auth_identity_one_phone ON auth_identities(user_id) WHERE provider = 'phone'`;
   });
   afterAll(async () => { await sql.end(); });
