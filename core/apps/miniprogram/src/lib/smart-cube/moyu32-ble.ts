@@ -15,7 +15,13 @@ import {
   moyu32DefaultMac,
 } from '@cuberoot/shared/smart-cube/moyu32';
 import type { BleAbortSignal, DiscoveredDevice, MiniProgramBleApi } from './ble-api';
-import { connectEncryptedBle, type EncryptedBleConnection } from './encrypted-ble';
+import {
+  connectEncryptedBle,
+  extractBleMacFromAdvertisement,
+  type EncryptedBleConnection,
+} from './encrypted-ble';
+
+const MOYU32_COMPANY_IDS = Array.from({ length: 255 }, (_value, index) => (index + 1) << 8);
 
 export type Moyu32BleConnection = EncryptedBleConnection;
 export interface ConnectMoyu32Options {
@@ -32,6 +38,7 @@ export interface ConnectMoyu32Options {
 export async function connectMoyu32(options: ConnectMoyu32Options = {}): Promise<Moyu32BleConnection> {
   const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const state = createMoyu32DecodeState();
+  let initialStateReceived = false;
   const initialFrames = [
     createMoyu32Command(MOYU32_MESSAGE_INFO),
     createMoyu32Command(MOYU32_MESSAGE_STATE),
@@ -39,21 +46,48 @@ export async function connectMoyu32(options: ConnectMoyu32Options = {}): Promise
   ];
   return connectEncryptedBle({
     api,
+    diagnosticLabel: 'moyu32',
     device: options.device,
     signal: options.signal,
     serviceUuid: MOYU32_SERVICE_UUID,
     notifyCharacteristicUuid: MOYU32_NOTIFY_CHARACTERISTIC_UUID,
     characteristicUuid: MOYU32_WRITE_CHARACTERISTIC_UUID,
     matches: (device) => matchesMoyu32Name(device.name) || matchesMoyu32Name(device.localName),
-    resolveMac: (device) => moyu32DefaultMac(device.name) ?? moyu32DefaultMac(device.localName),
+    resolveMac: (device) => {
+      const advertised = extractBleMacFromAdvertisement(device.advertisData, {
+        companyIds: MOYU32_COMPANY_IDS,
+        layout: 'last6-reversed',
+      });
+      if (advertised) return { source: 'manufacturer-data', value: advertised };
+      const named = moyu32DefaultMac(device.name) ?? moyu32DefaultMac(device.localName);
+      return named ? { source: 'device-name-default', value: named } : null;
+    },
     createCipher: (mac) => {
       return createMoyu32Cipher(mac);
     },
     initialFrames,
+    isReadyFrame: () => initialStateReceived,
+    readyTimeoutMs: 4_000,
+    retryInitialFramesAfterMs: 1_000,
     onDisconnect: options.onDisconnect,
-    onFrame: (frame) => {
+    onFrame: (frame, _write, diagnostic) => {
       const notification = decodeMoyu32Notification(frame, state);
-      if (notification.state) options.onState?.(notification.state);
+      if (notification.state !== null || notification.moves.length > 0
+        || notification.battery !== null || state.badFrames > 0) {
+        diagnostic.info('decoded-frame', {
+          messageType: frame[0] ?? null,
+          state: notification.state !== null,
+          moves: notification.moves,
+          battery: notification.battery,
+          gyro: notification.gyro !== null,
+          badFrames: state.badFrames,
+          prevMoveCount: state.prevMoveCount,
+        });
+      }
+      if (notification.state) {
+        initialStateReceived = true;
+        options.onState?.(notification.state);
+      }
       if (notification.gyro) options.onGyro?.(notification.gyro);
       for (const move of notification.moves) options.onMove?.(move.mv, move.ts);
       return notification.battery;
