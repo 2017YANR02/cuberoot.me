@@ -278,9 +278,8 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
 
   /** 全集唯一 slug 表(生成关联链接 / 社区区都要);和列表页、落地解析同一份算法。 */
   const slugMap = useMemo(() => buildCaseSlugMap(data.cases, set), [data, set]);
-  const hrefFor = (c: AlgCase, edit = false) => {
-    const detailHref = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
-    const href = edit ? `${detailHref}/edit` : detailHref;
+  const hrefFor = (c: AlgCase) => {
+    const href = algCaseDetailHref(puzzle, set, (c.id != null && slugMap.byId.get(c.id)) || '');
     return keepOrientation(keepViewAngle(keepScrambleKind(keepSq1Notation(keepSq1Top(href)))));
   };
 
@@ -407,14 +406,14 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data, edit
             <ExternalLink size={14} />
           </Link>
           {isAdmin && caseObj.id != null && (
-            <Link
-              href={hrefFor(caseObj, true)}
-              prefetch={false}
+            <button
+              type="button"
+              onClick={() => setEditorState({ mode: 'edit', existing: caseObj })}
               className="alg-admin-edit-btn"
               title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
             >
               <Pencil size={12} />
-            </Link>
+            </button>
           )}
         </h1>
         {puzzle === 'sq1' && (
