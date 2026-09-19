@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { connectMiniProgramCubeBridge } from '@/app/[lang]/timer/_lib/bluetooth/miniprogram_bridge';
+import { normalizeMiniProgramCubeBrand } from '@/app/[lang]/timer/_lib/bluetooth';
 
 type Listener = (event: { data?: string; reason?: string }) => void;
 
@@ -75,6 +76,18 @@ describe('mini-program smart-cube bridge', () => {
     FakeWebSocket.instances = [];
     vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  it.each(['gan-v2', 'gan-v3', 'gan-v4', 'gocube', 'qiyi', 'giiker', 'moyu', 'moyu32'])(
+    'preserves the supported %s protocol identity',
+    (brand) => {
+      expect(normalizeMiniProgramCubeBrand(brand)).toBe(brand);
+    },
+  );
+
+  it('maps an absent or unsupported protocol identity to unknown', () => {
+    expect(normalizeMiniProgramCubeBrand(undefined)).toBe('unknown');
+    expect(normalizeMiniProgramCubeBrand('future-protocol')).toBe('unknown');
   });
 
   it('confirms the iOS WeChat container when its user agent omits miniProgram', async () => {

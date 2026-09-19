@@ -61,7 +61,7 @@ import { toFaceletString, fromFaceletString } from '../cube/state';
 import { stepSolved, type CubeStep } from '../cube/steps';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
 import { BluetoothConnectError, atStage, describeError, isNoDeviceSelected } from './connect_error';
-import type { BluetoothCubeStatus } from './types';
+import type { BluetoothCubeStatus, CubeBrand } from './types';
 import {
   connectMiniProgramCubeBridge,
   mayUseMiniProgramBridge,
@@ -88,6 +88,17 @@ export type {
 export { BluetoothConnectError, CONNECT_STAGE_LABEL, describeError } from './connect_error';
 export type { ConnectStage } from './connect_error';
 export { mayUseMiniProgramBridge } from './miniprogram_bridge';
+
+const MINI_PROGRAM_CUBE_BRANDS: readonly CubeBrand[] = [
+  'gan-v2', 'gan-v3', 'gan-v4', 'gocube', 'qiyi', 'giiker', 'moyu', 'moyu32',
+];
+
+/** Keep protocol identities reported by the native mini-program bridge. */
+export function normalizeMiniProgramCubeBrand(brand: string | undefined): CubeBrand {
+  return MINI_PROGRAM_CUBE_BRANDS.includes(brand as CubeBrand)
+    ? brand as CubeBrand
+    : 'unknown';
+}
 
 /* ------------------------------------------------------------------ */
 /*  Connection-state event surface                                    */
@@ -1394,9 +1405,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       cleanupRef.current = bridge.disconnect;
       setStatus({
         connected: true,
-        brand: bridge.brand === 'gan-v4' || bridge.brand === 'gocube'
-          ? bridge.brand
-          : 'unknown',
+        brand: normalizeMiniProgramCubeBrand(bridge.brand),
         battery: null,
         deviceName: bridge.deviceName,
         deviceId: `miniprogram:${bridge.brand}`,
