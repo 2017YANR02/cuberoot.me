@@ -77,6 +77,7 @@ export interface GanV4BleConnection {
 
 export interface ConnectGanV4Options {
   api?: MiniProgramBleApi;
+  device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   onBattery?(level: number): void;
   onDisconnect?(message: string): void;
@@ -167,7 +168,22 @@ async function findGan(
   lease: BleResourceLease,
   timeoutMs: number,
   signal: BleAbortSignal | undefined,
+  selectedDevice?: DiscoveredDevice,
 ): Promise<GanDiscovery> {
+  if (selectedDevice) {
+    const mac = ganMac(selectedDevice);
+    if (!selectedDevice.deviceId || !mac) {
+      throw new GanV4BleError(
+        'mac-unavailable',
+        tr({
+          en: 'The selected GAN did not provide its device address. Keep the cube awake and search again.',
+          zh: '所选 GAN 未提供设备地址，请让魔方保持唤醒后重新扫描',
+        }),
+      );
+    }
+    return { device: selectedDevice, mac };
+  }
+
   return new Promise<GanDiscovery>((resolve, reject) => {
     let settled = false;
     let sawGan = false;
@@ -368,7 +384,7 @@ export async function connectGanV4(
       });
     }
 
-    const discovery = await findGan(api, lease, scanTimeoutMs, options.signal);
+    const discovery = await findGan(api, lease, scanTimeoutMs, options.signal, options.device);
     connectedDeviceId = discovery.device.deviceId;
     deviceName = discovery.device.name ?? discovery.device.localName ?? deviceName;
     try {

@@ -10,6 +10,23 @@
     <text wx:elif="{{phase === 'disconnected'}}" class="connection-value">{{deviceName || copy.disconnected}}</text>
     <text wx:else class="connection-value connection-value--error">{{error || copy.failed}}</text>
     <text wx:if="{{phase === 'scanning'}}" class="connection-note">{{copy.wakeCube}}</text>
+    <view wx:if="{{phase === 'scanning' && devices.length > 0}}" class="device-picker">
+      <text class="section-title">{{copy.chooseDevice}}</text>
+      <button
+        wx:for="{{devices}}"
+        wx:key="deviceId"
+        class="device-option"
+        hover-class="press-feedback"
+        data-device-id="{{item.deviceId}}"
+        bindtap="selectDevice"
+        disabled="{{phase === 'connecting'}}"
+      >
+        <view class="device-option-main">
+          <text class="device-name">{{item.deviceName}}</text>
+          <text class="device-driver">{{item.driverLabel}}</text>
+        </view>
+      </button>
+    </view>
     <view wx:if="{{phase === 'connected'}}" class="connection-metrics">
       <text wx:if="{{battery !== null}}" class="connection-detail">{{copy.battery}} {{battery}}%</text>
       <text wx:if="{{lastMove}}" class="connection-detail">{{copy.latestMove}} {{lastMove}}</text>

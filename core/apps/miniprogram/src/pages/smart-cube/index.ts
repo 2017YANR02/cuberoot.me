@@ -21,6 +21,7 @@ const SMART_CUBE_COPY = {
   battery: tr({ en: 'Battery', zh: '电量' }),
   connected: tr({ en: 'Connected to', zh: '已连接' }),
   connecting: tr({ en: 'Connecting to', zh: '正在连接' }),
+  chooseDevice: tr({ en: 'Choose a smart cube', zh: '请选择要连接的智能魔方' }),
   disconnected: tr({ en: 'Connection lost', zh: '连接已断开' }),
   disconnect: tr({ en: 'Disconnect', zh: '断开连接' }),
   eyebrow: tr({ en: 'SMART CUBE', zh: '智能魔方' }),
@@ -80,7 +81,7 @@ async function startConnection(page: SmartCubePageInstance): Promise<void> {
   try {
     await smartCubeSession.start(page.token ?? '');
     if (page.simulator) await smartCubeSession.connect('simulator');
-    else await smartCubeSession.connectAutomatically();
+    else await smartCubeSession.scan();
     if (
       page.active
       && page.connectionAttempt === attempt
@@ -100,11 +101,39 @@ async function startConnection(page: SmartCubePageInstance): Promise<void> {
   }
 }
 
+async function connectSelectedDevice(page: SmartCubePageInstance, deviceId: string): Promise<void> {
+  if (!page.active || !deviceId || page.latestPhase === 'connecting') return;
+  const attempt = (page.connectionAttempt ?? 0) + 1;
+  page.connectionAttempt = attempt;
+  page.autoReturnAttempted = false;
+  try {
+    await smartCubeSession.connectDevice(deviceId);
+    if (
+      page.active
+      && page.connectionAttempt === attempt
+      && page.token
+      && page.latestPhase === 'connected'
+      && !page.autoReturnAttempted
+    ) {
+      page.autoReturnAttempted = true;
+      navigateBackToTimer(page);
+    }
+  } catch (error) {
+    if (!page.active || page.connectionAttempt !== attempt) return;
+    page.setData({
+      phase: 'error',
+      error: error instanceof Error ? error.message : SMART_CUBE_COPY.failed,
+      busy: false,
+    });
+  }
+}
+
 Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
   data: {
     phase: 'idle',
     brand: '',
     deviceName: '',
+    devices: [],
     battery: null,
     error: '',
     lastMove: '',
@@ -167,6 +196,12 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     const page = this as unknown as SmartCubePageInstance;
     page.autoReturnAttempted = false;
     void startConnection(page);
+  },
+
+  selectDevice(event: WechatMiniprogram.TouchEvent) {
+    const page = this as unknown as SmartCubePageInstance;
+    const deviceId = event.currentTarget.dataset.deviceId;
+    if (typeof deviceId === 'string') void connectSelectedDevice(page, deviceId);
   },
 
   simulateMove(event: WechatMiniprogram.TouchEvent) {

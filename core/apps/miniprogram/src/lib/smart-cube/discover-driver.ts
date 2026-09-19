@@ -6,6 +6,8 @@ import { matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
 import { matchesGiikerName } from '@cuberoot/shared/smart-cube/giiker';
 import { matchesGoCubeName } from '@cuberoot/shared/smart-cube/gocube';
 import { matchesMoyuName } from '@cuberoot/shared/smart-cube/moyu';
+import { matchesMoyu32Name } from '@cuberoot/shared/smart-cube/moyu32';
+import { matchesQiyiName } from '@cuberoot/shared/smart-cube/qiyi';
 import {
   beginBleResourceCleanup,
   bluetoothAdapterErrorMessage,
@@ -22,7 +24,12 @@ import {
   type MiniProgramBleApi,
 } from './ble-api';
 
-export type DetectableSmartCubeDriver = 'gan-v4' | 'giiker' | 'gocube' | 'moyu';
+export type DetectableSmartCubeDriver = 'gan-v4' | 'giiker' | 'gocube' | 'moyu' | 'moyu32' | 'qiyi';
+
+export interface DiscoveredSmartCube {
+  device: DiscoveredDevice;
+  driver: DetectableSmartCubeDriver;
+}
 
 const DEFAULT_SCAN_TIMEOUT_MS = 6_000;
 
@@ -38,6 +45,8 @@ export function classifySmartCubeDriver(
   if (names.length === 0) return null;
 
   if (matches(matchesGoCubeName)) return 'gocube';
+  if (matches(matchesQiyiName)) return 'qiyi';
+  if (matches(matchesMoyu32Name)) return 'moyu32';
   if (matches(matchesMoyuName)) return 'moyu';
   if (matches(matchesGanV4Name) || matches(matchesGanV3Name)) return 'gan-v4';
   if (matches(matchesGiikerName)) return 'giiker';
@@ -49,7 +58,7 @@ export async function discoverSmartCubeDriver(options: {
   api?: MiniProgramBleApi;
   scanTimeoutMs?: number;
   signal?: BleAbortSignal;
-} = {}): Promise<DetectableSmartCubeDriver> {
+} = {}): Promise<DiscoveredSmartCube[]> {
   const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const scanTimeoutMs = options.scanTimeoutMs ?? DEFAULT_SCAN_TIMEOUT_MS;
   if (!Number.isFinite(scanTimeoutMs) || scanTimeoutMs < 1_000 || scanTimeoutMs > 30_000) {
@@ -86,11 +95,12 @@ export async function discoverSmartCubeDriver(options: {
       throw new Error(bluetoothAdapterErrorMessage(error), { cause: error });
     }
 
-    return await new Promise<DetectableSmartCubeDriver>((resolve, reject) => {
+    return await new Promise<DiscoveredSmartCube[]>((resolve, reject) => {
       let settled = false;
       let timer: ReturnType<typeof setTimeout> | undefined;
       let offAbort = (): void => {};
-      const finish = (result: DetectableSmartCubeDriver | Error): void => {
+      const devices = new Map<string, DiscoveredSmartCube>();
+      const finish = (result: DiscoveredSmartCube[] | Error): void => {
         if (settled) return;
         settled = true;
         if (timer !== undefined) clearTimeout(timer);
@@ -102,20 +112,34 @@ export async function discoverSmartCubeDriver(options: {
       listener = (result): void => {
         for (const device of result.devices) {
           const driver = classifySmartCubeDriver(device);
-          if (driver) {
-            finish(driver);
-            return;
-          }
+          if (!driver || !device.deviceId) continue;
+          const previous = devices.get(device.deviceId)?.device;
+          const merged: DiscoveredDevice = {
+            ...previous,
+            ...device,
+            name: device.name ?? previous?.name,
+            localName: device.localName ?? previous?.localName,
+            advertisData: device.advertisData ?? previous?.advertisData,
+            RSSI: device.RSSI ?? previous?.RSSI,
+          };
+          devices.set(device.deviceId, { device: merged, driver });
         }
       };
       api.onBluetoothDeviceFound(listener);
       offAbort = options.signal?.onAbort(() => finish(new BleOperationAbortedError())) ?? offAbort;
       if (settled) return;
 
-      timer = setTimeout(() => finish(new Error(tr({
-        en: 'No smart cube found. Turn the cube to wake it up and try again.',
-        zh: '未发现智能魔方，请转动魔方将它唤醒后重试',
-      }))), scanTimeoutMs);
+      timer = setTimeout(() => {
+        const found = [...devices.values()].sort((left, right) => {
+          const leftRssi = left.device.RSSI ?? Number.NEGATIVE_INFINITY;
+          const rightRssi = right.device.RSSI ?? Number.NEGATIVE_INFINITY;
+          return rightRssi - leftRssi;
+        });
+        finish(found.length > 0 ? found : new Error(tr({
+          en: 'No smart cube found. Turn the cube to wake it up and try again.',
+          zh: '未发现智能魔方，请转动魔方将它唤醒后重试',
+        })));
+      }, scanTimeoutMs);
 
       const startDiscovery = invokeBleWithLateCleanupForLease(
         lease,

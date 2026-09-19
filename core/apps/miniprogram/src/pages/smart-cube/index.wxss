@@ -40,6 +40,43 @@
   margin-top: 16rpx;
 }
 
+.device-picker {
+  margin-top: 32rpx;
+}
+
+.device-option {
+  align-items: stretch;
+  background: var(--cr-surface);
+  border: 1rpx solid var(--cr-line);
+  border-radius: 18rpx;
+  display: flex;
+  margin-top: 16rpx;
+  padding: 22rpx 24rpx;
+  text-align: left;
+  width: 100%;
+}
+
+.device-option-main {
+  min-width: 0;
+}
+
+.device-name,
+.device-driver {
+  display: block;
+}
+
+.device-name {
+  font-size: 30rpx;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.device-driver {
+  color: var(--cr-muted);
+  font-size: 23rpx;
+  margin-top: 6rpx;
+}
+
 .connection-metrics {
   display: flex;
   flex-wrap: wrap;

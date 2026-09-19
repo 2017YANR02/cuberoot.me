@@ -6,6 +6,7 @@ interface Snapshot {
   phase: SnapshotPhase;
   brand: string;
   deviceName: string;
+  devices: unknown[];
   battery: number | null;
   error: string;
   lastMove: string;
@@ -16,6 +17,7 @@ interface SmartCubePage {
   onLoad(options: { token?: string }): void;
   onUnload(): void;
   retryConnection(): void;
+  selectDevice(event: { currentTarget: { dataset: { deviceId?: string } } }): void;
   returnToTimer(): void;
   setData(data: Record<string, unknown>): void;
 }
@@ -24,6 +26,7 @@ const idleSnapshot: Snapshot = {
   phase: 'idle',
   brand: '',
   deviceName: '',
+  devices: [],
   battery: null,
   error: '',
   lastMove: '',
@@ -32,7 +35,7 @@ const idleSnapshot: Snapshot = {
 async function loadPage(
   navigateBack: ReturnType<typeof vi.fn>,
   initialSnapshot: Snapshot = idleSnapshot,
-  connectAutomatically?: ReturnType<typeof vi.fn<() => Promise<void>>>,
+  scan?: ReturnType<typeof vi.fn<() => Promise<void>>>,
   storedSession: unknown = {
     token: 't'.repeat(20),
     user: { uid: 42, name: 'CubeRoot user', wcaId: null, avatar: '' },
@@ -40,12 +43,15 @@ async function loadPage(
 ) {
   let page: SmartCubePage | undefined;
   let listener: ((snapshot: Snapshot) => void) | undefined;
-  const connectAutomaticallyMock = connectAutomatically ?? vi.fn(async (): Promise<void> => {
+  const scanMock = scan ?? vi.fn(async (): Promise<void> => {
     listener?.(connectedSnapshot());
   });
   const session = {
     connect: vi.fn(async () => undefined),
-    connectAutomatically: connectAutomaticallyMock,
+    scan: scanMock,
+    connectDevice: vi.fn(async () => {
+      listener?.(connectedSnapshot());
+    }),
     disconnect: vi.fn(async () => undefined),
     simulateMove: vi.fn(),
     start: vi.fn(async () => undefined),
@@ -92,6 +98,7 @@ function connectedSnapshot(battery: number | null = null): Snapshot {
     phase: 'connected',
     brand: 'gan',
     deviceName: 'GAN16ui_C296',
+    devices: [],
     battery,
   };
 }
@@ -133,7 +140,7 @@ describe('native smart-cube page', () => {
     expect(switchTab).toHaveBeenCalledWith({ url: '/pages/account/index' });
     expect(session.subscribe).not.toHaveBeenCalled();
     expect(session.start).not.toHaveBeenCalled();
-    expect(session.connectAutomatically).not.toHaveBeenCalled();
+    expect(session.scan).not.toHaveBeenCalled();
   });
 
   it('keeps the success page when it was not opened by the website relay', async () => {
@@ -148,18 +155,18 @@ describe('native smart-cube page', () => {
 
   it('does not return for a stale connected snapshot before this attempt completes', async () => {
     let finishConnection!: () => void;
-    const connectAutomatically = vi.fn(() => new Promise<void>((resolve) => {
+    const scan = vi.fn(() => new Promise<void>((resolve) => {
       finishConnection = resolve;
     }));
     const navigateBack = vi.fn();
     const { emit, page } = await loadPage(
       navigateBack,
       connectedSnapshot(100),
-      connectAutomatically,
+      scan,
     );
 
     page.onLoad({ token: 'relay-token' });
-    await vi.waitFor(() => expect(connectAutomatically).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(scan).toHaveBeenCalledOnce());
     expect(navigateBack).not.toHaveBeenCalled();
 
     emit({ ...idleSnapshot, phase: 'scanning' });
@@ -169,26 +176,44 @@ describe('native smart-cube page', () => {
   });
 
   it('does not return when an existing scan finishes the call without connecting', async () => {
-    const connectAutomatically = vi.fn(async (): Promise<void> => {});
+    const scan = vi.fn(async (): Promise<void> => {});
     const navigateBack = vi.fn();
     const { page } = await loadPage(
       navigateBack,
       { ...idleSnapshot, phase: 'scanning' },
-      connectAutomatically,
+      scan,
     );
 
     page.onLoad({ token: 'relay-token' });
-    await vi.waitFor(() => expect(connectAutomatically).toHaveBeenCalledOnce());
+    await vi.waitFor(() => expect(scan).toHaveBeenCalledOnce());
 
     expect(navigateBack).not.toHaveBeenCalled();
   });
 
+  it('connects the device selected from the scan result', async () => {
+    const navigateBack = vi.fn();
+    const { emit, page, session } = await loadPage(navigateBack);
+
+    page.onLoad({ token: 'relay-token' });
+    await vi.waitFor(() => expect(session.scan).toHaveBeenCalledOnce());
+    emit({
+      ...idleSnapshot,
+      phase: 'scanning',
+      devices: [{ deviceId: 'cube-1', deviceName: 'GoCube Edge' }],
+    });
+
+    page.selectDevice({ currentTarget: { dataset: { deviceId: 'cube-1' } } });
+
+    await vi.waitFor(() => expect(session.connectDevice).toHaveBeenCalledWith('cube-1'));
+    await vi.waitFor(() => expect(navigateBack).toHaveBeenCalledOnce());
+  });
+
   it('stays on the native page when the connected status cannot reach the timer', async () => {
-    const connectAutomatically = vi.fn(async () => {
+    const scan = vi.fn(async () => {
       throw new Error('无法向计时器发送智能魔方数据，请返回重试');
     });
     const navigateBack = vi.fn();
-    const { page } = await loadPage(navigateBack, idleSnapshot, connectAutomatically);
+    const { page } = await loadPage(navigateBack, idleSnapshot, scan);
 
     page.onLoad({ token: 'relay-token' });
     await vi.waitFor(() => expect(page.data.error).toBe(
