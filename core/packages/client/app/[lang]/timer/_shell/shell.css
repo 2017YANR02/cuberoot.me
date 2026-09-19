@@ -694,6 +694,23 @@
 .shell-main:has(> .shell-recap) .shell-stat-rail { bottom: calc(var(--recap-h) + 10px); }
 .shell-main:has(> .shell-recap) .shell-device-actions { bottom: calc(var(--recap-h) + 10px); }
 
+/* Mobile recap shares the vertical budget with the timer. Keep the timer's
+   scramble/readout band usable first, then let the recap give up rows through
+   its own scroller instead of squeezing the scramble source out of view. */
+@media (max-width: 1023px) {
+  .shell-main:has(> .shell-recap) {
+    --recap-h: clamp(150px, calc(100dvh - 610px), 300px);
+  }
+
+  .shell-main:has(> .shell-recap) .timing-surface-scramble-top .scramble-src-row {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    padding-block: 4px;
+    background: var(--background);
+  }
+}
+
 /* ── Distraction-free fade while running ────────────────── */
 .timer-shell.is-solving .surface-chrome {
   opacity: 0;

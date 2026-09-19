@@ -65,7 +65,8 @@ export function TimerSmartCubeSettingsFields({ value, localize, onChange, render
       <TimerBooleanSettingRow field={recap} label={localize(recap.copy)} value={settings.autoRecap}
         onChange={(autoRecap) => onChange({ autoRecap })} renderBooleanControl={renderBooleanControl} />
       <TimerBooleanSettingRow field={solution} label={localize(solution.copy)} value={settings.autoOpenSolution}
-        onChange={(autoOpenSolution) => onChange({ autoOpenSolution })} renderBooleanControl={renderBooleanControl} />
+        onChange={(autoOpenSolution) => onChange({ autoOpenSolution })} renderBooleanControl={renderBooleanControl}
+        hint={localize({ zh: '仅桌面窗口自动展开，移动端请手动打开解法。', en: 'Auto-opens on desktop only; open solutions manually on mobile.' })} />
     </>
   );
 }
