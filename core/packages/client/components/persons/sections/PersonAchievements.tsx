@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { RecordBadge } from '@/components/RecordBadge';
 import AppLink from '@/components/AppLink';
 import { AchievementBadge } from './AchievementBadge';
@@ -14,7 +14,7 @@ import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from '@/lib/event-constants';
 import { CONTINENT_RECORD_ABBR } from '@/lib/continent';
 import { fetchWcaPersonChampionshipPodiums, type ChampionshipPodiumRow, type WcaCompetition, type WcaPersonProfile, type WcaResultRow } from '@/lib/wca-person-api';
 import './person-achievements.css';
-import { EXPLORER_ACHIEVEMENTS, personalExplorerAchievements, fetchExplorerAchievements, femaleRecordAchievements, type FemalePersonRecord, type ExplorerAchievement } from '@/lib/person-achievements';
+import { EXPLORER_ACHIEVEMENTS, personalExplorerAchievements, groupExplorerAchievements, fetchExplorerAchievements, femaleRecordAchievements, type FemalePersonRecord, type ExplorerAchievement } from '@/lib/person-achievements';
 
 interface Achievement {
   wcaId: string;
@@ -36,7 +36,15 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
 }) {
   const t = useT();
   const female = femaleRecordAchievements(femaleRecords, femaleNationalComplete, countryIso2);
-  const explorer = useMemo(() => [...personalExplorerAchievements(results, comps, countryIso2, podiums), ...extraAchievements], [results, comps, countryIso2, podiums, extraAchievements]);
+  // Historical records combine events, but current holders and continent labels
+  // retain their original scope.
+  const femaleGroups = new Map<string, Omit<typeof female.history[number], 'event'> & { event?: string }>();
+  for (const entry of female.history) {
+    const key = entry.current ? `${entry.event}:${entry.record}` : entry.record;
+    const group = femaleGroups.get(key);
+    femaleGroups.set(key, group ? { ...group, event: undefined, rows: [...group.rows, ...entry.rows] } : entry);
+  }
+  const explorer = useMemo(() => groupExplorerAchievements([...personalExplorerAchievements(results, comps, countryIso2, podiums), ...extraAchievements]), [results, comps, countryIso2, podiums, extraAchievements]);
   const achievements = rows.filter(row => row.wcaId === wcaId);
   const compNames = new Map(comps.map(comp => [comp.id, comp.name]));
   const official = results.filter(row => !row.live && row.competition_id && row.event_id);
@@ -47,8 +55,8 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
   const allEvents = activeEvents.every(event => completed.has(event));
   const hundred = attended.size >= 100;
   // Only official, positive results with recognized record markers qualify.
-  // Keep historical retired events; deduplicate singles, averages and repeat records.
-  const historical = new Map<string, { event: string; kind: 'historicalWR' | 'historicalCR' | 'historicalNR'; history: { row: WcaResultRow; type: 'single' | 'average'; marker: string; value: number }[] }>();
+  // Keep retired events and every single/average record, grouped by level.
+  const historical = new Map<string, { event?: string; kind: 'historicalWR' | 'historicalCR' | 'historicalNR'; history: { row: WcaResultRow; type: 'single' | 'average'; marker: string; value: number }[] }>();
   for (const row of results) {
     if (row.live || !row.event_id) continue;
     for (const [value, marker, type] of [[row.best, row.regional_single_record, 'single'], [row.average, row.regional_average_record, 'average']] as const) {
@@ -57,8 +65,9 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
         : marker === 'CR' || Object.values(CONTINENT_RECORD_ABBR).includes(marker) ? 'CR' : null;
       if (!level) continue;
       const kind = `historical${level}` as const;
-      const key = `${row.event_id}:${kind}`;
+      const key = kind;
       const entry = historical.get(key) ?? { event: row.event_id, kind, history: [] };
+      if (entry.event !== row.event_id) entry.event = undefined;
       entry.history.push({ row, type, marker, value });
       historical.set(key, entry);
     }
@@ -80,7 +89,9 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
         {explorer.map(a => <AchievementBadge key={`${a.kind}:${a.event}:${a.record}`} kind={a.kind} event={a.event} achievement={a}
           name={[a.event ? eventDisplayName(a.event, isZh) : '', a.record].filter(Boolean).join(' ')}
           description={t(EXPLORER_ACHIEVEMENTS[a.kind].description.zh, EXPLORER_ACHIEVEMENTS[a.kind].description.en)}>
-          {!!a.evidence.length && <ol>{a.evidence.map((e, i) => <li key={i}>
+          {(a.groupedEvents ?? [a]).map((item, index) => <Fragment key={index}>
+          {a.groupedEvents && <h4>{eventDisplayName(item.event!, isZh)} {a.aggregation === 'events' ? '' : a.kind === 'monument' ? t(`${item.count} 天`, `${item.count} days`) : `×${item.count}`}</h4>}
+          {!!item.evidence.length && <ol>{item.evidence.map((e, i) => <li key={i}>
             {a.kind === 'thaw' && <strong>{i % 2 === 0 ? t('原 PB：', 'Previous PB: ') : t('新 PB：', 'New PB: ')}</strong>}
             {a.kind === 'reunion' && <strong>{i === 0 ? t('上次参赛：', 'Previous competition: ') : t('回归赛场：', 'Return: ')}</strong>}
             {a.kind === 'thaw' && <span>{e.type === 'average' ? t('平均 ', 'Average ') : t('单次 ', 'Single ')}</span>}
@@ -92,6 +103,7 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
             {e.date && <time>{formatDateRangeIso(e.date, e.endDate)}</time>}
             {e.compId && <div><AppLink href={`/wca/comp/${e.compId}`} prefetch={false}><CompCell compId={e.compId} compName={compNames.get(e.compId)} isZh={isZh} date={null} /></AppLink></div>}
           </li>)}</ol>}
+          </Fragment>)}
           {EXPLORER_ACHIEVEMENTS[a.kind].stat && <AppLink href={`/wca/${EXPLORER_ACHIEVEMENTS[a.kind].stat}`} prefetch={false}>{t('查看相关统计', 'View related statistics')}</AppLink>}
         </AchievementBadge>)}
         {hundred && <AchievementBadge kind="hundred" description={t('参加过至少 100 场正式 WCA 比赛。', 'Participated in at least 100 official WCA competitions.')}>
@@ -107,18 +119,18 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
         {!!currentRecords.length && <AchievementBadge kind="wr">
           <ul>{currentRecords.map(detail => <li key={detail}>{detail}</li>)}</ul>
         </AchievementBadge>}
-        {female.history.map(({ event, level, record, current, rows: history }) => <AchievementBadge key={`female:${event}:${record}`} kind={current ? 'wr' : `historical${level}`} female record={record} event={event} recordCount={history.length} name={eventDisplayName(event, isZh)}>
+        {[...femaleGroups.entries()].map(([key, { event, level, record, current, rows: history }]) => <AchievementBadge key={`female:${key}`} kind={current ? 'wr' : `historical${level}`} female record={record} event={event} recordCount={history.length} name={event ? eventDisplayName(event, isZh) : undefined}>
           <ol>{history.map((row, index) => <li key={index}>
-            <div className="wp-achievement-result"><RecordBadge record={row.l} /><strong>{formatWcaResult(row.v, event, row.t === 'a' ? 'average' : 'single')}</strong><span>{eventDisplayName(event, isZh)}{t('', ' ')}{row.t === 'a' ? t('平均', 'Average') : t('单次', 'Single')}</span></div>
+            <div className="wp-achievement-result"><RecordBadge record={row.l} /><strong>{formatWcaResult(row.v, row.e, row.t === 'a' ? 'average' : 'single')}</strong><span>{eventDisplayName(row.e, isZh)}{t('', ' ')}{row.t === 'a' ? t('平均', 'Average') : t('单次', 'Single')}</span></div>
             {current && row.currentWorld && <span>{t('当前保持', 'Currently held')} </span>}
             <AppLink href={`/wca/comp/${row.c}`} prefetch={false}><CompCell compId={row.c} compName={compNames.get(row.c)} isZh={isZh} date={null} /></AppLink>
           </li>)}</ol>
         </AchievementBadge>)}
-        {[...historical.values()].sort((a, b) => a.event.localeCompare(b.event) || ['historicalWR', 'historicalCR', 'historicalNR'].indexOf(a.kind) - ['historicalWR', 'historicalCR', 'historicalNR'].indexOf(b.kind)).map(({ event, kind, history }) => (
-          <AchievementBadge key={event + kind} kind={kind} event={event} recordCount={history.length} name={eventDisplayName(event, isZh)}>
+        {[...historical.values()].sort((a, b) => ['historicalWR', 'historicalCR', 'historicalNR'].indexOf(a.kind) - ['historicalWR', 'historicalCR', 'historicalNR'].indexOf(b.kind)).map(({ event, kind, history }) => (
+          <AchievementBadge key={kind} kind={kind} event={event} recordCount={history.length} name={event ? eventDisplayName(event, isZh) : undefined}>
             <h4>{t('纪录历程', 'Record history')}</h4>
             <ol>{history.map(({ row, type, marker, value }, index) => <li key={index}>
-              <div className="wp-achievement-result"><RecordBadge record={marker} /><strong>{formatWcaResult(value, event, type)}</strong><span>{eventDisplayName(event, isZh)}{t('', ' ')}{type === 'single' ? t('单次', 'Single') : t('平均', 'Average')}</span></div>
+              <div className="wp-achievement-result"><RecordBadge record={marker} /><strong>{formatWcaResult(value, row.event_id, type)}</strong><span>{eventDisplayName(row.event_id, isZh)}{t('', ' ')}{type === 'single' ? t('单次', 'Single') : t('平均', 'Average')}</span></div>
               <AppLink href={`/wca/comp/${row.competition_id}`} prefetch={false}><CompCell compId={row.competition_id} compName={compNames.get(row.competition_id)} isZh={isZh} date={null} /></AppLink>
             </li>)}</ol>
           </AchievementBadge>
