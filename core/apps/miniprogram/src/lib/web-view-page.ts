@@ -31,6 +31,7 @@ import {
 } from './required-session';
 import { decodeMiniProgramSessionMessage } from './web-session-contract';
 import { tr } from './i18n';
+import { decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
 
 export interface WebViewPageData {
   canRetry: boolean;
@@ -68,6 +69,8 @@ interface WebViewPageFactoryOptions {
 }
 
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
+const sharedDestinations = new WeakMap<WebViewPageContext, string>();
+const shareMetadata = new WeakMap<WebViewPageContext, PageShareMessage>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const visiblePages = new WeakSet<WebViewPageContext>();
 const pausedRouteResumes = new WeakSet<WebViewPageContext>();
@@ -291,7 +294,7 @@ export function createWebViewPageData(): WebViewPageData {
 export async function openWebRoute(context: WebViewPageContext, key: unknown): Promise<boolean> {
   if (disposedPages.has(context)) return false;
 
-  const route = resolveWebRoute(key);
+  const route = resolveWebRoute(key, sharedDestinations.get(context));
   updateShareMenu(key);
   if (!route) {
     const attempt = beginRouteAttempt(context);
@@ -522,6 +525,15 @@ export function createWebViewPageOptions(
       pausedRouteResumes.delete(this);
       disposedPages.delete(this);
       cancelLoginAttempt(this);
+      sharedDestinations.delete(this);
+      shareMetadata.delete(this);
+      if (!fixedRouteKey && options.path !== undefined) {
+        // Decode the query transport once; preserve percent escapes inside the destination.
+        let path = options.path;
+        try { if (!path.startsWith('/')) path = decodeURIComponent(path); }
+        catch { path = ''; }
+        sharedDestinations.set(this, path);
+      }
       if (factoryOptions.requireMiniProgramSession) {
         sessionRequiredPages.add(this);
       } else {
@@ -555,8 +567,9 @@ export function createWebViewPageOptions(
       cancelWebRoute(this);
     },
 
-    onShareAppMessage() {
-      return resolveWebRouteShare(this.data.routeKey) ?? {
+    onShareAppMessage(options) {
+      // webViewUrl is authoritative after in-web-view navigation; never use stale message URLs.
+      return resolveWebRouteShare(this.data.routeKey, options?.webViewUrl ?? sharedDestinations.get(this), shareMetadata.get(this)) ?? {
         imageUrl: WEB_ROUTE_SHARE_IMAGE,
         title: tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
         path: '/pages/timer/index',
@@ -569,6 +582,10 @@ export function createWebViewPageOptions(
 
     handleWebViewMessage(event) {
       const messages = Array.isArray(event.detail?.data) ? event.detail.data : [];
+      for (const message of messages) {
+        const metadata = decodePageShareMessage(message);
+        if (metadata) shareMetadata.set(this, metadata);
+      }
       if (messages.some((message) => decodeMiniProgramSessionMessage(message))) {
         clearStoredSession();
       }

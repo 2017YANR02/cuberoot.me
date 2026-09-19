@@ -92,6 +92,7 @@
       "./drive": "runtime-neutral",
       "./platform": "runtime-neutral",
       "./site-directory": "runtime-neutral",
+      "./page-share": "runtime-neutral",
       "./contact": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
       "./nnn-sim": "runtime-neutral",
@@ -403,6 +404,7 @@
     "./drive": "./src/drive.ts",
     "./platform": "./src/platform.ts",
     "./site-directory": "./src/site_directory.ts",
+    "./page-share": "./src/page_share.ts",
     "./contact": {
       "node": "./dist/contact.js",
       "default": "./src/contact.ts"

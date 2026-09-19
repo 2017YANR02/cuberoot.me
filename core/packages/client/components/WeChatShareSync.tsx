@@ -9,18 +9,21 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { configureWeChatShare, isInWeChat } from '@/lib/wechat-share';
+import { syncMiniProgramPageShare } from '@/lib/page-share';
+import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
 
 export default function WeChatShareSync() {
   const pathname = usePathname();
   useEffect(() => {
-    if (!isInWeChat()) return;
+    if (!isInWeChat() && !mayUseMiniProgramBridge()) return;
     let last = '';
     const apply = () => {
+      void syncMiniProgramPageShare();
       const pageTitle = (document.title || 'CubeRoot').trim();
       const title = pageTitle === 'CubeRoot' ? pageTitle : `CubeRoot — ${pageTitle}`;
       if (title === last) return; // 去重:同标题不重复签名/配置
       last = title;
-      void configureWeChatShare({ title });
+      if (isInWeChat()) void configureWeChatShare({ title });
     };
     // 首配延后一拍,等本页 useDocumentTitle 落定;再用 MutationObserver 跟随后续标题变化
     // (i18n 切换 / 数据加载后改标题)。
@@ -28,7 +31,11 @@ export default function WeChatShareSync() {
     const titleEl = document.querySelector('title');
     const obs = titleEl ? new MutationObserver(apply) : null;
     if (titleEl && obs) obs.observe(titleEl, { childList: true, characterData: true, subtree: true });
-    return () => { clearTimeout(t); obs?.disconnect(); };
+    window.addEventListener('hashchange', apply);
+    return () => {
+      clearTimeout(t); obs?.disconnect();
+      window.removeEventListener('hashchange', apply);
+    };
   }, [pathname]);
   return null;
 }

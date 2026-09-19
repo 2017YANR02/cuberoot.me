@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"e263719dc893888a4c6239c9558c4c965af5bae2a55fdec4a5bac703c567fbb3","reason":"复核微信小程序 WCA 绑定流程：微信小程序 WebView 不再直接打开 WCA 外域，而是使用短期账号票据转到系统浏览器完成 WCA OAuth，由服务端直接绑定；小程序返回前台后刷新账号状态。普通微信登录、手机号授权和其他绑定流程未改变。"}
+{"fingerprint":"829212baebbac41e5841eceed8ed24822c8728ff5aac7de55d188049297cae12","reason":"复核小程序 web-routes、web-view-page 及微信分享入口：分享接收新增经校验的站内公开文章路径，沿用接收者现有会话和单次网页票据恢复，重试保留该路径；账号、认证及编辑路径不可作为分享目的地，分享过滤票据和令牌。登录、绑定、退出消息处理和固定 tab 的会话门禁未改。已在小程序流程补充文章分享接收步骤；部署及微信真机转发仍待验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -162,6 +162,13 @@ export default function AuthFlowPage() {
         <div className="auth-map-stem auth-map-finish"><Arrow /><FlowNode outcome>{t('登录完成：会员、资料仍在同一个账号', 'Signed in: membership and profile stay on one account')}<small>{t('以后进入小程序，走「已绑定」路径。', 'Future visits follow the already-linked path.')}</small></FlowNode></div>
         <figcaption>{t('三条路径是不同情况，不是每个人都要走三遍。登录和绑定完成后才到达底部结果。', 'These are alternative paths, not three steps everyone must repeat. The final result requires successful sign-in and linking.')}</figcaption>
       </figure>
+      <h3>{t('打开别人分享的文章', 'Opening a shared article')}</h3>
+      <Steps items={[
+        t('分享卡片 → 校验站内公开路径，排除账号、认证和编辑流程，移除票据与令牌', 'Share card → validate a public site path, excluding account, authentication and editing flows and removing tickets and tokens'),
+        t('接收者已登录 → 用接收者自己的单次网页票据同步会话；未登录 → 以游客打开文章', 'Signed-in recipient → sync their own session with a one-time web ticket; otherwise open the article as a guest'),
+        t('打开具体文章并保留语言、筛选和锚点；加载失败重试仍回到该文章', 'Open the specific article with its language, filters and anchor; retries retain that destination'),
+      ]} />
+      <p className="auth-map-note">{t('分享不携带发送者的登录态。本地实现仍须发布后验收微信真机转发。', 'Sharing never carries the sender’s session. This local implementation still needs release and real-device WeChat sharing acceptance.')}</p>
     </section>
 
     <aside className="auth-map-boundaries" aria-labelledby="boundary-title">
