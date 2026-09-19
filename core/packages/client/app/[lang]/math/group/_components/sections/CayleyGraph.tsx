@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { GTSec, L, TeX, TeXBlock, useLang } from '../primitives';
 import { applyAlg, invariants, isSolved, thistlethwaiteStage, cycleStructure, identity, CubieState } from '../cube_state';
 import { tr } from '@/i18n/tr';
+import Link from '@/components/AppLink';
 import { TwistyMini } from '../TwistyMini';
 import { formatCycle, type FaceLetterChar } from '../gt-helpers';
 import {
@@ -125,7 +126,7 @@ function CayleyWalker() {
       </div>
       <div className="gt-aside" style={{ marginTop: 12, marginBottom: 0 }}>
         {isHome && path.length > 0
-          ? (lang === 'zh' ? `走了 ${path.length} 步又回到 e — 你转了一个圈 (这条路径是 G 中的一个 ${path.length}-阶元素)。` : `Walked ${path.length} steps and returned to e — you traced a cycle (this path is an ${path.length}-order element of G).`)
+          ? tr({ zh: `走了 ${path.length} 步回到 e：这是一条闭合游走，操作乘积是单位元。路径长度不等于元素的阶。`, en: `Returned to e after ${path.length} moves: a closed walk whose product is the identity. Walk length is not an element’s order.` })
           : tr({ zh: '每个按钮都是一条边。路径长度 = 在 Cayley 图上的步数 (≥ 真实距离 d(e,g))。', en: 'Each button is an edge. Path length = walk length in Cayley graph (≥ the true distance d(e, g)).'
                           })}
       </div>
@@ -136,8 +137,8 @@ function CayleyWalker() {
 // BFS sphere sizes |S_r| at each HTM radius in the full cube Cayley graph.
 // Single source: lib/god-distance-333 (Rokicki et al. 2010, cube20.org). d ≤ 15
 // is exact; d = 16..19 are cube20.org's two-significant-digit estimates, taken
-// here in their normalized form so Σ|S_d| is exactly |G|; d = 20 is a lower
-// bound on the antipode count, not a census.
+// here in their normalized form so Σ|S_d| is exactly |G|; d = 20 is also
+// an estimate, not a census.
 // `count` 是 cube20.org 的公布值(界面上显示的就是它);`norm` 是等比缩到尾部真值后的版本,
 // 只拿来画条和算占比 —— 否则各档占比加起来是 101%。
 const CAYLEY_SPHERE: { d: number; count: bigint; norm: bigint; kind: GodBinKind }[] =
@@ -180,11 +181,7 @@ function CayleyBFSTable() {
 
 // ── Cayley graph mini (§14) ───────────────────────────────────────────────
 // A tiny visualization: subgroup ⟨R, U⟩'s first few BFS layers as a Cayley graph.
-// Because the full graph has 73,483,200 nodes (the order of ⟨R, U⟩), we just
-// render the identity, its first neighbours, and a few second-layer nodes —
-// enough to convey the geometric idea.
-
-// enough to convey the geometric idea.
+// Selected states and quarter-turn edges, not a complete subgroup graph.
 function CayleyMini() {
   // Pre-computed positions of nodes at depths 0, 1, 2 in a layout-friendly form.
   // Layer 0: e
@@ -200,8 +197,8 @@ function CayleyMini() {
     { id: 'U',    x: cx + 100,  y: cy + 60,   label: 'U',  layer: 1 },
     { id: "U'",   x: cx - 100,  y: cy + 60,   label: "U'", layer: 1 },
     { id: 'U2',   x: cx,        y: cy + 120,  label: 'U²', layer: 1 },
-    { id: 'RU',   x: cx + 220,  y: cy + 10,   label: 'RU', layer: 2 },
-    { id: 'UR',   x: cx + 220,  y: cy - 10,   label: 'UR', layer: 2 },
+    { id: 'RU',   x: cx + 220,  y: cy + 40,   label: 'RU', layer: 2 },
+    { id: 'UR',   x: cx + 220,  y: cy - 40,   label: 'UR', layer: 2 },
     { id: "RU'",  x: cx + 240,  y: cy + 90,   label: "RU'",layer: 2 },
     { id: "UR'",  x: cx + 240,  y: cy - 110,  label: "UR'",layer: 2 },
     { id: "R'U",  x: cx - 240,  y: cy + 90,   label: "R'U",layer: 2 },
@@ -216,8 +213,8 @@ function CayleyMini() {
     ['U', 'UR', 'R'], ['R', 'RU', 'U'],
     // U edges (blue)
     ['e', 'U', 'U'], ['U', 'U2', 'U'], ['U2', "U'", 'U'], ["U'", 'e', 'U'],
-    ['R', 'RU', 'U'], ['U', 'UR', 'R'],
-    [ "R'", "R'U", 'U'], [ "U'", "U'R", 'R'], ["U'", "U'R'", 'R'],
+    ['R', "RU'", "U'"], ['U', "UR'", "R'"],
+    ["R'", "R'U", 'U'], ["R'", "R'U'", "U'"], ["U'", "U'R", 'R'], ["U'", "U'R'", "R'"],
   ];
   const nMap = Object.fromEntries(nodes.map(n => [n.id, n]));
   return (
@@ -226,7 +223,7 @@ function CayleyMini() {
         {edges.map(([a, b, kind], i) => {
           const na = nMap[a], nb = nMap[b];
           if (!na || !nb) return null;
-          return <line key={i} x1={na.x} y1={na.y} x2={nb.x} y2={nb.y} className={`gt-cayley-edge gt-cayley-edge-${(kind as string).toLowerCase()}`} />;
+          return <line key={i} x1={na.x} y1={na.y} x2={nb.x} y2={nb.y} className={`gt-cayley-edge gt-cayley-edge-${kind[0].toLowerCase()}`} />;
         })}
         {nodes.map((n) => (
           <g key={n.id} className={`gt-cayley-node ${n.solved ? 'gt-cayley-node-solved' : ''}`}>
@@ -318,7 +315,7 @@ function SphereLogPlot() {
         )}
       </div>
       <div className="gt-aside" style={{ marginTop: 8, marginBottom: 0 }}>
-        {tr({ zh: '前 13 步增长率稳定在 ≈ 17.97× (略低于 18 — 因为 R 后不能立刻走 R\'); d = 18 达到 ≈ 2.87 × 10¹⁹ 的峰值; d = 20 已知的只剩 4.9 亿个 (下界, 其中包含 superflip)。 这是「球面填空」在有限图上的几何后果 — 顶端必然收缩。d ≥ 16 的四档是 cube20.org 两位有效数字的估计, 这里按尾部真值等比归一, 故 Σ|S_d| 恰为 |G|。', en: 'Steady growth at ~17.97× for d ≤ 13 (just below 18 because R cannot be immediately undone). Peak at d = 18 ≈ 2.87 × 10¹⁹. At d = 20 only 490 million states are known (a lower bound; superflip among them). This is the geometric consequence of "sphere packing in a finite graph" — the outer tip must shrink. The four d ≥ 16 bins are cube20.org estimates to two significant figures, rescaled here to the exact tail so that Σ|S_d| is exactly |G|.'
+        {tr({ zh: '球壳的增长率不是顶点的度数 18：不同路径会汇合。中段相邻层之比约为 13，后段估计在 d = 18 附近达到峰值。这里的估计档按已知总状态数归一化以便展示；总和吻合不代表各档计数精确。', en: 'Sphere growth is not the vertex degree 18: different paths merge. Middle-layer ratios are around 13, and later estimates peak near d = 18. Estimated bins are normalised to the known total for display; matching that total does not make individual counts exact.'
         })}
       </div>
     </div>
@@ -978,20 +975,20 @@ const CAYLEY_REFS: CayleyRef[] = [
   {
     authors: 'Rokicki, T.; Kociemba, H.; Davidson, M.; Dethridge, J.', year: '2010',
     title: "The diameter of the Rubik's cube group is twenty",
-    venue: 'SIAM Journal on Discrete Mathematics 27 (2): 1082-1105',
-    link: 'https://arxiv.org/abs/0710.3686',
+    venue: 'cube20.org proof announcement',
+    link: 'https://www.cube20.org/',
     category: 'cube',
-    noteZh: '上帝之数 HTM = 20 的最终证明 (35 CPU-年, 对称约简 + IDA* + 共置 lookup)。',
+    noteZh: '上帝之数 HTM = 20 的最终证明 (35 CPU-年, 对称约简 + IDA* + 陪集搜索)。',
     noteEn: "God's number HTM = 20 proven exactly (35 CPU-years; symmetry reduction + IDA* + cosets)."
 },
   {
-    authors: 'Rokicki, T.', year: '2014',
+    authors: 'Rokicki, T.; Davidson, M.', year: '2014',
     title: "The diameter of the Rubik's cube group is twenty-six in the quarter-turn metric",
-    venue: 'arXiv:1408.6303',
-    link: 'https://arxiv.org/abs/1408.6303',
+    venue: 'cube20.org proof announcement',
+    link: 'https://www.cube20.org/qtm/',
     category: 'cube',
-    noteZh: 'QTM 直径 = 26 (HTM 的伴生结果, 同年完工)。',
-    noteEn: 'QTM diameter = 26 (companion to the 2010 HTM result).'
+    noteZh: 'QTM 直径 = 26，2014 年证明。',
+    noteEn: 'QTM diameter = 26, proved in 2014.'
 },
   {
     authors: 'Korf, R. E.', year: '1997',
@@ -1008,8 +1005,8 @@ const CAYLEY_REFS: CayleyRef[] = [
     venue: 'kociemba.org',
     link: 'http://kociemba.org/cube.htm',
     category: 'cube',
-    noteZh: '二阶段法的官方网页; G → G₁ → e 两段 IDA*, 任何状态 ≤ 24 步。',
-    noteEn: 'Official two-phase reference (G → G₁ → e); any scramble solved in ≤ 24 moves.'
+    noteZh: '二阶段法的官方网页：先进入子群，再在子群内还原，通常不保证最短解。',
+    noteEn: 'Official two-phase reference: enter a subgroup, then solve within it; solutions are generally not guaranteed optimal.'
 },
   {
     authors: 'Bordoni, A.; Reiter, F.', year: '2024',
@@ -1227,6 +1224,12 @@ export default function CayleyGraph() {
         <h1 className="gt-sec-title">
           <L zh="Cayley 图 — 群的几何" en="The Cayley graph — geometry of a group" />
         </h1>
+        <p><Link href="/math/cube-graph#cayley-bridge" prefetch={false}>{tr({ zh: '从可转动的魔方出发：对照贴纸图理解凯莱图', en: 'Start with a turnable cube: compare sticker diagrams and Cayley graphs' })}</Link></p>
+        <h2>{tr({ zh: '先把魔方、状态和图对应起来', en: 'Connecting the physical cube, its states and the graph' })}</h2>
+        <p>{tr({ zh: '本节讨论普通三阶：固定中心参考方向，不计中心贴纸的自转。群 G 的元素是合法转动造成的整体置换，以还原态为基准，也可以看成所有可达状态。一个顶点包含完整的角块与棱块位置、朝向；不是一个小方块，也不是一枚贴纸。', en: 'Here the cube is an ordinary 3×3 with a fixed centre frame and unmarked centre orientation. Elements of G are the overall permutations produced by legal turns, identified with reachable states by starting from solved. Each vertex contains every corner and edge position and orientation; it is neither a cubie nor a sticker.' })}</p>
+        <p><TeX src={String.raw`|G|=8!\,3^7\,12!\,2^{10}`} />{' = '}{BigInt(CUBE3_STATES).toLocaleString('en-US')}{tr({ zh: '。这个状态数与贴纸图的 54 个位置处于不同层次。54 枚贴纸的完整排列描述一个状态；一次面转同步改变多个位置，但只使状态沿一条凯莱边移动。', en: '. This counts states, whereas 54 counts positions in the sticker diagram. One complete sticker arrangement describes a state. A face turn changes many positions simultaneously but moves the state along just one Cayley edge.' })}</p>
+        <p>{tr({ zh: '约定乘积 gs 表示先到达状态 g，再执行转动 s。HTM 的生成集包含六个面的顺转、逆转、半转，因此每个顶点有 18 个不同邻居；R 边的反向是 R′，R2 则是自身的逆。普通无向图把反向边合并，边数为 18|G|÷2=9|G|，与贴纸相邻图的 108 条边无关。', en: 'Use gs to mean reaching g and then executing s. HTM includes clockwise, counterclockwise and half turns of each face, so each vertex has 18 distinct neighbours. An R edge reverses via R′, while R2 is its own inverse. Pairing opposite edges gives 18|G|/2 = 9|G| undirected edges, unrelated to the 108 edges of a sticker adjacency graph.' })}</p>
+        <p>{tr({ zh: '例如从 e 执行 R U 得到一个状态；U R 通常是另一个状态。执行 R R 与 R2 却会到达同一点。图中保存状态，而不是把每种写法当成新顶点。上面的贴纸图链接提供 ⟨R⟩ 的四状态实验，可以直接比较“走过几步”和“离还原态还有几步”。', en: 'For example, R U from e reaches one state, while U R generally reaches another. Yet R R and R2 reach the same vertex. The graph stores states rather than creating a vertex for each spelling. The linked sticker page includes a four-state ⟨R⟩ experiment that compares moves walked with shortest distance to solved.' })}</p>
         <p>
           <L
             zh={<>群本身是抽象代数对象, 但我们可以给它一副 「面孔」 —— 把每个元素画成一个点, 每个 「生成元 s」 画成一条边。 这就是 <strong>Cayley 图</strong>: 它把抽象群变成具体的几何对象, 让群论里的 「直径」 「测地线」 「球壳」 「邻域」 等词有了字面意义。 凯莱图是 1878 年由 Arthur Cayley 提出的, 比魔方早了一个世纪, 但它最自然的可视化就是魔方。</>}
@@ -1238,24 +1241,24 @@ export default function CayleyGraph() {
         })}</div>
           <div className="gt-def-body">
             <L
-              zh={<>设群 <TeX src={`G`} /> 有生成集 <TeX src={`S`} /> (假设 <TeX src={`S = S^{-1}`} />, 即生成元的逆也在 S 中)。 <strong>Cayley 图</strong> <TeX src={`\\operatorname{Cay}(G, S)`} /> 是: 顶点 = G 的每个元素, 每对 <TeX src={`(g, s)`} /> 给出一条 <TeX src={`g \\to g \\cdot s`} /> 的有色无向边 (按 s 配色)。 它是一个 <strong>顶点传递</strong> (vertex-transitive) 图。</>}
-              en={<>Let G be a group with generating set S, closed under inversion (so that <TeX src={`S = S^{-1}`} />). The <strong>Cayley graph</strong> <TeX src={`\\operatorname{Cay}(G, S)`} /> has one node per element of G; for every pair <TeX src={`(g, s)`} /> there is an edge <TeX src={`g \\to g \\cdot s`} /> coloured by <em>s</em>. The graph is <strong>vertex-transitive</strong>.</>}
+              zh={<>设群 <TeX src={`G`} /> 有生成集 <TeX src={`S`} /> (假设 <TeX src={`S = S^{-1}`} />, 即生成元的逆也在 S 中)。 <strong>Cayley 图</strong> <TeX src={`\\operatorname{Cay}(G, S)`} /> 是: 顶点 = G 的每个元素, 每对 <TeX src={`(g, s)`} /> 给出一条 <TeX src={`g \\to g \\cdot s`} /> 的有向标记边。将互逆的有向边配对，可得到无向图。 它是一个 <strong>顶点传递</strong> (vertex-transitive) 图。</>}
+              en={<>Let G be a group with generating set S, closed under inversion (so that <TeX src={`S = S^{-1}`} />). The <strong>Cayley graph</strong> <TeX src={`\\operatorname{Cay}(G, S)`} /> has one node per element of G; for every pair <TeX src={`(g, s)`} /> there is an edge <TeX src={`g \\to g \\cdot s`} /> labelled by <em>s</em>. Pairing inverse edges yields the undirected graph. The graph is <strong>vertex-transitive</strong>.</>}
             />
           </div>
         </div>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 14, color: 'var(--ink)' }}>
-          <L zh="14.1  小例子热身 — ⟨R, U⟩ 的前两层" en="14.1  Warm-up — first two layers of ⟨R, U⟩" />
+          <L zh="14.1  小例子热身 — ⟨R, U⟩ 的部分状态" en="14.1  Warm-up — selected states of ⟨R, U⟩" />
         </h3>
         <p>
           <L
-            zh={<>魔方的完整 Cayley 图有 4.3 × 10¹⁹ 个节点和 ≈ 3.9 × 10²⁰ 条边, 没法画出来。但我们可以画 <strong>小子群</strong>。下面是 ⟨R, U⟩ 的前两层 BFS — 从 e 出发, 一步、两步能到达的部分节点。 红边 = R, 蓝边 = U。 已经能看出非阿贝尔群特有的 「不对称扇形」 (R·U ≠ U·R, 所以两边的两步邻居各占一片):</>}
-            en={<>The full cube Cayley graph has 4.3 × 10¹⁹ nodes and ≈ 3.9 × 10²⁰ edges — impossible to render. But we can plot a <strong>small subgroup</strong>. Below: the first two BFS layers of ⟨R, U⟩ from e. Red edges = R, blue = U. The "asymmetric fan" of a non-Abelian group is already visible — R·U ≠ U·R, so the two-step neighbours bifurcate:</>}
+            zh={<>完整 HTM 图有约 4.3 × 10¹⁹ 个顶点、3.9 × 10²⁰ 条无向边，无法逐点画出。下面只取 ⟨R,U⟩ 中的部分状态，以面转颜色连接它们。R U 与 U R 是不同节点；节点的排布由绘图决定，不代表图中距离。</>}
+            en={<>The full HTM graph has about 4.3 × 10¹⁹ vertices and 3.9 × 10²⁰ undirected edges, too many to draw individually. Below are selected states in ⟨R,U⟩ with face-coloured edges. R U and U R are distinct vertices; layout positions do not encode graph distance.</>}
           />
         </p>
         <div className="gt-panel">
           <CayleyMini />
           <div className="gt-aside" style={{ marginTop: 12, marginBottom: 0 }}>
-            {tr({ zh: '完整的 ⟨R, U⟩ Cayley 图有 73,483,200 个节点, 直径约 26 (HTM)。这里只画了前 15 个节点作示意。', en: 'The full Cay(⟨R, U⟩, {R, U}) has 73,483,200 nodes and diameter ≈ 26 (HTM). Only 15 nodes shown here.'
+            {tr({ zh: '这是 R、U 转动产生的一组选定状态和边，不是完整图或完整 BFS 层。边按所转的面着色，逆转沿同一条边返回；节点标签按从左到右的转动顺序读取。', en: 'Selected states and edges generated by R and U, not a complete graph or complete BFS layers. Edges are coloured by face; inverse moves return along the same edge. Read node labels as moves executed left to right.'
             })}
           </div>
         </div>
@@ -1264,8 +1267,8 @@ export default function CayleyGraph() {
         </h3>
         <p>
           <L
-            zh={<>你正站在节点 <span className="gt-math">e</span> 上。 点 18 个生成元里的任意一个, 就沿那条 「彩色边」 跨到邻居。 路径就是 「在 Cayley 图上走过的边序列」 。 走着走着回到 e? 你刚刚走完一个 <em>闭路</em> — 这条路径作为 G 的元素 = 单位元, 它的长度就是相应元素的 <em>阶</em>。</>}
-            en={<>You are standing at node <span className="gt-math">e</span>. Click any of the 18 generators to traverse that coloured edge to a neighbour. The path is the sequence of edges walked. Wandered back to e? You just closed a loop — the product of the path is the identity, and its length is the order of that element.</>}
+            zh={<>从单位元 e 出发，每次点击一个生成元就走到相邻状态。公式是一条游走，乘积为 e 的公式是一条闭合游走。<strong>闭合游走的长度不是元素的阶</strong>：R R′ 两步回到 e，但乘积 e 的阶为 1；R 的阶为 4，是因为连续重复 R，首次回到 e 需要四次。</>}
+            en={<>Start at the identity e and click a generator to reach a neighbouring state. An algorithm is a walk; one with product e is a closed walk. <strong>Closed-walk length is not element order</strong>: R R′ returns in two steps, but its product e has order 1. R has order 4 because four is the first positive repetition count returning to e.</>}
           />
         </p>
         <CayleyWalker />
@@ -1274,15 +1277,15 @@ export default function CayleyGraph() {
         </h3>
         <p>
           <L
-            zh={<>对 <TeX src={`e \\in G`} />, 距离恰为 d 的状态集合记作 <TeX src={`S_d = \\{g : d(e, g) = d\\}`} /> (Cayley 图上的「球壳」)。 球壳大小 <TeX src={`|S_d|`} /> 由 BFS 直接给出, 在魔方上是 21 个精确已知的数字 (来自 cube20.org):</>}
-            en={<>For <TeX src={`e \\in G`} />, the set of states at distance exactly d is <TeX src={`S_d = \\{g : d(e, g) = d\\}`} /> — the "sphere of radius d" in Cay(G). The sizes <TeX src={`|S_d|`} /> come from BFS. For the cube, all 21 values are known exactly (a byproduct of Rokicki et al. 2010):</>}
+            zh={<>球壳 S_d 是距还原态恰好 d 步的状态集合，d 取最短距离。BFS 可以逐层计算球壳，但不能据此声称完整魔方图已被逐点遍历。下表复用本站的 HTM 分布数据：d = 0…15 为精确计数，d = 16…20 为估计，请看各行标注；这些数不是 21 个精确计数。</>}
+            en={<>The sphere S_d contains states at shortest distance d from solved. BFS can enumerate spheres layer by layer, but this does not mean the full cube graph has been exhaustively traversed. The shared HTM data below has exact counts for d = 0…15 and estimates for d = 16…20, as labelled; these are not 21 exact counts.</>}
           />
         </p>
         <CayleyBFSTable />
         <p>
           <L
-            zh={<>球壳大小先以 <strong>17.97 倍</strong> 的稳定指数增长 (这是 「分支因子」, 接近 18 但略小, 因为有 reduction — 比如 <span className="gt-mono">R</span> 之后不再走 <span className="gt-mono">R'</span>) , 在 d ≈ 13 达到 5 × 10¹⁴ 量级, 然后 <strong>急剧饱和</strong> 在 d = 18 达到峰值, 接着突然下降。 d = 20 时只剩 4.9 亿个状态 (其中包括 superflip)。 这是经典 「球面填空」 现象 — 一个有限图的 「外缘」 一定收缩。</>}
-            en={<>Sphere sizes grow at a steady factor of about <strong>17.97×</strong> (the branching factor — close to 18 but slightly less, due to reductions like "don't immediately undo <span className="gt-mono">R</span>"). They reach ~5 × 10¹⁴ around d = 13, then sharply <strong>saturate</strong> at the peak d = 18, and collapse. By d = 20 only 490 million states remain (including superflip). This is the classic "sphere packing in a finite graph" phenomenon — the outer boundary must shrink.</>}
+            zh={<>18 个邻居不意味着球壳每层增长 18 倍：不同走法会汇合到同一状态，连续同面转动也可合并。例如第一层有 18 个状态，第二层有 243 个，增长率是 13.5；中段约为 13 倍，而非固定常数。后段估计在 d = 18 附近达到峰值。<a href="https://www.cube20.org/" target="_blank" rel="noreferrer">cube20.org</a> 将 d = 20 的约 4.9 亿标为估计，并未给出精确总数。</>}
+            en={<>Having 18 neighbours does not multiply sphere sizes by 18: different walks merge, and consecutive turns of one face can combine. The first two spheres contain 18 and 243 states, a ratio of 13.5; middle-layer ratios are around 13, not a fixed constant. Later estimates peak near d = 18. <a href="https://www.cube20.org/" target="_blank" rel="noreferrer">cube20.org</a> labels roughly 490 million distance-20 states as an estimate, not an exact count.</>}
           />
         </p>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 14, color: 'var(--ink)' }}>
@@ -1290,8 +1293,8 @@ export default function CayleyGraph() {
         </h3>
         <p>
           <L
-            zh={<>从 e 到 g 的 「最短路径」 称为 <strong>测地线</strong> (geodesic), 长度 = d(e, g) = 「g 的最短解 |g|_S」 。 一个公式 (alg) 就是一条 walk; 它是测地线当且仅当它是最优解。 这正是 「solver」 在做的事 — <em>找测地线</em>。</>}
-            en={<>The shortest path from e to g is a <strong>geodesic</strong>, of length d(e, g) = |g|_S (the optimal solution length for g). Any alg is a walk on Cay(G); it is a geodesic iff it is optimal. Solvers, in graph-theoretic language, search for geodesics.</>}
+            zh={<>从 e 到 g 的最短路径称为<strong>测地线</strong>，长度为 d(e,g)。逆向走这条路就是 g 的最短解。任意公式都是游走，但只有最短的才是测地线。一般求解器只需找到一条还原路径；最优求解器还必须证明不存在更短路径。</>}
+            en={<>A shortest path from e to g is a <strong>geodesic</strong> of length d(e,g). Reversing it gives an optimal solution for g. Every algorithm is a walk, but only a shortest walk is geodesic. A general solver finds a solution; an optimal solver must also establish that no shorter one exists.</>}
           />
         </p>
         <div className="gt-thm">
@@ -1306,8 +1309,8 @@ export default function CayleyGraph() {
         </div>
         <p>
           <L
-            zh={<>有意思的对比 — Korf 算法 (1997) 是直接在 Cayley 图上做 IDA* 搜索 (启发式: 用角块查表和棱块查表的 max 作下界估计); Kociemba 二阶段法 (§10) 先走 G → G_1 的捷径再走 G_1 → e, 不一定是测地线但保证 ≤ 24 步; Rokicki 的 God's number 证明在 Cayley 图上做了一次 「分块的全局 BFS」 (按对称等价类切片, 35 CPU 年)。 这三个就是 「Cayley 图上的三种穿越策略」 。</>}
-            en={<>A nice contrast: Korf's 1997 algorithm does IDA* directly on Cay(G), using max(corner-PDB, edge-PDB) as a heuristic; Kociemba's two-phase (§10) walks G → G_1, then G_1 → e, sacrificing optimality for speed and bounded length (≤ 24); Rokicki's 2010 proof did a "block-BFS" of Cay(G) using symmetry-quotient classes, costing 35 CPU-years. Three different ways to traverse the same graph.</>}
+            zh={<>Korf 的 IDA* 方法用角块和棱块模式数据库提供距离下界，搜索最优路径。Kociemba 二阶段法先进入子群 G₁，再在其中还原，通常以最优性换取速度。20 步上界的计算证明利用子群陪集、对称性和集合覆盖来组织搜索，只需证明每个状态有一个不超过 20 步的解，并不是对整个图做一次 BFS 或求出每个状态的最短距离。</>}
+            en={<>Korf’s IDA* method uses corner and edge pattern databases as distance lower bounds in optimal search. Kociemba’s two-phase method first enters a subgroup G₁ and then solves within it, generally trading optimality for speed. The computational proof of the 20-move bound organises searches using subgroup cosets, symmetry and set covering. It establishes a solution of at most 20 moves for each state, rather than running a full BFS or finding every optimal distance.</>}
           />
         </p>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 14, color: 'var(--ink)' }}>
@@ -1315,8 +1318,8 @@ export default function CayleyGraph() {
         </h3>
         <p>
           <L
-            zh={<>魔方 Cayley 图是一个 <strong>「胖」</strong> 图 — 每个节点 18 邻居, 直径只 20, 节点数 4.3 × 10¹⁹。 这意味着图的 「扩张系数」 接近最大: 任何子集 A ⊆ G (|A| ≤ |G|/2), 它的边界 |∂A| / |A| 不会太小。 数学上, 这与图 Laplacian 的 <strong>spectral gap</strong> 直接相关; 实验上, 它表现为 「随机游走快速混合」 (rapidly mixing random walk)。</>}
-            en={<>The cube's Cayley graph is a <strong>"fat" graph</strong> — every node has 18 neighbours, diameter only 20, with 4.3 × 10¹⁹ nodes. The "expansion" is near-maximal: for any subset A ⊆ G with |A| ≤ |G|/2, the boundary |∂A| / |A| does not shrink. Mathematically this connects to the <strong>spectral gap</strong> of the graph Laplacian; practically, it makes random walks "rapidly mix" through G.</>}
+            zh={<>HTM 图有约 4.3 × 10¹⁹ 个顶点，每点有 18 个邻居，直径为 20。小直径并不直接给出“接近最大”的扩张系数。扩张性研究集合与其边界的比例，谱隙则把这种几何性质与随机游走联系起来；具体数值需要额外证明或计算。</>}
+            en={<>The HTM graph has about 4.3 × 10¹⁹ vertices, 18 neighbours per vertex and diameter 20. Small diameter alone does not establish near-maximal expansion. Expansion studies sets relative to their boundaries; the spectral gap connects this geometry to random walks. Numerical claims require additional proof or computation.</>}
           />
         </p>
         <div className="gt-thm">
@@ -1324,8 +1327,8 @@ export default function CayleyGraph() {
         })}</div>
           <div className="gt-thm-body">
             <L
-              zh={<>魔方 Cayley 图的随机游走混合时间是 <strong>O(log |G| / λ)</strong> 步, 其中 λ 是 spectral gap。 数值实验给出 λ ≈ 0.6, 混合时间 ≈ 70 步 — 即任何 70 步以上的均匀随机打乱在统计意义上跟 「真正均匀分布」 几乎不可区分。 WCA 比赛打乱长度 (3x3 一般 25 步) 远低于这个值, 所以打乱有一些 「偏」 — 比如靠近 e 的状态出现概率比预期高一点点。</>}
-              en={<>Random-walk mixing time on the cube Cayley graph is <strong>O(log |G| / λ)</strong>, where λ is the spectral gap. Numerical experiments give λ ≈ 0.6 and a mixing time of roughly 70 steps. Any scramble longer than ~70 random moves is statistically indistinguishable from the uniform distribution on G. WCA scrambles (25 moves on 3x3) sit well below this, so they retain a slight bias — states near e occur slightly more often than expected.</>}
+              zh={<>混合时间必须指定转动的抽样规则、是否允许停留，以及与均匀分布的误差阈值。最短解最多 20 步，不代表随机走 20 步就接近均匀。QTM 的每一步都会翻转角块置换的奇偶性，因此不允许停留的游走具有周期性；需处理这一点再讨论收敛。随机转动序列与直接抽取随机状态是不同的打乱方法，不能仅凭公式长度判断分布。</>}
+              en={<>Mixing time requires a move-sampling rule, a choice about allowing stays, and a tolerance from uniformity. A 20-move solving bound does not mean 20 random moves mix the walk. Each QTM move reverses corner-permutation parity, so a walk without stays is periodic; this must be addressed before discussing convergence. Random-move and random-state scrambling are different sampling procedures; algorithm length alone does not determine the distribution.</>}
             />
           </div>
         </div>
@@ -1338,6 +1341,7 @@ export default function CayleyGraph() {
             en={<>The same G, with a different generating set S, gives a <em>different</em> Cayley graph. Distance, diameter, sphere sizes, mixing time — all change. The cube under various metrics:</>}
           />
         </p>
+        <div style={{ overflowX: 'auto' }}>
         <table className="gt-compare">
           <thead>
             <tr>
@@ -1354,7 +1358,7 @@ export default function CayleyGraph() {
               <td>HTM = U U' U2 D D' D2 ...</td>
               <td className="num">18</td>
               <td className="num">20</td>
-              <td>{tr({ zh: 'WCA 标准, 半圈算一步', en: 'WCA standard, half-turn metric'
+              <td>{tr({ zh: '面转度量，半圈算一步', en: 'face-turn metric; a half turn counts as one'
             })}</td>
             </tr>
             <tr>
@@ -1365,33 +1369,20 @@ export default function CayleyGraph() {
             })}</td>
             </tr>
             <tr>
-              <td>STM = HTM + M E S (切片)</td>
-              <td className="num">27</td>
-              <td className="num">18</td>
-              <td>{tr({ zh: '加 9 个切片转, 直径少 2', en: '+ 9 slice moves; diameter drops by 2'
-            })}</td>
-            </tr>
-            <tr>
-              <td>BTM (block turn)</td>
-              <td className="num">36</td>
-              <td className="num">≤ 16</td>
-              <td>{tr({ zh: '宽幅 + 切片; 进一步缩短', en: 'wide + slice; shortens further'
-            })}</td>
-            </tr>
-            <tr>
               <td>{tr({ zh: '只用 ⟨R, U⟩ 两个面', en: 'only ⟨R, U⟩'
             })}</td>
-              <td className="num">2 (or 6 with inverses/dbl)</td>
-              <td className="num">~26</td>
-              <td>{tr({ zh: '只能到达 73,483,200 个状态', en: 'reaches just 73,483,200 states'
+              <td className="num">6</td>
+              <td>—</td>
+              <td>{tr({ zh: '子群图，不能到达全部状态', en: 'subgroup graph; not all states are reachable'
             })}</td>
             </tr>
           </tbody>
         </table>
+        </div>
         <p>
           <L
-            zh={<>注意: 「⟨R, U⟩ 直径 26」 是相对它生成的 <em>子群</em> (那个 73M 子群) 而言的; 在整个 G 中 R, U 不是生成集, 所以 「在 G 里只用 R, U」 大部分状态根本到不了, 距离是无穷大。这就是为什么生成集 「越多越好」 — 更多边 = 更小直径 = 更易解。</>}
-            en={<>Note: "⟨R, U⟩ has diameter 26" refers to the <em>subgroup</em> it generates (the 73 million-element subgroup). Within G itself, R and U alone do not generate G, so most states are unreachable — at "distance infinity." This is why "more generators = better": more edges → smaller diameter → easier to solve.</>}
+            zh={<>只允许 R、U 两个面的转动，得到的是它们生成的子群，不能从还原态到达整个魔方群。若仍把全部状态作为顶点，图会分成多个连通分量。在顶点集合固定时，增加生成元不会增加最短距离；但搜索分支也会变多，不能据此保证求解更快。</>}
+            en={<>Restricting moves to the R and U faces generates a subgroup, not the entire cube group. Keeping every cube state as a vertex then produces multiple connected components. On a fixed vertex set, adding generators cannot increase shortest distances, but it also increases search branching and need not make a solver faster.</>}
           />
         </p>
         <h3 style={{ fontFamily: 'var(--serif)', fontSize: 22, fontWeight: 600, marginTop: 36, marginBottom: 14, color: 'var(--ink)' }}>
@@ -1459,7 +1450,7 @@ export default function CayleyGraph() {
           </li>
           <li>
             <L
-              zh={<><strong>魔方 G</strong>: 球壳大小见 §14.3 表。 直径 20, |G| = 4.3 × 10¹⁹。 顶点传递 + 几乎正则 + 高扩张 = 一个 「漂亮的有限非阿贝尔图」 。</>}
+              zh={<><strong>魔方 G</strong>：HTM 图有约 4.3 × 10¹⁹ 个顶点，是顶点传递的 18 正则图，直径为 20。球壳大小见 §14.3，注意区分精确计数与估计。</>}
               en={<><strong>The cube G</strong>: sphere sizes from §14.3. Diameter 20, |G| = 4.3 × 10¹⁹. Vertex-transitive, near-regular, highly expanding — a "beautiful finite non-Abelian graph."</>}
             />
           </li>
@@ -1477,8 +1468,8 @@ export default function CayleyGraph() {
         </h3>
         <p>
           <L
-            zh={<>把 §14.3 的 21 个 |S_d| 数字摊到对数纸上, 「分支因子 17.97×」 就是图里的恒定斜率。 鼠标悬停每一根条 → 显示 d、 |S_d|、 占 |G| 的百分比、 以及 <strong>瞬时分支因子</strong> |S_d| / |S_{`{d-1}`}|。 注意中段 (d = 3 → 13) 的斜率几乎是常数 (≈ 17.97×), 然后突然在 d = 16 → 18 显著放缓 (饱和), 在 d = 19 → 20 几乎消失 (球面填空尾部)。</>}
-            en={<>The same 21 numbers from §14.3, laid on log paper — the "17.97× branching factor" appears as a constant slope. Hover any bar to see d, |S_d|, percentage of |G|, and the <strong>instantaneous branching</strong> |S_d| / |S_<sub>d-1</sub>|. The middle (d = 3 → 13) is almost linear (slope ≈ log<sub>10</sub> 17.97 ≈ 1.255); growth visibly slows from d = 16 → 18 (saturation), then collapses by d = 19 → 20 (the sphere-packing tail).</>}
+            zh={<>对数图展示球壳大小的数量级。悬停条形可查看距离、状态数、占比和相邻层之比 |S_d| / |S_d₋₁|。这个比值描述新增状态的增长，不等于每个顶点的 18 个邻居。后段包含估计数据，图形和百分比同样继承这些限制。</>}
+            en={<>The logarithmic chart shows sphere-size orders of magnitude. Hover a bar for distance, count, percentage and the ratio |S_d| / |S_d₋₁|. This ratio measures growth in new states, not the 18 neighbours of each vertex. Later bins contain estimates, so the plot and percentages inherit those limitations.</>}
           />
         </p>
         <SphereLogPlot />
@@ -1487,8 +1478,8 @@ export default function CayleyGraph() {
         })}</div>
           <div className="gt-thm-body">
             <L
-              zh={<>对于 finite vertex-transitive graph Γ = Cay(G, S), 球壳大小 |S_d| 必满足: <strong>(a)</strong> 单峰 (上下文意义上的) — 存在唯一 d* 使得 |S_{`{d-1}`}| ≤ |S_d| ≥ |S_{`{d+1}`}|; <strong>(b)</strong> 总和 ∑|S_d| = |G|; <strong>(c)</strong> 在直径 D 处必有 |S_D| ≥ 1。 对魔方 d* = 18, D = 20, |S_D| = 4.9 × 10⁸ (其中 superflip 是被研究最多的)。</>}
-              en={<>For a finite vertex-transitive graph Γ = Cay(G, S), the sphere sizes |S_d| satisfy: <strong>(a)</strong> a unimodal envelope — there is a unique d* with |S_<sub>d-1</sub>| ≤ |S_d| ≥ |S_<sub>d+1</sub>|; <strong>(b)</strong> ∑|S_d| = |G|; <strong>(c)</strong> at the diameter D, |S_D| ≥ 1. For the cube: d* = 18, D = 20, |S_D| = 4.9 × 10⁸ (superflip being its most-studied member).</>}
+              zh={<>有限连通凯莱图的球壳互不重叠，并覆盖全部顶点，所以 ∑|S_d| = |G|；直径 D 处有 |S_D| ≥ 1。不能仅凭顶点传递性断言球壳严格单峰或峰值唯一。魔方图在 d = 18 附近的峰值来自分布数据，d = 20 的总数仍不是这里已知的精确值。</>}
+              en={<>Spheres in a finite connected Cayley graph partition its vertices, so ∑|S_d| = |G|; at diameter D, |S_D| ≥ 1. Vertex transitivity alone does not establish strict unimodality or a unique peak. The cube’s peak near d = 18 comes from distribution data; its distance-20 count is not an exact value known here.</>}
             />
           </div>
         </div>
@@ -1541,8 +1532,8 @@ export default function CayleyGraph() {
         </div>
         <p>
           <L
-            zh={<>对魔方 G 与生成集 S (HTM), 数值实验给出 <TeX src={`\\lambda_2 / k \\approx 0.95`} />, 即 <TeX src={`\\Delta / k \\approx 0.05`} /> (是 「小」 但远非 0)。 这就是为什么 25 步打乱 「几乎均匀」 但仍 「不完全均匀」 — 用 Cheeger 估计, 混合时间 τ<sub>mix</sub> = Θ(log |G| / Δ) ≈ log(4.3 × 10¹⁹) / 0.05 ≈ 905. 但严格的随机游走分析 (考虑 spectral gap of the lazy walk + dominant eigenfunctions) 给出更紧的界, 实验观察 ≈ 70-100 步即视觉不可区分。</>}
-            en={<>For the cube G with HTM, numerical experiments give <TeX src={`\\lambda_2 / k \\approx 0.95`} />, i.e. <TeX src={`\\Delta / k \\approx 0.05`} /> ("small" but not zero). This is why a 25-move WCA scramble is <em>nearly</em> uniform but not exactly so — by Cheeger, τ<sub>mix</sub> = Θ(log |G| / Δ) ≈ log(4.3 × 10¹⁹) / 0.05 ≈ 905. Tighter random-walk analysis (using spectral gap of the lazy walk + dominant eigenfunctions) gives much smaller bounds; experimentally ~70-100 random moves are visually indistinguishable from uniform.</>}
+            zh={<>把这些界用于魔方时，应先明确邻接矩阵、归一化方式和随机游走规则。Cheeger 不等式提供谱隙与扩张性的界，并不直接给出某个打乱长度的均匀性保证。上面的“小群实验室”可以完整计算其小图；这些小群的实验结果不能直接当作整个魔方群的谱或混合时间。</>}
+            en={<>Applying these bounds to the cube requires a specified adjacency matrix, normalisation and random-walk rule. Cheeger inequalities bound the relationship between spectral gap and expansion; they do not directly certify uniformity at a particular scramble length. The small-group laboratory can compute its small graphs completely, but those results do not determine the full cube group’s spectrum or mixing time.</>}
           />
         </p>
         <div className="gt-aside">
@@ -1611,6 +1602,7 @@ export default function CayleyGraph() {
             en={<>The miracle (Lubotzky-Phillips-Sarnak 1988): they constructed <strong>infinite families</strong> of Ramanujan graphs via G = PSL₂(𝔽_p) and a generating set S of <em>p + 1</em> "Hecke operators" coming from quaternion algebras and Ramanujan-Petersson (Deligne 1974). The graphs are (p+1)-regular, diameter O(log |G|), girth (4/3) log<sub>p</sub>|G|, with |λ| ≤ 2√p. They are all <strong>Cayley graphs</strong>.</>}
           />
         </p>
+        <div style={{ overflowX: 'auto' }}>
         <table className="gt-compare">
           <thead>
             <tr>
@@ -1655,7 +1647,7 @@ export default function CayleyGraph() {
               <td>{tr({ zh: '魔方 (HTM)', en: 'Rubik cube (HTM)' })}</td>
               <td className="num">18</td>
               <td className="num">20</td>
-              <td>λ₂/k ≈ 0.95{tr({ zh: ' (扩张但非 Ramanujan)', en: ' (expander, not Ramanujan)'
+              <td>{tr({ zh: '谱需要另行分析', en: 'spectrum requires separate analysis'
             })}</td>
               <td>✓</td>
             </tr>
@@ -1670,6 +1662,7 @@ export default function CayleyGraph() {
             </tr>
           </tbody>
         </table>
+        </div>
         <p>
           <L
             zh={<>三个独立的扩张图构造方法 (Margulis 1973 → LPS 1988 → Alon-Roichman 1994) 各自代表了 「<strong>显式数论</strong>」 「<strong>四元数代数 + Ramanujan 猜想</strong>」 「<strong>随机化</strong>」 三种思路。 后来 Reingold-Vadhan-Wigderson (2002) 给了 「zig-zag 乘积」 构造, 完全组合学没用代数。 这是过去 50 年 「极值组合学」 最深的方向之一。</>}
@@ -1724,8 +1717,8 @@ export default function CayleyGraph() {
         </ul>
         <div className="gt-aside">
           <L
-            zh={<>魔方的 G 不是 「有限单群」 — 它是非阿贝尔但 <em>可解</em> 的, 有合成列。 所以 「diam = 20」 不属于 Babai 猜想的范畴, 而是更易处理的 「可解群直径」 范畴。 但魔方仍是 「polylog 直径 + 巨大 |G|」 的典型例子, 给 Babai 猜想提供了 「这是合理的」 的直觉支撑。</>}
-            en={<>Note: the cube G is <em>not</em> a finite simple group — it is non-Abelian but solvable, with a composition series. So "diam = 20" is outside Babai's conjecture proper. But it is a flagship example of "polylog diameter on huge |G|" and provides intuition that the conjecture is reasonable.</>}
+            zh={<>魔方群 G 不是有限单群，也<strong>不是可解群</strong>。只记录角块置换得到一个满射到 S₈ 的群同态，而 S₈ 不可解，因此 G 也不可解。有合成列并不等于可解：所有有限群都有合成列。因此这里讨论有限单群的猜想时，不能直接把魔方当作其中一个实例。</>}
+            en={<>The cube group G is neither finite simple nor <strong>solvable</strong>. Recording corner permutations gives a surjective homomorphism onto S₈, which is not solvable, so neither is G. Having a composition series does not imply solvability: every finite group has one. A conjecture about finite simple groups therefore does not apply directly to the cube.</>}
           />
         </div>
 
@@ -1795,17 +1788,17 @@ export default function CayleyGraph() {
         </p>
         <p>
           <L
-            zh={<>这就是 「Cayley 图」 的祖先 — Cayley 图的边 g → g·s <em>就是</em> 「L_s 在节点 g 上的作用」。 把 Cayley 定理可视化 = 把 G 的每个生成元 s 画成 「permutation of vertices = arrow set」 = Cayley 图。 因此 Cayley 1878 的论文标题 <em>Graphical representation</em> (图形表示) 正是这层意义: <strong>用图把 1854 的定理画出来</strong>。</>}
-            en={<>This is the ancestor of "the Cayley graph" — the edge g → g·s <em>is</em> "L_s acting on node g". Visualising Cayley's theorem = drawing each generator s as a "permutation of vertices = arrow set" = the Cayley graph. The title of Cayley's 1878 paper, <em>Graphical representation</em>, is precisely this: <strong>drawing his 1854 theorem on paper</strong>.</>}
+            zh={<>需要区分左右乘法：本页的边 g → gs 由<strong>右乘</strong>生成。左乘 L_h(g) = hg 则把边 g → gs 送到 hg → (hg)s，保留边的标签。这说明左乘是凯莱图的自同构，也解释了顶点传递性：任意一个状态都能被送到另一个状态，而整张图的连接结构不变。</>}
+            en={<>Distinguish the two sides: this page’s edges g → gs come from <strong>right multiplication</strong>. Left multiplication L_h(g) = hg sends g → gs to hg → (hg)s and preserves the edge label. Thus left multiplication is a graph automorphism and establishes vertex transitivity: any vertex can be moved to any other while preserving the connections.</>}
           />
         </p>
         <div className="gt-def">
-          <div className="gt-def-title">{tr({ zh: '推论 14.16.1 — 魔方 G 嵌入 S₄.₃ₓ₁₀¹⁹', en: 'Corollary 14.16.1 — the cube G embeds in S_{4.3×10¹⁹}'
+          <div className="gt-def-title">{tr({ zh: '推论 14.16.1 — 状态作用与贴纸作用', en: 'Corollary 14.16.1 — actions on states and stickers'
         })}</div>
           <div className="gt-def-body">
             <L
-              zh={<>形式上, 魔方的 G 是 <TeX src={`S_{4.3 \\times 10^{19}}`} /> 的一个子群。 但这没什么用 — <TeX src={`|S_n| = (4.3 \\times 10^{19})!`} /> 是远超宇宙原子数的天文数。 实际我们用 「<strong>更紧的</strong>」 嵌入 G ↪ S₈ × S₁₂ (角块 + 棱块置换) 来计算, 把 cube state 编码成 (8 + 12)-元置换 + 朝向向量 — 这就是 §5 的 (cp, co, ep, eo) 表示。</>}
-              en={<>Formally, G is a subgroup of <TeX src={`S_{4.3 \\times 10^{19}}`} />. This is useless in practice — <TeX src={`|S_n| = (4.3 \\times 10^{19})!`} /> is astronomically larger than the number of atoms in the universe. We use the <strong>much tighter</strong> embedding G ↪ S₈ × S₁₂ (corner and edge permutations) plus an orientation vector — that is the (cp, co, ep, eo) representation from §5.</>}
+              zh={<>Cayley 定理把 G 嵌入全部状态上的置换群 S_|G|。还有更小的忠实表示：让 G 作用在 54 个贴纸位置上，就得到 G ↪ S₅₄。这正是贴纸图与群论的联系。只记录角块和棱块的位置，会丢掉朝向，不能称作嵌入 S₈ × S₁₂；实际求解器使用包含朝向的 (cp, co, ep, eo) 表示。</>}
+              en={<>Cayley’s theorem embeds G in S_|G|, acting on all states. A much smaller faithful representation acts on the 54 sticker positions, giving G ↪ S₅₄: this connects sticker diagrams to group theory. Recording corner and edge positions alone forgets orientation and is not an embedding into S₈ × S₁₂. Solvers retain orientations in the (cp, co, ep, eo) representation.</>}
             />
           </div>
         </div>
@@ -1829,14 +1822,14 @@ export default function CayleyGraph() {
           </li>
           <li>
             <L
-              zh={<><strong>魔方谱隙的解析值</strong>: λ₂/k ≈ 0.95 来自数值估计, 但没有解析公式。 (对 Abelian Cayley 图, 谱由 Fourier 自然给出; 对魔方非 Abelian, 需要 G 的所有不可约表示 — 约 80 个 — 上的 character sums。)</>}
-              en={<><strong>Analytic spectral gap for the cube</strong>: λ₂/k ≈ 0.95 is numerical only; no closed form. For Abelian Cayley graphs the spectrum is Fourier; for the cube it requires character sums over G's ~80 irreps.</>}
+              zh={<><strong>魔方谱隙</strong>：需要分析指定生成集对应的邻接算子；不能从状态数和直径直接读出谱隙。</>}
+              en={<><strong>Cube spectral gap</strong>: analyse the adjacency operator for the specified generators; state count and diameter alone do not determine the gap.</>}
             />
           </li>
           <li>
             <L
-              zh={<><strong>魔方混合时间精确值</strong>: 已知 ≥ 26 (Bordoni-Reiter 2024); 上界 ≤ 70 (数值); 精确常数和 cutoff 现象未知。</>}
-              en={<><strong>Exact cube mixing time</strong>: ≥ 26 (Bordoni-Reiter 2024); ≤ 70 (numerical); exact value and cutoff window unknown.</>}
+              zh={<><strong>魔方混合时间</strong>：指定随机游走的转动规则及误差阈值后，研究经过多少步接近均匀分布。这个问题与最短解的最大长度不同。</>}
+              en={<><strong>Cube mixing time</strong>: after fixing the move-sampling rule and error tolerance, ask how many steps approach uniformity. This differs from the maximum optimal solution length.</>}
             />
           </li>
           <li>
