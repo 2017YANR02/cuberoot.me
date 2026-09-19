@@ -133,6 +133,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 改记号约定同步改锁约定的 baseline 测试。
 
 ## 验证(必做)
+- NxN 房间装饰复用 `room-cube.ts`，按 HOME 块索引跟随 `getCubeletRenderMatrix`，切主题时释放自有几何并恢复原渲染器，遍历主题与支持阶数验证边界及转动中间帧。
 - 干净 worktree/新 clone 先 `pnpm -F @cuberoot/shared build && pnpm -F @cuberoot/visualcube build`(否则 typecheck/dev 报缺 `@cuberoot/visualcube`/`@cuberoot/shared/admin`)。
 - `pnpm --filter @cuberoot/client typecheck`(tsgo)。
 - Playwright 开 `127.0.0.1:3000/zh/sim?puzzle=x`:① solved 看花纹(非实色,对账参考图);② 随机打乱看乱态(招式动画 + 颜色跨面);③ 拖某可抓件 → 单件转动 + 解法框追加 token,拖中心/空白 → 转视角(合成 PointerEvent 打 canvas、读第 2 个 `<textarea>`.value)。

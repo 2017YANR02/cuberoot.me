@@ -172,6 +172,7 @@ import PlaybackBar from '@/components/PlaybackBar';
 import BoolToggle from '@/components/BoolToggle';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import './player-controls.css';
+import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive, supportsRoomCube } from './room-themes';
 
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
@@ -3656,13 +3657,21 @@ function PuzzleSettings({
   // by puzzle, absent on NxN/SQ1) and `caps.hasRendererChoice` (cubing.js ↔ 群论内核
   // dropdown). Adding a puzzle's controls = one simCaps entry, never an edit to the JSX.
   const caps = resolveCaps(puzzleKind, renderer);
+  const roomsActive = roomCubeActive(puzzleKind, settings.roomTheme) && caps.engineActive;
+  // Rooms replace only the visible surface; keep the user's ordinary cube settings.
+  if (roomsActive) Object.assign(caps.supports, {
+    thickness: false, hollow: false, hint: false, logo: false, structureColor: false,
+    coreColor: false, coreOpacity: false, coreFinish: false, faceColors: false,
+  });
   const isNxNLocal = typeof puzzleKind === 'number';
   const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
   // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
   // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
   // 拼图切渲染也不会启用(引擎未建),只给通用说明。
   const switchEnables = !caps.engineActive && resolveCaps(puzzleKind, 'engine').engineActive;
-  const naHint = switchEnables
+  const naHint = roomsActive
+    ? t('立体房间使用独立布景，切回普通色块后可调整', '3D rooms use their own artwork. Switch to classic colors to adjust this.')
+    : switchEnables
     ? t('该拼图暂不支持此功能(切到「群论内核」渲染可启用)', 'Not available for this puzzle (switch the renderer to "Group theory" to enable)')
     : t('该拼图暂不支持此功能', 'Not available for this puzzle');
   const hint = (ok: boolean) => (ok ? undefined : naHint);
@@ -3689,6 +3698,7 @@ function PuzzleSettings({
       ...settings,
       pictureFaces: faces,
       pictureCube: countPictureFaces(faces) > 0,
+      roomTheme: 'off',
     });
     return true;
   }, [onSettingsChange, settings]);
@@ -3857,11 +3867,11 @@ function PuzzleSettings({
               <div className="sim-puzzle-section">
                 <select
                   className="sim-puzzle-select"
-                  value={settings.viewMode}
+                  value={roomsActive ? 'cube' : settings.viewMode}
                   onChange={(e) => set('viewMode', e.target.value as 'cube' | 'net')}
                 >
                   <option value="cube">{t('立体图', '3D cube')}</option>
-                  <option value="net">{t('平面图', 'Flat net')}</option>
+                  <option value="net" disabled={roomsActive}>{t('平面图', 'Flat net')}</option>
                 </select>
               </div>
             )}
@@ -3921,8 +3931,8 @@ function PuzzleSettings({
               label={t('字母', 'Letters')}
               value={settings.faceLabels === true}
               onChange={(v) => set('faceLabels', v)}
-              disabled={!caps.supports.faceLabels || pictureCubeActive}
-              title={pictureCubeActive
+              disabled={!caps.supports.faceLabels || pictureCubeActive || roomsActive}
+              title={pictureCubeActive || roomsActive
                 ? t('使用图案时暂时隐藏字母', 'Letters are hidden while artwork is active')
                 : hint(caps.supports.faceLabels)}
             />
@@ -3971,7 +3981,7 @@ function PuzzleSettings({
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
             {isNxNLocal && (
-              <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} />
+              <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} disabled={roomsActive} title={hint(!roomsActive)} />
             )}
           </div>
           {caps.supports.hands && settings.hands && settings.fullBody && (
@@ -4162,21 +4172,32 @@ function PuzzleSettings({
             className={'sim-picture-setting' + (caps.supports.pictureCube ? '' : ' sim-picture-setting--disabled')}
             title={hint(caps.supports.pictureCube)}
           >
-            <Toggle
-              label={t('图案魔方', 'Picture cube')}
-              value={settings.pictureCube && pictureFaceCount > 0}
-              disabled={!caps.supports.pictureCube}
-              title={hint(caps.supports.pictureCube)
-                ?? t('把六张图片切到魔方的真实贴纸上,打乱后图片会随块移动', 'Slice six images across the real stickers so the artwork moves with every turn')}
-              onChange={(enabled) => {
-                if (enabled && pictureFaceCount === 0) {
-                  setPictureEditorOpen(true);
-                  return;
-                }
-                set('pictureCube', enabled);
-              }}
-            />
-            <button
+            <label className="sim-toggle">
+              <span>{t('图案魔方', 'Picture cube')}</span>
+              <select
+                aria-label={t('图案魔方主题', 'Picture cube theme')}
+                value={roomsActive ? settings.roomTheme : settings.pictureCube ? 'pictures' : 'off'}
+                disabled={!caps.supports.pictureCube}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (value === 'pictures' && pictureFaceCount === 0) {
+                    setPictureEditorOpen(true);
+                    return;
+                  }
+                  const roomTheme = normalizeRoomTheme(value);
+                  onSettingsChange({ ...settings, roomTheme, pictureCube: value === 'pictures',
+                    ...(roomTheme !== 'off' ? { viewMode: 'cube' as const } : {}) });
+                }}
+              >
+                <option value="off">{t('普通色块', 'Classic colors')}</option>
+                <optgroup label={t('立体房间（二至七阶）', '3D rooms (2–7 layers)')}>
+                  {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}
+                    disabled={!supportsRoomCube(puzzleKind)}>{t(theme.zh, theme.en)}</option>)}
+                </optgroup>
+                <option value="pictures">{t('自选图片', 'Your pictures')}</option>
+              </select>
+            </label>
+            {settings.pictureCube && <button
               type="button"
               className="sim-picture-open"
               disabled={!caps.supports.pictureCube}
@@ -4186,10 +4207,12 @@ function PuzzleSettings({
               <span>{pictureFaceCount > 0
                 ? t('编辑', 'Edit')
                 : t('选择六面图片', 'Choose face images')}</span>
-            </button>
-            {pictureCubeActive && (
+            </button>}
+            {(pictureCubeActive || roomsActive) && (
               <span className="sim-picture-setting-note">
-                {t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
+                {roomsActive
+                  ? t('每个小块都是立体房间，随转动一起移动', 'Every cubie is a 3D room that moves with your turns')
+                  : t('使用图案时暂时隐藏 logo、字母和箭头', 'Logo, letters and arrows are hidden while pictures are in use')}
               </span>
             )}
           </div>
