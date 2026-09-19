@@ -338,7 +338,7 @@ export async function fetchCubingAttempts(
   const wcaEventId = toWcaEventId(reconEvent);
   // 传 compId(无横杠 WCA ID),cubing.com slug 由服务端按真实比赛名推导 —— 客户端从 ID 反推
   // 会把内部大写词误拆(GuangzhouGraDUAL3x3I2026 → Guangzhou-Gra-DUAL-…)导致 404。见 /recon/cubing-attempts。
-  const url = apiUrl(`/v1/recon/cubing-attempts?compId=${encodeURIComponent(compWcaId)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}`);
+  const url = apiUrl(`/v1/recon/cubing-attempts?compId=${encodeURIComponent(compWcaId)}&event=${encodeURIComponent(wcaEventId)}&round=${encodeURIComponent(round)}&personId=${encodeURIComponent(personId)}&v=5`);
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -361,16 +361,18 @@ interface CubingLiveData {
   resultsByRound?: Record<string, CubingLiveResult[]>;
   currentRecords?: CubingRecordsSnapshot;
 }
-const cubingLiveCache = new Map<string, Promise<CubingLiveData | null>>();
+const cubingLiveCache = new Map<string, { expires: number; promise: Promise<CubingLiveData | null> }>();
 
 function loadCubingLive(compWcaId: string): Promise<CubingLiveData | null> {
-  let p = cubingLiveCache.get(compWcaId);
-  if (!p) {
-    p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=2`))
+  const hit = cubingLiveCache.get(compWcaId);
+  if (hit && hit.expires > Date.now()) return hit.promise;
+  const p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=5`))
       .then(r => r.ok ? r.json() as Promise<CubingLiveData> : null)
       .catch(() => null);
-    cubingLiveCache.set(compWcaId, p);
-  }
+  cubingLiveCache.set(compWcaId, { expires: Date.now() + 15_000, promise: p });
+  void p.then(data => {
+    if (!data && cubingLiveCache.get(compWcaId)?.promise === p) cubingLiveCache.delete(compWcaId);
+  });
   return p;
 }
 

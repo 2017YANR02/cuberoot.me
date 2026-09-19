@@ -1,4 +1,4 @@
-import { cubingRoundMeta, cubingUser, fetchCubingJson, fetchCubingLiveRound, type CubingCompetitor, type CubingRound } from '@cuberoot/shared/cubing-live';
+import { cubingRoundMeta, cubingUser, fetchCubingJson, fetchCubingLiveRound, fetchCubingCompetitors, type CubingRound } from '@cuberoot/shared/cubing-live';
 
 interface Competition {
   id: number; name: string; type: string;
@@ -48,12 +48,7 @@ export async function collectCubingResults(slug: string, events: { rs: { i: stri
   // The public roster supplies gender and registrations, including entrants without results.
   // It does not expose age: never infer children's membership from a podium's top three.
   try {
-    const roster = await fetchCubingJson<{ number: number; user: Omit<CubingCompetitor, 'number'>; registrationEvents: { eventId: string }[] }[]>(slug, '/competitors');
-    if (!Array.isArray(roster)) throw new Error('Invalid cubing.com roster');
-    for (const entry of roster) {
-      const user = cubingUser({ ...entry.user, number: entry.number });
-      users[String(user.number)] = { ...user, eventIds: entry.registrationEvents.map(event => event.eventId) };
-    }
+    Object.assign(users, await fetchCubingCompetitors(slug));
   } catch (error) {
     if (!Object.keys(users).length) throw error;
     console.warn('[cubing-live] public roster unavailable:', (error as Error).message);

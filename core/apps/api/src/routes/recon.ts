@@ -743,10 +743,7 @@ reconRoutes.get('/recon/wca-attempts', async (c) => {
 });
 
 // GET /v1/recon/cubing-attempts?slug=&event=&round=&personId= — 代理 cubing.com 实时直播成绩
-// NOTE: 经验观察:cubing.com 数据要么全空要么全填,极少卡在中间态。所以
-//   "attempts 全部非 null" 即可作为"该选手该轮已完赛"的判据,可安全长 TTL 缓存到 DB,
-//   让第二位用户/设备在 WCA post 之前秒加载。
-const CUBING_CACHE_TTL_DAYS = 7;
+// Filled attempts can still be corrected; do not reuse the old seven-day DB cache.
 
 reconRoutes.get('/recon/cubing-attempts', async (c) => {
   // 优先 compId(WCA 比赛 ID,无横杠):服务端按真实比赛名推 cubing slug,避免无横杠 ID 反推
@@ -780,51 +777,17 @@ reconRoutes.get('/recon/cubing-attempts', async (c) => {
     slug = name ? nameToCubingSlug(name) : wcaIdToCubingSlug(compId);
   }
 
-  // 1. 查缓存
-  try {
-    const rows = await query<{ attempts: string }>(
-      `SELECT attempts FROM cubing_attempts_cache
-        WHERE slug = ? AND event = ? AND round = ? AND person_id = ?
-          AND fetched_at > NOW() - INTERVAL '${CUBING_CACHE_TTL_DAYS} days'`,
-      [slug, event, round, personId],
-    );
-    if (rows[0]?.attempts) {
-      c.header('Cache-Control', 'public, max-age=86400');
-      c.header('X-Cache', 'HIT');
-      return c.json({ attempts: JSON.parse(rows[0].attempts) });
-    }
-  } catch (err) {
-    console.error('[cubing-attempts] cache read failed:', err);
-  }
-
-  // 2. miss → fetchCubingAttempts(内含 5min 内存缓存 + WS 拉取)
+  // The REST adapter has a short round cache, including ongoing attempts.
   let attempts: (number | null)[] | null;
   try {
     attempts = await fetchCubingAttempts(slug, event, round, personId);
   } catch (err) {
     console.error('[cubing-attempts] fetch failed:', err);
+    c.header('Cache-Control', 'no-store');
     return c.json({ error: 'cubing.com unreachable', detail: String((err as Error)?.message ?? err) }, 502);
   }
 
-  // 3. 仅当"完赛"(数组非空且全部非 null)写库;部分填 / 全空保持短 TTL
-  const isComplete = Array.isArray(attempts) && attempts.length >= 1 && attempts.every(v => v != null);
-  if (isComplete) {
-    try {
-      await query(
-        `INSERT INTO cubing_attempts_cache (slug, event, round, person_id, attempts)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT (slug, event, round, person_id) DO UPDATE SET
-           attempts = EXCLUDED.attempts,
-           fetched_at = NOW()`,
-        [slug, event, round, personId, JSON.stringify(attempts)],
-      );
-    } catch (err) {
-      console.error('[cubing-attempts] cache write failed:', err);
-    }
-  }
-
-  c.header('Cache-Control', isComplete ? 'public, max-age=86400' : 'public, max-age=60');
-  c.header('X-Cache', 'MISS');
+  c.header('Cache-Control', attempts?.some(value => value !== null) ? 'public, max-age=0, s-maxage=15' : 'no-store');
   return c.json({ attempts });
 });
 
