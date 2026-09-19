@@ -1,5 +1,5 @@
 import { createDeviceStateReset } from './device_reset';
-import { createGanV2ResetCommand, decodeGanV2Facelets } from '@cuberoot/shared/smart-cube/gan-v2';
+import { createGanV2ResetCommand } from '@cuberoot/shared/smart-cube/gan-v2';
 /**
  * Web Bluetooth transport for GAN's Nordic-UART v2 protocol.
  * Frame parsing, encryption and commands live in @cuberoot/shared so the
@@ -55,7 +55,9 @@ export const ganV2Driver: CubeDriver = {
       : (nameMac ? macStringToBytes(nameMac) : new Uint8Array(6));
     const cipher = createGanV2Cipher(mac, server.device.name ?? '');
     let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
-    const decodeState = createGanV2DecodeState();
+    const decodeState = createGanV2DecodeState({
+      onState: (facelets) => { calibration?.observe(facelets); ctx?.onState?.(facelets); },
+    });
     let keyErrorFired = false;
 
     const onCharacteristic = (event: Event): void => {
@@ -69,10 +71,6 @@ export const ganV2Driver: CubeDriver = {
         return;
       }
       for (const move of decodeGanV2Frame(frame, decodeState, ctx?.onGyro)) onMove(move);
-      if (calibration?.waiting) {
-        const facelets = decodeGanV2Facelets(frame);
-        if (facelets) { calibration.observe(facelets); ctx?.onState?.(facelets); }
-      }
       if (!keyErrorFired && decodeState.badFrames >= 3) {
         keyErrorFired = true;
         ctx?.onKeyError?.();

@@ -111,20 +111,20 @@ function ConnectFailure() {
 
 export default function BluetoothModal({ cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
   const titleId = useId();
-  const [calibrationBusy, setCalibrationBusy] = useState(false);
-  const [confirmCalibration, setConfirmCalibration] = useState(false);
-  const [calibrationFeedback, setCalibrationFeedback] = useState<string | null>(null);
-  const backdropProps = useModalBackdrop(onClose, calibrationBusy);
-  const calibrateDevice = async () => {
-    if (!cube.resetDeviceState || calibrationBusy) return;
-    setCalibrationBusy(true);
-    setCalibrationFeedback(null);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetFeedback, setResetFeedback] = useState<string | null>(null);
+  const backdropProps = useModalBackdrop(onClose, resetBusy);
+  const resetCube = async () => {
+    if (resetBusy) return;
+    setResetBusy(true);
+    setResetFeedback(null);
     try {
-      await cube.resetDeviceState();
-      setCalibrationFeedback(tr({ zh: '设备状态已校准', en: 'Device state calibrated' }));
+      if (cube.resetDeviceState) await cube.resetDeviceState();
+      else cube.resetState();
+      setResetFeedback(tr({ zh: '状态已重置', en: 'State reset' }));
     } catch {
-      setCalibrationFeedback(tr({ zh: '未能确认设备已复原，请检查连接后重试', en: 'Could not confirm the solved state. Check the connection and retry.' }));
-    } finally { setCalibrationBusy(false); setConfirmCalibration(false); }
+      setResetFeedback(tr({ zh: '软件状态已重置，但设备回写失败，请检查连接后重试', en: 'Software state was reset, but writing to the device failed. Check the connection and retry.' }));
+    } finally { setResetBusy(false); }
   };
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile(480);
@@ -182,11 +182,11 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !calibrationBusy) onClose();
+      if (e.key === 'Escape' && !resetBusy) onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose, calibrationBusy]);
+  }, [onClose, resetBusy]);
 
   useEffect(() => {
     const focusable = dialogRef.current?.querySelector<HTMLElement>(macPrompt
@@ -231,7 +231,7 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
         <ClearButton
           variant="standalone"
           className="bt-modal-close"
-          onClick={() => { if (calibrationBusy) cube.disconnect(); onClose(); }}
+          onClick={() => { if (resetBusy) cube.disconnect(); onClose(); }}
           ariaLabel={tr({ zh: '关闭', en: 'Close' })}
         />
         <h2 id={titleId} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -363,26 +363,14 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
           </button>
         )}
 
-        {connected && !macPrompt && confirmCalibration && (
-          <div className="modal-section">
-            <p>{tr({ zh: '请先将实物魔方复原，再校准设备内部状态。', en: 'Solve the physical cube before calibrating its internal state.' })}</p>
-            <button type="button" className="modal-action-btn" disabled={calibrationBusy || !cube.resetDeviceState} onClick={() => { void calibrateDevice(); }}>
-              {calibrationBusy ? tr({ zh: '正在校准…', en: 'Calibrating…' }) : tr({ zh: '已复原，开始校准', en: 'Cube solved, calibrate' })}
-            </button>
-            <button type="button" className="modal-action-btn" disabled={calibrationBusy} onClick={() => setConfirmCalibration(false)}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-          </div>
-        )}
-        {calibrationFeedback && <p role="status">{calibrationFeedback}</p>}
+        {resetFeedback && <p role="status">{resetFeedback}</p>}
         {!macPrompt && (
           <div
             className="modal-actions"
             style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
           >
-              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || calibrationBusy}
-                onClick={() => {
-                  if (cube.resetDeviceState) { setCalibrationFeedback(null); setConfirmCalibration(true); }
-                  else cube.resetState();
-                }}>
+              <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || resetBusy}
+                onClick={() => { void resetCube(); }}>
                 <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state'
                 })}
               </button>
