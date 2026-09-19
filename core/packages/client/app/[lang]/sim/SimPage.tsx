@@ -39,6 +39,8 @@ import HandsRig from './engine/hands/handsRig';
 import { loadSmplxFullBody } from './engine/hands/handModelMano';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import { exportSimSvg, simSceneSignature, type SimSvgView } from './sim_svg_export';
+import { RoomCube } from './room-cube';
+import { roomCubeActive } from './room-themes';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
 import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { exportSimPlanSvg } from './sim_plan_export';
@@ -479,10 +481,11 @@ export default function SimPage() {
     if (!query.anchor) return saved;
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
-  const pictureCubeActive = typeof puzzleParam === 'number'
+  const roomsActive = !twisty && roomCubeActive(puzzleParam, settings.roomTheme);
+  const pictureCubeActive = !roomsActive && typeof puzzleParam === 'number'
     && settings.pictureCube
     && countPictureFaces(settings.pictureFaces) > 0;
-  const pictureImageStudioEngineOnly = imageStudioEngineOnly || pictureCubeActive;
+  const pictureImageStudioEngineOnly = imageStudioEngineOnly || pictureCubeActive || roomsActive;
   useEffect(() => {
     if (!query.anchor) return;
     const playbackMode = query.anchor === 'end' ? 'algorithm' : 'moves';
@@ -1258,9 +1261,10 @@ export default function SimPage() {
       // 方位字母完全由设置面板「字母」开关控制:开=该拼图的方位标签常驻,关=完全不显示
       // (拖视角 / 拖层时也不再浮现 —— 这个开关是字母的唯一开关,用户明确要求)。
       // SMPL-X 全身查看时字母无意义(拼图已藏),一并压掉。
-      const pictureLabelsHidden = typeof world.puzzleKind === 'number'
-        && settingsRef.current.pictureCube
-        && countPictureFaces(settingsRef.current.pictureFaces) > 0;
+      const pictureLabelsHidden = roomCubeActive(world.puzzleKind, settingsRef.current.roomTheme)
+        || (typeof world.puzzleKind === 'number'
+          && settingsRef.current.pictureCube
+          && countPictureFaces(settingsRef.current.pictureFaces) > 0);
       const showLabels = settingsRef.current.faceLabels === true
         && !world.smplxBodyOn
         && !pictureLabelsHidden;
@@ -1444,6 +1448,14 @@ export default function SimPage() {
     customEditing, customGrain, setQuery]);
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
+  useEffect(() => {
+    const world = worldRef.current;
+    if (!world || !roomsActive || settings.roomTheme === 'off') return;
+    const rooms = new RoomCube(world.cube as Cube, settings.roomTheme);
+    world.dirty = true;
+    return () => { rooms.dispose(); world.dirty = true; };
+  }, [roomsActive, settings.roomTheme, puzzleParam, worldTick, twisty]);
+
   useEffect(() => {
     // 存的是用户自己的设置(settings),喂给引擎的是叠了 trans 预设的那份(renderSettings)。
     saveSettings(settings);
@@ -1742,7 +1754,7 @@ export default function SimPage() {
   const srCompanionForced = imgEngineMode === 'sr';
   const [engineSvg, setEngineSvg] = useState<string | null>(null);
   useEffect(() => {
-    const active = imageOpen && (!srCompanionForced || pictureCubeActive || !staticFallbackExact);
+    const active = imageOpen && (!srCompanionForced || pictureCubeActive || roomsActive || !staticFallbackExact);
     if (!active) { setEngineSvg(null); return; }
     // 贴纸遮罩(mask 直映):有派生表的拼图把灰化烙进镜像;没有的整程置 null,
     // PuzzleImage 落回 spec 渲染器(sr/visualcube 认 mask)—— 哪条路都不丢遮罩。
@@ -1786,6 +1798,20 @@ export default function SimPage() {
       if (++frame % 8 !== 0) return; // ~7.5Hz 采样
       const world = worldRef.current;
       if (world) {
+        if (roomsActive) {
+          // Dense miniature art uses the actual WebGL image, never an unrelated flat net
+          // or hundreds of thousands of SVG triangles. No extra render loop is needed.
+          world.scene.updateMatrixWorld(true);
+          const sig = `rooms|${settings.roomTheme}|${simSceneSignature(world)}`;
+          if (sig !== lastSig) { lastSig = sig; stable = 0; return; }
+          if (stable < 1) { stable++; return; }
+          if (sig === exportedSig) return;
+          const canvas = rendererRef.current?.domElement;
+          if (!canvas) return;
+          exportedSig = sig;
+          setEngineSvg(`<svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}" viewBox="0 0 ${canvas.width} ${canvas.height}"><image width="100%" height="100%" href="${canvas.toDataURL('image/png')}"/></svg>`);
+          return;
+        }
         if (pictureCubeActive && typeof world.puzzleKind === 'number') {
           const nxn = world.cube as Cube;
           // Export only after the instanced scene has settled. Besides avoiding an
@@ -1962,7 +1988,7 @@ export default function SimPage() {
     };
     raf = requestAnimationFrame(tick);
     return () => { disposed = true; cancelAnimationFrame(raf); };
-  }, [imageOpen, srCompanionForced, pictureCubeActive, pictureImageStudioEngineOnly,
+  }, [imageOpen, srCompanionForced, pictureCubeActive, roomsActive, settings.roomTheme, pictureImageStudioEngineOnly,
       staticFallbackExact,
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
       // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
@@ -1982,7 +2008,7 @@ export default function SimPage() {
       settings.faceColors, settings.pictureBaseColors, settings.pictureFaces, stickeringMaskFor]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
-  const netMode = settings.viewMode === 'net' && typeof puzzleParam === 'number';
+  const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';
   // 魔表:唯一没有立体形态的拼图 —— 画面恒走 DOM 层的 SVG 板,3D 画布是空的。判据与
   // netMode 同族(都是"画布上盖一层平面图"),所以下面凡是 `!netMode` 的角落控件
   // (背面小窗 / 交换主图 …)也一并要避开它,统一用 flatMode。
@@ -2279,7 +2305,7 @@ export default function SimPage() {
             engineSvg={engineSvg}
             staticFallbackExact={staticFallbackExact}
             engineOnly={pictureImageStudioEngineOnly}
-            compare={imgEngineMode === 'both' && !pictureCubeActive}
+            compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}
           />
           {/* 阶段速查整本都是 NxN,只对 cube 露出。 */}
           {imgPuzzle.puzzleType === 'cube' && (
