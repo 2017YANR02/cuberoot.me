@@ -62,7 +62,7 @@ body[data-site-scenery] .deskpet-story .deskpet-story-art {
 }
 
 /* Formula rows share their enclosing material; keep hover, selection and errors. */
-body[data-site-scenery] :is(.alg-card, .alg-case-detail-ori-algs) .alg-alg-row:not(:hover):not(.is-expanded):not(.is-invalid) {
+body[data-site-scenery] :is(.alg-card, .alg-case, .alg-case-detail-ori-algs) .alg-alg-row:not(:hover):not(.is-expanded):not(.is-invalid) {
   background: transparent;
 }
 
