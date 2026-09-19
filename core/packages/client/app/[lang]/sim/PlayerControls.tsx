@@ -156,7 +156,7 @@ import StickeringSelect from './StickeringSelect';
 import SwatchCell, { SwatchPopup } from './SwatchCell';
 import type { PickGrain, CustomTreatment } from './engine/nxn/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
-import { stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
+import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import {
   canonicalFtoEifAlgorithm,
   invertFtoEifAlgorithm,
@@ -2601,6 +2601,14 @@ export default function PlayerControls({
         )}
         {!isSquarePuzzle && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
         {!isSquarePuzzle && !isTwistyMode && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
+          <button
+            onClick={tool(flattenAlg)}
+            title={t('展开所有括号并保留等价动作', 'Expand all groups into equivalent moves')}
+          >
+            {t('去括号', 'Expand')}
+          </button>
+        )}
         <button onClick={tool(() => '')} title={t('清空', 'Clear')}><Eraser size={13} />{t('清空', 'Clear')}</button>
         <button
           onClick={handleCopyLink}
