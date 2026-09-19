@@ -32,6 +32,7 @@ import { KEYMAP_GROUPS, KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } fro
 import './setting-drawer.css';
 import { useT } from "@/hooks/useT";
 import { tr } from '@/i18n/tr';
+import { normalizeRoomTheme, roomCubeActive, type RoomThemeSetting } from './room-themes';
 
 /** Canvas background. 'auto' = solid, follows the page theme (var --background);
  *  'white'/'dark' = fixed solid; 'checkerDark'/'checkerLight' = fixed transparent
@@ -140,6 +141,8 @@ export interface SimSettings {
   customLogo: string;
   /** NxN 图案魔方总开关。图片按 HOME 面切成贴纸碎片,转层后随物理块移动。 */
   pictureCube: boolean;
+  /** Procedural miniature rooms; mutually exclusive with uploaded pictures. */
+  roomTheme: RoomThemeSetting;
   /** 图案贴纸是否保留原本的六面色斜边。默认关,斜边跟随内核色。 */
   pictureBaseColors: boolean;
   /** 六面用户图片(data URL)。单独存储,避免每次拖滑条都重写大字符串。 */
@@ -228,6 +231,7 @@ export const DEFAULT_SETTINGS: SimSettings = {
   logo: 'none',
   customLogo: '',
   pictureCube: false,
+  roomTheme: 'off',
   pictureBaseColors: false,
   pictureFaces: emptyPictureFaces(),
   liveReduce: true,
@@ -306,6 +310,8 @@ export function loadSettings(): SimSettings {
     if (merged.logo !== 'site' && merged.logo !== 'custom' && merged.logo !== 'none') merged.logo = 'none';
     if (typeof merged.customLogo !== 'string') merged.customLogo = '';
     if (typeof merged.pictureCube !== 'boolean') merged.pictureCube = false;
+    merged.roomTheme = normalizeRoomTheme(merged.roomTheme);
+    if (merged.roomTheme !== 'off') merged.pictureCube = false;
     if (typeof merged.pictureBaseColors !== 'boolean') merged.pictureBaseColors = false;
     if (typeof merged.pointerTurns !== 'boolean') merged.pointerTurns = true;
     if (typeof merged.hands !== 'boolean') merged.hands = false;
@@ -432,15 +438,17 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
+    const roomsActive = roomCubeActive(world.puzzleKind, s.roomTheme);
     const pictureActive = typeof world.puzzleKind === 'number'
+      && !roomsActive
       && s.pictureCube === true
       && countPictureFaces(s.pictureFaces) > 0;
-    cube.arrow = s.arrow && !pictureActive;
+    cube.arrow = s.arrow && !pictureActive && !roomsActive;
     // 「动画」关 → 撤销/重做也瞬切(手动转/拖/单击各自路径已 fast)。
     cube.twister.instantTurns = !s.animatePlayback;
     cube.instancedRenderer.thickness = s.thickness;
     cube.instancedRenderer.hollow = s.hollow;
-    cube.instancedRenderer.hint = s.hint;
+    cube.instancedRenderer.hint = s.hint && !roomsActive;
     if (hintBg) cube.instancedRenderer.setHintBackdrop(hintBg);
     // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
     Cubelet.CORE.color.set(s.coreColor);
@@ -482,13 +490,14 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
     if (!prev
       || prev.pictureCube !== s.pictureCube
+      || prev.roomTheme !== s.roomTheme
       || prev.pictureFaces !== s.pictureFaces) {
       cube.instancedRenderer.setPictureFaces(
         pictureActive ? s.pictureFaces : null,
         () => { world.dirty = true; },
       );
     }
-    const logoTex = pictureActive ? null : s.logo === 'site'
+    const logoTex = pictureActive || roomsActive ? null : s.logo === 'site'
       ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })
       : (s.logo === 'custom' && s.customLogo)
         ? loadLogoTexture(s.customLogo, () => { world.dirty = true; })
