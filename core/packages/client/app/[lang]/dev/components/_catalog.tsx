@@ -2439,9 +2439,9 @@ export const CATALOG: ComponentEntry[] = [
     name: 'PageShareButton / PageShareModal',
     import: "import PageShareButton from '@/components/PageShareButton';",
     category: 'more',
-    zh: `统一页面分享入口：始终提供复制链接，按环境提供系统分享、电脑微信或小程序菜单指引；过滤账号流程和内部凭据，保留语言、筛选与锚点。`,
-    en: `Shared page sharing entry: always offers link copy, plus system sharing, desktop WeChat or Mini Program menu guidance. Excludes account workflows and internal credentials while preserving language, filters and anchors.`,
-    note: { zh: `文章页和桌宠工具栏复用 PageShareButton；PageShareModal 按需加载，复制失败可手动选中链接。`, en: `Articles and the pet toolbar reuse PageShareButton. PageShareModal loads on demand and provides a selectable link if copying fails.` },
+    zh: `已停用的网页分享组件：支持复制链接和按环境调用分享；过滤认证回调和内部凭据，保留语言、筛选与锚点。`,
+    en: `Inactive web sharing components supporting link copy and environment-specific sharing; exclude authentication callbacks and internal credentials while preserving language, filters and anchors.`,
+    note: { zh: `网页和桌宠中的入口已移除。小程序右上角原生转发由全局分享同步与小程序控制器处理，不依赖此按钮。`, en: `The website and pet toolbar entries have been removed. Native Mini Program sharing uses global share synchronization and the Mini Program controller, independently of this button.` },
   },
   {
     name: 'DonateModal',

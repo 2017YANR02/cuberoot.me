@@ -16,7 +16,6 @@ import HeaderToggles from '@/components/HeaderToggles';
 import WcaAuth from '@/components/WcaAuth';
 import DonateModal from '@/components/DonateModal';
 import FeedbackModal from '@/components/FeedbackModal';
-import PageShareButton from '@/components/PageShareButton';
 import { SEARCH_CARDS, isLandingSearchCardVisible } from '@/lib/landing-sections';
 import { isAdmin } from '@/lib/auth-store';
 import { useFeedbackUnread, refreshFeedbackUnread } from '@/lib/feedback-unread';
@@ -311,7 +310,6 @@ export default function DeskPetSearch({
             }} />
           )}
         </button>
-        <PageShareButton className="icon-only" />
         <button type="button" className={`icon-only${metronomeOpen ? ' is-active' : ''}`}
           onClick={onToggleMetronome}
           title={t('音乐与节拍器', 'Music and metronome')}>
