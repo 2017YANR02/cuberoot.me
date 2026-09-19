@@ -168,6 +168,18 @@ export default function PlaybackPanel({
   const elapsedMs = tsOf(idx);
   const lastTs = total > 0 ? moves[total - 1].ts : 0;
 
+  // SimCubeView starts a move when its timestamp is reached. Its animation
+  // therefore has to occupy the interval until the next move (or solve end),
+  // rather than the engine's generic 500 ms default. Otherwise short gaps
+  // accumulate in the twister queue and the cube visibly trails the clock.
+  const moveDurationTicks = idx > 0
+    ? Math.max(
+      1,
+      (((idx < total ? moves[idx].ts : totalMs) - moves[idx - 1].ts) * 60) /
+        (1000 * speedMult),
+    )
+    : undefined;
+
   /**
    * 播放时钟。**按墙钟走,不是一手一个定时器**。
    *
@@ -303,6 +315,7 @@ export default function PlaybackPanel({
               mirror={posed ? mirrorForBrand(deviceModel) : false}
               // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
               animate
+              moveDurationTicks={moveDurationTicks}
               ariaLabel={tr({
                 zh: '这把的三维回放',
                 en: '3D replay of this solve',

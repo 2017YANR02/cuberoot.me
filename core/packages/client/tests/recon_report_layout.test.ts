@@ -122,6 +122,15 @@ describe('回放进度条匀速走', () => {
     // 自增会和墙钟脱钩:掉帧 / 后台标签页回来之后,魔方停在半路而游标已经到底。
     expect(pb).toMatch(/while \(i < total && moves\[i\]\.ts <= at\) i\+\+/);
   });
+
+  it('虚拟魔方按相邻动作的真实间隔转动', () => {
+    // 引擎默认一手 500ms,比真实动作间隔长时会把动作排队,所以回放必须
+    // 把当前动作到下一手(或结束)的时间间隔换成 60Hz ticks,并跟随播放倍率。
+    expect(pb).toMatch(/moveDurationTicks = idx > 0/);
+    expect(pb).toMatch(/moves\[idx\]\.ts : totalMs/);
+    expect(pb).toMatch(/\* 60\) \/\s*\(1000 \* speedMult\)/);
+    expect(pb).toMatch(/moveDurationTicks=\{moveDurationTicks\}/);
+  });
 });
 
 describe('关闭连续陀螺仪仍回放已识别转体', () => {
