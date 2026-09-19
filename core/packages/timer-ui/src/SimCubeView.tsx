@@ -67,6 +67,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import './live-cube.css';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type NxnCube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
+import type Controller from '@cuberoot/puzzle-render-core/engine/nxn/controller';
 import type { SimMount } from '@cuberoot/puzzle-render-core/sim/mountSimWorld';
 import { FRONT_SCENE_ROT, homeSceneRot, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import {
@@ -113,6 +114,66 @@ function sceneRotation(view: CubeView, hasGyro: boolean) {
 function hasValidOrientation(q: Quat | null | undefined): q is Quat {
   return !!q && [q.w, q.x, q.y, q.z].every(Number.isFinite)
     && Math.hypot(q.w, q.x, q.y, q.z) > 1e-6;
+}
+
+function attachPointerController(host: HTMLElement, controller: Controller): () => void {
+  let activePointerId: number | null = null;
+  const previousTouchAction = host.style.touchAction;
+  host.style.touchAction = 'none';
+
+  const send = (type: 'mousedown' | 'mousemove' | 'mouseup', event: PointerEvent) => {
+    const rect = host.getBoundingClientRect();
+    controller.touch({
+      type,
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+      shift: event.shiftKey,
+      button: event.button,
+      alt: event.altKey,
+    });
+  };
+
+  const release = (pointerId: number) => {
+    try { host.releasePointerCapture(pointerId); } catch { /* already released */ }
+  };
+
+  const onPointerDown = (event: PointerEvent) => {
+    if (activePointerId !== null) return;
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    activePointerId = event.pointerId;
+    try { host.setPointerCapture(event.pointerId); } catch { /* unsupported WebView */ }
+    send('mousedown', event);
+    event.preventDefault();
+  };
+
+  const onPointerMove = (event: PointerEvent) => {
+    if (event.pointerId !== activePointerId) return;
+    send('mousemove', event);
+    event.preventDefault();
+  };
+
+  const onPointerUp = (event: PointerEvent) => {
+    if (event.pointerId !== activePointerId) return;
+    send('mouseup', event);
+    release(event.pointerId);
+    activePointerId = null;
+    event.preventDefault();
+  };
+
+  host.addEventListener('pointerdown', onPointerDown, { passive: false });
+  host.addEventListener('pointermove', onPointerMove, { passive: false });
+  host.addEventListener('pointerup', onPointerUp, { passive: false });
+  host.addEventListener('pointercancel', onPointerUp, { passive: false });
+
+  return () => {
+    host.removeEventListener('pointerdown', onPointerDown);
+    host.removeEventListener('pointermove', onPointerMove);
+    host.removeEventListener('pointerup', onPointerUp);
+    host.removeEventListener('pointercancel', onPointerUp);
+    if (activePointerId !== null) release(activePointerId);
+    host.style.touchAction = previousTouchAction;
+    activePointerId = null;
+  };
 }
 
 export interface SimCubeViewProps {
@@ -367,6 +428,12 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
         controller.turnsLocked = true;
         controller.dragEmpty = 'view';
         controller.onOrbit = (dx, dy) => orbitScene(nextMount.world, dx, dy, ORBIT_K);
+        const detachPointerController = attachPointerController(host, controller);
+        const originalDispose = nextMount.dispose;
+        nextMount.dispose = () => {
+          detachPointerController();
+          originalDispose();
+        };
       }
       mount = nextMount;
       mountRef.current = mount;
