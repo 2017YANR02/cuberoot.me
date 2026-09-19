@@ -1,6 +1,6 @@
 ---
 name: wca-event
-description: "渲染 WCA 项目名/图标/选择器时用。(1) 图标走 `<EventIcon>` 或 `<CubingIcon>` (内联 SVG,components/EventIcon),禁 `<span className=\"cubing-icon ...\">` (空 span)。(2) /wca 子页选项目用 `<WcaEventSelector>` 21 图标行,不用 `<EventSelect>` 下拉。Triggers: 项目名, EventIcon, CubingIcon, cubing-icon, WcaEventSelector, 项目选择器, event picker, eventDisplayName."
+description: "渲染 WCA 项目名、图标或选择器时用。图标复用 EventIcon/CubingIcon；WCA 筛选复用菜单式 WcaEventSelector/WcaEventMultiSelector，底层统一 PuzzlePicker。Triggers: 项目名, EventIcon, CubingIcon, WcaEventSelector, 项目选择器, event picker, eventDisplayName."
 ---
 
 # 项目图标 + 选择器
@@ -26,9 +26,10 @@ CSS 用 `font-size`(SVG=1em) + `color`(SVG fill=currentColor) — 现存规则�
 <WcaEventSelector availableEvents={SET} selectedEvent={ev} onSelect={...} isZh={isZh} />
 ```
 
-放 filters **上方独立一行**。`allowAll` 加"全部"。多选传 `selectedEvents`+`onToggle`。
+默认折叠为 `PuzzlePicker` 菜单，与筛选控件紧凑排列；`allowAll` 加「全部」，多选传 `selectedEvents`+`onToggle`，分类快选用 `WcaEventMultiSelector`。
 
-废止项(脚拧/八板/十二板/旧多盲,`CANCELLED_EVENT_IDS`)组件内自动折叠进末尾三角形,点击展开,选中其一则强制展开。别再把它们内联回去。`collapsibleAppend`(非 WCA 拼图)同时存在时两者合并到**同一个**三角(tooltip「其他项目」),不并排两个三角。calc 自带 `EventSelector` 也复刻了废止项折叠。
+菜单只列可用项目，废止项和非 WCA 项目分别分组；多选菜单保留清空、全选、分类和废止项开关。
+师生编辑与双人计时浮层显式传 `presentation="inline"` 保留展开图标行；比赛列表保留项目表头，筛选使用菜单；`EventSelect` 仅作旧调用的菜单适配入口。
 
 ## 加新 unofficial 图标
 

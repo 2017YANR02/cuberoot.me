@@ -139,7 +139,7 @@ pnpm --filter @cuberoot/client lint
 - 新可复用组件/hook 登记 `/dev` catalog(`_catalog.tsx`)。CI 守卫:`dev-catalog-sync` + `dev-tokens-drift`。
 - 答题/训练的对错提示统一复用 `components/TrainingFeedbackOverlay` 的绿色 ✅ / 红色 ❌,禁页面自画。
 - 浏览器基线跟随当前 Next 官方支持范围，禁为旧 WebView/开发者工具下调 `browserslist`；旧内核走全站启动失败提示，顶层 `ssr:false` 加载态用 `ClientLoadStatus`。CI:`browser-support-policy.test.ts` + `timer-bootstrap.test.ts`。
-- 项目下拉统一用 `components/PuzzlePicker`;`/wca` 页内展开式项目行用 `WcaEventSelector`;禁页面内自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
+- 项目菜单统一用 `components/PuzzlePicker`;WCA 筛选用默认菜单式 `WcaEventSelector`/`WcaEventMultiSelector`，师生编辑和双人计时浮层显式 `presentation="inline"`；比赛列表保留项目表头；禁页面自写项目菜单。hook + CI 守卫:`component-reuse-guard`。
 - `/alg` case 详情统一走 `AlgCaseView`:静态主图用 `CaseThumb`,动画用 `AlgPlayer`;多朝向不得省略主图或另造结构,桌面一行一朝向且动画左公式右。
 - 全局固定按钮对齐内容右沿:`right: max(16px, calc((100vw - <content-max-width>) / 2))`。
 - chip/tab/下拉项不显示数量计数。

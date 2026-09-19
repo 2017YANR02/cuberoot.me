@@ -828,7 +828,7 @@ export function WcaStudentAdder({
             )}
             {(selectedStudent || namedStudentName.trim()) && !loadingEvents && (
               <>
-                <WcaEventSelector
+                <WcaEventSelector presentation="inline"
                   availableEvents={visibleEventSet}
                   selectedEvents={selectedEventIds}
                   onToggle={toggleEvent}
@@ -988,7 +988,7 @@ export function WcaStudentAdder({
             <p className="wca-teacher-dialog-field-label">
               {tr({ zh: '默认项目（必选）', en: 'Default events (required)' })}
             </p>
-            <WcaEventSelector
+            <WcaEventSelector presentation="inline"
               availableEvents={new Set(ALL_EVENT_IDS)}
               selectedEvents={batchEventIds}
               onToggle={toggleBatchEvent}
@@ -1250,7 +1250,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                   {tr({ zh: '已参加比赛', en: 'Competed events' })}
                 </p>
                 {competedEventIds.size > 0 ? (
-                  <WcaEventSelector
+                  <WcaEventSelector presentation="inline"
                     availableEvents={competedEventIds}
                     selectedEvents={selectedEventIds}
                     onToggle={toggleEvent}
@@ -1265,7 +1265,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                 <p className="wca-teacher-dialog-field-label">
                   {tr({ zh: '未参加比赛', en: 'Not-competed events' })}
                 </p>
-                <WcaEventSelector
+                <WcaEventSelector presentation="inline"
                   availableEvents={notCompetedEventIds}
                   selectedEvents={selectedEventIds}
                   onToggle={toggleEvent}
@@ -1274,7 +1274,7 @@ export function WcaNamedStudentCell({ student, teacherWcaId, directory, isZh, on
                 />
               </>
             ) : (
-              <WcaEventSelector
+              <WcaEventSelector presentation="inline"
                 availableEvents={new Set(ALL_EVENT_IDS)}
                 selectedEvents={selectedEventIds}
                 onToggle={toggleEvent}
@@ -1601,7 +1601,7 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
               </div>
             )}
             {isMultiEditor && (
-              <WcaEventSelector
+              <WcaEventSelector presentation="inline"
                 availableEvents={availableEventSet}
                 selectedEvents={selectedEventIds}
                 onToggle={toggleEvent}

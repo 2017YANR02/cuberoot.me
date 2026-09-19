@@ -620,6 +620,22 @@
   overflow-y: auto;
   padding-right: 4px;
 }
+.cstimer-import-list:has(.pp-popup) {
+  max-height: none;
+  overflow: visible;
+}
+/* Keep menus in the scrollable dialog's flow so all choices remain reachable. */
+.cstimer-target-picker .pp,
+.bulk-controls .pp {
+  flex-direction: column;
+  align-items: flex-start;
+}
+.cstimer-target-picker .pp-popup,
+.bulk-controls .pp-popup {
+  position: relative;
+  top: auto;
+  margin-top: 6px;
+}
 .cstimer-import-row {
   display: flex;
   align-items: center;

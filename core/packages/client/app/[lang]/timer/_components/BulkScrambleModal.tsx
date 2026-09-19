@@ -3,6 +3,9 @@
 import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
 import type { EventId } from '../_lib/types';
 import { EVENTS } from '../_lib/types';
+import { TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/shared/timer';
+import { TimerPuzzlePicker } from '@cuberoot/timer-ui';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { generateScramble } from '../_lib/scramble';
 import { warmup333 } from '../_lib/scramble/kociemba/random_state';
 import { isNonWcaEvent, nextNonWcaScramble } from '../_lib/scramble/nonwca';
@@ -15,24 +18,33 @@ interface Props {
   onClose: () => void;
 }
 
-export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props) {
+export default function BulkScrambleModal({ defaultEvent, onClose }: Props) {
   const [event, setEvent] = useState<EventId>(defaultEvent);
   const [count, setCount] = useState(12);
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const titleId = useId();
-  const firstSelectRef = useRef<HTMLSelectElement | null>(null);
+  const firstSelectRef = useRef<HTMLDivElement | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const backdropProps = useModalBackdrop(onClose);
+  const allowedEvents = new Set(EVENTS.filter(e => e.group !== 'll' && e.group !== 'cfop' && e.id !== 'custom').map(e => e.id));
+  const groups = TIMER_EVENT_PICKER_GROUPS.map(group => ({
+    id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
+    items: group.items.filter(item => allowedEvents.has(item.id)).map(item => ({
+      id: item.id, label: tr({ zh: item.nameZh, en: item.nameEn }), iconClass: item.iconClass, textLabel: item.textLabel,
+    })),
+  }));
   const isMobile = useIsMobile(480);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !pickerOpen) onClose(); };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, pickerOpen]);
 
   useEffect(() => {
-    firstSelectRef.current?.focus();
+    firstSelectRef.current?.querySelector('button')?.focus();
   }, []);
 
   const handleGenerate = async () => {
@@ -104,9 +116,6 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
   const numberInputStyle: CSSProperties | undefined = isMobile
     ? { width: '100%', minHeight: 44, fontSize: 16, padding: '8px 10px' }
     : undefined;
-  const selectStyle: CSSProperties | undefined = isMobile
-    ? { width: '100%', minHeight: 44, fontSize: 16, padding: '8px 10px' }
-    : undefined;
   const generateBtnStyle: CSSProperties | undefined = isMobile
     ? { width: '100%', minHeight: 44, fontSize: 15, padding: '10px 14px' }
     : undefined;
@@ -121,7 +130,7 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
     : undefined;
 
   return (
-    <div className="timer-modal-overlay" style={overlayStyle} onClick={onClose}>
+    <div className="timer-modal-overlay" style={overlayStyle} {...backdropProps}>
       <div
         className="timer-modal bulk-scramble-modal"
         role="dialog"
@@ -134,21 +143,19 @@ export default function BulkScrambleModal({ defaultEvent, isZh, onClose }: Props
         })}</h2>
 
         <div className="modal-section bulk-controls" style={controlsStyle}>
-          <label className="manual-label inline" style={fieldStyle}>
+          <div className="manual-label inline" style={fieldStyle} ref={firstSelectRef}>
             {tr({ zh: '项目', en: 'Event'
             })}
-            <select
-              className="bulk-controls-select"
-              ref={firstSelectRef}
-              value={event}
-              onChange={(e) => setEvent(e.target.value as EventId)}
-              style={selectStyle}
-            >
-              {EVENTS.filter(e => e.group !== 'll' && e.group !== 'cfop' && e.id !== 'custom').map(ev => (
-                <option key={ev.id} value={ev.id}>{(isZh ? ev.nameZh : ev.nameEn)}</option>
-              ))}
-            </select>
-          </label>
+            <TimerPuzzlePicker
+              groups={groups}
+              selectedEvent={event}
+              onSelect={id => setEvent(id as EventId)}
+              puzzleLabel={tr({ zh: '项目', en: 'Event' })}
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              dataNoTimer
+            />
+          </div>
           <label className="manual-label inline" style={fieldStyle}>
             {tr({ zh: '数量', en: 'Count'
             })}

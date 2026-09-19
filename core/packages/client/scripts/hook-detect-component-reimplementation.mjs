@@ -54,7 +54,7 @@ export const COMPONENT_REUSE_RULES = [
     replacement:
       '<PuzzlePicker selectedEvent={event} groups={groups} onSelect={setEvent} />',
     reason:
-      '检测到页面内重新实现项目选择菜单。下拉统一复用 PuzzlePicker；/wca 页内展开式 21 项图标行复用 WcaEventSelector。',
+      '检测到页面内重新实现项目选择菜单。统一复用 PuzzlePicker；WCA 筛选用默认菜单式 WcaEventSelector，师生编辑和双人计时浮层才显式使用 inline。',
   },
   {
     id: 'back-home-layout',
