@@ -15,6 +15,7 @@ import Link from '@/components/AppLink';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { VisualCube } from '@/components/VisualCube';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { PUZZLES, WCA_EVENT_ORDER, type PuzzleEntry } from './god_data';
 import { tr, MathText } from './events/_shared';
 import { useTranslation } from 'react-i18next';
@@ -82,17 +83,10 @@ export default function EventDetail({ eventId, setEvent }: {
           <ArrowLeft size={14} />
           <span>{tr({ zh: '全部项目', en: 'All events' })}</span>
         </Link>
-        <select
-          className="god-ev-jump"
-          value={eventId}
-          onChange={(e) => setEvent(e.target.value)}
-          aria-label={tr({ zh: '跳到项目', en: 'jump to event' })}
-        >
-          {WCA_EVENT_ORDER.map((id) => {
-            const q = byId.get(id);
-            return <option key={id} value={id}>{q ? tr(q.name) : id}</option>;
-          })}
-        </select>
+        <PuzzlePicker selectedEvent={eventId} onSelect={setEvent} groups={[{
+          id: 'events', label: tr({ zh: '项目', en: 'Events' }),
+          items: WCA_EVENT_ORDER.map(id => ({ id, label: tr(byId.get(id)!.name), iconClass: `event-${id}` })),
+        }]} />
         <span className="god-ev-nav-sep" />
         <span className="god-ev-arrows">
           {prev && (

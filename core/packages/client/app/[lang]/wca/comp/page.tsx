@@ -54,6 +54,8 @@ import { expandCountrySelection } from '@/lib/continent';
 import { fetchCompRounds, fetchCompWcif, fetchCubingZh } from '@/lib/comp-wcif';
 import { statsUrl } from '@/lib/stats-base';
 import { ClearButton } from '@/components/ClearButton';
+import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import { eventDisplayName } from '@/lib/wca-events';
 import { CubingIcon } from '@/components/EventIcon';
 import type { WcaPersonLite } from '@/lib/wca-api';
 import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
@@ -2289,10 +2291,7 @@ function CalendarPageInner() {
         )}
       </div>
 
-      <div
-        className={`event-chips${viewMode === 'list' && displayedComps.length > 0 ? ' event-chips--list-header' : ''}`}
-        ref={viewMode === 'list' && displayedComps.length > 0 ? chipsHeaderRef : undefined}
-      >
+      <>
         {(() => {
           // 天数列表头 = 日历图标，下方每行显示该比赛天数；单击图标循环过滤 null → 1 → ... → maxDays → null。
           const daysActive = daysFilter != null;
@@ -2314,48 +2313,50 @@ function CalendarPageInner() {
               </span>
             </button>
           );
-          const chips = EVENT_ORDER.map((eid) => {
-            const cur = eventFilters[eid];
-            const active = cur !== undefined;
+          const cycleEvent = (eid: string) => setEventFilters(prev => {
+            const next = { ...prev };
+            const current = prev[eid];
             const max = maxRoundsByEid[eid] ?? 0;
-            const badge = typeof cur === 'number' ? String(cur) : '';
-            const cycle = () => setEventFilters((prev) => {
-              const next = { ...prev };
-              const c = prev[eid];
-              if (c === undefined) {
-                next[eid] = 'any';
-              } else if (c === 'any') {
-                if (max >= 1) next[eid] = 1;
-                else delete next[eid]; // 此项目无任何 rounds 数据 → 直接关
-              } else {
-                const n = c + 1;
-                if (n <= max) next[eid] = n as 1 | 2 | 3 | 4;
-                else delete next[eid];
-              }
-              return next;
-            });
-            const cycleHint = max >= 1
-              ? ((isZh ? `点击切换：关 → max → 1 → ... → ${max} → 关` : `Click to cycle: off → max → 1 → ... → ${max} → off`))
-              : tr({ zh: '点击切换：关 → max → 关', en: 'Click to cycle: off → max → off'
-                            });
-            return (
-              <button
-                key={eid}
-                className={`event-chip ${active ? 'is-active' : ''}`}
-                onClick={cycle}
-                aria-pressed={active}
-                title={cycleHint}
-              >
-                <CubingIcon icon={`event-${eid}`} />
-                <span className={`event-chip-rounds${badge === '' ? ' is-empty' : ''}`}>
-                  {badge}
-                </span>
-              </button>
-            );
+            if (current === undefined) next[eid] = 'any';
+            else if (current === 'any' && max >= 1) next[eid] = 1;
+            else if (typeof current === 'number' && current < max) next[eid] = (current + 1) as 1 | 2 | 3 | 4;
+            else delete next[eid];
+            return next;
           });
+          const menu = (
+            <PuzzlePicker
+              selectedEvents={new Set(Object.keys(eventFilters))}
+              onToggle={cycleEvent}
+              groups={[{
+                id: 'events', label: tr({ zh: '项目', en: 'Events' }),
+                items: EVENT_ORDER.map(id => ({
+                  id, label: eventDisplayName(id, isZh), iconClass: `event-${id}`,
+                  detail: eventFilters[id] === 'any'
+                    ? tr({ zh: '任意轮数', en: 'Any rounds' })
+                    : typeof eventFilters[id] === 'number'
+                      ? tr({ zh: `${eventFilters[id]} 轮`, en: `${eventFilters[id]} rounds` })
+                      : undefined,
+                })),
+              }]}
+              popupFooter={<>
+                <span>{tr({ zh: '重复点击：任意轮数 → 指定轮数 → 取消', en: 'Click again: any rounds → exact rounds → off' })}</span>
+                <ClearButton variant="standalone" isZh={isZh} onClick={() => setEventFilters({})} />
+              </>}
+            />
+          );
+          const chips = EVENT_ORDER.map(eid => (
+            <span key={eid} className={`event-chip ${eventFilters[eid] !== undefined ? 'is-active' : ''}`} title={eventDisplayName(eid, isZh)}>
+              <CubingIcon icon={`event-${eid}`} />
+              <span className={`event-chip-rounds${typeof eventFilters[eid] === 'number' ? '' : ' is-empty'}`}>
+                {typeof eventFilters[eid] === 'number' ? eventFilters[eid] : ''}
+              </span>
+            </span>
+          ));
           // 列表模式：用 grid 把表头对齐到下方各列（年份 cell + flag/name 两个 spacer + 天数列头 + 21 chip）。
-          if (viewMode !== 'list' || displayedComps.length === 0) return <>{daysChip}{chips}</>;
-          return (
+          if (viewMode !== 'list' || displayedComps.length === 0) return <div className="event-chips">{menu}{daysChip}</div>;
+          return (<>
+            <div className="event-chips">{menu}</div>
+            <div className="event-chips event-chips--list-header" ref={chipsHeaderRef}>
             <div className="event-chips-grid">
               {/* 报名列头（最左）：文字「报名」+ 点击按下一个将发生的报名里程碑时刻排序（已截止/无数据沉底） */}
               {(() => {
@@ -2501,9 +2502,10 @@ function CalendarPageInner() {
               })()}
               {chips}
             </div>
-          );
+            </div>
+          </>);
         })()}
-      </div>
+      </>
 
       {allError && mode === 'all' && (
         <div className="mode-status is-error">{allError}</div>

@@ -46,7 +46,8 @@ import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type C
 import { useAuthStore } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
-import { EVENTS, eventInfo, type EventId } from '../_lib/types';
+import { eventInfo, type EventId } from '../_lib/types';
+import { TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/shared/timer';
 import {
   TIMER_SETTING_CATEGORY_CONTRACTS,
   TIMER_RANK_SCOPES,
@@ -59,6 +60,7 @@ import {
 } from '@cuberoot/shared/timer';
 import {
   TimerAttemptSplitSettings,
+  TimerPuzzlePicker,
   TimerScramblePreviewSettings,
   TimerBooleanSettingRow,
   TimerTimingSettingsSections,
@@ -1285,20 +1287,21 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
                         ) : sess.solves.length === 0 ? (
                           <span className="hint">{tr({ zh: '空分组', en: 'Empty group' })}</span>
                         ) : (
-                          <label className="cstimer-target-picker">
+                          <div className="cstimer-target-picker" data-setting-id="settings.data.import-session-mapping">
                             <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
-                            <select
-                              data-setting-id="settings.data.import-session-mapping"
-                              className="cstimer-target-select"
-                              value={selectedTarget ?? ''}
-                              onChange={(event) => setTimerImportTargets((current) => ({ ...current, [sess.sessionId]: event.target.value as EventId }))}
-                            >
-                              <option value="" disabled>{settingLabel('settings.data.import-session-mapping')}</option>
-                              {EVENTS.map((item) => (
-                                <option key={item.id} value={item.id}>{tr({ zh: item.nameZh, en: item.nameEn })}</option>
-                              ))}
-                            </select>
-                          </label>
+                            <TimerPuzzlePicker
+                              selectedEvent={selectedTarget ?? ''}
+                              puzzleLabel={settingLabel('settings.data.import-session-mapping')}
+                              onSelect={id => setTimerImportTargets(current => ({ ...current, [sess.sessionId]: id as EventId }))}
+                              dataNoTimer
+                              groups={TIMER_EVENT_PICKER_GROUPS.map(group => ({
+                                id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
+                                items: group.items.map(item => ({
+                                  id: item.id, label: tr({ zh: item.nameZh, en: item.nameEn }), iconClass: item.iconClass, textLabel: item.textLabel,
+                                })),
+                              }))}
+                            />
+                          </div>
                         )}
                       </div>
                     </div>

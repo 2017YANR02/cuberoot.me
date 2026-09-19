@@ -9,14 +9,11 @@ import TrainingStatsPanel from '@/components/TrainingStatsPanel';
 // and the mode-aware keydown handler (Enter=generate, Space=start/stop, R=reset).
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
 import { Layers, RotateCcw, Eye, TimerReset, ArrowRight } from 'lucide-react';
-import { ALG_CATALOG, ALG_PUZZLES } from '@cuberoot/shared';
-import WcaEventSelector from '@/components/WcaEventSelector';
+import AlgPuzzlePicker from '@/components/AlgPuzzlePicker';
 import { useSkewbTrainer, type SkewbMode } from './_lib/useSkewbTrainer';
-import { PUZZLE_EVENT, resolveAlgPuzzle } from '@/app/[lang]/alg/_trainer/events';
 import FirstLayerPanel from './_components/FirstLayerPanel';
 import AlgPanel from './_components/AlgPanel';
 import OneLookPanel from './_components/OneLookPanel';
@@ -24,19 +21,10 @@ import '@/app/[lang]/alg/_trainer/trainer.css';
 import './skewb.css';
 import { tr } from '@/i18n/tr';
 
-// Same selector vocabulary as the [puzzle] hub: every alg-set puzzle with ≥1
-// catalog set, plus 333bf (3BLD). SkewbSkills shadows the skewb hub, so we
-// carry the event selector here to keep cross-event navigation intact.
-const SELECTOR_EVENTS = new Set<string>([
-  ...ALG_PUZZLES.filter((p) => ALG_CATALOG[p].length > 0).map((p) => PUZZLE_EVENT[p]),
-  '333bf',
-]);
-
 export default function SkewbTrainerPage() {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
   const lang = (i18n.language.startsWith('zh') ? 'zh' : 'en');
-  const router = useRouter();
 
   const t = useSkewbTrainer();
 
@@ -73,11 +61,9 @@ export default function SkewbTrainerPage() {
   return (
     <div className="trainer-root">
       <div className="trainer-topbar">
-        <WcaEventSelector
-          availableEvents={SELECTOR_EVENTS}
-          onlyAvailable
-          selectedEvent="skewb"
-          onSelect={(id) => router.push(`${lang === 'zh' ? '/zh' : ''}/alg/${id === '333bf' ? '3bld' : (resolveAlgPuzzle(id) ?? id)}`)}
+        <AlgPuzzlePicker
+          current="skewb"
+          linkFor={(id) => ({ href: `/alg/${id}` })}
           isZh={isZh}
         />
       </div>

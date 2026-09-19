@@ -4,7 +4,7 @@
 import { useQueryStates, parseAsString } from 'nuqs';
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { EventIcon } from '@/components/EventIcon/EventIcon';
+import WcaEventSelector from '@/components/WcaEventSelector';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
@@ -72,16 +72,7 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
     <div className="wp-results-tab">
       {sub === 'event' && eventIds.length > 0 && (
         <div className="wp-event-strip wp-event-strip-tabs">
-          {eventIds.map((eid) => (
-            <button
-              key={eid}
-              className={`wp-event-tab ${eid === activeEvent ? 'is-active' : ''}`}
-              onClick={() => setEvent(eid)}
-              title={eid}
-            >
-              <EventIcon event={eid} className="wp-event-icon-md" />
-            </button>
-          ))}
+          <WcaEventSelector availableEvents={new Set(eventIds)} selectedEvent={activeEvent} onSelect={setEvent} isZh={isZh} />
         </div>
       )}
 
