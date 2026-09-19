@@ -40,6 +40,7 @@ export interface PuzzlePickerItem {
   label: string;
   iconClass?: string;
   textLabel?: string;
+  detail?: ReactNode;
 }
 
 export interface PuzzlePickerGroup {
@@ -144,23 +145,24 @@ export default function PuzzlePicker({
 
   useEffect(() => {
     if (!open) return;
-    const onDoc = (e: MouseEvent) => {
+    const onDoc = (e: PointerEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     const onEsc = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      e.stopPropagation();
       setOpen(false);
       requestAnimationFrame(() => triggerRef.current?.focus());
     };
-    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('pointerdown', onDoc);
     document.addEventListener('keydown', onEsc);
     return () => {
-      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('pointerdown', onDoc);
       document.removeEventListener('keydown', onEsc);
     };
   }, [open]);
 
-  if (groups.length === 0) return null;
+  if (groups.length === 0 && !popupFooter) return null;
 
   const iconFor = (item: PuzzlePickerItem, trigger = false) => {
     const className = trigger ? 'pp-trigger-icon' : 'pp-item-icon';
@@ -173,8 +175,9 @@ export default function PuzzlePicker({
     const cls = `pp-item${active ? ' pp-item--active' : ''}`;
     const inner = (
       <>
-        {showItemIcons && iconFor(item)}
+        {showItemIcons && item.id && iconFor(item)}
         <span className="pp-item-label">{item.label}</span>
+        {item.detail && <span className="pp-item-detail">{item.detail}</span>}
       </>
     );
     const link = linkFor ? linkFor(item.id) : null;
@@ -216,16 +219,16 @@ export default function PuzzlePicker({
         aria-controls={open ? popupId : undefined}
         onClick={() => setOpen((o) => !o)}
       >
-        {showTriggerIcon && (selectedItem && showItemIcons
+        {showTriggerIcon && (selectedItem?.id && showItemIcons
           ? iconFor(selectedItem, true)
           : <Boxes size={15} className="pp-trigger-icon" />)}
-        {(!selectedItem || !showItemIcons || !showTriggerIcon) && (
+        {(!selectedItem?.id || !showItemIcons || !showTriggerIcon) && (
           <span className="pp-trigger-label">{triggerLabel}</span>
         )}
         <ChevronDown size={14} className="pp-trigger-chevron" />
       </button>
       {open && (
-        <div ref={panelRef} className="pp-popup" id={popupId} role="menu">
+        <div ref={panelRef} className="pp-popup" id={popupId} role="menu" data-site-surface="popover">
           {groups.map((group) => (
             <div key={group.id} className="pp-group">
               <div className="pp-group-title">{group.label}</div>

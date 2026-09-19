@@ -69,8 +69,7 @@ export default function WcaEventMultiSelector({
     onChange(next);
   };
 
-  return (
-    <div className="wca-event-multi-selector">
+  const toolbar = (
       <div className="wca-event-multi-toolbar">
         <ClearButton variant="standalone" onClick={() => onChange(new Set())} isZh={isZh} />
         <button
@@ -104,12 +103,16 @@ export default function WcaEventMultiSelector({
           />
         )}
       </div>
+  );
+  return (
+    <div className="wca-event-multi-selector">
       <WcaEventSelector
         availableEvents={renderedEvents}
         selectedEvents={selectedEvents}
         onToggle={toggleEvent}
         isZh={isZh}
         onlyAvailable
+        popupFooter={toolbar}
       />
     </div>
   );

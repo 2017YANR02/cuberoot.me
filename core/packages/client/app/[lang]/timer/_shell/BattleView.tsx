@@ -682,7 +682,7 @@ function EventPickerOverlay({ playerId }: { playerId: number }) {
       }}
     >
       <div className="event-overlay-inner">
-        <WcaEventSelector
+        <WcaEventSelector presentation="inline"
           availableEvents={BATTLE_AVAILABLE_EVENTS}
           isZh={isZh}
           selectedEvent={value}
