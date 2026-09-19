@@ -4,12 +4,13 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Crown, Heart, Lightbulb, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
 import SortableCard from '@/components/SortableCard';
 import HeaderToggles from '@/components/HeaderToggles';
+import OnboardingGuideModal, { isOnboardingGuided, markOnboardingGuided } from '@/components/OnboardingGuideModal';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
@@ -117,6 +118,23 @@ export default function LandingPage() {
   }, []);
 
   const lang: 'zh' | 'en' = (i18n.language.startsWith('zh') ? 'zh' : 'en');
+  const [guideOpen, setGuideOpen] = useState(false);
+  // 首次访问自动弹出：localStorage 无 cuberoot_guided 才弹；关闭/完成即标记。
+  useEffect(() => {
+    let timer: number | undefined;
+    try {
+      if (!isOnboardingGuided()) {
+        timer = window.setTimeout(() => setGuideOpen(true), 600);
+      }
+    } catch {
+      /* localStorage 不可用则不打扰 */
+    }
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, []);
+  const closeGuide = useCallback(() => {
+    setGuideOpen(false);
+    markOnboardingGuided();
+  }, []);
   const [featuredNotice, setFeaturedNotice] = useState<PageNotice | null>(null);
   const [publicMembers, setPublicMembers] = useState<PublicMember[] | null>(null);
   const [memberQueries, setMemberQueries] = useState({ enterprise: '', individual: '' });
@@ -224,6 +242,27 @@ export default function LandingPage() {
   const isCardLocked = (card: CardConfig) => Boolean(card.adminOnly)
     || (cardLocks[card.id] ?? Boolean(card.lockedForNonAdmin || card.comingSoon));
 
+  // 新手引导锚点：card.id -> data-tour（OnboardingGuideModal 用
+  // document.querySelector('[data-tour="..."]') + getBoundingClientRect() 定位）。
+  // 触发后直接从第 1 步开始高亮，无欢迎页。共 12 步：
+  // 1 计时 timer / 2 公式 formulas / 3 模拟 simulator / 4 复盘 replay /
+  // 5 打乱 scramble / 6 比赛 competition / 7 纪录 records / 8 排名 rankings /
+  // 9 统计 statistics；10~12 为下方挂件（近期打乱 / 今日复盘 / 论坛），
+  // 锚点见下方 LazyVisible 外层包裹 div。
+  // 纪录与排名为独立步骤：wca-records -> records，wca-results -> rankings。
+  const CARD_ID_TO_TOUR: Record<string, string> = {
+    timer: 'timer',               // Step 1 计时
+    algdb: 'formulas',            // Step 2 公式
+    sim: 'simulator',             // Step 3 模拟
+    recon: 'replay',              // Step 4 复盘
+    scramble: 'scramble',         // Step 5 打乱
+    competitions: 'competition',  // Step 6 比赛（WCA 比赛入口，同组）
+    'comp-sim': 'competition',    // Step 6 比赛（模拟正式比赛，直达 CTA）
+    'wca-records': 'records',     // Step 7 纪录（个人计时成绩）
+    'wca-results': 'rankings',    // Step 8 排名（全球排行榜）
+    'wca-stats': 'statistics',    // Step 9 统计
+  };
+
   const renderCard = (card: CardConfig) => {
     const locked = isCardLocked(card);
     const isLocked = locked && !isAdmin;
@@ -266,7 +305,12 @@ export default function LandingPage() {
       );
     }
     return (
-      <SortableCard key={card.id} id={card.id} draggable={isAdmin}>
+      <SortableCard
+        key={card.id}
+        id={card.id}
+        draggable={isAdmin}
+        tourKey={CARD_ID_TO_TOUR[card.id]}
+      >
         {renderLock(card.id, locked, card.adminOnly)}
         {cardElement}
       </SortableCard>
@@ -352,6 +396,16 @@ export default function LandingPage() {
     <div className="landing-page">
       <div className="landing-auth">
         <HeaderToggles />
+        <button
+          type="button"
+          onClick={() => setGuideOpen(true)}
+          className="landing-auth-btn"
+          title={tr({ zh: '新手指南', en: 'Beginner guide' })}
+          aria-label={tr({ zh: '新手指南', en: 'Beginner guide' })}
+        >
+          <Lightbulb size={16} aria-hidden="true" />
+          <span className="hidden min-[601px]:inline">{tr({ zh: '💡 新手指南', en: '💡 Guide' })}</span>
+        </button>
         <Link href="/membership" className="landing-auth-icon landing-membership-icon"
           title={tr({ zh: '会员', en: 'Membership' })}
           aria-label={tr({ zh: '会员', en: 'Membership' })} prefetch={false}>
@@ -523,6 +577,7 @@ export default function LandingPage() {
           {renderMemberSections(true)}
         </section>
       )}
+      <OnboardingGuideModal open={guideOpen} lang={lang} onClose={closeGuide} />
     </div>
   );
 }
