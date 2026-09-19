@@ -1,21 +1,6 @@
-/**
- * cubing.com 中国比赛纪录快讯监控 —— 移植自 Python cubing_record_monitor.py 的 RECORD 路径。
- *
- * 流程:
- *   1. GET /api/competition 取比赛列表
- *   2. 过滤「中国(含港澳台)+ live=1 + date.from 在过去 30 天内」的比赛
- *   3. 每场一条 WS 连接拉所有 round 的 result.all
- *   4. row.sr / row.ar 非空 → 破纪录,过滤后按 record_format 模板推 Bark
- *
- * dedup 走 monitor_pushed_state('cubing_record'),无首跑静默吸收 —— 用户要
- * 「过去 N 天补推 + 已推不重推」,所以未 known 的全推。
- *
- * Bark 文案保留原 emoji / 措辞,推送正文须与旧 Python 逐字一致(网页 UI 才禁 emoji)。
- *
- * ⚠️ 本阶段只移植 RECORD 检测。watched_keys / PR / result.user / _fetch_user_pr_rows /
- *    iter_pr_events 全部跳过(Phase 4),scan_comp 里留 // Phase 4 桩注释。
- */
-import WebSocket from 'ws';
+/** Poll public REST rounds; preserve record and watched-person PR deduplication. */
+import { fetchCubingCompetitions, fetchCubingJson, normalizeCubingRound, type CubingCompetition as CubingComp, type CubingRound, type CubingResult } from '@cuberoot/shared/cubing-live';
+import { fetchCubingMeta } from '../utils/cubing_live.js';
 import { sendBark } from './bark.js';
 import { getPushedSet, markPushed, type MonitorId } from './state.js';
 import { RECORD_TAGS, NR_COUNTRIES, POLL_INTERVAL_MS, siteCompUrlFromCubingAlias, isChineseRegion } from './config.js';
@@ -26,30 +11,7 @@ import { EVENT_NAME_BY_ID, type RecordEvent } from '../utils/record_format.js';
 import { formatRecords } from '../routes/wca_format.js';
 
 const MONITOR: MonitorId = 'cubing_record';
-const CUBING_API = 'https://cubing.com/api/competition';
-const WS_URL = 'wss://cubing.com/ws';
-const UA: Record<string, string> = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
-
-// 监控窗口(天):扫 date.from 在过去 N 天内开始的中国比赛(覆盖赛中赛后补录的纪录),
-// 已推过的由 monitor_pushed_state dedup。硬编码 30(原 cfg.cubing_record_window_days)。
 const WINDOW_DAYS = 30;
-
-// 中国(含港澳台)地区在 cubing.com locations.province 中的特殊关键字 → ISO2
-const PROVINCE_TO_ISO2: Record<string, string> = { 香港: 'HK', 台湾: 'TW', 澳门: 'MO' };
-
-// ─── 类型 ──────────────────────────────────────────────────────────────────
-
-interface CubingComp {
-  id?: number | string;
-  alias?: string;
-  name?: string;
-  name_en?: string;
-  /** 'WCA' = WCA 认证赛;'other' = 民间赛(无 WCA id,链接不能指自有站)。 */
-  type?: string;
-  live?: number;
-  date?: { from?: number; to?: number };
-  locations?: { province?: string }[];
-}
 
 interface WsUser {
   name?: string;
@@ -87,139 +49,21 @@ interface InternalEvent {
   slug: string;
   /** 粗饼 type 字段;非 'WCA' 的民间赛没有自有站比赛页,链接留在粗饼 live。 */
   compType?: string;
+  wcaCompetitionId?: string;
 }
 
 // ─── HTTP helpers ──────────────────────────────────────────────────────────
 
-async function httpGetJson<T>(url: string): Promise<T> {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 20000);
-  try {
-    const r = await fetch(url, { headers: UA, signal: ctrl.signal });
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return (await r.json()) as T;
-  } finally {
-    clearTimeout(t);
-  }
+const listCompetitions = fetchCubingCompetitions;
+
+export function isChinaInWindow(comp: CubingComp, now: number, windowSeconds: number): boolean {
+  if (!comp.live || !comp.locations.some(location => ['CN', 'HK', 'MO', 'TW'].includes(location.regionIso2))) return false;
+  const start = Date.parse(comp.startDate + 'T00:00:00+08:00') / 1000;
+  return now - windowSeconds <= start && start <= now + 86400;
 }
 
-async function listCompetitions(): Promise<CubingComp[]> {
-  const data = await httpGetJson<{ data?: CubingComp[] }>(CUBING_API);
-  return data.data ?? [];
-}
-
-/** 中国(含港澳台)+ 启用 cubing.com live + date.from 在过去 window 秒内。now 单位:秒。 */
-function isChinaInWindow(comp: CubingComp, now: number, windowSeconds: number): boolean {
-  // live=0 表示没启用 cubing.com 直播,/live/<slug> 没 data-c,扫描无意义。
-  if (comp.live !== 1) return false;
-  const locations = comp.locations ?? [];
-  if (locations.length === 0) return false;
-  const province = (locations[0]?.province ?? '').trim();
-  const isSpecial = Object.keys(PROVINCE_TO_ISO2).some((k) => province.includes(k));
-  if (!isSpecial && !province) return false;
-  const start = comp.date?.from ?? 0;
-  const cutoff = now - windowSeconds;
-  return cutoff <= start && start <= now + 86400;
-}
-
-/** 从 locations[0].province 推断比赛所在地区 ISO2,默认 CN。 */
 function compIso2(comp: CubingComp): string {
-  const province = comp.locations?.[0]?.province ?? '';
-  for (const [keyword, iso] of Object.entries(PROVINCE_TO_ISO2)) {
-    if (province.includes(keyword)) return iso;
-  }
-  return 'CN';
-}
-
-// ─── live 页 HTML 抓取 ──────────────────────────────────────────────────────
-
-function decodeHtmlEntities(s: string): string {
-  return s
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
-}
-
-/** <title>X - Y</title> → unescape(X)(取 ' - ' 前段)。 */
-function extractTitle(body: string, slug: string): string {
-  const m = body.match(/<title>([^<]+)<\/title>/);
-  if (!m) return slug;
-  return decodeHtmlEntities(m[1].split(' - ')[0]).trim();
-}
-
-interface LiveRounds {
-  cid: number;
-  rounds: [string, string][]; // [eventId, roundId]
-  cnTitle: string;
-  enTitle: string;
-  // `${eventId}|${roundId}` → 本站 1-based 轮次序号(data-events 里 rs 的位置 +1)。
-  // cubing 的 roundId 非序号,本站深链 ?round=N 走 N→rs[N-1],故推送链接要带这个序号。
-  roundNumByKey: Map<string, number>;
-}
-
-/** 从 live 页 HTML 拿 (cid, rounds, cnTitle, enTitle)。跑两次 HTTP:默认中文 + ?lang=en。
- *  缺 data-c / data-events(下线 / 取消 / 改版)抛错,由调用方捕获跳过。 */
-async function fetchLiveRounds(slug: string): Promise<LiveRounds> {
-  const urlCn = `https://cubing.com/live/${slug}`;
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 30000);
-  let bodyCn: string;
-  try {
-    const res = await fetch(urlCn, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: ctrl.signal });
-    if (!res.ok) throw new Error(`HTTP ${res.status} on /live/${slug}`);
-    bodyCn = await res.text();
-  } finally {
-    clearTimeout(t);
-  }
-
-  const mC = bodyCn.match(/data-c="(\d+)"/);
-  if (!mC) throw new Error(`data-c not found on /live/${slug} (页面无效或已下线)`);
-  const mEv = bodyCn.match(/data-events="([^"]+)"/);
-  if (!mEv) throw new Error(`data-events not found on /live/${slug}`);
-  const cid = Number(mC[1]);
-  const events = JSON.parse(decodeHtmlEntities(mEv[1])) as { i: string; rs: { i: string }[] }[];
-  const rounds: [string, string][] = events.flatMap((ev) => ev.rs.map((rd) => [ev.i, rd.i] as [string, string]));
-  const roundNumByKey = new Map<string, number>();
-  for (const ev of events) ev.rs.forEach((rd, idx) => roundNumByKey.set(`${ev.i}|${rd.i}`, idx + 1));
-  const cnTitle = extractTitle(bodyCn, slug);
-
-  // 再拿一次英文 title(EN 推送用),失败回退 slug 去横杠。
-  let enTitle: string;
-  try {
-    const ctrlEn = new AbortController();
-    const tEn = setTimeout(() => ctrlEn.abort(), 30000);
-    try {
-      const resEn = await fetch(`${urlCn}?lang=en`, { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: ctrlEn.signal });
-      const bodyEn = await resEn.text();
-      enTitle = extractTitle(bodyEn, slug);
-    } finally {
-      clearTimeout(tEn);
-    }
-  } catch (e) {
-    console.warn(`[cubing-record] fetch en title failed slug=${slug}: ${(e as Error).message}; fallback to slug`);
-    enTitle = slug.replace(/-/g, ' ');
-  }
-
-  return { cid, rounds, cnTitle, enTitle, roundNumByKey };
-}
-
-// ─── WS fetch ──────────────────────────────────────────────────────────────
-
-function openCubingWs(): Promise<WebSocket> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(WS_URL, {
-      headers: { Origin: 'https://cubing.com', 'User-Agent': 'Mozilla/5.0' },
-    });
-    const t = setTimeout(() => {
-      ws.terminate();
-      reject(new Error('WS open timeout'));
-    }, 20000);
-    ws.once('open', () => { clearTimeout(t); resolve(ws); });
-    ws.once('error', (e) => { clearTimeout(t); reject(e); });
-  });
+  return comp.locations[0]?.regionIso2 ?? '';
 }
 
 // result.user 的 nb/na 行(破生涯 PR 标记)。schema 与 LiveRow 近似,额外带 _event/_wcaid/_name/_region。
@@ -240,116 +84,11 @@ interface PrRow {
   _region?: string;
 }
 
-interface CompResults {
-  users: Record<number, WsUser>;
-  rows: LiveRow[];
-  prRows: PrRow[];
-}
 
 /** cubing.com user.name → 选手 key(优先括号内中文名,否则原名)。等价 Python _match_key。 */
 function matchKey(name: string): string {
   const m = (name || '').match(/\(([^)]+)\)/);
   return (m ? m[1] : name || '').trim();
-}
-
-/** 在一条 ws 上挂临时 message 监听,onMsg 返 true 即本相收齐;deadline / close 也结束。
- *  结束后摘掉监听,供分相复用同一连接(result.all 相 → result.user 相)。 */
-function awaitMessages(
-  ws: WebSocket,
-  onMsg: (msg: { code?: number; type?: string; data?: unknown }) => boolean,
-  timeoutMs: number,
-): Promise<void> {
-  return new Promise((resolve) => {
-    const finish = (): void => {
-      ws.off('message', handler);
-      ws.off('close', onClose);
-      clearTimeout(timer);
-      resolve();
-    };
-    const timer = setTimeout(finish, timeoutMs);
-    const onClose = (): void => finish();
-    const handler = (raw: WebSocket.RawData): void => {
-      let msg: { code?: number; type?: string; data?: unknown };
-      try {
-        const text = raw.toString();
-        if (text === '"pong"' || text === 'pong') return;
-        msg = JSON.parse(text);
-      } catch { return; }
-      if (msg.code !== undefined && msg.code !== 200) return;
-      if (onMsg(msg)) finish();
-    };
-    ws.on('message', handler);
-    ws.once('close', onClose);
-  });
-}
-
-/** 单场比赛一条 WS 连接:相 1 拉所有 round 的 result.all(收 users + rows);
- *  相 2 对参赛且被关注的选手发 result.user 收 nb/na 生涯 PR rows。
- *  收齐(gotUsers && receivedRounds>=rounds.length)或各相 deadline 停。watchedKeys 空则跳过相 2。 */
-async function fetchCompResults(
-  cid: number,
-  rounds: [string, string][],
-  watchedKeys: Set<string>,
-): Promise<CompResults> {
-  const ws = await openCubingWs();
-  const users: Record<number, WsUser> = {};
-  const rows: LiveRow[] = [];
-  const prRows: PrRow[] = [];
-
-  try {
-    // 相 1:result.all
-    let gotUsers = false;
-    let receivedRounds = 0;
-    ws.send(JSON.stringify({ type: 'competition', competitionId: cid }));
-    for (const [eid, rid] of rounds) {
-      ws.send(JSON.stringify({ type: 'result', action: 'fetch', params: { event: eid, round: rid, filter: 'all' } }));
-    }
-    await awaitMessages(ws, (msg) => {
-      if (msg.type === 'users' && msg.data && typeof msg.data === 'object') {
-        for (const [k, v] of Object.entries(msg.data as Record<string, WsUser>)) users[Number(k)] = v;
-        gotUsers = true;
-      } else if (msg.type === 'result.all' && Array.isArray(msg.data)) {
-        receivedRounds += 1;
-        for (const row of msg.data as LiveRow[]) rows.push(row);
-      }
-      return gotUsers && receivedRounds >= rounds.length;
-    }, 30000);
-
-    // 相 2:result.user PR(仅关注选手)。串行,每人一个 10s 窗口。
-    if (watchedKeys.size > 0 && gotUsers) {
-      const watchedPairs: { number: number; wcaid: string; name: string }[] = [];
-      for (const [num, u] of Object.entries(users)) {
-        if (!u.wcaid) continue;
-        if (watchedKeys.has(matchKey(u.name || ''))) {
-          watchedPairs.push({ number: Number(num), wcaid: u.wcaid, name: u.name || '' });
-        }
-      }
-      for (const p of watchedPairs) {
-        ws.send(JSON.stringify({ type: 'result', action: 'user', user: { number: p.number, wcaid: p.wcaid } }));
-        let currentEvent: string | number | null = null;
-        await awaitMessages(ws, (msg) => {
-          if (msg.type !== 'result.user') return false; // 等到本人 result.user 这相才结束
-          const data = (msg.data as { t?: string; e?: string | number; sr?: string; ar?: string | number; nb?: boolean; na?: boolean }[]) || [];
-          for (const entry of data) {
-            if (entry.t === 'e') {
-              currentEvent = entry.e ?? null;
-            } else if (entry.t === 'r') {
-              // sr/ar 已由 record 路径覆盖,跳过
-              if (entry.sr || entry.ar) continue;
-              if (entry.nb || entry.na) {
-                prRows.push({ ...(entry as unknown as PrRow), _event: currentEvent, _wcaid: p.wcaid, _name: p.name });
-              }
-            }
-          }
-          return true;
-        }, 10000);
-      }
-    }
-  } finally {
-    try { ws.terminate(); } catch { /* ignore */ }
-  }
-
-  return { users, rows, prRows };
 }
 
 // ─── 纪录检测 ───────────────────────────────────────────────────────────────
@@ -358,8 +97,8 @@ async function fetchCompResults(
  *  每条 sr / ar 标记一个 event;同 row 的两条共享 groupKey,后续可合并推送。 */
 function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: CubingComp, roundNumByKey: Map<string, number>): InternalEvent[] {
   const cIso2 = compIso2(comp);
-  const compName = comp.name || comp.alias || '';
-  const compNameEn = comp.name_en || comp.name || comp.alias || '';
+  const compName = comp.nameZh || comp.name || comp.alias || '';
+  const compNameEn = comp.name || comp.alias || '';
   const slug = comp.alias || '';
   const out: InternalEvent[] = [];
 
@@ -392,6 +131,7 @@ function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: 
         compNameEn,
         slug,
         compType: comp.type,
+        wcaCompetitionId: comp.wcaCompetitionId,
       });
     }
   }
@@ -402,8 +142,8 @@ function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: 
  *  按 (wcaid, eventId, recType) 去重取最快;同选手同事件 single+avg 共享 groupKey 合并推送。 */
 function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<string, number>): InternalEvent[] {
   const cIso2 = compIso2(comp);
-  const compName = comp.name || comp.alias || '';
-  const compNameEn = comp.name_en || comp.name || comp.alias || '';
+  const compName = comp.nameZh || comp.name || comp.alias || '';
+  const compNameEn = comp.name || comp.alias || '';
   const slug = comp.alias || '';
 
   // (wcaid|eventId|recType) → 最快的那条
@@ -446,48 +186,44 @@ function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<stri
       compNameEn,
       slug,
       compType: comp.type,
+      wcaCompetitionId: comp.wcaCompetitionId,
     });
   }
   return out;
 }
 
 /** 扫描单场比赛,返回所有 record + PR 事件。 */
-async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Promise<InternalEvent[]> {
-  const slug = comp.alias;
-  if (!slug) {
-    console.warn(`[cubing-record] comp without alias: id=${comp.id} name=${comp.name}`);
-    return [];
+export async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Promise<InternalEvent[]> {
+  const meta = await fetchCubingMeta(comp.alias);
+  const users: Record<number, WsUser> = {};
+  const rows: LiveRow[] = [];
+  const prRows: PrRow[] = [];
+  const roundNumByKey = new Map<string, number>();
+  for (const event of meta.events) {
+    for (const round of event.rs) {
+      const number = Number(round.liveId);
+      const payload = await fetchCubingJson<{ round: CubingRound; results: CubingResult[] }>(comp.alias,
+        '/live/results/' + encodeURIComponent(event.i) + '/' + number);
+      if (payload.round.competitionId !== comp.id || payload.round.eventId !== event.i || payload.round.roundNumber !== number) {
+        throw new Error('Mismatched cubing.com monitor round');
+      }
+      const snapshot = normalizeCubingRound(payload, round.i);
+      Object.assign(users, snapshot.users);
+      rows.push(...snapshot.results);
+      roundNumByKey.set(event.i + '|' + round.i, number);
+      for (let index = 0; index < payload.results.length; index++) {
+        const raw = payload.results[index]!;
+        const row = snapshot.results[index]!;
+        const user = snapshot.users[String(row.n)]!;
+        if (!user.wcaid || !watchedKeys.has(matchKey(user.name))) continue;
+        if (raw.personalSingleRecord === 'PR' || raw.personalAverageRecord === 'PR') {
+          prRows.push({ ...row, nb: raw.personalSingleRecord === 'PR' && !row.sr, na: raw.personalAverageRecord === 'PR' && !row.ar,
+            _wcaid: user.wcaid, _name: user.name, _region: user.region });
+        }
+      }
+    }
   }
-  let live: LiveRounds;
-  try {
-    live = await fetchLiveRounds(slug);
-  } catch (e) {
-    console.warn(`[cubing-record] fetch live page failed slug=${slug}: ${(e as Error).message}`);
-    return [];
-  }
-  if (live.rounds.length === 0) return [];
-
-  // 比赛名缺失 / 等于 slug 时用 live 页中文标题补全;英文标题填 name_en。
-  const enriched: CubingComp = { ...comp, name_en: live.enTitle };
-  if (!enriched.name || enriched.name === slug) enriched.name = live.cnTitle;
-
-  let results: CompResults;
-  try {
-    results = await fetchCompResults(live.cid, live.rounds, watchedKeys);
-  } catch (e) {
-    console.warn(`[cubing-record] fetch ws results failed cid=${live.cid}: ${(e as Error).message}`);
-    return [];
-  }
-
-  // PR row 补 region(从 users map 反查)
-  for (const pr of results.prRows) {
-    const u = pr.n != null ? results.users[pr.n] : undefined;
-    if (u) pr._region = u.region;
-  }
-
-  const events = iterRecordEvents(results.rows, results.users, enriched, live.roundNumByKey);
-  events.push(...iterPrEvents(results.prRows, enriched, live.roundNumByKey));
-  return events;
+  return [...iterRecordEvents(rows, users, comp, roundNumByKey), ...iterPrEvents(prRows, comp, roundNumByKey)];
 }
 
 // ─── 过滤 + 聚合 + 推送 ─────────────────────────────────────────────────────
@@ -501,7 +237,7 @@ function toRecordEvent(ev: InternalEvent): RecordEvent {
     event_id: ev.eventId,
     event_name: EVENT_NAME_BY_ID[ev.eventId] || ev.eventId,
     person_name: ev.personName,
-    person_iso2: COUNTRY_EN_MAP[ev.personRegion] || '',
+    person_iso2: COUNTRY_EN_MAP[ev.personRegion] || (/^[A-Z]{2}$/.test(ev.personRegion) ? ev.personRegion : ''),
     person_country_en: ev.personRegion,
     comp_name: ev.compName,
     comp_name_en: ev.compNameEn,
@@ -510,8 +246,8 @@ function toRecordEvent(ev: InternalEvent): RecordEvent {
     // roundNumber 由 data-events 里 rs 的位置推出(cubing 的 roundId 非序号);
     // 中国比赛落 /zh;alias 缺失 / 民间赛(type≠'WCA',自有站无该比赛页)回退 cubing.com live 页。
     url:
-      siteCompUrlFromCubingAlias(ev.slug, ev.compType, ev.eventId, ev.roundNumber ?? null, isChineseRegion(ev.compIso2))
-      ?? `https://cubing.com/live/${ev.slug}?event=${ev.eventId}&round=${ev.roundId}`,
+      siteCompUrlFromCubingAlias(ev.slug, ev.compType, ev.eventId, ev.roundNumber ?? null, isChineseRegion(ev.compIso2), ev.wcaCompetitionId)
+      ?? `https://cubing.com/competition/${ev.slug}/live?eventId=${encodeURIComponent(ev.eventId)}&roundNumber=${ev.roundNumber ?? 1}`,
   };
 }
 
@@ -523,7 +259,7 @@ function wanted(ev: InternalEvent): boolean {
   if (tag === 'PR') return true;
   if (!(RECORD_TAGS.has(tag) || (isContinentalTag(tag) && RECORD_TAGS.has('CR')))) return false;
   if (tag === 'NR' && NR_COUNTRIES.size > 0) {
-    const personIso2 = COUNTRY_EN_MAP[ev.personRegion] || '';
+    const personIso2 = COUNTRY_EN_MAP[ev.personRegion] || (/^[A-Z]{2}$/.test(ev.personRegion) ? ev.personRegion : '');
     if (!NR_COUNTRIES.has(personIso2)) return false;
   }
   return true;
@@ -565,7 +301,7 @@ async function processEvents(events: InternalEvent[]): Promise<void> {
 
 // ─── 主循环 ─────────────────────────────────────────────────────────────────
 
-/** 单次扫描全部目标比赛(每场一条 WS 连接,串行)。每场错误捕获后跳过,不让整轮崩。 */
+/** 单次扫描全部目标比赛(REST 轮次,串行)。每场错误捕获后跳过,不让整轮崩。 */
 async function runOnce(): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
   let comps: CubingComp[];

@@ -57,10 +57,11 @@ describe('useLiveStream REST refresh', () => {
     users: { '9': { number: 9, name: 'Competitor', wcaid: '', region: 'CN' } },
     results: [resultRow({ e: 'clock', r: roundTypeId })],
   });
-  function Probe({ round = 'f', enabled = true }: { round?: string; enabled?: boolean }) {
+  function Probe({ round = 'f', enabled = true, all = false }: { round?: string; enabled?: boolean; all?: boolean }) {
     const status = useLiveStream({
       cubingSlug: enabled ? 'Xian-One-More-Clock-2026' : null,
       focusRound: { eventId: 'clock', roundTypeId: round, roundNumber: round === 'f' ? 3 : 1 },
+      rounds: all ? [{ eventId: 'clock', roundTypeId: '1', roundNumber: 1 }, { eventId: 'clock', roundTypeId: 'f', roundNumber: 3 }] : undefined,
       applyPatch: patch => patches.push(patch),
     });
     return createElement('span', null, status);
@@ -84,7 +85,7 @@ describe('useLiveStream REST refresh', () => {
   });
   it('fetches the final via our API, updates users before scores, and refreshes every 15s', async () => {
     await act(async () => root.render(createElement(Probe)));
-    expect(request.mock.calls[0][0]).toBe('/v1/cubing-live/Xian-One-More-Clock-2026/round/clock/3?roundTypeId=f&v=4');
+    expect(request.mock.calls[0][0]).toBe('/v1/cubing-live/Xian-One-More-Clock-2026/round/clock/3?roundTypeId=f&v=5');
     expect(patches.map(patch => patch.kind)).toEqual(['users', 'round.update', 'result.all']);
     expect(host.textContent).toBe('open');
     await act(async () => vi.advanceTimersByTimeAsync(15_000));
@@ -126,5 +127,36 @@ describe('useLiveStream REST refresh', () => {
     await act(async () => root.render(createElement(Probe)));
     expect(host.textContent).toBe('error');
     expect(patches).toEqual([]);
+  });
+  it('refreshes affected rounds on SSE, restores all rounds on reconnect, and applies deletions', async () => {
+    class Stream extends EventTarget {
+      static instance: Stream;
+      onopen?: () => void;
+      onerror?: () => void;
+      onmessage?: (event: MessageEvent) => void;
+      close = vi.fn();
+      constructor(public url: string) { super(); Stream.instance = this; }
+    }
+    vi.stubGlobal('EventSource', Stream);
+    request.mockImplementation(async (url: string) => ({ ok: true, json: async () => snapshot(url.includes('roundTypeId=1') ? '1' : 'f') }));
+    await act(async () => root.render(createElement(Probe, { all: true })));
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(Stream.instance.url).toBe('/v1/cubing-live/Xian-One-More-Clock-2026/stream?v=5');
+    request.mockImplementation(async () => ({ ok: true, json: async () => ({ ...snapshot('1'), results: [] }) }));
+    await act(async () => {
+      Stream.instance.dispatchEvent(new MessageEvent('result.updated', { data: JSON.stringify({ payload: { round: { eventId: 'clock', roundNumber: 1 } } }) }));
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(request).toHaveBeenCalledTimes(3);
+    expect(patches.at(-1)).toEqual({ kind: 'result.all', eventId: 'clock', roundTypeId: '1', results: [] });
+    request.mockImplementation(async (url: string) => ({ ok: true, json: async () => snapshot(url.includes('roundTypeId=1') ? '1' : 'f') }));
+    await act(async () => { Stream.instance.onopen?.(); await vi.advanceTimersByTimeAsync(500); });
+    expect(request).toHaveBeenCalledTimes(5);
+    await act(async () => { Stream.instance.onerror?.(); await vi.advanceTimersByTimeAsync(15_000); });
+    expect(request).toHaveBeenCalledTimes(6);
+    const stream = Stream.instance;
+    vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    await act(async () => document.dispatchEvent(new Event('visibilitychange')));
+    expect(stream.close).toHaveBeenCalledTimes(1);
   });
 });

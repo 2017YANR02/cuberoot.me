@@ -73,6 +73,7 @@ function compareResult(a: LiveResultRow, b: LiveResultRow, format: string): numb
 interface UseLiveStreamArgs {
   cubingSlug: string | null;
   focusRound: LiveRoundRef | null;
+  rounds?: LiveRoundRef[];
   applyPatch: (patch: LivePatch) => void;
 }
 
@@ -88,63 +89,116 @@ export type LivePatch =
   | { kind: 'round.update'; round: { i: string; e: string; s?: number; rn?: number; tt?: number; n?: number; name?: string } }
   | { kind: 'users'; users: Record<string, { number: number; name: string; wcaid: string; region: string }> };
 
-/** Poll the visible round through the same REST adapter as the initial API snapshot. */
-export function useLiveStream({ cubingSlug, focusRound, applyPatch }: UseLiveStreamArgs) {
+/** SSE invalidates snapshots; polling recovers missed events and disconnected streams. */
+export function useLiveStream({ cubingSlug, focusRound, rounds, applyPatch }: UseLiveStreamArgs) {
   const [status, setStatus] = useState<WsStatus>('idle');
   const applyRef = useRef(applyPatch);
   applyRef.current = applyPatch;
-  const eventId = focusRound?.eventId;
-  const roundTypeId = focusRound?.roundTypeId;
-  const roundNumber = focusRound?.roundNumber;
+  const focusKey = focusRound ? JSON.stringify(focusRound) : '';
+  const roundsKey = JSON.stringify(rounds ?? (focusRound ? [focusRound] : []));
 
   useEffect(() => {
-    if (!cubingSlug || !eventId || !roundTypeId || !roundNumber) {
-      setStatus('idle');
-      return;
-    }
+    const allRounds = JSON.parse(roundsKey) as LiveRoundRef[];
+    const focus = focusKey ? JSON.parse(focusKey) as LiveRoundRef : null;
+    if (!cubingSlug || !allRounds.length) { setStatus('idle'); return; }
     let cancelled = false;
     let pending = false;
+    let queued = false;
+    const dirtyRounds = new Set<LiveRoundRef>();
+    let lastFull = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let debounce: ReturnType<typeof setTimeout> | undefined;
+    let stream: EventSource | undefined;
     const abort = new AbortController();
     setStatus('connecting');
-    const refresh = async () => {
-      if (cancelled || pending || document.visibilityState === 'hidden') return;
+    const refresh = async (full = false) => {
+      if (cancelled || document.visibilityState === 'hidden') return;
+      if (pending) { queued = true; return; }
       clearTimeout(timer);
       pending = true;
       try {
-        const response = await fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(cubingSlug)}/round/${encodeURIComponent(eventId)}/${roundNumber}?roundTypeId=${encodeURIComponent(roundTypeId)}&v=4`), {
-          signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20_000)]),
-        });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const snapshot = await response.json() as Awaited<ReturnType<typeof fetchCubingLiveRound>>;
-        if (snapshot.round?.e !== eventId || snapshot.round?.i !== roundTypeId || !Array.isArray(snapshot.results) || !snapshot.users) {
-          throw new Error('Invalid live round response');
+        const recoverAll = full || !focus || Date.now() - lastFull >= 60_000;
+        const targets = recoverAll ? allRounds : dirtyRounds.size ? [...dirtyRounds] : [focus!];
+        dirtyRounds.clear();
+        // Keep upstream concurrency bounded even for competitions with many rounds.
+        for (let offset = 0; offset < targets.length; offset += 3) {
+          const batch = await Promise.allSettled(targets.slice(offset, offset + 3).map(async target => {
+            const { eventId, roundTypeId, roundNumber } = target;
+            const response = await fetch(apiUrl('/v1/cubing-live/' + encodeURIComponent(cubingSlug)
+              + '/round/' + encodeURIComponent(eventId) + '/' + roundNumber
+              + '?roundTypeId=' + encodeURIComponent(roundTypeId) + '&v=5'), {
+              signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20_000)]),
+            });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const snapshot = await response.json() as Awaited<ReturnType<typeof fetchCubingLiveRound>>;
+            if (snapshot.round?.e !== eventId || snapshot.round?.i !== roundTypeId || !Array.isArray(snapshot.results) || !snapshot.users) {
+              throw new Error('Invalid live round response');
+            }
+            if (cancelled) return;
+            applyRef.current({ kind: 'users', users: snapshot.users });
+            applyRef.current({ kind: 'round.update', round: snapshot.round });
+            applyRef.current({ kind: 'result.all', eventId, roundTypeId, results: snapshot.results });
+          }));
+          const failed = batch.find(result => result.status === 'rejected');
+          if (failed?.status === 'rejected') throw failed.reason;
         }
-        if (cancelled) return;
-        applyRef.current({ kind: 'users', users: snapshot.users });
-        applyRef.current({ kind: 'round.update', round: snapshot.round });
-        applyRef.current({ kind: 'result.all', eventId, roundTypeId, results: snapshot.results });
-        setStatus('open');
+        if (recoverAll) lastFull = Date.now();
+        if (!cancelled) setStatus('open');
       } catch {
         if (!cancelled) setStatus('error');
       } finally {
         pending = false;
-        if (!cancelled) timer = setTimeout(refresh, 15_000);
+        if (!cancelled) {
+          const fullQueued = queued;
+          queued = false;
+          timer = setTimeout(() => void refresh(fullQueued), fullQueued ? 500 : 15_000);
+        }
       }
     };
-    const onVisibility = () => {
-      if (document.visibilityState === 'visible') void refresh();
-      else clearTimeout(timer);
+    const connect = () => {
+      if (stream || typeof EventSource === 'undefined' || document.visibilityState === 'hidden') return;
+      stream = new EventSource(apiUrl('/v1/cubing-live/' + encodeURIComponent(cubingSlug) + '/stream?v=5'));
+      const invalidate = (event?: Event) => {
+        let target: LiveRoundRef | undefined;
+        try {
+          const message = JSON.parse((event as MessageEvent).data);
+          const round = (message.payload ?? message).round;
+          target = allRounds.find(ref => ref.eventId === round?.eventId && ref.roundNumber === round?.roundNumber);
+        } catch { /* Opening/reconnecting a stream needs every round. */ }
+        if (target) dirtyRounds.add(target);
+        else allRounds.forEach(round => dirtyRounds.add(round));
+        clearTimeout(debounce);
+        debounce = setTimeout(() => void refresh(), 500);
+      };
+      stream.onopen = invalidate; // includes automatic reconnect after lost events
+      stream.onerror = () => { if (!cancelled) setStatus('connecting'); };
+      for (const event of ['round.updated', 'round.rules.updated', 'round.competitor.joined', 'round.competitor.quit',
+        'result.updated', 'result.attempt.updated', 'result.checked', 'results.reranked', 'advancement.refreshed']) {
+        stream.addEventListener(event, invalidate);
+      }
+      stream.onmessage = event => {
+        try {
+          const type = (JSON.parse(event.data) as { type?: string }).type;
+          if (type && /^(round\.|result\.|results\.|advancement\.)/.test(type)) invalidate(event);
+        } catch { /* Ignore malformed messages; polling will recover. */ }
+      };
     };
-    void refresh();
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') { connect(); void refresh(true); }
+      else { clearTimeout(timer); clearTimeout(debounce); stream?.close(); stream = undefined; }
+    };
+    connect();
+    void refresh(true);
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       cancelled = true;
       abort.abort();
+      stream?.close();
       clearTimeout(timer);
+      clearTimeout(debounce);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [cubingSlug, eventId, roundTypeId, roundNumber]);
+  }, [cubingSlug, focusKey, roundsKey]);
   return status;
 }
 /** 把 LivePatch 应用到 results 数组 (新建 + 重排) — 给 reducer 用。 */

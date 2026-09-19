@@ -7,7 +7,7 @@
  * Cache: in-memory 60s。比赛实时刷新但 60s 粒度够看。
  */
 import { Hono } from 'hono';
-import { fetchCubingLiveRound } from '@cuberoot/shared/cubing-live';
+import { fetchCubingLiveRound, fetchCubingCompetitors } from '@cuberoot/shared/cubing-live';
 import { streamSSE } from 'hono/streaming';
 import { fetchCubingMeta as scrapeMeta, collectCubingResults as collectCompData } from '../utils/cubing_live.js';
 import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
@@ -20,7 +20,6 @@ import type { OverlayEntry } from '../utils/wca_live_overlay.js';
 import { getCnCompZh } from '../utils/cn_comp_zh_cache.js';
 import { hasCompResults, trimToRounds, resolveOnlyKeys } from '../utils/comp_trim.js';
 import { getUpcomingComps } from '../utils/upcoming_comps_cache.js';
-import { parseCubingCompetitors } from '../utils/cubing_competitors.js';
 import { wcaIdToCubingSlug, nameToCubingSlug } from '@cuberoot/shared/cubing-slug';
 
 export const cubingLiveRoutes = new Hono();
@@ -1394,38 +1393,9 @@ async function loadFromCubing(wcaId: string, onProgress?: ProgressFn, prefetched
   return data;
 }
 
-const COMPETITORS_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-const CJK_NAME_RE = /[一-鿿]/;
-
-/** 抓 cubing.com /competitors HTML(指定语言)。cubing.com 对裸 UA 返 429 + 发 cookie 让浏览器
- *  reload,服务器侧按 CubingRateLimit=1 cookie 放行. */
-async function fetchCompetitorsHtml(cubingSlug: string, lang: 'en' | 'zh'): Promise<string> {
-  const url = `${CUBING_BASE}/competition/${encodeURIComponent(cubingSlug)}/competitors?lang=${lang}`;
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': COMPETITORS_UA,
-      'Accept': 'text/html,application/xhtml+xml',
-      'Accept-Language': lang === 'zh' ? 'zh-CN,zh;q=0.9' : 'en-US,en;q=0.9',
-      'Cookie': 'CubingRateLimit=1',
-    },
-  });
-  if (!res.ok) throw new Error(`cubing.com /competitors HTTP ${res.status}`);
-  return res.text();
-}
-
-/** 复用同一报名表解析器读取中英文姓名及每位选手实际报名的项目。 */
 async function scrapeCompetitors(cubingSlug: string, onProgress?: ProgressFn): Promise<Record<string, User>> {
   onProgress?.({ step: 'cubing.results', done: 0, total: 1 });
-  const [users, zhUsers] = await Promise.all([
-    fetchCompetitorsHtml(cubingSlug, 'en').then(parseCubingCompetitors),
-    fetchCompetitorsHtml(cubingSlug, 'zh').then(parseCubingCompetitors).catch(() => ({} as Record<string, User>)),
-  ]);
-  for (const [number, user] of Object.entries(users)) {
-    const zhName = zhUsers[number]?.name;
-    if (zhName && CJK_NAME_RE.test(zhName) && !CJK_NAME_RE.test(user.name)) {
-      user.name = `${user.name} (${zhName})`;
-    }
-  }
+  const users = await fetchCubingCompetitors(cubingSlug);
   onProgress?.({ step: 'cubing.results', done: 1, total: 1 });
   return users;
 }
@@ -2139,6 +2109,31 @@ cubingLiveRoutes.get('/cubing-zh/:wcaId', async (c) => {
 });
 
 // Browser requests go through our API because api.cubing.com does not allow our origin.
+cubingLiveRoutes.get('/cubing-live/:slug/stream', async (c) => {
+  const { slug } = c.req.param();
+  c.header('Cache-Control', 'no-store');
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) return c.json({ error: 'invalid slug' }, 400);
+  const abort = new AbortController();
+  const timeout = setTimeout(() => abort.abort(), 15_000);
+  try {
+    const response = await fetch(`https://api.cubing.com/competitions/${encodeURIComponent(slug)}/live/stream`, {
+      headers: { accept: 'text/event-stream' }, signal: AbortSignal.any([abort.signal, c.req.raw.signal]),
+    });
+    if (!response.ok || !response.headers.get('content-type')?.includes('text/event-stream') || !response.body) {
+      await response.body?.cancel();
+      return c.json({ error: 'cubing.com live stream unavailable' }, 502);
+    }
+    // Preserve SSE event names, reconnect semantics and upstream heartbeats.
+    return new Response(response.body, { headers: {
+      'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no',
+    } });
+  } catch {
+    return c.json({ error: 'cubing.com live stream unavailable' }, 502);
+  } finally {
+    clearTimeout(timeout);
+  }
+});
+
 cubingLiveRoutes.get('/cubing-live/:slug/round/:event/:round', async (c) => {
   c.header('Cache-Control', 'no-store');
   const { slug, event, round } = c.req.param();
@@ -2149,7 +2144,7 @@ cubingLiveRoutes.get('/cubing-live/:slug/round/:event/:round', async (c) => {
   }
   try {
     const snapshot = await fetchCubingLiveRound(slug, event, Number(round), roundTypeId, c.req.raw.signal);
-    c.header('Cache-Control', snapshot.results.length ? 'public, max-age=0, s-maxage=10' : 'no-store');
+    // SSE invalidations must see corrections immediately, including deleted results.
     return c.json(snapshot);
   } catch (error) {
     return c.json({ error: (error as Error).message }, 502);

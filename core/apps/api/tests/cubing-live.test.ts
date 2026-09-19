@@ -9,13 +9,26 @@ vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
 afterEach(() => vi.unstubAllGlobals());
 
 describe('new cubing.com live API', () => {
+  it('passes SSE events and heartbeats through without buffering or caching', async () => {
+    const body = ': heartbeat\n\nevent: result.updated\ndata: {"type":"result.updated"}\n\n';
+    const upstream = vi.fn(async (_url: string) => new Response(body, { headers: { 'Content-Type': 'text/event-stream' } }));
+    vi.stubGlobal('fetch', upstream);
+    const response = await cubingLiveRoutes.request('/cubing-live/Xian-One-More-Clock-2026/stream');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('x-accel-buffering')).toBe('no');
+    expect(await response.text()).toBe(body);
+    expect(upstream.mock.calls[0][0]).toBe('https://api.cubing.com/competitions/Xian-One-More-Clock-2026/live/stream');
+    upstream.mockImplementation(async () => new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
+    expect((await cubingLiveRoutes.request('/cubing-live/Xian/stream')).status).toBe(502);
+  });
   it('serves the browser round proxy with bounded cache and validates input', async () => {
     const upstream = vi.fn(async () => Response.json(fixture.results['clock:3']));
     vi.stubGlobal('fetch', upstream);
     const path = '/cubing-live/Xian-One-More-Clock-2026/round/clock/3?roundTypeId=f';
     const response = await cubingLiveRoutes.request(path);
     expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('public, max-age=0, s-maxage=10');
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect((await response.json()).results).toHaveLength(12);
     const invalid = await cubingLiveRoutes.request(path.replace('/clock/3', '/clock/0'));
     expect(invalid.status).toBe(400);

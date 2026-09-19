@@ -1332,6 +1332,9 @@ export default function CompDetailPage() {
   const cubingWsStatus = useLiveStream({
     cubingSlug: isCubing ? (data?.cubingSlug ?? null) : null,
     focusRound: cubingFocusRound,
+    rounds: isCubing ? data?.events.flatMap(event => event.rs.filter(round => round.liveId).map(round => ({
+      eventId: event.i, roundTypeId: round.i, roundNumber: Number(round.liveId),
+    }))) : undefined,
     applyPatch,
   });
   // 只跟踪正在看的那一轮,不是全场。WCA Live 那边 subscription 走不通(check_origin
@@ -4028,7 +4031,7 @@ function LiveIndicator({ status, source }: { status: WsStatus; isZh: boolean; so
       className={`comp-live-indicator status-${status}`}
       title={source === 'wca_live'
         ? tr({ zh: 'WCA Live 轮次成绩(每 15 秒拉取)', en: 'WCA Live round results (polled every 15s)' })
-        : tr({ zh: '粗饼成绩（每 15 秒更新）', en: 'Cubing China results (updated every 15s)' })}
+        : tr({ zh: '粗饼成绩实时更新，断线自动重试', en: 'Cubing China live results with automatic reconnection' })}
     >
       <span className="comp-live-dot" />
       {label}

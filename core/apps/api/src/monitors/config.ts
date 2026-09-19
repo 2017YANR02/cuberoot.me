@@ -72,9 +72,10 @@ export function siteCompUrlFromCubingAlias(
   eventId?: string | null,
   roundNumber?: number | null,
   zh = false,
+  wcaCompetitionId?: string,
 ): string | null {
   if (!alias || !isWcaCubingComp(compType)) return null;
-  return siteCompUrl(alias.replace(/-/g, ''), eventId, roundNumber, zh);
+  return siteCompUrl(wcaCompetitionId || alias.replace(/-/g, ''), eventId, roundNumber, zh);
 }
 
 /** 纪录类型过滤(两个纪录监控共用),默认 WR/CR/NR。 */
