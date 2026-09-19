@@ -311,7 +311,7 @@ export default function DeskPetSearch({
             }} />
           )}
         </button>
-        <PageShareButton className="icon-only" labelClassName="toolbar-label" />
+        <PageShareButton className="icon-only" />
         <button type="button" className={`icon-only${metronomeOpen ? ' is-active' : ''}`}
           onClick={onToggleMetronome}
           title={t('音乐与节拍器', 'Music and metronome')}>
