@@ -31,7 +31,8 @@ import type { Context } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { createHash, randomUUID } from 'node:crypto';
 import QRCode from 'qrcode';
-import { query } from '../db/connection.js';
+import { query, withTransaction } from '../db/connection.js';
+import { grantMembershipInTransaction, membershipPaymentEvidence, settleMembershipPayment, MEMBERSHIP_PERIOD_UNITS, type MembershipProvider } from '../payment/membership-settlement.js';
 import { requireAuth, requireAdmin, checkRateLimit } from '../utils/recon_helpers.js';
 import { hasActiveMembership } from '../utils/membership.js';
 import { signXunhupay, verifyXunhupaySign, type SignParams } from '@cuberoot/shared/payment';
@@ -44,7 +45,6 @@ export const membershipRoutes = new Hono();
 
 // ── 配置(全部 env,缺则支付关闭,系统退化为「仅 admin 手动开通」)──
 const XHP_GATEWAY = process.env.XUNHUPAY_GATEWAY || 'https://api.xunhupay.com/payment/do.html';
-const XHP_QUERY = process.env.XUNHUPAY_QUERY || 'https://api.xunhupay.com/payment/query.html';
 // notify_url / return_url 用的对外 origin(api 域;notify 必须 xunhupay 能访问到)。
 const PUBLIC_API_ORIGIN = process.env.PUBLIC_API_ORIGIN || 'https://api.cuberoot.me';
 const SITE_ORIGIN = process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me';
@@ -105,12 +105,12 @@ function credsFor(channel: string): XhpCreds {
   if (channel === 'alipay' && XHP_ALIPAY?.appid) return XHP_ALIPAY;
   return XHP_PRIMARY;
 }
-// notify/响应验签:按回调里的 appid 选对应 secret(分渠道账号),回落主 secret。
+// 回调验签只使用对应 appid 的 secret；未知商户拒绝，不回落到其他商户。
 function secretForAppid(appid: string | undefined): string {
   for (const cr of [XHP_PRIMARY, XHP_WECHAT, XHP_ALIPAY]) {
     if (cr?.appid && cr.appid === appid) return cr.secret;
   }
-  return XHP_PRIMARY.secret;
+  return ''; // Unknown app IDs must never fall back to another merchant's secret.
 }
 
 const PLAN_SLUG_RE = /^[a-z0-9_]{1,40}$/;
@@ -217,61 +217,16 @@ function membershipToJson(m: MembershipRow) {
   };
 }
 
-// period → make_interval 单位 token(白名单,杜绝注入)。
-const PERIOD_UNIT: Record<string, string> = { month: 'months', year: 'years', week: 'weeks', day: 'days' };
+const PERIOD_UNIT = MEMBERSHIP_PERIOD_UNITS;
 
-/**
- * 开通/续期:计算新到期并 upsert。
- * - lifetime → expires_at = NULL(永久);
- * - 否则 base = GREATEST(now, 现有未过期到期) + period_count × period,过期则从 now 起算(不补退)。
- * 幂等性由调用方保证(只在订单从 pending→paid 翻转的那一次调用)。
- */
-async function grantMembership(opts: {
-  wcaId: string;
-  name: string;
-  avatarUrl?: string | null;
-  plan: PlanRow;
-  source: string;
-  orderNo: string | null;
-}): Promise<MembershipRow> {
-  const { wcaId, name, plan, source, orderNo } = opts;
-  let expiresAt: Date | null = null;
-
-  if (plan.period !== 'lifetime') {
-    const unit = PERIOD_UNIT[plan.period];
-    if (!unit) throw new Error(`Validation: unknown plan period ${plan.period}`);
-    const existing = await query<{ expires_at: Date | null }>(
-      'SELECT expires_at FROM memberships WHERE wca_id = ?',
-      [wcaId],
-    );
-    const cur = existing[0]?.expires_at ?? null;
-    // 现有为永久则保持永久(永久买月卡不降级)。
-    if (existing.length && cur == null) {
-      expiresAt = null;
-    } else {
-      const r = await query<{ exp: Date }>(
-        `SELECT (GREATEST(NOW(), COALESCE(?::timestamptz, NOW())) + make_interval(${unit} => ?))::timestamptz AS exp`,
-        [cur, plan.period_count],
-      );
-      expiresAt = r[0].exp;
-    }
-  }
-
-  const avatar = opts.avatarUrl ?? null;
-  const rows = await query<MembershipRow>(
-    `INSERT INTO memberships (wca_id, name, avatar_url, plan_slug, started_at, expires_at, source, last_order_no)
-     VALUES (?, ?, ?, ?, NOW(), ?, ?, ?)
-     ON CONFLICT (wca_id) DO UPDATE SET
-       name          = EXCLUDED.name,
-       avatar_url    = COALESCE(EXCLUDED.avatar_url, memberships.avatar_url),
-       plan_slug     = EXCLUDED.plan_slug,
-       expires_at    = EXCLUDED.expires_at,
-       source        = EXCLUDED.source,
-       last_order_no = EXCLUDED.last_order_no
-     RETURNING *`,
-    [wcaId, name, avatar, plan.slug, expiresAt, source, orderNo],
-  );
-  return rows[0];
+// Legacy orders have no immutable merchant snapshot. Match their channel against the current
+// configured merchant; merchant rotation must reconcile pending orders before switching credentials.
+function paymentMerchant(provider: string, channel: string | null): string {
+  if (provider === 'alipay') return process.env.ALIPAY_APP_ID || '';
+  if (provider === 'wechat') return process.env.WECHAT_MCHID || '';
+  if (provider === 'airwallex') return airwallex.airwallexAccountId();
+  if (provider === 'xunhupay') return credsFor(channel || '').appid;
+  return '';
 }
 
 // ─────────────────────────── 公开:套餐 ───────────────────────────
@@ -629,11 +584,9 @@ membershipRoutes.get('/membership/orders/:no', async (c) => {
           ? await wechat.queryWechatOrder(no)
           : order.provider === 'airwallex' && order.provider_txn
             ? airwallexResult(await airwallex.retrieveAirwallexPaymentIntent(order.provider_txn), order)
-            : order.provider === 'xunhupay'
-              ? await queryXunhupayOrder(no, order.pay_channel || 'alipay')
-              : null;
+            : null; // Xunhupay query responses are not authenticated; only signed callbacks may settle them.
       if (remote?.paid) {
-        await settlePaidOrder(no, { provider_txn: remote.txn, raw: remote.raw });
+        await settlePaidOrder(order.provider as MembershipProvider, remote.raw, paymentMerchant(order.provider, order.pay_channel));
         const fresh = await query<OrderRow>('SELECT * FROM membership_orders WHERE out_trade_no = ?', [no]);
         if (fresh.length) order = fresh[0];
       }
@@ -654,7 +607,8 @@ membershipRoutes.post('/membership/notify/xunhupay', async (c) => {
     console.error('[membership] xunhupay notify received but not configured — rejecting');
     return c.text('fail');
   }
-  if (!verifyXunhupaySign(params, secretForAppid(params.appid ? String(params.appid) : undefined), md5)) {
+  const notifySecret = secretForAppid(params.appid ? String(params.appid) : undefined);
+  if (!notifySecret || !verifyXunhupaySign(params, notifySecret, md5)) {
     console.error('[membership] xunhupay notify bad signature');
     return c.text('fail');
   }
@@ -664,10 +618,7 @@ membershipRoutes.post('/membership/notify/xunhupay', async (c) => {
   if (!outTradeNo) return c.text('fail');
 
   if (paid) {
-    await settlePaidOrder(outTradeNo, {
-      provider_txn: String(params.transaction_id || params.open_order_id || ''),
-      raw: params,
-    });
+    await settlePaidOrder('xunhupay', params, String(params.appid || ''));
   }
   // xunhupay 要求回 success 字面量,否则最多重试 6 次。
   return c.text('success');
@@ -693,7 +644,7 @@ membershipRoutes.post('/membership/notify/alipay', async (c) => {
   if (!outTradeNo) return c.text('fail');
 
   if (paid) {
-    await settlePaidOrder(outTradeNo, { provider_txn: String(params.trade_no || ''), raw: params });
+    await settlePaidOrder('alipay', params, paymentMerchant('alipay', 'alipay'));
   }
   // 支付宝要求回字面量 success,否则按策略重试。
   return c.text('success');
@@ -719,7 +670,7 @@ membershipRoutes.post('/membership/notify/wechat', async (c) => {
     return c.json({ code: 'FAIL', message: 'verify failed' }, 401);
   }
   if (result.paid && result.outTradeNo) {
-    await settlePaidOrder(result.outTradeNo, { provider_txn: result.txn, raw: result.raw });
+    await settlePaidOrder('wechat', result.raw, paymentMerchant('wechat', 'wechat'));
   }
   // 微信要求 2xx + {code:'SUCCESS'},否则会重试。
   return c.json({ code: 'SUCCESS' });
@@ -763,10 +714,7 @@ membershipRoutes.post('/membership/notify/airwallex', async (c) => {
     return c.json({ error: 'order mismatch' }, 409);
   }
 
-  await settlePaidOrder(order.out_trade_no, {
-    provider_txn: intent.id,
-    raw: airwallex.sanitizeAirwallexWebhook(event),
-  });
+  await settlePaidOrder('airwallex', airwallex.sanitizeAirwallexWebhook(event), airwallex.airwallexAccountId());
   return c.json({ ok: true });
 });
 
@@ -791,43 +739,13 @@ function airwallexResult(
   return {
     paid: airwallexPaymentMatchesOrder(intent, order),
     txn: intent.id,
-    raw: airwallex.sanitizeAirwallexWebhook({ name: 'active_query', data: { object: intent } }),
+    raw: airwallex.sanitizeAirwallexWebhook({ name: 'active_query', account_id: airwallex.airwallexAccountId(), data: { object: intent } }),
   };
 }
 
-/**
- * 订单 pending → paid 的唯一翻转点(幂等)。
- * 用条件 UPDATE ... WHERE status='pending' RETURNING 锁定只翻转一次,再据此开通会员。
- */
-async function settlePaidOrder(
-  outTradeNo: string,
-  info: { provider_txn?: string; pay_channel?: string | null; raw?: unknown },
-): Promise<void> {
-  const flipped = await query<OrderRow>(
-    `UPDATE membership_orders
-        SET status = 'paid', paid_at = NOW(),
-            provider_txn = COALESCE(NULLIF(?, ''), provider_txn),
-            raw_notify = ?::jsonb
-      WHERE out_trade_no = ? AND status = 'pending'
-      RETURNING *`,
-    [info.provider_txn ?? '', info.raw != null ? JSON.stringify(info.raw) : null, outTradeNo],
-  );
-  if (!flipped.length) return; // 已结算过或不存在 → 幂等返回。
-
-  const order = flipped[0];
-  const plans = await query<PlanRow>('SELECT * FROM membership_plans WHERE slug = ?', [order.plan_slug]);
-  if (!plans.length) {
-    console.error(`[membership] paid order ${outTradeNo} references missing plan ${order.plan_slug}`);
-    return;
-  }
-  await grantMembership({
-    wcaId: order.wca_id,
-    name: order.name,
-    plan: plans[0],
-    source: order.provider,
-    orderNo: order.out_trade_no,
-  });
-  console.log(`[membership] granted ${order.plan_slug} to ${order.wca_id} via ${order.provider} (${outTradeNo})`);
+/** Verified provider evidence is matched and fulfilled in one transaction. */
+async function settlePaidOrder(provider: MembershipProvider, raw: unknown, merchantId: string): Promise<void> {
+  await settleMembershipPayment(membershipPaymentEvidence(provider, raw, merchantId), paymentMerchant);
 }
 
 // ─────────────────────────── admin ───────────────────────────
@@ -847,13 +765,15 @@ membershipRoutes.post('/membership/admin/grant', async (c) => {
 
   const name = (b.name && b.name.trim()) || wcaId;
   const orderNo = genOutTradeNo();
-  await query(
-    `INSERT INTO membership_orders (out_trade_no, wca_id, name, plan_slug, amount_cents, currency, provider, status, paid_at)
-     VALUES (?, ?, ?, ?, 0, 'CNY', 'manual', 'paid', NOW())`,
-    [orderNo, wcaId, name, planSlug],
-  );
-  const m = await grantMembership({
-    wcaId, name, avatarUrl: b.avatarUrl ?? null, plan: plans[0], source: 'manual', orderNo,
+  const m = await withTransaction(async (run) => {
+    await run(
+      `INSERT INTO membership_orders (out_trade_no, wca_id, name, plan_slug, amount_cents, currency, provider, status, paid_at)
+       VALUES (?, ?, ?, ?, 0, 'CNY', 'manual', 'paid', NOW())`,
+      [orderNo, wcaId, name, planSlug],
+    );
+    return grantMembershipInTransaction<MembershipRow>(run, {
+      wcaId, name, avatarUrl: b.avatarUrl ?? null, plan: plans[0], source: 'manual', orderNo,
+    });
   });
   return c.json({ membership: membershipToJson(m) });
 });
@@ -920,7 +840,7 @@ membershipRoutes.put('/membership/admin/plans/:slug', async (c) => {
   if (b.sort != null) add('sort', Math.round(Number(b.sort)) || 0);
   if (b.perks != null) add('perks', JSON.stringify(Array.isArray(b.perks) ? b.perks : []));
   if (b.period != null) {
-    if (b.period !== 'lifetime' && !PERIOD_UNIT[b.period]) return c.json({ error: 'invalid period' }, 400);
+    if (b.period !== 'lifetime' && !Object.hasOwn(PERIOD_UNIT, b.period)) return c.json({ error: 'invalid period' }, 400);
     add('period', b.period);
   }
   if (b.periodCount != null) add('period_count', Math.max(1, Math.round(Number(b.periodCount)) || 1));
@@ -991,34 +911,6 @@ async function createXunhupayOrder(opts: {
   return {
     url: typeof data.url === 'string' ? data.url : undefined,            // 手机端跳转(自动判微信/H5)
     qrcode: typeof data.url_qrcode === 'string' ? data.url_qrcode : undefined, // PC 扫码(5 分钟有效)
-  };
-}
-
-async function queryXunhupayOrder(
-  outTradeNo: string,
-  channel: string,
-): Promise<{ paid: boolean; txn?: string; raw: unknown } | null> {
-  const creds = credsFor(channel);
-  const params: SignParams = {
-    appid: creds.appid,
-    out_trade_order: outTradeNo, // = 我方 trade_order_id
-    time: Math.floor(Date.now() / 1000),
-    nonce_str: randomUUID().replace(/-/g, ''),
-  };
-  params.hash = signXunhupay(params, creds.secret, md5);
-  let data: Record<string, unknown>;
-  try {
-    data = await postForm(XHP_QUERY, params);
-  } catch {
-    return null;
-  }
-  // 状态在 data.data.status:OD=已支付,WP=待支付,CD=已取消/退款。
-  const inner = (data.data ?? {}) as Record<string, unknown>;
-  const status = String(inner.status ?? '').toUpperCase();
-  return {
-    paid: status === 'OD',
-    txn: typeof inner.transaction_id === 'string' ? inner.transaction_id : undefined,
-    raw: data,
   };
 }
 
