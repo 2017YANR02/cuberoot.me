@@ -8,6 +8,19 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
 describe('algorithm player placement', () => {
+  it('opens the existing editor in place from detail and category pages', () => {
+    const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
+    const category = read('components/AlgCategoryView.tsx');
+    for (const [source, current] of [[detail, 'caseObj'], [category, 'c']]) {
+      expect(source).toContain(`onClick={() => setEditorState({ mode: 'edit', existing: ${current} })}`);
+      expect(source).not.toContain('`${detailHref}/edit`');
+      expect(source).toContain('<AdminCaseEditor');
+    }
+    expect(detail).toContain('isAdmin && caseObj.id != null');
+    expect(detail).toContain("if (!editMode) return;");
+    expect(category).toContain('onClose={() => setEditorState(null)}');
+  });
+
   it('uses the shared top-layer display rule in every formula list, rich text and PDF', () => {
     for (const path of [
       'components/AlgCategoryView.tsx',

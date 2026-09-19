@@ -1082,9 +1082,8 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   /** 整个 set 的 case → 唯一短链 slug(点卡片跳转用)。落地解析用同一份算法,见 alg_case_link。 */
   const slugMap = useMemo(() => (data ? buildCaseSlugMap(data.cases, set) : null), [data, set]);
   const caseDetailHref = useCallback(
-    (c: AlgCase, edit = false) => {
-      const detailHref = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
-      const href = edit ? `${detailHref}/edit` : detailHref;
+    (c: AlgCase) => {
+      const href = algCaseDetailHref(puzzleParam, set, (c.id != null && slugMap?.byId.get(c.id)) || caseSlugBase(set, c));
       const query = new URLSearchParams();
       if (puzzleParam === 'sq1' && !sq1BlackTop) query.set('black', 'false');
       if (puzzleParam === 'sq1' && sq1NotationMode !== 'compact') query.set('sq1-notation', sq1NotationMode);
@@ -1671,14 +1670,14 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         aria-label={cardName}
                       />
                       {isAdmin && c.id != null && (
-                        <Link
-                          href={caseDetailHref(c, true)}
-                          prefetch={false}
+                        <button
+                          type="button"
+                          onClick={() => setEditorState({ mode: 'edit', existing: c })}
                           className="alg-admin-edit-btn alg-admin-edit-btn-corner"
                           title={tr({ zh: '编辑 case (admin)', en: 'Edit case (admin)' })}
                         >
                           <Pencil size={12} />
-                        </Link>
+                        </button>
                       )}
                       <div className="alg-case-head">
                         <div className={`alg-case-cube${useSvDualThumb || useZbllDualThumb ? ' is-dual' : ''}`}>
