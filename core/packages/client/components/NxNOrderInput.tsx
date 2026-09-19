@@ -16,17 +16,19 @@ type Props = Omit<
   value: number;
   onCommit: (order: number) => void;
   className?: string;
+  max?: number;
 };
 
 /** Shared NxN order field used by the simulator and notation explorer. */
-export default function NxNOrderInput({ value, onCommit, className, ...rest }: Props) {
+export default function NxNOrderInput({ value, onCommit, className, max = NXN_ORDER_MAX, ...rest }: Props) {
+  const upper = clampNxNOrder(max);
   return (
     <NumberCommitInput
       {...rest}
       className={`nxn-order-input${className ? ` ${className}` : ''}`}
-      value={clampNxNOrder(value)}
+      value={Math.min(upper, clampNxNOrder(value))}
       min={NXN_ORDER_MIN}
-      max={NXN_ORDER_MAX}
+      max={upper}
       step={1}
       inputMode="numeric"
       enterKeyHint="done"
