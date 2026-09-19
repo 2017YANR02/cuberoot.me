@@ -12,7 +12,11 @@ import {
   qiyiDefaultMac,
 } from '@cuberoot/shared/smart-cube/qiyi';
 import type { BleAbortSignal, DiscoveredDevice, MiniProgramBleApi } from './ble-api';
-import { connectEncryptedBle, type EncryptedBleConnection } from './encrypted-ble';
+import {
+  connectEncryptedBle,
+  extractBleMacFromAdvertisement,
+  type EncryptedBleConnection,
+} from './encrypted-ble';
 
 export type QiyiBleConnection = EncryptedBleConnection;
 export interface ConnectQiyiOptions {
@@ -31,22 +35,53 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
   let timestamp = 0;
   return connectEncryptedBle({
     api,
+    diagnosticLabel: 'qiyi',
     device: options.device,
     signal: options.signal,
+    mtu: 64,
     serviceUuid: QIYI_SERVICE_UUID,
     characteristicUuid: QIYI_CHARACTERISTIC_UUID,
     writeCharacteristicUuid: QIYI_WRITE_CHARACTERISTIC_UUID,
+    preferNotifyCharacteristicForWrite: true,
+    preferWriteNoResponse: true,
     matches: (device) => matchesQiyiName(device.name) || matchesQiyiName(device.localName),
-    resolveMac: (device) => qiyiDefaultMac(device.name) ?? qiyiDefaultMac(device.localName),
+    resolveMac: (device) => {
+      const advertised = extractBleMacFromAdvertisement(device.advertisData, {
+        companyIds: [0x0504],
+        layout: 'first6-reversed',
+      });
+      if (advertised) return { source: 'manufacturer-data', value: advertised };
+      const named = qiyiDefaultMac(device.name) ?? qiyiDefaultMac(device.localName);
+      return named ? { source: 'device-name-default', value: named } : null;
+    },
     createCipher: () => createQiyiCipher(),
     initialFrames: (mac) => {
       const content = [0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00];
       for (let index = 5; index >= 0; index--) content.push(mac[index]);
       return [buildQiyiPacket(content)];
     },
+    isReadyFrame: (frame) => {
+      const notification = decodeQiyiNotification(frame, 0);
+      return notification.opcode === QIYI_OP_HELLO || notification.opcode === QIYI_OP_STATE;
+    },
+    readyTimeoutMs: 5_000,
+    retryInitialFramesAfterMs: 1_500,
     onDisconnect: options.onDisconnect,
-    onFrame: (frame, write) => {
+    onFrame: (frame, write, diagnostic) => {
       const notification = decodeQiyiNotification(frame, timestamp);
+      if (notification.opcode !== null || notification.moves.length > 0
+        || notification.futureMoves.length > 0 || notification.battery !== null) {
+        diagnostic.info('decoded-frame', {
+          header: frame[0] ?? null,
+          opcode: notification.opcode,
+          timestamp: notification.timestamp,
+          state: notification.state !== null,
+          moves: notification.moves,
+          futureMoves: notification.futureMoves,
+          battery: notification.battery,
+          gyro: notification.gyro !== null,
+        });
+      }
       if (notification.timestamp !== null) timestamp = Math.max(timestamp, notification.timestamp);
       if (notification.opcode === QIYI_OP_HELLO || notification.opcode === QIYI_OP_STATE) {
         const ts = notification.timestamp ?? 0;

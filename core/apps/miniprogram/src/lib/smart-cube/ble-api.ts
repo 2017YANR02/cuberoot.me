@@ -14,10 +14,94 @@ export interface BleCallbacks<T> {
 
 export interface DiscoveredDevice {
   advertisData?: ArrayBuffer;
+  advertisServiceUUIDs?: string[];
+  connectable?: boolean;
+  /** Opaque Mini Program GATT identifier. It is not a portable Bluetooth MAC address. */
   deviceId: string;
   localName?: string;
   name?: string;
   RSSI?: number;
+  serviceData?: Record<string, ArrayBuffer>;
+}
+
+export interface BleDiagnostic {
+  readonly id: string;
+  error(event: string, data?: Record<string, unknown>): void;
+  info(event: string, data?: Record<string, unknown>): void;
+  warn(event: string, data?: Record<string, unknown>): void;
+}
+
+let bleDiagnosticSequence = 0;
+
+export function bleBytesToHex(value: ArrayBuffer | Uint8Array | undefined, limit = 96): string | null {
+  if (!value) return null;
+  const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
+  const shown = bytes.subarray(0, Math.max(0, limit));
+  const hex = Array.from(shown, (byte) => byte.toString(16).padStart(2, '0')).join(' ');
+  return bytes.length > shown.length ? `${hex} ... (${bytes.length} bytes)` : `${hex} (${bytes.length} bytes)`;
+}
+
+export function describeBleDevice(device: DiscoveredDevice): Record<string, unknown> {
+  return {
+    deviceId: device.deviceId,
+    name: device.name ?? null,
+    localName: device.localName ?? null,
+    RSSI: device.RSSI ?? null,
+    connectable: device.connectable ?? null,
+    advertisData: bleBytesToHex(device.advertisData),
+    advertisServiceUUIDs: device.advertisServiceUUIDs ?? [],
+    serviceData: Object.fromEntries(Object.entries(device.serviceData ?? {}).map(([uuid, value]) => [
+      uuid,
+      bleBytesToHex(value),
+    ])),
+  };
+}
+
+export function createBleDiagnostic(label: string): BleDiagnostic {
+  const id = `${Date.now().toString(36)}-${(++bleDiagnosticSequence).toString(36)}`;
+  const startedAt = Date.now();
+  const enabled = Boolean((globalThis as typeof globalThis & { wx?: unknown }).wx);
+  const write = (
+    level: 'error' | 'info' | 'warn',
+    event: string,
+    data: Record<string, unknown> = {},
+  ): void => {
+    if (!enabled) return;
+    const message = `[CubeRoot BLE][${label}][${id}] ${event}`;
+    const payload = { elapsedMs: Date.now() - startedAt, ...data };
+    try {
+      console[level](message, payload);
+    } catch {
+      // Diagnostics must never affect the Bluetooth transport.
+    }
+  };
+  return {
+    id,
+    error: (event, data) => write('error', event, data),
+    info: (event, data) => write('info', event, data),
+    warn: (event, data) => write('warn', event, data),
+  };
+}
+
+export function bleRuntimeInfo(): Record<string, unknown> {
+  try {
+    const runtime = globalThis as typeof globalThis & {
+      wx?: { getSystemInfoSync?(): Record<string, unknown> };
+    };
+    const system = runtime.wx?.getSystemInfoSync?.();
+    if (!system) return { available: false };
+    return {
+      available: true,
+      brand: system.brand ?? null,
+      model: system.model ?? null,
+      platform: system.platform ?? null,
+      system: system.system ?? null,
+      version: system.version ?? null,
+      SDKVersion: system.SDKVersion ?? null,
+    };
+  } catch (error) {
+    return { available: false, error: error instanceof Error ? error.message : String(error) };
+  }
 }
 
 export interface BleService {
@@ -191,6 +275,10 @@ export interface MiniProgramBleApi {
     deviceId: string;
     serviceId: string;
   } & BleCallbacks<BleFailure>): void;
+  setBLEMTU?(options: {
+    deviceId: string;
+    mtu: number;
+  } & BleCallbacks<BleFailure>): void;
   offBLEConnectionStateChange?(listener: (result: BleConnectionStateChange) => void): void;
   offBLECharacteristicValueChange(listener: (result: CharacteristicValueChange) => void): void;
   offBluetoothDeviceFound(listener: (result: { devices: DiscoveredDevice[] }) => void): void;
@@ -208,6 +296,7 @@ export interface MiniProgramBleApi {
     deviceId: string;
     serviceId: string;
     value: ArrayBuffer;
+    writeType?: 'write' | 'writeNoResponse';
   } & BleCallbacks<BleFailure>): void;
 }
 
