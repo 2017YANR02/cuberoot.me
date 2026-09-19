@@ -40,7 +40,8 @@ import { loadSmplxFullBody } from './engine/hands/handModelMano';
 import { bspSceneAudit, exportSimSvgBsp } from './sim_svg_export_bsp';
 import { exportSimSvg, simSceneSignature, type SimSvgView } from './sim_svg_export';
 import { RoomCube } from './room-cube';
-import { roomCubeActive } from './room-themes';
+import { lightRoomCube } from './room-lighting';
+import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive } from './room-themes';
 import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_schematic';
 import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { exportSimPlanSvg } from './sim_plan_export';
@@ -482,6 +483,8 @@ export default function SimPage() {
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
   const roomsActive = !twisty && roomCubeActive(puzzleParam, settings.roomTheme);
+  const [roomControlsOpen, setRoomControlsOpen] = useState(false);
+  const roomGallery = roomsActive && !roomControlsOpen && !drawMode && !imageMode;
   const pictureCubeActive = !roomsActive && typeof puzzleParam === 'number'
     && settings.pictureCube
     && countPictureFaces(settings.pictureFaces) > 0;
@@ -1452,8 +1455,10 @@ export default function SimPage() {
     const world = worldRef.current;
     if (!world || !roomsActive || settings.roomTheme === 'off') return;
     const rooms = new RoomCube(world.cube as Cube, settings.roomTheme);
+    const restoreLighting = settings.roomTheme === 'whimsy' && rendererRef.current
+      ? lightRoomCube(rendererRef.current, world.scene, (world.cube as Cube).order) : undefined;
     world.dirty = true;
-    return () => { rooms.dispose(); world.dirty = true; };
+    return () => { restoreLighting?.(); rooms.dispose(); world.dirty = true; };
   }, [roomsActive, settings.roomTheme, puzzleParam, worldTick, twisty]);
 
   useEffect(() => {
@@ -2017,14 +2022,14 @@ export default function SimPage() {
 
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
-  const imgSwapActive = imageOpen && imgSwap && !flatMode;
+  const imgSwapActive = imageOpen && imgSwap && !flatMode && !roomGallery;
   useEffect(() => {
     imgSwapRef.current = imgSwapActive;
     resizeMainViewRef.current?.();
   }, [imgSwapActive]);
 
   return (
-    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
+    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}${roomGallery ? ' sim-page--room-gallery' : ''}`} data-board-bg={settings.boardBg}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
@@ -2058,6 +2063,22 @@ export default function SimPage() {
 
       <div className="sim-body" style={{ display: drawMode || imageMode ? 'none' : undefined }} aria-hidden={drawMode || imageMode}>
         <div className="sim-stage">
+        {roomsActive && <div className="sim-room-toolbar">
+          <select
+            className="sim-tool-select"
+            aria-label={t('立体房间主题', '3D room theme')}
+            value={settings.roomTheme}
+            onChange={(event) => handleSettingsChange({ ...settings, roomTheme: normalizeRoomTheme(event.target.value) })}
+          >
+            {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}>{t(theme.zh, theme.en)}</option>)}
+            <option value="off">{t('普通色块', 'Classic colors')}</option>
+          </select>
+          <button type="button" className="sim-open-recon"
+            aria-expanded={roomControlsOpen}
+            onClick={() => { setRoomControlsOpen((open) => !open); setFullscreen(false); }}>
+            {roomControlsOpen ? t('收起设置', 'Hide settings') : t('设置', 'Settings')}
+          </button>
+        </div>}
         <div
           // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas
           // 或 SimCubeNet 上 —— 它把两者都包住,一层 filter 就够,不会叠加两次。

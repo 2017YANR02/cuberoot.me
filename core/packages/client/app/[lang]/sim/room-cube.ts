@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { buildInterior, createInteriorMaterials, INTERIOR_SCENES } from './room-interiors';
 import type Cube from './engine/nxn/cube';
 import { supportsRoomCube, type RoomTheme } from './room-themes';
 
@@ -94,70 +95,6 @@ class Miniature {
     const result = mergeGeometries(this.parts)!;
     for (const g of [...this.parts, ...Object.values(this.shapes)]) g.dispose();
     return result;
-  }
-}
-
-function living(b: Miniature, scene: number) {
-  b.ball([0, 0.015, 0.06], [0.33, 0.012, 0.27], [TEAL, CORAL, LILAC][scene % 3]);
-  switch (scene) {
-    case 0: // Library, a ladder and a tiny reader.
-      b.box([0, 0.31, -0.28], [0.58, 0.62, 0.14], WOOD);
-      for (const y of [0.14, 0.35, 0.56]) {
-        b.box([0, y, -0.18], [0.6, 0.025, 0.19], CREAM);
-        for (let i = 0; i < 7; i++) b.box([-0.235 + i * 0.077, y - 0.073, -0.195], [0.045, 0.12 + (i % 2) * 0.025, 0.1], [CORAL, GOLD, BLUE, MINT][i % 4]);
-      }
-      b.person(0.16, 0.2, GOLD);
-      b.box([0.14, 0.24, 0.29], [0.16, 0.025, 0.11], CREAM, [-0.4, 0, 0]);
-      b.plant(-0.28, 0.2); break;
-    case 1: // Coffee bar.
-      b.table(-0.03, -0.14, CREAM);
-      b.box([-0.11, 0.39, -0.19], [0.18, 0.18, 0.14], TEAL);
-      b.tube([0.1, 0.34, -0.07], 0.04, 0.07, CORAL);
-      b.ring([0.145, 0.35, -0.07], 0.025, CORAL);
-      b.person(0.16, 0.18, CORAL); b.plant(-0.29, 0.18, 0.38); break;
-    case 2: // Music studio: real raised black keys and a brass horn.
-      b.box([-0.06, 0.24, -0.17], [0.49, 0.44, 0.19], INK);
-      b.box([-0.06, 0.28, -0.01], [0.49, 0.04, 0.16], CREAM);
-      for (let i = 0; i < 8; i++) b.box([-0.26 + i * 0.056, 0.31, -0.045], [0.019, 0.026, 0.07], INK);
-      b.person(-0.05, 0.22, PINK);
-      b.rod([0.3, 0.03, -0.19], [0.3, 0.48, -0.19], 0.02, GOLD);
-      b.add('cone', [0.3, 0.48, -0.19], [0.1, 0.14, 0.1], GOLD, [0, 0, Math.PI / 2]); break;
-    case 3: // Artist's atelier.
-      for (const x of [-0.2, 0.14]) b.rod([x, 0.02, -0.01], [x * 0.7, 0.61, -0.17], 0.018, WOOD);
-      b.box([-0.03, 0.42, -0.12], [0.39, 0.31, 0.035], CREAM);
-      b.ball([-0.1, 0.45, -0.09], [0.085, 0.085, 0.009], GOLD);
-      b.box([0.04, 0.36, -0.092], [0.17, 0.07, 0.013], TEAL, [0, 0, 0.2]);
-      b.person(0.21, 0.2, CORAL); b.tube([-0.28, 0.07, 0.22], 0.06, 0.14, BLUE); break;
-    case 4: // Dream bedroom and sculptural bedside lamp.
-      b.box([-0.08, 0.11, -0.02], [0.4, 0.18, 0.63], WOOD);
-      b.box([-0.08, 0.22, 0.05], [0.4, 0.08, 0.45], LILAC);
-      b.ball([-0.08, 0.225, -0.24], [0.17, 0.055, 0.08], CREAM);
-      b.box([-0.08, 0.25, -0.34], [0.44, 0.4, 0.04], TEAL);
-      b.tube([0.25, 0.17, -0.22], 0.1, 0.28, CORAL);
-      b.rod([0.25, 0.32, -0.22], [0.25, 0.51, -0.22], 0.016, GOLD);
-      b.add('cone', [0.25, 0.53, -0.22], [0.1, 0.13, 0.1], CREAM); break;
-    case 5: // The rooftop greenhouse.
-      for (const x of [-0.25, 0, 0.25]) { b.plant(x, -0.23, 0.4); b.plant(x, 0.2, 0.2); }
-      b.person(0, 0.01, GOLD); break;
-    case 6: // Giant doughnut bakery.
-      b.table(0, -0.1, TEAL);
-      b.ring([0, 0.51, -0.12], 0.18, CORAL);
-      for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; b.box([Math.cos(a) * 0.18, 0.51 + Math.sin(a) * 0.18, -0.085], [0.025, 0.013, 0.015], i % 2 ? GOLD : CREAM, [0, 0, a]); }
-      b.person(-0.22, 0.22, BLUE); b.tube([0.24, 0.065, 0.21], 0.095, 0.13, GOLD); break;
-    case 7: // Quiet bath with a toy duck.
-      b.ball([0, 0.13, -0.06], [0.34, 0.15, 0.23], CREAM);
-      b.ball([0, 0.245, -0.06], [0.28, 0.02, 0.17], BLUE);
-      b.ball([0.08, 0.3, -0.04], [0.075, 0.045, 0.047], GOLD);
-      b.ball([0.11, 0.36, -0.025], [0.034, 0.036, 0.033], GOLD);
-      b.box([0.11, 0.35, 0.015], [0.034, 0.016, 0.035], CORAL);
-      b.plant(-0.29, -0.29, 0.42); b.plant(0.29, 0.25); break;
-    case 8: // A retro arcade.
-      b.box([-0.08, 0.26, -0.13], [0.3, 0.52, 0.26], CORAL);
-      b.box([-0.08, 0.4, 0.009], [0.24, 0.19, 0.026], INK);
-      b.box([-0.1, 0.41, 0.025], [0.12, 0.035, 0.008], TEAL);
-      b.box([-0.08, 0.28, 0.065], [0.32, 0.035, 0.13], GOLD);
-      b.rod([-0.15, 0.29, 0.08], [-0.15, 0.34, 0.08], 0.012, INK);
-      b.person(0.12, 0.23, BLUE); b.plant(0.29, -0.24); break;
   }
 }
 
@@ -290,8 +227,9 @@ export const ROOM_SCENE_COUNT = 9;
 
 /** Stable HOME-index rooms follow the existing static/moving instance matrices. */
 export class RoomCube extends THREE.Group {
-  readonly rooms = new Map<number, THREE.Mesh<THREE.BufferGeometry, THREE.MeshLambertMaterial>>();
-  private readonly material = new THREE.MeshLambertMaterial({ vertexColors: true });
+  readonly rooms = new Map<number, THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]>>();
+  private readonly materials: THREE.Material[];
+  private readonly geometries = new Map<string, THREE.BufferGeometry>();
   private readonly wasVisible: boolean;
   private disposed = false;
 
@@ -299,44 +237,61 @@ export class RoomCube extends THREE.Group {
     super();
     if (!supportsRoomCube(cube.order) || cube.isMirror || !(theme in palettes)) throw new Error('Rooms require an ordinary 2–7 layer cube and a valid theme');
     this.name = `room-cube-${theme}`;
+    this.materials = theme === 'whimsy' ? createInteriorMaterials() : [new THREE.MeshLambertMaterial({ vertexColors: true })];
     this.wasVisible = cube.instancedRenderer.visible;
     const n = cube.order, mid = (n - 1) / 2;
     let ordinal = 0;
     for (const [initial] of cube.initials) {
       const xyz = [initial % n, Math.floor(initial / n) % n, Math.floor(initial / (n * n))];
-      // Side rooms stand upright, including the bottom row. U/D-only centres face out.
+      // Side rooms stand upright; residential U/D centres expose their open roof.
       const side = xyz[2] === n - 1 ? 0 : xyz[0] === n - 1 ? Math.PI / 2 : xyz[2] === 0 ? Math.PI : xyz[0] === 0 ? -Math.PI / 2 : null;
       const orientation = side === null
-        ? new THREE.Matrix4().makeRotationX(xyz[1] === n - 1 ? -Math.PI / 2 : Math.PI / 2)
+        ? new THREE.Matrix4().makeRotationX(theme === 'whimsy'
+          ? xyz[1] === n - 1 ? 0 : Math.PI
+          : xyz[1] === n - 1 ? -Math.PI / 2 : Math.PI / 2)
         : new THREE.Matrix4().makeRotationY(side);
       const outward = (v: V) => {
         const d = new THREE.Vector3(...v).transformDirection(orientation).toArray();
         return d.some((value, axis) => Math.abs(value) > 0.9 && xyz[axis] === (value > 0 ? n - 1 : 0));
       };
-      const b = new Miniature(), color = palettes[theme][ordinal % 6];
-      b.box([0, -0.018, 0], [0.92, 0.055, 0.92], color);
-      for (const sign of [-1, 1]) {
-        if (!outward([sign, 0, 0])) b.box([sign * 0.446, 0.38, 0], [0.028, 0.79, 0.92], color);
-        if (!outward([0, 0, sign])) b.box([0, 0.38, sign * 0.446], [0.92, 0.79, 0.028], color);
-      }
-      // Open structural frames preserve the cube silhouette without covering the contents.
-      for (const x of [-0.446, 0.446]) for (const z of [-0.446, 0.446])
-        b.box([x, 0.393, z], [0.024, 0.87, 0.024], INK);
-      for (const sign of [-1, 1]) {
-        b.box([sign * 0.446, 0.815, 0], [0.024, 0.025, 0.916], INK);
-        b.box([0, 0.815, sign * 0.446], [0.916, 0.025, 0.024], INK);
-      }
-      // Thin contrasting floor rim makes the independent physical cubies legible.
-      b.box([0, 0.006, 0.443], [0.92, 0.022, 0.033], theme === 'cosmos' ? GOLD : CREAM);
       const scene = (ordinal + Math.floor(ordinal / ROOM_SCENE_COUNT) * 4) % ROOM_SCENE_COUNT;
       ordinal++;
-      ({ whimsy: living, forest: woodland, cosmos: cosmic })[theme](b, scene);
-      const geometry = b.finish();
-      geometry.applyMatrix4(orientation).scale(64, 64, 64);
-      geometry.computeBoundingSphere();
-      const mesh = new THREE.Mesh(geometry, this.material);
+      const walls: [boolean, boolean] = [!outward([-1, 0, 0]), !outward([1, 0, 0])];
+      const key = `${scene}:${walls.join(',')}:${side}:${xyz[1] === n - 1}`;
+      let geometry = theme === 'whimsy' ? this.geometries.get(key) : undefined;
+      if (!geometry && theme === 'whimsy') {
+        geometry = buildInterior(scene, walls);
+        geometry.applyMatrix4(orientation).scale(64, 64, 64);
+        geometry.computeBoundingSphere();
+        this.geometries.set(key, geometry);
+      }
+      if (!geometry) {
+        const b = new Miniature(), color = palettes[theme][(ordinal - 1) % 6];
+        b.box([0, -0.018, 0], [0.92, 0.055, 0.92], color);
+        for (const sign of [-1, 1]) {
+          if (!outward([sign, 0, 0])) b.box([sign * 0.446, 0.38, 0], [0.028, 0.79, 0.92], color);
+          if (!outward([0, 0, sign])) b.box([0, 0.38, sign * 0.446], [0.92, 0.79, 0.028], color);
+        }
+        // Open structural frames preserve the cube silhouette without covering the contents.
+        for (const x of [-0.446, 0.446]) for (const z of [-0.446, 0.446])
+          b.box([x, 0.393, z], [0.024, 0.87, 0.024], INK);
+        for (const sign of [-1, 1]) {
+          b.box([sign * 0.446, 0.815, 0], [0.024, 0.025, 0.916], INK);
+          b.box([0, 0.815, sign * 0.446], [0.916, 0.025, 0.024], INK);
+        }
+        // Thin contrasting floor rim makes the independent physical cubies legible.
+        b.box([0, 0.006, 0.443], [0.92, 0.022, 0.033], theme === 'cosmos' ? GOLD : CREAM);
+        (theme === 'forest' ? woodland : cosmic)(b, scene);
+        geometry = b.finish();
+        geometry.applyMatrix4(orientation).scale(64, 64, 64);
+        geometry.computeBoundingSphere();
+        this.geometries.set(String(initial), geometry);
+      }
+      const mesh = new THREE.Mesh(geometry, theme === 'whimsy' ? this.materials : this.materials[0]);
+      mesh.castShadow = mesh.receiveShadow = theme === 'whimsy';
       mesh.name = `${theme}-${scene}-${initial}`;
       mesh.userData.roomScene = scene;
+      if (theme === 'whimsy') mesh.userData.interior = INTERIOR_SCENES[scene];
       mesh.matrixAutoUpdate = false;
       // Initialize before first render (also usable in headless geometry tests).
       mesh.matrix.makeTranslation((xyz[0] - mid) * 64, (xyz[1] - mid) * 64, (xyz[2] - mid) * 64);
@@ -360,8 +315,12 @@ export class RoomCube extends THREE.Group {
     this.disposed = true;
     this.removeFromParent();
     this.cube.instancedRenderer.visible = this.wasVisible;
-    for (const mesh of this.rooms.values()) mesh.geometry.dispose();
-    this.material.dispose();
+    for (const geometry of this.geometries.values()) geometry.dispose();
+    this.geometries.clear();
+    for (const material of this.materials) {
+      if (material instanceof THREE.MeshStandardMaterial) material.map?.dispose();
+      material.dispose();
+    }
     this.rooms.clear();
     this.clear();
   }
