@@ -99,6 +99,7 @@
   <text class="eyebrow">ACCOUNT</text>
   <text class="page-title">{{displayName}}</text>
   <text wx:if="{{uidText}}" class="account-user-meta">CubeRoot ID {{uidText}}</text>
+  <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">请在系统浏览器完成 WCA 授权，返回后页面会刷新</text>
   <button
     class="primary-button account-primary-button"
     aria-label="{{copy.accountButtonAria}}"

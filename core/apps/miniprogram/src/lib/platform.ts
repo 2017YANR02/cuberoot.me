@@ -34,6 +34,33 @@ export function miniProgramApi(): typeof wx {
   return api;
 }
 
+export function isExternalHttpsUrl(value: string): boolean {
+  return /^https:\/\//.test(value);
+}
+
+export async function openExternalUrl(url: string): Promise<boolean> {
+  if (!isExternalHttpsUrl(url)) return false;
+  const api = miniProgramApi() as typeof wx & {
+    openUrl?: (options: {
+      url: string;
+      success?(): void;
+      fail?(error: { errMsg?: string }): void;
+    }) => void;
+  };
+  if (typeof api.openUrl !== 'function') {
+    api.setClipboardData({ data: url });
+    api.showModal({
+      title: '请在浏览器打开',
+      content: '绑定 WCA 需要使用系统浏览器，链接已复制。',
+      showCancel: false,
+    });
+    return false;
+  }
+  return new Promise((resolve) => {
+    api.openUrl!({ url, success: () => resolve(true), fail: () => resolve(false) });
+  });
+}
+
 export function miniProgramNextTick(callback: () => void): void {
   if (typeof __MINI_PROGRAM_TARGET__ === 'string' && __MINI_PROGRAM_TARGET__ === 'douyin') {
     void Promise.resolve().then(callback);
