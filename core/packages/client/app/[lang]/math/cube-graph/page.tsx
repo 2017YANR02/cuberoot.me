@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw, Shuffle } from 'lucide-react';
 import { MOVE_NAMES } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { invertMoveString } from '@cuberoot/shared/alg-notation';
@@ -33,19 +33,26 @@ function StickerGraph({ stickers, view, animate, selected }: { stickers: number[
   const t = useT();
   const targets = useMemo(() => locations(stickers), [stickers]);
   const previous = useRef(targets);
+  const previousView = useRef(view);
+  const initial = useRef(targets.map(slot => GRAPH_SLOTS[slot]));
+  const displayed = useRef(initial.current.map(({ x, y }) => ({ x, y })));
   const circles = useRef<(SVGCircleElement | null)[]>([]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const from = previous.current;
+    const origins = displayed.current;
     previous.current = targets;
-    const duration = animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? TURN_MS : 0;
+    const duration = animate && view === 'rings' && previousView.current === view
+      && !window.matchMedia('(prefers-reduced-motion: reduce)').matches ? TURN_MS : 0;
+    previousView.current = view;
     const start = performance.now();
     let frame = 0;
     function draw(now: number) {
       const progress = duration ? Math.min(1, (now - start) / duration) : 1;
-      targets.forEach((slot, id) => {
-        const p = graphPosition(from[id], slot, progress * progress * (3 - 2 * progress));
+      displayed.current = targets.map((slot, id) => {
+        const p = graphPosition(from[id], slot, progress * progress * (3 - 2 * progress), origins[id]);
         circles.current[id]?.setAttribute('cx', String(p.x));
         circles.current[id]?.setAttribute('cy', String(p.y));
+        return p;
       });
       if (progress < 1) frame = requestAnimationFrame(draw);
     }
@@ -59,7 +66,8 @@ function StickerGraph({ stickers, view, animate, selected }: { stickers: number[
     {view === 'rings' ? <>
       {RINGS.map((ring, i) => <circle key={i} cx={ring.x} cy={ring.y} r={ring.r} fill="none" stroke="var(--muted-foreground)" strokeOpacity="0.6" strokeWidth="1.3" />)}
       {targets.map((slot, id) => <circle key={id} ref={node => { circles.current[id] = node; }}
-        cx={GRAPH_SLOTS[slot].x} cy={GRAPH_SLOTS[slot].y} r={selected === id ? 10 : 6.5} opacity={selected === undefined || selected === id ? 1 : 0.2} fill={CUBE_FILL[FACES[Math.floor(id / 9)]]}
+        // Keep React's coordinates stable: the animation owns subsequent positions.
+        cx={initial.current[id].x} cy={initial.current[id].y} r={selected === id ? 10 : 6.5} opacity={selected === undefined || selected === id ? 1 : 0.2} fill={CUBE_FILL[FACES[Math.floor(id / 9)]]}
         stroke="var(--foreground)" strokeWidth="0.8" data-sticker={id}>
         <title>{`${FACES[Math.floor(id / 9)]}${id % 9 + 1} → ${FACES[Math.floor(slot / 9)]}${slot % 9 + 1}`}</title>
       </circle>)}

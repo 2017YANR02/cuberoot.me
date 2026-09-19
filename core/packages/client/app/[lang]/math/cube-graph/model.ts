@@ -68,10 +68,15 @@ export function stickerPermutation(moves: readonly string[]): number[] {
 }
 
 /** Adjacent-face stickers follow their common layer circle; face stickers cross rings. */
-export function graphPosition(from: number, to: number, progress: number): Point {
-  const a = GRAPH_SLOTS[from], b = GRAPH_SLOTS[to];
-  const ringId = a.rings.find(ring => b.rings.includes(ring));
-  if (ringId === undefined || from === to) return { x: a.x + (b.x - a.x) * progress, y: a.y + (b.y - a.y) * progress };
+export function graphPosition(from: number, to: number, progress: number, origin: Point = GRAPH_SLOTS[from]): Point {
+  const a = origin, b = GRAPH_SLOTS[to];
+  if (progress <= 0) return { x: a.x, y: a.y };
+  if (progress >= 1) return { x: b.x, y: b.y };
+  // An interrupted turn may still be between slots. Only follow a circle when
+  // the displayed point actually lies on it; otherwise connect from that point.
+  const ringId = GRAPH_SLOTS[from].rings.find(id => b.rings.includes(id)
+    && Math.abs(Math.hypot(a.x - RINGS[id].x, a.y - RINGS[id].y) - RINGS[id].r) < 1e-7);
+  if (ringId === undefined) return { x: a.x + (b.x - a.x) * progress, y: a.y + (b.y - a.y) * progress };
   const ring = RINGS[ringId];
   const start = Math.atan2(a.y - ring.y, a.x - ring.x);
   let delta = Math.atan2(b.y - ring.y, b.x - ring.x) - start;
