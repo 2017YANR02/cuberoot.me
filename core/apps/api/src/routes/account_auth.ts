@@ -41,6 +41,7 @@ import {
 } from '../utils/account.js';
 import { AccountHasMembershipContractError, AccountOwnsOrganizationError, deleteAccount } from '../utils/account_delete.js';
 import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../utils/account_merge.js';
+import { consumeWechatWcaLink, issueWechatWcaLink } from '../utils/web_session_ticket.js';
 import { emailConfigured, sendEmailCode } from '../utils/email.js';
 import { smsConfigured, sendSmsCode } from '../utils/sms.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
@@ -921,6 +922,58 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   // 绑定后重签 token,让新的 wcaId 立即进入会话。
   const token = user ? signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name }) : undefined;
   return c.json({ ok: true, token, user: user ? publicUser(user) : undefined, identities: await getIdentities(uid) });
+});
+
+// 小程序账号设置里的 WCA 绑定:浏览器完成 OAuth,票据只负责绑定目标 CubeRoot 账号。
+accountAuthRoutes.post('/auth/wechat/wca-link/start', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const uid = await requireAppUserId(c);
+  const pending = await issueWechatWcaLink(uid);
+  const siteOrigin = process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me';
+  const url = `${siteOrigin}/auth/miniprogram/wca-link?ticket=${encodeURIComponent(pending.ticket)}`;
+  return c.json({ ...pending, url });
+});
+
+accountAuthRoutes.post('/auth/wechat/wca-link/complete', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const body = await c.req.json<{ ticket?: unknown; accessToken?: unknown }>()
+    .catch(() => ({ ticket: undefined, accessToken: undefined }));
+  const ticket = typeof body.ticket === 'string' ? body.ticket.trim() : '';
+  const accessToken = typeof body.accessToken === 'string' ? body.accessToken.trim() : '';
+  if (!ticket || !accessToken) return c.json({ error: 'ticket and accessToken are required' }, 400);
+
+  let me: { wca_id?: string; name?: string; country_iso2?: string; avatar?: { url?: string } };
+  try {
+    const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return c.json({ error: 'invalid WCA token' }, 401);
+    const data = (await res.json()) as { me?: typeof me };
+    me = data.me ?? {};
+  } catch {
+    return c.json({ error: 'WCA API unavailable' }, 502);
+  }
+  if (!me.wca_id) return c.json({ error: 'this WCA account has no WCA ID (never competed)' }, 400);
+  const verifiedName = me.name?.normalize('NFC').trim();
+  if (!verifiedName) return c.json({ error: 'WCA profile has no verified name' }, 502);
+  const uid = await consumeWechatWcaLink(ticket);
+  if (!uid) return c.json({ error: 'invalid or expired WCA link ticket' }, 401);
+  const countryIso2 = typeof me.country_iso2 === 'string'
+    ? normalizeCountryIso2(me.country_iso2)
+    : null;
+  const verifiedCountryIso2 = countryIso2 && isValidCountryIso2(countryIso2) ? countryIso2 : null;
+  const result = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null, verifiedCountryIso2);
+  if (result === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
+  await query(
+    `INSERT INTO wca_users (wca_id, name, avatar_url, access_token, token_expires_at)
+     VALUES (?, ?, ?, ?, NOW() + INTERVAL '7200 seconds')
+     ON CONFLICT (wca_id) DO UPDATE SET name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url,
+       access_token = EXCLUDED.access_token, token_expires_at = EXCLUDED.token_expires_at, updated_at = NOW()`,
+    [me.wca_id, me.name ?? '', me.avatar?.url ?? null, accessToken],
+  );
+  return c.json({ ok: true });
 });
 
 // ── Google(浏览器拿 access_token → 墙外 Vercel 中继验真并签断言 → 此处只验断言 HMAC)──
