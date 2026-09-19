@@ -1,7 +1,7 @@
-/** Public share destinations, usable in browsers and Mini Programs without URL polyfills. */
-const PRIVATE_SEGMENT = /^(?:auth|account|admin|login|signin|signup|logout|checkout|payment|pay|edit|new|submit|submit-sketch|bind|invite|org|learn)$/i;
+/** Shareable page addresses; recipients still need their own access permissions. */
+const AUTH_ROUTE = /^\/(?:zh\/)?auth(?:\/|$)/i;
 // Shares can cross containers, so strip both hosts' markers regardless of the sender.
-const INTERNAL_PARAM = /^(?:(?:wechat|douyin)_redirect|ticket|token|access_token|refresh_token|id_token|code|state|next|redirect|redirect_uri|returnTo)$/i;
+const INTERNAL_PARAM = /^(?:(?:wechat|douyin)_redirect|ticket|token|access_token|refresh_token|id_token|auth_code|code_verifier|code_challenge|next|redirect|redirect_uri|returnTo)$/i;
 
 function cleanParameters(value: string): string | null {
   const kept: string[] = [];
@@ -25,9 +25,9 @@ export function publicPageSharePath(value: unknown): string | null {
   const pathname = queryAt < 0 ? beforeHash : beforeHash.slice(0, queryAt);
   let decoded: string;
   try { decoded = decodeURIComponent(pathname); } catch { return null; }
-  // Reject encoded delimiters, dot traversal and private workflows before navigation.
+  // Reject encoded delimiters, dot traversal and executable authentication callbacks.
   if (/[\\%?#\u0000-\u001f\u007f]/.test(decoded) || decoded.includes('//')) return null;
-  if (decoded.split('/').some(segment => segment === '.' || segment === '..' || PRIVATE_SEGMENT.test(segment))) return null;
+  if (AUTH_ROUTE.test(decoded) || decoded.split('/').some(segment => segment === '.' || segment === '..')) return null;
   const query = cleanParameters(queryAt < 0 ? '' : beforeHash.slice(queryAt + 1));
   const fragment = cleanParameters(hashAt < 0 ? '' : path.slice(hashAt + 1));
   if (query === null || fragment === null) return null;

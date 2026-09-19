@@ -20,6 +20,8 @@ const EXACT = new Set([
   'apps/api/src/routes/mcp.ts',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
+  'apps/miniprogram/src/lib/web-view-page.ts',
+  'packages/shared/src/page_share.ts', 'packages/client/lib/page-share.ts',
   'packages/client/components/MobileEmbedBridge.tsx', 'packages/shared/src/mobile_embed.ts',
   'packages/client/components/CountryPinButton.tsx', 'packages/client/hooks/usePinnedCountries.ts',
   'packages/client/lib/pinned-countries.ts', 'packages/client/lib/ip-country.ts',
