@@ -73,6 +73,9 @@ describe('shared smart-cube controls and auto-ready subscription', () => {
       expect(onChange).toHaveBeenLastCalledWith({ liveCubeView: value });
     }
     const [viewGyro, recordGyro, recap, solution] = [...host.querySelectorAll('button')];
+    expect(host.textContent).toContain(lang === 'zh'
+      ? '仅桌面窗口自动展开，移动端请手动打开解法。'
+      : 'Auto-opens on desktop only; open solutions manually on mobile.');
     await act(async () => viewGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ gyroEnabled: false });
     await act(async () => recordGyro.click()); expect(onChange).toHaveBeenLastCalledWith({ recordGyro: false });
     await act(async () => recap.click()); expect(onChange).toHaveBeenLastCalledWith({ autoRecap: false });
