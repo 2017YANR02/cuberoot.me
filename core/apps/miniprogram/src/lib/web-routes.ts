@@ -9,6 +9,7 @@ import { localizedWebsitePath, tr } from './i18n';
 import { SITE_ORIGIN } from './runtime-config';
 import { isSafeWebSessionDestination, isWebSessionTicket } from './web-session-contract';
 import { MINI_PROGRAM_WEB_MARKER, isDouyinMiniProgram } from './platform';
+import { publicPageSharePath, type PageShareMessage } from '@cuberoot/shared/page-share';
 
 type DiscoveryRouteKey = Exclude<SiteDirectoryEntryId, 'algdb' | 'alg' | 'github'> | 'alg';
 export type WebRouteKey = DiscoveryRouteKey | 'home' | 'account' | 'account-link' | 'privacy' | 'logout';
@@ -194,7 +195,7 @@ export function resolveAccountPageShare(): WebRouteShare {
   };
 }
 
-export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
+export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata?: PageShareMessage): WebRouteShare | null {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;
   }
@@ -202,6 +203,16 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
   const routeKey = key as WebRouteKey;
   const route = WEB_ROUTES[routeKey];
   if (!route.publicEntry) return null;
+
+  if (currentUrl !== undefined) {
+    const path = publicPageSharePath(currentUrl);
+    if (!path) return null;
+    return {
+      imageUrl: WEB_ROUTE_SHARE_IMAGE,
+      title: metadata?.path === path ? metadata.title : tr({ en: 'CubeRoot', zh: '魔方根CubeRoot' }),
+      path: `/pages/web/index?key=${encodeURIComponent(routeKey)}&path=${encodeURIComponent(path)}`,
+    };
+  }
 
   return {
     imageUrl: WEB_ROUTE_SHARE_IMAGE,
@@ -214,7 +225,7 @@ export function resolveWebRouteShare(key: unknown): WebRouteShare | null {
   };
 }
 
-export function resolveWebRoute(key: unknown): {
+export function resolveWebRoute(key: unknown, sharedPath?: unknown): {
   title: string;
   path: string;
   sessionHandoff: boolean;
@@ -225,11 +236,13 @@ export function resolveWebRoute(key: unknown): {
     return null;
   }
   const route = WEB_ROUTES[key as WebRouteKey];
+  const path = sharedPath === undefined ? route.path : publicPageSharePath(sharedPath);
+  if (!path || (sharedPath !== undefined && !route.publicEntry)) return null;
   const resolved = {
     title: route.title,
-    path: route.path,
+    path,
     sessionHandoff: route.sessionHandoff !== false,
-    url: withMiniProgramRedirect(`${SITE_ORIGIN}${route.path}`),
+    url: withMiniProgramRedirect(`${SITE_ORIGIN}${path}`),
   };
   if (route.loadFailureMessage) {
     return { ...resolved, loadFailureMessage: route.loadFailureMessage };

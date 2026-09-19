@@ -17,6 +17,8 @@
 /* ─── header ─────────────────────────────────────────── */
 .prob-header {
   display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
   align-items: center;
   padding: 1rem max(1rem, calc((100vw - 980px) / 2));
   border-bottom: 1px solid var(--prob-border);

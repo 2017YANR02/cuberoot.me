@@ -1,0 +1,13 @@
+.page-share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.page-share-button:hover { color: var(--accent); }

@@ -2436,12 +2436,12 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需传 url / code / onClose。/alg 训练器房间与 /timer 联机对战共用;二维码固定深码白底(不随主题反色),保证扫得出。`, en: `Takes url / code / onClose. Shared by /alg trainer rooms and /timer online battle; the QR stays dark-on-white regardless of theme so it always scans.` },
   },
   {
-    name: 'WeChatPcShareModal / MobilePageShareModal',
-    import: "import { MobilePageShareModal, WeChatPcShareModal } from '@/components/WeChatPcShareModal';",
+    name: 'PageShareButton / PageShareModal',
+    import: "import PageShareButton from '@/components/PageShareButton';",
     category: 'more',
-    zh: `页面分享弹窗组:电脑端按需调用网站应用 PC OpenSDK;手机微信提示使用右上角菜单,不支持系统分享时提供复制链接。`,
-    en: `Page sharing dialogs: desktop calls the Website App PC OpenSDK on demand; mobile WeChat explains the top-right menu, with link-copy fallback when system sharing is unavailable.`,
-    note: { zh: `电脑弹窗传 onClose;手机弹窗另传 mode="wechat" 或 mode="browser"。`, en: `The desktop dialog takes onClose; the mobile dialog also takes mode="wechat" or mode="browser".` },
+    zh: `统一页面分享入口：始终提供复制链接，按环境提供系统分享、电脑微信或小程序菜单指引；过滤账号流程和内部凭据，保留语言、筛选与锚点。`,
+    en: `Shared page sharing entry: always offers link copy, plus system sharing, desktop WeChat or Mini Program menu guidance. Excludes account workflows and internal credentials while preserving language, filters and anchors.`,
+    note: { zh: `文章页和桌宠工具栏复用 PageShareButton；PageShareModal 按需加载，复制失败可手动选中链接。`, en: `Articles and the pet toolbar reuse PageShareButton. PageShareModal loads on demand and provides a selectable link if copying fails.` },
   },
   {
     name: 'DonateModal',
