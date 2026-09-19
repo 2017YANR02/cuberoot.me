@@ -4,7 +4,7 @@ import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { engineHomeSid } from '@/app/[lang]/sim/engine/nxn/netIndex';
 import {
   customMaskFn, pickedSids, pieceSids, toggleSids, countSids,
-} from '@/app/[lang]/sim/engine/nxn/customStickering';
+} from '@/components/sim-embed/customStickering';
 import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE } from '@/app/[lang]/sim/engine/nxn/stickering';
 import { buildFaceletMap } from '@/components/sim-embed/faceletMap';
 import { solvedCube, applyAlg } from '@/lib/lsll/cube333';

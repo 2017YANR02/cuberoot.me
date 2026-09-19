@@ -11,11 +11,11 @@
 // 通用性:对外三个动作 —— 「点中的东西 → sid」「sid 清单 → 遮罩函数」「切换选中」。
 // 只有第一个是 NxN 专属(要把世界面转回块的本地面);换别的拼图时照 pyra/skewb/mega
 // 已有的 userData.stickerKey 出一份同签名的 pickedSid 即可,后两个原样复用。
-import { FACE } from '../define';
-import { engineHomeSid } from './netIndex';
+import { FACE } from '@cuberoot/puzzle-render-core/engine/define';
+import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex';
 import { parseMask, formatMask, type StickerId } from '@/lib/puzzle-image/mask-core';
-import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE, type FaceletMask, type StickeringMaskFn } from './stickering';
-import type Cube from './cube';
+import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE, type FaceletMask, type StickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
+import type Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 
 /** 阶段下拉里代表「自定义」的值(URL `?stickering=custom`)。 */
 export const CUSTOM_STICKERING = 'custom';

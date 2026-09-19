@@ -9,7 +9,7 @@ import { useT } from '@/hooks/useT';
 import { useIsAdmin } from '@/lib/auth-store';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
 import type { StickeringGroup } from './engine/nxn/stickering';
-import { CUSTOM_STICKERING, countSids, type PickGrain, type CustomTreatment } from './engine/nxn/customStickering';
+import { CUSTOM_STICKERING, countSids, type PickGrain, type CustomTreatment } from '@/components/sim-embed/customStickering';
 import { stickeringSelectGroupsFor, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
 import { applyMaskConfig, maskLabelOverride, maskRowsForOrder, PRESET_GROUP } from './engine/nxn/maskConfig';
 import { PRESET_PREFIX } from '@/lib/sim-masks-api';
