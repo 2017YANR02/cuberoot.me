@@ -4,7 +4,7 @@ import { findDuplicateAlgs } from '@cuberoot/shared/alg-notation';
 import { commonCaseSetup } from '@/lib/alg_case_alignment';
 
 /**
- * Admin-only modal for editing / adding / deleting one alg case.
+ * Shared admin form and save pipeline, embedded in details or shown when adding a case.
  *
  * 普通 case: 用户填 caseName / subgroup / setup + 一行一条公式即可,sticker
  * 自动推断默认值。多 orientation (F2L) / 自定义 sticker 等放在"高级"区。
@@ -18,7 +18,8 @@ import { mirrorCascadeOnDelete, VIEWS } from '@cuberoot/shared/alg-mirror';
 import { canonicalSq1Alg, formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { createCase, updateCase, deleteCase, type AlgCaseInput } from '@/lib/alg_sets_api';
 import { validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
-import { displayAlg, shortOriName } from '@/lib/alg_display';
+import { displayAlg, displayCaseAlg, displayCaseAlgHtml, shortOriName, oriAdjustSetup } from '@/lib/alg_display';
+import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import AlgEditor, { type AlgEditorHandle, type AlgEditorMirror, type AlgInvalidMark } from '@/components/AlgEditor';
 import AlgDeleteConfirm, { type AlgDeleteGroup } from '@/components/AlgDeleteConfirm';
@@ -35,18 +36,32 @@ export type AdminEditorState =
   | { mode: 'edit'; existing: AlgCase }
   | { mode: 'add' };
 
+/** The same form and save pipeline, placed directly in a case detail. */
+export interface InlineCaseEditorParts {
+  name: React.ReactNode;
+  subgroup: React.ReactNode;
+  setup: React.ReactNode;
+  algorithms: React.ReactNode;
+  advanced: React.ReactNode;
+  actions: React.ReactNode;
+  error: React.ReactNode;
+  busy: boolean;
+  confirmDiscard: () => boolean;
+}
+
 interface Props {
   puzzle: AlgPuzzle;
   setSlug: string;
   state: AdminEditorState;
   /** 页面那轮校验已经判出的坏行 —— 一开编辑器就标红,不用先按一次保存。 */
   initialInvalid?: AlgInvalidMark[];
+  children?: (parts: InlineCaseEditorParts) => React.ReactNode;
   onClose: () => void;
   onSaved: (action:
     | { type: 'add'; created: AlgCase }
     | { type: 'update'; updated: AlgCase }
     | { type: 'delete'; id: number }
-  ) => void;
+  ) => void | Promise<void>;
 }
 
 /** Default sticker for new cases — depends on puzzle/set; rendering needs SOMETHING. */
@@ -77,7 +92,7 @@ function blankCase(puzzle: string, set: string): AlgCase {
   };
 }
 
-export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, onClose, onSaved }: Props) {
+export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid, onClose, onSaved, children }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const initial = state.mode === 'edit' ? state.existing : blankCase(puzzle, setSlug);
   const [orientation] = useQueryState(
@@ -89,11 +104,13 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     'sq1-notation',
     parseAsStringEnum<Sq1NotationMode>([...SQ1_NOTATION_MODES]).withDefault('compact'),
   );
+  // Reading notation can change without replacing an unsaved numeric input.
+  const [editorNotationMode] = useState(sq1NotationMode);
   const formatSq1EditorAlg = useCallback(
-    (alg: string) => puzzle === 'sq1' && sq1NotationMode === 'full'
+    (alg: string) => puzzle === 'sq1' && editorNotationMode === 'full'
       ? canonicalSq1Alg(alg)
       : formatScrambleForEvent(puzzle, alg),
-    [puzzle, sq1NotationMode],
+    [puzzle, editorNotationMode],
   );
   const initialSetupText = formatSq1EditorAlg(initial.setup);
 
@@ -111,34 +128,43 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const [trainerKey, setTrainerKey] = useState(initial.trainerKey ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const backdrop = useModalBackdrop(onClose, busy);
   const initialPreviewEntry = initial.algs[0]?.[0];
   const [preview, setPreview] = useState(() => ({
     alg: initialPreviewEntry?.alg ?? '',
     setup: initialPreviewEntry?.setup,
+    oi: 0,
   }));
-  const handlePreviewAlg = useCallback((alg: string, entrySetup?: string) => {
-    if (alg.trim()) setPreview({ alg, setup: entrySetup });
+  const [oriPreviews, setOriPreviews] = useState<Record<number, { alg: string; setup?: string }>>({});
+  const handlePreviewAlg = useCallback((alg: string, entrySetup?: string, oi = 0) => {
+    setPreview({ alg, setup: entrySetup, oi });
   }, []);
   // Debounce preview(给 AlgPlayer);避免每次按键都重建播放器。
   const [debouncedPreview, setDebouncedPreview] = useState(preview);
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedPreview(preview), 400);
+    const t = setTimeout(() => {
+      setDebouncedPreview(preview);
+      setOriPreviews(current => ({ ...current, [preview.oi]: preview }));
+    }, 400);
     return () => clearTimeout(t);
   }, [preview]);
 
   // 光标 sync:AlgEditor 上报 prefix token 数,这里转成 player.timestamp
   const playerHandleRef = useRef<AlgPlayerHandle>(null);
+  const oriPlayers = useRef(new Map<number, AlgPlayerHandle>());
   const lastMoveCountRef = useRef(0);
-  const handleCursorMoveCount = useCallback((n: number) => {
+  const activeOri = useRef(0);
+  const handleCursorMoveCount = useCallback((n: number, oi = 0) => {
+    activeOri.current = oi;
     lastMoveCountRef.current = n;
-    const p = playerHandleRef.current?.getPlayer();
+    const p = (oriPlayers.current.get(oi) ?? playerHandleRef.current)?.getPlayer();
     if (p) syncPlayerToMoveCount(p, n);
   }, []);
   // alg 重建后 player ready 也要再 sync 一次到当前 caret(否则停在 0)
   useEffect(() => {
     const tries = [50, 200, 500].map(d =>
       setTimeout(() => {
-        const p = playerHandleRef.current?.getPlayer();
+        const p = (oriPlayers.current.get(activeOri.current) ?? playerHandleRef.current)?.getPlayer();
         if (p) syncPlayerToMoveCount(p, lastMoveCountRef.current);
       }, d),
     );
@@ -149,9 +175,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
    * 镜像伙伴(issue #40 T5)—— 删一条公式 / 删整张 case 之前要算「会连带抹掉哪些生成公式」,
    * 而那些公式落在**伙伴那张 case** 上,本组件手上只有自己这张,所以得去拉一次。
    *
-   * 在这儿拉不在调用方传:AdminCaseEditor 有四处宿主(case 详情页 / case 列表页 /
-   * 校验报告 ×2),其中两处手上根本没有整个 set 的数据 —— 靠传参就会在那两处静默少一段
-   * 连带清单,而这个弹层存在的意义正是不静默。只对真会写回公式的 set 拉(`MIRROR_ALG_SYNC_SETS`),
+   * 在表单内部加载伙伴，保证内联编辑与新增弹窗共用完整的连带校验。
+   * 只对真会写回公式的 set 拉(`MIRROR_ALG_SYNC_SETS`),
    * 且必须已建链:没链就一条都不生成,自然没有连带。
    */
   const selfId = state.mode === 'edit' ? state.existing.id ?? null : null;
@@ -204,7 +229,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
   const advancedDirty = useMemo(() => {
     if (algsJson.trim() && algsJson !== JSON.stringify(initial.algs, null, 2)) return true;
     if (stickerJson !== JSON.stringify(initial.sticker, null, 2)) return true;
-    if (oriNamesJson) return true;
+    if (oriNamesJson !== (initial.oriNames ? JSON.stringify(initial.oriNames) : '')) return true;
     return false;
   }, [algsJson, stickerJson, oriNamesJson, initial]);
 
@@ -217,10 +242,10 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     /** 入库数组的下标 → **编辑器里的行号**。空行不入库,两边的下标因此对不上 ——
      *  照 `ai` 直接标红会标到隔壁那条公式上。高级 JSON 那条路没有行可标,留 null。 */
     let editorRowOf: number[][] | null = null;
-    if (advancedOpen && algsJson.trim()) {
+    if (algsJson.trim()) {
       try {
         const parsed = JSON.parse(algsJson);
-        if (!Array.isArray(parsed)) throw new Error('not array');
+        if (!Array.isArray(parsed) || !parsed.length || !parsed.every(ori => Array.isArray(ori) && ori.every(entry => entry && typeof entry.alg === 'string')) || !parsed.flat().some(entry => entry.alg.trim())) throw new Error('invalid algorithms');
         algs = parsed as AlgEntry[][];
       } catch {
         setError(tr({ zh: '高级 algs JSON 格式错', en: 'Advanced algs JSON invalid' })); return;
@@ -259,7 +284,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     if (oriNamesJson.trim()) {
       try {
         const v = JSON.parse(oriNamesJson);
-        if (!Array.isArray(v)) throw new Error('not array');
+        if (!Array.isArray(v) || !v.every(name => typeof name === 'string')) throw new Error('not string array');
         oriNames = v as string[];
       } catch {
         setError(tr({ zh: 'oriNames JSON 格式错', en: 'oriNames JSON invalid' })); return;
@@ -343,10 +368,10 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     try {
       if (state.mode === 'add') {
         const created = await createCase(puzzle, setSlug, body);
-        onSaved({ type: 'add', created });
+        await onSaved({ type: 'add', created });
       } else {
         const updated = await updateCase(puzzle, setSlug, state.existing.id!, body);
-        onSaved({ type: 'update', updated });
+        await onSaved({ type: 'update', updated });
       }
       onClose();
     } catch (e) {
@@ -396,7 +421,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     setError(null);
     try {
       await deleteCase(puzzle, setSlug, state.existing.id!);
-      onSaved({ type: 'delete', id: state.existing.id! });
+      await onSaved({ type: 'delete', id: state.existing.id! });
       onClose();
     } catch (e) {
       setError((e as Error).message);
@@ -411,48 +436,16 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
     : tr({ zh: '新增 case', en: 'Add new case' });
   const previewSetup = debouncedPreview.setup ?? setup;
 
-  return (
-    <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="alg-admin-modal alg-admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
-        <div className="alg-admin-modal-head">
-          <h2>{title}</h2>
-          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
-            <X size={16} />
-          </button>
-        </div>
-
-        <div className="alg-admin-modal-main">
-          <aside className="alg-admin-modal-side">
-            {previewSetup.trim() ? (
-              // 统一走 AlgPlayer 的默认分流：公式库支持的拼图复用 /sim 播放器，
-              // getPlayer() 仍提供同一份可 seek handle 给光标同步。
-              <AlgPlayer
-                ref={playerHandleRef}
-                alg={debouncedPreview.alg}
-                puzzle={puzzle}
-                set={setSlug}
-                setup={previewSetup}
-                orientation={orientation}
-                fillPane
-              />
-            ) : (
-              <div className="alg-admin-modal-side-empty">
-                {tr({ zh: '填入 Setup 公式后,左侧会显示动画演示', en: 'Enter a setup to preview here' })}
-              </div>
-            )}
-          </aside>
-
-          <div className="alg-admin-modal-body">
-          <label>
+  const nameField = (<label>
             <span>{tr({ zh: 'Case 名', en: 'Case Name' })} *</span>
-            <input className="alg-admin-modal-input" value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus />
-          </label>
-          <label>
+            <input className="alg-admin-modal-input" value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus={!children} />
+          </label>);
+  const subgroupField = (<label>
             <span>{tr({ zh: '子分组', en: 'Subgroup' })}</span>
             <input className="alg-admin-modal-input" value={subgroup} onChange={e => setSubgroup(e.target.value)} maxLength={64}
               placeholder={tr({ zh: '例如 Geng / U / Adj Swap', en: 'e.g. Geng / U / Adj Swap' })} />
-          </label>
-          <label className="alg-admin-setup-label">
+          </label>);
+  const setupField = (<label className="alg-admin-setup-label">
               <span>{tr({ zh: '打乱', en: 'Setup' })}</span>
             <AlgInput
               className="alg-admin-setup-textarea"
@@ -472,16 +465,31 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
             {setupFocused && (
               <CubeKeyboardSection target={setupElRef} />
             )}
-          </label>
-
-          <div className="alg-admin-algs-block">
+          </label>);
+  const algorithms = (<div className="alg-admin-algs-block">
             <span className="alg-admin-algs-label">
               {tr({ zh: '公式 (Enter 加新行,记号键 ✎ 切下划/波浪/删除)', en: 'Algs (Enter to add row; ✎ for marks)' })} *
             </span>
             <AlgEditor
               ref={algEditorRef}
               initialValue={initial.algs}
-              formatInitialAlg={puzzle === 'sq1' ? formatSq1EditorAlg : undefined}
+              formatInitialAlg={alg => puzzle === 'sq1' ? formatSq1EditorAlg(alg) : displayCaseAlg(puzzle, setSlug, alg)}
+              formatInitialHtml={html => displayCaseAlgHtml(puzzle, setSlug, html)}
+              caseContext={children ? { puzzle, set: setSlug, caseObj: initial, sq1NotationMode } : undefined}
+              renderOrientation={children ? (rows, oi) => {
+                const selected = oriPreviews[oi] ?? initial.algs[oi]?.[0];
+                return <div className="alg-case-detail-ori-main alg-player-list-layout">
+                  <div className="alg-case-detail-ori-player alg-player-list-player">
+                    <AlgPlayer
+                      ref={handle => { if (handle) oriPlayers.current.set(oi, handle); else oriPlayers.current.delete(oi); }}
+                      alg={selected?.alg ?? ''}
+                      setup={setup === initialSetupText ? (selected?.setup ?? commonCaseSetup(puzzle, setSlug, initial, oi)) : oriAdjustSetup(setup, oi)}
+                      puzzle={puzzle} set={setSlug} orientation={orientation} size={260}
+                    />
+                  </div>
+                  <div className="alg-case-detail-ori-algs alg-player-list-options">{rows}</div>
+                </div>;
+              } : undefined}
               initialInvalid={initialInvalid}
               oriNames={initial.oriNames}
               mirror={mirrorCtx}
@@ -490,10 +498,8 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               onCurrentAlgChange={handlePreviewAlg}
               onCursorMoveCount={handleCursorMoveCount}
             />
-          </div>
-
-          {/* Advanced 区:sticker / 多 orientation algs / oriNames / standard / trainerKey */}
-          <div className="alg-admin-advanced">
+          </div>);
+  const advanced = (<div className="alg-admin-advanced">
             <button
               type="button"
               className="alg-admin-advanced-toggle"
@@ -529,28 +535,22 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
                 </label>
               </div>
             )}
-          </div>
-
-          {error && <div className="alg-admin-modal-error">{error}</div>}
-          </div>
-        </div>
-
-        <div className="alg-admin-modal-foot">
+          </div>);
+  const actions = (<div className="alg-admin-modal-foot">
           {/* 开删除弹层时顺手清掉上一次保存留下的报错 —— 它和「要不要删」无关,顶在弹层里只会误导 */}
           {state.mode === 'edit' && (
             <button type="button" className="alg-admin-modal-delete alg-admin-modal-foot-btn" disabled={busy} onClick={() => { setError(null); setConfirmingDelete(true); }}>
               <Trash2 size={14} /> {tr({ zh: '删除', en: 'Delete' })}
             </button>
           )}
-          <div className="alg-admin-modal-foot-spacer" />
+
           <button type="button" className="alg-admin-modal-foot-btn" disabled={busy} onClick={onClose}>{tr({ zh: '取消', en: 'Cancel' })}</button>
           <button type="button" className="alg-admin-modal-save alg-admin-modal-foot-btn" disabled={busy} onClick={handleSave}>
             <Save size={14} /> {tr({ zh: '保存', en: 'Save' })}
           </button>
-        </div>
-      </div>
-
-      {confirmingDelete && state.mode === 'edit' && (
+        </div>);
+  const errorMessage = error ? <div role="alert" className="alg-admin-modal-error">{error}</div> : null;
+  const deleteConfirmation = (<>      {confirmingDelete && state.mode === 'edit' && (
         <AlgDeleteConfirm
           title={tr({
             zh: `删掉整张 case「${primaryCaseName(puzzle, setSlug, state.existing)}」?`,
@@ -568,6 +568,62 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
           onConfirm={handleDelete}
         />
       )}
+</>);
+
+  const confirmDiscard = () => {
+    const changed = caseName !== initial.name || subgroup !== initial.subgroup || setup !== initialSetupText
+      || standard !== (initial.standard ?? '') || trainerKey !== (initial.trainerKey ?? '') || advancedDirty
+      || JSON.stringify(algEditorRef.current?.getValue()) !== JSON.stringify(initial.algs);
+    return !changed || window.confirm(tr({ zh: '旋转会放弃未保存的修改，继续吗？', en: 'Rotating will discard unsaved changes. Continue?' }));
+  };
+  if (children) return <><div inert={busy || undefined} aria-busy={busy}>{children({ name: nameField, subgroup: subgroupField, setup: setupField, algorithms, advanced, actions, error: errorMessage, busy, confirmDiscard })}</div>{deleteConfirmation}</>;
+
+  return (
+    <div className="alg-admin-modal-backdrop alg-admin-modal-backdrop-top" {...backdrop} role="dialog" aria-modal="true">
+      <div className="alg-admin-modal alg-admin-modal-fullscreen" onClick={e => e.stopPropagation()}>
+        <div className="alg-admin-modal-head">
+          <h2>{title}</h2>
+          <button type="button" className="alg-admin-modal-head-btn" onClick={onClose} title={tr({ zh: '关闭', en: 'Close' })}>
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="alg-admin-modal-main">
+          <aside className="alg-admin-modal-side">
+            {previewSetup.trim() ? (
+              // 统一走 AlgPlayer 的默认分流：公式库支持的拼图复用 /sim 播放器，
+              // getPlayer() 仍提供同一份可 seek handle 给光标同步。
+              <AlgPlayer
+                ref={playerHandleRef}
+                alg={debouncedPreview.alg}
+                puzzle={puzzle}
+                set={setSlug}
+                setup={previewSetup}
+                orientation={orientation}
+                fillPane
+              />
+            ) : (
+              <div className="alg-admin-modal-side-empty">
+                {tr({ zh: '填入 Setup 公式后,左侧会显示动画演示', en: 'Enter a setup to preview here' })}
+              </div>
+            )}
+          </aside>
+
+          <div className="alg-admin-modal-body">
+          {nameField}
+          {subgroupField}
+          {setupField}
+          {algorithms}
+          {/* Advanced 区:sticker / 多 orientation algs / oriNames / standard / trainerKey */}
+          {advanced}
+          {error && <div className="alg-admin-modal-error">{error}</div>}
+          </div>
+        </div>
+
+        {actions}
+      </div>
+
+      {deleteConfirmation}
     </div>
   );
 }

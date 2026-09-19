@@ -8,16 +8,17 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
 describe('algorithm player placement', () => {
-  it('opens the existing editor in place from detail and category pages', () => {
+  it('embeds editing in the canonical detail and links category actions to it', () => {
     const detail = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgCaseView.tsx');
     const category = read('components/AlgCategoryView.tsx');
-    for (const [source, current] of [[detail, 'caseObj'], [category, 'c']]) {
-      expect(source).toContain(`onClick={() => setEditorState({ mode: 'edit', existing: ${current} })}`);
-      expect(source).not.toContain('`${detailHref}/edit`');
-      expect(source).toContain('<AdminCaseEditor');
-    }
+    expect(detail).toContain('>{renderDetail}</AdminCaseEditor>');
+    expect(detail).toContain('editorAlgorithms={editor?.algorithms}');
+    expect(detail).toContain('{editor ? editor.name : primary}');
+    expect(detail).not.toContain('<Pencil');
+    expect(category).toMatch(/<Link\s+href=\{caseDetailHref\(c\)\}\s+prefetch=\{false\}\s+className="alg-admin-edit-btn/);
+    expect(category).not.toContain("setEditorState({ mode: 'edit'");
     expect(detail).toContain('isAdmin && caseObj.id != null');
-    expect(detail).toContain("if (!editMode) return;");
+    expect(detail).not.toContain('editMode');
     expect(category).toContain('onClose={() => setEditorState(null)}');
   });
 
@@ -131,7 +132,7 @@ describe('algorithm player placement', () => {
     const route = read('app/[lang]/alg/[puzzle]/[set]/[subgroup]/AlgSubOrCaseClient.tsx');
 
     expect(route).toContain("import AlgCaseView from './AlgCaseView'");
-    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} editMode={route.edit} />;');
+    expect(route).toContain('return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;');
   });
 
   it('binds the shared sim pointer bridge so dragging the cube changes only the view', () => {

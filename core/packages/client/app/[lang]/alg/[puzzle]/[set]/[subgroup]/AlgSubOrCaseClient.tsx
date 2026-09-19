@@ -71,7 +71,7 @@ export default function AlgSubOrCaseClient() {
   // 否则当 case 解析(slug 唯一表 + 手打名兜底)。
   const caseObj = resolveCaseSlug(data.cases, slug, puzzle, set);
   if (caseObj) {
-    return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} editMode={route.edit} />;
+    return <AlgCaseView puzzle={puzzle as AlgPuzzle} set={set} caseObj={caseObj} data={data} />;
   }
   return <div className="alg-root"><div className="alg-empty">{tr({ zh: '没找到这个 case', en: 'Case not found.' })}</div></div>;
 }
