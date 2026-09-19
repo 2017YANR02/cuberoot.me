@@ -480,6 +480,21 @@ describe('WeChat GAN BLE transport', () => {
     expect(rig.events).toContain('adapter:close');
   });
 
+  it('never treats a MAC-shaped Mini Program deviceId as the GAN encryption MAC', async () => {
+    vi.useFakeTimers();
+    const rig = createBleRig({
+      advertisement: new Uint8Array(6).buffer,
+      deviceId: 'AA:BB:CC:DD:EE:FF',
+    });
+    const pending = connectGanV4({ api: rig.api, scanTimeoutMs: 1_000 });
+    const rejection = expect(pending).rejects.toMatchObject({ code: 'mac-unavailable' });
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    await rejection;
+    expect(rig.events).not.toContain('connection:open');
+    expect(rig.events).toContain('adapter:close');
+  });
+
   it('reports a physical BLE disconnect once and performs cleanup', async () => {
     const rig = createBleRig();
     const onDisconnect = vi.fn();

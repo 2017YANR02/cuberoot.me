@@ -2,8 +2,12 @@ import { miniProgramApi } from '../platform';
 import { tr } from '../i18n';
 import {
   beginBleResourceCleanup,
+  bleBytesToHex,
+  bleRuntimeInfo,
   bluetoothAdapterErrorMessage,
   claimBleResourceLease,
+  createBleDiagnostic,
+  describeBleDevice,
   createBleNativeOperationQueue,
   getBleSubscriptionType,
   ignoreBleFailure,
@@ -19,6 +23,7 @@ import {
   type BleAbortSignal,
   type BleCharacteristic,
   type BleConnectionStateChange,
+  type BleDiagnostic,
   type BleResourceLease,
   type BleService,
   type BleSubscriptionType,
@@ -34,22 +39,38 @@ export interface EncryptedBleConnection {
   requestBattery(): Promise<number | null>;
 }
 
+export interface ResolvedBleMac {
+  source: string;
+  value: string;
+}
+
 export interface EncryptedBleOptions {
   api?: MiniProgramBleApi;
   device?: DiscoveredDevice;
   signal?: BleAbortSignal;
   scanTimeoutMs?: number;
+  mtu?: number;
   serviceUuid: string;
   notifyCharacteristicUuid?: string;
   characteristicUuid: string;
   writeCharacteristicUuid?: string;
+  preferNotifyCharacteristicForWrite?: boolean;
+  preferWriteNoResponse?: boolean;
+  readyTimeoutMs?: number;
+  retryInitialFramesAfterMs?: number;
+  diagnosticLabel: string;
   matches(device: DiscoveredDevice): boolean;
-  resolveMac(device: DiscoveredDevice): string | null;
+  resolveMac(device: DiscoveredDevice): ResolvedBleMac | null;
   createCipher(mac: Uint8Array): {
     decrypt(frame: Uint8Array): Uint8Array;
     encrypt(frame: Uint8Array): Uint8Array;
   };
-  onFrame(frame: Uint8Array, write: (value: Uint8Array) => Promise<void>): number | null | void;
+  onFrame(
+    frame: Uint8Array,
+    write: (value: Uint8Array) => Promise<void>,
+    diagnostic: BleDiagnostic,
+  ): number | null | void;
+  isReadyFrame?(frame: Uint8Array): boolean;
   initialFrames?: Uint8Array[] | ((mac: Uint8Array) => Uint8Array[]);
   onBattery?(level: number): void;
   onDisconnect?(message: string): void;
@@ -107,6 +128,8 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
   const api = options.api ?? (miniProgramApi() as unknown as MiniProgramBleApi);
   const timeoutMs = options.scanTimeoutMs ?? 10_000;
   const lease = claimBleResourceLease(api);
+  const diagnostic = createBleDiagnostic(options.diagnosticLabel);
+  diagnostic.info('connect-start', { runtime: bleRuntimeInfo() });
   let adapterOpen = false;
   let active = false;
   let closing = false;
@@ -120,6 +143,11 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
   let stateListener: ((result: BleConnectionStateChange) => void) | null = null;
   let disconnectPromise: Promise<void> | null = null;
   let lastBattery: number | null = null;
+  let notificationCount = 0;
+  let writeCount = 0;
+  let ready = !options.isReadyFrame;
+  let resolveReady = (): void => {};
+  const readyPromise = new Promise<void>((resolve) => { resolveReady = resolve; });
   const writeQueue = createBleNativeOperationQueue(lease);
 
   const disconnect = (): Promise<void> => {
@@ -164,8 +192,13 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
     );
     adapterOpen = true;
     const device = await findDevice(api, lease, timeoutMs, options.signal, options);
-    const mac = options.resolveMac(device);
-    if (!mac) throw new Error(tr({ en: 'The cube address could not be read. Wake it and scan again.', zh: '未读取到魔方地址，请唤醒魔方后重新扫描' }));
+    diagnostic.info('device-selected', describeBleDevice(device));
+    const resolvedMac = options.resolveMac(device);
+    diagnostic.info('mac-resolution', resolvedMac
+      ? { source: resolvedMac.source, mac: resolvedMac.value }
+      : { source: null, mac: null });
+    if (!resolvedMac) throw new Error(tr({ en: 'The cube address could not be read. Wake it and scan again.', zh: '未读取到魔方地址，请唤醒魔方后重新扫描' }));
+    const mac = resolvedMac.value;
     connectedDeviceId = device.deviceId;
     const closeConnection = (): Promise<unknown> => invokeBleCleanupForLease(lease, (callbacks) => api.closeBLEConnection({ ...callbacks, deviceId: device.deviceId }));
     await raceBleAbortWithLateCleanup(
@@ -174,46 +207,121 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       closeConnection,
     );
     active = true;
+    diagnostic.info('gatt-connected', { deviceId: device.deviceId });
+    const setBleMtu = api.setBLEMTU;
+    if (options.mtu && setBleMtu) {
+      try {
+        await raceBleAbort(invokeBleForLease(lease, (callbacks) => setBleMtu({
+          ...callbacks,
+          deviceId: device.deviceId,
+          mtu: options.mtu as number,
+        })), options.signal);
+        diagnostic.info('mtu-ready', { mtu: options.mtu });
+      } catch (error) {
+        if (error instanceof BleOperationAbortedError) throw error;
+        diagnostic.warn('mtu-failed', { mtu: options.mtu, error: error instanceof Error ? error.message : String(error) });
+      }
+    }
     stateListener = (result): void => {
       if (result.deviceId === connectedDeviceId && !result.connected && !closing) {
+        diagnostic.warn('gatt-disconnected', { deviceId: result.deviceId });
         safeBleCallback(options.onDisconnect ? () => options.onDisconnect?.(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' })) : undefined);
         void disconnect();
       }
     };
     api.onBLEConnectionStateChange?.(stateListener);
     const services = await raceBleAbort(invokeBleForLease<{ services: BleService[] }>(lease, (callbacks) => api.getBLEDeviceServices({ ...callbacks, deviceId: device.deviceId })), options.signal);
+    diagnostic.info('services', { services: services.services.map((candidate) => candidate.uuid) });
     const service = services.services.find((candidate) => normalizeBleUuid(candidate.uuid) === normalizeBleUuid(options.serviceUuid));
     if (!service) throw new Error(tr({ en: 'Smart cube communication service is unavailable', zh: '智能魔方通信服务不可用' }));
     serviceId = service.uuid;
     const characteristics = await raceBleAbort(invokeBleForLease<{ characteristics: BleCharacteristic[] }>(lease, (callbacks) => api.getBLEDeviceCharacteristics({
       ...callbacks, deviceId: device.deviceId, serviceId: service.uuid,
     })), options.signal);
-    const characteristic = characteristics.characteristics.find((candidate) => normalizeBleUuid(candidate.uuid) === normalizeBleUuid(options.writeCharacteristicUuid ?? options.characteristicUuid)
-      && Boolean(candidate.properties?.write || candidate.properties?.writeNoResponse));
+    diagnostic.info('characteristics', {
+      characteristics: characteristics.characteristics.map((candidate) => ({
+        uuid: candidate.uuid,
+        properties: candidate.properties ?? {},
+      })),
+    });
     const notifyCharacteristic = characteristics.characteristics.find((candidate) => normalizeBleUuid(candidate.uuid)
       === normalizeBleUuid(options.notifyCharacteristicUuid ?? options.characteristicUuid) && Boolean(getBleSubscriptionType(candidate)));
+    const supportsWrite = (candidate: BleCharacteristic | undefined): candidate is BleCharacteristic => Boolean(
+      candidate?.properties?.write || candidate?.properties?.writeNoResponse,
+    );
+    const fallbackWriteCharacteristic = characteristics.characteristics.find((candidate) => normalizeBleUuid(candidate.uuid)
+      === normalizeBleUuid(options.writeCharacteristicUuid ?? options.characteristicUuid) && supportsWrite(candidate));
+    const characteristic = options.preferNotifyCharacteristicForWrite && supportsWrite(notifyCharacteristic)
+      ? notifyCharacteristic
+      : fallbackWriteCharacteristic;
     subscriptionType = notifyCharacteristic ? getBleSubscriptionType(notifyCharacteristic) ?? null : null;
     if (!characteristic || !notifyCharacteristic || !subscriptionType) throw new Error(tr({ en: 'Smart cube communication characteristic is unavailable', zh: '智能魔方通信特征不可用' }));
     characteristicId = characteristic.uuid;
     notifyCharacteristicId = notifyCharacteristic.uuid;
+    const writeType = options.preferWriteNoResponse && characteristic.properties?.writeNoResponse
+      ? 'writeNoResponse'
+      : characteristic.properties?.write
+        ? 'write'
+        : 'writeNoResponse';
+    diagnostic.info('channels-selected', {
+      serviceId,
+      notifyCharacteristicId,
+      writeCharacteristicId: characteristicId,
+      subscriptionType,
+      writeType,
+    });
     const cipher = options.createCipher(parseMac(mac));
     const write = (value: Uint8Array): Promise<void> => writeQueue.enqueue(() => {
       if (closing || !active || !connectedDeviceId || !serviceId || !characteristicId) throw new Error(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
+      const encrypted = cipher.encrypt(value);
+      const sequence = ++writeCount;
+      diagnostic.info('write-start', {
+        sequence,
+        characteristicId,
+        writeType,
+        plaintext: bleBytesToHex(value),
+        encrypted: bleBytesToHex(encrypted),
+      });
       return invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
         ...callbacks, characteristicId: characteristicId as string, deviceId: connectedDeviceId as string,
-        serviceId: serviceId as string, value: toArrayBuffer(cipher.encrypt(value)),
-      })).then(() => undefined);
+        serviceId: serviceId as string, value: toArrayBuffer(encrypted), writeType,
+      })).then(() => {
+        diagnostic.info('write-success', { sequence });
+      }, (error: unknown) => {
+        diagnostic.error('write-failed', { sequence, error: error instanceof Error ? error.message : String(error) });
+        throw error;
+      });
     }, options.signal);
     listener = (result): void => {
       if (!active || result.deviceId !== connectedDeviceId || normalizeBleUuid(result.serviceId) !== normalizeBleUuid(serviceId as string)
         || normalizeBleUuid(result.characteristicId) !== normalizeBleUuid(notifyCharacteristicId as string)) return;
       try {
-        const battery = options.onFrame(cipher.decrypt(new Uint8Array(result.value)), write);
+        const raw = new Uint8Array(result.value);
+        const frame = cipher.decrypt(raw);
+        const sequence = ++notificationCount;
+        if (sequence <= 40 || sequence % 50 === 0) {
+          diagnostic.info('notification', {
+            sequence,
+            characteristicId: result.characteristicId,
+            raw: bleBytesToHex(raw),
+            decrypted: bleBytesToHex(frame),
+          });
+        }
+        const battery = options.onFrame(frame, write, diagnostic);
+        if (!ready && options.isReadyFrame?.(frame)) {
+          ready = true;
+          diagnostic.info('protocol-ready', { notificationCount, writeCount });
+          resolveReady();
+        }
         if (typeof battery === 'number' && battery !== lastBattery) {
           lastBattery = battery;
           options.onBattery?.(battery);
         }
-      } catch { /* Ignore malformed protocol frames. */ }
+      } catch (error) {
+        diagnostic.warn('notification-rejected', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     };
     api.onBLECharacteristicValueChange(listener);
     await raceBleAbort(invokeBleForLease(lease, (callbacks) => api.notifyBLECharacteristicValueChange({
@@ -221,10 +329,49 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       state: true, type: subscriptionType as BleSubscriptionType,
     })), options.signal);
     notificationsEnabled = true;
+    diagnostic.info('notifications-enabled', {
+      characteristicId: notifyCharacteristic.uuid,
+      subscriptionType,
+    });
     const initialFrames = typeof options.initialFrames === 'function'
       ? options.initialFrames(parseMac(mac))
       : options.initialFrames ?? [];
-    for (const frame of initialFrames) await write(frame);
+    const writeInitialFrames = async (): Promise<void> => {
+      for (const frame of initialFrames) await write(frame);
+    };
+    try {
+      await writeInitialFrames();
+    } catch (error) {
+      if (options.retryInitialFramesAfterMs === undefined) throw error;
+    }
+    if (!ready) {
+      const retryDelayMs = options.retryInitialFramesAfterMs;
+      let retryTimer: ReturnType<typeof setTimeout> | undefined;
+      if (retryDelayMs !== undefined && retryDelayMs >= 0) {
+        retryTimer = setTimeout(() => {
+          if (ready || closing) return;
+          diagnostic.warn('initial-write-retry', { retryDelayMs });
+          void writeInitialFrames().catch(() => {});
+        }, retryDelayMs);
+      }
+      const readyTimeoutMs = options.readyTimeoutMs ?? 4_000;
+      diagnostic.info('protocol-wait', { readyTimeoutMs });
+      try {
+        await raceBleAbort(new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error(tr({
+            en: 'The smart cube protocol did not respond. Wake the cube and try again.',
+            zh: '智能魔方协议未响应，请转动唤醒魔方后重试',
+          }))), readyTimeoutMs);
+          void readyPromise.then(() => {
+            clearTimeout(timer);
+            resolve();
+          });
+        }), options.signal);
+      } finally {
+        if (retryTimer !== undefined) clearTimeout(retryTimer);
+      }
+    }
+    diagnostic.info('connect-ready', { notificationCount, writeCount, macSource: resolvedMac.source });
     return {
       deviceId: device.deviceId,
       deviceName: device.name ?? device.localName,
@@ -232,6 +379,11 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       requestBattery: async () => lastBattery,
     };
   } catch (error) {
+    diagnostic.error('connect-failed', {
+      error: error instanceof Error ? error.message : String(error),
+      notificationCount,
+      writeCount,
+    });
     await disconnect();
     throw error;
   }
@@ -239,6 +391,39 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
 
 function parseMac(value: string): Uint8Array {
   return Uint8Array.from(value.split(':').map((part) => Number.parseInt(part, 16)));
+}
+
+export function normalizeBleMac(value: string | null | undefined): string | null {
+  const normalized = value?.trim().replace(/-/g, ':').toUpperCase() ?? '';
+  if (!/^[0-9A-F]{2}(?::[0-9A-F]{2}){5}$/.test(normalized)) return null;
+  return normalized === '00:00:00:00:00:00' || normalized === 'FF:FF:FF:FF:FF:FF'
+    ? null
+    : normalized;
+}
+
+export function extractBleMacFromAdvertisement(
+  advertisement: ArrayBuffer | undefined,
+  options: {
+    companyIds: readonly number[];
+    layout: 'first6-reversed' | 'last6-reversed';
+  },
+): string | null {
+  if (!advertisement) return null;
+  const bytes = new Uint8Array(advertisement);
+  const companyIds = new Set(options.companyIds);
+  const decode = (payload: Uint8Array): string | null => {
+    if (payload.length < 6) return null;
+    const start = options.layout === 'first6-reversed' ? 0 : payload.length - 6;
+    const parts: string[] = [];
+    for (let index = 0; index < 6; index++) {
+      parts.push(payload[start + 5 - index].toString(16).padStart(2, '0'));
+    }
+    return normalizeBleMac(parts.join(':'));
+  };
+
+  if (bytes.length < 8) return null;
+  const companyId = bytes[0] | (bytes[1] << 8);
+  return companyIds.has(companyId) ? decode(bytes.subarray(2)) : null;
 }
 
 function toArrayBuffer(value: Uint8Array): ArrayBuffer {

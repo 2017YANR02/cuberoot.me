@@ -10,8 +10,11 @@ import { matchesMoyu32Name } from '@cuberoot/shared/smart-cube/moyu32';
 import { matchesQiyiName } from '@cuberoot/shared/smart-cube/qiyi';
 import {
   beginBleResourceCleanup,
+  bleRuntimeInfo,
   bluetoothAdapterErrorMessage,
   claimBleResourceLease,
+  createBleDiagnostic,
+  describeBleDevice,
   ignoreBleFailure,
   invokeBleCleanupForLease,
   invokeBleWithLateCleanupForLease,
@@ -66,6 +69,8 @@ export async function discoverSmartCubeDriver(options: {
   }
 
   const lease = claimBleResourceLease(api);
+  const diagnostic = createBleDiagnostic('scan');
+  diagnostic.info('start', { runtime: bleRuntimeInfo(), scanTimeoutMs });
   let adapterOpen = false;
   let discoveryStarted = false;
   let listener: ((result: { devices: DiscoveredDevice[] }) => void) | null = null;
@@ -100,6 +105,7 @@ export async function discoverSmartCubeDriver(options: {
       let timer: ReturnType<typeof setTimeout> | undefined;
       let offAbort = (): void => {};
       const devices = new Map<string, DiscoveredSmartCube>();
+      const loggedDevices = new Map<string, string>();
       const finish = (result: DiscoveredSmartCube[] | Error): void => {
         if (settled) return;
         settled = true;
@@ -112,6 +118,14 @@ export async function discoverSmartCubeDriver(options: {
       listener = (result): void => {
         for (const device of result.devices) {
           const driver = classifySmartCubeDriver(device);
+          const description = { ...describeBleDevice(device), driver };
+          const stableDescription: Record<string, unknown> = { ...description };
+          delete stableDescription['RSSI'];
+          const signature = JSON.stringify(stableDescription);
+          if (loggedDevices.get(device.deviceId) !== signature) {
+            loggedDevices.set(device.deviceId, signature);
+            diagnostic.info('device-found', description);
+          }
           if (!driver || !device.deviceId) continue;
           const previous = devices.get(device.deviceId)?.device;
           const merged: DiscoveredDevice = {
@@ -135,6 +149,10 @@ export async function discoverSmartCubeDriver(options: {
           const rightRssi = right.device.RSSI ?? Number.NEGATIVE_INFINITY;
           return rightRssi - leftRssi;
         });
+        diagnostic.info('finish', {
+          count: found.length,
+          devices: found.map(({ device, driver }) => ({ ...describeBleDevice(device), driver })),
+        });
         finish(found.length > 0 ? found : new Error(tr({
           en: 'No smart cube found. Turn the cube to wake it up and try again.',
           zh: '未发现智能魔方，请转动魔方将它唤醒后重试',
@@ -155,7 +173,9 @@ export async function discoverSmartCubeDriver(options: {
         stopDiscovery,
       ).then(() => {
         discoveryStarted = true;
+        diagnostic.info('discovery-started');
       }).catch((error: unknown) => {
+        diagnostic.error('discovery-failed', { error: error instanceof Error ? error.message : String(error) });
         finish(error instanceof BleOperationAbortedError
           ? error
           : new Error(tr({

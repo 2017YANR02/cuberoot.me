@@ -158,7 +158,6 @@ function macFromText(value: string | undefined): Uint8Array | null {
 function ganMac(device: DiscoveredDevice): Uint8Array | null {
   return extractGanV4MacFromAdvertisement(device.advertisData, 'manufacturer-data')
     ?? extractGanV4MacFromAdvertisement(device.advertisData, 'full-ad')
-    ?? macFromText(device.deviceId)
     ?? macFromText(device.name)
     ?? macFromText(device.localName);
 }
