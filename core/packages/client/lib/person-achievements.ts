@@ -52,6 +52,42 @@ export type ExplorerAchievement = { kind: ExplorerKind; count: number; tier: num
 export function explorerTier(kind: ExplorerKind, count: number) {
   return Number.isSafeInteger(count) && count > 0 ? EXPLORER_ACHIEVEMENTS[kind].tiers.findLast(n => count >= n) : undefined;
 }
+
+export type DisplayExplorerAchievement = ExplorerAchievement & {
+  aggregation?: 'events' | 'sum' | 'best';
+  groupedEvents?: ExplorerAchievement[];
+};
+
+// These families describe repeatable experiences. Event-specific championship
+// honors stay separate; streaks and durations must never add across events.
+const EXPLORER_GROUPING: Partial<Record<ExplorerKind, DisplayExplorerAchievement['aggregation']>> = {
+  debutWin: 'events', calendar: 'sum', triplets: 'sum',
+  podiumStreak: 'best', weekly: 'best', firstWin: 'best', monument: 'best',
+};
+
+export function groupExplorerAchievements(achievements: ExplorerAchievement[]): DisplayExplorerAchievement[] {
+  const groups = new Map<string, ExplorerAchievement[]>();
+  for (const achievement of achievements) {
+    if (!achievement.event || !EXPLORER_GROUPING[achievement.kind]) continue;
+    const key = `${achievement.kind}:${achievement.record ?? ''}`;
+    const group = groups.get(key) ?? [];
+    group.push(achievement);
+    groups.set(key, group);
+  }
+  return achievements.flatMap(achievement => {
+    const aggregation = EXPLORER_GROUPING[achievement.kind];
+    const group = groups.get(`${achievement.kind}:${achievement.record ?? ''}`);
+    if (!achievement.event || !aggregation || !group || group.length < 2) return [achievement];
+    if (group[0] !== achievement) return [];
+    const count = aggregation === 'events' ? new Set(group.map(a => a.event)).size
+      : aggregation === 'sum' ? group.reduce((sum, a) => sum + a.count, 0)
+        : Math.max(...group.map(a => a.count));
+    return [{ ...achievement, event: undefined, count, tier: explorerTier(achievement.kind, count)!,
+      evidence: group.flatMap(a => a.evidence.map(e => ({ ...e, event: e.event ?? a.event }))),
+      aggregation, groupedEvents: group }];
+  });
+}
+
 function recordLevel(marker?: string | null): 'WR' | 'CR' | 'NR' | undefined {
   return marker === 'WR' || marker === 'NR' ? marker : marker === 'CR' || Object.values(CONTINENT_RECORD_ABBR).includes(marker ?? '') ? 'CR' : undefined;
 }

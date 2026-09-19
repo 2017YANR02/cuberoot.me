@@ -7,7 +7,7 @@ import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { useT } from '@/hooks/useT';
 import { CONTINENT_NAMES, CONTINENT_RECORD_ABBR, type ContinentCode } from '@/lib/continent';
-import { EXPLORER_ACHIEVEMENTS, type ExplorerAchievement } from '@/lib/person-achievements';
+import { EXPLORER_ACHIEVEMENTS, type DisplayExplorerAchievement } from '@/lib/person-achievements';
 import { AchievementMedal, ACHIEVEMENT_TITLES, RECORD_ACHIEVEMENT_TIERS, recordAchievementTier, type AchievementKind } from './AchievementMedal';
 
 const FEMALE_TITLES: Partial<Record<AchievementKind, { zh: string; en: string }>> = {
@@ -18,7 +18,7 @@ const FEMALE_TITLES: Partial<Record<AchievementKind, { zh: string; en: string }>
 };
 
 export function AchievementBadge({ kind, event, name, description, children, recordCount, achievement, female = false, record }: {
-  kind: AchievementKind; event?: string; name?: string; description?: string; children?: ReactNode; recordCount?: number; achievement?: ExplorerAchievement; female?: boolean; record?: string;
+  kind: AchievementKind; event?: string; name?: string; description?: string; children?: ReactNode; recordCount?: number; achievement?: DisplayExplorerAchievement; female?: boolean; record?: string;
 }) {
   const t = useT();
   const id = useId();
@@ -86,7 +86,11 @@ export function AchievementBadge({ kind, event, name, description, children, rec
         {name && kind !== 'wr' && !kind.startsWith('historical') && <p className="wp-achievement-card-event">{name}</p>}
         {description && <p>{description}</p>}
         {achievement && <div className="wp-achievement-progress">
-          <strong>{achievement.record && `${achievement.record} `}{achievement.kind === 'worldPodium' ? t(`历史最好：第 ${achievement.place} 名`, `Best historical finish: ${achievement.place}`) : t(`已达成：${achievement.count}`, `Achieved: ${achievement.count}`)}</strong>
+          <strong>{achievement.record && `${achievement.record} `}{achievement.kind === 'worldPodium' ? t(`历史最好：第 ${achievement.place} 名`, `Best historical finish: ${achievement.place}`)
+            : achievement.aggregation === 'best' ? t(`单项最高：${achievement.count}`, `Best in one event: ${achievement.count}`)
+              : achievement.aggregation === 'events' ? t(`达标项目：${achievement.count}`, `Qualifying events: ${achievement.count}`)
+                : achievement.aggregation === 'sum' ? t(`累计达成：${achievement.count}`, `Total achieved: ${achievement.count}`)
+                  : t(`已达成：${achievement.count}`, `Achieved: ${achievement.count}`)}</strong>
           {EXPLORER_ACHIEVEMENTS[achievement.kind].tiers.length > 1 && <ul aria-label={t('徽章等级', 'Badge tiers')}>
             {EXPLORER_ACHIEVEMENTS[achievement.kind].tiers.map(level => <li key={level} data-unlocked={level <= achievement.tier}>{level <= achievement.tier ? '✓ ' : ''}{level}</li>)}
           </ul>}
