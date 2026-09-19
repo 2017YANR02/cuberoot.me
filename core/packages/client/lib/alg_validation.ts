@@ -33,6 +33,7 @@ import { ftoEifState, invertFtoEifAlgorithm, isFtoEifSolved, parseFtoEifAlgorith
 import { sq1StateShapes } from '@/lib/sq1-shapes';
 import { traceSq1Algorithm } from '@/lib/sq1-tools';
 import { tr } from '@/i18n/tr';
+import { CUBE_ORIENTATIONS as HOLDING_ORIENTATIONS } from '@/lib/cube-orientation';
 
 /**
  * PF must finish at the start of Top Layer, not at a solved FTO. This reference
@@ -58,6 +59,8 @@ export interface ValidateAlgResult {
 interface ValidateAlgOptions {
   /** 入库/全库扫描时不允许校验器隐式补 AUF；SQ1 EP 还必须精确对齐上下层。 */
   storedAlg?: boolean;
+  /** Public solutions must explicitly restore the starting colour frame. */
+  fixedOrientation?: boolean;
 }
 
 /** `''` 排最前 —— 已经写全的公式不该被改；五魔方 U 是五阶，金字塔 U 是三阶。 */
@@ -86,6 +89,23 @@ function loadKpuzzle(puzzle: string): Promise<KPuzzle> | null {
     _kpuzzleCache[puzzle] = import('cubing/puzzles').then(m => m.puzzles[id].kpuzzle());
   }
   return _kpuzzleCache[puzzle];
+}
+
+/** Preserve the case geometry while putting its completed bottom colour on D. */
+export async function orientCaseSetup(puzzle: AlgPuzzle, set: string, setup: string): Promise<string> {
+  // LS/TCLL deliberately have an unfinished bottom face; do not reinterpret them.
+  if (puzzle !== '2x2' || !['cll', 'eg1', 'eg2', 'leg1', 'ortega-oll', 'ortega-pbl'].includes(set)) return setup;
+  const kp = await loadKpuzzle(puzzle)!;
+  try {
+    const clean = normalizeAlg(puzzle, setup);
+    for (const { value } of HOLDING_ORIENTATIONS) {
+      const corners = kp.defaultPattern().applyAlg([value, clean].filter(Boolean).join(' ')).patternData.CORNERS;
+      if ([4, 5, 6, 7].every(i => corners.pieces[i] >= 4 && corners.orientation[i] === 0)) {
+        return [value, setup].filter(Boolean).join(' ');
+      }
+    }
+  } catch { /* Malformed sources remain failures in the normal validator. */ }
+  return setup;
 }
 
 /**
@@ -205,10 +225,13 @@ export async function validateAlgCase(
   // SQ1 EP 的阶段目标允许上下层各自任意 AUF；库内公式则必须把两层都转回准确位置，
   // 否则校验看似通过，按原文渲染的缩略图却仍是错态。
   const effectiveGoal = options.storedAlg && goalKind === 'sq1-ep' ? 'solve' : goalKind;
-  const goal = (p: KPattern) => reachesGoal(p, kp, puzzle, effectiveGoal);
+  const goal = (p: KPattern) => reachesGoal(p, kp, puzzle, effectiveGoal, options.fixedOrientation);
   const head = (cleanSetup ? cleanSetup + ' ' : '') + cleanAlg;
+  let end: KPattern;
+  try { end = kp.defaultPattern().applyAlg(head); }
+  catch { return { ok: false, reason: GOAL_MISS[goalKind] }; }
   const run = (tail: string): KPattern | null => {
-    try { return kp.defaultPattern().applyAlg(tail ? `${head} ${tail}` : head); }
+    try { return tail ? end.applyAlg(tail) : end; }
     catch { return null; }
   };
 
@@ -217,6 +240,11 @@ export async function validateAlgCase(
     const trailing = trailingUFamilyMove(leafMoves);
     if (trailing) return { ok: false, reason: `公式末尾的 ${trailing.toString()} 是多余的 AUF` };
     const p = run('');
+    if (p && options.fixedOrientation && !options.storedAlg && !goal(p)) {
+      for (const { value: rotation } of HOLDING_ORIENTATIONS) {
+        if (rotation && goal(p.applyAlg(rotation))) return { ok: true, auf: rotation };
+      }
+    }
     if (!p || !goal(p)) return { ok: false, reason: GOAL_MISS[goalKind] };
     return { ok: true, auf: '' };
   }
@@ -229,6 +257,19 @@ export async function validateAlgCase(
   for (const auf of aufCandidates) {
     const p = run(auf);
     if (p && goal(p)) return { ok: true, auf };
+  }
+  if (options.fixedOrientation && !options.storedAlg && ['2x2', '3x3', '4x4', '5x5'].includes(puzzle)) {
+    // A source may finish in another grip. Make that correction visible;
+    // never let the validator silently rotate a displayed final state.
+    for (const auf of aufCandidates) {
+      const p = run(auf);
+      if (!p) continue;
+      for (const { value: rotation } of HOLDING_ORIENTATIONS) {
+        if (rotation && goal(p.applyAlg(rotation))) {
+          return { ok: true, auf: [auf, rotation].filter(Boolean).join(' ') };
+        }
+      }
+    }
   }
   // An algorithm can finish in a different grip (for example an initial x'
   // without a final x). Its original U layer is then no longer the world U
@@ -265,8 +306,9 @@ export function validateStoredAlgCase(
   sticker: AlgSticker,
   puzzle: string,
   set?: string,
+  options: Pick<ValidateAlgOptions, 'fixedOrientation'> = {},
 ): Promise<ValidateAlgResult> {
-  return validateAlgCase(setup, alg, sticker, puzzle, set, { storedAlg: true });
+  return validateAlgCase(setup, alg, sticker, puzzle, set, { ...options, storedAlg: true });
 }
 
 /** 没达标时给人看的话 —— 每个目标态一句,别再一律说「没有还原魔方」。 */
