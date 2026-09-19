@@ -2338,11 +2338,12 @@ cubingLiveRoutes.get('/cubing-zh/:wcaId', async (c) => {
   try {
     const meta = await getCnCompZh(wcaId);
     const isEmpty = !meta.location && !meta.withdrawDeadline && !meta.reopenAt && !meta.nameZh;
-    // 命中数据缓存 7d;空(非 CN / cubing.com 无页面)只缓存 1h
-    c.header('Cache-Control', isEmpty ? 'public, max-age=3600' : 'public, max-age=604800');
+    // 空响应不固化；浏览器最多 1h，共享缓存保留 7d。
+    c.header('Cache-Control', isEmpty ? 'no-store' : 'public, max-age=3600, s-maxage=604800');
     return c.json(meta);
   } catch (e) {
     console.warn(`[cubing-zh] ${wcaId}:`, (e as Error).message);
+    c.header('Cache-Control', 'no-store');
     return c.json({ location: null, withdrawDeadline: null, reopenAt: null, nameZh: null });
   }
 });
