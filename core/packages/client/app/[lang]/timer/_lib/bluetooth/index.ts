@@ -966,6 +966,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     if (calibratingRef.current) throw new Error('Device calibration already in progress');
     const generation = connectionGenerationRef.current;
     calibratingRef.current = true;
+    // Reset is one user operation: update the local model before sending the
+    // solved-state command so software and hardware move together.
+    resetState();
     try {
       await reset();
       if (connectionGenerationRef.current !== generation) throw new Error('Cube connection changed');
@@ -979,7 +982,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     } finally {
       if (connectionGenerationRef.current === generation) calibratingRef.current = false;
     }
-  }, [publishState]);
+  }, [publishState, resetState]);
 
   const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string, step?: CubeStep): boolean => {
     const raw = toFaceletString(trackerRef.current.getFaces());
