@@ -6,6 +6,39 @@ import Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import { GRAPH_SLOTS, RINGS, graphPosition, sectorPath, stickerPermutation, parseGraphMoves, turnCycles } from '@/app/[lang]/math/cube-graph/model';
 
 describe('cube sticker graph', () => {
+  it('retargets repeated interrupted turns from the displayed positions without jumping', () => {
+    let slots = GRAPH_SLOTS.map((_, id) => id);
+    let displayed = GRAPH_SLOTS.map(({ x, y }) => ({ x, y }));
+    const moves = ['R', 'U', 'F2', "R'", 'M', 'x', 'Rw', 'D'];
+    for (let step = 0; step < moves.length; step++) {
+      const targets = new Array<number>(54);
+      stickerPermutation(moves.slice(0, step + 1)).forEach((id, slot) => { targets[id] = slot; });
+      displayed = targets.map((to, id) => {
+        const origin = displayed[id];
+        expect(graphPosition(slots[id], to, 0, origin)).toEqual(origin);
+        const nextFrame = graphPosition(slots[id], to, 0.000001, origin);
+        expect(Math.hypot(nextFrame.x - origin.x, nextFrame.y - origin.y)).toBeLessThan(0.001);
+        expect(graphPosition(slots[id], to, 1, origin)).toEqual({ x: GRAPH_SLOTS[to].x, y: GRAPH_SLOTS[to].y });
+        return graphPosition(slots[id], to, 0.2, origin);
+      });
+      slots = targets;
+    }
+  });
+
+  it('continues an interrupted arc on its circle when its target is unchanged', () => {
+    const permutation = stickerPermutation(['R']);
+    const to = permutation.findIndex((from, slot) => from !== slot
+      && GRAPH_SLOTS[from].rings.some(id => GRAPH_SLOTS[slot].rings.includes(id)));
+    const from = permutation[to];
+    const origin = graphPosition(from, to, 0.3);
+    // The next move leaves this sticker's target alone, but its old turn is unfinished.
+    const p = graphPosition(to, to, 0.5, origin);
+    const ring = RINGS[GRAPH_SLOTS[from].rings.find(id => GRAPH_SLOTS[to].rings.includes(id))!];
+    expect(Math.hypot(p.x - ring.x, p.y - ring.y)).toBeCloseTo(ring.r, 8);
+    expect(p.x).not.toBe(GRAPH_SLOTS[to].x);
+    expect(graphPosition(to, to, 0, origin)).toEqual(origin);
+  });
+
   it('validates editor input without dropping unsupported moves or expanding unbounded groups', () => {
     expect(parseGraphMoves('')).toEqual([]);
     expect(parseGraphMoves('RU2 M′ Rw x')).toEqual(['R', 'U2', "M'", 'Rw', 'x']);
