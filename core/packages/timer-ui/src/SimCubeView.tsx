@@ -38,8 +38,9 @@
  *     which the engine never writes, so it is ours to own outright.
  *
  * Two things this deliberately does NOT do:
- *   - It does not attach the /sim pointer Controller. A gyro view is driven by
- *     the physical cube; a drag handler would fight it for the same transform.
+ *   - It does not attach the /sim pointer Controller unless the caller opts in
+ *     to view dragging. The live virtual cube uses that opt-in with layer turns
+ *     locked, so dragging adjusts the view without changing cube state.
  *   - It does not put orientation on `world.scene.rotation`. That is the orbit
  *     channel, and the lights live under the scene — rotating it would drag the
  *     lighting around with the cube and kill every shading cue that makes the
@@ -67,7 +68,7 @@ import './live-cube.css';
 import type World from '@cuberoot/puzzle-render-core/engine/world';
 import type NxnCube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
 import type { SimMount } from '@cuberoot/puzzle-render-core/sim/mountSimWorld';
-import { FRONT_SCENE_ROT, homeSceneRot } from '@cuberoot/puzzle-render-core/engine/viewControls';
+import { FRONT_SCENE_ROT, homeSceneRot, ORBIT_K, orbitScene } from '@cuberoot/puzzle-render-core/engine/viewControls';
 import {
   appendedSlicePair,
   planLiveSimUpdate,
@@ -116,6 +117,8 @@ function hasValidOrientation(q: Quat | null | undefined): q is Quat {
 
 export interface SimCubeViewProps {
   language?: 'en' | 'zh';
+  /** Allow dragging the cube area to orbit the view without turning layers. */
+  allowViewDrag?: boolean;
   /** Moves since the cube was last known SOLVED — see the note above. */
   moves: string[];
   /**
@@ -200,6 +203,7 @@ export interface SimCubeViewProps {
 export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const {
     language = 'en',
+    allowViewDrag = false,
     moves,
     pose = '',
     quat,
@@ -299,10 +303,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       if (!host) return;
       gyroViewActiveRef.current = hasValidOrientation(externalQuatRef.current?.current ?? rawRef.current);
 
-      mount = mountSimWorld({
+      const nextMount = mountSimWorld({
         host,
         puzzle: 3,
-        interactive: false, // gyro-driven: a pointer Controller would fight it
+        interactive: allowViewDrag,
         faceHints: false,
         pixelRatioCap: 2,
         sceneRot: sceneRotation(viewRef.current, gyroViewActiveRef.current),
@@ -358,6 +362,13 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
           return true;
         },
       });
+      if (allowViewDrag) {
+        const controller = nextMount.world.controller;
+        controller.turnsLocked = true;
+        controller.dragEmpty = 'view';
+        controller.onOrbit = (dx, dy) => orbitScene(nextMount.world, dx, dy, ORBIT_K);
+      }
+      mount = nextMount;
       mountRef.current = mount;
       setReady(true);
       onReadyRef.current?.();
@@ -380,7 +391,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       mount?.dispose();
       mountRef.current = null;
     };
-  }, [attempt]);
+  }, [allowViewDrag, attempt]);
 
   // Update the viewing angle without remounting the cube or altering its moves.
   useEffect(() => {

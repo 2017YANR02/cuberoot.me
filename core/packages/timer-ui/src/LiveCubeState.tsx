@@ -94,6 +94,8 @@ export interface LiveCubeStateProps {
   language?: 'en' | 'zh';
   /** Host enables only in its development build. Never poll synthetic data by default. */
   enableDevSource?: boolean;
+  /** Whether the live virtual cube should consume gyroscope orientation. */
+  useGyro?: boolean;
   /**
    * The cube's tracked state as a 54-character facelet string, or null when
    * nothing is being tracked yet. This is the source of truth for the 2D view.
@@ -149,6 +151,7 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
   const {
     language = 'en',
     enableDevSource = false,
+    useGyro = true,
     facelets,
     moves,
     algAnchored,
@@ -164,8 +167,8 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
 
   const tr = (copy: { en: string; zh: string }) => copy[language];
   const wants3d = mode === '3d';
-  const devQuat = useSyntheticQuat(wants3d && enableDevSource);
-  const liveQuat = quat ?? devQuat;
+  const devQuat = useSyntheticQuat(wants3d && useGyro && enableDevSource);
+  const liveQuat = useGyro ? (quat ?? devQuat) : null;
   // A state resync temporarily invalidates the move log. Preserve the last
   // verified 3D instance until the new opening is ready, rather than switching
   // renderers (and disposing a cube while it may still be turning).
@@ -192,11 +195,13 @@ export default function LiveCubeState(props: LiveCubeStateProps): JSX.Element {
       <div aria-busy={!algAnchored} style={{ height: '100%', position: 'relative', lineHeight: 1.5 }}>
       <Suspense fallback={<Spinner size={16} label={tr({ zh: '加载中', en: 'Loading' })} />}>
       <SimCubeView
+        key={useGyro ? 'gyro' : 'no-gyro'}
         language={language}
+        allowViewDrag
         ariaLabel={tr({ zh: '智能魔方实时三维状态', en: 'Live 3D smart-cube state' })}
         moves={renderedMoves}
         quat={liveQuat}
-        quatRef={quatRef}
+        quatRef={useGyro ? quatRef : undefined}
         calibrateToken={calibrateToken}
         sensorBasis={sensorBasis}
         mirror={mirror}

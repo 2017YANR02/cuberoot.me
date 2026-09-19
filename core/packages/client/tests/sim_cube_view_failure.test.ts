@@ -20,6 +20,7 @@ beforeEach(() => {
     host.appendChild(canvas);
     return { dispose: () => { state.dispose(); canvas.remove(); }, invalidate() {}, world: {
     puzzleKind: 3,
+    controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null },
     scene: { rotation: { set() {} }, updateMatrix() {} },
     cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
@@ -39,6 +40,7 @@ describe('the single live/replay 3D failure surface', () => {
     })));
     await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
     const options = state.mount.mock.calls[0][0];
+    expect(options.interactive).toBe(true);
     expect(options.sceneRot).toEqual({ x: Math.atan2(4.1, Math.hypot(4.8, 7.2)), y: -Math.atan2(4.8, 7.2), z: 0 });
     const world = state.mount.mock.results[0].value.world;
     const rotate = vi.spyOn(world.scene.rotation, 'set');

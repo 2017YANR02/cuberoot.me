@@ -183,6 +183,8 @@ export interface TimerSmartCubeSettings {
   bluetoothAutoReady: (typeof TIMER_SMART_CUBE_AUTO_READY_MODES)[number];
   /** 3D is available without a gyro; an unanchored state falls back to the net. */
   liveCubeView: (typeof TIMER_SMART_CUBE_LIVE_VIEWS)[number];
+  /** Whether the live virtual cube consumes the device gyroscope pose. */
+  gyroEnabled: boolean;
   recordGyro: boolean;
   autoRecap: boolean;
 }
@@ -190,6 +192,7 @@ export interface TimerSmartCubeSettings {
 export const DEFAULT_TIMER_SMART_CUBE_SETTINGS: TimerSmartCubeSettings = {
   bluetoothAutoReady: 'scrambled',
   liveCubeView: '3d',
+  gyroEnabled: true,
   recordGyro: true,
   autoRecap: true,
 };
@@ -200,6 +203,7 @@ export function normalizeTimerSmartCubeSettings(value: Partial<Record<keyof Time
       ? value.bluetoothAutoReady as TimerSmartCubeSettings['bluetoothAutoReady'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.bluetoothAutoReady,
     liveCubeView: TIMER_SMART_CUBE_LIVE_VIEWS.includes(value.liveCubeView as TimerSmartCubeSettings['liveCubeView'])
       ? value.liveCubeView as TimerSmartCubeSettings['liveCubeView'] : DEFAULT_TIMER_SMART_CUBE_SETTINGS.liveCubeView,
+    gyroEnabled: normalizedBoolean(value.gyroEnabled, DEFAULT_TIMER_SMART_CUBE_SETTINGS.gyroEnabled),
     recordGyro: normalizedBoolean(value.recordGyro, DEFAULT_TIMER_SMART_CUBE_SETTINGS.recordGyro),
     autoRecap: normalizedBoolean(value.autoRecap, DEFAULT_TIMER_SMART_CUBE_SETTINGS.autoRecap),
   };
@@ -264,11 +268,12 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.timer.result-precision', category: 'timer', copy: { en: 'Result precision', zh: '成绩精度' }, storagePath: 'precision', value: { kind: 'enum', values: [2, 3] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-result-precision' },
 
   // Smart cube
-  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Fake cube', zh: '假魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
+  { id: 'settings.smart-cube.fake-cube', category: 'smart-cube', copy: { en: 'Virtual cube', zh: '虚拟魔方' }, storagePath: 'showDevFakeCube', value: bool, visibility: 'development-only', disabledWhen: 'never', effect: 'persist-development-fake-cube-controls' },
+  { id: 'settings.smart-cube.gyro', category: 'smart-cube', copy: { en: 'Gyroscope', zh: '陀螺仪' }, storagePath: 'gyroEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-gyro' },
   { id: 'settings.smart-cube.auto-ready', category: 'smart-cube', copy: { en: 'Smart-cube auto-ready', zh: '智能魔方自动预备' }, storagePath: 'bluetoothAutoReady', value: { kind: 'enum', values: TIMER_SMART_CUBE_AUTO_READY_MODES }, visibility: 'always', disabledWhen: 'never', effect: 'persist-smart-cube-auto-ready' },
   { id: 'settings.smart-cube.live-view', category: 'smart-cube', copy: { en: 'Live cube', zh: '实况魔方' }, storagePath: 'liveCubeView', value: { kind: 'enum', values: TIMER_SMART_CUBE_LIVE_VIEWS }, visibility: 'always', disabledWhen: 'never', effect: 'persist-live-cube-view' },
-  { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
-  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '拧完后打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
+  { id: 'settings.smart-cube.record-orientation', category: 'smart-cube', copy: { en: 'Record orientation for replay', zh: '记录姿态用于回放' }, storagePath: 'recordGyro', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-record-orientation' },
+  { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '结束后自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
 
   // Scrambles
   { id: 'settings.scramble.optimal', category: 'scramble', copy: { en: 'Optimal scramble', zh: '最优打乱' }, storagePath: 'wcaUseOptimal', value: bool, visibility: 'event-not-222', disabledWhen: 'optimal-unavailable', effect: 'persist-optimal-scramble' },
