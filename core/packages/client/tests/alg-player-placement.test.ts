@@ -15,7 +15,8 @@ describe('algorithm player placement', () => {
     expect(detail).toContain('editorAlgorithms={editor?.algorithms}');
     expect(detail).toContain('{editor ? editor.name : primary}');
     expect(detail).not.toContain('<Pencil');
-    expect(category).toMatch(/<Link\s+href=\{caseDetailHref\(c\)\}\s+prefetch=\{false\}\s+className="alg-admin-edit-btn/);
+    expect(category).not.toContain('<Pencil');
+    expect(category).toMatch(/<Link\s+href=\{caseDetailHref\(c\)\}\s+className="alg-case-cardlink"/);
     expect(category).not.toContain("setEditorState({ mode: 'edit'");
     expect(detail).toContain('isAdmin && caseObj.id != null');
     expect(detail).not.toContain('editMode');
