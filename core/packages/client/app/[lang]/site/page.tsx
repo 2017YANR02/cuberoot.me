@@ -2,21 +2,23 @@
 
 /**
  * /site — 魔方网址导航页
- * 顶部话题/项目筛选 + 单行密集列表;搜索用 Fuse.js;数据源 /v1/nav/sites。
+ * 顶部话题/项目筛选 + 列表/卡片视图;搜索用 Fuse.js;数据源 /v1/nav/sites。
  * admin 看到行内 ✏️/🗑/⬆⬇ 按钮 + Add。
  *
  * 1:1 port from packages/client-vite/src/pages/sites/SitesPage.tsx (Vite SPA).
  * URL state (?q query, ?topic topics, ?events events, ?sets alg sets, ?methods methods,
- * ?countries countries) is managed via nuqs (history: 'replace').
+ * ?countries countries, ?view list|grid) is managed via nuqs.
  */
 import { Suspense, useMemo, useCallback, useState, useEffect } from 'react';
-import { useQueryStates, parseAsArrayOf, parseAsString } from 'nuqs';
+import { useQueryState, useQueryStates, parseAsArrayOf, parseAsString, parseAsStringEnum } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus } from 'lucide-react';
+import { Search, AlertTriangle, Pencil, Trash2, ArrowUp, ArrowDown, Plus, LayoutGrid, List } from 'lucide-react';
 import Fuse from 'fuse.js';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
 import { WCA_AUTHOR_BY_CREDIT } from './data/wca-authors';
 import type { GroupId, Site } from './data/types';
+import { GROUPS } from './data/categories';
+import { SITE_ICON_CACHE_STORAGE_PREFIX, siteIconSources } from './site-icons';
 import { isAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import BackHome from '@/components/BackHome';
@@ -43,6 +45,8 @@ function YouTubeBadge() {
 }
 
 const DEFAULT_GROUP: GroupId = 'competition';
+type ViewMode = 'list' | 'grid';
+const VIEW_MODES: ViewMode[] = ['list', 'grid'];
 
 const GROUP_COLOR: Record<GroupId, string> = {
   competition: '#2f6fd8',
@@ -265,12 +269,96 @@ function linkLabel(url: string): string {
   }
 }
 
+
+type SiteIconCacheValue = string | null;
+const SITE_ICON_CACHE = new Map<string, SiteIconCacheValue>();
+
+function siteIconCacheKey(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return url;
+  }
+}
+
+function readSiteIconCache(url: string, sources: readonly string[]): SiteIconCacheValue | undefined {
+  const key = siteIconCacheKey(url);
+  if (SITE_ICON_CACHE.has(key)) return SITE_ICON_CACHE.get(key);
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const stored = window.sessionStorage.getItem(`${SITE_ICON_CACHE_STORAGE_PREFIX}${encodeURIComponent(key)}`);
+    if (stored === 'fallback') {
+      SITE_ICON_CACHE.set(key, null);
+      return null;
+    }
+    if (stored && sources.includes(stored)) {
+      SITE_ICON_CACHE.set(key, stored);
+      return stored;
+    }
+  } catch {
+    // Storage may be unavailable in private or restricted browsing contexts.
+  }
+  return undefined;
+}
+
+function writeSiteIconCache(url: string, source: SiteIconCacheValue): void {
+  const key = siteIconCacheKey(url);
+  SITE_ICON_CACHE.set(key, source);
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(
+      `${SITE_ICON_CACHE_STORAGE_PREFIX}${encodeURIComponent(key)}`,
+      source ?? 'fallback',
+    );
+  } catch {
+    // The in-memory cache still avoids duplicate loads for the current page.
+  }
+}
+
 function LetterAvatar({ name, group }: { name: string; group: GroupId }) {
   return (
     <span className="site-avatar" style={{ backgroundColor: GROUP_COLOR[group] }} aria-hidden>
       {firstGlyph(name)}
     </span>
   );
+}
+
+function SiteIcon({ name, url, group }: { name: string; url: string; group: GroupId }) {
+  const sources = useMemo(() => siteIconSources(url), [url]);
+  const cachedSource = useMemo(() => readSiteIconCache(url, sources), [url, sources]);
+  const cachedIndex = typeof cachedSource === 'string' ? sources.indexOf(cachedSource) : -1;
+  const initialSourceIndex = cachedSource === null
+    ? sources.length
+    : cachedIndex >= 0 ? cachedIndex : 0;
+  const [sourceIndex, setSourceIndex] = useState(initialSourceIndex);
+
+  useEffect(() => setSourceIndex(initialSourceIndex), [initialSourceIndex, url]);
+
+  const source = sources[sourceIndex];
+  if (!source) return <LetterAvatar name={name} group={group} />;
+
+  return (
+    <img
+      className="site-avatar site-avatar-image"
+      src={source}
+      alt=""
+      aria-hidden="true"
+      loading="lazy"
+      decoding="async"
+      referrerPolicy="no-referrer"
+      onLoad={() => writeSiteIconCache(url, source)}
+      onError={() => setSourceIndex((index) => {
+        const nextIndex = index + 1;
+        if (nextIndex >= sources.length) writeSiteIconCache(url, null);
+        return nextIndex;
+      })}
+    />
+  );
+}
+
+function groupLabel(group: GroupId, lang: 'en' | 'zh'): string {
+  const meta = GROUPS.find((item) => item.id === group);
+  return meta ? meta[lang === 'zh' ? 'label_zh' : 'label_en'] : group;
 }
 
 /** 精确子串(不区分大小写)命中在哪一档:名称 0 > 标签/作者/网址 1 > 简介 2 > 只是模糊像 3。 */
@@ -280,6 +368,10 @@ function matchTier(s: Site, lowerQuery: string): number {
   if (has(s.author) || has(s.url) || has(s.github) || (s.alt_urls ?? []).some(has) || (s.tags ?? []).some(has)) return 1;
   if (has(s.desc_zh) || has(s.desc_en)) return 2;
   return 3;
+}
+
+function deadLast(sites: readonly Site[]): Site[] {
+  return [...sites].sort((a, b) => Number(a.status === 'dead') - Number(b.status === 'dead'));
 }
 
 interface RowProps {
@@ -304,7 +396,7 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
   const hasMultipleExternalLinks = Boolean(site.youtube && site.github);
 
   return (
-    <div className={`site-row${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}${hasExternalLinks ? ' has-external-links' : ''}${hasMultipleExternalLinks ? ' has-multiple-external-links' : ''}`}>
+    <div className={`site-row${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}${hasExternalLinks ? ' has-external-links' : ''}${hasMultipleExternalLinks ? ' has-multiple-external-links' : ''}`} data-site-surface="panel">
       <div className="site-row-main">
         <a
           href={site.url}
@@ -314,7 +406,7 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
           aria-label={name}
         />
         <div className="site-row-icon">
-          {dead ? <AlertTriangle size={20} className="site-dead-icon" /> : <LetterAvatar name={name} group={site.group} />}
+          {dead ? <AlertTriangle size={20} className="site-dead-icon" /> : <SiteIcon name={name} url={site.url} group={site.group} />}
         </div>
         <div className="site-row-title">
           <span className="site-row-name">{name}</span>
@@ -353,12 +445,12 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
         <div className="site-row-admin">
           {reorderable && (
             <>
-              <button className="site-admin-btn" disabled={!canMoveUp} title="up" onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
-              <button className="site-admin-btn" disabled={!canMoveDown} title="down" onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
+              <button type="button" className="site-admin-btn" disabled={!canMoveUp} title={lang === 'zh' ? '上移' : 'Move up'} onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
+              <button type="button" className="site-admin-btn" disabled={!canMoveDown} title={lang === 'zh' ? '下移' : 'Move down'} onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
             </>
           )}
-          <button className="site-admin-btn" title="edit" onClick={() => onEdit(site)}><Pencil size={14} /></button>
-          <button className="site-admin-btn site-admin-del" title="delete" onClick={() => onDelete(site)}><Trash2 size={14} /></button>
+          <button type="button" className="site-admin-btn" title={lang === 'zh' ? '编辑' : 'Edit'} onClick={() => onEdit(site)}><Pencil size={14} /></button>
+          <button type="button" className="site-admin-btn site-admin-del" title={lang === 'zh' ? '删除' : 'Delete'} onClick={() => onDelete(site)}><Trash2 size={14} /></button>
         </div>
       )}
 
@@ -374,6 +466,82 @@ function SiteRow({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdi
   );
 }
 
+function SiteCard({ site, lang, admin, reorderable, canMoveUp, canMoveDown, onEdit, onDelete, onMove }: RowProps) {
+  const name = lang === 'zh' ? site.name_zh || site.name : site.name_en || site.name;
+  const desc = lang === 'zh' ? site.desc_zh || site.desc_en : site.desc_en || site.desc_zh;
+  const dead = site.status === 'dead';
+  const wcaAuthor = site.author ? WCA_AUTHOR_BY_CREDIT[site.author] : undefined;
+  const hasExternalLinks = Boolean(site.youtube || site.github);
+  const hasMultipleExternalLinks = Boolean(site.youtube && site.github);
+
+  return (
+    <article className={`site-card${dead ? ' is-dead' : ''}${admin ? ' is-admin' : ''}${hasExternalLinks ? ' has-external-links' : ''}${hasMultipleExternalLinks ? ' has-multiple-external-links' : ''}`} data-site-surface="panel">
+      <a href={site.url} target="_blank" rel="noopener noreferrer" className="site-card-primary-link" aria-label={name} />
+      <div className="site-card-body">
+        <div className="site-card-head">
+          <div className="site-card-icon">
+            {dead ? <AlertTriangle size={20} className="site-dead-icon" /> : <SiteIcon name={name} url={site.url} group={site.group} />}
+          </div>
+          <div className="site-card-title">
+            <div className="site-card-name-row">
+              <span className="site-card-name">{name}</span>
+              {dead && <span className="site-row-dead-badge">{TEXTS.dead[lang]}</span>}
+            </div>
+            <span className="site-card-host">{hostOf(site.url)}</span>
+          </div>
+        </div>
+        {site.tags && site.tags.length > 0 && (
+          <div className="site-card-tags">
+            {site.tags.map((tag) => <span key={tag} className="site-row-subgroup">{splitLangTag(tag)[lang]}</span>)}
+          </div>
+        )}
+        {desc && <p className="site-card-desc">{desc}</p>}
+        <div className="site-card-meta">
+          <span className="site-card-author" title={site.author || ''}>
+            {wcaAuthor ? <PersonLink wcaId={wcaAuthor[0]} name={wcaAuthor[1]} isZh={lang === 'zh'} /> : site.author || ''}
+          </span>
+          <span className="site-card-group">{groupLabel(site.group, lang)}</span>
+        </div>
+      </div>
+
+      {hasExternalLinks && (
+        <div className="site-card-external-links">
+          {site.youtube && (
+            <a href={site.youtube} target="_blank" rel="noopener noreferrer" className="site-row-external-link" title="YouTube" aria-label="YouTube">
+              <YouTubeBadge />
+            </a>
+          )}
+          {site.github && (
+            <a href={site.github} target="_blank" rel="noopener noreferrer" className="site-row-external-link" title="GitHub" aria-label="GitHub">
+              <span className="site-row-github-label">GitHub</span>
+            </a>
+          )}
+        </div>
+      )}
+
+      {admin && (
+        <div className="site-card-admin">
+          {reorderable && (
+            <>
+              <button type="button" className="site-admin-btn" disabled={!canMoveUp} title={lang === 'zh' ? '上移' : 'Move up'} onClick={() => onMove(site, -1)}><ArrowUp size={14} /></button>
+              <button type="button" className="site-admin-btn" disabled={!canMoveDown} title={lang === 'zh' ? '下移' : 'Move down'} onClick={() => onMove(site, 1)}><ArrowDown size={14} /></button>
+            </>
+          )}
+          <button type="button" className="site-admin-btn" title={lang === 'zh' ? '编辑' : 'Edit'} onClick={() => onEdit(site)}><Pencil size={14} /></button>
+          <button type="button" className="site-admin-btn site-admin-del" title={lang === 'zh' ? '删除' : 'Delete'} onClick={() => onDelete(site)}><Trash2 size={14} /></button>
+        </div>
+      )}
+
+      {site.alt_urls && site.alt_urls.length > 0 && (
+        <div className="site-card-alts">
+          <span className="site-row-alts-label">{TEXTS.altLink[lang]}:</span>
+          {site.alt_urls.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer" className="site-row-alt">{linkLabel(u)}</a>)}
+        </div>
+      )}
+    </article>
+  );
+}
+
 function SitesPageInner() {
   const t = useT();
   const { i18n } = useTranslation();
@@ -383,6 +551,10 @@ function SitesPageInner() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const admin = mounted && isAdmin();
+  const [viewMode, setViewMode] = useQueryState(
+    'view',
+    parseAsStringEnum<ViewMode>(VIEW_MODES).withDefault('list').withOptions({ history: 'push', clearOnDefault: false }),
+  );
 
   const [params, setQuery] = useQueryStates(
     {
@@ -750,7 +922,7 @@ function SitesPageInner() {
       ? countryCandidates.filter((site) => selectedEventIds.some((eventId) => siteMatchesEvent(site, eventId)))
       : countryCandidates;
     const q = query.trim();
-    if (!q) return candidates;
+    if (!q) return deadLast(candidates);
     // 先只认精确子串(不区分大小写),按命中字段分层排序 —— 搜 "MCC" 就该给含 MCC 的,
     // 而不是被 Fuse 判成「像 FMC」的一大片噪音(3 字母缩写编辑距离 2 就命中)。
     // 精确匹配独立于 Fuse 算,不受 threshold 影响,不会漏。
@@ -760,22 +932,16 @@ function SitesPageInner() {
       .filter((r) => r.tier < 3)
       .sort((a, b) => a.tier - b.tier || a.i - b.i)
       .map((r) => r.site);
-    if (exact.length) return exact;
+    if (exact.length) return deadLast(exact);
     // 一条精确的都没有(拼错 / 记岔了)才降级到 Fuse 模糊,保住容错。
     const candidateIds = new Set(candidates.map((site) => site.id));
-    return fuse.search(q).map((r) => r.item).filter((site) => candidateIds.has(site.id));
+    return deadLast(fuse.search(q).map((r) => r.item).filter((site) => candidateIds.has(site.id)));
   }, [
     sites, query, selectedTopicKeys, selectedAlgSetIds, selectedAlgSets,
     selectedMethodIds, selectedMethods, selectedCountryIds, selectedCountries,
     selectedEventIds, lang, fuse,
   ]);
 
-  const selectedEventNames = selectedEventIds.map((id) => eventDisplayName(id, lang === 'zh'));
-  const filterLabels = [
-    selectedEventNames.length > 0 ? `${TEXTS.projects[lang]}: ${selectedEventNames.join(', ')}` : '',
-    query.trim() ? `${TEXTS.resultsFor[lang]} "${query.trim()}"` : '',
-  ].filter(Boolean);
-  const headerLabel = filterLabels.join(' / ');
 
   function applySaved(saved: Site) {
     setSites((prev) => {
@@ -828,35 +994,63 @@ function SitesPageInner() {
     <div className="sites-page">
       <main className="sites-main">
         <header className="sites-page-header">
-          <BackHome className="sites-back" />
-          <h1 className="sites-title">{TEXTS.title[lang]}</h1>
-          <div className="sites-search">
-            <Search size={14} className="sites-search-icon" />
-            <input
-              className="sites-search-input"
-              placeholder={TEXTS.searchPh[lang]}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onCompositionStart={() => setComposing(true)}
-              onCompositionEnd={(e) => {
-                setComposing(false);
-                setInputValue((e.target as HTMLInputElement).value);
-              }}
-            />
-            {inputValue && (
-              <ClearButton
-                onClick={() => {
-                  setInputValue('');
-                  void setQuery({ q: null });
+          <div className="sites-heading">
+            <BackHome className="sites-back" />
+            <div className="sites-title-row">
+              <h1 className="sites-title">
+                {TEXTS.title[lang]}
+                {sites && <span className="sites-title-count">{filtered.length} {TEXTS.sites[lang]}</span>}
+              </h1>
+              {admin && (
+                <button
+                  type="button"
+                  className="sites-heading-action"
+                  onClick={() => setCreating(true)}
+                  aria-label={TEXTS.add[lang]}
+                  title={TEXTS.add[lang]}
+                >
+                  <Plus size={16} />
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="sites-page-actions">
+            <div className="sites-search">
+              <Search size={14} className="sites-search-icon" />
+              <input
+                className="sites-search-input"
+                placeholder={TEXTS.searchPh[lang]}
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                onCompositionStart={() => setComposing(true)}
+                onCompositionEnd={(e) => {
+                  setComposing(false);
+                  setInputValue((e.target as HTMLInputElement).value);
                 }}
-                preserveFocus
               />
-            )}
+              {inputValue && (
+                <ClearButton
+                  onClick={() => {
+                    setInputValue('');
+                    void setQuery({ q: null });
+                  }}
+                  preserveFocus
+                />
+              )}
+            </div>
+            <div className="sites-view-toggle" role="group" aria-label={t('视图', 'View')}>
+              <button type="button" className={`sites-view-btn${viewMode === 'list' ? ' is-active' : ''}`} onClick={() => void setViewMode('list')} aria-label={t('列表视图', 'List view')} aria-pressed={viewMode === 'list'} title={t('列表视图', 'List view')}>
+                <List size={16} />
+              </button>
+              <button type="button" className={`sites-view-btn${viewMode === 'grid' ? ' is-active' : ''}`} onClick={() => void setViewMode('grid')} aria-label={t('卡片视图', 'Card view')} aria-pressed={viewMode === 'grid'} title={t('卡片视图', 'Card view')}>
+                <LayoutGrid size={16} />
+              </button>
+            </div>
           </div>
         </header>
 
         {sites && (
-          <div className="sites-filter-row">
+          <div className="sites-filter-row" data-site-surface="panel">
             <div className="sites-filter-control" aria-label={TEXTS.projects[lang]}>
               <PuzzlePicker
                 isZh={lang === 'zh'}
@@ -954,9 +1148,21 @@ function SitesPageInner() {
 
         {sites && (topics.length > 0 || admin) && (
           <section className="sites-topics" aria-labelledby="sites-topics-title">
-            <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
-            {admin && <button type="button" className="sites-topic" aria-expanded={manageTopics}
-              onClick={() => setManageTopics((value) => !value)}>{t('管理话题', 'Manage topics')}</button>}
+            <div className="sites-topics-heading">
+              <h2 id="sites-topics-title">{TEXTS.topics[lang]}</h2>
+              {admin && (
+                <button
+                  type="button"
+                  className="sites-heading-action"
+                  aria-expanded={manageTopics}
+                  aria-label={t('管理话题', 'Manage topics')}
+                  title={t('管理话题', 'Manage topics')}
+                  onClick={() => setManageTopics((value) => !value)}
+                >
+                  <Pencil size={14} />
+                </button>
+              )}
+            </div>
             {admin && manageTopics && <div className="sites-topic-manager">
               <form className="sites-topic-form" onSubmit={(event) => {
                 event.preventDefault();
@@ -1007,21 +1213,6 @@ function SitesPageInner() {
           </section>
         )}
 
-        <header className="sites-main-header">
-          {headerLabel && <h2>{headerLabel}</h2>}
-          <span className="sites-main-count">
-            {filtered.length} {TEXTS.sites[lang]}
-          </span>
-          {admin && (
-            <button
-              className="sites-add-btn"
-              onClick={() => setCreating(true)}
-              aria-label={TEXTS.add[lang]}
-            >
-              <Plus size={14} />
-            </button>
-          )}
-        </header>
 
         {loadErr ? (
           <div className="sites-empty">{TEXTS.err[lang]}: {loadErr}</div>
@@ -1030,34 +1221,29 @@ function SitesPageInner() {
         ) : filtered.length === 0 ? (
           <div className="sites-empty">{TEXTS.noResults[lang]}</div>
         ) : (
-          <div className="sites-list">
-            <div className="sites-list-head" aria-hidden>
-              <span />
-              <span>{TEXTS.colName[lang]}</span>
-              <span>{TEXTS.colAuthor[lang]}</span>
-              <span>{TEXTS.colDesc[lang]}</span>
-            </div>
-            {filtered.map((s, i) => (
-              <SiteRow
-                key={s.id}
-                site={s}
-                lang={lang}
-                admin={admin}
-                reorderable={
-                  !query.trim()
-                  && selectedTopics.length === 0
-                  && selectedEventIds.length === 0
-                  && selectedAlgSetIds.length === 0
-                  && selectedMethodIds.length === 0
-                  && selectedCountryIds.length === 0
-                }
-                canMoveUp={i > 0 && filtered[i - 1].group === s.group}
-                canMoveDown={i < filtered.length - 1 && filtered[i + 1].group === s.group}
-                onEdit={setEditing}
-                onDelete={handleDelete}
-                onMove={handleMove}
-              />
-            ))}
+          <div className={`sites-list${viewMode === 'grid' ? ' is-grid' : ''}`}>
+            {viewMode === 'list' && (
+              <div className="sites-list-head" data-site-surface="heading" aria-hidden>
+                <span />
+                <span>{TEXTS.colName[lang]}</span>
+                <span>{TEXTS.colAuthor[lang]}</span>
+                <span>{TEXTS.colDesc[lang]}</span>
+              </div>
+            )}
+            {filtered.map((s, i) => {
+              const rowProps = {
+                site: s,
+                lang,
+                admin,
+                reorderable: !query.trim() && selectedTopics.length === 0 && selectedEventIds.length === 0 && selectedAlgSetIds.length === 0 && selectedMethodIds.length === 0 && selectedCountryIds.length === 0,
+                canMoveUp: i > 0 && filtered[i - 1].group === s.group,
+                canMoveDown: i < filtered.length - 1 && filtered[i + 1].group === s.group,
+                onEdit: setEditing,
+                onDelete: handleDelete,
+                onMove: handleMove,
+              } satisfies RowProps;
+              return viewMode === 'list' ? <SiteRow key={s.id} {...rowProps} /> : <SiteCard key={s.id} {...rowProps} />;
+            })}
           </div>
         )}
       </main>

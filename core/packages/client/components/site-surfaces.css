@@ -227,6 +227,13 @@ body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) 
   box-shadow: var(--glass-shadow);
 }
 
+/* Dense site filters need stronger separation from the card text beneath them. */
+body[data-site-scenery] .sites-filter-row .pp-popup {
+  background: var(--glass-menu-bg);
+  -webkit-backdrop-filter: var(--glass-menu-filter);
+  backdrop-filter: var(--glass-menu-filter);
+}
+
 /* Dialog shells provide the reading layer; inner sections need no opaque mat. */
 body[data-site-scenery] :is(
   .otd-header,
