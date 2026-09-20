@@ -60,7 +60,8 @@ describe('algorithm player placement', () => {
     const sharedStyles = read('components/AlgPlayer/alg-sim-player.css');
 
     expect(detail).toMatch(/displayedOrientations\.map\(\(\{ oriAlgs, oi \}\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
-    expect(detail).toContain("invertAlg(caseViewAlg(oriAlgs[0]?.alg ?? '', effectiveViewAngle))");
+    expect(detail).toContain('const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);');
+    expect(detail).not.toContain("invertAlg(caseViewAlg(oriAlgs[0]?.alg ?? '', effectiveViewAngle))");
     expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{caseViewAlg\(selectedEntry\.alg, effectiveViewAngle\)\}[\s\S]*?setup=\{orientationSetup\}/);
     expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup\)/);
     expect(detail).toContain('renderOrientationSetup={(setup) => (');

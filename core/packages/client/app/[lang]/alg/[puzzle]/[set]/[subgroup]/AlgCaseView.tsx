@@ -21,7 +21,6 @@ import { ArrowLeft, ExternalLink, Copy, Check, Shuffle, FlipHorizontal2, HelpCir
 import type { AlgCase, AlgEntry, AlgFile, AlgPuzzle, AlgSubmission } from '@cuberoot/shared';
 import { displayedAlgorithmStm } from '@/lib/alg-metrics';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { invertAlg } from '@cuberoot/shared/alg-transform';
 import AlgCaseMetaContent from '@/components/AlgCaseMetaContent';
 import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
@@ -541,9 +540,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             {editor && <div hidden={effectiveViewAngle !== 'default'}>{editor.algorithms}</div>}
             {(!editor || effectiveViewAngle !== 'default') && displayedOrientations.map(({ oriAlgs, oi }) => {
               const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
-              const orientationSetup = multiOri
-                ? invertAlg(caseViewAlg(oriAlgs[0]?.alg ?? '', effectiveViewAngle))
-                : caseViewSetup(orientedSetup, effectiveViewAngle);
+              const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);
               const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
               const selectedAlgIdx = requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
               const candidateEntry = oriAlgs[selectedAlgIdx];
