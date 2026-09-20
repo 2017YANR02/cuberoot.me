@@ -2,7 +2,8 @@
 
 import { useTranslation } from 'react-i18next';
 import PuzzlePicker from '../PuzzlePicker/PuzzlePicker';
-import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
+import { eventIconClass } from '@/components/EventIcon/EventIcon';
+import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 
 interface EventSelectProps {
@@ -29,7 +30,11 @@ export function EventSelect({ events, value, onChange, className, allLabel }: Ev
           id: 'events', label: tr({ zh: '项目', en: 'Events' }),
           items: [
             ...(allLabel !== undefined ? [{ id: '', label: allLabel }] : []),
-            ...events.map(id => ({ id, label: eventDisplayName(id, isZh), iconClass: isWcaEvent(id) ? `event-${id}` : undefined })),
+            ...events.map(id => ({
+              id,
+              label: eventDisplayName(id, isZh),
+              iconClass: eventIconClass(id),
+            })),
           ],
         }]}
       />
