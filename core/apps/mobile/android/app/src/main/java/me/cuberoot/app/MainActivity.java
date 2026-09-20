@@ -19,6 +19,7 @@ public class MainActivity extends BridgeActivity {
         SplashScreen.installSplashScreen(this);
         registerPlugin(TimerPrintPlugin.class);
         registerPlugin(RecordPushPlugin.class);
+        registerPlugin(SmartCubePickerPlugin.class);
         super.onCreate(savedInstanceState);
     }
 
