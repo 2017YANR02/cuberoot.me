@@ -26,7 +26,7 @@ async function mount(entities: PlatformEntity[] = []) {
   return { host, runAction, close: () => act(async () => root.unmount()) };
 }
 
-it('creates distinct trial and formal access, with one learner by default and full access only when selected', async () => {
+it('includes trial lessons in formal access, with one learner by default and full access only when selected', async () => {
   load.mockResolvedValue({ items: [course] });
   const writeText = vi.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
@@ -41,7 +41,7 @@ it('creates distinct trial and formal access, with one learner by default and fu
     const submit = () => act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); });
     await submit();
     expect(runAction.mock.lastCall?.[2]).toMatchObject({ maxRedemptions: 1, expiresAt: null,
-      benefit: { courseId: course.id, lessonIds: ['core-1', 'core-2'] } });
+      benefit: { courseId: course.id, lessonIds: ['trial', 'core-1', 'core-2'] } });
     const result = host.querySelector('.platform-invite-result')!;
     expect(result.querySelector('input[readonly]')).toBeNull();
     expect(result.querySelector<HTMLTextAreaElement>('textarea[readonly]')?.value).toBe(
@@ -59,7 +59,7 @@ it('creates distinct trial and formal access, with one learner by default and fu
       '兑换码： TEST-ONLY-CODE\n课程链接： https://cuberoot.me/zh/platform/courses/course-test\n\n'
       + '兑换码： TEST-ONLY-CODE\n课程链接： https://cuberoot.me/zh/platform/courses/course-test',
     );
-    expect(host.querySelector('textarea[readonly]')?.getAttribute('rows')).toBe('5');
+    expect(host.querySelector('textarea[readonly]')?.getAttribute('rows')).toBe('1');
     await act(async () => { scope.value = 'all'; scope.dispatchEvent(new Event('change', { bubbles: true })); });
     await submit();
     expect(runAction.mock.lastCall?.[2].benefit).toEqual({ courseId: course.id });

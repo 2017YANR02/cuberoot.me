@@ -32,7 +32,7 @@ import type {
   PlatformPaymentAttemptResult,
 } from '@/lib/platform-types';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
-import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
+import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformState } from './PlatformState';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 
@@ -808,7 +808,7 @@ function escapeCsv(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
-function inviteSectionIds(course: PlatformEntity | null | undefined, slug: string): string[] {
+function directInviteSectionIds(course: PlatformEntity | null | undefined, slug: string): string[] {
   const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === slug);
   const lessons = Array.isArray(course?.data?.lessons) ? course.data.lessons : [];
   if (!section) return [];
@@ -819,9 +819,13 @@ function inviteSectionIds(course: PlatformEntity | null | undefined, slug: strin
   });
 }
 
+function inviteSectionIds(course: PlatformEntity | null | undefined, slug: string): string[] {
+  return platformCourseSectionsIncludedBy(slug).flatMap(section => directInviteSectionIds(course, section.slug));
+}
+
 function preferredInviteScope(course: PlatformEntity | null | undefined): string {
-  if (inviteSectionIds(course, 'core').length) return 'core';
-  return PLATFORM_COURSE_SECTIONS.find(section => section.slug !== 'introduction' && inviteSectionIds(course, section.slug).length)?.slug ?? 'all';
+  if (directInviteSectionIds(course, 'core').length) return 'core';
+  return PLATFORM_COURSE_SECTIONS.find(section => section.slug !== 'introduction' && directInviteSectionIds(course, section.slug).length)?.slug ?? 'all';
 }
 
 interface GeneratedRedemptionCode {
@@ -874,12 +878,13 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   const courseDetail = courses?.find(course => course.id === courseId) ?? null;
   // Match the course directory's section names; never infer permissions from an invite's label.
   const sectionIds = (slug: string) => inviteSectionIds(courseDetail, slug);
+  const hasDirectSection = (slug: string) => directInviteSectionIds(courseDetail, slug).length > 0;
   const generateCode = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy) return;
     const values = new FormData(event.currentTarget);
     const lessonIds = sectionIds(scope);
-    if (!courseDetail || courseDetail.id !== courseId || (scope !== 'all' && !lessonIds.length)) {
+    if (!courseDetail || courseDetail.id !== courseId || (scope !== 'all' && !hasDirectSection(scope))) {
       setFormError(t('请选择课程中已有的课时范围。', 'Choose an available lesson section.'));
       return;
     }
@@ -974,7 +979,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
             <label><span>{t('开放内容', 'Access to')}</span>
               <select className="platform-field-control" value={scope} onChange={event => setScope(event.target.value)}>
                 {PLATFORM_COURSE_SECTIONS.filter(section => section.slug !== 'introduction').map(section => (
-                  <option key={section.slug} value={section.slug} disabled={!sectionIds(section.slug).length}>{t(section.title.zh, section.title.en)}</option>
+                  <option key={section.slug} value={section.slug} disabled={!hasDirectSection(section.slug)}>{t(section.title.zh, section.title.en)}</option>
                 ))}
                 <option value="all">{t('全部课程', 'Full course')}</option>
               </select>
@@ -990,7 +995,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
             </div>
           </details>
           {formError ? <p role="alert" className="platform-form-error">{formError}</p> : null}
-          <button className="platform-button platform-button-primary" type="submit" disabled={Boolean(busy) || !courseDetail || (scope !== 'all' && !sectionIds(scope).length)}>{busy === 'admin-save' ? t('生成中…', 'Creating…') : t('生成一个兑换码', 'Create one code')}</button>
+          <button className="platform-button platform-button-primary" type="submit" disabled={Boolean(busy) || !courseDetail || (scope !== 'all' && !hasDirectSection(scope))}>{busy === 'admin-save' ? t('生成中…', 'Creating…') : t('生成一个兑换码', 'Create one code')}</button>
         </form>
       )}
       {generated?.codes?.length ? (
