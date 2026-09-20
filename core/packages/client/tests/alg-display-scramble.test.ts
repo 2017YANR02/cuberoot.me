@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ALG_3X3_TOP_LAYER_SET } from '@cuberoot/shared/alg';
 import { CubeData, parseAlgorithm } from '@cuberoot/visualcube';
 import { normalizeAlg } from '@/lib/alg_normalize';
-import { CASE_VIEW_ANGLES, caseViewSetup, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
+import { CASE_VIEW_ANGLES, caseViewSetup, displayCaseAlg, displayCaseAlgHtml, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
 import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
 import fixtures from './fixtures/alg-ll-scramble-setups.json';
 
@@ -20,6 +20,13 @@ function topLayer(alg: string) {
 }
 
 describe('last-layer displayed scrambles', () => {
+  it('canonicalizes y2 prime everywhere in /alg display text', () => {
+    expect(displayCaseScramble('3x3', 'f2l', "y2' L U L' U'")).toBe("y2 L U L' U'");
+    expect(displayCaseAlg('3x3', 'f2l', "y2' R U R'")).toBe("y2 R U R'");
+    expect(displayCaseAlgHtml('3x3', 'f2l', "<em>y2'</em> R U R'"))
+      .toBe("<em>y2</em> R U R'");
+  });
+
   it('reduces consecutive U moves using the puzzle turn order and preserves unaffected finger marks', () => {
     expect(simplifyAdjacentU('3x3', "U U' R U U U' R' U2 U2")).toBe("R U R'");
     expect(simplifyAdjacentU('megaminx', 'U2 U2 R')).toBe("U' R");
