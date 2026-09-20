@@ -1223,7 +1223,7 @@ function SitesPageInner() {
         ) : (
           <div className={`sites-list${viewMode === 'grid' ? ' is-grid' : ''}`}>
             {viewMode === 'list' && (
-              <div className="sites-list-head" data-site-surface="heading" aria-hidden>
+              <div className="sites-list-head" aria-hidden>
                 <span />
                 <span>{TEXTS.colName[lang]}</span>
                 <span>{TEXTS.colAuthor[lang]}</span>
