@@ -143,7 +143,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
   }, [details, src, mediaId, lessonId, mimeType]);
   useEffect(() => {
     const element = video.current;
-    if (element && element.readyState > 0 && Number.isFinite(startTime) && startTime >= 0 && Number.isFinite(element.duration)) {
+    if (element && element.readyState > 0 && Number.isFinite(startTime) && startTime > 0 && Number.isFinite(element.duration)) {
       element.currentTime = Math.min(startTime, element.duration);
     }
   }, [startTime]);
@@ -402,7 +402,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
         const element = event.currentTarget;
         setDuration(Number.isFinite(element.duration) ? element.duration : 0);
         setResolution(element.videoHeight);
-        if (Number.isFinite(startTime) && startTime >= 0 && Number.isFinite(element.duration)) element.currentTime = Math.min(startTime, element.duration);
+        if (Number.isFinite(startTime) && startTime > 0 && Number.isFinite(element.duration)) element.currentTime = Math.min(startTime, element.duration);
         onLoadedMetadata(event);
       }}
       onDurationChange={event => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
