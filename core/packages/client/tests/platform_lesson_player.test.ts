@@ -218,8 +218,10 @@ it('links section cards to separate lesson pages without losing lessons or chang
     for (const [index, section] of ['introduction', 'trial', 'core'].entries()) {
       await render(lessons, `course-section-${section}`);
       expect(host.textContent).not.toContain('published');
-      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(
-        Array.from({ length: [2, 2, 19][index] }, (_, lessonIndex) => String(lessonIndex + 1)));
+      const expectedTitles = index === 2
+        ? ['1', '2', ...Array.from({ length: 19 }, (_, lessonIndex) => String(lessonIndex + 1))]
+        : ['1', '2'];
+      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(expectedTitles);
       expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe('1');
       expect(host.querySelectorAll('video')).toHaveLength(1);
       expect(host.querySelector('a')).toBeNull();
@@ -282,20 +284,20 @@ it('switches videos in place, resets position, rejects stale IDs and ignores abo
   }
   try {
     await act(async () => root.render(createElement(Classroom)));
-    expect(load.mock.calls[0][0]).toBe('first');
-    expect(host.querySelectorAll('nav button')).toHaveLength(2);
-    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
+    expect(load.mock.calls[0][0]).toBe('other');
+    expect(host.querySelectorAll('nav button')).toHaveLength(3);
+    await act(async () => (host.querySelectorAll('nav button')[2] as HTMLButtonElement).click());
     expect(load.mock.calls[0][1].aborted).toBe(true);
     expect(host.querySelector('[aria-current]')?.textContent).toBe('02');
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     await act(async () => resolveOld({ mimeType: 'video/mp4', accessUrl: '/stale' }));
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     host.querySelector('video')!.currentTime = 40;
-    await act(async () => (host.querySelector('nav button') as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
     expect(host.querySelector('video')!.currentTime).toBe(0);
     expect(host.querySelectorAll('video')).toHaveLength(1);
     load.mockRejectedValueOnce(new Error('Access denied'));
-    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll('nav button')[2] as HTMLButtonElement).click());
     expect(host.querySelector('video')).toBeNull();
     expect(host.textContent).toContain('Access denied');
     await act(async () => root.render(createElement(PlatformDomainContent, { ...props, entity: { id: 'empty', data: { lessons: [] } } as unknown as PlatformEntity })));

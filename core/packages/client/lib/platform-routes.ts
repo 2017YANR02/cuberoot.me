@@ -10,6 +10,11 @@ export const PLATFORM_COURSE_SECTIONS = [
   { slug: 'trial', title: text('试听课', 'Trial lessons') },
   { slug: 'core', title: text('正式课', 'Core lessons') },
 ] as const;
+
+export function platformCourseSectionsIncludedBy(slug: string): readonly (typeof PLATFORM_COURSE_SECTIONS)[number][] {
+  return PLATFORM_COURSE_SECTIONS.filter(section => section.slug === slug || (slug === 'core' && section.slug === 'trial'));
+}
+
 const PUBLIC = text('浏览可公开访问的内容与服务。', 'Browse content and services available to everyone.');
 const ACCOUNT = text('查看并管理与你的账号关联的数据。', 'Review and manage data connected to your account.');
 const INSTRUCTOR = text('面向讲师的课程、学员和结算工作区。', 'Workspace for instructor courses, learners, and payouts.');
