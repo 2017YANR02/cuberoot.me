@@ -27,6 +27,8 @@ describe('F2L detail player canonical pair', () => {
 
     for (const alg of A_PLUS_PRIMARY_ALGS) {
       const sequence = f2lPlayerSequence(alg);
+      expect(sequence.setup, `${alg} setup should use canonical half-turn notation`).not.toContain("y2'");
+      expect(sequence.alg, `${alg} playback should use canonical half-turn notation`).not.toContain("y2'");
       const cube = new Cube(3);
       cube.twister.setup(sequence.setup);
 
@@ -52,6 +54,13 @@ describe('F2L detail player canonical pair', () => {
     expect(f2lPlayerSequence("F' L F L' y'")).toEqual({
       setup: "y L F' L' F",
       alg: "F' L F L' y'",
+    });
+  });
+
+  it('writes the BL half-turn setup as y2 without a redundant prime', () => {
+    expect(f2lPlayerSequence("U L U' L' y2")).toEqual({
+      setup: "y2 L U L' U'",
+      alg: "U L U' L' y2",
     });
   });
 });

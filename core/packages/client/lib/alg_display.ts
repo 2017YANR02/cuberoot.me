@@ -60,6 +60,19 @@ export function applyAlgTextEdits(alg: string, edits: readonly AlgTextEdit[]): s
   return out.trim();
 }
 
+/** Half turns have no direction; keep /alg presentation on the canonical `y2` spelling. */
+function canonicalY2PrimeEdits(alg: string): AlgTextEdit[] {
+  return [...alg.matchAll(/\by2'(?![\w'])/g)].map(match => ({
+    start: match.index! + 2,
+    end: match.index! + match[0].length,
+    text: '',
+  }));
+}
+
+export function canonicalizeAlgY2(alg: string): string {
+  return applyAlgTextEdits(alg, canonicalY2PrimeEdits(alg));
+}
+
 export function simplifyAdjacentU(puzzle: string, alg: string): string {
   const order = uTurnOrder(puzzle);
   return order ? applyAlgTextEdits(alg, adjacentUEdits(alg, order)) : alg;
@@ -71,7 +84,7 @@ export function simplifyAdjacentU(puzzle: string, alg: string): string {
  * 只处理末尾连续的 U/y（包括观察角度追加的 U），不碰内部转体或 F2L 换槽。
  */
 export function displayCaseScramble(puzzle: string, set: string, scramble: string): string {
-  scramble = simplifyAdjacentU(puzzle, scramble);
+  scramble = canonicalizeAlgY2(simplifyAdjacentU(puzzle, scramble));
   if (!scramble || !is3x3TopLayerSet(puzzle, set)) return scramble;
   try {
     const { moves, junk } = tokenizeMoves(toMoveString(scramble));
@@ -152,13 +165,15 @@ function legacyGroupingBalanceEdits(alg: string): AlgTextEdit[] {
 export function displayCaseAlg(puzzle: string, set: string, alg: string): string {
   const edits = caseAlgDisplayEdits(puzzle, set, alg);
   const shown = edits.length ? applyAlgTextEdits(alg, edits) : alg;
-  return applyAlgTextEdits(shown, legacyGroupingBalanceEdits(shown));
+  const balanced = applyAlgTextEdits(shown, legacyGroupingBalanceEdits(shown));
+  return canonicalizeAlgY2(balanced);
 }
 
 /** Apply the same move edits to rich text without losing finger annotations. */
 export function displayCaseAlgHtml(puzzle: string, set: string, html: string): string {
   const shown = editAlgHtmlText(html, caseAlgDisplayEdits(puzzle, set, algHtmlText(html)));
-  return editAlgHtmlText(shown, legacyGroupingBalanceEdits(algHtmlText(shown)));
+  const balanced = editAlgHtmlText(shown, legacyGroupingBalanceEdits(algHtmlText(shown)));
+  return editAlgHtmlText(balanced, canonicalY2PrimeEdits(algHtmlText(balanced)));
 }
 
 /**
@@ -207,9 +222,9 @@ export function caseViewAlg(alg: string, angle: CaseViewAngle): string {
  * 不能把首尾转体共轭掉；那会固定中心色，却把 FL 等槽位换成另一组实际棱角块。
  */
 export function f2lPlayerSequence(alg: string): { setup: string; alg: string } {
-  const trimmed = alg.trim();
+  const trimmed = canonicalizeAlgY2(alg.trim());
   if (!trimmed) return { setup: '', alg: '' };
-  return { setup: invertAlg(trimmed), alg: trimmed };
+  return { setup: canonicalizeAlgY2(invertAlg(trimmed)), alg: trimmed };
 }
 
 /**
