@@ -366,6 +366,10 @@ CREATE TABLE alg_submissions (
   case_name    VARCHAR(128) NOT NULL,
   alg          TEXT NOT NULL,
   notes        TEXT,
+  tags         TEXT[] NOT NULL DEFAULT '{}' CHECK (
+    tags <@ ARRAY['oh', 'ft', 'fmc', 'big', 'key']::TEXT[]
+    AND array_position(tags, NULL) IS NULL
+  ),
   author_id    VARCHAR(20) NOT NULL,
   author_name  VARCHAR(100) NOT NULL,
   created_at   TIMESTAMP NOT NULL DEFAULT NOW()

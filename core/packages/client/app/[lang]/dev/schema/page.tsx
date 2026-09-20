@@ -777,6 +777,8 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 238, slug: 'record_notifications', desc: { zh: '纪录订阅、首次同步基线及持久化投递去重。', en: 'Record subscriptions, initial snapshot baselines, and persistent delivery deduplication.' } },
   { n: 239, slug: 'record_push', desc: { zh: 'Android 推送设备绑定、退出撤销及持久化投递队列。', en: 'Android device bindings, logout revocation, and a durable push queue.' } },
   { n: 240, slug: 'mcp_oauth', desc: { zh: '管理员只读 MCP 的单次授权码、短效访问令牌、刷新轮换与撤销。', en: 'Single-use codes, short-lived access tokens, refresh rotation and revocation for administrator read-only MCP.' } },
+  { n: 241, slug: 'fix_alg_grouping_parentheses', desc: { zh: '修正两条公式及关联打乱中缺失或多余的分组括号。', en: 'Fix missing or extra grouping parentheses in two algorithms and a related scramble.' } },
+  { n: 242, slug: 'alg_submission_tags', desc: { zh: '为用户投稿公式增加单手、脚拧、最少步、高阶和键盘标签。', en: 'Add one-handed, feet, FMC, big-cube, and keyboard tags to user-submitted algorithms.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

@@ -231,10 +231,19 @@ describe('top-layer formula presentation', () => {
     expect(shown).toBe("(<em>R</em> <u>U</u> <s>R'</s>)");
     expect(algHtmlText(shown)).toBe(displayCaseAlg('3x3', 'pll', algHtmlText(html)));
   });
-  it('also strips the tail of source notation with an unmatched grouping parenthesis', () => {
+  it('strips the tail and repairs a missing closing parenthesis in legacy source notation', () => {
     const source = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u' U' y";
     expect(displayCaseAlg('3x3', 'pll', source))
-      .toBe("U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u'");
+      .toBe("U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u')");
+  });
+  it('repairs both existing unmatched-parenthesis shapes without changing moves', () => {
+    const missingClose = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u' U'";
+    const extraClose = "(F R U R' U') (R U R' F2) r U r2' F r)";
+    const shownGa = "U2 R2 U (R' U R' U') (R U' R2 U'D) (R' U R u')";
+    expect(displayCaseAlg('3x3', 'pll', missingClose)).toBe(shownGa);
+    expect(displayCaseAlg('3x3', '1lll', extraClose)).toBe(extraClose.slice(0, -1));
+    expect(algHtmlText(displayCaseAlgHtml('3x3', 'pll', `<em>${missingClose}</em>`)))
+      .toBe(shownGa);
   });
   it.each([['3x3', 'f2l'], ['3x3', 'wv'], ['2x2', 'eg1'], ['sq1', 'pbl']])(
     'leaves non-top-layer %s/%s unchanged', (puzzle, set) => {

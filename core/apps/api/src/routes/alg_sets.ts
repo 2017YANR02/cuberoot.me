@@ -16,7 +16,9 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import {
+  canonicalize3x3WideMoves, cubeOnly, hasBalancedGrouping, startsWithYRotation,
+} from '@cuberoot/shared/alg-notation';
 import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
 
 export const algSetsRoutes = new Hono();
@@ -121,6 +123,17 @@ function containsLeadingY(value: unknown): boolean {
     || (typeof entry.algHtml === 'string' && startsWithYRotation(entry.algHtml));
 }
 
+function containsUnbalancedGrouping(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsUnbalancedGrouping);
+  if (!value || typeof value !== 'object') return false;
+  const entry = value as Record<string, unknown>;
+  return Object.entries(entry).some(([key, child]) => (
+    FORMULA_JSON_FIELDS.has(key) && typeof child === 'string'
+      ? !hasBalancedGrouping(cubeOnly(child))
+      : containsUnbalancedGrouping(child)
+  ));
+}
+
 async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseInput): Promise<{ error?: string }> {
   if (typeof body.caseName !== 'string' || !body.caseName.trim()) return { error: 'caseName required' };
   if (body.caseName.length > CASE_NAME_MAX) return { error: 'caseName too long' };
@@ -133,6 +146,11 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
   if (!body.sticker || typeof body.sticker !== 'object') return { error: 'sticker required (object)' };
   if (!Array.isArray(body.algs)) return { error: 'algs must be array' };
   assertUniqueCaseAlgs(body.algs);
+  if ((typeof body.setup === 'string' && !hasBalancedGrouping(cubeOnly(body.setup)))
+    || (typeof body.standard === 'string' && !hasBalancedGrouping(cubeOnly(body.standard)))
+    || containsUnbalancedGrouping(body.algs)) {
+    return { error: 'unbalanced_grouping_parentheses' };
+  }
   const setupError = await validateRequiredAlgCaseSetup(puzzle, setSlug, body.setup);
   if (setupError) return { error: setupError };
   if (is3x3TopLayerSet(puzzle, setSlug)

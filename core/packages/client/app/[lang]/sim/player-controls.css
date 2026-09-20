@@ -413,6 +413,22 @@
   flex: none;
 }
 
+.sim-logo-setting {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.sim-logo-member-prompt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* 背景档色块外观(各档 1:1 对齐 sim.css 的 .sim-canvas-wrap 固定背景)。选择器本体
    已移到画布左下角浮层(sim.css 的 .sim-bg-overlay),这里只留复用的色块样式 —— trigger
    与弹层里的 5 个 .sim-swatch-box 都靠它上色。 */

@@ -3,7 +3,7 @@ import { Alg } from 'cubing/alg';
 import { cube3x3x3 } from 'cubing/puzzles';
 import {
   tokenizeMoves, flattenAlg, expandGroups, cubeOnly, stripGripMarks, deleteAuf,
-  stripUpstreamMarks, invertMoveString, toMoveString,
+  stripUpstreamMarks, invertMoveString, toMoveString, toMoveStringStrict,
   canonicalize3x3WideMoves, stm, sqtm, htm, qtm, etm, gen,
 } from '@cuberoot/shared/alg-notation';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
@@ -63,6 +63,9 @@ describe('expandGroups', () => {
   it('throws on unbalanced parens — flattenAlg is the forgiving one', () => {
     expect(() => expandGroups('(R U')).toThrow();
     expect(flattenAlg('(R U')).toBe('R U');
+    expect(() => toMoveStringStrict('(R U')).toThrow('少一个 ")"');
+    expect(() => toMoveStringStrict('R U)')).toThrow('多出一个 ")"');
+    expect(toMoveStringStrict('(R U)2')).toBe('R U R U');
   });
 
   // cubedb 抓来的 zbls 里有 `F' (L' U2 L U')2' F U'` —— 重复两遍**再整段取逆**。

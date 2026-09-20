@@ -9,8 +9,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAlgTextField } from '@/hooks/useAlgTextField';
-import { Plus, Trash2, Pencil, Check, X } from 'lucide-react';
-import { is3x3TopLayerSet, type AlgEntry, type AlgPuzzle, type AlgSticker } from '@cuberoot/shared/alg';
+import { Plus, Trash2, Pencil, Check, X, Tags } from 'lucide-react';
+import { is3x3TopLayerSet, type AlgEntry, type AlgPuzzle, type AlgSticker, type AlgTag } from '@cuberoot/shared/alg';
 import { alignCaseEntry, caseAlgIssue, sourceCaseEntry } from '@/lib/alg_case_alignment';
 import { duplicateAlgKey, startsWithYRotation } from '@cuberoot/shared/alg-notation';
 import PersonLink from '@/components/PersonLink';
@@ -23,8 +23,44 @@ import { hasAdminAccess, useAuthStore } from '@/lib/auth-store';
 import { ownerKey as computeOwnerKey } from '@cuberoot/shared/account';
 import { ownerDisplayName } from '@/lib/cuber-name-display';
 import { tr } from '@/i18n/tr';
+import { CompactSelect } from '@/components/CompactSelect';
+import AlgTagLabel from '@/components/AlgTagLabel';
+import { ALG_TAGS, algTagLabel } from '@/lib/alg_tags';
 
 type AlgSubmission = Awaited<ReturnType<typeof addSubmission>>;
+
+function communityTagLabel(tag: AlgTag): string {
+  return tag === 'oh' ? tr({ zh: '单手', en: 'One-handed' }) : algTagLabel(tag);
+}
+
+function CommunityTagSelect({ tags, onChange }: { tags: readonly AlgTag[]; onChange: (tags: AlgTag[]) => void }) {
+  const title = tags.length
+    ? tags.map(communityTagLabel).join(', ')
+    : tr({ zh: '公式标签', en: 'Algorithm tags' });
+  return (
+    <CompactSelect
+      variant="plain"
+      className="alg-tag-select alg-community-tag-select"
+      label={tags.length
+        ? <span className="alg-tag-symbol">{tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />)}</span>
+        : <Tags size={13} />}
+      ariaLabel={tr({ zh: '公式标签', en: 'Algorithm tags' })}
+      title={title}
+      selectedValues={tags}
+      items={ALG_TAGS.map(tag => ({
+        value: tag,
+        label: <span className="alg-tag-label">
+          <AlgTagLabel tag={tag} label={communityTagLabel(tag)} hand={null} />
+          <span>{communityTagLabel(tag)}</span>
+          {tags.includes(tag) && <Check size={12} aria-hidden="true" />}
+        </span>,
+      }))}
+      onChange={tag => onChange(tags.includes(tag)
+        ? tags.filter(value => value !== tag)
+        : [...tags, tag])}
+    />
+  );
+}
 
 interface Props {
   puzzle: string;
@@ -39,6 +75,8 @@ interface Props {
   standardAlgs?: readonly AlgEntry[];
   /** All current submissions for this case (parent already filtered). */
   submissions: AlgSubmission[];
+  /** 列表页只展示投稿；新增统一进入 case 详情页。 */
+  allowAdd?: boolean;
   /** 只改只读公式的显示；编辑框和提交值始终保持标准记号。 */
   notationStyle?: AlgNotationStyle;
   /** 只改只读公式的观察角度；编辑、校验和入库仍使用原始 case。 */
@@ -118,6 +156,7 @@ export default function CommunityAlgs({
   setup,
   firstAlg,
   submissions,
+  allowAdd = true,
   standardAlgs = [],
   notationStyle = 'standard',
   viewAngle = 'default',
@@ -175,10 +214,12 @@ export default function CommunityAlgs({
   const [adding, setAdding] = useState(false);
   const [draftAlg, setDraftAlg] = useState('');
   const [draftNotes, setDraftNotes] = useState('');
+  const [draftTags, setDraftTags] = useState<AlgTag[]>([]);
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editAlg, setEditAlg] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editTags, setEditTags] = useState<AlgTag[]>([]);
   const [editCaseName, setEditCaseName] = useState('');
 
   // 公式框只收半角招式 —— 中文输入法开着也一样(全角转半角、汉字直接删)。注释框不管,
@@ -192,10 +233,11 @@ export default function CommunityAlgs({
     try {
       const alg = await prepareAlg(draftAlg.trim());
       if (alg === null) return;
-      const created = await addSubmission(puzzle, setSlug, caseName, alg, draftNotes.trim() || undefined);
+      const created = await addSubmission(puzzle, setSlug, caseName, alg, draftNotes.trim() || undefined, draftTags);
       onPatch({ type: 'add', submission: created });
       setDraftAlg('');
       setDraftNotes('');
+      setDraftTags([]);
       setAdding(false);
     } catch (e) {
       alert(`${tr({ zh: '提交失败', en: 'Submit failed' })}: ${(e as Error).message}`);
@@ -210,9 +252,10 @@ export default function CommunityAlgs({
     try {
       const alg = await prepareAlg(editAlg.trim(), id);
       if (alg === null) return;
-      const fields: { alg: string; notes?: string; caseName?: string } = {
+      const fields: { alg: string; notes?: string; caseName?: string; tags: AlgTag[] } = {
         alg,
         notes: editNotes.trim() || undefined,
+        tags: editTags,
       };
       // Only admins can re-target caseName; ignore for everyone else.
       if (isAdmin && editCaseName.trim() && editCaseName.trim() !== caseName) {
@@ -245,8 +288,11 @@ export default function CommunityAlgs({
     setEditingId(s.id);
     setEditAlg(s.alg);
     setEditNotes(s.notes ?? '');
+    setEditTags(s.tags ?? []);
     setEditCaseName(s.caseName);
   };
+
+  if (!allowAdd && submissions.length === 0) return null;
 
   return (
     <div className="alg-community">
@@ -282,6 +328,7 @@ export default function CommunityAlgs({
                   onChange={e => setEditNotes(e.target.value)}
                   placeholder={tr({ zh: '注释 (可选)', en: 'Notes (optional)' })}
                 />
+                <CommunityTagSelect tags={editTags} onChange={setEditTags} />
                 <button type="button" className="alg-community-edit-btn" disabled={busy} onClick={() => handleSaveEdit(s.id)} title={tr({ zh: '保存', en: 'Save' })}>
                   <Check size={14} />
                 </button>
@@ -291,6 +338,9 @@ export default function CommunityAlgs({
               </div>
             ) : (
               <>
+                {(s.tags ?? []).map(tag => (
+                  <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />
+                ))}
                 <code className="alg-community-alg">
                   {formatAlgNotation(caseViewAlg(alignedSubmissions.get(s)?.alg ?? s.alg, viewAngle), notationStyle)}
                 </code>
@@ -327,7 +377,7 @@ export default function CommunityAlgs({
         );
       })}
 
-      {user && adding ? (
+      {allowAdd && (user && adding ? (
         <div className="alg-community-add">
           <textarea
             className="alg-community-textarea"
@@ -343,10 +393,11 @@ export default function CommunityAlgs({
             onChange={e => setDraftNotes(e.target.value)}
             placeholder={tr({ zh: '注释 (可选)', en: 'Notes (optional)' })}
           />
+          <CommunityTagSelect tags={draftTags} onChange={setDraftTags} />
           <button type="button" className="alg-community-add-icon-btn" disabled={busy || !draftAlg.trim()} onClick={handleSubmit} title={tr({ zh: '提交', en: 'Submit' })}>
             <Check size={14} />
           </button>
-          <button type="button" className="alg-community-add-icon-btn" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); }} title={tr({ zh: '取消', en: 'Cancel' })}>
+          <button type="button" className="alg-community-add-icon-btn" disabled={busy} onClick={() => { setAdding(false); setDraftAlg(''); setDraftNotes(''); setDraftTags([]); }} title={tr({ zh: '取消', en: 'Cancel' })}>
             <X size={14} />
           </button>
         </div>
@@ -360,7 +411,7 @@ export default function CommunityAlgs({
         >
           <Plus size={14} />
         </button>
-      )}
+      ))}
     </div>
   );
 }

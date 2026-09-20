@@ -358,6 +358,11 @@ export function saveSettings(s: SimSettings): boolean {
   return saved;
 }
 
+/** 会员权益只影响实际渲染，不删除用户已经保存在本地的自定义 logo。 */
+export function withCustomLogoAccess(s: SimSettings, enabled: boolean): SimSettings {
+  return !enabled && s.logo === 'custom' ? { ...s, logo: 'none' } : s;
+}
+
 // 把 0~100 → 实际数值。scale 50 = 1.0 (upstream 默认), 范围 0.5 ~ 1.5。
 /** 几何映射:每 25 格 ×2,默认(50)= 0.4 与旧线性映射同值(手感不变)。范围 0.1 ~ 1.6
  *  即 0.25×~4×。改几何是因为旧线性区间 0.05~0.75 比例上偏斜(下半程 8 倍、上半程 1.9 倍),
