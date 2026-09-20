@@ -15,6 +15,7 @@
  */
 
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import { algHtmlText, editAlgHtmlText, type AlgTextEdit } from '@/lib/alg_html';
 
@@ -198,6 +199,24 @@ export function caseViewAlg(alg: string, angle: CaseViewAngle): string {
   if (!alg || !prefix) return alg;
 
   return simplifyAdjacentU('3x3', `${prefix} ${alg.trimStart()}`);
+}
+
+const TRAILING_Y_ROTATION = /(?:^|\s)(y(?:2'?|')?)\s*$/;
+
+/**
+ * F2L 四朝向公式末尾的 y 转体只负责恢复拿法。若直接对完整公式取逆，转体会跑到
+ * 打乱开头并旋转整颗魔方。把同一转体补到打乱末尾，得到中心色不变的共轭状态；
+ * 播放公式也取这个规范化打乱的逆式，保证动画从该状态精确还原。
+ */
+export function canonicalF2lPlayerSequence(alg: string): { setup: string; alg: string } {
+  const trimmed = alg.trim();
+  if (!trimmed) return { setup: '', alg: '' };
+
+  const trailingRotation = trimmed.match(TRAILING_Y_ROTATION)?.[1];
+  if (!trailingRotation) return { setup: invertAlg(trimmed), alg: trimmed };
+
+  const setup = `${invertAlg(trimmed)} ${trailingRotation}`;
+  return { setup, alg: invertAlg(setup) };
 }
 
 /**

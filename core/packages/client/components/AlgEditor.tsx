@@ -365,7 +365,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                 <div className="alg-editor-tools">
                 {isFocused && <span className="alg-input-keyboard-toggle" ref={setKeyboardToggleContainer} />}
                 <span className="alg-editor-gen">
-                  {ai === 0 && <span className="alg-editor-gen-heading">{tr({ zh: '生成元', en: 'gen' })}</span>}
+                  {ai === 0 && <span className="alg-editor-gen-heading">{tr({ zh: '流', en: 'gen' })}</span>}
                   <code>{algorithmGenerators(currentText) || '—'}</code>
                 </span>
                 <CompactSelect
