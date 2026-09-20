@@ -338,12 +338,12 @@ export default function CommunityAlgs({
               </div>
             ) : (
               <>
-                {(s.tags ?? []).map(tag => (
-                  <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />
-                ))}
                 <code className="alg-community-alg">
                   {formatAlgNotation(caseViewAlg(alignedSubmissions.get(s)?.alg ?? s.alg, viewAngle), notationStyle)}
                 </code>
+                {(s.tags ?? []).map(tag => (
+                  <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />
+                ))}
                 {(!alignedSubmissions.has(s) || caseAlgIssue(alignedSubmissions.get(s)!)) && (
                   <span className="alg-community-notes">{alignedSubmissions.has(s)
                     ? tr({ zh: '原公式与本图不匹配', en: 'Source algorithm does not match this case' })

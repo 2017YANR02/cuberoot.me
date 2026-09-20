@@ -44,7 +44,7 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(document.querySelector('[role="listbox"]')?.getAttribute('aria-multiselectable')).toBe('true');
     expect(document.querySelectorAll('[role="listbox"] button:not([role="option"])')).toHaveLength(0);
     expect(host.querySelector('.alg-tag-manager')).toBeNull();
-    expect([...document.querySelectorAll('[role="option"] .sr-only')].map(el => el.textContent)).toEqual(['Left OH', 'Feet', 'FMC', 'Big cube', 'Keyboard']);
+    expect([...document.querySelectorAll('[role="option"] .sr-only')].map(el => el.textContent)).toEqual(['Left OH', 'Feet', 'FMC', 'Big cube', 'Keyboard', 'Beginner pick']);
     expect(document.querySelector('[role="option"][aria-selected="true"]')?.textContent).toContain('Left OH');
     await click('Feet');
     expect(ref.current!.getValue()[0][0]).toEqual({ ...initial[0][0], tags: ['oh', 'ft'] });

@@ -74,9 +74,6 @@ importers:
       '@tiptap/starter-kit':
         specifier: ^3.30.0
         version: 3.30.0
-      '@types/ws':
-        specifier: ^8.18.1
-        version: 8.18.1
       cubing:
         specifier: ^0.63.3
         version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
@@ -110,9 +107,6 @@ importers:
       sanitize-html:
         specifier: ^2.17.6
         version: 2.17.6
-      ws:
-        specifier: ^8.20.0
-        version: 8.20.0
       yjs:
         specifier: ^13.6.32
         version: 13.6.32

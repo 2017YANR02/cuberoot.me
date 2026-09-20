@@ -2443,14 +2443,6 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `需传 url / code / onClose。/alg 训练器房间与 /timer 联机对战共用;二维码固定深码白底(不随主题反色),保证扫得出。`, en: `Takes url / code / onClose. Shared by /alg trainer rooms and /timer online battle; the QR stays dark-on-white regardless of theme so it always scans.` },
   },
   {
-    name: 'PageShareButton / PageShareModal',
-    import: "import PageShareButton from '@/components/PageShareButton';",
-    category: 'more',
-    zh: `已停用的网页分享组件：支持复制链接和按环境调用分享；过滤认证回调和内部凭据，保留语言、筛选与锚点。`,
-    en: `Inactive web sharing components supporting link copy and environment-specific sharing; exclude authentication callbacks and internal credentials while preserving language, filters and anchors.`,
-    note: { zh: `网页和桌宠中的入口已移除。小程序右上角原生转发由全局分享同步与小程序控制器处理，不依赖此按钮。`, en: `The website and pet toolbar entries have been removed. Native Mini Program sharing uses global share synchronization and the Mini Program controller, independently of this button.` },
-  },
-  {
     name: 'DonateModal',
     import: "import DonateModal from '@/components/DonateModal';",
     category: 'more',
