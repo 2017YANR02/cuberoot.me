@@ -52,6 +52,14 @@ describe('why-cube ability atlas', () => {
     expect(pageSource).toContain('engine="sim"');
   });
 
+  it('uses the thirty-card atlas as the single benefits overview', () => {
+    const pageSource = readFileSync(join(CLIENT_ROOT, 'app', '[lang]', 'why-cube', 'page.tsx'), 'utf8');
+
+    expect(pageSource).toContain('一块魔方，展开三十种成长');
+    expect(pageSource).not.toContain('一块魔方，展开二十种成长');
+    expect(pageSource).not.toContain("title={t('空间想象能力', 'Spatial imagination')}");
+  });
+
   it('opens every ability card in the shared dismissible dialog pattern', () => {
     const atlasSource = readFileSync(join(CLIENT_ROOT, 'app', '[lang]', 'why-cube', '_AbilityAtlas.tsx'), 'utf8');
 
