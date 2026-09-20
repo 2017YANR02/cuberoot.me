@@ -51,11 +51,11 @@ describe('standard and community formula duplicate enforcement', () => {
 
   it('allows editing the same submission without counting itself as a duplicate', async () => {
     mocks.query.mockImplementation(async (sql: string) => sql.startsWith('SELECT * FROM alg_submissions') || sql.startsWith('SELECT id, alg') ? [existing] : []);
-    const r = await send('submissions/7', 'PUT', { alg: '(R U)', notes: 'Updated note', tags: ['ft', 'ft'] });
+    const r = await send('submissions/7', 'PUT', { alg: '(R U)', notes: 'Updated note', tags: ['beginner', 'beginner'] });
     expect(r.status).toBe(200);
     expect(mocks.query.mock.calls).toContainEqual([
       'UPDATE alg_submissions SET alg = ?, notes = ?, tags = ? WHERE id = ?',
-      ['(R U)', 'Updated note', ['ft'], 7],
+      ['(R U)', 'Updated note', ['beginner'], 7],
     ]);
   });
 

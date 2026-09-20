@@ -1,3 +1,16 @@
 .alg-tag-label { display: inline-flex; align-items: center; vertical-align: middle; }
 .alg-tag-symbol { display: inline-flex; align-items: center; gap: 3px; font-size: 20px; line-height: 1; }
-.alg-tag-hand { order: -1; font-family: var(--font-sans, inherit); font-size: 10px; font-weight: 700; font-style: normal; line-height: 1; }
+.alg-tag-oh-icon { position: relative; display: inline-flex; width: 1em; height: 1em; }
+.alg-tag-hand {
+  position: absolute;
+  top: 69%;
+  left: 55%;
+  color: var(--background);
+  font-family: var(--font-sans, inherit);
+  font-size: 0.4em;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
