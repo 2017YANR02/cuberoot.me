@@ -53,6 +53,51 @@ on:
       - '.github/workflows/update_upcoming.yml'
 
 jobs:
+  # Keep the workflow-level trigger broad so required checks are still created,
+  # then skip only the expensive platform matrix when its dependency closure is untouched.
+  changes:
+    name: Detect affected jobs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      desktop: ${{ steps.filter.outputs.desktop }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.node-version
+            /.github/workflows/test.yml
+            /core/package.json
+          filter: blob:none
+
+      - name: Detect desktop inputs
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            desktop:
+              - '.node-version'
+              - '.github/workflows/test.yml'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/scripts/build-cubing-worker.mjs'
+              - 'core/apps/desktop/**'
+              - 'core/packages/app-ui/**'
+              - 'core/packages/event-icon/**'
+              - 'core/packages/puzzle-render-core/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+              - 'core/packages/stack-kernel/**'
+              - 'core/packages/timer-ui/**'
+              - 'core/packages/visualcube/**'
+
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -457,6 +502,8 @@ jobs:
   # different native WebView, keyring and BLE backends. Both runners are required.
   desktop:
     name: Desktop (${{ matrix.os }})
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
