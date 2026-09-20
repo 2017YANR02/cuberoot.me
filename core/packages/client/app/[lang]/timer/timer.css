@@ -1448,8 +1448,10 @@
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
   }
-  body[data-site-scenery] .timer-presence-panel,
-  body[data-site-scenery] .timer-modal {
+  body[data-site-scenery] .timer-presence-panel {
     background: var(--glass-popover-bg);
+  }
+  body[data-site-scenery] .timer-modal {
+    background: var(--glass-dialog-bg);
   }
 }
