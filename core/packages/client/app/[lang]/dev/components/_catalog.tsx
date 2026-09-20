@@ -2064,6 +2064,14 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `画公式案例缩略图统一用它,别手拼 VisualCube / PuzzleSVG 选择逻辑。`, en: `Use this for alg-case thumbnails; don't hand-wire the VisualCube/PuzzleSVG selection logic yourself.` },
   },
   {
+    name: 'AlgCaseRelationCards',
+    import: "import { AlgCaseRelationCards } from '@/components/AlgCaseRelationCards';",
+    category: 'more',
+    zh: `公式详情页共用的原始、镜像、逆关系缩略图行，统一 CaseThumb、当前态与链接或切换交互。`,
+    en: `Shared origin, mirror, and inverse thumbnail row for algorithm details, with canonical CaseThumb rendering and navigation states.`,
+    note: { zh: `F2L 精简详情与 PLL 等富元数据详情共用同一结构。`, en: `Shared by lean F2L and metadata-rich PLL detail layouts.` },
+  },
+  {
     name: 'RecognizeTrainer',
     import: "import RecognizeTrainer from '@/components/RecognizeTrainer';",
     category: 'more',

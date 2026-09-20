@@ -97,6 +97,66 @@ export function canonicalize3x3WideMoves(alg: string): string {
  */
 export const MOVE_RE = /^(\d+(?:-\d+)?)?([RLUDFBMSExyzrludfbmse])(w?)(\d*)('?)/;
 
+const OPPOSITE_FACE_PAIRS = new Set(['RL', 'LR', 'UD', 'DU', 'FB', 'BF']);
+
+/** Whether two face turns are on opposite, parallel faces. Wide/lowercase faces use the same axis. */
+export function areOppositeParallelFaceMoves(firstBase: string, secondBase: string): boolean {
+  return OPPOSITE_FACE_PAIRS.has(`${firstBase.toUpperCase()}${secondBase.toUpperCase()}`);
+}
+
+export interface IllegalGluedCubeMoves {
+  first: string;
+  second: string;
+  joined: string;
+  /** String offset where the second move starts. */
+  index: number;
+}
+
+/**
+ * Finds adjacent cube moves that are missing whitespace. Opposite parallel faces may stay joined
+ * (`RL`, `U'D`, `FB`); every other pair, including rotations and slices, must be separated.
+ */
+export function findIllegalGluedCubeMoves(alg: string): IllegalGluedCubeMoves | null {
+  let i = 0;
+  let previousRaw = '';
+  let previousBase = '';
+  let previousEnd = -1;
+  while (i < alg.length) {
+    if (alg[i] === '/' && alg[i + 1] === '/') {
+      const newline = alg.indexOf('\n', i + 2);
+      if (newline < 0) return null;
+      i = newline + 1;
+      previousEnd = -1;
+      continue;
+    }
+    const match = MOVE_RE.exec(alg.slice(i));
+    if (match) {
+      const [raw, , base] = match;
+      if (previousEnd === i && !areOppositeParallelFaceMoves(previousBase, base)) {
+        return { first: previousRaw, second: raw, joined: previousRaw + raw, index: i };
+      }
+      i += raw.length;
+      previousRaw = raw;
+      previousBase = base;
+      previousEnd = i;
+      continue;
+    }
+    previousEnd = -1;
+    i += 1;
+  }
+  return null;
+}
+
+/** Inserts only the required spaces and preserves permitted opposite-face notation verbatim. */
+export function spaceIllegalGluedCubeMoves(alg: string): string {
+  let fixed = alg;
+  while (true) {
+    const invalid = findIllegalGluedCubeMoves(fixed);
+    if (!invalid) return fixed;
+    fixed = `${fixed.slice(0, invalid.index)} ${fixed.slice(invalid.index)}`;
+  }
+}
+
 /**
  * 能出现在纯 move 串里的字符,**已转义成可直接嵌进字符类的形式**(层前缀的 `-` escape 过 ——
  * 裸的尾随 `-` 拼到 `[^…\s]` 里会被当成区间端点,行为随 `u` flag 变)。

@@ -570,7 +570,6 @@ function PlatformResourceRouteView({
   const [retry, setRetry] = useState(0);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
-  const [redeemed, setRedeemed] = useState(false);
   const [redeemedCourseIds, setRedeemedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
   const loadsResource = Boolean(definition.resource)
     && definition.id !== 'account-invites'
@@ -665,11 +664,15 @@ function PlatformResourceRouteView({
     try {
       const response = await executePlatformAction(definition, { action, resourceId: id, payload });
       if (action === 'redeem-invite') {
-        if (response.courseId) {
-          window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(response.courseId)}/sections/core`);
-          return response;
+        let courseId = response.courseId;
+        if (!courseId && response.entitlementId) {
+          const { items } = await loadPlatformResource('entitlements', { params: {} });
+          const entitlement = items.find((item) => item.id === response.entitlementId);
+          courseId = typeof entitlement?.data?.courseId === 'string' ? entitlement.data.courseId : null;
         }
-        setRedeemed(true);
+        if (!courseId) throw new Error(t('兑换成功，但无法定位课程。请刷新后重试。', 'Code redeemed, but the course could not be located. Please refresh and try again.'));
+        window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);
+        return response;
       }
       setActionMessage(response.message ?? t('操作已完成。', 'Action completed.'));
       if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
@@ -695,11 +698,6 @@ function PlatformResourceRouteView({
     return <div className="platform-route platform-redemption">
       {!mounted ? <PlatformState kind="loading" /> : !user ? (
         <AppLink href="/account" className="platform-button" prefetch={false}>{t('登录', 'Sign in')}</AppLink>
-      ) : redeemed ? (
-        <>
-          <p role="status">{t('兑换成功', 'Code redeemed')}</p>
-          <AppLink href="/platform/account/courses" className="platform-button" prefetch={false}>{t('开始学习', 'Start learning')}</AppLink>
-        </>
       ) : (
         <>
           <PlatformDomainActions definition={definition} params={params} busy={actionBusy} runAction={runAction} />

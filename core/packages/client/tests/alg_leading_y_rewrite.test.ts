@@ -143,6 +143,14 @@ describe('validateAlgCase — 收尾 AUF 由库来补,不要求人写', () => {
     const marked = `=y2 ${BODY.split(' ').join('·')}`;            // 等价标注 + 换握记号
     expect((await validateAlgCase(inv(`y2 ${BODY}`), marked, FACE, '3x3')).ok).toBe(true);
   });
+
+  it('rejects glued moves unless their faces are opposite and parallel', async () => {
+    const glued = BODY.replace('R U', 'RU');
+    const result = await validateAlgCase(inv(BODY), glued, FACE, '3x3');
+    expect(result.ok).toBe(false);
+    expect(result.reason).toContain('RU');
+    expect(result.reason).toMatch(/space|空格/);
+  });
 });
 
 describe('completeAlgAuf — 入库前补成完整式', () => {
