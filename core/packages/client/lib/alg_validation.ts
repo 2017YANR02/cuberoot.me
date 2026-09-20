@@ -26,7 +26,6 @@
 import { Alg, Move } from 'cubing/alg';
 import type { KPattern, KPuzzle } from 'cubing/kpuzzle';
 import type { AlgPuzzle, AlgSticker } from '@cuberoot/shared';
-import { findIllegalGluedCubeMoves } from '@cuberoot/shared/alg-notation';
 import { normalizeAlg } from '@/lib/alg_normalize';
 import { displayAlg } from '@/lib/alg_display';
 import { CUBE_ORIENTATIONS, goalOf, reachesGoal, type AlgGoal } from '@/lib/alg_goals';
@@ -80,8 +79,6 @@ const PUZZLE_TO_CUBINGJS_ID: Record<string, string> = {
   'pyraminx': 'pyraminx',
   'skewb': 'skewb',
 };
-
-const CUBE_PUZZLES = new Set(['2x2', '3x3', '4x4', '5x5']);
 
 const _kpuzzleCache: Record<string, Promise<KPuzzle>> = {};
 
@@ -145,20 +142,6 @@ export async function validateAlgCase(
   set?: string,
   options: ValidateAlgOptions = {},
 ): Promise<ValidateAlgResult> {
-  if (CUBE_PUZZLES.has(puzzle)) {
-    for (const [kind, formula] of [['alg', alg], ['setup', setup]] as const) {
-      const glued = findIllegalGluedCubeMoves(formula);
-      if (glued) {
-        return {
-          ok: false,
-          reason: tr({
-            zh: `${kind === 'setup' ? 'Setup' : '公式'}中的 ${glued.joined} 必须用空格分开`,
-            en: `${glued.joined} in the ${kind} must be separated by a space`,
-          }),
-        };
-      }
-    }
-  }
   const goalKind = goalOf(puzzle, set, sticker.kind);
   if (goalKind === 'unregistered') {
     return { ok: false, reason: `未注册校验目标:${puzzle}/${set}` };
