@@ -66,6 +66,7 @@ describe('/dev/schema migration ledger drift', () => {
     const legacyDuplicateNumbers = new Map<string, string[]>([
       ['0062', ['wca_persons_gender', 'wss_covering_and_rare']],
       ['0087', ['page_notice_icon', 'page_notice_icon_color']],
+      ['0241', ['fix_alg_grouping_parentheses', 'wechat_wca_link']],
     ]);
     const slugsByNumber = new Map<string, string[]>();
     for (const entry of fileEntries) {

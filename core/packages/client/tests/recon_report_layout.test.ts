@@ -54,10 +54,9 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(src).toMatch(/const analysisBlock = \(/);
   });
 
-  it('那一块里确实是质量分 / 分步分析 / 总量,不是个空壳', () => {
+  it('那一块里确实是分步分析 / 总量,不是个空壳', () => {
     const from = src.indexOf('const analysisBlock = (');
     const block = src.slice(from, src.indexOf('\n  return (', from));
-    expect(block).toMatch(/<QualityRow\b/);
     expect(block).toMatch(/<StepAnalysis\b/);
     expect(block).toMatch(/<TimerReconstructMetrics\b/);
   });

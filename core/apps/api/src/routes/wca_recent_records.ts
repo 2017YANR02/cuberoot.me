@@ -232,6 +232,7 @@ export async function formatInferred(rec: InferredRecord): Promise<{ cn: string;
     url: `${SITE_BASE}/wca/comp/${rec.compId}`,
     previous_pr: null,
     pr_rank: null,
+    tied: rec.tied,
   };
   const companion = rec.companionPr;
   const events = [event];
@@ -239,7 +240,7 @@ export async function formatInferred(rec: InferredRecord): Promise<{ cn: string;
     ...event, tag: 'PR', rec_type: companion.type,
     attempt_result: companion.attemptResult, pr_rank: 1,
   });
-  return renderCached(`${rec.id}|${JSON.stringify(companion ?? null)}`, events);
+  return renderCached(`${rec.id}|${rec.tied ? 'tied' : 'untied'}|${JSON.stringify(companion ?? null)}`, events);
 }
 
 /** 取 cubing.com 中国比赛缓存里的推断纪录,排序 + 截断 + 格式化成 RecentRecord. */

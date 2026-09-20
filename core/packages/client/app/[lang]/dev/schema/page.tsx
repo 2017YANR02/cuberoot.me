@@ -778,6 +778,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 239, slug: 'record_push', desc: { zh: 'Android 推送设备绑定、退出撤销及持久化投递队列。', en: 'Android device bindings, logout revocation, and a durable push queue.' } },
   { n: 240, slug: 'mcp_oauth', desc: { zh: '管理员只读 MCP 的单次授权码、短效访问令牌、刷新轮换与撤销。', en: 'Single-use codes, short-lived access tokens, refresh rotation and revocation for administrator read-only MCP.' } },
   { n: 241, slug: 'fix_alg_grouping_parentheses', desc: { zh: '修正两条公式及关联打乱中缺失或多余的分组括号。', en: 'Fix missing or extra grouping parentheses in two algorithms and a related scramble.' } },
+  { n: 241, slug: 'wechat_wca_link', desc: { zh: '增加微信内浏览器绑定 WCA 账号的专用会话票据用途。', en: 'Add a dedicated session-ticket purpose for linking WCA accounts inside WeChat.' } },
   { n: 242, slug: 'alg_submission_tags', desc: { zh: '为用户投稿公式增加单手、脚拧、最少步、高阶和键盘标签。', en: 'Add one-handed, feet, FMC, big-cube, and keyboard tags to user-submitted algorithms.' } },
 ];
 
@@ -1019,7 +1020,7 @@ export default function SchemaPage() {
             {MIGRATIONS.map((m) => {
               const latest = m.n === MIGRATIONS[MIGRATIONS.length - 1]?.n;
               return (
-                <li key={m.n} className={`schema-mig${latest ? ' is-latest' : ''}`}>
+                <li key={`${m.n}_${m.slug}`} className={`schema-mig${latest ? ' is-latest' : ''}`}>
                   <span className="schema-mig-num">{String(m.n).padStart(4, '0')}</span>
                   <span className="schema-mig-slug">{m.slug}</span>
                   <span className="schema-mig-desc">
