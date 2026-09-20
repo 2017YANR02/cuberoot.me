@@ -7,6 +7,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { DateInput } from '@/components/DateInput';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { useT } from '@/hooks/useT';
+import { useLang } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
 import { approveCompetitionOrderRefund, listCompetitionOrderRefunds, refreshCompetitionOrderRefund, rejectCompetitionOrderRefund, requestCompetitionOrderRefund, type CompetitionRefund } from '@/lib/online-competition-api';
@@ -823,13 +824,30 @@ function preferredInviteScope(course: PlatformEntity | null | undefined): string
   return PLATFORM_COURSE_SECTIONS.find(section => section.slug !== 'introduction' && inviteSectionIds(course, section.slug).length)?.slug ?? 'all';
 }
 
+interface GeneratedRedemptionCode {
+  id: string;
+  code: string;
+  courseId: string;
+}
+
+interface GeneratedRedemptionCodes {
+  batchReference?: string;
+  codes: GeneratedRedemptionCode[];
+}
+
+function platformCourseUrl(courseId: string, lang: 'en' | 'zh'): string {
+  const langPrefix = lang === 'zh' ? '/zh' : '';
+  return `https://cuberoot.me${langPrefix}/platform/courses/${encodeURIComponent(courseId)}`;
+}
+
 function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAction }: CommonProps) {
   const t = useT();
+  const lang = useLang();
   // Ordinary invitation DELETE archives the code; retain physical-bundle audit management.
   const visibleEntities = entities.filter(entity => entity.status !== 'archived' || entity.data?.distributionType === 'physical_bundle');
   const [courses, setCourses] = useState<PlatformEntity[] | null>(null);
   const [courseError, setCourseError] = useState<Error | null>(null);
-  const [generated, setGenerated] = useState<PlatformActionResult | null>(null);
+  const [generated, setGenerated] = useState<GeneratedRedemptionCodes | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const [courseId, setCourseId] = useState('');
   const [scope, setScope] = useState('core');
@@ -884,15 +902,25 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
       benefit: { courseId, ...(scope === 'all' ? {} : { lessonIds }) },
     });
     if (response?.code) {
-      setGenerated({ codes: [...(generated?.codes ?? []), { id: response.id ?? '', code: response.code }] });
+      const generatedCode = response.code;
+      setGenerated(current => ({
+        batchReference: current?.batchReference,
+        codes: [...(current?.codes ?? []), { id: response.id ?? '', code: generatedCode, courseId }],
+      }));
       setCopyMessage(null);
     }
   };
 
-  const codeLines = generated?.codes?.map((item) => item.code).join('\n') ?? '';
+  const shareText = generated?.codes.map(item => [
+    `${t('兑换码：', 'Redemption code:')} ${item.code}`,
+    `${t('课程链接：', 'Course link:')} ${platformCourseUrl(item.courseId, lang)}`,
+  ].join('\n')).join('\n\n') ?? '';
   const downloadCsv = () => {
     if (!generated?.codes?.length) return;
-    const csv = [escapeCsv(t('兑换码', 'Redemption code')), ...generated.codes.map((item) => escapeCsv(item.code))].join('\r\n');
+    const csv = [
+      [escapeCsv(t('兑换码', 'Redemption code')), escapeCsv(t('课程链接', 'Course link'))].join(','),
+      ...generated.codes.map(item => [escapeCsv(item.code), escapeCsv(platformCourseUrl(item.courseId, lang))].join(',')),
+    ].join('\r\n');
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -902,8 +930,8 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   };
   const copyCodes = async () => {
     try {
-      await navigator.clipboard.writeText(codeLines);
-      setCopyMessage(t('兑换码已复制。', 'Redemption codes copied.'));
+      await navigator.clipboard.writeText(shareText);
+      setCopyMessage(t('兑换码和课程链接已复制。', 'Redemption codes and course links copied.'));
     } catch {
       setCopyMessage(t('复制失败，请手动选择文本。', 'Copy failed; select the text manually.'));
     }
@@ -954,9 +982,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
       {generated?.codes?.length ? (
         <section className="platform-invite-result" aria-label={t('新生成的兑换码', 'New codes')}>
           <h2>{t('复制后发给买家', 'Copy and send to your buyer')}</h2>
-          {generated.codes.length === 1
-            ? <input className="platform-field-control" readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
-            : <textarea className="platform-field-control platform-invite-code-lines" rows={Math.min(8, generated.codes.length)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />}
+          <textarea className="platform-field-control platform-invite-code-lines" rows={Math.min(12, generated.codes.length * 3 - 1)} readOnly value={shareText} aria-label={t('可转发的兑换信息', 'Shareable redemption details')} />
           <div className="platform-write-actions">
             <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制', 'Copy')}</button>
             <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载', 'Download')}</button>
@@ -969,8 +995,18 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         <DomainForm
           definition={definition}
           busy={busy}
-          runAction={(action, id, payload) => runAction(action, id, { ...payload, expiresAt: payload?.expiresAt ? new Date(String(payload.expiresAt)).toISOString() : null })}
-          onResult={(result) => { setGenerated({ ...result, codes: [...(generated?.codes ?? []), ...(result.codes ?? [])] }); setCopyMessage(null); }}
+          runAction={async (action, id, payload) => {
+            const result = await runAction(action, id, { ...payload, expiresAt: payload?.expiresAt ? new Date(String(payload.expiresAt)).toISOString() : null });
+            const batchCourseId = typeof payload?.courseId === 'string' ? payload.courseId : '';
+            if (result?.codes?.length && batchCourseId) {
+              setGenerated(current => ({
+                batchReference: result.batchReference ?? current?.batchReference,
+                codes: [...(current?.codes ?? []), ...result.codes!.map(item => ({ ...item, courseId: batchCourseId }))],
+              }));
+              setCopyMessage(null);
+            }
+            return result;
+          }}
           spec={{
             title: text('批量生成', 'Create multiple codes'),
             action: 'admin-invite-batch',
