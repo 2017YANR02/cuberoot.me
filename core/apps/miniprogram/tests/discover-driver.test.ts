@@ -84,6 +84,80 @@ describe('discoverSmartCubeDriver', () => {
     expect(closeBluetoothAdapter).toHaveBeenCalledOnce();
   });
 
+  it('publishes the first result immediately and throttles repeated advertisement updates', async () => {
+    vi.useFakeTimers();
+    try {
+      let deviceListener = (_result: { devices: DiscoveredDevice[] }): void => {
+        throw new Error('Bluetooth device listener was not registered');
+      };
+      const startBluetoothDevicesDiscovery = vi.fn((options: {
+        success?(result: object): void;
+      }) => options.success?.({}));
+      const api = {
+        closeBluetoothAdapter(options: { success?(): void }) {
+          options.success?.();
+        },
+        offBluetoothDeviceFound() {},
+        onBluetoothDeviceFound(listener: typeof deviceListener) {
+          deviceListener = listener;
+        },
+        openBluetoothAdapter(options: { success?(result: object): void }) {
+          options.success?.({});
+        },
+        startBluetoothDevicesDiscovery,
+        stopBluetoothDevicesDiscovery(options: { success?(): void }) {
+          options.success?.();
+        },
+      } as unknown as MiniProgramBleApi;
+      const onUpdate = vi.fn();
+
+      const scan = discoverSmartCubeDriver({
+        api,
+        onUpdate,
+        scanTimeoutMs: 1_000,
+      });
+      await vi.waitFor(() => expect(startBluetoothDevicesDiscovery).toHaveBeenCalledOnce());
+
+      deviceListener?.({
+        devices: [{ deviceId: 'cube-1', name: 'GAN16ui Test', RSSI: -70 }],
+      });
+      expect(onUpdate).toHaveBeenCalledOnce();
+      expect(onUpdate).toHaveBeenLastCalledWith([{
+        device: { deviceId: 'cube-1', name: 'GAN16ui Test', RSSI: -70 },
+        driver: 'gan-v4',
+      }]);
+
+      deviceListener?.({
+        devices: [{ deviceId: 'cube-1', name: 'GAN16ui Test', RSSI: -35 }],
+      });
+      deviceListener?.({
+        devices: [{ deviceId: 'cube-2', name: 'GoCube Edge', RSSI: -50 }],
+      });
+      expect(onUpdate).toHaveBeenCalledOnce();
+
+      await vi.advanceTimersByTimeAsync(149);
+      expect(onUpdate).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(onUpdate).toHaveBeenCalledTimes(2);
+      expect(onUpdate).toHaveBeenLastCalledWith([
+        {
+          device: { deviceId: 'cube-1', name: 'GAN16ui Test', RSSI: -35 },
+          driver: 'gan-v4',
+        },
+        {
+          device: { deviceId: 'cube-2', name: 'GoCube Edge', RSSI: -50 },
+          driver: 'gocube',
+        },
+      ]);
+
+      await vi.runAllTimersAsync();
+      await expect(scan).resolves.toHaveLength(2);
+      expect(onUpdate).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rejects invalid scan timeouts before opening Bluetooth', async () => {
     const openBluetoothAdapter = vi.fn();
     const api = { openBluetoothAdapter } as unknown as MiniProgramBleApi;
