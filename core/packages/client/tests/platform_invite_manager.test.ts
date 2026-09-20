@@ -29,6 +29,9 @@ it('creates distinct trial and formal access, with one learner by default and fu
   load.mockResolvedValue({ items: [course] });
   const { host, runAction, close } = await mount();
   try {
+    expect(load).toHaveBeenCalledOnce();
+    expect(load.mock.lastCall?.[0]).toBe('admin-courses');
+    expect(host.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(false);
     expect(host.querySelectorAll('details[open]')).toHaveLength(0);
     const form = host.querySelector('form')!;
     const scope = form.querySelectorAll('select')[1];
@@ -79,14 +82,15 @@ it('presents existing records in everyday language and keeps management folded',
   } finally { await close(); }
 });
 
-it('blocks creation when lessons fail to load or the selected section has no lessons', async () => {
-  load.mockResolvedValueOnce({ items: [course] }).mockRejectedValueOnce(new Error('fixture failure'));
+it('falls back to an available section when a course has no formal lessons', async () => {
+  const trialOnly = { ...course, data: { lessons: [{ id: 'trial-only', titleZh: '试听课 01' }] } } as PlatformEntity;
+  load.mockResolvedValue({ items: [trialOnly] });
   const { host, runAction, close } = await mount();
   try {
-    expect(host.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(true);
-    expect(host.textContent).toContain('课程加载失败');
+    expect(host.querySelectorAll('select')[1].value).toBe('trial');
+    expect(host.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(false);
     await act(async () => { host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); });
-    expect(runAction).not.toHaveBeenCalled();
+    expect(runAction.mock.lastCall?.[2].benefit).toEqual({ courseId: trialOnly.id, lessonIds: ['trial-only'] });
   } finally { await close(); }
 });
 
