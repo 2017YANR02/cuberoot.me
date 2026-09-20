@@ -33,6 +33,7 @@ import type {
 } from '@/lib/platform-types';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
+import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
 import { PlatformState } from './PlatformState';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 
@@ -660,6 +661,7 @@ function PlatformCourseContentManager(props: CommonProps) {
                   fields: LESSON_EDIT_FIELDS,
                 }}
               />
+              <PlatformLessonCoverEditor scope={definition.area === 'instructor' ? 'instructor' : 'admin'} courseId={courseId} lessonId={lesson.id} />
               <ActionButton
                 action="delete-course-lesson"
                 resourceId={courseId}

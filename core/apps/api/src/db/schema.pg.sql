@@ -1175,6 +1175,7 @@ CREATE TABLE platform_lesson_revisions (
   body_zh JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(body_zh) = 'object'),
   body_en JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(body_en) = 'object'),
   media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL,
+  cover_media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL,
   duration_seconds INTEGER CHECK (duration_seconds BETWEEN 0 AND 86400),
   status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published', 'retired')),
   content_hash BYTEA NOT NULL CHECK (octet_length(content_hash) = 32),

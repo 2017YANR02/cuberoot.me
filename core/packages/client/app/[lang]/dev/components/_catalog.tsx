@@ -900,6 +900,14 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Lesson video controls with seeking, volume, autoplay, speed, sleep timer, picture-in-picture and fullscreen.',
   },
   {
+    name: 'PlatformLessonCoverEditor',
+    import: "import { PlatformLessonCoverEditor } from '@/components/platform/PlatformLessonCoverEditor';",
+    category: 'more',
+    zh: '课程管理与视频页共用的课时封面编辑器，支持上传图片或截取当前视频画面。',
+    en: 'Shared lesson cover editor for management and classroom pages, supporting image uploads and current-frame capture.',
+    note: { zh: '需要课程管理权限和课时媒体，无法独立演示。', en: 'Requires course-management permission and lesson media, so it has no standalone demo.' },
+  },
+  {
     name: 'ForumVideoPlayer',
     import: "import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';",
     category: 'more',

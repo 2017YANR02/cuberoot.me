@@ -51,8 +51,8 @@ describe('Platform typed quiz contract', () => {
     expect(catalogSource.match(/revision.titleEn, revision.bodyZh, revision.bodyEn/g)).toHaveLength(2);
   });
   it('pins revision CASE parameters to the status and publisher column types', () => {
-    expect(catalogSource.match(/CASE WHEN \$[89]::varchar = 'published' THEN \$1[01]::bigint ELSE NULL END/g)).toHaveLength(4);
-    expect(catalogSource).not.toMatch(/CASE WHEN \$[89] = 'published' THEN \$1[01] ELSE NULL END/);
+    expect(catalogSource.match(/CASE WHEN \$\d+::varchar = 'published' THEN \$\d+::bigint ELSE NULL END/g)).toHaveLength(5);
+    expect(catalogSource).not.toMatch(/CASE WHEN \$\d+ = 'published' THEN \$\d+ ELSE NULL END/);
   });
   it('normalizes each supported answer type consistently for authoring and submission', () => {
     expect(normalizePlatformQuizChoices('single_choice', [' Red ', 'Blue'])).toEqual(['Red', 'Blue']);
@@ -132,6 +132,15 @@ describe('Platform private data and media tokens', () => {
     expect(verifyPlatformMediaToken({
       token: signed.token, mediaId: 'media-1', binding: 'lesson:lesson-1:3', nowSeconds: 1_800_000_301,
     })).toBe(false);
+    const cover = createPlatformMediaToken({
+      mediaId: 'cover-1', binding: 'lesson-cover:lesson-1:3', nowSeconds: 1_800_000_000,
+    });
+    expect(verifyPlatformMediaToken({
+      token: cover.token, mediaId: 'cover-1', binding: 'lesson-cover:lesson-1:3', nowSeconds: 1_800_000_299,
+    })).toBe(true);
+    expect(verifyPlatformMediaToken({
+      token: cover.token, mediaId: 'cover-1', binding: 'lesson:lesson-1:3', nowSeconds: 1_800_000_299,
+    })).toBe(false);
   });
 
   it('accepts a Drive preview URL and resolves only validated Drive storage keys', () => {
@@ -146,6 +155,7 @@ describe('Platform private data and media tokens', () => {
 describe('Platform route and security contract', () => {
   it('keeps commerce, learning, privacy, media, certificate, and QR operations reachable', () => {
     const commerce = routePaths(commerceSource, 'platformCommerceRoutes');
+    const catalog = routePaths(catalogSource, 'platformCatalogRoutes');
     const learning = routePaths(learningSource, 'platformLearningRoutes');
     const qr = routePaths(qrSource, 'platformQrRoutes');
     for (const path of [
@@ -159,11 +169,17 @@ describe('Platform route and security contract', () => {
       '/admin/instructor-payouts/:id/reconcile-processing-refund',
     ]) expect(commerce.has(path), path).toBe(true);
     for (const path of [
-      '/learning/lessons/:lessonId/quiz', '/lessons/:lessonId/media',
+      '/learning/lessons/:lessonId/quiz', '/lessons/:lessonId/media', '/lessons/:lessonId/cover',
       '/certificates/:code', '/certificates/:code/image', '/me/privacy/consents',
       '/analytics', '/admin/retention-jobs', '/admin/invites/batch',
       '/admin/invites/:id/order-reference', '/admin/invites/:id/revoke',
     ]) expect(learning.has(path), path).toBe(true);
+    for (const path of [
+      '/platform/instructor/courses/:courseId/lessons/:lessonId/media',
+      '/platform/admin/courses/:courseId/lessons/:lessonId/media',
+      '/platform/instructor/courses/:courseId/lessons/:lessonId/cover',
+      '/platform/admin/courses/:courseId/lessons/:lessonId/cover',
+    ]) expect(catalog.has(path), path).toBe(true);
     for (const path of [
       '/qr/:code', '/qr/:code/card', '/admin/qr', '/admin/qr/:id/card',
       '/admin/qr/:id/duplicate', '/admin/qr/:id/disabled',
@@ -198,8 +214,11 @@ describe('Platform route and security contract', () => {
   it('preserves quiz privacy, media entitlement, analytics consent, and certificate image safety', () => {
     expect(learningSource).toContain('answers_snapshot_encrypted');
     expect(learningSource).not.toContain('answers_snapshot,');
-    expect(routeBlock(learningSource, 'platformLearningRoutes', 'get', '/lessons/:lessonId/media'))
+    expect(learningSource)
       .toContain('requireCourseEntitlement(db, await requirePlatformActor(c), lesson.course_id, lessonId)');
+    expect(learningSource).toContain("binding: `lesson-cover:${lessonId}:${revision}`");
+    expect(catalogSource).toContain('receiveMusicFile(c.req.raw.body, platformMediaPath(\'.tmp\'), COVER_MAX_BYTES, sniffMusicCover');
+    expect(catalogSource).toContain('authorizeCourseWrite(db, actor, courseKeyValue)');
     expect(routeBlock(learningSource, 'platformLearningRoutes', 'post', '/analytics'))
       .toContain("consents[0]?.status !== 'granted'");
     expect(routeBlock(learningSource, 'platformLearningRoutes', 'get', '/certificates/:code/image'))

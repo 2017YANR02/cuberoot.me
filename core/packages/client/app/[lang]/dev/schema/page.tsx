@@ -338,7 +338,7 @@ const TABLES: Table[] = [
   ] },
 
   // ── main-site Platform ─────────────────────────────────
-  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203], purpose: { zh: '主站 Platform 的 62 表 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The 62-table PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
+  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203, 244], purpose: { zh: '主站 Platform 的 62 表 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The 62-table PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
     'platform_instructors', 'platform_instructor_applications', 'platform_media_assets', 'platform_courses',
     'platform_course_owners', 'platform_course_revisions', 'platform_lessons', 'platform_lesson_revisions',
     'platform_learning_paths', 'platform_learning_path_items', 'platform_quizzes', 'platform_quiz_revisions',
@@ -781,6 +781,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 241, slug: 'wechat_wca_link', desc: { zh: '增加微信内浏览器绑定 WCA 账号的专用会话票据用途。', en: 'Add a dedicated session-ticket purpose for linking WCA accounts inside WeChat.' } },
   { n: 242, slug: 'alg_submission_tags', desc: { zh: '为用户投稿公式增加单手、脚拧、最少步、高阶和键盘标签。', en: 'Add one-handed, feet, FMC, big-cube, and keyboard tags to user-submitted algorithms.' } },
   { n: 243, slug: 'auth_code_delivery', desc: { zh: '验证码发送状态；旧码兼容，邮箱成功发送后才可验证。', en: 'Verification delivery state; preserve old codes and activate email codes only after acceptance.' } },
+  { n: 244, slug: 'platform_lesson_covers', desc: { zh: '课时修订可关联独立视频封面，支持上传图片或从视频截取画面。', en: 'Let lesson revisions reference a dedicated video cover uploaded directly or captured from a video frame.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

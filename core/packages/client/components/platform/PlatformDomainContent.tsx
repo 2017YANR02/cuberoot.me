@@ -4,11 +4,12 @@ import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
-import { nextQuery } from '@/lib/auth-store';
-import { loadPlatformLessonMedia, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
+import { nextQuery, useIsAdmin } from '@/lib/auth-store';
+import { loadPlatformLessonMedia, platformMediaBrowserUrl, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
+import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -81,7 +82,7 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime }: {
+function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime, posterOverride, onVideoElement }: {
   lessonId: string;
   courseSlug?: string;
   startTime?: number;
@@ -90,6 +91,8 @@ function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange,
   onNext?: () => void;
   onPrevious?: () => void;
   autoPlay?: boolean;
+  posterOverride?: string;
+  onVideoElement?: (element: HTMLVideoElement | null) => void;
 }) {
   const t = useT();
   const [media, setMedia] = useState<PlatformLessonMedia | null>(null);
@@ -149,9 +152,9 @@ function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange,
     <button type="button" className="platform-action-link" onClick={() => setReload(value => value + 1)}>{t('重新加载播放器', 'Reload player')}</button>
   </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;
-  if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata}
+  if (media.mimeType.startsWith('video/')) return <LessonVideoPlayer src={platformMediaBrowserUrl(media.accessUrl)} poster={posterOverride ?? (media.posterUrl ? platformMediaBrowserUrl(media.posterUrl) : undefined)} onError={onError} onLoadedMetadata={onLoadedMetadata}
     lessonId={lessonId} mediaId={media.mediaId} mimeType={media.mimeType} startTime={startTime}
-    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay} />;
+    autoContinue={autoContinue} onAutoContinueChange={onAutoContinueChange} onNext={onNext} onPrevious={onPrevious} autoPlay={autoPlay} onVideoElement={onVideoElement} />;
   if (media.mimeType.startsWith('audio/')) return <audio className="platform-lesson-media" controls preload="metadata" src={media.accessUrl} onError={onError} onLoadedMetadata={onLoadedMetadata} />;
   return <a className="platform-action-link" href={media.accessUrl} target="_blank" rel="noreferrer">{t('打开课时媒体', 'Open lesson media')}</a>;
 }
@@ -202,6 +205,48 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
   );
 }
 
+function ClassroomLessonStage({ title, courseId, lessonId, courseSlug, canEditCover, startTime, autoContinue, onAutoContinueChange, autoPlay, onPrevious, onNext }: {
+  title: string;
+  courseId: string;
+  lessonId: string;
+  courseSlug?: string;
+  canEditCover: boolean;
+  startTime?: number;
+  autoContinue?: boolean;
+  onAutoContinueChange?: (enabled: boolean) => void;
+  autoPlay?: boolean;
+  onPrevious?: () => void;
+  onNext?: () => void;
+}) {
+  const [posterOverride, setPosterOverride] = useState<string>();
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null);
+  return <section className="platform-classroom-stage" aria-label={title}>
+    <div className="platform-classroom-stage-heading">
+      <h2 aria-live="polite">{title}</h2>
+      {canEditCover ? <PlatformLessonCoverEditor
+        scope="admin"
+        courseId={courseId}
+        lessonId={lessonId}
+        currentVideo
+        videoElement={videoElement}
+        onCoverUpdated={(posterUrl) => { if (posterUrl) setPosterOverride(posterUrl); }}
+      /> : null}
+    </div>
+    <div className="platform-classroom-player"><LessonMedia
+      lessonId={lessonId}
+      courseSlug={courseSlug}
+      startTime={startTime}
+      autoContinue={autoContinue}
+      onAutoContinueChange={onAutoContinueChange}
+      autoPlay={autoPlay}
+      onPrevious={onPrevious}
+      onNext={onNext}
+      posterOverride={posterOverride}
+      onVideoElement={setVideoElement}
+    /></div>
+  </section>;
+}
+
 export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime, courseRedeemed }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
@@ -213,6 +258,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
   onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
+  const isAdmin = useIsAdmin();
   const [autoContinue, setAutoContinue] = useState(false);
   const [autoPlayLessonId, setAutoPlayLessonId] = useState<string | null>(null);
   if (!entity?.data) return null;
@@ -265,13 +311,11 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
             onClick={() => { setAutoPlayLessonId(null); onSelectLesson?.(lesson.id); }}
           >{lesson.title}</button>)}</div>
         </nav>
-        <section className="platform-classroom-stage" aria-label={t('课程视频', 'Lesson video')}>
-          <h2 aria-live="polite">{active.title}</h2>
-          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} courseSlug={string(data.slug) ?? undefined} startTime={lessonStartTime}
-            autoContinue={autoContinue} onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
-            onPrevious={onSelectLesson && activeIndex > 0 ? () => playLesson(activeIndex - 1) : undefined}
-            onNext={onSelectLesson && activeIndex < sectionLessons.length - 1 ? () => playLesson(activeIndex + 1) : undefined} /></div>
-        </section>
+        <ClassroomLessonStage key={active.id} title={active.title} courseId={entity.id} lessonId={active.id} courseSlug={string(data.slug) ?? undefined}
+          canEditCover={isAdmin} startTime={lessonStartTime} autoContinue={autoContinue}
+          onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
+          onPrevious={onSelectLesson && activeIndex > 0 ? () => playLesson(activeIndex - 1) : undefined}
+          onNext={onSelectLesson && activeIndex < sectionLessons.length - 1 ? () => playLesson(activeIndex + 1) : undefined} />
       </div>;
     }
     return (

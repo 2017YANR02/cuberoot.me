@@ -3,15 +3,30 @@ import { act, createElement, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-const { load } = vi.hoisted(() => ({ load: vi.fn() }));
+const { access, load, loadManaged, uploadCover } = vi.hoisted(() => ({
+  access: { admin: false },
+  load: vi.fn(),
+  loadManaged: vi.fn(),
+  uploadCover: vi.fn(),
+}));
 vi.mock('@/lib/platform-gateway', () => ({
   loadPlatformLessonMedia: load,
+  loadPlatformManagedLessonMedia: loadManaged,
+  uploadPlatformLessonCover: uploadCover,
+  platformMediaBrowserUrl: (value: string) => {
+    const url = new URL(value, window.location.origin);
+    return url.pathname.startsWith('/v1/') ? `${url.pathname}${url.search}` : value;
+  },
   PlatformPermissionError: class PlatformPermissionError extends Error {
     constructor(public readonly status: 401 | 403) {
       super(status === 401 ? 'Authentication required.' : 'Permission denied.');
       this.name = 'PlatformPermissionError';
     }
   },
+}));
+vi.mock('@/lib/auth-store', () => ({
+  nextQuery: (next: string) => `?next=${encodeURIComponent(next)}`,
+  useIsAdmin: () => access.admin,
 }));
 const locale = vi.hoisted(() => ({ english: false }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string, en: string) => locale.english ? en : zh }));
@@ -23,7 +38,71 @@ import { PlatformPermissionError } from '@/lib/platform-gateway';
 
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  access.admin = false;
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
+  loadManaged.mockReset().mockResolvedValue({
+    mediaId: 'media', mimeType: 'video/mp4', sizeBytes: 100, accessUrl: 'https://api.cuberoot.me/v1/platform/lessons/first/media?token=signed', expiresAt: '2099-01-01T00:00:00Z',
+    posterUrl: '/signed-cover', posterMediaId: 'cover', posterMimeType: 'image/jpeg', posterSizeBytes: 50,
+  });
+  uploadCover.mockReset().mockResolvedValue({ ok: true });
+});
+
+it('uses the saved lesson cover as the native video poster', async () => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      src: '/signed-video', poster: '/signed-cover', onError: vi.fn(), onLoadedMetadata: vi.fn(),
+    })));
+    const video = host.querySelector('video');
+    expect(video?.getAttribute('poster')).toBe('/signed-cover');
+  } finally {
+    await act(async () => root.unmount());
+  }
+});
+
+it('shows the shared current-frame cover editor only to administrators', async () => {
+  access.admin = true;
+  const host = document.createElement('div'), root = createRoot(host);
+  const createObjectUrl = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
+  Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:lesson-cover') });
+  const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as unknown as CanvasRenderingContext2D);
+  const toBlob = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(callback => callback(new Blob(['cover'], { type: 'image/jpeg' })));
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }] } } as PlatformEntity,
+      params: {},
+    })));
+    const details = host.querySelector<HTMLDetailsElement>('.platform-classroom-cover-editor');
+    expect(details?.querySelector('summary')?.textContent).toBe('编辑封面');
+    await act(async () => {
+      if (details) details.open = true;
+      details?.dispatchEvent(new Event('toggle', { bubbles: true }));
+    });
+    expect(loadManaged).not.toHaveBeenCalled();
+    expect([...host.querySelectorAll('button')].map(button => button.textContent)).toEqual(expect.arrayContaining(['上传图片', '使用当前画面']));
+    expect(host.querySelectorAll('.platform-classroom-player video')).toHaveLength(1);
+    expect(host.querySelector('.platform-classroom-player video')?.getAttribute('src')).toBe('/signed-video');
+    expect(host.querySelectorAll('.platform-lesson-frame-picker video')).toHaveLength(0);
+    expect(host.textContent).not.toContain('Not Found');
+    const video = host.querySelector<HTMLVideoElement>('.platform-classroom-player video')!;
+    Object.defineProperties(video, {
+      readyState: { configurable: true, value: HTMLMediaElement.HAVE_CURRENT_DATA },
+      videoWidth: { configurable: true, value: 1280 },
+      videoHeight: { configurable: true, value: 720 },
+    });
+    const useFrame = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent === '使用当前画面')!;
+    expect(useFrame.disabled).toBe(false);
+    await act(async () => useFrame.click());
+    expect(uploadCover).toHaveBeenCalledWith('admin', 'course', 'first', expect.objectContaining({ type: 'image/jpeg' }));
+    expect(video.getAttribute('poster')).toBe('blob:lesson-cover');
+  } finally {
+    getContext.mockRestore();
+    toBlob.mockRestore();
+    if (createObjectUrl) Object.defineProperty(URL, 'createObjectURL', createObjectUrl);
+    else Reflect.deleteProperty(URL, 'createObjectURL');
+    await act(async () => root.unmount());
+  }
 });
 
 it('turns unauthenticated media access into a sign-in action', async () => {

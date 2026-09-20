@@ -29,6 +29,32 @@ export interface PlatformLessonMedia {
   sizeBytes: number;
   accessUrl: string;
   expiresAt: string;
+  posterUrl: string | null;
+}
+
+export interface PlatformManagedLessonMedia {
+  mediaId: string | null;
+  mimeType: string | null;
+  sizeBytes: number | null;
+  accessUrl: string | null;
+  expiresAt: string | null;
+  posterUrl: string | null;
+  posterMediaId: string | null;
+  posterMimeType: string | null;
+  posterSizeBytes: number | null;
+}
+
+export type PlatformCourseManagementScope = 'admin' | 'instructor';
+
+export function platformMediaBrowserUrl(value: string): string {
+  if (typeof window === 'undefined') return value;
+  try {
+    const url = new URL(value, window.location.origin);
+    if ((url.protocol !== 'http:' && url.protocol !== 'https:') || !url.pathname.startsWith('/v1/')) return value;
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return value;
+  }
 }
 
 export class PlatformPermissionError extends Error {
@@ -258,6 +284,40 @@ export async function loadPlatformLessonMedia(lessonId: string, signal?: AbortSi
   });
   if (response.status === 401 || response.status === 403) throw new PlatformPermissionError(response.status);
   return handleApi<PlatformLessonMedia>(response);
+}
+
+export async function loadPlatformManagedLessonMedia(
+  scope: PlatformCourseManagementScope,
+  courseId: string,
+  lessonId: string,
+  signal?: AbortSignal,
+): Promise<PlatformManagedLessonMedia> {
+  const response = await fetch(apiUrl(
+    `/v1/platform/${scope}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/media`,
+  ), {
+    headers: authHeaders(false),
+    cache: 'no-store',
+    signal,
+  });
+  if (response.status === 401 || response.status === 403) throw new PlatformPermissionError(response.status);
+  return handleApi<PlatformManagedLessonMedia>(response);
+}
+
+export async function uploadPlatformLessonCover(
+  scope: PlatformCourseManagementScope,
+  courseId: string,
+  lessonId: string,
+  file: File,
+): Promise<PlatformActionResult> {
+  const response = await fetch(apiUrl(
+    `/v1/platform/${scope}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/cover`,
+  ), {
+    method: 'PUT',
+    headers: { ...authHeaders(false), 'Content-Type': file.type, 'Idempotency-Key': idempotencyKey() },
+    body: file,
+  });
+  if (response.status === 401 || response.status === 403) throw new PlatformPermissionError(response.status);
+  return handleApi<PlatformActionResult>(response);
 }
 
 export const PLATFORM_PRIVACY_POLICY_VERSION = 'platform-privacy-v1';

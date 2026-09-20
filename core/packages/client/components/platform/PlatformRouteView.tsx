@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
 import { ArrowRight, ExternalLink, Play, Search } from 'lucide-react';
 import { parseAsFloat, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
@@ -555,7 +554,6 @@ function PlatformResourceRouteView({
 }) {
   const t = useT();
   const lang = useLang();
-  const pathname = usePathname();
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
@@ -709,7 +707,8 @@ function PlatformResourceRouteView({
   const courseDetail = definition.id === 'course-detail';
   const inviteManager = definition.id === 'admin-invites';
   const courseSection = definition.id.startsWith('course-section-');
-  const courseSectionLoginHref = `/account${nextQuery(pathname)}`;
+  const redemptionReturnPath = `${lang === 'zh' ? '/zh' : ''}/platform/account/invites`;
+  const courseSectionLoginHref = `/account${nextQuery(redemptionReturnPath)}`;
   const course = courseDetail && !error ? sortedItems[0] : undefined;
   const courseRedeemed = Boolean(course && visibleRedeemedCourseIds.has(course.id));
   const orderPage = ['orders', 'order-detail', 'admin-orders', 'admin-order'].includes(definition.id);
@@ -759,7 +758,6 @@ function PlatformResourceRouteView({
       ) : !allowed ? (
         <PlatformState
           kind="permission"
-          message={courseSection ? t('请先登录。兑换课程后即可观看对应课时。', 'Sign in first. After redeeming the course, you can watch its lessons.') : undefined}
           permissionHref={courseSection ? courseSectionLoginHref : undefined}
         />
       ) : definition.resource ? (
@@ -799,7 +797,11 @@ function PlatformResourceRouteView({
           ) : null}
 
           {!loadsResource ? null : permissionDenied ? (
-            <PlatformState kind="permission" message={error.status === 403 ? t('当前账号没有访问这个工作区的角色。', 'Your account does not have the role required for this workspace.') : undefined} />
+            <PlatformState
+              kind="permission"
+              message={error.status === 403 ? t('当前账号没有访问这个工作区的角色。', 'Your account does not have the role required for this workspace.') : undefined}
+              permissionHref={courseSection && error.status !== 403 ? courseSectionLoginHref : undefined}
+            />
           ) : error ? (
             <PlatformState kind="error" message={error.message} onRetry={() => setRetry((value) => value + 1)} />
           ) : !result ? (

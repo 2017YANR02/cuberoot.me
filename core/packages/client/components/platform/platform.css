@@ -817,6 +817,17 @@ body[data-site-scenery] :is(
   margin-top: 12px;
 }
 
+.platform-sign-in-state {
+  justify-content: center;
+  align-items: center;
+}
+
+.platform-sign-in-button {
+  padding: 14px 28px;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
 .platform-spin {
   animation: platform-spin 1s linear infinite;
 }
@@ -1190,7 +1201,9 @@ body[data-site-scenery] :is(
 .platform-classroom-lesson:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); color: var(--foreground); }
 .platform-classroom-lesson[aria-current] { background: var(--accent-soft); color: var(--foreground); font-weight: 600; }
 .platform-classroom-stage { min-width: 0; }
-.platform-classroom-stage h2 { margin: 0 0 18px; font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 1.5; overflow-wrap: anywhere; }
+.platform-classroom-stage-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 16px; margin-bottom: 18px; }
+.platform-classroom-stage-heading h2 { margin: 0; font-size: clamp(1.1rem, 2vw, 1.45rem); line-height: 1.5; overflow-wrap: anywhere; }
+.platform-classroom-stage-heading .platform-video-cover-editor[open] { flex-basis: 100%; }
 .platform-classroom-player { border-radius: 24px; overflow: hidden; background: var(--muted); min-height: 240px; }
 .platform-classroom-player .platform-domain-note { margin: 0; padding: 28px; overflow-wrap: anywhere; }
 .platform-classroom-player .platform-lesson-media { width: 100%; max-height: 75vh; margin: 0; }
@@ -1262,6 +1275,43 @@ body[data-site-scenery] :is(
 .platform-course-editor-item > .platform-button {
   margin-top: 12px;
 }
+
+.platform-video-cover-editor {
+  margin-top: 22px;
+  max-width: 760px;
+}
+
+.platform-video-cover-editor > summary {
+  width: max-content;
+  cursor: pointer;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.platform-video-cover-editor-content,
+.platform-lesson-frame-picker {
+  display: grid;
+  justify-items: start;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.platform-video-cover-editor-preview,
+.platform-lesson-frame-picker video {
+  display: block;
+  width: min(100%, 640px);
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border-radius: 14px;
+}
+
+.platform-video-cover-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.platform-classroom-cover-editor { margin-top: 0; }
 
 .platform-quiz-questions {
   display: grid;
