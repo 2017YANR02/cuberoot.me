@@ -2161,6 +2161,7 @@ a.alg-community-author:hover {
 .alg-meta-algline-code::-webkit-scrollbar { display: none; }
 .alg-case-standard-detail {
   align-items: center;
+  padding-inline-end: 8px;
 }
 .alg-case-standard-detail code {
   white-space: nowrap;
