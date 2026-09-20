@@ -836,7 +836,7 @@ function PlatformResourceRouteView({
             </AppLink>
           ) : null}
 
-          {!permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
+          {!permissionDenied && !orderUnavailable ? <PlatformDomainContent definition={definition} params={params} entity={sortedItems[0]} previewRedirect={stay === '1'} selectedLessonId={selectedLessonId} lessonStartTime={lessonStartTime} courseRedeemed={courseRedeemed} onSelectLesson={id => { void setLessonStartTime(null); void setSelectedLessonId(id); }} /> : null}
 
           {permissionDenied || orderUnavailable || definition.id === 'qr' || (['membership', 'me-membership'].includes(definition.id) && !result) ? null : (
             <PlatformDomainActions
