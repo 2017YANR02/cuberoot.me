@@ -12,8 +12,9 @@ import { caseAlgIssue, caseCoepEntry } from '@/lib/alg_case_alignment';
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Copy, Check, Pin } from 'lucide-react';
+import { Copy, Check, HelpCircle, Pin } from 'lucide-react';
 import Link from '@/components/AppLink';
+import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
 import { stm } from '@cuberoot/shared/alg-notation';
 import { CaseThumb } from '@/components/CaseThumb';
@@ -28,6 +29,7 @@ import {
   type ScrambleKind,
 } from '@/lib/trainer-scramble';
 import { algTagLabel } from '@/lib/alg_tags';
+import { ALG_COMBO_TYPES, algComboTypeHref, algComboTypeInfo } from '@/lib/alg_combo_types';
 import { primaryCaseName } from '@/lib/alg_case_display';
 import { sanitizeAlgHtml } from '@/lib/alg_html';
 import {
@@ -117,10 +119,10 @@ function AlgLine({
   );
 }
 
-/** 一条「键 + 值」。`wide`:值挂了一串 chip,在三列网格里独占一行。 */
-function Row({ label, wide, children }: { label: string; wide?: boolean; children: React.ReactNode }) {
+/** 规格表中的一条「标签 + 值」。 */
+function Row({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className={`alg-meta-row${wide ? ' is-wide' : ''}`}>
+    <div className="alg-meta-row">
       <span className="alg-meta-key">{label}</span>
       <span className="alg-meta-val">{children}</span>
     </div>
@@ -161,6 +163,7 @@ interface Props {
   algsAfter?: React.ReactNode;
   onRotate?: () => Promise<void>;
   editorAlgorithms?: React.ReactNode;
+  subgroupEditor?: React.ReactNode;
   setupEditor?: React.ReactNode;
   editing?: boolean;
 }
@@ -176,7 +179,7 @@ export default function AlgCaseMetaContent({
   playable = false,
   preserveAlgOrder = false,
   algsAfter,
-  onRotate, editorAlgorithms, setupEditor, editing = false,
+  onRotate, editorAlgorithms, subgroupEditor, setupEditor, editing = false,
 }: Props) {
   /**
    * 没有 meta 的集(虚拟集 LSLL、库里还没补元数据的集)一样要能看:空对象兜底后
@@ -348,6 +351,11 @@ export default function AlgCaseMetaContent({
   ].filter(Boolean) as string[];
 
   const optimal = Object.entries(m.optimal ?? {}) as Array<[string, { len: number; scramble?: string }]>;
+  const comboType = m.type ? algComboTypeInfo(m.type) : undefined;
+  const legacyNumberDetails = [
+    m.docNo && tr({ zh: `旧编号（doc）：${m.docNo}`, en: `Old no. (doc): ${m.docNo}` }),
+    m.oldNo && tr({ zh: `旧编号：${m.oldNo}`, en: `Old no.: ${m.oldNo}` }),
+  ].filter(Boolean).join('\n');
   const coep = caseCoepEntry(caseObj);
   const metadataScramble = (text: string) => {
     const aligned = alignScrambleToSetup(puzzle, text, caseObj.setup);
@@ -457,7 +465,7 @@ export default function AlgCaseMetaContent({
       )}
 
       <div className="alg-meta-case">
-        {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms}{algsAfter}</div>}
+        {editorAlgorithms && <div className="alg-meta-case-player-layout" hidden={!editing}>{editorAlgorithms}</div>}
         {!editing && (
         <div className={playable ? 'alg-meta-case-player-layout alg-case-detail-ori-main alg-player-list-layout' : undefined}>
           {playable && selectedAlg && (
@@ -525,19 +533,65 @@ export default function AlgCaseMetaContent({
                 a.originalIndex,
               );
             }))}
-            {algsAfter}
           </div>
         </div>)}
+        {algsAfter}
       </div>
 
-      {/* 编号 / 子集 / OLL … 每条都只有几个字符,一行一条右边全是空的 —— 三列铺开(窄了自动退档)。
-          每条都是「有才出」:没有 meta 的集不该摆一排空值。 */}
+      {/* 紧凑规格表:桌面三列,平板两列,手机一列。每条都是「有才出」。 */}
       <div className="alg-meta-facts">
-        {m.no != null && <Row label={tr({ zh: '编号', en: 'No.' })}>{m.no}</Row>}
+        {m.no != null && (
+          <Row label={(
+            <>
+              {tr({ zh: '编号', en: 'No.' })}
+              {legacyNumberDetails && (
+                <InfoTooltip
+                  content={legacyNumberDetails}
+                  iconSize={13}
+                  ariaLabel={tr({ zh: '查看旧编号', en: 'View old numbers' })}
+                  className="alg-meta-number-help"
+                />
+              )}
+            </>
+          )}>
+            {m.no}
+          </Row>
+        )}
         {m.subset && <Row label={tr({ zh: '子集', en: 'Subset' })}>{m.subset}</Row>}
+        {subgroupEditor && <div className="alg-meta-subgroup-editor">{subgroupEditor}</div>}
         {m.oll && <Row label="OLL">{m.oll}</Row>}
         {m.cp && <Row label={tr({ zh: '角换', en: 'CP' })}>{m.cp}</Row>}
-        {m.type && <Row label={tr({ zh: '叠加类型', en: 'Type' })}>{m.type}</Row>}
+        {m.type && (
+          <Row label={(
+            <>
+              {tr({ zh: '叠加类型', en: 'Combo type' })}
+              <Link
+                href="/alg/combo-types"
+                className="alg-meta-type-help"
+                prefetch={false}
+                title={tr({
+                  zh: `查看全部 ${ALG_COMBO_TYPES.length} 种叠加类型`,
+                  en: `View all ${ALG_COMBO_TYPES.length} combo types`,
+                })}
+                aria-label={tr({
+                  zh: `查看全部 ${ALG_COMBO_TYPES.length} 种叠加类型`,
+                  en: `View all ${ALG_COMBO_TYPES.length} combo types`,
+                })}
+              >
+                <HelpCircle size={13} aria-hidden="true" />
+              </Link>
+            </>
+          )}>
+            <Link
+              href={comboType ? algComboTypeHref(comboType.code) : '/alg/combo-types'}
+              className="alg-meta-type-value"
+              prefetch={false}
+            >
+              <code>{m.type}</code>
+              <span>{comboType ? tr(comboType.fullName) : tr({ zh: '原表未定义', en: 'Not defined by the source sheet' })}</span>
+            </Link>
+          </Row>
+        )}
         {m.gen && <Row label={tr({ zh: '生成元', en: 'Generators' })}><code>{m.gen}</code></Row>}
         {m.etm != null && <Row label="ETM">{m.etm}</Row>}
 
@@ -548,16 +602,14 @@ export default function AlgCaseMetaContent({
           </Row>
         )}
 
-        {/* 出现概率:轨道大小(16/cn)÷ 全集状态数。非 1LLL set 同时给 1LLL 全集下的概率 ——
-            练 ZBLL 的人想知道「ZZ 到了顶层抽到它多大概率」,练 1LLL 的人想知道全局概率。
-            数学原理(轨道-稳定子)见 /math/probability。
-            两个 chip + 「原理」挤不进三分之一列,这一条独占一行。 */}
+        {/* 出现概率:轨道大小(16/cn)÷ 全集状态数。非 1LLL set 同时给 1LLL 全集下的概率。
+            数学原理(轨道-稳定子)见 /math/probability。 */}
         {(() => {
           const orbit = caseOrbit(caseObj);
           const uni = ALG_SET_UNIVERSE[set];
           if (orbit == null || !uni) return null;
           return (
-            <Row label={tr({ zh: '出现概率', en: 'Probability' })} wide>
+            <Row label={tr({ zh: '出现概率', en: 'Probability' })}>
               <span
                 className="alg-meta-chip"
                 title={tr({
@@ -610,11 +662,9 @@ export default function AlgCaseMetaContent({
         </div>
       )}
 
-      {(m.sdbNo || m.docNo || m.oldNo) && (
+      {m.sdbNo && (
         <div className="alg-meta-section alg-meta-refs">
-          {m.sdbNo && <Row label="speedcubedb">{m.sdbNo}</Row>}
-          {m.docNo && <Row label={tr({ zh: '旧编号 (doc)', en: 'Old no. (doc)' })}>{m.docNo}</Row>}
-          {m.oldNo && <Row label={tr({ zh: '旧编号', en: 'Old no.' })}>{m.oldNo}</Row>}
+          <Row label="speedcubedb">{m.sdbNo}</Row>
         </div>
       )}
     </>

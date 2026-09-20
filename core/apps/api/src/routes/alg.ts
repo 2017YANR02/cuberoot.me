@@ -15,7 +15,10 @@ import {
   requireAuth, requireAdmin, checkRateLimit,
 } from '../utils/recon_helpers.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
-import { canonicalize3x3WideMoves, startsWithYRotation } from '@cuberoot/shared/alg-notation';
+import { ALG_TAGS, type AlgTag } from '@cuberoot/shared/alg';
+import {
+  canonicalize3x3WideMoves, cubeOnly, hasBalancedGrouping, startsWithYRotation,
+} from '@cuberoot/shared/alg-notation';
 import { normalizeCaseNameForSet } from '../utils/sq1_cs.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
 
@@ -32,6 +35,7 @@ interface AlgSubmissionRow {
   case_name: string;
   alg: string;
   notes: string | null;
+  tags: AlgTag[];
   author_id: string;
   author_name: string;
   created_at: string | Date;
@@ -45,6 +49,7 @@ function rowToJson(row: AlgSubmissionRow, userIds: ReadonlyMap<string, number> =
     caseName: row.case_name,
     alg: row.puzzle === '3x3' ? canonicalize3x3WideMoves(row.alg) : row.alg,
     notes: row.notes,
+    tags: row.tags ?? [],
     authorId: row.author_id,
     authorName: row.author_name,
     authorUserId: userIds.get(row.author_id) ?? null,
@@ -59,11 +64,24 @@ async function rowsToJson(rows: AlgSubmissionRow[]) {
 
 const ALG_MAX_BYTES = 4096;
 const NOTES_MAX_BYTES = 1024;
+const ALG_TAG_SET = new Set<string>(ALG_TAGS);
+
+function parseTags(value: unknown): { tags?: AlgTag[]; error?: 'invalid_tags' } {
+  if (value === undefined) return {};
+  if (!Array.isArray(value) || value.some(tag => typeof tag !== 'string' || !ALG_TAG_SET.has(tag))) {
+    return { error: 'invalid_tags' };
+  }
+  return { tags: [...new Set(value)] as AlgTag[] };
+}
 
 function leadingYError(puzzle: string, setSlug: string, alg: string): string | null {
   return is3x3TopLayerSet(puzzle, setSlug) && startsWithYRotation(alg)
     ? 'leading_y_rotation'
     : null;
+}
+
+function groupingError(alg: string): string | null {
+  return hasBalancedGrouping(cubeOnly(alg)) ? null : 'unbalanced_grouping_parentheses';
 }
 
 // GET /v1/alg/:puzzle/:set/submissions — 列出该 set 下全部用户提交
@@ -124,22 +142,26 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
   const puzzle = c.req.param('puzzle');
   const setSlug = c.req.param('set');
   const caseName = normalizeCaseNameForSet(puzzle, setSlug, decodeURIComponent(c.req.param('case')));
-  const body = await c.req.json<{ alg?: string; notes?: string }>();
+  const body = await c.req.json<{ alg?: string; notes?: string; tags?: unknown }>();
   const submittedAlg = (body.alg ?? '').trim();
   const alg = puzzle === '3x3' ? canonicalize3x3WideMoves(submittedAlg) : submittedAlg;
   const notes = (body.notes ?? '').trim() || null;
+  const tagInput = parseTags(body.tags);
 
   if (!alg) return c.json({ error: 'alg required' }, 400);
   if (Buffer.byteLength(alg, 'utf8') > ALG_MAX_BYTES) return c.json({ error: 'alg too long' }, 400);
   if (notes && Buffer.byteLength(notes, 'utf8') > NOTES_MAX_BYTES) return c.json({ error: 'notes too long' }, 400);
+  if (tagInput.error) return c.json({ error: tagInput.error }, 400);
+  const syntaxError = groupingError(alg);
+  if (syntaxError) return c.json({ error: syntaxError }, 400);
   const ruleError = leadingYError(puzzle, setSlug, alg);
   if (ruleError) return c.json({ error: ruleError }, 400);
 
   const inserted = await withAlgWrite(puzzle, setSlug, async query => {
     await assertNoExistingAlg(query, puzzle, setSlug, caseName, [alg]);
     return query<AlgSubmissionRow>(
-      'INSERT INTO alg_submissions (puzzle, set_slug, case_name, alg, notes, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *',
-      [puzzle, setSlug, caseName, alg, notes, user.wcaId, user.name],
+      'INSERT INTO alg_submissions (puzzle, set_slug, case_name, alg, notes, tags, author_id, author_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *',
+      [puzzle, setSlug, caseName, alg, notes, tagInput.tags ?? [], user.wcaId, user.name],
     );
   });
   return c.json((await rowsToJson(inserted))[0]);
@@ -154,12 +176,14 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (!Number.isFinite(id)) return c.json({ error: 'invalid id' }, 400);
 
-  const body = await c.req.json<{ alg?: string; notes?: string; caseName?: string }>();
+  const body = await c.req.json<{ alg?: string; notes?: string; caseName?: string; tags?: unknown }>();
   const submittedAlg = (body.alg ?? '').trim();
   const notes = (body.notes ?? '').trim() || null;
+  const tagInput = parseTags(body.tags);
   if (!submittedAlg) return c.json({ error: 'alg required' }, 400);
   if (Buffer.byteLength(submittedAlg, 'utf8') > ALG_MAX_BYTES) return c.json({ error: 'alg too long' }, 400);
   if (notes && Buffer.byteLength(notes, 'utf8') > NOTES_MAX_BYTES) return c.json({ error: 'notes too long' }, 400);
+  if (tagInput.error) return c.json({ error: tagInput.error }, 400);
 
   const rows = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
   if (rows.length === 0) return c.json({ error: 'Not found' }, 404);
@@ -168,6 +192,8 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
     return c.json({ error: 'Cannot edit others alg' }, 403);
   }
   const alg = rows[0].puzzle === '3x3' ? canonicalize3x3WideMoves(submittedAlg) : submittedAlg;
+  const syntaxError = groupingError(alg);
+  if (syntaxError) return c.json({ error: syntaxError }, 400);
   const ruleError = leadingYError(rows[0].puzzle, rows[0].set_slug, alg);
   if (ruleError) return c.json({ error: ruleError }, 400);
 
@@ -184,11 +210,12 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
     const current = await query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ? FOR UPDATE', [id]);
     if (!current.length) throw new HTTPException(404, { message: 'Not found' });
     if (!isAdmin && current[0].author_id !== user.wcaId) throw new HTTPException(403, { message: 'Cannot edit others alg' });
+    const tags = tagInput.tags ?? current[0].tags ?? [];
     await assertNoExistingAlg(query, rows[0].puzzle, rows[0].set_slug, newCaseName ?? current[0].case_name, [alg], { submissionId: id });
     if (newCaseName !== null) {
-      await query('UPDATE alg_submissions SET alg = ?, notes = ?, case_name = ? WHERE id = ?', [alg, notes, newCaseName, id]);
+      await query('UPDATE alg_submissions SET alg = ?, notes = ?, tags = ?, case_name = ? WHERE id = ?', [alg, notes, tags, newCaseName, id]);
     } else {
-      await query('UPDATE alg_submissions SET alg = ?, notes = ? WHERE id = ?', [alg, notes, id]);
+      await query('UPDATE alg_submissions SET alg = ?, notes = ?, tags = ? WHERE id = ?', [alg, notes, tags, id]);
     }
     return query<AlgSubmissionRow>('SELECT * FROM alg_submissions WHERE id = ?', [id]);
   });

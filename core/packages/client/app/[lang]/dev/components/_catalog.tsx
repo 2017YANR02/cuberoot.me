@@ -2162,8 +2162,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'CommunityAlgs',
     import: "import CommunityAlgs from '@/components/CommunityAlgs';",
     category: 'more',
-    zh: `单个案例下的社区投稿公式列表,登录用户可添加(保存前 cubing.js 校验),作者和管理员可编辑 / 删除,管理员还能改 caseName 把公式转到别的案例。`,
-    en: `Community-submitted algs for one case: logged-in users can add (cubing.js-validated on save), authors and admins edit/delete, and admins can re-target the caseName to move an alg to another case.`,
+    zh: `单个案例下的社区投稿公式列表,登录用户可添加公式与标签(保存前 cubing.js 校验),作者和管理员可编辑 / 删除,管理员还能改 caseName 把公式转到别的案例;allowAdd 可隐藏新增入口。`,
+    en: `Community-submitted algs for one case: logged-in users can add algs and tags (cubing.js-validated on save), authors and admins edit/delete, admins can re-target the caseName, and allowAdd can hide the add control.`,
     note: { zh: `需登录态、submissions 数据和 onPatch 回写,由 AlgCategoryView 按 case 切分喂入,无法独立渲染。`, en: `Needs auth login, submissions data and an onPatch writer; fed per-case by AlgCategoryView, not standalone.` },
   },
   {

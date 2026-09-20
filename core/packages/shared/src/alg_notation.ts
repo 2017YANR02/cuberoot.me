@@ -207,6 +207,16 @@ export function invertMoveString(s: string): string {
   return moves.reverse().map(m => renderMove({ ...m, amount: -m.amount })).join(' ');
 }
 
+/** 分组括号是否一一配对。只检查 `expandGroups` 有语义的 ASCII 括号。 */
+export function hasBalancedGrouping(s: string): boolean {
+  let depth = 0;
+  for (const char of s) {
+    if (char === '(') depth++;
+    else if (char === ')' && --depth < 0) return false;
+  }
+  return depth === 0;
+}
+
 /**
  * 递归展开 `(...)N`(**会嵌套**)。括号不配对 → 抛。
  *
@@ -295,6 +305,13 @@ export function flattenAlg(alg: string): string {
  */
 export function toMoveString(alg: string): string {
   const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
+  return moves.map((m) => m.raw).join(' ');
+}
+
+/** 保存校验用严格版：括号不配对与未知记号都会抛错。 */
+export function toMoveStringStrict(alg: string): string {
+  const { moves, junk } = tokenizeMoves(expandGroups(cubeOnly(alg)));
   if (junk.length) throw new Error(`认不出来的记号:${junk.join(' ')}`);
   return moves.map((m) => m.raw).join(' ');
 }

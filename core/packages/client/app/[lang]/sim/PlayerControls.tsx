@@ -130,6 +130,7 @@ import {
 import { KEYBOARD_ROWS, keyLabel, displayMove, type KeyMove } from './keymap';
 import CubeVirtualKeyboard from '@/components/CubeVirtualKeyboard';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
+import AppLink from '@/components/AppLink';
 import { defaultPlatonicColorSchemes } from '@/lib/puzzle-geometry/colors';
 import { fileToLogoDataUrl } from './engine/nxn/logo';
 import {
@@ -923,6 +924,8 @@ interface Props {
   onPuzzleChange: (kind: SimPuzzle) => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  /** 自定义 logo 是会员权益；无权限时仍可使用无 logo 或本站 logo。 */
+  canUseCustomLogo: boolean;
   /** 图像面板选中 trans(X 光)视图时的内核预设值(SettingDrawer 的 TRANS_CORE),否则 null。
    *  非 null = 内核色 / 内核不透明度由预设接管(3D 与伴图同吃这一份,见 SimPage 的
    *  withTransCore):外观区那两行显示预设值、锁死不可改,hover 说明原因。 */
@@ -982,7 +985,7 @@ interface Props {
 export default function PlayerControls({
   world, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, onOrderChange, puzzleKind, onPuzzleChange,
-  settings, onSettingsChange, transCore = null,
+  settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
   userMoveRef, twistyPlayerRef,
   skewbNotation, onSkewbNotationChange,
@@ -2631,6 +2634,7 @@ export default function PlayerControls({
         onRendererChange={onRendererChange}
         settings={settings}
         onSettingsChange={onSettingsChange}
+        canUseCustomLogo={canUseCustomLogo}
         transCore={transCore}
         bgSlot={bgSlot}
         t={t}
@@ -3631,6 +3635,7 @@ function PuzzleSettings({
   order, onOrderChange, puzzleKind, onPuzzleChange,
   renderer, onRendererChange,
   settings, onSettingsChange, transCore, bgSlot, t,
+  canUseCustomLogo,
 }: {
   world: World | null;
   order: number;
@@ -3641,6 +3646,7 @@ function PuzzleSettings({
   onRendererChange?: (r: 'cubing' | 'engine' | 'group') => void;
   settings: SimSettings;
   onSettingsChange: (s: SimSettings) => void;
+  canUseCustomLogo: boolean;
   /** 非 null = trans 视图接管了内核色 / 内核不透明度(见 Props.transCore)。 */
   transCore?: { coreColor: string; coreOpacity: number } | null;
   /** 画布左下角浮层槽(SimPage 的 .sim-bg-overlay);背景选择器 portal 到这里,
@@ -3772,10 +3778,14 @@ function PuzzleSettings({
   };
 
   const logoFileRef = useRef<HTMLInputElement>(null);
+  const [showCustomLogoUpsell, setShowCustomLogoUpsell] = useState(false);
+  useEffect(() => {
+    if (canUseCustomLogo) setShowCustomLogoUpsell(false);
+  }, [canUseCustomLogo]);
   const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = ''; // 允许再次选同一文件
-    if (!file) return;
+    if (!file || !canUseCustomLogo) return;
     try {
       const url = await fileToLogoDataUrl(file);
       onSettingsChange({ ...settings, customLogo: url, logo: 'custom' });
@@ -3940,29 +3950,49 @@ function PuzzleSettings({
                 的 .sim-bg-overlay),不再占开关行。 */}
             {/* 顶面 U 中心 logo:无 / 网站 / 自定义上传。仅 NxN 奇数阶有正中心块时实际显示
                 (偶数阶 / 非 NxN 引擎里 setLogo 自动隐藏)。选「自定义」开文件选择器。 */}
-            <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
-              <span>logo</span>
-              <select
-                value={settings.logo}
-                disabled={!caps.supports.logo}
-                onChange={(e) => {
-                  const v = e.target.value as SimSettings['logo'];
-                  if (v === 'custom') logoFileRef.current?.click();
-                  else set('logo', v);
-                }}
-              >
-                <option value="none">{t('无', 'None')}</option>
-                <option value="site">{t('魔方根', 'CubeRoot')}</option>
-                <option value="custom">{t('自定义', 'Custom')}</option>
-              </select>
-              <input
-                ref={logoFileRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handleLogoFile}
-              />
-            </label>
+            <div className="sim-logo-setting">
+              <label className={'sim-toggle' + (caps.supports.logo ? '' : ' sim-toggle--disabled')} title={hint(caps.supports.logo)}>
+                <span>logo</span>
+                <select
+                  value={settings.logo === 'custom' && !canUseCustomLogo ? 'none' : settings.logo}
+                  disabled={!caps.supports.logo}
+                  onChange={(e) => {
+                    const v = e.target.value as SimSettings['logo'];
+                    if (v === 'custom') {
+                      if (!canUseCustomLogo) {
+                        setShowCustomLogoUpsell(true);
+                        return;
+                      }
+                      setShowCustomLogoUpsell(false);
+                      logoFileRef.current?.click();
+                      return;
+                    }
+                    setShowCustomLogoUpsell(false);
+                    set('logo', v);
+                  }}
+                >
+                  <option value="none">{t('无', 'None')}</option>
+                  <option value="site">{t('魔方根', 'CubeRoot')}</option>
+                  <option value="custom">
+                    {canUseCustomLogo ? t('自定义', 'Custom') : t('自定义（会员）', 'Custom (members)')}
+                  </option>
+                </select>
+                <input
+                  ref={logoFileRef}
+                  type="file"
+                  accept="image/*"
+                  disabled={!canUseCustomLogo}
+                  style={{ display: 'none' }}
+                  onChange={handleLogoFile}
+                />
+              </label>
+              {showCustomLogoUpsell && !canUseCustomLogo && (
+                <span className="sim-logo-member-prompt" role="status">
+                  {t('会员权益：', 'Member benefit:')}
+                  <AppLink href="/membership" prefetch={false}>{t('开通会员', 'Join')}</AppLink>
+                </span>
+              )}
+            </div>
             {/* 锁定大小位置 锁的是引擎滚轮/捏合缩放,cubing.js 拼图自管缩放 → 引擎未驱动时灰掉。 */}
             <Toggle label={t('锁定大小位置', 'Lock size & position')} value={settings.lockView} onChange={(v) => set('lockView', v)} disabled={!caps.supports.lockView} title={hint(caps.supports.lockView)} />
             {/* 小窗(背面视图)的开关不在这里:小窗自己右上角有 ×,关掉后播放条最右出现
