@@ -29,8 +29,10 @@ import { shouldAutoRecap } from '@/app/[lang]/timer/_lib/reconstruct/recap';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
+const WEB_RECAP = join(TIMER, '_components', 'SolveRecap.tsx');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const RECAP = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecap.tsx');
+const RECAP_PLACEHOLDER = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecapPlaceholder.tsx');
 const RECAP_CSS = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'solve-recap.css');
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -99,6 +101,52 @@ describe('停表那一下不该现下载 200 KB', () => {
     const idle = src.match(/onIdle\([\s\S]{0,600}?\{ timeout: (\d+) \}\)/);
     expect(idle, 'SoloView 的预取没有 onIdle + timeout').not.toBeNull();
     expect(Number(idle![1])).toBeLessThanOrEqual(2000);
+  });
+});
+
+describe('复盘异步加载时先稳定容器', () => {
+  const solo = read(SOLO_VIEW);
+  const recap = read(RECAP);
+
+  it('外层 chunk 等待期间立即渲染与正式复盘同框的占位', () => {
+    expect(solo).toMatch(/import SolveRecapPlaceholder from '@cuberoot\/timer-ui\/solve-recap-placeholder'/);
+    expect(solo).toMatch(/const SolveRecap = dynamic\([\s\S]{0,220}loading:\s*SolveRecapPlaceholder/);
+
+    const placeholder = read(RECAP_PLACEHOLDER);
+    expect(placeholder).toMatch(/<section className="shell-recap shell-recap-placeholder"/);
+    expect(placeholder).toMatch(/<div className="shell-recap-body">[\s\S]*<SolveRecapBodyPlaceholder\s*\/>/);
+  });
+
+  it('chunk 已缓存时，每一把只用一个绘制帧稳定空容器', () => {
+    const adapter = read(WEB_RECAP);
+    expect(adapter).toMatch(/import \{ useEffect, useState \} from 'react'/);
+    expect(adapter).toMatch(/import SolveRecapPlaceholder from '@cuberoot\/timer-ui\/solve-recap-placeholder'/);
+    expect(adapter).toMatch(/revealedSolveId !== props\.solve\.id[\s\S]{0,80}<SolveRecapPlaceholder\s*\/>/);
+    expect(adapter.match(/requestAnimationFrame\(/g)).toHaveLength(1);
+
+    const placeholder = read(RECAP_PLACEHOLDER);
+    expect(placeholder).not.toMatch(/placeholder-(?:line|metrics)/);
+  });
+
+  it('桌面自动复盘不在完整报告挂载时动画改变栏宽', () => {
+    const css = read(SHELL_CSS);
+    const rule = css.match(/\.timer-shell\.recap-open\s*\{([^}]*)\}/);
+    expect(rule, 'shell.css 里没有自动复盘右栏规则').not.toBeNull();
+    expect(rule![1]).toMatch(/transition:\s*none/);
+  });
+
+  it('报告自身的 lazy 边界也保留正文占位', () => {
+    expect(recap).toMatch(/import \{ SolveRecapBodyPlaceholder \} from '\.\/SolveRecapPlaceholder'/);
+    expect(recap).toMatch(/<Suspense fallback=\{<SolveRecapBodyPlaceholder\s*\/>\}>/);
+    expect(recap).not.toMatch(/<Suspense fallback=\{null\}>/);
+  });
+
+  it('占位没有额外动画，内容到达时只做原位替换', () => {
+    const css = read(RECAP_CSS);
+    const placeholderRules = css.match(/\/\* Recap loading placeholder[\s\S]*$/)?.[0] ?? '';
+    expect(placeholderRules).toContain('.shell-recap-placeholder');
+    expect(placeholderRules).not.toMatch(/placeholder-(?:line|metrics)/);
+    expect(placeholderRules).not.toMatch(/animation\s*:/);
   });
 });
 

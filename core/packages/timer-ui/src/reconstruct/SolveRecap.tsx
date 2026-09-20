@@ -23,6 +23,7 @@
 
 import { lazy, Suspense } from 'react';
 import type { ReconstructHost } from './ReconstructHost';
+import { SolveRecapBodyPlaceholder } from './SolveRecapPlaceholder';
 import './solve-recap.css';
 import { Maximize2, X } from 'lucide-react';
 import type { Solve } from '@cuberoot/shared/timer';
@@ -68,7 +69,7 @@ export default function SolveRecap({
       </div>
       <div className="shell-recap-body">
         {/* hideDate:这把是刚拧完的,日期是唯一不用告诉他的东西。 */}
-        <Suspense fallback={null}><ReconstructReport
+        <Suspense fallback={<SolveRecapBodyPlaceholder />}><ReconstructReport
           host={host}
           solve={solve}
           isZh={isZh}
