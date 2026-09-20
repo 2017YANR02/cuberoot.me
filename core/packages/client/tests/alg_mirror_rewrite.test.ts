@@ -285,6 +285,12 @@ describe('regenerateMirrorAlgs', () => {
     expect(texts(regenerateMirrorAlgs(a, b).algsById.get(2)!)[1]).toEqual(["U' L' U L"]);
   });
 
+  it('展示重合也跳过 —— 人工条末尾的持方 y 不会和生成条重复', () => {
+    const a = { id: 1, algs: views(["U R U' R'"]) };
+    const b = { id: 2, algs: views([], ["U' L' U L y'"]) };
+    expect(texts(regenerateMirrorAlgs(a, b).algsById.get(2)!)[1]).toEqual(["U' L' U L y'"]);
+  });
+
   it('幂等:把结果再喂一遍,一个字都不变', () => {
     const a = { id: 1, algs: views(["U R U' R'", "R' F R F'"]) };
     const b = { id: 2, algs: views(["F R' F' R"]) };

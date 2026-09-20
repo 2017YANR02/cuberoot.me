@@ -4,7 +4,8 @@ import { cube3x3x3 } from 'cubing/puzzles';
 import {
   tokenizeMoves, flattenAlg, expandGroups, cubeOnly, stripGripMarks, deleteAuf,
   stripUpstreamMarks, invertMoveString, toMoveString, toMoveStringStrict,
-  canonicalize3x3WideMoves, stm, sqtm, htm, qtm, etm, gen,
+  canonicalize3x3WideMoves, findIllegalGluedCubeMoves, spaceIllegalGluedCubeMoves,
+  stm, sqtm, htm, qtm, etm, gen,
 } from '@cuberoot/shared/alg-notation';
 import { cleanForPlayer, countMovesExpanded } from '@/lib/recon-alg-utils';
 
@@ -52,6 +53,22 @@ describe('tokenizeMoves', () => {
     const { moves, junk } = tokenizeMoves('R U @nonsense F');
     expect(moves.map((m) => m.raw)).toEqual(['R', 'U', 'F']);
     expect(junk).toEqual(['@nonsense']);
+  });
+});
+
+describe('glued cube move spacing', () => {
+  it('allows only turns on opposite parallel faces', () => {
+    expect(findIllegalGluedCubeMoves("RL L2R' U'D dU F2B bF")).toBeNull();
+  });
+
+  it.each(['rU', 'Dr', 'RR', 'MR', 'yR'])(
+    'rejects %s because the two moves are not opposite parallel faces',
+    (alg) => expect(findIllegalGluedCubeMoves(alg)?.joined).toBe(alg),
+  );
+
+  it('adds only required spaces and leaves permitted pairs and comments intact', () => {
+    expect(spaceIllegalGluedCubeMoves("rU RL Dr U'D // RU\nFB"))
+      .toBe("r U RL D r U'D // RU\nFB");
   });
 });
 

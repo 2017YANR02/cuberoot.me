@@ -1,4 +1,4 @@
-import { BookOpenCheck, Keyboard } from 'lucide-react';
+import { BookOpen, Keyboard } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { OhHand } from '@/lib/alg_oh_hand';
 import './alg-tag-label.css';
@@ -17,7 +17,7 @@ export default function AlgTagLabel({ tag, label, hand = 'left' }: { tag: string
           <EventIcon event={event} />
           {hand && <small className="alg-tag-hand">{hand === 'right' ? 'R' : 'L'}</small>}
         </span>
-      ) : event ? <EventIcon event={event} /> : tag === 'key' ? <Keyboard size="1em" /> : <BookOpenCheck size="1em" />}
+      ) : event ? <EventIcon event={event} /> : tag === 'key' ? <Keyboard size="1em" /> : <BookOpen size="1em" />}
     </span>
   </span>;
 }

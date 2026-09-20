@@ -3,6 +3,8 @@
  * Ported from packages/client-vite/src/utils/alg_autospace.ts
  */
 
+import { areOppositeParallelFaceMoves } from '@cuberoot/shared/alg-notation';
+
 export const MOVE_START_RE = /[RLUDFBMESxyzrludfbmes]/;
 export const MOVE_END_RE = /[RLUDFBMESwxyzrludfbmes'2]/;
 
@@ -117,16 +119,10 @@ function moveBaseFaceBack(value: string, endIdx: number): string {
 }
 
 /**
- * 同轴对面「连写」对:U/D 轴(UD / DU)、F/B 轴(FB / BF)两个方向都不加空格
- * (用户记号,如 U'D / U2D / U2'D / F'B' / F2B,以及反向 DU / D2U / BF / B'F)。
- * R/L 轴仍照常加空格 —— 只有 U-D、F-B 两条轴例外。大小写均按同一面处理。
+ * 同轴对面「连写」对:R/L、U/D、F/B 三条轴的两个方向都不加空格。
+ * 大小写宽层按对应外层面处理；其余相邻转动必须由空格分开。
  */
-function isGluedOppositePair(firstBase: string, secondBase: string): boolean {
-  const a = firstBase.toUpperCase();
-  const b = secondBase.toUpperCase();
-  return (a === 'U' && b === 'D') || (a === 'D' && b === 'U')
-    || (a === 'F' && b === 'B') || (a === 'B' && b === 'F');
-}
+const isGluedOppositePair = areOppositeParallelFaceMoves;
 
 const OPEN_TO_CLOSE: Record<string, string> = { '(': ')', '[': ']', '{': '}' };
 
