@@ -81,8 +81,9 @@ function DomainList({ title, items, href, showStatus = true }: {
   return <section className="platform-domain-content"><h2>{title}</h2>{list}</section>;
 }
 
-function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime }: {
+function LessonMedia({ lessonId, courseSlug, autoContinue, onAutoContinueChange, onNext, onPrevious, autoPlay, startTime }: {
   lessonId: string;
+  courseSlug?: string;
   startTime?: number;
   autoContinue?: boolean;
   onAutoContinueChange?: (enabled: boolean) => void;
@@ -122,17 +123,24 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
     if (resume.current.time > 0) element.currentTime = resume.current.time;
     if (resume.current.playing) void element.play().catch(() => { /* Native play control remains available. */ });
   };
+  if (error instanceof PlatformPermissionError && error.status === 403) {
+    return <div className="platform-locked-media">
+      <div className="platform-locked-media-visual" aria-hidden="true">
+        {courseSlug === 'yan-ruimin-3x3-beginner'
+          ? <img src="/images/ruimin/gallery/photo-03.webp" alt="" />
+          : <VisualCube view="iso" size={240} local alt="" />}
+      </div>
+      <AppLink className="platform-locked-media-action" href="/platform/account/invites" prefetch={false}>
+        {t('兑换课程', 'Redeem course')}
+      </AppLink>
+    </div>;
+  }
   if (error instanceof PlatformPermissionError) {
-    const needsLogin = error.status === 401;
-    const href = needsLogin
-      ? `/account${nextQuery(`${window.location.pathname}${window.location.search}`)}`
-      : '/platform/account/invites';
+    const href = `/account${nextQuery(`${window.location.pathname}${window.location.search}`)}`;
     return <div className="platform-domain-note">
-      <p>{needsLogin
-        ? t('请先登录，再继续观看这个课时。', 'Sign in to continue watching this lesson.')
-        : t('这个课时尚未解锁，请先兑换课程。', 'This lesson is not unlocked yet. Redeem the course first.')}</p>
+      <p>{t('请先登录，再继续观看这个课时。', 'Sign in to continue watching this lesson.')}</p>
       <AppLink className="platform-action-link" href={href} prefetch={false}>
-        {needsLogin ? t('前往登录', 'Go to sign in') : t('兑换课程', 'Redeem course')}
+        {t('前往登录', 'Go to sign in')}
       </AppLink>
     </div>;
   }
@@ -258,7 +266,7 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
         </nav>
         <section className="platform-classroom-stage" aria-label={t('课程视频', 'Lesson video')}>
           <h2 aria-live="polite">{active.title}</h2>
-          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} startTime={lessonStartTime}
+          <div className="platform-classroom-player"><LessonMedia key={active.id} lessonId={active.id} courseSlug={string(data.slug) ?? undefined} startTime={lessonStartTime}
             autoContinue={autoContinue} onAutoContinueChange={onSelectLesson ? setAutoContinue : undefined} autoPlay={autoPlayLessonId === active.id}
             onPrevious={onSelectLesson && activeIndex > 0 ? () => playLesson(activeIndex - 1) : undefined}
             onNext={onSelectLesson && activeIndex < sectionLessons.length - 1 ? () => playLesson(activeIndex + 1) : undefined} /></div>

@@ -26,12 +26,9 @@ beforeEach(() => {
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
 });
 
-it.each([
-  [401, '请先登录，再继续观看这个课时。', '前往登录', '/account?next=%2Fzh%2Fplatform%2Fcourses%2Fcourse%2Fsections%2Fcore%3Flesson%3Dfirst'],
-  [403, '这个课时尚未解锁，请先兑换课程。', '兑换课程', '/platform/account/invites'],
-] as const)('turns media permission %s into an actionable course state', async (status, message, action, href) => {
+it('turns unauthenticated media access into a sign-in action', async () => {
   window.history.replaceState({}, '', '/zh/platform/courses/course/sections/core?lesson=first');
-  load.mockRejectedValueOnce(new PlatformPermissionError(status));
+  load.mockRejectedValueOnce(new PlatformPermissionError(401));
   const host = document.createElement('div'), root = createRoot(host);
   try {
     await act(async () => root.render(createElement(PlatformDomainContent, {
@@ -39,14 +36,37 @@ it.each([
       entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }] } } as PlatformEntity,
       params: {},
     })));
-    expect(host.textContent).toContain(message);
-    expect(host.textContent).toContain(action);
+    expect(host.textContent).toContain('请先登录，再继续观看这个课时。');
+    expect(host.textContent).toContain('前往登录');
     expect(host.textContent).not.toContain('Authentication required.');
-    expect(host.textContent).not.toContain('Permission denied.');
-    expect(host.querySelector('a')?.getAttribute('href')).toBe(href);
+    expect(host.querySelector('a')?.getAttribute('href')).toBe('/account?next=%2Fzh%2Fplatform%2Fcourses%2Fcourse%2Fsections%2Fcore%3Flesson%3Dfirst');
   } finally {
     await act(async () => root.unmount());
     window.history.replaceState({}, '', '/');
+  }
+});
+
+it('shows a blurred course visual with only the redemption action when a lesson is locked', async () => {
+  load.mockRejectedValueOnce(new PlatformPermissionError(403));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: {
+        slug: 'yan-ruimin-3x3-beginner',
+        lessons: [{ id: 'first', titleZh: '正式课 01' }],
+      } } as PlatformEntity,
+      params: {},
+    })));
+    const locked = host.querySelector('.platform-locked-media');
+    expect(locked?.textContent).toBe('兑换课程');
+    expect(locked?.querySelector('p')).toBeNull();
+    expect(locked?.querySelector('img')?.getAttribute('src')).toBe('/images/ruimin/gallery/photo-03.webp');
+    expect(locked?.querySelector('a')?.getAttribute('href')).toBe('/platform/account/invites');
+    expect(host.textContent).not.toContain('Permission denied.');
+    expect(host.textContent).not.toContain('这个课时尚未解锁');
+  } finally {
+    await act(async () => root.unmount());
   }
 });
 
