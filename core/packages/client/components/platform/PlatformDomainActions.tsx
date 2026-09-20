@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Star } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { DateInput } from '@/components/DateInput';
 import { toLocalIsoDate } from '@cuberoot/shared/iso-date';
 import { useT } from '@/hooks/useT';
+import { useLang } from '@/i18n/tr';
 import { apiUrl } from '@/lib/api-base';
 import { useAuthUser } from '@/lib/auth-store';
 import { approveCompetitionOrderRefund, listCompetitionOrderRefunds, refreshCompetitionOrderRefund, rejectCompetitionOrderRefund, requestCompetitionOrderRefund, type CompetitionRefund } from '@/lib/online-competition-api';
@@ -31,7 +32,7 @@ import type {
   PlatformPaymentAttemptResult,
 } from '@/lib/platform-types';
 import { isPlatformPaymentAttemptResult } from '@/lib/platform-types';
-import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
+import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformState } from './PlatformState';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 
@@ -807,19 +808,56 @@ function escapeCsv(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
+function directInviteSectionIds(course: PlatformEntity | null | undefined, slug: string): string[] {
+  const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === slug);
+  const lessons = Array.isArray(course?.data?.lessons) ? course.data.lessons : [];
+  if (!section) return [];
+  return lessons.flatMap((lesson) => {
+    if (!lesson || typeof lesson !== 'object' || Array.isArray(lesson)) return [];
+    const item = lesson as Record<string, unknown>;
+    return typeof item.id === 'string' && String(item.titleZh ?? '').startsWith(section.title.zh) ? [item.id] : [];
+  });
+}
+
+function inviteSectionIds(course: PlatformEntity | null | undefined, slug: string): string[] {
+  return platformCourseSectionsIncludedBy(slug).flatMap(section => directInviteSectionIds(course, section.slug));
+}
+
+function preferredInviteScope(course: PlatformEntity | null | undefined): string {
+  if (directInviteSectionIds(course, 'core').length) return 'core';
+  return PLATFORM_COURSE_SECTIONS.find(section => section.slug !== 'introduction' && directInviteSectionIds(course, section.slug).length)?.slug ?? 'all';
+}
+
+interface GeneratedRedemptionCode {
+  id: string;
+  code: string;
+  courseId: string;
+}
+
+interface GeneratedRedemptionCodes {
+  batchReference?: string;
+  codes: GeneratedRedemptionCode[];
+}
+
+function platformCourseUrl(courseId: string, lang: 'en' | 'zh'): string {
+  const langPrefix = lang === 'zh' ? '/zh' : '';
+  return `https://cuberoot.me${langPrefix}/platform/courses/${encodeURIComponent(courseId)}`;
+}
+
 function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAction }: CommonProps) {
   const t = useT();
+  const lang = useLang();
   // Ordinary invitation DELETE archives the code; retain physical-bundle audit management.
   const visibleEntities = entities.filter(entity => entity.status !== 'archived' || entity.data?.distributionType === 'physical_bundle');
   const [courses, setCourses] = useState<PlatformEntity[] | null>(null);
   const [courseError, setCourseError] = useState<Error | null>(null);
-  const [generated, setGenerated] = useState<PlatformActionResult | null>(null);
+  const [generated, setGenerated] = useState<GeneratedRedemptionCodes | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const [courseId, setCourseId] = useState('');
-  const [courseDetail, setCourseDetail] = useState<PlatformEntity | null>(null);
   const [scope, setScope] = useState('core');
   const [expiresAt, setExpiresAt] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const shareTextRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -829,6 +867,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         const available = result.items.filter((item) => item.status === 'published' || item.status === 'unlisted');
         setCourses(available);
         setCourseId(available[0]?.id ?? '');
+        setScope(preferredInviteScope(available[0]));
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) setCourseError(reason instanceof Error ? reason : new Error(String(reason)));
@@ -836,30 +875,16 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    setCourseDetail(null);
-    setFormError(null);
-    if (!courseId) return;
-    const controller = new AbortController();
-    void loadPlatformResource('courses', { routeId: 'course-detail', params: { id: courseId }, signal: controller.signal })
-      .then(result => { if (!controller.signal.aborted) setCourseDetail(result.items[0] ?? null); })
-      .catch(() => { if (!controller.signal.aborted) setFormError(t('课程加载失败，请刷新页面重试。', 'Could not load lessons. Refresh the page to retry.')); });
-    return () => controller.abort();
-  }, [courseId]);
-
-  const lessons = (Array.isArray(courseDetail?.data?.lessons) ? courseDetail.data.lessons : []) as Record<string, unknown>[];
+  const courseDetail = courses?.find(course => course.id === courseId) ?? null;
   // Match the course directory's section names; never infer permissions from an invite's label.
-  const sectionIds = (slug: string) => {
-    const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === slug);
-    return lessons.filter(lesson => section && typeof lesson.id === 'string'
-      && String(lesson.titleZh ?? '').startsWith(section.title.zh)).map(lesson => String(lesson.id));
-  };
+  const sectionIds = (slug: string) => inviteSectionIds(courseDetail, slug);
+  const hasDirectSection = (slug: string) => directInviteSectionIds(courseDetail, slug).length > 0;
   const generateCode = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy) return;
     const values = new FormData(event.currentTarget);
     const lessonIds = sectionIds(scope);
-    if (!courseDetail || courseDetail.id !== courseId || (scope !== 'all' && !lessonIds.length)) {
+    if (!courseDetail || courseDetail.id !== courseId || (scope !== 'all' && !hasDirectSection(scope))) {
       setFormError(t('请选择课程中已有的课时范围。', 'Choose an available lesson section.'));
       return;
     }
@@ -883,15 +908,38 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
       benefit: { courseId, ...(scope === 'all' ? {} : { lessonIds }) },
     });
     if (response?.code) {
-      setGenerated({ codes: [...(generated?.codes ?? []), { id: response.id ?? '', code: response.code }] });
+      const generatedCode = response.code;
+      setGenerated(current => ({
+        batchReference: current?.batchReference,
+        codes: [...(current?.codes ?? []), { id: response.id ?? '', code: generatedCode, courseId }],
+      }));
       setCopyMessage(null);
     }
   };
 
-  const codeLines = generated?.codes?.map((item) => item.code).join('\n') ?? '';
+  const shareText = generated?.codes.map(item => [
+    `${t('兑换码：', 'Redemption code:')} ${item.code}`,
+    `${t('课程链接：', 'Course link:')} ${platformCourseUrl(item.courseId, lang)}`,
+  ].join('\n')).join('\n\n') ?? '';
+  useEffect(() => {
+    const textarea = shareTextRef.current;
+    if (!textarea) return;
+    const fitContent = () => {
+      const style = window.getComputedStyle(textarea);
+      const borderHeight = Number.parseFloat(style.borderTopWidth) + Number.parseFloat(style.borderBottomWidth);
+      textarea.style.height = '0px';
+      textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;
+    };
+    fitContent();
+    window.addEventListener('resize', fitContent);
+    return () => window.removeEventListener('resize', fitContent);
+  }, [shareText]);
   const downloadCsv = () => {
     if (!generated?.codes?.length) return;
-    const csv = [escapeCsv(t('兑换码', 'Redemption code')), ...generated.codes.map((item) => escapeCsv(item.code))].join('\r\n');
+    const csv = [
+      [escapeCsv(t('兑换码', 'Redemption code')), escapeCsv(t('课程链接', 'Course link'))].join(','),
+      ...generated.codes.map(item => [escapeCsv(item.code), escapeCsv(platformCourseUrl(item.courseId, lang))].join(',')),
+    ].join('\r\n');
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
     const anchor = document.createElement('a');
     anchor.href = url;
@@ -901,8 +949,8 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   };
   const copyCodes = async () => {
     try {
-      await navigator.clipboard.writeText(codeLines);
-      setCopyMessage(t('兑换码已复制。', 'Redemption codes copied.'));
+      await navigator.clipboard.writeText(shareText);
+      setCopyMessage(t('兑换码和课程链接已复制。', 'Redemption codes and course links copied.'));
     } catch {
       setCopyMessage(t('复制失败，请手动选择文本。', 'Copy failed; select the text manually.'));
     }
@@ -918,14 +966,20 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
           <h2>{t('生成兑换码', 'Create a code')}</h2>
           <div className="platform-form-grid">
             <label><span>{t('课程', 'Course')}</span>
-              <select className="platform-field-control" value={courseId} onChange={event => { setCourseId(event.target.value); setScope('core'); }}>
+              <select className="platform-field-control" value={courseId} onChange={event => {
+                const nextCourseId = event.target.value;
+                const nextCourse = courses?.find(course => course.id === nextCourseId);
+                setCourseId(nextCourseId);
+                setScope(preferredInviteScope(nextCourse));
+                setFormError(null);
+              }}>
                 {courseOptions.map(course => <option key={course.value} value={course.value}>{t(course.label.zh, course.label.en)}</option>)}
               </select>
             </label>
             <label><span>{t('开放内容', 'Access to')}</span>
               <select className="platform-field-control" value={scope} onChange={event => setScope(event.target.value)}>
                 {PLATFORM_COURSE_SECTIONS.filter(section => section.slug !== 'introduction').map(section => (
-                  <option key={section.slug} value={section.slug} disabled={!sectionIds(section.slug).length}>{t(section.title.zh, section.title.en)}</option>
+                  <option key={section.slug} value={section.slug} disabled={!hasDirectSection(section.slug)}>{t(section.title.zh, section.title.en)}</option>
                 ))}
                 <option value="all">{t('全部课程', 'Full course')}</option>
               </select>
@@ -941,15 +995,13 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
             </div>
           </details>
           {formError ? <p role="alert" className="platform-form-error">{formError}</p> : null}
-          <button className="platform-button platform-button-primary" type="submit" disabled={Boolean(busy) || !courseDetail || (scope !== 'all' && !sectionIds(scope).length)}>{busy === 'admin-save' ? t('生成中…', 'Creating…') : t('生成一个兑换码', 'Create one code')}</button>
+          <button className="platform-button platform-button-primary" type="submit" disabled={Boolean(busy) || !courseDetail || (scope !== 'all' && !hasDirectSection(scope))}>{busy === 'admin-save' ? t('生成中…', 'Creating…') : t('生成一个兑换码', 'Create one code')}</button>
         </form>
       )}
       {generated?.codes?.length ? (
         <section className="platform-invite-result" aria-label={t('新生成的兑换码', 'New codes')}>
           <h2>{t('复制后发给买家', 'Copy and send to your buyer')}</h2>
-          {generated.codes.length === 1
-            ? <input className="platform-field-control" readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />
-            : <textarea className="platform-field-control platform-invite-code-lines" rows={Math.min(8, generated.codes.length)} readOnly value={codeLines} aria-label={t('新生成的兑换码', 'New redemption codes')} />}
+          <textarea ref={shareTextRef} className="platform-field-control platform-invite-code-lines" rows={1} readOnly value={shareText} aria-label={t('可转发的兑换信息', 'Shareable redemption details')} />
           <div className="platform-write-actions">
             <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制', 'Copy')}</button>
             <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载', 'Download')}</button>
@@ -962,8 +1014,18 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         <DomainForm
           definition={definition}
           busy={busy}
-          runAction={(action, id, payload) => runAction(action, id, { ...payload, expiresAt: payload?.expiresAt ? new Date(String(payload.expiresAt)).toISOString() : null })}
-          onResult={(result) => { setGenerated({ ...result, codes: [...(generated?.codes ?? []), ...(result.codes ?? [])] }); setCopyMessage(null); }}
+          runAction={async (action, id, payload) => {
+            const result = await runAction(action, id, { ...payload, expiresAt: payload?.expiresAt ? new Date(String(payload.expiresAt)).toISOString() : null });
+            const batchCourseId = typeof payload?.courseId === 'string' ? payload.courseId : '';
+            if (result?.codes?.length && batchCourseId) {
+              setGenerated(current => ({
+                batchReference: result.batchReference ?? current?.batchReference,
+                codes: [...(current?.codes ?? []), ...result.codes!.map(item => ({ ...item, courseId: batchCourseId }))],
+              }));
+              setCopyMessage(null);
+            }
+            return result;
+          }}
           spec={{
             title: text('批量生成', 'Create multiple codes'),
             action: 'admin-invite-batch',
@@ -999,9 +1061,9 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         const benefit = entity.data?.benefit as Record<string, unknown> | undefined;
         const linkedCourse = courses?.find(course => course.id === benefit?.courseId);
         const ids = Array.isArray(benefit?.lessonIds) ? benefit.lessonIds : null;
-        const matchedSection = benefit?.courseId === courseDetail?.id && ids?.length
+        const matchedSection = linkedCourse && ids?.length
           ? PLATFORM_COURSE_SECTIONS.find(section => {
-            const matching = sectionIds(section.slug);
+            const matching = inviteSectionIds(linkedCourse, section.slug);
             return matching.length === ids.length && matching.every(id => ids.includes(id));
           }) : undefined;
         const scopeLabel = matchedSection ? t(matchedSection.title.zh, matchedSection.title.en) : ids

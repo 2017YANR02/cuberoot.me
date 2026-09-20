@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
+vi.mock('@/i18n/tr', async importOriginal => ({ ...await importOriginal<object>(), useLang: () => 'zh' }));
 vi.mock('@/components/AppLink', () => ({ default: ({ children }: { children: ReactNode }) => children }));
 const { load } = vi.hoisted(() => ({ load: vi.fn() }));
 vi.mock('@/lib/platform-gateway', async importOriginal => ({ ...await importOriginal<object>(), loadPlatformResource: load }));
@@ -25,27 +26,40 @@ async function mount(entities: PlatformEntity[] = []) {
   return { host, runAction, close: () => act(async () => root.unmount()) };
 }
 
-it('creates distinct trial and formal access, with one learner by default and full access only when selected', async () => {
+it('includes trial lessons in formal access, with one learner by default and full access only when selected', async () => {
   load.mockResolvedValue({ items: [course] });
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
   const { host, runAction, close } = await mount();
   try {
+    expect(load).toHaveBeenCalledOnce();
+    expect(load.mock.lastCall?.[0]).toBe('admin-courses');
+    expect(host.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(false);
     expect(host.querySelectorAll('details[open]')).toHaveLength(0);
     const form = host.querySelector('form')!;
     const scope = form.querySelectorAll('select')[1];
     const submit = () => act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); });
     await submit();
     expect(runAction.mock.lastCall?.[2]).toMatchObject({ maxRedemptions: 1, expiresAt: null,
-      benefit: { courseId: course.id, lessonIds: ['core-1', 'core-2'] } });
+      benefit: { courseId: course.id, lessonIds: ['trial', 'core-1', 'core-2'] } });
     const result = host.querySelector('.platform-invite-result')!;
-    expect(result.querySelector<HTMLInputElement>('input[readonly]')?.value).toBe('TEST-ONLY-CODE');
-    expect(result.querySelector('textarea')).toBeNull();
+    expect(result.querySelector('input[readonly]')).toBeNull();
+    expect(result.querySelector<HTMLTextAreaElement>('textarea[readonly]')?.value).toBe(
+      '兑换码： TEST-ONLY-CODE\n课程链接： https://cuberoot.me/zh/platform/courses/course-test',
+    );
     expect(result.textContent).not.toMatch(/离开页面|保存表格/);
     expect(result.textContent).toContain('下载');
+    await act(async () => { Array.from(result.querySelectorAll('button')).find(button => button.textContent === '复制')!.click(); });
+    expect(writeText).toHaveBeenCalledWith('兑换码： TEST-ONLY-CODE\n课程链接： https://cuberoot.me/zh/platform/courses/course-test');
+    expect(result.textContent).toContain('兑换码和课程链接已复制');
     await act(async () => { scope.value = 'trial'; scope.dispatchEvent(new Event('change', { bubbles: true })); });
     await submit();
     expect(runAction.mock.lastCall?.[2].benefit).toEqual({ courseId: course.id, lessonIds: ['trial'] });
-    expect(host.querySelector('textarea[readonly]')?.textContent).toBe('TEST-ONLY-CODE\nTEST-ONLY-CODE');
-    expect(host.querySelector('textarea[readonly]')?.getAttribute('rows')).toBe('2');
+    expect(host.querySelector<HTMLTextAreaElement>('textarea[readonly]')?.value).toBe(
+      '兑换码： TEST-ONLY-CODE\n课程链接： https://cuberoot.me/zh/platform/courses/course-test\n\n'
+      + '兑换码： TEST-ONLY-CODE\n课程链接： https://cuberoot.me/zh/platform/courses/course-test',
+    );
+    expect(host.querySelector('textarea[readonly]')?.getAttribute('rows')).toBe('1');
     await act(async () => { scope.value = 'all'; scope.dispatchEvent(new Event('change', { bubbles: true })); });
     await submit();
     expect(runAction.mock.lastCall?.[2].benefit).toEqual({ courseId: course.id });
@@ -79,14 +93,15 @@ it('presents existing records in everyday language and keeps management folded',
   } finally { await close(); }
 });
 
-it('blocks creation when lessons fail to load or the selected section has no lessons', async () => {
-  load.mockResolvedValueOnce({ items: [course] }).mockRejectedValueOnce(new Error('fixture failure'));
+it('falls back to an available section when a course has no formal lessons', async () => {
+  const trialOnly = { ...course, data: { lessons: [{ id: 'trial-only', titleZh: '试听课 01' }] } } as PlatformEntity;
+  load.mockResolvedValue({ items: [trialOnly] });
   const { host, runAction, close } = await mount();
   try {
-    expect(host.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(true);
-    expect(host.textContent).toContain('课程加载失败');
+    expect(host.querySelectorAll('select')[1].value).toBe('trial');
+    expect(host.querySelector('button[type="submit"]')?.hasAttribute('disabled')).toBe(false);
     await act(async () => { host.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); });
-    expect(runAction).not.toHaveBeenCalled();
+    expect(runAction.mock.lastCall?.[2].benefit).toEqual({ courseId: trialOnly.id, lessonIds: ['trial-only'] });
   } finally { await close(); }
 });
 

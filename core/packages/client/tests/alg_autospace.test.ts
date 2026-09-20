@@ -5,13 +5,16 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
   // 模拟「刚输入第二步那个面字母」后的一次 onInput 调用
   const typed = (value: string) => autoSpaceMoves(value, value.length, 'insertText');
 
-  it('RL 之间加空格(普通相邻面)', () => {
-    expect(typed('RL').value).toBe('R L');
-  });
-
-  it('UD / FB 连写不加空格(同轴对面)', () => {
+  it('RL / UD / FB 连写不加空格(三条轴的同轴对面)', () => {
+    expect(typed('RL').value).toBe('RL');
     expect(typed('UD').value).toBe('UD');
     expect(typed('FB').value).toBe('FB');
+  });
+
+  it('其余相邻面必须加空格', () => {
+    expect(typed('rU').value).toBe('r U');
+    expect(typed('Dr').value).toBe('D r');
+    expect(typed('RF').value).toBe('R F');
   });
 
   it("带修饰符的 U..D / F..B 也连写", () => {
@@ -29,9 +32,10 @@ describe('autoSpaceMoves — 相邻转动自动加空格', () => {
     expect(typed("B'F").value).toBe("B'F");
   });
 
-  it('R/L 轴仍照常加空格(只有 U-D、F-B 例外)', () => {
-    expect(typed('RL').value).toBe('R L');
-    expect(typed('LR').value).toBe('L R');
+  it('R/L 轴的反向及宽层写法也允许连写', () => {
+    expect(typed('LR').value).toBe('LR');
+    expect(typed('rL').value).toBe('rL');
+    expect(typed('RwL').value).toBe('RwL');
   });
 
   it('前缀有其它转动时,末尾 U..D 仍连写', () => {

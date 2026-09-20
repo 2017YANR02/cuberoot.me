@@ -1,7 +1,7 @@
 /* ─── /why-cube — "Why learn the cube" (for kids & parents) ───
  * Editorial long-form page. Theme-token driven (auto light/dark); warm --accent
  * as the page accent. Mirrors the /regulation visual language. Cube imagery is
- * self-contained (cubing.js TwistyPlayer + inline EventIcon SVGs), no external CDN.
+ * self-contained (shared /sim cube renderer + inline EventIcon SVGs), no external CDN.
  * ───────────────────────────────────────────────────────────── */
 
 .wc-page {
@@ -283,6 +283,8 @@
   display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end;
   gap: 18px 20px; margin-top: 6px;
 }
+.wc-sizes .alg-sim-player { padding: 0; }
+.wc-sizes .sim-stage-reset { display: none; }
 .wc-sizes .wc-fig-cap { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
 
 /* ── Responsive ─────────────────────────────────── */

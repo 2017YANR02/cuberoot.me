@@ -311,10 +311,12 @@ body[data-site-scenery] :is(
   backdrop-filter: var(--glass-filter);
 }
 
-/* Search fields inside their glass shell need no second sheet of glass. */
+/* Composite controls paint their visual surface on a sibling or parent layer. */
 body[data-site-scenery] :is(
   .landing-search-input .landing-search-field,
-  .region-picker-search .region-picker-search-input
+  .region-picker-search .region-picker-search-input,
+  .sim-player-hlwrap .sim-player-input--hl,
+  .auth-otp-native
 ) {
   background-color: transparent !important;
   -webkit-backdrop-filter: none;

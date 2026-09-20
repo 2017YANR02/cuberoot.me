@@ -11,13 +11,13 @@ import { caseAlgIssue, caseCoepEntry } from '@/lib/alg_case_alignment';
  * 镜像 / 逆 / 镜像逆存的是**表编号**(`meta.no`),不是 DB id;三者关联全落在本 set 内,
  * 所以 `byNo` 一定查得到(查不到只显示编号,不猜)。背景见 AlgCaseMetaModal 顶部注释。
  */
-import { useEffect, useMemo, useState } from 'react';
-import { Copy, Check, HelpCircle, Pin } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Copy, Check, HelpCircle, Pin, Shuffle } from 'lucide-react';
 import Link from '@/components/AppLink';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import type { AlgCase, AlgCaseMeta, AlgPuzzle } from '@cuberoot/shared';
-import { stm } from '@cuberoot/shared/alg-notation';
-import { CaseThumb } from '@/components/CaseThumb';
+import { displayedAlgorithmStm } from '@/lib/alg-metrics';
+import { AlgCaseRelationCards, type AlgCaseRelationCardItem } from '@/components/AlgCaseRelationCards';
 import AlgPlayer from '@/components/AlgPlayer';
 import { useCopy } from '@/hooks/useCopy';
 import { ALG_SET_UNIVERSE, LL_UNIVERSE_TOTAL, caseOrbit, probabilityFraction } from '@/lib/alg_probability';
@@ -56,12 +56,13 @@ const METRIC_LABEL: Record<string, string> = {
 
 /** 一行「可复制的公式 + 右侧标签」(`len` 给了就在右边挂步数徽章)。 */
 function AlgLine({
-  label, alg, algHtml, len, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle, issue,
+  label, alg, algHtml, len, prefix, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle, issue,
 }: {
   label: string;
   alg: string;
   algHtml?: string;
   len?: number;
+  prefix?: ReactNode;
   playable?: boolean;
   selected?: boolean;
   onPlay?: () => void;
@@ -85,6 +86,7 @@ function AlgLine({
       } : undefined}
       title={playable ? tr({ zh: '播放动画', en: 'Play animation' }) : undefined}
     >
+      {prefix}
       <code className="alg-meta-algline-code">
         {algHtml
           ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
@@ -215,7 +217,7 @@ export default function AlgCaseMetaContent({
       playbackAlg,
       text: formatScrambleForEvent(puzzle, shown),
       html: a.algHtml ? displayCaseAlgHtml(puzzle, set, a.algHtml) : undefined,
-      len: a.stm == null ? undefined : stm(shown),
+      len: displayedAlgorithmStm(puzzle, shown) ?? undefined,
       tags: a.tags ?? [],
     };
     });
@@ -247,7 +249,7 @@ export default function AlgCaseMetaContent({
     const relsOf = (x: AlgCaseMeta) => ([
       { key: 'mirror', label: tr({ zh: '镜像', en: 'Mirror' }), self: tr({ zh: '自镜像', en: 'self-mirror' }), no: x.mirror },
       { key: 'inv', label: tr({ zh: '逆', en: 'Inverse' }), self: tr({ zh: '自逆', en: 'self-inverse' }), no: x.inv },
-      { key: 'im', label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '自镜像逆', en: 'self-inv-mirror' }), no: x.im },
+      { key: 'im', label: tr({ zh: '镜像逆', en: 'Inv. mirror' }), self: tr({ zh: '镜像逆', en: 'self-inv-mirror' }), no: x.im },
     ].filter(r => r.no != null) as Array<{ key: string; label: string; self: string; no: number }>);
 
     const selfNo = m.no ?? -1;
@@ -357,6 +359,49 @@ export default function AlgCaseMetaContent({
     m.oldNo && tr({ zh: `旧编号：${m.oldNo}`, en: `Old no.: ${m.oldNo}` }),
   ].filter(Boolean).join('\n');
   const coep = caseCoepEntry(caseObj);
+  const scrambleKindSelect = onScrambleKindChange
+    && (scrambleKinds.length > 1 || (setupEditor && editing)) ? (
+      <select
+        className="alg-meta-scramble-kind"
+        value={editingSetup ? 'setup' : selectedScrambleKind}
+        onChange={event => {
+          const kind = event.target.value;
+          setShowGeneratedScramble(kind !== 'setup');
+          if (kind !== 'setup') onScrambleKindChange(kind as ScrambleKind);
+        }}
+        aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
+      >
+        {setupEditor && editing && <option value="setup">{tr({ zh: '原始', en: 'Original' })}</option>}
+        {scrambleKinds.map(kind => (
+          <option key={kind.id} value={kind.id}>{kind.label()}</option>
+        ))}
+      </select>
+    ) : null;
+  const relationCards: AlgCaseRelationCardItem[] = [
+    ...family.map(f => {
+      const label = f.labels.join(', ');
+      const familySlot = preferredAlgSlot(f.case);
+      const familyPreferred = findPreferredAlg(f.case.algs[0] ?? [], preferredSnapshot?.items[familySlot]);
+      const title = tr({ zh: `跳到${label}`, en: `Go to ${label.toLowerCase()}` });
+      return {
+        key: f.key,
+        label,
+        name: primaryCaseName(puzzle, set, f.case),
+        caseObj: f.case,
+        alg: familyPreferred?.alg,
+        current: f.current,
+        title: f.current ? undefined : title,
+        onRotate: f.current ? onRotate : undefined,
+        href: !f.current && jump.kind === 'link' ? jump.href(f.case) : undefined,
+        onSelect: !f.current && jump.kind === 'callback' ? () => jump.onJump(f.case) : undefined,
+      };
+    }),
+    ...missing.map(x => ({
+      key: x.key,
+      label: x.labels.join(', '),
+      name: `#${x.no}`,
+    })),
+  ];
   const metadataScramble = (text: string) => {
     const aligned = alignScrambleToSetup(puzzle, text, caseObj.setup);
     return <AlgLine label=""
@@ -372,93 +417,53 @@ export default function AlgCaseMetaContent({
 
           排头恒定是全族基准(标「原始」),其余按 `meta.no` 排 —— 全族共用同一份排布,
           所以点来点去图一张不动。加框的那张是「你正在看的」,它的标签未必是「原始」。 */}
-      <div className="alg-meta-related-grid alg-meta-top-grid">
-        {family.map(f => {
-          const labelText = f.labels.join(', ');
-          const familySlot = preferredAlgSlot(f.case);
-          const familyPreferred = findPreferredAlg(f.case.algs[0] ?? [], preferredSnapshot?.items[familySlot]);
-          const inner = (
-            <>
-              <CaseThumb
-                onRotate={f.current ? onRotate : undefined}
-                puzzle={puzzle}
-                set={set}
-                sticker={f.case.sticker}
-                alg={familyPreferred?.alg || f.case.algs[0]?.[0]?.alg || f.case.setup || ''}
-                setup={f.case.setup}
-                size={76}
-                viewAngle={viewAngle}
-                orientation={orientation}
-              />
-              <span className="alg-meta-related-label">{labelText}</span>
-              <span className="alg-meta-related-name">{primaryCaseName(puzzle, set, f.case)}</span>
-            </>
-          );
-          // 当前这张不是跳转目标,只是参照 —— 不给 hover、不可点。
-          if (f.current) {
-            return (
-              <div key={f.key} className="alg-meta-related-card is-self is-current">{inner}</div>
-            );
-          }
-          const title = tr({ zh: `跳到${labelText}`, en: `Go to ${labelText.toLowerCase()}` });
-          if (jump.kind === 'link') {
-            return (
-              <Link key={f.key} href={jump.href(f.case)} className="alg-meta-related-card" prefetch={false} title={title}>
-                {inner}
-              </Link>
-            );
-          }
-          return (
-            <button key={f.key} type="button" className="alg-meta-related-card" onClick={() => jump.onJump(f.case)} title={title}>
-              {inner}
-            </button>
-          );
-        })}
-        {/* 关联编号在本 set 里找不到对应 case(数据缺口),只报编号。 */}
-        {missing.map(x => (
-          <div key={x.key} className="alg-meta-related-card is-plain">
-            <span className="alg-meta-related-thumb-gap" aria-hidden="true" />
-            <span className="alg-meta-related-label">{x.labels.join(', ')}</span>
-            <span className="alg-meta-related-name">#{x.no}</span>
-          </div>
-        ))}
-      </div>
+      <AlgCaseRelationCards
+        items={relationCards}
+        puzzle={puzzle}
+        set={set}
+        viewAngle={viewAngle}
+        orientation={orientation}
+      />
 
       {/* 打乱紧跟着图 —— 图画的就是打乱之后的样子,两者一起看才对得上;公式是「怎么解开它」,
           排在后面。取值的三档(逆 case 的公式 / 现推 / setup 保底)见 {@link caseScramble}。 */}
       {(setupEditor || scramble || (selectedScrambleKind === 'cstimer' && inverseScramble)) && (
         <div className="alg-meta-section">
           <div className="alg-meta-scramble-row">
-            <h3>{tr({ zh: '打乱', en: 'Scramble' })}</h3>
-            {onScrambleKindChange && (scrambleKinds.length > 1 || (setupEditor && editing)) && (
-              <select
-                className="alg-meta-scramble-kind"
-                value={editingSetup ? 'setup' : selectedScrambleKind}
-                onChange={event => {
-                  const kind = event.target.value;
-                  setShowGeneratedScramble(kind !== 'setup');
-                  if (kind !== 'setup') onScrambleKindChange(kind as ScrambleKind);
-                }}
-                aria-label={tr({ zh: '打乱类型', en: 'Scramble type' })}
-              >
-                {setupEditor && editing && <option value="setup">{tr({ zh: '原始', en: 'Original' })}</option>}
-                {scrambleKinds.map(kind => (
-                  <option key={kind.id} value={kind.id}>{kind.label()}</option>
-                ))}
-              </select>
+            {editingSetup && (
+              <>
+                <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
+                  <Shuffle size={16} aria-hidden="true" />
+                </h3>
+                {scrambleKindSelect}
+              </>
             )}
             {setupEditor && <div className="alg-meta-setup-editor" hidden={!editingSetup}>{setupEditor}</div>}
             {!editingSetup && (scramble ? (
               <AlgLine
+                prefix={(
+                  <span className="alg-meta-scramble-prefix">
+                    <span role="img" aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
+                      <Shuffle size={16} aria-hidden="true" />
+                    </span>
+                    {scrambleKindSelect}
+                  </span>
+                )}
                 label={scramble.fromInvCase && (!onScrambleKindChange || selectedScrambleKind === 'cstimer')
                   ? tr({ zh: '逆 case', en: 'Inv case' })
                   : ''}
                 alg={scramble.text}
               />
             ) : (
-              <span className="alg-meta-scramble-loading">
-                {tr({ zh: '正在生成…', en: 'Generating…' })}
-              </span>
+              <>
+                <h3 aria-label={tr({ zh: '打乱', en: 'Scramble' })}>
+                  <Shuffle size={16} aria-hidden="true" />
+                </h3>
+                {scrambleKindSelect}
+                <span className="alg-meta-scramble-loading">
+                  {tr({ zh: '正在生成…', en: 'Generating…' })}
+                </span>
+              </>
             ))}
           </div>
         </div>
@@ -533,9 +538,9 @@ export default function AlgCaseMetaContent({
                 a.originalIndex,
               );
             }))}
+            {algsAfter}
           </div>
         </div>)}
-        {algsAfter}
       </div>
 
       {/* 紧凑规格表:桌面三列,平板两列,手机一列。每条都是「有才出」。 */}

@@ -132,6 +132,12 @@ describe('Platform route conservation', () => {
     expect(matchPlatformRoute(['events', 'preview', 'extra'])).toBeNull();
   });
 
+  it('keeps only the course introduction public', () => {
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'introduction'])?.definition.access).toBe('public');
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'trial'])?.definition.access).toBe('account');
+    expect(matchPlatformRoute(['courses', 'course-1', 'sections', 'core'])?.definition.access).toBe('account');
+  });
+
   it('matches all 95 legacy page mappings while allowing required new target routes', () => {
     const targets = manifest.capabilities
       .filter((capability) => capability.kind === 'page')

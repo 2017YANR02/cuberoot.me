@@ -519,8 +519,10 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
     let entitlementId: string | null = null;
     let entitlementGrantLedgerId: string | null = null;
     let membershipId: string | null = null;
+    let redeemedCourseId: string | null = null;
     if (typeof benefit.courseId === 'string') {
       const courseId = resourceId(benefit.courseId, 'courseId');
+      redeemedCourseId = courseId;
       const courses = await platformQuery(db, `SELECT id::text FROM platform_courses WHERE id = $1::uuid AND status IN ('published','unlisted') FOR SHARE`, [courseId]);
       if (!courses[0]) notFound('Course');
       const entitlements = await platformQuery<{ id: string }>(db, `
@@ -571,7 +573,7 @@ platformLearningRoutes.post('/invites/redeem', async (c) => {
     `, [invite.id, actor.userId, entitlementId, entitlementGrantLedgerId, membershipId]);
     return {
       status: 201,
-      body: { id: redemptions[0].id, entitlementId, membershipId },
+      body: { id: redemptions[0].id, entitlementId, membershipId, courseId: redeemedCourseId },
       resourceType: 'platform_invite_redemption',
       resourceId: redemptions[0].id,
     };

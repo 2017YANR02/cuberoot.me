@@ -4,17 +4,70 @@ import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 const { load } = vi.hoisted(() => ({ load: vi.fn() }));
-vi.mock('@/lib/platform-gateway', () => ({ loadPlatformLessonMedia: load }));
+vi.mock('@/lib/platform-gateway', () => ({
+  loadPlatformLessonMedia: load,
+  PlatformPermissionError: class PlatformPermissionError extends Error {
+    constructor(public readonly status: 401 | 403) {
+      super(status === 401 ? 'Authentication required.' : 'Permission denied.');
+      this.name = 'PlatformPermissionError';
+    }
+  },
+}));
 const locale = vi.hoisted(() => ({ english: false }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string, en: string) => locale.english ? en : zh }));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement('a', { href, className }, children) }));
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { PlatformDomainContent } from '@/components/platform/PlatformDomainContent';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
+import { PlatformPermissionError } from '@/lib/platform-gateway';
 
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
+});
+
+it('turns unauthenticated media access into a sign-in action', async () => {
+  window.history.replaceState({}, '', '/zh/platform/courses/course/sections/core?lesson=first');
+  load.mockRejectedValueOnce(new PlatformPermissionError(401));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }] } } as PlatformEntity,
+      params: {},
+    })));
+    expect(host.textContent).toContain('请先登录，再继续观看这个课时。');
+    expect(host.textContent).toContain('前往登录');
+    expect(host.textContent).not.toContain('Authentication required.');
+    expect(host.querySelector('a')?.getAttribute('href')).toBe('/account?next=%2Fzh%2Fplatform%2Fcourses%2Fcourse%2Fsections%2Fcore%3Flesson%3Dfirst');
+  } finally {
+    await act(async () => root.unmount());
+    window.history.replaceState({}, '', '/');
+  }
+});
+
+it('shows a blurred course visual with only the redemption action when a lesson is locked', async () => {
+  load.mockRejectedValueOnce(new PlatformPermissionError(403));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: {
+        slug: 'yan-ruimin-3x3-beginner',
+        lessons: [{ id: 'first', titleZh: '正式课 01' }],
+      } } as PlatformEntity,
+      params: {},
+    })));
+    const locked = host.querySelector('.platform-locked-media');
+    expect(locked?.textContent).toBe('兑换课程');
+    expect(locked?.querySelector('p')).toBeNull();
+    expect(locked?.querySelector('img')?.getAttribute('src')).toBe('/images/ruimin/gallery/photo-03.webp');
+    expect(locked?.querySelector('a')?.getAttribute('href')).toBe('/platform/account/invites');
+    expect(host.textContent).not.toContain('Permission denied.');
+    expect(host.textContent).not.toContain('这个课时尚未解锁');
+  } finally {
+    await act(async () => root.unmount());
+  }
 });
 
 it('opens the video menu, prioritizes looping, and copies safe lesson links and diagnostics', async () => {
@@ -150,9 +203,9 @@ it('links section cards to separate lesson pages without losing lessons or chang
       id: `${group}-${index}`, titleZh: `${prefix} ${index + 1}`, titleEn: `Lesson ${group}-${index}`, status: 'published',
     })));
   const host = document.createElement('div'), root = createRoot(host);
-  const render = (items: unknown[], id = 'course-detail') => act(async () => root.render(createElement(PlatformDomainContent, {
+  const render = (items: unknown[], id = 'course-detail', courseRedeemed = false) => act(async () => root.render(createElement(PlatformDomainContent, {
     definition: { id } as PlatformRouteDefinition,
-    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {},
+    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {}, courseRedeemed,
   })));
   try {
     await render(lessons);
@@ -162,11 +215,18 @@ it('links section cards to separate lesson pages without losing lessons or chang
     expect(host.querySelector('details')).toBeNull();
     expect([...host.querySelectorAll('a')].map(node => node.getAttribute('href'))).toEqual(
       ['introduction', 'trial', 'core'].map(section => `/platform/courses/course/sections/${section}`));
+    expect(host.querySelector('.platform-course-redeemed')).toBeNull();
+    await render(lessons, 'course-detail', true);
+    const redeemedBadge = host.querySelector('.platform-course-redeemed');
+    expect(redeemedBadge?.textContent).toBe('已兑换');
+    expect(redeemedBadge?.closest('a')?.getAttribute('href')).toBe('/platform/courses/course/sections/core');
     for (const [index, section] of ['introduction', 'trial', 'core'].entries()) {
       await render(lessons, `course-section-${section}`);
       expect(host.textContent).not.toContain('published');
-      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(
-        Array.from({ length: [2, 2, 19][index] }, (_, lessonIndex) => String(lessonIndex + 1)));
+      const expectedTitles = index === 2
+        ? ['1', '2', ...Array.from({ length: 19 }, (_, lessonIndex) => String(lessonIndex + 1))]
+        : ['1', '2'];
+      expect([...host.querySelectorAll('nav button')].map(node => node.textContent)).toEqual(expectedTitles);
       expect(host.querySelector('.platform-classroom-stage h2')?.textContent).toBe('1');
       expect(host.querySelectorAll('video')).toHaveLength(1);
       expect(host.querySelector('a')).toBeNull();
@@ -229,20 +289,20 @@ it('switches videos in place, resets position, rejects stale IDs and ignores abo
   }
   try {
     await act(async () => root.render(createElement(Classroom)));
-    expect(load.mock.calls[0][0]).toBe('first');
-    expect(host.querySelectorAll('nav button')).toHaveLength(2);
-    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
+    expect(load.mock.calls[0][0]).toBe('other');
+    expect(host.querySelectorAll('nav button')).toHaveLength(3);
+    await act(async () => (host.querySelectorAll('nav button')[2] as HTMLButtonElement).click());
     expect(load.mock.calls[0][1].aborted).toBe(true);
     expect(host.querySelector('[aria-current]')?.textContent).toBe('02');
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     await act(async () => resolveOld({ mimeType: 'video/mp4', accessUrl: '/stale' }));
     expect(host.querySelector('video')?.getAttribute('src')).toBe('/signed-video');
     host.querySelector('video')!.currentTime = 40;
-    await act(async () => (host.querySelector('nav button') as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
     expect(host.querySelector('video')!.currentTime).toBe(0);
     expect(host.querySelectorAll('video')).toHaveLength(1);
     load.mockRejectedValueOnce(new Error('Access denied'));
-    await act(async () => (host.querySelectorAll('nav button')[1] as HTMLButtonElement).click());
+    await act(async () => (host.querySelectorAll('nav button')[2] as HTMLButtonElement).click());
     expect(host.querySelector('video')).toBeNull();
     expect(host.textContent).toContain('Access denied');
     await act(async () => root.render(createElement(PlatformDomainContent, { ...props, entity: { id: 'empty', data: { lessons: [] } } as unknown as PlatformEntity })));

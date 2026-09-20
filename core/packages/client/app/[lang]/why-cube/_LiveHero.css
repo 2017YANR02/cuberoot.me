@@ -35,7 +35,7 @@
   display: flex;
   justify-content: center;
 }
-.wc-livehero-stage .twisty-section { width: 100%; }
+.wc-livehero-stage .alg-sim-player { width: 100%; }
 
 /* mode toggle (≤2 options, side-by-side compare → chips ok) */
 .wc-livehero-modes {
@@ -68,7 +68,7 @@
   background: var(--accent);
 }
 
-/* play-mode keypad */
+/* play-mode status */
 .wc-livehero-pad {
   position: relative;
   z-index: 1;
@@ -79,31 +79,6 @@
   align-items: center;
   gap: 10px;
 }
-.wc-livehero-keys {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-  width: 100%;
-}
-.wc-livehero-key {
-  appearance: none;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 15px;
-  font-weight: 700;
-  padding: 9px 0;
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  background: var(--card);
-  color: var(--foreground);
-  transition: border-color .12s, background .12s, transform .08s;
-}
-.wc-livehero-key:hover {
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--border-default));
-  background: color-mix(in srgb, var(--accent) 8%, var(--card));
-}
-.wc-livehero-key:active { transform: translateY(1px); }
-
 .wc-livehero-pad-foot {
   display: flex;
   align-items: center;
@@ -111,24 +86,6 @@
   flex-wrap: wrap;
   justify-content: center;
   font-size: 13px;
-}
-.wc-livehero-dir {
-  appearance: none;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border-default);
-  background: var(--card);
-  color: var(--muted-foreground);
-  transition: color .12s, border-color .12s, background .12s;
-}
-.wc-livehero-dir.is-active {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
-  background: color-mix(in srgb, var(--accent) 9%, var(--card));
 }
 .wc-livehero-count { font-family: var(--font-mono); color: var(--muted-foreground); }
 .wc-livehero-reset {
@@ -161,5 +118,4 @@
 
 @media (max-width: 600px) {
   .wc-livehero { max-width: 300px; }
-  .wc-livehero-key { font-size: 14px; padding: 11px 0; }
 }

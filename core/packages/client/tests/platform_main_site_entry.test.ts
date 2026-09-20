@@ -16,11 +16,36 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(redemption).toContain("!user ? (");
     expect(redemption).toContain('href="/account"');
     expect(redemption).toContain('<PlatformDomainActions');
-    expect(redemption).toContain('href="/platform/account/courses"');
     expect(redemption).toContain('role="status"');
+    expect(redemption).not.toContain('兑换成功');
+    expect(redemption).not.toContain('开始学习');
     expect(redemption).not.toMatch(/kind="permission"|platform-route-header|PlatformEntityList|SearchInput/);
     expect(view).toContain("&& definition.id !== 'account-invites'");
-    expect(view).toContain("if (action === 'redeem-invite') setRedeemed(true);");
+    expect(view).toContain("if (action === 'redeem-invite') {");
+    expect(view).toContain("loadPlatformResource('entitlements', { params: {} })");
+    expect(view).toContain("window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);");
+    expect(view).not.toContain('setRedeemed(true)');
+  });
+
+  it('marks active redeemed courses and exposes their learning entry', () => {
+    const view = read('components/platform/PlatformRouteView.tsx');
+    const styles = read('components/platform/platform.css');
+
+    expect(view).toContain("loadPlatformResource('account-courses'");
+    expect(view).toContain("item.status === 'active'");
+    expect(view).toContain('redeemedCourseIds.has(item.id)');
+    expect(view).toContain("t('已兑换', 'Redeemed')");
+    expect(view).toContain("courseRedeemed ? t('开始学习', 'Start learning')");
+    expect(styles).toMatch(/\.platform-course-redeemed\s*\{[^}]*var\(--signal-success\)/s);
+  });
+
+  it('fully expands generated redemption details without an inner scrollbar', () => {
+    const actions = read('components/platform/PlatformDomainActions.tsx');
+    const styles = read('components/platform/platform.css');
+
+    expect(actions).toContain('textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;');
+    expect(actions).toContain('ref={shareTextRef}');
+    expect(styles).toMatch(/\.platform-invite-code-lines\s*\{[^}]*overflow:\s*hidden[^}]*resize:\s*none/s);
   });
 
   it('does not expose internal API fields or status in learner course lists and lesson pages', () => {

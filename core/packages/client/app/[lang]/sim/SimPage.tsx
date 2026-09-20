@@ -485,8 +485,6 @@ export default function SimPage() {
     return { ...saved, playbackMode: query.anchor === 'end' ? 'algorithm' : 'moves' };
   });
   const roomsActive = !twisty && roomCubeActive(puzzleParam, settings.roomTheme);
-  const [roomControlsOpen, setRoomControlsOpen] = useState(false);
-  const roomGallery = roomsActive && !roomControlsOpen && !drawMode && !imageMode;
   const pictureCubeActive = !roomsActive && typeof puzzleParam === 'number'
     && settings.pictureCube
     && countPictureFaces(settings.pictureFaces) > 0;
@@ -2027,14 +2025,14 @@ export default function SimPage() {
 
   // 主图 ↔ 伴图交换态生效条件(与画布 wrap 的 --imgswap class 同一判据):把它写进
   // resize 闭包读的 ref,再触发一次重排,渲染器在全幅 ↔ 左上小框之间切换。
-  const imgSwapActive = imageOpen && imgSwap && !flatMode && !roomGallery;
+  const imgSwapActive = imageOpen && imgSwap && !flatMode;
   useEffect(() => {
     imgSwapRef.current = imgSwapActive;
     resizeMainViewRef.current?.();
   }, [imgSwapActive]);
 
   return (
-    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}${roomGallery ? ' sim-page--room-gallery' : ''}`} data-board-bg={settings.boardBg}>
+    <div className={`sim-page${fullscreen && !drawMode && !imageMode ? ' sim-page--fullscreen' : ''}`} data-board-bg={settings.boardBg}>
       <header className="sim-header">
         <HomeLink className="sim-back" title={t('返回', 'Back')}>
           <ChevronLeft size={18} />
@@ -2078,11 +2076,6 @@ export default function SimPage() {
             {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}>{t(theme.zh, theme.en)}</option>)}
             <option value="off">{t('普通色块', 'Classic colors')}</option>
           </select>
-          <button type="button" className="sim-open-recon"
-            aria-expanded={roomControlsOpen}
-            onClick={() => { setRoomControlsOpen((open) => !open); setFullscreen(false); }}>
-            {roomControlsOpen ? t('收起设置', 'Hide settings') : t('设置', 'Settings')}
-          </button>
         </div>}
         <div
           // puzzle-art:柔和度的统一钩子(见 globals.css)。挂在 wrap 而不是 3D canvas

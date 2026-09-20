@@ -41,12 +41,14 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
   it('uses one menu per row to toggle multiple tags without changing moves, marks, metadata or another orientation', async () => {
     await render();
     expect(host.querySelectorAll('.alg-editor-row .alg-tag-select')).toHaveLength(3);
+    expect(host.querySelector('.alg-tag-select .compact-select-arrow')).toBeNull();
     await click('Algorithm tags');
     expect(document.querySelector('[role="listbox"]')?.getAttribute('aria-multiselectable')).toBe('true');
     expect(document.querySelectorAll('[role="listbox"] button:not([role="option"])')).toHaveLength(0);
     expect(host.querySelector('.alg-tag-manager')).toBeNull();
     expect([...document.querySelectorAll('[role="option"] .sr-only')].map(el => el.textContent)).toEqual(['Left OH', 'Feet', 'FMC', 'Big cube', 'Keyboard', 'Beginner pick']);
     expect(document.querySelector('[role="option"][aria-selected="true"]')?.textContent).toContain('Left OH');
+    expect(document.querySelector('[role="option"][aria-selected="true"] .lucide-check')).toBeNull();
     await click('Feet');
     expect(ref.current!.getValue()[0][0]).toEqual({ ...initial[0][0], tags: ['oh', 'ft'] });
     await click('Algorithm tags'); await click('Left OH');
@@ -68,5 +70,11 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(icons).toHaveLength(2);
     expect(icons.map(icon => icon.querySelector('.alg-tag-hand')?.textContent)).toEqual(['L', 'R']);
     expect(icons.every(icon => icon.querySelector('.event-333oh'))).toBe(true);
+  });
+
+  it('uses a plain book for the beginner tag without a check symbol', async () => {
+    await act(async () => root.render(createElement(AlgTagLabel, { tag: 'beginner', label: 'Beginner pick' })));
+    expect(host.querySelector('.lucide-book-open')).not.toBeNull();
+    expect(host.querySelector('.lucide-book-open-check')).toBeNull();
   });
 });
