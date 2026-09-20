@@ -17,6 +17,7 @@ vi.mock('@/components/AlgInput', async () => {
 });
 
 import AlgEditor, { type AlgEditorHandle } from '@/components/AlgEditor';
+import AlgTagLabel from '@/components/AlgTagLabel';
 
 describe('formula tag editor with the shared menu and fixed tags', () => {
   let host: HTMLDivElement;
@@ -56,5 +57,16 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(ref.current!.getValue()).toEqual(initial);
     await act(async () => { window.dispatchEvent(new Event('focus')); });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('draws the L and R hand marks inside the one-handed icon', async () => {
+    await act(async () => root.render(createElement('div', null,
+      createElement(AlgTagLabel, { tag: 'oh', label: 'Left OH', hand: 'left' }),
+      createElement(AlgTagLabel, { tag: 'oh', label: 'Right OH', hand: 'right' }),
+    )));
+    const icons = [...host.querySelectorAll('.alg-tag-oh-icon')];
+    expect(icons).toHaveLength(2);
+    expect(icons.map(icon => icon.querySelector('.alg-tag-hand')?.textContent)).toEqual(['L', 'R']);
+    expect(icons.every(icon => icon.querySelector('.event-333oh'))).toBe(true);
   });
 });
