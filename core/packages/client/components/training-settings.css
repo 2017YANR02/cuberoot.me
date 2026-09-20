@@ -29,7 +29,7 @@
 }
 
 .training-settings-panel {
-  /* anchored-panel: clamped (usePanelClamp in TrainingSettings) */
+  /* anchored-panel: clamped (usePanelClamp in SettingsPopover) */
   position: absolute;
   top: calc(100% + 0.35rem);
   right: 0;
