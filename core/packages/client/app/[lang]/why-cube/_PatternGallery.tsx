@@ -51,7 +51,7 @@ export default function PatternGallery() {
         <Name i={0}>{t('棋盘', 'Checkerboard')}</Name>
         <Name i={1}>{t('六个圆点', 'Six Spots')}</Name>
         <Name i={2}>{t('立方中立方', 'Cube in a Cube')}</Name>
-        <Name i={3}>{t('驴桥', 'Pons Asinorum')}</Name>
+        <Name i={3}>{t('六面十字', 'Six Crosses')}</Name>
         <Name i={4}>{t('礼物盒', 'Gift Box')}</Name>
         <Name i={5}>{t('超级翻转', 'Superflip')}</Name>
       </div>
