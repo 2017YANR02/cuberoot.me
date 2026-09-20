@@ -87,6 +87,22 @@ const PLATFORM_ACCOUNT_DELETE_EVIDENCE_TABLES = [
 ] as const;
 
 describe('main-site Platform PostgreSQL schema', () => {
+  it('keeps lesson-cover migration, canonical schema, ledger, and /dev/schema in sync', async () => {
+    const [migration, schema, readme, devSchema] = await Promise.all([
+      read('../migrations/0244_platform_lesson_covers.sql'),
+      read('../src/db/schema.pg.sql'),
+      read('../migrations/README.md'),
+      readFile(workspaceFixturePath('@cuberoot/client', 'app/[lang]/dev/schema/page.tsx'), 'utf8'),
+    ]);
+
+    expect(migration).not.toMatch(/^(?:BEGIN|COMMIT)\s*;/im);
+    expect(migration).toContain('ADD COLUMN cover_media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL');
+    expect(schema).toContain('cover_media_id UUID REFERENCES platform_media_assets(id) ON DELETE SET NULL');
+    expect(readme).toContain('0244_platform_lesson_covers.sql');
+    expect(devSchema).toContain("{ n: 244, slug: 'platform_lesson_covers'");
+    expect(devSchema).toContain("evolved: [203, 244]");
+  });
+
   it('keeps Platform account deletion compatible with immutable evidence', async () => {
     const [migration, schema, readme, devSchema, accountDelete, learning, fixture] = await Promise.all([
       read('../migrations/0168_platform_account_deletion.sql'),

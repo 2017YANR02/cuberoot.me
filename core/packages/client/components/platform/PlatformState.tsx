@@ -18,6 +18,13 @@ export function PlatformState({
   permissionHref?: string;
 }) {
   const t = useT();
+  if (kind === 'permission' && !message) {
+    return (
+      <div className="platform-state platform-state-permission platform-sign-in-state" role="status">
+        <AppLink href={permissionHref} className="platform-button platform-sign-in-button" prefetch={false}>{t('请先登录', 'Please sign in')}</AppLink>
+      </div>
+    );
+  }
   const content = {
     loading: {
       Icon: LoaderCircle,
