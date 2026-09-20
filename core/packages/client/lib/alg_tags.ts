@@ -19,6 +19,7 @@ export const ALG_TAG_LABEL: Record<AlgTag, () => string> = {
   fmc: () => tr({ zh: '最少步', en: 'FMC' }),
   big: () => tr({ zh: '高阶', en: 'Big cube' }),
   key: () => tr({ zh: '键盘', en: 'Keyboard' }),
+  beginner: () => tr({ zh: '新手首选', en: 'Beginner pick' }),
 };
 
 export function algTagLabel(id: string): string {

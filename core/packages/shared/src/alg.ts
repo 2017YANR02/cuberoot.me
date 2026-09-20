@@ -11,8 +11,8 @@ import { invert as invertSkewb } from './skewb_notation';
 import type { MirrorGen } from './alg_mirror';
 import { canonicalize3x3WideMoves, duplicateAlgKey } from './alg_notation';
 
-/** 公式标签。转写自站长 1LLL 表里的 `[oh]` / `[ft]` / `[fmc]` / `[big]` / `[key]`。 */
-export const ALG_TAGS = ['oh', 'ft', 'fmc', 'big', 'key'] as const;
+/** 公式标签。前五项转写自站长 1LLL 表；`beginner` 标记新手应优先学习的公式。 */
+export const ALG_TAGS = ['oh', 'ft', 'fmc', 'big', 'key', 'beginner'] as const;
 export type AlgTag = (typeof ALG_TAGS)[number];
 
 /** 用户提交的算法——挂在 (puzzle, set, case_name) 上;任何登录用户能投,作者+admin 可改/删 */
@@ -45,7 +45,7 @@ export interface AlgEntry {
   altId?: string;
   /** YouTube finger-tricks tutorial id (no full URL — caller composes) */
   ytId?: string;
-  /** 单手 / 脚拧 / 最少步 / 高阶 / 虚拟键盘。UI 据此做筛选。 */
+  /** 单手 / 脚拧 / 最少步 / 高阶 / 虚拟键盘 / 新手首选。UI 据此做筛选。 */
   tags?: AlgTag[];
   /** 公式出处。站长自编的排在外部数据源前面。 */
   source?: 'cuberoot' | 'speedcubedb' | 'cubingapp' | 'LowCubes / Raul Low';

@@ -268,10 +268,6 @@ function AlgRow({ entry, puzzle, set, invalid, mirror, ori = 0, notationStyle, v
       >
         {/* 就是这条过不了校验 —— 卡片红框只说「这张有问题」,不说是哪条 */}
         {invalid && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={invalid} />}
-        {entry.tags?.map(t => {
-          const label = t === 'oh' && ohHand === 'right' ? OH_TAG_LABEL.right() : algTagLabel(t);
-          return <span key={t} className={`alg-tag alg-tag-${t}`}><AlgTagLabel tag={t} label={label} hand={ohHand} /></span>;
-        })}
         <span className={`alg-alg-text${isKarnaukh ? ' is-karnaukh' : ''}`}>
           {sq1Notation
             ? shownText
@@ -281,6 +277,10 @@ function AlgRow({ entry, puzzle, set, invalid, mirror, ori = 0, notationStyle, v
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
         </span>
+        {entry.tags?.map(t => {
+          const label = t === 'oh' && ohHand === 'right' ? OH_TAG_LABEL.right() : algTagLabel(t);
+          return <span key={t} className={`alg-tag alg-tag-${t}`}><AlgTagLabel tag={t} label={label} hand={ohHand} /></span>;
+        })}
         {!isKarnaukh && shownStm != null && <span className="alg-alg-len" title="STM">{shownStm}</span>}
         {mirror && !issue && (
           <button

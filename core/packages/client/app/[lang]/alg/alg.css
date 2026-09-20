@@ -1575,7 +1575,7 @@ a.alg-community-author:hover {
   padding-top: 6px;
 }
 
-/* ── 公式标签 + 步数(1LLL 表带来的:[oh] / [ft] / [fmc] / [big] / [key])──────── */
+/* ── 公式右侧标签 + 步数 ──────────────────────────────────────────────── */
 .alg-tag {
   flex: none;
   font-family: var(--font-sans, inherit);

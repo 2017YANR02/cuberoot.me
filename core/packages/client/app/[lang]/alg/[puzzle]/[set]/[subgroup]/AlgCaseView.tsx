@@ -57,6 +57,7 @@ import { useIsAdmin } from '@/lib/auth-store';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { algTagLabel } from '@/lib/alg_tags';
+import AlgTagLabel from '@/components/AlgTagLabel';
 import { tr } from '@/i18n/tr';
 import BoolToggle from '@/components/BoolToggle';
 import Sq1NotationSelect from '@/components/Sq1NotationSelect';
@@ -135,7 +136,11 @@ function PlayableAlgRow({ entry, puzzle, set, mirror, ori = 0, viewAngle, sq1Not
           {!sourceKarnaukh && entry.note && <span className="alg-alg-note">({tr(entry.note)})</span>}
           {issue && <span className="alg-alg-note">{tr({ zh: '（原公式与本图不匹配）', en: '(Source algorithm does not match this case)' })}</span>}
         </span>
-        {entry.tags?.map(tag => <span key={tag} className="alg-tag">{algTagLabel(tag)}</span>)}
+        {entry.tags?.map(tag => (
+          <span key={tag} className={`alg-tag alg-tag-${tag}`}>
+            <AlgTagLabel tag={tag} label={algTagLabel(tag)} />
+          </span>
+        ))}
         {!isKarnaukh && len != null && <span className="alg-alg-len" title="STM">{len}</span>}
         {mirror && !issue && (
           <button

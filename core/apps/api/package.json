@@ -38,7 +38,6 @@
     "@modelcontextprotocol/sdk": "1.30.0",
     "@tiptap/html": "^3.30.0",
     "@tiptap/starter-kit": "^3.30.0",
-    "@types/ws": "^8.18.1",
     "cubing": "^0.63.3",
     "fast-xml-parser": "5.7.3",
     "hono": "^4.0.0",
@@ -50,7 +49,6 @@
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
     "sanitize-html": "^2.17.6",
-    "ws": "^8.20.0",
     "yjs": "^13.6.32",
     "zod": "^4.4.3"
   },
