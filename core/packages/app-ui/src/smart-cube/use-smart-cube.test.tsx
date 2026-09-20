@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
 
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
+import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
+import { MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -12,6 +14,7 @@ import { useInstalledSmartCube } from './use-smart-cube';
 const state = vi.hoisted(() => ({
   onMove: vi.fn(), onSolved: vi.fn(), requestState: vi.fn(),
   connect: vi.fn<() => Promise<void>>(), disconnect: vi.fn<() => Promise<void>>(),
+  connectionKind: '' as '' | 'gan-v4' | 'moyu32',
   callbacks: null as null | {
     onDisconnect(): void;
     onMove(move: string, timestamp: number): void;
@@ -23,6 +26,24 @@ const state = vi.hoisted(() => ({
 vi.mock('./gan-v4-cube', () => ({
   GanV4CubeConnection: class {
     constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
+      state.connectionKind = 'gan-v4';
+      state.callbacks = callbacks;
+    }
+
+    async connect() {
+      await state.connect();
+      state.callbacks?.onState(SOLVED_3X3);
+    }
+
+    async disconnect() { await state.disconnect(); }
+    async requestState() { state.requestState(); }
+  },
+}));
+
+vi.mock('./moyu32-cube', () => ({
+  Moyu32CubeConnection: class {
+    constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
+      state.connectionKind = 'moyu32';
       state.callbacks = callbacks;
     }
 
@@ -61,7 +82,10 @@ describe('useInstalledSmartCube', () => {
   beforeEach(async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     state.callbacks = null;
+    state.connectionKind = '';
+    delete transport.getServices;
     vi.clearAllMocks();
+    vi.mocked(transport.requestDevice).mockResolvedValue({ id: 'cube', name: 'GAN16ui' });
     state.connect.mockResolvedValue(undefined);
     state.disconnect.mockResolvedValue(undefined);
     container = document.createElement('div');
@@ -76,6 +100,38 @@ describe('useInstalledSmartCube', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
+  });
+
+  it('keeps hosts without service discovery on the GAN v4 picker', () => {
+    expect(state.connectionKind).toBe('gan-v4');
+    expect(cube.model).toBe('gan-v4');
+    expect(transport.requestDevice).toHaveBeenCalledWith(expect.objectContaining({
+      namePrefix: 'GAN',
+      optionalServices: [GAN_V4_SERVICE_UUID],
+    }));
+    const options = vi.mocked(transport.requestDevice).mock.calls[0]?.[0];
+    expect(options).not.toHaveProperty('namePrefixes');
+    expect(options).not.toHaveProperty('services');
+  });
+
+  it('opens the native service picker for MoYu32 and exposes its protocol model', async () => {
+    await act(async () => { await cube.disconnect(); });
+    transport.getServices = vi.fn(async () => []);
+    vi.mocked(transport.requestDevice).mockResolvedValueOnce({
+      id: 'CF:30:16:00:A1:B2',
+      name: 'WCU_MY32_A1B2',
+    });
+
+    await act(async () => { await cube.connect(); });
+
+    expect(state.connectionKind).toBe('moyu32');
+    expect(cube.model).toBe('moyu32');
+    expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
+      namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'WCU_MY3'],
+      services: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID]),
+      optionalServices: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID]),
+    }));
   });
 
   it('clears tracked cube state on an unexpected disconnect', async () => {

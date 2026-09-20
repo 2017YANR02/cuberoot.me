@@ -2617,7 +2617,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     },
   });
   connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName
-    ? { model: 'gan-v4', name: smartCube.deviceName }
+    ? { model: smartCube.model ?? 'gan-v4', name: smartCube.deviceName }
     : undefined;
   useAutoReady({
     enabled: view === 'timer' && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled

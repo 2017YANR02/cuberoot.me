@@ -133,6 +133,12 @@ export function decodeMoyu32Notification(
     state.badFrames = 0;
     return result;
   }
+  if (type === MOYU32_MESSAGE_INFO || type === MOYU32_MESSAGE_GYRO_SWITCH) {
+    // Both are valid replies to the connection handshake/control commands.
+    // They must not count as bad-key evidence.
+    state.badFrames = 0;
+    return result;
+  }
   if (type !== MOYU32_MESSAGE_MOVE) {
     state.badFrames++;
     return result;

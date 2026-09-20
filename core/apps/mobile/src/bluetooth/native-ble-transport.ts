@@ -10,7 +10,7 @@ import {
   type TimeoutOptions,
 } from '@capacitor-community/bluetooth-le';
 
-import type { BleDeviceRef, BleRequestOptions, BleTransport } from '@cuberoot/app-ui';
+import type { BleDeviceRef, BleRequestOptions, BleServiceRef, BleTransport } from '@cuberoot/app-ui';
 
 export interface NativeBleClientPort {
   connect(deviceId: string, onDisconnect?: (deviceId: string) => void, options?: ConnectClientOptions): Promise<void>;
@@ -78,7 +78,7 @@ function copyManufacturerData(
 const ADVERTISEMENT_CAPTURE_TIMEOUT_MS = 3_000;
 
 export class NativeBleTransport implements BleTransport {
-  private readonly writeModes = new Map<string, 'response' | 'without-response'>();
+  private readonly writeModes = new Map<string, Map<string, 'response' | 'without-response'>>();
 
   constructor(private readonly client: NativeBleClientPort = BleClient) {}
 
@@ -88,8 +88,12 @@ export class NativeBleTransport implements BleTransport {
 
   async requestDevice(options: BleRequestOptions): Promise<BleDeviceRef> {
     await this.client.setDisplayStrings(options.pickerLabels);
+    const namePrefixes = options.namePrefixes?.length
+      ? options.namePrefixes
+      : [options.namePrefix];
     const device = await this.client.requestDevice({
-      namePrefix: options.namePrefix,
+      ...(namePrefixes.length === 1 ? { namePrefix: namePrefixes[0] } : {}),
+      ...(options.services?.length ? { services: [...options.services] } : {}),
       optionalServices: options.optionalServices,
     });
     const selected = { id: device.deviceId, name: device.name || options.namePrefix };
@@ -124,22 +128,41 @@ export class NativeBleTransport implements BleTransport {
   async connect(deviceId: string, onDisconnect: () => void): Promise<void> {
     await this.client.connect(deviceId, onDisconnect);
     const services = await this.client.getServices(deviceId);
+    const modes = new Map<string, 'response' | 'without-response'>();
     for (const service of services) {
       for (const characteristic of service.characteristics) {
         const mode = characteristic.properties.writeWithoutResponse && !characteristic.properties.write
           ? 'without-response'
           : 'response';
-        this.writeModes.set(characteristicKey(service.uuid, characteristic.uuid), mode);
+        modes.set(characteristicKey(service.uuid, characteristic.uuid), mode);
       }
     }
+    this.writeModes.set(deviceId, modes);
   }
 
   async disconnect(deviceId: string): Promise<void> {
     try {
       await this.client.disconnect(deviceId);
     } finally {
-      this.writeModes.clear();
+      this.writeModes.delete(deviceId);
     }
+  }
+
+  async getServices(deviceId: string): Promise<BleServiceRef[]> {
+    const services = await this.client.getServices(deviceId);
+    return services.map((service) => ({
+      uuid: service.uuid,
+      characteristics: service.characteristics.map((characteristic) => ({
+        uuid: characteristic.uuid,
+        properties: {
+          notify: characteristic.properties.notify,
+          indicate: characteristic.properties.indicate,
+          read: characteristic.properties.read,
+          write: characteristic.properties.write,
+          writeWithoutResponse: characteristic.properties.writeWithoutResponse,
+        },
+      })),
+    }));
   }
 
   async getMtu(deviceId: string): Promise<number | null> {
@@ -161,7 +184,7 @@ export class NativeBleTransport implements BleTransport {
     value: Uint8Array,
   ): Promise<void> {
     const view = dataView(value);
-    const mode = this.writeModes.get(characteristicKey(service, characteristic));
+    const mode = this.writeModes.get(deviceId)?.get(characteristicKey(service, characteristic));
     if (mode === 'without-response') {
       await this.client.writeWithoutResponse(deviceId, service, characteristic, view);
       return;

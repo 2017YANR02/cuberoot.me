@@ -12,6 +12,7 @@ import type {
 import type { SupportedLanguage } from './copy';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import type { GanV4CubeStatus } from './smart-cube/gan-v4-cube';
+import type { Moyu32CubeStatus } from './smart-cube/moyu32-cube';
 
 export interface InstalledAppAuth {
   busy: boolean;
@@ -33,13 +34,14 @@ export interface InstalledAppSmartCubeOptions {
 export interface InstalledAppSmartCube {
   connect(): Promise<string>;
   deviceName: string;
+  model?: string | null;
   disconnect(): Promise<void>;
   facelets: string;
   lastMove: string;
   phase: 'idle' | 'requesting' | 'connecting' | 'connected' | 'error';
-  /** Optional for older host/test adapters; the shared GAN adapter supplies these. */
+  /** Optional for older host/test adapters; the shared smart-cube adapter supplies these. */
   quaternion?: GyroQuaternion | null;
-  status?: GanV4CubeStatus | null;
+  status?: GanV4CubeStatus | Moyu32CubeStatus | null;
   solved?: boolean;
   resetState?(): void;
   requestState?(): Promise<void>;
