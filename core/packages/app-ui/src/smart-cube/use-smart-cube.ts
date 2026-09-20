@@ -1,12 +1,34 @@
-import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
+import { GAN_V2_SERVICE_UUID, matchesGanV2Name } from '@cuberoot/shared/smart-cube/gan-v2';
+import { GAN_V3_SERVICE_UUID, matchesGanV3Name } from '@cuberoot/shared/smart-cube/gan-v3';
+import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
+import { matchesMoyu32Name, MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
 import { MoveClock } from '@cuberoot/shared/smart-cube/move-clock';
-import type { GyroQuaternion } from '@cuberoot/shared/smart-cube/gan-crypto';
+import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { InstalledAppSmartCube, InstalledAppSmartCubeOptions } from '../platform';
+import { GanCubeConnection, type GanCubeStatus } from './gan-cube';
 import { GanV4CubeConnection, type GanV4CubeStatus } from './gan-v4-cube';
+import { Moyu32CubeConnection, type Moyu32CubeStatus } from './moyu32-cube';
 import type { BleTransport } from './transport';
+
+type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32';
+
+const DISCOVERABLE_CUBE_SERVICES = [
+  GAN_V2_SERVICE_UUID,
+  GAN_V3_SERVICE_UUID,
+  GAN_V4_SERVICE_UUID,
+  MOYU32_SERVICE_UUID,
+] as const;
+
+function modelForDeviceName(name: string): InstalledCubeModel | null {
+  if (matchesMoyu32Name(name)) return 'moyu32';
+  if (matchesGanV4Name(name)) return 'gan-v4';
+  if (matchesGanV3Name(name)) return 'gan-v3';
+  if (matchesGanV2Name(name)) return 'gan-v2';
+  return null;
+}
 
 export function useInstalledSmartCube(
   createTransport: () => BleTransport,
@@ -14,7 +36,8 @@ export function useInstalledSmartCube(
 ): InstalledAppSmartCube {
   const transportRef = useRef<BleTransport | null>(null);
   if (!transportRef.current) transportRef.current = createTransport();
-  const connectionRef = useRef<GanV4CubeConnection | null>(null);
+  type SmartCubeConnection = GanV4CubeConnection | GanCubeConnection | Moyu32CubeConnection;
+  const connectionRef = useRef<SmartCubeConnection | null>(null);
   const trackerRef = useRef(new SmartCubeStateTracker());
   const moveClockRef = useRef(new MoveClock());
   const wasSolvedRef = useRef(true);
@@ -29,10 +52,11 @@ export function useInstalledSmartCube(
   onGyroRef.current = onGyro;
   const [phase, setPhase] = useState<InstalledAppSmartCube['phase']>('idle');
   const [deviceName, setDeviceName] = useState('');
+  const [model, setModel] = useState<InstalledCubeModel | null>(null);
   const [lastMove, setLastMove] = useState('');
   const [facelets, setFacelets] = useState('');
   const [quaternion, setQuaternion] = useState<GyroQuaternion | null>(null);
-  const [status, setStatus] = useState<GanV4CubeStatus | null>(null);
+  const [status, setStatus] = useState<GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | null>(null);
   const [solved, setSolved] = useState(true);
 
   const publishSolved = useCallback((nextSolved: boolean, timestamp: number) => {
@@ -52,9 +76,10 @@ export function useInstalledSmartCube(
     setSolved(true);
     setQuaternion(null);
     setStatus(null);
+    setModel(null);
   }, []);
 
-  const disposeConnection = useCallback((connection: GanV4CubeConnection | null) => {
+  const disposeConnection = useCallback((connection: SmartCubeConnection | null) => {
     // Invalidate this connection immediately, but retain its asynchronous native
     // cleanup even after connectionRef is cleared. GATT disconnect is device-wide:
     // a new connection must not race an older stopNotifications/disconnect pair.
@@ -88,10 +113,17 @@ export function useInstalledSmartCube(
       setPhase('requesting');
       await transport.initialize();
       if (!current()) throw new Error('smart cube connection closed');
+      const supportsServiceDiscovery = Boolean(transport.getServices);
       const device = await transport.requestDevice({
         captureManufacturerData: true,
         namePrefix: 'GAN',
-        optionalServices: [GAN_V4_SERVICE_UUID],
+        ...(supportsServiceDiscovery ? {
+          namePrefixes: ['GAN', 'WCU_MY3'],
+          services: [...DISCOVERABLE_CUBE_SERVICES],
+        } : {}),
+        optionalServices: supportsServiceDiscovery
+          ? [...DISCOVERABLE_CUBE_SERVICES]
+          : [GAN_V4_SERVICE_UUID],
         pickerLabels: language === 'zh' ? {
           scanning: '正在扫描智能魔方…',
           cancel: '取消',
@@ -107,7 +139,10 @@ export function useInstalledSmartCube(
       if (!current()) throw new Error('smart cube connection closed');
       setPhase('connecting');
       setDeviceName(device.name);
-      const connection = new GanV4CubeConnection(transport, {
+      const namedModel = modelForDeviceName(device.name);
+      setModel(namedModel);
+      let connection!: SmartCubeConnection;
+      const connectionCallbacks = {
         onDisconnect: () => {
           if (connectionRef.current !== connection) return;
           connectionRef.current = null;
@@ -115,7 +150,7 @@ export function useInstalledSmartCube(
           resetCubeState();
           setPhase('idle');
         },
-        onMove: (move, deviceTimestamp) => {
+        onMove: (move: string, deviceTimestamp?: number) => {
           if (connectionRef.current !== connection) return;
           const timestamp = moveClockRef.current.stamp(deviceTimestamp, performance.now());
           const solved = trackerRef.current.applyMove(move);
@@ -133,24 +168,38 @@ export function useInstalledSmartCube(
           resetCubeState();
           setPhase('error');
         },
-        onState: (nextFacelets) => {
+        onState: (nextFacelets: string) => {
           if (connectionRef.current !== connection) return;
           if (!trackerRef.current.adoptFacelets(nextFacelets)) return;
           setFacelets(nextFacelets);
           publishSolved(trackerRef.current.isSolved(), performance.now());
         },
-        onGyro: (nextQuaternion, velocity) => {
+        onGyro: onGyroRef.current
+          ? (nextQuaternion: GyroQuaternion, velocity?: GyroVelocity) => {
+            if (connectionRef.current !== connection) return;
+            setQuaternion(nextQuaternion);
+            onGyroRef.current?.(nextQuaternion, performance.now(), velocity);
+          }
+          : undefined,
+        onStatus: (nextStatus: GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus) => {
           if (connectionRef.current !== connection) return;
-          setQuaternion(nextQuaternion);
-          onGyroRef.current?.(nextQuaternion, performance.now(), velocity);
+          setStatus(nextStatus);
+          setModel(nextStatus.protocol);
         },
-        onStatus: (nextStatus) => {
-          if (connectionRef.current === connection) setStatus(nextStatus);
-        },
-      });
+      };
+      if (namedModel === 'moyu32') {
+        connection = new Moyu32CubeConnection(transport, connectionCallbacks);
+      } else if (supportsServiceDiscovery) {
+        connection = new GanCubeConnection(transport, connectionCallbacks);
+      } else {
+        connection = new GanV4CubeConnection(transport, connectionCallbacks);
+      }
       connectionRef.current = connection;
       await connection.connect(device);
       if (connectionRef.current !== connection) throw new Error('smart cube connection closed');
+      if (connection instanceof GanCubeConnection) {
+        setModel(connection.getProtocol() ?? namedModel);
+      }
       setPhase('connected');
       return device.name;
     } catch (error) {
@@ -187,5 +236,8 @@ export function useInstalledSmartCube(
     connectionRef.current = null;
   }, [disposeConnection]);
 
-  return { connect, deviceName, disconnect, facelets, lastMove, phase, quaternion, requestState, resetState, solved, status };
+  return {
+    connect, deviceName, disconnect, facelets, lastMove, model, phase, quaternion,
+    requestState, resetState, solved, status,
+  };
 }

@@ -21,6 +21,7 @@ export type {
   BleDevicePickerLabels,
   BleDeviceRef,
   BleRequestOptions,
+  BleServiceRef,
   BleTransport,
 } from './smart-cube/transport';
 export { useInstalledSmartCube } from './smart-cube/use-smart-cube';
