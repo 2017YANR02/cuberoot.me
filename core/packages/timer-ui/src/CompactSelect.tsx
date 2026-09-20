@@ -37,7 +37,7 @@ export interface CompactSelectProps<T extends string | number> {
   dataNoTimer?: boolean;
   /** Mouse hover opens the menu; touch and keyboard keep click activation. */
   openOnHover?: boolean;
-  /** Close immediately outside the trigger/popup, retaining their small crossing gap. */
+  /** Close immediately outside the trigger/popup, retaining their small crossing gap. Defaults to openOnHover. */
   dismissOnMouseLeave?: boolean;
   /** Fixed content below the popup, such as Mobile's bottom navigation. */
   viewportBottomInset?: number;
@@ -74,7 +74,7 @@ export function CompactSelect<T extends string | number>({
   footer,
   dataNoTimer = false,
   openOnHover = false,
-  dismissOnMouseLeave = false,
+  dismissOnMouseLeave = openOnHover,
   viewportBottomInset = 0,
 }: CompactSelectProps<T>) {
   const [open, setOpen] = useState(false);
