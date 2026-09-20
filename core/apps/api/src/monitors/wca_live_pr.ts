@@ -22,6 +22,7 @@ import { startPoller } from './poll.js';
 import { enrichName } from './names.js';
 import { formatRecords } from '../routes/wca_format.js';
 import type { RecordEvent } from '../utils/record_format.js';
+import { extractInferredRecords, type InferredRecord } from '../routes/cubing_live.js';
 
 const MONITOR: MonitorId = 'wca_live_pr';
 const WCA_LIVE_API = 'https://live.worldcubeassociation.org/api';
@@ -117,6 +118,28 @@ interface Candidate {
   compName: string;
   compIso2: string;
   tied?: boolean;
+}
+
+export type PrAchievementIdentity = Pick<
+  Candidate,
+  'compWcaId' | 'eventId' | 'roundNumber' | 'wcaid' | 'recType' | 'value'
+>;
+
+/** Match records inferred by the competition pipeline that WCA Live cannot tag, such as FWR/NWR. */
+export function findInferredRecordForPr(
+  candidate: PrAchievementIdentity,
+  records: readonly InferredRecord[],
+): InferredRecord | undefined {
+  if (!candidate.compWcaId || candidate.roundNumber == null) return undefined;
+  return records.find((record) => (
+    record.tag !== 'PR'
+    && record.compId === candidate.compWcaId
+    && record.eventId === candidate.eventId
+    && record.roundId === String(candidate.roundNumber)
+    && record.personWcaId === candidate.wcaid
+    && record.type === candidate.recType
+    && record.attemptResult === candidate.value
+  ));
 }
 
 interface ActiveRound {
@@ -368,6 +391,10 @@ async function runOnce(): Promise<void> {
   const allCandidates = candLists.flat();
   if (allCandidates.length === 0) return;
 
+  // FWR/NWR are inferred by the competition pipeline and are absent from WCA Live's record tags.
+  // Read the same adjudicated pool as the record monitor so those achievements never fall through as PR.
+  const inferredRecords = await extractInferredRecords();
+
   // 预加载已推台账,跳已处理 uid。
   const allUids = allCandidates.map(prUid);
   const pushedSet = await getPushedSet(MONITOR, allUids);
@@ -384,6 +411,12 @@ async function runOnce(): Promise<void> {
     // recordTag 非空且 != 'PR' → WR/CR/NR,交 record 监控推;这里只把基线推进 + 记账。
     // (WCA Live 也用 singleRecordTag='PR' 标橙色 PR 角标,PR 走本文件,不能当 regional 跳过。)
     if (cand.recordTag && cand.recordTag !== 'PR') {
+      baselineWrites.push(cand);
+      accountUids.push(uid);
+      continue;
+    }
+
+    if (findInferredRecordForPr(cand, inferredRecords)) {
       baselineWrites.push(cand);
       accountUids.push(uid);
       continue;
