@@ -106,7 +106,6 @@ afterEach(async () => {
 describe('installed App GAN lifecycle integration', () => {
   it.each([
     ['touch', '.timer-display-value'], ['mouse', '.timer-display-value'],
-    ['touch', '.scramble-moves'], ['mouse', '.scramble-moves'],
   ])('keeps legacy copy settings inert and %s presses on %s on the real timer', async (pointerType, selector) => {
     const clipboard = vi.spyOn(host, 'writeClipboardText');
     const scramble = container.querySelector<HTMLElement>('.scramble-moves')!;
@@ -115,9 +114,20 @@ describe('installed App GAN lifecycle integration', () => {
     expect(clipboard).not.toHaveBeenCalled();
     expect(scramble.textContent).toBe(originalScramble);
     expect(scramble.closest('[data-interactive="true"]')).toBeNull();
-    for (const type of ['touchstart', 'selectstart', 'contextmenu']) {
-      expect(scramble.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
+    for (const type of ['touchstart', 'selectstart']) {
+      expect(scramble.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(true);
     }
+    expect(scramble.dispatchEvent(new Event('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+    }))).toBe(false);
+    const ignoredPress = new Event('pointerdown', { bubbles: true, cancelable: true });
+    Object.defineProperties(ignoredPress, {
+      pointerType: { value: pointerType }, pointerId: { value: 2 }, button: { value: 0 },
+      clientX: { value: 100 }, clientY: { value: 100 },
+    });
+    scramble.dispatchEvent(ignoredPress);
+    expect(phase).toBe('idle');
     const timingText = container.querySelector<HTMLElement>(selector)!;
     // Hold readiness must be deterministic even on a busy build machine.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });

@@ -89,7 +89,7 @@ describe('shared timer complete-readout fitting', () => {
     expect(fit()).toBe(initial);
   });
 
-  it('blocks native readout and scramble menus while preserving pointer input and text fields', async () => {
+  it('blocks native readout menus while preserving scramble scrolling, pointer input and text fields', async () => {
     const down = vi.fn();
     const up = vi.fn();
     await act(async () => root.render(createElement(TimingSurface, {
@@ -103,9 +103,8 @@ describe('shared timer complete-readout fitting', () => {
     const moves = host.querySelector('.scramble-moves')!;
     const input = host.querySelector('textarea')!;
     for (const type of ['touchstart', 'selectstart', 'contextmenu']) {
-      for (const target of [colon, moves]) {
-        expect(target.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
-      }
+      expect(colon.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(false);
+      expect(moves.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(true);
       expect(input.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }))).toBe(true);
     }
     colon.dispatchEvent(new Event('pointerdown', { bubbles: true, cancelable: true }));
@@ -119,7 +118,7 @@ describe('shared timer complete-readout fitting', () => {
     expect(moves.dispatchEvent(new Event('touchstart', { bubbles: true, cancelable: true }))).toBe(true);
     moves.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(stripAction).toHaveBeenCalledTimes(1);
-    expect(moves.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(false);
+    expect(moves.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(true);
     await act(async () => root.render(null));
     expect(colon.dispatchEvent(new Event('contextmenu', { bubbles: true, cancelable: true }))).toBe(true);
   });
