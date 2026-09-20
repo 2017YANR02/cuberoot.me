@@ -36,11 +36,14 @@ describe('Mobile capability surface guard', () => {
   });
 
   it('reuses the shared smart-cube guide and consumes an armed first turn before verification', () => {
-    const onMove = app.match(/onMove: \(move, timestamp, facelets\) => \{[\s\S]*?(?=\n    onSolved:)/)?.[0];
+    const onMove = app.match(/onMove: \(move, timestamp, facelets, metadata\) => \{[\s\S]*?(?=\n    onSolved:)/)?.[0];
 
     expect(onMove).toBeDefined();
     expect(onMove).toContain('if (timerModeRef.current !== 1)');
-    expect(onMove).toContain('battleSmartCubeHandlersRef.current?.onMove');
+    expect(onMove).toContain('const futureHistory = metadata?.futureHistory === true');
+    expect(onMove).toContain('if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove');
+    expect(onMove).toContain('if (futureHistory) return');
+    expect(onMove).toMatch(/if \(!futureHistory\) \{[\s\S]*?smartCubeMoveSubscribersRef\.current/);
     expect(onMove).toContain('timer.startFromCube(timestamp)');
     expect(onMove).not.toContain('smartCubeMoveRecorderRef.current.begin(timestamp)');
     expect(onMove).toContain('smartCubeMoveRecorderRef.current.record(move, timestamp)');

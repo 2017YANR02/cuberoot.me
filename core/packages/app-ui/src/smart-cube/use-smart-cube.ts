@@ -2,28 +2,36 @@ import { GAN_V2_SERVICE_UUID, matchesGanV2Name } from '@cuberoot/shared/smart-cu
 import { GAN_V3_SERVICE_UUID, matchesGanV3Name } from '@cuberoot/shared/smart-cube/gan-v3';
 import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
 import { matchesMoyu32Name, MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
+import { matchesQiyiName, QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
 import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
 import { MoveClock } from '@cuberoot/shared/smart-cube/move-clock';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { InstalledAppSmartCube, InstalledAppSmartCubeOptions } from '../platform';
+import type {
+  InstalledAppSmartCube,
+  InstalledAppSmartCubeOptions,
+  InstalledSmartCubeMoveMetadata,
+} from '../platform';
 import { GanCubeConnection, type GanCubeStatus } from './gan-cube';
 import { GanV4CubeConnection, type GanV4CubeStatus } from './gan-v4-cube';
 import { Moyu32CubeConnection, type Moyu32CubeStatus } from './moyu32-cube';
+import { QiyiCubeConnection, type QiyiCubeStatus } from './qiyi-cube';
 import type { BleTransport } from './transport';
 
-type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32';
+type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32' | 'qiyi';
 
 const DISCOVERABLE_CUBE_SERVICES = [
   GAN_V2_SERVICE_UUID,
   GAN_V3_SERVICE_UUID,
   GAN_V4_SERVICE_UUID,
   MOYU32_SERVICE_UUID,
+  QIYI_SERVICE_UUID,
 ] as const;
 
 function modelForDeviceName(name: string): InstalledCubeModel | null {
   if (matchesMoyu32Name(name)) return 'moyu32';
+  if (matchesQiyiName(name)) return 'qiyi';
   if (matchesGanV4Name(name)) return 'gan-v4';
   if (matchesGanV3Name(name)) return 'gan-v3';
   if (matchesGanV2Name(name)) return 'gan-v2';
@@ -36,7 +44,11 @@ export function useInstalledSmartCube(
 ): InstalledAppSmartCube {
   const transportRef = useRef<BleTransport | null>(null);
   if (!transportRef.current) transportRef.current = createTransport();
-  type SmartCubeConnection = GanV4CubeConnection | GanCubeConnection | Moyu32CubeConnection;
+  type SmartCubeConnection =
+    | GanV4CubeConnection
+    | GanCubeConnection
+    | Moyu32CubeConnection
+    | QiyiCubeConnection;
   const connectionRef = useRef<SmartCubeConnection | null>(null);
   const trackerRef = useRef(new SmartCubeStateTracker());
   const moveClockRef = useRef(new MoveClock());
@@ -56,7 +68,9 @@ export function useInstalledSmartCube(
   const [lastMove, setLastMove] = useState('');
   const [facelets, setFacelets] = useState('');
   const [quaternion, setQuaternion] = useState<GyroQuaternion | null>(null);
-  const [status, setStatus] = useState<GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | null>(null);
+  const [status, setStatus] = useState<
+    GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus | null
+  >(null);
   const [solved, setSolved] = useState(true);
 
   const publishSolved = useCallback((nextSolved: boolean, timestamp: number) => {
@@ -118,7 +132,7 @@ export function useInstalledSmartCube(
         captureManufacturerData: true,
         namePrefix: 'GAN',
         ...(supportsServiceDiscovery ? {
-          namePrefixes: ['GAN', 'WCU_MY3'],
+          namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
           services: [...DISCOVERABLE_CUBE_SERVICES],
         } : {}),
         optionalServices: supportsServiceDiscovery
@@ -150,14 +164,19 @@ export function useInstalledSmartCube(
           resetCubeState();
           setPhase('idle');
         },
-        onMove: (move: string, deviceTimestamp?: number) => {
+        onMove: (
+          move: string,
+          deviceTimestamp?: number,
+          metadata?: InstalledSmartCubeMoveMetadata,
+        ) => {
           if (connectionRef.current !== connection) return;
           const timestamp = moveClockRef.current.stamp(deviceTimestamp, performance.now());
           const solved = trackerRef.current.applyMove(move);
           const nextFacelets = trackerRef.current.getFacelets();
           setLastMove(move);
           setFacelets(nextFacelets);
-          onMoveRef.current(move, timestamp, nextFacelets);
+          if (metadata) onMoveRef.current(move, timestamp, nextFacelets, metadata);
+          else onMoveRef.current(move, timestamp, nextFacelets);
           publishSolved(solved, timestamp);
         },
         onProtocolError: () => {
@@ -181,7 +200,9 @@ export function useInstalledSmartCube(
             onGyroRef.current?.(nextQuaternion, performance.now(), velocity);
           }
           : undefined,
-        onStatus: (nextStatus: GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus) => {
+        onStatus: (
+          nextStatus: GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus,
+        ) => {
           if (connectionRef.current !== connection) return;
           setStatus(nextStatus);
           setModel(nextStatus.protocol);
@@ -189,6 +210,8 @@ export function useInstalledSmartCube(
       };
       if (namedModel === 'moyu32') {
         connection = new Moyu32CubeConnection(transport, connectionCallbacks);
+      } else if (namedModel === 'qiyi') {
+        connection = new QiyiCubeConnection(transport, connectionCallbacks);
       } else if (supportsServiceDiscovery) {
         connection = new GanCubeConnection(transport, connectionCallbacks);
       } else {

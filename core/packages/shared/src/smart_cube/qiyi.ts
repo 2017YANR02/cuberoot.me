@@ -26,6 +26,7 @@ export interface QiyiNotification {
   state: string | null;
   battery: number | null;
   timestamp: number | null;
+  latestTimestamp: number | null;
   opcode: number | null;
   gyro: GyroQuaternion | null;
 }
@@ -86,6 +87,23 @@ export function buildQiyiPacket(content: ReadonlyArray<number>): Uint8Array {
   return frame;
 }
 
+export function createQiyiHelloCommand(mac: Uint8Array): Uint8Array {
+  if (mac.length !== 6) throw new Error('QiYi MAC must contain 6 bytes');
+  const content = [0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00];
+  for (let index = mac.length - 1; index >= 0; index--) content.push(mac[index]);
+  return buildQiyiPacket(content);
+}
+
+export function createQiyiAckCommand(opcode: number, timestamp: number): Uint8Array {
+  return buildQiyiPacket([
+    opcode,
+    (timestamp >>> 24) & 0xff,
+    (timestamp >>> 16) & 0xff,
+    (timestamp >>> 8) & 0xff,
+    timestamp & 0xff,
+  ]);
+}
+
 function parseGyro(frame: Uint8Array): GyroQuaternion | null {
   if (frame.length < 16 || frame[0] !== 0xcc || frame[1] !== 0x10
     || crc16Modbus(frame.subarray(0, 14)) !== (frame[14] | (frame[15] << 8))) return null;
@@ -103,7 +121,8 @@ export function decodeQiyiNotification(
   previousTimestamp: number,
 ): QiyiNotification {
   const empty: QiyiNotification = {
-    moves: [], futureMoves: [], state: null, battery: null, timestamp: null, opcode: null, gyro: null,
+    moves: [], futureMoves: [], state: null, battery: null, timestamp: null,
+    latestTimestamp: null, opcode: null, gyro: null,
   };
   if (frame.length < 16 || frame.length % 16 !== 0) return empty;
   if (frame[0] === 0xcc && frame[1] === 0x10) return { ...empty, gyro: parseGyro(frame) };
@@ -115,8 +134,13 @@ export function decodeQiyiNotification(
   const view = new DataView(msg.buffer, msg.byteOffset, msg.byteLength);
   const timestamp = view.getUint32(3, false);
   const battery = msg[35] <= 100 ? msg[35] : null;
-  const result = { ...empty, opcode, timestamp, battery };
-  if (opcode === QIYI_OP_HELLO) return { ...result, state: parseFacelets(msg) };
+  const result = { ...empty, opcode, timestamp, latestTimestamp: timestamp, battery };
+  if (opcode === QIYI_OP_HELLO) {
+    if (timestamp < previousTimestamp) {
+      return { ...result, battery: null, latestTimestamp: previousTimestamp };
+    }
+    return { ...result, state: parseFacelets(msg) };
+  }
   if (opcode !== QIYI_OP_STATE) return result;
   const candidates: Array<{ code: number; ts: number }> = [{ code: msg[34], ts: timestamp }];
   for (let index = 0; index < 11; index++) {
@@ -126,15 +150,21 @@ export function decodeQiyiNotification(
   }
   candidates.sort((left, right) => left.ts - right.ts);
   const seen = new Set<string>();
+  let latestTimestamp = Math.max(previousTimestamp, timestamp);
   for (const candidate of candidates) {
     if (candidate.ts <= previousTimestamp || candidate.code < 1 || candidate.code > 12) continue;
     const key = `${candidate.ts}:${candidate.code}`;
     if (seen.has(key)) continue;
     seen.add(key);
+    latestTimestamp = Math.max(latestTimestamp, candidate.ts);
     const face = 'URFDLB'[QIYI_AXIS[(candidate.code - 1) >> 1]];
     const move = face + (candidate.code & 1 ? "'" : '');
     const target = candidate.ts > timestamp ? result.futureMoves : result.moves;
     target.push({ mv: move, ts: Math.trunc(candidate.ts / 1.6) });
   }
-  return { ...result, state: timestamp >= previousTimestamp ? parseFacelets(msg) : null };
+  return {
+    ...result,
+    latestTimestamp,
+    state: timestamp >= previousTimestamp ? parseFacelets(msg) : null,
+  };
 }
