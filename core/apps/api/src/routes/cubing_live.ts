@@ -1875,6 +1875,8 @@ export interface InferredRecord {
   personWcaId: string;   // 可能为空(新人);排名 overlay 按它去重
   personIso2: string;    // 大写
   startDate: string | null;
+  /** Result equals the pre-competition record baseline. */
+  tied?: boolean;
   newcomerSource?: NewcomerSource;
   /** Same-round personal record, confirmed by the existing chronological PR ranks. */
   companionPr?: { type: 'single' | 'average'; attemptResult: number };
@@ -1936,6 +1938,7 @@ export function collectInferred(data: CompData, startDate: string | null, includ
         id: `inferred|${data.slug}|${r.e}|${roundId}|single|${r.n}|${sr}|${r.b}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'single',
         tag: sr, attemptResult: r.b, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        ...(sr === 'FWR' && r.b === data.currentRecords?.fwr?.[`${r.e}|0`] ? { tied: true } : {}),
         ...(!wantA && !ar && r.a > 0 && r.pA === 1
           ? { companionPr: { type: 'average' as const, attemptResult: r.a } } : {}),
       });
@@ -1943,6 +1946,7 @@ export function collectInferred(data: CompData, startDate: string | null, includ
         id: `inferred|${data.slug}|${r.e}|${roundId}|average|${r.n}|${ar}|${r.a}`,
         compId: data.slug, compNameEn, eventId: r.e, roundId, type: 'average',
         tag: ar, attemptResult: r.a, personName: u.name, personWcaId: u.wcaid ?? '', personIso2, startDate,
+        ...(ar === 'FWR' && r.a === data.currentRecords?.fwr?.[`${r.e}|1`] ? { tied: true } : {}),
         ...(!wantS && !sr && r.b > 0 && r.pS === 1
           ? { companionPr: { type: 'single' as const, attemptResult: r.b } } : {}),
       });

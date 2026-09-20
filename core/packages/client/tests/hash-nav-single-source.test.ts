@@ -6,7 +6,7 @@
 // 任何文件再自己挂 `hashchange` 监听(这套模式的标志动作)= CI 直接红,指回该 hook。
 //
 // 真属另一类用途的 hashchange(如 OAuth 回调、i18n infra)加进 ALLOWLIST 并写理由——
-// 目前一个都没有(全站仅 useHashHighlight 一处),所以是「闭集 = 0」而非棘轮。
+// WeChatShareSync 的 hashchange 只同步分享元数据，不执行页内导航。
 //
 // CI 跑 vitest,故约定靠本测试当红灯。
 // guard-registry: tracked at /dev/guards (app/[lang]/dev/guards/_guards.ts)
@@ -21,6 +21,7 @@ const SCAN_DIRS = ['app', 'components', 'lib', 'hooks'];
 // 相对 client 根的 posix 路径 → 豁免。
 const ALLOWLIST = new Set([
   'hooks/useHashHighlight.ts', // 唯一合法处:全站 hash 锚点滚动+高亮的单一实现
+  'components/WeChatShareSync.tsx', // 全局分享元数据同步，不滚动也不高亮
 ]);
 
 // 另一团队的 roux 实验 WIP,不在本约定范围内。

@@ -377,7 +377,7 @@ export function formatRecordMessage(ev: RecordEvent, getRank: RankFn): Formatted
         en = replaceFirst(en, 'NWR', `NWR${suffix}`);
       } else if (tag === 'FWR') {
         cn = replaceFirst(cn, `FWR${tiedCn}`, `FWR${tiedCn}${suffix}`);
-        en = replaceFirst(en, `FWR${tiedEn}`, `FWR${tiedEn}${suffix}`);
+        en = replaceFirst(en, `FWR${tiedEn}`, `FWR${tiedEn}${tied ? '/WR' : suffix}`);
       } else if (tag === 'NR') {
         cn = replaceFirst(cn, 'NR', `NR${suffix}`);
         en = replaceFirst(en, 'NR', `NR${suffix}`);
@@ -570,7 +570,7 @@ function reduceSegmentCn(ev: RecordEvent, getRank: RankFn, includeFlag: boolean)
   if (tag === 'WR') return `${t}${typeCn}世界纪录WR`;
   if (tag === 'FWR') {
     const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
-    return `${t}${typeCn}女子世界纪录FWR${rank ? `/WR${rank}` : ''}`;
+    return `${t}${typeCn}女子世界纪录FWR${ev.tied ? '(平)' : ''}${rank ? `/WR${rank}` : ''}`;
   }
   if (tag === 'NR') {
     const countryCn = COUNTRY_CN_MAP[personIso2] ?? (ev.person_country_en || personIso2);
@@ -603,7 +603,7 @@ function reduceSegmentEn(ev: RecordEvent, getRank: RankFn, includeFlag: boolean)
   if (tag === 'WR') return `${t} WR ${tEn}`;
   if (tag === 'FWR') {
     const rank = getRank(eventId, ev.rec_type, ev.attempt_result);
-    return `${t} FWR${rank ? `/WR${rank}` : ''} ${tEn}`;
+    return `${t} FWR${ev.tied ? `(Tied)${rank ? '/WR' : ''}` : rank ? `/WR${rank}` : ''} ${tEn}`;
   }
   if (tag === 'NR') {
     const rank = getRank(eventId, ev.rec_type, ev.attempt_result);

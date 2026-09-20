@@ -150,11 +150,11 @@ export default function SalesMindMap() {
     <div className="sales-mindmap-toolbar">
       <strong>直播成交思维导图</strong>
       <div className="sales-mindmap-tools" role="group" aria-label="导图视图">
-        <button type="button" aria-label="缩小导图" disabled={view.scale <= MIN_SCALE} onClick={() => zoom(1 / 1.25)}><Minus size={18} /></button>
+        <button type="button" className="sales-mindmap-tool" aria-label="缩小导图" disabled={view.scale <= MIN_SCALE} onClick={() => zoom(1 / 1.25)}><Minus size={18} /></button>
         <output aria-label="导图缩放比例">{Math.round(view.scale * 100)}%</output>
-        <button type="button" aria-label="放大导图" disabled={view.scale >= MAX_SCALE} onClick={() => zoom(1.25)}><Plus size={18} /></button>
-        <button type="button" onClick={fit}><Scan size={17} /><span>适应画布</span></button>
-        {canFullscreen && <button type="button" onClick={async () => {
+        <button type="button" className="sales-mindmap-tool" aria-label="放大导图" disabled={view.scale >= MAX_SCALE} onClick={() => zoom(1.25)}><Plus size={18} /></button>
+        <button type="button" className="sales-mindmap-tool" onClick={fit}><Scan size={17} /><span>适应画布</span></button>
+        {canFullscreen && <button type="button" className="sales-mindmap-tool" onClick={async () => {
           try {
             if (fullscreen) await document.exitFullscreen();
             else await container.current?.requestFullscreen();

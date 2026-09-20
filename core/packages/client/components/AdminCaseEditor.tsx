@@ -439,7 +439,7 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
 
   const nameField = (<label>
             <span>{tr({ zh: 'Case 名', en: 'Case Name' })} *</span>
-            <input className="alg-admin-modal-input" value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus={!children} />
+            <input className="alg-admin-modal-input alg-case-name-input" value={caseName} onChange={e => setCaseName(e.target.value)} maxLength={128} autoFocus={!children} />
           </label>);
   const subgroupField = (<label>
             <span>{tr({ zh: '子分组', en: 'Subgroup' })}</span>

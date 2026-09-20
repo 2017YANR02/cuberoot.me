@@ -59,6 +59,12 @@ describe('FWR notification formatting', () => {
     expect(result.en).toContain('FWR/WR10');
     expect(result.en).not.toContain('AsR');
   });
+
+  it('formats a tied FWR with the Chinese overall rank and an unnumbered English WR marker', () => {
+    const result = formatCombinedRecords([{ ...event, attempt_result: 427, tied: true }], () => 4);
+    expect(result.cn).toBe('纪录快讯! 4.27三阶平均女子世界纪录FWR(平)/WR4 连允之🇨🇳| 武汉丹秋赛🇨🇳');
+    expect(result.en).toBe('BREAKING NEWS! 4.27 3x3 FWR(Tied)/WR Avg Yunzhi Lian🇨🇳| 武汉丹秋赛🇨🇳');
+  });
   it('supports double FWR and mixed WR/FWR messages', () => {
     expect(formatCombinedRecords([event, { ...event, rec_type: 'single', attempt_result: 354 }], () => null).cn).toContain('双女子世界纪录FWR');
     expect(formatCombinedRecords([{ ...event, tag: 'WR', rec_type: 'single', attempt_result: 200 }, event], () => 10).cn).toContain('4.52平均女子世界纪录FWR/WR10');
