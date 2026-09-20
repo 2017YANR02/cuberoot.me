@@ -193,7 +193,7 @@ public class SmartCubePickerPlugin extends Plugin {
             DeviceCandidate candidate = new DeviceCandidate(address, name);
             devicesByAddress.put(addressKey, candidate);
             devices.add(candidate);
-            deviceRows.add("[" + address + "] " + name);
+            deviceRows.add(name);
             if (dialog != null) dialog.setTitle(availableDevicesLabel);
             if (listAdapter != null) listAdapter.notifyDataSetChanged();
         } catch (SecurityException error) {
