@@ -1,3 +1,4 @@
+import { ScanMode } from '@capacitor-community/bluetooth-le';
 import { describe, expect, it, vi } from 'vitest';
 
 import { NativeBleTransport, type NativeBleClientPort } from './native-ble-transport';
@@ -81,9 +82,41 @@ describe('NativeBleTransport', () => {
     expect(client.stopNotifications).toHaveBeenCalledOnce();
   });
 
-  it('uses service filters when the native picker spans multiple name prefixes', async () => {
+  it('uses the Android smart-cube picker to filter multiple name prefixes', async () => {
     const client = fakeClient();
-    const transport = new NativeBleTransport(client);
+    const picker = {
+      requestDevice: vi.fn(async () => ({
+        deviceId: 'CF:30:16:00:A1:B2',
+        name: 'WCU_MY32_A1B2',
+      })),
+    };
+    const transport = new NativeBleTransport(client, picker, 'android');
+    const pickerLabels = {
+      availableDevices: 'Available',
+      cancel: 'Cancel',
+      noDeviceFound: 'None',
+      scanning: 'Scanning',
+    };
+
+    await expect(transport.requestDevice({
+      namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      services: ['gan-service', 'moyu32-service', 'qiyi-service'],
+      optionalServices: ['gan-service', 'moyu32-service', 'qiyi-service'],
+      pickerLabels,
+    })).resolves.toEqual({ id: 'CF:30:16:00:A1:B2', name: 'WCU_MY32_A1B2' });
+
+    expect(picker.requestDevice).toHaveBeenCalledWith({
+      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      ...pickerLabels,
+    });
+    expect(client.requestDevice).not.toHaveBeenCalled();
+  });
+
+  it('uses an unfiltered low-latency community scan outside Android', async () => {
+    const client = fakeClient();
+    const picker = { requestDevice: vi.fn() };
+    const transport = new NativeBleTransport(client, picker, 'ios');
     const pickerLabels = {
       availableDevices: 'Available',
       cancel: 'Cancel',
@@ -100,10 +133,12 @@ describe('NativeBleTransport', () => {
     });
 
     expect(client.requestDevice).toHaveBeenCalledWith({
-      services: ['gan-service', 'moyu32-service'],
       optionalServices: ['gan-service', 'moyu32-service'],
+      scanMode: ScanMode.SCAN_MODE_LOW_LATENCY,
     });
-    expect(vi.mocked(client.requestDevice).mock.calls[0]?.[0]).not.toHaveProperty('namePrefix');
+    const request = vi.mocked(client.requestDevice).mock.calls[0]?.[0];
+    expect(request).not.toHaveProperty('namePrefix');
+    expect(request).not.toHaveProperty('services');
   });
 
   it('captures manufacturer data for an iOS UUID after the native picker returns', async () => {
