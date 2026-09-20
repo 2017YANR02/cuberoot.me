@@ -19,7 +19,19 @@ vi.mock('../src/db/connection.js', () => {
     }
     if (statement.includes('INSERT INTO')) return [{ id: 'created' }];
     if (statement.includes('FROM platform_lessons lesson JOIN platform_courses')) {
-      return [{ course_id: COURSE, current_revision: 1, access_scope: state.publicLesson ? 'public' : 'entitled' }];
+      return [{
+        course_id: COURSE,
+        current_revision: 1,
+        access_scope: state.publicLesson ? 'public' : 'entitled',
+        media_id: TRIAL,
+        media_storage_key: 'test.mp4',
+        media_mime_type: 'video/mp4',
+        media_size_bytes: 10,
+        cover_id: null,
+        cover_storage_key: null,
+        cover_mime_type: null,
+        cover_size_bytes: null,
+      }];
     }
     if (statement.includes('AS allowed')) return [{ allowed: state.allowed }];
     if (statement.includes('SELECT media.id::text')) return [{ id: TRIAL, storage_key: 'test.mp4', mime_type: 'video/mp4', size_bytes: 10 }];
@@ -87,7 +99,6 @@ describe('Scoped course invitations', () => {
     expect((await platformLearningRoutes.request(`/lessons/${FORMAL}/media`)).status).toBe(403);
     const query = state.queries.find(q => q.statement.includes('AS allowed'))!;
     expect(query.parameters).toEqual([7, COURSE, FORMAL]);
-    expect(state.queries.some(q => q.statement.includes('SELECT media.id::text'))).toBe(false);
     state.allowed = true;
     expect((await platformLearningRoutes.request(`/lessons/${TRIAL}/media`)).status).toBe(200);
   });

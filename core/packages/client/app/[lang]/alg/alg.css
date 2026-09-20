@@ -389,28 +389,10 @@ html[data-theme=dark] .alg-root {
   margin: 16px 0 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border-default);
-  padding-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.alg-subgroup-title.is-toggleable {
-  cursor: pointer;
-  user-select: none;
-}
-.alg-subgroup-title.is-toggleable:hover {
-  color: var(--foreground);
-}
-.alg-subgroup-count {
-  margin-left: auto;
-  font-size: 11px;
-  color: var(--faint-foreground);
-  font-weight: 500;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
 .alg-ep-options,
 .alg-ep-parity-section {
   max-width: 1200px;
@@ -891,6 +873,11 @@ html[data-theme=dark] .alg-root {
   text-decoration: underline;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
+}
+.alg-alg-text strong,
+.alg-meta-algline-code strong,
+.alg-editor-input strong {
+  font-weight: inherit;
 }
 .alg-alg-text u.wavy,
 .alg-meta-algline-code u.wavy {
