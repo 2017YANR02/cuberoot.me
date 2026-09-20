@@ -98,6 +98,21 @@ function errorMessage(error: unknown): string {
     : tr({ en: 'Connection failed. Try again.', zh: '连接失败，请重试' });
 }
 
+function smartCubeCandidatesEqual(
+  left: SmartCubeCandidate[],
+  right: SmartCubeCandidate[],
+): boolean {
+  return left.length === right.length && left.every((candidate, index) => {
+    const other = right[index];
+    return other !== undefined
+      && candidate.deviceId === other.deviceId
+      && candidate.deviceName === other.deviceName
+      && candidate.driver === other.driver
+      && candidate.driverLabel === other.driverLabel
+      && candidate.rssi === other.rssi;
+  });
+}
+
 interface BleCancellation {
   cancel(): void;
   drain(): Promise<void>;
@@ -319,9 +334,20 @@ export class SmartCubeSession {
     const cancellation = createBleCancellation();
     this.pendingConnection = cancellation;
 
+    const updateDiscoveredDevices = (foundDevices: DiscoveredSmartCube[]): void => {
+      if (generation !== this.connectionGeneration) return;
+      this.discoveredDevices = new Map(foundDevices.map((item) => [item.device.deviceId, item]));
+      const devices = foundDevices.map(({ device, driver }) => this.toCandidate(device, driver));
+      if (smartCubeCandidatesEqual(this.snapshot.devices, devices)) return;
+      this.setSnapshot({ phase: 'scanning', devices, error: '' });
+    };
+
     let found: DiscoveredSmartCube[];
     try {
-      found = await discoverSmartCubeDriver({ signal: cancellation.signal });
+      found = await discoverSmartCubeDriver({
+        signal: cancellation.signal,
+        onUpdate: updateDiscoveredDevices,
+      });
     } catch (error) {
       if (this.pendingConnection === cancellation) this.pendingConnection = null;
       if (generation !== this.connectionGeneration) return;
@@ -334,12 +360,7 @@ export class SmartCubeSession {
 
     if (this.pendingConnection === cancellation) this.pendingConnection = null;
     if (generation !== this.connectionGeneration) return;
-    this.discoveredDevices = new Map(found.map((item) => [item.device.deviceId, item]));
-    this.setSnapshot({
-      phase: 'scanning',
-      devices: found.map(({ device, driver }) => this.toCandidate(device, driver)),
-      error: '',
-    });
+    updateDiscoveredDevices(found);
   }
 
   async connectDevice(deviceId: string): Promise<void> {

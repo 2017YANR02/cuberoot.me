@@ -446,6 +446,51 @@ describe('SmartCubeSession', () => {
     expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
   });
 
+  it('exposes and connects a discovered device while the scan is still running', async () => {
+    const session = new SmartCubeSession();
+    await startSession(session, 'v'.repeat(32));
+    const found = {
+      device: { deviceId: 'cube-1', name: 'GoCube Edge', RSSI: -48 },
+      driver: 'gocube' as const,
+    };
+    driverMocks.discoverSmartCubeDriver.mockImplementation((options: {
+      onUpdate?(devices: typeof found[]): void;
+      signal: { onAbort(listener: () => void): () => void };
+    }) => {
+      options.onUpdate?.([found]);
+      return new Promise<typeof found[]>((_resolve, reject) => {
+        options.signal.onAbort(() => reject(new Error('cancelled')));
+      });
+    });
+    driverMocks.connectGoCube.mockResolvedValue({
+      deviceName: 'GoCube Edge',
+      disconnect: async () => {},
+      requestBattery: async () => 65,
+    });
+    const snapshots: Array<{ phase: string; devices: string[] }> = [];
+    session.subscribe((snapshot) => snapshots.push({
+      phase: snapshot.phase,
+      devices: snapshot.devices.map((device) => device.deviceId),
+    }));
+
+    const scan = session.scan();
+    let scanFinished = false;
+    void scan.then(() => {
+      scanFinished = true;
+    });
+
+    await vi.waitFor(() => {
+      expect(snapshots.at(-1)).toEqual({ phase: 'scanning', devices: ['cube-1'] });
+    });
+    expect(scanFinished).toBe(false);
+
+    await Promise.all([scan, session.connectDevice('cube-1')]);
+    expect(scanFinished).toBe(true);
+    expect(driverMocks.connectGoCube).toHaveBeenCalledWith(expect.objectContaining({
+      device: found.device,
+    }));
+  });
+
   it('connects only the device selected from the scan result', async () => {
     const session = new SmartCubeSession();
     await startSession(session, 'k'.repeat(32));
