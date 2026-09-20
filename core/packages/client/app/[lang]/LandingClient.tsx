@@ -14,6 +14,7 @@ import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
 import LandingSearch from '@/components/LandingSearch';
+import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import SearchInput from '@/components/SearchInput';
 import LazyVisible from '@/components/LazyVisible';
 import {
@@ -388,6 +389,7 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} autoFocus />
+      {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} />}
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
         const isHistoryFeature = featuredNotice === HISTORY_HOME_FEATURE;

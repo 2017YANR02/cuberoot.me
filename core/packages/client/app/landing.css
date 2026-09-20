@@ -235,6 +235,15 @@ body:has(.page-notice-wrap) .landing-page .brand-line {
 .landing-page .landing-search:has(+ .landing-featured-news) {
     margin-bottom: 0.7rem;
 }
+.landing-page .landing-search:has(+ .wp-upcoming-card) {
+    margin-bottom: 1rem;
+}
+.landing-page > .wp-upcoming-card {
+    width: 100%;
+    max-width: 1100px;
+    box-sizing: border-box;
+    margin: 0 auto 2.5rem;
+}
 .landing-page .landing-featured-news {
     --home-news-color: var(--accent);
     display: grid;
