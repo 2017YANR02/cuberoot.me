@@ -35,6 +35,8 @@ import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 
+const HOVER_CLOSE_DELAY_MS = 120;
+
 function Swatch({ color }: { color: string }) {
   return (
     <span className="palette-swatch" aria-hidden="true">
@@ -59,7 +61,14 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const previewingRef = useRef(false);
+  const hoverCloseTimerRef = useRef<number | null>(null);
   const eff = useEffectiveTheme();
+
+  const cancelHoverClose = () => {
+    if (hoverCloseTimerRef.current === null) return;
+    window.clearTimeout(hoverCloseTimerRef.current);
+    hoverCloseTimerRef.current = null;
+  };
 
   const endPreview = () => {
     if (!previewingRef.current) return;
@@ -68,9 +77,19 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   };
 
   const closeMenu = () => {
+    cancelHoverClose();
     endPreview();
     endAppearancePreview(true);
     setOpen(false);
+  };
+
+  const scheduleHoverClose = (pointerType: string) => {
+    if (pointerType === 'touch') return;
+    cancelHoverClose();
+    hoverCloseTimerRef.current = window.setTimeout(() => {
+      hoverCloseTimerRef.current = null;
+      closeMenu();
+    }, HOVER_CLOSE_DELAY_MS);
   };
 
   const showThemePreview = (choice: 'light' | 'dark') => {
@@ -115,6 +134,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   }, [open]);
 
   useEffect(() => () => {
+    cancelHoverClose();
     if (previewingRef.current) restorePersistedAppearance();
     endAppearancePreview(true);
   }, []);
@@ -164,10 +184,12 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
         className={cls}
         onPointerEnter={(event) => {
           if (event.pointerType !== 'touch') {
+            cancelHoverClose();
             beginAppearancePreview();
             setOpen(true);
           }
         }}
+        onPointerLeave={(event) => scheduleHoverClose(event.pointerType)}
         onClick={(event) => {
           // Mouse hover already opens the menu; its following click must keep it open.
           if (open && event.detail === 0) closeMenu();
@@ -188,7 +210,11 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
         <div
           className="lang-menu palette-menu appearance-menu"
           role="menu"
-          onPointerLeave={endPreview}
+          onPointerEnter={cancelHoverClose}
+          onPointerLeave={(event) => {
+            endPreview();
+            scheduleHoverClose(event.pointerType);
+          }}
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
           }}
