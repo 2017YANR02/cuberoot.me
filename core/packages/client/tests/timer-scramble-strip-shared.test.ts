@@ -88,6 +88,12 @@ describe('shared TimerScrambleStrip', () => {
     expect(activate).toHaveBeenCalledTimes(3);
   });
 
+  it('keeps space-free Square-1 scrambles wrappable instead of making the whole string nowrap', () => {
+    const strip = render({ scramble: '-5/22/-3/1-5/0-3/-3/2/0-3,1/0-3/-2/2-1' });
+    expect(strip.querySelector('.scramble-moves')?.textContent).toContain('-5/22/-3/1-5/0-3/-3/2/0-3,1/0-3/-2/2-1');
+    expect(strip.querySelector('.scramble-moves > .scramble-copied-tail')).toBeNull();
+  });
+
   it('renders current-turn progress and correction-copy feedback without a false tail check', () => {
     const strip = render({
       copied: true,
@@ -310,6 +316,8 @@ describe('shared TimerScrambleStrip', () => {
     expect(css).toMatch(/\.scramble-strip \.scramble-text[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/);
     expect(rootRule).not.toContain('word-spacing');
     expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?word-spacing:\s*0\.25em;/);
+    expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?overflow-wrap:\s*anywhere;/);
+    expect(css).toMatch(/\.scramble-strip \.scramble-moves,[\s\S]*?white-space:\s*pre-wrap;/);
     expect(css).toMatch(/\.timer-scramble-source-meta[\s\S]*?word-spacing:\s*normal;/);
     expect(css).toMatch(/\.scramble-src[\s\S]*?min-height:\s*44px;/);
     expect(css).toMatch(/\.scramble-status-retry[\s\S]*?min-width:\s*44px;[\s\S]*?min-height:\s*44px;/);

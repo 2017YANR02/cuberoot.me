@@ -251,7 +251,6 @@ describe('shared useGestureWheel pointer lifecycle', () => {
 
   it.each([
     ['mouse', '.timer-display-value'], ['touch', '.timer-display-value'],
-    ['mouse', '.scramble-moves'], ['touch', '.scramble-moves'],
   ] as const)('keeps %s presses on %s timing-only even after dragging', (pointerType, selector) => {
     render({ ignoreButtons: true });
     const digits = host.querySelector(selector)!;
@@ -262,6 +261,18 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     dispatch(surface, 'pointerup', { pointerType, time: 800, x: 200, y: 200 });
     expect(effects.down).toHaveBeenCalledTimes(1);
     expect(effects.up).toHaveBeenCalledTimes(1);
+    expect(effects.cancel).not.toHaveBeenCalled();
+    expect(effects.fire).not.toHaveBeenCalled();
+  });
+
+  it.each(['mouse', 'touch'] as const)('keeps %s scramble scrolling outside the timing path', (pointerType) => {
+    render({ ignoreButtons: true });
+    const scramble = host.querySelector('.scramble-moves')!;
+    dispatch(scramble, 'pointerdown', { pointerType, time: 0, x: 100, y: 100 });
+    dispatch(scramble, 'pointermove', { pointerType, time: 700, x: 100, y: 30 });
+    dispatch(scramble, 'pointerup', { pointerType, time: 800, x: 100, y: 30 });
+    expect(effects.down).not.toHaveBeenCalled();
+    expect(effects.up).not.toHaveBeenCalled();
     expect(effects.cancel).not.toHaveBeenCalled();
     expect(effects.fire).not.toHaveBeenCalled();
   });
