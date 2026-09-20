@@ -155,8 +155,10 @@ describe('component reuse rule registry', () => {
     const activeRule = css.match(/\.pp-trigger--active\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 
     expect(source).toContain('showTriggerIcon = true');
-    expect(source).toContain('{showTriggerIcon && (selectedItem?.id && showItemIcons');
-    expect(source).toContain('(!selectedItem?.id || !showItemIcons || !showTriggerIcon)');
+    expect(source).toContain('const showSelectedIcons = showTriggerIcon && showItemIcons && hasSelection');
+    expect(source).toContain('{showSelectedIcons ? (');
+    expect(source).toContain('{selectedItems.map(item => (');
+    expect(source).toContain(') : <span className="pp-trigger-label">{triggerLabel}</span>}');
     expect(siteSource.match(/showTriggerIcon=\{false\}/g)).toHaveLength(4);
     expect(source).not.toContain('iconOnlyTrigger');
     expect(triggerRule).toContain('border: 1px solid transparent');
