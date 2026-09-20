@@ -203,9 +203,9 @@ it('links section cards to separate lesson pages without losing lessons or chang
       id: `${group}-${index}`, titleZh: `${prefix} ${index + 1}`, titleEn: `Lesson ${group}-${index}`, status: 'published',
     })));
   const host = document.createElement('div'), root = createRoot(host);
-  const render = (items: unknown[], id = 'course-detail') => act(async () => root.render(createElement(PlatformDomainContent, {
+  const render = (items: unknown[], id = 'course-detail', courseRedeemed = false) => act(async () => root.render(createElement(PlatformDomainContent, {
     definition: { id } as PlatformRouteDefinition,
-    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {},
+    entity: { id: 'course', title: 'Course', data: { lessons: items } } as PlatformEntity, params: {}, courseRedeemed,
   })));
   try {
     await render(lessons);
@@ -215,6 +215,11 @@ it('links section cards to separate lesson pages without losing lessons or chang
     expect(host.querySelector('details')).toBeNull();
     expect([...host.querySelectorAll('a')].map(node => node.getAttribute('href'))).toEqual(
       ['introduction', 'trial', 'core'].map(section => `/platform/courses/course/sections/${section}`));
+    expect(host.querySelector('.platform-course-redeemed')).toBeNull();
+    await render(lessons, 'course-detail', true);
+    const redeemedBadge = host.querySelector('.platform-course-redeemed');
+    expect(redeemedBadge?.textContent).toBe('已兑换');
+    expect(redeemedBadge?.closest('a')?.getAttribute('href')).toBe('/platform/courses/course/sections/core');
     for (const [index, section] of ['introduction', 'trial', 'core'].entries()) {
       await render(lessons, `course-section-${section}`);
       expect(host.textContent).not.toContain('published');
