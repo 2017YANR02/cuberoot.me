@@ -16,13 +16,15 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     expect(redemption).toContain("!user ? (");
     expect(redemption).toContain('href="/account"');
     expect(redemption).toContain('<PlatformDomainActions');
-    expect(redemption).toContain('href="/platform/account/courses"');
     expect(redemption).toContain('role="status"');
+    expect(redemption).not.toContain('兑换成功');
+    expect(redemption).not.toContain('开始学习');
     expect(redemption).not.toMatch(/kind="permission"|platform-route-header|PlatformEntityList|SearchInput/);
     expect(view).toContain("&& definition.id !== 'account-invites'");
     expect(view).toContain("if (action === 'redeem-invite') {");
-    expect(view).toContain("window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(response.courseId)}/sections/core`);");
-    expect(view).toContain('setRedeemed(true);');
+    expect(view).toContain("loadPlatformResource('entitlements', { params: {} })");
+    expect(view).toContain("window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(courseId)}/sections/core`);");
+    expect(view).not.toContain('setRedeemed(true)');
   });
 
   it('marks active redeemed courses and exposes their learning entry', () => {

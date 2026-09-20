@@ -1030,6 +1030,10 @@ body[data-site-scenery] :is(
   text-align: center;
 }
 
+.platform-redemption .platform-write-actions {
+  justify-content: center;
+}
+
 .platform-invite-page .platform-route-header { margin-bottom: 32px; }
 .platform-invite-page .platform-route-header h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); }
 .platform-invite-manager { max-width: 780px; display: grid; gap: 32px; }

@@ -167,6 +167,14 @@ export function canonicalNnnAlg(alg: string): string {
   return out.join(' ');
 }
 
+/** Mirror rows are shown without a finishing y rotation, so dedupe on that same form. */
+function canonicalMirrorDisplayAlg(alg: string): string {
+  const { moves, junk } = tokenizeMoves(flattenAlg(alg));
+  if (junk.length) return canonicalNnnAlg(alg);
+  while (moves.at(-1)?.family === 'y') moves.pop();
+  return canonicalNnnAlg(moves.map(renderMove).join(' '));
+}
+
 // ---------------------------------------------------------------- 成对重算
 
 export interface MirrorPairCase {
@@ -242,10 +250,10 @@ export function regenerateMirrorAlgs(
         const dst = MIRROR_TARGET[gen] === 'self' ? src : srcPartner;
         const list = algsById.get(dst.id)?.[MIRROR_VIEW[gen][0]];
         if (!list) continue;
-        const key = canonicalNnnAlg(alg);
-        // 字面重合就跳过 —— 库里本来就人工收了不少镜像份(f2l `A-` 的 FL 首条就是 `A+` 的
-        // 左右镜),自镜像 case 更是常常镜回自己身上一模一样的东西。
-        if (!key || list.some(e => canonicalNnnAlg(e.alg) === key)) continue;
+        const key = canonicalMirrorDisplayAlg(alg);
+        // 展示重合就跳过 —— 库里本来就人工收了不少镜像份(f2l `A-` 的 FL 首条就是 `A+` 的
+        // 左右镜,只是末尾多一个页面会隐藏的 y'),自镜像 case 也常镜回同一条。
+        if (!key || list.some(e => canonicalMirrorDisplayAlg(e.alg) === key)) continue;
         const made: AlgEntry = { alg, gen, src: { id: src.id, ori: 0, i } };
         // 步数镜像后不变;出处跟着源走(作者还是写源那条的人)。
         // algHtml / ytId / tags 一律不带:指法标注、教学视频、单手标签讲的都是**那只手**的事。

@@ -860,9 +860,8 @@ html[data-theme=dark] .alg-root {
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
-  background: var(--background);
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
+  background: transparent;
+  border: 0;
   font-family: var(--font-mono, Consolas, monospace);
   font-size: 12px;
   color: var(--foreground);
@@ -870,8 +869,7 @@ html[data-theme=dark] .alg-root {
   text-align: left;
 }
 .alg-alg-row:hover {
-  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  border-color: var(--accent);
+  background: transparent;
 }
 .alg-alg-text {
   flex: 1;
@@ -994,7 +992,7 @@ html[data-theme=dark] .alg-root {
 .alg-case-inline-editor .alg-alg-drag-handle { position: absolute; left: 0; top: 8px; }
 .alg-editor-mirror { flex-basis: 100%; min-width: 0; }
 .alg-editor-notation { flex-basis: 100%; overflow-wrap: anywhere; }
-.alg-validation-name:is(button, a) { color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
+.alg-validation-name:is(button, a) { display: flex; flex: 1; align-items: center; gap: 6px; color: inherit; font: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: start; }
 .alg-editor-input {
   flex: 1;
   min-height: 32px;
@@ -1190,8 +1188,8 @@ html[data-theme=dark] .alg-root {
 .alg-alg-copy-icon { color: var(--faint-foreground); flex: 0 0 auto; }
 .alg-alg-row:hover .alg-alg-copy-icon { color: var(--accent); }
 .alg-alg-row.is-expanded {
-  background: var(--accent-soft);
-  border-color: var(--accent);
+  background: transparent;
+  color: var(--accent);
 }
 .alg-alg-copy-btn {
   display: inline-flex;
@@ -1222,12 +1220,26 @@ html[data-theme=dark] .alg-root {
   padding: 8px 12px;
   font-size: 12px;
 }
+.alg-community.is-compact {
+  gap: 2px;
+  padding: 0;
+}
 .alg-community-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 24px;
+}
+.alg-player-list-options > .alg-community {
+  padding: 8px 0 0;
+}
+.alg-community-meta {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  min-height: 24px;
+  min-width: 0;
 }
 .alg-community-author {
   flex-shrink: 0;
@@ -1253,8 +1265,7 @@ a.alg-community-author:hover {
   font-size: 12px;
   color: var(--foreground);
   background: none;
-  flex: 1 1 12rem;
-  min-width: min(100%, 12rem);
+  min-width: 0;
   word-break: break-word;
 }
 .alg-community-notes {
@@ -1897,22 +1908,12 @@ a.alg-community-author:hover {
   overflow: visible;
 }
 
-/* 非 meta case(f2l / oll / coll / cmll / zbls …)的精简正文:
-   左边保留静态辨识图和打乱，右边专注动画与公式。 */
+/* 非 meta case(f2l / oll / coll / cmll / zbls …)复用 meta 页层级:
+   关系卡片独占顶行，动画与公式排列在下方。 */
 .alg-case-detail-lean {
-  display: grid;
-  grid-template-columns: 136px minmax(0, 1fr);
-  align-items: start;
-  gap: 24px;
-}
-.alg-case-detail-lean-aside {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-.alg-case-detail-lean-thumb {
-  align-self: flex-start;
+  gap: 0;
 }
 .alg-case-detail-lean-algs {
   display: flex;
@@ -1924,6 +1925,32 @@ a.alg-community-author:hover {
 .alg-case-detail-lean-algs.is-paired-player {
   gap: 24px;
 }
+@media (min-width: 901px) {
+  .alg-case-detail.is-f2l-orientation-grid {
+    max-width: min(1440px, 100%);
+  }
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid:not(.is-editing),
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    column-gap: 32px;
+    row-gap: 24px;
+  }
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(3) {
+    order: 4;
+  }
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid.is-editing .alg-editor > .alg-editor-ori:nth-child(4) {
+    order: 3;
+  }
+}
+@media (min-width: 901px) and (max-width: 1399px) {
+  .alg-case-detail-lean-algs.is-paired-player.is-f2l-orientation-grid .alg-player-list-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+}
 .alg-case-detail-ori {
   display: flex;
   flex-direction: column;
@@ -1934,28 +1961,40 @@ a.alg-community-author:hover {
 }
 .alg-case-detail-ori-algs {
   min-width: 0;
+  --alg-case-detail-formula-size: 0.85rem;
+  --alg-case-detail-formula-indent: 32px;
 }
-/* 同一朝向的公式是一个连续列表:相邻行共用一条边,不要各画一条横线再留缝。
-   普通访客的行直接相邻;管理员多一层 sortable 外壳,两种 DOM 都要拼起来。 */
-.alg-case-detail-ori > .alg-alg-row:has(+ .alg-alg-row),
-.alg-case-detail-ori > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-row:has(+ .alg-alg-row),
-.alg-case-detail-ori-algs > .alg-alg-sortable:has(+ .alg-alg-sortable) > .alg-alg-row {
-  border-bottom-right-radius: 0;
-  border-bottom-left-radius: 0;
+.alg-case-detail-ori-algs > .alg-case-standard {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  column-gap: 8px;
 }
-.alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable,
-.alg-case-detail-ori-algs > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-sortable + .alg-alg-sortable {
-  margin-top: -1px;
+.alg-case-detail-ori-algs > .alg-case-standard .alg-case-icon {
+  justify-self: start;
 }
-.alg-case-detail-ori > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-row + .alg-alg-row,
-.alg-case-detail-ori-algs > .alg-alg-sortable + .alg-alg-sortable > .alg-alg-row {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+.alg-case-detail-ori-algs > .alg-alg-row {
+  padding-inline-start: var(--alg-case-detail-formula-indent);
+}
+.alg-case-detail-ori-algs > .alg-community {
+  padding-inline-start: var(--alg-case-detail-formula-indent);
+}
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-alg-sortable {
+  padding-inline-start: var(--alg-case-detail-formula-indent);
+}
+.alg-case-inline-editor .alg-case-detail-ori-algs .alg-editor-input {
+  padding-inline: 0;
+}
+.alg-case-detail-ori-algs > .alg-case-standard,
+.alg-case-detail-ori-algs > .alg-admin-setup-label {
+  margin: 0 0 10px;
+}
+.alg-case-detail-ori-algs > .alg-case-standard code,
+.alg-case-detail-ori-algs > .alg-alg-row,
+.alg-case-detail-ori-algs > .alg-alg-sortable .alg-alg-row,
+.alg-case-detail-ori-algs .alg-editor-input {
+  font-family: inherit;
+  font-size: var(--alg-case-detail-formula-size);
+  line-height: 1.5;
 }
 .alg-case-detail-ori > .alg-alg-row:hover,
 .alg-case-detail-ori > .alg-alg-row.is-expanded,
@@ -1978,24 +2017,6 @@ a.alg-community-author:hover {
   min-width: 0;
 }
 
-/* 中等宽度先把静态信息移到上方，把整行留给动画与公式。 */
-@media (max-width: 900px) {
-  .alg-case-detail-lean.is-paired-player {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 116px minmax(0, 1fr);
-    column-gap: 12px;
-    row-gap: 6px;
-  }
-  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
-  .alg-case-detail-lean.is-paired-player .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
-}
-
 @media (max-width: 680px) {
   .alg-case-detail {
     padding: 12px;
@@ -2008,26 +2029,6 @@ a.alg-community-author:hover {
     min-block-size: 44px;
     align-items: center;
     justify-content: center;
-  }
-  .alg-case-detail-lean {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .alg-case-detail-lean-aside {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 116px minmax(0, 1fr);
-    column-gap: 12px;
-    row-gap: 6px;
-  }
-  .alg-case-detail-lean-thumb { grid-row: 1 / span 3; }
-  .alg-case-detail-lean-aside > :not(.alg-case-detail-lean-thumb) { grid-column: 2; }
-  .alg-case-detail-lean-aside .alg-mirror-row {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 4px;
-    margin: 0;
   }
   .alg-case-detail-lean-algs.is-paired-player {
     gap: 10px;
@@ -2051,6 +2052,8 @@ a.alg-community-author:hover {
 }
 .alg-meta-scramble-row {
   display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   min-width: 0;
@@ -2062,6 +2065,14 @@ a.alg-community-author:hover {
 .alg-meta-scramble-row > .alg-meta-algline {
   flex: 1;
   min-width: 0;
+}
+.alg-meta-scramble-prefix {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  color: var(--muted-foreground);
 }
 .alg-meta-scramble-kind {
   align-self: center;
@@ -2148,6 +2159,16 @@ a.alg-community-author:hover {
   font-size: 12px;
 }
 .alg-meta-algline-code::-webkit-scrollbar { display: none; }
+.alg-case-standard-detail {
+  align-items: center;
+}
+.alg-case-standard-detail code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.alg-case-standard-detail code::-webkit-scrollbar { display: none; }
 .alg-meta-copy {
   flex: none;
   display: inline-flex;
@@ -2446,24 +2467,6 @@ a.alg-community-author:hover {
   .alg-mirror-line .alg-alg-copy-btn { grid-area: copy; }
 }
 
-/* 伙伴 case 缩略卡(case 详情页,建链之后才出现) */
-.alg-mirror-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 4px 0 8px;
-  font-size: 12px;
-}
-.alg-mirror-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: inherit;
-  text-decoration: none;
-}
-.alg-mirror-link:hover .alg-mirror-name { color: var(--accent); }
-.alg-mirror-name { font-weight: 600; }
-
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .alg-root {
@@ -2486,6 +2489,10 @@ a.alg-community-author:hover {
   }
 }
 .alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.alg-editor-row.has-gen-heading { margin-top: 18px; }
+.alg-editor-gen { position: relative; display: inline-flex; align-items: center; min-width: 6ch; min-height: 32px; white-space: nowrap; font-size: 11px; }
+.alg-editor-gen-heading { position: absolute; inset-inline-start: 0; bottom: calc(100% + 2px); font-family: var(--font-sans, inherit); white-space: nowrap; }
+.alg-editor-gen code { font: inherit; }
 .alg-editor-tools .alg-editor-del { border-color: transparent; min-width: 28px; min-height: 32px; justify-content: center; }
 .alg-editor-tools .alg-editor-del:hover { color: var(--foreground); background: var(--muted); }
 .alg-editor-tools .alg-editor-remove:hover { color: var(--destructive); }

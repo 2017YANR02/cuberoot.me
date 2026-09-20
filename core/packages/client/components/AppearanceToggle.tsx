@@ -218,10 +218,10 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           onBlur={(event) => {
             if (!event.currentTarget.contains(event.relatedTarget as Node | null)) endPreview();
           }}
-        >
+          >
           <div className="appearance-settings">
             <div className="appearance-schemes" style={{ display: 'flex', flexFlow: 'row nowrap', gap: 0 }}>
-              {(['light', 'dark'] as const).map((choice) => {
+              {(['dark', 'light'] as const).map((choice) => {
                 const Icon = choice === 'light' ? Sun : Moon;
                 const active = onScheme && eff === choice;
                 return (
@@ -273,12 +273,6 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             </div>
           </div>
 
-          {<div
-            className="appearance-extra"
-            onPointerEnter={endPreview}
-            onFocus={endPreview}
-          ><SiteBackgroundControl onDiagnosticsOpen={closeMenu} />{menuContent}</div>}
-
           <AppLink
             href="/appearance"
             className="palette-menu-more"
@@ -288,6 +282,12 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           >
             {L.more} →
           </AppLink>
+
+          {<div
+            className="appearance-extra"
+            onPointerEnter={endPreview}
+            onFocus={endPreview}
+          ><SiteBackgroundControl onDiagnosticsOpen={closeMenu} />{menuContent}</div>}
         </div>
       )}
     </div>

@@ -17,7 +17,8 @@ import {
 import { is3x3TopLayerSet } from '@cuberoot/shared';
 import { ALG_TAGS, type AlgTag } from '@cuberoot/shared/alg';
 import {
-  canonicalize3x3WideMoves, cubeOnly, hasBalancedGrouping, startsWithYRotation,
+  canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
+  startsWithYRotation,
 } from '@cuberoot/shared/alg-notation';
 import { normalizeCaseNameForSet } from '../utils/sq1_cs.js';
 import { publicUserIdsForOwnerKeys } from '../utils/account.js';
@@ -82,6 +83,12 @@ function leadingYError(puzzle: string, setSlug: string, alg: string): string | n
 
 function groupingError(alg: string): string | null {
   return hasBalancedGrouping(cubeOnly(alg)) ? null : 'unbalanced_grouping_parentheses';
+}
+
+function moveSpacingError(puzzle: string, alg: string): string | null {
+  return /^\d+x\d+$/.test(puzzle) && findIllegalGluedCubeMoves(alg)
+    ? 'moves_must_be_space_separated'
+    : null;
 }
 
 // GET /v1/alg/:puzzle/:set/submissions — 列出该 set 下全部用户提交
@@ -154,6 +161,8 @@ algRoutes.post('/alg/:puzzle/:set/:case/submit', async (c) => {
   if (tagInput.error) return c.json({ error: tagInput.error }, 400);
   const syntaxError = groupingError(alg);
   if (syntaxError) return c.json({ error: syntaxError }, 400);
+  const spacingError = moveSpacingError(puzzle, alg);
+  if (spacingError) return c.json({ error: spacingError }, 400);
   const ruleError = leadingYError(puzzle, setSlug, alg);
   if (ruleError) return c.json({ error: ruleError }, 400);
 
@@ -194,6 +203,8 @@ algRoutes.put('/alg/submissions/:id', async (c) => {
   const alg = rows[0].puzzle === '3x3' ? canonicalize3x3WideMoves(submittedAlg) : submittedAlg;
   const syntaxError = groupingError(alg);
   if (syntaxError) return c.json({ error: syntaxError }, 400);
+  const spacingError = moveSpacingError(rows[0].puzzle, alg);
+  if (spacingError) return c.json({ error: spacingError }, 400);
   const ruleError = leadingYError(rows[0].puzzle, rows[0].set_slug, alg);
   if (ruleError) return c.json({ error: ruleError }, 400);
 

@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { ShieldCheck } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import ValidationReportModal, { type ValidationScope } from '@/components/ValidationReportModal';
+import type { AlgFailure } from '@/lib/alg_validation_scan';
 import { useIsAdmin } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 
@@ -24,9 +25,11 @@ interface Props {
   className?: string;
   /** 默认链接到详情页；详情页可接管为滚动到当前编辑区。 */
   onPickCase?: (puzzle: AlgPuzzle, set: string, caseObj: AlgCase) => void;
+  /** 把扫描结果交给需要同步标记公式行的宿主。 */
+  onResults?: (failures: AlgFailure[]) => void;
 }
 
-export default function AlgAdminValidate({ scope, label, className, onPickCase }: Props) {
+export default function AlgAdminValidate({ scope, label, className, onPickCase, onResults }: Props) {
   const isAdmin = useIsAdmin();
   const [open, setOpen] = useState(false);
 
@@ -48,6 +51,7 @@ export default function AlgAdminValidate({ scope, label, className, onPickCase }
           scope={scope}
           onClose={() => setOpen(false)}
           onPickCase={onPickCase}
+          onResults={onResults}
         />
       )}
 

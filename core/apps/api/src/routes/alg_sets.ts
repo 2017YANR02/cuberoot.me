@@ -17,7 +17,8 @@ import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js'
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
 import {
-  canonicalize3x3WideMoves, cubeOnly, hasBalancedGrouping, startsWithYRotation,
+  canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
+  startsWithYRotation,
 } from '@cuberoot/shared/alg-notation';
 import { validateRequiredAlgCaseSetup } from '../utils/alg_case_setup.js';
 
@@ -69,6 +70,7 @@ interface AlgCaseInput {
 }
 
 const FORMULA_JSON_FIELDS = new Set(['alg', 'algHtml', 'setup', 'scramble']);
+const SPACING_JSON_FIELDS = new Set(['alg', 'setup', 'scramble']);
 
 function canonicalize3x3FormulaJson(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize3x3FormulaJson);
@@ -134,6 +136,16 @@ function containsUnbalancedGrouping(value: unknown): boolean {
   ));
 }
 
+function containsIllegalGluedCubeMoves(value: unknown): boolean {
+  if (Array.isArray(value)) return value.some(containsIllegalGluedCubeMoves);
+  if (!value || typeof value !== 'object') return false;
+  return Object.entries(value as Record<string, unknown>).some(([key, child]) => (
+    SPACING_JSON_FIELDS.has(key) && typeof child === 'string'
+      ? findIllegalGluedCubeMoves(child) !== null
+      : containsIllegalGluedCubeMoves(child)
+  ));
+}
+
 async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseInput): Promise<{ error?: string }> {
   if (typeof body.caseName !== 'string' || !body.caseName.trim()) return { error: 'caseName required' };
   if (body.caseName.length > CASE_NAME_MAX) return { error: 'caseName too long' };
@@ -150,6 +162,12 @@ async function validateCaseInput(puzzle: string, setSlug: string, body: AlgCaseI
     || (typeof body.standard === 'string' && !hasBalancedGrouping(cubeOnly(body.standard)))
     || containsUnbalancedGrouping(body.algs)) {
     return { error: 'unbalanced_grouping_parentheses' };
+  }
+  if (/^\d+x\d+$/.test(puzzle)
+    && ((typeof body.setup === 'string' && findIllegalGluedCubeMoves(body.setup))
+      || (typeof body.standard === 'string' && findIllegalGluedCubeMoves(body.standard))
+      || containsIllegalGluedCubeMoves(body.algs))) {
+    return { error: 'moves_must_be_space_separated' };
   }
   const setupError = await validateRequiredAlgCaseSetup(puzzle, setSlug, body.setup);
   if (setupError) return { error: setupError };
