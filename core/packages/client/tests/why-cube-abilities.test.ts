@@ -11,13 +11,13 @@ import { PATTERNS } from '../app/[lang]/why-cube/_cube-util';
 const CLIENT_ROOT = join(import.meta.dirname, '..');
 
 describe('why-cube ability atlas', () => {
-  it('ships five illustrated groups and twenty unique expandable topics', () => {
+  it('ships seven illustrated groups and thirty unique card topics', () => {
     const abilities = ABILITY_GROUPS.flatMap(group => group.abilities);
 
-    expect(ABILITY_GROUPS).toHaveLength(5);
-    expect(ABILITY_COUNT).toBe(20);
-    expect(new Set(abilities.map(ability => ability.id)).size).toBe(20);
-    expect(new Set(ABILITY_GROUPS.map(group => group.image)).size).toBe(5);
+    expect(ABILITY_GROUPS).toHaveLength(7);
+    expect(ABILITY_COUNT).toBe(30);
+    expect(new Set(abilities.map(ability => ability.id)).size).toBe(30);
+    expect(new Set(ABILITY_GROUPS.map(group => group.image)).size).toBe(7);
   });
 
   it('keeps every topic substantial and bilingual', () => {
@@ -50,6 +50,15 @@ describe('why-cube ability atlas', () => {
     expect(pageSource).not.toContain('VisualCube');
     expect(pageSource).toContain('puzzleOrder={s.n}');
     expect(pageSource).toContain('engine="sim"');
+  });
+
+  it('opens every ability card in the shared dismissible dialog pattern', () => {
+    const atlasSource = readFileSync(join(CLIENT_ROOT, 'app', '[lang]', 'why-cube', '_AbilityAtlas.tsx'), 'utf8');
+
+    expect(atlasSource).toContain('aria-haspopup="dialog"');
+    expect(atlasSource).toContain('role="dialog"');
+    expect(atlasSource).toContain('useModalDismiss(onClose)');
+    expect(atlasSource).not.toContain('<details className="wc-atlas-ability"');
   });
 
   it('keeps every named gallery pattern visually distinct', () => {
