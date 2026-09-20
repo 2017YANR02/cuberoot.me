@@ -57,6 +57,12 @@ const ABILITY_INDEX = new Map(
   ABILITY_GROUPS.flatMap(group => group.abilities).map((ability, index) => [ability.id, index + 1]),
 );
 
+const DETAIL_LABELS = [
+  ['家长常见的困扰', 'What parents often notice'],
+  ['课堂会怎么练', 'How the lesson works'],
+  ['您能看到的变化', 'What you can expect to see'],
+] as const;
+
 export default function AbilityAtlas() {
   useTranslation();
   const t = useT();
@@ -149,14 +155,19 @@ export default function AbilityAtlas() {
                         <span>{t(ability.summary[0], ability.summary[1])}</span>
                       </span>
                       <span className="wc-atlas-expand" aria-hidden="true">
-                        <span className="wc-atlas-expand-closed">{t('展开详说', 'Read more')}</span>
+                        <span className="wc-atlas-expand-closed">{t('看看怎么练', 'See how it works')}</span>
                         <span className="wc-atlas-expand-open">{t('收起', 'Collapse')}</span>
                         <ChevronDown size={18} />
                       </span>
                     </summary>
                     <div className="wc-atlas-ability-body">
                       {ability.paragraphs.map((paragraph, paragraphIndex) => (
-                        <p key={paragraphIndex}>{t(paragraph[0], paragraph[1])}</p>
+                        <div className="wc-atlas-ability-point" key={paragraphIndex}>
+                          <strong>
+                            {t(DETAIL_LABELS[paragraphIndex][0], DETAIL_LABELS[paragraphIndex][1])}
+                          </strong>
+                          <p>{t(paragraph[0], paragraph[1])}</p>
+                        </div>
                       ))}
                     </div>
                   </details>

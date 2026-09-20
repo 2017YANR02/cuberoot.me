@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { CubeData, parseAlgorithm } from '@cuberoot/visualcube';
 import {
   ABILITY_COUNT,
   ABILITY_GROUPS,
 } from '../app/[lang]/why-cube/_ability-details';
+import { PATTERNS } from '../app/[lang]/why-cube/_cube-util';
 
 const CLIENT_ROOT = join(import.meta.dirname, '..');
 
@@ -48,5 +50,15 @@ describe('why-cube ability atlas', () => {
     expect(pageSource).not.toContain('VisualCube');
     expect(pageSource).toContain('puzzleOrder={s.n}');
     expect(pageSource).toContain('engine="sim"');
+  });
+
+  it('keeps every named gallery pattern visually distinct', () => {
+    const states = PATTERNS.map(pattern => {
+      const cube = new CubeData(3);
+      for (const turn of parseAlgorithm(pattern.setup)) cube.turn(turn);
+      return JSON.stringify(cube.faces);
+    });
+
+    expect(new Set(states).size).toBe(PATTERNS.length);
   });
 });

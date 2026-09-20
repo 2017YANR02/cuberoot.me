@@ -295,13 +295,18 @@
   padding-left: 16px;
   border-left: 2px solid color-mix(in srgb, var(--wc-atlas-tone) 42%, var(--border-default));
 }
-.wc-atlas-ability-body p {
-  margin: 0 0 13px;
+.wc-atlas-ability-point + .wc-atlas-ability-point { margin-top: 17px; }
+.wc-atlas-ability-point > strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.wc-atlas-ability-point p {
+  margin: 0;
   color: var(--muted-foreground);
   font-size: 14px;
   line-height: 1.85;
 }
-.wc-atlas-ability-body p:last-child { margin-bottom: 0; }
 
 .wc-atlas-sequence {
   display: flex;

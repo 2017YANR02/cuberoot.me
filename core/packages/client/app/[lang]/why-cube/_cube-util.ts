@@ -23,7 +23,7 @@ export const PATTERNS = [
   { key: 'checker',   setup: 'M2 E2 S2' },
   { key: 'spots',     setup: "U D' R L' F B' U D'" },
   { key: 'cube',      setup: "F L F U' R U F2 L2 U' L' B D' B' L2 U" },
-  { key: 'pons',      setup: 'F2 B2 U2 D2 L2 R2' },
+  { key: 'crosses',   setup: "U F B' L2 U2 L2 F' B U2 L2 U" },
   { key: 'gift',      setup: "U B2 R2 B2 L2 F2 R2 D' F2 L2 B U2 F' U F' R2 U" },
   { key: 'superflip', setup: "U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2" },
 ] as const;
