@@ -22,7 +22,11 @@ afterAll(() => vi.unstubAllGlobals());
 
 describe('female record adjudication', () => {
   it('uses the historical baseline, excluding later and invalid results', () => {
-    expect(femaleRecordBaseline([...history, { e: '333', t: 'a', v: -1, d: '2026-01-01' }], '2026-09-13')).toEqual({ '333|1': 468 });
+    expect(femaleRecordBaseline([
+      ...history,
+      { e: '333', t: 'a', v: -1, d: '2026-01-01' },
+      { e: '333', t: 'a', v: 427, d: '2026-09-13' },
+    ], '2026-09-13')).toEqual({ '333|1': 468 });
     expect(femaleRecordBaseline(history, '2024-01-01')).toEqual({});
   });
 
