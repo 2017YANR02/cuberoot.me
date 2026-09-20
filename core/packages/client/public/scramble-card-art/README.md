@@ -12,7 +12,7 @@ card labels and navigation remain real text in the page component.
 | `batch.webp` | Image 1: three different cube nets in a single row. |
 | `symmetry.webp` | Image 6: eighteen rotation/reflection diagrams in six columns and three rows. Native-resolution crops are displayed smaller than the source to avoid enlargement blur; tiny screenshot labels are omitted. |
 | `hardest.webp` | Image 7: the first cube net, paired with its `H* 20` value as real text. |
-| `mcc.webp` | Image 8: the first three action rows and their current costs, omitting the other columns. |
+| `mcc.webp` | Transparent placeholder; the first three action rows and current costs are rendered as `Roboto Mono` text by the page. |
 | `subsolver.webp` | Image 2: a partially colored cube, paired with `U / R / F` as real text. |
 
 `batch` and `subsolver` are suggested illustrations using the supplied material;
