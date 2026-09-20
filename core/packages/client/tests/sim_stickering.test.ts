@@ -85,9 +85,9 @@ describe('stickeringMaskFn 3x3', () => {
     expect(m(P3.FR, FACE.F)).toBe(FM_IGNORED);
   });
 
-  it('F2L:顶面中心原色,其它顶层块忽略', () => {
+  it('F2L:整个顶层忽略,其它层保持原色', () => {
     const m = stickeringMaskFn(3, 'F2L')!;
-    expect(m(P3.Uc, FACE.U)).toBe(FM_REGULAR);
+    expect(m(P3.Uc, FACE.U)).toBe(FM_IGNORED);
     expect(m(P3.UF, FACE.U)).toBe(FM_IGNORED);
     expect(m(P3.FL, FACE.F)).toBe(FM_REGULAR);
   });
