@@ -44,4 +44,22 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(local).toContain('recorder.record(move, ts)');
     expect(local).not.toMatch(/moves:\s*\[|t0:/);
   });
+
+  it('uses the authoritative smart-cube state for the online room preview', () => {
+    const net = readFileSync(new URL('../app/[lang]/timer/_shell/NetBattleView.tsx', import.meta.url), 'utf8');
+    const css = readFileSync(new URL('../app/[lang]/timer/_shell/net.css', import.meta.url), 'utf8');
+    expect(net).toContain("import LiveCubeState from '../_components/LiveCubeState';");
+    expect(net).toContain("import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';");
+    expect(net).toContain('liveAnchor.observeFacelets(bluetoothCube.facelets);');
+    expect(net).toContain('facelets={bluetoothCube.facelets}');
+    expect(net).toContain('mode={settings.liveCubeView}');
+    expect(net).toContain('useNetBattleLiveCube({');
+    expect(net).toContain('publishLiveMove(move)');
+    expect(net).toContain('cornerSlot={activePkLock ? ownLiveCubeSlot : selectedCubeSlot}');
+    expect(net).toContain('className="net-pk-arena"');
+    expect(net).toContain('className="net-live-cube-switch"');
+    expect(net).toContain('useGyro={false}');
+    expect(css).toContain("grid-template-areas: 'self opponent'");
+    expect(css).toContain("'opponent'\n      'self'");
+  });
 });
