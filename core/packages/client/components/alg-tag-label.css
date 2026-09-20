@@ -3,11 +3,11 @@
 .alg-tag-oh-icon { position: relative; display: inline-flex; width: 1em; height: 1em; }
 .alg-tag-hand {
   position: absolute;
-  top: 69%;
-  left: 55%;
-  color: var(--background);
+  top: 30%;
+  left: 83%;
+  color: inherit;
   font-family: var(--font-sans, inherit);
-  font-size: 0.4em;
+  font-size: 0.34em;
   font-weight: 800;
   font-style: normal;
   line-height: 1;
