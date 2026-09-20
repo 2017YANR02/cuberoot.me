@@ -87,16 +87,16 @@
 .sales-mindmap-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
 .sales-mindmap-toolbar > strong { font-size: 1.05rem; }
 .sales-mindmap-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 0.2rem; }
-.sales-mindmap-tools button { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-width: 44px; min-height: 44px; border: 0; border-radius: 8px; padding: 0.4rem 0.65rem; background: transparent; color: var(--foreground); font: inherit; font-size: 0.85rem; white-space: nowrap; cursor: pointer; }
-.sales-mindmap-tools button:hover { background: var(--muted); }
-.sales-mindmap-tools button:disabled { opacity: 0.35; cursor: default; }
+.sales-mindmap-tool { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; min-width: 44px; min-height: 44px; border: 0; border-radius: 8px; padding: 0.4rem 0.65rem; background: transparent; color: var(--foreground); font: inherit; font-size: 0.85rem; white-space: nowrap; cursor: pointer; }
+.sales-mindmap-tool:hover { background: var(--muted); }
+.sales-mindmap-tool:disabled { opacity: 0.35; cursor: default; }
 .sales-mindmap-tools output { min-width: 3.2em; text-align: center; color: var(--muted-foreground); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
 .live-guide .sales-mindmap-hint { margin: 0.3rem 0 0.8rem; font-size: 0.8rem; color: var(--muted-foreground); }
 /* 画布透出全站所选背景；节点和文字继续跟随主题色。 */
 .sales-mindmap-canvas { display: block; width: 100%; height: clamp(460px, 58vw, 610px); background: transparent; touch-action: none; user-select: none; cursor: grab; }
 .sales-mindmap-canvas:active { cursor: grabbing; }
 .sales-mindmap-canvas:focus-visible,
-.sales-mindmap-tools button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.sales-mindmap-tool:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .sales-mindmap-amber { --branch-color: var(--signal-warning); }
 .sales-mindmap-green { --branch-color: var(--signal-success); }
 .sales-mindmap-blue { --branch-color: var(--signal-info); }
@@ -152,7 +152,7 @@
   .sales-script-records { grid-template-columns: minmax(0, 1fr); }
   .sales-script-beat { grid-template-columns: minmax(0, 1fr); gap: 0.1rem; }
   .sales-mindmap-canvas { height: 430px; }
-  .sales-mindmap-tools button { padding-inline: 0.4rem; }
+  .sales-mindmap-tool { padding-inline: 0.4rem; }
 }
 
 @media (max-width: 800px) {

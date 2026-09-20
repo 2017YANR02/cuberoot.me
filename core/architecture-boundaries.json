@@ -552,15 +552,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/app/[lang]/alg/skewb-trainer/page.tsx",
-      "importKind": "runtime",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/app/[lang]/alg/time-attack/page.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -813,15 +804,6 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/components/AlgEditor.tsx",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/components/AlgMirrorPanel.tsx",
       "importKind": "runtime",
       "mechanism": "static-import",
@@ -975,25 +957,7 @@
       "target": "shared"
     },
     {
-      "file": "packages/client/lib/alg_api.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
       "file": "packages/client/lib/alg_case_link.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/alg_case_optimal.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "runtime",
@@ -1093,15 +1057,6 @@
     },
     {
       "file": "packages/client/lib/alg_simple_zbll.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "runtime",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/lib/alg_tags.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "runtime",
@@ -1500,15 +1455,6 @@
     },
     {
       "file": "packages/client/tests/alg_case_display.test.ts",
-      "importKind": "type-only",
-      "mechanism": "static-import",
-      "sourceKind": "test",
-      "specifier": "@cuberoot/shared",
-      "rule": "shared-root-import",
-      "target": "shared"
-    },
-    {
-      "file": "packages/client/tests/alg_case_optimal.test.ts",
       "importKind": "type-only",
       "mechanism": "static-import",
       "sourceKind": "test",

@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { Check, Copy } from 'lucide-react';
 import { useCopy } from '@/hooks/useCopy';
+import { useHashHighlight } from '@/hooks/useHashHighlight';
 import { salesScript as script } from './sales-script-data';
 import SalesMindMap from './SalesMindMap';
 
@@ -13,19 +14,20 @@ export default function SalesScript() {
   const { copy, copied } = useCopy();
 
   // 锚点链接（含新标签页）打开时，先展开折叠内容，再定位标题。
-  useEffect(() => {
-    const reveal = () => {
-      const id = window.location.hash.slice(1);
-      if (!id.startsWith('sales-')) return;
+  useHashHighlight({
+    block: 'start',
+    resolve: hash => {
+      const id = hash.slice(1);
+      if (!id.startsWith('sales-')) return null;
       const target = document.getElementById(id);
-      if (!target || !root.current?.contains(target)) return;
+      return target && root.current?.contains(target) ? target : null;
+    },
+    reveal: hash => {
+      const target = document.getElementById(hash.slice(1));
+      if (!target || !root.current?.contains(target)) return false;
       if (target instanceof HTMLDetailsElement) target.open = true;
-      target.scrollIntoView({ block: 'start' });
-    };
-    reveal();
-    window.addEventListener('hashchange', reveal);
-    return () => window.removeEventListener('hashchange', reveal);
-  }, []);
+    },
+  });
 
   function setAll(open: boolean) {
     root.current?.querySelectorAll<HTMLDetailsElement>('.sales-script-section').forEach(details => { details.open = open; });
