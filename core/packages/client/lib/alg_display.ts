@@ -3,6 +3,7 @@
  *
  * 库里存的是**完整公式**:`setup + alg` 精确还原,所以末尾常带一个把顶层转正的收尾 AUF。
  * 那个 U 对魔友没有任何帮助(他自己会转),所以显示和复制时剥掉。
+ * 公式末尾用来恢复持方的 y 转体也同理：原式和播放保留，仅展示时隐藏。
  *
  * 剥掉是安全的:若 `setup + A U^b` 还原,那 A 单独执行后魔方只差一个顶层转 —— 末尾的
  * U^b 必然是纯收尾 AUF,不可能是公式的一部分(它后面没有任何步骤能被它影响)。
@@ -86,30 +87,30 @@ export function displayCaseScramble(puzzle: string, set: string, scramble: strin
   }
 }
 
-/** 末尾的 U / U2 / U' / U2'(可带括号),`Uw`、`u` 不算(它们不是 AUF) */
-const TRAILING_AUF = /[\s(]*\bU(?:2'?|'|)(?![\w'])\s*\)?\s*$/;
+/** 末尾的 U 层 AUF 或 y 转体(可带括号)；`Uw`、`u` 不算。 */
+const TRAILING_DISPLAY_ADJUSTMENT = /[\s(]*\b[Uy](?:2'?|'|)(?![\w'])\s*\)?\s*$/;
 
 export function displayAlg(alg: string): string {
   if (!alg) return '';
   let stripped = alg;
   while (true) {
-    const next = stripped.replace(TRAILING_AUF, '').trimEnd();
-    // 整条公式只剩 AUF(理论上不该有)—— 至少留下一步,别剥成空串。
+    const next = stripped.replace(TRAILING_DISPLAY_ADJUSTMENT, '').trimEnd();
+    // 整条公式只剩显示调整(理论上不该有)—— 至少留下一步,别剥成空串。
     if (!next || next === stripped) return stripped;
     stripped = next;
   }
 }
 
-/** Only presentation drops top-layer AUF/y; canonical player and validation input stays intact. */
+/** Presentation always drops finishing y; top-layer sets also drop finishing AUF. */
 function caseAlgDisplayEdits(puzzle: string, set: string, alg: string): AlgTextEdit[] {
-  if (!is3x3TopLayerSet(puzzle, set)) return [];
+  const hideAuf = is3x3TopLayerSet(puzzle, set);
   const tokens = [...alg.matchAll(/[()]|[^\s()]+/g)];
   let end = tokens.length - 1;
   let adjustments = 0;
   while (end >= 0) {
     const token = tokens[end][0];
     if (token === '(' || token === ')') { end--; continue; }
-    if (!/^[Uy](?:2'?|')?$/.test(token)) break;
+    if (!/^y(?:2'?|')?$/.test(token) && !(hideAuf && /^U(?:2'?|')?$/.test(token))) break;
     adjustments++;
     end--;
   }

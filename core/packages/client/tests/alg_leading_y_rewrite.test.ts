@@ -175,10 +175,15 @@ describe('displayAlg', () => {
     expect(displayAlg("U' R U R' (U) U2'")).toBe("U' R U R'");
   });
 
-  it('leaves an alg with no trailing AUF alone', () => {
+  it('leaves an alg with no trailing display adjustment alone', () => {
     expect(displayAlg("R U R' U R U2 R'")).toBe("R U R' U R U2 R'");
     expect(displayAlg('M2 U M2 U2 M2 U M2')).toBe('M2 U M2 U2 M2 U M2');
-    expect(displayAlg("R U R' U' R' F R F' y")).toBe("R U R' U' R' F R F' y");
+  });
+
+  it('hides consecutive finishing y rotations without touching internal rotations', () => {
+    expect(displayAlg("y' r' U' R U M' y")).toBe("y' r' U' R U M'");
+    expect(displayAlg("R U R' y y2'")).toBe("R U R'");
+    expect(displayAlg("R y R' U'")).toBe("R y R'");
   });
 
   it('does not mistake a wide U for an AUF', () => {
@@ -246,11 +251,17 @@ describe('top-layer formula presentation', () => {
       .toBe(shownGa);
   });
   it.each([['3x3', 'f2l'], ['3x3', 'wv'], ['2x2', 'eg1'], ['sq1', 'pbl']])(
-    'leaves non-top-layer %s/%s unchanged', (puzzle, set) => {
+    'hides finishing y for non-top-layer %s/%s without hiding its U turn', (puzzle, set) => {
       const source = "R U R' U' y";
-      expect(displayCaseAlg(puzzle, set, source)).toBe(source);
+      expect(displayCaseAlg(puzzle, set, source)).toBe("R U R' U'");
     },
   );
+  it('hides finishing y in rich text for non-top-layer sets', () => {
+    const html = "<em>y'</em> r' U' R U M' <strong>y</strong>";
+    const shown = displayCaseAlgHtml('3x3', 'f2l', html);
+    expect(shown).toBe("<em>y'</em> r' U' R U M'");
+    expect(algHtmlText(shown)).toBe(displayCaseAlg('3x3', 'f2l', algHtmlText(html)));
+  });
   it('still finishes PLL up to AUF/y with the same top colour', async () => {
     const solved = (await cube3x3x3.kpuzzle()).defaultPattern();
     const full = `${aPerm} U' y`;
