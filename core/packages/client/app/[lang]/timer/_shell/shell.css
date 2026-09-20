@@ -875,7 +875,12 @@
     height: calc(100dvh - var(--page-notice-h, 0px));
     grid-template-columns: 1fr 360px;
   }
-  .timer-shell.recap-open { grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px); }
+  /* Auto recap mounts a dense report immediately after its frame. Animating the
+     grid track would reflow that report on every frame of the 160ms expansion. */
+  .timer-shell.recap-open {
+    transition: none;
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px);
+  }
   .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
   .shell-recap-rail > .shell-recap {
     flex: 1;

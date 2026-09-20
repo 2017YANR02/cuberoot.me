@@ -15,6 +15,7 @@
     },
     "runtime": {
       "./solve-recap": "react-dom",
+      "./solve-recap-placeholder": "react-dom",
       "./solve-recap.css": "react-dom",
       "./SimCubeView": "react-dom",
       "./LiveCubeState": "react-dom",
@@ -49,6 +50,7 @@
   },
   "exports": {
     "./solve-recap": "./src/reconstruct/SolveRecap.tsx",
+    "./solve-recap-placeholder": "./src/reconstruct/SolveRecapPlaceholder.tsx",
     "./solve-recap.css": "./src/reconstruct/solve-recap.css",
     "./SimCubeView": "./src/SimCubeView.tsx",
     "./LiveCubeState": "./src/LiveCubeState.tsx",

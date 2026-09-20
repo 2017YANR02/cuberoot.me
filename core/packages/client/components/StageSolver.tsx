@@ -31,7 +31,7 @@ import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
 import { onXCrossProgress, prefetchXCrossTableWhenIdle, type XCrossProgress } from '@/lib/rust-cross-tables';
-import { getRustCrossPool, dropRustCrossPool, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
+import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
 import { variantLabel, stageLabel, VARIANT_STAGES } from '@/lib/scramble-variants';
@@ -447,7 +447,10 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
             : method === 'fr' ? t(`${face} 轴 Floppy 还原(需已处于该轴 HTR)`, `${face}-axis Floppy Reduction (requires HTR on this axis)`)
               : t(`${face} 面十字`, `${face}-face cross`);
 
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const initialNeed = needOf(initialMethod);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(() => (
+    isRustCrossPoolReady(initialNeed) ? 'ready' : 'loading'
+  ));
   const [errMsg, setErrMsg] = useState('');
   const [method, setMethod] = useState<Method>(initialMethod);
   const [stage, setStage] = useState(initialStage);
@@ -621,15 +624,21 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   useEffect(() => {
     if (poolSize == null) return;
     let cancelled = false;
-    setStatus('loading');
     setErrMsg('');
     const pool = getRustCrossPool(need, poolSize);
     poolRef.current = pool;
     // 换池(或重建)后大表状态跟着这个池走:std 池可能是先前用过、已带大表的那一个。
     setXReady(need === 'cross' && pool.hasXCross());
-    pool.ready
-      .then(() => { if (!cancelled) setStatus('ready'); })
-      .catch((e) => { if (!cancelled) { setStatus('error'); setErrMsg(e?.message || String(e)); } });
+    if (pool.isReady()) {
+      // 智能魔方完成一把后面板会收起再自动打开;共享池已 ready 时不要把热挂载
+      // 误报成「首次加载」,否则用户会看到每把都在重载求解器。
+      setStatus('ready');
+    } else {
+      setStatus('loading');
+      pool.ready
+        .then(() => { if (!cancelled) setStatus('ready'); })
+        .catch((e) => { if (!cancelled) { setStatus('error'); setErrMsg(e?.message || String(e)); } });
+    }
     return () => { cancelled = true; };
   }, [need, poolSize, retryTick]);
   const retryLoad = useCallback(() => {
@@ -768,9 +777,9 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
 
   // ready / 方法 / 阶段 变化时:自动批算全部 6 面(含重阶段,无「计算」按钮)。
   useEffect(() => {
-    if (status === 'ready') void compute();
+    if (status === 'ready' && poolSize != null) void compute();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, method, stage]);
+  }, [status, method, stage, poolSize]);
 
   // 打乱变化(WCA 选取 / 粘贴 / 编辑)→ 防抖后自动重算当前阶段。跳过首挂(上面已算)。
   useEffect(() => {

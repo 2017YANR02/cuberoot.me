@@ -22,6 +22,11 @@ export function getRustCrossPool(need: PoolNeed, size: number): RustCrossPool {
   return active.pool;
 }
 
+/** 只查询当前池,不创建新 worker;StageSolver 热挂载首帧用。 */
+export function isRustCrossPoolReady(need: PoolNeed): boolean {
+  return active?.need === need && active.pool.isReady();
+}
+
 /** 终止并清空当前活跃池(一般不需要;留作显式释放)。 */
 export function dropRustCrossPool(): void {
   active?.pool.terminate();
