@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { ArrowRight, ExternalLink, Play, Search } from 'lucide-react';
 import { parseAsFloat, parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
 import AppLink from '@/components/AppLink';
@@ -13,7 +14,7 @@ import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useT } from '@/hooks/useT';
-import { getSessionToken, useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { getSessionToken, nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import {
   executePlatformAction,
   loadPlatformResource,
@@ -549,6 +550,7 @@ function PlatformResourceRouteView({
   params: Record<string, string>;
 }) {
   const t = useT();
+  const pathname = usePathname();
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
@@ -673,6 +675,7 @@ function PlatformResourceRouteView({
   const courseDetail = definition.id === 'course-detail';
   const inviteManager = definition.id === 'admin-invites';
   const courseSection = definition.id.startsWith('course-section-');
+  const courseSectionLoginHref = `/account${nextQuery(pathname)}`;
   const course = courseDetail && !error ? sortedItems[0] : undefined;
   const orderPage = ['orders', 'order-detail', 'admin-orders', 'admin-order'].includes(definition.id);
   const orderUnavailable = ['order-detail', 'admin-order'].includes(definition.id) && (!!error || !result || !sortedItems[0]);
@@ -710,7 +713,11 @@ function PlatformResourceRouteView({
       ) : !mounted ? (
         <PlatformState kind="loading" />
       ) : !allowed ? (
-        <PlatformState kind="permission" />
+        <PlatformState
+          kind="permission"
+          message={courseSection ? t('请先登录。兑换课程后即可观看对应课时。', 'Sign in first. After redeeming the course, you can watch its lessons.') : undefined}
+          permissionHref={courseSection ? courseSectionLoginHref : undefined}
+        />
       ) : definition.resource ? (
         <>
           {(definition.kind === 'collection' || definition.kind === 'dashboard')
