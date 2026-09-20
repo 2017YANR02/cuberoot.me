@@ -261,6 +261,7 @@ import {
   type TimerPrintControllerHandle,
   type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
+import SolveRecapPlaceholder from '@cuberoot/timer-ui/solve-recap-placeholder';
 import { histBack, histForward, histPush } from '@cuberoot/shared/timer';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { persistItem } from '@/lib/safe-storage';
@@ -292,7 +293,10 @@ const DrillModal = dynamic(() => import('../_components/DrillModal'), { ssr: fal
 /** 停表后就地摊开的复盘(见 SolveRecap 头注)。和上面那些弹层一样留在自己的 chunk
  *  里,但它不是「用户可能会打开的东西」而是「拧完就会出现的东西」—— 所以魔方一连上
  *  就 onIdle 预取(见 recapPrefetch),真停表那下已经在注册表里。 */
-const SolveRecap = dynamic(() => import('../_components/SolveRecap'), { ssr: false });
+const SolveRecap = dynamic(() => import('../_components/SolveRecap'), {
+  ssr: false,
+  loading: SolveRecapPlaceholder,
+});
 /** 假魔方调试面板只在 dev 存在;判断提到模块级,好让打包器把整个分支和它的
  *  chunk 一起消掉(见 DevFakeCubePanel.tsx)。 */
 const DEV_PANEL = process.env.NODE_ENV !== 'production';

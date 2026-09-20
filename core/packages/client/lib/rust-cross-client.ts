@@ -137,6 +137,8 @@ export interface MovesTimed extends MovesResult {
 
 export interface RustCrossPool {
   ready: Promise<void>; // 首个 worker 就绪
+  /** 首个 worker 是否已经就绪;用于组件热挂载时避免重复显示首次加载态。 */
+  isReady(): boolean;
   /** variant 0=cross,1=xc,2=xxc,3=xxxc,4=xxxxc;face 0..5。返回单格步数 + 计算耗时。
    *  mask:18 个 move 的 bitmask(bit m=1 表示允许),省略=不限步法;仅 cross(variant 0)生效。 */
   solveFace(scramble: string, variant: number, face: number, mask?: number): Promise<FaceResult>;
@@ -551,6 +553,9 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
   let nextId = 1;
   return {
     ready,
+    isReady() {
+      return anyReady;
+    },
     size,
     solveFace(scramble, variant, face, mask) {
       return submit({
