@@ -54,7 +54,7 @@ const METRIC_LABEL: Record<string, string> = {
   etm: 'ETM', htm: 'HTM', qtm: 'QTM', stm: 'STM', sqtm: 'SQTM', atm: 'ATM',
 };
 
-/** 一行「标签 + 可复制的公式」(`len` 给了就在右边挂步数徽章)。 */
+/** 一行「可复制的公式 + 右侧标签」(`len` 给了就在右边挂步数徽章)。 */
 function AlgLine({
   label, alg, algHtml, len, playable = false, selected = false, onPlay, preferred = false, onPreferredToggle, issue,
 }: {
@@ -85,12 +85,12 @@ function AlgLine({
       } : undefined}
       title={playable ? tr({ zh: '播放动画', en: 'Play animation' }) : undefined}
     >
-      {label && <span className="alg-meta-algline-label">{label}</span>}
       <code className="alg-meta-algline-code">
         {algHtml
           ? <span dangerouslySetInnerHTML={{ __html: sanitizeAlgHtml(algHtml) }} />
           : alg}
       </code>
+      {label && <span className="alg-meta-algline-label">{label}</span>}
       {issue && <span className="alg-alg-note" title={issue}>{tr({ zh: '原公式与本图不匹配', en: 'Source algorithm does not match this case' })}</span>}
       {len != null && <span className="alg-meta-algline-len" title="STM">{len}</span>}
       {onPreferredToggle && (

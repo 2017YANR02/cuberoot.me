@@ -1,4 +1,4 @@
-import { Keyboard } from 'lucide-react';
+import { BookOpenCheck, Keyboard } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import type { OhHand } from '@/lib/alg_oh_hand';
 import { tr } from '@/i18n/tr';
@@ -9,11 +9,11 @@ const TAG_EVENTS: Record<string, string> = { oh: '333oh', ft: '333ft', fmc: '333
 /** Tags share the event-menu artwork; unknown IDs remain readable. */
 export default function AlgTagLabel({ tag, label, hand = 'left' }: { tag: string; label: string; hand?: OhHand | null }) {
   const event = TAG_EVENTS[tag];
-  if (!event && tag !== 'key') return <>{label}</>;
+  if (!event && tag !== 'key' && tag !== 'beginner') return <>{label}</>;
   return <span className="alg-tag-label" title={label}>
     <span className="sr-only">{label}</span>
     <span className="alg-tag-symbol" aria-hidden="true">
-      {event ? <EventIcon event={event} /> : <Keyboard size="1em" />}
+      {event ? <EventIcon event={event} /> : tag === 'key' ? <Keyboard size="1em" /> : <BookOpenCheck size="1em" />}
       {tag === 'oh' && hand && <small className="alg-tag-hand">{hand === 'right' ? tr({ en: 'R', zh: '右' }) : tr({ en: 'L', zh: '左' })}</small>}
     </span>
   </span>;
