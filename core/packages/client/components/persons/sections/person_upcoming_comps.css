@@ -1,0 +1,11 @@
+/* Shared by the person page and the logged-in homepage placement. */
+.wp-upcoming-card { padding: 0 20px; }
+.wp-upcoming-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.wp-upcoming-title { margin: 0; font-size: 1rem; font-weight: 600; }
+.wp-upcoming-card .reg-cards { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+.wp-upcoming-card .rc-card { max-width: 100%; }
+.wp-upcoming-card .rc-main { gap: 4px; padding: 8px 12px; }
+
+@media (max-width: 720px) {
+  .wp-upcoming-card { padding: 0 16px; }
+}

@@ -7,6 +7,7 @@ import { useT } from '@/hooks/useT';
 import { loadLandingComps, type Comp } from '@/lib/comp-search';
 import { fetchCompPersonEventIds } from '@/lib/comp-wcif';
 import { fetchPersonUpcomingCompetitionIds } from '@/lib/person-upcoming';
+import './person_upcoming_comps.css';
 
 interface Props {
   wcaId: string;
