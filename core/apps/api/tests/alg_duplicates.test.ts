@@ -104,6 +104,17 @@ describe('standard and community formula duplicate enforcement', () => {
     expect(mocks.query).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['community alg', '3x3/f2l/A-/submit', { alg: "U' r' D' rU r' Dr" }],
+    ['standard alg', 'sets/3x3/f2l/cases', { caseName: 'A-', sticker: {}, algs: [[{ alg: "U' r' D' rU r' Dr" }]] }],
+    ['standard setup', 'sets/3x3/f2l/cases', { caseName: 'A-', sticker: {}, setup: 'rU', algs: [] }],
+  ])('rejects glued nonparallel moves in a %s before querying the database', async (_kind, path, body) => {
+    const r = await send(path, 'POST', body);
+    expect(r.status).toBe(400);
+    expect(await r.json()).toEqual({ error: 'moves_must_be_space_separated' });
+    expect(mocks.query).not.toHaveBeenCalled();
+  });
+
   it('prevents a standard edit from duplicating an existing community submission', async () => {
     mocks.query.mockImplementation(async (sql: string) => sql.startsWith('SELECT id, alg') ? [existing] : []);
     const r = await send('sets/3x3/oll/cases/3930', 'PUT', { caseName: 'L', sticker: {}, algs: [[{ alg: '(R U)' }]] });

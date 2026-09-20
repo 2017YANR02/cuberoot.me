@@ -9,6 +9,16 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PAGE = 'app/[lang]/example/example.css';
 
 describe('site materials have one definition and shared scenery tokens', () => {
+  it('keeps layered simulator and OTP inputs transparent', () => {
+    const css = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
+    const transparentCompositeRule = css.match(
+      /body\[data-site-scenery\] :is\(([^}]+)\) \{\s*background-color: transparent !important;\s*-webkit-backdrop-filter: none;\s*backdrop-filter: none;\s*\}/,
+    );
+
+    expect(transparentCompositeRule?.[1]).toContain('.sim-player-hlwrap .sim-player-input--hl');
+    expect(transparentCompositeRule?.[1]).toContain('.auth-otp-native');
+  });
+
   it.each([
     'background: var(--popover)',
     'background-color: #222',

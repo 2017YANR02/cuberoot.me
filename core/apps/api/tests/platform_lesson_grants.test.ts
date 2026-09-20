@@ -71,6 +71,7 @@ describe('Scoped course invitations', () => {
     state.benefit = { courseId: COURSE, ...(lessonIds ? { lessonIds } : {}) };
     const response = await post('/invites/redeem', { code: 'TEST-CODE' });
     expect(response.status).toBe(201);
+    expect(await response.json()).toMatchObject({ courseId: COURSE });
     const grant = state.queries.find(q => q.statement.includes('INSERT INTO platform_entitlement_ledger'))!;
     expect(grant.statement).toContain('lesson_ids');
     expect(grant.parameters[2]).toEqual(lessonIds ?? null);

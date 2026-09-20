@@ -5,19 +5,13 @@
 // the case → solved in 3D. Reinforces "recognize the pattern, run the
 // matching algorithm" (the if/then of solving).
 
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import dynamic from 'next/dynamic';
 import { Check, X, RotateCcw } from 'lucide-react';
-import TwistySection from '@/components/TwistySection';
+import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useT } from '../../../hooks/useT';
 import { invertAlg } from './_cube-util';
 import './_RecognizeGame.css';
-
-const VisualCube = dynamic(() => import('@/components/VisualCube').then((m) => m.VisualCube), {
-  ssr: false,
-  loading: () => <span className="wc-cube-ph" aria-hidden="true" />,
-});
 
 type Case = {
   label: string;            // ascii name — no CJK, so no Traditional needed
@@ -58,31 +52,10 @@ export default function RecognizeGame() {
   const t = useT();
   const [idx, setIdx] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerRef = useRef<any>(null);
 
   const c = CASES[idx];
   const solved = picked === c.alg;
   const wrong = picked != null && picked !== c.alg;
-
-  // Auto-play the case → solved animation once the answer is correct.
-  useEffect(() => {
-    if (!solved) return;
-    let tries = 0;
-    const id = window.setInterval(() => {
-      const p = playerRef.current;
-      tries += 1;
-      if (p && typeof p.play === 'function') {
-        try { p.background = 'none'; } catch { /* */ }
-        try { p.timestamp = 0; } catch { /* */ }
-        try { p.play(); } catch { /* */ }
-        window.clearInterval(id);
-      } else if (tries > 30) {
-        window.clearInterval(id);
-      }
-    }, 200);
-    return () => window.clearInterval(id);
-  }, [solved, idx]);
 
   function next() {
     setPicked(null);
@@ -98,21 +71,19 @@ export default function RecognizeGame() {
 
       <div className="wc-rg-body">
         <div className="wc-rg-cube">
-          {solved ? (
-            <TwistySection
-              puzzle="3x3x3"
-              scramble={invertAlg(c.alg)}
-              alg={c.alg}
-              playerRef={playerRef}
-              settings={{ scale: 54, viewAngle: 50, viewGradient: 30, speed: 58, hint: false }}
-            />
-          ) : (
-            <VisualCube
-              algorithm={c.alg} view={c.view} size={132} alt={`${c.label} case`} loading="lazy"
-              // OLL 才删侧面灰格(那圈是占位);PLL 的侧面是真配色,正是要认的东西。
-              hideGreySides={c.view === 'oll'}
-            />
-          )}
+          <AlgPlayer
+            key={idx}
+            puzzle="3x3"
+            set={c.view}
+            engine="sim"
+            alg={c.alg}
+            setup={invertAlg(c.alg)}
+            autoPlay={solved}
+            playRequest={solved ? idx + 1 : 0}
+            controlMode={solved ? 'replay' : 'none'}
+            moveDurationMs={360}
+            size={150}
+          />
         </div>
 
         <div className="wc-rg-choices">

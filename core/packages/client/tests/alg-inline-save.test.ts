@@ -51,10 +51,15 @@ describe('inline case save pipeline', () => {
     button!.click();
   });
   const fill = async (label: string, value: string) => act(async () => {
-    const field = [...host.querySelectorAll('label')].find(el => el.textContent?.startsWith(label))!.querySelector('input,textarea')!;
+    const owner = [...host.querySelectorAll('label')].find(el =>
+      el.textContent?.startsWith(label) || el.querySelector(`[aria-label="${label}"]`));
+    const field = owner!.querySelector('input,textarea')!;
     const proto = field instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
     Object.getOwnPropertyDescriptor(proto, 'value')!.set!.call(field, value);
     field.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const autoSave = async () => act(async () => {
+    await new Promise(resolve => setTimeout(resolve, 700));
   });
   beforeEach(() => {
     Object.assign(globalThis, { IS_REACT_ACT_ENVIRONMENT: true });
@@ -69,20 +74,20 @@ describe('inline case save pipeline', () => {
 
   it('saves every orientation and advanced field, preserving marks and completing AUF', async () => {
     mocks.validate.mockResolvedValue({ ok: true, auf: "U'" });
-    await render(); await click('Save');
+    await render(); await fill('Case Name', 'A++'); await autoSave();
     const body = mocks.update.mock.calls[0][3];
-    expect(body).toMatchObject({ caseName: 'A+', subgroup: 'Adj Swap', standard: 'R', trainerKey: 'key', oriNames: ['FR', 'FL'], sticker: original.sticker });
+    expect(body).toMatchObject({ caseName: 'A++', subgroup: 'Adj Swap', standard: 'R', trainerKey: 'key', oriNames: ['FR', 'FL'], sticker: original.sticker });
     expect(body.algs).toEqual([
       [{ alg: "R U'", algHtml: "<u>R</u> U'", tags: ['oh'], setup: original.setup }, { alg: "F U'", setup: original.setup }],
       [{ alg: "L U'", setup: original.setup }],
     ]);
     expect(mocks.stored).toHaveBeenCalledTimes(3);
     expect(onSaved).toHaveBeenCalledWith({ type: 'update', updated: original });
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
   });
   it('maps validation failures past blank rows and never sends invalid data', async () => {
     mocks.validate.mockImplementation(async (_setup, alg) => alg === 'F' ? { ok: false, reason: 'wrong case' } : { ok: true });
-    await render(); await click('Save');
+    await render(); await fill('Subgroup', 'Changed'); await autoSave();
     expect(mocks.markInvalid).toHaveBeenCalledWith([{ oi: 0, ai: 2, reason: 'wrong case' }]);
     expect(mocks.update).not.toHaveBeenCalled();
   });
@@ -92,7 +97,7 @@ describe('inline case save pipeline', () => {
     expect(field.closest('details')).toBeNull();
     expect(host.querySelectorAll('.alg-admin-setup-textarea')).toHaveLength(1);
     await fill('Setup', "F R U R' F'");
-    await click('Save');
+    await autoSave();
     expect(mocks.update.mock.calls[0][3].setup).toBe("F R U R' F'");
     expect(mocks.validate.mock.calls[0][0]).toBe("F R U R' F'");
   });
@@ -100,25 +105,25 @@ describe('inline case save pipeline', () => {
     await render(); await click('Advanced');
     await fill('Algs 2D JSON', JSON.stringify([[{ alg: 'B', tags: ['oh'] }], [{ alg: 'D' }]]));
     await fill('oriNames', '["Right","Left"]');
-    await click('Advanced'); await click('Save');
+    await click('Advanced'); await autoSave();
     expect(mocks.update.mock.calls[0][3]).toMatchObject({ algs: [[{ alg: 'B', tags: ['oh'] }], [{ alg: 'D' }]], oriNames: ['Right', 'Left'] });
   });
   it('rejects malformed nested JSON before calling validation or the API', async () => {
-    await render(); await click('Advanced'); await fill('Algs 2D JSON', '[42]'); await click('Save');
+    await render(); await click('Advanced'); await fill('Algs 2D JSON', '[42]'); await autoSave();
     expect(host.querySelector('[role="alert"]')?.textContent).toBe('Advanced algs JSON invalid');
     expect(mocks.validate).not.toHaveBeenCalled(); expect(mocks.update).not.toHaveBeenCalled();
   });
-  it('keeps drafts on API failure and waits for asynchronous saved state before resetting', async () => {
+  it('keeps drafts on API failure and does not close while asynchronous saved state settles', async () => {
     mocks.update.mockRejectedValueOnce(new Error('Save failed'));
-    await render(); await click('Save');
+    await render(); await fill('Subgroup', 'Fail once'); await autoSave();
     expect(host.querySelector('[role="alert"]')?.textContent).toBe('Save failed');
     expect(onClose).not.toHaveBeenCalled();
     let finish!: () => void;
     onSaved.mockImplementation(() => new Promise<void>(resolve => { finish = resolve; }));
-    await click('Save');
+    await fill('Subgroup', 'Retry'); await autoSave();
     expect(onClose).not.toHaveBeenCalled();
-    expect(host.querySelector('[aria-busy="true"]')).not.toBeNull();
+    expect(mocks.update).toHaveBeenCalledTimes(2);
     await act(async () => finish());
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

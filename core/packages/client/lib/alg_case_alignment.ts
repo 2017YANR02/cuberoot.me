@@ -1,6 +1,6 @@
 import { loadAlg as loadSourceAlg, isMergedOhCmllEntry, type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { duplicateAlgKey } from '@cuberoot/shared/alg-notation';
-import { adjacentUEdits, applyAlgTextEdits, displayCaseScramble, oriAdjustSetup, uTurnOrder } from '@/lib/alg_display';
+import { adjacentUEdits, applyAlgTextEdits, displayCaseAlg, displayCaseScramble, oriAdjustSetup, uTurnOrder } from '@/lib/alg_display';
 import { CUBE_ORIENTATIONS } from '@/lib/alg_goals';
 import { orientCaseSetup, setupForCase, validateAlgCase, validateStoredAlgCase } from '@/lib/alg_validation';
 import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
@@ -30,6 +30,27 @@ export function sourceCaseAlg(entry: AlgEntry): string {
 }
 export function caseAlgIssue(entry: AlgEntry): string | undefined {
   return (entry as CheckedEntry)[ISSUE];
+}
+
+/** A case must not show the same formula twice after alignment/display cleanup. */
+export function dedupeDisplayedCaseEntries(
+  puzzle: AlgPuzzle,
+  set: string,
+  entries: AlgEntry[],
+): AlgEntry[] {
+  const kept: AlgEntry[] = [];
+  const byKey = new Map<string, AlgEntry>();
+  for (const entry of entries) {
+    const key = duplicateAlgKey(displayCaseAlg(puzzle, set, entry.alg));
+    const duplicate = key ? byKey.get(key) : undefined;
+    if (!duplicate) {
+      kept.push(entry);
+      if (key) byKey.set(key, entry);
+      continue;
+    }
+    duplicate.tags = [...new Set([...(duplicate.tags ?? []), ...(entry.tags ?? [])])];
+  }
+  return kept;
 }
 
 function simplifyEntry(puzzle: AlgPuzzle, entry: AlgEntry): AlgEntry {
@@ -181,7 +202,7 @@ async function prepareFile(file: AlgFile): Promise<AlgFile> {
           await new Promise<void>(resolve => setTimeout(resolve, 0));
         }
       }
-      aligned.algs.push(entries);
+      aligned.algs.push(dedupeDisplayedCaseEntries(puzzle, file.set, entries));
     }
     if (c.meta?.coep?.alg) {
       aligned[COEP] = await alignCaseEntry(puzzle, file.set, aligned, { alg: c.meta.coep.alg });
