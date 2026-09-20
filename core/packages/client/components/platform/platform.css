@@ -1435,7 +1435,13 @@ body[data-site-scenery] :is(
   border-radius: 22px;
 }
 .platform-lesson-card .platform-lesson-cover { grid-column: 1 / -1; margin-bottom: 10px; }
-.platform-lesson-card-title { grid-column: 1; }
+.platform-lesson-card-title {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+}
 .platform-course-outline .platform-detail-list strong { font-size: 1rem; font-weight: 500; }
 .platform-course-outline .platform-detail-list a { display: inline-flex; align-items: center; min-height: 44px; }
 .platform-course-list .platform-entity { padding-block: 32px; }
