@@ -201,22 +201,15 @@ export function caseViewAlg(alg: string, angle: CaseViewAngle): string {
   return simplifyAdjacentU('3x3', `${prefix} ${alg.trimStart()}`);
 }
 
-const TRAILING_Y_ROTATION = /(?:^|\s)(y(?:2'?|')?)\s*$/;
-
 /**
- * F2L 四朝向公式末尾的 y 转体只负责恢复拿法。若直接对完整公式取逆，转体会跑到
- * 打乱开头并旋转整颗魔方。把同一转体补到打乱末尾，得到中心色不变的共轭状态；
- * 播放公式也取这个规范化打乱的逆式，保证动画从该状态精确还原。
+ * F2L 四朝向的公式会在末尾用 y 转体恢复拿法。完整取逆后，这个转体自然落到打乱
+ * 开头：中心朝向随槽位变化，但正在练的仍是同一组红绿棱角块，且原公式可以精确还原。
+ * 不能把首尾转体共轭掉；那会固定中心色，却把 FL 等槽位换成另一组实际棱角块。
  */
-export function canonicalF2lPlayerSequence(alg: string): { setup: string; alg: string } {
+export function f2lPlayerSequence(alg: string): { setup: string; alg: string } {
   const trimmed = alg.trim();
   if (!trimmed) return { setup: '', alg: '' };
-
-  const trailingRotation = trimmed.match(TRAILING_Y_ROTATION)?.[1];
-  if (!trailingRotation) return { setup: invertAlg(trimmed), alg: trimmed };
-
-  const setup = `${invertAlg(trimmed)} ${trailingRotation}`;
-  return { setup, alg: invertAlg(setup) };
+  return { setup: invertAlg(trimmed), alg: trimmed };
 }
 
 /**
