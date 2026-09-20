@@ -187,9 +187,6 @@
   font-weight: 600;
   line-height: 18px;
 }
-.site-row.has-external-links .site-row-main { padding-right: 62px; }
-.site-row.has-multiple-external-links .site-row-main { padding-right: 88px; }
-
 .site-row-main {
   position: relative;
   display: grid;
@@ -377,12 +374,8 @@
 .site-admin-btn:disabled:hover { background: transparent; color: var(--sites-text-muted); }
 .site-admin-del:hover { background: var(--sites-danger-soft); color: var(--sites-danger); }
 
-/* admin 行右侧腾出空间给按钮组(~110px) */
-.site-row.is-admin .site-row-main { padding-right: 130px; }
 .site-row.has-external-links .site-row-admin { right: 62px; }
 .site-row.has-multiple-external-links .site-row-admin { right: 88px; }
-.site-row.is-admin.has-external-links .site-row-main { padding-right: 166px; }
-.site-row.is-admin.has-multiple-external-links .site-row-main { padding-right: 192px; }
 
 /* ── Editor modal ───────────────────────────────────── */
 .site-editor-backdrop {
@@ -545,6 +538,7 @@
   }
   .site-row.has-external-links .site-row-main { padding-right: 62px; }
   .site-row.has-multiple-external-links .site-row-main { padding-right: 88px; }
+  .site-row.is-admin .site-row-main { padding-right: 130px; }
   .site-row.is-admin.has-external-links .site-row-main { padding-right: 166px; }
   .site-row.is-admin.has-multiple-external-links .site-row-main { padding-right: 192px; }
   .site-row-icon { grid-area: icon; align-items: flex-start; padding-top: 2px; }
@@ -723,18 +717,26 @@
 
 
 .sites-list {
+  --sites-list-columns: 40px minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 2.1fr);
+  --sites-list-column-gap: 14px;
   gap: 6px;
+}
+
+.sites-list-head,
+.site-row-main {
+  grid-template-columns: var(--sites-list-columns);
+  gap: var(--sites-list-column-gap);
 }
 
 .sites-list-head {
   margin-bottom: 2px;
-  padding: 9px 16px;
-  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-  border-radius: 9px;
-  background: var(--popover);
+  padding: 9px 17px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
-body[data-site-scenery] :is(.sites-list-head, .site-row-external-links, .site-row-admin, .site-card-external-links, .site-card-admin) {
+body[data-site-scenery] :is(.site-row-external-links, .site-row-admin, .site-card-external-links, .site-card-admin) {
   background: var(--glass-popover-bg);
   -webkit-backdrop-filter: var(--glass-filter);
   backdrop-filter: var(--glass-filter);
@@ -764,9 +766,20 @@ body[data-site-scenery] .site-row:hover {
 }
 
 .site-row-main {
-  grid-template-columns: 40px minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 2.1fr);
-  gap: 14px;
   padding: 13px 16px;
+}
+
+/* Desktop action overlays reserve space inside the description cell so grid tracks stay fixed. */
+@media (min-width: 721px) {
+  .site-row.has-external-links { --site-row-action-space: 46px; }
+  .site-row.has-multiple-external-links { --site-row-action-space: 72px; }
+  .site-row.is-admin { --site-row-action-space: 114px; }
+  .site-row.is-admin.has-external-links { --site-row-action-space: 150px; }
+  .site-row.is-admin.has-multiple-external-links { --site-row-action-space: 176px; }
+
+  .site-row-desc {
+    padding-right: var(--site-row-action-space, 0);
+  }
 }
 
 .site-avatar {
