@@ -46,14 +46,14 @@ describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
     expect(MANIFEST.legacyFindings).toHaveLength(195);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
-    // Reviewed FFmpeg adapter and local psql integration-test adapter.
-    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 2);
+    // Reviewed FFmpeg/psql adapters and the two isolated email/payment PG fixture runners.
+    expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 4);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(150);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
   it('keeps every semantic edge contract tied to live repository evidence', () => {
-    expect(MANIFEST.manualContracts).toHaveLength(15);
+    expect(MANIFEST.manualContracts).toHaveLength(16);
     expect(validateManifestSchema(MANIFEST)).toEqual([]);
     expect(validateManualContracts(MANIFEST.manualContracts)).toEqual([]);
     expect(new Set(MANIFEST.manualContracts.map((item: { phase: string }) => item.phase))).toEqual(new Set([
