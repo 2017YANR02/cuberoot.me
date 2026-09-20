@@ -30,9 +30,9 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      - name: Build shared package
+      - name: Build stats runtime dependencies
         working-directory: core
-        run: pnpm --filter @cuberoot/shared build
+        run: pnpm --filter @cuberoot/stats-build build:deps
 
       - name: Resolve workspace layout
         id: workspace

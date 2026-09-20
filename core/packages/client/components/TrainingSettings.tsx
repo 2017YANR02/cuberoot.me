@@ -61,9 +61,8 @@ export function useTrainingAutoAdvance() {
   return useMemo(() => ({ enabled, setEnabled, schedule, cancel }), [cancel, enabled, schedule, setEnabled]);
 }
 
-export default function TrainingSettings({ value, onChange, className, children }: {
-  value: boolean;
-  onChange: (next: boolean) => void;
+export function SettingsPopover({ label, className, children }: {
+  label: string;
   className?: string;
   children?: ReactNode;
 }) {
@@ -79,22 +78,42 @@ export default function TrainingSettings({ value, onChange, className, children 
         ref={triggerRef}
         type="button"
         className="training-settings-trigger"
-        aria-label={tr({ zh: '训练设置', en: 'Training settings' })}
+        aria-label={label}
+        aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
         <Settings size={18} aria-hidden="true" />
       </button>
       {open && (
-        <span ref={panelRef} className="training-settings-panel">
-          <BoolToggle
-            value={value}
-            onChange={onChange}
-            label={tr({ zh: '答对后自动进入下一题', en: 'Auto-next after a correct answer' })}
-          />
+        <span
+          ref={panelRef}
+          className="training-settings-panel"
+          role="dialog"
+          aria-label={label}
+          data-site-surface="popover"
+        >
           {children}
         </span>
       )}
     </span>
+  );
+}
+
+export default function TrainingSettings({ value, onChange, className, children }: {
+  value: boolean;
+  onChange: (next: boolean) => void;
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <SettingsPopover label={tr({ zh: '训练设置', en: 'Training settings' })} className={className}>
+      <BoolToggle
+        value={value}
+        onChange={onChange}
+        label={tr({ zh: '答对后自动进入下一题', en: 'Auto-next after a correct answer' })}
+      />
+      {children}
+    </SettingsPopover>
   );
 }

@@ -624,6 +624,10 @@ html[data-theme=dark] .alg-root {
   .alg-pdf-menu-item {
     min-block-size: 44px;
   }
+  .alg-cat-header .alg-list-settings .training-settings-trigger {
+    inline-size: 44px;
+    block-size: 44px;
+  }
   /* 保留紧凑滑轨视觉，同时让整块透明命中区达到 44px。 */
   .alg-cat-header .alg-view-toggle {
     margin-block: 8px;
@@ -1471,6 +1475,17 @@ a.alg-community-author:hover {
   padding: 12px 16px; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px;
 }
+.alg-list-settings-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.alg-list-settings-label {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
 .alg-admin-modal-body label {
   display: flex; flex-direction: column; gap: 4px;
 }
@@ -1799,11 +1814,10 @@ a.alg-community-author:hover {
   flex-wrap: wrap;
   gap: 10px;
 }
-/* 顶部那排缩略图(当前 + 镜像 / 逆 / 镜像逆),与下面公式用一条分隔线隔开 */
+/* 顶部那排缩略图(当前 + 镜像 / 逆 / 镜像逆)只保留与下面公式的留白。 */
 .alg-meta-top-grid {
   padding-bottom: 12px;
   margin-bottom: 12px;
-  border-bottom: 1px solid var(--border-default);
 }
 .alg-meta-related-card {
   display: flex;
