@@ -69,7 +69,7 @@ import { friendRoutes } from './routes/friends.js';
 import { privateVaultRoutes } from './routes/private_vault.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { trainerRoomsRoutes } from './routes/trainer_rooms.js';
-import { battleRoomsRoutes } from './routes/battle_rooms.js';
+import { authorizeBattleRoomLivePlayer, battleRoomsRoutes } from './routes/battle_rooms.js';
 import { videoRoomsRoutes } from './routes/video_rooms.js';
 import { wechatJssdkRoutes } from './routes/wechat_jssdk.js';
 import { wechatPcOpenSdkRoutes } from './routes/wechat_pc_opensdk.js';
@@ -95,6 +95,7 @@ import { driveRoutes } from './routes/drive.js';
 import { musicRoutes } from './routes/music.js';
 import { collaborativeDocuments } from './documents/realtime.js';
 import { smartCubeRelay } from './smart_cube/relay.js';
+import { battleRoomLiveRelay } from './battle_live_relay.js';
 import { calcLiveRelay } from './calc/live_relay.js';
 import { ensureDaemon as ensureCubeoptDaemon, isEnabled as cubeoptEnabled } from './cubeopt/daemon.js';
 import { startWcaPastResultsMonitor } from './monitors/wca_past_results.js';
@@ -244,20 +245,23 @@ app.get('/v1/documents/realtime', upgradeWebSocket((c) => {
   };
 }));
 app.get('/v1/smart-cube/relay', upgradeWebSocket((c) => {
-  let connection: ReturnType<typeof smartCubeRelay.connect> | undefined;
+  let connection: { handleMessage(data: unknown): void; handleClose(): void } | undefined;
   return {
     onOpen(_event, ws) {
-      connection = smartCubeRelay.connect({
+      const socket = {
         get bufferedAmount() {
           return ws.raw?.bufferedAmount ?? 0;
         },
-        send(data) {
+        send(data: string) {
           ws.send(data);
         },
-        close(code, reason) {
+        close(code?: number, reason?: string) {
           ws.close(code, reason);
         },
-      }, getIp(c));
+      };
+      connection = c.req.query('mode') === 'battle'
+        ? battleRoomLiveRelay.connect(socket, authorizeBattleRoomLivePlayer, getIp(c))
+        : smartCubeRelay.connect(socket, getIp(c));
     },
     onMessage(event) {
       connection?.handleMessage(event.data);
