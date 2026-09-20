@@ -18,6 +18,7 @@ import type { BleAbortSignal, DiscoveredDevice, MiniProgramBleApi } from './ble-
 import {
   connectEncryptedBle,
   extractBleMacFromAdvertisement,
+  normalizeBleMac,
   type EncryptedBleConnection,
 } from './encrypted-ble';
 
@@ -54,6 +55,8 @@ export async function connectMoyu32(options: ConnectMoyu32Options = {}): Promise
     characteristicUuid: MOYU32_WRITE_CHARACTERISTIC_UUID,
     matches: (device) => matchesMoyu32Name(device.name) || matchesMoyu32Name(device.localName),
     resolveMac: (device) => {
+      const deviceMac = normalizeBleMac(device.deviceId);
+      if (deviceMac) return { source: 'device-id', value: deviceMac };
       const advertised = extractBleMacFromAdvertisement(device.advertisData, {
         companyIds: MOYU32_COMPANY_IDS,
         layout: 'last6-reversed',

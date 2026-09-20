@@ -52,9 +52,11 @@ describe('SmartCubeRelay', () => {
 
     expect(sinkSocket.send).toHaveBeenCalledWith(ready('sink'));
     expect(sourceSocket.send).toHaveBeenCalledWith(ready('source'));
-    source.handleMessage(JSON.stringify({ type: 'move', move: "R'", deviceTs: 123 }));
+    source.handleMessage(JSON.stringify({
+      type: 'move', move: "R'", deviceTs: 123, futureHistory: true,
+    }));
     expect(sinkSocket.send).toHaveBeenCalledWith(JSON.stringify({
-      type: 'move', move: "R'", deviceTs: 123, relaySeq: 1,
+      type: 'move', move: "R'", deviceTs: 123, futureHistory: true, relaySeq: 1,
     }));
 
     sink.handleMessage(JSON.stringify({ type: 'command', command: 'disconnect' }));
