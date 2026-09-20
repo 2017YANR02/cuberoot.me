@@ -33,7 +33,10 @@ async function getHistory(): Promise<FemaleRecordRow[]> {
 export function femaleRecordBaseline(rows: FemaleRecordRow[], date: string): Record<string, number> {
   const best: Record<string, number> = {};
   for (const row of rows) {
-    if (row.d > date || !Number.isFinite(row.v) || row.v <= 0) continue;
+    // The published history can already contain this competition. Only older
+    // dates form its pre-competition baseline; same-day results are adjudicated
+    // separately through the live day pool.
+    if (row.d >= date || !Number.isFinite(row.v) || row.v <= 0) continue;
     const key = `${row.e}|${row.t === 'a' ? 1 : 0}`;
     best[key] = Math.min(best[key] ?? Infinity, row.v);
   }
