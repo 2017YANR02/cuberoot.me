@@ -232,7 +232,7 @@
 当前决策与目标设备：
 
 - 首测手机：OPPO Reno7 Pro 5G `PFDM00`（Android 13 / ColorOS 13.1）；首测魔方：GAN 16 UI（GAN v4）。
-- 原生 transport 采用 `@capacitor-community/bluetooth-le` 8.x 的薄 adapter；选择依据是 Capacitor 8 同主版本、Android/iOS central BLE、manufacturer data、读写、通知、断线和 MTU 能力齐全。智能魔方协议继续复用 `@cuberoot/shared/smart-cube` 下的 GAN v2/v3/v4 与 MoYu32 实现，由 `@cuberoot/app-ui` 负责原生连接编排；网站保留 Web Bluetooth adapter，不复制协议、不从 client deep import。
+- 原生 transport 采用 `@capacitor-community/bluetooth-le` 8.x 的薄 adapter；选择依据是 Capacitor 8 同主版本、Android/iOS central BLE、manufacturer data、读写、通知、断线和 MTU 能力齐全。智能魔方协议继续复用 `@cuberoot/shared/smart-cube` 下的 GAN v2/v3/v4、MoYu32 与 QiYi 实现，由 `@cuberoot/app-ui` 负责原生连接编排；网站保留 Web Bluetooth adapter，不复制协议、不从 client deep import。
 - Capawesome BLE 因本项目不需要其付费的 peripheral/headless/foreground 扩展而不选；Capgo Web Bluetooth shim 因设备选择语义受限且会把 Mobile 重新耦合到浏览器 GATT 对象而不选。只有社区插件真机 spike 暴露无法补齐的硬阻断时，才重开插件或自有原生桥决策。
 - 真机证据已覆盖 Android 13 附近设备授权、扫描、选择、连接、服务发现、写命令、通知、GAN v4 解密、状态帧与真实转动解析。2026-08-30 进一步实测打乱匹配后自动预备、第一手起表、复原自动停表并保存 `5.20`，统计从 `3/3` 更新为 `4/4` 后自动切换下一条比赛打乱。权限拒绝恢复、后台、蓝牙关闭、距离中断和反复重连仍是独立未完成门槛。
 - 2026-09-01 的 shared 指引/修正与 Solo lifecycle controller 已通过 Web/App 延迟 requester、同 target coalesce、新 target 续跑、协议错拒绝晚帧、同批帧、连接/切题后 authoritative state 重放、一次性完成 edge 与 43 项能力矩阵回归；Android APK 为 8,788,904 bytes、SHA-256 `5cc6b17112332c4c1e814b7495852365f761e951f0ee6b6fc8d046b3b7935ce7`，已安装到同一 OPPO 且与设备内 `base.apk` 字节一致。实体 GAN 新路径未在解锁屏幕上复验，故本阶段仍不完成。
@@ -1173,10 +1173,11 @@ CubeRoot 应以这些证据证明不是简单套壳：
 ### 19.2 Android 智能魔方桥接进度（2026-09-20）
 
 - `core/apps/mobile` 的 Capacitor BLE transport 已完成 Android 权限初始化、设备选择、GATT 连接、service/characteristic discovery、通知、读写、MTU 和断连清理；写入能力缓存按 `deviceId` 隔离，避免多连接或迟到清理串用其他设备的 write mode。
-- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，用 service filters 打开 GAN 与 `WCU_MY3` 多品牌选择；设备名区分 GAN/MoYu32 家族，GAN v2/v3/v4 再由已发现的 service 判定。不提供 discovery 的 Desktop/Harmony 路径继续保持原 GAN v4 入口，不误标为 MoYu32 已支持。
+- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，用 service filters 与 `GAN`、`WCU_MY3`、`QY-QYSC`、`XMD-TornadoV4-i` 名称前缀打开多品牌选择；设备名区分 GAN、MoYu32、QiYi 家族，GAN v2/v3/v4 再由已发现的 service 判定。不提供 discovery 的 Desktop/Harmony 路径继续保持原 GAN v4 入口，不误标为其他协议已支持。
 - GAN v2/v3 与 MoYu32 已完成代码级 Android bridge。MoYu32 覆盖名称推导 MAC、service/characteristic 校验、A1/A3/A4 握手、AES 通知、状态/动作/电量/姿态、设备增量时间、AC 陀螺开关、坏密钥熔断和断连迟到通知隔离；成绩设备型号不再固定写成 `gan-v4`。
-- 自动化证据包括 app-ui 的 GAN/MoYu32 connection 与 hook 定向测试、Mobile transport 多 service picker/设备隔离测试，以及 shared/app-ui/mobile 构建或类型检查。当前没有新增实体魔方验收；既有 OPPO Reno7 Pro 5G + GAN 16 UI 记录仍只证明 GAN v4 主链。
-- 下一协议仍是 QiYi；其 Android connection、握手与设备测试尚未接入。多品牌真机矩阵、自动重连、后台/蓝牙关闭/距离中断和异常压力测试仍未完成。
+- QiYi 已完成代码级 Android bridge，覆盖 `fff0` service、`fff6` 通知/优先写入、`fff5` 后备写入、Android 地址优先与设备名 MAC 后备、AES-ECB hello/ACK、状态与完整历史动作、电量、设备时间、Tornado V4 陀螺仪、坏帧熔断和断连迟到通知隔离。状态帧中晚于 facelet 快照的 future-history 动作会继续推进本地魔方状态；仅在计时已经运行时记入复盘，不会在空闲态、预备监听或 battle 中误触发起表。
+- 自动化证据包括 app-ui 的 GAN/MoYu32/QiYi connection 与 hook 定向测试、Mobile transport 多 service picker/设备隔离测试，以及 shared/app-ui/mobile 构建或类型检查。当前没有新增实体魔方验收；既有 OPPO Reno7 Pro 5G + GAN 16 UI 记录仍只证明 GAN v4 主链。
+- QiYi、GAN v2/v3 与 MoYu32 仍需补齐多品牌真机矩阵；自动重连、后台/蓝牙关闭/距离中断和异常压力测试也未完成。QiYi 真机需分别确认实际 Android MAC 与名称后备、`fff6`/`fff5` 写通道、service 广播过滤、状态历史以及 Tornado V4 陀螺仪。
 
 ## 20. 决策检查表
 

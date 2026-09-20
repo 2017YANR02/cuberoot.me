@@ -2564,11 +2564,12 @@ export function App({ host }: { host: InstalledAppHost }) {
         smartCubeGyroRecorderRef.current.push(quaternion, timestamp - attemptStartedAtRef.current);
       }
     },
-    onMove: (move, timestamp, facelets) => {
+    onMove: (move, timestamp, facelets, metadata) => {
+      const futureHistory = metadata?.futureHistory === true;
       smartCubeAnchorController.move(move);
       try {
       if (timerModeRef.current !== 1) {
-        battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
+        if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
       }
       const recordMove = () => {
@@ -2587,6 +2588,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         smartCubeGuidanceController.setRunning(true);
         return;
       }
+      if (futureHistory) return;
       const event = activeEventRef.current;
       if (!timerSupportsSmartCubeAutoTiming(event)) return;
       // An armed attempt consumes its first solve turn before scramble guidance
@@ -2602,7 +2604,9 @@ export function App({ host }: { host: InstalledAppHost }) {
         && storeRef.current?.settings.bluetoothAutoReady === 'scrambled'
         && timerSmartCubeStartsAttemptOnTurn(event)) timer.armFromCube();
       } finally {
-        for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
+        if (!futureHistory) {
+          for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
+        }
       }
     },
     onSolved: (timestamp) => {
