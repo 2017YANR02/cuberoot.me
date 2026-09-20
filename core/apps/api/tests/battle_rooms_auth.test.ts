@@ -118,7 +118,7 @@ describe('battle-room player capabilities', () => {
       expect(response.status).toBe(204);
       expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin);
       expect(response.headers.get('Access-Control-Allow-Headers')?.toLowerCase().split(','))
-        .toEqual(['content-type', 'authorization', 'x-battle-token', 'upload-offset', 'upload-checksum']);
+        .toEqual(['content-type', 'authorization', 'idempotency-key', 'x-battle-token', 'upload-offset', 'upload-checksum']);
     }
 
     const rejected = await preflight('https://evil.example');
