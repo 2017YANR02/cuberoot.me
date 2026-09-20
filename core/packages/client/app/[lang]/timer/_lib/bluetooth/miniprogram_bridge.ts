@@ -14,6 +14,7 @@ import {
   mayUseMiniProgramBridge,
   type MiniProgramNavigationApi,
 } from '@/lib/miniprogram-bridge';
+import type { CubeMoveMetadata } from './driver';
 
 export { isMiniProgramWebView, mayUseMiniProgramBridge };
 
@@ -23,7 +24,7 @@ export interface MiniProgramCubeBridgeCallbacks {
     quaternion: { w: number; x: number; y: number; z: number },
     velocity?: { x: number; y: number; z: number },
   ): void;
-  onMove(move: string, deviceTs?: number): void;
+  onMove(move: string, deviceTs?: number, metadata?: CubeMoveMetadata): void;
   onState(facelets: string): void;
   onStatus(status: Extract<SmartCubeRelayEvent, { type: 'status' }>): void;
 }
@@ -74,7 +75,12 @@ export async function connectMiniProgramCubeBridge(
   let fail: (error: Error) => void = () => {};
 
   const dispatch = (payload: SmartCubeRelayEvent): void => {
-    if (payload.type === 'move') callbacks.onMove(payload.move, payload.deviceTs);
+    if (payload.type === 'move') {
+      const metadata = payload.futureHistory === undefined
+        ? undefined
+        : { futureHistory: payload.futureHistory };
+      callbacks.onMove(payload.move, payload.deviceTs, metadata);
+    }
     else if (payload.type === 'state') callbacks.onState(payload.facelets);
     else if (payload.type === 'battery') callbacks.onBattery(payload.level);
     else if (payload.type === 'gyro') callbacks.onGyro(payload.quaternion, payload.velocity);

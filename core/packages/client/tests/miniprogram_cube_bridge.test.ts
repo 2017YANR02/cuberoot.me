@@ -181,7 +181,9 @@ describe('mini-program smart-cube bridge', () => {
     const pending = connectMiniProgramCubeBridge({
       onBattery: (level) => received.push(`battery:${level}`),
       onGyro: () => received.push('gyro'),
-      onMove: (move) => received.push(`move:${move}`),
+      onMove: (move, _deviceTs, metadata) => received.push(
+        `move:${move}:${metadata?.futureHistory ? 'future' : 'current'}`,
+      ),
       onState: (facelets) => received.push(`state:${facelets[0]}`),
       onStatus: (status) => received.push(`status:${status.phase}`),
     });
@@ -195,7 +197,7 @@ describe('mini-program smart-cube bridge', () => {
       type: 'state',
       facelets: 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB',
     });
-    socket.emitMessage({ type: 'move', move: 'U', deviceTs: 42, relaySeq: 1 });
+    socket.emitMessage({ type: 'move', move: 'U', deviceTs: 42, futureHistory: true, relaySeq: 1 });
     expect(received).toEqual([]);
 
     socket.emitMessage({
@@ -209,7 +211,7 @@ describe('mini-program smart-cube bridge', () => {
     expect(received).toEqual([]);
 
     connection.activate();
-    expect(received).toEqual(['state:U', 'move:U', 'status:connected']);
+    expect(received).toEqual(['state:U', 'move:U:future', 'status:connected']);
     expect(connection).toMatchObject({ brand: 'gan-v4', deviceName: 'GAN16ui', hasGyro: true });
   });
 

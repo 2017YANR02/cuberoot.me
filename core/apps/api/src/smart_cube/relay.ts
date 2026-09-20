@@ -84,6 +84,7 @@ function canonicalizeRelayPayload(message: SmartCubeRelayPayload): SmartCubeRela
       move: message.move,
     };
     if (message.deviceTs !== undefined) canonical.deviceTs = message.deviceTs;
+    if (message.futureHistory !== undefined) canonical.futureHistory = message.futureHistory;
     if (message.relaySeq !== undefined) canonical.relaySeq = message.relaySeq;
     return canonical;
   }
