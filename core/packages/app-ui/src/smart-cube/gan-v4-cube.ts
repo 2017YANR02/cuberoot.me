@@ -28,7 +28,7 @@ export interface GanV4CubeCallbacks {
 }
 
 export interface GanV4CubeStatus {
-  protocol: 'gan-v4';
+  protocol: 'gan-v2' | 'gan-v3' | 'gan-v4';
   battery: number | null;
   moveCounter: number;
   pendingMoves: number;

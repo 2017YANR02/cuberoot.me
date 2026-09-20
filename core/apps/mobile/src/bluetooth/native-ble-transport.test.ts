@@ -62,6 +62,13 @@ describe('NativeBleTransport', () => {
 
     const disconnected = vi.fn();
     await transport.connect('AA:BB:CC:DD:EE:FF', disconnected);
+    await expect(transport.getServices?.('AA:BB:CC:DD:EE:FF')).resolves.toEqual([{
+      uuid: 'service',
+      characteristics: [{
+        uuid: 'notify',
+        properties: { notify: true, indicate: false, read: true, write: false, writeWithoutResponse: true },
+      }],
+    }]);
     await transport.write('AA:BB:CC:DD:EE:FF', 'service', 'notify', Uint8Array.of(1, 2));
     expect(client.writeWithoutResponse).toHaveBeenCalledOnce();
     expect(client.write).not.toHaveBeenCalled();
@@ -72,6 +79,31 @@ describe('NativeBleTransport', () => {
     await unsubscribe();
     expect(client.startNotifications).toHaveBeenCalledOnce();
     expect(client.stopNotifications).toHaveBeenCalledOnce();
+  });
+
+  it('uses service filters when the native picker spans multiple name prefixes', async () => {
+    const client = fakeClient();
+    const transport = new NativeBleTransport(client);
+    const pickerLabels = {
+      availableDevices: 'Available',
+      cancel: 'Cancel',
+      noDeviceFound: 'None',
+      scanning: 'Scanning',
+    };
+
+    await transport.requestDevice({
+      namePrefix: 'GAN',
+      namePrefixes: ['GAN', 'WCU_MY3'],
+      services: ['gan-service', 'moyu32-service'],
+      optionalServices: ['gan-service', 'moyu32-service'],
+      pickerLabels,
+    });
+
+    expect(client.requestDevice).toHaveBeenCalledWith({
+      services: ['gan-service', 'moyu32-service'],
+      optionalServices: ['gan-service', 'moyu32-service'],
+    });
+    expect(vi.mocked(client.requestDevice).mock.calls[0]?.[0]).not.toHaveProperty('namePrefix');
   });
 
   it('captures manufacturer data for an iOS UUID after the native picker returns', async () => {
@@ -107,5 +139,32 @@ describe('NativeBleTransport', () => {
       0xa3, 0xb4, 0xc5, 6, 5, 4, 3, 2, 1,
     ]);
     expect(client.stopLEScan).toHaveBeenCalledOnce();
+  });
+
+  it('keeps write capability discovery isolated between connected devices', async () => {
+    const client = fakeClient();
+    vi.mocked(client.getServices)
+      .mockResolvedValueOnce([{
+        uuid: 'service-a',
+        characteristics: [{ uuid: 'write', descriptors: [], properties: {
+          authenticatedSignedWrites: false, broadcast: false, indicate: false, notify: false,
+          read: false, write: false, writeWithoutResponse: true,
+        } }],
+      }])
+      .mockResolvedValueOnce([{
+        uuid: 'service-b',
+        characteristics: [{ uuid: 'write', descriptors: [], properties: {
+          authenticatedSignedWrites: false, broadcast: false, indicate: false, notify: false,
+          read: false, write: true, writeWithoutResponse: false,
+        } }],
+      }]);
+    const transport = new NativeBleTransport(client);
+    await transport.connect('device-a', vi.fn());
+    await transport.connect('device-b', vi.fn());
+
+    await transport.write('device-a', 'service-a', 'write', Uint8Array.of(1));
+    await transport.write('device-b', 'service-b', 'write', Uint8Array.of(2));
+    expect(client.writeWithoutResponse).toHaveBeenCalledOnce();
+    expect(client.write).toHaveBeenCalledOnce();
   });
 });
