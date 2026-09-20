@@ -2,7 +2,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { Eye, Hand, Route, ScanSearch, Target, UsersRound } from 'lucide-react';
-import { VisualCube } from '@/components/VisualCube';
+import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useT } from '../../../hooks/useT';
 import './_AbilityAtlas.css';
 
@@ -63,12 +63,14 @@ export default function AbilityAtlas() {
           <span />
         </div>
         <div className="wc-atlas-cube">
-          <VisualCube
+          <AlgPlayer
+            puzzle="3x3"
+            set=""
+            engine="sim"
+            alg=""
             setup="R U R' U' F2 D L2 B U2"
-            view="iso"
+            controlMode="none"
             size={240}
-            local
-            alt={t('转动中的三阶魔方', 'A turned 3×3 cube')}
           />
         </div>
         <div className="wc-atlas-core-copy">
