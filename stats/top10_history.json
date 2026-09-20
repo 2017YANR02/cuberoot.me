@@ -1200,7 +1200,7 @@
       "iso2": "JP"
     },
     "2008SMIT04": {
-      "name": "Maarten Smit",
+      "name": "Emeline Smit",
       "country": "Netherlands",
       "iso2": "NL"
     },
@@ -4411,8 +4411,8 @@
     },
     "2009YICH01": {
       "name": "Zhou Yichen (周奕臣)",
-      "country": "China",
-      "iso2": "CN"
+      "country": "Singapore",
+      "iso2": "SG"
     },
     "2010KORO01": {
       "name": "Alex Koroglu",
@@ -27601,6 +27601,12 @@
     "StevenageSeptember2026": {
       "name": "Stevenage September 2026"
     },
+    "ViseSaturdayOpen2026": {
+      "name": "Visé Saturday Open 2026"
+    },
+    "GuangzhouGraDUAL3x3IV2026": {
+      "name": "Guangzhou GraDUAL 3x3 IV 2026"
+    },
     "DanishCubeDay2008": {
       "name": "Danish Cube Day 2008"
     },
@@ -29562,6 +29568,9 @@
     },
     "ShinKongOpenNewTaipei2026": {
       "name": "Shin Kong Open - New Taipei 2026"
+    },
+    "OhioChampionship2026": {
+      "name": "Ohio Championship 2026"
     },
     "SuvarnabhumiCubeOpen2026": {
       "name": "Suvarnabhumi Cube Open 2026"
@@ -31563,6 +31572,9 @@
     },
     "PuckOpen2026": {
       "name": "Puck Open 2026"
+    },
+    "BelgraveOpen2026": {
+      "name": "Belgrave Open 2026"
     },
     "BrazilOpen2007": {
       "name": "Brazil Open 2007"
@@ -37890,6 +37902,9 @@
     },
     "DragonCubingXII2026": {
       "name": "Dragon Cubing XII 2026"
+    },
+    "BalamCubesCitywalk2026": {
+      "name": "Balam Cubes Citywalk 2026"
     },
     "BigCubesSummer2009": {
       "name": "Big Cubes Summer 2009"
