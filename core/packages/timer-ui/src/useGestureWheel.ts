@@ -23,7 +23,7 @@ import type { GestureWheelHandle } from './GestureWheel';
 export function shouldIgnoreTimerTarget(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
   return target.closest(
-    'button, a, input, textarea, select, .scramble-strip[data-interactive="true"], [contenteditable="true"], [data-no-timer]',
+    'button, a, input, textarea, select, .scramble-strip, [contenteditable="true"], [data-no-timer]',
   ) !== null;
 }
 

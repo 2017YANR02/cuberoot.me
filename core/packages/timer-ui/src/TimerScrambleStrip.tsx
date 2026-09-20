@@ -249,7 +249,8 @@ function TimerScramblePlainText({
   tailExtra?: ReactNode;
 }) {
   const splitAt = scramble.lastIndexOf(' ');
-  const head = splitAt >= 0 ? scramble.slice(0, splitAt + 1) : '';
-  const tail = splitAt >= 0 ? scramble.slice(splitAt + 1) : scramble;
+  if (splitAt < 0) return <>{scramble}{tailExtra}</>;
+  const head = scramble.slice(0, splitAt + 1);
+  const tail = scramble.slice(splitAt + 1);
   return <>{head}<span className="scramble-copied-tail">{tail}{tailExtra}</span></>;
 }
