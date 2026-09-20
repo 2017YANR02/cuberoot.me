@@ -979,7 +979,13 @@ html[data-theme=dark] .alg-root {
 }
 .alg-case-inline-editor .alg-admin-setup-label > span:first-child,
 .alg-case-inline-editor .alg-admin-algs-label { font-size: 0.78rem; color: var(--muted-foreground); }
-.alg-case-inline-editor .alg-editor-input { min-width: 0; background: none; border-color: transparent; }
+.alg-case-inline-editor .alg-editor-input {
+  min-width: 0;
+  background: none;
+  border-color: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
 .alg-case-inline-editor .alg-editor-input:hover { border-color: var(--border-default); }
 .alg-case-inline-editor .alg-editor-input:focus { border-color: var(--accent); }
 .alg-case-inline-editor .alg-editor-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; }
@@ -2065,8 +2071,10 @@ a.alg-community-author:hover {
   border-radius: 6px;
   background: var(--background);
   color: var(--foreground);
+  font-family: inherit;
   font-size: 12px;
 }
+.alg-meta-scramble-kind option { font-family: inherit; }
 
 .alg-meta-setup-editor {
   flex: 1;
