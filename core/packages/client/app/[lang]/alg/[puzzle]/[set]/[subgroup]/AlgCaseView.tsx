@@ -45,7 +45,7 @@ import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
   caseViewSetup,
-  canonicalF2lPlayerSequence,
+  f2lPlayerSequence,
   displayCaseScramble,
   displayCaseAlg,
   displayCaseAlgHtml,
@@ -548,12 +548,12 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                 ? candidateEntry : oriAlgs.find(entry => !caseAlgIssue(entry));
               const selectedAlg = caseViewAlg(selectedEntry?.alg ?? '', effectiveViewAngle);
               const primaryAlg = caseViewAlg(oriAlgs[0]?.alg ?? '', effectiveViewAngle);
-              const canonicalPrimary = canonicalF2lPlayerSequence(primaryAlg);
+              const primarySequence = f2lPlayerSequence(primaryAlg);
               const playerAlg = useF2lOrientationGrid
-                ? canonicalF2lPlayerSequence(selectedAlg).alg
+                ? f2lPlayerSequence(selectedAlg).alg
                 : selectedAlg;
               const orientationSetup = useF2lOrientationGrid
-                ? canonicalPrimary.setup
+                ? primarySequence.setup
                 : caseViewSetup(orientedSetup, effectiveViewAngle);
               const playRequest = playRequestByOri[oi] ?? 0;
               const rows = oriAlgs.map((entry, i) => {

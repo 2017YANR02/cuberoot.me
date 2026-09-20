@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import Cube from '@/app/[lang]/sim/engine/nxn/cube';
 import { FM_REGULAR, stickeringMaskFn } from '@/app/[lang]/sim/engine/nxn/stickering';
-import { canonicalF2lPlayerSequence } from '@/lib/alg_display';
+import { f2lPlayerSequence } from '@/lib/alg_display';
 
-// 线上 A+ 的 FR / FL / BL / BR 主公式；后三条自带恢复持方的结尾转体。
+// 线上 A+ 的 FR / FL / BR / BL 主公式；后三条自带恢复持方的结尾转体。
 const A_PLUS_PRIMARY_ALGS = [
   "U R U' R'",
   "F' L F L' y'",
-  "U L U' L' y2",
   "U f R' f' y",
+  "U L U' L' y2",
 ];
 
 const TOP_LAYER_STICKERS = [
@@ -17,37 +17,41 @@ const TOP_LAYER_STICKERS = [
 ];
 
 describe('F2L detail player canonical pair', () => {
-  it('keeps canonical centers and the same red-green pair in every slot', () => {
+  it('keeps the red-green pair in every slot and lets each formula solve its setup', () => {
     const f2lMask = stickeringMaskFn(3, 'F2L');
     expect(f2lMask).not.toBeNull();
 
     const solved = new Cube(3);
     const solvedState = solved.serialize();
-    const solvedCenters = [4, 13, 22, 31, 40, 49].map(index => solvedState[index]);
     solved.dispose();
 
     for (const alg of A_PLUS_PRIMARY_ALGS) {
-      const sequence = canonicalF2lPlayerSequence(alg);
+      const sequence = f2lPlayerSequence(alg);
       const cube = new Cube(3);
       cube.twister.setup(sequence.setup);
 
       const state = cube.serialize();
       const mask = cube.serializeStickering(f2lMask!);
-      const centers = [4, 13, 22, 31, 40, 49].map(index => state[index]);
       const pairColors = TOP_LAYER_STICKERS
         .filter(index => mask[index] === FM_REGULAR)
         .map(index => state[index])
-        .filter(color => color === 'D' || color === 'F' || color === 'R')
         .sort();
 
-      expect(centers, `${alg} should retain the canonical color scheme`).toEqual(solvedCenters);
-      expect(pairColors, `${alg} should expose the same red-green pair`).toEqual(['D', 'F', 'F', 'R', 'R']);
+      expect(pairColors, `${alg} should expose only the red-green pair`)
+        .toEqual(['D', 'F', 'F', 'R', 'R']);
       cube.dispose();
 
       const restored = new Cube(3);
       restored.twister.setup(`${sequence.setup} ${sequence.alg}`);
-      expect(restored.serialize(), `${alg} should solve its canonical setup`).toBe(solvedState);
+      expect(restored.serialize(), `${alg} should solve its own setup`).toBe(solvedState);
       restored.dispose();
     }
+  });
+
+  it('moves the FL holding rotation to the beginning of the scramble', () => {
+    expect(f2lPlayerSequence("F' L F L' y'")).toEqual({
+      setup: "y L F' L' F",
+      alg: "F' L F L' y'",
+    });
   });
 });
