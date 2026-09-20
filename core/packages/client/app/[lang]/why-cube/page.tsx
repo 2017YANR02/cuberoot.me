@@ -27,8 +27,8 @@ import {
   Sparkles, Boxes, GraduationCap, MapPin,
 } from 'lucide-react';
 import Link from '@/components/AppLink';
-import dynamic from 'next/dynamic';
 import { EventIcon } from '@/components/EventIcon';
+import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import BackHome from '@/components/BackHome';
 import { useT } from '../../../hooks/useT';
 import LiveHero from './_LiveHero';
@@ -42,14 +42,6 @@ import SpeedFeel from './_SpeedFeel';
 import StickyToc from './_StickyToc';
 import AbilityAtlas from './_AbilityAtlas';
 import './why_cube.css';
-
-// Server-rendered cube SVG (api.cuberoot.me). Client-only to dodge a dev
-// hydration mismatch (server picks absolute API origin, client-dev picks a
-// relative path). Used for the static cube imagery throughout the page.
-const VisualCube = dynamic(() => import('@/components/VisualCube').then(m => m.VisualCube), {
-  loading: () => <span className="wc-cube-ph" aria-hidden="true" />,
-  ssr: false,
-});
 
 /* NxN family for the size line-up. */
 const SIZES = [
@@ -235,7 +227,7 @@ export default function WhyCubePage() {
         {/* ── Six abilities ─────────────────────────────────── */}
         <Sec
           eyebrow={t('核心能力', 'Core abilities')}
-          title={t('一块方块，练六种能力', 'One puzzle, six abilities')}
+          title={t('一块魔方，展开二十种成长', 'One puzzle, twenty areas of growth')}
         >
           <AbilityAtlas />
           <SolveFlow />
@@ -528,7 +520,17 @@ export default function WhyCubePage() {
           <div className="wc-sizes">
             {SIZES.map(s => (
               <Fig key={s.n} cap={s.label}>
-                <VisualCube algorithm="" view="iso" puzzleSize={s.n} size={96} alt={`${s.label} cube`} loading="lazy" />
+                <AlgPlayer
+                  alg=""
+                  puzzle="3x3"
+                  puzzleOrder={s.n}
+                  set=""
+                  startSolved
+                  controlMode="none"
+                  interactionMode="view"
+                  engine="sim"
+                  size={96}
+                />
               </Fig>
             ))}
           </div>

@@ -283,6 +283,8 @@
   display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end;
   gap: 18px 20px; margin-top: 6px;
 }
+.wc-sizes .alg-sim-player { padding: 0; }
+.wc-sizes .sim-stage-reset { display: none; }
 .wc-sizes .wc-fig-cap { font-family: var(--font-mono); font-weight: 700; color: var(--acc); }
 
 /* ── Responsive ─────────────────────────────────── */
