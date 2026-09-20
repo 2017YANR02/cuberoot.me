@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type SyntheticEvent } from 'react';
 import { AudioLines, Bug, Check, ChevronLeft, ChevronRight, CircleHelp, Code, Gauge, Info, Keyboard, Link, Maximize, Minimize, Moon, Pause, PictureInPicture2, Play, RectangleHorizontal, Repeat2, Settings, SlidersHorizontal, Subtitles, Volume1, Volume2, VolumeX } from 'lucide-react';
 import { browserClipboardTransport } from '@cuberoot/timer-ui';
 import { ClearButton } from '@/components/ClearButton';
@@ -11,6 +11,7 @@ import './lesson-video-player.css';
 
 interface Props {
   src: string;
+  poster?: string;
   onError: (event: SyntheticEvent<HTMLVideoElement>) => void;
   onLoadedMetadata: (event: SyntheticEvent<HTMLVideoElement>) => void;
   autoContinue?: boolean;
@@ -22,6 +23,7 @@ interface Props {
   mediaId?: string;
   mimeType?: string;
   startTime?: number;
+  onVideoElement?: (element: HTMLVideoElement | null) => void;
 }
 
 const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
@@ -32,7 +34,7 @@ function timeLabel(time: number) {
   return `${minutes >= 60 ? `${Math.floor(minutes / 60)}:` : ''}${minutes >= 60 ? String(minutes % 60).padStart(2, '0') : minutes}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue = false, onAutoContinueChange, onNext, onPrevious, autoPlay = false, lessonId, mediaId, mimeType, startTime = 0 }: Props) {
+export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, autoContinue = false, onAutoContinueChange, onNext, onPrevious, autoPlay = false, lessonId, mediaId, mimeType, startTime = 0, onVideoElement }: Props) {
   const t = useT();
   const root = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -67,6 +69,10 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
   const touchStart = useRef({ x: 0, y: 0 });
   const suppressTap = useRef(false);
   const cancelLongPress = () => { if (longPress.current) clearTimeout(longPress.current); };
+  const setVideoRef = useCallback((element: HTMLVideoElement | null) => {
+    video.current = element;
+    onVideoElement?.(element);
+  }, [onVideoElement]);
   useEffect(() => cancelLongPress, []);
   usePanelClamp(menu !== null, panel);
   usePanelClamp(contextMenu !== null, contextPanel);
@@ -372,7 +378,6 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
   const sleep = sleepMinutes ? t(`${sleepMinutes} 分钟`, `${sleepMinutes} minutes`) : t('关闭', 'Off');
   const unavailable = t('当前视频不提供此功能', 'This feature is unavailable for this video');
   const controlsVisible = visible || !playing || menu !== null || contextMenu !== null;
-
   // allow-static-onclick: root captures synthetic touch clicks; playback actions are real buttons.
   return <div ref={root} className={`lesson-video-player${controlsVisible ? ' controls-visible' : ''}${theater ? ' is-theater' : ''}`} tabIndex={0}
     aria-label={t('视频播放器', 'Video player')} onPointerMove={reveal} onPointerDown={() => { suppressTap.current = false; reveal(); }} onFocus={reveal}
@@ -392,7 +397,7 @@ export function LessonVideoPlayer({ src, onError, onLoadedMetadata, autoContinue
         event.preventDefault(); setMenu(null); setContextMenu({ x: 16, y: 16 }); return;
       }
     }}>
-    <video ref={video} src={src} playsInline preload="metadata" autoPlay={autoPlay} loop={loop} onError={onError}
+    <video ref={setVideoRef} src={src} poster={poster} playsInline preload="metadata" autoPlay={autoPlay} loop={loop} onError={onError}
       onLoadedMetadata={event => {
         const element = event.currentTarget;
         setDuration(Number.isFinite(element.duration) ? element.duration : 0);
