@@ -1,4 +1,5 @@
 import { tr } from '../i18n';
+import { miniProgramApi } from '../platform';
 
 export interface BleFailure {
   errCode?: number | string;
@@ -60,7 +61,13 @@ export function describeBleDevice(device: DiscoveredDevice): Record<string, unkn
 export function createBleDiagnostic(label: string): BleDiagnostic {
   const id = `${Date.now().toString(36)}-${(++bleDiagnosticSequence).toString(36)}`;
   const startedAt = Date.now();
-  const enabled = Boolean((globalThis as typeof globalThis & { wx?: unknown }).wx);
+  let enabled = false;
+  try {
+    miniProgramApi();
+    enabled = true;
+  } catch {
+    // Unit tests and non-Mini-Program runtimes intentionally omit the platform API.
+  }
   const write = (
     level: 'error' | 'info' | 'warn',
     event: string,
@@ -85,10 +92,7 @@ export function createBleDiagnostic(label: string): BleDiagnostic {
 
 export function bleRuntimeInfo(): Record<string, unknown> {
   try {
-    const runtime = globalThis as typeof globalThis & {
-      wx?: { getSystemInfoSync?(): Record<string, unknown> };
-    };
-    const system = runtime.wx?.getSystemInfoSync?.();
+    const system = miniProgramApi().getSystemInfoSync?.();
     if (!system) return { available: false };
     return {
       available: true,

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchCubingCompetitions, fetchCubingCompetitors, type CubingCompetition } from '@cuberoot/shared/cubing-live';
 import { fetchCubingAttempts } from '../src/utils/cubing_proxy';
-import { scanComp, isChinaInWindow } from '../src/monitors/cubing_record';
+import { scanComp, isChinaInWindow, suppressAdjudicatedRecordPrs } from '../src/monitors/cubing_record';
 import { formatCompMessage } from '../src/monitors/cubing_comp';
 import fixture from './fixtures/cubing-live-xian.json';
 
@@ -75,6 +75,14 @@ describe('cubing.com migration consumers', () => {
     expect(events.find(event => event.uid === `cubing-${id}-sr`)).toMatchObject({ tag: 'NR', roundNumber: 3, personRegion: 'CN', attemptResult: 281 });
     expect(events.find(event => event.uid === `cubing-${id}-na`)).toMatchObject({ tag: 'PR', attemptResult: 369 });
     expect((await scanComp(comp, new Set())).some(event => event.tag === 'PR')).toBe(false);
+  });
+  it('does not downgrade an adjudicated FWR to an upstream personal record', () => {
+    const prs = [{
+      i: 427, n: 4, e: '333', r: '3', b: 354, a: 427, nb: false, na: true,
+      _wcaid: '2023LIAN05', _name: 'Yunzhi Lian (连允之)', _region: 'CN',
+    }];
+    suppressAdjudicatedRecordPrs(prs, [{ i: 427, n: 4, e: '333', r: '3', b: 354, a: 427, ar: 'FWR' }]);
+    expect(prs[0].na).toBe(false);
   });
   it('uses real WCA IDs in notices and the new date/location/live fields', async () => {
     expect((await formatCompMessage({ ...comp, alias: 'Different-Alias' })).url).toContain('/XianOneMoreClock2026');

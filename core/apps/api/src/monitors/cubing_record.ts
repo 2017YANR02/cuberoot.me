@@ -9,6 +9,7 @@ import { getWatchedMatchKeys } from './watched.js';
 import { startPoller } from './poll.js';
 import { EVENT_NAME_BY_ID, type RecordEvent } from '../utils/record_format.js';
 import { formatRecords } from '../routes/wca_format.js';
+import { enrichRecordTags, type CompData } from '../routes/cubing_live.js';
 
 const MONITOR: MonitorId = 'cubing_record';
 const WINDOW_DAYS = 30;
@@ -82,6 +83,16 @@ interface PrRow {
   _wcaid: string;
   _name: string;
   _region?: string;
+}
+
+/** A regional record is also a personal record upstream. Keep the stronger adjudicated label only. */
+export function suppressAdjudicatedRecordPrs(prRows: PrRow[], adjudicatedRows: LiveRow[]): void {
+  const byId = new Map(adjudicatedRows.map(row => [row.i, row]));
+  for (const row of prRows) {
+    const adjudicated = byId.get(row.i);
+    if (adjudicated?.sr) row.nb = false;
+    if (adjudicated?.ar) row.na = false;
+  }
 }
 
 
@@ -195,9 +206,10 @@ function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<stri
 /** 扫描单场比赛,返回所有 record + PR 事件。 */
 export async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Promise<InternalEvent[]> {
   const meta = await fetchCubingMeta(comp.alias);
-  const users: Record<number, WsUser> = {};
+  const users: CompData['users'] = {};
   const rows: LiveRow[] = [];
   const prRows: PrRow[] = [];
+  const resultsByRound: CompData['resultsByRound'] = {};
   const roundNumByKey = new Map<string, number>();
   for (const event of meta.events) {
     for (const round of event.rs) {
@@ -210,6 +222,7 @@ export async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Prom
       const snapshot = normalizeCubingRound(payload, round.i);
       Object.assign(users, snapshot.users);
       rows.push(...snapshot.results);
+      resultsByRound[`${event.i}:${round.i}`] = structuredClone(snapshot.results);
       roundNumByKey.set(event.i + '|' + round.i, number);
       for (let index = 0; index < payload.results.length; index++) {
         const raw = payload.results[index]!;
@@ -222,6 +235,27 @@ export async function scanComp(comp: CubingComp, watchedKeys: Set<string>): Prom
         }
       }
     }
+  }
+  if (prRows.length > 0) {
+    const adjudicated: CompData = {
+      slug: comp.wcaCompetitionId || comp.alias.replace(/-/g, ''),
+      cubingSlug: comp.alias,
+      source: 'cubing',
+      compId: meta.compId,
+      name: meta.name,
+      type: meta.type,
+      events: meta.events,
+      users,
+      resultsByRound,
+      membersByFilter: {
+        females: Object.values(users).filter(user => user.gender === 'f').map(user => user.number),
+        children: [],
+        newcomers: Object.values(users).filter(user => !user.wcaid).map(user => user.number),
+      },
+      fetchedAt: Date.now(),
+    };
+    await enrichRecordTags(adjudicated);
+    suppressAdjudicatedRecordPrs(prRows, Object.values(adjudicated.resultsByRound).flat());
   }
   return [...iterRecordEvents(rows, users, comp, roundNumByKey), ...iterPrEvents(prRows, comp, roundNumByKey)];
 }
