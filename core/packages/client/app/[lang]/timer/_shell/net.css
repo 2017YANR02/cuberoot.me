@@ -292,6 +292,143 @@
 }
 .net-p-time.is-dnf { color: var(--destructive); }
 
+/* 智能魔方实况入口:多人房默认看自己,有实况的玩家可切换观察对象。 */
+.net-live-cube-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 120ms ease, background 120ms ease, color 120ms ease;
+}
+.net-live-cube-switch[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.net-live-cube-switch:active { transform: scale(0.96); }
+.net-live-cube-switch:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+@media (hover: hover) {
+  .net-live-cube-switch:hover {
+    background: var(--shell-hover);
+    color: var(--foreground);
+  }
+  .net-live-cube-switch[aria-pressed='true']:hover {
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+  }
+}
+
+.net-cube-owner,
+.net-cube-connection-state {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+.net-cube-owner {
+  max-width: min(80vw, 22em);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.net-cube-connection-state { color: var(--signal-warning); }
+
+/* 双智能魔方 1v1:竞技区内并列双方计时与虚拟魔方。布局按本轮锁定,
+   避免第三人加入或短时掉线让双方视线位置突然改变。 */
+.net-pk-arena {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-areas: 'self opponent';
+  overflow: hidden;
+}
+.net-pk-side {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.net-pk-side.is-self { grid-area: self; }
+.net-pk-side.is-opponent {
+  grid-area: opponent;
+  border-left: 1px solid var(--shell-divider);
+}
+.net-pk-side-head {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--shell-divider);
+}
+.net-pk-side-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+.net-pk-side-role {
+  flex: none;
+  font-size: 11px;
+  color: var(--faint-foreground);
+}
+.net-pk-side-status {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.net-pk-side > .timing-surface {
+  min-height: 0;
+  --timer-cube-h: min(18vw, 24dvh, 220px);
+}
+.net-pk-side .timing-surface-sub { gap: 8px; }
+.net-pk-side.is-opponent .timing-surface {
+  cursor: default;
+  touch-action: pan-y;
+}
+
+@media (max-width: 720px) {
+  .net-pk-arena {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(190px, 1fr));
+    grid-template-areas:
+      'opponent'
+      'self';
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .net-pk-side.is-opponent {
+    border-left: 0;
+    border-bottom: 1px solid var(--shell-divider);
+  }
+  .net-pk-side > .timing-surface {
+    padding: 10px;
+    --timer-cube-h: min(24vw, 11dvh, 110px);
+  }
+  .net-pk-side-head {
+    min-height: 32px;
+    padding: 4px 10px;
+  }
+}
 /* ── 面板内子状态区 ───────────────────────────────────────── */
 .net-substate {
   display: flex;

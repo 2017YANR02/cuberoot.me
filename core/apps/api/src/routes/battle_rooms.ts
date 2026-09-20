@@ -16,6 +16,7 @@ import {
   netReadyRoster,
   pendingCount,
   settleNetRound,
+  type NetBattleCredentials,
   type NetBattleEventId,
   type NetPlayerEntry,
   type NetResult,
@@ -28,6 +29,7 @@ import {
   hashBattlePlayerToken,
 } from '../utils/battle_room_auth.js';
 import { retireBattleVideoGeneration } from './video_rooms.js';
+import { battleRoomLiveRelay } from '../battle_live_relay.js';
 import {
   generateNetBattleScramble,
   generateNetBattleScrambleForSlot,
@@ -217,6 +219,16 @@ async function requirePlayer(code: string, pid: string | null, token: unknown): 
   if (!room) return { error: 'room not found', status: 404 };
   if (!authorizedPlayer(room, pid, token)) return { error: 'invalid player capability', status: 403 };
   return { room, pid, tokenHash: hashBattlePlayerToken(token as string) };
+}
+/** Authenticate the first message on the ephemeral room telemetry socket. */
+export async function authorizeBattleRoomLivePlayer(
+  code: string,
+  credentials: NetBattleCredentials,
+): Promise<boolean> {
+  const parsedCode = parseCode(code);
+  if (!parsedCode || !isNetBattlePlayerId(credentials.playerId)) return false;
+  const gate = await requirePlayer(parsedCode, credentials.playerId, credentials.playerToken);
+  return !('error' in gate);
 }
 
 /** SQL form of effectiveAdmin(); used inside UPDATE so admin races cannot pass a stale read check. */
@@ -998,6 +1010,7 @@ battleRoomsRoutes.post('/battle/rooms/:code/kick', async (c) => {
   });
   if ('error' in outcome) return c.json({ error: outcome.error }, outcome.status);
   await retireBattleVideoGeneration(code, outcome.previousVideoGeneration);
+  battleRoomLiveRelay.disconnectPlayer(code, target, 'removed from room');
   return c.json(stateJson(outcome.room));
 });
 
@@ -1048,6 +1061,9 @@ battleRoomsRoutes.post('/battle/rooms/:code/leave', async (c) => {
   if ('error' in outcome) return c.json({ error: outcome.error }, outcome.status);
   if (Object.keys(outcome.players).length === 0) {
     await query(`DELETE FROM battle_rooms WHERE code = ? AND players = '{}'::jsonb`, [code]);
+    battleRoomLiveRelay.disconnectRoom(code);
+  } else {
+    battleRoomLiveRelay.disconnectPlayer(code, pid, 'left room');
   }
   await retireBattleVideoGeneration(code, outcome.previousVideoGeneration);
   return c.json({ ok: true });

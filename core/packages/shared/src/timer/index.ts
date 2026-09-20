@@ -16,6 +16,7 @@ export * from './manual-scramble-queue';
 export * from './machine';
 export * from './more-actions';
 export * from './net-battle';
+export * from './net-battle-live';
 export * from './optimal333-pool';
 export * from './cloud-optimal333';
 export * from './equivalent-clean-333';
