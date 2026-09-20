@@ -65,7 +65,7 @@ it('shows the shared current-frame cover editor only to administrators', async (
   const host = document.createElement('div'), root = createRoot(host);
   const createObjectUrl = Object.getOwnPropertyDescriptor(URL, 'createObjectURL');
   Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:lesson-cover') });
-  const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({ drawImage: vi.fn() } as unknown as CanvasRenderingContext2D);
+  const getContext = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => ({ drawImage: vi.fn() }) as never);
   const toBlob = vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(callback => callback(new Blob(['cover'], { type: 'image/jpeg' })));
   try {
     await act(async () => root.render(createElement(PlatformDomainContent, {

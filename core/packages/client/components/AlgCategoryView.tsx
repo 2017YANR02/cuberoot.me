@@ -9,13 +9,13 @@
  *   - Formula rows stay compact here; 3D playback lives on each case detail page
  *
  * Keeps: subgroup picker (umbrella sets), second-level picker, ori switcher,
- * per-case ori cycle, subgroup collapse, sticker/setup/HTML alg rendering.
+ * per-case ori cycle, grouped case sections, sticker/setup/HTML alg rendering.
  */
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryState, useQueryStates, parseAsBoolean, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import Link from '@/components/AppLink';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Copy, Check, ChevronDown, ChevronRight, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pin } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Shuffle, Plus, ShieldCheck, AlertTriangle, HelpCircle, Pin } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import {
@@ -469,17 +469,6 @@ export interface AlgCategoryViewProps {
   };
 }
 
-/** Large sets normally start collapsed; SQ1 cubeshape sets are learned slice-count by
- * slice-count, so their groups stay visible on first entry despite 100+ cases. */
-export function collapseAlgGroupsByDefault(
-  puzzle: string,
-  set: string,
-  caseCount: number,
-  umbrella: boolean,
-): boolean {
-  return caseCount > 100 && !umbrella && !(puzzle === 'sq1' && ['cs', 'csp', 'obl'].includes(set));
-}
-
 /** 分类选择页没有可见 case 列表，页头仍应显示当前 set / subgroup 的完整数量。 */
 export function categoryHeaderCaseCount(
   scopedCaseCount: number,
@@ -559,7 +548,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   const [sq1EpNumericNames, setSq1EpNumericNames] = useState(false);
   const [sq1EpHasParity, setSq1EpHasParity] = useState(false);
   const [caseOri, setCaseOri] = useState<Record<string, number>>({});
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [submissions, setSubmissions] = useState<AlgSubmission[]>([]);
   const user = useAuthStore(s => s.user);
   const isAdmin = hasAdminAccess(user);
@@ -772,17 +760,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     if (!validPuzzle || !meta) { setError('unknown set'); setData(null); return; }
     let live = true;
     setError(null);
-    // 大集合的公式模式可从总览直接展开，预先折叠分组以免同时挂载数千行。
-    // 子组选择器不读折叠状态；SQ1 cubeshape 仍按 slice 数全展开。
-    const applyCollapse = (d: AlgFile) => {
-      if (collapseAlgGroupsByDefault(puzzleParam, set, d.cases.length, !!meta.umbrella && !!subgroupParam)) {
-        const groups = new Set<string>();
-        for (const c of d.cases) groups.add(c.subgroup || '');
-        setCollapsedGroups(groups);
-      } else {
-        setCollapsedGroups(new Set());
-      }
-    };
     // 哨兵壳分流已经把整份 set 拉好传下来(initialData):非 admin 直接复用,免二次 fetch。
     setData(null);
     // admin 必须绕开那 1 小时的 Cache-Control。他刚删掉的那条公式,DB 里确实没了,
@@ -794,10 +771,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     pending.then(d => {
       if (!live) return;
       setData(d);
-      applyCollapse(d);
     }).catch(e => { if (live) setError(String(e)); });
     return () => { live = false; };
-  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData, subgroupParam]);
+  }, [puzzleParam, set, validPuzzle, meta, isAdmin, initialData]);
 
   useEffect(() => {
     if (!data || !validPuzzle) return;
@@ -825,22 +801,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
     return () => { cancelled = true; };
   }, [data, puzzleParam, set, validPuzzle, validationRefreshKey, isAdmin]);
 
-  /**
-   * `#<case 名>` 锚点:分享出去的链接、元数据弹窗的「在列表中打开」、个人页的校验汇总都落这儿
-   * (目标多半在别的组)。落地后:选中它(黄框)+ 滚过去 + 闪一下 —— 一组七十来个 case,
-   * 不指出来等于没跳。(锚点不是页内状态,是 URL 片段,和 nuqs 那条约定不冲突。)
-   *
-   * 目标卡在**折叠的组**里(>100 个 case 的 set 默认全折)⟹ 先把那组展开,否则
-   * `getElementById` 拿到 null,跳转静默失败。
-   */
-  // `#<case 名>` 锚点(分享链接 / 元数据弹窗「在列表中打开」/ 个人页校验汇总都落这儿,目标多半
-  // 在别的、可能还折叠着的组):选中它(黄框)+ 滚过去 + 闪一下。走共享 useHashHighlight ——
-  // reveal 负责选中并展开目标所在折叠组(展开后返回 false,collapsedGroups 进 deps 触发重试);
-  // 闪一下用 flashId(React state,免得卡片重渲染把命令式 class 冲掉),故不传 highlightClass。
+  // `#<case 名>` 锚点来自分享链接、元数据弹窗和个人页校验汇总。选中目标后滚动并闪一下；
+  // 闪烁用 flashId 保持在 React 状态中，避免卡片重渲染覆盖命令式 class。
   const { setHash } = useHashHighlight({
     block: 'center',
     linger: 1800, // 闪一下语义(同一锚点不重放);实际的闪由下面 onScroll→flashId 渲染
-    deps: [data, collapsedGroups, puzzleParam, set, subgroupParam, sq1EpHasParity],
+    deps: [data, puzzleParam, set, subgroupParam, sq1EpHasParity],
     resolve: (h) => {
       const c = findCaseByHash(data?.cases ?? [], h, puzzleParam, set);
       return c?.id != null ? document.getElementById(`case-${c.id}`) : null;
@@ -857,11 +823,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       if (parity === 'no-parity' && sq1EpHasParity) {
         setSq1EpHasParity(false);
         return false;
-      }
-      const g = parity ? `${parity}:${c.subgroup || ''}` : c.subgroup || '';
-      if (collapsedGroups.has(g)) {
-        setCollapsedGroups(prev => { const next = new Set(prev); next.delete(g); return next; });
-        return false; // 组刚展开,卡还没挂 → 等 collapsedGroups 变化后重试
       }
     },
     onScroll: (el) => {
@@ -1148,12 +1109,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       orientation: effectiveOrientation,
     });
   };
-
-  const toggleGroup = (g: string) => setCollapsedGroups(prev => {
-    const next = new Set(prev);
-    if (next.has(g)) next.delete(g); else next.add(g);
-    return next;
-  });
 
   return (
     <div className="alg-root">
@@ -1534,7 +1489,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
 
       {data && !showSubgroupPicker && !showSubSubgroupPicker && grouped.map((group) => {
         const { key, subgroup, cases, paritySection, startsParitySection, sectionCaseCount } = group;
-        const collapsed = collapsedGroups.has(key);
         const showHeader = !subgroupParam && (grouped.length > 1 || subgroup !== '');
         return (
           <Fragment key={key}>
@@ -1551,13 +1505,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           )}
           <section className="alg-subgroup">
             {showHeader && (
-              <h2
-                className="alg-subgroup-title is-toggleable"
-                onClick={() => toggleGroup(key)}
-                role="button"
-                tabIndex={0}
-              >
-                {collapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
+              <h2 className="alg-subgroup-title">
                 {isSq1Ep
                   ? (sq1EpNumericNames
                     ? `${sq1EpNumericLayerName(subgroup) ?? subgroup}.*`
@@ -1565,11 +1513,9 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                   : (ollByGroup.get(subgroup)
                     ?? displayAlgCaseName(puzzleParam, set, subgroup)
                     ?? tr({ zh: '其他', en: 'Other' }))}
-                <span className="alg-subgroup-count">{cases.length}</span>
               </h2>
             )}
-            {!collapsed && (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext
                   items={cases.map(c => c.id).filter((x): x is number => typeof x === 'number')}
                   strategy={rectSortingStrategy}
@@ -1806,7 +1752,6 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
               </div>
                 </SortableContext>
               </DndContext>
-            )}
           </section>
           </Fragment>
         );
