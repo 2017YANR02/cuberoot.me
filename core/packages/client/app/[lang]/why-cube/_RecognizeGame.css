@@ -36,8 +36,7 @@
   min-height: 132px;
   filter: drop-shadow(0 10px 24px color-mix(in srgb, var(--accent) 15%, transparent));
 }
-.wc-rg-cube .twisty-section { width: 100%; max-width: 150px; }
-.wc-rg-cube img { display: block; border-radius: 10px; height: auto; max-width: 100%; }
+.wc-rg-cube .alg-sim-player { width: 100%; max-width: 150px; }
 
 .wc-rg-choices { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .wc-rg-choice {
