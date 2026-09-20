@@ -26,6 +26,8 @@ interface TimerEventPickerLayoutItem {
   readonly group: TimerEventPickerGroupId;
   /** Reuse another timer event's WCA icon, for example 3BLD for 3x3 NI. */
   readonly iconEvent?: EventId;
+  /** Use a non-WCA icon key when the event has a dedicated cubing icon. */
+  readonly iconClass?: string;
   readonly textLabel?: string;
 }
 
@@ -60,7 +62,7 @@ const TIMER_EVENT_PICKER_LAYOUT = [
 
   // Extra BLD / puzzle / relay / training modes.
   { id: '333ni', group: 'other', iconEvent: '333bld' },
-  { id: '333mr', group: 'other', textLabel: 'MR' },
+  { id: '333mr', group: 'other', iconClass: 'unofficial-333_mirror_blocks' },
   { id: '666bld', group: 'other', textLabel: '6BLD' },
   { id: '777bld', group: 'other', textLabel: '7BLD' },
   { id: 'r3', group: 'other', textLabel: 'R3' },
@@ -89,9 +91,9 @@ const TIMER_EVENT_PICKER_LAYOUT = [
 
 function pickerItem(entry: TimerEventPickerLayoutItem): TimerEventPickerItem {
   const info = eventInfo(entry.id);
-  const iconClass = entry.iconEvent
+  const iconClass = entry.iconClass ?? (entry.iconEvent
     ? `event-${toWcaSpelling(entry.iconEvent)}`
-    : info.icon ?? (entry.group === 'wca' ? `event-${toWcaSpelling(entry.id)}` : undefined);
+    : info.icon ?? (entry.group === 'wca' ? `event-${toWcaSpelling(entry.id)}` : undefined));
   return Object.freeze({
     id: entry.id,
     nameEn: info.nameEn,

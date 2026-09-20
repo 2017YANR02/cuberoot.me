@@ -21,6 +21,7 @@ import {
   type EventId,
 } from '@cuberoot/shared/timer';
 import { nxnSizeForEvent } from '@/app/[lang]/timer/_lib/cube/colors';
+import { cstimerEvent } from '@/lib/cstimer-scramble';
 
 const EXPECTED_WCA: EventId[] = [
   '333', '222', '444', '555', '666', '777', '333bld', '333fm', '333oh',
@@ -116,6 +117,12 @@ describe('shared timer event picker catalog', () => {
     for (const id of ['fto', 'kilominx', 'gear', 'ivy', 'redi', 'mpyram'] as const) {
       expect(timerEventPickerItem(id).iconClass, id).toBe(eventInfo(id).icon);
     }
+  });
+
+  it('uses the dedicated icons for gear and mirror blocks', () => {
+    expect(cstimerEvent('gear')?.iconClass).toBe('unofficial-gear');
+    expect(timerEventPickerItem('333mr').iconClass).toBe('unofficial-333_mirror_blocks');
+    expect(timerEventPickerItem('333mr').textLabel).toBeUndefined();
   });
 
   it('publishes preview and smart-cube capabilities without a Mobile-only map', () => {
