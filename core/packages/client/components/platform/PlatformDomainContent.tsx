@@ -7,7 +7,7 @@ import { useT } from '@/hooks/useT';
 import { nextQuery } from '@/lib/auth-store';
 import { loadPlatformLessonMedia, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
+import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
 
@@ -243,12 +243,12 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
     };
     if (selectedSection) {
       // Invalid or stale query IDs fall back to the first lesson in this section.
-      const sectionLessons = lessons.flatMap(raw => {
+      const sectionLessons = platformCourseSectionsIncludedBy(selectedSection.slug).flatMap(section => lessons.flatMap(raw => {
         const lesson = record(raw);
         const id = string(lesson?.id);
-        return lesson && id && (string(lesson.titleZh) ?? '').startsWith(selectedSection.title.zh)
-          ? [{ id, title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), selectedSection) }] : [];
-      });
+        return lesson && id && (string(lesson.titleZh) ?? '').startsWith(section.title.zh)
+          ? [{ id, title: sectionLessonTitle(localized(lesson, 'title', english) ?? t('未命名课时', 'Untitled lesson'), section) }] : [];
+      }));
       const active = sectionLessons.find(lesson => lesson.id === selectedLessonId) ?? sectionLessons[0];
       if (!active) return <p className="platform-domain-note">{t('暂无课时。', 'No lessons yet.')}</p>;
       const activeIndex = sectionLessons.findIndex(lesson => lesson.id === active.id);
