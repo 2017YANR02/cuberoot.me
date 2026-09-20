@@ -202,13 +202,14 @@ function OrderItems({ items, status }: { items: unknown[]; status?: string }) {
   );
 }
 
-export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime }: {
+export function PlatformDomainContent({ definition, entity, params, previewRedirect, selectedLessonId, onSelectLesson, lessonStartTime, courseRedeemed }: {
   definition: PlatformRouteDefinition;
   entity?: PlatformEntity;
   params: Record<string, string>;
   previewRedirect?: boolean;
   selectedLessonId?: string | null;
   lessonStartTime?: number;
+  courseRedeemed?: boolean;
   onSelectLesson?: (id: string) => void;
 }) {
   const t = useT();
@@ -288,7 +289,12 @@ export function PlatformDomainContent({ definition, entity, params, previewRedir
                 : <VisualCube view={index === 1 ? 'f2l' : 'iso'} size={144} local alt="" />}
               <span className="platform-lesson-cover-number">0{index + 1}</span>
             </span>
-            <span className="platform-lesson-card-title">{t(PLATFORM_COURSE_SECTIONS[index].title.zh, PLATFORM_COURSE_SECTIONS[index].title.en)}</span>
+            <span className="platform-lesson-card-title">
+              {t(PLATFORM_COURSE_SECTIONS[index].title.zh, PLATFORM_COURSE_SECTIONS[index].title.en)}
+              {courseRedeemed && PLATFORM_COURSE_SECTIONS[index].slug === 'core'
+                ? <> <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span></>
+                : null}
+            </span>
           </AppLink> : null)}</div>
         </section> : <DomainList
           title={t('课程课时', 'Course lessons')}
