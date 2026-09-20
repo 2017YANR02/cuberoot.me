@@ -522,12 +522,6 @@
   margin: 12px 16px 0;
 }
 .sim-room-toolbar .sim-tool-select { max-width: 100%; }
-.sim-room-toolbar button { cursor: pointer; }
-.sim-page--room-gallery .sim-side,
-.sim-page--room-gallery .sim-image-overlay,
-.sim-page--room-gallery .sim-backview,
-.sim-page--room-gallery .sim-backview-swap,
-.sim-page--room-gallery .sim-float-close--backview { display: none !important; }
 
 /* 全屏模式:藏 header + side,canvas 占满 */
 .sim-page--fullscreen { top: 0; } /* 沉浸全屏:铺满,不为通知条让位 */
