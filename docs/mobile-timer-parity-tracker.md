@@ -2,7 +2,7 @@
 
 状态：`ACTIVE — NOT COMPLETE`
 
-最后更新：2026-09-11
+最后更新：2026-09-20
 
 产品决定：仓库所有者要求 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 的整个计时器与网站 `/timer` 保持完整 UI/UX 一致，且不得复制形成多端维护。`@cuberoot/app-ui` 是五端唯一 React 产品层；本文中早期“Mobile”证据行仍特指当时的 Android/iOS 快照，不自动升格为其他三端证据。
 
@@ -80,7 +80,61 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 
 ## 4. 当前诚实基线
 
-2026-08-30 的 Android 画面与源码证明当前尚未完全一致：
+本节是当前功能、共享层和平台证据的统一总账。详细可达 surface ID、43 项项目表、设置/弹层/设备逐项清单继续由 [mobile-timer-zero-omission-audit.md](./mobile-timer-zero-omission-audit.md) 保存；本节只维护当前状态，不复制第二份 43 项明细。
+
+### 4.1 功能/共享层差分总账（2026-09-20）
+
+“同视图”指 Web 与五端是否渲染同一棵产品级 React 视图，不是仅仅导入了同一个按钮、规则函数或 CSS。状态分为 `未开始`、`进行中`、`待真机`、`完成`；任一行未完成时，整体仍为 `NOT COMPLETE`。
+
+| 稳定范围 | Web 当前事实 | `@cuberoot/shared` | `@cuberoot/timer-ui` | Web/App 同视图 | 五端 App 当前状态与主要差异 | 状态 / 下一迁移单元 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `GAP-001` / `PAR-001/002/015/016` 人数、本地多人、联机 | `/timer` 有 1～4 人和联机五种完整模式；Web 仍使用 `BattleView` / `NetBattleView` | 计时状态机、本地 reducer、原子 round、联机 DTO/鉴权/计分已共享 | 人数控件、计时 Surface、打乱条等基础组件已共享；完整 Battle/Net 页面未进入 | `否` | App 有真实 2/3/4 人和联机流程，但设置、历史、视频、多 BLE、高级房间状态和五平台交互未齐 | `进行中（P0）`；先提取 `LocalBattleView`，再提取 `NetBattleView` |
+| `GAP-002` / `PAR-001/003/006` 壳、顶栏、解法 | Web 顶栏含人数、项目、来源、条件控件、解法、更多和设置 | 项目 catalog、能力门禁、222/pyra/skewb 与 333 分步解法核心已共享 | 人数/项目/来源/难度/小项目提示/More 等组件已共享 | `局部` | 333 顶栏完整面板和 Worker host、SQ1/Megaminx 提示及全部条件控件集合仍不等；单人页面编排仍分别存在 | `进行中（P0）`；提取共享单人壳和解法面板 host contract |
+| `GAP-003` / `PAR-003/004` 43 项随机语义 | Web 三来源对 43 项均可达；42 项有生成语义，`custom` 为可计时空槽 | 43 项目录、42 项 provider、capability/source identity 已共享 | 项目选择、随机难度、按步数与状态组件已共享 | `局部` | App 已覆盖同一 42 项生成路径和 `custom` 空槽，但尚无完整 Web/App exact-set consumer guard、逐项目 invariant 和五平台矩阵 | `进行中（P0）`；落地 Guard A/B 与全部 43 项 fixture |
+| `GAP-004` / `PAR-004/005` 真题来源 | Web 有比赛/日期、搜索、轮组、难度、步数、2×2 类型、最优、出处、进度与异常态 | WCA map、配置、cache identity、17 类状态和打卡规则已共享 | WCA config、难度、步数、出处、进度、重试 UI 已共享 | `局部` | App 已接主要配置；完整组合、真实断网恢复、长列表/键盘和五平台状态仍缺 | `进行中（P0）`；完成 `EventId × source × config` 笛卡尔积测试 |
+| `GAP-005` / `PAR-004/008` 手动队列与打乱历史 | Web 是 opaque 多行队列，编辑即重置，顺序循环，左右只回看已显示历史，空槽可计时 | parser、queue、history occurrence 和 attempt snapshot 已共享 | 编辑器、历史前后导航、打乱状态/预览已共享 | `局部` | Android 已有队列/空态证据；进程重启、手指起停、横屏/大字及其余四端仍缺 | `待真机（P0）`；补齐同 fixture 的五端状态矩阵 |
+| `GAP-006` / `PAR-009/010/011` session、历史、详情、复盘 | Web 有 session CRUD、筛选、成绩动作、对比、详情和完整复盘 | schema、迁移、统计、历史动作、标签、比较、复盘算法和反馈已共享 | session、成绩行、菜单、筛选/标签、对比、详情、预览、`ReconstructReport` / `SolveRecap` 已共享 | `大部分组件同源，整体历史工作区仍非同视图` | App 已可真实使用上述能力；完整统计入口、全状态视觉与五平台交互仍缺 | `进行中`；将 History/Stats 外壳继续收敛为共享工作区 |
+| `GAP-007` / `PAR-009/011` 完整统计 | Web 还有成绩/图表/统计三栏、五图、period/case/跨分组/纪录对比 | 基础 stats、rolling、PB、标签等规则已共享 | 仅紧凑 `TimerStatsPanel` 与 rolling picker 已共享 | `否` | App 缺完整 `StatsModal`、五图、period/case/cross-session/records | `进行中（P0）`；提取完整 `TimerStatsWorkspace` |
+| `GAP-008` / `PAR-012` 设置 | 注册表有 66 个稳定 ID；Web `SettingsPanel` 消费其中 65 个（64 个生产可达 + 1 个开发态），旧点击打乱字段仅保留数据兼容 | 8 类、66 ID、默认值、归一化、可见/禁用/effect contract 已共享 | 计时 8、智能魔方 6、分段 2、真题 2、预览 2，共 20 个当前可见且有真实 effect 的字段已共享 | `局部` | App 相对 Web consumer 仍缺 45 项，其中 44 项是生产功能、1 项是开发态；任何字段尚未完成五端视觉/交互 parity | `进行中（P0）`；按 Training → Appearance → Sound → Data → Advanced 提取完整 `TimerSettingsWorkspace` |
+| `GAP-009` / `PAR-012` 更多菜单 | Web canonical registry 共 12 项 | action ID、可见/禁用/effect contract 已共享 | More 菜单、专项、手动录入、打印等 UI 已共享 | `局部` | App 已接真实 11/12；仅 `more.replay` 粘贴/解码/错误流程仍绑定 Web 私有入口 | `进行中（P0）`；迁移 replay import 后做 exact action equality |
+| `GAP-010` / `PAR-014/015/016` 设备 | Web 有智能魔方、智能计时器、Stackmat 及完整设备弹层 | GAN v2/v3/v4、MoYu32、QiYi 协议/时钟/状态/复盘 producer 已共享；其他 Web driver 仍需逐项核对 | 实况魔方、姿态、自动预备设置已共享；设备中心弹层未共享 | `否` | Android 已能过滤已知魔方名称、仅显示名称并完成当前真机扫描/连接/使用；型号级证据仍只登记 GAN v4。App 尚无智能计时器/Stackmat，其他四端 BLE 矩阵未齐 | `进行中（P0）`；提取 `TimerDeviceCenter`，平台只注入 transport/permission |
+| `GAP-011` / `PAR-010/012/013` 特殊成绩、目标、轮次、分段 | Web 有手动成绩、FMC/MBLD、目标、每日目标、轮次模拟、CFOP/BLD 分段 | 手动成绩/FMC/MBLD 与分段 recorder 已共享 | 手动录入弹层、分段设置/状态已共享 | `局部` | App 已接录入与分段；目标、每日目标、round/cutoff/time-limit 仍缺 | `进行中（P0）`；迁移 Training 剩余 7 个字段及 round UI |
+| `GAP-012` / `PAR-013/018/019/020/021` 输入、显示、可访问性、生命周期 | Web 有默认/自定义键位、八向轮盘、全屏、运行隐藏、完整中断和视觉状态 | timer machine、默认 keymap、pointer policy、轮盘动作、持久化 schema 已共享 | `TimingSurface`、`GestureWheel`、toast、overlay 原语已共享 | `局部` | App 已接默认键盘/触摸/撤销；自定义改键 UI、运行隐藏全 UI、TalkBack/VoiceOver、后台/来电/权限中断及完整视觉矩阵未齐 | `进行中（P1）`；先补 keymap 与 lifecycle contract，再跑跨端视觉/读屏矩阵 |
+
+### 4.2 状态维度总账
+
+下列维度必须组合验证，不能把每列各测一个样例后宣称整体完成。详细 fixture 值见零遗漏审计第 7 节。
+
+| 维度 | 必须覆盖的当前集合 | 已有单一来源/守卫 | 未关闭条件 |
+| --- | --- | --- | --- |
+| 模式 | `1/2/3/4/net` | 人数 contract、本地 reducer、联机 contract | Battle/Net 同视图、全部模式设备交互 |
+| 项目 | 43 个 `EventId` | shared catalog 与 source capability | 逐项目 UI/保存/统计/预览/设备 invariant |
+| 来源与配置 | 真题/随机/手动及比赛、日期、轮组、难度、类型、步数、case | shared source/config/status contracts | Web/App exact-set 报告与完整异常组合 |
+| 计时阶段 | idle/holding/ready/inspection/running/stopped，OK/+2/DNF/DNS | shared timer machine 与输入决策 | 全视口、系统中断、多人/设备组合 |
+| 数据状态 | 首次空库、已有成绩、损坏/迁移、pending save、离线/cache、loading/empty/error/retry | shared codec/repository contracts | 升级、回滚、杀进程和五端持久化实证 |
+| 内容状态 | 长打乱、长比赛/session/备注/玩家名，FMC/MBLD/relay/BLD/trainer | 审计 fixture 清单 | 全部 renderer、换行、滚动与可达性 |
+| 语言与主题 | English/简体中文，light/dark/system | 共用 copy/部分 token | 动态切换、最长文案和主题视觉基线 |
+| 视口与输入 | 320/360/390/412/768，横竖屏、小窗口，触摸/鼠标/键盘，100%/150%/200% 字号 | 部分 overflow/组件测试 | Web/App 成对截图、遮挡、焦点、TalkBack/VoiceOver |
+| 弹层与系统区域 | 项目/来源/比赛/More/设置/成绩/统计/设备/房间，状态栏/安全区/底栏/软键盘 | 共用 overlay 原语和部分 Back contract | 每个弹层的首尾可达、焦点恢复和系统返回 |
+| 平台能力 | BLE、权限、安全存储、打印/分享、保亮/震动、生命周期 | capability contracts | 五个平台分别完成真实 adapter 与设备/实体电脑证据 |
+
+### 4.3 五端证据矩阵
+
+源码共用、能构建、能安装、功能可交互、BLE 可用、可签名发布是六个不同层级，不得相互替代。
+
+| 平台 | 同一 `@cuberoot/app-ui` | 原生构建 | 安装/启动 | Timer 交互 | BLE | 签名/发布 | 当前结论 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Android | 是 | Debug/Release 构建链已有证据；本次仅显示名称的 picker Java 编译通过 | OPPO 已多次安装启动 | 单人、部分弹层/设置/打印已有真机证据 | 2026-09-20 扫描/连接/使用由所有者确认；名称-only 列表尚未单独复验，型号级完整证据仍仅 GAN v4 | 正式上传密钥、商店轨道与完整发布矩阵未完成 | `进行中，五端中证据最完整` |
+| iOS | 是，与 Android 同一 Capacitor 产品层 | Simulator/Xcode 构建已有证据 | Simulator 与 iPhone 12 Pro Max 有安装记录 | 仅部分布局、启动和旧版本交互 | 旧版本已连接 GAN，但新版停表/姿态与完整状态未复验 | Apple 4.8、正式签名/TestFlight/审核未完成 | `进行中` |
+| HarmonyOS NEXT | 是 | Web bundle、ArkTS bridge、unsigned HAP 已构建 | 无设备安装/运行证据 | 无 | ConnectivityKit adapter 有源码，无真机 | 无调试设备 profile、签名与发布 | `仅源码/构建` |
+| Windows | 是，与 macOS 同一 Tauri 工程 | 只有 CI 定义和源码，尚无 Windows 原生 run 证据 | 无 | 无 | BLEC adapter 有源码，无实体机 | 无签名/安装包发布证据 | `仅源码` |
+| macOS | 是 | `.app` 和未签名 DMG 已构建，DMG 已校验 | `.app` 已启动 | 未完成 Timer 状态矩阵 | BLEC adapter 有源码，无实体 GAN 证据 | 未签名、未公证 | `源码/构建/启动，交互未验` |
+
+下一共享层提取顺序固定为：先建立 canonical surface manifest 与 Web/App exact-set guard；再依次收敛完整设置工作区、完整统计工作区、本地多人、联机、设备中心；最后执行全状态视觉、读屏和五平台设备矩阵。每个单元必须先有 Web 与 `@cuberoot/app-ui` 两个真实 consumer，禁止只把代码移动到 package 后就记为完成。
+
+### 4.4 历史基线（2026-08-30 起）
+
+以下 `BASE-*` 保留迁移起点和历史证据；当前状态以 4.1～4.3 与第 5 节 `PAR-*` 为准。
 
 | ID | 已发现差异 | 当前证据 | 状态 |
 | --- | --- | --- | --- |
@@ -118,9 +172,9 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 | PAR-009 | 左下统计与成绩历史 | shared timer schema/stats；紧凑统计、成绩行、快捷菜单/底部操作表、注释编辑、Undo toast、筛选、成绩对比、基础成绩详情及网站当前打乱预览已由 Web 与五端共用；bulk 当前不可达；完整复盘已共用 ReconstructReport，完整统计继续提取共用 | 紧凑 current/best/rolling、Mobile 持久化、行 DOM/七项动作/焦点/视口/Undo/tag/filter/compare/detail/preview 单源回归通过；详情的异常 partial/倒序/超总时长/NaN 分段和 BLD memo 均 fail closed，App 智能魔方新成绩也已共用 move/stage producer | 本轮新 APK 与解锁后的详情、GAN、标签、TalkBack、多视口真机证据待补；iOS 和其余三端全状态矩阵仍待验 | `进行中` |
 | PAR-010 | session、PB、目标、轮次 | shared 数据契约与共用 UI | 持久化/迁移/边界测试 | 进程重启恢复 | `进行中` |
 | PAR-011 | 统计/图表/复盘面板 | 完整 ReconstructReport、SolveRecap、PlaybackPanel、时间线、动作谱、方法分析与反馈已迁入 timer-ui，纯算法/姿态进 shared，3D 进既有 puzzle-render-core；完整 StatsModal/五图仍待迁移 | 468 条分析测试、32 条组件/守卫、4 条完整真值通过；Mobile 生产 bundle 导入全部四条并逐条打开 WebGL 与报告，无页面异常/390px 溢出；App 两次连续还原与详情关闭重开集成通过 | iPhone 实际动作/姿态、新记录完整回放及五平台矩阵仍待验，不将导入样本算作 BLE 实拧 | `进行中` |
-| PAR-012 | 更多菜单和设置 | 菜单模型与共用设置控件单源；宿主只注入真实平台动作，未绑定项不得显示 | More 12 项与 Settings 8 类/66 字段 exact registry/条件/effect、Web 真实 consumer、App implemented/missing ledger；App 已接 More 11 项，专项的 case 数据/严格生成/React 弹层由 Web/五端共用；“计时”8 字段、“智能魔方”6 字段、“训练”2 个分段字段、“打乱”的最优开关及“外观”的打乱图、2D/3D、点击打乱动作共用 UI/effect，共 21 项。仅 replay 与其余 45 个设置字段仍待迁移 | OPPO 已实点专项选 T/重开/退出/Back 及 8/8 计时 setting ID；短横屏/大字最终修复、iOS 与其他三端仍待验 | `进行中` |
+| PAR-012 | 更多菜单和设置 | 菜单模型与共用设置控件单源；宿主只注入真实平台动作，未绑定项不得显示 | More 12 项与 Settings 8 类/66 ID exact registry/条件/effect、Web 真实 consumer、App implemented/missing ledger；Web 当前消费 65 项（旧点击打乱字段只保留解码兼容），App 已接 More 11 项和 20 个当前可见且有真实 effect 的共享设置字段。仅 replay、44 个生产设置和 1 个开发态设置仍待迁移 | OPPO 已实点专项选 T/重开/退出/Back 及 8/8 计时 setting ID；短横屏/大字最终修复、iOS 与其他三端仍待验 | `进行中` |
 | PAR-013 | 键盘、触摸、检查和系统中断 | shared timer machine + `input-contract`；轮盘 React UI/DOM pointer lifecycle/CSS 走 `@cuberoot/timer-ui`；平台只分类目标并执行纯决策命令 | action/default/rebind/digit precedence、modal/input/running priority、八向 action/enabled map、mouse/touch slop/dead-zone、轮盘 DOM/disabled/highlight/cancel exact golden；Web identity migration | Mobile 已接共用轮盘、默认键盘决策与任意键停表；自定义改键和 OPPO 来电/锁屏/切后台仍待验 | `进行中` |
-| PAR-014 | 智能魔方 | 共用 GAN v4 协议、时钟/状态、实时定锚、姿态编码、自动准备设置/控件、LiveCubeState/SimCubeView；宿主只注入 transport/Worker，Web/App 生命周期编排仍有各自入口 | 真实协议→App/controller/repository→两次还原/自动复盘/历史报告集成已通过；停止转动后查询状态补漏末帧，迟到状态/异步定锚有 revision gate | iPhone 12 已连接但旧版曾不自动停表；新版需要实体 GAN 验证，不沿用 Android 旧成功记录。多品牌、诊断/重置 UI、自动重连和权限/后台仍未完成 | `进行中` |
+| PAR-014 | 智能魔方 | GAN v2/v3/v4、MoYu32、QiYi 协议/时钟/状态与复盘 producer 进入 shared/app-ui；LiveCubeState/SimCubeView 共用，宿主只注入 transport/Worker，Web/App 生命周期编排仍有各自入口 | GAN/MoYu32/QiYi bridge、连接 hook、状态补帧、迟到回调隔离和 Android picker 前缀过滤已有自动化；2026-09-20 picker 仅显示设备名，地址只用于内部去重/连接 | Android 当前真机扫描、连接和使用已由所有者确认；未登记新型号，所以型号级完成证据仍只认 GAN v4。iOS 新版停表/姿态、多品牌、诊断/重置、自动重连和五平台权限/后台矩阵仍未完成 | `进行中` |
 | PAR-015 | 多人智能魔方与本地 Battle | `@cuberoot/shared/timer` 的 reducer/`LocalBattleRound` 与模式 capability 是规则来源；App `LocalBattleMode` 已真实消费 reducer，Web 已消费部分共享规则与 round codec，但两端 React 视图尚未合一 | App 2/3/4 人、事件切换、同题分组、计时、罚时、并列/下一轮与 stale/failure reducer fixture；Web/App 共用本地仅 `333`、联机 `333/333oh` 的 BLE 门禁；历史/repository、完整设置、Web/App 同视图和设备矩阵仍缺 | 触摸、横竖屏、五平台与共享/四路真实 BLE 组合 | `进行中` |
 | PAR-016 | 联机房间 | DTO、13 项白名单、计分/同步/统计、runtime decoder、admission gate 与注入式 HTTP client 已进入 `@cuberoot/shared/timer`；App `NetBattleMode` 已接创建/加入/恢复/房间/计时 UI，三个宿主都注入同一 client/session contract；Web `NetBattleView` 仍须与其收敛为同一 React 视图 | capability 安全矩阵及 App create room、同步倒计时、settled round 交互已有定向回归；真实 PostgreSQL 并发、版本化 staged rollout、完整 Web/App surface equality 尚缺 | 两设备真实房间、邀请/后台恢复、视频/权限和五平台完整状态 | `进行中` |
 | PAR-017 | 登录、在线足迹与同步提示 | 现有唯一账号/票据契约；登录不伪装成绩已同步 | auth 与未同步文案测试 | 系统浏览器回跳 | `进行中` |

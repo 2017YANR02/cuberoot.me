@@ -1173,10 +1173,10 @@ CubeRoot 应以这些证据证明不是简单套壳：
 ### 19.2 Android 智能魔方桥接进度（2026-09-20）
 
 - `core/apps/mobile` 的 Capacitor BLE transport 已完成 Android 权限初始化、设备选择、GATT 连接、service/characteristic discovery、通知、读写、MTU 和断连清理；写入能力缓存按 `deviceId` 隔离，避免多连接或迟到清理串用其他设备的 write mode。
-- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，识别 `GAN`、`WCU_MY3`、`QY-QYSC`、`XMD-TornadoV4-i` 名称前缀。Android 多品牌设备选择按 DCTimer 的策略使用低延迟无 service 过滤扫描，避免未在广播包声明 GATT UUID 的魔方被系统提前丢弃；原生选择列表再按上述名称前缀做大小写不敏感的软件过滤并按蓝牙地址去重，不展示其他未知 BLE 设备。选中后再由设备名与已发现的 service 判定协议。不提供 discovery 的 Desktop/Harmony 路径继续保持原 GAN v4 入口，不误标为其他协议已支持。
+- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，识别 `GAN`、`WCU_MY3`、`QY-QYSC`、`XMD-TornadoV4-i` 名称前缀。Android 多品牌设备选择按 DCTimer 的策略使用低延迟无 service 过滤扫描，避免未在广播包声明 GATT UUID 的魔方被系统提前丢弃；原生选择列表再按上述名称前缀做大小写不敏感的软件过滤并按蓝牙地址去重，不展示其他未知 BLE 设备。列表只显示设备名称，MAC 地址仅用于内部去重和连接。选中后再由设备名与已发现的 service 判定协议。不提供 discovery 的 Desktop/Harmony 路径继续保持原 GAN v4 入口，不误标为其他协议已支持。
 - GAN v2/v3 与 MoYu32 已完成代码级 Android bridge。MoYu32 覆盖名称推导 MAC、service/characteristic 校验、A1/A3/A4 握手、AES 通知、状态/动作/电量/姿态、设备增量时间、AC 陀螺开关、坏密钥熔断和断连迟到通知隔离；成绩设备型号不再固定写成 `gan-v4`。
 - QiYi 已完成代码级 Android bridge，覆盖 `fff0` service、`fff6` 通知/优先写入、`fff5` 后备写入、Android 地址优先与设备名 MAC 后备、AES-ECB hello/ACK、状态与完整历史动作、电量、设备时间、Tornado V4 陀螺仪、坏帧熔断和断连迟到通知隔离。状态帧中晚于 facelet 快照的 future-history 动作会继续推进本地魔方状态；仅在计时已经运行时记入复盘，不会在空闲态、预备监听或 battle 中误触发起表。
-- 自动化证据包括 app-ui 的 GAN/MoYu32/QiYi connection 与 hook 定向测试、Mobile transport 的 Android 多前缀原生 picker 路由与非 Android 无过滤回退测试、设备隔离测试，以及 shared/app-ui/mobile 构建或类型检查。当前没有新增实体魔方型号验收；既有 OPPO Reno7 Pro 5G + GAN 16 UI 记录仍只证明 GAN v4 主链。
+- 自动化证据包括 app-ui 的 GAN/MoYu32/QiYi connection 与 hook 定向测试、Mobile transport 的 Android 多前缀原生 picker 路由与非 Android 无过滤回退测试、设备隔离测试，以及 shared/app-ui/mobile 构建或类型检查。2026-09-20 所有者已确认当前 Android 真机能够正常扫描、连接并使用智能魔方；由于本次未单独登记魔方型号，不增加任何品牌协议的型号级验收，既有 OPPO Reno7 Pro 5G + GAN 16 UI 记录仍只证明 GAN v4 主链。
 - QiYi、GAN v2/v3 与 MoYu32 仍需补齐多品牌真机矩阵；自动重连、后台/蓝牙关闭/距离中断和异常压力测试也未完成。QiYi 真机需分别确认实际 Android MAC 与名称后备、`fff6`/`fff5` 写通道、广播包不含 service UUID 时的选择器可见性、状态历史以及 Tornado V4 陀螺仪。
 
 ## 20. 决策检查表

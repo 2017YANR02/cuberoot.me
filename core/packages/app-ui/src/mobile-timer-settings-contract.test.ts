@@ -29,8 +29,10 @@ describe('Mobile timer settings parity ledger', () => {
       'settings.scramble.optimal',
       'settings.scramble.auto-mark-wca',
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
-      'settings.appearance.scramble-click-action',
     ]);
+    expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
+      'settings.appearance.scramble-click-action',
+    );
     expect(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS).toEqual([]);
   });
 
