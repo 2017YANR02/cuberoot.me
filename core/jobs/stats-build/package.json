@@ -7,13 +7,14 @@
   },
   "type": "module",
   "scripts": {
+    "build:deps": "pnpm --filter @cuberoot/shared build",
     "compute": "tsx src/bin/compute.ts",
     "validate-queries": "tsx src/bin/validate_queries.ts",
     "nemesizer": "tsx src/bin/nemesizer.ts",
     "gen-persons-search": "tsx src/bin/gen_persons_search.ts",
     "build:scramble-lengths": "tsx src/bin/build_scramble_lengths.ts",
     "typecheck": "tsgo --noEmit",
-    "test": "vitest run tests"
+    "test": "pnpm run build:deps && vitest run tests"
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",

@@ -45,7 +45,8 @@ import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
 import SortableAlgRow from '@/components/SortableAlgRow';
 import SortableCard from '@/components/SortableCard';
-import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import { useAlgViewMode } from '@/components/AlgViewModeToggle';
+import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
@@ -649,6 +650,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
   // 列表视图(`cards` 只看图 / `full` 公式内联)。语义 + localStorage key 都在
   // AlgViewModeToggle 里,`/alg` 下所有 case 列表页共用同一个偏好。
   const [view, changeView] = useAlgViewMode();
+  const [showCaseNumbers, setShowCaseNumbers] = useAlgCaseNumberVisibility();
   // 分组页也共用图 / 公式偏好；公式模式直接列出当前范围的情况。
 
   /** 这个 set 里实际出现过的标签 —— 没有就不渲染筛选器 */
@@ -1261,9 +1263,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             onChange={value => void setSq1NotationMode(value)}
           />
         )}
-        {/* 所有公式集共用图 / 公式开关，公式模式展开当前分组。 */}
-        {data && !collection?.cardsOnly && (
-          <AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />
+        {/* 所有公式集共用列表设置，偏好跨 `/alg` 页面生效。 */}
+        {data && (
+          <AlgListSettings
+            view={view}
+            onViewChange={changeView}
+            showCaseNumbers={showCaseNumbers}
+            onShowCaseNumbersChange={setShowCaseNumbers}
+            showViewMode={!collection?.cardsOnly}
+          />
         )}
         {puzzleParam === 'fto' && (
           <Link href="/alg/fto/notation" className="alg-recog-cta" prefetch={false}>
@@ -1641,7 +1649,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               const primary = primaryCaseName(puzzleParam, set, c);
                               return disp.startsWith(primary) ? null : <span className="alg-case-index">{disp}</span>;
                             })()}
-                            {c.number != null && <span className="alg-case-index">#{c.number}</span>}
+                            {showCaseNumbers && c.number != null && <span className="alg-case-index">#{c.number}</span>}
                             {oriCount > 1 && (
                               <button
                                 type="button"

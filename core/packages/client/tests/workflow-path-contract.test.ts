@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -29,9 +29,17 @@ function readWorkflow(workflowName: string): string {
   return readFileSync(join(REPO_ROOT, '.github', 'workflows', workflowName), 'utf8');
 }
 
+function workflowNames(): string[] {
+  return readdirSync(join(REPO_ROOT, '.github', 'workflows'))
+    .filter((name) => name.endsWith('.yml') || name.endsWith('.yaml'));
+}
+
 function readWorkspacePackage(packageName: string): {
   root: string;
-  manifest: { dependencies?: Record<string, string> };
+  manifest: {
+    dependencies?: Record<string, string>;
+    scripts?: Record<string, string>;
+  };
 } {
   const directoryName = packageName.slice('@cuberoot/'.length);
   const matches = [appPath(directoryName), packagePath(directoryName), jobPath(directoryName)]
@@ -51,7 +59,10 @@ function readWorkspacePackage(packageName: string): {
     manifest: JSON.parse(readFileSync(
       join(REPO_ROOT, ...root.split('/'), 'package.json'),
       'utf8',
-    )) as { dependencies?: Record<string, string> },
+    )) as {
+      dependencies?: Record<string, string>;
+      scripts?: Record<string, string>;
+    },
   };
 }
 
@@ -479,19 +490,28 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
-  it('builds the shared package before generating upcoming competition data', () => {
-    const workflow = readWorkflow('update_upcoming.yml');
-    const sharedBuild = workflow.indexOf('pnpm --filter @cuberoot/shared build');
-    const upcomingRefresh = workflow.indexOf(
-      'npx tsx src/bin/fetch_upcoming_comps.ts --refresh',
-    );
-    const namesRefresh = workflow.indexOf(
-      'npx tsx src/bin/fetch_comp_names_zh.ts --refresh',
+  it('builds stats runtime dependencies before every workflow tsx entrypoint', () => {
+    const { manifest } = readWorkspacePackage('@cuberoot/stats-build');
+    expect(manifest.scripts?.['build:deps']).toBe(
+      'pnpm --filter @cuberoot/shared build',
     );
 
-    expect(sharedBuild).toBeGreaterThan(-1);
-    expect(upcomingRefresh).toBeGreaterThan(sharedBuild);
-    expect(namesRefresh).toBeGreaterThan(sharedBuild);
+    const statsWorkflows = workflowNames()
+      .map((name) => [name, readWorkflow(name)] as const)
+      .filter(([, workflow]) => (
+        workflow.includes('resolve-workspace-path.mjs @cuberoot/stats-build')
+        && /npx tsx src\/bin\//.test(workflow)
+      ));
+
+    expect(statsWorkflows.length).toBeGreaterThan(0);
+    for (const [name, workflow] of statsWorkflows) {
+      const dependencyBuild = workflow.indexOf(
+        'pnpm --filter @cuberoot/stats-build build:deps',
+      );
+      const firstRuntimeEntrypoint = workflow.search(/npx tsx src\/bin\//);
+      expect(dependencyBuild, name).toBeGreaterThan(-1);
+      expect(firstRuntimeEntrypoint, name).toBeGreaterThan(dependencyBuild);
+    }
   });
 
   it('fails workspace resolution before publishing an empty workflow output', () => {

@@ -132,7 +132,8 @@ describe('algorithm player placement', () => {
     expect(modal).toMatch(/<AlgCaseMetaContent\s+caseObj=\{caseObj\}[\s\S]*?jump=\{\{ kind: 'callback', onJump \}\}\s*\/>/);
     expect(modal).not.toMatch(/<AlgCaseMetaContent[\s\S]{0,500}?\bplayable\b/);
     expect(styles).toMatch(/\.alg-meta-related-grid\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*wrap;[^}]*gap:\s*10px;/);
-    expect(styles).toMatch(/\.alg-meta-top-grid\s*\{[^}]*border-bottom:\s*1px solid var\(--border-default\);/);
+    expect(styles).toMatch(/\.alg-meta-top-grid\s*\{[^}]*padding-bottom:\s*12px;[^}]*margin-bottom:\s*12px;/);
+    expect(styles).not.toMatch(/\.alg-meta-top-grid\s*\{[^}]*border-bottom:/);
     expect(styles).toMatch(/\.alg-meta-scramble-row\s*\{[^}]*display:\s*flex;[^}]*flex-direction:\s*row;[^}]*flex-wrap:\s*nowrap;/);
     expect(styles).toMatch(/\.alg-case-standard-detail code\s*\{[^}]*white-space:\s*nowrap;[^}]*overflow-x:\s*auto;/);
     expect(styles).toMatch(/\.alg-meta-case-player-layout\s*\{\s*flex:\s*1;\s*min-width:\s*0;\s*\}/);
