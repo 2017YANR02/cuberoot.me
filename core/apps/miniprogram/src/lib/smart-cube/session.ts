@@ -457,7 +457,9 @@ export class SmartCubeSession {
           device: selectedDevice,
           signal: cancellation.signal,
           onDisconnect: (message) => this.handleHardwareDisconnect(generation, kind, message),
-          onMove: (move, deviceTs) => this.publishMove(generation, move, deviceTs),
+          onMove: (move, deviceTs, metadata) => {
+            this.publishMove(generation, move, deviceTs, metadata);
+          },
           onState: (facelets) => this.publishFor(generation, { type: 'state', facelets }),
           onBattery: (level) => this.publishBattery(generation, level),
           onGyro: (quaternion) => this.publishFor(generation, { type: 'gyro', quaternion }),
@@ -561,8 +563,18 @@ export class SmartCubeSession {
     this.setSnapshot({ battery: null, deviceName: message, error: '', lastMove: '' });
   }
 
-  private publishMove(generation: number, move: string, deviceTs?: number): void {
-    this.publishFor(generation, { type: 'move', move, deviceTs });
+  private publishMove(
+    generation: number,
+    move: string,
+    deviceTs?: number,
+    metadata?: { futureHistory?: boolean },
+  ): void {
+    this.publishFor(generation, {
+      type: 'move',
+      move,
+      deviceTs,
+      futureHistory: metadata?.futureHistory,
+    });
     if (generation === this.connectionGeneration) this.setSnapshot({ lastMove: move });
   }
 

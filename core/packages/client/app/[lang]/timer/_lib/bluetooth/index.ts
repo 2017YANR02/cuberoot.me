@@ -1365,8 +1365,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       cleanupRef.current = null;
 
       const bridge = await connectMiniProgramCubeBridge({
-        onMove: (move, deviceTs) => {
-          if (isCurrentSession()) handleMove(move, deviceTs);
+        onMove: (move, deviceTs, metadata) => {
+          if (isCurrentSession()) handleMove(move, deviceTs, metadata);
         },
         onState: (facelets) => {
           if (isCurrentSession()) handleCubeState(facelets);

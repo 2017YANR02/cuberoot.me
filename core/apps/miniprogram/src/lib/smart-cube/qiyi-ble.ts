@@ -15,10 +15,14 @@ import type { BleAbortSignal, DiscoveredDevice, MiniProgramBleApi } from './ble-
 import {
   connectEncryptedBle,
   extractBleMacFromAdvertisement,
+  normalizeBleMac,
   type EncryptedBleConnection,
 } from './encrypted-ble';
 
 export type QiyiBleConnection = EncryptedBleConnection;
+export interface QiyiMoveMetadata {
+  futureHistory?: boolean;
+}
 export interface ConnectQiyiOptions {
   api?: MiniProgramBleApi;
   device?: DiscoveredDevice;
@@ -26,7 +30,7 @@ export interface ConnectQiyiOptions {
   onBattery?(level: number): void;
   onDisconnect?(message: string): void;
   onGyro?(quaternion: { w: number; x: number; y: number; z: number }): void;
-  onMove?(move: string, timestamp?: number): void;
+  onMove?(move: string, timestamp?: number, metadata?: QiyiMoveMetadata): void;
   onState?(facelets: string): void;
 }
 
@@ -46,6 +50,8 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
     preferWriteNoResponse: true,
     matches: (device) => matchesQiyiName(device.name) || matchesQiyiName(device.localName),
     resolveMac: (device) => {
+      const deviceMac = normalizeBleMac(device.deviceId);
+      if (deviceMac) return { source: 'device-id', value: deviceMac };
       const advertised = extractBleMacFromAdvertisement(device.advertisData, {
         companyIds: [0x0504],
         layout: 'first6-reversed',
@@ -82,7 +88,9 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
           gyro: notification.gyro !== null,
         });
       }
-      if (notification.timestamp !== null) timestamp = Math.max(timestamp, notification.timestamp);
+      if (notification.latestTimestamp !== null) {
+        timestamp = Math.max(timestamp, notification.latestTimestamp);
+      }
       if (notification.opcode === QIYI_OP_HELLO || notification.opcode === QIYI_OP_STATE) {
         const ts = notification.timestamp ?? 0;
         void write(buildQiyiPacket([
@@ -93,9 +101,12 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
           ts & 0xff,
         ])).catch(() => {});
       }
+      for (const move of notification.moves) options.onMove?.(move.mv, move.ts);
       if (notification.state) options.onState?.(notification.state);
+      for (const move of notification.futureMoves) {
+        options.onMove?.(move.mv, move.ts, { futureHistory: true });
+      }
       if (notification.gyro) options.onGyro?.(notification.gyro);
-      for (const move of [...notification.moves, ...notification.futureMoves]) options.onMove?.(move.mv, move.ts);
       return notification.battery;
     },
   });

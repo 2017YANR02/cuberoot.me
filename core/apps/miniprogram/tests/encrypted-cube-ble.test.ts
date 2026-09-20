@@ -56,6 +56,33 @@ function solvedMoyu32StateFrame(moveCount: number): Uint8Array {
   return frame;
 }
 
+function qiyiStateFrame(
+  timestamp: number,
+  moveCode: number,
+  futureMove?: { code: number; timestamp: number },
+): Uint8Array {
+  const content = new Array<number>(futureMove ? 39 : 34).fill(0);
+  content[0] = 0x03;
+  content[1] = (timestamp >>> 24) & 0xff;
+  content[2] = (timestamp >>> 16) & 0xff;
+  content[3] = (timestamp >>> 8) & 0xff;
+  content[4] = timestamp & 0xff;
+  const facelets = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB';
+  for (let index = 0; index < facelets.length; index++) {
+    content[5 + (index >> 1)] |= 'LRDUFB'.indexOf(facelets[index]) << ((index & 1) * 4);
+  }
+  content[32] = moveCode;
+  content[33] = 80;
+  if (futureMove) {
+    content[34] = (futureMove.timestamp >>> 24) & 0xff;
+    content[35] = (futureMove.timestamp >>> 16) & 0xff;
+    content[36] = (futureMove.timestamp >>> 8) & 0xff;
+    content[37] = futureMove.timestamp & 0xff;
+    content[38] = futureMove.code;
+  }
+  return buildQiyiPacket(content);
+}
+
 function createApi(options: {
   characteristics?: Array<{
     properties?: { notify?: boolean; write?: boolean; writeNoResponse?: boolean };
@@ -173,15 +200,15 @@ describe('encrypted smart-cube mini program transport', () => {
     await connection.disconnect();
   });
 
-  it('never uses a MAC-shaped Mini Program deviceId as the MoYu32 protocol MAC', async () => {
-    const mac = Uint8Array.from([0xcf, 0x30, 0x16, 0x00, 0x12, 0x34]);
+  it('uses the Android deviceId as the MoYu32 protocol MAC', async () => {
+    const mac = Uint8Array.from([0xcf, 0x30, 0x16, 0x01, 0x5c, 0x3a]);
     const cipher = createMoyu32Cipher(mac);
     const rig = createApi({
       characteristics: [
         { uuid: MOYU32_WRITE_CHARACTERISTIC_UUID, properties: { writeNoResponse: true } },
         { uuid: MOYU32_NOTIFY_CHARACTERISTIC_UUID, properties: { notify: true } },
       ],
-      deviceId: 'AA:BB:CC:DD:EE:FF',
+      deviceId: 'CF:30:16:01:5C:3A',
       notifyCharacteristicUuid: MOYU32_NOTIFY_CHARACTERISTIC_UUID,
       onWrite(write, emit) {
         const request = cipher.decrypt(write.value);
@@ -194,8 +221,8 @@ describe('encrypted smart-cube mini program transport', () => {
     const connection = await connectMoyu32({
       api: rig.api,
       device: {
-        deviceId: 'AA:BB:CC:DD:EE:FF',
-        name: 'WCU_MY32_1234',
+        deviceId: 'CF:30:16:01:5C:3A',
+        name: 'WCU_MY32_5C3A',
       },
     });
 
@@ -245,15 +272,15 @@ describe('encrypted smart-cube mini program transport', () => {
     await connection.disconnect();
   });
 
-  it('never uses a MAC-shaped Mini Program deviceId as the QiYi hello MAC', async () => {
+  it('uses the Android deviceId as the QiYi hello MAC', async () => {
     const cipher = createQiyiCipher();
-    const expectedHelloMac = [0x34, 0x12, 0x00, 0x00, 0xa3, 0xcc];
+    const expectedHelloMac = [0x3a, 0x5c, 0x01, 0x16, 0x30, 0xcf];
     const rig = createApi({
       characteristics: [{
         uuid: QIYI_CHARACTERISTIC_UUID,
         properties: { notify: true, writeNoResponse: true },
       }],
-      deviceId: 'AA:BB:CC:DD:EE:FF',
+      deviceId: 'CF:30:16:01:5C:3A',
       notifyCharacteristicUuid: QIYI_CHARACTERISTIC_UUID,
       serviceUuid: QIYI_SERVICE_UUID,
       writeCharacteristicUuid: QIYI_WRITE_CHARACTERISTIC_UUID,
@@ -270,11 +297,49 @@ describe('encrypted smart-cube mini program transport', () => {
     const connection = await connectQiyi({
       api: rig.api,
       device: {
-        deviceId: 'AA:BB:CC:DD:EE:FF',
-        name: 'QY-QYSC-2-1234',
+        deviceId: 'CF:30:16:01:5C:3A',
+        name: 'QY-QYSC-2-5C3A',
       },
     });
 
+    await connection.disconnect();
+  });
+
+  it('applies current QiYi moves, then state, then future history without replaying it', async () => {
+    const cipher = createQiyiCipher();
+    const rig = createApi({
+      characteristics: [{
+        uuid: QIYI_CHARACTERISTIC_UUID,
+        properties: { notify: true, writeNoResponse: true },
+      }],
+      deviceId: 'CF:30:16:01:5C:3A',
+      notifyCharacteristicUuid: QIYI_CHARACTERISTIC_UUID,
+      serviceUuid: QIYI_SERVICE_UUID,
+      writeCharacteristicUuid: QIYI_WRITE_CHARACTERISTIC_UUID,
+      onWrite(write, emit) {
+        const hello = cipher.decrypt(write.value);
+        if (hello[2] === 0x00) emit(cipher.encrypt(qiyiStateFrame(0, 0)));
+      },
+    });
+    const events: string[] = [];
+    const connection = await connectQiyi({
+      api: rig.api,
+      device: {
+        deviceId: 'CF:30:16:01:5C:3A',
+        name: 'QY-QYSC-2-5C3A',
+      },
+      onMove: (move, _timestamp, metadata) => {
+        events.push(metadata?.futureHistory ? `future:${move}` : `move:${move}`);
+      },
+      onState: () => events.push('state'),
+    });
+    events.length = 0;
+
+    rig.emit(cipher.encrypt(qiyiStateFrame(160, 10, { code: 4, timestamp: 320 })));
+    expect(events).toEqual(['move:F', 'state', 'future:R']);
+
+    rig.emit(cipher.encrypt(qiyiStateFrame(320, 4)));
+    expect(events).toEqual(['move:F', 'state', 'future:R', 'state']);
     await connection.disconnect();
   });
 

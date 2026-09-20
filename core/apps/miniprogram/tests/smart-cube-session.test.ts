@@ -490,6 +490,43 @@ describe('SmartCubeSession', () => {
     expect(driverMocks.connectGanV4).not.toHaveBeenCalled();
   });
 
+  it('relays QiYi future-history metadata to the timer', async () => {
+    const session = new SmartCubeSession();
+    await startSession(session, 'h'.repeat(32));
+    const device = { deviceId: 'qiyi-1', name: 'QY-QYSC-X-12AF' };
+    driverMocks.discoverSmartCubeDriver.mockResolvedValue([{ device, driver: 'qiyi' }]);
+    driverMocks.connectQiyi.mockImplementation(async (options: {
+      onMove(
+        move: string,
+        timestamp?: number,
+        metadata?: { futureHistory?: boolean },
+      ): void;
+    }) => {
+      options.onMove('R', 200, { futureHistory: true });
+      return {
+        deviceName: device.name,
+        disconnect: async () => {},
+        requestBattery: async () => null,
+      };
+    });
+
+    await session.scan();
+    await session.connectDevice(device.deviceId);
+
+    const payloads = socket.sent.map((data) => JSON.parse(data) as {
+      deviceTs?: number;
+      futureHistory?: boolean;
+      move?: string;
+      type?: string;
+    });
+    expect(payloads).toContainEqual({
+      type: 'move',
+      move: 'R',
+      deviceTs: 200,
+      futureHistory: true,
+    });
+  });
+
   it('publishes an actionable error when scanning finds no cube', async () => {
     const session = new SmartCubeSession();
     const snapshots: Array<{ error: string; phase: string }> = [];

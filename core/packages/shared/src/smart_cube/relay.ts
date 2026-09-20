@@ -33,7 +33,13 @@ export type SmartCubeRelayEvent =
       hasGyro?: boolean;
       error?: string;
     }
-  | { type: 'move'; move: string; deviceTs?: number; relaySeq?: number }
+  | {
+      type: 'move';
+      move: string;
+      deviceTs?: number;
+      futureHistory?: boolean;
+      relaySeq?: number;
+    }
   | { type: 'state'; facelets: string }
   | { type: 'battery'; level: number }
   | {
@@ -78,6 +84,7 @@ export function isSmartCubeRelayPayload(value: unknown): value is SmartCubeRelay
       && /^[URFDLB](?:2|')?$/.test(value.move)
       && (value.deviceTs === undefined
         || (typeof value.deviceTs === 'number' && Number.isFinite(value.deviceTs)))
+      && (value.futureHistory === undefined || typeof value.futureHistory === 'boolean')
       && (value.relaySeq === undefined
         || (Number.isSafeInteger(value.relaySeq) && Number(value.relaySeq) > 0));
   }
