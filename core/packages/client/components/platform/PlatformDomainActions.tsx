@@ -807,6 +807,22 @@ function escapeCsv(value: string): string {
   return `"${value.replace(/"/g, '""')}"`;
 }
 
+function inviteSectionIds(course: PlatformEntity | null | undefined, slug: string): string[] {
+  const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === slug);
+  const lessons = Array.isArray(course?.data?.lessons) ? course.data.lessons : [];
+  if (!section) return [];
+  return lessons.flatMap((lesson) => {
+    if (!lesson || typeof lesson !== 'object' || Array.isArray(lesson)) return [];
+    const item = lesson as Record<string, unknown>;
+    return typeof item.id === 'string' && String(item.titleZh ?? '').startsWith(section.title.zh) ? [item.id] : [];
+  });
+}
+
+function preferredInviteScope(course: PlatformEntity | null | undefined): string {
+  if (inviteSectionIds(course, 'core').length) return 'core';
+  return PLATFORM_COURSE_SECTIONS.find(section => section.slug !== 'introduction' && inviteSectionIds(course, section.slug).length)?.slug ?? 'all';
+}
+
 function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAction }: CommonProps) {
   const t = useT();
   // Ordinary invitation DELETE archives the code; retain physical-bundle audit management.
@@ -816,7 +832,6 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   const [generated, setGenerated] = useState<PlatformActionResult | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const [courseId, setCourseId] = useState('');
-  const [courseDetail, setCourseDetail] = useState<PlatformEntity | null>(null);
   const [scope, setScope] = useState('core');
   const [expiresAt, setExpiresAt] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -829,6 +844,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         const available = result.items.filter((item) => item.status === 'published' || item.status === 'unlisted');
         setCourses(available);
         setCourseId(available[0]?.id ?? '');
+        setScope(preferredInviteScope(available[0]));
       })
       .catch((reason: unknown) => {
         if (!controller.signal.aborted) setCourseError(reason instanceof Error ? reason : new Error(String(reason)));
@@ -836,24 +852,9 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
     return () => controller.abort();
   }, []);
 
-  useEffect(() => {
-    setCourseDetail(null);
-    setFormError(null);
-    if (!courseId) return;
-    const controller = new AbortController();
-    void loadPlatformResource('courses', { routeId: 'course-detail', params: { id: courseId }, signal: controller.signal })
-      .then(result => { if (!controller.signal.aborted) setCourseDetail(result.items[0] ?? null); })
-      .catch(() => { if (!controller.signal.aborted) setFormError(t('课程加载失败，请刷新页面重试。', 'Could not load lessons. Refresh the page to retry.')); });
-    return () => controller.abort();
-  }, [courseId]);
-
-  const lessons = (Array.isArray(courseDetail?.data?.lessons) ? courseDetail.data.lessons : []) as Record<string, unknown>[];
+  const courseDetail = courses?.find(course => course.id === courseId) ?? null;
   // Match the course directory's section names; never infer permissions from an invite's label.
-  const sectionIds = (slug: string) => {
-    const section = PLATFORM_COURSE_SECTIONS.find(item => item.slug === slug);
-    return lessons.filter(lesson => section && typeof lesson.id === 'string'
-      && String(lesson.titleZh ?? '').startsWith(section.title.zh)).map(lesson => String(lesson.id));
-  };
+  const sectionIds = (slug: string) => inviteSectionIds(courseDetail, slug);
   const generateCode = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy) return;
@@ -918,7 +919,13 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
           <h2>{t('生成兑换码', 'Create a code')}</h2>
           <div className="platform-form-grid">
             <label><span>{t('课程', 'Course')}</span>
-              <select className="platform-field-control" value={courseId} onChange={event => { setCourseId(event.target.value); setScope('core'); }}>
+              <select className="platform-field-control" value={courseId} onChange={event => {
+                const nextCourseId = event.target.value;
+                const nextCourse = courses?.find(course => course.id === nextCourseId);
+                setCourseId(nextCourseId);
+                setScope(preferredInviteScope(nextCourse));
+                setFormError(null);
+              }}>
                 {courseOptions.map(course => <option key={course.value} value={course.value}>{t(course.label.zh, course.label.en)}</option>)}
               </select>
             </label>
@@ -999,9 +1006,9 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
         const benefit = entity.data?.benefit as Record<string, unknown> | undefined;
         const linkedCourse = courses?.find(course => course.id === benefit?.courseId);
         const ids = Array.isArray(benefit?.lessonIds) ? benefit.lessonIds : null;
-        const matchedSection = benefit?.courseId === courseDetail?.id && ids?.length
+        const matchedSection = linkedCourse && ids?.length
           ? PLATFORM_COURSE_SECTIONS.find(section => {
-            const matching = sectionIds(section.slug);
+            const matching = inviteSectionIds(linkedCourse, section.slug);
             return matching.length === ids.length && matching.every(id => ids.includes(id));
           }) : undefined;
         const scopeLabel = matchedSection ? t(matchedSection.title.zh, matchedSection.title.en) : ids
