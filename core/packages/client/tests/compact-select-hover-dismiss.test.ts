@@ -7,13 +7,14 @@ import { CompactSelect } from '@cuberoot/timer-ui/compact-select';
 let root: Root;
 let host: HTMLDivElement;
 const popup = () => document.querySelector('[role="listbox"]');
-async function open(dismissOnMouseLeave = true) {
+async function open(dismissOnMouseLeave?: boolean) {
   host = document.createElement('div');
   document.body.append(host);
   root = createRoot(host);
   await act(async () => root.render(createElement(CompactSelect, {
     label: 'Role', ariaLabel: 'Role', items: [{ value: 'admin', label: 'Admin' }],
-    onChange: () => {}, openOnHover: true, dismissOnMouseLeave,
+    onChange: () => {}, openOnHover: true,
+    ...(dismissOnMouseLeave === undefined ? {} : { dismissOnMouseLeave }),
   })));
   const trigger = host.querySelector('button')!;
   await act(async () => trigger.click());
@@ -51,7 +52,7 @@ it.each([false, true])('keeps trigger, popup and crossing gap usable (above=%s)'
   expect(popup()).toBeNull();
 });
 
-it('preserves the default behavior of other menus', async () => {
+it('allows hover-dismiss to be disabled explicitly', async () => {
   await open(false);
   await move(document.body, 500, 500);
   expect(popup()).not.toBeNull();
