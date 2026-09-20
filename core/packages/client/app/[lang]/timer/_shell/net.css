@@ -720,6 +720,6 @@
     backdrop-filter: var(--glass-filter);
   }
   body[data-site-scenery] .net-stats-panel {
-    background: var(--glass-popover-bg);
+    background: var(--glass-dialog-bg);
   }
 }
