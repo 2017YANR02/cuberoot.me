@@ -29,6 +29,53 @@ function readWorkflow(workflowName: string): string {
   return readFileSync(join(REPO_ROOT, '.github', 'workflows', workflowName), 'utf8');
 }
 
+function readWorkspacePackage(packageName: string): {
+  root: string;
+  manifest: { dependencies?: Record<string, string> };
+} {
+  const directoryName = packageName.slice('@cuberoot/'.length);
+  const matches = [appPath(directoryName), packagePath(directoryName), jobPath(directoryName)]
+    .filter((root) => {
+      const manifestPath = join(REPO_ROOT, ...root.split('/'), 'package.json');
+      if (!existsSync(manifestPath)) return false;
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as { name?: string };
+      return manifest.name === packageName;
+    });
+  if (matches.length !== 1) {
+    throw new Error(`Expected exactly one ${packageName} workspace, found ${matches.length}`);
+  }
+  const root = matches[0];
+  if (!root) throw new Error(`Missing ${packageName} workspace after validation`);
+  return {
+    root,
+    manifest: JSON.parse(readFileSync(
+      join(REPO_ROOT, ...root.split('/'), 'package.json'),
+      'utf8',
+    )) as { dependencies?: Record<string, string> },
+  };
+}
+
+function workspaceDependencyClosure(packageName: string): string[] {
+  const pending = [packageName];
+  const roots = new Set<string>();
+  const visited = new Set<string>();
+
+  while (pending.length > 0) {
+    const current = pending.pop();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
+    const { root, manifest } = readWorkspacePackage(current);
+    roots.add(`${root}/**`);
+    for (const [dependency, version] of Object.entries(manifest.dependencies ?? {})) {
+      if (dependency.startsWith('@cuberoot/') && version.startsWith('workspace:')) {
+        pending.push(dependency);
+      }
+    }
+  }
+
+  return [...roots].sort();
+}
+
 function readStepLines(workflowName: string, stepName: string): { lines: string[]; stepIndent: number } {
   const lines = readWorkflow(workflowName).split(/\r?\n/);
   const header = `- name: ${stepName}`;
@@ -77,6 +124,32 @@ function readStepEnv(workflowName: string, stepName: string): Record<string, str
       if (!entry) throw new Error(`Unsupported env YAML for ${stepName}: ${line.trim()}`);
       return [entry[1], entry[2]];
     }));
+}
+
+function readStepFilterPaths(workflowName: string, stepName: string, filterName: string): string[] {
+  const { lines } = readStepLines(workflowName, stepName);
+  const filters = lines.findIndex((line) => line.trim() === 'filters: |');
+  if (filters < 0) throw new Error(`Missing filters block for ${stepName} in ${workflowName}`);
+  const filtersIndent = indentation(lines[filters]);
+  const filter = lines.findIndex((line, index) => (
+    index > filters
+    && indentation(line) === filtersIndent + 2
+    && line.trim() === `${filterName}:`
+  ));
+  if (filter < 0) throw new Error(`Missing filter ${filterName} for ${stepName} in ${workflowName}`);
+  const filterIndent = indentation(lines[filter]);
+  const values: string[] = [];
+  for (let index = filter + 1; index < lines.length; index += 1) {
+    const trimmed = lines[index].trim();
+    if (trimmed && indentation(lines[index]) <= filterIndent) break;
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (!trimmed.startsWith('- ')) {
+      throw new Error(`Unsupported filter YAML at ${workflowName}:${index + 1}`);
+    }
+    values.push(parseYamlScalar(trimmed.slice(2).trim()));
+  }
+  if (!values.length) throw new Error(`Empty filter ${filterName} in ${workflowName}`);
+  return values;
 }
 
 const WORKSPACE_INPUT_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
@@ -181,6 +254,18 @@ const TEST_PATHS = [
   repoPath('.github', 'workflows', 'stats.yml'),
   repoPath('.github', 'workflows', 'test.yml'),
   repoPath('.github', 'workflows', 'update_upcoming.yml'),
+] as const;
+
+const DESKTOP_PATHS = [
+  repoPath('.node-version'),
+  repoPath('.github', 'workflows', 'test.yml'),
+  corePath('package.json'),
+  corePath('pnpm-lock.yaml'),
+  corePath('pnpm-workspace.yaml'),
+  corePath('tsconfig.base.json'),
+  corePath('patches', '**'),
+  corePath('scripts', 'build-cubing-worker.mjs'),
+  ...workspaceDependencyClosure('@cuberoot/desktop'),
 ] as const;
 
 function indentation(line: string): number {
@@ -435,6 +520,38 @@ describe('deployment workflow path contracts', () => {
       expect(workflowTriggers(paths, [repoPath('scripts', 'upstream', 'sync-all.ps1')])).toBe(true);
       expect(workflowTriggers(paths, [packagePath('platform', 'README.md')])).toBe(false);
       expect(workflowTriggers(paths, [packagePath('server', 'src', 'index.ts')])).toBe(true);
+    }
+  });
+
+  it('runs the desktop matrix only when its dependency closure changes', () => {
+    const workflow = readWorkflow('test.yml');
+    const desktopPaths = readStepFilterPaths('test.yml', 'Detect desktop inputs', 'desktop');
+    expect(desktopPaths).toEqual(DESKTOP_PATHS);
+    expect(workflow).toContain(
+      "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' }}",
+    );
+    expect(workflow).toContain(
+      'uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3',
+    );
+
+    const cases = [
+      [appPath('desktop', 'src', 'main.tsx'), true],
+      [packagePath('app-ui', 'src', 'App.tsx'), true],
+      [packagePath('timer-ui', 'src', 'Timer.tsx'), true],
+      [packagePath('event-icon', 'src', 'event.tsx'), true],
+      [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
+      [packagePath('stack-kernel', 'src', 'lib.rs'), true],
+      [corePath('pnpm-lock.yaml'), true],
+      [repoPath('.github', 'workflows', 'test.yml'), true],
+      [packagePath('client', 'app', '[lang]', 'page.tsx'), false],
+      [appPath('api', 'src', 'index.ts'), false],
+      [appPath('mobile', 'src', 'App.tsx'), false],
+      [repoPath('.github', 'workflows', 'deploy_next.yml'), false],
+      [repoPath('docs', 'platform-unification-plan.md'), false],
+    ] as const;
+
+    for (const [path, expected] of cases) {
+      expect(workflowTriggers(desktopPaths, [path]), path).toBe(expected);
     }
   });
 
