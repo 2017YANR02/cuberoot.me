@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "9c89bcd1750614583667b3a5c84c7cf2eb3d125f1fd41597022de4a7605d0f44", "reason": "复核邮箱验证码事务加固后的认证源码变更：API 入口只新增双人计时实时中继，Android MainActivity 只注册智能魔方选择插件，App.tsx 只过滤智能魔方未来历史转动并记录实际设备型号；登录、注册、会话、回跳、绑定、合并、退出和注销流程均未改变，现有中英文节点无需调整。相关计时与蓝牙改动已部署，但本次 CI 修复仅在本地，尚未推送。"}
+{"fingerprint": "aeafd8f1ea953375416c38bed0ef036ed74720f1f454ee4a951112cd8d9a4c7c", "reason": "复核课程课时未登录流程：锁定课时的登录按钮现在携带课程兑换页作为返回目的地，登录成功后进入兑换页，兑换成功后再直接进入视频页；已同步公开页面与账号操作的中英文流程节点。本次 CI 修复仅在本地，尚未推送。"}
 */
 
 import type { ReactNode } from 'react';
@@ -32,7 +32,7 @@ export default function AuthFlowPage() {
       <h1>{t('账号全流程', 'Account lifecycle')}</h1>
       <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
       <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
-      <p className="auth-map-note">{t('源码核对：2026-09-19。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-19. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
+      <p className="auth-map-note">{t('源码核对：2026-09-20。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-20. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
       <p className="auth-map-note">{t('本次邮箱发送状态与账号事务加固已完成本地隔离验证，尚未部署；短信发送生命周期与账号合并仍使用各自原有流程，不能由邮箱测试推断已完成同样改造。', 'Email delivery state and account transactions have passed isolated local checks and are not deployed. SMS delivery and account merging retain their existing flows; email tests do not prove those flows have received the same changes.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
@@ -65,6 +65,7 @@ export default function AuthFlowPage() {
         t('赛前训练 → 游客也可使用，训练记录保存在当前浏览器', 'Competition Practice → guests can train, with practice records saved in this browser'),
         t('需要账号或管理权限的操作 → 由对应功能与服务端接口校验', 'Actions requiring an account or administrator access → checked by the feature and its server API'),
         t('国家菜单图钉 → 游客进入登录页，登录后回到原网址和筛选；任何登录账号都可置顶，无需会员或 WCA ID', 'Country menu pin → guests sign in and return to the original URL and filters; any signed-in account can pin, without membership or a WCA ID'),
+        t('锁定的课程课时 → 「请先登录」进入账号页；登录后回到课程兑换页，兑换成功再直接进入对应视频页', 'Locked course lesson → Please sign in opens the account page; after sign-in, return to course redemption, then open the matching video page immediately after redemption'),
         t('登录后默认依次置顶 WCA 国家、IP 国家，相同国家只显示一次；未绑定 WCA 或未登录时使用 IP 国家。手动设置按账号保存在当前浏览器，取消后不自动恢复；退出登录只保留 IP 国家，定位失败不影响菜单', 'Signed-in defaults are WCA country first, then IP country, without duplicates; without a WCA link or login, use the IP country. Manual choices are saved per account in this browser and unpinning is retained; signing out shows only the IP country, and lookup failure leaves menus usable'),
       ]} />
       <p>{t('首页隐藏卡片只影响入口展示，不限制直接访问网址。', 'Hiding a homepage card affects its visibility, not direct URL access.')}</p>

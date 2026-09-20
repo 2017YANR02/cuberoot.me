@@ -60,7 +60,7 @@ describe('QR landing metadata contract', () => {
     }
     expect(migration).toContain("UPDATE platform_qr_revisions SET qr_type = 'landing' WHERE target_kind = 'content'");
     expect(readme).toContain('0203_qr_landing_content.sql');
-    expect(devSchema).toContain("evolved: [203]");
+    expect(devSchema).toContain("evolved: [203, 244]");
     expect(devSchema).toContain("{ n: 203, slug: 'qr_landing_content'");
   });
 

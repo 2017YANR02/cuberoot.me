@@ -1,19 +1,27 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { collapseAlgGroupsByDefault } from '@/components/AlgCategoryView';
 
-describe('algorithm group default collapse policy', () => {
-  it('keeps SQ1 cubeshape groups expanded despite its large case count', () => {
-    expect(collapseAlgGroupsByDefault('sq1', 'cs', 169, false)).toBe(false);
-    expect(collapseAlgGroupsByDefault('sq1', 'csp', 179, false)).toBe(false);
-    expect(collapseAlgGroupsByDefault('sq1', 'obl', 185, false)).toBe(false);
+const source = readFileSync(new URL('../components/AlgCategoryView.tsx', import.meta.url), 'utf8');
+const styles = readFileSync(new URL('../app/[lang]/alg/alg.css', import.meta.url), 'utf8');
+
+describe('algorithm group headings', () => {
+  it('keeps every case group permanently expanded', () => {
+    expect(source).not.toContain('collapsedGroups');
+    expect(source).not.toContain('toggleGroup');
+    expect(source).not.toContain('alg-subgroup-title is-toggleable');
   });
 
-  it('still collapses other large non-umbrella sets', () => {
-    expect(collapseAlgGroupsByDefault('3x3', '1lll', 1000, false)).toBe(true);
+  it('renders plain headings without a divider', () => {
+    const headingRule = styles.match(/\.alg-subgroup-title\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(headingRule).not.toContain('border-bottom');
+    expect(styles).not.toContain('.alg-subgroup-title.is-toggleable');
+    expect(source).not.toContain('alg-subgroup-count');
   });
 
-  it('does not collapse small or umbrella sets', () => {
-    expect(collapseAlgGroupsByDefault('sq1', 'cs', 100, false)).toBe(false);
-    expect(collapseAlgGroupsByDefault('3x3', 'zbll', 493, true)).toBe(false);
+  it('renders imported formula emphasis at the surrounding text weight', () => {
+    const weightRule = styles.match(
+      /\.alg-alg-text strong,\s*\.alg-meta-algline-code strong,\s*\.alg-editor-input strong\s*\{([^}]*)\}/,
+    )?.[1] ?? '';
+    expect(weightRule).toContain('font-weight: inherit');
   });
 });

@@ -533,7 +533,7 @@ describe('deployment workflow path contracts', () => {
     const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
     expect(desktopPaths).toEqual(DESKTOP_PATHS);
     expect(workflow).toContain(
-      "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' }}",
+      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}",
     );
     expect(workflow).toContain(
       'uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3',
@@ -563,10 +563,10 @@ describe('deployment workflow path contracts', () => {
   it('uses affected-job conditions for the expensive platform and analyzer jobs', () => {
     const workflow = readWorkflow('test.yml');
     expect(workflow).toContain(
-      "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.mobile == 'true' }}",
+      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true' }}",
     );
     expect(workflow).toContain(
-      "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.analyzer == 'true' }}",
+      "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true' }}",
     );
   });
 

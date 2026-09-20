@@ -6,6 +6,7 @@ import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-typ
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/lib/platform-gateway', () => ({
   loadPlatformLessonMedia: vi.fn(async () => ({ mimeType: 'video/mp4', accessUrl: '/test-video' })),
+  platformMediaBrowserUrl: (value: string) => value,
   PlatformPermissionError: class PlatformPermissionError extends Error {},
 }));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children }: { href: string; children: ReactNode }) => createElement('a', { href }, children) }));
