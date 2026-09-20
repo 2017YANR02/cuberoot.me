@@ -143,6 +143,7 @@ describe('validateAlgCase — 收尾 AUF 由库来补,不要求人写', () => {
     const marked = `=y2 ${BODY.split(' ').join('·')}`;            // 等价标注 + 换握记号
     expect((await validateAlgCase(inv(`y2 ${BODY}`), marked, FACE, '3x3')).ok).toBe(true);
   });
+
 });
 
 describe('completeAlgAuf — 入库前补成完整式', () => {

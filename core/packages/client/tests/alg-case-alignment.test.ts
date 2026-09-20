@@ -43,8 +43,6 @@ describe('one public case state for every algorithm set', () => {
     expect(prepared.setup).toBe(`z2 ${c.setup}`);
     expect(prepared.algs[0][0].alg).toBe(`${c.algs[0][0].alg} z2`);
     expect(aligned.cases[0].algs[0].slice(5).map(e => e.alg)).toEqual([
-      "U' B U' R2 F2 U' F z2",
-      "U R' F R2 U R' F' U' R U' R' U y2",
       "L' U' L U' F' L' U L2 F L' U2 y2",
       "U L' U L2 F L' F' U' L F' L' U y2",
     ]);
@@ -161,8 +159,8 @@ describe('one public case state for every algorithm set', () => {
         }
       }
     }
-    // Exact exception identities are reviewable; accepting extra bad rows or
-    // silently dropping source rows cannot turn this test green.
+    // Exact post-dedupe exception identities are reviewable; accepting extra
+    // bad rows or dropping a unique displayed row cannot turn this test green.
     expect({ total, adjusted, unmatched }).toEqual(expected);
     // Every set remains printable even when a source alternative is unresolved.
     const sheet = algSheetFromCases({ puzzle, set: file.set, cases: aligned.cases, title: key, filename: key, allOris: true, maxAlgs: Infinity });
@@ -193,8 +191,7 @@ describe('one public case state for every algorithm set', () => {
     const t = oll.cases.find(c => c.id === 3929)!;
     expect(caseAlgIssue(t.algs[0][3])).toBeDefined();
     const failures = await scanCases('3x3', 'oll', [t]);
-    expect(failures.map(f => f.algIdx)).toEqual([3, 9]);
-    expect(failures[1].reason).toContain('Duplicate algorithm');
+    expect(failures.map(f => f.algIdx)).toEqual([3]);
     const sheet = algSheetFromCases({ puzzle: '3x3', set: 'oll', cases: [t], title: '', filename: '', maxAlgs: 99 });
     expect(sheet.cases[0].algs).toEqual(t.algs[0].filter(e => !caseAlgIssue(e)).map(e => displayCaseAlg('3x3', 'oll', e.alg)));
     expect(sheet.subtitle).toContain('1 unverified algorithms omitted');
@@ -239,9 +236,7 @@ describe('one public case state for every algorithm set', () => {
     expect(swapped.cases.flatMap(c => c.algs.flat()).length).toBe(462);
     const prepared = await alignAlgFile(swapped);
     const failures = await scanCases('3x3', 'oll', prepared.cases.filter(c => c.id === t.id || c.id === l.id));
-    // The historical fixture still contains one separate parenthesis-only duplicate.
-    expect(failures.map(f => ({ caseId: f.caseObj.id, index: f.algIdx }))).toEqual([{ caseId: 3929, index: 9 }]);
-    expect(failures[0].reason).toContain('Duplicate algorithm');
+    expect(failures).toEqual([]);
   });
 
   it('all 13 applied relocations retain the source metadata and solve the destination state', async () => {

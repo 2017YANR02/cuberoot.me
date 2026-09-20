@@ -16,7 +16,7 @@
   justify-content: center;
   filter: drop-shadow(0 14px 34px color-mix(in srgb, var(--accent) 16%, transparent));
 }
-.wc-gallery-stage .twisty-section { width: 100%; }
+.wc-gallery-stage .alg-sim-player { width: 100%; }
 
 .wc-gallery-names {
   display: flex;

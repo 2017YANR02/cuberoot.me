@@ -38,12 +38,14 @@ interface Props {
   scope: ValidationScope;
   onClose: () => void;
   onPickCase?: (puzzle: AlgPuzzle, set: string, caseObj: AlgFailure['caseObj']) => void;
+  /** 扫描完成后把逐行结果交给宿主；详情页用它标出对应公式。 */
+  onResults?: (failures: AlgFailure[]) => void;
   /** 改变会触发重新校验(用于 case saved 后) */
   refreshKey?: number;
 }
 
 export default function ValidationReportModal({
-  scope, onClose, onPickCase, refreshKey = 0,
+  scope, onClose, onPickCase, onResults, refreshKey = 0,
 }: Props) {
   useTranslation(); // subscribe to language changes; text via tr()
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -89,6 +91,7 @@ export default function ValidationReportModal({
         if (cancelRef.current) return;
         setProgress({ done: total, total });
         setFailures(found);
+        onResults?.(found);
         return;
       }
       const found = await scanTargets(targets, {
@@ -97,6 +100,7 @@ export default function ValidationReportModal({
       });
       if (cancelRef.current) return;
       setFailures(found);
+      onResults?.(found);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -159,11 +163,16 @@ export default function ValidationReportModal({
                 >
                   <div className="alg-validation-row-head">
                     <span className="alg-validation-tag">{f.puzzle}/{f.set}</span>
-                    {onPickCase ? <button type="button" className="alg-validation-name" onClick={() => { onClose(); onPickCase(f.puzzle, f.set, f.caseObj); }}>{f.caseObj.name}</button>
+                    {onPickCase ? <button type="button" className="alg-validation-name" onClick={() => { onClose(); onPickCase(f.puzzle, f.set, f.caseObj); }}>
+                      {f.caseObj.name}
+                      <ExternalLink size={12} className="alg-validation-link" aria-hidden="true" />
+                    </button>
                       : caseLinks[`${f.puzzle}/${f.set}/${f.caseObj.id}`]
-                        ? <Link className="alg-validation-name" href={caseLinks[`${f.puzzle}/${f.set}/${f.caseObj.id}`]} prefetch={false}>{f.caseObj.name}</Link>
+                        ? <Link className="alg-validation-name" href={caseLinks[`${f.puzzle}/${f.set}/${f.caseObj.id}`]} prefetch={false}>
+                          {f.caseObj.name}
+                          <ExternalLink size={12} className="alg-validation-link" aria-hidden="true" />
+                        </Link>
                         : <span className="alg-validation-name">{f.caseObj.name}</span>}
-                    <ExternalLink size={12} className="alg-validation-link" />
                   </div>
                   <div className="alg-validation-alg">{f.alg}</div>
                   <div className="alg-validation-reason">{f.reason}</div>

@@ -4,7 +4,10 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
-vi.mock('@/lib/platform-gateway', () => ({ loadPlatformLessonMedia: vi.fn(async () => ({ mimeType: 'video/mp4', accessUrl: '/test-video' })) }));
+vi.mock('@/lib/platform-gateway', () => ({
+  loadPlatformLessonMedia: vi.fn(async () => ({ mimeType: 'video/mp4', accessUrl: '/test-video' })),
+  PlatformPermissionError: class PlatformPermissionError extends Error {},
+}));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children }: { href: string; children: ReactNode }) => createElement('a', { href }, children) }));
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';

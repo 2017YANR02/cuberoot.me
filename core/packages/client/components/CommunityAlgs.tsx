@@ -9,12 +9,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAlgTextField } from '@/hooks/useAlgTextField';
-import { Plus, Trash2, Pencil, Check, X, Tags } from 'lucide-react';
+import { Plus, Trash2, Pencil, Check, X, Tags, Pin, Copy, AlertTriangle } from 'lucide-react';
 import { is3x3TopLayerSet, type AlgEntry, type AlgPuzzle, type AlgSticker, type AlgTag } from '@cuberoot/shared/alg';
 import { alignCaseEntry, caseAlgIssue, sourceCaseEntry } from '@/lib/alg_case_alignment';
 import { duplicateAlgKey, startsWithYRotation } from '@cuberoot/shared/alg-notation';
 import PersonLink from '@/components/PersonLink';
-import { UserIdLabel } from '@/components/UserIdLabel';
 import { addSubmission, updateSubmission, deleteSubmission } from '@/lib/alg_api';
 import { validateAlgCase, validateStoredAlgCase, setupForCase } from '@/lib/alg_validation';
 import { caseViewAlg, displayAlg, type CaseViewAngle } from '@/lib/alg_display';
@@ -26,6 +25,8 @@ import { tr } from '@/i18n/tr';
 import { CompactSelect } from '@/components/CompactSelect';
 import AlgTagLabel from '@/components/AlgTagLabel';
 import { ALG_TAGS, algTagLabel } from '@/lib/alg_tags';
+import { useCopy } from '@/hooks/useCopy';
+import { preferredAlgRef } from '@/lib/alg-preferred-algs';
 
 type AlgSubmission = Awaited<ReturnType<typeof addSubmission>>;
 
@@ -41,6 +42,7 @@ function CommunityTagSelect({ tags, onChange }: { tags: readonly AlgTag[]; onCha
     <CompactSelect
       variant="plain"
       className="alg-tag-select alg-community-tag-select"
+      showArrow={false}
       label={tags.length
         ? <span className="alg-tag-symbol">{tags.map(tag => <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />)}</span>
         : <Tags size={13} />}
@@ -52,13 +54,45 @@ function CommunityTagSelect({ tags, onChange }: { tags: readonly AlgTag[]; onCha
         label: <span className="alg-tag-label">
           <AlgTagLabel tag={tag} label={communityTagLabel(tag)} hand={null} />
           <span>{communityTagLabel(tag)}</span>
-          {tags.includes(tag) && <Check size={12} aria-hidden="true" />}
         </span>,
       }))}
       onChange={tag => onChange(tags.includes(tag)
         ? tags.filter(value => value !== tag)
         : [...tags, tag])}
     />
+  );
+}
+
+function CompactCommunityAlgRow({ text, issue, preferred, onPreferredToggle }: {
+  text: string;
+  issue?: string;
+  preferred: boolean;
+  onPreferredToggle: () => void;
+}) {
+  const { copied, copy } = useCopy();
+  return (
+    <div className={`alg-alg-row${issue ? ' is-invalid' : ''}`} title={issue}>
+      {issue && <AlertTriangle size={13} className="alg-alg-invalid-icon" aria-label={issue} />}
+      <span className="alg-alg-text">{text}</span>
+      <button
+        type="button"
+        className="alg-alg-copy-btn"
+        onClick={onPreferredToggle}
+        title={preferred ? tr({ zh: '取消置顶', en: 'Unpin algorithm' }) : tr({ zh: '置顶公式', en: 'Pin algorithm' })}
+        aria-pressed={preferred}
+      >
+        <Pin size={14} fill={preferred ? 'currentColor' : 'none'} className="alg-alg-copy-icon" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        className="alg-alg-copy-btn"
+        onClick={() => copy(text)}
+        disabled={!!issue}
+        title={tr({ zh: '复制', en: 'Copy' })}
+      >
+        {copied ? <Check size={14} /> : <Copy size={14} className="alg-alg-copy-icon" />}
+      </button>
+    </div>
   );
 }
 
@@ -77,6 +111,12 @@ interface Props {
   submissions: AlgSubmission[];
   /** 列表页只展示投稿；新增统一进入 case 详情页。 */
   allowAdd?: boolean;
+  /** 列表卡使用与标准公式相同的紧凑行；作者和管理信息只留在详情页。 */
+  compact?: boolean;
+  /** 投稿备注若只是当前栏的朝向名，详情页栏头已经表达过，不再重复显示。 */
+  redundantNote?: string;
+  preferredRef?: string;
+  onPreferredToggle?: (submission: AlgSubmission, preferred: boolean) => void;
   /** 只改只读公式的显示；编辑框和提交值始终保持标准记号。 */
   notationStyle?: AlgNotationStyle;
   /** 只改只读公式的观察角度；编辑、校验和入库仍使用原始 case。 */
@@ -157,6 +197,10 @@ export default function CommunityAlgs({
   firstAlg,
   submissions,
   allowAdd = true,
+  compact = false,
+  redundantNote,
+  preferredRef,
+  onPreferredToggle,
   standardAlgs = [],
   notationStyle = 'standard',
   viewAngle = 'default',
@@ -295,7 +339,7 @@ export default function CommunityAlgs({
   if (!allowAdd && submissions.length === 0) return null;
 
   return (
-    <div className="alg-community">
+    <div className={`alg-community${compact ? ' is-compact' : ''}`}>
       {submissions.map((s, index) => {
         const keys = new Set([s.alg, alignedSubmissions.get(s)?.alg ?? s.alg].map(duplicateAlgKey));
         const duplicate = standardAlgs.some(e => keys.has(duplicateAlgKey(e.alg)) || keys.has(duplicateAlgKey(sourceCaseEntry(e).alg)))
@@ -303,6 +347,28 @@ export default function CommunityAlgs({
         const isMine = !!myKey && myKey === s.authorId;
         const canEdit = isMine || isAdmin;
         const editing = editingId === s.id;
+        const shownText = formatAlgNotation(caseViewAlg(alignedSubmissions.get(s)?.alg ?? s.alg, viewAngle), notationStyle);
+        const alignmentIssue = !alignedSubmissions.has(s)
+          ? tr({ zh: '尚未校验', en: 'Not yet validated' })
+          : caseAlgIssue(alignedSubmissions.get(s)!)
+            ? tr({ zh: '原公式与本图不匹配', en: 'Source algorithm does not match this case' })
+            : undefined;
+        const duplicateIssue = duplicate
+          ? tr({ zh: '重复公式：忽略括号后与已有公式相同', en: 'Duplicate algorithm: identical to an existing algorithm, ignoring parentheses' })
+          : undefined;
+        const ref = preferredAlgRef({ alg: s.alg });
+        if (compact && onPreferredToggle) {
+          const preferred = preferredRef === ref;
+          return (
+            <CompactCommunityAlgRow
+              key={s.id}
+              text={shownText}
+              issue={alignmentIssue ?? duplicateIssue}
+              preferred={preferred}
+              onPreferredToggle={() => onPreferredToggle(s, preferred)}
+            />
+          );
+        }
         return (
           <div key={s.id} className="alg-community-row">
             {editing ? (
@@ -339,38 +405,39 @@ export default function CommunityAlgs({
             ) : (
               <>
                 <code className="alg-community-alg">
-                  {formatAlgNotation(caseViewAlg(alignedSubmissions.get(s)?.alg ?? s.alg, viewAngle), notationStyle)}
+                  {shownText}
                 </code>
-                {(s.tags ?? []).map(tag => (
-                  <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />
-                ))}
-                {(!alignedSubmissions.has(s) || caseAlgIssue(alignedSubmissions.get(s)!)) && (
-                  <span className="alg-community-notes">{alignedSubmissions.has(s)
-                    ? tr({ zh: '原公式与本图不匹配', en: 'Source algorithm does not match this case' })
-                    : tr({ zh: '尚未校验', en: 'Not yet validated' })}</span>
-                )}
-                {duplicate && <span className="alg-community-notes">{tr({ zh: '重复公式：忽略括号后与已有公式相同', en: 'Duplicate algorithm: identical to an existing algorithm, ignoring parentheses' })}</span>}
-                {s.notes && <span className="alg-community-notes">{s.notes}</span>}
-                {/* authorId 是归属键 ownerKey,没绑 WCA 的账号是合成 `u<uid>`——
-                    PersonLink 对非 WCA id 自动降级成纯文本,不出死链。 */}
-                <PersonLink
-                  wcaId={s.authorId}
-                  className="alg-community-author"
-                  title={`${tr({ zh: '投稿者', en: 'Submitted by' })}: ${s.authorName} (${s.authorId})`}
-                >
-                  {ownerDisplayName(s.authorId, s.authorName, isZh)}
-                </PersonLink>
-                <UserIdLabel userId={s.authorUserId} />
-                {canEdit && (
-                  <span className="alg-community-actions">
-                    <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
-                      <Pencil size={12} />
-                    </button>
-                    <button type="button" className="alg-community-action-btn" onClick={() => handleDelete(s.id)} title={tr({ zh: '删除', en: 'Delete' })}>
-                      <Trash2 size={12} />
-                    </button>
-                  </span>
-                )}
+                <div className="alg-community-meta">
+                  {(s.tags ?? []).map(tag => (
+                    <AlgTagLabel key={tag} tag={tag} label={communityTagLabel(tag)} hand={null} />
+                  ))}
+                  {(!alignedSubmissions.has(s) || caseAlgIssue(alignedSubmissions.get(s)!)) && (
+                    <span className="alg-community-notes">{alignedSubmissions.has(s)
+                      ? tr({ zh: '原公式与本图不匹配', en: 'Source algorithm does not match this case' })
+                      : tr({ zh: '尚未校验', en: 'Not yet validated' })}</span>
+                  )}
+                  {duplicate && <span className="alg-community-notes">{tr({ zh: '重复公式：忽略括号后与已有公式相同', en: 'Duplicate algorithm: identical to an existing algorithm, ignoring parentheses' })}</span>}
+                  {s.notes && s.notes.trim() !== redundantNote?.trim() && <span className="alg-community-notes">{s.notes}</span>}
+                  {/* authorId 是归属键 ownerKey,没绑 WCA 的账号是合成 `u<uid>`——
+                      PersonLink 对非 WCA id 自动降级成纯文本,不出死链。 */}
+                  <PersonLink
+                    wcaId={s.authorId}
+                    className="alg-community-author"
+                    title={`${tr({ zh: '投稿者', en: 'Submitted by' })}: ${s.authorName} (${s.authorId})`}
+                  >
+                    {ownerDisplayName(s.authorId, s.authorName, isZh)}
+                  </PersonLink>
+                  {canEdit && (
+                    <span className="alg-community-actions">
+                      <button type="button" className="alg-community-action-btn" onClick={() => startEdit(s)} title={tr({ zh: '编辑', en: 'Edit' })}>
+                        <Pencil size={12} />
+                      </button>
+                      <button type="button" className="alg-community-action-btn" onClick={() => handleDelete(s.id)} title={tr({ zh: '删除', en: 'Delete' })}>
+                        <Trash2 size={12} />
+                      </button>
+                    </span>
+                  )}
+                </div>
               </>
             )}
           </div>

@@ -7,7 +7,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  width: 100%;
+  width: min(100%, 260px);
+  align-self: center;
 }
 
 /* Scrubber row: the slider fills edge-to-edge; the current-step value floats
