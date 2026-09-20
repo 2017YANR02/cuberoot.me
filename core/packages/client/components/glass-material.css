@@ -2,6 +2,8 @@
 :root, body, .palette-scope, .contrast-scope {
   --glass-surface-bg: color-mix(in srgb, var(--card) 22%, transparent);
   --glass-popover-bg: color-mix(in srgb, var(--popover) 38%, transparent);
+  --glass-menu-bg: color-mix(in srgb, var(--popover) 82%, transparent);
+  --glass-menu-filter: blur(18px);
   --glass-background: transparent;
   --glass-border: color-mix(in srgb, var(--foreground) 22%, transparent);
   --glass-edge: var(--glass-border);
@@ -12,6 +14,8 @@
   :root, body, .palette-scope, .contrast-scope {
     --glass-surface-bg: var(--card);
     --glass-popover-bg: var(--popover);
+    --glass-menu-bg: var(--popover);
+    --glass-menu-filter: none;
     --glass-background: var(--card);
     --glass-filter: none;
   }
@@ -20,6 +24,8 @@
   :root, body, .palette-scope, .contrast-scope {
     --glass-surface-bg: var(--card);
     --glass-popover-bg: var(--popover);
+    --glass-menu-bg: var(--popover);
+    --glass-menu-filter: none;
     --glass-background: var(--card);
     --glass-filter: none;
   }
@@ -32,6 +38,8 @@
   :root, body, .palette-scope, .contrast-scope {
     --glass-surface-bg: var(--card);
     --glass-popover-bg: var(--popover);
+    --glass-menu-bg: var(--popover);
+    --glass-menu-filter: none;
     --glass-background: var(--card);
     --glass-filter: none;
     --glass-shadow: none;
