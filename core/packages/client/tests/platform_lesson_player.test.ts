@@ -4,17 +4,50 @@ import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 const { load } = vi.hoisted(() => ({ load: vi.fn() }));
-vi.mock('@/lib/platform-gateway', () => ({ loadPlatformLessonMedia: load }));
+vi.mock('@/lib/platform-gateway', () => ({
+  loadPlatformLessonMedia: load,
+  PlatformPermissionError: class PlatformPermissionError extends Error {
+    constructor(public readonly status: 401 | 403) {
+      super(status === 401 ? 'Authentication required.' : 'Permission denied.');
+      this.name = 'PlatformPermissionError';
+    }
+  },
+}));
 const locale = vi.hoisted(() => ({ english: false }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string, en: string) => locale.english ? en : zh }));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement('a', { href, className }, children) }));
 vi.mock('@/components/platform/PlatformQrLanding', () => ({ PlatformQrLanding: () => null }));
 import { PlatformDomainContent } from '@/components/platform/PlatformDomainContent';
 import { LessonVideoPlayer } from '@/components/video/LessonVideoPlayer';
+import { PlatformPermissionError } from '@/lib/platform-gateway';
 
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
+});
+
+it.each([
+  [401, '请先登录，再继续观看这个课时。', '前往登录', '/account?next=%2Fzh%2Fplatform%2Fcourses%2Fcourse%2Fsections%2Fcore%3Flesson%3Dfirst'],
+  [403, '这个课时尚未解锁，请先兑换课程。', '兑换课程', '/platform/account/invites'],
+] as const)('turns media permission %s into an actionable course state', async (status, message, action, href) => {
+  window.history.replaceState({}, '', '/zh/platform/courses/course/sections/core?lesson=first');
+  load.mockRejectedValueOnce(new PlatformPermissionError(status));
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(PlatformDomainContent, {
+      definition: { id: 'course-section-core' } as PlatformRouteDefinition,
+      entity: { id: 'course', title: 'Course', data: { lessons: [{ id: 'first', titleZh: '正式课 01' }] } } as PlatformEntity,
+      params: {},
+    })));
+    expect(host.textContent).toContain(message);
+    expect(host.textContent).toContain(action);
+    expect(host.textContent).not.toContain('Authentication required.');
+    expect(host.textContent).not.toContain('Permission denied.');
+    expect(host.querySelector('a')?.getAttribute('href')).toBe(href);
+  } finally {
+    await act(async () => root.unmount());
+    window.history.replaceState({}, '', '/');
+  }
 });
 
 it('opens the video menu, prioritizes looping, and copies safe lesson links and diagnostics', async () => {

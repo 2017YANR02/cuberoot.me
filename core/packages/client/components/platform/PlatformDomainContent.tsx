@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { useT } from '@/hooks/useT';
-import { loadPlatformLessonMedia, type PlatformLessonMedia } from '@/lib/platform-gateway';
+import { nextQuery } from '@/lib/auth-store';
+import { loadPlatformLessonMedia, PlatformPermissionError, type PlatformLessonMedia } from '@/lib/platform-gateway';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
 import { PLATFORM_COURSE_SECTIONS } from '@/lib/platform-routes';
 import { PlatformQrLanding } from './PlatformQrLanding';
@@ -91,7 +92,7 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
 }) {
   const t = useT();
   const [media, setMedia] = useState<PlatformLessonMedia | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [reload, setReload] = useState(0);
   const resume = useRef({ time: 0, playing: false });
   const refreshing = useRef(false);
@@ -104,7 +105,7 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
         if (!controller.signal.aborted) { refreshing.current = false; setMedia(value); }
       })
       .catch((reason: unknown) => {
-        if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason));
+        if (!controller.signal.aborted) setError(reason instanceof Error ? reason : new Error(String(reason)));
       });
     return () => controller.abort();
   }, [lessonId, reload]);
@@ -114,15 +115,29 @@ function LessonMedia({ lessonId, autoContinue, onAutoContinueChange, onNext, onP
     if (media && Date.parse(media.expiresAt) <= Date.now() && !refreshing.current) {
       refreshing.current = true;
       setReload(value => value + 1);
-    } else setError(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.'));
+    } else setError(new Error(t('播放失败，请重新加载后再试。', 'Playback failed. Reload and try again.')));
   };
   const onLoadedMetadata = (event: SyntheticEvent<HTMLMediaElement>) => {
     const element = event.currentTarget;
     if (resume.current.time > 0) element.currentTime = resume.current.time;
     if (resume.current.playing) void element.play().catch(() => { /* Native play control remains available. */ });
   };
+  if (error instanceof PlatformPermissionError) {
+    const needsLogin = error.status === 401;
+    const href = needsLogin
+      ? `/account${nextQuery(`${window.location.pathname}${window.location.search}`)}`
+      : '/platform/account/invites';
+    return <div className="platform-domain-note">
+      <p>{needsLogin
+        ? t('请先登录，再继续观看这个课时。', 'Sign in to continue watching this lesson.')
+        : t('这个课时尚未解锁，请先兑换课程。', 'This lesson is not unlocked yet. Redeem the course first.')}</p>
+      <AppLink className="platform-action-link" href={href} prefetch={false}>
+        {needsLogin ? t('前往登录', 'Go to sign in') : t('兑换课程', 'Redeem course')}
+      </AppLink>
+    </div>;
+  }
   if (error) return <div className="platform-domain-note">
-    <p>{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error}</p>
+    <p>{t('课时媒体暂时无法加载：', 'Lesson media could not be loaded: ')}{error.message}</p>
     <button type="button" className="platform-action-link" onClick={() => setReload(value => value + 1)}>{t('重新加载播放器', 'Reload player')}</button>
   </div>;
   if (!media) return <p className="platform-domain-note">{t('正在取得课时媒体访问权限。', 'Requesting lesson media access.')}</p>;

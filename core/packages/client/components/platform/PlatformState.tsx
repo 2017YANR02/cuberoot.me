@@ -10,10 +10,12 @@ export function PlatformState({
   kind,
   message,
   onRetry,
+  permissionHref = '/account',
 }: {
   kind: StateKind;
   message?: string;
   onRetry?: () => void;
+  permissionHref?: string;
 }) {
   const t = useT();
   const content = {
@@ -51,7 +53,7 @@ export function PlatformState({
             <button type="button" className="platform-button" onClick={onRetry}>{t('重试', 'Retry')}</button>
           ) : null}
           {kind === 'permission' ? (
-            <AppLink href="/account" className="platform-button">{t('前往登录', 'Go to sign in')}</AppLink>
+            <AppLink href={permissionHref} className="platform-button" prefetch={false}>{t('前往登录', 'Go to sign in')}</AppLink>
           ) : null}
         </div>
       </div>
