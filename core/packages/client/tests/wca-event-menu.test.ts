@@ -107,6 +107,38 @@ describe('WCA event menus', () => {
     expect(document.activeElement).toBe(host.querySelector('.pp-trigger'));
   });
 
+  it('normalizes recon-style short event ids before rendering icons', () => {
+    act(() => root.render(createElement(EventSelect, {
+      events: ['3x3', '3bld'],
+      value: '3x3',
+      onChange: vi.fn(),
+    })));
+
+    open();
+    const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
+    expect(items.map(item => item.querySelector('.cubing-icon')?.className)).toEqual([
+      expect.stringContaining('event-333'),
+      expect.stringContaining('event-333bf'),
+    ]);
+    expect(items.every(item => item.querySelector('svg'))).toBe(true);
+  });
+
+  it('uses the dedicated non-WCA icons for gear and mirror blocks', () => {
+    act(() => root.render(createElement(EventSelect, {
+      events: ['gear', 'mirror'],
+      value: 'gear',
+      onChange: vi.fn(),
+    })));
+
+    open();
+    const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
+    expect(items.map(item => item.querySelector('.cubing-icon')?.className)).toEqual([
+      expect.stringContaining('unofficial-gear'),
+      expect.stringContaining('unofficial-333_mirror_blocks'),
+    ]);
+    expect(items.every(item => item.querySelector('svg'))).toBe(true);
+  });
+
   it('preserves inline editing and real hard-navigation links', () => {
     const common = { availableEvents: new Set(['333', '222']), selectedEvent: '333', isZh: false, onlyAvailable: true };
     act(() => root.render(createElement(WcaEventSelector, { ...common, presentation: 'inline' })));
