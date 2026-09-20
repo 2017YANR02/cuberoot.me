@@ -119,6 +119,9 @@ body[data-site-scenery] .calendar-page .event-chip-rounds {
 body[data-site-scenery] :is(
   .wca-stats-section-title:not(:hover),
   .wca-stats-index-tab:not(.active),
+  .alg-cat-metric,
+  .alg-ori-tab.is-active,
+  .alg-case-y-btn,
   .cuber-search-chip,
   .wp-ms-order,
   .wp-ms-chip,
