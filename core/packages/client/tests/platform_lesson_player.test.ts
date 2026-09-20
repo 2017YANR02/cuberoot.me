@@ -60,6 +60,27 @@ it('uses the saved lesson cover as the native video poster', async () => {
   }
 });
 
+it('keeps the poster visible instead of seeking to the first video frame on open', async () => {
+  const host = document.createElement('div'), root = createRoot(host);
+  try {
+    await act(async () => root.render(createElement(LessonVideoPlayer, {
+      src: '/signed-video', poster: '/signed-cover', startTime: 0, onError: vi.fn(), onLoadedMetadata: vi.fn(),
+    })));
+    const video = host.querySelector('video')!;
+    let currentTime = 0;
+    const setCurrentTime = vi.fn((value: number) => { currentTime = value; });
+    Object.defineProperties(video, {
+      duration: { configurable: true, value: 120 },
+      currentTime: { configurable: true, get: () => currentTime, set: setCurrentTime },
+    });
+    await act(async () => video.dispatchEvent(new Event('loadedmetadata')));
+    expect(setCurrentTime).not.toHaveBeenCalled();
+    expect(video.getAttribute('poster')).toBe('/signed-cover');
+  } finally {
+    await act(async () => root.unmount());
+  }
+});
+
 it('shows the shared current-frame cover editor only to administrators', async () => {
   access.admin = true;
   const host = document.createElement('div'), root = createRoot(host);
