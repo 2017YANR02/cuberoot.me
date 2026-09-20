@@ -87,7 +87,7 @@ import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
 import {
   loadSettings, saveSettings, applySettings,
-  TRANS_CORE, withTransCore,
+  TRANS_CORE, withCustomLogoAccess, withTransCore,
   mapOrbitK, mapTurnDragFactor, type SimSettings,
 } from './SettingDrawer';
 import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls';
@@ -118,6 +118,7 @@ import { resolveEngineArrows } from './engine/nxn/vcArrowBridge';
 import { resolveCaps } from './simCaps';
 import SimCubeNet from './_SimCubeNet';
 import SimClockBoard from '@/components/sim-embed/SimClockBoard';
+import { useMembership } from '@/hooks/useMembership';
 import {
   loadKeymap, saveKeymap, resetKeymap as resetKeymapStorage, type KeyMove,
 } from './keymap';
@@ -266,6 +267,7 @@ const DAISY_SETUP = 'F2 R2 B2 L2';
 
 export default function SimPage() {
   const t = useT();
+  const { isMember } = useMembership();
   // 管理员自建遮罩(DB)。首屏为空 → 按代码清单渲染;拉到后 stickering effect 重跑。
   const { rows: simMaskRows } = useSimMasks();
 
@@ -618,7 +620,10 @@ export default function SimPage() {
   // 持久化的 settings 一个字节不动(saveSettings 存的仍是 settings),切回别的视图立刻恢复;
   // 外观区那两行同步锁死(PlayerControls 的 transCore),不给出「滑块 100% 而图是 50%」的假读数。
   const transCore = typeof puzzleParam === 'number' && imgSpec.cubeView === 'trans';
-  const renderSettings = useMemo(() => withTransCore(settings, transCore), [settings, transCore]);
+  const renderSettings = useMemo(
+    () => withTransCore(withCustomLogoAccess(settings, isMember), transCore),
+    [settings, isMember, transCore],
+  );
   const renderSettingsRef = useRef(renderSettings);
   useEffect(() => { renderSettingsRef.current = renderSettings; }, [renderSettings]);
 
@@ -2243,6 +2248,7 @@ export default function SimPage() {
             onPuzzleChange={handlePuzzle}
             settings={settings}
             onSettingsChange={handleSettingsChange}
+            canUseCustomLogo={isMember}
             transCore={transCore ? TRANS_CORE : null}
             keymap={keymap}
             onKeymapChange={setKeymap}

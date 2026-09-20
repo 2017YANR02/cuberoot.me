@@ -44,6 +44,7 @@ const PERK_LABEL: Record<string, { zh: string; en: string }> = {
   platform_follow: { zh: '获得魔方根在各平台的关注', en: 'Get followed by CubeRoot across platforms' },
   vip_group: { zh: '进入魔方根 VIP 群', en: 'Join the CubeRoot VIP group' },
   group_qr_sharing: { zh: '允许在魔方根群分享二维码', en: 'Share QR codes in CubeRoot groups' },
+  custom_sim_logo: { zh: '在魔方模拟器中使用自定义 logo', en: 'Use a custom logo in the cube simulator' },
   personal_video_review_2_monthly: {
     zh: '每月可发送 2 把视频给我进行复盘（仅限三阶、二阶、SQ1、金字塔和斜转）',
     en: 'Send me up to 2 solve videos per month for review (3×3, 2×2, SQ1, Pyraminx, and Skewb only)',
@@ -192,6 +193,7 @@ export default function MembershipPage() {
   if (!universalPerks.includes('platform_follow')) universalPerks.push('platform_follow');
   if (!universalPerks.includes('vip_group')) universalPerks.push('vip_group');
   if (!universalPerks.includes('group_qr_sharing')) universalPerks.push('group_qr_sharing');
+  if (!universalPerks.includes('custom_sim_logo')) universalPerks.push('custom_sim_logo');
   if (!universalPerks.includes('personal_video_review_2_monthly')) universalPerks.push('personal_video_review_2_monthly');
   const universalPerkSet = new Set(universalPerks);
   const enterpriseSharedPerks = intersectPerks(enterprisePlans)

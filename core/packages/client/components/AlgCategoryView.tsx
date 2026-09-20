@@ -1836,6 +1836,7 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                         firstAlg={c.algs[0]?.[0]?.alg}
                         standardAlgs={c.algs.flat()}
                         submissions={submissionsByCase.get(c.name) ?? []}
+                        allowAdd={false}
                         notationStyle={displayedNotationStyle}
                         viewAngle={effectiveViewAngle}
                         onPatch={(action) => {

@@ -3,7 +3,7 @@ import { duplicateAware } from './alg_duplicates';
  * Alg submissions API client — ported from packages/client-vite/src/utils/alg_api.ts.
  * 任何登录用户都能给 (puzzle, set, case_name) 投 alg;作者 + admin 可改/删。
  */
-import type { AlgSubmission } from '@cuberoot/shared';
+import type { AlgSubmission, AlgTag } from '@cuberoot/shared/alg';
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -24,12 +24,13 @@ export async function addSubmission(
   caseName: string,
   alg: string,
   notes?: string,
+  tags: readonly AlgTag[] = [],
 ): Promise<AlgSubmission> {
   const path = `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}/${encodeURIComponent(caseName)}/submit`;
   const resp = await fetch(path, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ alg, notes }),
+    body: JSON.stringify({ alg, notes, tags }),
   });
   return duplicateAware(handleApi<AlgSubmission>(resp));
 }
@@ -37,7 +38,7 @@ export async function addSubmission(
 /** Edit your own submission (admins can edit anyone's, and admins can also re-target caseName). */
 export async function updateSubmission(
   id: number,
-  fields: { alg: string; notes?: string; caseName?: string },
+  fields: { alg: string; notes?: string; caseName?: string; tags?: readonly AlgTag[] },
 ): Promise<AlgSubmission> {
   const resp = await fetch(`${API_BASE}/submissions/${id}`, {
     method: 'PUT',

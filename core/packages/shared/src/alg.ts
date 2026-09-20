@@ -12,7 +12,24 @@ import type { MirrorGen } from './alg_mirror';
 import { canonicalize3x3WideMoves, duplicateAlgKey } from './alg_notation';
 
 /** 公式标签。转写自站长 1LLL 表里的 `[oh]` / `[ft]` / `[fmc]` / `[big]` / `[key]`。 */
-export type AlgTag = 'oh' | 'ft' | 'fmc' | 'big' | 'key';
+export const ALG_TAGS = ['oh', 'ft', 'fmc', 'big', 'key'] as const;
+export type AlgTag = (typeof ALG_TAGS)[number];
+
+/** 用户提交的算法——挂在 (puzzle, set, case_name) 上;任何登录用户能投,作者+admin 可改/删 */
+export interface AlgSubmission {
+  id: number;
+  puzzle: string;
+  setSlug: string;
+  caseName: string;
+  alg: string;
+  notes: string | null;
+  tags: AlgTag[];
+  authorId: string;
+  authorName: string;
+  authorUserId?: number | null;
+  /** ISO timestamp from DB */
+  createdAt: string;
+}
 
 export interface AlgEntry {
   /** Plain-text alg, used for clipboard copy (no HTML, but `[OH]` prefix and

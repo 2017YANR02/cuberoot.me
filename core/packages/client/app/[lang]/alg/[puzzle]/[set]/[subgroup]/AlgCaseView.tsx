@@ -438,6 +438,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             set={set}
             playable
             editorAlgorithms={editor?.algorithms}
+            subgroupEditor={editor?.subgroup}
             editing={!!editor && effectiveViewAngle === 'default'}
             setupEditor={editor?.setup}
             byNo={byNo}
@@ -543,7 +544,6 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
 
       </div>
       {editor && <fieldset className="alg-case-inline-fields alg-admin-modal-body" disabled={editor.busy}>
-        {editor.subgroup}
         {editor.advanced}
       </fieldset>}
     </div>

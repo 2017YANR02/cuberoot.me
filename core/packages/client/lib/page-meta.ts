@@ -178,6 +178,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   // 'alg' 没有条目:/alg 不再是页面(next.config 直接 redirect 到 /alg/3x3),
   // 每个魔方页的标题由 alg/[puzzle]/layout.tsx 的 generateMetadata 逐个发。
   'alg-trainers': { title: { zh: '公式训练器', en: 'Alg Trainers' } },
+  'alg/combo-types': {
+    title: { zh: '公式叠加类型', en: 'Algorithm Combo Types' },
+    description: {
+      zh: '查看公式库中 CC、OO、OP 等 18 种公式叠加类型的缩写、全称与含义。',
+      en: 'Reference all 18 algorithm combo types used in the algorithm database, including abbreviations, full names, and meanings.',
+    },
+  },
   'alg/3bld': { title: { zh: '盲拧训练', en: '3BLD Trainer' } },
   'alg/3bld/2c2c': { title: { zh: '双角双角训练', en: '2-Corner / 2-Corner Trainer' } },
   'alg/3bld/2e2e': { title: { zh: '双棱双棱训练', en: '2-Edge / 2-Edge Trainer' } },

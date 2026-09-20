@@ -129,14 +129,34 @@ function caseAlgDisplayEdits(puzzle: string, set: string, alg: string): AlgTextE
   return [{ start, end: alg.length, text: closing }];
 }
 
+/**
+ * 已入库旧数据的只读兜底：移除没有左括号的 `)`，并在末尾补齐缺少的 `)`。
+ * 新写入会被严格校验拒绝；这里不展开分组，也不改变任何 move。
+ */
+function legacyGroupingBalanceEdits(alg: string): AlgTextEdit[] {
+  const edits: AlgTextEdit[] = [];
+  let depth = 0;
+  for (let i = 0; i < alg.length; i++) {
+    if (alg[i] === '(') depth++;
+    else if (alg[i] === ')') {
+      if (depth > 0) depth--;
+      else edits.push({ start: i, end: i + 1, text: '' });
+    }
+  }
+  if (depth > 0) edits.push({ start: alg.length, end: alg.length, text: ')'.repeat(depth) });
+  return edits;
+}
+
 export function displayCaseAlg(puzzle: string, set: string, alg: string): string {
   const edits = caseAlgDisplayEdits(puzzle, set, alg);
-  return edits.length ? applyAlgTextEdits(alg, edits) : alg;
+  const shown = edits.length ? applyAlgTextEdits(alg, edits) : alg;
+  return applyAlgTextEdits(shown, legacyGroupingBalanceEdits(shown));
 }
 
 /** Apply the same move edits to rich text without losing finger annotations. */
 export function displayCaseAlgHtml(puzzle: string, set: string, html: string): string {
-  return editAlgHtmlText(html, caseAlgDisplayEdits(puzzle, set, algHtmlText(html)));
+  const shown = editAlgHtmlText(html, caseAlgDisplayEdits(puzzle, set, algHtmlText(html)));
+  return editAlgHtmlText(shown, legacyGroupingBalanceEdits(algHtmlText(shown)));
 }
 
 /**
