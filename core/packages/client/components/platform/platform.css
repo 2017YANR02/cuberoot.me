@@ -1170,6 +1170,45 @@ body[data-site-scenery] :is(
 .platform-classroom-player .platform-domain-note { margin: 0; padding: 28px; overflow-wrap: anywhere; }
 .platform-classroom-player .platform-lesson-media { width: 100%; max-height: 75vh; margin: 0; }
 .platform-classroom-player video { aspect-ratio: 16 / 9; object-fit: contain; }
+.platform-locked-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  min-height: inherit;
+  overflow: hidden;
+  isolation: isolate;
+}
+.platform-locked-media-visual {
+  position: absolute;
+  inset: -24px;
+  display: grid;
+  place-items: center;
+  filter: blur(18px);
+  transform: scale(1.08);
+}
+.platform-locked-media-visual::after {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--background) 58%, transparent);
+  content: '';
+}
+.platform-locked-media-visual img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 66% center;
+}
+.platform-locked-media-action {
+  position: relative;
+  z-index: 1;
+  color: var(--foreground);
+  font-size: clamp(1.15rem, 3vw, 1.65rem);
+  font-weight: 700;
+  text-decoration: none;
+}
+.platform-locked-media-action:hover { text-decoration: underline; }
+.platform-locked-media-action:focus-visible { border-radius: 4px; outline: 2px solid var(--ring); outline-offset: 5px; }
 @media (max-width: 760px) {
   .platform-classroom { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .platform-classroom-stage { grid-row: 1; }
