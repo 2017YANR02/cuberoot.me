@@ -1,6 +1,6 @@
 # CubeRoot 文档索引
 
-状态：`ACTIVE`。最后更新：2026-09-02。
+状态：`ACTIVE`。最后更新：2026-09-20。
 
 本页是文档状态和权威入口的索引，不替代代码、schema、workflow 或各专题跟踪表。
 
@@ -39,6 +39,7 @@
 | 五端 App 路线图 | [mobile-app-roadmap.md](./mobile-app-roadmap.md) | `ACTIVE` | 五端实现、设备、发布和长期维护进度 |
 | 五端三栏合同 | [mobile-three-tab-contract.md](./mobile-three-tab-contract.md) | `ACTIVE` | 计时/工具/我的结构、网站复用策略和五端协作边界 |
 | App `/timer` 一致性 | [mobile-timer-parity-tracker.md](./mobile-timer-parity-tracker.md) | `ACTIVE` | 网站与已安装客户端的计时器完整 UI/UX、复用边界与逐项验收 |
+| App `/timer` 零遗漏审计 | [mobile-timer-zero-omission-audit.md](./mobile-timer-zero-omission-audit.md) | `ACTIVE` | Tracker 的强制 inventory 附录：43 项、可达 surface、状态矩阵和 parity guard 设计 |
 | 小程序 | [../core/docs/MINIPROGRAM.md](../core/docs/MINIPROGRAM.md) | `REFERENCE` | 小程序实现、构建和发布契约 |
 
 未列出的专题文档仍可作为局部证据；涉及继续实施前，先核对其日期、状态和对应现役代码。
