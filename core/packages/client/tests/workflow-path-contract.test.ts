@@ -84,8 +84,11 @@ function readStepLines(workflowName: string, stepName: string): { lines: string[
   const stepIndent = indentation(lines[stepStart]);
   const stepEnd = lines.findIndex((line, index) => (
     index > stepStart
-    && line.trim().startsWith('- ')
-    && indentation(line) <= stepIndent
+    && line.trim()
+    && (
+      indentation(line) < stepIndent
+      || (line.trim().startsWith('- ') && indentation(line) === stepIndent)
+    )
   ));
   const end = stepEnd < 0 ? lines.length : stepEnd;
   return { lines: lines.slice(stepStart + 1, end), stepIndent };
@@ -211,6 +214,7 @@ const CORE_PATHS = [
 const NEXT_PATHS = [
   repoPath('.node-version'),
   packagePath('client', '**'),
+  `!${packagePath('client', 'tests', '**')}`,
   appPath('web', '**'),
   // The Web renderer consumes stack-kernel through puzzle-render-core now;
   // moving that import must not remove its versioned WASM from deploy inputs.
@@ -422,6 +426,7 @@ describe('deployment workflow path contracts', () => {
 
     const cases = [
       [packagePath('client', 'app', '[lang]', 'page.tsx'), true],
+      [packagePath('client', 'tests', 'workflow-path-contract.test.ts'), false],
       [appPath('web', 'app', '[lang]', 'page.tsx'), true],
       [packagePath('shared', 'src', 'account.ts'), true],
       [packagePath('visualcube', 'src', 'index.ts'), true],
@@ -525,7 +530,7 @@ describe('deployment workflow path contracts', () => {
 
   it('runs the desktop matrix only when its dependency closure changes', () => {
     const workflow = readWorkflow('test.yml');
-    const desktopPaths = readStepFilterPaths('test.yml', 'Detect desktop inputs', 'desktop');
+    const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
     expect(desktopPaths).toEqual(DESKTOP_PATHS);
     expect(workflow).toContain(
       "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' }}",
@@ -553,6 +558,31 @@ describe('deployment workflow path contracts', () => {
     for (const [path, expected] of cases) {
       expect(workflowTriggers(desktopPaths, [path]), path).toBe(expected);
     }
+  });
+
+  it('uses affected-job conditions for the expensive platform and analyzer jobs', () => {
+    const workflow = readWorkflow('test.yml');
+    expect(workflow).toContain(
+      "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.mobile == 'true' }}",
+    );
+    expect(workflow).toContain(
+      "if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.analyzer == 'true' }}",
+    );
+  });
+
+  it('shards the complete client suite without duplicating the isolated cross trainer test', () => {
+    const workflow = readWorkflow('test.yml');
+    expect(workflow).toContain('shard: [1, 2]');
+    expect(readStepRun('test.yml', 'Test client shard')).toBe(
+      'pnpm --filter @cuberoot/client exec vitest run --exclude tests/cross_trainer_reach.test.ts --shard=${{ matrix.shard }}/2',
+    );
+    expect(readStepRun('test.yml', 'Test cross trainer reachability')).toBe(
+      'pnpm --filter @cuberoot/client exec vitest run tests/cross_trainer_reach.test.ts',
+    );
+    expect(workflow).toMatch(
+      /- name: Test cross trainer reachability\n\s+if: \$\{\{ matrix\.shard == 1 \}\}/,
+    );
+    expect(workflow).not.toContain('- name: Test fast suite');
   });
 
   it('applies GitHub path patterns in order, including exclusion and re-inclusion', () => {
