@@ -68,6 +68,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   max-width: 100%;
   word-spacing: 0.25em;
   word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 .timer-scramble-source-meta {
   font-family: var(--font-sans, sans-serif);

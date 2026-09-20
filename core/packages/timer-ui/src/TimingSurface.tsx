@@ -74,11 +74,7 @@ export default function TimingSurface({
     const preventDefault = (event: Event) => {
       if (!(event.target instanceof Element)) return;
       const digits = event.target.closest('.timer-display');
-      const moves = event.target.closest('.scramble-moves');
-      if (!digits && !moves) return;
-      // Explicit Web scramble actions still need their synthesized click.
-      if (event.type === 'touchstart' && !digits
-        && moves?.closest('[data-interactive="true"]')) return;
+      if (!digits) return;
       event.preventDefault();
     };
     surface.addEventListener('touchstart', preventDefault, { passive: false });
