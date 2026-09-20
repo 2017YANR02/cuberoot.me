@@ -14,6 +14,7 @@ import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { useT } from '@/hooks/useT';
+import { useLang } from '@/i18n/tr';
 import { getSessionToken, nextQuery, useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import {
   executePlatformAction,
@@ -452,11 +453,13 @@ function PlatformCanonicalView({
 function PlatformEntityList({
   definition,
   items,
+  redeemedCourseIds,
   onAction,
   actionBusy,
 }: {
   definition: PlatformRouteDefinition;
   items: PlatformEntity[];
+  redeemedCourseIds: ReadonlySet<string>;
   onAction: (action: PlatformActionId, id: string, payload?: Record<string, unknown>) => void;
   actionBusy: string | null;
 }) {
@@ -496,6 +499,7 @@ function PlatformEntityList({
                 {item.eyebrow ? <span>{item.eyebrow}</span> : null}
                 <h2>{href ? <AppLink href={href} prefetch={false}>{title}</AppLink> : title}</h2>
               </div>
+              {learnerCourses && redeemedCourseIds.has(item.id) ? <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span> : null}
               {!learnerContent && item.status ? <span className="platform-status">{orderContent ? orderStatuses[item.status] ?? t('等待确认', 'Awaiting confirmation') : item.status}</span> : null}
             </div>
             {item.summary ? <p>{item.summary}</p> : null}
@@ -550,6 +554,7 @@ function PlatformResourceRouteView({
   params: Record<string, string>;
 }) {
   const t = useT();
+  const lang = useLang();
   const pathname = usePathname();
   const user = useAuthUser();
   const isAdmin = useIsAdmin();
@@ -566,6 +571,7 @@ function PlatformResourceRouteView({
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [redeemed, setRedeemed] = useState(false);
+  const [redeemedCourseIds, setRedeemedCourseIds] = useState<ReadonlySet<string>>(() => new Set());
   const loadsResource = Boolean(definition.resource)
     && definition.id !== 'account-invites'
     && definition.id !== 'account-privacy'
@@ -595,12 +601,36 @@ function PlatformResourceRouteView({
     return () => controller.abort();
   }, [allowed, definition.resource, loadsResource, mounted, owned, params, query, retry, sort]);
 
+  useEffect(() => {
+    const needsCourseOwnership = definition.id === 'courses' || definition.id === 'course-detail';
+    if (!mounted || !user || !needsCourseOwnership) {
+      setRedeemedCourseIds(new Set());
+      return;
+    }
+    const controller = new AbortController();
+    void loadPlatformResource('account-courses', { params: {}, signal: controller.signal })
+      .then(({ items }) => {
+        if (!controller.signal.aborted) {
+          setRedeemedCourseIds(new Set(items.filter((item) => item.status === 'active').map((item) => item.id)));
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setRedeemedCourseIds(new Set());
+      });
+    return () => controller.abort();
+  }, [definition.id, mounted, user, retry]);
+
   const sortedItems = useMemo(() => {
     if (!result) return [];
     return [...result.items].sort((a, b) => sort === 'title'
       ? a.title.localeCompare(b.title)
       : (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''));
   }, [result, sort]);
+
+  const visibleRedeemedCourseIds = useMemo<ReadonlySet<string>>(() => {
+    if (definition.id !== 'account-courses') return redeemedCourseIds;
+    return new Set(sortedItems.filter((item) => item.status === 'active').map((item) => item.id));
+  }, [definition.id, redeemedCourseIds, sortedItems]);
 
   // Keep the entire order current after native checkout, QR payment, or a provider return.
   const orderStatus = definition.id === 'order-detail' ? result?.items[0]?.data?.status : undefined;
@@ -634,7 +664,13 @@ function PlatformResourceRouteView({
     setActionMessage(null);
     try {
       const response = await executePlatformAction(definition, { action, resourceId: id, payload });
-      if (action === 'redeem-invite') setRedeemed(true);
+      if (action === 'redeem-invite') {
+        if (response.courseId) {
+          window.location.replace(`${lang === 'zh' ? '/zh' : ''}/platform/courses/${encodeURIComponent(response.courseId)}/sections/core`);
+          return response;
+        }
+        setRedeemed(true);
+      }
       setActionMessage(response.message ?? t('操作已完成。', 'Action completed.'));
       if (definition.id === 'admin-qr-detail' && action === 'admin-save' && params.code
         && response.code && response.code !== params.code) {
@@ -677,6 +713,7 @@ function PlatformResourceRouteView({
   const courseSection = definition.id.startsWith('course-section-');
   const courseSectionLoginHref = `/account${nextQuery(pathname)}`;
   const course = courseDetail && !error ? sortedItems[0] : undefined;
+  const courseRedeemed = Boolean(course && visibleRedeemedCourseIds.has(course.id));
   const orderPage = ['orders', 'order-detail', 'admin-orders', 'admin-order'].includes(definition.id);
   const orderUnavailable = ['order-detail', 'admin-order'].includes(definition.id) && (!!error || !result || !sortedItems[0]);
 
@@ -689,11 +726,20 @@ function PlatformResourceRouteView({
               {t('返回课程', 'Back to course')}
             </AppLink>
           </div> : null}
-          {!inviteManager && !orderPage ? <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span> : null}
+          {!inviteManager && !orderPage ? <div className="platform-route-labels">
+            <span className="platform-route-area">{courseDetail || courseSection || definition.id === 'course-lesson' || definition.id === 'courses' ? t('CubeRoot 课程', 'CubeRoot Courses') : definition.area}</span>
+            {courseRedeemed ? <span className="platform-course-redeemed">{t('已兑换', 'Redeemed')}</span> : null}
+          </div> : null}
           <h1>{course?.title ?? titleFor(t, definition)}</h1>
           {!courseSection && !courseDetail && !inviteManager && !orderPage ? <p>{t(definition.description.zh, definition.description.en)}</p> : null}
           {course ? <div className="platform-home-actions">
-            <AppLink className="platform-home-secondary" href="/platform/account/invites" prefetch={false}>{t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden /></AppLink>
+            <AppLink
+              className="platform-home-secondary"
+              href={courseRedeemed ? `/platform/courses/${encodeURIComponent(course.id)}/sections/core` : '/platform/account/invites'}
+              prefetch={false}
+            >
+              {courseRedeemed ? t('开始学习', 'Start learning') : t('兑换课程', 'Redeem a code')}<ArrowRight aria-hidden />
+            </AppLink>
           </div> : null}
         </div>
       </header>
@@ -777,6 +823,7 @@ function PlatformResourceRouteView({
             <PlatformEntityList
               definition={definition}
               items={sortedItems}
+              redeemedCourseIds={visibleRedeemedCourseIds}
               actionBusy={actionBusy}
               onAction={(action, id, payload) => { void runAction(action, id, payload); }}
             />

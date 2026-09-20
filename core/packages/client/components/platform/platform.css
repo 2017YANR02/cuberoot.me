@@ -296,6 +296,27 @@ body[data-site-scenery] :is(
   text-transform: uppercase;
 }
 
+.platform-route-labels {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.platform-course-redeemed {
+  display: inline-flex;
+  align-items: center;
+  width: max-content;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--signal-success) 16%, transparent);
+  color: var(--signal-success);
+  font-size: 0.72rem;
+  font-weight: 760;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .platform-home-actions {
   display: flex;
   flex-wrap: wrap;
@@ -654,7 +675,7 @@ body[data-site-scenery] :is(
   min-width: 0;
 }
 
-.platform-entity-heading span:first-child {
+.platform-entity-heading > div > span:first-child {
   color: var(--faint-foreground);
   font-size: 0.72rem;
 }
@@ -1029,7 +1050,7 @@ body[data-site-scenery] :is(
 .platform-invite-record .platform-invite-expiry { flex-basis: 100%; }
 .platform-invite-create .platform-form-grid label { display: grid; gap: 8px; min-width: 0; font-size: .9rem; }
 .platform-invite-result { padding: 24px; border-radius: 24px; background: var(--glass-surface-bg, var(--card)); -webkit-backdrop-filter: var(--glass-filter, none); backdrop-filter: var(--glass-filter, none); }
-.platform-invite-code-lines { min-height: 0; resize: vertical; line-height: 1.5; }
+.platform-invite-code-lines { min-height: 0; overflow: hidden; resize: none; line-height: 1.5; }
 .platform-invite-expiry { display: grid; align-content: start; gap: 8px; min-width: 0; font-size: .9rem; grid-column: 1 / -1; }
 .platform-invite-datetime { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .platform-invite-datetime .date-input { width: 190px; max-width: 100%; }

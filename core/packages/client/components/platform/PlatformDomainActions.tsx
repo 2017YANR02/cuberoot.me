@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { Star } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
@@ -853,6 +853,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
   const [scope, setScope] = useState('core');
   const [expiresAt, setExpiresAt] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const shareTextRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -915,6 +916,19 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
     `${t('兑换码：', 'Redemption code:')} ${item.code}`,
     `${t('课程链接：', 'Course link:')} ${platformCourseUrl(item.courseId, lang)}`,
   ].join('\n')).join('\n\n') ?? '';
+  useEffect(() => {
+    const textarea = shareTextRef.current;
+    if (!textarea) return;
+    const fitContent = () => {
+      const style = window.getComputedStyle(textarea);
+      const borderHeight = Number.parseFloat(style.borderTopWidth) + Number.parseFloat(style.borderBottomWidth);
+      textarea.style.height = '0px';
+      textarea.style.height = `${textarea.scrollHeight + borderHeight}px`;
+    };
+    fitContent();
+    window.addEventListener('resize', fitContent);
+    return () => window.removeEventListener('resize', fitContent);
+  }, [shareText]);
   const downloadCsv = () => {
     if (!generated?.codes?.length) return;
     const csv = [
@@ -982,7 +996,7 @@ function PlatformRedemptionCodeManager({ definition, entities = [], busy, runAct
       {generated?.codes?.length ? (
         <section className="platform-invite-result" aria-label={t('新生成的兑换码', 'New codes')}>
           <h2>{t('复制后发给买家', 'Copy and send to your buyer')}</h2>
-          <textarea className="platform-field-control platform-invite-code-lines" rows={Math.min(12, generated.codes.length * 3 - 1)} readOnly value={shareText} aria-label={t('可转发的兑换信息', 'Shareable redemption details')} />
+          <textarea ref={shareTextRef} className="platform-field-control platform-invite-code-lines" rows={1} readOnly value={shareText} aria-label={t('可转发的兑换信息', 'Shareable redemption details')} />
           <div className="platform-write-actions">
             <button type="button" className="platform-button platform-button-primary" onClick={() => void copyCodes()}>{t('复制', 'Copy')}</button>
             <button type="button" className="platform-button" onClick={downloadCsv}>{t('下载', 'Download')}</button>
