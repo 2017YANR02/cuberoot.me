@@ -40,6 +40,7 @@ import GodsNumberDist from './_GodsNumberDist';
 import MemoryPalace from './_MemoryPalace';
 import SpeedFeel from './_SpeedFeel';
 import StickyToc from './_StickyToc';
+import AbilityAtlas from './_AbilityAtlas';
 import './why_cube.css';
 
 // Server-rendered cube SVG (api.cuberoot.me). Client-only to dodge a dev
@@ -236,6 +237,7 @@ export default function WhyCubePage() {
           eyebrow={t('核心能力', 'Core abilities')}
           title={t('一块方块，练六种能力', 'One puzzle, six abilities')}
         >
+          <AbilityAtlas />
           <SolveFlow />
           <div className="wc-benefits">
             <Benefit icon={<Shapes size={26} />} title={t('空间想象能力', 'Spatial imagination')}>
