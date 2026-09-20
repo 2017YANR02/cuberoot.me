@@ -344,10 +344,12 @@ export class SmartCubeSession {
 
     let found: DiscoveredSmartCube[];
     try {
-      found = await discoverSmartCubeDriver({
+      const discovery = discoverSmartCubeDriver({
         signal: cancellation.signal,
         onUpdate: updateDiscoveredDevices,
       });
+      cancellation.track(discovery);
+      found = await discovery;
     } catch (error) {
       if (this.pendingConnection === cancellation) this.pendingConnection = null;
       if (generation !== this.connectionGeneration) return;
