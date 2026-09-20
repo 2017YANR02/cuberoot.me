@@ -4,6 +4,9 @@ name: Test
 
 on:
   workflow_dispatch:
+  # Weekly full run catches runner/toolchain drift that path filters cannot see.
+  schedule:
+    - cron: '17 9 * * 1'
   pull_request:
     paths:
       - '.node-version'
@@ -51,6 +54,10 @@ on:
       - '.github/workflows/stats.yml'
       - '.github/workflows/test.yml'
       - '.github/workflows/update_upcoming.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   # Keep the workflow-level trigger broad so required checks are still created,
@@ -382,7 +389,7 @@ jobs:
           git diff --exit-code -- ../stats/scramble/dist_sq2.json
 
       - name: Typecheck client
-        if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.client == 'true' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
         working-directory: core
         run: pnpm --filter @cuberoot/client typecheck
 
@@ -418,7 +425,7 @@ jobs:
   client-tests:
     name: Client tests (${{ matrix.shard }}/2)
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.client == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.client == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -505,7 +512,7 @@ jobs:
   # Capacitor/Gradle 链。Tauri 的双桌面 native backend 由独立矩阵编译。
   mobile:
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.mobile == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -660,7 +667,7 @@ jobs:
   desktop:
     name: Desktop (${{ matrix.os }})
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -714,7 +721,7 @@ jobs:
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。
   analyzer-worker:
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.analyzer == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
