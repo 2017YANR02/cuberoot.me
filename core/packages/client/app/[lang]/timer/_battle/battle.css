@@ -2224,10 +2224,15 @@ body.solo .scramble-img {
     backdrop-filter: var(--glass-filter);
   }
 
-  body[data-site-scenery] .penalty-menu,
-  body[data-site-scenery] .settings-panel,
-  body[data-site-scenery] .round-modal,
-  body[data-site-scenery] .ao-detail-panel {
+  body[data-site-scenery] .penalty-menu {
     background: var(--glass-popover-bg);
+  }
+
+  body[data-site-scenery] :is(
+    .settings-panel,
+    .round-modal,
+    .ao-detail-panel
+  ) {
+    background: var(--glass-dialog-bg);
   }
 }
