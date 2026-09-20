@@ -10,6 +10,7 @@ on:
     paths:
       - '.node-version'
       - 'core/packages/client/**'
+      - '!core/packages/client/tests/**'
       - 'core/apps/web/**'
       - 'core/packages/event-icon/**'
       - 'core/packages/puzzle-render-core/**'

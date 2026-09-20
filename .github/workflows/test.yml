@@ -54,7 +54,7 @@ on:
 
 jobs:
   # Keep the workflow-level trigger broad so required checks are still created,
-  # then skip only the expensive platform matrix when its dependency closure is untouched.
+  # then skip expensive jobs when their package dependency closure is untouched.
   changes:
     name: Detect affected jobs
     runs-on: ubuntu-latest
@@ -63,7 +63,10 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
+      client: ${{ steps.filter.outputs.client }}
+      mobile: ${{ steps.filter.outputs.mobile }}
       desktop: ${{ steps.filter.outputs.desktop }}
+      analyzer: ${{ steps.filter.outputs.analyzer }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -74,11 +77,66 @@ jobs:
             /core/package.json
           filter: blob:none
 
-      - name: Detect desktop inputs
+      - name: Detect affected inputs
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
           filters: |
+            client:
+              - '.node-version'
+              - '.github/workflows/test.yml'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/scripts/**'
+              - 'core/apps/web/**'
+              - 'core/packages/client/**'
+              - 'core/packages/event-icon/**'
+              - 'core/packages/puzzle-render-core/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+              - 'core/packages/stack-kernel/**'
+              - 'core/packages/timer-ui/**'
+              - 'core/packages/vendor-sr-puzzlegen/**'
+              - 'core/packages/visualcube/**'
+              - 'docs/platform-capability-manifest.json'
+              - 'docs/platform-unification-plan.md'
+              - '*.ps1'
+              - '.sync/**'
+              - 'scripts/upstream/**'
+              - 'ops/nginx/**'
+              - 'ops/systemd/cuberoot-drive-compression.service'
+              - '.github/workflows/backup_recon.yml'
+              - '.github/workflows/best2x2_drift.yml'
+              - '.github/workflows/deploy_core.yml'
+              - '.github/workflows/deploy_next.yml'
+              - '.github/workflows/elev_backfill.yml'
+              - '.github/workflows/icons_drift.yml'
+              - '.github/workflows/regulation_drift.yml'
+              - '.github/workflows/sq1_pbl_drift.yml'
+              - '.github/workflows/stats.yml'
+              - '.github/workflows/update_upcoming.yml'
+            mobile:
+              - '.node-version'
+              - '.github/workflows/test.yml'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/scripts/resolve-workspace-path.mjs'
+              - 'core/apps/mobile/**'
+              - 'core/packages/app-ui/**'
+              - 'core/packages/event-icon/**'
+              - 'core/packages/puzzle-render-core/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+              - 'core/packages/stack-kernel/**'
+              - 'core/packages/timer-ui/**'
+              - 'core/packages/visualcube/**'
+              - 'docs/platform-capability-manifest.json'
             desktop:
               - '.node-version'
               - '.github/workflows/test.yml'
@@ -97,8 +155,21 @@ jobs:
               - 'core/packages/stack-kernel/**'
               - 'core/packages/timer-ui/**'
               - 'core/packages/visualcube/**'
+            analyzer:
+              - '.node-version'
+              - '.github/workflows/test.yml'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/packages/client/package.json'
+              - 'core/packages/client/vitest.config.ts'
+              - 'core/packages/client/scripts/test-slow.mjs'
+              - 'core/packages/client/public/analyze-worker/**'
+              - 'core/packages/client/tests/analyzer_worker.test.ts'
+              - 'core/packages/client/tests/_analyzer_worker_runner.cjs'
 
   test:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -311,6 +382,7 @@ jobs:
           git diff --exit-code -- ../stats/scramble/dist_sq2.json
 
       - name: Typecheck client
+        if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.client == 'true' }}
         working-directory: core
         run: pnpm --filter @cuberoot/client typecheck
 
@@ -335,20 +407,105 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/miniprogram check:all
 
-      # 常规全集不和 analyzer_worker 慢测争 CPU；后者由独立 job 并行覆盖。
-      - name: Test fast suite
-        working-directory: core
-        run: pnpm --filter @cuberoot/client test
-
       # 死代码棘轮:只卡已清零的类别(unused files / deps / unlisted / binaries),
       # 不卡 unused exports/types(649/221,过度导出噪声,另行收敛)。配置见 core/knip.json。
       - name: Knip dead-code guard
         working-directory: core
         run: pnpm exec knip --include files,dependencies,unlisted,binaries --no-config-hints
 
+  # Vitest 原生按文件分片；两片并集等于原快测全集且互不重叠。
+  # cross_trainer 单独只跑一次，保持 package.json 中的串行隔离契约。
+  client-tests:
+    name: Client tests (${{ matrix.shard }}/2)
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.client == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.node-version
+            /core/
+            /solver/Cargo.toml
+            /docs/generated-artifacts.json
+            /docs/platform-capability-manifest.json
+            /docs/platform-unification-plan.md
+            /*.ps1
+            /.sync/
+            /scripts/upstream/
+            /ops/nginx/platform.cuberoot.me.conf
+            /ops/nginx/www.cuberoot.me.conf
+            /ops/systemd/cuberoot-drive-compression.service
+            /tools/cstimer-scramble/
+            /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/blddb/data/cornerManmade.json
+            /tools/blddb/data/parityManmade.json
+            /tools/blddb/data/twistsManmade.json
+            /tools/blddb/data/flipsManmade.json
+            /tools/blddb/data/ltctManmade.json
+            /tools/blddb/data/bigbld/wingManmade.json
+            /tools/blddb/data/bigbld/midgeManmade.json
+            /.codex/hooks/
+            /.codex/hooks.json
+            /.codex/banned-words.json
+            /.github/workflows/
+            /.githooks/pre-commit
+            /stats/all_past_comps.json
+            /stats/all_upcoming_comps.json
+            /stats/records/history/gender/
+            /stats/date_match_pr.json
+            /stats/tied_podium_results.json
+            /stats/complete_competition_winners.json
+            /stats/scramble/2x2_essential.json
+            /stats/scramble/puzzle_distribution.json
+            /stats/scramble/recent_scrambles.json
+            /stats/scramble/distribution.json
+          filter: blob:none
+
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+
+      - name: Check out record-statistics fixtures discovered from generators
+        shell: bash
+        run: node core/scripts/list-record-stat-fixtures.mjs | git sparse-checkout add --stdin
+
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+
+      - name: Build client dependencies
+        working-directory: core
+        run: pnpm --filter @cuberoot/client build:deps
+
+      - name: Test client shard
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/client exec vitest run --exclude tests/cross_trainer_reach.test.ts --shard=${{ matrix.shard }}/2
+
+      - name: Test cross trainer reachability
+        if: ${{ matrix.shard == 1 }}
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/client exec vitest run tests/cross_trainer_reach.test.ts
+
   # Installed App 共用 React 产品层；这里锁住共享层、Harmony Web bundle 与
   # Capacitor/Gradle 链。Tauri 的双桌面 native backend 由独立矩阵编译。
   mobile:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.mobile == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -531,6 +688,18 @@ jobs:
       - name: Select stable Rust
         run: rustup default stable
 
+      - name: Cache Rust dependencies and target
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            core/apps/desktop/src-tauri/target/
+          key: ${{ runner.os }}-desktop-cargo-${{ hashFiles('core/apps/desktop/src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-desktop-cargo-
+
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
@@ -544,6 +713,8 @@ jobs:
   # analyzer_worker 会做深度搜索并加载多份 WASM。独占 runner 可避免与 360+ 个快测文件
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。
   analyzer-worker:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.analyzer == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
