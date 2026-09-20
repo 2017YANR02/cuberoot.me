@@ -1,7 +1,7 @@
 /* ─── /why-cube — "Why learn the cube" (for kids & parents) ───
  * Editorial long-form page. Theme-token driven (auto light/dark); warm --accent
  * as the page accent. Mirrors the /regulation visual language. Cube imagery is
- * self-contained (cubing.js TwistyPlayer + inline EventIcon SVGs), no external CDN.
+ * self-contained (shared /sim cube renderer + inline EventIcon SVGs), no external CDN.
  * ───────────────────────────────────────────────────────────── */
 
 .wc-page {

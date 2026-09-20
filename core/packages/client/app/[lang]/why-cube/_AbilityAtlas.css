@@ -1,4 +1,4 @@
-/* Six-ability map: a real DOM composition around an inline VisualCube SVG. */
+/* Six-ability map: a real DOM composition around the shared /sim cube. */
 
 .wc-atlas {
   position: relative;
@@ -74,7 +74,7 @@
   justify-content: center;
   filter: drop-shadow(0 20px 24px color-mix(in srgb, var(--foreground) 16%, transparent));
 }
-.wc-atlas-cube .puzzle-art { max-width: 100%; }
+.wc-atlas-cube .alg-sim-player { padding: 0; }
 
 .wc-atlas-core-copy {
   position: relative;

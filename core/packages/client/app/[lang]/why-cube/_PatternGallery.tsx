@@ -4,9 +4,9 @@
 // only when scrolled into view). Tap a pattern name and the solved cube turns
 // into that pattern (plays the setup alg); drag to rotate.
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import TwistySection from '@/components/TwistySection';
+import AlgPlayer from '@/components/AlgPlayer/AlgPlayer';
 import { useInView } from './_hooks';
 import { useT } from '../../../hooks/useT';
 import { PATTERNS } from './_cube-util';
@@ -17,27 +17,6 @@ export default function PatternGallery() {
   const t = useT();
   const [sel, setSel] = useState(0);
   const [ref, inView] = useInView<HTMLDivElement>({ rootMargin: '250px' });
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const playerRef = useRef<any>(null);
-
-  // Play solved → pattern whenever the selection changes (once mounted/in view).
-  useEffect(() => {
-    if (!inView) return;
-    let tries = 0;
-    const id = window.setInterval(() => {
-      const p = playerRef.current;
-      tries += 1;
-      if (p && typeof p.play === 'function') {
-        try { p.background = 'none'; } catch { /* */ }
-        try { p.timestamp = 0; } catch { /* */ }
-        try { p.play(); } catch { /* */ }
-        window.clearInterval(id);
-      } else if (tries > 30) {
-        window.clearInterval(id);
-      }
-    }, 200);
-    return () => window.clearInterval(id);
-  }, [sel, inView]);
 
   const Name = ({ i, children }: { i: number; children: ReactNode }) => (
     <button
@@ -52,12 +31,16 @@ export default function PatternGallery() {
     <div className="wc-gallery" ref={ref}>
       <div className="wc-gallery-stage">
         {inView ? (
-          <TwistySection
-            puzzle="3x3x3"
-            scramble=""
+          <AlgPlayer
+            puzzle="3x3"
+            set=""
+            engine="sim"
             alg={PATTERNS[sel].setup}
-            playerRef={playerRef}
-            settings={{ scale: 52, viewAngle: 50, viewGradient: 32, speed: 62, hint: false }}
+            startSolved
+            autoPlay
+            playRequest={sel}
+            moveDurationMs={300}
+            size={280}
           />
         ) : (
           <div className="wc-cube-loading" aria-hidden style={{ minHeight: 260 }} />
