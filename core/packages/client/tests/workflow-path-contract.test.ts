@@ -479,6 +479,21 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('builds the shared package before generating upcoming competition data', () => {
+    const workflow = readWorkflow('update_upcoming.yml');
+    const sharedBuild = workflow.indexOf('pnpm --filter @cuberoot/shared build');
+    const upcomingRefresh = workflow.indexOf(
+      'npx tsx src/bin/fetch_upcoming_comps.ts --refresh',
+    );
+    const namesRefresh = workflow.indexOf(
+      'npx tsx src/bin/fetch_comp_names_zh.ts --refresh',
+    );
+
+    expect(sharedBuild).toBeGreaterThan(-1);
+    expect(upcomingRefresh).toBeGreaterThan(sharedBuild);
+    expect(namesRefresh).toBeGreaterThan(sharedBuild);
+  });
+
   it('fails workspace resolution before publishing an empty workflow output', () => {
     const expectedResolverCalls = {
       'backup_recon.yml': 1,
