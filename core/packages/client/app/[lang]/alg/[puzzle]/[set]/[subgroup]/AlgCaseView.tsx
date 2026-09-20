@@ -45,6 +45,7 @@ import {
   CASE_VIEW_ANGLES,
   caseViewAlg,
   caseViewSetup,
+  canonicalF2lPlayerSequence,
   displayCaseScramble,
   displayCaseAlg,
   displayCaseAlgHtml,
@@ -540,12 +541,20 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
             {editor && <div hidden={effectiveViewAngle !== 'default'}>{editor.algorithms}</div>}
             {(!editor || effectiveViewAngle !== 'default') && displayedOrientations.map(({ oriAlgs, oi }) => {
               const orientedSetup = oriAdjustSetup(caseObj.setup, oi);
-              const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);
               const requestedAlgIdx = selectedAlgByOri[oi] ?? 0;
               const selectedAlgIdx = requestedAlgIdx < oriAlgs.length ? requestedAlgIdx : 0;
               const candidateEntry = oriAlgs[selectedAlgIdx];
               const selectedEntry = candidateEntry && !caseAlgIssue(candidateEntry)
                 ? candidateEntry : oriAlgs.find(entry => !caseAlgIssue(entry));
+              const selectedAlg = caseViewAlg(selectedEntry?.alg ?? '', effectiveViewAngle);
+              const primaryAlg = caseViewAlg(oriAlgs[0]?.alg ?? '', effectiveViewAngle);
+              const canonicalPrimary = canonicalF2lPlayerSequence(primaryAlg);
+              const playerAlg = useF2lOrientationGrid
+                ? canonicalF2lPlayerSequence(selectedAlg).alg
+                : selectedAlg;
+              const orientationSetup = useF2lOrientationGrid
+                ? canonicalPrimary.setup
+                : caseViewSetup(orientedSetup, effectiveViewAngle);
               const playRequest = playRequestByOri[oi] ?? 0;
               const rows = oriAlgs.map((entry, i) => {
                 // setup 必须跟着朝向走 —— 四个槽共用一条原始 setup 时,FL/BL/BR 演的是别的 case
@@ -573,7 +582,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                     {selectedEntry && (
                       <div className="alg-case-detail-ori-player alg-player-list-player">
                         <AlgPlayer
-                          alg={caseViewAlg(selectedEntry.alg, effectiveViewAngle)}
+                          alg={playerAlg}
                           puzzle={puzzle}
                           set={set}
                           setup={orientationSetup}
