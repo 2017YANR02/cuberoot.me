@@ -1,5 +1,8 @@
 import type { TimerSettingFieldId } from '@cuberoot/shared/timer';
-import { TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS } from '@cuberoot/timer-ui';
+import {
+  TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+  TIMER_SMART_CUBE_SETTING_FIELD_IDS,
+} from '@cuberoot/timer-ui';
 
 /**
  * Current Mobile settings effects, not visual/device parity claims. These
@@ -15,6 +18,7 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.timer.hide-running-time',
   'settings.timer.running-precision',
   'settings.timer.result-precision',
+  ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   'settings.training.stage-splits',
   'settings.training.bld-memo-split',
   'settings.scramble.optimal',

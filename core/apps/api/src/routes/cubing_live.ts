@@ -478,7 +478,7 @@ const ROUND_NAME: Record<string, string> = {
  *  - 现有 results 的空 sr/ar 用 wca_results_flat 当前 MIN 推断填充
  *  - 附加 currentRecords 快照供 client 给 WS 实时推送的成绩做同款推断
  *  女子历史缓存 1 小时,选手性别缓存 24 小时。 */
-async function enrichRecordTags(data: CompData): Promise<void> {
+export async function enrichRecordTags(data: CompData): Promise<void> {
   // 比赛日:用来判定「上游 tag 已被本场之前的纪录证伪」(refutesTag).拿不到就不动上游 tag.
   const compDate = ymd((await getCompDates(data.slug)).start);
   const fwr = data.type === 'WCA'

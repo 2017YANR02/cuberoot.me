@@ -10,6 +10,7 @@ import {
 import {
   TimerAttemptSplitSettings,
   TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
+  TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   TIMER_TIMING_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
@@ -22,6 +23,7 @@ describe('Mobile timer settings parity ledger', () => {
   it('records all real shared effects and no unverified device parity', () => {
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).toEqual([
       ...TIMER_TIMING_SETTING_FIELD_IDS,
+      ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
       'settings.training.stage-splits',
       'settings.training.bld-memo-split',
       'settings.scramble.optimal',
@@ -33,10 +35,10 @@ describe('Mobile timer settings parity ledger', () => {
   });
 
   it('locks the canonical category gap counts so a new Web field fails here', () => {
-    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(64);
+    expect(TIMER_SETTING_FIELD_IDS).toHaveLength(66);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category).length
-    ))).toEqual([8, 5, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 7, 5, 9, 11, 6, 15, 5]);
 
     const parity = new Set<string>(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
@@ -45,12 +47,13 @@ describe('Mobile timer settings parity ledger', () => {
         && field.visibility !== 'development-only'
         && !parity.has(field.id)
       )).length
-    ))).toEqual([8, 4, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 6, 5, 9, 11, 6, 15, 5]);
   });
 
   it('renders the shared settings UI and keeps its runtime effects wired', () => {
     const app = readFileSync('src/App.tsx', 'utf8');
     expect(app).toContain('<TimerTimingSettingsSections');
+    expect(app).toContain('<TimerSmartCubeSettingsFields');
     expect(app).toContain('<TimerAttemptSplitSettings');
     expect(app).toContain('<TimerAttemptSplitStatus');
     expect(app).not.toContain('<TimerScrambleClickActionSetting');
