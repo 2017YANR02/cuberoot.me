@@ -13,6 +13,7 @@ import type { SupportedLanguage } from './copy';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import type { GanV4CubeStatus } from './smart-cube/gan-v4-cube';
 import type { Moyu32CubeStatus } from './smart-cube/moyu32-cube';
+import type { QiyiCubeStatus } from './smart-cube/qiyi-cube';
 
 export interface InstalledAppAuth {
   busy: boolean;
@@ -24,9 +25,18 @@ export interface InstalledAppAuth {
   session: WebSession | null;
 }
 
+export interface InstalledSmartCubeMoveMetadata {
+  futureHistory?: boolean;
+}
+
 export interface InstalledAppSmartCubeOptions {
   language: SupportedLanguage;
-  onMove(move: string, timestamp: number, facelets: string): void;
+  onMove(
+    move: string,
+    timestamp: number,
+    facelets: string,
+    metadata?: InstalledSmartCubeMoveMetadata,
+  ): void;
   onSolved?(timestamp: number): void;
   onGyro?(quaternion: GyroQuaternion, timestamp: number, velocity?: GyroVelocity): void;
 }
@@ -41,7 +51,7 @@ export interface InstalledAppSmartCube {
   phase: 'idle' | 'requesting' | 'connecting' | 'connected' | 'error';
   /** Optional for older host/test adapters; the shared smart-cube adapter supplies these. */
   quaternion?: GyroQuaternion | null;
-  status?: GanV4CubeStatus | Moyu32CubeStatus | null;
+  status?: GanV4CubeStatus | Moyu32CubeStatus | QiyiCubeStatus | null;
   solved?: boolean;
   resetState?(): void;
   requestState?(): Promise<void>;

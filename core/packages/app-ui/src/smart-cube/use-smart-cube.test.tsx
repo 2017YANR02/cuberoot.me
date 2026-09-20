@@ -3,21 +3,22 @@
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import { GAN_V4_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gan-v4';
 import { MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
+import { QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
 import { act, useEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { InstalledAppSmartCube } from '../platform';
+import type { InstalledAppSmartCube, InstalledSmartCubeMoveMetadata } from '../platform';
 import type { BleTransport } from './transport';
 import { useInstalledSmartCube } from './use-smart-cube';
 
 const state = vi.hoisted(() => ({
   onMove: vi.fn(), onSolved: vi.fn(), requestState: vi.fn(),
   connect: vi.fn<() => Promise<void>>(), disconnect: vi.fn<() => Promise<void>>(),
-  connectionKind: '' as '' | 'gan-v4' | 'moyu32',
+  connectionKind: '' as '' | 'gan-v4' | 'moyu32' | 'qiyi',
   callbacks: null as null | {
     onDisconnect(): void;
-    onMove(move: string, timestamp: number): void;
+    onMove(move: string, timestamp: number, metadata?: InstalledSmartCubeMoveMetadata): void;
     onProtocolError(): void;
     onState(facelets: string): void;
   },
@@ -44,6 +45,23 @@ vi.mock('./moyu32-cube', () => ({
   Moyu32CubeConnection: class {
     constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
       state.connectionKind = 'moyu32';
+      state.callbacks = callbacks;
+    }
+
+    async connect() {
+      await state.connect();
+      state.callbacks?.onState(SOLVED_3X3);
+    }
+
+    async disconnect() { await state.disconnect(); }
+    async requestState() { state.requestState(); }
+  },
+}));
+
+vi.mock('./qiyi-cube', () => ({
+  QiyiCubeConnection: class {
+    constructor(_transport: BleTransport, callbacks: NonNullable<typeof state.callbacks>) {
+      state.connectionKind = 'qiyi';
       state.callbacks = callbacks;
     }
 
@@ -128,9 +146,28 @@ describe('useInstalledSmartCube', () => {
     expect(cube.model).toBe('moyu32');
     expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
       namePrefix: 'GAN',
-      namePrefixes: ['GAN', 'WCU_MY3'],
-      services: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID]),
-      optionalServices: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID]),
+      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      services: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
+      optionalServices: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
+    }));
+  });
+
+  it('opens the native service picker for QiYi and exposes its protocol model', async () => {
+    await act(async () => { await cube.disconnect(); });
+    transport.getServices = vi.fn(async () => []);
+    vi.mocked(transport.requestDevice).mockResolvedValueOnce({
+      id: 'CC:A3:00:00:A1:B2',
+      name: 'XMD-TornadoV4-i-1-A1B2',
+    });
+
+    await act(async () => { await cube.connect(); });
+
+    expect(state.connectionKind).toBe('qiyi');
+    expect(cube.model).toBe('qiyi');
+    expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
+      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      services: expect.arrayContaining([QIYI_SERVICE_UUID]),
+      optionalServices: expect.arrayContaining([QIYI_SERVICE_UUID]),
     }));
   });
 
@@ -175,6 +212,16 @@ describe('useInstalledSmartCube', () => {
     expect(state.onMove).toHaveBeenLastCalledWith("R'", expect.any(Number), SOLVED_3X3);
     expect(state.onSolved).toHaveBeenCalledOnce();
     expect(state.onMove.mock.invocationCallOrder.at(-1)).toBeLessThan(state.onSolved.mock.invocationCallOrder[0]);
+  });
+
+  it('forwards future-history metadata with the tracked facelets', async () => {
+    await act(async () => state.callbacks?.onMove("R'", 251, { futureHistory: true }));
+    expect(state.onMove).toHaveBeenLastCalledWith(
+      "R'",
+      expect.any(Number),
+      SOLVED_3X3,
+      { futureHistory: true },
+    );
   });
 
   it('explicit physical-solved reset is not a solve completion and uses the same state model', async () => {
