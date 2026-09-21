@@ -8,12 +8,15 @@
 
 ```powershell
 pnpm --filter @cuberoot/miniprogram dev
+pnpm --filter @cuberoot/miniprogram dev:douyin
 pnpm --filter @cuberoot/miniprogram check:all
 ```
 
 微信开发者工具导入本目录并读取 `dist/`；抖音开发者工具直接导入 `dist-douyin/`。`check:all` 只跑一次类型检查和测试，再构建两个目标；单独检查抖音时运行 `check:douyin`。
 抖音构建后可打开 `.tmp/wx-to-tt-log/__wxToTT/report/index.html` 查看官方转换器的逐文件报告；它包含本机路径并且每次可重建，因此不提交生成页。
-构建会先验证本机项目配置和全部源码 JSON，并在 `.tmp` 生成完整候选产物后再替换 `dist/`；配置或编译失败时保留上一份可用产物和小程序身份。
+`dev` 监听微信，`dev:douyin` 复用同一套监听、合并连续变更和串行重建机制；分别在需要时运行，不要对同一个目标同时启动多个构建进程。
+构建会先验证本机项目配置和全部源码 JSON，并在 `.tmp` 生成完整候选产物；配置、编译或转换失败时保留上一份可用产物和小程序身份。微信仍整体替换 `dist/`；抖音在原 `dist-douyin/` 内更新变动文件、清理过期产物，不再重命名开发工具打开的项目根目录，未变文件不重写。普通构建和监听构建均适用，无需因项目根目录占用而关闭工具。
+抖音逐文件同步不是多文件原子事务，开发工具若在更新期间编译可在完成后重新编译；个别文件被独占或磁盘错误仍会明确报错并保留候选目录，排除错误后重新构建。监听进程继续等待下次修改，不会把失败报告成成功。
 跨包源码依赖由 esbuild 的实际解析图统一驱动构建指纹和开发监听；新增 `@cuberoot/shared` 子路径后不需要维护额外文件清单。
 
 首次构建可分别用 `WECHAT_MINI_APP_ID` 和 `DOUYIN_MINI_APP_ID` 生成并保留被忽略的本机项目配置。微信 `release:check` 只接受 CubeRoot 官方身份；抖音尚未做上传闸门，`check:douyin` 只证明工程产物可生成。

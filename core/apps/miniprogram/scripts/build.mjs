@@ -47,7 +47,6 @@ const douyinUnsupportedAppConfigKeys = [
   'themeLocation',
 ];
 const watch = process.argv.includes('--watch');
-if (watch && douyin) throw new Error('抖音构建暂不支持 watch，请运行 build:douyin。');
 
 function watchExactFiles(files, onChange) {
   const filenamesByDirectory = new Map();
@@ -128,8 +127,10 @@ async function buildProject() {
     format: 'iife',
     logLevel: 'info',
     metafile: true,
-    minifySyntax: !watch,
-    minifyWhitespace: !watch,
+    // Douyin's converter and output guard must not see dead WeChat branches
+    // or platform examples in comments, including in watch builds.
+    minifySyntax: !watch || douyin,
+    minifyWhitespace: !watch || douyin,
     // Only local identifiers: WXML handlers, data keys and native API properties stay intact.
     minifyIdentifiers: !watch,
     outbase: sourceRoot,
@@ -153,6 +154,7 @@ async function buildProject() {
     stagedPath: stagingRoot,
     targetPath: outputRoot,
     backupPath: backupRoot,
+    preserveRoot: douyin,
   });
   if (!douyin) {
     await writeBuildState(packageRoot, {
