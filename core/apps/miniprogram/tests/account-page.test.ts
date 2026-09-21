@@ -376,6 +376,7 @@ describe('mini program account page', () => {
   } = {}) {
     let storedSession: unknown = null;
     const ticket = 'p'.repeat(43);
+    const getStorageInfoSync = vi.fn(() => ({ keys: storedSession === null ? [] : ['cuberoot:session'] }));
     const getStorageSync = vi.fn(() => storedSession);
     const setStorageSync = vi.fn((_key: string, value: unknown) => { storedSession = value; });
     const navigateTo = vi.fn((options: { complete?(): void }) => options.complete?.());
@@ -392,9 +393,9 @@ describe('mini program account page', () => {
       } else throw new Error(`Unexpected request: ${options.url}`);
     });
     const login = vi.fn((options: { success(result: { code: string }): void }) => options.success({ code: 'douyin-proof' }));
-    const page = await loadPage({ getStorageSync, setStorageSync, removeStorageSync: vi.fn(), login, request, navigateTo, showShareMenu: vi.fn() }, 'douyin');
+    const page = await loadPage({ getStorageInfoSync, getStorageSync, setStorageSync, removeStorageSync: vi.fn(), login, request, navigateTo, showShareMenu: vi.fn() }, 'douyin');
     page.onLoad(); page.toggleAgreement(); await page.loginWithMiniProgram();
-    return { page, request, login, getStorageSync, setStorageSync, navigateTo, ticket };
+    return { page, request, login, getStorageInfoSync, getStorageSync, setStorageSync, navigateTo, ticket };
   }
 
   it('keeps unknown Douyin identity in memory and creates only after the explicit choice', async () => {
@@ -499,10 +500,10 @@ describe('mini program account page', () => {
 
   it('does not persist a pending completion when the original empty session becomes unreadable', async () => {
     let complete!: (response: unknown) => void;
-    const { page, getStorageSync, setStorageSync } = await douyinChoiceFixture({ complete: (options) => { complete = options.success; } });
+    const { page, getStorageInfoSync, setStorageSync } = await douyinChoiceFixture({ complete: (options) => { complete = options.success; } });
     const pending = page.createAccount();
     expect(page.data.loginBusy).toBe(true);
-    getStorageSync.mockImplementation(() => { throw new Error('storage unavailable'); });
+    getStorageInfoSync.mockImplementation(() => { throw new Error('storage unavailable'); });
     complete({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 42, name: 'Late', wcaId: null, avatar: '' }, isNew: true } });
     await pending;
     expect(setStorageSync).not.toHaveBeenCalled();
@@ -667,6 +668,7 @@ describe('mini program account page', () => {
       });
     });
     const page = await loadPage({
+      getStorageInfoSync: () => ({ keys: [] }),
       getStorageSync: () => null,
       login,
       removeStorageSync: vi.fn(),

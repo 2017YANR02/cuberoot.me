@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "80f501c990092abcc8cb7f6870a9d05b79aa92f78762eb3bc78b54468c2f40b8", "reason": "复核角色测试与指定用户查看流程：新增超级管理员从用户管理页填写理由，在独立标签页建立 30 分钟只读会话；原管理员标签页不变，服务端在业务路由前拦截并审计所有非只读请求，且继续隔离凭据、身份绑定、OAuth 与管理员密钥。本次实现仅在本地，尚未部署。"}
+{"fingerprint": "6ba94efc412fc7d758530fbc6c05a53daa5c116d92e49b9e9e550958b316ab68", "reason": "复核抖音启动与网页会话同步：直接使用宿主 tt，不依赖 globalThis；先通过存储键列表确认会话确实不存在，再允许游客访问公开页面。已有会话仍校验并换取短期票据，存储读取和损坏会话清理失败仍阻断网页，不绕过账号保护。已补充双语流程；登录、绑定、合并及管理员只读会话契约不变。仅本地实现，模拟器与真机验收及发布另行确认。"}
 */
 
 import type { ReactNode } from 'react';
@@ -56,6 +56,12 @@ export default function AuthFlowPage() {
       <details className="auth-map-current"><summary>{t('其他平台：鸿蒙、Windows、macOS、抖音小程序', 'Other platforms: HarmonyOS, Windows, macOS, Douyin Mini Program')}</summary>
         <p>{t('HarmonyOS NEXT、Windows、macOS 共用 App 产品层和网站账号流程，只替换系统浏览器、深链与安全存储适配；每个平台的真实回跳仍须单独验收。', 'HarmonyOS NEXT, Windows, and macOS share the App product layer and website account flow, with platform browser, deep-link, and secure-storage adapters. Each platform still needs its own real handoff tests.')}</p>
         <p>{t('抖音小程序：已绑定身份直接登录；未知身份先选择绑定旧号或明确创建。绑定旧号时，先在网站原账号的登录方式页生成短期「绑定码」，回小程序输入并核对目标账号，再确认绑定。绑定码不是合并码，不会搬迁两个账号的数据。此增量须部署并发布新版小程序后才生效。', 'Douyin Mini Program: linked identities sign in directly; unknown identities choose existing-account linking or explicit creation. Generate a short-lived link code in the existing website account’s sign-in settings, enter it in the Mini Program, check the target account, and confirm. A link code is not a merge code and does not migrate two accounts. This change requires deployment and a new Mini Program release.')}</p>
+        <Steps items={[
+          t('抖音启动 → 使用宿主注入的 tt API，读取本地存储键列表；不依赖浏览器 globalThis', 'Douyin startup → use the host-injected tt API and read the local storage key inventory; browser globalThis is not required'),
+          t('确认没有会话键 → 按游客打开公开页面；已有会话 → 校验后通过短期票据同步网站登录态', 'Confirmed missing session key → open public pages as a guest; existing session → validate it and synchronize website sign-in through a short-lived ticket'),
+          t('存储不可读、损坏会话无法清理或登录同步失败 → 停止打开网页并允许重试，不冒充游客继续', 'Unreadable storage, failed cleanup of a malformed session, or sign-in synchronization failure → stop opening the web page and allow retry, without silently continuing as a guest'),
+        ]} />
+        <p className="auth-map-note">{t('上述抖音启动兼容修复仅在本地实现；模拟器与真机验收、上传和发布分别确认。', 'The Douyin startup compatibility fix above is implemented locally; simulator and physical-device acceptance, upload, and release must be confirmed separately.')}</p>
       </details>
     </section>
 

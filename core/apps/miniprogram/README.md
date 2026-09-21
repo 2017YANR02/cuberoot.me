@@ -17,6 +17,9 @@ pnpm --filter @cuberoot/miniprogram check:all
 跨包源码依赖由 esbuild 的实际解析图统一驱动构建指纹和开发监听；新增 `@cuberoot/shared` 子路径后不需要维护额外文件清单。
 
 首次构建可分别用 `WECHAT_MINI_APP_ID` 和 `DOUYIN_MINI_APP_ID` 生成并保留被忽略的本机项目配置。微信 `release:check` 只接受 CubeRoot 官方身份；抖音尚未做上传闸门，`check:douyin` 只证明工程产物可生成。
+抖音导入正式项目后，也要将正式 AppID 写入被忽略的 `project.douyin.config.json`；仅在开发工具修改 `dist-douyin/project.config.json` 会被下次构建覆盖。
+抖音底栏图标由 `scripts/build-tab-icons.mjs` 复用 Lucide 静态图标和现有主题色，生成本地 PNG 与许可证，微信底栏配置不变；不要手改生成图。平台 API 使用宿主直接注入的 `tt` / `wx`，不假设小程序提供浏览器 `globalThis`。
+抖音读取不存在的存储键会抛错（[官方 getStorageSync 文档](https://developer.open-douyin.com/docs/resource/zh-CN/mini-app/develop/api/data-caching/tt-get-storage-sync)）；会话读取先确认键是否存在，只有明确不存在才按游客处理，真实存储故障仍阻止网页账号同步。
 
 ## 单一来源
 
