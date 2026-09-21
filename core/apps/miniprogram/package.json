@@ -16,6 +16,7 @@
     "check:all": "pnpm verify && node scripts/build.mjs && node scripts/build.mjs --target=douyin",
     "check:douyin": "pnpm verify && node scripts/build.mjs --target=douyin",
     "dev": "node scripts/build.mjs --watch",
+    "dev:douyin": "node scripts/build.mjs --target=douyin --watch",
     "release:check": "pnpm verify && node scripts/build.mjs && node scripts/release-check.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
