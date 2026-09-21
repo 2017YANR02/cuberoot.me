@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "1377977073eb12ceb59bd3c7fa2a3171d1916778bf8621712777917f45583498", "reason": "复核角色测试会话：数据库 expires_at 与测试 JWT 统一为 30 分钟，迁移同时收敛旧的无限会话；已新增中英文角色测试流程节点并保留凭据、OAuth 与管理员密钥隔离说明。本次修正仅在本地，尚未部署。"}
+{"fingerprint": "80f501c990092abcc8cb7f6870a9d05b79aa92f78762eb3bc78b54468c2f40b8", "reason": "复核角色测试与指定用户查看流程：新增超级管理员从用户管理页填写理由，在独立标签页建立 30 分钟只读会话；原管理员标签页不变，服务端在业务路由前拦截并审计所有非只读请求，且继续隔离凭据、身份绑定、OAuth 与管理员密钥。本次实现仅在本地，尚未部署。"}
 */
 
 import type { ReactNode } from 'react';
@@ -41,7 +41,7 @@ export default function AuthFlowPage() {
         <AppLink href="#linking" prefetch={false}>{t('绑定 / 解绑', 'Link / unlink')}</AppLink>
         <AppLink href="#merge" prefetch={false}>{t('合并账号', 'Merge accounts')}</AppLink>
         <AppLink href="#exit" prefetch={false}>{t('退出 / 注销', 'Sign out / delete')}</AppLink>
-        <AppLink href="#role-preview" prefetch={false}>{t('角色测试', 'Role testing')}</AppLink>
+        <AppLink href="#role-preview" prefetch={false}>{t('角色测试 / 用户查看', 'Role testing / user viewing')}</AppLink>
       </nav>
     </header>
 
@@ -73,12 +73,12 @@ export default function AuthFlowPage() {
     </aside>
 
     <section id="role-preview" className="auth-map-section">
-      <div className="auth-map-section-heading"><h2>{t('超级管理员角色测试', 'Superadministrator role testing')}</h2><span className="auth-map-status">{t('本地修正，尚未部署', 'Fixed locally, not deployed')}</span></div>
+      <div className="auth-map-section-heading"><h2>{t('超级管理员角色测试与指定用户查看', 'Superadministrator role testing and specific-user viewing')}</h2><span className="auth-map-status">{t('本地实现，尚未部署', 'Implemented locally, not deployed')}</span></div>
       <Steps items={[
-        t('超级管理员选择预设角色 → 服务端创建与真实账号隔离的测试身份', 'A superadministrator selects a preset role → the server creates a test identity isolated from the real account'),
-        t('数据库测试会话与测试 JWT 同时限制为 30 分钟；旧的无限会话按创建时间收敛到同一期限', 'The database test session and test JWT are both limited to 30 minutes; legacy unlimited sessions are capped from their creation time'),
-        t('测试身份不能签发凭据、绑定身份、更改认证信息、授权 OAuth 或使用管理员密钥绕过；写请求记录操作者、方法和路径', 'The test identity cannot mint credentials, link identities, change authentication, authorize OAuth, or bypass checks with an admin key; writes record the actor, method, and path'),
-        t('主动结束或任一层到期 → 测试令牌失效；回到真实身份后再继续管理操作', 'Explicit exit or expiry at either layer → the test token stops working; return to the real identity before continuing administration'),
+        t('角色测试：超级管理员选择预设角色 → 服务端创建与真实账号隔离的测试身份；允许验证该角色的正常写入，写请求记录实际操作者、方法和路径', 'Role testing: a superadministrator selects a preset role → the server creates a test identity isolated from the real account; ordinary writes for that role remain testable and record the real actor, method, and path'),
+        t('指定用户查看：超级管理员从用户管理页选择具体账号并填写理由 → 在新标签页建立该账号的只读会话，原管理员标签页不变', 'Specific-user viewing: a superadministrator selects an account in user administration and enters a reason → a read-only session opens in a new tab while the original administrator tab stays unchanged'),
+        t('两类数据库会话与 JWT 都限制为 30 分钟；指定用户查看中的所有非只读请求由服务端先拦截并记录，不执行正文、账号或业务数据写入', 'Both database sessions and JWTs are limited to 30 minutes; during specific-user viewing the server blocks and records every non-read-only request before it can change account or business data'),
+        t('两类会话都不能签发凭据、绑定身份、更改认证信息、授权 OAuth 或使用管理员密钥绕过；主动结束或任一层到期后令牌立即失效', 'Neither session can mint credentials, link identities, change authentication, authorize OAuth, or bypass checks with an admin key; explicit exit or expiry at either layer immediately invalidates the token'),
       ]} />
     </section>
 
