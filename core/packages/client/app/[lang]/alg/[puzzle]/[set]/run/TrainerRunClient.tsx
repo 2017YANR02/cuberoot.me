@@ -7,7 +7,7 @@ import Link from '@/components/AppLink';
 import { useParams, useRouter } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Settings, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Copy, Check, QrCode, RotateCcw, X } from 'lucide-react';
 import { ALG_CATALOG, getAlgSetMeta, type AlgCase } from '@cuberoot/shared/alg';
 import { loadTrainingAlg as loadAlg } from '@/lib/alg_case_alignment';
 import {
@@ -16,7 +16,6 @@ import {
 } from '@/lib/trainer-store';
 import TimerFontPicker from '@/components/TimerFontPicker';
 import { useSpaceHoldTimer } from '@/hooks/useSpaceHoldTimer';
-import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { GestureWheel, useGestureWheel } from '@cuberoot/timer-ui';
 import { useCopy } from '@/hooks/useCopy';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
@@ -70,6 +69,7 @@ import '@/app/[lang]/alg/_trainer/memory.css';
 import '@/app/[lang]/alg/alg.css';
 import { tr } from '@/i18n/tr';
 import { Spinner } from '@/components/Spinner/Spinner';
+import { SettingsPopover } from '@/components/TrainingSettings';
 
 /** 顶层只区分动作训练与间隔记忆;训练内部再选覆盖或随机抽题。 */
 const PRIMARY_MODES: Array<{ id: 'train' | 'memo'; zh: string; en: string }> = [
@@ -790,24 +790,12 @@ export default function TrainerRunClient() {
     void joinRoom(code).then(r => { if (r.ok) { setJoinCode(''); void setRoomParam(code.toUpperCase()); } });
   }, [joinRoom, roomBusy, setRoomParam]);
 
-  // 齿轮设置弹出面板(训练选项全收在里面),点外部关闭。
-  // 监听 pointerdown 而非 mousedown:stage 手势层在 pointerdown 里 preventDefault,
-  // 会抑制后续的兼容性 mousedown —— 挂 mousedown 的话点 stage 空白永远关不上。
-  const optsRef = useRef<HTMLDivElement | null>(null);
-  const optsPanelRef = useRef<HTMLDivElement | null>(null);
+  // 齿轮设置弹出面板(训练选项全收在里面)，打开状态仍供常驻计时监听读取；
+  // 外部点击、Escape 和视口钳制统一由 SettingsPopover 处理。
   const [optsOpen, setOptsOpen] = useState(false);
   // 空白按压处理器(下方)是常驻监听、不随 optsOpen 重订阅 —— 用 ref 让它读到当次最新值。
   const optsOpenRef = useRef(false);
   optsOpenRef.current = optsOpen;
-  usePanelClamp(optsOpen, optsPanelRef);
-  useEffect(() => {
-    if (!optsOpen) return;
-    const handler = (e: PointerEvent) => {
-      if (optsRef.current && !optsRef.current.contains(e.target as Node)) setOptsOpen(false);
-    };
-    document.addEventListener('pointerdown', handler);
-    return () => document.removeEventListener('pointerdown', handler);
-  }, [optsOpen]);
   // 房间模式题面由服务端队列领取,本机 selected 可空(经邀请链接进来的新设备)—— 不算「未选」。
   const stageMounted = !!(puzzle && meta) && !isMemo && !splitActive
     && !(pool.length === 0 && cases.length > 0 && !room);
@@ -1339,31 +1327,31 @@ export default function TrainerRunClient() {
         </span>
         {/* 训练选项全收进齿轮弹出面板,齿轮居中吸在页面正上方
             (data-no-timer:面板空白不触发按压计时) */}
-        <div className="trainer-opts trainer-opts--top" data-no-timer ref={optsRef}>
-          {/* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
-              合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */}
-          <div className="trainer-top-actions">
-            {!isMix && printableCases.length > 0 && (
-              <AlgPdfButton
-                build={buildPdfSheet}
-                title={tr({ zh: '下载可打印的训练打乱', en: 'Download printable training scrambles' })}
-              />
-            )}
-            <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
-              {tr({ zh: '进度', en: 'Progress' })}
-            </Link>
-          </div>
-          <button
-            type="button"
-            className="trainer-opts-gear"
-            onClick={() => setOptsOpen(o => !o)}
-            aria-expanded={optsOpen}
-            aria-label={tr({ zh: '训练设置', en: 'Trainer settings' })}
-          >
-            <Settings size={22} />
-          </button>
-          {/* 复习进度贴在齿轮右侧(absolute 脱流:齿轮仍精确居中,面板锚点不受影响) */}
-          {recapShown && recapCur && !splitActive && (
+        <SettingsPopover
+          label={tr({ zh: '训练设置', en: 'Trainer settings' })}
+          className="trainer-opts trainer-opts--top"
+          triggerClassName="trainer-opts-gear"
+          panelClassName="trainer-opts-panel"
+          iconSize={22}
+          open={optsOpen}
+          onOpenChange={setOptsOpen}
+          ignoreTimer
+          triggerPrefix={(
+            /* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
+               合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */
+            <div className="trainer-top-actions">
+              {!isMix && printableCases.length > 0 && (
+                <AlgPdfButton
+                  build={buildPdfSheet}
+                  title={tr({ zh: '下载可打印的训练打乱', en: 'Download printable training scrambles' })}
+                />
+              )}
+              <Link href="/alg/progress" className="trainer-progress-link" prefetch={false}>
+                {tr({ zh: '进度', en: 'Progress' })}
+              </Link>
+            </div>
+          )}
+          triggerSuffix={recapShown && recapCur && !splitActive ? (
             <span className="trainer-recap-progress">
               {/* 分轮次的范围(LSLL 已收录:302 条一轮、494 轮)把「第几轮」摆在进度前面 */}
               {roundLabel && roundNumber && totalRounds && virtual?.scopeForRound ? (
@@ -1397,9 +1385,8 @@ export default function TrainerRunClient() {
               ) : null}
               {recapCompleted}/{recapCur.total}
             </span>
-          )}
-          {optsOpen && (
-            <div className="trainer-opts-panel" ref={optsPanelRef}>
+          ) : undefined}
+        >
               {/* 虚拟集的打乱 / 公式是现算的 —— 这话得摆在设置面板最上面,别让人以为是收录的公式 */}
               {virtual && <div className="trainer-opts-hint">{tr(virtual.note)}</div>}
               {/* 公式集与打乱类型共用一行,空间不足时由 trainer-opts-row 自然换行。一起练的成员
@@ -1891,9 +1878,7 @@ export default function TrainerRunClient() {
                       en: 'Keys 1 shaky and 2 mastered mark the “Previous” case',
                     })}
               </div>
-            </div>
-          )}
-        </div>
+        </SettingsPopover>
       </div>
 
       {isMemo ? (

@@ -39,7 +39,6 @@ import {
 } from '@/lib/alg_thumb_plan';
 import AlgCard from '@/components/AlgCard';
 import CommunityAlgs from '@/components/CommunityAlgs';
-import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
 import AdminCaseEditor, { type AdminEditorState } from '@/components/AdminCaseEditor';
 import type { AlgInvalidMark } from '@/components/AlgEditor';
 import ValidationReportModal from '@/components/ValidationReportModal';
@@ -1271,6 +1270,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
             showCaseNumbers={showCaseNumbers}
             onShowCaseNumbersChange={setShowCaseNumbers}
             showViewMode={!collection?.cardsOnly}
+            {...(isZh && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && canChooseNotationStyle
+              ? {
+                  notationStyle,
+                  onNotationStyleChange: (value: AlgNotationStyle) => void setNotationStyle(value),
+                }
+              : {})}
           />
         )}
         {puzzleParam === 'fto' && (
@@ -1295,18 +1300,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
           </>
         )}
         {isZh && data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && canChooseNotationStyle && (
-          <>
-            <AlgNotationStyleSelect
-              value={notationStyle}
-              onChange={value => void setNotationStyle(value)}
-            />
-            {displayedNotationStyle !== 'standard' && (
-              <Link href="/notation" prefetch={false} className="alg-back">
-                <HelpCircle size={15} aria-hidden="true" />
-                {tr({ zh: '记号说明', en: 'Notation guide' })}
-              </Link>
-            )}
-          </>
+          displayedNotationStyle !== 'standard' && (
+            <Link href="/notation" prefetch={false} className="alg-back">
+              <HelpCircle size={15} aria-hidden="true" />
+              {tr({ zh: '记号说明', en: 'Notation guide' })}
+            </Link>
+          )
         )}
         {/* 标签筛选只在公式内联时有意义(只看图时没公式可筛) */}
         {data && !showSubgroupPicker && !showSubSubgroupPicker && effectiveView === 'full' && availableTags.length > 0 && (

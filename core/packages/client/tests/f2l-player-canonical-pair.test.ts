@@ -24,6 +24,7 @@ describe('F2L detail player canonical pair', () => {
     const solved = new Cube(3);
     const solvedState = solved.serialize();
     solved.dispose();
+    const setupStates = new Set<string>();
 
     for (const alg of A_PLUS_PRIMARY_ALGS) {
       const sequence = f2lPlayerSequence(alg);
@@ -33,6 +34,7 @@ describe('F2L detail player canonical pair', () => {
       cube.twister.setup(sequence.setup);
 
       const state = cube.serialize();
+      setupStates.add(state);
       const mask = cube.serializeStickering(f2lMask!);
       const pairColors = TOP_LAYER_STICKERS
         .filter(index => mask[index] === FM_REGULAR)
@@ -48,6 +50,8 @@ describe('F2L detail player canonical pair', () => {
       expect(restored.serialize(), `${alg} should solve its own setup`).toBe(solvedState);
       restored.dispose();
     }
+
+    expect(setupStates.size, 'FR / FL / BR / BL must remain four distinct slot states').toBe(4);
   });
 
   it('moves the FL holding rotation to the beginning of the scramble', () => {
