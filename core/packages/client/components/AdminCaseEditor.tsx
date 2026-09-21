@@ -525,11 +525,11 @@ export default function AdminCaseEditor({ puzzle, setSlug, state, initialInvalid
               formatInitialHtml={html => displayCaseAlgHtml(puzzle, setSlug, html)}
               caseContext={children ? { puzzle, set: setSlug, caseObj: initial, sq1NotationMode } : undefined}
               renderBeforeAdd={children ? oi => oi === 0 ? algorithmsAfter : null : undefined}
-              renderOrientation={children ? (rows, oi, firstAlg) => {
+              renderOrientation={children ? (rows, oi, firstEntry) => {
                 const selected = oriPreviews[oi] ?? initial.algs[oi]?.[0];
                 const derivesOrientationSetup = initial.algs.length > 1;
                 const orientationSetup = derivesOrientationSetup
-                  ? invertAlg(firstAlg)
+                  ? invertAlg(firstEntry?.alg ?? '')
                   : setup === initialSetupText
                     ? (selected?.setup ?? commonCaseSetup(puzzle, setSlug, initial, oi))
                     : oriAdjustSetup(setup, oi);

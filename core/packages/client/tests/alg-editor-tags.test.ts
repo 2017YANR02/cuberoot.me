@@ -61,6 +61,21 @@ describe('formula tag editor with the shared menu and fixed tags', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it('keeps presentation formatting out of semantic previews', async () => {
+    const source: AlgEntry = { alg: "F' L F L' y'", tags: ['oh'] };
+    let preview: AlgEntry | undefined;
+    await act(async () => root.render(createElement(AlgEditor, {
+      initialValue: [[source]],
+      formatInitialAlg: alg => alg.replace(/ y'$/, ''),
+      renderOrientation: (rows, _oi, firstEntry) => {
+        preview = firstEntry;
+        return rows;
+      },
+    })));
+    expect(host.querySelector('code')?.textContent).toBe("F' L F L'");
+    expect(preview).toEqual(source);
+  });
+
   it('draws the L and R hand marks inside the one-handed icon', async () => {
     await act(async () => root.render(createElement('div', null,
       createElement(AlgTagLabel, { tag: 'oh', label: 'Left OH', hand: 'left' }),
