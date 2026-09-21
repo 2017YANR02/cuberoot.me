@@ -395,13 +395,13 @@ describe('deployment workflow path contracts', () => {
   it('bounds Next transfers and reuses live bytes without modifying the live release', () => {
     const transfer = readStepRun('deploy_next.yml', 'rsync standalone + systemd unit');
     const step = readStepLines('deploy_next.yml', 'rsync standalone + systemd unit').lines.join('\n');
-    expect(step).toContain('timeout-minutes: 14');
+    expect(step).toContain('timeout-minutes: 19');
     expect(transfer).toContain('for i in 1 2; do');
     expect(transfer).toContain('timeout --kill-after=15s 300s rsync -az --checksum');
     expect(transfer).toContain("split -t '\\0' -n r/8");
     expect(transfer).toContain('--from0 --files-from="$1"');
     expect(transfer).toContain('xargs -0 -n 1 -P 8');
-    expect(transfer).toContain('timeout --kill-after=15s 120s rsync -az --checksum --delete-delay');
+    expect(transfer).toContain('timeout --kill-after=15s 360s rsync -az --checksum --delete-delay');
     expect(transfer.indexOf('xargs -0 -n 1 -P 8')).toBeLessThan(transfer.indexOf('--delete-delay'));
     expect(transfer).toContain('--partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next');
     expect(transfer).toContain(':/www/wwwroot/toolkit-next.new/');
