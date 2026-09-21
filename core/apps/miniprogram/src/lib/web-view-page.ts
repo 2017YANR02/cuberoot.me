@@ -13,7 +13,7 @@ import {
   WEB_ROUTE_SHARE_IMAGE,
   type WebRouteKey,
 } from './web-routes';
-import { showFriendShareMenu } from './share';
+import { hidePublicShareMenu, showFriendShareMenu } from './share';
 import {
   clearRuntimeTimeout,
   scheduleRuntimeTimeout,
@@ -216,9 +216,7 @@ function updateShareMenu(key: unknown): void {
       showFriendShareMenu();
       return;
     }
-    miniProgramApi().hideShareMenu({
-      menus: isDouyinMiniProgram() ? ['shareAppMessage'] : ['shareAppMessage', 'shareTimeline'],
-    });
+    hidePublicShareMenu();
   } catch {
     // Sharing is optional; route loading must survive unsupported menu APIs.
   }

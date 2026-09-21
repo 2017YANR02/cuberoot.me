@@ -3,14 +3,15 @@ import { runInNewContext } from 'node:vm';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 type Target = 'wechat' | 'douyin';
-type Runtime = typeof import('../src/lib/platform') & typeof import('../src/lib/auth');
+type Runtime = typeof import('../src/lib/platform') & typeof import('../src/lib/auth')
+  & typeof import('../src/lib/share');
 const bundles = {} as Record<Target, string>;
 
 beforeAll(async () => {
   for (const target of ['wechat', 'douyin'] as const) {
     const result = await build({
       stdin: {
-        contents: "export * from './src/lib/platform'; export * from './src/lib/auth';",
+        contents: "export * from './src/lib/platform'; export * from './src/lib/auth'; export * from './src/lib/share';",
         resolveDir: process.cwd(),
         loader: 'ts',
       },
@@ -42,6 +43,38 @@ describe('bundled native Mini Program runtime without globalThis', () => {
   it.each(['wechat', 'douyin'] as const)('does not borrow the other platform API for %s', (target) => {
     expect(() => load(target, { [target === 'douyin' ? 'wx' : 'tt']: {} }).miniProgramApi())
       .toThrow(`${target} Mini Program API unavailable`);
+  });
+
+  it.each(['wechat', 'douyin'] as const)('uses native share menu names in the %s bundle', (target) => {
+    const showShareMenu = vi.fn();
+    const hideShareMenu = vi.fn();
+    const runtime = load(target, { [target === 'douyin' ? 'tt' : 'wx']: { showShareMenu, hideShareMenu } });
+
+    runtime.showFriendShareMenu();
+    runtime.showPublicShareMenu();
+    runtime.hidePublicShareMenu();
+
+    expect(showShareMenu).toHaveBeenNthCalledWith(1, {
+      menus: target === 'douyin' ? ['share'] : ['shareAppMessage'],
+    });
+    expect(showShareMenu).toHaveBeenNthCalledWith(2, {
+      menus: target === 'douyin' ? ['share'] : ['shareAppMessage', 'shareTimeline'],
+    });
+    expect(hideShareMenu).toHaveBeenCalledWith({
+      menus: target === 'douyin' ? ['share'] : ['shareAppMessage', 'shareTimeline'],
+    });
+  });
+
+  it.each(['wechat', 'douyin'] as const)('survives missing or throwing optional share APIs on %s', (target) => {
+    for (const native of [undefined, {}, {
+      showShareMenu() { throw new Error('unavailable'); },
+      hideShareMenu() { throw new Error('unavailable'); },
+    }]) {
+      const runtime = load(target, { [target === 'douyin' ? 'tt' : 'wx']: native });
+      expect(() => runtime.showFriendShareMenu()).not.toThrow();
+      expect(() => runtime.showPublicShareMenu()).not.toThrow();
+      expect(() => runtime.hidePublicShareMenu()).not.toThrow();
+    }
   });
 
   it('treats an absent Douyin session key as signed out without reading or deleting it', () => {
