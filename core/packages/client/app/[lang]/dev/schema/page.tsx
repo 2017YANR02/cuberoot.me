@@ -62,7 +62,7 @@ const TABLES: Table[] = [
   { name: 'deskpet_catalog', domain: 'community', origin: '0235', purpose: { zh: '桌宠名称、开放状态与排序配置', en: 'Pet names, visibility and ordering' }, cols: [{ name: 'id' }, { name: 'revision' }, { name: 'entries', note: { zh: '按稳定 ID 排列的展示配置', en: 'Presentation overrides ordered by stable ID' } }] },
   { name: 'home_card_locks', domain: 'community', origin: '0221', purpose: { zh: '管理员设置的首页卡片锁定覆盖值', en: 'Administrator overrides for homepage card locks' }, cols: [{ name: 'item_id' }, { name: 'locked' }] },
   { name: 'role_preview_profiles', domain: 'account', origin: '0217', purpose: { zh: '超级管理员专用的独立角色测试身份', en: 'Separate role-test identities for superadministrators' } },
-  { name: 'role_preview_sessions', domain: 'account', origin: '0217', purpose: { zh: '可撤销的短效角色测试会话与实际操作者', en: 'Revocable short-lived test sessions and their real actors' } },
+  { name: 'role_preview_sessions', domain: 'account', origin: '0217', evolved: [245], purpose: { zh: '可撤销的 30 分钟角色测试会话与实际操作者', en: 'Revocable 30-minute role-test sessions and their real actors' } },
   { name: 'role_preview_events', domain: 'account', origin: '0217', purpose: { zh: '角色测试写入请求审计，不记录正文或凭据', en: 'Role-test mutation audit without bodies or credentials' } },
   // ── WCA mirror ──────────────────────────────────────────
   { name: 'wca_results_flat', domain: 'mirror', origin: '0042', evolved: [7, 42], purpose: { zh: '扁平化的全量成绩(每把一行),站内绝大多数 WCA 查询的主表', en: 'Flattened all-time results (one row per solve) — the main WCA query table' } },
@@ -782,6 +782,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 242, slug: 'alg_submission_tags', desc: { zh: '为用户投稿公式增加单手、脚拧、最少步、高阶和键盘标签。', en: 'Add one-handed, feet, FMC, big-cube, and keyboard tags to user-submitted algorithms.' } },
   { n: 243, slug: 'auth_code_delivery', desc: { zh: '验证码发送状态；旧码兼容，邮箱成功发送后才可验证。', en: 'Verification delivery state; preserve old codes and activate email codes only after acceptance.' } },
   { n: 244, slug: 'platform_lesson_covers', desc: { zh: '课时修订可关联独立视频封面，支持上传图片或从视频截取画面。', en: 'Let lesson revisions reference a dedicated video cover uploaded directly or captured from a video frame.' } },
+  { n: 245, slug: 'role_preview_expiry', desc: { zh: '把旧的无限角色测试会话收敛为创建后 30 分钟到期。', en: 'Cap legacy unlimited role-test sessions at 30 minutes after creation.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

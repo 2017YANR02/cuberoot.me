@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "aeafd8f1ea953375416c38bed0ef036ed74720f1f454ee4a951112cd8d9a4c7c", "reason": "复核课程课时未登录流程：锁定课时的登录按钮现在携带课程兑换页作为返回目的地，登录成功后进入兑换页，兑换成功后再直接进入视频页；已同步公开页面与账号操作的中英文流程节点。本次 CI 修复仅在本地，尚未推送。"}
+{"fingerprint": "1377977073eb12ceb59bd3c7fa2a3171d1916778bf8621712777917f45583498", "reason": "复核角色测试会话：数据库 expires_at 与测试 JWT 统一为 30 分钟，迁移同时收敛旧的无限会话；已新增中英文角色测试流程节点并保留凭据、OAuth 与管理员密钥隔离说明。本次修正仅在本地，尚未部署。"}
 */
 
 import type { ReactNode } from 'react';
@@ -41,6 +41,7 @@ export default function AuthFlowPage() {
         <AppLink href="#linking" prefetch={false}>{t('绑定 / 解绑', 'Link / unlink')}</AppLink>
         <AppLink href="#merge" prefetch={false}>{t('合并账号', 'Merge accounts')}</AppLink>
         <AppLink href="#exit" prefetch={false}>{t('退出 / 注销', 'Sign out / delete')}</AppLink>
+        <AppLink href="#role-preview" prefetch={false}>{t('角色测试', 'Role testing')}</AppLink>
       </nav>
     </header>
 
@@ -70,6 +71,16 @@ export default function AuthFlowPage() {
       ]} />
       <p>{t('首页隐藏卡片只影响入口展示，不限制直接访问网址。', 'Hiding a homepage card affects its visibility, not direct URL access.')}</p>
     </aside>
+
+    <section id="role-preview" className="auth-map-section">
+      <div className="auth-map-section-heading"><h2>{t('超级管理员角色测试', 'Superadministrator role testing')}</h2><span className="auth-map-status">{t('本地修正，尚未部署', 'Fixed locally, not deployed')}</span></div>
+      <Steps items={[
+        t('超级管理员选择预设角色 → 服务端创建与真实账号隔离的测试身份', 'A superadministrator selects a preset role → the server creates a test identity isolated from the real account'),
+        t('数据库测试会话与测试 JWT 同时限制为 30 分钟；旧的无限会话按创建时间收敛到同一期限', 'The database test session and test JWT are both limited to 30 minutes; legacy unlimited sessions are capped from their creation time'),
+        t('测试身份不能签发凭据、绑定身份、更改认证信息、授权 OAuth 或使用管理员密钥绕过；写请求记录操作者、方法和路径', 'The test identity cannot mint credentials, link identities, change authentication, authorize OAuth, or bypass checks with an admin key; writes record the actor, method, and path'),
+        t('主动结束或任一层到期 → 测试令牌失效；回到真实身份后再继续管理操作', 'Explicit exit or expiry at either layer → the test token stops working; return to the real identity before continuing administration'),
+      ]} />
+    </section>
 
     <section id="signin" className="auth-map-section" aria-labelledby="signin-title">
       <div className="auth-map-section-heading"><h2 id="signin-title">{t('登录与注册：网站和 App 共用', 'Sign-in and registration: shared by website and App')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现 · 可用入口以服务端配置为准', 'Implemented in source · availability depends on server configuration')}</span></div>
