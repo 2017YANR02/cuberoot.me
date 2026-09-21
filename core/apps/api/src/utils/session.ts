@@ -15,15 +15,25 @@ import jwt from 'jsonwebtoken';
 import { sql } from '../db/connection.js';
 import { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 
-export async function isRolePreviewActive(id: string, uid: number): Promise<boolean> {
-  if (typeof id !== 'string' || !Number.isSafeInteger(uid) || uid <= 0) return false;
+export type RolePreviewSessionRole = 'admin' | 'member' | 'user' | 'user-complete' | 'guest' | 'impersonation';
+
+export async function getActiveRolePreview(
+  id: string,
+  uid: number,
+): Promise<{ role: RolePreviewSessionRole } | null> {
+  if (typeof id !== 'string' || !Number.isSafeInteger(uid) || uid <= 0) return null;
   const [session] = await sql`
-    SELECT s.id FROM role_preview_sessions s JOIN app_users actor ON actor.id = s.actor_user_id
-    JOIN role_preview_profiles p ON p.actor_user_id = s.actor_user_id AND p.role = s.role AND p.user_id = s.user_id
+    SELECT s.role FROM role_preview_sessions s JOIN app_users actor ON actor.id = s.actor_user_id
+    LEFT JOIN role_preview_profiles p ON p.actor_user_id = s.actor_user_id AND p.role = s.role AND p.user_id = s.user_id
     WHERE s.id::text = ${id} AND s.user_id = ${uid}
       AND s.ended_at IS NULL AND s.expires_at > NOW()
+      AND (s.role = 'impersonation' OR p.user_id IS NOT NULL)
       AND actor.wca_id = ANY(${[...ADMIN_WCA_IDS]}::text[])`;
-  return !!session;
+  return session ? { role: session.role as RolePreviewSessionRole } : null;
+}
+
+export async function isRolePreviewActive(id: string, uid: number): Promise<boolean> {
+  return !!await getActiveRolePreview(id, uid);
 }
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';

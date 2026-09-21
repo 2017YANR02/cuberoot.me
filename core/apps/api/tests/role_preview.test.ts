@@ -35,7 +35,7 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
       forum_banned BOOLEAN DEFAULT FALSE
     ); CREATE TABLE forum_posts (author_id TEXT, created_at TIMESTAMPTZ);
     CREATE FUNCTION trg_set_updated_at() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN NEW.updated_at = NOW(); RETURN NEW; END $$;`);
-    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview', '0218_drive_compressions', '0233_role_preview_complete_profile', '0245_role_preview_expiry']) {
+    for (const migration of ['0184_drive', '0189_drive_shares', '0216_drive_member_folders', '0217_role_preview', '0218_drive_compressions', '0233_role_preview_complete_profile', '0245_role_preview_expiry', '0246_user_impersonation']) {
       await sql.unsafe(await readFile(new URL(`../migrations/${migration}.sql`, import.meta.url), 'utf8'));
     }
     await sql`INSERT INTO app_users (display_name, wca_id, is_admin)
@@ -64,6 +64,31 @@ describe.skipIf(process.env.DRIVE_TEST_PG !== '1')('role preview (PostgreSQL)', 
     });
     expect((await request(adminToken, '/auth/role-preview', 'POST', { role: 'admin' })).status).toBe(403);
     expect((await request(rootToken, '/auth/role-preview', 'POST', { role: 'superadmin' })).status).toBe(400);
+    expect((await request(adminToken, '/auth/admin/users/1/impersonation', 'POST', { reason: 'Support investigation' })).status).toBe(403);
+    expect((await request(rootToken, '/auth/admin/users/2/impersonation', 'POST', { reason: 'no' })).status).toBe(400);
+    expect((await request(rootToken, '/auth/admin/users/1/impersonation', 'POST', { reason: 'Support investigation' })).status).toBe(400);
+    const impersonationResponse = await request(rootToken, '/auth/admin/users/2/impersonation', 'POST', { reason: 'Support investigation' });
+    expect(impersonationResponse.status).toBe(200);
+    const impersonation = await impersonationResponse.json();
+    expect(impersonation).toMatchObject({ role: 'impersonation', user: { uid: 2, name: 'Admin', isAdmin: true } });
+    const impersonationToken = jwt.decode(impersonation.token) as jwt.JwtPayload;
+    expect(impersonationToken.exp! - impersonationToken.iat!).toBe(1800);
+    const [impersonationSession] = await sql`SELECT actor_user_id::int, user_id::int, role, reason,
+      EXTRACT(EPOCH FROM (expires_at - created_at))::int AS ttl_seconds
+      FROM role_preview_sessions WHERE id = ${impersonation.id}`;
+    expect(impersonationSession).toEqual({
+      actor_user_id: 1, user_id: 2, role: 'impersonation', reason: 'Support investigation', ttl_seconds: 1800,
+    });
+    expect((await request(impersonation.token, '/auth/me')).status).toBe(200);
+    expect((await request(impersonation.token, '/drive')).status).toBe(200);
+    const [{ count: foldersBefore }] = await sql`SELECT COUNT(*)::int AS count FROM drive_nodes WHERE kind = 'folder'`;
+    expect((await request(impersonation.token, '/drive/folders', 'POST', { name: 'Must not exist' })).status).toBe(403);
+    const [{ count: foldersAfter }] = await sql`SELECT COUNT(*)::int AS count FROM drive_nodes WHERE kind = 'folder'`;
+    expect(foldersAfter).toBe(foldersBefore);
+    const [blockedWrite] = await sql`SELECT method, path FROM role_preview_events WHERE session_id = ${impersonation.id}`;
+    expect(blockedWrite).toEqual({ method: 'POST', path: '/v1/drive/folders' });
+    expect((await request(rootToken, `/auth/role-preview/${impersonation.id}`, 'DELETE')).status).toBe(200);
+    expect((await request(impersonation.token, '/auth/me')).status).toBe(401);
     const ordinaryIds: number[] = [];
     for (const role of ['admin', 'member', 'user', 'user-complete', 'guest']) {
       const response = await request(rootToken, '/auth/role-preview', 'POST', { role });

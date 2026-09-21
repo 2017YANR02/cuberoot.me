@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama } from 'lucide-react';
+import { Megaphone, Sparkles, UserCog, Laptop, Globe, Drama, X } from 'lucide-react';
 import { ensureFreshToken, refreshSessionUser, canTestRoles, getRolePreview, startRolePreview, endRolePreview, useAuthUser, isAdmin, type TestRole } from '@/lib/auth-store';
 import AppLink from './AppLink';
 import { openPageNoticeEditor, pageKeyFromPathname } from '@/lib/page-notices-api';
@@ -127,6 +127,10 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
   const admin = ready && !!user && isAdmin();
   const roleTesting = ready && (!!preview || (!!user && canTestRoles()));
   if (!ready || (!admin && !roleTesting)) return null;
+  const impersonatedName = preview?.role === 'impersonation'
+    ? preview.user?.name || t('未命名用户', 'Unnamed user')
+    : '';
+  const testRole = preview?.role === 'impersonation' ? undefined : preview?.role;
   const environment = adminEnvironment(window.location.hostname, navigator);
   const local = environment.current === 'local';
   const environmentLabel = local ? t('切换到线上', 'Switch to live') : t('切换到本地', 'Switch to local');
@@ -184,6 +188,9 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
       .admin-tools[data-expanded="true"] .admin-tools-group > *{opacity:1;visibility:visible;transform:none;pointer-events:auto;
         transition:opacity 220ms ease 100ms,transform 420ms cubic-bezier(.22,1,.36,1),visibility 0s;}
       .admin-tools-actions .compact-select{min-width:0;width:fit-content;}
+      .admin-tool-impersonation{display:inline-flex;align-items:center;gap:6px;max-width:min(240px,calc(100vw - 150px));
+        color:var(--foreground);font-size:.78rem;white-space:nowrap;}
+      .admin-tool-impersonation span{overflow:hidden;text-overflow:ellipsis;}
       @media(prefers-reduced-motion:reduce){.admin-tools-surface,.admin-tools-group > *{transition:none;}}
     `}</style>
     <span aria-hidden="true" className="admin-tools-surface"
@@ -211,18 +218,27 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
         title={t('管理后台', 'Administration')} aria-label={t('管理后台', 'Administration')}>
         <UserCog size={13} aria-hidden />
       </AppLink>}
-    {roleTesting &&
+    {roleTesting && preview?.role === 'impersonation' ? <>
+      <span className="admin-tool-impersonation" title={t('当前是只读查看会话', 'This is a read-only viewing session')}>
+        <Drama size={17} aria-hidden />
+        <span>{t(`正以 ${impersonatedName}（UID ${preview.user?.uid}）只读查看`, `Viewing as ${impersonatedName} (UID ${preview.user?.uid}), read-only`)}</span>
+      </span>
+      <button type="button" className="admin-tool-action" disabled={busy} onClick={() => void run()}
+        title={t('结束查看', 'End viewing')} aria-label={t('结束查看', 'End viewing')}>
+        <X size={17} aria-hidden />
+      </button>
+    </> : roleTesting &&
       <CompactSelect
         variant="plain"
         openOnHover
         dismissOnMouseLeave
         popupClassName="admin-tools-role-popup"
-        label={preview ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{preview.role === 'user' ? t('普通用户', 'User') : items.find(item => item.value === preview.role)?.label}</span> : <Drama size={17} aria-hidden />}
+        label={testRole ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Drama size={17} aria-hidden />{testRole === 'user' ? t('普通用户', 'User') : items.find(item => item.value === testRole)?.label}</span> : <Drama size={17} aria-hidden />}
         ariaLabel={busy ? t('正在切换…', 'Switching…') : t('选择测试角色', 'Choose test role')}
         title={busy ? t('正在切换…', 'Switching…') : t('角色测试', 'Test role')}
-        value={preview?.role ?? 'superadmin'}
+        value={testRole ?? 'superadmin'}
         items={items.map(item => ({ ...item, disabled: busy }))}
-        onChange={role => { if (role !== (preview?.role ?? 'superadmin')) void run(role === 'superadmin' ? undefined : role); }}
+        onChange={role => { if (role !== (testRole ?? 'superadmin')) void run(role === 'superadmin' ? undefined : role); }}
       />
     }
     {error && <span role="alert">{t('切换失败，请重试。', 'Switch failed. Please retry.')}</span>}

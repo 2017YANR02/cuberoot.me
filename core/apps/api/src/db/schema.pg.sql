@@ -651,10 +651,16 @@ CREATE TABLE role_preview_sessions (
   id UUID PRIMARY KEY,
   actor_user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user', 'user-complete', 'guest')),
+  role TEXT NOT NULL CHECK (role IN ('admin', 'member', 'user', 'user-complete', 'guest', 'impersonation')),
+  reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMPTZ NOT NULL,
-  ended_at TIMESTAMPTZ
+  ended_at TIMESTAMPTZ,
+  CHECK (
+    (role = 'impersonation' AND user_id IS NOT NULL AND reason IS NOT NULL
+      AND CHAR_LENGTH(BTRIM(reason)) BETWEEN 5 AND 200)
+    OR (role <> 'impersonation' AND reason IS NULL)
+  )
 );
 CREATE TABLE role_preview_events (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

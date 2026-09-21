@@ -32,11 +32,35 @@ const g = globalThis as unknown as { window?: unknown; localStorage?: FakeLS };
 g.window = { addEventListener() {} };
 g.localStorage = makeLocalStorage(1_000_000);
 
-const { applySession, ensureFreshToken, persistAuthItem, useAuthStore, getSessionToken, getWcaToken, startRolePreview, endRolePreview } = await import('@/lib/auth-store');
+const { applySession, ensureFreshToken, persistAuthItem, useAuthStore, getSessionToken, getWcaToken, startRolePreview, startUserImpersonation, endRolePreview } = await import('@/lib/auth-store');
 
 function setLS(ls: FakeLS) { g.localStorage = ls; }
 
 describe('role preview identity isolation', () => {
+  it('stores a real-user viewing session only in the target tab', async () => {
+    const ls = makeLocalStorage(10000);
+    setLS(ls);
+    ls.setItem('cuberoot_jwt', 'real-token');
+    const targetSession = makeLocalStorage(10000);
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        id: 'view-session', role: 'impersonation', token: 'view-token',
+        user: { uid: 42, wcaId: null, name: 'Viewed user', avatar: '', avatarSource: 'auto', avatarPreset: null, isAdmin: false },
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      await startUserImpersonation(42, 'Support investigation', { sessionStorage: targetSession as Storage });
+      expect(JSON.parse(targetSession.getItem('cuberoot_role_preview')!)).toMatchObject({
+        id: 'view-session', role: 'impersonation', token: 'view-token', user: { uid: 42, name: 'Viewed user' },
+      });
+      expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'POST' });
+      expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe('Bearer real-token');
+      expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ reason: 'Support investigation' });
+    } finally { vi.unstubAllGlobals(); }
+  });
+
   it.each(['success', 'revoke-failure', 'start-failure'] as const)('switches roles with the real credential: %s', async outcome => {
     const ls = makeLocalStorage(10000);
     setLS(ls);

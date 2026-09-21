@@ -62,7 +62,8 @@ const STATE_KEY = 'wca_oauth_state';
 const RETURN_URL_KEY = 'wca_return_url';
 const PREVIEW_KEY = 'cuberoot_role_preview';
 export type TestRole = 'admin' | 'member' | 'user' | 'user-complete' | 'guest';
-interface RolePreview { id: string; role: TestRole; token: string; user: WcaUser | null }
+export type PreviewRole = TestRole | 'impersonation';
+export interface RolePreview { id: string; role: PreviewRole; token: string; user: WcaUser | null }
 
 export function getRolePreview(): RolePreview | null {
   if (typeof window === 'undefined') return null;
@@ -96,6 +97,40 @@ export async function startRolePreview(role: TestRole): Promise<void> {
   syncPageSessionCookie(preview.token);
   // Reload clears queries, open files and owner-scoped state from the previous identity.
   window.location.reload();
+}
+
+export async function startUserImpersonation(
+  userId: number,
+  reason: string,
+  targetWindow: Pick<Window, 'sessionStorage'>,
+): Promise<void> {
+  const normalizedReason = reason.trim();
+  if (!Number.isSafeInteger(userId) || userId <= 0) throw new Error('Invalid user id.');
+  if (normalizedReason.length < 5 || normalizedReason.length > 200) throw new Error('Invalid viewing reason.');
+  const response = await fetch(apiUrl(`/v1/auth/admin/users/${userId}/impersonation`), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${localStorage.getItem(JWT_KEY) || ''}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reason: normalizedReason }),
+  });
+  if (!response.ok) throw new Error('Could not start user viewing session.');
+  const result = await response.json();
+  const user = result.user ? decodeWebSessionUserEnvelope({ user: result.user })?.user : null;
+  if (typeof result.id !== 'string' || result.role !== 'impersonation' || typeof result.token !== 'string'
+    || !user || !Number.isSafeInteger(user.uid)) throw new Error('Invalid user viewing response.');
+  const preview: RolePreview = {
+    id: result.id,
+    role: 'impersonation',
+    token: result.token,
+    user: { ...user, wcaId: user.wcaId ?? '', country: '' },
+  };
+  try {
+    targetWindow.sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(preview));
+  } catch {
+    await revokeRolePreview(preview.id).catch(() => undefined);
+    throw new Error('Could not store user viewing session.');
+  }
+  // Deliberately do not change the page-session cookie: cookies are shared by tabs.
+  // The child tab reads this tab-scoped session before making authenticated API calls.
 }
 
 async function revokeRolePreview(id: string): Promise<void> {

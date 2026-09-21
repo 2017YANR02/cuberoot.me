@@ -1396,6 +1396,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
   providerCounts.set('wca', Number(summary?.wca_users ?? 0));
   return c.json({
     canManageAdmins: isAdminWcaId(actor.wcaId),
+    canImpersonateUsers: isAdminWcaId(actor.wcaId),
     summary: {
       totalUsers: Number(summary?.total_users ?? 0),
       registeredToday: Number(summary?.registered_today ?? 0),
