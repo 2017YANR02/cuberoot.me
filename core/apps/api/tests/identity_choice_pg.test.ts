@@ -428,8 +428,8 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
       FROM auth_identity_pending WHERE provider_uid = ${f.providerUid}`;
     expect(row.attempts).toBe(5);
     expect(row.expired).toBe(true);
-    await expect(previewIdentityLinkCode(f.ticket, f.linkCode)).rejects.toThrow('wrong or expired');
-    expect((await completeIdentityChoice(f.ticket, 'create')).isNew).toBe(true);
+    await expect(previewIdentityLinkCode(f.ticket, f.linkCode)).rejects.toThrow('identity ticket');
+    await expect(completeIdentityChoice(f.ticket, 'create')).rejects.toThrow('identity ticket');
   });
 
   it('code linkage is scoped to Douyin and cannot accept merge codes or a changed target', async () => {
