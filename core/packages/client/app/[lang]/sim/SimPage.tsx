@@ -2004,7 +2004,7 @@ export default function SimPage() {
       imgSpec.stickerMask, imgSpec.maskColor, imgPuzzle.puzzleType,
       // 伴图外观跟 3D 走同一份设置(见上面 exportSimSvgSchematic 的注释);trans 预设
       // 已经叠在 renderSettings 里,所以这里跟着它走而不是原始 settings。
-      renderSettings.coreColor, renderSettings.coreOpacity,
+      renderSettings.coreColor, renderSettings.coreOpacity, renderSettings.coreStyle,
       renderSettings.stickerOpacity, renderSettings.stickerGap,
       // plan companion 透视投影随这些旋钮变(specToCubeOptions 单一源):dist(透视)、
       // 旋转、背景。net/BSP 不用,但一并列入无害(只多一次同结果重算)。
@@ -2016,7 +2016,7 @@ export default function SimPage() {
       imgSpec.hideGreySides, imgSpec.stageMask, imgSpec.maskAlg,
       imgSpec.planSideRule, imgSpec.planUpRule, imgSpec.planShowYellow,
       imgSpec.planForceShow, imgSpec.planForceHide,
-      settings.faceColors, settings.pictureBaseColors, settings.pictureFaces, stickeringMaskFor]);
+      settings.faceColors, settings.ghostFaceColors, settings.pictureBaseColors, settings.pictureFaces, stickeringMaskFor]);
 
   // 2D flat-net view mode — NxN only (number puzzle), driven by the same live cube.
   const netMode = !roomsActive && settings.viewMode === 'net' && typeof puzzleParam === 'number';

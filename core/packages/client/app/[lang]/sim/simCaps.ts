@@ -38,6 +38,8 @@ export interface SimPuzzleCaps {
    *  场景的设置(视角 / 透视 / 立体贴片 / 镂空 / 内核色 / 挖块 / 半转停住 …)对它一律无效,
    *  由 `resolveCaps` 统一压成 false,不要在控件处单点判断拼图名。 */
   flat?: boolean;
+  /** Engine implements six home-face colors via setFaceColors (NxN is implicit). */
+  faceColors?: boolean;
   /** The debug "carve" toggle hides one move's moving group to reveal the core; which
    *  element the puzzle turns sets the label:
    *  - `corner` 挖角 — corner-turn puzzles + ivy (Ivy / Dino / Redi / Rex / Skewb / Pyraminx)
@@ -84,7 +86,7 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   pyraminx: { engine: 'engineMode', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
   fto: { engine: 'engineMode', carve: 'face' },
-  ghost: { engine: 'always', carve: 'face' },
+  ghost: { engine: 'always', carve: 'face', faceColors: true },
   // Mirror Cube — NxN engine (uniform logic, non-uniform geometry), order 3 / order 2.
   // Like NxN it has no single moving group to lift off, so no carve. Studio renders it
   // as a cube of the matching order.
@@ -108,7 +110,7 @@ export function puzzleCaps(kind: SimPuzzle): SimPuzzleCaps {
  *  apply paths, NOT guessed:
  *   - in-house engine (SettingDrawer.applySettings, runs only when a `world` exists):
  *     drives sensitivity / perspective / face-label常显 / lockView / 立体贴片 / 镂空 /
- *     半转停 / 结构着色 / 内核色, plus NxN-InstancedRenderer-only 面色 / logo / 箭头.
+ *     半转停 / 结构着色 / 内核色, plus opt-in 面色 and NxN-only logo / 箭头.
  *   - cubing.js TwistyPlayer (components/TwistySection, world-less): honors only
  *     scale / yaw / pitch / speed / 提示贴片(hint) / 小窗(backView) / 锁定大小位置(lockView)
  *     / 方位字母常显(FaceOverlay, skewb/pyraminx/megaminx only) — the rest no-op.
@@ -116,8 +118,8 @@ export function puzzleCaps(kind: SimPuzzle): SimPuzzleCaps {
  *     拖空白(twisty honors 'rotate') / 锁定大小位置(both wire a lockView guard into their
  *     zoom handlers), so those are never disabled here.
  *  So everything below keys off `engineActive`, except 锁定大小位置(both paths honor it),
- *  方位字母(engine via faceHints OR cubing.js FaceOverlay puzzles), and 面色/logo which need
- *  the NxN InstancedRenderer specifically. */
+ *  方位字母(engine via faceHints OR cubing.js FaceOverlay puzzles), opt-in 面色,
+ *  and logo which needs the NxN InstancedRenderer specifically. */
 export interface ControlSupport {
   sensitivity: boolean;
   perspective: boolean;
@@ -229,9 +231,8 @@ export function resolveCaps(kind: SimPuzzle, renderer: SimRenderer): ResolvedCap
       coreOpacity: true,
       // 贴纸不透明度 / 黑边: NxN InstancedRenderer 独有(含镜面 —— 它就是 order-3/2)。
       coreFinish: isNxN || isMirror,
-      // 面色: only the NxN InstancedRenderer (and Mirror, which IS the NxN engine) re-applies
-      // face colors live; other engine-body puzzles bake their sticker colors at construction.
-      faceColors: isNxN || isMirror,
+      // 面色: NxN/Mirror plus engines explicitly supporting live home-face palettes.
+      faceColors: isNxN || isMirror || (engineActive && c.faceColors === true),
       // 顶面 U 中心 logo: NxN InstancedRenderer 特性 —— 含三阶镜面(它是 order-3 NxN
       // 引擎,走同一条 cube.setLogo() 路径)。偶数阶(含二阶镜面)没有 U 面正中心块,
       // setLogo 本就是空操作 → 直接灰掉。其它 engine-body 拼图无中心贴片不支持。

@@ -308,7 +308,7 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
     facelets.push({ pts, stickerPts, fill, body, z: zSum / view.length, hidden, plane });
   };
 
-  scene.traverseVisible((obj) => {
+  const collectFacelets = (obj: THREE.Object3D): void => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh) return;
     // 材质色:sticker mesh 是 [capMat, wallMat],取 cap(彩色)那层;平色无光照。
@@ -358,6 +358,16 @@ export function exportSimSvgSchematic(opts: SchematicSvgExportOptions): string {
       ? obj.userData.schematicInsetBasis
       : undefined;
     addPoly(poly, mtx, fill, body, insetMode, insetBasis);
+  };
+  scene.traverseVisible(obj => {
+    collectFacelets(obj);
+    // Raw bodies hide their sticker meshes but still use those home-face colors.
+    // Visit each piece once even with multiple bodies; hidden ancestors stay hidden.
+    if (obj.children.some(child => child.visible && child.userData.simRole === 'body')) {
+      for (const child of obj.children) {
+        if (!child.visible && child.userData.simRawFace === true) collectFacelets(child);
+      }
+    }
   });
 
   // 远 → 近(凸体下可见面互不重叠,排序只是对轻微非凸的保护;衬底 + 贴纸按面

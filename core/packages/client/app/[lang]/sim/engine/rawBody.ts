@@ -51,10 +51,12 @@ export function deriveRawFaces(body: THREE.Mesh): RawFace[] {
     if (s.userData?.simRole !== 'sticker') continue;
     const n = s.userData.simStickerNormal as THREE.Vector3 | undefined;
     if (!n) continue;
-    const mat = s.material;
+    const mat = s.userData.simBaseMat ?? s.material;
     const capMat = (Array.isArray(mat) ? mat[0] : mat) as THREE.Material & { color?: THREE.Color };
     if (!capMat?.color) continue;
-    faces.push({ n: n.clone().normalize(), c: capMat.color.clone() });
+    // Keep the base cap color live: settings can repaint it while raw is cached,
+    // including when the visible sticker material is a translucent clone.
+    faces.push({ n: n.clone().normalize(), c: capMat.color });
     if (faces.length >= MAX_RAW_FACES) break;
   }
   return faces;
@@ -86,7 +88,7 @@ export function makeRawBodyMaterial(base: THREE.Material | THREE.Material[], fac
   for (let i = 0; i < MAX_RAW_FACES; i++) {
     const f = faces[i];
     nArr.push(f ? f.n.clone() : new THREE.Vector3());
-    cArr.push(f ? f.c.clone() : new THREE.Color(0xffffff));
+    cArr.push(f ? f.c : new THREE.Color(0xffffff));
   }
   const count = Math.min(faces.length, MAX_RAW_FACES);
 

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import MoveHistory from '../MoveHistory';
 import { makeAnim, type PieceAnim } from '../pieceAnim';
 import type { TweenCube } from '../TweenTwister';
-import { buildGhostPieces, type GhostPiece } from './ghostGeometry';
+import { buildGhostPieces, GHOST_DEFAULT_FACE_COLORS, GHOST_FACE_LABELS, type GhostPiece } from './ghostGeometry';
 import { GHOST_DISPLAY_QUATERNION } from './ghostModel';
 import { GHOST_FACES, applyGhostMove, ghostMoveFrame, ghostMoveToString, ghostSelection, solvedGhostPose, type GhostMove } from './ghostState';
 import GhostTwister from './GhostTwister';
@@ -60,6 +60,17 @@ export default class GhostCube extends THREE.Group implements TweenCube<GhostMov
   setCarve(on: boolean): void {
     const selected = on ? GHOST_FACES.map(family => ghostSelection(this.pose, { family, degrees: 90 })).find(Boolean) : null;
     for (let i = 0; i < this.pieces.length; i++) this.pieces[i].pivot.visible = !selected?.includes(i);
+    this.dirty = true;
+  }
+  setFaceColors(colors: typeof GHOST_DEFAULT_FACE_COLORS): void {
+    this.traverse(obj => {
+      if (!(obj instanceof THREE.Mesh) || obj.userData.simRole !== 'sticker') return;
+      // Home shell identity follows the piece through turns; never recolor by live normals.
+      const face = GHOST_FACE_LABELS[obj.userData.ghostFace as number];
+      const materials = obj.userData.simBaseMat ?? obj.material;
+      const cap = (Array.isArray(materials) ? materials[0] : materials) as THREE.MeshPhongMaterial;
+      cap.color.set(colors[face]);
+    });
     this.dirty = true;
   }
   dispose(): void {
