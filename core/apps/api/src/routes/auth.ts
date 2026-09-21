@@ -23,6 +23,7 @@ import { beginIdentityLogin } from '../utils/identity_choice.js';
 const WCA_CLIENT_ID = process.env.WCA_CLIENT_ID || '';
 const WCA_CLIENT_SECRET = process.env.WCA_CLIENT_SECRET || '';
 const WCA_REDIRECT_URI = process.env.WCA_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+const ROLE_PREVIEW_TTL_SECONDS = 30 * 60;
 
 /**
  * WCA OAuth + JWT 认证路由
@@ -93,12 +94,12 @@ authRoutes.post('/auth/role-preview', async (c) => {
       else await tx`UPDATE drive_members SET enabled = FALSE WHERE user_id = ${userId}`;
     }
     await tx`INSERT INTO role_preview_sessions (id, actor_user_id, user_id, role, expires_at)
-      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, 'infinity'::timestamptz)`;
+      VALUES (${id}, ${actor.uid!}, ${userId}, ${role}, NOW() + ${ROLE_PREVIEW_TTL_SECONDS} * INTERVAL '1 second')`;
     return userId;
   });
   const user = uid === null ? null : await getUserById(uid);
   const token = uid === null ? '' : jwt.sign({ uid, previewId: id }, JWT_SECRET,
-    { audience: 'role-preview', issuer: 'cuberoot' });
+    { audience: 'role-preview', issuer: 'cuberoot', expiresIn: ROLE_PREVIEW_TTL_SECONDS });
   c.header('Cache-Control', 'no-store');
   return c.json({ id, role, token, user: user ? publicUser(user) : null });
 });
