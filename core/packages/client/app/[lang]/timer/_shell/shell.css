@@ -696,18 +696,11 @@
 
 /* Mobile recap shares the vertical budget with the timer. Keep the timer's
    scramble/readout band usable first, then let the recap give up rows through
-   its own scroller instead of squeezing the scramble source out of view. */
+   its own scroller. The source stays after the moves in normal flow: pinning
+   it to the scroller bottom would cover wrapped moves when the recap opens. */
 @media (max-width: 1023px) {
   .shell-main:has(> .shell-recap) {
     --recap-h: clamp(150px, calc(100dvh - 610px), 300px);
-  }
-
-  .shell-main:has(> .shell-recap) .timing-surface-scramble-top .scramble-src-row {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-    padding-block: 4px;
-    background: var(--background);
   }
 }
 
