@@ -1,4 +1,5 @@
 declare const __MINI_PROGRAM_TARGET__: 'wechat' | 'douyin';
+declare const tt: typeof wx | undefined;
 
 export type MiniProgramTarget = 'wechat' | 'douyin';
 
@@ -23,13 +24,10 @@ export function isDouyinMiniProgram(): boolean {
 }
 
 export function miniProgramApi(): typeof wx {
-  const runtime = globalThis as typeof globalThis & {
-    tt?: typeof wx;
-    wx?: typeof wx;
-  };
+  // Mini Program sandboxes inject native API bindings, not necessarily globalThis.
   const api = typeof __MINI_PROGRAM_TARGET__ === 'string' && __MINI_PROGRAM_TARGET__ === 'douyin'
-    ? runtime.tt
-    : runtime.wx;
+    ? (typeof tt === 'undefined' ? undefined : tt)
+    : (typeof wx === 'undefined' ? undefined : wx);
   if (!api) throw new Error(`${MINI_PROGRAM_TARGET} Mini Program API unavailable`);
   return api;
 }

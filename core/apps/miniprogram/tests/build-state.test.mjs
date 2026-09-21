@@ -63,6 +63,7 @@ describe('mini program build graph state', () => {
     let storedSession = null;
     let payload;
     const api = {
+      getStorageInfoSync() { return { keys: storedSession === null ? [] : ['cuberoot:session'] }; },
       getStorageSync(key) { return key === 'cuberoot:session' ? storedSession : ''; },
       setStorageSync(_key, value) { storedSession = value; },
       getSystemInfoSync() { return { language: 'en' }; },

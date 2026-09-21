@@ -124,9 +124,14 @@ type StoredSessionRead =
 
 function readStoredSessionValue(): StoredSessionRead {
   try {
+    const api = miniProgramApi();
+    // Douyin throws for an absent key; only a successful inventory proves signed-out state.
+    if (isDouyinMiniProgram() && !api.getStorageInfoSync().keys.includes(SESSION_STORAGE_KEY)) {
+      return { available: true, value: undefined };
+    }
     return {
       available: true,
-      value: miniProgramApi().getStorageSync(SESSION_STORAGE_KEY) as unknown,
+      value: api.getStorageSync(SESSION_STORAGE_KEY) as unknown,
     };
   } catch {
     return { available: false };
