@@ -1,5 +1,5 @@
 # 部署 @cuberoot/client 到 next.cuberoot.me (云服务器 systemd cuberoot-next)。
-# CI build → tar 标准 standalone 输出 → scp → 服务器原子替换 → systemctl restart。
+# CI build → rsync 增量同步 standalone 到 staging → 服务器原子替换 → systemctl restart。
 # 服务器拉不到 GitHub,所以 build 必须在 CI 跑。
 name: Deploy Next
 
@@ -31,11 +31,8 @@ on:
       - 'ops/systemd/cuberoot-next.service'
       - '.github/workflows/deploy_next.yml'
 
-# Serialize deploys. Concurrent runs clobbered the shared /tmp/cuberoot-next.tar.gz:
-# run B's scp (and the `rm -f` after extract) corrupted run A's tarball mid-extract →
-# remote "gzip: stdin: invalid compressed data--format violated". One deploy at a time;
-# a newer push supersedes a still-PENDING run, but a RUNNING deploy is never cancelled
-# mid-server-swap (cancel-in-progress:false — the remote script isn't interruption-safe).
+# Serialize writes to staging and the live/backup swap. A newer push supersedes a
+# pending run, but must not cancel a running deployment mid-server-swap.
 concurrency:
   group: deploy-next
   cancel-in-progress: false
@@ -122,8 +119,8 @@ jobs:
           exec "\$NODE_DIR/bin/node" server.js
           EOF
           chmod +x .next/standalone/start.sh
-          tar -czf /tmp/cuberoot-next.tar.gz -C .next/standalone .
-          ls -lh /tmp/cuberoot-next.tar.gz
+          printf '%s\n' "$GITHUB_SHA" > .next/standalone/.deploy-sha
+          du -sh .next/standalone
 
       - name: Setup SSH
         env:
@@ -135,31 +132,33 @@ jobs:
           chmod 600 ~/.ssh/id
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
-      # US runner → CN server 的国际链路在国内晚高峰会把大文件传到 ~80MB 就 stall。
-      # plain scp 无法续传 → 每次从头传又卡死同一处。rsync --partial 保留已传的半截,
-      # --timeout 检测 stall 后返回非零,由重试循环续传剩余字节,直到整包传完。
-      - name: rsync tarball + systemd unit (resumable — tolerates link stalls)
+      # Reuse unchanged live files with server-local copies, never hard links or
+      # writes into LIVE. Checksums handle fresh build mtimes and interrupted stages.
+      # Idle timeout alone cannot stop a continuously slow transfer; bound wall time.
+      - name: rsync standalone + systemd unit
+        timeout-minutes: 13
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          RSH="ssh -i ~/.ssh/id -o StrictHostKeyChecking=no -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
+          RSH="ssh -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
           ok=0
-          for i in $(seq 1 40); do
-            rsync -a --partial --inplace --timeout=60 -e "$RSH" \
-              /tmp/cuberoot-next.tar.gz \
-              "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.tar.gz" \
-              && { ok=1; echo "tarball transferred on attempt $i"; break; }
+          for i in 1 2 3; do
+            timeout --kill-after=15s 240s rsync -az --checksum --delete-delay \
+              --partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next \
+              -e "$RSH" "core/${{ steps.workspace.outputs.web }}/.next/standalone/" \
+              "$DEPLOY_USER@$DEPLOY_HOST:/www/wwwroot/toolkit-next.new/" \
+              && { ok=1; echo "standalone transferred on attempt $i"; break; }
             echo "attempt $i stalled/failed — resuming remaining bytes in 5s..."
             sleep 5
           done
-          [ "$ok" = 1 ] || { echo "rsync failed after 40 attempts"; exit 1; }
+          [ "$ok" = 1 ] || { echo "rsync failed after 3 bounded attempts; live release untouched"; exit 1; }
           # unit file is tiny — plain scp is fine
-          scp -i ~/.ssh/id ops/systemd/cuberoot-next.service \
+          timeout --kill-after=5s 30s scp -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 ops/systemd/cuberoot-next.service \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.service"
 
       # Server side: atomic-ish swap.
-      # 1. extract to staging dir
+      # 1. validate the fully transferred staging dir
       # 2. snapshot current as .bak-$TS (one snapshot kept for rollback)
       # 3. rename staging → live
       # 4. restart systemd (Next standalone entry: node server.js)
@@ -175,11 +174,6 @@ jobs:
           STAGE=/www/wwwroot/toolkit-next.new
           TS=$(date +%s)
           BACKUP=/www/wwwroot/toolkit-next.bak-$TS
-
-          rm -rf "$STAGE"
-          mkdir -p "$STAGE"
-          tar -xzf /tmp/cuberoot-next.tar.gz -C "$STAGE"
-          rm -f /tmp/cuberoot-next.tar.gz
 
           if [ ! -x "$STAGE/start.sh" ]; then
             echo "ERROR: $STAGE/start.sh missing — bundle malformed"
