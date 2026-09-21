@@ -51,6 +51,38 @@ export const HOLLOW_MAT = new THREE.MeshBasicMaterial({
   color: 0x808080, transparent: true, opacity: 0.1, depthWrite: false,
 });
 
+// Geometry builders can share materials across puzzle instances. Keep the user's
+// plastic color local to this root, including sticker side walls, never the caps.
+const bodyColors = new WeakMap<THREE.Object3D, Map<THREE.Material, THREE.Material>>();
+
+function coloredBodyMaterials(root: THREE.Object3D, color: string): Map<THREE.Material, THREE.Material> {
+  let materials = bodyColors.get(root);
+  if (!materials) { materials = new Map(); bodyColors.set(root, materials); }
+  const cache = materials;
+  root.traverse((obj) => {
+    const mesh = obj as THREE.Mesh;
+    if (!mesh.isMesh || !['body', 'core'].includes(mesh.userData.simRole)) return;
+    const base = mesh.userData.simBaseMat ??= mesh.material;
+    for (const source of (Array.isArray(base) ? base : [base]) as THREE.Material[]) {
+      let material = cache.get(source);
+      if (!material) {
+        material = source.clone();
+        cache.set(source, material);
+        // Geometry is disposed even while a shared debug/hollow overlay hides us.
+        const owned = material;
+        const dispose = () => {
+          owned.dispose();
+          cache.delete(source);
+          mesh.geometry.removeEventListener('dispose', dispose);
+        };
+        mesh.geometry.addEventListener('dispose', dispose);
+      }
+      (material as THREE.Material & { color?: THREE.Color }).color?.set(color);
+    }
+  });
+  return cache;
+}
+
 /**
  * Single deterministic owner of every body/core mesh material for the in-house
  * engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb), composing the
@@ -62,7 +94,7 @@ export const HOLLOW_MAT = new THREE.MeshBasicMaterial({
  * — this function is the only thing that ever sets these materials, so the first
  * read is always the real base (never HOLLOW_MAT / DEBUG_* / raw). Every call then
  * derives the effective material purely from that base + the current flags, in
- * priority raw > debug > hollow > base. Idempotent; call on every applySettings.
+ * priority raw > debug > hollow > colored base. Idempotent; call on every applySettings.
  *
  * 原核 (raw, stickerless body): when on, each 'body' mesh shows a per-piece raw
  * material (built once from its sibling stickers, cached on `userData.simRawMat`)
@@ -74,12 +106,18 @@ export const HOLLOW_MAT = new THREE.MeshBasicMaterial({
  * InstancedRenderer, and its debug overlay runs via applyDebugStructureColors
  * after the NxN block — see SettingDrawer.applySettings.)
  */
-export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, debug: boolean, raw: boolean): void {
+export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, debug: boolean, raw: boolean, coreColor?: string): void {
+  const colors = coreColor === undefined ? undefined : coloredBodyMaterials(root, coreColor);
+  const colored = (material: THREE.Material) => colors?.get(material) ?? material;
   root.traverse((obj) => {
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh) return;
     const role = mesh.userData.simRole as string | undefined;
     if (role === 'sticker') {
+      if (colors) {
+        const base = mesh.userData.simBaseMat ??= mesh.material;
+        if (Array.isArray(base)) mesh.material = base.map((m, i) => i === 0 ? m : colored(m));
+      }
       // 原核 paints the body itself → hide the raised sticker tiles. Idempotent; a
       // carved (hidden) parent still hides its children regardless of this flag.
       mesh.visible = !raw;
@@ -97,7 +135,8 @@ export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, de
       }
       if (rawMat) { mesh.material = rawMat; return; }
     }
-    mesh.material = debug ? ROLE_MAT[role] : hollow ? HOLLOW_MAT : base;
+    mesh.material = debug ? ROLE_MAT[role] : hollow ? HOLLOW_MAT
+      : Array.isArray(base) ? base.map(colored) : colored(base);
   });
 }
 

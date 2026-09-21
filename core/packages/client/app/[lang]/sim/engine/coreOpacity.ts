@@ -19,7 +19,19 @@ function translucentMaterial(material: THREE.Material, opacity: number): THREE.M
     clone = base.clone();
     translucentByBase.set(base, clone);
     baseByTranslucent.set(clone, base);
+    const owned = clone;
+    const dispose = () => {
+      owned.dispose();
+      translucentByBase.delete(base);
+      baseByTranslucent.delete(owned);
+      base.removeEventListener('dispose', dispose);
+    };
+    base.addEventListener('dispose', dispose);
   }
+  // The base's core color can change while this cached translucent copy is active.
+  clone.copy(base);
+  clone.onBeforeCompile = base.onBeforeCompile;
+  clone.customProgramCacheKey = base.customProgramCacheKey;
   clone.opacity = base.opacity * opacity;
   clone.transparent = opacity < 1 || base.transparent;
   clone.needsUpdate = true;
