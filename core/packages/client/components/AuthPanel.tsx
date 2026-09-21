@@ -111,6 +111,7 @@ const DouyinGlyph = ({ size = 16 }: { size?: number }) => (
 
 /** 国内三方 provider 配置(标 + 名),供 SSO 按钮 / 账号绑定 chip 共用。 */
 const SOCIALS: { key: RedirectAuthProvider; Glyph: (p: { size?: number }) => React.ReactNode; name: { zh: string; en: string } }[] = [
+  { key: 'douyin', Glyph: DouyinGlyph, name: { zh: '抖音', en: 'Douyin' } },
   { key: 'apple', Glyph: AppleGlyph, name: { zh: 'Apple', en: 'Apple' } },
   { key: 'wechat', Glyph: WechatGlyph, name: { zh: '微信', en: 'WeChat' } },
   { key: 'qq', Glyph: QqGlyph, name: { zh: 'QQ', en: 'QQ' } },
@@ -831,7 +832,7 @@ function LoginFormFields({
   // reload 即自动亮。拿不到默认全开 email/phone/wca(退化成旧行为),google/三方拿不到凭据不乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
+  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null, douyin: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
 
   // 主凭据区:邮箱(默认)/ 手机;仅邮箱未开放时落到手机。
@@ -1009,7 +1010,7 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
 };
 
 /** Only an authenticated account may issue this short-lived proof; it is never an account lookup. */
-function MiniProgramLinkCodePanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
+function MiniProgramLinkCodePanel({ emphasized = false }: { emphasized?: boolean }) {
   const t = useT();
   const uid = useAuthStore((state) => state.user?.uid);
   const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number } | null>(null);
@@ -1040,21 +1041,21 @@ function MiniProgramLinkCodePanel({ defaultOpen = false }: { defaultOpen?: boole
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   };
-  return <details className="auth-flow" open={defaultOpen || undefined}>
-    <summary>{t('登录小程序', 'Sign in to the Mini Program')}</summary>
-    <p className="auth-hint">{t('生成登录码，复制后回到小程序粘贴即可。', 'Generate a sign-in code, copy it, then return to the Mini Program and paste it.')}</p>
+  return <section className={`auth-flow auth-mini-link${emphasized ? ' auth-mini-link-emphasized' : ''}`} aria-labelledby="mini-program-link-title">
+    <h2 id="mini-program-link-title" className="auth-mini-link-title">{t('在小程序登录已有账号', 'Sign in to your existing account in the Mini Program')}</h2>
+    <p className="auth-hint">{t('生成 6 位登录码，然后在小程序中输入。', 'Generate a 6-digit sign-in code, then enter it in the Mini Program.')}</p>
     <p className="auth-hint">{t('登录码 10 分钟内有效，只能使用一次。请勿转发给他人。', 'The sign-in code works once and expires in 10 minutes. Do not share it with anyone.')}</p>
     {result?.uid === uid && result && <>
-      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('小程序登录码', 'Mini Program sign-in code')} />
+      <input className="auth-input auth-mini-link-code" inputMode="numeric" readOnly value={result.linkCode} aria-label={t('小程序登录码', 'Mini Program sign-in code')} />
       <button type="button" className="auth-textbtn" onClick={async () => {
         setError('');
         try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
         catch { setError(t('无法复制，请选中登录码手动复制。', 'Could not copy. Select the sign-in code and copy it manually.')); }
       }}>{copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')}</button>
     </>}
-    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成登录码', 'Generate sign-in code')}</button>
+    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成 6 位登录码', 'Generate 6-digit sign-in code')}</button>
     {error && <p className="auth-error" role="alert">{error}</p>}
-  </details>;
+  </section>;
 }
 
 /**
@@ -1085,7 +1086,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
   // googleClientId 拿不到没法弹窗,不能乐观开。
   const [providers, setProviders] = useState<AuthProviders | null>(null);
   useEffect(() => { void fetchAuthProviders().then(setProviders); }, []);
-  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null } };
+  const avail = providers ?? { email: true, phone: true, wca: true, apple: false, googleClientId: null, googleRelayUrl: null, social: { wechat: null, qq: null, alipay: null, douyin: null } };
   const googleOn = !!(avail.googleClientId && avail.googleRelayUrl);
   const [linkingGoogle, setLinkingGoogle] = useState(false);
   const socialRedirect = useSocialRedirect();
@@ -1259,6 +1260,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
             : t('浏览器账号与 App 一致。请主动点击 Apple 旁的绑定按钮完成授权。', 'This browser is signed in to the same account as the app. Choose Link next to Apple to authorize linking.')}
         </p>
       ) : null}
+      <MiniProgramLinkCodePanel emphasized={miniProgramLogin} />
       <div className="auth-idlist">
         {identityLoadFailed ? (
           <div role="alert">
@@ -1462,8 +1464,6 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
           onCancel={() => setPwAction(null)}
         />
       )}
-
-      <MiniProgramLinkCodePanel defaultOpen={miniProgramLogin} />
 
       <div className="auth-linklist">
         <div className="auth-idrow">

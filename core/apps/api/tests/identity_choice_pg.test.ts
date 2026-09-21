@@ -156,20 +156,40 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
     expect(await findUserByIdentity('phone', '+8613800100013')).toBeNull();
   });
 
-  it('paired proofs support the existing scoped linking code, persist wrong guesses and consume once', async () => {
+  it('paired proofs support the existing scoped linking code, limit ticket guesses and consume once', async () => {
     const target = await loginWithIdentity('google', 'paired-code-target', { name: 'Code target' });
     const choice = await paired('paired-code-wx', '+8613800100012');
     const issued = await issueIdentityLinkCode(target.user.id);
     if (!('linkCode' in issued)) throw new Error('expected link code');
     const wrong = issued.linkCode.slice(0, -1) + (issued.linkCode.endsWith('0') ? '1' : '0');
     await expect(completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, wrong)).rejects.toMatchObject({ code: 'INVALID_IDENTITY_LINK_CODE' });
-    const [code] = await sql`SELECT attempts FROM auth_codes WHERE channel = 'id_link' AND target = ${String(target.user.id)}`;
-    expect(code.attempts).toBe(1);
+    const [pendingAttempt] = await sql`SELECT attempts FROM auth_identity_pending WHERE provider_uid = 'paired-code-wx'`;
+    expect(pendingAttempt.attempts).toBe(1);
     expect(await previewIdentityLinkCode(choice.ticket, issued.linkCode)).toEqual({ user: { id: target.user.id, displayName: 'Code target' } });
     const result = await completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, issued.linkCode);
     expect(result.user.id).toBe(target.user.id);
     expect((await findUserByIdentity('phone', '+8613800100012'))?.id).toBe(target.user.id);
     await expect(completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, issued.linkCode)).rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
+  });
+
+  it('expires the pending identity proof after five wrong six-digit link codes', async () => {
+    const target = await loginWithIdentity('google', 'paired-code-limit-target', { name: 'Code limit target' });
+    const choice = await paired('paired-code-limit-wx', '+8613800100014');
+    const issued = await issueIdentityLinkCode(target.user.id);
+    if (!('linkCode' in issued)) throw new Error('expected link code');
+
+    const wrongCodes = ['000000', '111111', '222222', '333333', '444444']
+      .map(code => code === issued.linkCode ? '555555' : code);
+    for (const wrongCode of wrongCodes) {
+      await expect(completeIdentityChoice(choice.ticket, 'link_with_code', target.user.id, wrongCode))
+        .rejects.toMatchObject({ code: 'INVALID_IDENTITY_LINK_CODE' });
+    }
+
+    const [pendingAttempt] = await sql`SELECT attempts, expires_at <= NOW() AS expired
+      FROM auth_identity_pending WHERE provider_uid = 'paired-code-limit-wx'`;
+    expect(pendingAttempt).toMatchObject({ attempts: 5, expired: true });
+    await expect(previewIdentityLinkCode(choice.ticket, issued.linkCode))
+      .rejects.toMatchObject({ code: 'INVALID_IDENTITY_TICKET' });
   });
 
   it('rejects NULL, unsupported and cross-provider Apple credential metadata at the database boundary', async () => {

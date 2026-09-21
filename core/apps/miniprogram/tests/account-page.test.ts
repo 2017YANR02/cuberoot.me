@@ -118,7 +118,7 @@ describe('mini program account page', () => {
     const template = readFileSync(new URL('../src/pages/account/index.wxml', import.meta.url), 'utf8');
     expect(source).toContain("zh: '登录已有 CubeRoot 账号'");
     expect(source).toContain("zh: '去网站登录'");
-    expect(source).toContain("zh: '粘贴登录码'");
+    expect(source).toContain("zh: '输入 6 位登录码'");
     expect(source).not.toContain('小程序绑定码');
     expect(template.indexOf('bindtap="openLinkCodeWebsite"')).toBeLessThan(
       template.indexOf('class="account-link-code-row"'),
@@ -243,9 +243,9 @@ describe('mini program account page', () => {
     const { page, authorize, request, navigateTo, ticket } = await wechatPhoneFixture();
     await authorize(); page.linkExistingAccount();
     expect(page.data.accountLinkCodeMode).toBe(true); expect(navigateTo).not.toHaveBeenCalled();
-    page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode();
+    page.onLinkCodeInput({ detail: { value: '123456' } }); await page.previewLinkCode();
     expect(request).toHaveBeenCalledTimes(3); await page.confirmLinkCode();
-    expect(request.mock.calls[3][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    expect(request.mock.calls[3][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: '123456', expectedUid: 42 });
   });
 
   it.each(['cancel', 'unload'] as const)('ignores a native authorization callback after %s', async (action) => {
@@ -445,22 +445,22 @@ describe('mini program account page', () => {
     expect(navigateTo).not.toHaveBeenCalled();
     page.openLinkCodeWebsite();
     expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?key=account-link' }));
-    page.onLinkCodeInput({ detail: { value: ' L42-123456 ' } });
+    page.onLinkCodeInput({ detail: { value: ' 123456 ' } });
     await page.previewLinkCode();
     expect(page.data.accountLinkTargetId).toBe(42);
     expect(page.data.accountLinkTargetName).toBe('Existing member');
     expect(request).toHaveBeenCalledTimes(2); expect(setStorageSync).not.toHaveBeenCalled();
     await page.confirmLinkCode();
-    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    expect(request.mock.calls[2][0].data).toEqual({ ticket, action: 'link_with_code', linkCode: '123456', expectedUid: 42 });
     expect(request.mock.calls[2][0].header?.Authorization).toBeUndefined();
-    expect(request.mock.calls.every(([options]) => !options.url.includes(ticket) && !options.url.includes('L42-123456'))).toBe(true);
+    expect(request.mock.calls.every(([options]) => !options.url.includes(ticket) && !options.url.includes('123456'))).toBe(true);
     expect(page.data.uidText).toBe('42'); expect(setStorageSync).toHaveBeenCalledOnce();
   });
 
   it('invalidates target confirmation whenever the entered binding code changes or clears', async () => {
     const { page, request } = await douyinChoiceFixture();
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode();
-    page.onLinkCodeInput({ detail: { value: 'L99-654321' } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '123456' } }); await page.previewLinkCode();
+    page.onLinkCodeInput({ detail: { value: '654321' } });
     expect(page.data.accountLinkTargetId).toBeNull();
     await page.confirmLinkCode(); expect(request).toHaveBeenCalledTimes(2);
     page.clearLinkCode(); expect(page.data.accountLinkCode).toBe(''); expect(page.data.accountLinkTargetName).toBe('');
@@ -530,7 +530,7 @@ describe('mini program account page', () => {
   it('releases busy after background expiry and ignores the old preview during a new attempt', async () => {
     const replies: Array<(response: unknown) => void> = [];
     const { page } = await douyinChoiceFixture({ preview: (options) => { replies.push(options.success); } });
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '123456' } });
     const oldPreview = page.previewLinkCode();
     expect(page.data.loginBusy).toBe(true);
     const expired = Date.now() + 900_001;
@@ -540,7 +540,7 @@ describe('mini program account page', () => {
     expect(page.data.loginBusy).toBe(false);
     expect(page.data.accountLinkRequired).toBe(false);
     await page.loginWithMiniProgram();
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L55-654321' } });
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '654321' } });
     const newPreview = page.previewLinkCode();
     expect(page.data.loginBusy).toBe(true);
     replies[0]({ statusCode: 200, data: { user: { id: 42, displayName: 'Old target' } } });
@@ -555,7 +555,7 @@ describe('mini program account page', () => {
 
   it('never installs a completion session for an account different from the preview', async () => {
     const { page, setStorageSync } = await douyinChoiceFixture({ complete: (options) => options.success({ statusCode: 200, data: { token: 'c'.repeat(20), user: { uid: 99, name: 'Wrong', wcaId: null, avatar: '' } } }) });
-    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: 'L42-123456' } }); await page.previewLinkCode(); await page.confirmLinkCode();
+    page.linkExistingAccount(); page.onLinkCodeInput({ detail: { value: '123456' } }); await page.previewLinkCode(); await page.confirmLinkCode();
     expect(page.data.loginRequired).toBe(true); expect(setStorageSync).not.toHaveBeenCalled();
     expect(page.data.loginError).toBe('账号或绑定状态已改变，请先检查账号后重试。');
   });

@@ -193,6 +193,9 @@ async function normalizeDouyinAppConfig() {
     if (typeof resolvedValue !== 'string') throw new Error(`抖音 app.json 无法解析主题值：${value}`);
     return resolvedValue;
   }));
+  // Douyin privacy-related capabilities (including Bluetooth) must enter the
+  // platform privacy authorization flow before the native API is invoked.
+  normalized.usePrivacyCheck = true;
   normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
@@ -211,6 +214,9 @@ async function validateDouyinOutput() {
   const appConfig = JSON.parse(await readFile(join(stagingRoot, 'app.json'), 'utf8'));
   const unsupportedKey = douyinUnsupportedAppConfigKeys.find((key) => key in appConfig);
   if (unsupportedKey) throw new Error(`抖音 app.json 残留微信配置：${unsupportedKey}`);
+  if (appConfig.usePrivacyCheck !== true) {
+    throw new Error('抖音 app.json 必须开启 usePrivacyCheck');
+  }
   if (/\"@[^\"]+\"/.test(JSON.stringify(appConfig))) {
     throw new Error('抖音 app.json 残留微信主题变量');
   }

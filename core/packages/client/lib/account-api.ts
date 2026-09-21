@@ -275,9 +275,9 @@ export const completeIdentityChoice = (ticket: string, action: 'create' | 'link'
   postCanonicalSession('/v1/auth/identity/complete', { ticket, action, ...(expectedUid === undefined ? {} : { expectedUid }) }, action === 'link', signal);
 export const linkGoogle = (assertion: string) => post<{ ok: true; identities: Identity[] }>('/v1/auth/link/google', { assertion }, true);
 
-// 国内三方(微信/QQ/支付宝):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
-export type SocialProvider = 'wechat' | 'qq' | 'alipay';
-export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
+// 国内三方(微信/QQ/支付宝/抖音):授权码重定向流。浏览器跳授权页 → 回调拿 code → 交后端换身份。
+export type SocialProvider = 'wechat' | 'qq' | 'alipay' | 'douyin';
+export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay', 'douyin'];
 export type RedirectAuthProvider = SocialProvider | 'apple';
 export const REDIRECT_AUTH_PROVIDERS: readonly RedirectAuthProvider[] = ['apple', ...SOCIAL_PROVIDERS];
 // 服务端验签 state；Apple 额外验证只在 POST body 传递的浏览器 PKCE verifier。
@@ -328,7 +328,7 @@ let providersCache: AuthProviders | null = null;
 /** 服务端已配置的登录方式(env 未配 email/sms/google 则对应关闭)。成功结果进模块缓存;
  *  拿不到就乐观全开 email/phone/wca(退化成旧行为:点未配的方式走 503 + 友好文案),
  *  但 google 拿不到 clientId/relayUrl 就是 null(没有它俩发不起弹窗/验不了真,不能乐观)。 */
-const NO_SOCIAL: Record<SocialProvider, string | null> = { wechat: null, qq: null, alipay: null };
+const NO_SOCIAL: Record<SocialProvider, string | null> = { wechat: null, qq: null, alipay: null, douyin: null };
 function normSocial(raw: unknown): Record<SocialProvider, string | null> {
   const s = (raw ?? {}) as Record<string, unknown>;
   const out = { ...NO_SOCIAL };
