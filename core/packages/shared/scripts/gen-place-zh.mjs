@@ -15,10 +15,13 @@
 //   CI 守卫:tests/city-localize-cn-coverage.test.ts(每个 upcoming 城市中文下必含 CJK)。
 import fs from 'node:fs';
 import readline from 'node:readline';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as OpenCC from 'opencc-js';
 
 const GN = 'D:/cube/cuberoot.me/.tmp/geonames';
-const ROOT = 'D:/cube/cuberoot.me';
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(SCRIPT_DIR, '../../../..');
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 
 const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
