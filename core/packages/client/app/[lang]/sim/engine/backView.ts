@@ -130,6 +130,7 @@ export function createBackView(
         : isSquare ? 3.85
         : k === 'megaminx' ? 3.3
         : k === 'fto' ? 3.2
+        : k === 'ghost' ? 3.3
         : (k === 'dino' || k === 'redi' || k === 'rex' || k === 'heli' || k === 'gear'
            || k === 'skewb') ? 3.6
         : 3;

@@ -332,6 +332,7 @@ export default function SimPage() {
     if (raw === 'gear') return 'gear';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
     if (raw === 'fto') return 'fto';
+    if (raw === 'ghost') return 'ghost';
     if (raw === 'custom') return 'custom';
     if (raw === 'mirror' || raw === 'mirror2') return raw;
     if (raw === 'clock') return 'clock';
@@ -1262,8 +1263,9 @@ export default function SimPage() {
                   : world.puzzleKind === 'pyraminx' ? world.pyraHints
                     : world.puzzleKind === 'megaminx' ? world.megaHints
                       : world.puzzleKind === 'fto' ? world.ftoHints
+                        : world.puzzleKind === 'ghost' ? world.ghostHints
                         : world.faceHints;
-      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints, world.ftoHints];
+      const allHints = [world.faceHints, world.ivyHints, world.dinoHints, world.rediHints, world.rexHints, world.heliHints, world.skewbHints, world.pyraHints, world.megaHints, world.ftoHints, world.ghostHints];
       // 方位字母完全由设置面板「字母」开关控制:开=该拼图的方位标签常驻,关=完全不显示
       // (拖视角 / 拖层时也不再浮现 —— 这个开关是字母的唯一开关,用户明确要求)。
       // SMPL-X 全身查看时字母无意义(拼图已藏),一并压掉。
@@ -1299,6 +1301,7 @@ export default function SimPage() {
       cleanup = () => {
         cancelAnimationFrame(raf);
         world.disposeSquareFamilyCubes();
+        world.disposeGhostCube();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);
@@ -2231,6 +2234,7 @@ export default function SimPage() {
           )}
           <PlayerControls
             world={worldRef.current}
+            clearFrozen={clearPartialFreeze}
             alg={algParam}
             setup={setupParam}
             onAlgChange={onAlgChange}
