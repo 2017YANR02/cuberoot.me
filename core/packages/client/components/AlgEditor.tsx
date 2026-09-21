@@ -70,7 +70,8 @@ interface Props {
   formatInitialAlg?: (alg: string) => string;
   formatInitialHtml?: (html: string) => string;
   caseContext?: { puzzle: AlgPuzzle; set: string; caseObj: AlgCase; sq1NotationMode?: Sq1NotationMode };
-  renderOrientation?: (rows: React.ReactNode, oi: number, firstAlg: string) => React.ReactNode;
+  /** 第三项始终是无损语义值，不能传仅供展示的 formatInitialAlg 结果。 */
+  renderOrientation?: (rows: React.ReactNode, oi: number, firstEntry: AlgEntry | undefined) => React.ReactNode;
   /** 内联详情页中，在“新增公式”按钮之前插入社区公式等附加内容。 */
   renderBeforeAdd?: (oi: number) => React.ReactNode;
   /** 开局就标红的行(页面那轮全库校验已经知道谁挂了,不必等用户按一次保存才告诉他)。 */
@@ -289,9 +290,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
     <div className="alg-editor">
       {layout.map((ori, oi) => {
         const first = ori[0];
-        const firstAlg = first
-          ? (editedText[first.uid] ?? formatInitialAlg?.(first.alg || '') ?? (first.alg || ''))
-          : '';
+        const firstEntry = first ? readEntry(first) : undefined;
         return (
         <div key={oi} className="alg-editor-ori">
           {oriNames && oriNames[oi] && (
@@ -422,7 +421,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
           <button type="button" className="alg-editor-add" onClick={() => addAlg(oi)} tabIndex={-1} title={tr({ zh: '加一条', en: 'Add' })}>
             <Plus size={12} />
           </button>
-          </SortableContext></DndContext>, oi, firstAlg)}
+          </SortableContext></DndContext>, oi, firstEntry)}
         </div>
         );
       })}
