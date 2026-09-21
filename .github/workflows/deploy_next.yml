@@ -136,23 +136,38 @@ jobs:
       # writes into LIVE. Checksums handle fresh build mtimes and interrupted stages.
       # Idle timeout alone cannot stop a continuously slow transfer; bound wall time.
       - name: rsync standalone + systemd unit
-        timeout-minutes: 13
+        timeout-minutes: 14
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           RSH="ssh -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=4"
-          ok=0
-          for i in 1 2 3; do
-            timeout --kill-after=15s 240s rsync -az --checksum --delete-delay \
-              --partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next \
-              -e "$RSH" "core/${{ steps.workspace.outputs.web }}/.next/standalone/" \
-              "$DEPLOY_USER@$DEPLOY_HOST:/www/wwwroot/toolkit-next.new/" \
-              && { ok=1; echo "standalone transferred on attempt $i"; break; }
-            echo "attempt $i stalled/failed — resuming remaining bytes in 5s..."
-            sleep 5
-          done
-          [ "$ok" = 1 ] || { echo "rsync failed after 3 bounded attempts; live release untouched"; exit 1; }
+          SOURCE="core/${{ steps.workspace.outputs.web }}/.next/standalone/"
+          DEST="$DEPLOY_USER@$DEPLOY_HOST:/www/wwwroot/toolkit-next.new/"
+          LISTS=$(mktemp -d)
+          # Disjoint file lists bound concurrency without concurrent deletion.
+          # NUL records preserve spaces; empty directories and symlinks are included.
+          (cd "$SOURCE" && find . \( -type f -o -type l -o -type d -empty \) -print0 \
+            | sort -z | split -t '\0' -n r/8 - "$LISTS/part-")
+          upload_part() {
+            for i in 1 2; do
+              timeout --kill-after=15s 300s rsync -az --checksum \
+                --from0 --files-from="$1" --partial --timeout=60 --stats \
+                --copy-dest=/www/wwwroot/toolkit-next -e "$RSH" "$SOURCE" "$DEST" \
+                && return 0
+              echo "$(basename "$1") attempt $i failed; resuming in 5s"
+              sleep 5
+            done
+            return 1
+          }
+          export RSH SOURCE DEST
+          export -f upload_part
+          printf '%s\0' "$LISTS"/part-* | xargs -0 -n 1 -P 8 bash -c 'upload_part "$1"' _
+          # Only after every part succeeds, reconcile the complete tree once.
+          # This restores directory metadata and removes stale staged files safely.
+          timeout --kill-after=15s 120s rsync -az --checksum --delete-delay \
+            --partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next \
+            -e "$RSH" "$SOURCE" "$DEST"
           # unit file is tiny — plain scp is fine
           timeout --kill-after=5s 30s scp -i ~/.ssh/id -o BatchMode=yes -o ConnectTimeout=15 ops/systemd/cuberoot-next.service \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-next.service"
