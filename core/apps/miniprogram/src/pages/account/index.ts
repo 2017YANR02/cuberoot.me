@@ -77,14 +77,14 @@ const ACCOUNT_COPY = {
   phoneFoundHint: tr({ en: 'This phone number belongs to the account below. Confirm to link WeChat and sign in, keeping your membership and data.', zh: '此手机号已绑定下方账号。确认后绑定微信并登录，保留原会员和数据。' }),
   cancelLabel: tr({ en: 'Cancel', zh: '取消' }),
   clearCodeLabel: tr({ en: 'Clear sign-in code', zh: '清除登录码' }),
-  linkCodeLabel: tr({ en: 'Paste sign-in code', zh: '粘贴登录码' }),
-  linkCodeHint: tr({ en: 'Open the website, sign in to your existing CubeRoot account, then copy the one-time code back here.', zh: '打开网站登录原账号，复制一次性登录码后回到这里。' }),
-  linkCodeReadyHint: tr({ en: 'Already copied the code? Paste it below.', zh: '已复制登录码？粘贴到下面。' }),
+  linkCodeLabel: tr({ en: 'Enter 6-digit sign-in code', zh: '输入 6 位登录码' }),
+  linkCodeHint: tr({ en: 'Sign in to your existing CubeRoot account on the website, generate a 6-digit code, then enter it here.', zh: '在网站登录原账号并生成 6 位登录码，然后在这里输入。' }),
+  linkCodeReadyHint: tr({ en: 'Have a code? Enter the 6 digits below.', zh: '已有登录码？在下方输入 6 位数字。' }),
   openLinkCodeWebsiteLabel: tr({ en: 'Sign in on the website', zh: '去网站登录' }),
   previewLinkCodeLabel: tr({ en: 'Continue', zh: '继续' }),
   confirmLinkCodeLabel: tr({ en: 'Sign in to this account', zh: '登录这个账号' }),
   loginAsLabel: tr({ en: 'Account:', zh: '登录账号：' }),
-  linkCodeInvalid: tr({ en: 'Paste the one-time sign-in code shown on the website.', zh: '请粘贴网站上显示的一次性登录码。' }),
+  linkCodeInvalid: tr({ en: 'Enter the 6-digit sign-in code shown on the website.', zh: '请输入网站上显示的 6 位登录码。' }),
   choiceExpired: tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' }),
   defaultUser: tr({ en: 'CubeRoot user', zh: 'CubeRoot 用户' }),
   entryCopy: tr({
@@ -711,7 +711,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
 
   onLinkCodeInput(event: WechatMiniprogram.Input) {
     if (this.data.loginBusy) return;
-    this.setData({ accountLinkCode: event.detail.value.trim().toUpperCase(), accountLinkTargetId: null, accountLinkTargetName: '', loginError: '' });
+    const accountLinkCode = event.detail.value.replace(/\D/g, '').slice(0, 6);
+    this.setData({ accountLinkCode, accountLinkTargetId: null, accountLinkTargetName: '', loginError: '' });
   },
 
   clearLinkCode() {
@@ -724,7 +725,7 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
     const pending = currentPendingIdentity(page);
     if (!pending) return;
     const linkCode = this.data.accountLinkCode;
-    if (!/^L[1-9]\d{0,15}-\d{6}$/.test(linkCode)) { this.setData({ loginError: ACCOUNT_COPY.linkCodeInvalid }); return; }
+    if (!/^\d{6}$/.test(linkCode)) { this.setData({ loginError: ACCOUNT_COPY.linkCodeInvalid }); return; }
     this.setData({ loginBusy: true, loginError: '' });
     try {
       const target = await previewIdentityLinkCode(pending.ticket, linkCode);

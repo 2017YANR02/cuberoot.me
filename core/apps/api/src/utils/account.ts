@@ -125,8 +125,9 @@ export async function issueCode(
   target: string,
   purpose: CodePurpose,
   run?: QueryRunner,
-  options: { deliveryStatus?: 'pending' | 'sent' } = {},
+  options: { deliveryStatus?: 'pending' | 'sent'; code?: string } = {},
 ): Promise<{ code: string; id: string } | { error: 'cooldown' }> {
+  if (options.code !== undefined && !/^\d{6}$/.test(options.code)) throw new Error('invalid verification code');
   // Explicit runners must belong to the caller's transaction (identity-choice already does).
   const issue = async (transaction: QueryRunner): Promise<{ code: string; id: string } | { error: 'cooldown' }> => {
     // Includes absent rows and serializes cooldown across purposes, matching the lookup scope.
@@ -141,7 +142,7 @@ export async function issueCode(
       'UPDATE auth_codes SET consumed_at = clock_timestamp() WHERE channel = ? AND target = ? AND purpose = ? AND consumed_at IS NULL',
       [channel, target, purpose],
     );
-    const code = genCode();
+    const code = options.code ?? genCode();
     const rows = await transaction<{ id: string }>(
       `INSERT INTO auth_codes (channel, target, purpose, code_hash, delivery_status, expires_at, created_at)
        VALUES (?, ?, ?, ?, ?, clock_timestamp() + make_interval(secs => ?), clock_timestamp()) RETURNING id::text`,
@@ -151,6 +152,25 @@ export async function issueCode(
     return { code, id: rows[0].id };
   };
   return run ? issue(run) : sql.begin(tx => issue(transactionQuery(tx))) as Promise<{ code: string; id: string } | { error: 'cooldown' }>;
+}
+
+/** Resolve a live code without exposing its target in the user-facing value. */
+export async function findActiveCodeTarget(
+  channel: Channel,
+  purpose: CodePurpose,
+  code: string,
+  run: QueryRunner = query,
+): Promise<string | null> {
+  if (!/^\d{6}$/.test(code)) return null;
+  const rows = await run<{ target: string; code_hash: string }>(
+    `SELECT target, code_hash FROM auth_codes
+      WHERE channel = ? AND purpose = ? AND delivery_status = 'sent'
+        AND consumed_at IS NULL AND expires_at > clock_timestamp() AND attempts < ?`,
+    [channel, purpose, CODE_MAX_ATTEMPTS],
+  );
+  const matches = rows.filter(row => timingSafeEqualHex(row.code_hash, hashCode(channel, row.target, code)));
+  const targets = new Set(matches.map(row => row.target));
+  return targets.size === 1 ? [...targets][0] : null;
 }
 
 /** A late delivery result can only update its own still-current, unconsumed reservation. */
@@ -716,6 +736,36 @@ export async function replaceCredentialIdentity(
     // 唯一约束 (provider, provider_uid):新地址在我们检查之后被别人抢注。
     return 'conflict';
   }
+}
+
+/**
+ * Provider upgrades its stable subject (for example Douyin OpenID -> UnionID).
+ * The account never temporarily loses its only sign-in method, and a raced owner is never merged silently.
+ */
+export async function migrateIdentityProviderUid(
+  userId: number,
+  provider: Provider,
+  oldUid: string,
+  newUid: string,
+): Promise<'ok' | 'conflict' | 'none'> {
+  if (oldUid === newUid) return 'ok';
+  return sql.begin(async (tx) => {
+    for (const uid of [oldUid, newUid].sort()) {
+      await tx`SELECT pg_advisory_xact_lock(hashtext('identity-provider-uid'), hashtext(${`${provider}:${uid}`}))`;
+    }
+    const rows = await tx`SELECT id, user_id, provider_uid FROM auth_identities
+      WHERE provider = ${provider} AND provider_uid IN (${oldUid}, ${newUid}) FOR UPDATE`;
+    const oldRow = rows.find((row) => String(row.provider_uid) === oldUid);
+    const newRow = rows.find((row) => String(row.provider_uid) === newUid);
+    if (!oldRow || Number(oldRow.user_id) !== userId) return 'none';
+    if (newRow && Number(newRow.user_id) !== userId) return 'conflict';
+    if (newRow) {
+      await tx`DELETE FROM auth_identities WHERE id = ${oldRow.id}`;
+    } else {
+      await tx`UPDATE auth_identities SET provider_uid = ${newUid}, verified_at = NOW() WHERE id = ${oldRow.id}`;
+    }
+    return 'ok';
+  });
 }
 
 export interface IdentityRow {

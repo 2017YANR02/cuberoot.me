@@ -3,11 +3,13 @@ import crypto from 'node:crypto';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import { sql, transactionQuery } from '../db/connection.js';
 import {
-  addIdentity, findUserByIdentity, getUserById, IdentityNotFoundError, loginWithIdentity, issueCode, verifyCode, isValidPhone,
+  addIdentity, findActiveCodeTarget, findUserByIdentity, genCode, getUserById, IdentityNotFoundError,
+  loginWithIdentity, issueCode, verifyCode, isValidPhone,
   type AppleIdentityCredential,
 } from './account.js';
 
 export const IDENTITY_CHOICE_TTL_SECONDS = 15 * 60;
+const IDENTITY_LINK_MAX_ATTEMPTS = 5;
 export type ChoiceProvider = PendingIdentity['provider'];
 type IdentityProfile = Parameters<typeof loginWithIdentity>[2] & {
   /** Server-only paired proof; never serialized into the public pending envelope. */
@@ -25,6 +27,7 @@ type PendingRow = {
   profile: IdentityProfile;
   apple_refresh_token_encrypted: Buffer | null;
   apple_token_key_version: number | null;
+  attempts: number;
 };
 
 export class IdentityChoiceError extends Error {
@@ -40,24 +43,42 @@ export class IdentityChoiceError extends Error {
 
 /** A separately scoped capability: never accepts account-merge codes. */
 function parseIdentityLinkCode(raw: string) {
-  const match = /^L([1-9]\d*)-([0-9]{6})$/.exec(raw.trim());
-  if (!match || !Number.isSafeInteger(Number(match[1]))) throw new IdentityChoiceError('INVALID_IDENTITY_LINK_CODE');
-  return { uid: Number(match[1]), code: match[2] };
+  const code = raw.trim();
+  if (!/^\d{6}$/.test(code)) throw new IdentityChoiceError('INVALID_IDENTITY_LINK_CODE');
+  return code;
 }
 
 export async function issueIdentityLinkCode(uid: number) {
   return sql.begin(async (tx) => {
-    // Serialize issuance per account across instances without reversing completion's code/account lock order.
-    await tx`SELECT pg_advisory_xact_lock(hashtext('identity-link-code'), hashtext(${String(uid)}))`;
+    // Six digits intentionally contain no account id. Serialize the live-code namespace so
+    // concurrent accounts can never reserve the same value.
+    await tx`SELECT pg_advisory_xact_lock(hashtext('identity-link-code'), hashtext('global'))`;
     const accounts = await tx`SELECT id FROM app_users WHERE id = ${uid} AND merged_into_user_id IS NULL`;
     if (!accounts.length) throw new IdentityChoiceError('ACCOUNT_CHANGED');
-    const issued = await issueCode('id_link', String(uid), 'identity_link', transactionQuery(tx));
-    return 'error' in issued ? issued : { linkCode: `L${uid}-${issued.code}`, expiresInSeconds: 600 };
+    let code = '';
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const candidate = genCode();
+      if (!await findActiveCodeTarget('id_link', 'identity_link', candidate, transactionQuery(tx))) {
+        code = candidate;
+        break;
+      }
+    }
+    if (!code) throw new Error('link code namespace unavailable');
+    const issued = await issueCode('id_link', String(uid), 'identity_link', transactionQuery(tx), { code });
+    return 'error' in issued ? issued : { linkCode: issued.code, expiresInSeconds: 600 };
   });
 }
 
 function ticketHash(ticket: string): string {
   return crypto.createHash('sha256').update(ticket).digest('hex');
+}
+
+async function recordInvalidLinkCodeAttempt(tx: TransactionSql, ticket: string) {
+  await tx`UPDATE auth_identity_pending SET attempts = attempts + 1,
+    expires_at = CASE WHEN attempts + 1 >= ${IDENTITY_LINK_MAX_ATTEMPTS}
+      THEN clock_timestamp() ELSE expires_at END
+    WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > clock_timestamp()
+      AND attempts < ${IDENTITY_LINK_MAX_ATTEMPTS}`;
 }
 
 /** An abandoned attempt expires, not an existing account or the provider's grant. */
@@ -129,12 +150,12 @@ async function queueIdentityChoice(identity: VerifiedIdentity, transaction?: Tra
 export async function completeIdentityChoice(ticket: string, action: 'create' | 'link' | 'link_with_code' | 'link_verified_phone', expectedUid?: number, linkCode?: string) {
   if (!/^[A-Za-z0-9_-]{43}$/.test(ticket)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
   const parsed = action === 'link_with_code' ? parseIdentityLinkCode(linkCode ?? '') : undefined;
-  if (parsed && parsed.uid !== expectedUid) throw new IdentityChoiceError('ACCOUNT_CHANGED');
   const result = await sql.begin(async (tx) => {
     // Both actions lock the attempt first, then the account (including raced create → existing login).
     const rows = await tx`SELECT provider, provider_uid, profile, apple_refresh_token_encrypted,
-      apple_token_key_version FROM auth_identity_pending
-      WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW() FOR UPDATE`;
+      apple_token_key_version, attempts FROM auth_identity_pending
+      WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW()
+        AND attempts < ${IDENTITY_LINK_MAX_ATTEMPTS} FOR UPDATE`;
     const pending = rows[0] as PendingRow | undefined;
     if (!pending) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
     const phoneProof = pending.provider === 'wechat' ? pending.profile.wechatPhone : undefined;
@@ -155,8 +176,13 @@ export async function completeIdentityChoice(ticket: string, action: 'create' | 
       if (!Number.isSafeInteger(expectedUid) || (expectedUid ?? 0) <= 0) throw new IdentityChoiceError('ACCOUNT_CHANGED');
       if (parsed) {
         if (pending.provider !== 'douyin' && !phoneProof) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
-        // A wrong guess must commit its attempt count; do not throw inside this transaction.
-        if (!await verifyCode('id_link', String(parsed.uid), 'identity_link', parsed.code, { transaction: tx })) return null;
+        await tx`SELECT pg_advisory_xact_lock(hashtext('identity-link-code'), hashtext('global'))`;
+        const target = await findActiveCodeTarget('id_link', 'identity_link', parsed, transactionQuery(tx));
+        if (!target || Number(target) !== expectedUid) {
+          await recordInvalidLinkCodeAttempt(tx, ticket);
+          return null;
+        }
+        if (!await verifyCode('id_link', target, 'identity_link', parsed, { transaction: tx })) return null;
       }
       const accounts = await tx`SELECT id FROM app_users
         WHERE id = ${expectedUid!} AND merged_into_user_id IS NULL FOR UPDATE`;
@@ -208,11 +234,17 @@ export async function previewIdentityLinkCode(ticket: string, linkCode: string) 
   const parsed = parseIdentityLinkCode(linkCode);
   const result = await sql.begin(async (tx) => {
     const pending = await tx`SELECT provider, profile FROM auth_identity_pending
-      WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW() FOR UPDATE`;
+      WHERE ticket_hash = ${ticketHash(ticket)} AND expires_at > NOW()
+        AND attempts < ${IDENTITY_LINK_MAX_ATTEMPTS} FOR UPDATE`;
     if (pending[0]?.provider !== 'douyin' && !(pending[0]?.provider === 'wechat' && pending[0]?.profile?.wechatPhone)) throw new IdentityChoiceError('INVALID_IDENTITY_TICKET');
-    if (!await verifyCode('id_link', String(parsed.uid), 'identity_link', parsed.code, { transaction: tx, consume: false })) return null;
+    await tx`SELECT pg_advisory_xact_lock(hashtext('identity-link-code'), hashtext('global'))`;
+    const target = await findActiveCodeTarget('id_link', 'identity_link', parsed, transactionQuery(tx));
+    if (!target || !await verifyCode('id_link', target, 'identity_link', parsed, { transaction: tx, consume: false })) {
+      await recordInvalidLinkCodeAttempt(tx, ticket);
+      return null;
+    }
     const accounts = await tx`SELECT id, display_name FROM app_users
-      WHERE id = ${parsed.uid} AND merged_into_user_id IS NULL FOR UPDATE`;
+      WHERE id = ${Number(target)} AND merged_into_user_id IS NULL FOR UPDATE`;
     if (!accounts.length) throw new IdentityChoiceError('ACCOUNT_CHANGED');
     return { user: { id: Number(accounts[0].id), displayName: String(accounts[0].display_name) } };
   });

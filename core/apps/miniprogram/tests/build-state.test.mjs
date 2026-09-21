@@ -56,6 +56,8 @@ describe('mini program build graph state', () => {
     expect(buildSource).toContain('minifyIdentifiers: !watch');
     expect(buildSource).toContain('minifySyntax: !watch || douyin');
     expect(buildSource).toContain('minifyWhitespace: !watch || douyin');
+    expect(buildSource).toContain('normalized.usePrivacyCheck = true');
+    expect(buildSource).toContain("appConfig.usePrivacyCheck !== true");
     expect(buildSource).not.toMatch(/\bmangleProps\s*:/);
     const { outputFiles } = await build({ absWorkingDir: packageRoot, bundle: true,
       entryPoints: ['src/pages/account/index.ts'], format: 'iife', write: false,
