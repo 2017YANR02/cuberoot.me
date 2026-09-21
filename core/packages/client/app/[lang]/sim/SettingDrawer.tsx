@@ -7,6 +7,8 @@
 import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CUBE_FILL } from '@/lib/cube-colors';
+import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
+import { GHOST_DEFAULT_FACE_COLORS, GHOST_FACE_LABELS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
 import { persistItem } from '@/lib/safe-storage';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
@@ -120,6 +122,8 @@ export interface SimSettings {
   stickerGap: number;
   /** 6 面色 (WCA 默认) */
   faceColors: { U: string; D: string; L: string; R: string; F: string; B: string };
+  /** Ghost keeps its white default and custom shell palette separate from NxN. */
+  ghostFaceColors?: SimSettings['faceColors'];
   /** 原核 (raw / stickerless body):
    *  - 'normal' = 默认。黑色内核 + 平面贴片。
    *  - 'raw'    = 整块实色,去黑核 —— 每块塑料本身即颜色,棱块沿对角线劈成双色、
@@ -295,6 +299,14 @@ export function loadSettings(): SimSettings {
     if (!raw) return { ...DEFAULT_SETTINGS, pictureFaces };
     const parsed = JSON.parse(raw) as Partial<SimSettings> & { checkeredBg?: boolean };
     const merged = { ...DEFAULT_SETTINGS, ...parsed, pictureFaces };
+    const ghostColors = parsed.ghostFaceColors;
+    merged.ghostFaceColors = { ...GHOST_DEFAULT_FACE_COLORS };
+    for (const face of GHOST_FACE_LABELS) {
+      const color = ghostColors?.[face];
+      if (typeof color === 'string' && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(color)) {
+        merged.ghostFaceColors[face] = color;
+      }
+    }
     // Migrate the old boolean checkeredBg → boardBg (true = the dark twizzle grid;
     // false stays the theme-following solid, i.e. 'auto').
     if (!('boardBg' in parsed) && parsed.checkeredBg) merged.boardBg = 'checkerDark';
@@ -509,6 +521,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
         : null;
     cube.setLogo(logoTex);
   } else {
+    if (world.cube instanceof GhostCube) {
+      world.cube.setFaceColors(s.ghostFaceColors ?? GHOST_DEFAULT_FACE_COLORS);
+    }
     // In-house engine puzzles (SQ1 / Ivy / Dino / Redi / Rex / Heli / Skewb): their
     // sticker thickness + body materials are baked at construction (no InstancedRenderer),
     // so 立体贴片 / 镂空 / structure-colors are applied generically off userData tags.
