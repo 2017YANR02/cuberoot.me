@@ -389,8 +389,9 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
     const target = await loginWithIdentity('google', 'link-code-target-' + suffix, { name: 'Known account' });
     const issued = await issueIdentityLinkCode(target.user.id);
     if (!('linkCode' in issued)) throw new Error('unexpected cooldown');
-    const choice = await pending('douyin', 'link-code-subject-' + suffix);
-    return { uid: target.user.id, linkCode: issued.linkCode, ticket: choice.pending.ticket };
+    const providerUid = 'link-code-subject-' + suffix;
+    const choice = await pending('douyin', providerUid);
+    return { uid: target.user.id, linkCode: issued.linkCode, ticket: choice.pending.ticket, providerUid };
   }
 
   it('separate account-link code previews a proved target then atomically links without creating an account', async () => {
@@ -419,13 +420,14 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
 
   it('wrong preview/completion guesses share a committed five-attempt budget under concurrency', async () => {
     const f = await linkingFixture('guesses');
-    const wrong = f.linkCode.endsWith('000000') ? `L${f.uid}-111111` : `L${f.uid}-000000`;
+    const wrong = f.linkCode === '000000' ? '111111' : '000000';
     await Promise.all(Array.from({ length: 10 }, (_, index) => index % 2
       ? previewIdentityLinkCode(f.ticket, wrong).catch(() => null)
       : completeIdentityChoice(f.ticket, 'link_with_code', f.uid, wrong).catch(() => null)));
-    const [row] = await sql`SELECT attempts, consumed_at FROM auth_codes WHERE channel = 'id_link' AND target = ${String(f.uid)}`;
+    const [row] = await sql`SELECT attempts, expires_at <= NOW() AS expired
+      FROM auth_identity_pending WHERE provider_uid = ${f.providerUid}`;
     expect(row.attempts).toBe(5);
-    expect(row.consumed_at).not.toBeNull();
+    expect(row.expired).toBe(true);
     await expect(previewIdentityLinkCode(f.ticket, f.linkCode)).rejects.toThrow('wrong or expired');
     expect((await completeIdentityChoice(f.ticket, 'create')).isNew).toBe(true);
   });
@@ -435,7 +437,7 @@ describe.skipIf(!enabled)('identity choice on real isolated PostgreSQL', () => {
     const email = await pending('email', 'scope-email@test.invalid');
     await expect(previewIdentityLinkCode(email.pending.ticket, f.linkCode)).rejects.toThrow('identity ticket');
     await expect(completeIdentityChoice(email.pending.ticket, 'link_with_code', f.uid, f.linkCode)).rejects.toThrow('identity ticket');
-    await expect(completeIdentityChoice(f.ticket, 'link_with_code', f.uid + 1, f.linkCode)).rejects.toThrow('account changed');
+    await expect(completeIdentityChoice(f.ticket, 'link_with_code', f.uid + 1, f.linkCode)).rejects.toThrow('wrong or expired');
     const merge = await issueCode('merge', String(f.uid), 'account_merge');
     if (!('code' in merge)) throw new Error('unexpected cooldown');
     await expect(previewIdentityLinkCode(f.ticket, `${f.uid}-${merge.code}`)).rejects.toThrow('wrong or expired');
