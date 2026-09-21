@@ -136,7 +136,7 @@ jobs:
       # writes into LIVE. Checksums handle fresh build mtimes and interrupted stages.
       # Idle timeout alone cannot stop a continuously slow transfer; bound wall time.
       - name: rsync standalone + systemd unit
-        timeout-minutes: 14
+        timeout-minutes: 19
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -165,7 +165,8 @@ jobs:
           printf '%s\0' "$LISTS"/part-* | xargs -0 -n 1 -P 8 bash -c 'upload_part "$1"' _
           # Only after every part succeeds, reconcile the complete tree once.
           # This restores directory metadata and removes stale staged files safely.
-          timeout --kill-after=15s 120s rsync -az --checksum --delete-delay \
+          # Budget for the full 29k-file checksum list over the slow SSH link too.
+          timeout --kill-after=15s 360s rsync -az --checksum --delete-delay \
             --partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next \
             -e "$RSH" "$SOURCE" "$DEST"
           # unit file is tiny — plain scp is fine
