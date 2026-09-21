@@ -159,8 +159,8 @@ describe('移动端复盘不遮挡计时区关键信息', () => {
     expect(shell).toMatch(/@media \(max-width: 1023px\) \{[\s\S]{0,220}--recap-h: clamp\(150px, calc\(100dvh - 610px\), 300px\)/);
   });
 
-  it('打乱所属比赛固定在打乱滚动区底部', () => {
-    expect(shell).toMatch(/\.timing-surface-scramble-top \.scramble-src-row \{[\s\S]{0,180}position: sticky;[\s\S]{0,180}bottom: 0;/);
+  it('打乱所属比赛留在正常文档流，不覆盖换行后的打乱', () => {
+    expect(shell).not.toMatch(/\.timing-surface-scramble-top \.scramble-src-row \{[^}]*position:\s*sticky;/);
   });
 });
 
