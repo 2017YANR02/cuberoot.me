@@ -58,7 +58,7 @@ describe('mini program web routes', () => {
       url: 'https://cuberoot.me/zh/account#wechat_redirect',
     });
     expect(resolveWebRoute('account-link')).toEqual({
-      title: '绑定已有账号',
+      title: '登录 CubeRoot',
       path: '/zh/account',
       sessionHandoff: false,
       url: 'https://cuberoot.me/zh/account#wechat_redirect',

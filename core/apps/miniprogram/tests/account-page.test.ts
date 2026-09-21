@@ -113,6 +113,22 @@ describe('mini program account page', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps existing-account sign-in in plain user language and shows the website step first', () => {
+    const source = readFileSync(new URL('../src/pages/account/index.ts', import.meta.url), 'utf8');
+    const template = readFileSync(new URL('../src/pages/account/index.wxml', import.meta.url), 'utf8');
+    expect(source).toContain("zh: '登录已有 CubeRoot 账号'");
+    expect(source).toContain("zh: '去网站登录'");
+    expect(source).toContain("zh: '粘贴登录码'");
+    expect(source).not.toContain('小程序绑定码');
+    expect(template.indexOf('bindtap="openLinkCodeWebsite"')).toBeLessThan(
+      template.indexOf('class="account-link-code-row"'),
+    );
+    expect(template).toContain('{{copy.loginAsLabel}}{{accountLinkTargetName}}');
+    const codeModeStart = template.indexOf('<block wx:elif="{{accountLinkCodeMode}}">');
+    const codeModeEnd = template.indexOf('\n    <button wx:else', codeModeStart);
+    expect(template.slice(codeModeStart, codeModeEnd)).not.toContain('CubeRoot ID');
+  });
+
   async function wechatPhoneFixture(options: {
     knownPhone?: boolean;
     supported?: boolean;

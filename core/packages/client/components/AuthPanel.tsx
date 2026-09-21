@@ -1009,10 +1009,10 @@ const PROVIDER_LABEL: Record<string, { zh: string; en: string }> = {
 };
 
 /** Only an authenticated account may issue this short-lived proof; it is never an account lookup. */
-function MiniProgramLinkCodePanel() {
+function MiniProgramLinkCodePanel({ defaultOpen = false }: { defaultOpen?: boolean }) {
   const t = useT();
   const uid = useAuthStore((state) => state.user?.uid);
-  const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number; name: string } | null>(null);
+  const [result, setResult] = useState<{ linkCode: string; expiresAt: number; uid: number } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
@@ -1033,27 +1033,26 @@ function MiniProgramLinkCodePanel() {
     try {
       const issued = await issueIdentityLinkCode(uid, controller.signal);
       if (controller.signal.aborted || useAuthStore.getState().user?.uid !== uid) return;
-      setResult({ linkCode: issued.linkCode, expiresAt: Date.now() + issued.expiresInSeconds * 1000, uid, name: useAuthStore.getState().user?.name ?? '' });
+      setResult({ linkCode: issued.linkCode, expiresAt: Date.now() + issued.expiresInSeconds * 1000, uid });
     } catch (cause) {
       if (!controller.signal.aborted) setError(authErrorText(cause instanceof Error ? cause.message : String(cause), t));
     } finally {
       if (request.current === controller) { request.current = null; setBusy(false); }
     }
   };
-  return <details className="auth-flow">
-    <summary>{t('绑定小程序到这个账号', 'Link a mini program to this account')}</summary>
-    <p className="auth-hint">{t(`保留当前账号 ID ${uid ?? ''}。在微信手机号授权后的账号选择页，或抖音小程序选择“已有账号”，输入绑定码，再确认绑定。`, `Keep account ID ${uid ?? ''}. Choose “Existing account” after WeChat phone authorization, or in the Douyin mini program, enter this code, then confirm linking.`)}</p>
-    <p className="auth-hint">{t('绑定码有效期 10 分钟，只能使用一次。它不是合并码；不要截图、转发或提供给他人。', 'The code lasts 10 minutes and works once. It is not a merge code. Do not screenshot, forward or share it.')}</p>
+  return <details className="auth-flow" open={defaultOpen || undefined}>
+    <summary>{t('登录小程序', 'Sign in to the Mini Program')}</summary>
+    <p className="auth-hint">{t('生成登录码，复制后回到小程序粘贴即可。', 'Generate a sign-in code, copy it, then return to the Mini Program and paste it.')}</p>
+    <p className="auth-hint">{t('登录码 10 分钟内有效，只能使用一次。请勿转发给他人。', 'The sign-in code works once and expires in 10 minutes. Do not share it with anyone.')}</p>
     {result?.uid === uid && result && <>
-      <p className="auth-hint">{result.name} · ID {result.uid}</p>
-      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('小程序绑定码', 'Mini program linking code')} />
+      <input className="auth-input" readOnly value={result.linkCode} aria-label={t('小程序登录码', 'Mini Program sign-in code')} />
       <button type="button" className="auth-textbtn" onClick={async () => {
         setError('');
         try { await navigator.clipboard.writeText(result.linkCode); setCopied(true); }
-        catch { setError(t('无法复制，请选中绑定码手动复制。', 'Could not copy. Select the code and copy it manually.')); }
-      }}>{copied ? t('已复制', 'Copied') : t('复制绑定码', 'Copy linking code')}</button>
+        catch { setError(t('无法复制，请选中登录码手动复制。', 'Could not copy. Select the sign-in code and copy it manually.')); }
+      }}>{copied ? t('已复制', 'Copied') : t('复制登录码', 'Copy sign-in code')}</button>
     </>}
-    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成绑定码', 'Generate linking code')}</button>
+    <button type="button" className="auth-primary" disabled={busy || !uid} onClick={() => void generate()}>{busy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成登录码', 'Generate sign-in code')}</button>
     {error && <p className="auth-error" role="alert">{error}</p>}
   </details>;
 }
@@ -1062,7 +1061,7 @@ function MiniProgramLinkCodePanel() {
  * 账号面板:已绑定身份 + 绑定新方式 + 解绑 + 设/改密码。只渲染于 /account。
  * 姓名与登出归宿主页头部管(那是页面级信息),这里只管凭据本身。
  */
-export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number | null }) {
+export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { expectedAppleUid?: number | null; miniProgramLogin?: boolean }) {
   const lang = useLang();
   const currentUid = useAuthStore((s) => s.user?.uid);
   const appleAccountMismatch = expectedAppleUid !== undefined && (!expectedAppleUid || currentUid !== expectedAppleUid);
@@ -1464,7 +1463,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
         />
       )}
 
-      <MiniProgramLinkCodePanel />
+      <MiniProgramLinkCodePanel defaultOpen={miniProgramLogin} />
 
       <div className="auth-linklist">
         <div className="auth-idrow">
@@ -1495,7 +1494,7 @@ export function AccountPanel({ expectedAppleUid }: { expectedAppleUid?: number |
           {mergeMode === 'keep' ? (
             <>
               <p className="auth-hint">{t('生成合并码,再登录另一个账号输入。合并后保留当前账号。', 'Generate a code, then sign in to the other account and enter it. This account will be kept.')}</p>
-              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；小程序绑定请使用上面的绑定码。', 'The merge code lasts 10 minutes and works once. Do not share it. To link a mini program, use the linking code above.')}</p>
+              <p className="auth-hint">{t('合并码有效期 10 分钟，只能使用一次。请勿向他人分享；小程序登录请使用上面的登录码。', 'The merge code lasts 10 minutes and works once. Do not share it. To sign in to the Mini Program, use the sign-in code above.')}</p>
               {generatedMergeCode && <input className="auth-input" readOnly value={generatedMergeCode} aria-label={t('合并码', 'Merge code')} />}
               <button type="button" className="auth-primary" disabled={mergeBusy} onClick={() => void generateMergeCode()}>
                 {mergeBusy ? <Loader2 size={ICON} className="auth-spin" /> : t('生成合并码', 'Generate merge code')}
