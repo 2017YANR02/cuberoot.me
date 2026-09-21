@@ -435,7 +435,7 @@ export function loginErrorMessage(error: unknown): string {
     });
   }
   if (error.code === 'ACCOUNT_CHOICE_REQUIRED') return tr({ en: 'Choose an existing account or create a new one.', zh: '请选择登录已有账号或创建新账号。' });
-  if (error.code === 'INVALID_IDENTITY_LINK_CODE') return tr({ en: 'The account linking code is invalid or expired. Get a new code from your account settings.', zh: '账号绑定码无效或已过期，请在原账号设置中重新获取。' });
+  if (error.code === 'INVALID_IDENTITY_LINK_CODE') return tr({ en: 'This sign-in code is invalid or expired. Get a new one from the website.', zh: '登录码无效或已过期，请返回网站重新获取。' });
   if (error.code === 'INVALID_IDENTITY_TICKET') return tr({ en: 'This sign-in request expired. Start again.', zh: '本次登录已过期，请重新开始。' });
   if (error.code === 'ACCOUNT_CHANGED' || error.code === 'IDENTITY_CONFLICT') return tr({ en: 'The account or linked identity changed. Check your account and try again.', zh: '账号或绑定状态已改变，请先检查账号后重试。' });
   if (error.code === 'WECHAT_NOT_CONFIGURED' || error.code === 'DOUYIN_NOT_CONFIGURED') {

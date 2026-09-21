@@ -123,15 +123,15 @@ export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
     publicEntry: false,
   },
   'account-link': {
-    title: tr({ en: 'Link existing account', zh: '绑定已有账号' }),
+    title: tr({ en: 'Sign in to CubeRoot', zh: '登录 CubeRoot' }),
     description: tr(isDouyinMiniProgram() ? {
-      en: 'Sign in to your existing account, then generate a Douyin mini program linking code in account settings',
-      zh: '先登录已有账号，再在账号设置获取抖音小程序绑定码',
+      en: 'Sign in to your existing account and get a one-time sign-in code',
+      zh: '登录原账号并获取一次性登录码',
     } : {
       en: 'Sign in to your existing account, then link WeChat under sign-in methods',
       zh: '先登录已有账号，再在登录方式中绑定微信',
     }),
-    path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin' : ''}`,
+    path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin&mini_program=login' : ''}`,
     publicEntry: false,
     sessionHandoff: false,
   },

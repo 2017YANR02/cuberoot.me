@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "8fcfb0af63522612f3511c92adf64c6f5048e162f34d74834e2ee212fd7e30cb", "reason": "复核 web-view-page 的分享菜单适配提取：仅将隐藏菜单交给现有 share 模块，抖音改用 share，微信保留原菜单值。页面路由、分享目标净化、接收者会话校验和单次换票、存储失败阻断均未改变，因此账号流程图保持不变。模拟器日志证实业务域名未获放行，页面验收与上传发布仍未完成，不能由菜单修复推断登录或网页可用。"}
+{"fingerprint": "7c1e9101da63660c503c548f07140c168635645ef54a335c896ba4f86472bd14", "reason": "复核抖音小程序已有账号登录：用户界面从内部绑定术语改为一次性登录码，调整为先登录网站、再粘贴登录码，网站会自动展开小程序登录面板。服务端单次票据、账号预览、expected UID 确认和账号合并边界未变。流程图已同步新顺序与中英文文案；仍需部署网站、上传小程序并完成真机验收。"}
 */
 
 import type { ReactNode } from 'react';
@@ -32,7 +32,7 @@ export default function AuthFlowPage() {
       <h1>{t('账号全流程', 'Account lifecycle')}</h1>
       <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
       <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
-      <p className="auth-map-note">{t('源码核对：2026-09-20。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-20. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
+      <p className="auth-map-note">{t('源码核对：2026-09-21。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-21. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
       <p className="auth-map-note">{t('本次邮箱发送状态与账号事务加固已完成本地隔离验证，尚未部署；短信发送生命周期与账号合并仍使用各自原有流程，不能由邮箱测试推断已完成同样改造。', 'Email delivery state and account transactions have passed isolated local checks and are not deployed. SMS delivery and account merging retain their existing flows; email tests do not prove those flows have received the same changes.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
@@ -55,7 +55,7 @@ export default function AuthFlowPage() {
       </div>
       <details className="auth-map-current"><summary>{t('其他平台：鸿蒙、Windows、macOS、抖音小程序', 'Other platforms: HarmonyOS, Windows, macOS, Douyin Mini Program')}</summary>
         <p>{t('HarmonyOS NEXT、Windows、macOS 共用 App 产品层和网站账号流程，只替换系统浏览器、深链与安全存储适配；每个平台的真实回跳仍须单独验收。', 'HarmonyOS NEXT, Windows, and macOS share the App product layer and website account flow, with platform browser, deep-link, and secure-storage adapters. Each platform still needs its own real handoff tests.')}</p>
-        <p>{t('抖音小程序：已绑定身份直接登录；未知身份先选择绑定旧号或明确创建。绑定旧号时，先在网站原账号的登录方式页生成短期「绑定码」，回小程序输入并核对目标账号，再确认绑定。绑定码不是合并码，不会搬迁两个账号的数据。此增量须部署并发布新版小程序后才生效。', 'Douyin Mini Program: linked identities sign in directly; unknown identities choose existing-account linking or explicit creation. Generate a short-lived link code in the existing website account’s sign-in settings, enter it in the Mini Program, check the target account, and confirm. A link code is not a merge code and does not migrate two accounts. This change requires deployment and a new Mini Program release.')}</p>
+        <p>{t('抖音小程序：已关联抖音身份时直接登录。新身份选择「登录已有 CubeRoot 账号」后，打开网站登录原账号，网站自动展开「登录小程序」；生成 10 分钟内有效的一次性登录码，复制后回小程序粘贴，确认显示的账号即完成登录。登录码不是合并码，不会搬迁两个账号的数据。此增量须部署并发布新版小程序后才生效。', 'Douyin Mini Program: a linked Douyin identity signs in directly. For a new identity, choose Sign in to an existing CubeRoot account, open the website and sign in to the original account, and the website automatically expands Sign in to the Mini Program. Generate a one-time sign-in code that expires in 10 minutes, copy it back to the Mini Program, and confirm the displayed account. A sign-in code is not a merge code and does not migrate data between accounts. This change requires deployment and a new Mini Program release.')}</p>
         <Steps items={[
           t('抖音启动 → 使用宿主注入的 tt API，读取本地存储键列表；不依赖浏览器 globalThis', 'Douyin startup → use the host-injected tt API and read the local storage key inventory; browser globalThis is not required'),
           t('确认没有会话键 → 按游客打开公开页面；已有会话 → 校验后通过短期票据同步网站登录态', 'Confirmed missing session key → open public pages as a guest; existing session → validate it and synchronize website sign-in through a short-lived ticket'),
@@ -127,7 +127,7 @@ export default function AuthFlowPage() {
         t('我的 → 微信登录（公开浏览和普通计时无需登录）', 'Me → WeChat sign-in (public browsing and ordinary timing need no sign-in)'),
         t('服务端验证微信身份（UnionID）；取不到则停止，不另造 OpenID 账号', 'Server verifies the WeChat identity (UnionID); if unavailable, stop rather than create an OpenID account'),
         t('已绑定 → 原账号登录；未绑定 → 手机号实时验证授权，或其他方式验证旧号', 'Already linked → sign in; otherwise → authorize real-time phone verification, or verify an existing account another way'),
-        t('手机号命中旧号 → 显示账号并确认；未命中 → 选择旧号绑定码或明确创建，微信与手机号原子绑定', 'Phone matches an account → show it and confirm; no match → use an existing-account link code or explicitly create, linking phone and WeChat atomically'),
+        t('手机号命中旧号 → 显示账号并确认；未命中 → 使用原账号生成的一次性小程序登录码或明确创建，微信与手机号原子绑定', 'Phone matches an account → show it and confirm; no match → use a one-time Mini Program sign-in code from the original account or explicitly create, linking phone and WeChat atomically'),
       ]} /></figure>
       <p className="auth-map-note">{t('不会自动取得手机号：需主动点击并完成微信实时验证授权。仅支持既有中国大陆手机号契约；其他号码或不支持实时验证时，使用其他方式登录旧号，不降级到非实时授权。后台权限、额度、隐私声明和真机验收仍是发布前置条件。', 'Phone access requires an explicit tap and WeChat real-time verification. The existing phone contract supports mainland China numbers only. Other numbers or unsupported real-time verification use another existing-account sign-in method, never a non-real-time fallback. Platform permission, quota, privacy declarations and real-device acceptance remain release prerequisites.')}</p>
       <div className="auth-map-section-heading">
@@ -176,8 +176,8 @@ export default function AuthFlowPage() {
             <Arrow />
             <FlowNode>{t('使用原账号的登录方式验证', 'Authenticate with an existing sign-in method')}<small>{t('手机号、邮箱、WCA、Apple 等已绑定方式。', 'An already-linked phone, email, WCA, Apple, or other method.')}</small></FlowNode>
             <Arrow />
-            <FlowNode>{t('已授权手机号：网站原账号生成绑定码 → 回小程序预览并确认，一并绑定手机号和微信；未授权：在网站完成原有微信绑定后返回', 'After phone authorization: generate a link code in the existing website account → preview and confirm in the Mini Program to link both phone and WeChat. Without phone authorization: complete existing WeChat linking on the website and return')}</FlowNode>
-            <p className="auth-map-note">{t('绑定码有效期 10 分钟，不是合并码。原账号已有其他手机号时停止，不覆盖号码；可取消并用原有方式登录、在设置中处理换绑。', 'Link codes last 10 minutes and are not merge codes. If the account has another phone, stop without replacing it; cancel, sign in with an existing method and manage replacement in settings.')}</p>
+            <FlowNode>{t('已授权手机号：网站原账号生成一次性小程序登录码 → 回小程序预览并确认，一并绑定手机号和微信；未授权：在网站完成原有微信绑定后返回', 'After phone authorization: generate a one-time Mini Program sign-in code in the existing website account → preview and confirm it in the Mini Program to link both phone and WeChat. Without phone authorization: complete existing WeChat linking on the website and return')}</FlowNode>
+            <p className="auth-map-note">{t('登录码有效期 10 分钟，不是合并码。原账号已有其他手机号时停止，不覆盖号码；可取消并用原有方式登录、在设置中处理换绑。', 'The sign-in code lasts 10 minutes and is not a merge code. If the account has another phone, stop without replacing it; cancel, sign in with an existing method and manage replacement in settings.')}</p>
           </section>
         </div>
         <div className="auth-map-stem auth-map-finish"><Arrow /><FlowNode outcome>{t('登录完成：会员、资料仍在同一个账号', 'Signed in: membership and profile stay on one account')}<small>{t('以后进入小程序，走「已绑定」路径。', 'Future visits follow the already-linked path.')}</small></FlowNode></div>
