@@ -50,14 +50,20 @@
       <button class="primary-button account-primary-button" disabled="{{loginBusy}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmPhoneAccount">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
     </block>
     <block wx:elif="{{accountLinkCodeMode}}">
-      <view class="account-link-code-row">
-        <input class="account-link-code-input" value="{{accountLinkCode}}" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="24" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
-        <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
-      </view>
-      <text wx:if="{{accountLinkTargetId}}" class="account-user-meta">{{accountLinkTargetName}} · CubeRoot ID {{accountLinkTargetId}}</text>
-      <button wx:if="{{accountLinkTargetId}}" class="primary-button account-primary-button" disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmLinkCode">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
-      <button wx:else class="primary-button account-primary-button" disabled="{{loginBusy || !accountLinkCode}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="previewLinkCode">{{copy.previewLinkCodeLabel}}</button>
-      <button class="text-button account-create-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+      <block wx:if="{{accountLinkTargetId}}">
+        <text class="account-user-meta">{{copy.loginAsLabel}}{{accountLinkTargetName}}</text>
+        <button class="primary-button account-primary-button" disabled="{{loginBusy || (requiresAgreement && !agreementAccepted)}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="confirmLinkCode">{{loginBusy ? copy.signingInLabel : copy.confirmLinkCodeLabel}}</button>
+        <button class="text-button account-create-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">{{copy.clearCodeLabel}}</button>
+      </block>
+      <block wx:else>
+        <button class="primary-button account-primary-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
+        <text class="account-link-code-prompt">{{copy.linkCodeReadyHint}}</text>
+        <view class="account-link-code-row">
+          <input class="account-link-code-input" value="{{accountLinkCode}}" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="24" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
+          <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
+        </view>
+        <button class="primary-button account-primary-button account-link-continue-button" disabled="{{loginBusy || !accountLinkCode}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="previewLinkCode">{{copy.previewLinkCodeLabel}}</button>
+      </block>
     </block>
     <button wx:else
       class="primary-button account-primary-button"

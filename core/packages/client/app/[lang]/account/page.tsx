@@ -672,6 +672,7 @@ export default function AccountPage() {
   const [managedUserId] = useQueryState('user', parseAsInteger);
   const [linkProvider] = useQueryState('link_provider', parseAsStringEnum(['apple']));
   const [expectedLinkUid] = useQueryState('expected_uid', parseAsInteger);
+  const [miniProgramAction] = useQueryState('mini_program', parseAsStringEnum(['login']));
 
   // 'wait' = 还没判定(SSR / 正在跳走)—— auth-store 从 localStorage 同步初始化,服务端恒为
   // null,所以判定只能在挂载后做,渲染前固定空壳避免 hydration 错配。
@@ -925,7 +926,10 @@ export default function AccountPage() {
             <section className="account-creds">
               <DisplayNameEditor />
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
-              <AccountPanel expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined} />
+              <AccountPanel
+                expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined}
+                miniProgramLogin={miniProgramAction === 'login'}
+              />
               {/* 清掉 ?view= —— 否则重新登录后会莫名其妙落在登录方式视图 */}
               <button type="button" className="account-logout" onClick={handleLogout}>
                 <LogOut size={14} />

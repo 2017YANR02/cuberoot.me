@@ -46,6 +46,22 @@
   padding: 20rpx 0;
 }
 
+.account-link-website-button {
+  margin-top: 40rpx;
+}
+
+.account-link-code-prompt {
+  color: var(--cr-muted);
+  display: block;
+  font-size: 25rpx;
+  line-height: 1.5;
+  margin-top: 40rpx;
+}
+
+.account-link-continue-button {
+  margin-top: 32rpx;
+}
+
 .account-link-code-input {
   flex: 1;
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
