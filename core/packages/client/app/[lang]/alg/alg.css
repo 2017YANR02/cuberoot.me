@@ -624,7 +624,7 @@ html[data-theme=dark] .alg-root {
   .alg-pdf-menu-item {
     min-block-size: 44px;
   }
-  .alg-cat-header .alg-list-settings .training-settings-trigger {
+  .alg-cat-header .alg-list-settings .settings-popover-trigger {
     inline-size: 44px;
     block-size: 44px;
   }
@@ -2491,6 +2491,72 @@ a.alg-community-author:hover {
   }
 }
 .alg-editor-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.alg-editor-tools-group { display: contents; }
+
+/* Inline detail rows reuse the admin toolbar's compact capsule behavior: the
+   action group stays behind a small hover target, then opens toward the input. */
+@media (hover: hover) and (pointer: fine) {
+  .alg-case-inline-editor .alg-editor-tools {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    max-width: none;
+    justify-self: end;
+    overflow: visible;
+    z-index: 2;
+  }
+  .alg-case-inline-editor .alg-editor-tools-group {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+    box-sizing: border-box;
+    width: max-content;
+    max-width: 40px;
+    min-height: 40px;
+    padding: 3px;
+    overflow: hidden;
+    border: 1px solid var(--border-default);
+    border-radius: 22px;
+    transition: max-width 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+  .alg-case-inline-editor .alg-editor-tools-group::before {
+    content: '…';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: var(--muted-foreground);
+    line-height: 1;
+    transition: opacity 140ms ease;
+  }
+  .alg-case-inline-editor .alg-editor-tools-group > * {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(8px);
+    transition: opacity 140ms ease, transform 300ms cubic-bezier(.22, 1, .36, 1);
+  }
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group {
+    max-width: min(320px, calc(100vw - 32px));
+  }
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group::before {
+    opacity: 0;
+  }
+  .alg-case-inline-editor .alg-editor-tools:is(:hover, :has(:focus-visible), :has([aria-expanded='true'])) .alg-editor-tools-group > * {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+    transition: opacity 220ms ease 100ms, transform 420ms cubic-bezier(.22, 1, .36, 1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .alg-case-inline-editor .alg-editor-tools-group,
+    .alg-case-inline-editor .alg-editor-tools-group::before,
+    .alg-case-inline-editor .alg-editor-tools-group > * { transition: none; }
+  }
+}
 .alg-editor-row.has-gen-heading { margin-top: 18px; }
 .alg-editor-gen { position: relative; display: inline-flex; align-items: center; min-width: 6ch; min-height: 32px; white-space: nowrap; font-size: 11px; }
 .alg-editor-gen-heading { position: absolute; inset-inline-start: 0; bottom: calc(100% + 2px); font-family: var(--font-sans, inherit); white-space: nowrap; }

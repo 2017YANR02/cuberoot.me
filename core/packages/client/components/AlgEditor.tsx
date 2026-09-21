@@ -362,7 +362,8 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                     }
                   }}
                 />
-                <div className="alg-editor-tools">
+                <div className="alg-editor-tools" role="toolbar" aria-label={tr({ zh: '公式操作', en: 'Algorithm actions' })}>
+                <div className="alg-editor-tools-group" data-site-surface="popover">
                 {isFocused && <span className="alg-input-keyboard-toggle" ref={setKeyboardToggleContainer} />}
                 <span className="alg-editor-gen">
                   {ai === 0 && <span className="alg-editor-gen-heading">{tr({ zh: '流', en: 'gen' })}</span>}
@@ -396,6 +397,7 @@ const AlgEditor = forwardRef<AlgEditorHandle, Props>(({ initialValue, puzzle = '
                     <Trash2 size={12} />
                   </button>
                 )}
+                </div>
                 </div>
               </div>
                 {bad && (

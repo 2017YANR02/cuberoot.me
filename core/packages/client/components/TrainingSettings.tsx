@@ -61,42 +61,74 @@ export function useTrainingAutoAdvance() {
   return useMemo(() => ({ enabled, setEnabled, schedule, cancel }), [cancel, enabled, schedule, setEnabled]);
 }
 
-export function SettingsPopover({ label, className, children }: {
+export function SettingsPopover({
+  label,
+  className,
+  triggerClassName,
+  panelClassName,
+  triggerPrefix,
+  triggerSuffix,
+  iconSize = 18,
+  open: controlledOpen,
+  onOpenChange,
+  ignoreTimer = false,
+  children,
+}: {
   label: string;
   className?: string;
+  triggerClassName?: string;
+  panelClassName?: string;
+  triggerPrefix?: ReactNode;
+  triggerSuffix?: ReactNode;
+  iconSize?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  ignoreTimer?: boolean;
   children?: ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = useCallback((next: boolean) => {
+    if (controlledOpen === undefined) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  }, [controlledOpen, onOpenChange]);
+  const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLSpanElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   usePanelClamp(open, panelRef);
-  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  usePopoverDismiss(open, () => setOpen(false), rootRef, triggerRef);
 
   return (
-    <span className={`training-settings${className ? ` ${className}` : ''}`}>
+    <div
+      ref={rootRef}
+      className={`settings-popover${className ? ` ${className}` : ''}`}
+      data-no-timer={ignoreTimer || undefined}
+    >
+      {triggerPrefix}
       <button
         ref={triggerRef}
         type="button"
-        className="training-settings-trigger"
+        className={`settings-popover-trigger${triggerClassName ? ` ${triggerClassName}` : ''}`}
         aria-label={label}
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen(!open)}
       >
-        <Settings size={18} aria-hidden="true" />
+        <Settings size={iconSize} aria-hidden="true" />
       </button>
+      {triggerSuffix}
       {open && (
-        <span
+        <div
           ref={panelRef}
-          className="training-settings-panel"
+          className={`settings-popover-panel${panelClassName ? ` ${panelClassName}` : ''}`}
           role="dialog"
           aria-label={label}
           data-site-surface="popover"
         >
           {children}
-        </span>
+        </div>
       )}
-    </span>
+    </div>
   );
 }
 
