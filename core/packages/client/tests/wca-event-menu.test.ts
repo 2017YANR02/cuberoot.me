@@ -148,4 +148,18 @@ describe('WCA event menus', () => {
     open();
     expect([...host.querySelectorAll('a')].map(node => node.getAttribute('href'))).toEqual(['/puzzle/333', '/puzzle/222']);
   });
+
+  it('keeps multi-select shortcuts visible with the inline event strip', () => {
+    act(() => root.render(createElement(WcaEventMultiSelector, {
+      presentation: 'inline',
+      availableEvents: new Set(['333', '222', '333bf']),
+      selectedEvents: new Set(['333']),
+      onChange: vi.fn(),
+      isZh: false,
+    })));
+
+    expect(host.querySelector('.pp-trigger')).toBeNull();
+    expect(host.querySelector('.wca-event-multi-toolbar')).not.toBeNull();
+    expect(host.querySelectorAll('.event-btn')).toHaveLength(3);
+  });
 });

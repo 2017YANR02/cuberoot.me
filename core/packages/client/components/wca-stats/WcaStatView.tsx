@@ -39,12 +39,14 @@ interface WcaStatViewProps {
   /** 受控指标 id(metricPanels 的 id,如 'bao5')。传了即由宿主页驱动:同步到对应面板 +
    *  隐藏组件内置的指标选择器(/wca/results 把它提升进顶层「类型」下拉,避免重复)。 */
   metricId?: string | null;
+  /** Override the shared event selector presentation for an embedding surface. */
+  eventSelectorPresentation?: 'menu' | 'inline';
   /** 插在「项目选择器」与 note 之间的内容。/wca/results 指标视图把顶层「类型」下拉放这,
    *  实现 项目选择器 在 类型下拉 上方。 */
   afterEventSelector?: React.ReactNode | ((availableMetricIds: ReadonlySet<string>) => React.ReactNode);
 }
 
-export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, afterEventSelector = null }: WcaStatViewProps) {
+export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metricId = null, eventSelectorPresentation = 'menu', afterEventSelector = null }: WcaStatViewProps) {
   const { i18n } = useTranslation();
   const [data, setData] = useState<StatData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +233,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
     <>
       {showEventSelector && (
         <WcaEventSelector
+          presentation={eventSelectorPresentation}
           availableEvents={availableEvents}
           selectedEvent={selectedEvent}
           onSelect={handleSelectEvent}
