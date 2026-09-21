@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(), complete: vi.fn(), verifySession: vi.fn(), requireUid: vi.fn(),
   sign: vi.fn(), capture: vi.fn(), login: vi.fn(), verifyCode: vi.fn(), findUser: vi.fn(), douyinExchange: vi.fn(),
+  migrateIdentity: vi.fn(),
   issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(), transaction: { fixture: true },
   wechatPhoneBegin: vi.fn(), wechatExchange: vi.fn(), wechatPhoneExchange: vi.fn(),
 }));
@@ -15,6 +16,7 @@ vi.mock('../src/utils/identity_choice.js', async (original) => {
 vi.mock('../src/utils/account.js', async (original) => {
   const actual = await original<typeof import('../src/utils/account.js')>();
   return { ...actual, loginWithIdentity: mocks.login, verifyCode: mocks.verifyCode, issueCode: mocks.issueCode, findUserByIdentity: mocks.findUser, publicUser: (u: unknown) => u,
+    migrateIdentityProviderUid: mocks.migrateIdentity,
     withVerifiedCode: async (...args: Parameters<typeof actual.withVerifiedCode>) => {
       if (!await mocks.verifyCode(...args.slice(0, 4))) return { verified: false };
       return { verified: true, value: await args[4](mocks.transaction as never) };
@@ -38,7 +40,7 @@ vi.mock('../src/utils/wechat_miniprogram.js', async (original) => ({
   exchangeWechatMiniProgramPhoneCode: mocks.wechatPhoneExchange,
 }));
 vi.mock('../src/utils/social_login.js', () => ({
-  isSocialProvider: (p: string) => ['wechat', 'qq', 'alipay'].includes(p),
+  isSocialProvider: (p: string) => ['douyin', 'wechat', 'qq', 'alipay'].includes(p),
   socialLoginConfigured: () => true, verifySocialState: () => ({ intent: 'login' }),
   exchangeSocialCode: async () => ({ sub: 'subject', name: '' }),
 }));
@@ -63,7 +65,8 @@ beforeEach(() => {
   mocks.sign.mockReturnValue('canonical-session');
   mocks.verifyCode.mockResolvedValue(true);
   mocks.douyinExchange.mockResolvedValue({ openid: 'douyin-subject' });
-  mocks.issueLinkCode.mockResolvedValue({ linkCode: 'L42-123456', expiresInSeconds: 600 });
+  mocks.migrateIdentity.mockResolvedValue('ok');
+  mocks.issueLinkCode.mockResolvedValue({ linkCode: '123456', expiresInSeconds: 600 });
   mocks.previewLinkCode.mockResolvedValue({ user: { id: 42, displayName: 'Target' } });
   mocks.issueCode.mockResolvedValue({ code: '123456' });
   mocks.wechatExchange.mockResolvedValue({ openid: 'verified-openid', unionid: 'verified-unionid' });
@@ -73,6 +76,39 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('unified provider account-choice routes', () => {
+  it('upgrades a legacy Douyin OpenID identity to UnionID before login', async () => {
+    mocks.douyinExchange.mockResolvedValue({ openid: 'legacy-openid', unionid: 'stable-unionid' });
+    mocks.findUser.mockImplementation(async (_provider: string, providerUid: string) => (
+      providerUid === 'legacy-openid' ? user : null
+    ));
+    mocks.begin.mockResolvedValue({ user, isNew: false });
+
+    const response = await post('/auth/douyin/miniprogram', { code: 'verified-code' });
+
+    expect(response.status).toBe(200);
+    expect(mocks.migrateIdentity).toHaveBeenCalledWith(42, 'douyin', 'legacy-openid', 'stable-unionid');
+    expect(mocks.begin).toHaveBeenCalledWith({
+      provider: 'douyin',
+      providerUid: 'stable-unionid',
+      profile: { name: '' },
+    });
+  });
+
+  it('refuses to merge different accounts that already own the Douyin OpenID and UnionID', async () => {
+    mocks.douyinExchange.mockResolvedValue({ openid: 'legacy-openid', unionid: 'stable-unionid' });
+    mocks.findUser.mockImplementation(async (_provider: string, providerUid: string) => (
+      providerUid === 'legacy-openid' ? user : { ...user, id: 43 }
+    ));
+
+    const response = await post('/auth/douyin/miniprogram', { code: 'verified-code' });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    expect(mocks.migrateIdentity).not.toHaveBeenCalled();
+    expect(mocks.begin).not.toHaveBeenCalled();
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+
   it('exchanges the phone grant with the server-verified openid and only reveals a pending target', async () => {
     mocks.findUser.mockResolvedValue(null);
     const response = await post('/auth/wechat/miniprogram', { code: 'wx-code', phoneCode: 'phone-code' });
@@ -133,6 +169,7 @@ describe('unified provider account-choice routes', () => {
   it.each([
     ['apple', '/auth/apple', { code: 'code', state: 'state', codeVerifier: 'verifier' }],
     ['google', '/auth/google', { assertion: 'assertion' }],
+    ['douyin', '/auth/social/douyin', { code: 'code', state: 'state' }],
     ['wechat', '/auth/social/wechat', { code: 'code', state: 'state' }],
     ['qq', '/auth/social/qq', { code: 'code', state: 'state' }],
     ['alipay', '/auth/social/alipay', { code: 'code', state: 'state' }],
@@ -261,7 +298,7 @@ describe('unified provider account-choice routes', () => {
     const response = await post('/auth/identity/link-code', { expectedUid: 42 }, 'jwt');
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
-    expect(await response.json()).toEqual({ linkCode: 'L42-123456', expiresInSeconds: 600 });
+    expect(await response.json()).toEqual({ linkCode: '123456', expiresInSeconds: 600 });
     expect(mocks.issueLinkCode).toHaveBeenCalledWith(42);
     mocks.issueLinkCode.mockClear();
     mocks.requireUid.mockResolvedValue(99);
@@ -269,20 +306,20 @@ describe('unified provider account-choice routes', () => {
     expect(mocks.issueLinkCode).not.toHaveBeenCalled();
   });
   it('preview returns only a proved target and does not sign a session', async () => {
-    const response = await post('/auth/identity/link-code/preview', { ticket, linkCode: 'L42-123456' });
+    const response = await post('/auth/identity/link-code/preview', { ticket, linkCode: '123456' });
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ user: { id: 42, displayName: 'Target' } });
-    expect(mocks.previewLinkCode).toHaveBeenCalledWith(ticket, 'L42-123456');
+    expect(mocks.previewLinkCode).toHaveBeenCalledWith(ticket, '123456');
     expect(mocks.sign).not.toHaveBeenCalled();
     mocks.previewLinkCode.mockRejectedValue(new IdentityChoiceError('INVALID_IDENTITY_LINK_CODE'));
-    expect((await post('/auth/identity/link-code/preview', { ticket, linkCode: 'L42-000000' })).status).toBe(400);
+    expect((await post('/auth/identity/link-code/preview', { ticket, linkCode: '000000' })).status).toBe(400);
   });
   it('code-based linking requires the confirmed target and passes both independent proofs', async () => {
-    expect((await post('/auth/identity/complete', { ticket, action: 'link_with_code', linkCode: 'L42-123456' })).status).toBe(400);
+    expect((await post('/auth/identity/complete', { ticket, action: 'link_with_code', linkCode: '123456' })).status).toBe(400);
     expect(mocks.complete).not.toHaveBeenCalled();
-    const response = await post('/auth/identity/complete', { ticket, action: 'link_with_code', linkCode: 'L42-123456', expectedUid: 42 });
+    const response = await post('/auth/identity/complete', { ticket, action: 'link_with_code', linkCode: '123456', expectedUid: 42 });
     expect(response.status).toBe(200);
-    expect(mocks.complete).toHaveBeenCalledWith(ticket, 'link_with_code', 42, 'L42-123456');
+    expect(mocks.complete).toHaveBeenCalledWith(ticket, 'link_with_code', 42, '123456');
     expect(mocks.verifySession).not.toHaveBeenCalled();
     expect(mocks.sign).toHaveBeenCalledWith({ uid: 42, wcaId: null, name: 'Target' });
   });

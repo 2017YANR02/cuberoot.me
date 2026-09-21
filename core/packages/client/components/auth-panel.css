@@ -10,6 +10,21 @@
 }
 
 .auth-flow { display: flex; flex-direction: column; gap: 10px; }
+.auth-mini-link { margin: 2px 0 22px; }
+.auth-mini-link-emphasized { scroll-margin-top: 18px; }
+.auth-mini-link-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+.auth-mini-link-code {
+  max-width: 12rem;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-align: center;
+}
 
 /* 「或」分隔线:两侧发丝线 + 居中文字,分隔主凭据区与第三方登录 */
 .auth-divider {

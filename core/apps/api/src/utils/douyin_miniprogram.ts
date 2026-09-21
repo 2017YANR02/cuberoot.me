@@ -23,7 +23,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** Keep only the stable account identifier. session_key and anonymous_openid stay private. */
-export function parseDouyinMiniProgramSession(value: unknown): { openid: string } {
+export function parseDouyinMiniProgramSession(value: unknown): { openid: string; unionid?: string } {
   if (!isRecord(value)) {
     throw new DouyinMiniProgramError('invalid-response', 'douyin returned a non-object response');
   }
@@ -44,14 +44,22 @@ export function parseDouyinMiniProgramSession(value: unknown): { openid: string 
     || CONTROL_CHARACTER_PATTERN.test(openid)) {
     throw new DouyinMiniProgramError('invalid-response', 'douyin response has invalid openid');
   }
-  return { openid };
+  const unionid = isRecord(value.data) ? value.data.unionid : null;
+  if (unionid !== undefined && unionid !== null && (typeof unionid !== 'string'
+    || !unionid
+    || unionid !== unionid.trim()
+    || unionid.length > MAX_PROVIDER_UID_LENGTH
+    || CONTROL_CHARACTER_PATTERN.test(unionid))) {
+    throw new DouyinMiniProgramError('invalid-response', 'douyin response has invalid unionid');
+  }
+  return { openid, ...(typeof unionid === 'string' ? { unionid } : {}) };
 }
 
 export function douyinMiniProgramConfigured(): boolean {
   return Boolean(DOUYIN_MINI_APP_ID && DOUYIN_MINI_APP_SECRET);
 }
 
-export async function exchangeDouyinMiniProgramCode(code: string): Promise<{ openid: string }> {
+export async function exchangeDouyinMiniProgramCode(code: string): Promise<{ openid: string; unionid?: string }> {
   let response: Response;
   try {
     response = await fetch('https://developer.toutiao.com/api/apps/v2/jscode2session', {

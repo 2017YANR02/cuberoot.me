@@ -1,5 +1,5 @@
 /**
- * 国内三方登录(微信 / QQ / 支付宝)—— 标准 OAuth2「授权码」重定向流,服务端换 code。
+ * 国内三方登录(微信 / QQ / 支付宝 / 抖音)—— 标准 OAuth2「授权码」重定向流,服务端换 code。
  *
  * 与 Google 不同:本服务器出网到微信/QQ/支付宝 API 全部畅通(均为国内域),故**无需墙外中继**,
  * 直接服务端 code→access_token→userinfo。浏览器只负责跳授权页 + 把回调 code 送回来。
@@ -15,9 +15,9 @@ import { createSign, createHmac, randomBytes, timingSafeEqual } from 'node:crypt
 import { buildAlipaySignContent, type SignParams } from '@cuberoot/shared/payment';
 import { JWT_SECRET } from './session.js';
 
-export type SocialProvider = 'wechat' | 'qq' | 'alipay';
+export type SocialProvider = 'wechat' | 'qq' | 'alipay' | 'douyin';
 export type SocialIntent = 'login' | 'link';
-export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay'];
+export const SOCIAL_PROVIDERS: readonly SocialProvider[] = ['wechat', 'qq', 'alipay', 'douyin'];
 export function isSocialProvider(x: string): x is SocialProvider {
   return (SOCIAL_PROVIDERS as readonly string[]).includes(x);
 }
@@ -52,17 +52,26 @@ const ALIPAY_PRIVATE_KEY = normalizePem(process.env.ALIPAY_PRIVATE_KEY || '', 'P
 const ALIPAY_LOGIN_ON = process.env.ALIPAY_LOGIN_ENABLED === '1' || process.env.ALIPAY_LOGIN_ENABLED === 'true';
 export function alipayLoginConfigured(): boolean { return Boolean(ALIPAY_LOGIN_ON && ALIPAY_APP_ID && ALIPAY_PRIVATE_KEY); }
 
+// 抖音开放平台「网站应用」,与抖音小程序是两套独立凭据。
+const DOUYIN_LOGIN_CLIENT_KEY = process.env.DOUYIN_LOGIN_CLIENT_KEY || '';
+const DOUYIN_LOGIN_CLIENT_SECRET = process.env.DOUYIN_LOGIN_CLIENT_SECRET || '';
+export function douyinLoginConfigured(): boolean {
+  return Boolean(DOUYIN_LOGIN_CLIENT_KEY && DOUYIN_LOGIN_CLIENT_SECRET);
+}
+
 /** 某 provider 的公开 appId(供前端展示/兜底;未配返 null)。 */
 export function socialAppId(provider: SocialProvider): string | null {
   if (provider === 'wechat') return wechatLoginConfigured() ? WECHAT_APP_ID : null;
   if (provider === 'qq') return qqLoginConfigured() ? QQ_APP_ID : null;
-  return alipayLoginConfigured() ? ALIPAY_APP_ID : null;
+  if (provider === 'alipay') return alipayLoginConfigured() ? ALIPAY_APP_ID : null;
+  return douyinLoginConfigured() ? DOUYIN_LOGIN_CLIENT_KEY : null;
 }
 
 export function socialLoginConfigured(provider: SocialProvider): boolean {
   if (provider === 'wechat') return wechatLoginConfigured();
   if (provider === 'qq') return qqLoginConfigured();
-  return alipayLoginConfigured();
+  if (provider === 'alipay') return alipayLoginConfigured();
+  return douyinLoginConfigured();
 }
 
 // ── 自包含签名 state ──
@@ -110,14 +119,46 @@ export function socialAuthorizeUrl(provider: SocialProvider, intent: SocialInten
   if (provider === 'qq') {
     return `https://graph.qq.com/oauth2.0/authorize?response_type=code&client_id=${QQ_APP_ID}&redirect_uri=${redirect}&scope=get_user_info&state=${st}`;
   }
-  return `https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=${ALIPAY_APP_ID}&scope=auth_user&redirect_uri=${redirect}&state=${st}`;
+  if (provider === 'alipay') {
+    return `https://openauth.alipay.com/oauth2/publicAppAuthorize.htm?app_id=${ALIPAY_APP_ID}&scope=auth_user&redirect_uri=${redirect}&state=${st}`;
+  }
+  return `https://open.douyin.com/platform/oauth/connect/?client_key=${encodeURIComponent(DOUYIN_LOGIN_CLIENT_KEY)}&response_type=code&scope=user_info&redirect_uri=${redirect}&state=${st}`;
 }
 
 /** 用回调 code 换取用户身份(登录/绑定共用)。任一步失败即抛异常。 */
 export async function exchangeSocialCode(provider: SocialProvider, code: string): Promise<SocialUser> {
   if (provider === 'wechat') return exchangeWechat(code);
   if (provider === 'qq') return exchangeQq(code);
-  return exchangeAlipay(code);
+  if (provider === 'alipay') return exchangeAlipay(code);
+  return exchangeDouyin(code);
+}
+
+// 抖音网站授权和小程序共用 provider='douyin',必须使用 UnionID 才能识别同一账号。
+async function exchangeDouyin(code: string): Promise<SocialUser> {
+  const tokenBody = new URLSearchParams({
+    client_key: DOUYIN_LOGIN_CLIENT_KEY,
+    client_secret: DOUYIN_LOGIN_CLIENT_SECRET,
+    code,
+    grant_type: 'authorization_code',
+  });
+  const token = await postFormJson<{
+    access_token?: string;
+    open_id?: string;
+    data?: { access_token?: string; open_id?: string };
+  }>('https://open.douyin.com/oauth/access_token/', tokenBody);
+  const accessToken = token.data?.access_token || token.access_token;
+  const openId = token.data?.open_id || token.open_id;
+  if (!accessToken || !openId) throw new Error('douyin token exchange failed');
+
+  const info = await postFormJson<{
+    data?: { union_id?: string; nickname?: string; avatar?: string };
+    union_id?: string;
+    nickname?: string;
+    avatar?: string;
+  }>('https://open.douyin.com/oauth/userinfo/', new URLSearchParams({ access_token: accessToken, open_id: openId }));
+  const profile = info.data ?? info;
+  if (!profile.union_id) throw new Error('douyin unionid required');
+  return { sub: profile.union_id, name: profile.nickname || undefined, avatar: profile.avatar || undefined };
 }
 
 // ─────────────────────────── 微信 ───────────────────────────
@@ -218,6 +259,17 @@ async function getJson<T>(url: string): Promise<T> {
   return JSON.parse(text) as T;
 }
 
+async function postFormJson<T>(url: string, body: URLSearchParams): Promise<T> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+    signal: AbortSignal.timeout(12000),
+  });
+  if (!res.ok) throw new Error(`fetch ${res.status}`);
+  return res.json() as Promise<T>;
+}
+
 // 与 payment/alipay.ts 同款(那边未导出,这里本地保留一份,避免耦合支付模块)。
 function normalizePem(raw: string, type: 'PRIVATE KEY' | 'PUBLIC KEY'): string {
   const s = raw.trim();
@@ -241,5 +293,6 @@ function beijingTimestamp(): string {
  *   微信:  WECHAT_LOGIN_APP_ID / WECHAT_LOGIN_APP_SECRET(微信开放平台「网站应用」,与微信支付 WECHAT_* 分开)
  *   QQ:    QQ_APP_ID / QQ_APP_KEY(QQ 互联「网站应用」APPID/APPKEY)
  *   支付宝: 复用 ALIPAY_APP_ID / ALIPAY_PRIVATE_KEY(支付那套),另需 ALIPAY_LOGIN_ENABLED=1 显式开启
+ *   抖音:  DOUYIN_LOGIN_CLIENT_KEY / DOUYIN_LOGIN_CLIENT_SECRET(抖音开放平台「网站应用」)
  * 各平台后台回调域/地址统一登记:  https://cuberoot.me/auth/social/callback(域名 cuberoot.me 已 ICP 备案)
  */

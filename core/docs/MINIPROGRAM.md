@@ -37,7 +37,7 @@
 | 智能魔方短时中继协议 | `@cuberoot/shared/smart-cube/relay` | 原生 BLE 只作为数据源，网站计时器只作为数据接收方；不把会话数据写入数据库 |
 | 小程序智能魔方连接生命周期 | `apps/miniprogram/src/lib/smart-cube/session.ts` | 页面只展示状态和发起操作，不直接管理 socket、BLE 连接或竞态 |
 | 全局视觉变量和通用按钮 | `apps/miniprogram/src/app.wxss` | 页面只写自身布局 |
-| 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` / `douyin_miniprogram.ts` | 微信用 UnionID；抖音用 code2session 返回的 OpenID，provider 命名空间隔离 |
+| 账号落库 | 服务端 `account_auth.ts` + `wechat_miniprogram.ts` / `douyin_miniprogram.ts` | 微信只用 UnionID；抖音优先用 UnionID，暂时取不到时保留 code2session OpenID 兼容，并在后续拿到 UnionID 时原位升级旧身份 |
 
 新增或调整网站首页入口时，只改共享目录并补测试；网站和小程序会同时消费。新增原生功能前，先在本文件写清楚为什么不能继续复用网站。
 
@@ -67,9 +67,12 @@
 - [x] 资质审核期间继续复用现有小程序源码开发，不等待审核结果。
 - [x] 同一 `src/` 可构建微信 `dist/` 和抖音 `dist-douyin/`，不复制页面、路由、BLE 协议或网站业务。
 - [x] 已取得抖音小程序 AppID，用户已提供备案成功截图；本机开发者工具已导入正式应用，平台身份配置不入库。
-- [ ] 配置 request、socket 和 `web-view` 域名及所需能力。2026-09-21 开发者工具运行日志明确拒绝 `https://cuberoot.me/zh/timer#douyin_redirect`：`updateHTMLWebView:fail url not in domain list`；需在抖音后台「开发 → 开发配置 → 域名管理」完成业务域名校验，再验收页面，不能通过关闭校验宣称修复或可发布。
+- [x] request 合法域名已配置为 `https://api.cuberoot.me`，用户于 2026-09-21 确认添加成功。
+- [ ] socket 合法域名仍需确认配置为 `wss://api.cuberoot.me`；智能魔方原生 BLE 向网站计时器转发事件时需要它。
+- [x] `web-view` 合法域名已配置为 `https://cuberoot.me`，域名校验文件已部署并由用户于 2026-09-21 确认添加成功。
 - [x] 分享菜单复用 `src/lib/share.ts` 适配：抖音显示/隐藏使用 `share`，微信保留 `shareAppMessage`/`shareTimeline`；不把微信参数传给抖音 API。
-- [ ] 在抖音后台声明实际使用的登录、网络和蓝牙能力；BLE 以基础库 3.87.0、抖音 36.1+ 为最低验收基线，并在 iOS、Android 真机验收。
+- [ ] 抖音后台的隐私政策预览已写入“蓝牙用于连接智能魔方”，但真机仍返回 10202“未声明蓝牙用途”。需上传含 `usePrivacyCheck: true` 的新包，并复核后台声明是否覆盖实际蓝牙 API 类目；通过前不能把政策文字预览当作能力已生效。BLE 以基础库 3.87.0、抖音 36.1+ 为最低验收基线，并在 iOS、Android 真机验收。
+- [ ] 网站“抖音登录”还需单独申请并审核抖音网站应用，在服务端配置 `DOUYIN_LOGIN_CLIENT_KEY` 和 `DOUYIN_LOGIN_CLIENT_SECRET`。它与小程序 AppID/AppSecret 不是同一组凭据；未配置时网站不显示该入口。
 - [ ] 上传体验版、处理平台扫描结果并完成平台审核；完成前只称“可开发产物”，不称“已上线”。
 
 ### 工程能力
@@ -81,7 +84,7 @@
 - [x] “我的” tab 是可分享的原生账号入口：未登录时提供当前平台登录，抖音首登要求手动同意用户协议与隐私政策；已登录时显示轻量账号摘要和本机退出，账号管理继续通过 `web-view` 复用网站 `/zh/account`。
 - [x] 原生微信登录已接入后端 `/v1/auth/wechat/miniprogram`。
 - [x] 原生抖音登录已接入后端 `/v1/auth/douyin/miniprogram`，登录前要求手动同意用户协议与隐私政策，使用 `tt.login({ force: true })`。
-- [x] 登录只接受 UnionID；缺失时拒绝创建账号，避免同一用户产生两个账号。
+- [x] 微信登录只接受 UnionID；抖音优先使用 UnionID，code2session 暂未返回 UnionID 时兼容 OpenID，并在后续拿到 UnionID 时安全升级同一条身份，不新建第二个账号。
 - [x] 微信开发者工具的旧 Chromium 兼容边界固定为 Chrome 91，并有网站回归测试保护。
 - [x] 小程序构建目标固定为 Chrome 91，避免产物使用模拟器不支持的语法。
 - [x] `web-view` 统一处理非法地址、加载失败和重试。
@@ -190,14 +193,16 @@ provider_uid = unionid
 
 禁止在 UnionID 缺失时回退到 OpenID。两者命名空间不同，回退会把一个用户拆成两个账号。
 
-抖音登录使用服务端 code2session 返回的 OpenID：
+抖音小程序登录优先使用服务端 code2session 返回的 UnionID：
 
 ```text
 provider = douyin
-provider_uid = openid
+provider_uid = unionid（优先）或 openid（平台未返回 UnionID 时兼容）
 ```
 
-抖音 OpenID 与现有微信、邮箱或 WCA 身份之间没有可验证的自动对应关系：已知身份直接登录，未知身份需明确创建或使用网站原账号生成的绑定码，核对目标后绑定；不猜测合并。
+已有 OpenID 身份在同一账号后续拿到 UnionID 时原位升级；若该 UnionID 已归属其他账号则拒绝覆盖。抖音身份与现有微信、邮箱或 WCA 身份之间没有可验证的自动对应关系：已知身份直接登录，未知身份需明确创建，或在网站原账号页生成六位数字登录码后由小程序核对并绑定；不猜测合并。六位码全局唯一、短时有效、最多尝试五次，只是一次性绑定凭证，不是第二套账号密码。
+
+网站“抖音登录”复用现有第三方登录与账号合并链路：电脑端显示抖音官方扫码授权，移动端由抖音官方授权页拉起 App 或继续网页登录。它要求单独审核的网站应用 ClientKey/Secret，不能拿小程序 AppID/AppSecret 代替。
 
 微信手机号实时授权增量（2026-09-12，本地实现，未据此确认发布）：未绑定 UnionID 可通过 `getRealtimePhoneNumber` 获取独立一次性 `phoneCode`；后端同时验证本次登录 OpenID、手机号凭证和 AppID 水印。手机号已有账号先预览并确认，未匹配则明确创建或复用上述绑定码；两个身份在既有 pending 事务中原子绑定，不能静默合并/覆盖。拒绝授权或不支持时继续提供原账号验证；已绑定微信不重复要求手机号。目前复用中国大陆号码契约，不把其他区号转换为 +86。实现与发布前检查见 [小程序 README](../apps/miniprogram/README.md#微信手机号实时授权2026-09-12本地接入)。
 
@@ -270,10 +275,11 @@ pnpm --filter @cuberoot/miniprogram release:check
 
 ### 抖音
 
-1. 等资质审核完成并取得正式 AppID，配置后端密钥、网络域名、业务域名和所需平台能力。
-2. 按实际使用的登录、网络和蓝牙能力填写隐私说明，不扩大声明范围。
-3. 在抖音开发者工具验收普通流程，并用基础库 3.87.0、抖音 36.1+ 的 iOS、Android 真机验收登录、`web-view`、返回路径、错误恢复和 BLE；官方沙盒不支持 BLE，模拟器结果不能替代真机。
-4. 上传体验版并处理平台扫描结果，再提交审核和发布。
+1. 确认服务端小程序密钥已部署；如需网站抖音扫码/App 登录，另行申请网站应用并配置对应 ClientKey/Secret。
+2. 确认 request、socket、`web-view` 三类域名分别生效；目前 request 和 `web-view` 已确认，socket 仍待确认。
+3. 按实际使用的登录、网络和蓝牙能力填写隐私说明，不扩大声明范围；后台文字预览不是 10202 已消失的证据。
+4. 上传含 `usePrivacyCheck: true` 的体验版，在抖音开发者工具验收普通流程，并用基础库 3.87.0、抖音 36.1+ 的 iOS、Android 真机验收登录、`web-view`、返回路径、错误恢复和 BLE；官方沙盒不支持 BLE，模拟器结果不能替代真机。
+5. 处理平台扫描结果，再提交审核和发布。
 
 ## 7. 近期迭代队列
 
@@ -322,6 +328,7 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 数据或能力 | 当前是否使用 | 用途 |
 |---|---|---|
 | 微信一次性登录凭证、UnionID | 用户主动登录时使用 | 识别与网站相同的 CubeRoot 账号 |
+| 抖音一次性登录凭证、OpenID、UnionID | 用户主动登录时使用 | 识别抖音身份；优先用 UnionID，缺失时兼容 OpenID，并支持用户明确绑定网站原账号 |
 | CubeRoot 会话凭证、显示名、WCA ID | 登录后使用 | 保持登录状态和显示账号信息 |
 | 短时单次网页换票 | 登录后打开网页时使用 | 让 `web-view` 复用同一账号，不在 URL 暴露长期会话 |
 | 附近蓝牙设备、智能魔方转动、状态、电量与姿态 | 用户主动点击计时器蓝牙入口后使用 | 连接兼容魔方并把实时事件交给网站计时器；不写入数据库 |
@@ -331,6 +338,18 @@ pnpm --filter @cuberoot/miniprogram release:check
 | 定位、摄像头、麦克风、相册、通讯录 | 不使用 | 后台不应声明收集 |
 
 ## 9. 迭代记录
+
+### 2026-09-21：六位登录码、网站抖音登录与蓝牙隐私跟踪
+
+| 层级 | 当前状态 | 尚未完成 |
+|---|---|---|
+| 源码 | [x] 网站原账号页把“在小程序登录已有账号”放到登录入口前部；登录码改为六位数字、短时全局唯一且最多尝试五次。[x] 抖音小程序优先 UnionID 并可安全升级历史 OpenID。[x] 网站复用现有第三方身份链路接入抖音 OAuth。[x] 抖音构建强制输出 `usePrivacyCheck: true`。[x] 共享包、API、网站和双小程序构建及针对性回归通过。 | PostgreSQL 增量迁移和五次失败失效已有隔离测试，但本机数据库服务未运行，本轮未执行真实 PostgreSQL 集成测试；源码完成不等于线上已生效。 |
+| 平台配置 | [x] request `https://api.cuberoot.me`。[x] `web-view` `https://cuberoot.me` 及校验文件。[x] 隐私政策预览已写蓝牙用途。 | [ ] socket `wss://api.cuberoot.me` 确认。[ ] 网站应用审核及 ClientKey/Secret。[ ] 后台实际蓝牙 API 类目与 10202 对照复核。政策中的 2026-09-28 是文本生效日期；官方说明后台隐私配置实时生效，不能用这个日期解释当前 10202。 |
+| 部署与验收 | 尚未上传本轮体验版，尚未据此发布。 | 上传新包后分别验证：已有账号六位码绑定、新账号创建、网站抖音扫码/移动授权、iOS/Android 蓝牙授权与连接。只有真机不再返回 10202，才把蓝牙隐私项标为完成。 |
+
+这三层独立记账：本地测试通过只证明源码，后台截图只证明配置内容，体验版/审核版真机通过才证明用户实际可用。
+
+本轮本地证据：API 类型检查通过，抖音身份、登录选择和网站 OAuth 共 88 项回归通过；网站类型检查及登录流程图、账号绑定 UI 共 77 项回归通过；小程序类型检查、微信和抖音构建以及 828 项回归通过。抖音产物的 `app.json` 已由构建检查锁定 `usePrivacyCheck: true`。真实 PostgreSQL 迁移、体验版上传、平台审核和双端真机仍按上表单独验收。
 
 ### 2026-08-30：原生“我的”朋友圈登录入口
 

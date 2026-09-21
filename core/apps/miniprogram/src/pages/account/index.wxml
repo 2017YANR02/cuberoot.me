@@ -59,7 +59,7 @@
         <button class="primary-button account-primary-button account-link-website-button" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="openLinkCodeWebsite">{{copy.openLinkCodeWebsiteLabel}}</button>
         <text class="account-link-code-prompt">{{copy.linkCodeReadyHint}}</text>
         <view class="account-link-code-row">
-          <input class="account-link-code-input" value="{{accountLinkCode}}" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="24" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
+          <input class="account-link-code-input" value="{{accountLinkCode}}" type="number" placeholder="{{copy.linkCodeLabel}}" aria-label="{{copy.linkCodeLabel}}" maxlength="6" disabled="{{loginBusy}}" bindinput="onLinkCodeInput" />
           <button wx:if="{{accountLinkCode}}" class="text-button" aria-label="{{copy.clearCodeLabel}}" disabled="{{loginBusy}}" hover-class="press-feedback" bindtap="clearLinkCode">×</button>
         </view>
         <button class="primary-button account-primary-button account-link-continue-button" disabled="{{loginBusy || !accountLinkCode}}" aria-busy="{{loginBusy}}" hover-class="press-feedback" bindtap="previewLinkCode">{{copy.previewLinkCodeLabel}}</button>

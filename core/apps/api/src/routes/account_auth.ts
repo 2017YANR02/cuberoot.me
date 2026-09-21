@@ -28,6 +28,7 @@ import { captureAccountDevice } from '../utils/account_device.js';
 import {
   issueCode, verifyCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, findUserByIdentity, publicUser,
+  migrateIdentityProviderUid,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
   getAccountBasicProfile, updateAccountBasicProfile,
@@ -491,8 +492,23 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
   }
 
   try {
-    const { openid } = await exchangeDouyinMiniProgramCode(code);
-    const result = await beginIdentityLogin({ provider: 'douyin', providerUid: openid, profile: { name: '' } });
+    const { openid, unionid } = await exchangeDouyinMiniProgramCode(code);
+    let providerUid = openid;
+    if (unionid) {
+      const [openidUser, unionidUser] = await Promise.all([
+        findUserByIdentity('douyin', openid),
+        findUserByIdentity('douyin', unionid),
+      ]);
+      if (openidUser && unionidUser && openidUser.id !== unionidUser.id) {
+        throw new IdentityChoiceError('IDENTITY_CONFLICT');
+      }
+      if (openidUser) {
+        const migrated = await migrateIdentityProviderUid(openidUser.id, 'douyin', openid, unionid);
+        if (migrated === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+      }
+      providerUid = unionid;
+    }
+    const result = await beginIdentityLogin({ provider: 'douyin', providerUid, profile: { name: '' } });
     if ('pending' in result) return c.json(result, 409);
     const { user, isNew } = result;
     await captureAccountDevice(user.id, c.req.header('User-Agent'));
@@ -500,6 +516,7 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
     const session: WebSession = { token, user: publicUser(user) };
     return c.json({ ...session, isNew });
   } catch (error) {
+    if (error instanceof IdentityChoiceError) return identityChoiceErrorResponse(c, error);
     if (error instanceof DouyinMiniProgramError && error.code === 'invalid-code') {
       return c.json(webSessionError('INVALID_DOUYIN_CODE', 'invalid douyin code'), 401);
     }
