@@ -162,6 +162,7 @@ export interface AdminUserRecord {
 }
 export interface AdminUsersResponse {
   canManageAdmins: boolean;
+  canImpersonateUsers: boolean;
   summary: {
     totalUsers: number;
     registeredToday: number;

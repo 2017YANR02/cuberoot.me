@@ -8,7 +8,7 @@ import type {
 } from '@cuberoot/shared/auth/web-session';
 import { webSessionError } from '@cuberoot/shared/auth/web-session';
 import { query, sql } from '../db/connection.js';
-import { JWT_SECRET, signSession, verifySession, isRolePreviewActive } from '../utils/session.js';
+import { JWT_SECRET, signSession, verifySession, getActiveRolePreview } from '../utils/session.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
@@ -43,9 +43,16 @@ export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
   let payload;
   try {
     payload = jwt.verify(token, JWT_SECRET, { audience: 'role-preview', issuer: 'cuberoot' }) as { previewId: string; uid: number };
-  } catch { return c.json({ error: 'Test session expired or invalid; exit test mode.' }, 401); }
-  if (!await isRolePreviewActive(payload.previewId, payload.uid)) return c.json({ error: 'Test session ended; exit test mode.' }, 401);
+  } catch { return c.json({ error: 'Preview session expired or invalid; exit preview mode.' }, 401); }
+  const preview = await getActiveRolePreview(payload.previewId, payload.uid);
+  if (!preview) return c.json({ error: 'Preview session ended; exit preview mode.' }, 401);
   c.header('Cache-Control', 'no-store');
+  if (preview.role === 'impersonation' && !['GET', 'HEAD', 'OPTIONS'].includes(c.req.method)) {
+    // Record attempts before side effects; no request bodies, secrets or query parameters.
+    await sql`INSERT INTO role_preview_events (session_id, method, path)
+      VALUES (${payload.previewId}, ${c.req.method}, ${c.req.path})`;
+    return c.json({ error: 'User viewing sessions are read-only.' }, 403);
+  }
   // No credential minting, identity linking, account editing or API-key bypass while testing.
   if (c.req.header('X-Admin-Key') || c.req.path.startsWith('/v1/mcp/oauth/') || (c.req.path.startsWith('/v1/auth/')
     && !['/v1/auth/me', '/v1/auth/profile', '/v1/auth/providers', '/v1/auth/identities'].includes(c.req.path))) {
@@ -102,6 +109,33 @@ authRoutes.post('/auth/role-preview', async (c) => {
     { audience: 'role-preview', issuer: 'cuberoot', expiresIn: ROLE_PREVIEW_TTL_SECONDS });
   c.header('Cache-Control', 'no-store');
   return c.json({ id, role, token, user: user ? publicUser(user) : null });
+});
+
+authRoutes.post('/auth/admin/users/:userId/impersonation', async (c) => {
+  const actor = await requireAuth(c);
+  if (!actor.uid || !isAdminWcaId(actor.realWcaId)) return c.json({ error: 'Super administrator required' }, 403);
+  const requestedUserId = Number(c.req.param('userId'));
+  if (!Number.isSafeInteger(requestedUserId) || requestedUserId <= 0) {
+    return c.json({ error: 'Invalid user id' }, 400);
+  }
+  const body = await c.req.json<{ reason?: unknown }>().catch((): { reason?: unknown } => ({}));
+  const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  if (reason.length < 5 || reason.length > 200) {
+    return c.json({ error: 'Reason must contain 5 to 200 characters' }, 400);
+  }
+  const target = await getUserById(requestedUserId);
+  if (!target) return c.json({ error: 'Account not found' }, 404);
+  if (target.id === actor.uid) return c.json({ error: 'Cannot view your own account this way' }, 400);
+  if (isAdminWcaId(target.wca_id)) return c.json({ error: 'Cannot view another superadministrator account' }, 403);
+
+  const id = randomUUID();
+  await sql`INSERT INTO role_preview_sessions (id, actor_user_id, user_id, role, reason, expires_at)
+    VALUES (${id}, ${actor.uid}, ${target.id}, 'impersonation', ${reason},
+      NOW() + ${ROLE_PREVIEW_TTL_SECONDS} * INTERVAL '1 second')`;
+  const token = jwt.sign({ uid: target.id, previewId: id }, JWT_SECRET,
+    { audience: 'role-preview', issuer: 'cuberoot', expiresIn: ROLE_PREVIEW_TTL_SECONDS });
+  c.header('Cache-Control', 'no-store');
+  return c.json({ id, role: 'impersonation', token, user: publicUser(target) });
 });
 
 authRoutes.delete('/auth/role-preview/:id', async (c) => {

@@ -4,9 +4,16 @@ import { createRoot, type Root } from 'react-dom/client';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
-const { fetchAdminUsers } = vi.hoisted(() => ({ fetchAdminUsers: vi.fn() }));
+const { fetchAdminUsers, startUserImpersonation } = vi.hoisted(() => ({
+  fetchAdminUsers: vi.fn(),
+  startUserImpersonation: vi.fn(),
+}));
 vi.mock('@/lib/account-api', () => ({ fetchAdminUsers, updateAdminRole: vi.fn() }));
-vi.mock('@/lib/auth-store', () => ({ useAuthStore: () => ({ isAdmin: true }), hasAdminAccess: () => true }));
+vi.mock('@/lib/auth-store', () => ({
+  useAuthStore: () => ({ isAdmin: true }),
+  hasAdminAccess: () => true,
+  startUserImpersonation,
+}));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string) => zh }));
 vi.mock('@/i18n/tr', () => ({ useLang: () => 'zh', tr: ({ zh }: { zh: string }) => zh }));
 vi.mock('@/components/AppLink', () => ({ default: () => null }));
@@ -23,6 +30,7 @@ beforeEach(async () => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
   vi.clearAllMocks();
   fetchAdminUsers.mockResolvedValue({
+    canManageAdmins: false, canImpersonateUsers: false,
     users: [], daily: [], providerCounts: [], summary: {}, pagination: { total: 1425 },
   });
   host = document.createElement('div');
@@ -115,4 +123,55 @@ it('ignores an older response that finishes after the latest search', async () =
     expect(host.querySelector('.admin-users-list-heading')!.textContent).toContain('1425');
     expect(host.querySelector<HTMLInputElement>('[aria-label="搜索用户"]')!.value).toBe('newer');
   } finally { vi.useRealTimers(); }
+});
+
+it('requires a reason and opens a specific-user view in a new tab', async () => {
+  await act(async () => root.unmount());
+  fetchAdminUsers.mockResolvedValue({
+    canManageAdmins: true,
+    canImpersonateUsers: true,
+    summary: {
+      totalUsers: 1, registeredToday: 0, registeredLast7Days: 0, wcaUsers: 0,
+      passwordUsers: 0, completedProfiles: 0, usersWithoutIdentity: 1,
+    },
+    daily: [],
+    providerCounts: [],
+    users: [{
+      id: 42, displayName: '目标用户', avatarUrl: null, wcaId: null, isAdmin: false, isRootAdmin: false,
+      birthDate: null, gender: null, countryIso2: null, regionCode: null, cityName: null,
+      createdAt: '2026-09-20T00:00:00.000Z', updatedAt: '2026-09-20T00:00:00.000Z',
+      passwordUpdatedAt: null, hasPassword: false, emailNotify: false, lang: 'zh', lastDevice: null, identities: [],
+    }],
+    pagination: { page: 1, pageSize: 25, total: 1 },
+  });
+  root = createRoot(host);
+  await act(async () => root.render(createElement(NuqsTestingAdapter, {
+    searchParams: '', hasMemory: true, onUrlUpdate, children: createElement(AdminUsersPage),
+  })));
+  const viewButton = await vi.waitFor(() => {
+    const button = [...host.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent === '以此用户查看');
+    expect(button).toBeTruthy();
+    return button!;
+  });
+  await act(async () => viewButton.click());
+  const submit = [...host.querySelectorAll<HTMLButtonElement>('button')].find(item => item.textContent === '在新标签页查看')!;
+  expect(submit.disabled).toBe(true);
+
+  const textarea = host.querySelector<HTMLTextAreaElement>('#admin-users-impersonation-reason')!;
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(textarea, '排查用户反馈');
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  const childWindow = {
+    document: { title: '' }, opener: window, location: { replace: vi.fn() }, close: vi.fn(), sessionStorage,
+  } as unknown as Window;
+  const open = vi.spyOn(window, 'open').mockReturnValue(childWindow);
+  startUserImpersonation.mockResolvedValue(undefined);
+  await act(async () => submit.click());
+  await vi.waitFor(() => expect(startUserImpersonation).toHaveBeenCalledWith(42, '排查用户反馈', childWindow));
+  expect(open).toHaveBeenCalledWith('about:blank', '_blank');
+  expect(childWindow.opener).toBeNull();
+  expect(childWindow.location.replace).toHaveBeenCalledWith(expect.stringMatching(/\/zh\/$/));
+  expect(host.querySelector('[role="dialog"]')).toBeNull();
+  open.mockRestore();
 });
