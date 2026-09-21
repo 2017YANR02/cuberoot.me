@@ -15,6 +15,7 @@ vi.mock('@/lib/wca-api', () => ({
 
 describe('person upcoming competitions', () => {
   beforeEach(() => {
+    vi.resetModules();
     fetchUserUpcoming.mockResolvedValue([]);
     vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request) => {
       const url = String(input);
@@ -30,6 +31,34 @@ describe('person upcoming competitions', () => {
 
     await expect(fetchPersonUpcomingCompetitionIds('2023root01')).resolves.toEqual([
       'ChinaOpen2099',
+    ]);
+    expect(fetch).toHaveBeenCalledWith(
+      '/stats/upcoming_comps.json',
+      { cache: 'no-cache' },
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      '/stats/cn_upcoming_registrations.json',
+      { cache: 'no-cache' },
+    );
+  });
+
+  it('does not pin the first registration index for the browser lifetime', async () => {
+    let competitionId = 'OldOpen2099';
+    vi.mocked(fetch).mockImplementation(async (input: string | URL | Request) => {
+      const url = String(input);
+      const body = url.endsWith('/stats/cn_upcoming_registrations.json')
+        ? { [competitionId]: ['2023ROOT01'] }
+        : { competitions: [] };
+      return new Response(JSON.stringify(body), { status: 200 });
+    });
+    const { fetchPersonUpcomingCompetitionIds } = await import('@/lib/person-upcoming');
+
+    await expect(fetchPersonUpcomingCompetitionIds('2023ROOT01')).resolves.toEqual([
+      'OldOpen2099',
+    ]);
+    competitionId = 'FreshOpen2099';
+    await expect(fetchPersonUpcomingCompetitionIds('2023ROOT01')).resolves.toEqual([
+      'FreshOpen2099',
     ]);
   });
 });
