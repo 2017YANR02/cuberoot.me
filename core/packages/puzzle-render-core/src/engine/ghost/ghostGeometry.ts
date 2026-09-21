@@ -1,14 +1,23 @@
 import * as THREE from 'three';
-import { CUBE_FILL, CUBE_ON_FILL } from '../../support/cube-colors';
+import { CUBE_FILL, CUBE_ON_FILL, type CubeFace } from '../../support/cube-colors';
 import { roundedSolid } from '../polytopeCut';
 import { extrudeOntoFace, makeSticker, roundCorners } from '../stickerGeom';
 import { GHOST_CELLS, GHOST_SCALE, type GhostCell } from './ghostModel';
 
 export interface GhostPiece { pivot: THREE.Object3D; cell: GhostCell }
 
+/** Shell faces in ghostModel order: -X, +X, -Y, +Y, -Z, +Z in the solved display. */
+export const GHOST_FACE_LABELS = ['L', 'R', 'D', 'U', 'B', 'F'] as const;
+export const GHOST_DEFAULT_FACE_COLORS: Record<CubeFace, string> = {
+  U: CUBE_FILL.U, D: CUBE_FILL.U, L: CUBE_FILL.U,
+  R: CUBE_FILL.U, F: CUBE_FILL.U, B: CUBE_FILL.U,
+};
+
 export function buildGhostPieces(): GhostPiece[] {
   const bodyMat = new THREE.MeshPhongMaterial({ color: CUBE_ON_FILL.U, shininess: 24 });
-  const stickerMat = new THREE.MeshPhongMaterial({ color: CUBE_FILL.U, shininess: 65 });
+  const stickerMats = GHOST_FACE_LABELS.map(face => new THREE.MeshPhongMaterial({
+    color: GHOST_DEFAULT_FACE_COLORS[face], shininess: 65,
+  }));
   return GHOST_CELLS.map((cell, index) => {
     const pivot = new THREE.Object3D();
     pivot.userData.ghostPiece = index;
@@ -31,7 +40,7 @@ export function buildGhostPieces(): GhostPiece[] {
       }, 0.1 * GHOST_SCALE);
       const schematicPoly = facet.raw.flatMap(([a, b]) => facet.origin.clone()
         .addScaledVector(facet.u, a).addScaledVector(facet.v, b).toArray());
-      pivot.add(makeSticker(geometry, stickerMat, bodyMat, {
+      pivot.add(makeSticker(geometry, stickerMats[facet.face], bodyMat, {
         simStickerNormal: facet.normal.clone(), schematicPoly, ghostFace: facet.face,
       }));
     }

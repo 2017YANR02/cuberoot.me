@@ -120,6 +120,7 @@ export function applyEngineBodyOverlay(root: THREE.Object3D, hollow: boolean, de
       }
       // 原核 paints the body itself → hide the raised sticker tiles. Idempotent; a
       // carved (hidden) parent still hides its children regardless of this flag.
+      mesh.userData.simRawFace = raw;
       mesh.visible = !raw;
       return;
     }

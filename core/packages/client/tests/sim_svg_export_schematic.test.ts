@@ -20,6 +20,7 @@ import {
 } from '@/app/[lang]/sim/engine/squareFamily/squareFamilyGeometry';
 import type { SquareFamilyKind } from '@/app/[lang]/sim/engine/squareFamily/squareFamilyState';
 import { exportSimSvgSchematic, hasSchematicFacelets } from '@/app/[lang]/sim/sim_svg_export_schematic';
+import { applyEngineBodyOverlay } from '@/app/[lang]/sim/engine/debugColors';
 import { buildPyraPiece, buildCore, EDGE_PAIRS, PYRA_A } from '@/app/[lang]/sim/engine/pyra/pyraGeometry';
 import {
   buildCornerMesh, buildCenterMesh, buildCore as buildSkewbCore, H as SKEWB_H,
@@ -732,5 +733,10 @@ describe('exportSimSvgSchematic — sq1', () => {
     // 近面衬底必须在远贴纸之后继续出现,不能再「所有衬底 → 所有贴纸」两遍画;
     // 否则后方绿色会从前方红/蓝块的尖角接缝漏出来。
     expect(svg.indexOf('fill="#d0021b"/>')).toBeLessThan(svg.lastIndexOf('fill="#202020" stroke="#202020"'));
+    // Raw hides raised stickers, not their schematic faces or the exposed body fill.
+    applyEngineBodyOverlay(scene, false, false, true);
+    expect(exportSimSvgSchematic({ world, inset: 0.06, bodyColor: '#202020' })).toBe(svg);
+    applyEngineBodyOverlay(scene, false, false, false);
+    expect(exportSimSvgSchematic({ world, inset: 0.06, bodyColor: '#202020' })).toBe(svg);
   });
 });

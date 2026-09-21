@@ -89,6 +89,7 @@ import {
 } from './engine/fto/ftoState';
 import { parseFtoEifMoveGroups } from './engine/fto/ftoEifMoves';
 import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
+import { GHOST_DEFAULT_FACE_COLORS } from '@cuberoot/puzzle-render-core/engine/ghost/ghostGeometry';
 import {
   GHOST_ALIGN, ghostAlignmentMoves, parseGhostMoves, ghostMovesToString,
   invertGhostMoves, reduceGhostAlg, ghostSequenceValid, type GhostMove,
@@ -3719,6 +3720,8 @@ function PuzzleSettings({
   });
   const isNxNLocal = typeof puzzleKind === 'number';
   const isMirror = puzzleKind === 'mirror' || puzzleKind === 'mirror2';
+  const faceColorsKey = puzzleKind === 'ghost' ? 'ghostFaceColors' : 'faceColors';
+  const faceColors = settings[faceColorsKey] ?? GHOST_DEFAULT_FACE_COLORS;
   // 灰掉「该拼图暂不支持」的控件时,hover 给出统一说明。engineMode 拼图(斜转/金字塔/五魔/FTO)
   // 在 cubing.js 渲染下引擎特性不生效,但切到「群论内核」即点亮 → 附一句提示往哪切;PG 探索
   // 拼图切渲染也不会启用(引擎未建),只给通用说明。
@@ -4230,16 +4233,16 @@ function PuzzleSettings({
             action={{
               label: 'WCA',
               title: t('恢复 WCA 默认', 'Reset to WCA defaults'),
-              onClick: () => set('faceColors', { ...DEFAULT_FACE_COLORS }),
+              onClick: () => set(faceColorsKey, { ...DEFAULT_FACE_COLORS }),
             }}
           >
             {FACE_ORDER.map((f) => (
               <span key={f} className="sim-face-pick">
                 <span className="sim-swatch-label">{f}</span>
                 <ModeColorSelect
-                  color={settings.faceColors[f]}
+                  color={faceColors[f]}
                   presets={FACE_COLOR_PRESETS}
-                  onPickColor={(c) => set('faceColors', { ...settings.faceColors, [f]: c })}
+                  onPickColor={(c) => set(faceColorsKey, { ...faceColors, [f]: c })}
                   title={t(FACE_LABELS_ZH[f], f)}
                   t={t}
                 />
