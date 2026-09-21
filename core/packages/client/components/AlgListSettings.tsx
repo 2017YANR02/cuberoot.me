@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useSyncExternalStore } from 'react';
-import AlgViewModeToggle, { type AlgViewMode } from '@/components/AlgViewModeToggle';
+import AlgNotationStyleSelect from '@/components/AlgNotationStyleSelect';
+import type { AlgViewMode } from '@/components/AlgViewModeToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { SettingsPopover } from '@/components/TrainingSettings';
 import { tr } from '@/i18n/tr';
+import type { AlgNotationStyle } from '@/lib/alg-notation-display';
 import { persistItem } from '@/lib/safe-storage';
 
 const ALG_CASE_NUMBERS_KEY = 'alg-show-case-numbers';
@@ -62,6 +64,8 @@ interface AlgListSettingsProps {
   showCaseNumbers: boolean;
   onShowCaseNumbersChange: (show: boolean) => void;
   showViewMode?: boolean;
+  notationStyle?: AlgNotationStyle;
+  onNotationStyleChange?: (style: AlgNotationStyle) => void;
   className?: string;
 }
 
@@ -72,6 +76,8 @@ export default function AlgListSettings({
   showCaseNumbers,
   onShowCaseNumbersChange,
   showViewMode = true,
+  notationStyle,
+  onNotationStyleChange,
   className,
 }: AlgListSettingsProps) {
   return (
@@ -82,7 +88,21 @@ export default function AlgListSettings({
       {showViewMode && (
         <span className="alg-list-settings-row">
           <span className="alg-list-settings-label">{tr({ zh: '列表内容', en: 'List content' })}</span>
-          <AlgViewModeToggle value={view} onChange={onViewChange} />
+          <select
+            className="alg-notation-style-select"
+            value={view}
+            onChange={event => onViewChange(event.target.value as AlgViewMode)}
+            aria-label={tr({ zh: '列表内容', en: 'List content' })}
+          >
+            <option value="cards">{tr({ zh: '图', en: 'Images' })}</option>
+            <option value="full">{tr({ zh: '公式', en: 'Algs' })}</option>
+          </select>
+        </span>
+      )}
+      {notationStyle && onNotationStyleChange && (
+        <span className="alg-list-settings-row">
+          <span className="alg-list-settings-label">{tr({ zh: '转动记号', en: 'Move notation' })}</span>
+          <AlgNotationStyleSelect value={notationStyle} onChange={onNotationStyleChange} />
         </span>
       )}
       <BoolToggle

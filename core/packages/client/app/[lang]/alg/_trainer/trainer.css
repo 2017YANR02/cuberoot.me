@@ -742,7 +742,6 @@
 }
 
 /* ─── 齿轮设置弹出面板(训练选项全收纳:打乱类型/模式/计时/pre-AUF/概率/字体) ─── */
-.trainer-opts { position: relative; display: inline-flex; }
 /* 齿轮吸在页面正上方(topbar 水平居中) */
 .trainer-opts--top {
   position: absolute;
@@ -765,37 +764,19 @@
     transform: none;
   }
 }
-/* 无外框裸图标按钮 */
-.trainer-opts-gear {
-  display: inline-flex;
-  align-items: center;
+/* 训练页沿用原来的紧凑齿轮尺寸，按钮交互由 SettingsPopover 统一提供。 */
+.settings-popover-trigger.trainer-opts-gear {
+  width: auto;
+  height: auto;
   padding: 6px;
-  border: none;
-  background: none;
-  color: var(--muted-foreground);
-  cursor: pointer;
 }
-.trainer-opts-gear:hover { color: var(--foreground); }
-/* anchored-panel: clamped (usePanelClamp in TrainerRunClient) */
-.trainer-opts-panel {
-  position: absolute;
-  top: calc(100% + 6px);
+/* 面板外观、视口钳制和关闭交互由 SettingsPopover 统一提供。 */
+.settings-popover-panel.trainer-opts-panel {
+  right: auto;
   left: 50%;
   transform: translateX(-50%);
   z-index: 50;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  border-radius: 10px;
-  border: 1px solid var(--border-default);
-  background: var(--popover);
   color: var(--foreground);
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--foreground) 14%, transparent);
-  width: max-content;
-  max-width: min(92vw, 360px);
-  text-align: left;
 }
 .trainer-opts-row {
   display: flex;
@@ -1509,7 +1490,6 @@
 
 /* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
-  body[data-site-scenery] .trainer-opts-panel,
   body[data-site-scenery] .trainer-stats-card,
   body[data-site-scenery] .trainer-set-card,
   body[data-site-scenery] .trainer-cube-view-panel,
@@ -1520,7 +1500,6 @@
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
   }
-  body[data-site-scenery] .trainer-opts-panel,
   body[data-site-scenery] .trainer-cube-view-panel,
   body[data-site-scenery] .trainer-round-modal {
     background: var(--glass-popover-bg);

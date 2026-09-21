@@ -13,10 +13,23 @@ describe('shared algorithm list settings', () => {
     expect(settings).toContain('<SettingsPopover');
     expect(shared).toContain('export function SettingsPopover');
     expect(shared).toContain('usePanelClamp(open, panelRef)');
-    expect(shared).toContain('usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef)');
-    expect(settings).toContain('<AlgViewModeToggle value={view} onChange={onViewChange} />');
+    expect(shared).toContain('usePopoverDismiss(open, () => setOpen(false), rootRef, triggerRef)');
+    expect(settings).toContain('value={view}');
+    expect(settings).toContain('onChange={event => onViewChange(event.target.value as AlgViewMode)}');
+    expect(settings).toContain('<option value="cards">');
+    expect(settings).toContain('<option value="full">');
+    expect(settings).toContain('<AlgNotationStyleSelect value={notationStyle} onChange={onNotationStyleChange} />');
     expect(settings).toContain("localStorage.getItem(ALG_CASE_NUMBERS_KEY) === 'true'");
     expect(settings).toContain("label={tr({ zh: '数字编号', en: 'Numeric IDs' })}");
+  });
+
+  it('reuses the same anchored popover in the trainer instead of rebuilding it', () => {
+    const trainer = read('app/[lang]/alg/[puzzle]/[set]/run/TrainerRunClient.tsx');
+
+    expect(trainer).toContain('<SettingsPopover');
+    expect(trainer).toContain('panelClassName="trainer-opts-panel"');
+    expect(trainer).not.toContain("import usePanelClamp from '@/hooks/usePanelClamp'");
+    expect(trainer).not.toContain('<Settings size={22}');
   });
 
   it('uses the shared settings on regular and generated case lists', () => {
