@@ -3,7 +3,8 @@ import { GHOST_CELLS, GHOST_CUT } from './ghostModel';
 
 export const GHOST_FACES = ['U', 'D', 'R', 'L', 'F', 'B'] as const;
 export type GhostFace = typeof GHOST_FACES[number];
-export type GhostFamily = GhostFace | `${GhostFace}w` | 'M' | 'E' | 'S' | 'x' | 'y' | 'z';
+export type GhostLayer = GhostFace | 'M' | 'E' | 'S';
+export type GhostFamily = GhostLayer | `${GhostFace}w` | 'x' | 'y' | 'z';
 /** Positive degrees are clockwise as seen from outside the named face. */
 export interface GhostMove { family: GhostFamily; degrees: number }
 export type GhostPose = readonly THREE.Quaternion[];
@@ -87,7 +88,7 @@ export function ghostSequenceValid(text: string, initial: GhostPose = solvedGhos
 }
 
 /** Next quarter-grid detent, including the exact 29/35 degree initial offsets. */
-export function ghostDragMove(pose: GhostPose, family: GhostFace, clockwise: boolean): GhostMove | null {
+export function ghostDragMove(pose: GhostPose, family: GhostLayer, clockwise: boolean): GhostMove | null {
   const probe: GhostMove = { family, degrees: 90 };
   const selected = ghostSelection(pose, probe);
   if (!selected) return null;
