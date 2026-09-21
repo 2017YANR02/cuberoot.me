@@ -1890,36 +1890,6 @@ export default function CompDetailPage() {
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
         <div className="comp-view-tabs">
-          {/* 分享图布局不吃项目筛选,项目条一并隐藏 */}
-          {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
-            <>
-              <WcaEventSelector
-                availableEvents={availableEventIds}
-                {...(isPsych
-                  ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
-                  : isSchedule
-                    ? { selectedEvents: schedSelectedSet, onToggle: onToggleSchedEvent }
-                    : { selectedEvent: eventParam, onSelect: onSelectEvent })}
-                isZh={isZh}
-                onlyAvailable
-                badges={isSchedule ? h2hBadges : isPsych ? {} : eventBadges}
-                topBadges={isPsych ? {} : eventTopBadges}
-                appendEvents={nonWcaEvents}
-              />
-              {/* 双轮只控制成绩表合并;预排名 / 赛程没有对应语义。 */}
-              {viewParam === 'result' && currentIsDual && (
-                <BoolToggle
-                  value={showCombined}
-                  onChange={setCombinedPref}
-                  label={tr({ zh: '双轮', en: 'Dual'
-                  })}
-                  ariaLabel={tr({ zh: '合并双轮成绩', en: 'Combine dual rounds'
-                  })}
-                />
-              )}
-            </>
-          )}
-
           {hasPodiumTab && (
             <button
               type="button"
@@ -1990,6 +1960,37 @@ export default function CompDetailPage() {
           )}
           {/* 编辑模式铅笔已移除:编辑 / 提议 / 复盘 / 视频全收进点成绩弹窗(AttemptPopover),与选手页一致。 */}
         </div>
+
+        {/* 分享图布局不吃项目筛选,项目条一并隐藏 */}
+        {!isPodium && !isScramble && !isSimilar && !(isSchedule && schedView === 'poster') && (
+          <div className="comp-event-bar">
+            <WcaEventSelector
+              presentation="inline"
+              availableEvents={availableEventIds}
+              {...(isPsych
+                ? { selectedEvents: psychSelectedSet, onToggle: onTogglePsychEvent }
+                : isSchedule
+                  ? { selectedEvents: schedSelectedSet, onToggle: onToggleSchedEvent }
+                  : { selectedEvent: eventParam, onSelect: onSelectEvent })}
+              isZh={isZh}
+              onlyAvailable
+              badges={isSchedule ? h2hBadges : isPsych ? {} : eventBadges}
+              topBadges={isPsych ? {} : eventTopBadges}
+              appendEvents={nonWcaEvents}
+            />
+            {/* 双轮只控制成绩表合并;预排名 / 赛程没有对应语义。 */}
+            {viewParam === 'result' && currentIsDual && (
+              <BoolToggle
+                value={showCombined}
+                onChange={setCombinedPref}
+                label={tr({ zh: '双轮', en: 'Dual'
+                })}
+                ariaLabel={tr({ zh: '合并双轮成绩', en: 'Combine dual rounds'
+                })}
+              />
+            )}
+          </div>
+        )}
 
         {isScramble ? (
           <CompScramblesTab slug={slug} />

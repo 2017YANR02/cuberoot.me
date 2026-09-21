@@ -585,6 +585,7 @@ function AllResultsPageInner() {
       {view === 'metric' && (
         <WcaStatView
           statId="wr_metric" headerMode="note" urlScope="m" metricId={metricId}
+          eventSelectorPresentation="inline"
           afterEventSelector={(availableMetricIds) => (
             renderTypeSelect(availableMetricIds)
           )}
@@ -604,10 +605,11 @@ function AllResultsPageInner() {
         </div>
       )}
 
-      {/* 项目菜单在模式切换时保持挂载，与当前筛选共用一行。 */}
+      {/* 项目选择器在模式切换时保持挂载。 */}
       <div className="wse-filters">
-        <div className="wse-filter" style={{ minWidth: 0, maxWidth: '100%', flex: '0 0 auto', alignSelf: 'flex-end' }}>
+        <div className="wse-filter" style={{ minWidth: '100%' }}>
           <WcaEventMultiSelector
+            presentation="inline"
             availableEvents={RANK_EVENT_SET}
             selectedEvents={selectedSet}
             onChange={setEventsSet}
