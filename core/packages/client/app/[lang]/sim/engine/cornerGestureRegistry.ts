@@ -2,6 +2,9 @@ import DinoCube from './dino/DinoCube';
 import { dinoPickHit, dinoResolveLive, dinoResolveMove, type DinoPickHit } from './dino/dinoDrag';
 import { dinoMoveToString, type DinoMove } from './dino/dinoState';
 import FtoCube from './fto/FtoCube';
+import GhostCube from '@cuberoot/puzzle-render-core/engine/ghost/GhostCube';
+import { ghostMoveToString, type GhostMove } from '@cuberoot/puzzle-render-core/engine/ghost/ghostState';
+import { ghostPickHit, ghostResolveLive, ghostResolveMove, type GhostPickHit } from './ghost/ghostDrag';
 import { ftoPickHit, ftoResolveLive, ftoResolveMove, type FtoPickHit } from './fto/ftoDrag';
 import { ftoMoveToString, type FtoMove } from './fto/ftoState';
 import GearCube from './gear/GearCube';
@@ -152,6 +155,12 @@ export function createCornerGestureResolver(
   };
 
   const gestures = {
+    ghost: new CornerTurnGesture<GhostCube, GhostMove, GhostPickHit>({
+      match: (cube): cube is GhostCube => cube instanceof GhostCube,
+      pickHit: ghostPickHit, resolveLive: ghostResolveLive, resolveMove: ghostResolveMove,
+      beginMove: (cube, move) => cube.beginMove(move), moveToString: ghostMoveToString,
+      fullPx: 150, threshold: 6,
+    }, ctx),
     ivy: new CornerTurnGesture(ivyAdapter, ctx),
     dino: new CornerTurnGesture(dinoAdapter, ctx),
     redi: new CornerTurnGesture(rediAdapter, ctx),
