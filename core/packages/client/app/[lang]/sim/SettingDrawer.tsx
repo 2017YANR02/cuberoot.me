@@ -515,7 +515,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     applyStickerThickness(world.cube, s.thickness);
     // 原核 (raw/stickerless body): generic across the in-house engines — paints each
     // body from its sibling stickers' colors + hides the tiles. Raw > debug > hollow.
-    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw');
+    applyEngineBodyOverlay(world.cube, s.hollow, s.debugStructureColor, s.coreStyle === 'raw', s.coreColor);
     applyHintFacelets(world.cube, s.hint, hintBg);
   }
   // 内核透明度在两族引擎的材质/overlay 都落定后统一应用:NxN 走有序 x-ray
