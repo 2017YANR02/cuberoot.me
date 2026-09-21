@@ -86,8 +86,8 @@
 .admin-users-modal h2 { margin: 0; font-size: 1.05rem; }
 .admin-users-modal > p { margin: 10px 0 18px; color: var(--muted-foreground); font-size: .82rem; line-height: 1.6; }
 .admin-users-modal label { display: block; margin-bottom: 7px; font-size: .82rem; font-weight: 600; }
-.admin-users-modal textarea { box-sizing: border-box; width: 100%; min-height: 88px; resize: vertical; padding: 9px 10px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; font-size: .82rem; line-height: 1.5; }
-.admin-users-modal textarea:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
+.admin-users-impersonation-reason { box-sizing: border-box; width: 100%; min-height: 88px; resize: vertical; padding: 9px 10px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; font-size: .82rem; line-height: 1.5; }
+.admin-users-impersonation-reason:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
 .admin-users-modal > small { display: block; margin-top: 4px; color: var(--faint-foreground); text-align: right; }
 .admin-users-modal .admin-users-error { margin-bottom: 0; color: var(--destructive); }
 .admin-users-modal-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 18px; }

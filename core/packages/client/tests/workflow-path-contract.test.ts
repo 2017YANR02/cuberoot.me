@@ -392,6 +392,23 @@ describe('deployment workflow path contracts', () => {
   const testPushPaths = readEventPaths('test.yml', 'push');
   const testPullRequestPaths = readEventPaths('test.yml', 'pull_request');
 
+  it('bounds Next transfers and reuses live bytes without modifying the live release', () => {
+    const transfer = readStepRun('deploy_next.yml', 'rsync standalone + systemd unit');
+    const step = readStepLines('deploy_next.yml', 'rsync standalone + systemd unit').lines.join('\n');
+    expect(step).toContain('timeout-minutes: 13');
+    expect(transfer).toContain('for i in 1 2 3; do');
+    expect(transfer).toContain('timeout --kill-after=15s 240s rsync -az --checksum --delete-delay');
+    expect(transfer).toContain('--partial --timeout=60 --stats --copy-dest=/www/wwwroot/toolkit-next');
+    expect(transfer).toContain(':/www/wwwroot/toolkit-next.new/');
+    expect(transfer).not.toMatch(/--(?:inplace|link-dest)|tar\.gz/);
+    const deploy = readStepRun('deploy_next.yml', 'Deploy + restart');
+    expect(deploy).not.toContain('rm -rf "$STAGE"');
+    expect(deploy).toContain('mv "$LIVE" "$BACKUP"');
+    expect(deploy).toContain('mv "$STAGE" "$LIVE"');
+    expect(deploy).toContain('mv "$BACKUP" "$LIVE"');
+    expect(readWorkflow('deploy_next.yml')).toContain('cancel-in-progress: false');
+  });
+
   it('keeps the Core deploy boundary limited to real API production inputs', () => {
     expect(corePaths).toEqual(CORE_PATHS);
 
