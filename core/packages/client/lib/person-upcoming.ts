@@ -10,20 +10,22 @@ interface TopUpcomingData {
 
 type CnUpcomingRegistrations = Record<string, string[]>;
 
-let staticUpcomingPromise: Promise<[TopUpcomingData, CnUpcomingRegistrations]> | null = null;
+async function loadStatsJson<T>(path: string, fallback: T): Promise<T> {
+  try {
+    // These indexes are regenerated daily. Always revalidate instead of keeping
+    // one stale Promise for the lifetime of a long-open browser tab.
+    const response = await fetch(statsUrl(path), { cache: 'no-cache' });
+    return response.ok ? await response.json() as T : fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 function loadStaticUpcoming(): Promise<[TopUpcomingData, CnUpcomingRegistrations]> {
-  if (!staticUpcomingPromise) {
-    staticUpcomingPromise = Promise.all([
-      fetch(statsUrl('/stats/upcoming_comps.json'))
-        .then((response) => response.ok ? response.json() : {})
-        .catch(() => ({})) as Promise<TopUpcomingData>,
-      fetch(statsUrl('/stats/cn_upcoming_registrations.json'))
-        .then((response) => response.ok ? response.json() : {})
-        .catch(() => ({})) as Promise<CnUpcomingRegistrations>,
-    ]);
-  }
-  return staticUpcomingPromise;
+  return Promise.all([
+    loadStatsJson<TopUpcomingData>('/stats/upcoming_comps.json', {}),
+    loadStatsJson<CnUpcomingRegistrations>('/stats/cn_upcoming_registrations.json', {}),
+  ]);
 }
 
 /** 与比赛中心一致：静态报名索引先命中，WCA upcoming API 再补全。 */
