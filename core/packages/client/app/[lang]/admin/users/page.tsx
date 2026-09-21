@@ -162,6 +162,7 @@ function UserImpersonationDialog({
         <label htmlFor="admin-users-impersonation-reason">{t('查看理由', 'Reason for viewing')}</label>
         <textarea
           id="admin-users-impersonation-reason"
+          className="admin-users-impersonation-reason"
           value={reason}
           minLength={5}
           maxLength={200}
