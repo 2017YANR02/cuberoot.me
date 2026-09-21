@@ -102,6 +102,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 范本:Ivy `ivyDrag.ts`(离散 120° 过阈值整步)、SQ1 `sq1Drag.ts`(连续跟手 + 松手 snap);`<x>Drag.ts` 运行时 `import * as THREE`(SimPage 保持 type-only)。
 - `<x>PickHit`:`scene.updateMatrixWorld()`→`setFromCamera`→`intersectObject(cube,true)`;命中魔方任意件都返回(命中点 + 一组候选单元),脱靶才 null→orbit;鼠标在魔方上一律不 orbit。
 - 候选单元只认 `hits[0]`,沿 parent 链读 `userData`(花瓣→它的角、中心→它 live 面相邻 2 角、缝/黑体→全部)。
+- 层转拼图把合法中层切片纳入拖拽候选，按命中块的当前归属筛选，覆盖 E/M/S 双向、错层与整体转体回归。
 - `<x>ResolveMove`:对每候选算「绕它转时命中点的屏幕切向」与拖拽向量点积 `s`,取 |s| 最大者、`sign(s)` 作方向(别用固定符号),离散魔方过阈值(~6px)触发整步。
 - SimPage 接线:pointerdown 先 PickHit(命中→记 pending、`rotating=false`;脱靶→orbit);pointermove pending 过阈值→ResolveMove→`cube.twister.twist(move,false,true)` + `userMoveRef.current?.(move.name)`(传 string,免 TwistAction 吞多字符);非活跃时各分支 `if(pending){…return}`/`if(orbiting){…return}` 让出到底部双指 pinch,别整体 `return`。
 - 离散角/棱转:用 `engine/cornerTurnGesture.ts` 的 `CornerTurnGesture` —— SimPage 写 ~7 行 `CornerTurnAdapter<Cube,Move,PickHit>`(`match` instanceof、`pickHit`/`resolveLive`/`resolveMove` 给 drag 函数、`beginMove:(c,m)=>c.beginMove(m)`、`moveToString`、`fullPx`/`threshold`)进注册表,别 copy 175 行 dispatch;连续(SQ1)/异类(Ivy)各写各的。
