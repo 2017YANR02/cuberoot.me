@@ -176,6 +176,15 @@ describe('计时中那颗智能魔方留在屏幕上', () => {
 describe('复盘那一格不许把计时区挤出视口', () => {
   const css = read(SHELL_CSS) + read(RECAP_CSS);
 
+  it('比赛来源跟随打乱滚动,不能吸附到短视口底部遮住下一把打乱', () => {
+    const stripCss = read(join(ROOT, '..', 'timer-ui', 'src', 'scramble-strip.css'));
+    const sourceRules = [...(css + stripCss).matchAll(/[^{}]*\.scramble-src-row[^{}]*\{([^}]*)\}/g)];
+    expect(sourceRules.length).toBeGreaterThan(0);
+    for (const rule of sourceRules) {
+      expect(rule[1]).not.toMatch(/position:\s*(?:sticky|absolute|fixed)/);
+    }
+  });
+
   it('普通态、复盘态和桌面侧栏态都扣除页面通知栏高度', () => {
     // PageNoticeBar 是计时器前面的兄弟节点。直接占 100dvh 会把底部连接胶囊推出视口；
     // 复盘或侧栏展开时也必须沿用同一可见高度，不能退回完整视口高。
