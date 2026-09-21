@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Vector3 } from 'three';
 import { ConvexGeometry } from 'three/examples/jsm/geometries/ConvexGeometry.js';
 import { polytopeVerts } from '@cuberoot/puzzle-render-core/engine/polytopeCut';
+import { GHOST_CELLS, GHOST_SCALE, GHOST_SHELL_AXES } from '@cuberoot/puzzle-render-core/engine/ghost/ghostModel';
 
 const out = fileURLToPath(new URL('../../../../../.tmp/png/', import.meta.url));
 const data = JSON.parse(readFileSync(`${out}ghost-original-analysis.json`, 'utf8'));
@@ -121,6 +122,26 @@ assert.equal(data.cells.length, 27);
 assert.equal(visible, 26);
 assert.equal(count, 59);
 assert.equal(matched.size, 55);
+// Compare the production engine, including its frame change, to ALL decoded CAD caps.
+const productionMatches = new Set();
+let productionMaxErrorMm = 0;
+for (const cell of GHOST_CELLS) for (const facet of cell.facets) {
+  if (!facet.sticker.length) continue;
+  const axis = Math.floor(facet.face / 2), sign = facet.face % 2 ? 1 : -1;
+  const dims = [0, 1, 2].filter(i => i !== axis);
+  const points = facet.sticker.map(([u, v]) => {
+    const p = facet.origin.clone().addScaledVector(facet.u, u).addScaledVector(facet.v, v);
+    return dims.map(i => p.dot(GHOST_SHELL_AXES[i]) / GHOST_SCALE);
+  });
+  const match = caps.filter(c => c.axis === axis && c.sign === sign)
+    .map(c => ({ ...c, error: hausdorff(points, c.points) })).sort((a, b) => a.error - b.error)[0];
+  assert.ok(match.error < 5e-6);
+  assert.equal(points.length, match.points.length);
+  assert.ok(!productionMatches.has(match.body));
+  productionMatches.add(match.body);
+  productionMaxErrorMm = Math.max(productionMaxErrorMm, match.error);
+}
+assert.equal(productionMatches.size, 55);
 assert.ok(Math.abs(volume - 58 ** 3) < 0.02);
 for (const [key, row] of surface) {
   assert.ok(Math.abs(row.area - 58 ** 2) < 1e-7);
@@ -128,4 +149,4 @@ for (const [key, row] of surface) {
   assert.equal(row.patches, expected.patches);
   assert.equal(row.stickers, expected.stickers);
 }
-console.log(JSON.stringify({ cells: data.cells.length, visible, surfacePatches: count, matchedStickers: matched.size, maxVertexErrorMm: maxError, volumeMm3: volume, faces: Object.fromEntries(surface) }, null, 2));
+console.log(JSON.stringify({ cells: data.cells.length, visible, surfacePatches: count, matchedStickers: matched.size, maxVertexErrorMm: maxError, productionMatchedStickers: productionMatches.size, productionMaxErrorMm, volumeMm3: volume, faces: Object.fromEntries(surface) }, null, 2));

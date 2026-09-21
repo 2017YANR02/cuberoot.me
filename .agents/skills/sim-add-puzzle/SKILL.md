@@ -131,6 +131,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - involution/对称转(Heli 180°,顺逆终态相同)动画也跟手做两方向:给 move 加 cosmetic `dir?:1|-1`(状态/记号忽略它),`<x>ResolveLive` 把 `score.dir` 烤进 move,`beginMove` 用 `(move.dir ?? sweepDir)*ANGLE` 定扫动符号。
 - alg/打乱输入框坏 token 别 throw(async `jumpToStep` 里 throw = 崩页):token 分类器算 validity(坏则早退、totalSteps=0)+ mirror 高亮层标红(范本 `classifyIvyTokens` + `.sim-player-hl`);strict parser 只留求解器。
 - 改记号约定同步改锁约定的 baseline 测试。
+- 形变拼图先完整验证公式序列再改状态/队列；拖拽拾取与播放前统一清除半转冻结，别只清 NxN controller 的锁。
 
 ## 验证(必做)
 - NxN 房间装饰复用 `room-cube.ts`，按 HOME 块索引跟随 `getCubeletRenderMatrix`，切主题时释放自有几何并恢复原渲染器，遍历主题与支持阶数验证边界及转动中间帧。

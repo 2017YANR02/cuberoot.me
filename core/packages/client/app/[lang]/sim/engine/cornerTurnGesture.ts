@@ -183,6 +183,9 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
       if (this.ctx.settings().pointerTurns !== false && this.adapter.match(cube)) {
         cube.twister.finish();
         tweener.finish();
+        // A frozen visual pose is not a committed state. Restore it BEFORE
+        // picking/resolving: shape-shifting cuts may be blocked mid-sweep.
+        this.ctx.clearPartialFreeze();
         // pick from the original pointerdown location (before the drag moved)
         this.hit = this.adapter.pickHit(cube, world.scene, world.camera, this.downX, this.downY, world.width, world.height);
         if (this.hit) {
@@ -197,7 +200,6 @@ export class CornerTurnGesture<C extends TwistableCube<M>, M, H> implements Corn
               Number.isFinite(this.adapter.fullPx) &&
               this.adapter.fullPx > 0
             ) {
-              this.ctx.clearPartialFreeze();
               const anims = this.adapter.beginMove(cube, plan.move, plan.dir ?? 1);
               this.live = { anims, tx: plan.tangentX, ty: plan.tangentY, downX: this.downX, downY: this.downY };
               const proj = (localX - this.downX) * plan.tangentX + (localY - this.downY) * plan.tangentY;
