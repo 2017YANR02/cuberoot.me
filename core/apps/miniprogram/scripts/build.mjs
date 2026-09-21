@@ -7,6 +7,7 @@ import process from 'node:process';
 import { build } from 'esbuild';
 
 import { BUILD_ASSETS } from './build-assets.mjs';
+import { buildDouyinTabIcons } from './build-tab-icons.mjs';
 import { resolveProjectConfig } from './build-config.mjs';
 import {
   buildGraphInputFiles,
@@ -190,6 +191,7 @@ async function normalizeDouyinAppConfig() {
     if (typeof resolvedValue !== 'string') throw new Error(`抖音 app.json 无法解析主题值：${value}`);
     return resolvedValue;
   }));
+  normalized.tabBar.list = await buildDouyinTabIcons(stagingRoot, normalized.tabBar);
   await writeFile(appConfigPath, `${JSON.stringify(normalized, null, 2)}\n`, 'utf8');
   await Promise.all([
     rm(themePath, { force: true }),
