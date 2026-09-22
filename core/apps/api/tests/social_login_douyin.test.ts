@@ -35,7 +35,7 @@ describe('Douyin website OAuth', () => {
     expect(authorization.searchParams.get('client_key')).toBe('site-client-key');
     expect(authorization.searchParams.get('response_type')).toBe('code');
     expect(authorization.searchParams.get('scope')).toBe('user_info');
-    expect(authorization.searchParams.get('redirect_uri')).toBe('https://cuberoot.me/auth/social/callback');
+    expect(authorization.searchParams.get('redirect_uri')).toBe('https://cuberoot.me/auth/social/callback/');
     expect(authorization.searchParams.get('state')).toBeTruthy();
 
     await expect(exchangeSocialCode('douyin', 'verified-code')).resolves.toEqual({
