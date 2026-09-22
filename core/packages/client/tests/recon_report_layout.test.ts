@@ -73,6 +73,14 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     // 排到第一位却折叠着,等于把报告的主体藏在一次点击后面。
     expect(src).toMatch(/const \[playbackExpanded, setPlaybackExpanded\] = useState\(true\)/);
   });
+
+  it('参考解法排在数据之后、动作序列之前', () => {
+    const analysis = src.indexOf('{analysisBlock}');
+    const reference = src.indexOf("title={tr({ zh: '参考解法'");
+    const moves = src.indexOf("title={tr({ zh: `动作序列");
+    expect(reference, '报告里找不到参考解法').toBeGreaterThan(analysis);
+    expect(moves, '报告里找不到动作序列').toBeGreaterThan(reference);
+  });
 });
 
 describe('同一个数不写两遍', () => {
