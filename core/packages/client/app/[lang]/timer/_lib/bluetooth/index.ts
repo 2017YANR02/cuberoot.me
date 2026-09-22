@@ -53,8 +53,10 @@ import { gocubeDriver } from './gocube';
 import { moyuDriver } from './moyu';
 import { moyu32Driver } from './moyu32';
 import { qiyiDriver } from './qiyi';
-import { CubeStateTracker } from './state_track';
-import { MoveClock } from './move_clock';
+import {
+  SmartCubeSessionController,
+  type SmartCubeSessionLease,
+} from '@cuberoot/shared/smart-cube/session';
 import { armedFakeCube } from './fake_cube';
 import { applyHijack, makeHijack, type StateHijack } from './state_hijack';
 import { toFaceletString, fromFaceletString } from '../cube/state';
@@ -570,9 +572,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const [solved, setSolved] = useState<boolean>(true);
   /**
    * The tracked state as a facelet string, pushed rather than pulled.
-   * `getFaces()` reads a ref, so a consumer calling it from its own onMove
-   * handler used to depend on our internal ordering; this is a plain value
-   * that is always the state after the move that triggered the render.
+   * `getFaces()` reads the session controller's synchronous snapshot, while
+   * this value drives rendering after the same move has been published.
    */
   const [facelets, setFacelets] = useState<string | null>(null);
 
@@ -602,7 +603,6 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
   // Mutable runtime handles. We can't put these in state because they are
   // not serializable and updating them would re-render the consumer.
-  const trackerRef = useRef<CubeStateTracker>(new CubeStateTracker());
   const deviceRef = useRef<BluetoothDevice | null>(null);
   const macRef = useRef<string | null>(null);
   // MAC pending persistence — only written once a real move or a validated
@@ -616,7 +616,6 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const calibratingRef = useRef(false);
   const setGyroRef = useRef<((enabled: boolean) => Promise<void>) | null>(null);
   const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
-  const wasSolvedRef = useRef<boolean>(true);
   /**
    * Training-mode offset: non-null means what we publish is a relabelling of
    * the physical cube, not the cube itself. See `./state_hijack.ts`.
@@ -631,7 +630,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
    * the state it installs. A trainer that changed the step by re-rendering
    * would have a window between the two — the offset in place, the step still
    * the previous case's — and if the new case happened to satisfy the old step,
-   * `publishSolved` would latch `wasSolved` on a state nobody solved. The real
+   * the session controller would latch solved on a state nobody solved. The real
    * finish then produces no edge at all and the clock never stops. Mixed
    * sessions, where consecutive cases genuinely want different steps, hit that
    * on their first PLL after an OLL.
@@ -652,100 +651,48 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   // Set while a reconnect attempt is in flight, so we don't double-fire from
   // overlapping disconnect events.
   const reconnectInFlightRef = useRef<boolean>(false);
-  /** Reconciles the cube's clock with ours. Reset on every (re)connect. */
-  const moveClockRef = useRef<MoveClock>(new MoveClock());
+  const sessionControllerRef = useRef<SmartCubeSessionController<CubeMoveMetadata> | null>(null);
+  if (!sessionControllerRef.current) {
+    sessionControllerRef.current = new SmartCubeSessionController({
+      now: () => performance.now(),
+      projectFacelets: (rawFacelets) => applyHijack(hijackRef.current, rawFacelets),
+      isSolved: (nextFacelets) => stepSolved(activeStep(), nextFacelets),
+      onChange: (snapshot) => {
+        lastMoveMetadataRef.current = snapshot.lastMoveMetadata;
+        setLastMove(snapshot.lastMove);
+        setFacelets(snapshot.facelets);
+        setSolved(snapshot.solved);
+      },
+      onMove: ({ metadata, move, timestamp }) => {
+        // Persist a MAC only after a real frame decodes successfully.
+        const pendingMac = pendingSaveMacRef.current;
+        if (pendingMac) {
+          saveMac(pendingMac.name, pendingMac.mac);
+          pendingSaveMacRef.current = null;
+        }
+        if (calibratingRef.current) return;
+        if (metadata) onMoveRef.current?.(move, timestamp, metadata);
+        else onMoveRef.current?.(move, timestamp);
+      },
+      onSolved: (timestamp) => {
+        if (!calibratingRef.current) onSolvedRef.current?.(timestamp);
+      },
+    });
+  }
+  const sessionController = sessionControllerRef.current;
 
-  /**
-   * Publish a solved/unsolved transition. Both the move path and the
-   * cube-reported-state path funnel through here so that "the cube is now
-   * solved" fires `onSolved` — which is what stops the timer — no matter
-   * which of the two established it. A brand whose protocol reports state on
-   * every frame (QiYi) would otherwise flip `wasSolved` silently and swallow
-   * the very edge the timer is waiting for.
-   */
-  const publishSolved = useCallback((isSolved: boolean, timestamp?: number) => {
-    if (isSolved && !wasSolvedRef.current) {
-      wasSolvedRef.current = true;
-      setSolved(true);
-      if (!calibratingRef.current) onSolvedRef.current?.(timestamp);
-    } else if (!isSolved && wasSolvedRef.current) {
-      wasSolvedRef.current = false;
-      setSolved(false);
+  const adoptCubeState = useCallback((
+    session: SmartCubeSessionLease<CubeMoveMetadata>,
+    nextFacelets: string,
+  ): void => {
+    if (!session.adoptFacelets(nextFacelets)) return;
+    // A validated encrypted state proves the MAC even before the first move.
+    const pendingMac = pendingSaveMacRef.current;
+    if (pendingMac) {
+      saveMac(pendingMac.name, pendingMac.mac);
+      pendingSaveMacRef.current = null;
     }
   }, []);
-
-  /**
-   * Publish the tracked state, seen through the hijack (if any).
-   *
-   * Both the move path and the state-dump path go through here, and so does
-   * every reset, so there is exactly one place where "what the cube reports"
-   * turns into "what the timer sees". The solved edge is decided from the SAME
-   * string that is published — with a hijack in play, the raw tracker's opinion
-   * of "solved" is about a cube nobody is looking at.
-   */
-  const publishState = useCallback((rawFacelets: string, timestamp?: number) => {
-    const view = applyHijack(hijackRef.current, rawFacelets);
-    setFacelets(view);
-    publishSolved(stepSolved(activeStep(), view), timestamp);
-  }, [publishSolved]);
-
-  const handleMove = useCallback((move: string, deviceTs?: number, metadata?: CubeMoveMetadata) => {
-    // First successfully-decoded move proves the MAC: persist it now. We
-    // deliberately don't save before a move lands, to avoid caching a wrong
-    // MAC the user typed (which would silently poison every reconnect).
-    const ps = pendingSaveMacRef.current;
-    if (ps) { saveMac(ps.name, ps.mac); pendingSaveMacRef.current = null; }
-    // Arrival time, as close to characteristic-value-changed as possible —
-    // drivers call this synchronously from their notification handler. When
-    // the cube sent its own clock reading, `MoveClock` uses that instead: BLE
-    // batches notifications per connection interval, so arrival times cluster
-    // and cannot resolve the gaps between fast consecutive turns. Everything
-    // downstream (TPS, pauses, per-phase splits) is built on those gaps.
-    const ts = moveClockRef.current.stamp(deviceTs, performance.now());
-    // Advance the model BEFORE telling anyone. Subscribers routinely read the
-    // cube state from inside their onMove handler (the scramble check does),
-    // and notifying first hands them the state as it was one move ago — which
-    // is exactly one move short at the instant a scramble is completed, so the
-    // check fires "doesn't match the scramble" on a cube that does.
-    lastMoveMetadataRef.current = metadata;
-    trackerRef.current.applyMove(move);
-    setLastMove(move);
-    if (!calibratingRef.current) {
-      if (metadata) onMoveRef.current?.(move, ts, metadata);
-      else onMoveRef.current?.(move, ts);
-    }
-    // Through `publishState`, NOT the tracker's own opinion of "solved": the
-    // tracker knows nothing about a training offset or about stopping on a
-    // sub-step, so publishing its verdict here would leave every drill unable
-    // to finish — the two would only agree in the one case where there is no
-    // offset and the step is a full solve.
-    publishState(toFaceletString(trackerRef.current.getFaces()), ts);
-  }, [publishState]);
-
-  /**
-   * The cube told us where it actually is. Adopt it wholesale — this reading
-   * beats anything we inferred from the move stream, which is exactly why the
-   * drivers only fire it for states that passed a validity check.
-   *
-   * GAN emits this at connect and after a resync request, i.e. while the cube
-   * is sitting still. QiYi emits it on every state frame, right after the
-   * moves in that frame, so a dropped move heals on the next turn instead of
-   * poisoning the rest of the session.
-   *
-   * The solved edge goes through the same publisher as the move path: if the
-   * cube's own report is what establishes that it is solved, that still has to
-   * stop the timer.
-   */
-  const handleCubeState = useCallback((facelets: string) => {
-    lastMoveMetadataRef.current = undefined;
-    if (!trackerRef.current.adoptFacelets(facelets)) return;
-    // GAN reports an encrypted, validated state during its initial handshake.
-    // That proves the MAC just as strongly as a decoded move and lets a user
-    // reconnect quickly even if they only inspected diagnostics before leaving.
-    const ps = pendingSaveMacRef.current;
-    if (ps) { saveMac(ps.name, ps.mac); pendingSaveMacRef.current = null; }
-    publishState(facelets);
-  }, [publishState]);
 
   const cancelPendingReconnect = useCallback(() => {
     if (reconnectTimerRef.current != null) {
@@ -786,14 +733,15 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       driverRef.current = null;
       cleanupRef.current = null;
       disconnectListenerRef.current = null;
+      sessionController.close();
       setStatus(INITIAL_STATUS);
-      setFacelets(null);
       return;
     }
 
     let server: BluetoothRemoteGATTServer | null = null;
     let onDisc: (() => void) | null = null;
     let started: Awaited<ReturnType<CubeDriver['start']>> | null = null;
+    let reconnectSession: SmartCubeSessionLease<CubeMoveMetadata> | null = null;
     const discardAttempt = (): void => {
       try { started?.cleanup(); } catch { /* ignore */ }
       if (onDisc) {
@@ -811,6 +759,16 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         discardAttempt();
         return;
       }
+      // Establish the provisional solved baseline before the driver starts.
+      // Some drivers publish their authoritative state during start(); doing
+      // this afterwards would overwrite a real scrambled reconnect state.
+      gyroSeenRef.current = false;
+      hijackRef.current = null;
+      hijackStepRef.current = null;
+      setHijacked(false);
+      reconnectSession = sessionController.open();
+      const session = reconnectSession;
+
       // Re-attach the disconnect listener (the device may keep the old one,
       // but to be safe we strip + re-add a fresh closure).
       if (disconnectListenerRef.current) {
@@ -819,6 +777,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       onDisc = (): void => {
         if (!isCurrentSession()) return;
         if (intentionalDisconnectRef.current) return;
+        if (!session.isCurrent()) return;
+        sessionController.close();
         if (reconnectInFlightRef.current) return;
         onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
         scheduleReconnectRef.current?.(0);
@@ -826,34 +786,22 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       device.addEventListener('gattserverdisconnected', onDisc);
       disconnectListenerRef.current = onDisc;
 
-      // Establish the provisional solved baseline before the driver starts.
-      // Some drivers publish their authoritative state during start(); doing
-      // this afterwards would overwrite a real scrambled reconnect state.
-      gyroSeenRef.current = false;
-      trackerRef.current.reset();
-      moveClockRef.current.reset();
-      hijackRef.current = null;
-      hijackStepRef.current = null;
-      setHijacked(false);
-      wasSolvedRef.current = true;
-      setSolved(true);
-      publishState(toFaceletString(trackerRef.current.getFaces()));
-      setLastMove(null);
-
       // Re-run the driver handshake to resume the move stream. Re-arm the
       // gyro sink too, or orientation would silently die after any drop.
       started = await driver.start(server, (move, deviceTs, metadata) => {
-        if (isCurrentSession()) handleMove(move, deviceTs, metadata);
+        if (isCurrentSession()) session.move(move, deviceTs, metadata);
       }, {
         mac: macRef.current,
         onState: (nextFacelets) => {
-          if (isCurrentSession()) handleCubeState(nextFacelets);
+          if (isCurrentSession()) adoptCubeState(session, nextFacelets);
         },
         onGyro: (onGyroRef.current || driver.brand === 'qiyi')
-          ? ((q, v) => { if (isCurrentSession()) gyroSink(q, v); })
+          ? ((q, v) => {
+              if (isCurrentSession() && session.isCurrent()) gyroSink(q, v);
+            })
           : undefined,
       });
-      if (!isCurrentSession() || intentionalDisconnectRef.current) {
+      if (!isCurrentSession() || intentionalDisconnectRef.current || !session.isCurrent()) {
         discardAttempt();
         return;
       }
@@ -871,7 +819,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       });
 
       void started.battery().then(b => {
-        if (isCurrentSession() && deviceRef.current === device) {
+        if (isCurrentSession() && session.isCurrent() && deviceRef.current === device) {
           setStatus(s => ({ ...s, battery: b }));
         }
       }).catch(() => {});
@@ -881,6 +829,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     } catch {
       discardAttempt();
       if (!isCurrentSession()) return;
+      if (reconnectSession?.isCurrent()) sessionController.close();
       // Reconnect failed (timeout, GATT error, cube off, etc.).
       reconnectInFlightRef.current = false;
       if (intentionalDisconnectRef.current) return;
@@ -897,13 +846,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           } catch { /* ignore */ }
         }
         disconnectListenerRef.current = null;
+        sessionController.close();
         setStatus(INITIAL_STATUS);
-        setFacelets(null);
         return;
       }
       scheduleReconnectRef.current?.(next);
     }
-  }, [handleMove, handleCubeState]);
+  }, [adoptCubeState, gyroSink, sessionController]);
 
   const scheduleReconnect = useCallback((attempt: number) => {
     if (intentionalDisconnectRef.current) return;
@@ -948,10 +897,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     deviceRef.current = null;
     driverRef.current = null;
     disconnectListenerRef.current = null;
+    sessionController.close();
     setStatus(INITIAL_STATUS);
-    setFacelets(null);
     onConnectionEventRef.current?.({ kind: 'disconnected', reason });
-  }, [cancelPendingReconnect]);
+  }, [cancelPendingReconnect, sessionController]);
 
   const disconnect = useCallback(() => {
     connectionGenerationRef.current += 1;
@@ -960,16 +909,13 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   }, [internalDisconnect]);
 
   const resetState = useCallback(() => {
-    trackerRef.current.reset();
     // "The cube in my hands is solved" is a statement about the PHYSICAL cube,
     // so any pretence about where it is has to go with it.
     hijackRef.current = null;
     hijackStepRef.current = null;
     setHijacked(false);
-    wasSolvedRef.current = true;
-    setSolved(true);
-    publishState(toFaceletString(trackerRef.current.getFaces()));
-  }, [publishState]);
+    sessionController.resetState();
+  }, [sessionController]);
 
   const resetDeviceState = useCallback(async () => {
     const reset = resetDeviceRef.current;
@@ -983,20 +929,21 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     try {
       await reset();
       if (connectionGenerationRef.current !== generation) throw new Error('Cube connection changed');
-      moveClockRef.current.reset();
+      sessionController.resetClock();
       // The driver published the confirmed snapshot and may already have
       // replayed newer turns. Clear training offsets without overwriting them.
       hijackRef.current = null;
       hijackStepRef.current = null;
       setHijacked(false);
-      publishState(toFaceletString(trackerRef.current.getFaces()));
+      sessionController.republish();
     } finally {
       if (connectionGenerationRef.current === generation) calibratingRef.current = false;
     }
-  }, [publishState, resetState]);
+  }, [resetState, sessionController]);
 
   const hijackTo = useCallback((target: import('../cube/state').CubeFaces | string, step?: CubeStep): boolean => {
-    const raw = toFaceletString(trackerRef.current.getFaces());
+    const raw = sessionController.getRawFacelets();
+    if (!raw) return false;
     const wanted = typeof target === 'string' ? target : toFaceletString(target);
     const h = makeHijack(raw, target);
     // `makeHijack` returns null for two very different reasons. "The cube is
@@ -1009,17 +956,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     hijackStepRef.current = step ?? null;
     setHijacked(h !== null);
     // Publish at once: the case has to appear without waiting for a turn.
-    publishState(raw);
+    sessionController.republish();
     return true;
-  }, [publishState]);
+  }, [sessionController]);
 
   const clearHijack = useCallback(() => {
     if (!hijackRef.current && hijackStepRef.current === null) return;
     hijackRef.current = null;
     hijackStepRef.current = null;
     setHijacked(false);
-    publishState(toFaceletString(trackerRef.current.getFaces()));
-  }, [publishState]);
+    sessionController.republish();
+  }, [sessionController]);
 
   /**
    * Everything after "we have a device": open GATT, pick the driver from the
@@ -1116,9 +1063,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // On unexpected drop, fire the connection event then schedule the first
     // reconnect attempt with zero-index backoff (1s).
     let readyForReconnect = false;
+    let activeSession: SmartCubeSessionLease<CubeMoveMetadata> | null = null;
     const onDisc = (): void => {
       if (!isCurrentSession()) return;
       if (intentionalDisconnectRef.current) return;
+      if (activeSession?.isCurrent()) sessionController.close();
       // During the initial handshake, the owning connectDevice() call must
       // handle failure. Scheduling an independent reconnect here would race a
       // user retry while the modal is already reporting that handshake error.
@@ -1139,7 +1088,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
     // `activate` (re)subscribes the driver with a given MAC. Factored out so a
     // wrong-MAC re-prompt can re-run it on the same open GATT connection. The
-    // MAC is only persisted once a real move decodes (see handleMove).
+    // MAC is only persisted once the shared session accepts a real move.
     const discardAttachedAttempt = (started?: Awaited<ReturnType<CubeDriver['start']>>): void => {
       try { started?.cleanup(); } catch { /* ignore */ }
       try { device.removeEventListener('gattserverdisconnected', onDisc); } catch { /* ignore */ }
@@ -1161,32 +1110,38 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       // synchronously publish their authoritative state during the handshake;
       // resetting afterwards would incorrectly replace it with solved.
       gyroSeenRef.current = false;
-      trackerRef.current.reset();
-      moveClockRef.current.reset();
       hijackRef.current = null;
       hijackStepRef.current = null;
       setHijacked(false);
-      wasSolvedRef.current = true;
-      setSolved(true);
-      publishState(toFaceletString(trackerRef.current.getFaces()));
-      setLastMove(null);
+      const session = sessionController.open();
+      activeSession = session;
 
-      const started = await driver!.start(server, (move, deviceTs, metadata) => {
-        if (isCurrentSession()) handleMove(move, deviceTs, metadata);
-      }, {
-        mac: macToUse,
-        onKeyError: () => { if (isCurrentSession()) handleKeyError(); },
-        onState: (nextFacelets) => {
-          if (isCurrentSession()) handleCubeState(nextFacelets);
-        },
-        // Only hand the sink over when a consumer asked for orientation —
-        // that's the signal MoYu32 uses to turn its 0xAB stream on. QiYi
-        // additionally needs this listener for runtime capability detection.
-        onGyro: (onGyroRef.current || driver!.brand === 'qiyi')
-          ? ((q, v) => { if (isCurrentSession()) gyroSink(q, v); })
-          : undefined,
-      });
-      if (!isCurrentSession()) {
+      let started: Awaited<ReturnType<CubeDriver['start']>>;
+      try {
+        started = await driver!.start(server, (move, deviceTs, metadata) => {
+          if (isCurrentSession()) session.move(move, deviceTs, metadata);
+        }, {
+          mac: macToUse,
+          onKeyError: () => {
+            if (isCurrentSession() && session.isCurrent()) handleKeyError();
+          },
+          onState: (nextFacelets) => {
+            if (isCurrentSession()) adoptCubeState(session, nextFacelets);
+          },
+          // Only hand the sink over when a consumer asked for orientation —
+          // that's the signal MoYu32 uses to turn its 0xAB stream on. QiYi
+          // additionally needs this listener for runtime capability detection.
+          onGyro: (onGyroRef.current || driver!.brand === 'qiyi')
+            ? ((q, v) => {
+                if (isCurrentSession() && session.isCurrent()) gyroSink(q, v);
+              })
+            : undefined,
+        });
+      } catch (error) {
+        if (session.isCurrent()) sessionController.close();
+        throw error;
+      }
+      if (!isCurrentSession() || !session.isCurrent()) {
         discardAttachedAttempt(started);
         return;
       }
@@ -1204,7 +1159,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       });
       // Read battery in the background; failures fall back to null silently.
       void started.battery().then(b => {
-        if (isCurrentSession() && deviceRef.current === device) {
+        if (isCurrentSession() && session.isCurrent() && deviceRef.current === device) {
           setStatus(s => ({ ...s, battery: b }));
         }
       }).catch(() => {});
@@ -1251,7 +1206,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       throw atStage('handshake', err);
     }
     onPhase?.('connected', Math.max(0, Math.round(performance.now() - phaseStartedAt)));
-  }, [handleMove, handleCubeState, cancelPendingReconnect, internalDisconnect]);
+  }, [adoptCubeState, cancelPendingReconnect, gyroSink, internalDisconnect, sessionController]);
 
   const connectDevice = useCallback(async (device: BluetoothDevice): Promise<void> => {
     const connectionStartedAt = performance.now();
@@ -1359,6 +1314,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       const generation = connectionGenerationRef.current + 1;
       connectionGenerationRef.current = generation;
       const isCurrentSession = (): boolean => connectionGenerationRef.current === generation;
+      let session: SmartCubeSessionLease<CubeMoveMetadata> | null = null;
+      const isCurrentBridgeSession = (): boolean => (
+        isCurrentSession() && session?.isCurrent() === true
+      );
       intentionalDisconnectRef.current = false;
       cancelPendingReconnect();
       cleanupRef.current?.();
@@ -1366,21 +1325,21 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
       const bridge = await connectMiniProgramCubeBridge({
         onMove: (move, deviceTs, metadata) => {
-          if (isCurrentSession()) handleMove(move, deviceTs, metadata);
+          if (isCurrentBridgeSession()) session!.move(move, deviceTs, metadata);
         },
         onState: (facelets) => {
-          if (isCurrentSession()) handleCubeState(facelets);
+          if (isCurrentBridgeSession()) adoptCubeState(session!, facelets);
         },
         onBattery: (level) => {
-          if (isCurrentSession()) {
+          if (isCurrentBridgeSession()) {
             setStatus((current) => ({ ...current, battery: level }));
           }
         },
         onGyro: (quaternion, velocity) => {
-          if (isCurrentSession()) gyroSink(quaternion, velocity);
+          if (isCurrentBridgeSession()) gyroSink(quaternion, velocity);
         },
         onStatus: (next) => {
-          if (!isCurrentSession()) return;
+          if (!isCurrentBridgeSession()) return;
           if ((next.phase === 'disconnected' || next.phase === 'error')
             && cleanupRef.current) {
             connectionGenerationRef.current += 1;
@@ -1393,15 +1352,10 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         return;
       }
 
-      trackerRef.current.reset();
       hijackRef.current = null;
       hijackStepRef.current = null;
       setHijacked(false);
-      wasSolvedRef.current = true;
-      setSolved(true);
-      publishState(toFaceletString(trackerRef.current.getFaces()));
-      setLastMove(null);
-      moveClockRef.current.reset();
+      session = sessionController.open();
       cleanupRef.current = bridge.disconnect;
       setStatus({
         connected: true,
@@ -1432,10 +1386,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     cancelPendingReconnect,
     connectDevice,
     gyroSink,
-    handleCubeState,
-    handleMove,
+    adoptCubeState,
     internalDisconnect,
-    publishState,
+    sessionController,
   ]);
 
   const preconnectGrantedDevice = useCallback(async (): Promise<boolean> => {
@@ -1465,6 +1418,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         clearTimeout(reconnectTimerRef.current);
         reconnectTimerRef.current = null;
       }
+      sessionController.dispose();
       cleanupRef.current?.();
       cleanupRef.current = null;
       setGyroRef.current = null;
@@ -1481,18 +1435,17 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       driverRef.current = null;
       disconnectListenerRef.current = null;
     };
-  }, []);
+  }, [sessionController]);
 
   const getFaces = useCallback(() => {
     if (!status.connected) return null;
-    const raw = trackerRef.current.getFaces();
-    const h = hijackRef.current;
-    if (!h) return raw;
+    const faceletView = sessionController.getFacelets();
+    if (!faceletView) return null;
     // Consumers must see the same state `facelets` shows, hijack included —
     // otherwise the two disagree mid-training and whichever one a caller
     // happens to read decides its behaviour.
-    return fromFaceletString(applyHijack(h, toFaceletString(raw))) ?? raw;
-  }, [status.connected]);
+    return fromFaceletString(faceletView);
+  }, [sessionController, status.connected]);
 
   const setGyro = useCallback(async (enabled: boolean): Promise<boolean> => {
     const fn = setGyroRef.current;
