@@ -59,27 +59,48 @@ describe('shouldAutoRecap —— 哪把成绩配得上那半屏', () => {
   });
 });
 
-describe('复盘挂在计时页上', () => {
+describe('复原后自动复盘', () => {
   const src = read(SOLO_VIEW);
+  const recordStart = src.indexOf('const recordSolve = useCallback');
+  const recordSolve = src.slice(recordStart, src.indexOf('const timer = useTimer', recordStart));
+  const dismissStart = src.indexOf('const dismissAutoRecapOnMove');
+  const dismissOnMove = src.slice(dismissStart, src.indexOf('subscribers.add', dismissStart));
 
-  it('计时页自己渲染那块', () => {
+  it('桌面继续在计时页右栏渲染复盘', () => {
     expect(src).toMatch(/<SolveRecap\b/);
+    expect(src).toMatch(/\{isDesktop && !panelTab && solveRecap && \(/);
+  });
+
+  it('移动端停表后直接打开带来源标记的整屏详情', () => {
+    expect(recordStart).toBeGreaterThan(0);
+    expect(recordSolve).toMatch(/if \(showRecap && !isDesktop\) \{\s*setModalSolve\(\{ s: solve, idx: solveIndex, autoRecap: true \}\);/);
+    expect(src).not.toMatch(/\{!isDesktop && solveRecap\}/);
   });
 
   it('仍是独立 chunk —— 手动计时的人不该为一份不会渲染的报告买单', () => {
     expect(src).toMatch(/dynamic\(\s*\(\)\s*=>\s*import\('\.\.\/_components\/SolveRecap'\)/);
   });
 
-  it('该不该摊开走 shouldAutoRecap,不在视图里另写一套判据', () => {
+  it('该不该自动打开走 shouldAutoRecap,不在视图里另写一套判据', () => {
     expect(src).toMatch(/shouldAutoRecap\(/);
   });
 
-  it('开下一把就收起 —— 停表以外的任何阶段都清掉', () => {
-    // 观察、按住、计时中都不该有半屏复盘压在下面。
+  it('智能魔方任意一手都会关闭自动整屏复盘', () => {
+    expect(dismissStart).toBeGreaterThan(0);
+    expect(dismissOnMove).toMatch(/current\?\.autoRecap && current\.s\.id === recapId \? null : current/);
+    expect(dismissOnMove).toMatch(/setRecapId\(null\)/);
+  });
+
+  it('历史记录手动打开的详情没有 autoRecap 标记,不会被转动订阅误关', () => {
+    expect(src).toMatch(/onRowClick=\{\(s, idx\) => setModalSolve\(\{ s, idx \}\)\}/);
+    expect(dismissOnMove).toMatch(/current\?\.autoRecap/);
+  });
+
+  it('开下一把就清掉复盘标识', () => {
     expect(src).toMatch(/timer\.phase !== 'stopped'[\s\S]{0,40}setRecapId\(null\)/);
   });
 
-  it('报告本体只有一份实现:这块渲染的是 ReconstructReport,不是精简版分叉', () => {
+  it('报告本体只有一份实现:右栏和整屏都复用 ReconstructReport', () => {
     expect(read(RECAP)).toMatch(/import\('\.\/ReconstructReport'\)/);
   });
 });
@@ -173,8 +194,10 @@ describe('计时中那颗智能魔方留在屏幕上', () => {
   });
 });
 
-describe('复盘那一格不许把计时区挤出视口', () => {
-  const css = read(SHELL_CSS) + read(RECAP_CSS);
+describe('移动端复盘不再挤压计时区', () => {
+  const src = read(SOLO_VIEW);
+  const shell = read(SHELL_CSS);
+  const css = shell + read(RECAP_CSS);
 
   it('比赛来源跟随打乱滚动,不能吸附到短视口底部遮住下一把打乱', () => {
     const stripCss = read(join(ROOT, '..', 'timer-ui', 'src', 'scramble-strip.css'));
@@ -185,23 +208,19 @@ describe('复盘那一格不许把计时区挤出视口', () => {
     }
   });
 
-  it('普通态、复盘态和桌面侧栏态都扣除页面通知栏高度', () => {
-    // PageNoticeBar 是计时器前面的兄弟节点。直接占 100dvh 会把底部连接胶囊推出视口；
-    // 复盘或侧栏展开时也必须沿用同一可见高度，不能退回完整视口高。
+  it('窄屏不再挂载内联复盘或预留垂直高度', () => {
+    expect(src).not.toMatch(/\{!isDesktop && solveRecap\}/);
+    expect(shell).not.toMatch(/--recap-h|:has\(> \.shell-recap\)|timer-shell:has\(\.shell-recap\)/);
+  });
+
+  it('桌面右栏形态保持不变', () => {
+    expect(src).toMatch(/\{isDesktop && !panelTab && solveRecap && \(/);
+    expect(shell).toMatch(/\.shell-recap-rail/);
+  });
+
+  it('普通态和桌面侧栏态都扣除页面通知栏高度', () => {
     const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
-    expect(css).toMatch(new RegExp(String.raw`\.timer-shell\s*\{[^}]*min-height:\s*${visibleHeight}`));
-    expect(css).toMatch(new RegExp(String.raw`\.timer-shell:has\(\.shell-recap\)\s*\{[^}]*height:\s*${visibleHeight}`));
-    expect(css).toMatch(new RegExp(String.raw`\.timer-shell\.panel-open\s*\{[^}]*height:\s*${visibleHeight}`));
-  });
-
-  it('那一格自己可收缩,让位给计时区压不动的部分', () => {
-    const rule = css.match(/\n\.shell-recap\s*\{([^}]*)\}/);
-    expect(rule, 'shell.css 里没有 .shell-recap').not.toBeNull();
-    expect(rule![1]).toMatch(/flex:\s*0 1 auto/);
-    expect(rule![1]).toMatch(/min-height:\s*0/);
-  });
-
-  it('绝对定位的统计条跟着往上让 —— 它是成绩面板的唯一入口', () => {
-    expect(css).toMatch(/:has\(> \.shell-recap\) \.shell-stat-rail\s*\{[^}]*bottom:\s*calc\(var\(--recap-h\)/);
+    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\s*\{[^}]*min-height:\s*${visibleHeight}`));
+    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\.panel-open\s*\{[^}]*height:\s*${visibleHeight}`));
   });
 });

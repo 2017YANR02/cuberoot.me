@@ -1392,18 +1392,22 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
     }
 
+    const solveIndex = (byEventRef.current[ev] ?? []).length;
     setByEvent(prev => ({ ...prev, [ev]: [...(prev[ev] ?? []), solve] }));
     submitTimerTrainingEvidence(trainingDestinationRef.current, solve);
-    // 拧完了复盘就在这一屏,不用去成绩里找那条刚拧的。只对录到动作流的成绩成立
-    // (判据见 shouldAutoRecap),下一把一开始就收起。
+    // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
+    // 没有动作流或关闭开关时都不主动打断下一把流程。
     const showRecap = shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
     setRecapId(showRecap ? solve.id : null);
+    if (showRecap && !isDesktop) {
+      setModalSolve({ s: solve, idx: solveIndex, autoRecap: true });
+    }
     const showSolution = settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
     if (showRecap || showSolution) setPanelTab(null);
     if (showSolution) setSolverOpenRequest((value) => value + 1);
     if (res.autoPenalty === 'DNF') petReact('error');
     nextScramble();
-  }, [attemptSplitRecorder, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap]);
+  }, [attemptSplitRecorder, isDesktop, nextScramble, settings.autoOpenSolution, settings.precision, settings.autoRecap]);
 
   const timer = useTimer(recordSolve, (startedAtMs) => {
     const history = scrambleHistRef.current;
@@ -2237,22 +2241,34 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [timer.phase, timer.displayMs, targetMs]);
 
   // ── Modals ──────────────────────────────────────────────────────
-  const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number } | null>(null);
+  const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number; autoRecap?: boolean } | null>(null);
   const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
 
-  // ── 停表后就地摊开的复盘 ────────────────────────────────────────
-  // 存 id 不存 solve:改惩罚、加注释、删除都在别处写库,存快照就得跟着同步,而这块
-  // 显示的正是那些数字。null = 不显示(还没拧完 / 关了开关 / 用户收起了 / 开下一把)。
+  // ── 停表后自动复盘 ──────────────────────────────────────────────
+  // 存 id 不存 solve:桌面右栏始终读最新成绩；窄屏整屏详情另带 autoRecap 标记，
+  // 这样蓝牙转动只会关闭自动打开的窗口，不会误关用户从历史记录手动打开的详情。
   const [recapId, setRecapId] = useState<string | null>(null);
   const recapSolve = useMemo(
     () => (recapId ? solves.find(s => s.id === recapId) ?? null : null),
     [recapId, solves],
   );
-  // 开下一把就收起 —— 观察、按住、计时中都不该有半屏复盘在下面。停表停在原地
-  // (那正是它该在的时候),换项目/换会话由上面 find 不到自然落空。
+  // 开下一把就收起。停表时保留桌面右栏；换项目/换会话由上面 find 不到自然落空。
   useEffect(() => {
     if (timer.phase !== 'stopped') setRecapId(null);
   }, [timer.phase]);
+  useEffect(() => {
+    if (isDesktop || !recapId) return;
+    const subscribers = bluetoothSubscribersRef.current;
+    const dismissAutoRecapOnMove = () => {
+      // BLE onMove 会先尝试起表再广播，因此关闭窗口不会吞掉下一把的第一手。
+      setModalSolve(current => (
+        current?.autoRecap && current.s.id === recapId ? null : current
+      ));
+      setRecapId(null);
+    };
+    subscribers.add(dismissAutoRecapOnMove);
+    return () => { subscribers.delete(dismissAutoRecapOnMove); };
+  }, [isDesktop, recapId]);
 
   // Gesture: open the last solve's detail (to add a note / comment).
   const commentLast = useCallback(() => {
@@ -2826,7 +2842,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )
     : null;
 
-  // 桌面复盘占右栏；窄屏仍放在计时区底部。全屏复用同一份成绩详情报告。
+  // 桌面复盘占右栏；窄屏在 recordSolve 中直接进入整屏成绩详情。
   const solveRecap = recapSolve ? (
     <SolveRecap
       key={recapSolve.id}
@@ -3217,9 +3233,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           )}
         </TimingSurface>
 
-        {/* 窄屏保留停表后底部复盘，桌面在右栏展示。 */}
-        {!isDesktop && solveRecap}
-
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
           <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
@@ -3332,7 +3345,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             solve={modalSolve.s}
             index={displayIdx}
             isZh={isZh}
-            onClose={() => setModalSolve(null)}
+            onClose={() => {
+              setModalSolve(null);
+              if (modalSolve.autoRecap) setRecapId(null);
+            }}
             onChangePenalty={(p) => {
               updateSolve(modalSolve.s.id, { penalty: p });
               setModalSolve({ ...modalSolve, s: { ...modalSolve.s, penalty: p } });
@@ -3342,7 +3358,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               updateSolve(modalSolve.s.id, { comment: text });
               setModalSolve({ ...modalSolve, s: { ...modalSolve.s, comment: text } });
             }}
-            onDelete={() => { deleteSolve(modalSolve.s.id); setModalSolve(null); if (isLatest) setLastPenalty(null); }}
+            onDelete={() => {
+              deleteSolve(modalSolve.s.id);
+              setModalSolve(null);
+              if (modalSolve.autoRecap) setRecapId(null);
+              if (isLatest) setLastPenalty(null);
+            }}
             history={byEvent[modalSolve.s.event] ?? []}
             onUseScramble={useScramble}
             // Two writes because the page reads a *snapshot*: the store keeps
@@ -3357,6 +3378,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               if (moveSolveToSession(modalSolve.s.id, toId)) {
                 setByEvent(loadAll());
                 setModalSolve(null);
+                if (modalSolve.autoRecap) setRecapId(null);
                 if (isLatest) setLastPenalty(null);
               }
             }}

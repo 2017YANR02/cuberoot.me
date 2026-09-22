@@ -175,11 +175,13 @@ describe('移动端自动打开的解法浮层可手动关闭', () => {
   });
 });
 
-describe('移动端复盘不遮挡计时区关键信息', () => {
+describe('移动端复盘直接进入整屏详情', () => {
   const shell = read(SHELL_CSS);
+  const solo = read(join(TIMER, '_shell', 'SoloView.tsx'));
 
-  it('复盘在移动端使用更克制的高度预算', () => {
-    expect(shell).toMatch(/@media \(max-width: 1023px\) \{[\s\S]{0,220}--recap-h: clamp\(150px, calc\(100dvh - 610px\), 300px\)/);
+  it('不再挂在计时区下方或保留内联高度预算', () => {
+    expect(solo).not.toMatch(/\{!isDesktop && solveRecap\}/);
+    expect(shell).not.toMatch(/--recap-h|:has\(> \.shell-recap\)/);
   });
 
   it('打乱所属比赛留在正常文档流，不覆盖换行后的打乱', () => {
