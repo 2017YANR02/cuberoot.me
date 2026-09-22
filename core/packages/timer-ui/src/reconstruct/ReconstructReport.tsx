@@ -35,7 +35,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import { TimerReconstructMetrics } from '../TimerReconstructMetrics';
-import { Forward, Check, ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
+import { ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
 import { effectiveMs } from '@cuberoot/shared/timer';
 import { formatMs } from '@cuberoot/shared/timer';
@@ -58,6 +58,7 @@ import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reco
 import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
+import ReconstructActions from './ReconstructActions';
 
 import { timerEventNxnSize as nxnSizeForEvent } from '@cuberoot/shared/timer';
 import { memoize3bld } from '@cuberoot/shared/timer/reconstruct/bld-helper';
@@ -120,6 +121,8 @@ export interface ReconstructReportProps {
   /** Drop the 日期 cell from the summary row. For containers that already show
    *  the timestamp in their own header — the solve detail page does. */
   hideDate?: boolean;
+  /** The inline recap renders these actions beside its full-screen control. */
+  hideActions?: boolean;
 }
 
 const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
@@ -175,7 +178,7 @@ function AccordionSection({
 }
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
@@ -340,30 +343,12 @@ function ReconstructReportBody({
     };
   }, [method, reconText, playbackLines]);
 
-  const [copied, setCopied] = useState(false);
   // 默认展开:回放 + 分步动作现在是这份报告的主体,不是附录。折叠留给「原始动作
   // 序列」那种真的很少看的东西。
   const [playbackExpanded, setPlaybackExpanded] = useState(true);
   const [moveListExpanded, setMoveListExpanded] = useState(false);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
-  const canShare = moves.length > 0;
-  const shareLabel = !canShare
-    ? tr({ zh: '没有动作记录，无法分享回放', en: 'No move log — share unavailable' })
-    : copied
-      ? tr({ zh: '链接已复制', en: 'Link copied' })
-      : tr({ zh: '复制分享链接', en: 'Copy share link' });
-
-  const handleCopyShare = async () => {
-    try {
-      const url = host.replayUrl(solve);
-      await host.writeClipboardText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch (err) {
-      console.warn('[reconstruct] copy share link failed:', err);
-    }
-  };
 
   const eff = effectiveMs(solve);
   const dt = new Date(solve.ts);
@@ -505,31 +490,16 @@ function ReconstructReportBody({
         )}
       </dl>
 
-      {/* 读完那几个数之后想做的事,一行摆完:再打一遍、把这把发出去、拿到别的
-          工具里看。放在数字下面,因为它们是读完的动作,不是先于它们的选项。 */}
-      <div className="rc-actions">
-        {onUseScramble && (solve.scramble ?? '').trim() !== '' && (
-          <button
-            type="button"
-            className="rc-action"
-            onClick={() => onUseScramble(solve.scramble)}
-          >
-            {tr({ zh: '用这条打乱', en: 'Use this scramble' })}
-          </button>
-        )}
-        {/* 转发。只一个图标 —— 「复制分享链接」这句话比它做的事长,而复制成功
-            与否由图标自己说(√ 一下)。 */}
-        <button
-          type="button"
-          className="rc-action rc-action--ghost rc-action--icon"
-          onClick={handleCopyShare}
-          disabled={!canShare}
-          aria-label={shareLabel}
-          title={shareLabel}
-        >
-          {copied ? <Check size={15} /> : <Forward size={15} />}
-        </button>
-      </div>
+      {/* 读完那几个数之后想做的事。内联复盘把它们提到整屏按钮旁边，
+          完整详情仍留在摘要下面。 */}
+      {!hideActions && (
+        <ReconstructActions
+          host={host}
+          solve={solve}
+          onUseScramble={onUseScramble}
+          placement="report"
+        />
+      )}
 
       {/* 打乱。有文字复盘的时候它是谱子的第一行(见 StepMoveList)—— 打乱和动作
           写在一起才是一份照着能复现的东西,分成两块就得自己拼。这里兜的是没有
