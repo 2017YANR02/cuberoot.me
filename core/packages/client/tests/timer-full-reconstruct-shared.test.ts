@@ -105,9 +105,11 @@ describe('the complete shared reconstruction report', () => {
   it('keeps the inline recap nonmodal and reuses the same report with localized controls', async () => {
     const onFull = vi.fn();
     const onDismiss = vi.fn();
+    const useScramble = vi.fn();
     await act(async () => {
       root.render(createElement(SolveRecap, {
         solve, history: [solve], isZh: true, onFull, onDismiss,
+        onUseScramble: useScramble,
         host: { ...host, localize: (text) => text.zh },
       }));
     });
@@ -117,8 +119,18 @@ describe('the complete shared reconstruction report', () => {
     });
     expect(container.querySelector('[role="dialog"]')).toBeNull();
     expect(container.textContent).toContain('回放与分步动作');
+    expect(container.querySelector('.shell-recap-body .rc-actions')).toBeNull();
+    const toolbarButtons = [...container.querySelectorAll<HTMLButtonElement>('.shell-recap-head button')];
+    expect(toolbarButtons.map((element) => element.getAttribute('aria-label') ?? element.textContent)).toEqual([
+      '整屏', '复制分享链接', '用这条打乱', '收起',
+    ]);
     const fullScreenButton = button('整屏');
     expect(fullScreenButton.textContent).toBe('');
+    expect(button('复制分享链接').textContent).toBe('');
+    await act(async () => button('复制分享链接').click());
+    expect(writeClipboardText).toHaveBeenLastCalledWith(host.replayUrl(solve));
+    await act(async () => button('用这条打乱').click());
+    expect(useScramble).toHaveBeenCalledWith('R U');
     await act(async () => fullScreenButton.click());
     await act(async () => button('收起').click());
     expect(onFull).toHaveBeenCalledTimes(1);

@@ -35,7 +35,16 @@
   padding: 0;
 }
 .shell-recap-btn:hover { background: var(--shell-hover, var(--muted)); }
-/* 工具栏形态:左标题右关闭,这个 auto 是有意的两端对齐。 */
+.shell-recap-btn:disabled { opacity: 0.5; cursor: default; }
+.shell-recap-btn:disabled:hover { background: transparent; }
+.shell-recap-btn--primary {
+  color: var(--accent-foreground);
+  background: var(--accent);
+  border-color: transparent;
+  white-space: nowrap;
+}
+.shell-recap-btn--primary:hover { background: color-mix(in srgb, var(--accent) 88%, black); }
+/* 工具栏形态:操作组靠左,关闭按钮用 auto 推到最右。 */
 .shell-recap-x {
   margin-left: auto;
   display: inline-flex;
