@@ -65,8 +65,8 @@ import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segment
 import SolveTimeline from './SolveTimeline';
 import type { SolveTimelineHandle } from './SolveTimeline';
 
-// WebGL + the /sim engine. Only mounted when the playback section is open, so a
-// report opened just to read the numbers never pays for it.
+// WebGL + the /sim engine. The panel stays visible; the cube itself mounts only
+// when it nears the viewport (see cubeNear below).
 const SimCubeView = lazy(() => import('../SimCubeView'));
 
 interface Props {
