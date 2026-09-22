@@ -82,6 +82,11 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(reference, '报告里找不到参考解法').toBeGreaterThan(analysis);
     expect(moves, '报告里找不到动作序列').toBeGreaterThan(reference);
   });
+
+  it('整把补充统计不再显示拿起时长', () => {
+    expect(stripComments(src)).not.toMatch(/stepMetrics\.pickupMs/);
+    expect(src).toMatch(/stepMetrics\.putDownMs/);
+  });
 });
 
 describe('同一个数不写两遍', () => {
