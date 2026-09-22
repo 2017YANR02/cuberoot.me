@@ -107,6 +107,10 @@ describe('shared timer solve detail UI', () => {
     const onClose = vi.fn();
     await act(async () => root.render(createElement(TimerSolveDetailModal, {
       autoFocusComment: true,
+      fullHeaderActions: createElement('button', {
+        'data-header-action': true,
+        type: 'button',
+      }, 'header action'),
       index: 0,
       localize,
       onChangeComment: vi.fn(),
@@ -130,6 +134,14 @@ describe('shared timer solve detail UI', () => {
     expect(document.body.querySelector('[data-preview]')).toBeNull();
     expect(document.body.querySelectorAll('[data-timer-reconstruct-metrics]')).toHaveLength(1);
     expect(document.body.textContent).not.toContain('Scramble:');
+    const fullHeader = document.body.querySelector('.timer-solve-detail-full-head .timer-solve-detail-inner')!;
+    const penalty = fullHeader.querySelector('.timer-solve-detail-penalty')!;
+    const headerActions = fullHeader.querySelector('.timer-solve-detail-header-actions')!;
+    const close = fullHeader.querySelector('.timer-solve-detail-close')!;
+    expect(headerActions.querySelector('[data-header-action]')).not.toBeNull();
+    const headerChildren = [...fullHeader.children];
+    expect(headerChildren.indexOf(penalty)).toBeLessThan(headerChildren.indexOf(headerActions));
+    expect(headerChildren.indexOf(headerActions)).toBeLessThan(headerChildren.indexOf(close));
 
     await act(async () => comment.blur());
     document.body.querySelector('[role="dialog"]')!.dispatchEvent(

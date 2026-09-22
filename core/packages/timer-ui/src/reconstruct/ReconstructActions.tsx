@@ -9,10 +9,10 @@ interface ReconstructActionsProps {
   host: ReconstructHost;
   solve: Solve;
   onUseScramble?: (scramble: string) => void;
-  placement: 'report' | 'recap';
+  placement: 'detail' | 'report' | 'recap';
 }
 
-/** Share and retry actions shared by the inline recap and the full report. */
+/** Share and retry actions shared by the inline recap, full detail, and report. */
 export default function ReconstructActions({
   host, solve, onUseScramble, placement,
 }: ReconstructActionsProps) {
@@ -37,10 +37,14 @@ export default function ReconstructActions({
 
   const shareClassName = placement === 'recap'
     ? 'shell-recap-btn shell-recap-btn--icon'
-    : 'rc-action rc-action--ghost rc-action--icon';
+    : placement === 'detail'
+      ? 'timer-solve-detail-action timer-solve-detail-header-action--icon'
+      : 'rc-action rc-action--ghost rc-action--icon';
   const useClassName = placement === 'recap'
     ? 'shell-recap-btn shell-recap-btn--primary'
-    : 'rc-action';
+    : placement === 'detail'
+      ? 'timer-solve-detail-action'
+      : 'rc-action';
   const actions = (
     <>
       <button
