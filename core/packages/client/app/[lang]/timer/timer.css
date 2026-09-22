@@ -1089,7 +1089,7 @@
   font-size: 12px;
   line-height: 1.55;
 }
-.bluetooth-modal .bt-label { color: var(--muted-foreground); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+.bluetooth-modal .bt-label { color: var(--muted-foreground); font-size: 12px; text-transform: uppercase; letter-spacing: 0; }
 .bluetooth-modal .bt-value { color: var(--foreground); font-size: 13px; }
 .bluetooth-modal .bt-value.mono { font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
 .bluetooth-modal .bt-value.ok { color: var(--signal-success); }
@@ -1110,6 +1110,24 @@
 }
 .bluetooth-modal .bt-install-btn:hover,
 .bluetooth-modal .bt-connect-btn:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
+@media (max-width: 480px) {
+  .timer-modal.bluetooth-modal .bt-connected-actions .timer-smart-cube-device__action {
+    flex: 1 1 auto;
+    min-width: max-content;
+    min-height: 36px;
+    padding: 7px 8px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .timer-modal.bluetooth-modal .bt-mac-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .timer-modal.bluetooth-modal .bt-mac-actions .modal-action-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}
 /* 外观整体由 shell.css 的 .trainer-subset-btn 定(同特异性、加载在后);这里只补它没设的过渡
    和 hover 描边。 */
 .trainer-subset-btn { transition: background 0.15s, border-color 0.15s; }

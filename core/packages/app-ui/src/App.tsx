@@ -179,6 +179,7 @@ import {
   ManualScrambleQueueEditor,
   SegmentTime,
   TimerDeviceActions,
+  TimerSmartCubeDeviceModal,
   TimerInfoToast,
   TimerAttemptSplitSettings,
   TimerAttemptSplitStatus,
@@ -2680,19 +2681,45 @@ export function App({ host }: { host: InstalledAppHost }) {
     timerMode,
   ]);
 
-  const toggleSmartCube = useCallback(() => {
+  const closeSmartCubeDevice = useCallback(() => {
+    setOpenOverlay((current) => {
+      const next = current === TIMER_OVERLAY_IDS.smartCubeDevice ? null : current;
+      openOverlayRef.current = next;
+      return next;
+    });
+  }, []);
+
+  const connectSmartCube = useCallback(async () => {
+    try {
+      const name = await smartCube.connect();
+      announce(copy.smartCubeConnected(name));
+    } catch (error) {
+      announce(copy.smartCubeError);
+      throw error;
+    }
+  }, [announce, copy, smartCube]);
+
+  const disconnectSmartCube = useCallback(async () => {
+    await smartCube.disconnect();
+    announce(copy.smartCubeDisconnected);
+  }, [announce, copy.smartCubeDisconnected, smartCube]);
+
+  const resetSmartCubeState = useCallback(async () => {
+    smartCube.resetState?.();
+    await smartCube.requestState?.();
+  }, [smartCube]);
+
+  const openSmartCubeDevice = useCallback(() => {
     if (!timerSupportsSmartCubeAutoTiming(activeEvent)) {
       announce(copy.smartCubeOnly333);
       return;
     }
-    if (smartCube.phase === 'connected') {
-      void smartCube.disconnect().then(() => announce(copy.smartCubeDisconnected));
-      return;
+    openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice;
+    setOpenOverlay(TIMER_OVERLAY_IDS.smartCubeDevice);
+    if (smartCube.phase === 'idle' || smartCube.phase === 'error') {
+      void connectSmartCube().catch(() => undefined);
     }
-    void smartCube.connect()
-      .then((name) => announce(copy.smartCubeConnected(name)))
-      .catch(() => announce(copy.smartCubeError));
-  }, [activeEvent, announce, copy, smartCube]);
+  }, [activeEvent, announce, connectSmartCube, copy.smartCubeOnly333, smartCube.phase]);
 
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
@@ -4701,16 +4728,36 @@ export function App({ host }: { host: InstalledAppHost }) {
         )}
       </div>
 
+      {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
+        <TimerSmartCubeDeviceModal
+          language={language}
+          onClose={closeSmartCubeDevice}
+          onConnect={connectSmartCube}
+          onDisconnect={disconnectSmartCube}
+          onResetGyro={smartCube.quaternion ? () => setSmartCubeCalibration((value) => value + 1) : undefined}
+          onResetState={smartCube.resetState ? resetSmartCubeState : undefined}
+          snapshot={{
+            battery: smartCube.status?.battery,
+            deviceName: smartCube.deviceName,
+            hasGyro: Boolean(smartCube.quaternion),
+            lastMove: smartCube.lastMove,
+            phase: smartCube.phase,
+            protocol: smartCube.status?.protocol ?? smartCube.model,
+            solved: smartCube.solved,
+          }}
+        />
+      )}
+
       {view === 'timer' && timerMode === 1 && (
         <TimerDeviceActions
           active={smartCube.phase === 'connected'}
-          connectAriaLabel={smartCube.phase === 'connected' ? copy.disconnectBluetooth : copy.connectBluetooth}
+          connectAriaLabel={smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connectBluetooth}
           connectLabel={smartCube.phase === 'connected'
             ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
             : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
               ? copy.connectingBluetooth
               : copy.connect}
-          onConnect={toggleSmartCube}
+          onConnect={openSmartCubeDevice}
         />
       )}
 

@@ -1517,6 +1517,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared Web, Android, and iOS session switch/create/rename/clear/delete popover. It remains uncontrolled by default and accepts the common open/onOpenChange contract for system Back; hosts inject only persistence operations and confirmation adaptation.',
   },
   {
+    name: 'TimerSmartCubeDeviceModal',
+    import: "import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的智能魔方状态和恢复弹层；设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开、焦点圈定与统一关闭只维护这一份。宿主只注入 BLE transport 动作，Web 可额外插入浏览器环境、失败详情和 MAC 输入。',
+    en: 'The smart-cube status and recovery modal shared by Web and all five installed clients. Device name, battery, protocol, connected/solved state, reset/state refresh, gyro calibration, disconnect, focus trapping, and dismissal live in one implementation. Hosts inject only BLE transport actions; Web may add browser environment advice, failure detail, and MAC entry.',
+  },
+  {
     name: 'TimerScramble222Config',
     import: "import { TimerScramble222Config } from '@cuberoot/timer-ui';",
     category: 'more',
