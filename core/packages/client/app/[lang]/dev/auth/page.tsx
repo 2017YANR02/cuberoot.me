@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "6d05e1be2dee100af14fa31f8a36e845fc75c4b329017390adfb2463aded8f44", "reason": "复核抖音网站登录的实际后台配置：扫码授权重定向 URL 已保存为带末尾斜杠的 https://cuberoot.me/auth/social/callback/，服务端只对抖音授权请求使用该精确地址，微信、QQ、支付宝回调保持不变。授权、绑定、合并和小程序流程语义未变；网站应用密钥仍须独立配置并完成真人扫码验收。"}
+{"fingerprint": "41728f7a61a6f3278faf0633a475d8400e47cb9e34a69305c7303d8e6b0e0138", "reason": "复核抖音网站登录的实际后台配置：扫码授权重定向 URL 已保存为带末尾斜杠的 https://cuberoot.me/auth/social/callback/，服务端只对抖音授权请求使用该精确地址，微信、QQ、支付宝回调保持不变。恢复已执行的 0232 迁移原文仅修复部署完整性，六位绑定码的尝试次数仍由新迁移 0247 添加，因此授权、绑定、合并和小程序流程语义未变；网站应用密钥仍须独立配置并完成真人扫码验收。"}
 */
 
 import type { ReactNode } from 'react';
