@@ -813,8 +813,8 @@ function ReferenceList({ reference }: { reference: ReferenceResult }) {
 }
 
 /**
- * The solve-level line the step table has no column for: inspection, pickup
- * and put-down. Everything here is about the WHOLE solve rather than one step,
+ * The solve-level line the step table has no column for: inspection and
+ * put-down. Everything here is about the WHOLE solve rather than one step,
  * which is exactly why it sits outside the table instead of being squeezed
  * into a TOTAL cell.
  */
@@ -830,9 +830,6 @@ function StageMetaLine({
   const parts: string[] = [];
   if (inspectionMs !== null && inspectionMs > 0) {
     parts.push(`${tr({ zh: '观察', en: 'inspect' })} ${t(inspectionMs)}`);
-  }
-  if (stepMetrics.pickupMs > 0) {
-    parts.push(`${tr({ zh: '拿起', en: 'pickup' })} ${t(stepMetrics.pickupMs)}`);
   }
   if (stepMetrics.putDownMs !== null && stepMetrics.putDownMs > 0) {
     parts.push(`${tr({ zh: '放下', en: 'put-down' })} ${t(stepMetrics.putDownMs)}`);
