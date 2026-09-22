@@ -231,14 +231,6 @@
   margin-left: 6px;
 }
 
-/* Solve-level wasted-work line, above the stage panel. */
-.reconstruct-waste-line {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--signal-warning);
-  margin: 0 0 10px;
-}
-
 .reconstruct-stages-section {
   margin-bottom: 16px;
 }

@@ -15,7 +15,7 @@
  *   摘要 — 时间 / STM / TPS,加上读完之后想做的那几件事。
  *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。固定展示,
  *     它是报告的主体。
- *   数据 — 时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
+ *   数据 — 分步分析表。排在后面不是因为不重要,而是
  *     因为它们都在**归因**:不知道自己拧了什么的时候,一张 5×7 的表读不出东西。
  *   参考解法 — 折叠,放在原始动作序列之前。
  *   原始动作序列 — 折叠,收尾。
@@ -35,7 +35,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { TimerReconstructMetrics } from '../TimerReconstructMetrics';
 import { ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
 import { effectiveMs } from '@cuberoot/shared/timer';
@@ -275,7 +274,7 @@ function ReconstructReportBody({
       });
     }, 0);
     return () => { alive = false; clearTimeout(timer); };
-  }, [scoreable, stepMx, solve.scramble, moves, waste, slots]);
+  }, [scoreable, stepMx, solve.scramble, moves, slots]);
 
   // 文字复盘。识别那一层是 cubing.js 的活(每一行两次 detectStage + 末层查表),
   // 所以和参考解法一样推到首帧之后 —— 报告该立刻出现,标注可以晚一拍。
@@ -396,7 +395,7 @@ function ReconstructReportBody({
   }, [solve.event, solve.scramble]);
 
   /**
-   * 数据那一半:时间轴、分步分析表、废步、四个总量。
+   * 数据那一半:分步分析表和阶段补充信息。
    *
    * 摘出来是因为它排在**回放和谱子后面**(2026-08-03 用户提的顺序)。以前它是报告
    * 的第一屏,道理是「这把慢在哪」该一眼看到;但那是在假设读者已经知道自己拧了
@@ -436,20 +435,6 @@ function ReconstructReportBody({
           inspectionMs={solve.inspectionMs ?? null}
         />
       )}
-
-      {waste && waste.spans.length > 0 && (
-        <div className="reconstruct-waste-line">
-          {tr({ zh: '废步', en: 'Wasted' })} {waste.totalWastedMoves} {tr({ zh: '步', en: 'turns' })}
-          {' · '}
-          {tr({ zh: '多花', en: 'lost' })} {formatSec(waste.totalWastedMs)}
-          {tr({
-            zh: `（${waste.spans.length} 处,动作表中已标出）`,
-            en: ` (${waste.spans.length} ${waste.spans.length === 1 ? 'loop' : 'loops'}, marked in the move stream)`,
-          })}
-        </div>
-      )}
-
-      <TimerReconstructMetrics localize={tr} metrics={slices} />
     </>
   );
 
