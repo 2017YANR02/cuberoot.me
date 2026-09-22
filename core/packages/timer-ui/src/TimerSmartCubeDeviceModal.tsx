@@ -1,4 +1,4 @@
-import { Bluetooth, Check, X } from 'lucide-react';
+import { Bluetooth, Check, RefreshCw, X } from 'lucide-react';
 import {
   useEffect,
   useId,
@@ -28,17 +28,26 @@ export interface TimerSmartCubeDeviceSnapshot {
   solved?: boolean | null;
 }
 
+export interface TimerSmartCubeAvailableDevice {
+  id: string;
+  name: string;
+  rssi?: number;
+}
+
 export interface TimerSmartCubeDeviceModalProps {
+  availableDevices?: readonly TimerSmartCubeAvailableDevice[];
   className?: string;
   connectionFailure?: ReactNode;
   intro?: ReactNode;
   language: TimerUiLanguage;
   onClose(): void;
-  onConnect?(): Promise<void> | void;
+  onConnect?(deviceId?: string): Promise<void> | void;
   onDisconnect?(): Promise<void> | void;
   onResetGyro?(): void;
   onResetState?(): Promise<void> | void;
+  onScan?(): Promise<void> | void;
   overrideBody?: ReactNode;
+  scanning?: boolean;
   snapshot: TimerSmartCubeDeviceSnapshot;
   title?: string;
 }
@@ -46,6 +55,7 @@ export interface TimerSmartCubeDeviceModalProps {
 const COPY = {
   en: {
     battery: 'Battery',
+    availableDevices: 'Available devices',
     cancel: 'Cancel',
     close: 'Close',
     connect: 'Connect',
@@ -58,17 +68,24 @@ const COPY = {
     disconnect: 'Disconnect',
     lastMove: 'Last move',
     notConnected: 'Not connected',
+    noDevices: 'No supported smart cubes found',
     protocol: 'Protocol',
     resetFailed: 'Software state was reset, but writing to the device failed. Check the connection and retry.',
     resetGyro: 'Reset gyroscope',
     resetGyroHint: 'Hold white on top and green in front, then reset the gyroscope',
     resetState: 'Reset state',
     retry: 'Retry connection',
+    scanAgain: 'Scan again',
+    scanning: 'Scanning…',
+    signalGood: 'Good signal',
+    signalLow: 'Weak signal',
+    signalMedium: 'Fair signal',
     stateReset: 'State reset',
     title: 'Smart cube',
   },
   zh: {
     battery: '电量',
+    availableDevices: '可用设备',
     cancel: '取消',
     close: '关闭',
     connect: '连接',
@@ -81,12 +98,18 @@ const COPY = {
     disconnect: '断开',
     lastMove: '最近一步',
     notConnected: '未连接',
+    noDevices: '未发现支持的智能魔方',
     protocol: '协议',
     resetFailed: '软件状态已重置，但设备回写失败，请检查连接后重试',
     resetGyro: '重置陀螺仪',
     resetGyroHint: '按白顶绿前握好魔方，再重置陀螺仪',
     resetState: '重置状态',
     retry: '重新连接',
+    scanAgain: '重新扫描',
+    scanning: '正在扫描…',
+    signalGood: '信号良好',
+    signalLow: '信号较弱',
+    signalMedium: '信号一般',
     stateReset: '状态已重置',
     title: '智能魔方',
   },
@@ -96,6 +119,7 @@ type DeviceAction = 'connect' | 'disconnect' | 'reset' | null;
 
 /** Shared smart-cube status and recovery surface. Hosts only provide transport actions. */
 export function TimerSmartCubeDeviceModal({
+  availableDevices,
   className,
   connectionFailure,
   intro,
@@ -105,12 +129,15 @@ export function TimerSmartCubeDeviceModal({
   onDisconnect,
   onResetGyro,
   onResetState,
+  onScan,
   overrideBody,
+  scanning = false,
   snapshot,
   title,
 }: TimerSmartCubeDeviceModalProps) {
   const copy = COPY[language];
   const [action, setAction] = useState<DeviceAction>(null);
+  const [connectingDeviceId, setConnectingDeviceId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const backdropStartedOutsideRef = useRef(false);
   const closeBlockedRef = useRef(false);
@@ -122,6 +149,7 @@ export function TimerSmartCubeDeviceModal({
   onCloseRef.current = onClose;
 
   const connected = snapshot.phase === 'connected';
+  const listMode = availableDevices !== undefined && onScan !== undefined;
   const connecting = action === 'connect'
     || snapshot.phase === 'requesting'
     || snapshot.phase === 'connecting';
@@ -191,17 +219,31 @@ export function TimerSmartCubeDeviceModal({
     autofocus?.focus();
   }, [overrideBody !== undefined]);
 
-  const runConnect = async () => {
+  const runConnect = async (deviceId?: string) => {
     if (!onConnect || action !== null) return;
     setFeedback(null);
     setAction('connect');
+    setConnectingDeviceId(deviceId ?? '');
     try {
-      await onConnect();
+      await onConnect(deviceId);
     } catch {
       // The host owns transport-specific failure state and copy. This catch
       // keeps a rejected picker/GATT attempt from becoming an unhandled task.
     } finally {
-      if (mountedRef.current) setAction(null);
+      if (mountedRef.current) {
+        setAction(null);
+        setConnectingDeviceId(null);
+      }
+    }
+  };
+
+  const runScan = async () => {
+    if (!onScan || action !== null || scanning) return;
+    setFeedback(null);
+    try {
+      await onScan();
+    } catch {
+      // The host exposes scan failures through its connection phase and copy.
     }
   };
 
@@ -291,7 +333,7 @@ export function TimerSmartCubeDeviceModal({
         {overrideBody ?? (
           <>
             {intro}
-            <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
+            {(connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">
               <div className="timer-smart-cube-device__primary bt-connected-primary">
                 <strong className="timer-smart-cube-device__name bt-connected-device">
                   {snapshot.deviceName || copy.deviceFallback}
@@ -310,10 +352,59 @@ export function TimerSmartCubeDeviceModal({
                 <DeviceFact label={copy.battery} value={snapshot.battery === null || snapshot.battery === undefined ? '—' : `${snapshot.battery}%`} />
                 <DeviceFact label={copy.protocol} value={connected ? snapshot.protocol || '—' : '—'} />
               </div>
-            </section>
+            </section>}
 
             {!connected && !connecting && connectionFailure}
-            {!connected && !connecting && onConnect && (
+            {!connected && listMode && (
+              <section className="timer-smart-cube-device__picker" aria-label={copy.availableDevices}>
+                <div className="timer-smart-cube-device__picker-header">
+                  <strong>{copy.availableDevices}</strong>
+                  <button
+                    className="timer-smart-cube-device__scan"
+                    disabled={action !== null || scanning || connecting}
+                    onClick={() => { void runScan(); }}
+                    type="button"
+                  >
+                    <RefreshCw
+                      aria-hidden="true"
+                      className={scanning ? 'is-scanning' : undefined}
+                      size={14}
+                    />
+                    {scanning ? copy.scanning : copy.scanAgain}
+                  </button>
+                </div>
+                {availableDevices.length > 0 ? (
+                  <ul className="timer-smart-cube-device__list">
+                    {availableDevices.map((device) => (
+                      <li key={device.id}>
+                        <button
+                          aria-label={`${copy.connect} ${device.name}`}
+                          className="timer-smart-cube-device__device"
+                          disabled={action !== null || connecting}
+                          onClick={() => { void runConnect(device.id); }}
+                          type="button"
+                        >
+                          <span className="timer-smart-cube-device__device-copy">
+                            <strong>{device.name}</strong>
+                            <span>{signalText(device.rssi, copy)}</span>
+                          </span>
+                          <span className="timer-smart-cube-device__device-action">
+                            {action === 'connect' && connectingDeviceId === device.id
+                              ? copy.connecting
+                              : copy.connect}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="timer-smart-cube-device__empty" role="status">
+                    {scanning ? copy.scanning : copy.noDevices}
+                  </p>
+                )}
+              </section>
+            )}
+            {!connected && !listMode && !connecting && onConnect && (
               <button
                 className="timer-smart-cube-device__connect bt-connect-btn"
                 onClick={() => { void runConnect(); }}
@@ -375,4 +466,13 @@ function DeviceFact({ label, value }: { label: string; value: string }) {
       <span className="timer-smart-cube-device__value bt-value">{value}</span>
     </span>
   );
+}
+
+function signalText(
+  rssi: number | undefined,
+  copy: { signalGood: string; signalLow: string; signalMedium: string },
+): string {
+  if (rssi === undefined || rssi >= -60) return copy.signalGood;
+  if (rssi >= -75) return copy.signalMedium;
+  return copy.signalLow;
 }

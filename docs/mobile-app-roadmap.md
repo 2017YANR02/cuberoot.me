@@ -8,7 +8,7 @@
 
 > 状态：执行中
 >
-> 更新日期：2026-09-20
+> 更新日期：2026-09-22
 >
 > 目标：以最低长期维护成本，把同一个 CubeRoot 产品发布到 Android、iOS、HarmonyOS NEXT、Windows 和 macOS，并逐步覆盖对应商店和安装渠道。
 >
@@ -137,18 +137,18 @@
 - [ ] 完成现有 Web/五端计时器迁移，使 `@cuberoot/timer-ui` 覆盖网站 `/timer` 的完整可达功能，不留宿主私有业务副本。
 - [x] 已从 Mobile 提取有真实多宿主消费者的 `@cuberoot/app-ui`；Mobile、Desktop 和 Harmony 只通过公开入口消费，无 app→app 源码或 `dist` 依赖。
 - [x] 已建立 `core/apps/desktop`，Windows 和 macOS 共用同一 Tauri 工程。
-- [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 只有 CI 定义，尚无实际 run 证据。
+- [ ] Desktop 两平台构建、安装、实体机功能、签名与发布验收完成。macOS 本机已有可启动 `.app` 和经 `hdiutil verify` 的未签名 DMG；Windows 当前源码的 release 可执行文件已构建，并有 Desktop 实际运行与 GAN v4 BLE 使用证据，但正式安装包、升级、签名和完整功能矩阵仍未验收。
 - [ ] `core/apps/harmony` 完成设备安装、ArkWeb/bridge 交互、BLE、签名与发布验收。ArkWeb 本地 bundle、ArkTS bridge 和 unsigned HAP 已本地构建成功，但当前 `hdc` 无设备，不能记为鸿蒙适配完成。
-- [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 与 Harmony ConnectivityKit adapter 均接入共享 GAN 连接逻辑，但两端都没有实机 BLE 证据。
+- [ ] BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 capability contracts 与宿主 adapters 逐项完成。Desktop BLEC 已接共享多协议扫描、选择和连接链路，Windows 的 GAN v4 已实测；其他 Desktop 型号、macOS 与 Harmony 仍缺实体设备 BLE 证据。
 - [ ] 建立五端 build/安装/真机或实体电脑/签名/发布矩阵；五端全部通过前总体状态保持 `NOT COMPLETE`。
 
 当前证据：
 
 - `@cuberoot/app-ui` 已是五端唯一 React 产品层；`@cuberoot/app-ui` typecheck 与自动化测试已本地通过。
-- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport，BLEC 复用 `@cuberoot/app-ui` 中的同一 GAN connection 逻辑。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有实机 BLE 证据。Windows CI 矩阵只是已定义的待运行检查；本机交叉 `cargo check` 缺 Windows `llvm-rc`，不能当作 Windows 构建/安装证据。
+- Desktop 源码已共用 Tauri 宿主、系统 keyring、深链、外链和 BLEC transport；BLEC 通过 `tauri-plugin-blec` / `btleplug` 使用 Windows 与 macOS 的系统 BLE 栈，并复用 `@cuberoot/app-ui` 中的 GAN v2/v3/v4、MoYu32 和 QiYi connection。2026-09-22 当前源码执行 `tauri build --no-bundle` 成功，产出 `src-tauri/target/release/cuberoot-desktop.exe`；所有者同日确认 Windows Desktop 上 GAN v4 可以正常连接和使用。这只证明 Windows 原生编译和该型号主链，不替代正式安装包、其他协议或压力矩阵。2026-09-01 当前源码的 macOS `CubeRoot.app` 已启动；`CubeRoot_0.1.0_x64.dmg` 为 6,297,645 bytes，`hdiutil verify` 通过，SHA-256 为 `94af17fe41d3dade835ebe929a83858d6d2ea0ff2acfc386c5fea29bf3d61fea`。该包未签名、未公证，也没有 macOS 实机 BLE 证据。
 - Harmony 的本地 Web bundle、ArkWeb/ArkTS bridge、ConnectivityKit BLE bridge、安全存储与 unsigned HAP 已通过官方 Hvigor 构建。2026-09-01 在当前 Intel `x86_64` Mac 上使用 DevEco Studio `26.0.0.821` 的官方 SDK 再次执行 `assembleHap`，日志为 `BUILD SUCCESSFUL`，产物是 `entry-default-unsigned.hap`。当前 `hdc list targets` 为 `[Empty]`，所以安装、ArkWeb 运行、系统交互、真实 GAN 16 UI BLE、签名和发布仍未验收，`HARMONY-01` 保持进行中。
 - Harmony 首次 BLE 现由 `UIAbilityContext` 显式请求 `ACCESS_BLUETOOTH`，Asset Store 机密限定为 `DEVICE_UNLOCKED`，系统备份关闭，native 版本由 build guard 对齐 `package.json`；BLE connect 以 generation + GATT identity 拒绝超时连接的迟到回调，避免同设备快速重连被旧请求断开。ArkTS/HAP 目前只能在已安装的官方 CLT 上本地编译；GitHub CI 尚无官方 Harmony SDK runner，不能把 Vite build 当成 native 回归。所有者已完成华为企业开发者认证；自动调试签名现因未连接 HarmonyOS NEXT 设备而无法生成 profile，`build-profile.json5` 的 `signingConfigs` 仍为空，Hvigor 明确跳过签名。模拟器不需要签名，真机才需要把设备写入调试 profile；不得为绕过设备门槛手填、生成或提交 `.p12`、密码或本机 profile。
-- Desktop BLE 扫描已按插件真实异步回调等待并在 8 秒后 `stopScan`；但 `tauri-plugin-blec 0.12.0` 的通知队列容量为 1，快速转动时的上游 `try_send(...).expect(...)` 仍须用 GAN 16 UI 做压力测试，复现后优先升级或最小 patch upstream，不能用 mock test 宣布稳定。
+- Desktop BLE 现有 8 秒实时扫描、按地址去重、RSSI 排序、名称列表选择、连接后 service/characteristic discovery、通知、读写和写入模式选择；关闭弹层、重扫和发起连接都会停止旧扫描。`tauri-plugin-blec 0.12.0` 的通知队列容量为 1，快速转动时的上游 `try_send(...).expect(...)` 仍须用实体魔方做压力测试，复现后优先升级或最小 patch upstream，不能用 mock test 宣布稳定。
 - Android 对不支持安全 main-frame message listener 的旧 WebView 启动即 fail closed，并锁定 release manifest 的 10 项权限及 legacy 权限 `maxSdkVersion=30`/扫描 `neverForLocation`。Capacitor 内部仍注册 Cookies/Http/SystemBars 辅助 JS interface；通用 plugin dispatcher 已主 frame 隔离，但远端 iframe 的 cookie 边界仍是发布前 P2 审核项，文档不得声称“所有原生接口均仅主 frame”。
 - `@cuberoot/app-ui` 已接真实 2/3/4 人 `LocalBattleMode` 与 `NetBattleMode`，三个宿主均注入同一联机 client/session contract；本地模式已有原子轮次、胜场/次数/最佳、按键冲突交换、共享一颗智能魔方轮换与打乱失败的 12 秒超时/原位重试；联机已有 WCA 身份、邀请二维码、房主转让/踢人、历史打乱及 single/ao5/mean。Web 仍有另一套 Battle/Net React 视图，完整设置/视频/每人独立 BLE/高级历史展示、staged API 部署、真实双设备和五平台交互仍未完成。
 - API CORS 与网站 embed bridge 已在本地源码加入 Tauri origins，但本轮未 push/部署；不能把本地代码写成生产 Desktop Tools/Account/登录已通。
@@ -1173,11 +1173,19 @@ CubeRoot 应以这些证据证明不是简单套壳：
 ### 19.2 Android 智能魔方桥接进度（2026-09-20）
 
 - `core/apps/mobile` 的 Capacitor BLE transport 已完成 Android 权限初始化、设备选择、GATT 连接、service/characteristic discovery、通知、读写、MTU 和断连清理；写入能力缓存按 `deviceId` 隔离，避免多连接或迟到清理串用其他设备的 write mode。
-- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，识别 `GAN`、`WCU_MY3`、`QY-QYSC`、`XMD-TornadoV4-i` 名称前缀。Android 多品牌设备选择按 DCTimer 的策略使用低延迟无 service 过滤扫描，避免未在广播包声明 GATT UUID 的魔方被系统提前丢弃；原生选择列表再按上述名称前缀做大小写不敏感的软件过滤并按蓝牙地址去重，不展示其他未知 BLE 设备。列表只显示设备名称，MAC 地址仅用于内部去重和连接。选中后再由设备名与已发现的 service 判定协议。不提供 discovery 的 Desktop/Harmony 路径继续保持原 GAN v4 入口，不误标为其他协议已支持。
+- `@cuberoot/app-ui` 的 `useInstalledSmartCube` 现已在宿主提供 service discovery 时，识别 `GAN`、`MG`、`AiCube`、`Gi`、`WCU_MY3`、`QY-QYSC`、`XMD-TornadoV4-i` 名称前缀。Android 多品牌设备选择按 DCTimer 的策略使用低延迟无 service 过滤扫描，避免未在广播包声明 GATT UUID 的魔方被系统提前丢弃；原生选择列表再按上述名称前缀做大小写不敏感的软件过滤并按蓝牙地址去重，不展示其他未知 BLE 设备。列表只显示设备名称，MAC 地址仅用于内部去重和连接。选中后再由设备名与已发现的 service 判定协议。Desktop 已提供 discovery 和共享设备列表；当前仍不提供 discovery 的 Harmony 路径继续保持原 GAN v4 入口，不误标为其他协议已支持。
 - GAN v2/v3 与 MoYu32 已完成代码级 Android bridge。MoYu32 覆盖名称推导 MAC、service/characteristic 校验、A1/A3/A4 握手、AES 通知、状态/动作/电量/姿态、设备增量时间、AC 陀螺开关、坏密钥熔断和断连迟到通知隔离；成绩设备型号不再固定写成 `gan-v4`。
 - QiYi 已完成代码级 Android bridge，覆盖 `fff0` service、`fff6` 通知/优先写入、`fff5` 后备写入、Android 地址优先与设备名 MAC 后备、AES-ECB hello/ACK、状态与完整历史动作、电量、设备时间、Tornado V4 陀螺仪、坏帧熔断和断连迟到通知隔离。状态帧中晚于 facelet 快照的 future-history 动作会继续推进本地魔方状态；仅在计时已经运行时记入复盘，不会在空闲态、预备监听或 battle 中误触发起表。
 - 自动化证据包括 app-ui 的 GAN/MoYu32/QiYi connection 与 hook 定向测试、Mobile transport 的 Android 多前缀原生 picker 路由与非 Android 无过滤回退测试、设备隔离测试，以及 shared/app-ui/mobile 构建或类型检查。2026-09-20 所有者已确认当前 Android 真机能够正常扫描、连接并使用智能魔方；由于本次未单独登记魔方型号，不增加任何品牌协议的型号级验收，既有 OPPO Reno7 Pro 5G + GAN 16 UI 记录仍只证明 GAN v4 主链。
 - QiYi、GAN v2/v3 与 MoYu32 仍需补齐多品牌真机矩阵；自动重连、后台/蓝牙关闭/距离中断和异常压力测试也未完成。QiYi 真机需分别确认实际 Android MAC 与名称后备、`fff6`/`fff5` 写通道、广播包不含 service UUID 时的选择器可见性、状态历史以及 Tornado V4 陀螺仪。
+
+### 19.3 Desktop 智能魔方桥接进度（2026-09-22）
+
+- Windows 与 macOS 继续共用 `core/apps/desktop` 的同一 Tauri 宿主，不新增平台专用协议实现。前端 `TauriBleTransport` 通过 BLEC/btleplug 调用系统 BLE 栈，协议、加解密、状态跟踪和 UI 继续来自共享包。
+- Desktop 智能魔方弹层现会主动扫描并显示支持设备列表，按地址去重、按 RSSI 排序，只展示名称和信号等级；用户选择设备后按原扫描得到的设备 ID 连接，不再自动连接信号最强的一台，也不在 UI 暴露设备地址。
+- 连接后会读取系统返回的 GATT service/characteristic，映射 notify/indicate/read/write/write-without-response 能力，并按实际写入属性选择 BLE 写入方式。由设备名称和 service 共同路由 GAN v2/v3/v4、MoYu32、QiYi/Tornado 共享 connection。
+- 2026-09-22 所有者已确认 Windows 上 GAN v4 可以正常连接和使用。GAN v2/v3（含 `MG`、`AiCube`、`Gi` 名称）、MoYu32、QiYi/Tornado 的 Desktop 入口已有源码与自动化覆盖，但尚无实体魔方验收；macOS 也尚未做任何型号的 BLE 实机验收。
+- 下一门槛是分别记录 Windows/macOS 的型号、硬件/固件、广播名称、系统地址形态、service/characteristic、写入模式、通知稳定性和断连恢复；同时补蓝牙关闭、拒绝权限、同名多设备、超距、休眠、快速转动和重新扫描矩阵。自动重连仍未实现。
 
 ## 20. 决策检查表
 

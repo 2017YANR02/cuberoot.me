@@ -72,6 +72,37 @@ describe('shared smart-cube device modal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('renders a selectable scan list without exposing device addresses', async () => {
+    const onConnect = vi.fn(async (_deviceId?: string) => {});
+    const onScan = vi.fn(async () => {});
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+      availableDevices: [
+        { id: 'CF:30:16:00:A1:B2', name: 'WCU_MY32_A1B2', rssi: -44 },
+        { id: 'CC:A3:00:00:A1:B2', name: 'XMD-TornadoV4-i-1-A1B2', rssi: -69 },
+      ],
+      language: 'en',
+      onClose: vi.fn(),
+      onConnect,
+      onScan,
+      scanning: false,
+      snapshot: { deviceName: '', phase: 'idle' },
+    })));
+
+    const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.textContent).toContain('Available devices');
+    expect(dialog.textContent).toContain('WCU_MY32_A1B2');
+    expect(dialog.textContent).toContain('XMD-TornadoV4-i-1-A1B2');
+    expect(dialog.textContent).toContain('Good signal');
+    expect(dialog.textContent).toContain('Fair signal');
+    expect(dialog.textContent).not.toContain('CF:30:16:00:A1:B2');
+
+    await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Connect WCU_MY32_A1B2"]')!.click());
+    expect(onConnect).toHaveBeenCalledWith('CF:30:16:00:A1:B2');
+    await act(async () => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
+      .find((button) => button.textContent?.includes('Scan again'))!.click());
+    expect(onScan).toHaveBeenCalledOnce();
+  });
+
   it('keeps rejected actions contained and protects busy or drag-out dismissal', async () => {
     let finishReset!: () => void;
     const onClose = vi.fn();

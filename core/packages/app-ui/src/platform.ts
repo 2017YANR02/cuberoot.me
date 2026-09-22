@@ -41,8 +41,15 @@ export interface InstalledAppSmartCubeOptions {
   onGyro?(quaternion: GyroQuaternion, timestamp: number, velocity?: GyroVelocity): void;
 }
 
+export interface InstalledAppSmartCubeDevice {
+  id: string;
+  name: string;
+  rssi?: number;
+}
+
 export interface InstalledAppSmartCube {
-  connect(): Promise<string>;
+  availableDevices?: readonly InstalledAppSmartCubeDevice[];
+  connect(deviceId?: string): Promise<string>;
   deviceName: string;
   model?: string | null;
   disconnect(): Promise<void>;
@@ -53,6 +60,9 @@ export interface InstalledAppSmartCube {
   quaternion?: GyroQuaternion | null;
   status?: GanV4CubeStatus | Moyu32CubeStatus | QiyiCubeStatus | null;
   solved?: boolean;
+  scanning?: boolean;
+  scanDevices?(): Promise<void>;
+  stopScan?(): Promise<void>;
   resetState?(): void;
   requestState?(): Promise<void>;
 }

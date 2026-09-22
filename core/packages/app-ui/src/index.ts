@@ -15,6 +15,7 @@ export type {
   InstalledAppNetBattle,
   InstalledAppNetBattleSessionStore,
   InstalledAppSmartCube,
+  InstalledAppSmartCubeDevice,
   InstalledAppSmartCubeOptions,
 } from './platform';
 export type {

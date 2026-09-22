@@ -228,6 +228,7 @@ export type {
 } from './TimerChrome';
 export { TimerSmartCubeDeviceModal } from './TimerSmartCubeDeviceModal';
 export type {
+  TimerSmartCubeAvailableDevice,
   TimerSmartCubeConnectionPhase,
   TimerSmartCubeDeviceModalProps,
   TimerSmartCubeDeviceSnapshot,

@@ -2682,22 +2682,32 @@ export function App({ host }: { host: InstalledAppHost }) {
   ]);
 
   const closeSmartCubeDevice = useCallback(() => {
+    void smartCube.stopScan?.();
     setOpenOverlay((current) => {
       const next = current === TIMER_OVERLAY_IDS.smartCubeDevice ? null : current;
       openOverlayRef.current = next;
       return next;
     });
-  }, []);
+  }, [smartCube]);
 
-  const connectSmartCube = useCallback(async () => {
+  const connectSmartCube = useCallback(async (deviceId?: string) => {
     try {
-      const name = await smartCube.connect();
+      const name = await smartCube.connect(deviceId);
       announce(copy.smartCubeConnected(name));
     } catch (error) {
       announce(copy.smartCubeError);
       throw error;
     }
   }, [announce, copy, smartCube]);
+
+  const scanSmartCubes = useCallback(async () => {
+    try {
+      await smartCube.scanDevices?.();
+    } catch (error) {
+      announce(copy.smartCubeError);
+      throw error;
+    }
+  }, [announce, copy.smartCubeError, smartCube]);
 
   const disconnectSmartCube = useCallback(async () => {
     await smartCube.disconnect();
@@ -2717,9 +2727,10 @@ export function App({ host }: { host: InstalledAppHost }) {
     openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice;
     setOpenOverlay(TIMER_OVERLAY_IDS.smartCubeDevice);
     if (smartCube.phase === 'idle' || smartCube.phase === 'error') {
-      void connectSmartCube().catch(() => undefined);
+      if (smartCube.scanDevices) void scanSmartCubes().catch(() => undefined);
+      else void connectSmartCube().catch(() => undefined);
     }
-  }, [activeEvent, announce, connectSmartCube, copy.smartCubeOnly333, smartCube.phase]);
+  }, [activeEvent, announce, connectSmartCube, copy.smartCubeOnly333, scanSmartCubes, smartCube]);
 
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
@@ -4730,12 +4741,18 @@ export function App({ host }: { host: InstalledAppHost }) {
 
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
+          availableDevices={smartCube.availableDevices}
+          connectionFailure={smartCube.phase === 'error'
+            ? <p className="timer-smart-cube-device__failure">{copy.smartCubeError}</p>
+            : undefined}
           language={language}
           onClose={closeSmartCubeDevice}
           onConnect={connectSmartCube}
           onDisconnect={disconnectSmartCube}
           onResetGyro={smartCube.quaternion ? () => setSmartCubeCalibration((value) => value + 1) : undefined}
           onResetState={smartCube.resetState ? resetSmartCubeState : undefined}
+          onScan={smartCube.scanDevices ? scanSmartCubes : undefined}
+          scanning={smartCube.scanning}
           snapshot={{
             battery: smartCube.status?.battery,
             deviceName: smartCube.deviceName,
