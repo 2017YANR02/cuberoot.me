@@ -2178,7 +2178,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [timer.phase, timer.displayMs, targetMs]);
 
   // ── Modals ──────────────────────────────────────────────────────
-  const [modalSolve, setModalSolve] = useState<{ s: Solve; idx: number; autoRecap?: boolean } | null>(null);
+  const [modalSolve, setModalSolve] = useState<{
+    s: Solve;
+    idx: number;
+    autoRecap?: boolean;
+    closeRequested?: boolean;
+  } | null>(null);
   const [reconstructSolve, setReconstructSolve] = useState<Solve | null>(null);
 
   // ── 停表后自动复盘 ──────────────────────────────────────────────
@@ -2202,11 +2207,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const subscribers = bluetoothSubscribersRef.current;
     const dismissAutoRecapOnMove = (move: string) => {
       if (!autoRecapDismissGestureRef.current.observe(move)) return;
-      autoRecapInputBlockedRef.current = false;
       setModalSolve(current => (
-        current?.autoRecap && current.s.id === recapId ? null : current
+        current?.autoRecap && current.s.id === recapId
+          ? { ...current, closeRequested: true }
+          : current
       ));
-      setRecapId(null);
     };
     subscribers.add(dismissAutoRecapOnMove);
     return () => { subscribers.delete(dismissAutoRecapOnMove); };
@@ -3288,6 +3293,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                id, and opening it from this modal would otherwise give two
                siblings the same key (React then reuses one for the other). */
             key={`detail-${modalSolve.s.id}`}
+            closeRequested={modalSolve.closeRequested}
             solve={modalSolve.s}
             index={displayIdx}
             isZh={isZh}

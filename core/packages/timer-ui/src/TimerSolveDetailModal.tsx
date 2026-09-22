@@ -18,10 +18,12 @@ import {
 } from '@cuberoot/shared/timer';
 import { X } from 'lucide-react';
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
   useState,
+  type AnimationEvent as ReactAnimationEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
@@ -72,8 +74,19 @@ const STAGE_COPY: Readonly<Record<TimerSolveDetailStageId, TimerHistoryLocalized
   pll: { en: 'PLL', zh: 'PLL' },
 };
 
+const FULL_DETAIL_ENTER_FALLBACK_MS = 240;
+const FULL_DETAIL_EXIT_MS = 160;
+
+function reducedMotionRequested(): boolean {
+  return typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 export interface TimerSolveDetailModalProps {
   autoFocusComment?: boolean;
+  /** Host-requested dismissal, used by gestures and actions outside the dialog shell. */
+  closeRequested?: boolean;
   formatDate?: (timestamp: number) => string;
   /** Actions shown only in the full-detail header, after the penalty control. */
   fullHeaderActions?: ReactNode;
@@ -84,6 +97,8 @@ export interface TimerSolveDetailModalProps {
   onChangePenalty?: (penalty: Penalty) => void;
   onClose: () => void;
   onDelete?: () => void;
+  /** Fires after the full-detail page has painted and its entrance motion has settled. */
+  onEntered?: () => void;
   onMoveToSession?: (targetSessionId: string) => void;
   preview?: ReactNode;
   /** Host-owned reconstruction/report slot. Timer UI never imports Web code. */
@@ -127,6 +142,7 @@ function SplitTable({
 
 export function TimerSolveDetailModal({
   autoFocusComment = false,
+  closeRequested = false,
   formatDate = (timestamp) => new Date(timestamp).toLocaleString(),
   fullHeaderActions,
   index,
@@ -136,18 +152,31 @@ export function TimerSolveDetailModal({
   onChangePenalty,
   onClose,
   onDelete,
+  onEntered,
   onMoveToSession,
   preview,
   report,
   solve,
 }: TimerSolveDetailModalProps) {
+  const full = report !== undefined;
+  const hasEnteredCallback = onEntered !== undefined;
+  const [closing, setClosing] = useState(false);
   const [editing, setEditing] = useState(false);
   const titleId = useId();
+  const closeCompletedRef = useRef(false);
+  const closeStartedRef = useRef(false);
+  const closeTimerRef = useRef<number | null>(null);
   const commentRef = useRef<HTMLTextAreaElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const enteredRef = useRef(false);
+  const entryMotionDoneRef = useRef(false);
+  const entryPaintedRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  const onEnteredRef = useRef(onEntered);
   const penaltyRef = useRef<HTMLSelectElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
-  const full = report !== undefined;
+  onCloseRef.current = onClose;
+  onEnteredRef.current = onEntered;
   const reconstructionMetrics = !full && solve.moves?.length
     ? sliceReconstruction(solve.moves, solve.timeMs, solve.bld?.memoMs)
     : null;
@@ -160,6 +189,78 @@ export function TimerSolveDetailModal({
     moveTargetCount: moveTargets.length,
   });
   const action = (id: TimerSolveDetailActionId) => actionStates.find((state) => state.id === id)!;
+
+  const finishClose = useCallback(() => {
+    if (closeCompletedRef.current) return;
+    closeCompletedRef.current = true;
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    onCloseRef.current();
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (!full) {
+      onCloseRef.current();
+      return;
+    }
+    if (closeStartedRef.current) return;
+    closeStartedRef.current = true;
+    setClosing(true);
+    closeTimerRef.current = window.setTimeout(
+      finishClose,
+      reducedMotionRequested() ? 0 : FULL_DETAIL_EXIT_MS,
+    );
+  }, [finishClose, full]);
+
+  const markEnteredIfReady = useCallback(() => {
+    if (enteredRef.current || closeStartedRef.current) return;
+    if (!entryPaintedRef.current || !entryMotionDoneRef.current) return;
+    enteredRef.current = true;
+    onEnteredRef.current?.();
+  }, []);
+
+  const onOverlayAnimationEnd = useCallback((event: ReactAnimationEvent<HTMLDivElement>) => {
+    if (!full || event.currentTarget !== event.target) return;
+    if (closing) {
+      finishClose();
+      return;
+    }
+    entryMotionDoneRef.current = true;
+    markEnteredIfReady();
+  }, [closing, finishClose, full, markEnteredIfReady]);
+
+  useEffect(() => {
+    if (closeRequested) requestClose();
+  }, [closeRequested, requestClose]);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current !== null) window.clearTimeout(closeTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (!full || !hasEnteredCallback) return;
+    enteredRef.current = false;
+    entryPaintedRef.current = false;
+    entryMotionDoneRef.current = reducedMotionRequested();
+    let visibleFrame = 0;
+    const mountedFrame = window.requestAnimationFrame(() => {
+      visibleFrame = window.requestAnimationFrame(() => {
+        entryPaintedRef.current = true;
+        markEnteredIfReady();
+      });
+    });
+    const fallback = window.setTimeout(() => {
+      entryMotionDoneRef.current = true;
+      markEnteredIfReady();
+    }, FULL_DETAIL_ENTER_FALLBACK_MS);
+    return () => {
+      window.cancelAnimationFrame(mountedFrame);
+      if (visibleFrame) window.cancelAnimationFrame(visibleFrame);
+      window.clearTimeout(fallback);
+    };
+  }, [full, hasEnteredCallback, markEnteredIfReady, solve.id]);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement instanceof HTMLElement
@@ -177,7 +278,7 @@ export function TimerSolveDetailModal({
     if (event.key === 'Escape') {
       if (!editing) {
         event.preventDefault();
-        onClose();
+        requestClose();
       }
       return;
     }
@@ -338,9 +439,10 @@ export function TimerSolveDetailModal({
   if (typeof document === 'undefined') return null;
   return createPortal(
     <div
-      className={`timer-solve-detail-overlay${full ? ' timer-solve-detail-overlay--full' : ''}`}
+      className={`timer-solve-detail-overlay${full ? ' timer-solve-detail-overlay--full' : ''}${closing ? ' timer-solve-detail-overlay--closing' : ''}`}
       data-no-timer
-      onClick={full ? undefined : onClose}
+      onAnimationEnd={onOverlayAnimationEnd}
+      onClick={full ? undefined : requestClose}
     >
       <div
         aria-labelledby={titleId}
@@ -366,7 +468,7 @@ export function TimerSolveDetailModal({
                   aria-label={localize(COPY.close)}
                   className="timer-solve-detail-close"
                   data-history-action-id="solve.detail.close"
-                  onClick={onClose}
+                  onClick={requestClose}
                   type="button"
                 ><X aria-hidden="true" size={16} /></button>
               </div>
@@ -408,7 +510,7 @@ export function TimerSolveDetailModal({
               <button
                 className="timer-solve-detail-action"
                 data-history-action-id="solve.detail.close"
-                onClick={onClose}
+                onClick={requestClose}
                 type="button"
               >{localize(COPY.close)}</button>
             </div>

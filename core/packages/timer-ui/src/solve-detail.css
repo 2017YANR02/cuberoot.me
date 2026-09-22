@@ -1,3 +1,35 @@
+@keyframes timer-solve-detail-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes timer-solve-detail-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes timer-solve-detail-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes timer-solve-detail-page-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
 .timer-solve-detail-overlay {
   position: fixed;
   z-index: 100;
@@ -233,9 +265,13 @@
   color: var(--muted-foreground);
 }
 
-.timer-solve-detail-overlay--full { padding: 0; }
+.timer-solve-detail-overlay--full {
+  padding: 0;
+  animation: timer-solve-detail-overlay-in 180ms ease-out;
+}
 .timer-solve-detail-modal--full {
   display: flex;
+  animation: timer-solve-detail-page-in 180ms cubic-bezier(0.22, 1, 0.36, 1);
   width: 100%;
   height: 100dvh;
   max-width: none;
@@ -245,6 +281,15 @@
   padding: 0;
   border: 0;
   border-radius: 0;
+}
+
+.timer-solve-detail-overlay--full.timer-solve-detail-overlay--closing {
+  pointer-events: none;
+  animation: timer-solve-detail-overlay-out 160ms ease-in forwards;
+}
+
+.timer-solve-detail-overlay--closing .timer-solve-detail-modal--full {
+  animation: timer-solve-detail-page-out 160ms cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .timer-solve-detail-inner {
@@ -332,5 +377,14 @@
   .timer-solve-detail-header-actions .timer-solve-detail-header-action--icon {
     width: 44px;
     height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-solve-detail-overlay--full,
+  .timer-solve-detail-modal--full,
+  .timer-solve-detail-overlay--full.timer-solve-detail-overlay--closing,
+  .timer-solve-detail-overlay--closing .timer-solve-detail-modal--full {
+    animation: none;
   }
 }
