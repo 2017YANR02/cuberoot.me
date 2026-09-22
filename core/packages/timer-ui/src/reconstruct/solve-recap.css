@@ -19,6 +19,7 @@
 .shell-recap-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 3px 10px;
   border: 1px solid var(--border-default);
@@ -27,6 +28,11 @@
   color: var(--foreground);
   font-size: 12px;
   cursor: pointer;
+}
+.shell-recap-btn--icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
 }
 .shell-recap-btn:hover { background: var(--shell-hover, var(--muted)); }
 /* 工具栏形态:左标题右关闭,这个 auto 是有意的两端对齐。 */

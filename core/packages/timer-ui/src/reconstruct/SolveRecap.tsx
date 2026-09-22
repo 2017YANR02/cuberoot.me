@@ -52,9 +52,14 @@ export default function SolveRecap({
   return (
     <section className="shell-recap" aria-label={tr({ zh: '计时复盘', en: 'Solve reconstruction' })}>
       <div className="shell-recap-head">
-        <button type="button" className="shell-recap-btn" onClick={onFull}>
+        <button
+          type="button"
+          className="shell-recap-btn shell-recap-btn--icon"
+          onClick={onFull}
+          aria-label={tr({ zh: '整屏', en: 'Full screen' })}
+          title={tr({ zh: '整屏', en: 'Full screen' })}
+        >
           <Maximize2 size={13} />
-          {tr({ zh: '整屏', en: 'Full screen' })}
         </button>
         {/* 工具栏形态:整屏入口、右侧关闭。 */}
         <button
