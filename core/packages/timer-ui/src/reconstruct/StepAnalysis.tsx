@@ -126,7 +126,7 @@ function gradeTitle(tr: ReconstructLocalize): string {
   });
 }
 
-function buildCfopColumns(tr: ReconstructLocalize,
+function buildCfopColumns(
   segs: StageSegments,
   stepMetrics: StepMetricsResult | null,
   slots: F2lSlotsResult | null,
@@ -142,7 +142,7 @@ function buildCfopColumns(tr: ReconstructLocalize,
   const crossRef = ref('cross');
   cols.push({
     key: 'cross',
-    label: tr({ zh: '十字', en: 'Cross' }),
+    label: 'Cross',
     chip: null,
     tone: 0,
     recognitionMs: cross?.recognitionMs ?? null,
@@ -167,7 +167,7 @@ function buildCfopColumns(tr: ReconstructLocalize,
       const sr = slotReference?.[i] ?? null;
       cols.push({
         key: `slot-${s.slot}`,
-        label: `F2L-${i + 1}`,
+        label: `F${i + 1}`,
         chip: null,
         tone: 1,
         recognitionMs: s.recognitionMs,
@@ -262,7 +262,7 @@ export default function StepAnalysis(props: StepAnalysisProps) {
 
   const cols = useMemo<Col[]>(() => {
     if (method === 'cfop' && segs) {
-      return buildCfopColumns(tr, segs, stepMetrics, slots, reference, slotReference, ao12);
+      return buildCfopColumns(segs, stepMetrics, slots, reference, slotReference, ao12);
     }
     if (walk) return buildWalkColumns(walk, isZh);
     return [];
