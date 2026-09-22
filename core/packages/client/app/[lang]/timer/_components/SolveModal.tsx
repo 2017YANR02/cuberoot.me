@@ -3,7 +3,7 @@
 import { TimerSolveDetailModal } from '@cuberoot/timer-ui';
 import ReconstructActions from '@cuberoot/timer-ui/reconstruct-actions';
 import dynamic from 'next/dynamic';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import { tr } from '@/i18n/tr';
 import { onIdle } from '@/lib/on-idle';
@@ -16,6 +16,7 @@ import type { Penalty, Solve } from '../_lib/types';
 const ReconstructReport = dynamic(() => import('./ReconstructReport'), { ssr: false });
 
 interface Props {
+  closeRequested?: boolean;
   history?: Solve[];
   index: number;
   isZh: boolean;
@@ -33,6 +34,7 @@ interface Props {
 
 /** Web adapter: native preview/report slots around the one shared detail UI. */
 export default function SolveModal({
+  closeRequested = false,
   history,
   index,
   isZh,
@@ -49,24 +51,11 @@ export default function SolveModal({
 }: Props) {
   const hasMoves = (solve.moves?.length ?? 0) > 0;
   const reconstructHost = useWebReconstructHost();
+  const [localCloseRequested, setLocalCloseRequested] = useState(false);
   const handleUseScramble = onUseScramble && ((scramble: string) => {
     onUseScramble(scramble);
-    onClose();
+    setLocalCloseRequested(true);
   });
-
-  // The dynamic wrapper can exist before this component has painted. Arm move
-  // gestures only after two frames so loading turns cannot dismiss the recap.
-  useEffect(() => {
-    if (!onDisplayed) return;
-    let visibleFrame = 0;
-    const mountedFrame = window.requestAnimationFrame(() => {
-      visibleFrame = window.requestAnimationFrame(onDisplayed);
-    });
-    return () => {
-      window.cancelAnimationFrame(mountedFrame);
-      if (visibleFrame) window.cancelAnimationFrame(visibleFrame);
-    };
-  }, [onDisplayed, solve.id]);
 
   // The report owns several nested lazy chunks. Start those downloads together
   // after the detail opens instead of serially waiting for each child mount.
@@ -82,6 +71,7 @@ export default function SolveModal({
 
   return (
     <TimerSolveDetailModal
+      closeRequested={closeRequested || localCloseRequested}
       fullHeaderActions={hasMoves ? (
         <ReconstructActions
           host={reconstructHost}
@@ -97,6 +87,7 @@ export default function SolveModal({
       onChangePenalty={onChangePenalty}
       onClose={onClose}
       onDelete={onDelete}
+      onEntered={onDisplayed}
       onMoveToSession={onMoveToSession}
       preview={<CubePreview event={solve.event} scramble={solve.scramble} size={14} />}
       report={hasMoves ? (

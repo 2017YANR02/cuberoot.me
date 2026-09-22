@@ -32,6 +32,8 @@ describe('shared timer solve detail UI', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('renders the complete compact detail and binds every real mutation', async () => {
@@ -104,6 +106,7 @@ describe('shared timer solve detail UI', () => {
   });
 
   it('keeps Escape inside an active comment edit and suppresses duplicate report content', async () => {
+    vi.useFakeTimers();
     const onClose = vi.fn();
     await act(async () => root.render(createElement(TimerSolveDetailModal, {
       autoFocusComment: true,
@@ -144,9 +147,46 @@ describe('shared timer solve detail UI', () => {
     expect(headerChildren.indexOf(headerActions)).toBeLessThan(headerChildren.indexOf(close));
 
     await act(async () => comment.blur());
-    document.body.querySelector('[role="dialog"]')!.dispatchEvent(
+    await act(async () => document.body.querySelector('[role="dialog"]')!.dispatchEvent(
       new KeyboardEvent('keydown', { bubbles: true, key: 'Escape' }),
-    );
+    ));
+    expect(document.body.querySelector('.timer-solve-detail-overlay')?.classList)
+      .toContain('timer-solve-detail-overlay--closing');
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTime(160));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('waits for the full-screen entrance and honors a host-requested animated exit', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      callback(0);
+      return 1;
+    });
+    const onClose = vi.fn();
+    const onEntered = vi.fn();
+    const renderDetail = (closeRequested: boolean) => createElement(TimerSolveDetailModal, {
+      closeRequested,
+      index: 0,
+      localize,
+      onClose,
+      onEntered,
+      report: createElement('div', { 'data-report': true }, 'reconstruction'),
+      solve: { ...baseSolve, moves: [{ m: 'R', ts: 4_250 }] },
+    });
+
+    await act(async () => root.render(renderDetail(false)));
+    await act(async () => vi.advanceTimersByTime(40));
+    expect(onEntered).not.toHaveBeenCalled();
+
+    const overlay = document.body.querySelector<HTMLElement>('.timer-solve-detail-overlay--full')!;
+    await act(async () => vi.advanceTimersByTime(200));
+    expect(onEntered).toHaveBeenCalledOnce();
+
+    await act(async () => root.render(renderDetail(true)));
+    expect(overlay.classList).toContain('timer-solve-detail-overlay--closing');
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => vi.advanceTimersByTime(160));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
