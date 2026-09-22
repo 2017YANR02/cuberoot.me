@@ -229,16 +229,68 @@ describe('BluetoothModal direct connection attempt', () => {
     expect(content).toContain('gan-v4');
     expect(content).toContain('72%');
     expect(content).toContain('solved');
-    expect(content).toContain("R'");
+    expect(content).not.toContain('Last move');
+    expect(content).not.toContain("R'");
     expect(content).not.toContain('Connection diagnostic');
     expect(content).not.toContain('Out of sync?');
     expect(content).toContain('Reset state');
     expect(content).toContain('Disconnect');
+    const stateResetButton = Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes('Reset state'))!;
     const gyroButton = Array.from(host.querySelectorAll('button')).find(button => button.textContent?.includes('Reset gyroscope'))!;
+    expect(stateResetButton.querySelector('svg')).toBeNull();
+    expect(gyroButton.querySelector('svg')).toBeNull();
     await act(async () => gyroButton.click());
     expect(resetGyro).toHaveBeenCalledOnce();
     expect(connectedCube.resetState).not.toHaveBeenCalled();
     expect(host.querySelector('button[aria-label="Close"]')).not.toBeNull();
+  });
+
+  it('keeps three mobile device actions on one wrapping row while their labels fit', async () => {
+    window.matchMedia = ((query: string) => ({
+      matches: query === '(max-width: 480px)',
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia;
+    const connectedCube = {
+      ...disconnectedCube,
+      status: {
+        connected: true,
+        brand: 'gan-v4',
+        battery: 72,
+        deviceName: 'GAN16ui',
+        hasGyro: true,
+      },
+      resetState: vi.fn(),
+      disconnect: vi.fn(),
+    } as BluetoothCubeHandle;
+
+    await act(async () => root.render(createElement(BluetoothModal, {
+      isZh: false,
+      cube: connectedCube,
+      onResetGyro: vi.fn(),
+      onClose: vi.fn(),
+      onConnect: vi.fn(async () => {}),
+    })));
+
+    const actions = host.querySelector<HTMLElement>('.bt-connected-actions')!;
+    const buttons = [...actions.querySelectorAll<HTMLButtonElement>('button')];
+    expect(buttons.map(button => button.textContent?.trim())).toEqual([
+      'Reset state',
+      'Reset gyroscope',
+      'Disconnect',
+    ]);
+    expect(actions.style.flexDirection).toBe('');
+    for (const button of buttons) {
+      expect(button.style.flex).toBe('1 1 auto');
+      expect(button.style.minWidth).toBe('max-content');
+      expect(button.style.padding).toBe('7px 8px');
+      expect(button.style.whiteSpace).toBe('nowrap');
+    }
   });
 
   it('keeps an idle status dialog compact and offers reconnection without a model list', async () => {

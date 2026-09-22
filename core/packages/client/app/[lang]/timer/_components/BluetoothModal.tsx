@@ -22,7 +22,7 @@ import {
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
-import { Bluetooth, Check, X, RotateCcw, ExternalLink } from 'lucide-react';
+import { Bluetooth, Check, X, ExternalLink } from 'lucide-react';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 import { ClearButton } from '@/components/ClearButton';
@@ -212,9 +212,8 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
     whiteSpace: 'nowrap',
-    ...(isMobile ? { flex: '1 1 100%', padding: '10px 14px' } : {}),
+    ...(isMobile ? { flex: '1 1 auto', minWidth: 'max-content', padding: '7px 8px' } : {}),
   } as const;
 
   return (
@@ -344,10 +343,6 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
                   <span className="bt-value">{cube.status.battery !== null ? `${cube.status.battery}%` : '—'}</span>
                 </span>
                 <span className="bt-connected-fact">
-                  <span className="bt-label">{tr({ zh: '最近一步', en: 'Last move' })}</span>{' '}
-                  <span className="bt-value mono">{cube.lastMove ?? '—'}</span>
-                </span>
-                <span className="bt-connected-fact">
                   <span className="bt-label">{tr({ zh: '协议', en: 'Protocol' })}</span>{' '}
                   <span className="bt-value">{connected ? cube.status.brand : '—'}</span>
                 </span>
@@ -365,20 +360,17 @@ export default function BluetoothModal({ cube, onClose, onConnect, connectAttemp
 
         {resetFeedback && <p role="status">{resetFeedback}</p>}
         {!macPrompt && (
-          <div
-            className="modal-actions"
-            style={isMobile ? { flexDirection: 'column', alignItems: 'stretch' } : undefined}
-          >
+          <div className="modal-actions bt-connected-actions">
               <button className="modal-action-btn" style={actionBtnStyle} disabled={!connected || connecting || resetBusy}
                 onClick={() => { void resetCube(); }}>
-                <RotateCcw size={14} /> {tr({ zh: '重置状态', en: 'Reset state'
+                {tr({ zh: '重置状态', en: 'Reset state'
                 })}
               </button>
               {onResetGyro && (
                 <button type="button" className="modal-action-btn" style={actionBtnStyle}
                   disabled={!connected || connecting || !cube.status.hasGyro} onClick={onResetGyro}
                   title={tr({ zh: '按白顶绿前握好魔方，再重置陀螺仪', en: 'Hold white on top and green in front, then reset the gyroscope' })}>
-                  <RotateCcw size={14} /> {tr({ zh: '重置陀螺仪', en: 'Reset gyroscope' })}
+                  {tr({ zh: '重置陀螺仪', en: 'Reset gyroscope' })}
                 </button>
               )}
               <button
