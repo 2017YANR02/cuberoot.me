@@ -24,6 +24,7 @@ interface Props {
   onChangePenalty: (penalty: Penalty) => void;
   onClose: () => void;
   onDelete: () => void;
+  onDisplayed?: () => void;
   onMoveToSession?: (targetSessionId: string) => void;
   onReconFeedback?: (ok: boolean | undefined) => void;
   onUseScramble?: (scramble: string) => void;
@@ -40,6 +41,7 @@ export default function SolveModal({
   onChangePenalty,
   onClose,
   onDelete,
+  onDisplayed,
   onMoveToSession,
   onReconFeedback,
   onUseScramble,
@@ -51,6 +53,20 @@ export default function SolveModal({
     onUseScramble(scramble);
     onClose();
   });
+
+  // The dynamic wrapper can exist before this component has painted. Arm move
+  // gestures only after two frames so loading turns cannot dismiss the recap.
+  useEffect(() => {
+    if (!onDisplayed) return;
+    let visibleFrame = 0;
+    const mountedFrame = window.requestAnimationFrame(() => {
+      visibleFrame = window.requestAnimationFrame(onDisplayed);
+    });
+    return () => {
+      window.cancelAnimationFrame(mountedFrame);
+      if (visibleFrame) window.cancelAnimationFrame(visibleFrame);
+    };
+  }, [onDisplayed, solve.id]);
 
   // The report owns several nested lazy chunks. Start those downloads together
   // after the detail opens instead of serially waiting for each child mount.

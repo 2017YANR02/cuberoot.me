@@ -24,12 +24,16 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
 
-import { shouldAutoRecap } from '@/app/[lang]/timer/_lib/reconstruct/recap';
+import {
+  AutoRecapDismissGesture,
+  shouldAutoRecap,
+} from '@/app/[lang]/timer/_lib/reconstruct/recap';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
 const WEB_RECAP = join(TIMER, '_components', 'SolveRecap.tsx');
+const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const RECAP = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecap.tsx');
 const RECAP_PLACEHOLDER = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'SolveRecapPlaceholder.tsx');
@@ -59,6 +63,40 @@ describe('shouldAutoRecap —— 哪把成绩配得上那半屏', () => {
   });
 });
 
+describe('AutoRecapDismissGesture', () => {
+  it('ignores turns until the fullscreen recap has painted', () => {
+    const gesture = new AutoRecapDismissGesture();
+    expect(gesture.observe('U')).toBe(false);
+    expect(gesture.observe("U'")).toBe(false);
+
+    gesture.markDisplayed();
+    expect(gesture.observe('U')).toBe(false);
+    expect(gesture.observe("U'")).toBe(true);
+  });
+
+  it('accepts one adjacent inverse quarter-turn pair on any face, in either order', () => {
+    for (const face of ['U', 'R', 'F', 'D', 'L', 'B']) {
+      for (const [first, second] of [[face, `${face}'`], [`${face}'`, face]]) {
+        const gesture = new AutoRecapDismissGesture();
+        gesture.markDisplayed();
+        expect(gesture.observe(first)).toBe(false);
+        expect(gesture.observe(second)).toBe(true);
+      }
+    }
+  });
+
+  it.each([
+    ['same direction', 'U', 'U'],
+    ['different faces', 'U', "R'"],
+    ['half turns', 'U2', 'U2'],
+  ])('rejects %s', (_label, first, second) => {
+    const gesture = new AutoRecapDismissGesture();
+    gesture.markDisplayed();
+    expect(gesture.observe(first)).toBe(false);
+    expect(gesture.observe(second)).toBe(false);
+  });
+});
+
 describe('复原后自动复盘', () => {
   const src = read(SOLO_VIEW);
   const recordStart = src.indexOf('const recordSolve = useCallback');
@@ -73,7 +111,7 @@ describe('复原后自动复盘', () => {
 
   it('移动端停表后直接打开带来源标记的整屏详情', () => {
     expect(recordStart).toBeGreaterThan(0);
-    expect(recordSolve).toMatch(/if \(showRecap && !isDesktop\) \{\s*setModalSolve\(\{ s: solve, idx: solveIndex, autoRecap: true \}\);/);
+    expect(recordSolve).toMatch(/if \(showRecap && !isDesktop\) \{[\s\S]{0,240}setModalSolve\(\{ s: solve, idx: solveIndex, autoRecap: true \}\);/);
     expect(src).not.toMatch(/\{!isDesktop && solveRecap\}/);
   });
 
@@ -85,10 +123,18 @@ describe('复原后自动复盘', () => {
     expect(src).toMatch(/shouldAutoRecap\(/);
   });
 
-  it('智能魔方任意一手都会关闭自动整屏复盘', () => {
+  it('弹窗显示后只有同面正反扭组合会关闭自动整屏复盘', () => {
     expect(dismissStart).toBeGreaterThan(0);
+    expect(dismissOnMove).toMatch(/if \(!autoRecapDismissGestureRef\.current\.observe\(move\)\) return/);
     expect(dismissOnMove).toMatch(/current\?\.autoRecap && current\.s\.id === recapId \? null : current/);
     expect(dismissOnMove).toMatch(/setRecapId\(null\)/);
+  });
+
+  it('弹窗首帧显示前不解锁手势，也不允许智能魔方起下一把', () => {
+    const detail = read(SOLVE_MODAL);
+    expect(src).toMatch(/canStartAttempt:[\s\S]{0,100}!autoRecapInputBlockedRef\.current/);
+    expect(src).toMatch(/onDisplayed=\{modalSolve\.autoRecap \? markAutoRecapDisplayed : undefined\}/);
+    expect(detail.match(/window\.requestAnimationFrame\(/g)).toHaveLength(2);
   });
 
   it('历史记录手动打开的详情没有 autoRecap 标记,不会被转动订阅误关', () => {
