@@ -40,6 +40,7 @@ const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
 const RECONSTRUCT_METRICS = join(TIMER_UI, 'TimerReconstructMetrics.tsx');
+const STEP_ANALYSIS = join(TIMER_UI, 'reconstruct', 'StepAnalysis.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
 /** 只留代码。断言「不许再出现某个写法」时用 —— 注释里讲得清来历,那不算回归。 */
@@ -86,6 +87,16 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
   it('整把补充统计不再显示拿起时长', () => {
     expect(stripComments(src)).not.toMatch(/stepMetrics\.pickupMs/);
     expect(src).toMatch(/stepMetrics\.putDownMs/);
+  });
+});
+
+describe('CFOP 分步分析表头', () => {
+  const src = read(STEP_ANALYSIS);
+
+  it('使用 Cross 与 F1-F4 的紧凑列名', () => {
+    expect(src).toMatch(/label: 'Cross'/);
+    expect(src).toMatch(/label: `F\$\{i \+ 1\}`/);
+    expect(stripComments(src)).not.toMatch(/label: `F2L-/);
   });
 });
 
