@@ -117,7 +117,9 @@ describe('the complete shared reconstruction report', () => {
     });
     expect(container.querySelector('[role="dialog"]')).toBeNull();
     expect(container.textContent).toContain('回放与分步动作');
-    await act(async () => button('整屏').click());
+    const fullScreenButton = button('整屏');
+    expect(fullScreenButton.textContent).toBe('');
+    await act(async () => fullScreenButton.click());
     await act(async () => button('收起').click());
     expect(onFull).toHaveBeenCalledTimes(1);
     expect(onDismiss).toHaveBeenCalledTimes(1);
