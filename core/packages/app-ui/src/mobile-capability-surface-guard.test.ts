@@ -29,6 +29,18 @@ describe('Mobile capability surface guard', () => {
     expect(copy).not.toMatch(/coming soon|即将推出|暂未开放/i);
   });
 
+  it('uses the shared smart-cube device surface without losing direct scan', () => {
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
+    expect(app).toContain('onConnect={connectSmartCube}');
+    expect(app).toContain('onDisconnect={disconnectSmartCube}');
+    expect(app).toContain('onResetState={smartCube.resetState ? resetSmartCubeState : undefined}');
+    expect(app).toContain('openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice');
+    expect(app).toContain("if (smartCube.phase === 'idle' || smartCube.phase === 'error')");
+    expect(app).toContain('void connectSmartCube().catch(() => undefined)');
+    expect(app).toContain('onConnect={openSmartCubeDevice}');
+    expect(app).not.toContain('onConnect={toggleSmartCube}');
+  });
+
   it('routes clipboard writes through the installed host capability', () => {
     expect(app).toContain('host.writeClipboardText');
     expect(battleModes).toContain('writeClipboardText(room.code)');

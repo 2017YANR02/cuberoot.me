@@ -1,0 +1,235 @@
+.timer-smart-cube-device__overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+    max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--foreground) 70%, transparent);
+  overscroll-behavior: contain;
+}
+
+.timer-smart-cube-device__modal {
+  position: relative;
+  width: min(100%, 520px);
+  max-height: min(80dvh, calc(100% - 40px));
+  min-width: 0;
+  padding: 20px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--popover);
+  color: var(--foreground);
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+}
+
+.timer-smart-cube-device__modal h2 {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 6px;
+  margin: 0 40px 14px 0;
+  color: var(--foreground);
+  font-size: 18px;
+}
+
+.timer-smart-cube-device__modal h2 span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.timer-smart-cube-device__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--shell-chip, var(--popover));
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.timer-smart-cube-device__close:hover:not(:disabled),
+.timer-smart-cube-device__close:active:not(:disabled),
+.timer-smart-cube-device__action:hover:not(:disabled),
+.timer-smart-cube-device__action:active:not(:disabled) {
+  background: var(--shell-hover, color-mix(in srgb, var(--foreground) 10%, var(--popover)));
+}
+
+.timer-smart-cube-device__close:active:not(:disabled),
+.timer-smart-cube-device__action:active:not(:disabled),
+.timer-smart-cube-device__connect:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.timer-smart-cube-device__close:focus-visible,
+.timer-smart-cube-device__action:focus-visible,
+.timer-smart-cube-device__connect:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.timer-smart-cube-device__summary {
+  min-width: 0;
+  margin: 0 0 14px;
+  color: var(--foreground);
+  font-size: 13px;
+}
+
+.timer-smart-cube-device__primary,
+.timer-smart-cube-device__facts {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.timer-smart-cube-device__primary { gap: 6px 12px; }
+.timer-smart-cube-device__facts {
+  gap: 6px 18px;
+  margin-top: 8px;
+}
+
+.timer-smart-cube-device__name {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.timer-smart-cube-device__state,
+.timer-smart-cube-device__fact {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.timer-smart-cube-device__state { white-space: nowrap; }
+.timer-smart-cube-device__state.is-ok { color: var(--signal-success); }
+.timer-smart-cube-device__state.is-error { color: var(--destructive); }
+
+.timer-smart-cube-device__label {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.timer-smart-cube-device__value {
+  min-width: 0;
+  color: var(--foreground);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.timer-smart-cube-device__connect,
+.timer-smart-cube-device__action {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--shell-chip, var(--popover));
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+
+.timer-smart-cube-device__connect {
+  border-color: color-mix(in srgb, var(--signal-info, var(--accent)) 45%, transparent);
+  background: color-mix(in srgb, var(--signal-info, var(--accent)) 14%, transparent);
+}
+
+.timer-smart-cube-device__connect:hover:not(:disabled),
+.timer-smart-cube-device__connect:active:not(:disabled) {
+  background: color-mix(in srgb, var(--signal-info, var(--accent)) 22%, transparent);
+}
+
+.timer-smart-cube-device__actions {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.timer-smart-cube-device__action--danger {
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+  color: var(--destructive);
+}
+
+.timer-smart-cube-device__action--danger:hover:not(:disabled),
+.timer-smart-cube-device__action--danger:active:not(:disabled) {
+  background: color-mix(in srgb, var(--destructive) 14%, transparent);
+}
+
+.timer-smart-cube-device__feedback {
+  margin: 10px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.timer-smart-cube-device__close:disabled,
+.timer-smart-cube-device__connect:disabled,
+.timer-smart-cube-device__action:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 480px) {
+  .timer-smart-cube-device__overlay {
+    align-items: stretch;
+    padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .timer-smart-cube-device__modal {
+    width: 100%;
+    max-height: min(95dvh, 100%);
+    align-self: center;
+    padding: 14px;
+    border-radius: 6px;
+  }
+
+  .timer-smart-cube-device__close {
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .timer-smart-cube-device__modal h2 { min-height: 36px; }
+  .timer-smart-cube-device__actions {
+    align-items: stretch;
+  }
+  .timer-smart-cube-device__connect {
+    width: 100%;
+    min-height: 44px;
+    font-size: 15px;
+  }
+  .timer-smart-cube-device__action {
+    flex: 1 1 auto;
+    min-width: max-content;
+    min-height: 36px;
+    padding: 7px 8px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}

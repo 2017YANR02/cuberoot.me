@@ -32,9 +32,14 @@ import { App } from './App';
 let options: InstalledAppSmartCubeOptions;
 let setRadio: (value: InstalledAppSmartCube) => void;
 let radio: InstalledAppSmartCube;
+let backListener: (() => void) | null = null;
 let now = 1_000;
 let phase: TimerPhase = 'idle';
 const host: InstalledAppHost = {
+  addBackButtonListener: async (listener) => {
+    backListener = listener;
+    return { remove: async () => { if (backListener === listener) backListener = null; } };
+  },
   addNetworkListener: async () => ({ remove: async () => undefined }),
   getNetworkStatus: async () => false,
   isInstalled: () => true,
@@ -72,6 +77,7 @@ const settle = async () => { await act(async () => { await new Promise((done) =>
 
 beforeEach(async () => {
   now = 1_000;
+  backListener = null;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
   vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
@@ -104,6 +110,59 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('opens the shared device modal and routes reset, disconnect, and Android Back', async () => {
+    const connect = vi.fn(async () => 'GAN16ui');
+    const disconnect = vi.fn(async () => undefined);
+    const requestState = vi.fn(async () => undefined);
+    const resetState = vi.fn();
+    await act(async () => setRadio({
+      ...radio,
+      connect,
+      disconnect,
+      quaternion: { w: 1, x: 0, y: 0, z: 0 },
+      requestState,
+      resetState,
+      solved: false,
+      status: {
+        badFrames: 0,
+        battery: 72,
+        moveCounter: 3,
+        pendingMoves: 0,
+        protocol: 'gan-v4',
+        stateReady: true,
+      },
+    }));
+    await settle();
+
+    const trigger = container.querySelector<HTMLButtonElement>('.shell-device-connect')!;
+    await act(async () => trigger.click());
+    await settle();
+    expect(connect).not.toHaveBeenCalled();
+
+    const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
+    expect(dialog.textContent).toContain('GAN16ui');
+    expect(dialog.textContent).toContain('Connected, unsolved');
+    expect(dialog.textContent).toContain('72%');
+    expect(dialog.textContent).toContain('gan-v4');
+    expect(dialog.textContent).not.toContain('Last move');
+    const button = (label: string) => [...dialog.querySelectorAll<HTMLButtonElement>('button')]
+      .find((candidate) => candidate.textContent?.includes(label))!;
+
+    await act(async () => button('Reset state').click());
+    expect(resetState).toHaveBeenCalledOnce();
+    expect(requestState).toHaveBeenCalledOnce();
+    expect(button('Reset gyroscope').disabled).toBe(false);
+
+    await act(async () => button('Disconnect').click());
+    expect(disconnect).toHaveBeenCalledOnce();
+    expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
+
+    await act(async () => trigger.click());
+    expect(document.querySelector('.timer-smart-cube-device__modal')).not.toBeNull();
+    await act(async () => backListener?.());
+    expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
+  });
+
   it.each([
     ['touch', '.timer-display-value'], ['mouse', '.timer-display-value'],
   ])('keeps legacy copy settings inert and %s presses on %s on the real timer', async (pointerType, selector) => {
