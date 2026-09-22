@@ -13,10 +13,11 @@
  * 顺序:**先这把是怎么拧的,再这把拧得怎么样**(2026-08-03 用户提的)。
  *
  *   摘要 — 时间 / STM / TPS,加上读完之后想做的那几件事。
- *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。默认展开:
- *     它是报告的主体。上面压着折叠起来的「参考解法」。
+ *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。默认展开,
+ *     它是报告的主体。
  *   数据 — 时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
  *     因为它们都在**归因**:不知道自己拧了什么的时候,一张 5×7 的表读不出东西。
+ *   参考解法 — 折叠,放在原始动作序列之前。
  *   原始动作序列 — 折叠,收尾。
  *
  * 分区块而不是分标签页(研究文档原本画的是 tab):tab 把内容藏在一次点击**加**一次
@@ -574,16 +575,6 @@ function ReconstructReportBody({
         </div>
       )}
 
-      {analysis?.reference && (
-        <AccordionSection
-          title={tr({ zh: '参考解法', en: 'Reference lines' })}
-          collapsible
-          expanded={referenceExpanded}
-          onToggle={() => setReferenceExpanded(v => !v)}
-        >
-          <ReferenceList reference={analysis.reference} />
-        </AccordionSection>
-      )}
 
       {playbackAvailable && (
         <div className="reconstruct-section">
@@ -633,6 +624,17 @@ function ReconstructReportBody({
       )}
 
       {analysisBlock}
+
+      {analysis?.reference && (
+        <AccordionSection
+          title={tr({ zh: '参考解法', en: 'Reference lines' })}
+          collapsible
+          expanded={referenceExpanded}
+          onToggle={() => setReferenceExpanded(v => !v)}
+        >
+          <ReferenceList reference={analysis.reference} />
+        </AccordionSection>
+      )}
 
       <AccordionSection
         title={tr({ zh: `动作序列 (${moves.length})`, en: `Move stream (${moves.length})` })}
