@@ -351,26 +351,6 @@
   margin-left: 5px;
 }
 
-.reconstruct-playback-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid var(--border-default);
-  color: var(--foreground);
-  font-size: 12px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: inherit;
-}
-.reconstruct-playback-toggle:hover {
-  background: var(--muted);  background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  color: var(--foreground);
-}
-
 /* 左魔方 右分步。两栏是同一件事的两种读法,分开折叠就得来回开关,而「对着看」
    正是回放的全部意义。窄屏落成上下两段(grid 单列),顺序不变。 */
 .reconstruct-playback {
@@ -526,11 +506,6 @@
   .reconstruct-section-header:hover,
   .reconstruct-section-header:active {
     background: var(--muted);    background: color-mix(in srgb, var(--foreground) 6%, transparent);
-  }
-  .reconstruct-playback-toggle {
-    min-height: 44px;
-    width: 100%;
-    justify-content: flex-start;
   }
 }
 

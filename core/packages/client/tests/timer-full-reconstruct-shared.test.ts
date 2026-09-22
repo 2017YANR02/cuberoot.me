@@ -118,7 +118,8 @@ describe('the complete shared reconstruction report', () => {
       expect(container.querySelector('.rc-report')).not.toBeNull();
     });
     expect(container.querySelector('[role="dialog"]')).toBeNull();
-    expect(container.textContent).toContain('回放与分步动作');
+    expect(container.querySelector('.reconstruct-playback')).not.toBeNull();
+    expect(container.querySelector('.reconstruct-playback-toggle')).toBeNull();
     expect(container.querySelector('.shell-recap-body .rc-actions')).toBeNull();
     const toolbarButtons = [...container.querySelectorAll<HTMLButtonElement>('.shell-recap-head button')];
     expect(toolbarButtons.map((element) => element.getAttribute('aria-label') ?? element.textContent)).toEqual([

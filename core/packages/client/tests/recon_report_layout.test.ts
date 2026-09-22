@@ -69,9 +69,10 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(rendered).toBeGreaterThan(playback);
   });
 
-  it('回放默认展开 —— 它是主体,不是附录', () => {
-    // 排到第一位却折叠着,等于把报告的主体藏在一次点击后面。
-    expect(src).toMatch(/const \[playbackExpanded, setPlaybackExpanded\] = useState\(true\)/);
+  it('回放固定展示,不再保留展开行', () => {
+    const code = stripComments(src);
+    expect(code).toMatch(/\{playbackAvailable && \(\s*<PlaybackPanel/);
+    expect(code).not.toMatch(/playbackExpanded|reconstruct-playback-toggle|回放与分步动作/);
   });
 
   it('参考解法排在数据之后、动作序列之前', () => {

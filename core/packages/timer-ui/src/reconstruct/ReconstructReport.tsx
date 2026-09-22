@@ -13,7 +13,7 @@
  * 顺序:**先这把是怎么拧的,再这把拧得怎么样**(2026-08-03 用户提的)。
  *
  *   摘要 — 时间 / STM / TPS,加上读完之后想做的那几件事。
- *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。默认展开,
+ *   回放 + 谱子 — 三维回放和按步写出来的动作(打乱就是谱子的第一行)。固定展示,
  *     它是报告的主体。
  *   数据 — 时间轴、分步分析表、四个总量。排在后面不是因为不重要,而是
  *     因为它们都在**归因**:不知道自己拧了什么的时候,一张 5×7 的表读不出东西。
@@ -344,9 +344,7 @@ function ReconstructReportBody({
     };
   }, [method, reconText, playbackLines]);
 
-  // 默认展开:回放 + 分步动作现在是这份报告的主体,不是附录。折叠留给「原始动作
-  // 序列」那种真的很少看的东西。
-  const [playbackExpanded, setPlaybackExpanded] = useState(true);
+  // 回放固定展示；折叠只留给「参考解法」和「原始动作序列」这类附加内容。
   const [moveListExpanded, setMoveListExpanded] = useState(false);
   const [referenceExpanded, setReferenceExpanded] = useState(false);
   const playbackAvailable = moves.length > 0 && nxnSizeForEvent(solve.event) !== null;
@@ -575,52 +573,34 @@ function ReconstructReportBody({
         </div>
       )}
 
-
       {playbackAvailable && (
-        <div className="reconstruct-section">
-          <button
-            type="button"
-            className="reconstruct-playback-toggle"
-            onClick={() => setPlaybackExpanded(v => !v)}
-            aria-expanded={playbackExpanded}
-          >
-            {playbackExpanded
-              ? <ChevronDown size={14} />
-              : <ChevronRight size={14} />}
-            <span>
-              {tr({ zh: '回放与分步动作', en: 'Replay and turns per step' })}
-            </span>
-          </button>
-          {playbackExpanded && (
-            <PlaybackPanel
-              event={solve.event}
-              scramble={solve.scramble}
-              moves={moves}
-              viewRotation={view.rotation}
-              totalMs={solve.timeMs}
-              isZh={isZh}
-              lines={playbackLines}
-              rotations={reconText?.rotations}
-              gyro={solve.gyro ?? null}
-              deviceModel={solve.device?.model ?? null}
-              side={playbackRecon ? ({ idx, seek }) => (
-                <StepMoveList
-                  recon={playbackRecon}
-                  reference={analysis?.reference ?? null}
-                  slotReference={analysis?.slotReference ?? null}
-                  currentIdx={idx}
-                  onSeek={seek}
-                  notice={!solve.gyro && playbackRecon.blindPairs > 0
-                    ? <NoGyroNotice />
-                    : undefined}
-                  feedback={onReconFeedback
-                    ? <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
-                    : undefined}
-                />
-              ) : undefined}
+        <PlaybackPanel
+          event={solve.event}
+          scramble={solve.scramble}
+          moves={moves}
+          viewRotation={view.rotation}
+          totalMs={solve.timeMs}
+          isZh={isZh}
+          lines={playbackLines}
+          rotations={reconText?.rotations}
+          gyro={solve.gyro ?? null}
+          deviceModel={solve.device?.model ?? null}
+          side={playbackRecon ? ({ idx, seek }) => (
+            <StepMoveList
+              recon={playbackRecon}
+              reference={analysis?.reference ?? null}
+              slotReference={analysis?.slotReference ?? null}
+              currentIdx={idx}
+              onSeek={seek}
+              notice={!solve.gyro && playbackRecon.blindPairs > 0
+                ? <NoGyroNotice />
+                : undefined}
+              feedback={onReconFeedback
+                ? <ReconFeedback value={solve.reconOk} onChange={onReconFeedback} />
+                : undefined}
             />
-          )}
-        </div>
+          ) : undefined}
+        />
       )}
 
       {analysisBlock}
