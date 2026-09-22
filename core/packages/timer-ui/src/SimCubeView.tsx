@@ -537,7 +537,7 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
       sliceFollowUntilRef.current = performance.now() + SLICE_ORIENTATION_FOLLOW_MS;
     }
     const plan = realtime
-      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog)
+      ? planLiveSimUpdate(shownRef.current, next, animate, twister.backlog, hasShownRef.current)
       : planSimUpdate(shownRef.current, next, animate);
     shownRef.current = { turns, pose };
     hasShownRef.current = true;
