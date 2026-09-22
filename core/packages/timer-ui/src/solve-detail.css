@@ -274,6 +274,28 @@
   font-size: 12px;
 }
 
+.timer-solve-detail-header-actions {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.timer-solve-detail-header-actions .timer-solve-detail-action {
+  min-height: 36px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+.timer-solve-detail-header-actions .timer-solve-detail-header-action--icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex: none;
+}
+.timer-solve-detail-header-actions .timer-solve-detail-action:active {
+  transform: translateY(1px);
+}
+
 .timer-solve-detail-full-body {
   flex: 1;
   min-height: 0;
@@ -307,4 +329,8 @@
   .timer-solve-detail-penalty select,
   .timer-solve-detail-move select { min-height: 44px; }
   .timer-solve-detail-close { width: 44px; height: 44px; }
+  .timer-solve-detail-header-actions .timer-solve-detail-header-action--icon {
+    width: 44px;
+    height: 44px;
+  }
 }
