@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SimCubeView from '@cuberoot/timer-ui/SimCubeView';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 
-const state = vi.hoisted(() => ({ mount: vi.fn(), dispose: vi.fn(), setup: vi.fn() }));
+const state = vi.hoisted(() => ({ mount: vi.fn(), dispose: vi.fn(), push: vi.fn(), setup: vi.fn() }));
 vi.mock('@cuberoot/puzzle-render-core/sim/mountSimWorld', () => ({ mountSimWorld: state.mount }));
 let root: Root;
 let host: HTMLDivElement;
@@ -22,7 +22,7 @@ beforeEach(() => {
     puzzleKind: 3,
     controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null, touch: vi.fn(() => true) },
     scene: { rotation: { set() {} }, updateMatrix() {} },
-    cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
+    cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
   });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -62,6 +62,20 @@ describe('the single live/replay 3D failure surface', () => {
       view: 'smart', moves: [], quat: { w: 1, x: 0, y: 0, z: 0 },
     })));
     expect(state.mount.mock.calls[0][0].sceneRot).toEqual({ x: Math.atan2(4.1, 7.2), y: 0, z: 0 });
+  });
+
+  it('animates both directions across the solved-state boundary after the initial sync', async () => {
+    const draw = (moves: string[]) => act(async () => root.render(createElement(SimCubeView, {
+      animate: true, realtime: true, moves,
+    })));
+    await draw([]);
+    await vi.waitFor(() => expect(state.setup).toHaveBeenLastCalledWith(''));
+    expect(state.push).not.toHaveBeenCalled();
+
+    await draw(['R']);
+    await draw([]);
+
+    expect(state.push.mock.calls.map((call: unknown[]) => call[0])).toEqual(['R', "R'"]);
   });
 
   it('bridges desktop pointer dragging to the interactive controller', async () => {
