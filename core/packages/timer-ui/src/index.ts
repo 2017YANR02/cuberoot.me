@@ -31,6 +31,7 @@ import './drill-picker.css';
 import './color-subset-picker.css';
 import './random-difficulty-config.css';
 import './random-difficulty-case.css';
+import './smart-cube-device-modal.css';
 
 export { default as TimingSurface } from './TimingSurface';
 export type { TimingSurfaceProps } from './TimingSurface';
@@ -225,6 +226,12 @@ export type {
   TimerStatRailProps,
   TimerTopbarProps,
 } from './TimerChrome';
+export { TimerSmartCubeDeviceModal } from './TimerSmartCubeDeviceModal';
+export type {
+  TimerSmartCubeConnectionPhase,
+  TimerSmartCubeDeviceModalProps,
+  TimerSmartCubeDeviceSnapshot,
+} from './TimerSmartCubeDeviceModal';
 export { TimerWcaSourceConfig } from './TimerWcaSourceConfig';
 export type {
   TimerWcaDateRangeRenderProps,

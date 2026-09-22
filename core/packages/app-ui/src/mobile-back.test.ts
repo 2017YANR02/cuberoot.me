@@ -58,11 +58,13 @@ describe('Android Back priority', () => {
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}');
     expect(app).toContain('open={openOverlay === TIMER_OVERLAY_IDS.sessionSwitcher}');
+    expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice');
     expect(app).toMatch(/open=\{openOverlay === TIMER_OVERLAY_IDS\.wcaScrambleMarks\s+&& wcaMarksOverlayIdentityRef\.current === currentWcaMarkIdentity\}/);
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.historyCompare');
     expect(app).toContain('openOverlay === TIMER_OVERLAY_IDS.solveDetail');
     expect(app).toContain('<TimerHistoryCompareModal');
     expect(app).toContain('<TimerSolveDetailModal');
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
     expect(app).toContain('toggleTimerHistoryCompareSelection(current, solve.id)');
     expect(app).toContain('visibleHistoryCompareSelectedIds,');
     expect(app).toContain('historyCompareSelectionContext === historyCompareContext');
