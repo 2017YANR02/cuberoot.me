@@ -3,8 +3,7 @@ import { GAN_V3_SERVICE_UUID, matchesGanV3Name } from '@cuberoot/shared/smart-cu
 import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
 import { matchesMoyu32Name, MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { matchesQiyiName, QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
-import { SmartCubeStateTracker } from '@cuberoot/shared/smart-cube/cubie';
-import { MoveClock } from '@cuberoot/shared/smart-cube/move-clock';
+import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -50,9 +49,6 @@ export function useInstalledSmartCube(
     | Moyu32CubeConnection
     | QiyiCubeConnection;
   const connectionRef = useRef<SmartCubeConnection | null>(null);
-  const trackerRef = useRef(new SmartCubeStateTracker());
-  const moveClockRef = useRef(new MoveClock());
-  const wasSolvedRef = useRef(true);
   const generationRef = useRef(0);
   const busyRef = useRef(false);
   const cleanupRef = useRef<Promise<void>>(Promise.resolve());
@@ -73,25 +69,32 @@ export function useInstalledSmartCube(
   >(null);
   const [solved, setSolved] = useState(true);
 
-  const publishSolved = useCallback((nextSolved: boolean, timestamp: number) => {
-    const becameSolved = nextSolved && !wasSolvedRef.current;
-    // Commit the edge before invoking a host that may synchronously reset/disconnect.
-    wasSolvedRef.current = nextSolved;
-    setSolved(nextSolved);
-    if (becameSolved) onSolvedRef.current?.(timestamp);
-  }, []);
+  const sessionControllerRef = useRef<SmartCubeSessionController<InstalledSmartCubeMoveMetadata> | null>(null);
+  if (!sessionControllerRef.current) {
+    sessionControllerRef.current = new SmartCubeSessionController({
+      now: () => performance.now(),
+      onChange: (snapshot) => {
+        setLastMove(snapshot.lastMove ?? '');
+        setFacelets(snapshot.facelets ?? '');
+        setSolved(snapshot.solved);
+      },
+      onMove: ({ facelets: nextFacelets, metadata, move, timestamp }) => {
+        if (metadata) onMoveRef.current(move, timestamp, nextFacelets, metadata);
+        else onMoveRef.current(move, timestamp, nextFacelets);
+      },
+      onSolved: (timestamp) => {
+        if (timestamp !== undefined) onSolvedRef.current?.(timestamp);
+      },
+    });
+  }
+  const sessionController = sessionControllerRef.current;
 
   const resetCubeState = useCallback(() => {
-    setLastMove('');
-    setFacelets('');
-    trackerRef.current.reset();
-    moveClockRef.current.reset();
-    wasSolvedRef.current = true;
-    setSolved(true);
+    sessionController.close();
     setQuaternion(null);
     setStatus(null);
     setModel(null);
-  }, []);
+  }, [sessionController]);
 
   const disposeConnection = useCallback((connection: SmartCubeConnection | null) => {
     // Invalidate this connection immediately, but retain its asynchronous native
@@ -155,10 +158,11 @@ export function useInstalledSmartCube(
       setDeviceName(device.name);
       const namedModel = modelForDeviceName(device.name);
       setModel(namedModel);
+      const session = sessionController.open({ publishInitialState: false });
       let connection!: SmartCubeConnection;
       const connectionCallbacks = {
         onDisconnect: () => {
-          if (connectionRef.current !== connection) return;
+          if (connectionRef.current !== connection || !session.isCurrent()) return;
           connectionRef.current = null;
           setDeviceName('');
           resetCubeState();
@@ -169,18 +173,11 @@ export function useInstalledSmartCube(
           deviceTimestamp?: number,
           metadata?: InstalledSmartCubeMoveMetadata,
         ) => {
-          if (connectionRef.current !== connection) return;
-          const timestamp = moveClockRef.current.stamp(deviceTimestamp, performance.now());
-          const solved = trackerRef.current.applyMove(move);
-          const nextFacelets = trackerRef.current.getFacelets();
-          setLastMove(move);
-          setFacelets(nextFacelets);
-          if (metadata) onMoveRef.current(move, timestamp, nextFacelets, metadata);
-          else onMoveRef.current(move, timestamp, nextFacelets);
-          publishSolved(solved, timestamp);
+          if (connectionRef.current !== connection || !session.isCurrent()) return;
+          session.move(move, deviceTimestamp, metadata);
         },
         onProtocolError: () => {
-          if (connectionRef.current !== connection) return;
+          if (connectionRef.current !== connection || !session.isCurrent()) return;
           connectionRef.current = null;
           void disposeConnection(connection);
           setDeviceName('');
@@ -188,14 +185,12 @@ export function useInstalledSmartCube(
           setPhase('error');
         },
         onState: (nextFacelets: string) => {
-          if (connectionRef.current !== connection) return;
-          if (!trackerRef.current.adoptFacelets(nextFacelets)) return;
-          setFacelets(nextFacelets);
-          publishSolved(trackerRef.current.isSolved(), performance.now());
+          if (connectionRef.current !== connection || !session.isCurrent()) return;
+          session.adoptFacelets(nextFacelets, performance.now());
         },
         onGyro: onGyroRef.current
           ? (nextQuaternion: GyroQuaternion, velocity?: GyroVelocity) => {
-            if (connectionRef.current !== connection) return;
+            if (connectionRef.current !== connection || !session.isCurrent()) return;
             setQuaternion(nextQuaternion);
             onGyroRef.current?.(nextQuaternion, performance.now(), velocity);
           }
@@ -203,7 +198,7 @@ export function useInstalledSmartCube(
         onStatus: (
           nextStatus: GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus,
         ) => {
-          if (connectionRef.current !== connection) return;
+          if (connectionRef.current !== connection || !session.isCurrent()) return;
           setStatus(nextStatus);
           setModel(nextStatus.protocol);
         },
@@ -238,14 +233,11 @@ export function useInstalledSmartCube(
     } finally {
       if (current()) busyRef.current = false;
     }
-  }, [disconnect, disposeConnection, language, publishSolved, resetCubeState]);
+  }, [disconnect, disposeConnection, language, resetCubeState, sessionController]);
 
   const resetState = useCallback(() => {
-    trackerRef.current.reset();
-    wasSolvedRef.current = true;
-    setSolved(true);
-    setFacelets(trackerRef.current.getFacelets());
-  }, []);
+    sessionController.resetState();
+  }, [sessionController]);
 
   const requestState = useCallback(async () => {
     if (!connectionRef.current) throw new Error('smart cube is not connected');
@@ -255,9 +247,10 @@ export function useInstalledSmartCube(
   useEffect(() => () => {
     generationRef.current++;
     busyRef.current = false;
+    sessionController.dispose();
     void disposeConnection(connectionRef.current);
     connectionRef.current = null;
-  }, [disposeConnection]);
+  }, [disposeConnection, sessionController]);
 
   return {
     connect, deviceName, disconnect, facelets, lastMove, model, phase, quaternion,

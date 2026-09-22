@@ -9,7 +9,8 @@
  *                  preview and that the "与打乱不符" check compares against.
  *   2. SMART CUBE — the scramble replayed as quarter turns over BLE, through
  *                  the REAL GAN driver (encrypted frames, unmodified driver)
- *                  into `CubeStateTracker` — i.e. the full production path.
+ *                  into `SmartCubeSessionController` — the production state,
+ *                  clock and solved-edge path shared by Web and installed App.
  *   3. csTimer    — the same quarter turns through csTimer's own `CubieCube`
  *                  in a Node `vm`, as an independent oracle.
  *
@@ -29,7 +30,7 @@ import {
   isValidCubieState, solvedCubie,
 } from '@/app/[lang]/timer/_lib/cube/cubie';
 import { parseScramble } from '@/app/[lang]/timer/_lib/cube/moves';
-import { CubeStateTracker } from '@/app/[lang]/timer/_lib/bluetooth/state_track';
+import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
 import { ganV4Driver } from '@/app/[lang]/timer/_lib/bluetooth/gan_v4';
 import { makeFakeGatt } from '@/tests/_fake_gatt';
 import { createCstimerSandbox, cstimerFileExists, type CstimerSandbox } from '@/tests/_cstimer_sandbox';
@@ -103,14 +104,21 @@ function virtualFacelets(scramble: string): string {
 
 /**
  * LEG 2 — the production path: encrypted BLE frames -> real GAN v4 driver ->
- * `CubeStateTracker`. Nothing here reaches past the driver's public surface.
+ * shared session controller. Nothing here reaches past the driver's public
+ * surface.
  */
 async function smartCubeFacelets(sb: CstimerSandbox, scramble: string): Promise<string> {
   const mac = 'AB:CD:EF:01:23:45';
   const crypto = installGanCrypto(sb, mac, 0);
   const gatt = makeFakeGatt('GAN14-PARITY', { [GAN_V4_SERVICE]: [GAN_V4_READ, GAN_V4_WRITE] });
-  const tracker = new CubeStateTracker();
-  await ganV4Driver.start(gatt.asServer, (m) => { tracker.applyMove(m); }, { mac });
+  const controller = new SmartCubeSessionController();
+  const session = controller.open();
+  await ganV4Driver.start(gatt.asServer, (move, deviceTs) => {
+    session.move(move, deviceTs);
+  }, {
+    mac,
+    onState: (facelets) => { session.adoptFacelets(facelets); },
+  });
   const notify = gatt.char(GAN_V4_SERVICE, GAN_V4_READ);
   const feed = (plain: number[]): void => notify.emit(crypto.encrypt(plain.slice()));
 
@@ -125,7 +133,9 @@ async function smartCubeFacelets(sb: CstimerSandbox, scramble: string): Promise<
     cnt = (cnt + 1) & 0xff;
     feed(ganV4MoveFrame(cnt, axis, pow));
   }
-  return toFaceletString(tracker.getFaces());
+  const facelets = controller.getRawFacelets();
+  if (!facelets) throw new Error('smart-cube session did not publish a state');
+  return facelets;
 }
 
 /** LEG 3 — csTimer's own cube model, driven by the same quarter turns. */
@@ -193,32 +203,6 @@ describe('the facelet string can be handed straight to visualcube', () => {
 
       expect(`${alg || '(solved)'}: ${virtualFacelets(alg)}`).toBe(`${alg || '(solved)'}: ${theirs}`);
     }
-  });
-});
-
-describe('source contract: the tracker advances before subscribers are told', () => {
-  /**
-   * `handleMove` used to call `onMove` and THEN apply the move, so anything
-   * reading the cube state from inside its own onMove handler — the scramble
-   * check does exactly that — saw the state as of one move ago. At the instant
-   * a scramble is completed that is one move short, so the check reported
-   * "doesn't match" on a correctly scrambled cube.
-   *
-   * There is no React test environment in this package, so this is guarded at
-   * the source level: cheap, and it fails loudly the moment the order is
-   * swapped back.
-   */
-  it('applyMove precedes the onMove notification in the hook', async () => {
-    const { readFileSync } = await import('node:fs');
-    const src = readFileSync(
-      new URL('../app/[lang]/timer/_lib/bluetooth/index.ts', import.meta.url),
-      'utf8',
-    );
-    const apply = src.indexOf('trackerRef.current.applyMove(move)');
-    const notify = src.indexOf('onMoveRef.current?.(move, ts)');
-    expect(apply, 'applyMove call not found — did handleMove get renamed?').toBeGreaterThan(-1);
-    expect(notify, 'onMove notification not found').toBeGreaterThan(-1);
-    expect(apply).toBeLessThan(notify);
   });
 });
 
