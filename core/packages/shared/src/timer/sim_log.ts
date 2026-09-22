@@ -36,6 +36,7 @@
  * 一致时成立,拿新 ρ 去共轭老状态是错的。
  */
 
+import { cubeMove, faceTurnToken, SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import { sliceSplitTable } from '../recon_slice';
 import { conjugateSequence, facePermFor } from './reconstruct/gyro_orient';
 
@@ -43,6 +44,37 @@ const SLICE_SPLITS = sliceSplitTable();
 
 function tokens(turns: string): string[] {
   return turns.trim().split(/\s+/).filter(Boolean);
+}
+
+const FACE_TURNS = [
+  'U', "U'", 'U2',
+  'R', "R'", 'R2',
+  'F', "F'", 'F2',
+  'D', "D'", 'D2',
+  'L', "L'", 'L2',
+  'B', "B'", 'B2',
+] as const;
+
+function replayFaceTurns(turns: string): string | null {
+  let state = SOLVED_3X3;
+  for (const move of tokens(turns)) {
+    const token = faceTurnToken(move);
+    if (!token) return null;
+    state = cubeMove(state, token);
+  }
+  return state;
+}
+
+/** The solved-boundary log is intentionally rebased to/from an empty string.
+ * Recover the one physical turn between those two verified states. */
+function oneFaceTurnBetween(prevTurns: string, nextTurns: string): string | null {
+  const prevState = replayFaceTurns(prevTurns);
+  const nextState = replayFaceTurns(nextTurns);
+  if (!prevState || !nextState || prevState === nextState) return null;
+  for (const move of FACE_TURNS) {
+    if (cubeMove(prevState, faceTurnToken(move)!) === nextState) return move;
+  }
+  return null;
 }
 
 /**
@@ -102,6 +134,12 @@ function composed(s: SimLogState): string {
   return s.turns ? `${s.turns} ${s.pose}` : s.pose;
 }
 
+function appendedPlan(appended: string, pose: string, fallbackExp: string): SimLogPlan {
+  if (!pose) return { mode: 'push', exp: appended };
+  const conj = conjugateSequence(appended, facePermFor(pose));
+  return conj === null ? { mode: 'setup', exp: fallbackExp } : { mode: 'push', exp: conj };
+}
+
 /**
  * 从 `prev` 到 `next` 该怎么驱动引擎。
  *
@@ -122,12 +160,10 @@ export function planSimUpdate(
 
   const appended = next.turns.slice(prev.turns.length).trim();
   if (appended === '') return { mode: 'setup', exp: full };
-  if (!next.pose) return { mode: 'push', exp: appended };
 
   // ρ⁻¹ · m · ρ —— 认不出来的记号整串放弃共轭,退回 setup。押一个猜出来的记号会
   // 转错层,而瞬切只是少一段动画。
-  const conj = conjugateSequence(appended, facePermFor(next.pose));
-  return conj === null ? { mode: 'setup', exp: full } : { mode: 'push', exp: conj };
+  return appendedPlan(appended, next.pose, full);
 }
 
 /**
@@ -141,8 +177,20 @@ export function planLiveSimUpdate(
   next: SimLogState,
   animate: boolean,
   currentBacklog: number,
+  hasRenderedState = false,
 ): LiveSimPlan {
-  const ordinary = planSimUpdate(prev, next, animate);
+  let ordinary = planSimUpdate(prev, next, animate);
+  // The canonical live log rebases to an empty string at solved. Once the cube
+  // has actually rendered that state, an empty boundary can still represent a
+  // real one-turn transition rather than an initial mount or arbitrary resync.
+  if (ordinary.mode !== 'push'
+    && animate
+    && hasRenderedState
+    && prev.pose === next.pose
+    && (prev.turns === '' || next.turns === '')) {
+    const boundaryMove = oneFaceTurnBetween(prev.turns, next.turns);
+    if (boundaryMove) ordinary = appendedPlan(boundaryMove, next.pose, composed(next));
+  }
   if (ordinary.mode !== 'push') return ordinary;
 
   const incomingCount = ordinary.exp.trim().split(/\s+/).filter(Boolean).length;
