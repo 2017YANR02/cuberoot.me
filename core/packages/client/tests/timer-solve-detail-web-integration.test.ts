@@ -23,8 +23,8 @@ describe('Web solve detail shared integration', () => {
     expect(source).toContain('<ReconstructReport');
     expect(source).not.toMatch(/function (StageSplits|BldSplits|MbldBreakdown)/);
     expect(source).not.toContain('stage-splits-table');
-    expect(reportSource.match(/<TimerReconstructMetrics/g)).toHaveLength(1);
-    expect(reportSource).toContain('metrics={slices}');
-    expect(reportCss).not.toContain('reconstruct-stats');
+    expect(reportSource).not.toContain('TimerReconstructMetrics');
+    expect(reportSource).not.toContain('reconstruct-waste-line');
+    expect(reportCss).not.toMatch(/reconstruct-(?:stats|waste-line)/);
   });
 });

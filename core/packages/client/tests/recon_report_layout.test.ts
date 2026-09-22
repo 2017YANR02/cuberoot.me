@@ -39,7 +39,6 @@ const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const TIMER_UI = join(ROOT, '..', 'timer-ui', 'src');
 const SHELL_CSS = join(TIMER, '_shell', 'shell.css');
 const DETAIL_MODAL = join(TIMER_UI, 'TimerSolveDetailModal.tsx');
-const RECONSTRUCT_METRICS = join(TIMER_UI, 'TimerReconstructMetrics.tsx');
 const STEP_ANALYSIS = join(TIMER_UI, 'reconstruct', 'StepAnalysis.tsx');
 
 const read = (p: string) => readFileSync(p, 'utf8');
@@ -55,11 +54,11 @@ describe('报告顺序:回放和谱子在前,数据在后', () => {
     expect(src).toMatch(/const analysisBlock = \(/);
   });
 
-  it('那一块里确实是分步分析 / 总量,不是个空壳', () => {
+  it('那一块只保留分步分析和阶段补充信息', () => {
     const from = src.indexOf('const analysisBlock = (');
     const block = src.slice(from, src.indexOf('\n  return (', from));
     expect(block).toMatch(/<StepAnalysis\b/);
-    expect(block).toMatch(/<TimerReconstructMetrics\b/);
+    expect(block).not.toMatch(/TimerReconstructMetrics|reconstruct-waste-line/);
   });
 
   it('渲染时排在回放后面', () => {
@@ -118,11 +117,10 @@ describe('同一个数不写两遍', () => {
     expect(pb).toMatch(/<SolveTimeline[\s\S]{0,240}showLabels/);
   });
 
-  it('HTM 那张卡不再和摘要里的「步数 / TPS」重复', () => {
-    const stats = read(RECONSTRUCT_METRICS);
-    expect(stats).not.toMatch(/>HTM</);
-    // QTM 留着:四分之一圈是另一个口径,摘要里没有。
-    expect(stats).toMatch(/>QTM</);
+  it('废步只在动作序列里标记,不再额外显示汇总说明', () => {
+    expect(report).toMatch(/const wasted = wastedIdx\.has\(i\)/);
+    expect(report).toMatch(/reconstruct-move-row[^\n]*wasted/);
+    expect(report).not.toMatch(/reconstruct-waste-line/);
   });
 });
 
