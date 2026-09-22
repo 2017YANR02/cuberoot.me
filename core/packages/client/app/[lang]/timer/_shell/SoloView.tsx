@@ -172,7 +172,7 @@ import {
   timerRealScrambleReady,
 } from '@cuberoot/shared/timer';
 import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
-import { shouldAutoRecap } from '../_lib/reconstruct/recap';
+import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import {
   isNonWcaEvent,
   nextNonWcaScramble,
@@ -1308,6 +1308,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const moveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
+  const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
+  const autoRecapInputBlockedRef = useRef(false);
   /** The smart cube connected when the attempt STARTED. Snapshotted with the
    *  other at-start refs so a mid-solve disconnect can't erase who solved it. */
   const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
@@ -1395,8 +1397,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // 桌面在右栏展开复盘；窄屏直接进入整屏详情。两者共用 shouldAutoRecap，
     // 没有动作流或关闭开关时都不主动打断下一把流程。
     const showRecap = shouldAutoRecap(solve, { autoRecap: settings.autoRecap });
+    autoRecapDismissGestureRef.current.reset();
+    autoRecapInputBlockedRef.current = false;
     setRecapId(showRecap ? solve.id : null);
     if (showRecap && !isDesktop) {
+      autoRecapInputBlockedRef.current = true;
       setModalSolve({ s: solve, idx: solveIndex, autoRecap: true });
     }
     const showSolution = settings.autoOpenSolution && Boolean(solve.device && solve.moves?.length);
@@ -1532,6 +1537,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     autoReadyOnScramble: () => !competitionRef.current.enabled
       && getSettings().bluetoothAutoReady === 'scrambled',
     canStartAttempt: () => attemptCanStartRef.current
+      && !autoRecapInputBlockedRef.current
       && (!competitionRef.current.enabled || competitionRef.current.canStart()),
     getPhase: () => phaseSnapshotRef.current,
     isTimingEnabled: () => competitionRef.current.enabled || getSettings().timingEnabled,
@@ -2188,10 +2194,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (timer.phase !== 'stopped') setRecapId(null);
   }, [timer.phase]);
   useEffect(() => {
-    if (isDesktop || !recapId) return;
+    if (isDesktop || !recapId) {
+      autoRecapDismissGestureRef.current.reset();
+      autoRecapInputBlockedRef.current = false;
+      return;
+    }
     const subscribers = bluetoothSubscribersRef.current;
-    const dismissAutoRecapOnMove = () => {
-      // BLE onMove 会先尝试起表再广播，因此关闭窗口不会吞掉下一把的第一手。
+    const dismissAutoRecapOnMove = (move: string) => {
+      if (!autoRecapDismissGestureRef.current.observe(move)) return;
+      autoRecapInputBlockedRef.current = false;
       setModalSolve(current => (
         current?.autoRecap && current.s.id === recapId ? null : current
       ));
@@ -2200,6 +2211,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     subscribers.add(dismissAutoRecapOnMove);
     return () => { subscribers.delete(dismissAutoRecapOnMove); };
   }, [isDesktop, recapId]);
+  const markAutoRecapDisplayed = useCallback(() => {
+    if (!autoRecapInputBlockedRef.current) return;
+    autoRecapDismissGestureRef.current.markDisplayed();
+  }, []);
 
   // Gesture: open the last solve's detail (to add a note / comment).
   const commentLast = useCallback(() => {
@@ -3276,6 +3291,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             solve={modalSolve.s}
             index={displayIdx}
             isZh={isZh}
+            onDisplayed={modalSolve.autoRecap ? markAutoRecapDisplayed : undefined}
             onClose={() => {
               setModalSolve(null);
               if (modalSolve.autoRecap) setRecapId(null);
