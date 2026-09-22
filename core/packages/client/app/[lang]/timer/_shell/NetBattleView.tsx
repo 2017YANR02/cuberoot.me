@@ -776,7 +776,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   const bluetoothCube = useBluetoothCube({
     onGyro: settings.gyroEnabled ? (q) => { gyroQuatRef.current = q; } : undefined,
-    onMove: (move, ts, metadata) => {
+    onMove: (move, ts, _facelets, metadata) => {
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
       // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
       // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。

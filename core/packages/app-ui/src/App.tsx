@@ -7,10 +7,8 @@ import { encodeReplayUrl } from '@cuberoot/shared/timer/replay-encode';
 import { shouldAutoRecap } from '@cuberoot/shared/timer/reconstruct/recap';
 import { Spinner } from '@cuberoot/timer-ui/Spinner';
 import { isWcaIdFormat, ownerKey } from '@cuberoot/shared/account';
-import {
-  createSmartCubeGuidanceController,
-  type SmartCubeGuidanceState,
-} from '@cuberoot/shared/smart-cube/scramble-guidance';
+import type { SmartCubeGuidanceState } from '@cuberoot/shared/smart-cube/scramble-guidance';
+import { SmartCubeSoloTimerController } from '@cuberoot/shared/smart-cube/solo-timer';
 import {
   decodeMobileEmbedAuthClear,
   decodeMobileEmbedAccountManage,
@@ -132,7 +130,6 @@ import {
   TIMER_WCA_SCRAMBLE_SOURCE_COPY,
   TIMER_WCA_MIN_DATE,
   timerSupportsRealWcaScrambles,
-  timerSmartCubeStartsAttemptOnTurn,
   timerSupportsStageSplits,
   timerSupportsSmartCubeAutoTiming,
   TimerAttemptSplitRecorder,
@@ -2381,6 +2378,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     scramble,
     sourceMatches: slotMatchesActiveSource,
   });
+  const attemptCanStartRef = useRef(attemptCanStart);
+  attemptCanStartRef.current = attemptCanStart;
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
   const smartCubeMoveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
   const smartCubeGyroRecorderRef = useRef(new GyroRecorder());
@@ -2521,6 +2520,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   timingRunningRef.current = timer.machine.phase === 'running';
   timerPhaseRef.current = timer.machine.phase;
   cancelTimerArmRef.current = timer.cancelArm;
+  const timerRef = useRef(timer);
+  timerRef.current = timer;
   host.useTimerEffects(timerMode === 1
     ? timer.machine.phase
     : battleModeActive ? 'running' : 'idle');
@@ -2546,15 +2547,46 @@ export function App({ host }: { host: InstalledAppHost }) {
       ? smartCubeTargetFacelets(scramble)
       : null
   ), [activeEvent, scramble]);
-  const smartCubeGuidanceController = useMemo(() => createSmartCubeGuidanceController({
-    onChange: setSmartCubeGuidance,
-    solve: solveMobileSmartCubeFixup,
-  }), []);
   const [smartCubeAnchor, setSmartCubeAnchor] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
   const [smartCubeAnchorController] = useState(() => new LiveSmartCubeAnchor({
     solve: solveMobileSmartCubeAnchor,
     onChange: setSmartCubeAnchor,
   }));
+  const smartCubeSoloController = useMemo(() => new SmartCubeSoloTimerController({
+    armFromCube: () => {
+      const armed = timerRef.current.armFromCube();
+      if (armed) timerPhaseRef.current = (storeRef.current?.settings.inspectionSec ?? 0) > 0
+        ? 'inspecting'
+        : 'ready';
+      return armed;
+    },
+    autoReadyOnScramble: () => storeRef.current?.settings.bluetoothAutoReady === 'scrambled',
+    canStartAttempt: () => attemptCanStartRef.current,
+    getPhase: () => timerPhaseRef.current,
+    isTimingEnabled: () => timingEnabledRef.current,
+    onGuidanceChange: setSmartCubeGuidance,
+    onMove: ({ move, timestamp }) => {
+      for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
+    },
+    recordMove: ({ move, timestamp }) => {
+      if (!smartCubeMoveRecorderRef.current.record(move, timestamp)) return;
+      const attempt = attemptRef.current;
+      if (!attempt) return;
+      attemptSplitRecorder.observeMoves({
+        event: attempt.event,
+        moves: smartCubeMoveRecorderRef.current.snapshot(),
+        scramble: attempt.scramble,
+        timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
+      });
+    },
+    solve: solveMobileSmartCubeFixup,
+    startFromCube: (timestamp) => timerRef.current.startFromCube(timestamp),
+    stopFromCube: (timestamp) => {
+      const stopped = timerRef.current.stopFromCube(timestamp);
+      if (stopped) timerPhaseRef.current = 'stopped';
+      return stopped;
+    },
+  }), [attemptSplitRecorder]);
   const smartCube = host.useSmartCube({
     language,
     onGyro: (quaternion, timestamp) => {
@@ -2567,57 +2599,18 @@ export function App({ host }: { host: InstalledAppHost }) {
     onMove: (move, timestamp, facelets, metadata) => {
       const futureHistory = metadata?.futureHistory === true;
       smartCubeAnchorController.move(move);
-      try {
       if (timerModeRef.current !== 1) {
         if (!futureHistory) battleSmartCubeHandlersRef.current?.onMove(move, timestamp, facelets);
         return;
       }
-      const recordMove = () => {
-        if (!smartCubeMoveRecorderRef.current.record(move, timestamp)) return;
-        const attempt = attemptRef.current;
-        if (!attempt) return;
-        attemptSplitRecorder.observeMoves({
-          event: attempt.event,
-          moves: smartCubeMoveRecorderRef.current.snapshot(),
-          scramble: attempt.scramble,
-          timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
-        });
-      };
-      if (timerPhaseRef.current === 'running') {
-        recordMove();
-        smartCubeGuidanceController.setRunning(true);
-        return;
-      }
-      if (futureHistory) return;
-      const event = activeEventRef.current;
-      if (!timerSupportsSmartCubeAutoTiming(event)) return;
-      // An armed attempt consumes its first solve turn before scramble guidance
-      // sees the deliberately off-target cube state.
-      if (timerSmartCubeStartsAttemptOnTurn(event) && timer.startFromCube(timestamp)) {
-        recordMove();
-        smartCubeGuidanceController.setRunning(true);
-        return;
-      }
-      const observation = smartCubeGuidanceController.observe(facelets);
-      if (observation.completedNow
-        && timingEnabled
-        && storeRef.current?.settings.bluetoothAutoReady === 'scrambled'
-        && timerSmartCubeStartsAttemptOnTurn(event)) timer.armFromCube();
-      } finally {
-        if (!futureHistory) {
-          for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
-        }
-      }
+      smartCubeSoloController.move({ facelets, metadata, move, timestamp });
     },
     onSolved: (timestamp) => {
       if (timerModeRef.current !== 1) {
         battleSmartCubeHandlersRef.current?.onSolved(timestamp);
         return;
       }
-      const event = activeEventRef.current;
-      if (timingEnabled
-        && timerSupportsSmartCubeAutoTiming(event)
-        && timer.stopFromCube(timestamp)) timerPhaseRef.current = 'stopped';
+      smartCubeSoloController.solved(timestamp);
     },
   });
   connectedSmartCubeRef.current = smartCube.phase === 'connected' && smartCube.deviceName
@@ -2650,33 +2643,38 @@ export function App({ host }: { host: InstalledAppHost }) {
     : null;
 
   useLayoutEffect(() => {
-    smartCubeGuidanceController.setContext(timerMode === 1 && smartCubeTarget && currentScrambleEntry
-      ? { id: currentScrambleEntry.id, scramble, targetFacelets: smartCubeTarget }
+    smartCubeSoloController.setContext(timerMode === 1 && currentScrambleEntry
+      ? {
+          event: currentScrambleEntry.event,
+          id: currentScrambleEntry.id,
+          scramble,
+          targetFacelets: smartCubeTarget,
+        }
       : null);
-  }, [currentScrambleEntry?.id, scramble, smartCubeGuidanceController, smartCubeTarget, timerMode]);
+  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode]);
 
   useLayoutEffect(() => {
     const connected = smartCube.phase === 'connected';
-    smartCubeGuidanceController.setConnected(connected);
+    smartCubeSoloController.setConnected(connected);
     if (!connected) {
       timer.cancelArm();
       smartCubeQuatRef.current = null;
     }
-    return () => smartCubeGuidanceController.setConnected(false);
-  }, [smartCube.phase, smartCubeGuidanceController, timer.cancelArm]);
+    return () => smartCubeSoloController.setConnected(false);
+  }, [smartCube.phase, smartCubeSoloController, timer.cancelArm]);
 
   useLayoutEffect(() => {
-    smartCubeGuidanceController.setRunning(timer.machine.phase === 'running');
-  }, [smartCubeGuidanceController, timer.machine.phase]);
+    smartCubeSoloController.setRunning(timer.machine.phase === 'running');
+  }, [smartCubeSoloController, timer.machine.phase]);
 
   useLayoutEffect(() => {
-    if (smartCube.facelets) smartCubeGuidanceController.syncFacelets(smartCube.facelets);
+    if (smartCube.facelets) smartCubeSoloController.syncFacelets(smartCube.facelets);
   }, [
     currentScrambleEntry?.id,
     scramble,
     smartCube.facelets,
     smartCube.phase,
-    smartCubeGuidanceController,
+    smartCubeSoloController,
     smartCubeTarget,
     timer.machine.phase,
     timerMode,

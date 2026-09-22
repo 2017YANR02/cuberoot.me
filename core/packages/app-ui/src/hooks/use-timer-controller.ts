@@ -144,10 +144,7 @@ export function useTimerController({
 
   const armFromCube = useCallback((): boolean => {
     if (!enabledRef.current || !canStartRef.current) return false;
-    const phase = machineRef.current.phase;
-    if (phase !== 'idle' && phase !== 'stopped') return false;
-    apply({ type: 'press-down', nowMs: performance.now() });
-    return true;
+    return apply({ type: 'arm-from-cube', nowMs: performance.now() }).accepted === true;
   }, [apply]);
 
   const cancelArm = useCallback((): boolean => {

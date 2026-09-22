@@ -358,7 +358,7 @@ function useSlot(
   // 晚于挂载 effect,拿不到 null。
   const selfRef = useRef<BluetoothCubeHandle | null>(null);
   const handle = useBluetoothCube({
-    onMove: (m, ts, metadata) => {
+    onMove: (m, ts, _facelets, metadata) => {
       onMove(slot, m, ts);
       if (selfRef.current && !metadata?.futureHistory) checkArm(slot, selfRef.current);
     },

@@ -448,7 +448,7 @@ describe('Web migration consumes the shared contract', () => {
       /if \(!await competition\.begin\(scrambleTarget, bluetoothCube\.status\)\) return;[\s\S]*?if \(!latest\?\.status\.connected \|\| latest\.hijacked \|\| !latestFaces \|\| toFaceletString\(latestFaces\) !== scrambleTarget\) \{[\s\S]*?return;\s*\}\s*timer\.onPressDown\(\)/,
     );
     expect(soloSource).toMatch(
-      /startFromCubeRef\.current[\s\S]*?if \(!attemptCanStartRef\.current\) return;[\s\S]*?timer\.startFromCube/,
+      /new SmartCubeSoloTimerController[\s\S]*?canStartAttempt: \(\) => attemptCanStartRef\.current[\s\S]*?competitionRef\.current\.canStart\(\)[\s\S]*?startFromCube: \(timestamp\) => \{[\s\S]*?timerHandleRef\.current\.startFromCube\(timestamp\)/,
     );
     expect(soloSource).toMatch(
       /if \(timerEvent\.state === 'RUNNING'\)[\s\S]*?if \(!attemptCanStartRef\.current\)[\s\S]*?timer\.startNow/,

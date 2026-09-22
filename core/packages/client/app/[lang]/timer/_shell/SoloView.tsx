@@ -74,7 +74,6 @@ import {
   timerCanHandleAttemptPress,
   timerCanStartAttempt,
   timerEventSupportsDrill,
-  timerSmartCubeStartsAttemptOnTurn,
   timerSupportsStageSplits,
   timerSupportsSmartCubeAutoTiming,
   timerCanUseGestureWheel,
@@ -100,10 +99,8 @@ import {
   type TimerRandomDifficultyResult,
   TimerAttemptSplitRecorder,
 } from '@cuberoot/shared/timer';
-import {
-  createSmartCubeGuidanceController,
-  type SmartCubeGuidanceState,
-} from '@cuberoot/shared/smart-cube/scramble-guidance';
+import type { SmartCubeGuidanceState } from '@cuberoot/shared/smart-cube/scramble-guidance';
+import { SmartCubeSoloTimerController } from '@cuberoot/shared/smart-cube/solo-timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import type { Cube222SpecialType } from '@cuberoot/puzzle-solvers/cube222';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
@@ -1512,31 +1509,66 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 时钟相减出来的是垃圾。这里自己记一个本地起点。
   const gyroRecRef = useRef(new GyroRecorder());
   const gyroStartRef = useRef(0);
-
-  /**
-   * The first turn of an armed attempt starts the clock — csTimer's behaviour
-   * (`timer/giiker.js:166`), and the missing half of auto-ready: arming used to
-   * leave the timer waiting for a space bar the user's hands had already left,
-   * so the inspection countdown just ran on to DNF while they solved.
-   *
-   * Assigned every render rather than memoised because it closes over `timer`,
-   * and the BLE handler reads it through the ref — same shape as
-   * `externalTimeRecordRef` above.
-   */
-  const startFromCubeRef = useRef<(ts: number) => void>(() => {});
-  startFromCubeRef.current = (ts: number) => {
-    if (competitionRef.current.enabled && !competitionRef.current.canStart()) return;
-    if (!competitionRef.current.enabled && !getSettings().timingEnabled) return; // 练习模式:换题不计时
-    if (!attemptCanStartRef.current) return;
-    if (!timerSmartCubeStartsAttemptOnTurn(eventAtStartRef.current)) return;
-    // The phase check lives inside startFromCube, against the timer's own
-    // synchronous phase — two turns from one BLE batch must not start twice.
-    if (!timer.startFromCube(ts)) return;
-    phaseSnapshotRef.current = 'running';
-    cubeStartedRef.current = true;
-    gyroRecRef.current.reset();
-    gyroStartRef.current = performance.now();
-  };
+  const timerHandleRef = useRef(timer);
+  timerHandleRef.current = timer;
+  const liveAnchorRef = useRef<LiveSmartCubeAnchor | null>(null);
+  const scrambleTarget = useMemo(() => (
+    timerSupportsSmartCubeAutoTiming(event) && scramble.trim()
+      ? smartCubeTargetFacelets(scramble)
+      : null
+  ), [event, scramble]);
+  const [scrambleGuidance, setScrambleGuidance] = useState<SmartCubeGuidanceState>({
+    correctionActive: false,
+    hint: null,
+    match: null,
+  });
+  const smartCubeSoloController = useMemo(() => new SmartCubeSoloTimerController<CubeMoveMetadata>({
+    armFromCube: () => {
+      warmupSound();
+      const armed = timerHandleRef.current.armFromCube();
+      if (armed) phaseSnapshotRef.current = getSettings().inspectionSec > 0 ? 'inspecting' : 'ready';
+      return armed;
+    },
+    autoReadyOnScramble: () => !competitionRef.current.enabled
+      && getSettings().bluetoothAutoReady === 'scrambled',
+    canStartAttempt: () => attemptCanStartRef.current
+      && (!competitionRef.current.enabled || competitionRef.current.canStart()),
+    getPhase: () => phaseSnapshotRef.current,
+    isTimingEnabled: () => competitionRef.current.enabled || getSettings().timingEnabled,
+    onGuidanceChange: setScrambleGuidance,
+    onMove: ({ metadata, move, timestamp }) => {
+      for (const subscriber of bluetoothSubscribersRef.current) {
+        try { subscriber(move, timestamp, metadata); } catch (err) { console.error('[bt-broadcast]', err); }
+      }
+    },
+    recordMove: ({ move, timestamp }) => {
+      if (!moveRecorderRef.current.record(move, timestamp)) return;
+      attemptSplitRecorder.observeMoves({
+        event: eventAtStartRef.current,
+        moves: moveRecorderRef.current.snapshot(),
+        scramble: scrambleAtStartRef.current,
+        timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
+      });
+    },
+    solve: async (fromFacelets, targetFacelets) => {
+      const from = fromFaceletString(fromFacelets);
+      const target = fromFaceletString(targetFacelets);
+      return from && target ? fixupScramble(from, target) : null;
+    },
+    startFromCube: (timestamp) => {
+      if (!timerHandleRef.current.startFromCube(timestamp)) return false;
+      phaseSnapshotRef.current = 'running';
+      cubeStartedRef.current = true;
+      gyroRecRef.current.reset();
+      gyroStartRef.current = performance.now();
+      return true;
+    },
+    stopFromCube: (timestamp) => {
+      const stopped = timerHandleRef.current.stopFromCube(timestamp);
+      if (stopped) phaseSnapshotRef.current = 'stopped';
+      return stopped;
+    },
+  }), [attemptSplitRecorder]);
 
   /**
    * dev 专用:没有真魔方时把**录制**这条路走通。
@@ -1574,22 +1606,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         }
       }
       : undefined,
-    onMove: (move: string, ts: number, metadata?: CubeMoveMetadata) => {
-      // Before the broadcast, deliberately: if this turn starts the clock, the
-      // subscribers below have to see it as the solve's first move. They read
-      // the phase from `phaseSnapshotRef`, which this sets synchronously —
-      // waiting for React to re-render would lose the move, and BLE can hand us
-      // two turns of the same batch inside one call stack.
-      startFromCubeRef.current(ts);
-      for (const sub of bluetoothSubscribersRef.current) {
-        try { sub(move, ts, metadata); } catch (err) { console.error('[bt-broadcast]', err); }
-      }
+    onMove: (move: string, ts: number, facelets: string, metadata?: CubeMoveMetadata) => {
+      liveAnchorRef.current?.move(move);
+      smartCubeSoloController.move({ facelets, metadata, move, timestamp: ts });
     },
     onSolved: (atMs) => {
       competitionSolvedRef.current = competitionRef.current.enabled && atMs !== undefined;
-      if (phaseSnapshotRef.current === 'running' && timer.stopFromCube(atMs)) {
-        phaseSnapshotRef.current = 'stopped';
-      }
+      smartCubeSoloController.solved(atMs);
     },
     onNeedMac: requestMac,
     // The hook has always emitted these; nothing consumed them, so a cube that
@@ -1641,23 +1664,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [competition.enabled]);
   useEffect(() => { if (competition.enabled && bluetoothCube.hijacked) bluetoothCube.clearHijack(); }, [competition.enabled, bluetoothCube.hijacked, bluetoothCube.clearHijack]);
 
-  useEffect(() => {
-    const subs = bluetoothSubscribersRef.current;
-    const recorder = (m: string, ts: number) => {
-      if (phaseSnapshotRef.current !== 'running') return;
-      if (!moveRecorderRef.current.record(m, ts)) return;
-      const elapsedMs = Math.max(0, ts - attemptStartedAtRef.current);
-      attemptSplitRecorder.observeMoves({
-        event: eventAtStartRef.current,
-        moves: moveRecorderRef.current.snapshot(),
-        scramble: scrambleAtStartRef.current,
-        timeMs: elapsedMs,
-      });
-    };
-    subs.add(recorder);
-    return () => { subs.delete(recorder); };
-  }, [attemptSplitRecorder]);
-
   // Dev-only: publish the fake-smart-cube console API. Gives the whole
   // smart-cube flow (connect → scramble check → auto-stop → live view) a way
   // to be exercised without hardware. No-op in production builds.
@@ -1680,12 +1686,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
     onChange: setLiveAnchor,
   }), []);
-  useEffect(() => {
-    const subs = bluetoothSubscribersRef.current;
-    const mirror = (m: string) => { liveAnchor.move(m); };
-    subs.add(mirror);
-    return () => { subs.delete(mirror); liveAnchor.setConnection(null); };
-  }, [liveAnchor]);
+  liveAnchorRef.current = liveAnchor;
+  useEffect(() => () => liveAnchor.setConnection(null), [liveAnchor]);
   const cubeConnected = bluetoothCube.status.connected;
   useEffect(() => {
     if (!cubeConnected) gyroQuatRef.current = null;
@@ -1789,104 +1791,33 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     </div>
   ) : undefined;
 
-  // ── Scramble verification ───────────────────────────────────────
-  // A smart cube knows its own state, so it can answer the one question the
-  // scramble line can't: did the user actually apply it correctly? We compare
-  // the tracked facelets against the scramble applied to a solved cube.
-  //
-  // Only 3x3: the tracker models a 3x3 (every smart cube on the market is one),
-  // and events whose scramble isn't plain face notation (FMC's solution, MBLD's
-  // multiple scrambles) have nothing meaningful to compare against.
-  const scrambleTarget = useMemo(() => (
-    timerSupportsSmartCubeAutoTiming(event) && scramble.trim()
-      ? smartCubeTargetFacelets(scramble)
-      : null
-  ), [event, scramble]);
-
-  const [scrambleGuidance, setScrambleGuidance] = useState<SmartCubeGuidanceState>({
-    correctionActive: false,
-    hint: null,
-    match: null,
-  });
-  const scrambleGuidanceController = useMemo(() => createSmartCubeGuidanceController({
-    onChange: setScrambleGuidance,
-    solve: async (fromFacelets, targetFacelets) => {
-      const from = fromFaceletString(fromFacelets);
-      const target = fromFaceletString(targetFacelets);
-      return from && target ? fixupScramble(from, target) : null;
-    },
-  }), []);
+  // ── Scramble verification and Solo timing orchestration ─────────
   useLayoutEffect(() => {
-    scrambleGuidanceController.setContext(scrambleTarget
-      ? {
-        id: currentScrambleEntry.id,
-        scramble,
-        targetFacelets: scrambleTarget,
-      }
-      : null);
-  }, [currentScrambleEntry.id, scramble, scrambleGuidanceController, scrambleTarget]);
-  /**
-   * 「打乱正确即预备」 —— csTimer's default (`giiSD='s'`, `giiker.js:143`). Once the
-   * scramble is on the cube there is nothing left for the user to signal: the
-   * cube can see it matches, so a keypress on top of that exists only because
-   * software used not to be able to tell. Arming is passive — the clock still
-   * waits for the first turn — which is what makes this safe as a default.
-   */
-  const armFromScrambleRef = useRef<() => void>(() => {});
-  armFromScrambleRef.current = () => {
-    if (competitionRef.current.enabled) return;
-    const s = getSettings();
-    if (s.bluetoothAutoReady !== 'scrambled' || !s.timingEnabled) return;
-    if (!timerSmartCubeStartsAttemptOnTurn(event)) return;
-    const ph = phaseSnapshotRef.current;
-    if (ph !== 'idle' && ph !== 'stopped') return;
-    if (!attemptCanStartRef.current) return;
-    warmupSound();
-    timer.armFromCube();
-    phaseSnapshotRef.current = s.inspectionSec > 0 ? 'inspecting' : 'ready';
-  };
-
-  useEffect(() => {
-    const subs = bluetoothSubscribersRef.current;
-    const verify = (_move: string, _ts: number, metadata?: CubeMoveMetadata) => {
-      if (metadata?.futureHistory) return;
-      const running = phaseSnapshotRef.current === 'running';
-      scrambleGuidanceController.setRunning(running);
-      if (running) return;
-      const faces = bluetoothCubeRef.current?.getFaces();
-      if (!faces) return;
-      const observation = scrambleGuidanceController.observe(toFaceletString(faces));
-      // 「打乱正确即预备」 belongs here and not in an effect over match state:
-      // it is the EVENT of a turn completing the scramble, not the state of
-      // matching. As state it also fires on the commit where a solve ends —
-      // the match is still `true` from before the solve there (the
-      // check skips while running), so every solve armed the next attempt and
-      // the next scramble's own turns started the clock.
-      if (observation.completedNow) armFromScrambleRef.current();
-    };
-    subs.add(verify);
-    return () => { subs.delete(verify); };
-  }, [scrambleGuidanceController]);
+    smartCubeSoloController.setContext({
+      event,
+      id: currentScrambleEntry.id,
+      scramble,
+      targetFacelets: scrambleTarget,
+    });
+  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController]);
   useLayoutEffect(() => {
-    scrambleGuidanceController.setConnected(cubeConnected);
-    return () => scrambleGuidanceController.setConnected(false);
-  }, [cubeConnected, scrambleGuidanceController]);
+    smartCubeSoloController.setConnected(cubeConnected);
+    return () => smartCubeSoloController.setConnected(false);
+  }, [cubeConnected, smartCubeSoloController]);
   // Mid-solve the strip goes back to plain text: the cube has left the
   // scrambled state on purpose, so "you still owe R" would be nonsense.
   useLayoutEffect(() => {
-    scrambleGuidanceController.setRunning(timer.phase === 'running');
-  }, [scrambleGuidanceController, timer.phase]);
+    smartCubeSoloController.setRunning(timer.phase === 'running');
+  }, [smartCubeSoloController, timer.phase]);
   useLayoutEffect(() => {
-    if (bluetoothCube.facelets && !bluetoothCube.lastMoveMetadata?.futureHistory) {
-      scrambleGuidanceController.syncFacelets(bluetoothCube.facelets);
-    }
+    if (bluetoothCube.facelets) smartCubeSoloController.syncFacelets(bluetoothCube.facelets);
   }, [
     bluetoothCube.facelets,
-    bluetoothCube.lastMoveMetadata,
     cubeConnected,
     currentScrambleEntry.id,
+    event,
     scramble,
-    scrambleGuidanceController,
+    smartCubeSoloController,
     scrambleTarget,
     timer.phase,
   ]);
