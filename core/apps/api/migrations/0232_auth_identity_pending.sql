@@ -6,7 +6,6 @@ CREATE TABLE auth_identity_pending (
   profile JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(profile) = 'object'),
   apple_refresh_token_encrypted BYTEA,
   apple_token_key_version SMALLINT,
-  attempts SMALLINT NOT NULL DEFAULT 0 CHECK (attempts BETWEEN 0 AND 5),
   expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT auth_identity_pending_apple_credential CHECK (
