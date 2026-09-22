@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "de762259e5d1ee68ec6c4d7d4f9ab2611161d78f260d80a105d7fb78e902c749", "reason": "复核并同步抖音网站与小程序登录：网站登录面板及 App 共用授权入口新增官方抖音 OAuth provider；已有网站账号顶部突出显示六位一次性小程序登录码；小程序使用 UnionID，老 OpenID 身份在确认无冲突后原位升级；六位码全局唯一、限时、单次使用，小程序票据连续五次输错即失效。流程图及中英文说明已同步网站应用凭据和小程序密钥相互独立的部署边界；仍需分别部署网站/API、上传小程序并完成两端真机验收。"}
+{"fingerprint": "6d05e1be2dee100af14fa31f8a36e845fc75c4b329017390adfb2463aded8f44", "reason": "复核抖音网站登录的实际后台配置：扫码授权重定向 URL 已保存为带末尾斜杠的 https://cuberoot.me/auth/social/callback/，服务端只对抖音授权请求使用该精确地址，微信、QQ、支付宝回调保持不变。授权、绑定、合并和小程序流程语义未变；网站应用密钥仍须独立配置并完成真人扫码验收。"}
 */
 
 import type { ReactNode } from 'react';

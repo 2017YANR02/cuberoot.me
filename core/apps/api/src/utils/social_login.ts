@@ -32,6 +32,8 @@ export interface SocialUser {
 // 用 PUBLIC_SITE_ORIGIN(支付已在用)保证与前端跳转时的 origin 一致,免 www/apex 漂移。
 const SITE_ORIGIN = (process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me').replace(/\/+$/, '');
 const SOCIAL_REDIRECT = `${SITE_ORIGIN}/auth/social/callback`;
+// 抖音网站应用后台按完整 URL 逐字匹配；当前备案地址包含末尾斜杠。
+const DOUYIN_REDIRECT = `${SOCIAL_REDIRECT}/`;
 
 // ── 微信开放平台「网站应用」扫码登录(需企业主体 + ¥300/年认证)──
 const WECHAT_APP_ID = process.env.WECHAT_LOGIN_APP_ID || '';
@@ -107,10 +109,10 @@ export function verifySocialState(state: string, expectProvider: SocialProvider 
   return { intent: i };
 }
 
-/** 服务端下发的授权页 URL(内部生成签名 state,redirect_uri 固定为 SOCIAL_REDIRECT)。未配返 null。 */
+/** 服务端下发的授权页 URL(内部生成签名 state,redirect_uri 与各平台后台配置逐字一致)。未配返 null。 */
 export function socialAuthorizeUrl(provider: SocialProvider, intent: SocialIntent): string | null {
   if (!socialLoginConfigured(provider)) return null;
-  const redirect = encodeURIComponent(SOCIAL_REDIRECT);
+  const redirect = encodeURIComponent(provider === 'douyin' ? DOUYIN_REDIRECT : SOCIAL_REDIRECT);
   const st = encodeURIComponent(signSocialState(provider, intent));
   if (provider === 'wechat') {
     // 网站应用扫码登录;#wechat_redirect 结尾为微信强制要求。
@@ -294,5 +296,6 @@ function beijingTimestamp(): string {
  *   QQ:    QQ_APP_ID / QQ_APP_KEY(QQ 互联「网站应用」APPID/APPKEY)
  *   支付宝: 复用 ALIPAY_APP_ID / ALIPAY_PRIVATE_KEY(支付那套),另需 ALIPAY_LOGIN_ENABLED=1 显式开启
  *   抖音:  DOUYIN_LOGIN_CLIENT_KEY / DOUYIN_LOGIN_CLIENT_SECRET(抖音开放平台「网站应用」)
- * 各平台后台回调域/地址统一登记:  https://cuberoot.me/auth/social/callback(域名 cuberoot.me 已 ICP 备案)
+ * 微信 / QQ / 支付宝回调: https://cuberoot.me/auth/social/callback(域名 cuberoot.me 已 ICP 备案)
+ * 抖音网站应用回调:       https://cuberoot.me/auth/social/callback/(后台按完整 URL 逐字匹配)
  */
