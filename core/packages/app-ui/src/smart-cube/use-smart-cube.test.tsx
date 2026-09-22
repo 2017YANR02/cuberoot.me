@@ -102,6 +102,7 @@ describe('useInstalledSmartCube', () => {
     state.callbacks = null;
     state.connectionKind = '';
     delete transport.getServices;
+    delete transport.scanDevices;
     vi.clearAllMocks();
     vi.mocked(transport.requestDevice).mockResolvedValue({ id: 'cube', name: 'GAN16ui' });
     state.connect.mockResolvedValue(undefined);
@@ -146,7 +147,7 @@ describe('useInstalledSmartCube', () => {
     expect(cube.model).toBe('moyu32');
     expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
       namePrefix: 'GAN',
-      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
       services: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
       optionalServices: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
     }));
@@ -165,10 +166,41 @@ describe('useInstalledSmartCube', () => {
     expect(state.connectionKind).toBe('qiyi');
     expect(cube.model).toBe('qiyi');
     expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
-      namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
       services: expect.arrayContaining([QIYI_SERVICE_UUID]),
       optionalServices: expect.arrayContaining([QIYI_SERVICE_UUID]),
     }));
+  });
+
+  it('publishes a live device list and connects the selected desktop device without reopening a picker', async () => {
+    transport.getServices = vi.fn(async () => []);
+    const stopScan = vi.fn(async () => undefined);
+    transport.scanDevices = vi.fn(async (options, onDevices) => {
+      expect(options.namePrefixes).toEqual([
+        'GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i',
+      ]);
+      onDevices([
+        { id: 'moyu', name: 'WCU_MY32_A1B2', rssi: -41 },
+        { id: 'gan', name: 'GAN16ui', rssi: -58 },
+      ]);
+      return stopScan;
+    });
+    await act(async () => { await cube.disconnect(); });
+    const pickerCalls = vi.mocked(transport.requestDevice).mock.calls.length;
+
+    await act(async () => { await cube.scanDevices?.(); });
+    expect(cube.scanning).toBe(true);
+    expect(cube.availableDevices).toEqual([
+      { id: 'moyu', name: 'WCU_MY32_A1B2', rssi: -41 },
+      { id: 'gan', name: 'GAN16ui', rssi: -58 },
+    ]);
+
+    await act(async () => { await cube.connect('moyu'); });
+    expect(stopScan).toHaveBeenCalledOnce();
+    expect(transport.requestDevice).toHaveBeenCalledTimes(pickerCalls);
+    expect(state.connectionKind).toBe('moyu32');
+    expect(cube.deviceName).toBe('WCU_MY32_A1B2');
+    expect(cube.availableDevices).toEqual([]);
   });
 
   it('clears tracked cube state on an unexpected disconnect', async () => {

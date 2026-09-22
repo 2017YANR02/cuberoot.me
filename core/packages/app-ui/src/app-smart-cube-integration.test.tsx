@@ -163,6 +163,30 @@ describe('installed App GAN lifecycle integration', () => {
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
   });
 
+  it('opens the desktop scan list and connects the selected smart cube', async () => {
+    const connect = vi.fn(async () => 'WCU_MY32_A1B2');
+    const scanDevices = vi.fn(async () => undefined);
+    await act(async () => setRadio({
+      ...radio,
+      availableDevices: [{ id: 'moyu', name: 'WCU_MY32_A1B2', rssi: -43 }],
+      connect,
+      deviceName: '',
+      phase: 'idle',
+      scanDevices,
+      scanning: false,
+      stopScan: vi.fn(async () => undefined),
+    }));
+    await settle();
+
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-connect')!.click());
+    await settle();
+    expect(scanDevices).toHaveBeenCalledOnce();
+    const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
+    expect(dialog.textContent).toContain('WCU_MY32_A1B2');
+    await act(async () => dialog.querySelector<HTMLButtonElement>('[aria-label="Connect WCU_MY32_A1B2"]')!.click());
+    expect(connect).toHaveBeenCalledWith('moyu');
+  });
+
   it.each([
     ['touch', '.timer-display-value'], ['mouse', '.timer-display-value'],
   ])('keeps legacy copy settings inert and %s presses on %s on the real timer', async (pointerType, selector) => {

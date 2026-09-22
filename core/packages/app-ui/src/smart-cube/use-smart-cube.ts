@@ -16,7 +16,7 @@ import { GanCubeConnection, type GanCubeStatus } from './gan-cube';
 import { GanV4CubeConnection, type GanV4CubeStatus } from './gan-v4-cube';
 import { Moyu32CubeConnection, type Moyu32CubeStatus } from './moyu32-cube';
 import { QiyiCubeConnection, type QiyiCubeStatus } from './qiyi-cube';
-import type { BleTransport } from './transport';
+import type { BleDeviceRef, BleRequestOptions, BleTransport } from './transport';
 
 type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32' | 'qiyi';
 
@@ -27,6 +27,40 @@ const DISCOVERABLE_CUBE_SERVICES = [
   MOYU32_SERVICE_UUID,
   QIYI_SERVICE_UUID,
 ] as const;
+
+const SMART_CUBE_NAME_PREFIXES = [
+  'GAN', 'MG', 'AiCube', 'Gi',
+  'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i',
+] as const;
+const SMART_CUBE_SCAN_TIMEOUT_MS = 8_000;
+
+function requestOptions(
+  language: InstalledAppSmartCubeOptions['language'],
+  supportsServiceDiscovery: boolean,
+): BleRequestOptions {
+  return {
+    captureManufacturerData: true,
+    namePrefix: 'GAN',
+    ...(supportsServiceDiscovery ? {
+      namePrefixes: [...SMART_CUBE_NAME_PREFIXES],
+      services: [...DISCOVERABLE_CUBE_SERVICES],
+    } : {}),
+    optionalServices: supportsServiceDiscovery
+      ? [...DISCOVERABLE_CUBE_SERVICES]
+      : [GAN_V4_SERVICE_UUID],
+    pickerLabels: language === 'zh' ? {
+      scanning: '正在扫描智能魔方…',
+      cancel: '取消',
+      availableDevices: '可用设备',
+      noDeviceFound: '没有发现设备',
+    } : {
+      scanning: 'Scanning for a smart cube…',
+      cancel: 'Cancel',
+      availableDevices: 'Available devices',
+      noDeviceFound: 'No device found',
+    },
+  };
+}
 
 function modelForDeviceName(name: string): InstalledCubeModel | null {
   if (matchesMoyu32Name(name)) return 'moyu32';
@@ -52,6 +86,10 @@ export function useInstalledSmartCube(
   const generationRef = useRef(0);
   const busyRef = useRef(false);
   const cleanupRef = useRef<Promise<void>>(Promise.resolve());
+  const scannedDevicesRef = useRef(new Map<string, BleDeviceRef>());
+  const scanGenerationRef = useRef(0);
+  const scanStopRef = useRef<(() => Promise<void>) | null>(null);
+  const scanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onMoveRef = useRef(onMove);
   const onSolvedRef = useRef(onSolved);
   const onGyroRef = useRef(onGyro);
@@ -59,6 +97,8 @@ export function useInstalledSmartCube(
   onSolvedRef.current = onSolved;
   onGyroRef.current = onGyro;
   const [phase, setPhase] = useState<InstalledAppSmartCube['phase']>('idle');
+  const [availableDevices, setAvailableDevices] = useState<readonly BleDeviceRef[]>([]);
+  const [scanning, setScanning] = useState(false);
   const [deviceName, setDeviceName] = useState('');
   const [model, setModel] = useState<InstalledCubeModel | null>(null);
   const [lastMove, setLastMove] = useState('');
@@ -106,6 +146,18 @@ export function useInstalledSmartCube(
     return cleanup;
   }, []);
 
+  const stopScan = useCallback(async () => {
+    scanGenerationRef.current++;
+    if (scanTimerRef.current !== null) {
+      globalThis.clearTimeout(scanTimerRef.current);
+      scanTimerRef.current = null;
+    }
+    const stop = scanStopRef.current;
+    scanStopRef.current = null;
+    setScanning(false);
+    await stop?.().catch(() => undefined);
+  }, []);
+
   const disconnect = useCallback(async () => {
     generationRef.current++;
     busyRef.current = false;
@@ -114,11 +166,56 @@ export function useInstalledSmartCube(
     setPhase('idle');
     setDeviceName('');
     resetCubeState();
-    await disposeConnection(connection);
-  }, [disposeConnection, resetCubeState]);
+    await Promise.all([stopScan(), disposeConnection(connection)]);
+  }, [disposeConnection, resetCubeState, stopScan]);
 
-  const connect = useCallback(async (): Promise<string> => {
+  const scanDevices = useCallback(async () => {
+    const transport = transportRef.current!;
+    if (!transport.scanDevices || connectionRef.current || busyRef.current) return;
+    await stopScan();
+    const generation = ++scanGenerationRef.current;
+    const current = () => scanGenerationRef.current === generation;
+    scannedDevicesRef.current = new Map();
+    setAvailableDevices([]);
+    setScanning(true);
+    setPhase((value) => value === 'error' ? 'idle' : value);
+    try {
+      await transport.initialize();
+      if (!current()) return;
+      const stop = await transport.scanDevices(
+        requestOptions(language, Boolean(transport.getServices)),
+        (devices) => {
+          if (!current()) return;
+          scannedDevicesRef.current = new Map(devices.map((device) => [device.id, device]));
+          setAvailableDevices(devices);
+        },
+      );
+      if (!current()) {
+        await stop().catch(() => undefined);
+        return;
+      }
+      scanStopRef.current = stop;
+      scanTimerRef.current = globalThis.setTimeout(() => {
+        if (!current()) return;
+        const finish = scanStopRef.current;
+        scanStopRef.current = null;
+        scanTimerRef.current = null;
+        setScanning(false);
+        void finish?.().catch(() => undefined);
+      }, SMART_CUBE_SCAN_TIMEOUT_MS);
+    } catch (error) {
+      if (current()) {
+        setScanning(false);
+        setPhase('error');
+      }
+      throw error;
+    }
+  }, [language, stopScan]);
+
+  const connect = useCallback(async (deviceId?: string): Promise<string> => {
     if (busyRef.current) throw new Error('connection already in progress');
+    const scannedDevice = deviceId ? scannedDevicesRef.current.get(deviceId) : undefined;
+    if (deviceId && !scannedDevice) throw new Error('smart cube is no longer available');
     const cleanup = disconnect();
     busyRef.current = true;
     const generation = ++generationRef.current;
@@ -131,28 +228,8 @@ export function useInstalledSmartCube(
       await transport.initialize();
       if (!current()) throw new Error('smart cube connection closed');
       const supportsServiceDiscovery = Boolean(transport.getServices);
-      const device = await transport.requestDevice({
-        captureManufacturerData: true,
-        namePrefix: 'GAN',
-        ...(supportsServiceDiscovery ? {
-          namePrefixes: ['GAN', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
-          services: [...DISCOVERABLE_CUBE_SERVICES],
-        } : {}),
-        optionalServices: supportsServiceDiscovery
-          ? [...DISCOVERABLE_CUBE_SERVICES]
-          : [GAN_V4_SERVICE_UUID],
-        pickerLabels: language === 'zh' ? {
-          scanning: '正在扫描智能魔方…',
-          cancel: '取消',
-          availableDevices: '可用设备',
-          noDeviceFound: '没有发现设备',
-        } : {
-          scanning: 'Scanning for a smart cube…',
-          cancel: 'Cancel',
-          availableDevices: 'Available devices',
-          noDeviceFound: 'No device found',
-        },
-      });
+      const device = scannedDevice
+        ?? await transport.requestDevice(requestOptions(language, supportsServiceDiscovery));
       if (!current()) throw new Error('smart cube connection closed');
       setPhase('connecting');
       setDeviceName(device.name);
@@ -218,6 +295,8 @@ export function useInstalledSmartCube(
       if (connection instanceof GanCubeConnection) {
         setModel(connection.getProtocol() ?? namedModel);
       }
+      scannedDevicesRef.current = new Map();
+      setAvailableDevices([]);
       setPhase('connected');
       return device.name;
     } catch (error) {
@@ -246,14 +325,25 @@ export function useInstalledSmartCube(
 
   useEffect(() => () => {
     generationRef.current++;
+    scanGenerationRef.current++;
     busyRef.current = false;
+    if (scanTimerRef.current !== null) globalThis.clearTimeout(scanTimerRef.current);
+    void scanStopRef.current?.().catch(() => undefined);
+    scanStopRef.current = null;
     sessionController.dispose();
     void disposeConnection(connectionRef.current);
     connectionRef.current = null;
   }, [disposeConnection, sessionController]);
 
+  const supportsDeviceScan = Boolean(transportRef.current?.scanDevices);
   return {
     connect, deviceName, disconnect, facelets, lastMove, model, phase, quaternion,
     requestState, resetState, solved, status,
+    ...(supportsDeviceScan ? {
+      availableDevices: availableDevices.map(({ id, name, rssi }) => ({ id, name, rssi })),
+      scanDevices,
+      scanning,
+      stopScan,
+    } : {}),
   };
 }
