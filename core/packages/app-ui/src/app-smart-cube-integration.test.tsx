@@ -197,7 +197,7 @@ describe('installed App GAN lifecycle integration', () => {
     await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button')!.click());
     await settle();
     await act(async () => move('F', 4_000));
-    expect(phase).toBe('holding');
+    expect(phase).toBe('ready');
     await act(async () => move('U', 5_000));
     expect(phase).toBe('running');
     await act(async () => move("U'", 5_250));
@@ -222,7 +222,7 @@ describe('installed App GAN lifecycle integration', () => {
 
   it('cancels pending preparation on disconnect and does not start on a stray post-disconnect turn', async () => {
     await act(async () => move('R', 1_000));
-    expect(phase).toBe('holding');
+    expect(phase).toBe('ready');
     await act(async () => setRadio({ ...radio, phase: 'idle', deviceName: '', facelets: '' }));
     expect(phase).toBe('idle');
     now = 2_000;

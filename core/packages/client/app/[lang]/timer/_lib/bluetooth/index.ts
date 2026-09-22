@@ -500,7 +500,12 @@ interface UseBluetoothCubeOpts {
   /** Called for each move. `timestamp` is a calibrated `performance.now()`-domain
    * estimate of when the cube made the move. The caller is responsible for
    * re-basing it against any "solve start" reference. */
-  onMove?: (move: string, timestamp: number, metadata?: CubeMoveMetadata) => void;
+  onMove?: (
+    move: string,
+    timestamp: number,
+    facelets: string,
+    metadata?: CubeMoveMetadata,
+  ) => void;
   /** Called when state transitions from unsolved → solved. Move-triggered
    * transitions carry that move's calibrated timestamp; state-only reports do not. */
   onSolved?: (timestamp?: number) => void;
@@ -663,7 +668,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         setFacelets(snapshot.facelets);
         setSolved(snapshot.solved);
       },
-      onMove: ({ metadata, move, timestamp }) => {
+      onMove: ({ facelets, metadata, move, timestamp }) => {
         // Persist a MAC only after a real frame decodes successfully.
         const pendingMac = pendingSaveMacRef.current;
         if (pendingMac) {
@@ -671,8 +676,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           pendingSaveMacRef.current = null;
         }
         if (calibratingRef.current) return;
-        if (metadata) onMoveRef.current?.(move, timestamp, metadata);
-        else onMoveRef.current?.(move, timestamp);
+        onMoveRef.current?.(move, timestamp, facelets, metadata);
       },
       onSolved: (timestamp) => {
         if (!calibratingRef.current) onSolvedRef.current?.(timestamp);
