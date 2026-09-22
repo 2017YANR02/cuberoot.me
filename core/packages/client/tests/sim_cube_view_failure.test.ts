@@ -6,7 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SimCubeView from '@cuberoot/timer-ui/SimCubeView';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 
-const state = vi.hoisted(() => ({ mount: vi.fn(), dispose: vi.fn(), push: vi.fn(), setup: vi.fn() }));
+const state = vi.hoisted(() => ({
+  mount: vi.fn(),
+  dispose: vi.fn(),
+  push: vi.fn(),
+  setup: vi.fn(),
+  setQuaternion: vi.fn(),
+}));
 vi.mock('@cuberoot/puzzle-render-core/sim/mountSimWorld', () => ({ mountSimWorld: state.mount }));
 let root: Root;
 let host: HTMLDivElement;
@@ -22,7 +28,7 @@ beforeEach(() => {
     puzzleKind: 3,
     controller: { turnsLocked: false, dragEmpty: 'orbit', onOrbit: null, touch: vi.fn(() => true) },
     scene: { rotation: { set() {} }, updateMatrix() {} },
-    cube: { quaternion: { set() {} }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
+    cube: { quaternion: { set: state.setQuaternion }, updateMatrix() {}, twister: { push: state.push, setup: state.setup, backlog: 0 }, instancedRenderer: { setStickering() {} } },
     } };
   });
   host = document.createElement('div'); document.body.append(host); root = createRoot(host);
@@ -62,6 +68,33 @@ describe('the single live/replay 3D failure surface', () => {
       view: 'smart', moves: [], quat: { w: 1, x: 0, y: 0, z: 0 },
     })));
     expect(state.mount.mock.calls[0][0].sceneRot).toEqual({ x: Math.atan2(4.1, 7.2), y: 0, z: 0 });
+  });
+
+  it('keeps following a slow continuous gyro rotation instead of settling to a whole orientation', async () => {
+    const quatRef = { current: { w: 1, x: 0, y: 0, z: 0 } };
+    await act(async () => root.render(createElement(SimCubeView, {
+      view: 'smart', moves: [], quatRef, sensorBasis: 'identity',
+    })));
+    await vi.waitFor(() => expect(state.mount).toHaveBeenCalledOnce());
+
+    const options = state.mount.mock.calls[0][0];
+    const world = state.mount.mock.results[0].value.world;
+    const displayedAngle = () => {
+      const call = state.setQuaternion.mock.calls.at(-1);
+      if (!call) throw new Error('Expected the gyro frame to update the cube quaternion');
+      const [, y, , w] = call;
+      return 2 * Math.atan2(Math.abs(y), Math.abs(w));
+    };
+    let angleAtFrame16 = 0;
+
+    for (let frame = 1; frame <= 24; frame++) {
+      const angle = frame * 0.005;
+      quatRef.current = { w: Math.cos(angle / 2), x: 0, y: Math.sin(angle / 2), z: 0 };
+      options.onFrame(world, 16);
+      if (frame === 16) angleAtFrame16 = displayedAngle();
+    }
+
+    expect(displayedAngle()).toBeGreaterThan(angleAtFrame16);
   });
 
   it('animates both directions across the solved-state boundary after the initial sync', async () => {

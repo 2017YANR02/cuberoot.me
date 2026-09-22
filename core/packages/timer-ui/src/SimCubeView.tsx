@@ -76,7 +76,6 @@ import {
   planSimUpdate,
 } from '@cuberoot/shared/timer/sim-log';
 import {
-  advanceStillMs,
   applyOrientation,
   calibrate,
   mirrorForBrand,
@@ -85,7 +84,6 @@ import {
   SLICE_ORIENTATION_FOLLOW_MS,
   SLICE_ORIENTATION_TAU_MS,
   slerpTowards,
-  snapWhenSettled,
   type Quat,
   type SensorBasisName,
 } from '@cuberoot/shared/smart-cube/orientation';
@@ -302,10 +300,6 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
   const referenceRef = useRef<Quat | null>(null);
   const smoothedRef = useRef<Quat | null>(null);
   const appliedRef = useRef<Quat | null>(null);
-  // Settling: the last measured (un-smoothed, un-snapped) pose and how long it
-  // has held still. See the snap block in orientation.ts.
-  const measuredRef = useRef<Quat | null>(null);
-  const stillMsRef = useRef(0);
   const pendingCalibrationRef = useRef(false);
   // M/E/S turns rotate the sensor-bearing core, unlike outer-layer turns. The
   // matching opposite-face BLE pair temporarily accelerates only orientation
@@ -345,11 +339,8 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
     seenTokenRef.current = calibrateToken;
     pendingCalibrationRef.current = true;
     // Re-derive from the new reference rather than easing out of a pose that no
-    // longer means anything. The settle timer restarts with it: stillness
-    // measured against the OLD reference says nothing about the new one.
+    // longer means anything.
     smoothedRef.current = null;
-    measuredRef.current = null;
-    stillMsRef.current = 0;
     sliceFollowUntilRef.current = 0;
   }, [calibrateToken]);
 
@@ -399,15 +390,10 @@ export default function SimCubeView(props: SimCubeViewProps): JSX.Element {
             basis: basisRef.current,
             mirror: mirrorRef.current,
           });
-          // A cube that has stopped moving near a whole orientation IS at it;
-          // the leftover few degrees are grip and sensor zero, and leaving them
-          // in is what makes the cube on screen read as permanently crooked.
-          // Stillness is measured on the MEASURED pose, never on the smoothed
-          // one — the smoothed pose is still converging on the snap target and
-          // would keep re-arming the timer against itself.
-          stillMsRef.current = advanceStillMs(measuredRef.current, measured, stillMsRef.current, dtMs);
-          measuredRef.current = measured;
-          const target = snapWhenSettled(measured, stillMsRef.current);
+          // Match DCTimer-BLE: always follow the latest measured pose and use
+          // SLERP only to bridge the gaps between BLE samples. Snapping gradual
+          // motion to a whole orientation makes the live cube feel stuck.
+          const target = measured;
           // BLE lands at 20-50 Hz, under the 60 fps loop — ease between samples
           // so the cube glides instead of stepping. A slice turn is the one
           // exception that moves the sensor-bearing core itself; keep SLERP but
