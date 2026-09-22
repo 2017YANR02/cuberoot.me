@@ -49,6 +49,7 @@ describe.skipIf(!enabled)('email code lifecycle on dedicated PostgreSQL', () => 
     await sql.unsafe(await readFile(new URL('../migrations/0243_auth_code_delivery.sql', import.meta.url), 'utf8'));
     await sql.unsafe(await readFile(new URL('../migrations/0232_auth_identity_pending.sql', import.meta.url), 'utf8'));
     await sql.unsafe(await readFile(new URL('../migrations/0234_auth_identity_choice_providers.sql', import.meta.url), 'utf8'));
+    await sql.unsafe(await readFile(new URL('../migrations/0247_auth_identity_pending_attempts.sql', import.meta.url), 'utf8'));
   });
   beforeEach(() => { send.mockReset(); send.mockResolvedValue(new Response(JSON.stringify({ id: 'synthetic-message' }))); vi.stubGlobal('fetch', send); });
   afterEach(() => vi.unstubAllGlobals());
