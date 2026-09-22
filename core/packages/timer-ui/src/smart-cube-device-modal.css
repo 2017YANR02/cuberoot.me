@@ -62,19 +62,25 @@
 .timer-smart-cube-device__close:hover:not(:disabled),
 .timer-smart-cube-device__close:active:not(:disabled),
 .timer-smart-cube-device__action:hover:not(:disabled),
-.timer-smart-cube-device__action:active:not(:disabled) {
+.timer-smart-cube-device__action:active:not(:disabled),
+.timer-smart-cube-device__scan:hover:not(:disabled),
+.timer-smart-cube-device__device:hover:not(:disabled) {
   background: var(--shell-hover, color-mix(in srgb, var(--foreground) 10%, var(--popover)));
 }
 
 .timer-smart-cube-device__close:active:not(:disabled),
 .timer-smart-cube-device__action:active:not(:disabled),
-.timer-smart-cube-device__connect:active:not(:disabled) {
+.timer-smart-cube-device__connect:active:not(:disabled),
+.timer-smart-cube-device__scan:active:not(:disabled),
+.timer-smart-cube-device__device:active:not(:disabled) {
   transform: translateY(1px);
 }
 
 .timer-smart-cube-device__close:focus-visible,
 .timer-smart-cube-device__action:focus-visible,
-.timer-smart-cube-device__connect:focus-visible {
+.timer-smart-cube-device__connect:focus-visible,
+.timer-smart-cube-device__scan:focus-visible,
+.timer-smart-cube-device__device:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
@@ -160,6 +166,112 @@
   background: color-mix(in srgb, var(--signal-info, var(--accent)) 22%, transparent);
 }
 
+.timer-smart-cube-device__picker {
+  min-width: 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.timer-smart-cube-device__picker-header {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.timer-smart-cube-device__picker-header > strong {
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.timer-smart-cube-device__scan {
+  display: inline-flex;
+  min-height: 40px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.timer-smart-cube-device__scan .is-scanning {
+  animation: timer-smart-cube-device-spin 900ms linear infinite;
+}
+
+.timer-smart-cube-device__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timer-smart-cube-device__list li {
+  border-top: 1px solid var(--border-default);
+}
+
+.timer-smart-cube-device__device {
+  display: flex;
+  width: 100%;
+  min-height: 58px;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.timer-smart-cube-device__device-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.timer-smart-cube-device__device-copy strong {
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.timer-smart-cube-device__device-copy span {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.timer-smart-cube-device__device-action {
+  flex: 0 0 auto;
+  color: var(--signal-info, var(--accent));
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.timer-smart-cube-device__empty {
+  min-height: 72px;
+  margin: 0;
+  padding: 22px 8px;
+  border-top: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  font-size: 13px;
+  text-align: center;
+}
+
 .timer-smart-cube-device__actions {
   display: flex;
   align-items: stretch;
@@ -186,11 +298,29 @@
   overflow-wrap: anywhere;
 }
 
+.timer-smart-cube-device__failure {
+  margin: 0 0 12px;
+  color: var(--destructive);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
 .timer-smart-cube-device__close:disabled,
 .timer-smart-cube-device__connect:disabled,
-.timer-smart-cube-device__action:disabled {
+.timer-smart-cube-device__action:disabled,
+.timer-smart-cube-device__scan:disabled,
+.timer-smart-cube-device__device:disabled {
   cursor: not-allowed;
   opacity: 0.55;
+}
+
+@keyframes timer-smart-cube-device-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-smart-cube-device__scan .is-scanning { animation: none; }
 }
 
 @media (max-width: 480px) {
@@ -223,6 +353,17 @@
     width: 100%;
     min-height: 44px;
     font-size: 15px;
+  }
+  .timer-smart-cube-device__picker-header {
+    min-height: 52px;
+  }
+  .timer-smart-cube-device__scan {
+    min-height: 44px;
+  }
+  .timer-smart-cube-device__device {
+    min-height: 62px;
+    padding-right: 4px;
+    padding-left: 4px;
   }
   .timer-smart-cube-device__action {
     flex: 1 1 auto;

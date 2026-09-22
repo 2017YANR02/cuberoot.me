@@ -2,6 +2,7 @@ export interface BleDeviceRef {
   id: string;
   manufacturerData?: ReadonlyMap<number, Uint8Array>;
   name: string;
+  rssi?: number;
 }
 
 /** GATT discovery data kept independent of Capacitor/Web BLE types. */
@@ -45,6 +46,11 @@ export interface BleTransport {
   initialize(): Promise<void>;
   read(deviceId: string, service: string, characteristic: string): Promise<DataView>;
   requestDevice(options: BleRequestOptions): Promise<BleDeviceRef>;
+  /** Optional live scan used by hosts that render their own device chooser. */
+  scanDevices?(
+    options: BleRequestOptions,
+    onDevices: (devices: readonly BleDeviceRef[]) => void,
+  ): Promise<() => Promise<void>>;
   subscribe(
     deviceId: string,
     service: string,
