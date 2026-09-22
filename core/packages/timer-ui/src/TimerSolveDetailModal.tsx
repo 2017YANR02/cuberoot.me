@@ -75,6 +75,8 @@ const STAGE_COPY: Readonly<Record<TimerSolveDetailStageId, TimerHistoryLocalized
 export interface TimerSolveDetailModalProps {
   autoFocusComment?: boolean;
   formatDate?: (timestamp: number) => string;
+  /** Actions shown only in the full-detail header, after the penalty control. */
+  fullHeaderActions?: ReactNode;
   index: number;
   localize: (copy: TimerHistoryLocalizedText) => string;
   moveTargets?: readonly { id: string; name: string }[];
@@ -126,6 +128,7 @@ function SplitTable({
 export function TimerSolveDetailModal({
   autoFocusComment = false,
   formatDate = (timestamp) => new Date(timestamp).toLocaleString(),
+  fullHeaderActions,
   index,
   localize,
   moveTargets = [],
@@ -356,6 +359,9 @@ export function TimerSolveDetailModal({
                 <h2 id={titleId}>#{index + 1}</h2>
                 <time dateTime={new Date(solve.ts).toISOString()}>{formatDate(solve.ts)}</time>
                 {penalty}
+                {fullHeaderActions && (
+                  <div className="timer-solve-detail-header-actions">{fullHeaderActions}</div>
+                )}
                 <button
                   aria-label={localize(COPY.close)}
                   className="timer-solve-detail-close"
