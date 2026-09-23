@@ -23,7 +23,9 @@ describe('Douyin website OAuth', () => {
           nickname: 'CubeRoot',
           avatar: 'https://example.test/avatar.png',
         },
-      }));
+      }))
+      .mockResolvedValueOnce(Response.json({ data: { error_code: 0, access_token: 'client-token', expires_in: 7200 } }))
+      .mockResolvedValueOnce(Response.json({ err_no: 0, data: { allied_id: 'same-person' } }));
     vi.stubGlobal('fetch', fetchMock);
 
     const { exchangeSocialCode, socialAuthorizeUrl, socialLoginConfigured } = await import('../src/utils/social_login.js');
@@ -42,6 +44,7 @@ describe('Douyin website OAuth', () => {
       sub: 'union-id',
       name: 'CubeRoot',
       avatar: 'https://example.test/avatar.png',
+      alliedId: 'allied:same-person',
     });
 
     const [tokenUrl, tokenRequest] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -61,6 +64,7 @@ describe('Douyin website OAuth', () => {
       access_token: 'access-token',
       open_id: 'open-id',
     }));
+    expect(fetchMock).toHaveBeenCalledTimes(4);
   });
 
   it('refuses a website identity without UnionID', async () => {
