@@ -87,6 +87,7 @@ vi.mock('../src/utils/douyin_miniprogram.js', () => ({
     }
   },
 }));
+vi.mock('../src/utils/douyin_allied_id.js', () => ({ getDouyinAlliedId: vi.fn().mockResolvedValue(null) }));
 vi.mock('../src/utils/web_session_ticket.js', () => ({
   approveWechatBrowserSession: mocks.approveWechatBrowserSession,
   consumeMobileSessionTicket: mocks.consumeMobileSessionTicket,

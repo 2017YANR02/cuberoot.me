@@ -64,6 +64,7 @@ import {
   exchangeDouyinMiniProgramCode,
   DouyinMiniProgramError,
 } from '../utils/douyin_miniprogram.js';
+import { getDouyinAlliedId } from '../utils/douyin_allied_id.js';
 import {
   consumeMobileSessionTicket,
   consumeWechatBrowserSession,
@@ -305,6 +306,23 @@ accountAuthRoutes.get('/auth/social/authorize', (c) => {
   return c.json({ url });
 });
 
+// 只在抖音平台给出同主体 AlliedID 时跨应用认作同一人；任何归属冲突都不静默合并。
+async function douyinSocialIdentityUid(identity: SocialUser): Promise<string> {
+  if (!identity.alliedId) return identity.sub;
+  const [unionUser, alliedUser] = await Promise.all([
+    findUserByIdentity('douyin', identity.sub),
+    findUserByIdentity('douyin', identity.alliedId),
+  ]);
+  if (unionUser && alliedUser && unionUser.id !== alliedUser.id) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+  const owner = unionUser ?? alliedUser;
+  if (owner) {
+    for (const key of [identity.sub, identity.alliedId]) {
+      if (await addIdentity(owner.id, 'douyin', key) === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    }
+  }
+  return owner ? identity.sub : identity.alliedId;
+}
+
 // ── 国内三方登录(浏览器回调拿到 code → 此处服务端换 code → 建/取账号)──
 accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   c.header('Cache-Control', 'no-store');
@@ -321,7 +339,14 @@ accountAuthRoutes.post('/auth/social/:provider', async (c) => {
   } catch {
     return c.json({ error: `invalid ${provider} code` }, 401);
   }
-  const result = await beginIdentityLogin({ provider, providerUid: g.sub, profile: {
+  let providerUid = g.sub;
+  try {
+    if (provider === 'douyin') providerUid = await douyinSocialIdentityUid(g);
+  } catch (error) {
+    if (error instanceof IdentityChoiceError) return identityChoiceErrorResponse(c, error);
+    throw error;
+  }
+  const result = await beginIdentityLogin({ provider, providerUid, profile: {
     name: g.name || '', avatar: g.avatar ?? null,
   } });
   if ('pending' in result) return c.json(result, 409);
@@ -493,20 +518,32 @@ accountAuthRoutes.post('/auth/douyin/miniprogram', async (c) => {
 
   try {
     const { openid, unionid } = await exchangeDouyinMiniProgramCode(code);
+    let alliedId: string | null = null;
+    try {
+      alliedId = await getDouyinAlliedId('miniprogram', openid);
+    } catch (error) {
+      console.warn('[auth] douyin miniprogram allied id unavailable:', error instanceof Error ? error.message : 'unknown');
+    }
     let providerUid = openid;
-    if (unionid) {
-      const [openidUser, unionidUser] = await Promise.all([
-        findUserByIdentity('douyin', openid),
-        findUserByIdentity('douyin', unionid),
-      ]);
-      if (openidUser && unionidUser && openidUser.id !== unionidUser.id) {
-        throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    const [openidUser, unionidUser, alliedUser] = await Promise.all([
+      findUserByIdentity('douyin', openid),
+      unionid ? findUserByIdentity('douyin', unionid) : Promise.resolve(null),
+      alliedId ? findUserByIdentity('douyin', alliedId) : Promise.resolve(null),
+    ]);
+    const owners = [openidUser, unionidUser, alliedUser].filter((owner) => owner != null);
+    if (owners.some((owner) => owner.id !== owners[0]?.id)) throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    const owner = owners[0];
+    if (unionid && openidUser) {
+      const migrated = await migrateIdentityProviderUid(openidUser.id, 'douyin', openid, unionid);
+      if (migrated === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
+    }
+    if (owner) {
+      for (const key of [unionid ?? openid, alliedId].filter((key): key is string => Boolean(key))) {
+        if (await addIdentity(owner.id, 'douyin', key) === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
       }
-      if (openidUser) {
-        const migrated = await migrateIdentityProviderUid(openidUser.id, 'douyin', openid, unionid);
-        if (migrated === 'conflict') throw new IdentityChoiceError('IDENTITY_CONFLICT');
-      }
-      providerUid = unionid;
+      providerUid = unionid ?? openid;
+    } else {
+      providerUid = alliedId ?? unionid ?? openid;
     }
     const result = await beginIdentityLogin({ provider: 'douyin', providerUid, profile: { name: '' } });
     if ('pending' in result) return c.json(result, 409);
@@ -622,8 +659,15 @@ accountAuthRoutes.post('/auth/link/social/:provider', async (c) => {
   } catch {
     return c.json({ error: `invalid ${provider} code` }, 401);
   }
-  const r = await addIdentity(uid, provider as SocialProvider, g.sub);
-  if (r === 'conflict') return c.json({ error: `${provider} account already linked to another account` }, 409);
+  const keys = provider === 'douyin' && g.alliedId ? [g.sub, g.alliedId] : [g.sub];
+  for (const key of keys) {
+    const owner = await findUserByIdentity(provider, key);
+    if (owner && owner.id !== uid) return c.json({ error: `${provider} account already linked to another account` }, 409);
+  }
+  for (const key of keys) {
+    const r = await addIdentity(uid, provider as SocialProvider, key);
+    if (r === 'conflict') return c.json({ error: `${provider} account already linked to another account` }, 409);
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -1047,7 +1091,9 @@ accountAuthRoutes.post('/auth/unlink', async (c) => {
   const allowed: Provider[] = ['email', 'phone', 'wca', 'apple', 'google', 'wechat', 'douyin', 'alipay', 'qq'];
   if (!allowed.includes(provider as Provider)) return c.json({ error: 'invalid provider' }, 400);
   let r;
-  try { r = await removeIdentity(uid, provider as Provider, providerUid); }
+  // Douyin's OpenID/UnionID/AlliedID are aliases for one sign-in method. Unlink them together,
+  // including requests sent by older clients that still pass a single providerUid.
+  try { r = await removeIdentity(uid, provider as Provider, provider === 'douyin' ? undefined : providerUid); }
   catch (error) {
     if (error instanceof AppleLoginError) return appleErrorResponse(c, error);
     throw error;

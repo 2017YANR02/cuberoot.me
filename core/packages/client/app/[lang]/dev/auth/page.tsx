@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "41728f7a61a6f3278faf0633a475d8400e47cb9e34a69305c7303d8e6b0e0138", "reason": "复核抖音网站登录的实际后台配置：扫码授权重定向 URL 已保存为带末尾斜杠的 https://cuberoot.me/auth/social/callback/，服务端只对抖音授权请求使用该精确地址，微信、QQ、支付宝回调保持不变。恢复已执行的 0232 迁移原文仅修复部署完整性，六位绑定码的尝试次数仍由新迁移 0247 添加，因此授权、绑定、合并和小程序流程语义未变；网站应用密钥仍须独立配置并完成真人扫码验收。"}
+{"fingerprint": "50414b6fb1e01d5ee63d33e8bf5f3cc8e9ed3d0d9051037dcc01df49069d3c71", "reason": "复核抖音网站扫码、小程序登录、绑定和解绑：两端分别取同主体 AlliedID 识别同一用户，历史小程序身份在再次登录后补齐跨应用别名；不同账号持有相同标识时拒绝合并，解绑抖音时清除全部别名。流程图同步标注平台同主体权限、历史身份补录和真机验收条件；微信及其他登录方式不变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -126,10 +126,10 @@ export default function AuthFlowPage() {
       <h3 id="douyin-mini-current">{t('抖音小程序', 'Douyin Mini Program')}</h3>
       <figure className="auth-map-figure" aria-labelledby="douyin-mini-current"><Steps items={[
         t('我的 → 抖音登录；公开浏览和普通计时不要求登录', 'Me → Douyin sign-in; public browsing and ordinary timing do not require sign-in'),
-        t('服务端验证抖音身份；优先使用 UnionID，将同一用户既有的 OpenID 身份原地升级，不创建第二个账号', 'The server verifies the Douyin identity, prefers UnionID, and upgrades the same user’s existing OpenID identity in place instead of creating a second account'),
+        t('服务端验证抖音身份；旧小程序 OpenID 仍升级为 UnionID。同主体网站应用与小程序还各自查询 AlliedID，匹配同一账号后补齐跨应用登录入口；标识冲突时停止，不自动合并账号', 'The server verifies Douyin identity and still upgrades legacy Mini Program OpenID to UnionID. The same-owner website app and Mini Program each request AlliedID; a match adds cross-app sign-in to the same account. Conflicting identities stop the flow rather than merging accounts'),
         t('已绑定 → 直接进入原账号；未绑定 → 选择登录已有账号或明确创建新账号', 'Already linked → enter the existing account; not linked → choose to sign in to an existing account or explicitly create one'),
         t('登录已有账号 → 在网站登录原账号，账号页顶部生成 6 位数字登录码 → 回小程序输入并核对账号 → 完成绑定', 'Existing account → sign in to it on the website, generate a 6-digit numeric sign-in code at the top of the account page → enter it in the Mini Program and verify the account → finish linking'),
-      ]} /><figcaption>{t('登录码 10 分钟内有效且只能使用一次，不包含账号编号。登录码不是合并码，不会迁移两个账号的数据。网站里的「抖音登录」使用独立的网站应用凭据；通过审核并在服务端配置后才显示，由抖音授权页提供电脑二维码或支持环境中的抖音 App 授权。', 'The sign-in code is valid for 10 minutes, works once, and contains no account number. The sign-in code is not a merge code and does not migrate data between accounts. Douyin sign-in on the website uses separate website-application credentials; it appears only after approval and server configuration, while the Douyin authorization page provides a desktop QR code or Douyin App authorization in supported environments.')}</figcaption></figure>
+      ]} /><figcaption>{t('登录码 10 分钟内有效且只能使用一次，不包含账号编号。登录码不是合并码，不会迁移两个账号的数据。网站「抖音登录」使用独立的网站应用凭据。历史小程序绑定要在新版服务端重新登录小程序一次，才能记录跨应用标识；此能力还取决于抖音是否将两个应用认证为同一主体并开放相应接口。抖音授权页提供电脑二维码或支持环境中的抖音 App 授权。', 'The sign-in code is valid for 10 minutes, works once, and contains no account number. The sign-in code is not a merge code and does not migrate data between accounts. Website Douyin sign-in uses separate website-app credentials. A previously linked Mini Program identity must sign in once on the updated server to record the cross-app ID; this also depends on Douyin recognizing both apps as the same certified owner and providing the related-ID API. The Douyin authorization page offers a desktop QR code or Douyin App authorization in supported environments.')}</figcaption></figure>
       <h3 id="wechat-mini-current">{t('微信小程序', 'WeChat Mini Program')}</h3>
       <figure className="auth-map-figure" aria-labelledby="wechat-mini-current"><Steps items={[
         t('我的 → 微信登录（公开浏览和普通计时无需登录）', 'Me → WeChat sign-in (public browsing and ordinary timing need no sign-in)'),
