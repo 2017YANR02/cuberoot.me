@@ -1,7 +1,7 @@
 {
   "name": "cuberoot-toolkit",
   "private": true,
-  "packageManager": "pnpm@11.1.2",
+  "packageManager": "pnpm@12.6.0",
   "scripts": {
     "audit:boundaries": "node scripts/check-architecture-boundaries.mjs",
     "build:cubing-worker": "node scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks",

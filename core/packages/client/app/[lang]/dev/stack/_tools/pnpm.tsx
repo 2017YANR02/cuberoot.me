@@ -1,12 +1,12 @@
 import type { StackTool } from '../_lib/stack_tool_types';
 import { k, v, s, f, p, c } from '../_lib/stack_tool_types';
 
-// ─── pnpm 11 ────────────────────────────────────────────────────────────────
+// ─── pnpm 12 ────────────────────────────────────────────────────────────────
 
 export const PNPM: StackTool = {
   slug: 'pnpm',
   name: 'pnpm',
-  version: '11.1.2',
+  version: '12.6.0',
   since: '2017-01',
   group: 'dev',
   accent: '#F69220',
@@ -16,7 +16,7 @@ export const PNPM: StackTool = {
   zh: {
     tagline: '硬链接 + 内容寻址的 npm 替代品',
     role: 'cuberoot.me monorepo 的包管理器, 把 workspace manifests 串成一棵共享树。',
-    heroSub: <>npm / yarn 把 node_modules 摊得到处都是, 一份 lodash 在硬盘上躺一百份; pnpm 把所有版本去重存进一个全局 store, 项目目录里只留硬链接。结果是 <strong>装更快、占盘更少、phantom dependency 直接堵死</strong>。Zoltan Kochan 2017 年发了 v1, 八年后 11.x 已经是新项目和大型 monorepo 的默认选择。</>,
+    heroSub: <>npm / yarn 把 node_modules 摊得到处都是, 一份 lodash 在硬盘上躺一百份; pnpm 把所有版本去重存进一个全局 store, 项目目录里只留硬链接。结果是 <strong>装更快、占盘更少、phantom dependency 直接堵死</strong>。Zoltan Kochan 2017 年发了 v1, 本仓库现在使用 pnpm 12.6.0。</>,
     whatDesc: <>pnpm 是个 <strong>包管理器</strong>, 接口跟 npm 几乎一样 (<code>install</code> / <code>add</code> / <code>run</code>), 内核做了三件事:把所有版本去重塞进全局 store、用硬链接把包接进项目、用<strong>严格 node_modules 布局</strong>禁止你引用没声明的依赖。这三件单独看都不算革命, 合起来就是 npm 多年解决不了的痛点。</>,
     historyDesc: <>2016 年 Rico Sta. Cruz 写了第一版原型 (灵感来自 Alexander Gugel 的 ied), 2017 年 1 月 npm 上首发, 同年 6 月 Zoltan Kochan 发布 v1。后面九年是稳步迭代:workspace、严格 node_modules、catalog、SQLite store, 没有任何一个 "大破大立" 版本, 但每个 major 都在挤性能或修正确性。</>,
     conceptsTitle: 'Store + 硬链接 + workspace 三板斧',
@@ -25,12 +25,12 @@ export const PNPM: StackTool = {
     adoptersTitle: '谁在用',
     adoptersDesc: <>Vue 生态全家桶 (Vite / Vitest / Nuxt) 全部 pnpm, Astro / Prisma / Remix / TanStack 也是。AI 一代工具 (Claude Code / Bun 自己的仓库) 大量切到 pnpm。本站 (cuberoot.me) 同样。</>,
     outlookTitle: '当下与前景',
-    outlookDesc: <>v11 (2026-04) 把 store 从 "一个包一个 JSON" 换成单一 SQLite 文件, 收紧 supply-chain 默认值, 强制要求 Node 22+。下一步 catalog / overrides 进一步标准化, 大型 monorepo 的依赖治理只会更省心。</>,
+    outlookDesc: <>v11 (2026-04) 把 store 从 "一个包一个 JSON" 换成单一 SQLite 文件。v12.6 (2026-09) 加入可迁移的 <code>node_modules</code> 和可选的自动依赖去重。本仓库继续用单一 lockfile 管理所有 workspace。</>,
   },
   en: {
     tagline: 'A drop-in npm replacement, with a content-addressable store and hard links',
     role: 'Package manager for the cuberoot.me monorepo — stitches workspace manifests into a shared tree.',
-    heroSub: <>npm / yarn spread node_modules everywhere; a hundred copies of lodash on disk. pnpm dedupes every version into one global store and only puts hard links into project folders. Result: <strong>faster installs, an order-of-magnitude less disk, phantom dependencies blocked at the door.</strong> Zoltan Kochan shipped v1 in 2017; eight years later pnpm 11 is the default for new projects and large monorepos.</>,
+    heroSub: <>npm / yarn spread node_modules everywhere; a hundred copies of lodash on disk. pnpm dedupes every version into one global store and only puts hard links into project folders. Result: <strong>faster installs, an order-of-magnitude less disk, phantom dependencies blocked at the door.</strong> Zoltan Kochan shipped v1 in 2017; this repo now uses pnpm 12.6.0.</>,
     whatDesc: <>pnpm is a <strong>package manager</strong> with an interface almost identical to npm (<code>install</code> / <code>add</code> / <code>run</code>). The kernel does three things: dedupe every version into a global store, link packages into projects via hard links, and enforce a <strong>strict node_modules layout</strong> that forbids importing what you didn't declare. None is revolutionary alone — together they fix the npm pain points that lingered for years.</>,
     historyDesc: <>Rico Sta. Cruz drafted the prototype in 2016 (drawing on Alexander Gugel's ied); the first npm publish was January 2017, and Zoltan Kochan announced v1 in June 2017. Nine years of steady iteration since: workspaces, strict layout, catalog, an SQLite store — no scorched-earth majors, but every release squeezes perf or sharpens correctness.</>,
     conceptsTitle: 'Store + hard links + workspaces',
@@ -39,10 +39,10 @@ export const PNPM: StackTool = {
     adoptersTitle: 'Who uses it',
     adoptersDesc: <>The whole Vue ecosystem (Vite / Vitest / Nuxt) runs on pnpm. Astro / Prisma / Remix / TanStack too. The AI-tool generation (Claude Code, Bun's own repo) increasingly defaults to pnpm. So does this site.</>,
     outlookTitle: 'Now and next',
-    outlookDesc: <>v11 (2026-04) replaces the "one JSON per package" store with a single SQLite file, tightens supply-chain defaults, and requires Node 22+. Next up: catalog / overrides standardizing further — dependency hygiene in large monorepos only gets easier from here.</>,
+    outlookDesc: <>v11 (2026-04) replaced the "one JSON per package" store with a single SQLite file. v12.6 (2026-09) adds relocatable <code>node_modules</code> and optional automatic dependency deduplication. This repo continues to manage every workspace with one lockfile.</>,
   },
   heroStats: [
-    { num: '11', unit: '.1', zh: <>当前稳定 <em>2026-05 · 11.1.2</em></>, en: <>current stable <em>2026-05 · 11.1.2</em></>
+    { num: '12', unit: '.6', zh: <>本仓库版本 <em>2026-09 · 12.6.0</em></>, en: <>repo version <em>2026-09 · 12.6.0</em></>
     },
     { num: '~3', unit: 'x', zh: <>同条件下比 npm 快 <em>warm install ~755 ms</em></>, en: <>warm install vs npm <em>~755 ms</em></>
     },
@@ -56,14 +56,14 @@ export const PNPM: StackTool = {
       <>
         <p>pnpm 来自 2016 年 Rico Sta. Cruz 的一个原型, 灵感是 Alexander Gugel 2015 年的实验性 <em>ied</em>。问题非常具体:npm 当时把每个项目的每份依赖都 copy 进自家 node_modules, 一台机器装十个项目, lodash 在硬盘上就有十份。Zoltan Kochan 在这套原型上接手, 2017 年 1 月把第一版发上 npm, 6 月发布 v1, 从此 pnpm 成为常规可选项。</p>
         <p>核心想法朴素到反直觉:全机器只在一个地方存所有版本 (内容寻址 store), 项目里要哪个版本就<strong>硬链接</strong>过去。文件系统层面文件是同一份 inode, 占盘几乎为零;Node 看到的还是一个完整 node_modules 目录。再叠一层"严格布局" —— 只把声明过的依赖暴露在 node_modules 顶层, 没声明的连看都看不到 —— phantom dependency 这个折磨过整个生态的问题就此被堵死。</p>
-        <p>2019 年 workspace 落地, pnpm 一下变成 monorepo 一等公民。2022 年 v7 把 monorepo 协议 (<code>workspace:*</code>) 标准化, 2024 年 v9 引入 catalog 把版本统一治理, 2026 年 v11 把内部 store 换成 SQLite。九年九个 major, 没有一次推翻自己。同期 npm 仍在追这套设计, yarn 内部分叉, Bun 起势但还不稳。pnpm 是目前最像"已经做完了"的那个。</p>
+        <p>2019 年 workspace 落地, pnpm 一下变成 monorepo 一等公民。2022 年 v7 把 monorepo 协议 (<code>workspace:*</code>) 标准化, 2024 年 v9 引入 catalog 把版本统一治理, 2026 年 v11 把内部 store 换成 SQLite。九年来持续迭代。同期 npm 仍在追这套设计, yarn 内部分叉, Bun 起势但还不稳。pnpm 是目前最像"已经做完了"的那个。</p>
       </>
     ),
     en: (
       <>
         <p>pnpm started as a 2016 prototype by Rico Sta. Cruz, drawing on Alexander Gugel's 2015 experiment <em>ied</em>. The problem was sharply concrete: npm copied every dependency of every project into its own node_modules — install ten projects on one machine and lodash sat on disk ten times. Zoltan Kochan took the prototype forward, published the first version to npm in January 2017, and announced v1 in June 2017. From then on pnpm was a real option.</p>
         <p>The core idea is almost embarrassingly simple: store every version exactly once on the machine (a content-addressable store), and <strong>hard-link</strong> the right version into each project. At the filesystem level the files share an inode — disk cost is near zero — yet Node still sees a complete node_modules tree. Layer on a "strict layout" — only declared dependencies are visible at the top of node_modules, undeclared ones are invisible — and the phantom-dependency disease that haunted the whole ecosystem is blocked.</p>
-        <p>Workspaces landed in 2019, instantly making pnpm a first-class monorepo tool. v7 (2022) standardized the <code>workspace:*</code> protocol; v9 (2024) introduced catalogs for unifying versions; v11 (2026) swapped the store backend to a single SQLite file. Nine majors in nine years, no rewrites. npm is still chasing the design, yarn forked internally, Bun is rising but unstable. pnpm is the one that looks most "done."</p>
+        <p>Workspaces landed in 2019, instantly making pnpm a first-class monorepo tool. v7 (2022) standardized the <code>workspace:*</code> protocol; v9 (2024) introduced catalogs for unifying versions; v11 (2026) swapped the store backend to a single SQLite file. The project has kept evolving across nine years. npm is still chasing the design, yarn forked internally, Bun is rising but unstable. pnpm is the one that looks most "done."</p>
       </>
     ),
   },
@@ -78,8 +78,9 @@ export const PNPM: StackTool = {
     { year: '2023·05', zh: { title: <>v8 — node-linker=hoisted</>, desc: <>对那些被严格布局打挂的老库, 加 <code>node-linker=hoisted</code> 兜底, 保留 pnpm 优点的同时跟 npm 风格兼容。</> }, en: { title: <>v8 — node-linker=hoisted</>, desc: <>For legacy libs that the strict layout breaks, <code>node-linker=hoisted</code> offers a npm-style fallback while keeping pnpm's other benefits.</> } },
     { year: '2024·05', zh: { title: <>v9 — catalog</>, desc: <>catalog 把 monorepo 里 "20 个 package 都用 react@19" 这种版本统一治理交给一个中心配置。少写一堆重复 ^19。</> }, en: { title: <>v9 — catalog</>, desc: <>Catalog moves "20 packages all use react@19" into one central config. Stops repeating ^19 across every package.json.</> } },
     { year: '2025·03', zh: { title: <>v10 — supply-chain 收紧</>, desc: <>默认禁掉 lifecycle script 的隐式执行, 强制 hooks 显式 opt-in。后 supply-chain 攻击 (xz、event-stream) 时代的反应。</> }, en: { title: <>v10 — supply-chain hardening</>, desc: <>Lifecycle scripts no longer run by default; hooks must opt in explicitly. A response to the post-xz, post-event-stream era.</> } },
-    { year: '2026·04', highlight: true, zh: { title: <>v11 — SQLite store</>, desc: <>store 从 "每个包一个 JSON" 换成单一 SQLite 文件, 元数据读取近乎瞬时。同时 ESM 分发、Node 22+ 强制、publish 不再 fallback 到 npm CLI。</> }, en: { title: <>v11 — SQLite store</>, desc: <>Store backend swapped from per-package JSON to a single SQLite file — metadata reads are near-instant. Plus ESM distribution, mandatory Node 22+, and no more npm-CLI fallback for publish.</> } },
-    { year: '2026·05', highlight: true, zh: { title: <>11.1.2 / 当前稳定</>, desc: <>2026-05 最新 patch。本仓库 <code>package.json</code> 的 <code>packageManager</code> 字段锁的就是这个版本。</> }, en: { title: <>11.1.2 / current stable</>, desc: <>Latest patch as of 2026-05. This repo's <code>package.json</code> pins exactly this version under <code>packageManager</code>.</> } },
+    { year: '2026·04', zh: { title: <>v11 — SQLite store</>, desc: <>store 从 "每个包一个 JSON" 换成单一 SQLite 文件, 元数据读取近乎瞬时。同时 ESM 分发、Node 22+ 强制、publish 不再 fallback 到 npm CLI。</> }, en: { title: <>v11 — SQLite store</>, desc: <>Store backend swapped from per-package JSON to a single SQLite file — metadata reads are near-instant. Plus ESM distribution, mandatory Node 22+, and no more npm-CLI fallback for publish.</> } },
+    { year: '2026·05', zh: { title: <>11.1.2 / 旧项目版本</>, desc: <>本仓库曾通过 <code>packageManager</code> 固定此版本。</> }, en: { title: <>11.1.2 / former repo version</>, desc: <>This repo previously pinned this version through <code>packageManager</code>.</> } },
+    { year: '2026·09', highlight: true, zh: { title: <>12.6.0 / 本仓库当前版本</>, desc: <>通过 <code>packageManager</code> 固定版本, 由 Corepack 和 CI 安装;依赖仍使用原有 lockfile。</> }, en: { title: <>12.6.0 / current repo version</>, desc: <>Pinned through <code>packageManager</code> and installed by Corepack and CI; dependencies still use the existing lockfile.</> } },
   ],
   concepts: [
     { tag: 'A', zh: { title: <>内容寻址全局 store</>, desc: <>所有包按 sha512 哈希存在 <code>~/.local/share/pnpm/store</code>。同一版本同一文件全机器只存一份。</> }, en: { title: <>Content-addressable global store</>, desc: <>Every package file is keyed by sha512 in <code>~/.local/share/pnpm/store</code>. A version's bytes exist exactly once per machine.</> }, code: <code>~/.local/share/pnpm/store/v3/{'\n'}  files/{'\n'}    a8/{'\n'}      d5e2f3...  {c('# react@19.2.0/index.js')}</code> },
@@ -145,6 +146,7 @@ export const PNPM: StackTool = {
     { label: 'pnpm.io', href: 'https://pnpm.io' },
     { label: 'GitHub · pnpm/pnpm', href: 'https://github.com/pnpm/pnpm' },
     { label: 'v11 announcement', href: 'https://pnpm.io/blog/releases/11.0' },
+    { label: 'v12.6 release', href: 'https://pnpm.io/blog/releases/12.6' },
     { label: 'Motivation', href: 'https://pnpm.io/motivation' },
     { label: 'Workspaces', href: 'https://pnpm.io/workspaces' },
   ],
