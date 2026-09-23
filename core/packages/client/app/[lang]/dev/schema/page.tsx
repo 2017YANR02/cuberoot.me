@@ -784,6 +784,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 244, slug: 'platform_lesson_covers', desc: { zh: '课时修订可关联独立视频封面，支持上传图片或从视频截取画面。', en: 'Let lesson revisions reference a dedicated video cover uploaded directly or captured from a video frame.' } },
   { n: 245, slug: 'role_preview_expiry', desc: { zh: '把旧的无限角色测试会话收敛为创建后 30 分钟到期。', en: 'Cap legacy unlimited role-test sessions at 30 minutes after creation.' } },
   { n: 246, slug: 'user_impersonation', desc: { zh: '增加超级管理员指定用户只读查看会话、理由记录与服务端写入拦截。', en: 'Add superadministrator specific-user read-only sessions, recorded reasons, and server-side write blocking.' } },
+  { n: 247, slug: 'auth_identity_pending_attempts', desc: { zh: '限制六位账号绑定码的尝试次数，防止反复猜测。', en: 'Limit attempts on six-digit account-link codes to prevent repeated guessing.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
