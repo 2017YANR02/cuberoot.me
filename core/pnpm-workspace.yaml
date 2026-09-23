@@ -3,6 +3,9 @@ packages:
   - 'packages/*'
   - 'jobs/*'
   - '!packages/platform'
+# Corepack and pnpm/action-setup select the pinned version. Avoid pnpm 12's
+# extra package-manager lockfile document, which breaks single-document readers.
+pmOnFail: ignore
 allowBuilds:
   better-sqlite3: true
   core-js: true
