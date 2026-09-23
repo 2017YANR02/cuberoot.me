@@ -2,8 +2,8 @@ import { Hono } from 'hono';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   begin: vi.fn(), complete: vi.fn(), verifySession: vi.fn(), requireUid: vi.fn(),
-  sign: vi.fn(), capture: vi.fn(), login: vi.fn(), verifyCode: vi.fn(), findUser: vi.fn(), douyinExchange: vi.fn(),
-  migrateIdentity: vi.fn(),
+  sign: vi.fn(), capture: vi.fn(), login: vi.fn(), verifyCode: vi.fn(), findUser: vi.fn(), addIdentity: vi.fn(), douyinExchange: vi.fn(), douyinAllied: vi.fn(), socialExchange: vi.fn(),
+  migrateIdentity: vi.fn(), removeIdentity: vi.fn(), getUserById: vi.fn(), getIdentities: vi.fn(),
   issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(), transaction: { fixture: true },
   wechatPhoneBegin: vi.fn(), wechatExchange: vi.fn(), wechatPhoneExchange: vi.fn(),
 }));
@@ -15,8 +15,9 @@ vi.mock('../src/utils/identity_choice.js', async (original) => {
 });
 vi.mock('../src/utils/account.js', async (original) => {
   const actual = await original<typeof import('../src/utils/account.js')>();
-  return { ...actual, loginWithIdentity: mocks.login, verifyCode: mocks.verifyCode, issueCode: mocks.issueCode, findUserByIdentity: mocks.findUser, publicUser: (u: unknown) => u,
-    migrateIdentityProviderUid: mocks.migrateIdentity,
+  return { ...actual, loginWithIdentity: mocks.login, verifyCode: mocks.verifyCode, issueCode: mocks.issueCode, findUserByIdentity: mocks.findUser, addIdentity: mocks.addIdentity, publicUser: (u: unknown) => u,
+    migrateIdentityProviderUid: mocks.migrateIdentity, removeIdentity: mocks.removeIdentity,
+    getUserById: mocks.getUserById, getIdentities: mocks.getIdentities,
     withVerifiedCode: async (...args: Parameters<typeof actual.withVerifiedCode>) => {
       if (!await mocks.verifyCode(...args.slice(0, 4))) return { verified: false };
       return { verified: true, value: await args[4](mocks.transaction as never) };
@@ -34,6 +35,7 @@ vi.mock('../src/utils/douyin_miniprogram.js', async (original) => ({
   ...await original<typeof import('../src/utils/douyin_miniprogram.js')>(),
   douyinMiniProgramConfigured: () => true, exchangeDouyinMiniProgramCode: mocks.douyinExchange,
 }));
+vi.mock('../src/utils/douyin_allied_id.js', () => ({ getDouyinAlliedId: mocks.douyinAllied }));
 vi.mock('../src/utils/wechat_miniprogram.js', async (original) => ({
   ...await original<typeof import('../src/utils/wechat_miniprogram.js')>(),
   wechatMiniProgramConfigured: () => true, exchangeWechatMiniProgramCode: mocks.wechatExchange,
@@ -42,7 +44,7 @@ vi.mock('../src/utils/wechat_miniprogram.js', async (original) => ({
 vi.mock('../src/utils/social_login.js', () => ({
   isSocialProvider: (p: string) => ['douyin', 'wechat', 'qq', 'alipay'].includes(p),
   socialLoginConfigured: () => true, verifySocialState: () => ({ intent: 'login' }),
-  exchangeSocialCode: async () => ({ sub: 'subject', name: '' }),
+  exchangeSocialCode: mocks.socialExchange,
 }));
 import { accountAuthRoutes } from '../src/routes/account_auth.js';
 import { authRoutes } from '../src/routes/auth.js';
@@ -65,6 +67,12 @@ beforeEach(() => {
   mocks.sign.mockReturnValue('canonical-session');
   mocks.verifyCode.mockResolvedValue(true);
   mocks.douyinExchange.mockResolvedValue({ openid: 'douyin-subject' });
+  mocks.douyinAllied.mockResolvedValue(null);
+  mocks.socialExchange.mockResolvedValue({ sub: 'subject', name: '' });
+  mocks.addIdentity.mockResolvedValue('ok');
+  mocks.removeIdentity.mockResolvedValue('ok');
+  mocks.getUserById.mockResolvedValue(user);
+  mocks.getIdentities.mockResolvedValue([]);
   mocks.migrateIdentity.mockResolvedValue('ok');
   mocks.issueLinkCode.mockResolvedValue({ linkCode: '123456', expiresInSeconds: 600 });
   mocks.previewLinkCode.mockResolvedValue({ user: { id: 42, displayName: 'Target' } });
@@ -76,6 +84,49 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('unified provider account-choice routes', () => {
+  it('unlinks every Douyin alias together even when an older client sends one provider UID', async () => {
+    const response = await post('/auth/unlink', { provider: 'douyin', providerUid: 'allied:same-person' }, 'session');
+
+    expect(response.status).toBe(200);
+    expect(mocks.removeIdentity).toHaveBeenCalledWith(42, 'douyin', undefined);
+  });
+
+  it('recognizes an existing mini-program account when website OAuth supplies its AlliedID', async () => {
+    mocks.socialExchange.mockResolvedValue({ sub: 'website-unionid', alliedId: 'allied:same-person', name: '' });
+    mocks.findUser.mockImplementation(async (_provider: string, key: string) => key === 'allied:same-person' ? user : null);
+    mocks.begin.mockResolvedValue({ user, isNew: false });
+
+    const response = await post('/auth/social/douyin', { code: 'verified-code', state: 'state' });
+
+    expect(response.status).toBe(200);
+    expect(mocks.addIdentity).toHaveBeenCalledWith(42, 'douyin', 'website-unionid');
+    expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ providerUid: 'website-unionid' }));
+  });
+
+  it('adds a cross-app alias to an existing mini-program identity on re-login', async () => {
+    mocks.douyinExchange.mockResolvedValue({ openid: 'mini-openid', unionid: 'mini-unionid' });
+    mocks.douyinAllied.mockResolvedValue('allied:same-person');
+    mocks.findUser.mockImplementation(async (_provider: string, key: string) => key === 'mini-unionid' ? user : null);
+    mocks.begin.mockResolvedValue({ user, isNew: false });
+
+    const response = await post('/auth/douyin/miniprogram', { code: 'verified-code' });
+
+    expect(response.status).toBe(200);
+    expect(mocks.douyinAllied).toHaveBeenCalledWith('miniprogram', 'mini-openid');
+    expect(mocks.addIdentity).toHaveBeenCalledWith(42, 'douyin', 'allied:same-person');
+  });
+
+  it('rejects a Douyin AlliedID already owned by another account', async () => {
+    mocks.socialExchange.mockResolvedValue({ sub: 'website-unionid', alliedId: 'allied:same-person', name: '' });
+    mocks.findUser.mockImplementation(async (_provider: string, key: string) => key === 'website-unionid' ? user : { ...user, id: 43 });
+
+    const response = await post('/auth/social/douyin', { code: 'verified-code', state: 'state' });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: 'IDENTITY_CONFLICT' });
+    expect(mocks.addIdentity).not.toHaveBeenCalled();
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
   it('upgrades a legacy Douyin OpenID identity to UnionID before login', async () => {
     mocks.douyinExchange.mockResolvedValue({ openid: 'legacy-openid', unionid: 'stable-unionid' });
     mocks.findUser.mockImplementation(async (_provider: string, providerUid: string) => (

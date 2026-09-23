@@ -14,6 +14,7 @@
 import { createSign, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { buildAlipaySignContent, type SignParams } from '@cuberoot/shared/payment';
 import { JWT_SECRET } from './session.js';
+import { getDouyinAlliedId } from './douyin_allied_id.js';
 
 export type SocialProvider = 'wechat' | 'qq' | 'alipay' | 'douyin';
 export type SocialIntent = 'login' | 'link';
@@ -26,6 +27,7 @@ export interface SocialUser {
   sub: string;              // 稳定唯一标识(unionid / openid / alipay user_id)→ 存 auth_identities.provider_uid
   name?: string;
   avatar?: string;
+  alliedId?: string;
 }
 
 // 授权回调统一落到这个前端页(各平台后台需把它的域名/地址登记为回调域)。
@@ -135,7 +137,7 @@ export async function exchangeSocialCode(provider: SocialProvider, code: string)
   return exchangeDouyin(code);
 }
 
-// 抖音网站授权和小程序共用 provider='douyin',必须使用 UnionID 才能识别同一账号。
+// UnionID 只在同一超管账号范围内稳定；跨网站应用和小程序须另取同主体 AlliedID。
 async function exchangeDouyin(code: string): Promise<SocialUser> {
   const tokenBody = new URLSearchParams({
     client_key: DOUYIN_LOGIN_CLIENT_KEY,
@@ -160,7 +162,15 @@ async function exchangeDouyin(code: string): Promise<SocialUser> {
   }>('https://open.douyin.com/oauth/userinfo/', new URLSearchParams({ access_token: accessToken, open_id: openId }));
   const profile = info.data ?? info;
   if (!profile.union_id) throw new Error('douyin unionid required');
-  return { sub: profile.union_id, name: profile.nickname || undefined, avatar: profile.avatar || undefined };
+  let alliedId: string | null = null;
+  try {
+    alliedId = await getDouyinAlliedId('website', openId);
+  } catch (error) {
+    // AlliedID 能力尚未开通或临时不可用时，网站原有 UnionID 登录仍可用。
+    console.warn('[auth] douyin website allied id unavailable:', error instanceof Error ? error.message : 'unknown');
+  }
+  return { sub: profile.union_id, name: profile.nickname || undefined, avatar: profile.avatar || undefined,
+    ...(alliedId ? { alliedId } : {}) };
 }
 
 // ─────────────────────────── 微信 ───────────────────────────

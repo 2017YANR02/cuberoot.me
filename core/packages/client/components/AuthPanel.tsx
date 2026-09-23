@@ -1272,10 +1272,10 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
         ) : identities.length === 0 ? (
           <p className="auth-hint">{t('暂无已绑定的登录方式。', 'No linked login methods yet.')}</p>
         ) : (
-          identities.map((i) => {
+          identities.filter((i, index, all) => i.provider !== 'douyin' || all.findIndex((row) => row.provider === 'douyin') === index).map((i) => {
             const lab = PROVIDER_LABEL[i.provider] ?? { zh: i.provider, en: i.provider };
             const key = `${i.provider}:${i.providerUid}`;
-            const onlyOne = identities.length <= 1;
+            const onlyOne = new Set(identities.map((row) => row.provider === 'douyin' ? 'douyin' : `${row.provider}:${row.providerUid}`)).size <= 1;
             // WCA ID / 邮箱 / 手机号对用户有意义,展示;三方(Google/支付宝/微信/QQ)的 uid 是不透明数字串,不展示。
             const showUid = i.provider === 'wca' || i.provider === 'email' || i.provider === 'phone';
             return (
