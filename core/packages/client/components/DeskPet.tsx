@@ -146,12 +146,12 @@ const CSS = `
 .clawd-deskpet[data-original=true] .clawd-deskpet-hit{left:17%;top:29%;width:66%;height:58%;}
 .clawd-deskpet.dragging .clawd-deskpet-hit{cursor:grabbing;}
 /* The hide action belongs to the pet itself. Reuse the shared ClearButton and
-   reveal it on real hover, keyboard focus, or briefly after a touch tap. */
+   reveal it on hover, keyboard focus, or touch long press. */
 .clawd-deskpet-dismiss.clear-btn--standalone{position:absolute;z-index:4;
   opacity:0;pointer-events:none;transition:opacity .15s;}
 .clawd-deskpet:focus-within .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}
 @media (hover:hover){.clawd-deskpet:hover .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}}
-@media (hover:none){.clawd-deskpet.touch-actions .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}}
+.clawd-deskpet.touch-actions .clawd-deskpet-dismiss{opacity:1;pointer-events:auto;}
 .clawd-deskpet[data-char=clawd] .clawd-deskpet-dismiss{left:calc(69% - 10px);top:calc(66% - 10px);}
 .clawd-deskpet[data-char=calico] .clawd-deskpet-dismiss{left:calc(80% - 10px);top:calc(30% - 10px);}
 .clawd-deskpet[data-char=cloudling] .clawd-deskpet-dismiss{left:calc(73% - 10px);top:calc(28% - 10px);}
@@ -897,6 +897,7 @@ export default function DeskPet() {
     let clicks = 0;
     let clickTimer: ReturnType<typeof setTimeout> | undefined;
     let touchActionsTimer: ReturnType<typeof setTimeout> | undefined;
+    let longPressTimer: ReturnType<typeof setTimeout> | undefined;
     const revealTouchActions = () => {
       clearTimeout(touchActionsTimer);
       setTouchActionsVisible(true);
@@ -905,10 +906,6 @@ export default function DeskPet() {
     const onClick = () => {
       if (suppressClick) { suppressClick = false; return; }
       if (dragging) return;
-      // Keep the touch-only dismiss action and search open in this same click.
-      // Updating the DOM during pointerup can cancel iOS's trailing click,
-      // making the first tap reveal only the dismiss action.
-      if (lastTouch) revealTouchActions();
       if (dnd || asleep) { exitRest(); return; }
       // In cling mode a tap just opens search (no multi-click react poses).
       if (mini) { openSearch(); return; }
@@ -946,6 +943,12 @@ export default function DeskPet() {
       baseR = vpW() - r.right;
       baseB = vpH() - r.bottom;
       baseW = r.width; baseH = r.height;
+      clearTimeout(longPressTimer);
+      if (lastTouch) longPressTimer = setTimeout(() => {
+        if (!dragging || moved) return;
+        suppressClick = true;
+        revealTouchActions();
+      }, 550);
       // While clinging, mousedown alone must not change the pose — a mere tap
       // should still open search. The lift happens on the first real move.
       if (!dnd && !mini && e.pointerType === 'mouse') setState('reactDrag', true);
@@ -955,6 +958,7 @@ export default function DeskPet() {
       if (!dragging) return;
       const dist = Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy);
       if (dist > 4 && !moved) {
+        clearTimeout(longPressTimer);
         moved = true;
         if (mini) liftFromMini(dnd ? 'sleeping' : 'reactDrag'); // pull out of cling
         else if (!dnd) setState('reactDrag', true); // first real move (covers touch)
@@ -965,6 +969,7 @@ export default function DeskPet() {
       root.style.bottom = c.bottom + 'px';
     };
     const onUp = (e: PointerEvent) => {
+      clearTimeout(longPressTimer);
       if (!dragging) return;
       dragging = false;
       root.classList.remove('dragging');
@@ -1096,6 +1101,7 @@ export default function DeskPet() {
       clearTimeout(idleTimer);
       clearTimeout(clickTimer);
       clearTimeout(touchActionsTimer);
+      clearTimeout(longPressTimer);
       clearTimeout(miniTimer);
       clearTimeout(randomTimer);
       window.removeEventListener('pointermove', onMove);

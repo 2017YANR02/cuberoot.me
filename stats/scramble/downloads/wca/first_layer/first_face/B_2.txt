@@ -2,7 +2,7 @@
 # Population in this bin: 4
 # Samples listed: 4 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 918143001,U2 L B2 L2 F2 D2 L B2 L' U B2 F L B U' R' U2 R2 U2,B,UK Championship 2018 (2018-10-26~28),333 R2 B #4

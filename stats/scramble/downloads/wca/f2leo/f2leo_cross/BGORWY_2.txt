@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGORWY / bin 2
-# Population in this bin: 900
+# Population in this bin: 902
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1885251001,U' F' R2 D2 R2 F U' L' D F R2 D2 R F2 B2 R2 F2 R L',Y,Aficube A 2022 (2022-04-17~18),333 R2 D #5
@@ -149,7 +149,7 @@
 1262217001,D L2 F2 D L2 U L2 F2 D L2 U' R D' L R' B' D B2 F2 L2 U B',Y,Vantaa Back to School 2019 (2019-08-17~18),333bf Final A #2
 2468584001,F' L' F' L F' U2 L2 D2 F2 U2 F2 R2 L' D' L R2 B2 L2 U2,B,Celebes Cube Fest 2023 (2023-01-28~29),333 R1 B E1
 647312001,F2 R2 U2 L' F2 R2 L D R' U' R2 F2 D' B2 D' L2 U' B2,G,Finnish Championship 2017 (2017-11-17~19),333 R1 D #4
-1447083001,R2 F' R2 U2 F U2 B' L2 B2 D2 F' L' D B' D' L R B' R U2,Y,Puget Sound NxNxN 2019 (2019-12-07),333 R1 A #3
+5831451001,B D2 F2 R' D' F B D F' U2 B' L2 U F2 D2 R2 F2 D L2,W,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 A #5
 2744278001,L' B2 U L B2 L B F2 D2 L2 B2 L2 B2 D' R2 F L2,R,SacCubing XIV 2023 (2023-05-20),333 R1 C #2
 4087810001,D L B2 L2 D2 U2 F U2 F L D L' R B' D R' U2 L2,Y,Apol Open Guayaquil 2024 (2024-09-07),333 R1 A #4
 913220001,B L2 U' B L' D2 R' F L2 F L2 U2 R2 D R2 D' F2 R2 D L2,Y,Iloilo Speedcubing Open II 2018 (2018-10-28),333 R2 A E1

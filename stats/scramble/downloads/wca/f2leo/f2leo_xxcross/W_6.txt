@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / W / bin 6
-# Population in this bin: 757
+# Population in this bin: 759
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1
@@ -39,7 +39,7 @@
 189228001,L2 U R F2 U B2 U2 F2 U F D F2 D2 L' B2 L F2,W,Berkeley Summer 2015 (2015-09-12),333 R1 F E2
 5585103001,B' U2 F2 D L2 B2 D R2 U R2 U2 F D U' B L' B2 D' L R',W,ACA 11th Anniversary Baku 2026 (2026-04-25~26),333 R1 C #2
 193380001,D B2 D B2 U2 B2 D F2 R B' D2 U' F L2 R D' R' U2 R,W,Cochabamba Open 2015 (2015-09-26~27),333oh R1 C #2
-222834001,F2 U2 F L2 B' D2 B' L2 F' D2 U2 R F' U' L B' D2 B2,W,Minyons de Terrassa Open 2015 (2015-11-28~29),333oh Final B #1
+5834881001,R2 F' L2 D2 R2 U' R2 B2 D' B2 U L D' B2 L' D R2 B' L',W,Chiclana Open 2026 (2026-09-19~20),333 R1 C E1
 2793956001,F' D L' F L F2 R' U2 F2 L' D2 L2 F' D2 R2 F2 R2 U' R',W,De La Sierra Cubing 2023 (2023-06-10~11),333 R1 D E1
 2491053001,F' R' U F B2 R F L2 B' D2 F2 U2 R2 B R2 U2 B' L F,W,Crazy Cubing Centurion 2023 (2023-02-11~12),333 R1 C #1
 232664001,B U' F2 B' D R2 F' D F' D' B U2 B2 R2 U2 F',W,Sivar Open 2015 (2015-12-20),333oh R1 C E1
@@ -63,7 +63,7 @@
 3067427001,F' R D' F2 D R2 U F2 U L U' F' D' L F2 D' U2,W,Glacier National Park Open 2023 (2023-09-09),333bf Final A E1
 315035001,F L2 B' U2 B2 D2 B' F' U B L R F R D2 L2 F' L' F',W,Santarém Open 2016 (2016-06-18~19),333oh Final A #4
 5634398041,U' L' B' D2 F2 U2 L2 B2 L F2 L B2 D' F R U B U' B' D,W,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
-326438001,L' U D2 B2 D R D' R2 L' U2 F L2 F' R2 U2 F D2 B' L2 D2,W,Cowboys Summer 2016 (2016-07-02~03),333 R1 C #4
+5832004001,R U F' U' D L' B' L2 B2 U' L2 U2 B2 D L2 F2 L2 F R' B,W,Les Beaupreau du Blind 2026 (2026-09-12~13),333bf Final A #5
 329236001,D L D F B D' L B' L U2 B' L2 F2 R2 F' D2 F R2 L2,W,Czech Open 2016 (2016-07-19~20),333 R1 B #1
 1410585001,D2 R2 F' D2 F' U2 L2 B2 U L' B' F2 L2 U L' F' L U2 R2,W,Palacio del Cubo 2019 (2019-11-16~17),333 R1 G #4
 1170911001,B' U2 F U2 F U2 F' D2 L' B F U2 F R' D2 B F U,W,Bay Area Speedcubin' 17 2019 (2019-06-01),333oh R1 A E1

@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / W / bin 6
-# Population in this bin: 246
+# Population in this bin: 247
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 67382001,F U2 B' R2 D2 L2 F D2 B' L U B D U' L' D B U2 B2,W,DJ Open 2014 (2014-10-18~19),333oh R1 D E2
@@ -173,7 +173,7 @@
 4057009001,D' L U2 B2 F' U2 B2 F U' B' F U2 F D' U2 L U,W,Ayat-Ti Cubing Elyu Fest 2024 (2024-08-24),333 R1 B #2
 4100340001,R' D' U' L2 F2 D2 F2 R2 U' R' F D U B' U' F2 D' B' U,W,Energy Cube Tomaszów Mazowiecki 2024 (2024-09-14~15),333oh R2 B E1
 5107647011,U' R L2 U' R2 D F2 D F2 B D2 L2 D F2 R' B U B' L' F2,W,Please Be Quiet Reno 2025 (2025-10-18),333mbf Final A #2
-4120712001,R' F D' B2 F2 R2 D L2 U' R2 D2 B D2 L2 D' L U2 L2 U,W,Unicentro Armenia III 2024 (2024-09-21),333 R1 A #4
+5837736028,R2 B L2 D2 B2 D2 L F2 L' U2 B2 F' L F2 D B' U2 L F' L',W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final B #1
 4145164001,D2 R F2 R2 U' B' R' D' B2 U D2 R' D2 F2 L' U2 B2 D2,W,Skewb Masters Bogotá 2024 (2024-09-29),333 R1 C #4
 4204914024,R2 B U' R2 F2 U F' R2 B2 D' L F' D2 F R2 F' U2 B' L2 U',W,BrizZon Side Open IV 2024 (2024-10-19~20),333mbf Final B #2
 5030701001,L2 D' L2 B2 D U R2 F D B2 F' R2 D' R U' L' B2 U2,W,Regionales Santander 2025 (2025-09-13~14),333 R1 B #1

@@ -1,3 +1,8 @@
+import { availableParallelism } from 'node:os';
+import { wcaDir } from './data_paths.mjs';
+if (process.env.CUBEROOT_ALLOW_LEGACY_OPT9 !== '1') {
+  throw new Error('旧 opt9 整解循环已停用；请在 core/ 运行 pnpm exec tsx ../solver/333opt/solve_h10.mts');
+}
 // Auto-restart wrapper for solve.mjs.
 //
 // The opt9 in-proc solver occasionally dies with an emscripten "unwind" after a few thousand solves
@@ -17,10 +22,11 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT = resolve(__dirname, 'out.0.csv');
 // TOTAL = 活的语料行数(与 solve.mjs 的 CORPUS 同源, 计含逗号的 "id,scramble" 行)。
 // 别再硬编码: master 池随新比赛增长(曾固定 1297444, 池涨到 1304126 后会提前 break 漏掉尾部)。
-const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : 'D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt';
-const TOTAL = existsSync(CORPUS) ? readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.indexOf(',') > 0).length : 1297444;
-// 线程数: env THREADS 覆盖(默认 12); 全局上限 14, 别再高(留 2 核给 OS/其它)。
-const THREADS = String(process.env.THREADS || '12');
+const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : resolve(wcaDir, 'wca_scrambles_no_wide_move.txt');
+if (!existsSync(CORPUS)) throw new Error(`WCA 语料不存在: ${CORPUS}`);
+const TOTAL = readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.indexOf(',') > 0).length;
+// 线程数: env THREADS 覆盖，默认使用可用 CPU 线程。
+const THREADS = String(process.env.THREADS || availableParallelism());
 const lines = () => (existsSync(OUT) ? readFileSync(OUT, 'utf8').split('\n').filter(Boolean).length : 0);
 
 let stuck = 0, run = 0;

@@ -53,7 +53,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'browser-regexp-lookbehind',
     scope: 'project',
-    hook: 'block-browser-regexp-lookbehind.mjs',
+    hook: 'block-browser-regexp-lookbehind.mts',
     test: 'browser-regexp-compat.test.ts',
     baseline: '0（6→0）',
     zh: { title: '浏览器端正则后行断言', desc: '浏览器会执行的 client、platform、shared、visualcube 源码禁用正则后行断言,避免 iOS 16.4 之前的 WebKit 在解析 chunk 时整页启动失败。改用捕获边界或显式前字符判断;Codex 写入即拦,CI 全量扫描。' },
@@ -62,7 +62,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'workspace-reparse-links',
     scope: 'project',
-    hook: 'block-workspace-reparse-links.mjs',
+    hook: 'block-workspace-reparse-links.mts',
     test: 'workspace-reparse-links-guard.test.ts',
     baseline: '0',
     zh: { title: '临时目录链接正式工作区', desc: '临时验证目录和 worktree 禁止通过 Junction 或 SymbolicLink 复用正式 node_modules / packages。每个验证树独立 pnpm install --offline --frozen-lockfile,由 pnpm store 安全去重;Codex 命令写入前拦截,CI 锁定危险命令与安全替代路径。' },
@@ -206,7 +206,7 @@ export const PAIRED_GUARDS: PairedGuard[] = [
   {
     id: 'recon-ground-truth',
     scope: 'project',
-    hook: 'recon-ground-truth-gate.mjs',
+    hook: 'recon-ground-truth-gate.mts',
     test: 'recon-ground-truth-gate.test.ts + recon_ground_truth.test.ts',
     baseline: '当前集合全量',
     zh: { title: '复盘 Ground Truth 未验证', desc: '管理员管理器是唯一手工入口，测试命令从公开导出生成供 Git 和 AI 审查的 JSON。Codex 命令 hook 与 Git pre-commit 两层拦截：提交复盘算法、陀螺仪、转体处理或 ground-truth 管道前，当前内容指纹必须对应一次全部 confirmed 样本测试通过记录；管理器新增样本并同步后，旧凭证立即失效。' },
@@ -435,7 +435,7 @@ export const PROCESS_GUARDS: ProcessGuard[] = [
   {
     id: 'banned-words',
     scope: 'project',
-    hook: 'block-banned-words.mjs',
+    hook: 'block-banned-words.mts',
     matcher: 'apply_patch',
     zh: { title: '站内违禁词', desc: 'Codex 新增文本命中 .codex/banned-words.json 时立即拦截,并给出统一替代词;确有必要时用行内 allow-banned-word 说明原因。' },
     en: { title: 'Site-banned wording', desc: 'Codex writes are blocked when newly added text matches .codex/banned-words.json, with the approved replacement shown; genuine exceptions require an inline allow-banned-word reason.' },

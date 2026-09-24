@@ -2,7 +2,7 @@
 # Population in this bin: 11
 # Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 63900001,R2 U2 B' U2 B F' D2 B U2 F D2 L U B D F2 L' R F,B,CCC Autumn Open 2014 (2014-10-04~05),333oh R1 B #5

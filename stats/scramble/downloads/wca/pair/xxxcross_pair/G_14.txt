@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / G / bin 14
-# Population in this bin: 110
-# Samples listed: 110 (all entries in this bin)
+# Population in this bin: 111
+# Samples listed: 111 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 14231001,U R2 B2 D R2 D' L2 B' F2 D' L U' B L' D2 U B D',G,Israel Championship 2014 (2014-04-16~17),333 R1 C E1
@@ -115,3 +115,4 @@
 5680667001,F2 L' F2 D2 F2 U2 L' F2 L D2 F' L' B' D U F D R' D R',G,Oruro Open 10th Anniversary 2026 (2026-05-30~31),333oh Final B #2
 5723214001,R' D F' R F2 L' U2 L2 U2 R' D' L' R2 U L B2 F2 U2 L2 U,G,Hannover Mental Breakdown 2026 (2026-06-27),333bf R2 A #4
 5728597001,D F' L2 B' R2 F2 L2 D2 U2 F' R B L F2 U B F2 D L,G,Guayaquil Masters Open 2026 (2026-06-27),333oh Final A #5
+5837045001,F R B2 R' U L2 B2 U R F2 R2 B2 D2 F D2 B' D2 U' R,G,Visé Sunday Open 2026 (2026-09-13),333 R1 C #5

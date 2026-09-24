@@ -16,8 +16,9 @@
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing asset provenance is listed in docs/space-sources.md and the website credits" },
       "owner": "design/space/scripts/export_scene.py",
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File design/space/scripts/batch.ps1 -Mode all",
-      "outputs": ["core/packages/client/public/assets/space/blender-v1/*.glb", "core/packages/client/public/assets/space/blender-v1/*.json", "core/packages/client/public/assets/space/blender-v1/textures/**"],
+      "command": "cd core && pnpm space:batch --mode all",
+      "outputs": ["core/packages/client/public/assets/space/blender-v1/*.json"],
+      "transientOutputs": ["core/packages/client/public/assets/space/blender-v1/*.glb", "core/packages/client/public/assets/space/blender-v1/textures/**"],
       "verification": ["design/space/scripts/verify.ts loads all 25 exports and checks room and city runtime contracts", "design/space/scripts/test_pack_gltf.py checks mesh buffer preservation and shared image round trips", "Inspect the local /zh/space page in daylight and at night after authoring changes"],
       "driftPolicy": "Edit the saved .blend sources and export; never regenerate authored models from bootstrap captures. Heavy binaries stay outside Git. Provision and verify the complete asset bundle before enabling NEXT_PUBLIC_SPACE_BLENDER=1 for a release. Ordinary CI uses the existing procedural scene source."
     },
@@ -127,12 +128,12 @@
       "kind": "local-heavy-artifact",
       "source": {
         "locator": "operator-provided read-only music source",
-        "paths": ["scripts/music/prepare-music.ps1", "docs/music-player-tracker.md"]
+        "paths": ["scripts/music/prepare-music.ts", "docs/music-player-tracker.md"]
       },
       "license": { "spdx": "NOASSERTION", "evidence": "source-media rights are managed outside Git; no media is checked into this repository" },
-      "owner": "scripts/music/prepare-music.ps1",
+      "owner": "scripts/music/prepare-music.ts",
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File scripts/music/prepare-music.ps1 -Pilot; omit -Pilot only for one reviewed batch",
+      "command": "cd core && pnpm music:prepare --source-root <read-only-media-dir> --staging-root <staging-dir> --pilot; omit --pilot only for one reviewed batch",
       "runtimeOutputs": ["music-staging/inventory/source-manifest.jsonl", "music-staging/library/**"],
       "verification": ["ffprobe every output for one audio stream, zero video streams, duration tolerance, and no partial files; validate manifest version and asset references"],
       "driftPolicy": "The source is read-only and the generated inventory and media stay outside Git. Run one bounded batch at a time, preserve the disk reserve, and publish only after content-hash deduplication and manual classification are complete."
@@ -145,24 +146,24 @@
         "ref": { "type": "branch", "value": "master" }
       },
       "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/cs0x7f/cstimer/blob/master/LICENSE" },
-      "owner": "scripts/upstream/sync-cstimer.ps1",
-      "patchOwner": ["scripts/upstream/sync-cstimer.ps1"],
+      "owner": "scripts/upstream/sync-cstimer.ts",
+      "patchOwner": ["scripts/upstream/sync-cstimer.ts"],
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only cstimer",
+      "command": "cd core && pnpm upstream:sync --only cstimer",
       "outputs": [
         "tools/cstimer/**",
         "core/packages/client/public/scramble_module.js"
       ],
       "versionRecord": {
         "path": "tools/cstimer/UPSTREAM.txt",
-        "writer": "scripts/upstream/sync-cstimer.ps1",
-        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD after a successful sync",
+        "writer": "scripts/upstream/sync-cstimer.ts",
+        "mechanism": "versionRecord() reads git rev-parse HEAD after a successful sync",
         "format": "structured-v1",
         "state": "pending-next-successful-sync",
         "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful sync must create it."
       },
       "verification": [
-        "pwsh -NoProfile -File scripts/upstream/sync-cstimer.ps1 -ValidateOnly"
+        "cd core && pnpm upstream:sync --only cstimer --validate-only"
       ],
       "driftPolicy": "Sync only through the owner, record the real clone HEAD, then review the vendored diff, local integration, and license before publication."
     },
@@ -174,21 +175,21 @@
         "ref": { "type": "branch", "value": "master" }
       },
       "license": { "spdx": "GPL-3.0-only", "evidence": "tools/cstimer-scramble/LICENSE" },
-      "owner": "scripts/upstream/sync-cstimer-scramble.ps1",
-      "patchOwner": ["scripts/upstream/sync-cstimer-scramble.ps1"],
+      "owner": "scripts/upstream/sync-cstimer-scramble.ts",
+      "patchOwner": ["scripts/upstream/sync-cstimer-scramble.ts"],
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only cstimer",
+      "command": "cd core && pnpm upstream:sync --only cstimer",
       "outputs": ["tools/cstimer-scramble/**"],
       "versionRecord": {
         "path": "tools/cstimer-scramble/UPSTREAM.txt",
-        "writer": "scripts/upstream/sync-cstimer-scramble.ps1",
-        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD after a successful three-way merge",
+        "writer": "scripts/upstream/sync-cstimer-scramble.ts",
+        "mechanism": "versionRecord() reads git rev-parse HEAD after a successful three-way merge",
         "format": "structured-v1",
         "state": "pending-next-successful-sync",
         "pendingReason": "The checked-in legacy record contains only a seven-character commit; the next reviewed successful three-way sync must replace it with the structured full-commit record."
       },
       "verification": [
-        "pwsh -NoProfile -File scripts/upstream/sync-cstimer-scramble.ps1 -ValidateOnly"
+        "cd core && pnpm upstream:sync --only cstimer --validate-only"
       ],
       "driftPolicy": "Sync only through the owner, record the real clone HEAD, then review the site integration contract before publication."
     },
@@ -200,14 +201,14 @@
         "ref": { "type": "branch", "value": "main" }
       },
       "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/or18/RubiksSolverDemo/blob/main/LICENSE" },
-      "owner": "scripts/upstream/sync-rubiks-solver-demo.ps1",
+      "owner": "scripts/upstream/sync-rubiks-solver-demo.ts",
       "patchOwner": [
-        "scripts/upstream/sync-rubiks-solver-demo.ps1",
+        "scripts/upstream/sync-rubiks-solver-demo.ts",
         ".sync/page_config.json",
         ".sync/menu_template.html"
       ],
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only solver",
+      "command": "cd core && pnpm upstream:sync --only solver",
       "outputs": [
         "tools/RUBIKS_SOLVER_UPSTREAM.txt",
         "tools/src/**",
@@ -234,14 +235,14 @@
       ],
       "versionRecord": {
         "path": "tools/RUBIKS_SOLVER_UPSTREAM.txt",
-        "writer": "scripts/upstream/sync-rubiks-solver-demo.ps1",
-        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD only outside DryRun",
+        "writer": "scripts/upstream/sync-rubiks-solver-demo.ts",
+        "mechanism": "versionRecord() reads git rev-parse HEAD only outside --dry-run",
         "format": "structured-v1",
         "state": "pending-next-successful-sync",
-        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful non-DryRun sync must create it."
+        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful sync without --dry-run must create it."
       },
       "verification": [
-        "pwsh -NoProfile -File scripts/upstream/sync-rubiks-solver-demo.ps1 -ValidateOnly"
+        "cd core && pnpm upstream:sync --only solver --validate-only"
       ],
       "driftPolicy": "Sync through the owner and review every local wrapper and patch owner after recording the real clone HEAD."
     },
@@ -253,24 +254,24 @@
         "ref": { "type": "branch", "value": "master" }
       },
       "license": { "spdx": "GPL-3.0-only", "evidence": "https://github.com/mihlefeld/Alg-Trainers/blob/master/LICENSE" },
-      "owner": "scripts/upstream/sync-alg-trainers.ps1",
+      "owner": "scripts/upstream/sync-alg-trainers.ts",
       "patchOwner": [
-        "scripts/upstream/sync-alg-trainers.ps1",
+        "scripts/upstream/sync-alg-trainers.ts",
         ".sync/alg_trainers_config.json"
       ],
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only algtrainers",
+      "command": "cd core && pnpm upstream:sync --only algtrainers",
       "outputs": ["tools/alg_trainers/**"],
       "versionRecord": {
         "path": "tools/alg_trainers/UPSTREAM.txt",
-        "writer": "scripts/upstream/sync-alg-trainers.ps1",
-        "mechanism": "Write-UpstreamVersionRecord reads git rev-parse HEAD only outside DryRun",
+        "writer": "scripts/upstream/sync-alg-trainers.ts",
+        "mechanism": "versionRecord() reads git rev-parse HEAD only outside --dry-run",
         "format": "structured-v1",
         "state": "pending-next-successful-sync",
-        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful non-DryRun sync must create it."
+        "pendingReason": "The current vendored tree predates the structured record and has no trustworthy full-commit provenance; the next reviewed successful sync without --dry-run must create it."
       },
       "verification": [
-        "pwsh -NoProfile -File scripts/upstream/sync-alg-trainers.ps1 -ValidateOnly"
+        "cd core && pnpm upstream:sync --only algtrainers --validate-only"
       ],
       "driftPolicy": "Sync through the owner and review the configured local patches after recording the real clone HEAD."
     },
@@ -282,25 +283,25 @@
         "ref": { "type": "branch", "value": "v2" }
       },
       "license": { "spdx": "GPL-3.0-only", "evidence": "tools/blddb/LICENSE" },
-      "owner": "scripts/upstream/sync-blddb.ps1",
+      "owner": "scripts/upstream/sync-blddb.ts",
       "patchOwner": [
-        "scripts/upstream/sync-blddb.ps1",
+        "scripts/upstream/sync-blddb.ts",
         ".sync/blddb_postprocess.mjs"
       ],
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only blddb",
+      "command": "cd core && pnpm upstream:sync --only blddb",
       "outputs": ["tools/blddb/**"],
       "versionRecord": {
         "path": "tools/blddb/UPSTREAM.txt",
-        "writer": "scripts/upstream/sync-blddb.ps1",
-        "mechanism": "Write-UpstreamVersionRecord records the detached origin/v2 commit after candidate export and post-processing succeed",
+        "writer": "scripts/upstream/sync-blddb.ts",
+        "mechanism": "versionRecord() records the detached origin/v2 commit after candidate export and post-processing succeed",
         "format": "structured-v1",
         "state": "verified"
       },
       "verification": [
-        "pwsh -NoProfile -File scripts/upstream/sync-blddb.ps1 -ValidateOnly"
+        "cd core && pnpm upstream:sync --only blddb --validate-only"
       ],
-      "driftPolicy": "Sync through sync_upstream.ps1 -Only blddb; record the locked origin/v2 commit and review post-processing and license."
+      "driftPolicy": "Sync through sync_upstream.ts --only blddb; record the locked origin/v2 commit and review post-processing and license."
     },
     {
       "id": "deploy.recordranks",
@@ -311,20 +312,20 @@
         "forkUrl": "https://github.com/2017YANR02/RecordRanks"
       },
       "license": { "spdx": "AGPL-3.0-only", "evidence": "https://github.com/mintydev789/RecordRanks/blob/main/LICENSE" },
-      "owner": "scripts/upstream/sync-recordranks.ps1",
-      "patchOwner": ["the 2017YANR02/RecordRanks fork", "scripts/upstream/sync-recordranks.ps1 compatibility assertions"],
+      "owner": "scripts/upstream/sync-recordranks.ts",
+      "patchOwner": ["the 2017YANR02/RecordRanks fork", "scripts/upstream/sync-recordranks.ts compatibility assertions"],
       "workingDirectory": ".",
-      "command": "pwsh -NoProfile -File .\\sync_upstream.ps1 -Only recordranks",
+      "command": "cd core && pnpm upstream:sync --only recordranks",
       "outputs": ["ops/contests/recordranks-ref.txt"],
       "versionRecord": {
         "path": "ops/contests/recordranks-ref.txt",
-        "writer": "scripts/upstream/sync-recordranks.ps1",
+        "writer": "scripts/upstream/sync-recordranks.ts",
         "mechanism": "the script writes the verified clone HEAD after pushing the fork and checking origin/main",
         "format": "sha40",
         "state": "verified"
       },
       "verification": [
-        "pwsh -NoProfile -File scripts/upstream/sync-recordranks.ps1 -ValidateOnly"
+        "cd core && pnpm upstream:sync --only recordranks --validate-only"
       ],
       "driftPolicy": "The owner verifies and pushes the maintained fork, then records the verified origin/main clone HEAD; fork patches remain owned outside this repository."
     },
@@ -872,7 +873,7 @@
       "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE and solver-specific upstream terms" },
       "owner": "solver",
       "workingDirectory": "solver",
-      "command": "follow the matching solver loop or runbook with computation capped at 14 threads",
+      "command": "follow the matching solver loop or runbook; use available CPU parallelism by default",
       "transientOutputs": ["solver/target/**", "solver/tables/**", "solver/pkg-*/**"],
       "versioning": "record the implementation version plus table size and hash for each generated family",
       "verification": ["exact fixtures, recorded table size and hash, and smoke checks in each target native or WASM runtime"],

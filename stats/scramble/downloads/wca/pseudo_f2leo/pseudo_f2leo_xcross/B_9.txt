@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / B / bin 9
-# Population in this bin: 389
+# Population in this bin: 390
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4190940001,U L D' R2 F' U2 F' L' F U F2 D2 F2 U R2 D F2 L2 U' R',B,CubingUSA Mid-Atlantic Championship 2024 (2024-10-12~14),333 R1 C E2
@@ -195,7 +195,7 @@
 3205396001,F2 L2 U F2 L2 F2 L2 D2 U' L F D B2 L D' R D2 B' R2 U,B,Dolné Orešany Cube Day 2023 (2023-10-28),333 R1 C E1
 2688988001,L D2 L2 D2 B2 L2 U B2 U' B U2 L D2 R2 U B R2 D' R2 F,B,San Marino Nationals 2023 (2023-05-07),333 R2 B #5
 3501373056,R' U' D' F2 L' F B U' F R2 L2 U F2 L2 U B2 U R2 U2 L,B,Shhicago 2024 (2024-02-11),333mbf Final A #1
-2722409024,R2 B U' D2 L2 R2 B2 D2 B' L2 B2 F D2 L' D' R B2 F' L' D',B,Let's Qualify Kuwait 2023 (2023-05-19),333mbf Final D #2
+5841291001,F2 L D F B' U' L2 U R2 F' R2 F' R2 U2 L2 U' L' D',B,USFA Spring 2026 (2026-09-19~20),333 R2 A E1
 4310994001,F2 L' D2 F L2 D2 F2 R2 D2 B R2 L D' B' F' U B2 U2 B F2,B,Indiana Championship 2024 (2024-11-22~24),333 R1 D #5
 3270588001,D R U' R2 L' F' U' D F R2 F' D2 L B2 U2 R2 B2 L' B2,B,Taoyuan Airport Cube Day 2023 (2023-11-11~12),333 R2 F #3
 2869248001,D2 F D2 F D2 L2 F' D2 R2 D F2 D R' U' F' D' L' D2 F2 U2,B,New Taipei Open 2023 (2023-07-08),333 R2 B #1

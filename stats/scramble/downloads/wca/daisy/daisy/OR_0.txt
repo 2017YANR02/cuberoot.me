@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / OR / bin 0
-# Population in this bin: 320
+# Population in this bin: 321
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 23209001,F R D' B2 D2 F' D' R2 L' D2 F R2 L2 D2 F B2 L2 U2 L2 U2,R,Speedcubing Los Alpes 2014 (2014-05-19),333 Final A #5
@@ -23,7 +23,7 @@
 3605543001,R' B2 L2 U2 B U2 B' L2 D2 B D2 U' B' L' B' U' F2 D B',O,IIT Kharagpur Spring Open 2024 (2024-03-17),333 Final A #3
 225024001,B2 L2 U' L2 R2 D F2 L2 U2 B2 F R' D' L' F D2 F2 D2 R U2 L',R,Sébra Open 2015 (2015-12-05~06),333bf R1 B #2
 248646001,L B2 R2 D F' L2 F D R D F2 L D2 L' F2 B2 L2 B2 L',O,Slow N Steady Winter 2016 (2016-01-30),333 R1 O #3
-4512587001,U' R F L' F2 L F2 R2 D2 B2 U2 B2 L F' R U' L' R' F R',R,Trikala Open 2025 (2025-02-15~16),333oh R1 B #3
+5834025001,U' F2 L2 B2 D B2 R2 D2 L' D F' D2 F' U2 L R F' U2 F',O,Gouverneur Sprint 2026 (2026-09-19),333 R1 A E2
 260633001,B' D2 F' D2 L2 F2 U2 L2 B2 R' F R B' U B' R F2 U R U2,R,Big Apple Cube Clash 2016 (2016-02-27),333 R2 C #5
 4776824008,F2 D2 B2 U' R' L F' L D B' L2 D' R2 D F2 L2 B D,R,Episode VII - The Blind Awakens Israel 2025 (2025-06-06),333mbf Final A #1
 344596001,D' B2 D' B2 R2 U L2 R2 F2 L2 B D B U2 L' U' L' D' R' U',O,Legends of Rubik 2016 (2016-08-05~06),333 R1 A #5

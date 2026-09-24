@@ -91,7 +91,7 @@ describe('nested link guard', () => {
     const preTool = codex.hooks?.PreToolUse ?? [];
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
       group.matcher?.includes('apply_patch')
-      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mjs')
+      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mts')
         && hook.command.includes('hook-detect-nested-links.mjs')),
     )).toBe(true);
     expect(existsSync(join(ROOT, 'scripts', 'hook-detect-nested-links.mjs'))).toBe(true);

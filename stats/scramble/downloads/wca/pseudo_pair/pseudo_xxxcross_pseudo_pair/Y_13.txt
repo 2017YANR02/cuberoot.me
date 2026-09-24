@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / Y / bin 13
-# Population in this bin: 227
+# Population in this bin: 228
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 31996001,F' B' U F2 U2 F' U2 D R F L2 B2 R' L' D2 L' B2 L F2 B2 L,Y,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #5
@@ -162,7 +162,7 @@
 3815605063,L' F2 R U2 L F2 L2 U2 F2 L U' F U L' B U R F L2 B' L B',Y,Glasgow Summer - Scottish Blind Off 2024 (2024-06-01~02),333mbf Final A #2
 3884317001,F' L U L2 F2 D' U' F2 D' R2 B F D2 B R U' L D F,Y,Uppsalaligan 6: O2 - 2024 (2024-06-24),333 R1 A #5
 3901893001,R' U' B L D' R2 F2 B2 D' L' F2 R2 F D2 B R2 F' R2 U2,Y,CubingUSA Southeast Championship 2024 (2024-06-28~30),333 R2 C #4
-3903968001,U' F D' F D2 B' U2 B R2 B2 F U2 F' L' U F D2 R2 D L,Y,Humble Cube Rumble Summer 2024 (2024-06-30),333oh R1 B #5
+5831900001,R' U' B2 R2 B2 U2 R2 D' R2 U F D' B L2 D' L' B2 D2 B R B' L,Y,Vratsa Cube Open 2026 (2026-09-12),333bf Final B #4
 3906903001,B U D B D B' R F' U' F2 B2 D L2 U2 B2 U2 B' D R,Y,Taipei Summer Open 2024 (2024-06-29~30),333 R2 D #2
 5492426001,B U' L2 R2 U' L2 U2 F2 D2 L' D' F D B' R' D' U L2 R',Y,Brown County Blitz 2026 (2026-03-29),333oh Final A #4
 3947363001,R2 L B R B' U' R2 F2 U2 R2 B2 D2 F' L2 F' R2 F' U L2 B D2,Y,Kuwait Side Events 2024 (2024-07-19),333bf R1 B #1

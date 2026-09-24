@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / ORWY / bin 5
-# Population in this bin: 499
+# Population in this bin: 501
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4800566001,U L B' F2 D' R2 U2 L2 F2 D2 U' F' D B' D' L2 R' F2,W,Risbjerg Juni 2025 (2025-06-14~15),333oh Final B #3
@@ -147,7 +147,7 @@
 5690374048,R2 U F U2 L' F2 B2 R' F D' L F2 D2 L2 F2 U' D' L' F,Y,Headache in Kode 2026 (2026-06-05~07),333mbf R1 A #1
 944629001,B U2 R2 B D2 F2 L' D2 B' L R' U2 R2 F D' F' U' L2 U2,Y,Please Be Quiet Berkeley 2018 (2018-12-01~02),333bf Final A E1
 4805783058,U F U' B2 U' D2 L' D2 B R2 D' L2 D B2 D' L2 R' D2 L B2,Y,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final A #2
-976996001,R L2 D B U D' B R' F' B U' R L2 D2 F2 L F2,W,PDX Cubing for Causes 2019 (2019-01-12),333 R1 A E2
+5836812001,R2 U2 L B R' D R2 B' D' L' U2 F L2 F L2 B2 L2 U2,R,Mina de Água Warm Up 2026 (2026-09-19),333 R1 A #3
 978538001,R2 U2 B' R2 F' L2 B U2 F2 L2 R D' L D' L2 R2 F D2 B2 D',W,Polish Speedcubing Tour LLS Lublin 2019 (2019-01-12~13),333 R1 C #2
 985184001,B R' B' R B' D' R' D2 R B U2 F2 U' R2 D' R2 D L2 D2,O,D-City Cubing 2019 (2019-01-19~20),333 R1 B #4
 3804028001,U' R2 D B2 U2 R2 F2 U2 L2 B L2 F U R B' R F' L' D,W,Guiyang Open 2024 (2024-05-26),333oh R1 B E2

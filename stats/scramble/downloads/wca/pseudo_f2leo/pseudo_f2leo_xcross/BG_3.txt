@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 711
+# Population in this bin: 713
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -10,7 +10,7 @@
 2630488026,D2 F U R2 D2 L D2 R' B2 D2 F2 D2 B' U L2 R U2 R2 U2 L,G,Barby Cube 2023 (2023-04-08~10),333mbf Final A #1
 13714001,U2 R2 F2 L' U2 R B2 R B' F U B' F2 D2 B L2 R B2 U',G,Berkeley Spring 2014 (2014-04-19),333oh R1 A #5
 5771439017,F' R' B2 D' R' U2 R' F2 L' R' U2 F' U L U2 F' R F' L' F,G,Silent Korea Open 2026 (2026-08-01~02),333mbf Final A #1
-4496827001,F' D' L2 B2 L2 B2 R2 D U L2 R D2 B' U2 B D2 U' R',G,URJC Open 2025 (2025-02-15~16),333 R2 B #1
+5837670001,U2 L2 B2 D L2 R2 B2 L2 B L B U R' B L2 R D2 B',G,Speedcubing à Saint Symphorien 2026 (2026-09-19~20),333 Final B #5
 1265172001,R2 F2 D B2 D2 B2 F2 R2 U' R2 U2 R U' F U' F D B' F' L',G,Kharkiv Open 2019 (2019-08-17~18),333ft R1 B E1
 35153001,D' R' U' D2 L F' L2 U2 B2 D F U2 F B2 R2 D2 F U2 B,G,Plentzia Open 2014 (2014-06-28~29),333ft Final A #1
 1703239001,U F L2 U' R' U2 B2 L' F' R2 F2 D2 R2 B2 L' U2 R' U',B,Danish Championship 2021 (2021-10-08~10),333 R2 C E2

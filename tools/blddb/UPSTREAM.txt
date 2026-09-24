@@ -6,7 +6,7 @@ Commit: 0f55b3acd2e734786b644f52571c87fd3db06ef6
 Date: 2026-08-24T02:44:46Z
 License: GPL-3.0-only
 Patch owners:
-- scripts/upstream/sync-blddb.ps1
+- scripts/upstream/sync-blddb.ts
 - .sync/blddb_postprocess.mjs
 Outputs:
 - tools/blddb/**

@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / OR / bin 10
-# Population in this bin: 974
+# Population in this bin: 976
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4380537001,F U2 D' L' U B' R' D B' L2 F U2 F L2 F L2 R F R',O,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333oh R1 C #5
@@ -172,7 +172,7 @@
 653628001,L2 B' D B2 R' U2 F2 L' F D L' U2 R2 F D2 R2 F' U2 L2 F',O,Jeju Open 2017 (2017-11-25~26),333 R1 A #5
 5141932001,L2 D' F U2 R F' R2 U R2 B U R2 D2 B2 D B2 U L2 B2 R,O,San Antonio Fall 2025 (2025-10-25~26),333 R1 D #5
 852601001,L' U' L D2 B U2 R' F D L U' R2 U' F2 U' B2 L2 U' B2 U' L2,O,Constanta Cube Days 2018 (2018-08-11~12),333 R2 A E1
-1349793021,F2 L2 U R2 B2 R2 B2 F2 U B2 U L F R B2 D F' U' F2 L B,O,345 Cube Day Allen 2019 (2019-10-13),333mbf Final A #3
+5831587001,R' B U F2 R2 D' L2 U2 F2 L F D2 B U L F D B2 D,O,Belgrave Open 2026 (2026-09-12~13),333 Final A #2
 660500009,U2 B2 L2 R2 U2 F L2 F' R2 F' R' U' R2 D' L R2 F' D' B R U' L2,O,Czech Open 2014 (2014-07-11~13),333mbf Final A #2
 1796543001,R2 B2 U2 L2 U2 L2 D' R' D' U' F' D L' D' L2 B F L' U2,O,Wakefield Open 2022 (2022-01-29~30),333 R1 F #5
 660585002,L2 R2 D2 B U2 B' U2 B U2 L2 B' L D2 U2 B U R U' F L2 D L2 U2,O,Asian Championship 2014 (2014-11-01~03),333mbf Final A #2

@@ -35,7 +35,7 @@ FRLS "leave slice" + insertions.
 ## §1 VERIFIED ENGINE FACTS (ground truth — do not re-derive from memory)
 
 Source: `D:\cube\cuberoot.me\solver\src\`. WASM surface: `solver/src/wasm.rs`
-(`#[cfg(target_arch="wasm32")]`, registered in `lib.rs`). Build: `solver/build_wasm.ps1`.
+(`#[cfg(target_arch="wasm32")]`, registered in `lib.rs`). Build: `pnpm --dir core solver:build-wasm`.
 
 - **Move model** (`cube_common.rs`): `#[repr(u8)] enum Move` = 18 values U,U2,U',D,D2,D',L,L2,L',
   R,R2,R',F,F2,F',B,B2,B' (idx 0..17). `MOVE_NAMES[18]`, `Move::ALL`, `from_index`, `index`.
@@ -80,14 +80,14 @@ solvers: `#[wasm_bindgen(constructor)] new()`, lazy `ensure()`, `solve(scramble)
 
 ## §2 THE "ADD A SOLVER KEY" RITUAL (9 sites — copy htr2 precedent commit `a8b9449f4` + `5626a0e9c`)
 
-Data flow: Rust crate → `wasm.rs` export → `build_wasm.ps1` (pkg-web) → **manual copy** to
+Data flow: Rust crate → `wasm.rs` export → `scripts/build_wasm.mts` (pkg-web) → **manual copy** to
 `tools/solver/rust-cross/` → **hand-maintained worker** → `rust-cross-client.ts` → `rust-cross-pool.ts`
 → `StageSolver.tsx`. Canonical: `solver/VARIANT_PLAYBOOK.md:56-84`.
 
 0. **Rust** `solver/src/wasm.rs`: add `<Name>SolverWasm` (copy `HtrPhase2SolverWasm`). Register
    module in `lib.rs` wasm-region.
-1. **Build** `solver/build_wasm.ps1`: if NEW `.bin` tables → add to `$names` (line 33). Zero-table
-   solvers add nothing. Run `pwsh solver/build_wasm.ps1` → `solver/pkg-web/`.
+1. **Build** `solver/scripts/build_wasm.mts`: if NEW `.bin` tables → add to `names`. Zero-table
+   solvers add nothing. Run `pnpm --dir core solver:build-wasm` from the repo root → `solver/pkg-web/`.
 2. **Copy (manual)**: `solver/pkg-web/{cross_solver.js, cross_solver_bg.wasm, cross_solver.d.ts,
    cross_solver_bg.wasm.d.ts}` → `D:\cube\cuberoot.me\tools\solver\rust-cross\`. New tables →
    `tools/solver/rust-cross/tables/`. (No Copy-Item in any .ps1; it's a hand step.)
@@ -199,7 +199,7 @@ Co-Authored-By trailer). No wasm, no UI this phase.
 
 - `wasm.rs`: add `FrSolverWasm` (copy `HtrPhase2SolverWasm` 466-518). `solve`→6 viewpoints (u32::MAX
   where not-HTR), `solve_moves`→JSON; `c`-label = FR axis (UD/FB/LR).
-- `build_wasm.ps1`: NO `$names` change (zero-table). Run `pwsh solver/build_wasm.ps1` (SERIAL build).
+- `scripts/build_wasm.mts`: NO `names` change (zero-table). Run `pnpm --dir core solver:build-wasm` (SERIAL build).
 - Manual copy pkg-web artifacts → tools/solver/rust-cross/.
 - Worker: `let frSolver=null;` + init `else if(need==='fr')` + `fr_stage`/`fr_moves` handlers.
 - Client: **BUMP V**; TABLE_SETS `fr:[]`; interface `solveFrStage`/`solveFrMoves`; need union;

@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / R / bin 8
-# Population in this bin: 698
+# Population in this bin: 702
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2275001,F2 U2 L B2 L2 F2 U2 F2 L F2 R' D B F R' D F2 U L B',R,IIT Roorkee Open 2014 (2014-03-21),333 Final C #5
@@ -58,7 +58,7 @@
 321100001,L2 B2 D R2 F2 L2 R2 D2 R2 D B' R2 U2 R2 D F' D2 R D F2,R,SESC Gravataí 2016 (2016-06-25~26),333 R2 A #2
 5660426001,B U2 B' U2 L2 D2 R2 B L2 U2 R F' D2 U' F U' L D' R U,R,UPV Open 2026 (2026-05-23~24),333 R2 B #4
 4545568001,B2 U L' F2 U2 B2 F2 D R2 U' F2 U' B' L' U2 B2 U' F' R,R,Korea Newcomers PM 2025 (2025-03-08),333 R1 D #2
-334032001,R' D2 L' U D' R' B D2 F L U' F2 U2 B' L2 F' D2 L2 D2 L2,R,Westlake Open 2016 (2016-07-23),333 R2 B #4
+5831413001,R2 L D' F' L2 U R' B' R' L2 D2 B' D2 R2 F' L2 F2 L' B2,R,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R1 G #3
 1443289001,R U' D F L B' D' F2 U' F' L D2 F2 U2 L U2 B2 L2 B2 U2,R,SSL Final Stockholm 2019 (2019-12-07~08),333 R2 A E2
 4025788024,L U' R2 B' L' F U F R D2 B2 R D2 R' B2 L F2 U2 D F' L2 U2,R,Big n' Blind Caloocan 2024 (2024-08-18),333mbf Final A #1
 1457723001,L2 U2 B2 D R2 U2 L2 D' B2 L D U R B' F' U' L B2 F2 R2,R,Bolivia Nationals 2019 (2019-12-06~08),333 R2 A #4

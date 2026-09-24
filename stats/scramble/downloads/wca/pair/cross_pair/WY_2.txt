@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / WY / bin 2
-# Population in this bin: 413
+# Population in this bin: 414
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5
@@ -67,7 +67,7 @@
 4758683001,F' L D' L' D' R2 L2 F2 R D F2 L2 B2 D2 L2 U R' U',Y,FECAP Open 2025 (2025-05-24),333 R1 E #2
 660450010,R2 D L2 U' R2 B2 D F' U2 B' F2 L' B L' F2 D2 B' D' L,W,Hefei Spring 2014 (2014-05-01~02),333mbf Final A #1
 660506023,D B2 R2 B2 L2 D' U' B2 L' B2 D F D B D B D' L D',W,Michigan 2014 (2014-07-12~13),333mbf Final A #1
-660568018,D' U' F2 D U2 F2 L2 B' R D2 U2 F2 L R2 B2 D L' F2 L,W,Hungarian Open 2014 (2014-10-17~19),333mbf Final A #2
+5840294001,U2 L2 R2 F' R2 U2 R2 U2 B2 D' L' F2 D' F' R2 B R2 F2 U2 B R,W,Galgotias Cube Open 2026 (2026-09-19~20),333bf Final A #1
 3992189001,D2 F L' F D L2 B R2 U B' L B2 L' F2 U2 R2 L' F2,W,Bio Fortec 2024 (2024-08-03),333 R1 C #3
 4538370001,U2 F2 L2 F2 U' F L F B U2 B' D2 L2 U2 L2 B2 U2 D L,W,Bangladesh Cubing Fiesta 2025 (2025-02-27~28),333 Final A #3
 5139137001,R L2 U B U D' B L F2 U B2 R2 B2 D2 B2 D' R U F2,Y,Cuboss Open 2025 (2025-10-25~26),333 R1 D #3

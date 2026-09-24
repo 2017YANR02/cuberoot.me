@@ -14,7 +14,7 @@ on:
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
-      - '*.ps1'
+      - 'sync_upstream.ts'
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
@@ -38,7 +38,7 @@ on:
       - '!core/packages/platform/**'
       - 'docs/platform-capability-manifest.json'
       - 'docs/platform-unification-plan.md'
-      - '*.ps1'
+      - 'sync_upstream.ts'
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
@@ -110,7 +110,7 @@ jobs:
               - 'core/packages/visualcube/**'
               - 'docs/platform-capability-manifest.json'
               - 'docs/platform-unification-plan.md'
-              - '*.ps1'
+              - 'sync_upstream.ts'
               - '.sync/**'
               - 'scripts/upstream/**'
               - 'ops/nginx/**'
@@ -225,7 +225,7 @@ jobs:
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
-            /*.ps1
+            /sync_upstream.ts
             /.sync/
             /scripts/upstream/
             /ops/nginx/platform.cuberoot.me.conf
@@ -262,9 +262,6 @@ jobs:
             /stats/scramble/distribution.json
           filter: blob:none
 
-      - name: Verify upstream sync PowerShell contract
-        run: pwsh -NoProfile -File ./scripts/upstream/tests/upstream-sync-contract.ps1
-
       - uses: pnpm/action-setup@v6
         with:
           # 版本单一源:core/package.json 的 packageManager。别在这里写 version —— 两处会打架。
@@ -283,6 +280,10 @@ jobs:
       - name: Install dependencies
         working-directory: core
         run: pnpm install --frozen-lockfile
+
+      - name: Verify upstream sync TypeScript contract
+        working-directory: core
+        run: pnpm exec tsx --test ../scripts/upstream/tests/upstream-sync-contract.test.ts
 
       - name: Resolve workspace layout
         id: workspace
@@ -443,7 +444,7 @@ jobs:
             /docs/generated-artifacts.json
             /docs/platform-capability-manifest.json
             /docs/platform-unification-plan.md
-            /*.ps1
+            /sync_upstream.ts
             /.sync/
             /scripts/upstream/
             /ops/nginx/platform.cuberoot.me.conf

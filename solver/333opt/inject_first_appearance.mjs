@@ -1,3 +1,4 @@
+import { wcaDir } from './data_paths.mjs';
 // 333 整解最优「首次出现」时间线注入。inject.mjs 的姊妹步:把 out.*.csv(id,htm)按比赛日期
 // 折成每 htm 步数的**最早**一条打乱,注入 stats/scramble/difficulty_first_appearance.json 的
 // sets.wca.variants['333'](阶段只 '333',伪子集 'ALL'),与 build_first_appearance.ts 产的
@@ -17,9 +18,9 @@ import { createInterface } from 'node:readline';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
 const FA = process.env.FA ? resolve(process.env.FA) : resolve(repoRoot, 'stats/scramble/difficulty_first_appearance.json');
-const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : 'D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt';
-const META = process.env.META ? resolve(process.env.META) : 'D:/cube/scramble/wca_scramble/input/wca_scrambles_split_mbf.csv';
-const COMP_TSV = process.env.COMPS ? resolve(process.env.COMPS) : 'D:/cube/scramble/wca_scramble/competitions.tsv';
+const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : resolve(wcaDir, 'wca_scrambles_no_wide_move.txt');
+const META = process.env.META ? resolve(process.env.META) : resolve(wcaDir, 'input/wca_scrambles_split_mbf.csv');
+const COMP_TSV = process.env.COMPS ? resolve(process.env.COMPS) : resolve(wcaDir, 'competitions.tsv');
 
 // 口径同 comp_date.ts dateDisplay
 function dateDisplay(start, end) {
@@ -43,7 +44,7 @@ for (const f of readdirSync(__dirname).filter((f) => /^out\.\d+\.csv$/.test(f)))
   }
 }
 const solvedN = Object.keys(lens).length;
-if (!solvedN) { console.error('out.*.csv 为空,先跑 solve_loop.mjs'); process.exit(1); }
+if (!solvedN) { console.error('out.*.csv 为空,先跑 solve_h10.mts'); process.exit(1); }
 
 // ---- 2. competitions.tsv -> compId -> { startInt, display, name } ----
 const compInfo = new Map();

@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / W / bin 0
-# Population in this bin: 816
+# Population in this bin: 819
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5259667001,D' R D L2 R2 B2 U F2 R2 U2 L2 U' B F2 L' B F' D' R',W,Tashkent Open 2025 (2025-12-06~07),333 Final A #2
@@ -126,7 +126,7 @@
 2933708001,B2 L B R' U B2 U2 B2 L2 D' F2 R2 D2 R' D2 L B',W,Studio 21 Open Saturday 2023 (2023-07-22),333 R1 I E1
 3567937001,L2 D2 L2 B2 R2 B2 R2 U2 B' F2 R' F' U' L' F' R2 D' L2 U2 L2,W,Stevenage Newcomers Saturday 2024 (2024-03-09),333 Final C #1
 899578001,D' B2 R' B' L B' R2 L2 D L B D' B2 U' R2 D B2 U2 B2,W,Five Rivers Cube Open 2018 (2018-10-06~07),333oh R1 B #3
-3364322024,D B' L' U2 L' U R F U2 L' U' B2 L2 F2 U' F2 D F2 R2 D' L B,W,Pittsburgh Be Quiet 2023 (2023-12-16~17),333mbf Final A #1
+5831999001,F' U2 F R2 D2 R2 B2 D2 L' F' D' R2 U B2 L F2 D' B' L2 U,W,Les Beaupreau du Blind 2026 (2026-09-12~13),333mbf Final B #3
 4754037001,F2 L B' R U' B2 U D' B L' D' F' D2 F' R2 F2 D2 F,W,Open Club El Dado 2025 (2025-05-24),333 R1 A #2
 632120006,B2 U2 R2 U2 R2 U2 B' R D L' F D' L F2 D L R B' L,W,SPB Championship 2017 (2017-10-27~29),333mbf Final A #1
 5221709001,U' R2 D2 U R2 U L' U' L' F L U F' L U2 F U L' F',W,New Hampshire Championship 2025 (2025-11-22~23),333bf Final A #1

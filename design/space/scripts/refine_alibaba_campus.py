@@ -1,6 +1,6 @@
 """Photo-referenced Alibaba Xuhui Y campus, incremental Blender authoring.
 
-Run against scenes/shanghai.blend with --threads 14. Preview is the default;
+Run against scenes/shanghai.blend. Preview is the default;
 --apply backs up and saves the source after geometry checks. References and
 estimated dimensions are recorded in ../references/alibaba-xuhui.md.
 """

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / G / bin 13
-# Population in this bin: 228
+# Population in this bin: 229
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 8407001,U L2 D F2 L2 R2 U' L2 R2 B L B L' F L' U R B' L D',G,Danish Open Championship 2014 (2014-04-05~06),333 R1 C #3
@@ -186,7 +186,7 @@
 4868848001,U' L R2 D2 B2 R B2 L U' F R D F' D' L D' B L2 B,G,NZ North Island Championship 2025 (2025-07-11~13),333bf Final A #1
 4893670001,L2 F' R2 B' D2 L2 F D2 B F2 U2 R' U B' L' B2 U' B D F',G,Colorado Springs Summer 2025 (2025-07-26),333 R1 B #4
 4900004001,F' R2 B' U2 L2 U2 B F L2 B R' B' U2 R U' B' L2 R F' U',G,SaskatooNxN 2025 (2025-08-02),333 R1 C #1
-4918493001,L D' B U2 F2 U2 L R2 U2 R2 U2 B2 D2 U L F D L' F U2,G,Elyu Cube Clash II 2025 (2025-08-02),333 R1 A #3
+5841933001,B L2 U' B' R2 F2 R U2 R' D2 R' U L B' R D R' F,G,Legio Open 2026 (2026-09-19~20),333 R1 B E1
 4960070001,D R F' D F' D' L2 B D F U2 R F2 R2 L F2 D2 F2 L' B2,G,Geselliges Gewürfel Göttingen 2025 (2025-08-23~24),333 Final A #2
 4984285001,F2 L2 D2 R' F L2 D2 B2 F L2 B2 L2 U R' B' L2 D' R2 D',G,Campeonato Baiano de 3x3 2025 (2025-08-30),333 R1 C E1
 5006395069,U2 L D' L' B U' D2 R' F' R B R2 D2 F2 R2 U2 B2 L B R,G,New York Quiet Championship 2025 (2025-09-06~07),333mbf Final A #2

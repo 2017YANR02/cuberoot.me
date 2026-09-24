@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "domain": "cuberoot.me",
+  "server": "47.97.30.181",
+  "adminSsh": "cuberoot",
+  "reservedPorts": [7101, 7102, 7199],
+  "machines": [
+    { "owner": "ruimin", "device": "mac-mini", "os": "mac", "transport": "frp", "status": "active", "localPort": 3000, "remotePort": 7100, "certificate": "dev-machines", "aliases": ["dev-mac-mini.cuberoot.me", "dev.cuberoot.me"] },
+    { "owner": "ruimin", "device": "alienware", "os": "windows", "transport": "frp", "status": "active", "localPort": 3000, "remotePort": 7103, "certificate": "dev-machines", "aliases": ["dev-alienware.cuberoot.me"] },
+    { "owner": "ruimin", "device": "macbook-pro", "os": "mac", "transport": "frp", "status": "active", "localPort": 3000, "remotePort": 7104, "certificate": "dev-machines", "aliases": ["dev-macbook-pro.cuberoot.me"] }
+  ]
+}

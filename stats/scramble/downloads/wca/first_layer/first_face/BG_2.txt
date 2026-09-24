@@ -2,7 +2,7 @@
 # Population in this bin: 10
 # Samples listed: 10 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 444047001,U2 B2 D R F' U2 F' L2 U' L' U2 F D2 B' R2 D2 L2 U2 B',G,Aventura Cúbica III 2017 (2017-02-04~05),333oh R2 B E2

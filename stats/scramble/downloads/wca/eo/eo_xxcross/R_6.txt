@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / R / bin 6
-# Population in this bin: 108
-# Samples listed: 108 (all entries in this bin)
+# Population in this bin: 110
+# Samples listed: 110 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 11317001,D2 F2 U2 R2 F U B U' R' U2 D2 F R2 B' R2 B2 L2 B,R,Nanjing Spring 2014 (2014-04-07),333 R2 A #2
@@ -113,3 +113,5 @@
 5774090001,F L' B2 D R2 D' R2 D2 B2 U2 F2 L U2 L U' F2 D2 R2,R,Egypt National 2026 (2026-07-31~08-01),333 Final A E1
 5809683001,B' L' U2 D F D2 B L B' R L' B2 R' U2 D2 L B2,R,DFW Cubing Summer 2026 (2026-08-29~30),333 R3 B E1
 5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
+5833006001,D2 F2 R' F2 R' U' R D2 L' D' B' R' D' F' R D2,R,Ansan Autumn 2026 (2026-09-19),333oh R1 F #1
+5833829001,R' B' R F U2 R' D2 R D2 F2 R2 D L' D2 L R2 F2 D',R,Roswell Rumble Fall 2026 (2026-09-19),333 R1 D #5

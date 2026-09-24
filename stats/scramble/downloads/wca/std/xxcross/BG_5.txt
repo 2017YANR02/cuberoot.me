@@ -1,14 +1,14 @@
 # Scramble samples — std / xxcross / BG / bin 5
-# Population in this bin: 230
+# Population in this bin: 231
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
 5587689001,U L2 U2 B2 D2 L B2 L U F2 D L' R' B' L D' U' B,B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 D E1
 107292001,D2 L D2 L' B2 R U2 F2 U B2 L F' U B2 D2 U2 F' U2 R',B,SMA Winter 2015 (2015-02-07),333 R1 B #3
-114998001,L' U' F' R' L' D' L B' D L2 B R2 U2 F2 U2 R2 D2 B D2,G,Murcia 2015 (2015-03-07),333 R2 A E2
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
 5714305001,D' B2 D' L' F D R U D' R2 D2 L2 B2 U' D2 B R B2 L',B,Ruta Cubera: Vila-real Open 2026 (2026-06-20~21),333bf Final B E1
 167436001,L2 F2 L2 D U2 R2 D' B2 D2 B2 R' B' F' U L U R' D' R' B',G,ŚLS Sosnowiec 2015 (2015-07-18~19),333oh R1 C #4
 189381001,L' F2 D2 L R D2 R' F2 U F L' U B R2 B' L F' L' F2,B,MCC Gamma 2015 (2015-09-13),333oh R1 C #3

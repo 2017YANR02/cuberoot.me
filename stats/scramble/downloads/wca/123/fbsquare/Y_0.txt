@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / Y / bin 0
-# Population in this bin: 851
+# Population in this bin: 856
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1937346001,U B' U' B' R' D2 B' D2 F' B2 R D2 R U2 B2 U2 R2 B2 R,Y,Ponikva Open 2022 (2022-05-21),333oh R1 A #1
@@ -109,10 +109,10 @@
 1254662001,D2 L2 D' L2 B2 F2 U R2 D' B2 U' L R' B R2 U2 F2 U' R' U2,Y,Sens Open 2019 (2019-08-10~11),333 R1 C #1
 542010001,D2 L2 F2 U2 R' U2 B R F2 D B' R2 F' U2 F D2 L2 U2 R2 B,Y,Valencia Open 2017 (2017-07-01),333oh Final A E2
 3996157003,R D' B' L2 D B2 D' R2 F' R' D2 F2 L' B D2 B2 L2 B R2,Y,CubingUSA Western Championship 2024 (2024-08-02~04),333mbf Final B #2
-3816959001,F2 L U2 F2 U L2 F2 U F2 B' R F U' B F L' F U2,Y,Pocos Cupos Tijuana 2024 (2024-06-02),333 R1 B #4
+5835025001,U2 B R' U2 R2 D2 B2 L' B2 L R D R' D2 L' R' U',Y,Dolné Orešany Autumn 2026 (2026-09-19),333 R1 B E1
 549215001,U2 R2 U2 R' B2 L B2 R U2 R2 B F D' L U B' U F R2,Y,CubingUSA Nationals 2017 (2017-07-07~09),333 R1 K #5
 3644028001,U' R2 B2 U F U' D' B' U2 B' D2 B2 R D2 L2 D2 B2 D2 F2 L' F',Y,Wide Bay Cubing 2024 (2024-04-06~07),333bf R1 B #1
-1076816001,R2 U2 R2 U' B2 R2 U2 R2 D U F2 L U' L' R B' U' R F2 D2,Y,Cubing For Kyle 2019 (2019-03-30),333 R1 C #5
+5836977001,U F L D L2 D2 B2 U B2 F2 U L2 F' U' B' U2 R2 U2 B,Y,Visé Sunday Open 2026 (2026-09-13),333 R1 B #2
 563107001,B2 L2 F2 L2 R2 U L' D' U' R2 U2 R' U2 F D' R B L2,Y,ŚLS Zawiercie 2017 (2017-07-29~30),333oh R1 B #2
 564443001,B' U2 L2 B L2 D2 F U2 L2 U L' B2 D2 L B U2 B2 D2 R D' L' F2,Y,Inner Mongolia Summer 2017 (2017-08-05~06),333bf Final A #1
 4667431001,L' U' R B2 D' F2 R2 D R' U F2 R2 D F2 L2 U L' F',Y,Deqing Spring 2025 (2025-04-19),333oh R1 D #4

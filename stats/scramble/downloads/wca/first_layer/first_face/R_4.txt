@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / R / bin 4
-# Population in this bin: 666
+# Population in this bin: 668
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6058001,U2 R2 D' L2 R2 F2 R2 D F R' D B D' F U' B U B' L' B R2,R,Telesis ICC Blindfold Open 2014 (2014-03-29~30),333bf R1 B #1
@@ -147,7 +147,7 @@
 716661001,L2 B2 D B2 U' R2 F2 U2 L2 D2 R B L2 F L' R' F' D' F2 L2,R,Dongguan Open 2018 (2018-03-04),333 R2 B E1
 4013425001,B R' D2 L' B R' D2 R D' B2 U' R2 D B2 U2 F2 D R2 F2 L' B R2,R,Korean Championship 2024 (2024-08-15~17),333bf R1 C #1
 2944833001,U2 F D R' D2 L D2 B2 L2 F2 R' D L2 U2 B D' U2 R2,R,Piera Open 2023 (2023-07-29~30),333oh Final C E2
-723438001,U2 B2 U' F2 D' F2 U2 F2 U' B2 U' R' U L' B R D2 R2 D' U2 B2,R,San Jose Cubing 2018 (2018-03-10~11),333 R1 B #5
+5836272001,B R2 U2 F U2 L2 F U2 B' L2 F' U' B' U L B2 D F',R,VERK XVIII 2026 (2026-09-19~20),333oh R1 B #1
 724076001,L2 U2 R2 F L2 F D2 F2 U' F' U F' R2 B L D L' D U',R,Pucallpa Open 2018 (2018-03-10~11),333oh R1 A #5
 726830001,U' B2 D2 U R2 B2 D F2 U' R2 B L B' F2 D' R2 F R2 D2,R,Brilliant Big & Blind Blast 2018 (2018-03-17~18),333ft Final B #2
 3133211001,B D' L2 R U2 F2 U2 R' U2 D F2 D F' D2 F2 R2 D2 F2,R,Primavera Paceña 2023 (2023-09-30),333 R1 H #5

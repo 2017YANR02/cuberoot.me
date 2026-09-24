@@ -1,6 +1,6 @@
 // 通用「PG 灌库行级增量 diff」: 把本地全量 CSV 跟上次灌库的 sha1 行清单(manifest)对比,
 // 只产出「内容真变 / 新增」的行(delta CSV)+「已消失」的自然键(deleted),并写出新 manifest。
-// 配合 update_cross_stats.ps1 的 Load-*ToPg: 有 manifest 走增量(staging+UPSERT+DELETE), 无则全量+建基线。
+// 配合 scripts/stats/update-local.ts 的 Load-*ToPg: 有 manifest 走增量(staging+UPSERT+DELETE), 无则全量+建基线。
 // 自然键 = CSV 前 N 个逗号字段(前 N 字段恒为简单标识符, 无逗号/引号), 行 hash = sha1(整行原文)。
 //
 // 用法:

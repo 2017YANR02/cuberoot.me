@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGWY / bin 2
-# Population in this bin: 811
+# Population in this bin: 815
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 28543001,D2 R2 D2 B F L2 B U' F' U F' D U' R' D2 R2 F2 U2 L2 U2,G,Bucharest Rubik Summer 2014 (2014-06-15),333bf Final A #1
@@ -44,7 +44,7 @@
 5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,B,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 4225632001,F D2 F2 D2 U2 L' R2 F2 L R2 B2 D2 U' L2 B' R U B' U2 R2,B,Green Fall 2024 (2024-10-26),333oh R1 B #4
 5137939001,F' D2 R' D2 R2 U' R' U L2 B2 D R2 F2 B2 L' F2 U',Y,Hampshire Autumn 2025 (2025-10-25~26),333 R2 A E1
-238001001,R2 D R2 U L2 D2 L2 R D B' F U' F D2 F2 D F' R,Y,Music City Winter 2016 (2016-01-02),333 R2 A #4
+5837585001,U R2 F2 R2 U F2 D' U' F' L D' B2 D2 L2 F U2 R' U' F2,B,Speedcubing à Saint Symphorien 2026 (2026-09-19~20),333 Final B #2
 1406857001,F2 L2 B2 D2 L R2 U2 F2 L F2 L2 F' R2 D U' R U' F2 L' U',Y,VSVN Cube Open 2019 (2019-11-17),333 R1 B #1
 1196257024,B2 U2 L R2 U2 L' F2 D2 B2 D2 U' F' L2 U R D' R F2 U' B' L',Y,CubingUSA Northwest Championship 2019 (2019-06-21~23),333mbf Final A #1
 1865343001,D2 R' D B' D2 B' D2 F' L2 R2 F2 R2 D F2 L D' B U2 L,Y,Farnworth Spring B 2022 (2022-04-10),333oh R1 A E2
@@ -88,7 +88,7 @@
 1811893001,L2 U L2 U R2 F2 D' L D F2 D2 L' B D' R' D' R' U,Y,Cocha Sub-X 2022 (2022-02-11~12),333 R1 B #3
 5584831001,F L2 D' F2 L2 R2 U F2 D' L2 D R2 U' R D B L' B' R U2,B,Trinidad and Tobago Nationals 2026 (2026-04-25),333 R1 F #5
 432157001,F2 D' R F' D2 R' D2 F2 L2 F' U2 D F2 L2 F2 L2 U2 D' L2 U',W,Yura Speedcubers 2017 (2017-01-14),333 R2 A #5
-1776419001,D' F2 D2 L2 U R2 U2 F2 U' F2 B' D2 R2 U R B R' B' L2,W,Northside Duology Part 1 2022 (2022-01-07~08),333 R2 B #1
+5840294001,U2 L2 R2 F' R2 U2 R2 U2 B2 D' L' F2 D' F' R2 B R2 F2 U2 B R,W,Galgotias Cube Open 2026 (2026-09-19~20),333bf Final A #1
 436770001,L2 B2 D B2 D' F2 R2 U' B D' B L R D' B D' B' L D2,B,Mind Games 2017 (2017-01-28),333 R1 A #1
 438569001,F' D' R2 F L' B2 U' L F2 D' F R2 D2 R2 U' R2 D' L2 D',B,Rubik Soletta Concepción 2017 (2017-01-29),333oh Final A #2
 2499028001,D L' B2 D2 R' D2 L' R U2 R2 U' L' B2 D R' F' R2 F',B,Chelles Open 2023 (2023-02-18~19),333oh R1 B E1

@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / B / bin 0
-# Population in this bin: 830
+# Population in this bin: 834
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4406135001,D2 R2 F2 U2 L2 B2 D' L B2 D B2 L D' R B2 L F' R2,B,Xi'an New Year 2025 (2025-01-04),333 R2 A #4
@@ -103,7 +103,7 @@
 3363660001,F' D2 L' B2 D R2 B2 D' B2 F2 U2 B' U R U' L2 B2 F' D',B,Wiltshire December 2023 (2023-12-16~17),333 R1 A E2
 1365818001,F2 R' F2 U2 R' F2 L2 B2 L' B L F' D' R2 F' D2 B D2 L,B,Dnepr Puzzles Fest 2019 (2019-10-19~20),333oh R1 D E1
 1024083023,B2 R2 B2 R2 U2 F U2 R2 F' L' R2 B' L B R' D R D2,B,I Hope It's Solved Edmonton 2019 (2019-02-16~17),333mbf Final A #2
-2156683001,R' U2 F2 D B2 U' L2 F2 R2 U F' L' F' L' B2 F' U2 R' U',B,Opawa Open 2022 (2022-09-10~11),333 R1 B #3
+5831999001,F' U2 F R2 D2 R2 B2 D2 L' F' D' R2 U B2 L F2 D' B' L2 U,B,Les Beaupreau du Blind 2026 (2026-09-12~13),333mbf Final B #3
 4450148001,F2 D2 L B2 L2 F2 U2 L' U B2 R B L' D' L' D2 F D',B,Eretum I 2025 (2025-01-25~26),333 R1 B #3
 889554001,F L2 B R2 B2 U2 R2 U2 R' U' B2 R B U2 L2 D R' F2 D',B,Philippine Championship 2018 (2018-09-28~30),333oh R2 A #3
 1311123001,B L2 U2 F D2 U2 R2 B2 R' F R' D R B' L2 F R' F',B,Mongolia Open 2019 (2019-09-21~22),333 R1 A #4

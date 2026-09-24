@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / OR / bin 4
-# Population in this bin: 169
-# Samples listed: 169 (all entries in this bin)
+# Population in this bin: 171
+# Samples listed: 171 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 32691001,F2 R2 B' U2 R2 F' D2 L2 D2 R2 U' F' R U2 B' D' F' U2 B F2 R2 B R2,R,Thailand Championship 2014 (2014-06-21~22),333bf Final A #3
@@ -174,3 +174,5 @@
 5791066001,U R2 D B2 D R2 F2 L' B L2 D' U2 L' B D' R' B2 D,R,Luzern Sunset Solves 2026 (2026-08-19),333oh Final B #1
 5806968001,U' L' B' D L2 U2 D' L U F2 U R2 U D' L2 B2 L2 D' L D',O,Slovenian Nationals 2026 (2026-08-28~30),333bf R1 A #3
 5809124001,R2 F2 R F' U2 R F' L' B2 R' D' R2 F2 U2 B2 L2 B2,O,Mololoa Open 2026 (2026-08-29~30),333 R1 B #5
+5831410001,L D B2 R2 U L2 D' L2 D2 B U B L D U R2 D' B,R,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 E #3
+5836428001,U D2 B' L2 F2 D2 F U2 L2 F2 D2 L' U F U L' B D U',O,VERK XVIII 2026 (2026-09-19~20),333oh R1 A #5

@@ -368,7 +368,7 @@ Canon 剪枝表的懒生成/加载/释放管理)。
 | 保序写 | critical section + `nextWriteIdx` 增量 flush | 预分配 `Vec<String>`,batch 写 |
 | 进度条 | 独立 monitor 线程 + ANSI 重写两行 | `eprintln!("[PROG] {}/{}")` 每 1% |
 | 节点统计 | `COUNT_NODE` thread-local + flush | 暴露 atomic + helper,Cross 暂未启用 |
-| 计时文件 | 写 `%TEMP%/<stem>_<suffix>_timing.txt` | 不写(verify.ps1 暂未移植) |
+| 计时文件 | 写 `%TEMP%/<stem>_<suffix>_timing.txt` | 由 `scripts/verify.mts` 输出终端计时 |
 | 数据预览 | `printDataPreview(file, 6)` | 不打印 |
 | 汇总表格 | 边框 ASCII art + ANSI 颜色 | 一行 `[DONE]` |
 | stdin 循环 | `std::cin >> filename` | `read_line` + `trim` |

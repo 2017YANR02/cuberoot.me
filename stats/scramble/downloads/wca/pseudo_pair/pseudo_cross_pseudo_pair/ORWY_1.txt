@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / ORWY / bin 1
-# Population in this bin: 712
+# Population in this bin: 715
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4024266001,D' L2 U2 F2 D2 R2 F U2 F' R D2 F2 D' B' D U B U2 B',Y,Samutprakarn Cube Open 2024 (2024-08-17~18),333 R1 C #3
@@ -52,7 +52,7 @@
 279272001,F' U2 L2 F L2 D2 U2 F' U' F' R2 B2 U' F2 L U' B2 F R,O,CBS Open 2016 (2016-04-02),333 Final A E2
 2166259001,U' R2 D2 L' F2 L D' B R' L2 U2 B2 U2 F2 U' L2 B2 R2 B2,W,Wakefield Autumn 2022 (2022-09-10~11),333 R2 C #1
 1828549001,D F U' B2 D L2 U B2 D B' R U2 L' B' L' U L' D',W,Lima Cuberano 2022 (2022-03-12~13),333 R1 C #3
-1009284008,D2 B' F' U2 F' L2 B R2 D2 R2 D2 R' B' L D R' U B L R2 D' L' F',R,Mentallinn 2019 (2019-02-09),333mbf Final A #2
+5835412001,B' U F R F' B L D2 R2 F2 L2 F2 L2 D' L2 U2 F2 B' D',O,Silesia Cubing Days 2026 (2026-09-19~20),333 R1 B E1
 4863222001,D B2 U R2 F2 U2 R2 B' U L U R2 U L F L B2 U',Y,Tallinn Open 2025 (2025-07-12),333 R2 A #5
 4844589001,U2 R' D' R F' R2 F D2 L' B2 D2 L' D2 F2 D2 R' B2,W,Aníbal ao Cubo 2025 (2025-07-05),333 Final A #4
 300622001,R B2 L' B2 F2 L' F2 R U R B2 F' D' R2 F U2 L D2 U',W,2nd Guwahati Open 2016 (2016-05-21~22),333 R2 D #3

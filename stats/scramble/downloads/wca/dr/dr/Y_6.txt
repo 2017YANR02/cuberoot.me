@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / Y / bin 6
-# Population in this bin: 636
+# Population in this bin: 639
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',Y,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -86,7 +86,7 @@
 1584013001,L2 R2 D2 U' B2 L2 D R2 U' L' B L' U L B' R' D R2 B',Y,Hamburg International 2020 (2020-02-29~03-01),333 R1 C #5
 532103001,U' L2 F2 R2 B2 D2 F2 U' F2 U F' U F2 R B' U,Y,Foon Yew Open 2017 (2017-06-11),333 R2 B #2
 533112001,U L2 U2 B2 U' L2 B2 U F2 R2 F D2 F' U B L2 B' R D2 B R',Y,Hudson Valley Spring 2017 (2017-06-10),333bf Final B E1
-3004704001,F2 U F2 D' U' R2 U' L2 R2 B' F' L2 B' L F2 D' R2 U2,Y,Mind Sports Olympiad Cubing 2023 (2023-08-24),333 R1 D #3
+5839894001,R2 D2 L2 B2 D2 U' R2 D' R2 F2 L' R F' U' F' U R2 U2,Y,Iowa Championship 2026 (2026-09-19~20),333 R1 A #1
 4967282001,U' F R F2 L2 D2 R2 F2 U R2 L' F2 L' U R' D2 F2 R',Y,CubingUSA Heartland Championship 2025 (2025-08-22~24),333oh R1 B #5
 3979576014,U2 F2 D2 R2 D R2 F2 D B R2 D2 U2 F2 U' L F2 L2 B',Y,Side N Blind Narre Warren 2024 (2024-08-03~04),333mbf Final A #1
 1636600001,F D' F2 U B' U2 B L2 D' R2 B2 D' F2 U' D2 L2 F2,Y,Brisbane Is Back On 2021 (2021-01-16~17),333 R1 G E2
@@ -183,7 +183,7 @@
 4430017001,D R2 F2 U2 F2 D R2 U' F2 U' B2 U2 B' L R D' L2 F2,Y,Aachen Open 2025 (2025-01-18~19),333 Final A #5
 5132034001,F2 U' B2 D2 B2 L2 D' L2 U2 F2 R2 D2 B L' U' L2 D' L',Y,Ankara Gloria October 2025 (2025-10-18~19),333 Final A #3
 1056657001,R' U' F D2 R2 D' L2 R2 F2 U F2 L2 F2 R' B' R' D U' R F' L R' D' B' R' U' F,Y,Please Be Quiet Korea 2019 (2019-03-16),333fm Final A #1
-3519293045,U' F2 L' B2 D' R2 D' R2 F2 D2 U' B' U2 R2 F2 L2 D F' D2 B,Y,3BLD on a Madison MoNona 2024 (2024-02-17~18),333mbf Final B #1
+5840357001,B' R2 D' F U2 R2 D2 F2 D2 F R D R F' U' F2 R' U,Y,Galgotias Cube Open 2026 (2026-09-19~20),333 R2 B #3
 3595376007,D B2 L2 D2 R2 U L2 B2 D2 B2 D' F2 R B R2 F' R B L2 B',Y,Primer Aldeilla: Mental Breakdown Open 2024 (2024-03-16~17),333mbf Final A #2
 1062111001,L2 R2 D2 F2 L2 D L2 R U R2 D B2 U' B D2 B2 D' L2,Y,Las Vegas Spring 2019 (2019-03-23),333oh Final B #5
 1064803001,D2 R' F' B2 D2 B' L2 B D' B2 R2 D2 R' B2 U2 R' D2 R D2,Y,GDSY Open 2019 (2019-03-23~24),333oh R1 B E2

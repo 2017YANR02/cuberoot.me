@@ -2,7 +2,7 @@
 # Population in this bin: 7
 # Samples listed: 7 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 117346001,U2 B' F2 U2 L2 B2 L2 B' R2 U' L2 D' F' U L F2 L' B2 U B' L,O,Guangzhou More Fun Site 2015 (2015-03-15),333bf R1 A E2

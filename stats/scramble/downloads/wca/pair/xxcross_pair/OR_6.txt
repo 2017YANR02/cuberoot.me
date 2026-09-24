@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / OR / bin 6
-# Population in this bin: 536
+# Population in this bin: 538
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4716333030,F' U' B L B' R L2 F U2 B D F U2 L2 U2 F2 B U2 L',O,UCSD Blind and Big 2025 (2025-05-10),333mbf Final A #1
@@ -162,7 +162,7 @@
 1885216001,D' R' B2 D2 U2 R2 B' D2 R2 U' B' U B F2 L F U2 F',O,Aficube A 2022 (2022-04-17~18),333 R1 F #5
 3810645001,B' L2 B U2 B2 F' R2 F U2 R2 D' B R U B2 F' L D' U,R,3:e Lördagskuben i Västerås 2024 (2024-06-01),333 R1 B #3
 987804001,B2 D2 L F2 D2 B2 R' U2 R2 U2 F R2 F' L2 U' B L2 R' D',O,Michigan Cubing Club Alpha 2019 (2019-01-20),333oh R1 B #2
-2748452001,F R2 U2 F2 D F2 U2 L2 F' D B D2 R' F' D' B L2 U',R,North Jersey Speedsolving B 2023 (2023-05-21),333 R1 A E2
+5839550001,L2 D2 R2 U2 B R2 B' D' R F2 U F' L' B L' D B' L2,R,Les Hérault de Claret Open 2026 (2026-09-19~20),333 R1 A #2
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',O,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 5049359001,R B2 F L2 U L2 B2 D L2 F2 L2 R' F' L U' R2 B U2 B2,O,Energy Cube Białołęka 2025 (2025-09-27~28),333oh R1 A E2
 4286622001,R2 U2 F2 R2 U2 R2 D B2 L2 R2 U' B R2 D' U' F2 L' U' R' U2,R,Tír Chonaill Cubing 2024 (2024-11-16~17),333 R2 B #5

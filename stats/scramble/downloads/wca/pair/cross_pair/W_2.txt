@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / W / bin 2
-# Population in this bin: 212
+# Population in this bin: 213
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5
@@ -51,7 +51,7 @@
 661270017,U2 F2 R D2 R' B2 L2 D2 U2 B2 R' F' D' L F' L F R F' R2 D2 B' L',W,Nacionales Uruguayas UCHI 2017 (2017-03-04~05),333mbf Final A #1
 661418029,F' U2 F U2 R2 B D2 F' R2 F2 U' B D' B2 L' D2 L' D' U2 L',W,CubingUSA Nationals 2017 (2017-07-07~09),333mbf Final A #2
 705690001,D B2 F2 R2 D' L2 U' L' B F D F' L' B2 L' D2 L D' F2,W,Aboard the Pyraminx Train 2018 (2018-02-10~11),333oh Final A E1
-755278001,U2 L2 B U2 B2 D2 R2 D2 R B L2 U2 B F R D' F2 L D,W,Cerritos Open 2018 (2018-04-14),333 R1 F #3
+5840294001,U2 L2 R2 F' R2 U2 R2 U2 B2 D' L' F2 D' F' R2 B R2 F2 U2 B R,W,Galgotias Cube Open 2026 (2026-09-19~20),333bf Final A #1
 783150001,D2 F2 U L2 D' L2 R2 U B F U' R2 D' L2 U2 R' F2 D' U,W,Pyra Pandemonium 2018 (2018-05-19),333ft Final A #3
 826436001,U B2 D' B2 L2 F2 U F2 D F' U F L F2 D U R' U' L2,W,Adelaide Winter 2018 (2018-07-14),333 Final A #2
 840365001,B D B' D R' D R L D R2 L B2 U2 R' D2 F2 B2 L B2,W,Korean Championship 2018 (2018-07-20~22),333 R2 E E2

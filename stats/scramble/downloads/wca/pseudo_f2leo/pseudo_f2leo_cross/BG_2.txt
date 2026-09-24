@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BG / bin 2
-# Population in this bin: 863
+# Population in this bin: 866
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4898413001,D F' B2 U F2 D L2 U' L2 F2 D2 B' F L' R' F U F U' R2,B,Boise One-Handed Blitz 2025 (2025-08-02),333 R1 A #3
@@ -158,7 +158,7 @@
 587977001,F2 U2 B2 R2 B2 F2 R2 U R' B R F R B' D' L2 U' R2 D2,B,Rubik Xela Open 2017 (2017-09-02~03),333 Final B #2
 4674551001,B2 U B2 R2 D2 U' F L D2 R' B2 R2 U' F U F' R,G,San Martín Autumn 2025 (2025-04-26),333 R2 A E1
 3201732001,F' U B D' R' L2 U2 F2 U L2 F D2 B U2 F' B R2 B2 L',G,Jakarta Masters 2023 (2023-10-21~22),333 R2 B #2
-1333383001,U' L2 D L' D2 R' D' B' L' U L2 B2 D' F2 L2 F2 L2 U F2 D,B,Shandong Open 2019 (2019-10-04~05),333 R1 D E2
+5832686004,L B U2 D2 F D' L2 U2 L' D2 F D2 F2 D2 L2 U' F2 R2 L2 B' L',B,Czech Quiet Championship 2026 (2026-09-12~13),333mbf Final A #1
 593375001,D2 B' D R' D' F' B2 U2 R' D' R2 U2 L2 F2 U' D2 F2 L2 U2 R2,G,Kirkkonummi Open 2017 (2017-09-16~17),333oh R2 B #2
 5377770001,F B2 L' B2 D2 B' R' B' R2 U F' B2 D2 F2 D2 L2 F B2 R',B,Berkeley February Weekday 2026 (2026-02-06),333 R1 A E2
 726597001,U L2 D B2 U' R2 B' R' F' R' U' B2 D2 B2 L2 D2 L2 D R2,B,ASFA Speedcubing 2018 (2018-03-17~18),333oh R1 B #5
@@ -193,7 +193,7 @@
 3126689001,B' L2 F2 D2 L2 B L2 F L2 F2 U R2 U2 B' F2 D2 F2,G,Búfalo Open 2023 (2023-09-30),333 R2 A E1
 2542554001,D2 F L D2 L2 R2 B' U2 B F2 L' B L' B2 L2 R' D2,G,Turnin' in Termonfeckin Saturday 2023 (2023-03-11),333 Final A #2
 5035806001,U2 F2 L D2 L2 R' U2 L R2 F' R2 B' F2 L' U F R F,G,Munich Open 2025 (2025-09-20~21),333oh R1 B #5
-661358030,U' B2 L2 D2 R2 U' B' F2 U2 R B R' U' F2 U2 F R' U' B' L2,G,Indian Nationals 2017 (2017-05-12~14),333mbf Final A #2
+5835824002,L2 D B2 R2 U2 F2 R2 U F' D' B2 D2 L B L U' B F' D L2,G,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 5508396037,D' R' F L' U2 R2 B' L2 B2 D2 F U2 D L2 R' B2 R' F D' B',G,Quiet Down In Pflugerville 2026 (2026-04-05),333mbf Final A #3
 1262173022,D2 L' R D2 R' F2 L' F2 U2 F' D F L' R2 F2 D' R U' B2 L2 U',B,Baia Mare North Open 2019 (2019-08-17~18),333mbf Final A #3
 3789703006,L R2 D' U' B2 U' R2 U' F D U' F2 L' B' L2 R' B' F D,G,Washtenaw Qualifiers 2024 (2024-05-24~26),333mbf Final A #2

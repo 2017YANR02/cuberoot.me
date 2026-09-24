@@ -1,3 +1,4 @@
+import { wcaDir, puzzleDir } from './local_data_paths.js';
 // Emits stats/scramble/recent_scrambles_events.json — the "近期打乱" widget data for
 // EVERY WCA event, including 3x3's scramble-length buckets (3x3's variant/metric/color
 // difficulty widget is fed separately by recent_scrambles.json).
@@ -11,7 +12,7 @@
 //
 // For each event we bucket the batch by **scramble length** (move count, per-event notation).
 // For 2x2x2 / Pyraminx / Skewb we ALSO bucket by **difficulty** = the whole-solve optimal
-// step count, joined by id from the puzzle pipeline CSVs (update_puzzle_stats.ps1 output);
+// step count, joined by id from the puzzle pipeline CSVs (scripts/stats/puzzles-cli.ts output);
 // those same CSVs' `soln` column also gives us `opt` (id -> optimal equivalent scramble), which the
 // difficulty view displays instead of the raw scramble (same as /timer's 最优打乱 — same state,
 // its move count IS the difficulty value). The length view keeps the raw scramble by definition.
@@ -169,7 +170,7 @@ async function main() {
   const wca = (config.sets || []).find((s: { key: string }) => s.key === 'wca') ?? config.sets?.[0];
   if (!wca) throw new Error('no wca set in config.yml');
   const dataRoot = path.dirname(wca.csv_dir as string);
-  const puzzleRoot: string = config.puzzle_data_dir ?? 'D:/cube/scramble/puzzle';
+  const puzzleRoot: string = config.puzzle_data_dir ?? puzzleDir;
 
   const scramblesTsv = path.join(dataRoot, 'incremental', 'tsv', 'Scrambles.tsv');
   const compTsv = wca.comp_csv ?? path.join(dataRoot, 'competitions.tsv');

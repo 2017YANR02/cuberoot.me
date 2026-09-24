@@ -1,11 +1,11 @@
 # Scramble samples — pseudo / pseudo_xxcross / ORWY / bin 4
-# Population in this bin: 713
+# Population in this bin: 718
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
-3493156001,R F2 U2 R2 F2 U2 R2 B U2 B' U R' U2 B2 U2 F2 R2 U' R2,O,Hiroshima Winter 2024 (2024-02-10),333 R1 D E2
+5831410001,L D B2 R2 U L2 D' L2 D2 B U B L D U R2 D' B,R,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 E #3
 3205914083,R2 D B2 D' R2 D L' D' R U B2 U L R U R2 B L' F2,O,Please Be Quiet in Astana 2023 (2023-10-28~29),333mbf Final B #2
 5759406001,R U2 B2 D2 U2 R D2 F R D2 U2 B2 U' L2 F2 L' F2 L',W,SPAMTown IV MN 2026 (2026-07-25),333oh R1 A E2
 1473395001,U2 F2 B L' B' U R' D B2 L2 B L2 F' R2 U2 F2 U2 F L2,W,Medan 10th Anniversary 2019 (2019-12-21~22),333 Final B #3

@@ -1,8 +1,10 @@
+import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { cors } from 'hono/cors';
 
 export const apiCors = cors({
   origin: (origin) => {
     const allowed = new Set([
+      ...DEV_PREVIEW_HOSTS.map(host => `https://${host}`),
       'http://localhost:3000',              // Next dev server
       'http://127.0.0.1:3000',              // Next dev server (binds 127.0.0.1; SSE bypasses the dev proxy → direct CORS call)
       'https://www.cuberoot.me',            // 主域

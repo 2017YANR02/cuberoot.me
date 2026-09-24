@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / O / bin 4
-# Population in this bin: 624
+# Population in this bin: 628
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1735001,F L2 U2 L' D' R' U2 D' R D2 B2 L2 B' U2 F L2 F' L2 D2 F',O,Kansai Open 2014 (2014-03-21~22),333 R2 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BG / bin 3
-# Population in this bin: 421
+# Population in this bin: 424
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -22,7 +22,7 @@
 5174209001,L2 B' R' F B' L' B L2 U2 D2 L U2 L2 F2 R B2 D2 F2 D',G,Clocking Manía Coacalco 2025 (2025-11-08~09),333 R1 A #5
 260911001,U2 L B' L' U2 F2 U D2 R2 B' R' B2 L D2 B2 U2 L2 U2 D2,B,Big Apple Cube Clash 2016 (2016-02-27),333oh R1 G #3
 5467116001,D' F' L2 B2 D B2 R2 D' L2 D' R' B' R' D2 R' D F R2,G,Sumgait Spring Open 2026 (2026-03-19),333 R1 A #4
-5516180001,L' U2 L2 U2 F R2 B' U2 B R U2 R' B F2 L' F D,G,Marble City Cubing NY 2026 (2026-04-11),333 Final B #1
+5832068001,R2 U D' R D2 B R' U' L R2 B2 U2 D2 R2 F R2 U,B,Cosgeek Open 2026 (2026-09-12~13),333 R1 B #3
 278843001,U' D2 R' D' F2 L2 U D L' D2 B R2 D F2 B2 D L2 U',B,Jeonju Spring 2016 (2016-04-02),333 R1 H #1
 280064001,L2 D2 R2 U F2 R2 B2 D' L2 D' B L' B L' R U2 B2 U R' U,B,Classic San Lorenzo Open 2016 (2016-03-24~26),333 R2 C #5
 4944935001,L' R2 U2 B D2 R2 F L2 U2 L' B F R2 F2 L' R2 B2 F U',B,Manaus Plaza Open II 2025 (2025-08-16),333 Final B E2

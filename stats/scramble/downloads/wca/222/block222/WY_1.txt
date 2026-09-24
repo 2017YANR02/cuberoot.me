@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / WY / bin 1
-# Population in this bin: 362
+# Population in this bin: 363
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,W,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -38,7 +38,7 @@
 388295001,U2 F2 L2 B2 L2 D L2 B2 D2 B L R2 B2 L' R U' L D' L2 F2 L',W,UNSA Speedcubing 2016 (2016-10-29),333bf R1 A E2
 397279001,D B L2 U' L' F L2 D2 F' L' B L2 F' B2 U2 F2 U2 L2 F2,W,GeniusCube 2016 (2016-11-05~07),333oh R1 B E2
 5763081001,B2 D2 F U2 R2 B L2 B' D B2 R2 U' B R D' R' D',Y,Middle Georgia Summer Solving 2026 (2026-07-25),333 R2 A E1
-401846001,F2 D2 F2 R F2 D2 F2 U2 F L F' U B' D2 U L' R D,W,Maharashtra Championship 2016 (2016-11-13),333 R1 A #4
+5833318001,B R' B2 L2 R D2 B2 L' B D F' R' B' F2 L' U2 B' L B,W,Manchester September 2026 (2026-09-19),333bf Final B E1
 419448001,B2 F R2 D2 F2 R2 D2 U' B2 U' R D2 R2 D' F' D' R2 D,W,Cubelelo Winter Open 2016 (2016-12-22~23),333 R1 F #3
 3342470043,R2 D' R F2 R' D2 B2 L2 F U2 B' R' B2 F L2 B D' L,W,Big N Blind Berwick 2023 (2023-12-16~17),333mbf Final A #1
 437462001,D R2 D R2 F2 U' L2 R2 U B' F D F2 L U2 L B2 R2 B2 U' L' F,Y,Frankfurt Cube Days 2017 (2017-01-28~29),333bf Final B E2

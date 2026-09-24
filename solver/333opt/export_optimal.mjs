@@ -1,3 +1,4 @@
+import { wcaDir } from './data_paths.mjs';
 // Export optimal-scramble data for /timer's "WCA 真题: 原始/最优打乱" toggle.
 //
 // Joins out.0.csv (id,htm,solution) ⋈ wca_scrambles_split_mbf.csv (id → natural key + event) and emits,
@@ -25,7 +26,7 @@ import { createInterface } from 'node:readline';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
 const OUT = resolve(__dirname, 'out.0.csv');
-const META = process.env.META ? resolve(process.env.META) : 'D:/cube/scramble/wca_scramble/input/wca_scrambles_split_mbf.csv';
+const META = process.env.META ? resolve(process.env.META) : resolve(wcaDir, 'input/wca_scrambles_split_mbf.csv');
 const DEST = resolve(__dirname, 'wca_optimal.csv');
 const SAME_STATE = new Set(['333', '333oh', '333ft', '333fm']); // plain face-turn → optimal scramble is a valid drop-in
 const verify = process.argv.includes('--verify');
@@ -35,7 +36,7 @@ const invertAlg = (alg) => alg.trim().split(/\s+/).filter(Boolean).reverse()
   .map((m) => m.endsWith("'") ? m.slice(0, -1) : m.endsWith('2') ? m : m + "'").join(' ');
 
 // ---- 1. id -> solution from out.0.csv ----
-if (!existsSync(OUT)) { console.error('out.0.csv 不存在,先跑 solve.mjs'); process.exit(1); }
+if (!existsSync(OUT)) { console.error('out.0.csv 不存在,先跑 solve_h10.mts'); process.exit(1); }
 const sol = new Map();
 for (const l of readFileSync(OUT, 'utf8').split('\n')) {
   const p = l.split(',');

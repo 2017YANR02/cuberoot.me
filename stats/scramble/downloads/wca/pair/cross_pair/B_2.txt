@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / B / bin 2
-# Population in this bin: 215
+# Population in this bin: 218
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 55529001,D2 F' U2 F D2 B' U2 R2 F U F2 U' B L' D' F' D U2 L,B,Mogi Open 2014 (2014-08-30~31),333 Final A E2
@@ -28,7 +28,7 @@
 336025001,R2 B2 D2 B2 F2 R2 B2 R U R' F R' U2 B' D' L' U' F2,B,Zeeland Open 2016 (2016-07-30~31),333 R2 A E1
 342445001,L' R2 F2 R' U2 B2 U2 L2 D L' F' L' U B2 L D2 U' F',B,SSN Cube Open 2016 (2016-08-05~06),333 R1 H #4
 404979001,B2 L' F R L2 B' R' L2 B2 R U' R2 F R2 B' L2 B D2 R2,B,Speedcubing Year End 2016 (2016-11-26),333 R2 A #1
-416408001,D2 B2 R2 U' R2 D L2 F2 U2 L2 B F2 L' D' B R' D2 U2 R2,B,Sydney Championship 2016 (2016-12-17~18),333oh Final A #1
+5837585001,U R2 F2 R2 U F2 D' U' F' L D' B2 D2 L2 F U2 R' U' F2,B,Speedcubing à Saint Symphorien 2026 (2026-09-19~20),333 Final B #2
 436770001,L2 B2 D B2 D' F2 R2 U' B D' B L R D' B D' B' L D2,B,Mind Games 2017 (2017-01-28),333 R1 A #1
 438569001,F' D' R2 F L' B2 U' L F2 D' F R2 D2 R2 U' R2 D' L2 D',B,Rubik Soletta Concepción 2017 (2017-01-29),333oh Final A #2
 446274001,U2 L2 F' L2 U2 B' L2 R U' B2 U' R2 B U' F' R2 D L2,B,Ledgewood Winter Open 2017 (2017-02-11),333oh Final A #5
@@ -120,7 +120,7 @@
 2983802001,R L U' D2 R' B U' F2 R' L' F2 R2 B R2 U2 L2 D2 B2 L' F,B,Couffouleux Open 2023 (2023-08-19~20),333bf Final A #3
 5804944001,B2 U2 B2 R F2 U B L2 D2 L R2 U2 B' D2 R2 F2 B D',B,Calgary Fall 2026 (2026-08-29),333 R2 A #3
 3024184001,B2 L U' L2 R2 F' R2 D2 R2 U2 F' L2 D L2 R2 B D2 L R,B,Berkeley Summer 2023 (2023-08-26),333 R1 E #1
-3025428001,L D F' D R2 B L' U2 F' L D2 R F2 B2 R B2 R' D2 B',B,Stulang Cube Party 2023 (2023-09-02),333 R1 F #4
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
 3049191001,U' F2 R2 U L2 U' R2 U' L D' L U2 R' F' L' D F L,B,Singapore Mini 2023 (2023-09-09),333 R1 A #5
 3167340001,F' B2 D' L2 D L' F L' R2 F2 R2 B' D2 B' L' F2 U,B,Chengdu Flash Cube Open 2023 (2023-10-15),333 R1 J #2
 3187898001,D2 L2 U2 L' U2 L' U2 L' D2 B2 U B2 F2 R2 F' D F' U,B,Zamiin-Uud Open 2023 (2023-10-21),333 R1 H E1
@@ -192,7 +192,7 @@
 5761802039,F U D R' B' D' L' F2 R2 U L2 U F2 U2 F L' F' L2 U,B,Luminous Sol Open 2026 (2026-07-25~26),333mbf Final A #1
 5693039044,D2 L' D2 R2 U2 L2 B2 R D L' U' F' U' R B' U2 B U R' B R,B,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final A #1
 5005903001,L2 B2 D L2 R2 F2 U L2 D2 R2 U' L U F' L D B' R' F' D,B,Makati Speedcubing Open IV 2025 (2025-09-07),333 R1 B E1
-5034297002,D U2 R2 U2 F R2 B2 F' D2 B' F' L U R2 U B' L2 U2 B2 L2,B,Cubing Kerala Travancore Open 2025 (2025-09-21),333mbf Final A #1
+5841685001,R' U F' U2 L2 U' R2 U' F2 U F2 U' L2 R U2 L B' F D' B,B,Ukrainian Nationals 2026 (2026-09-18~20),333oh R1 A E2
 5085860001,U R B L' B D2 F L' F2 U2 B2 U2 B2 R2 U' F2 U2 L2 D',B,Graz Open 2025 (2025-10-04~05),333 R1 A #3
 5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
 5135866001,F2 U L U2 R2 B2 D F2 L2 U R2 B2 U' F' D L' B2 D2 B R2,B,Baku Fall Open 2025 (2025-10-26),333 R1 A E1

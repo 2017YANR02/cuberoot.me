@@ -2,7 +2,7 @@
 # Population in this bin: 60
 # Samples listed: 60 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 75305001,U2 R' U' D' L2 D2 B U B R F' U' B2 R2 D' L2 U D R2,B,Trondheim Fall 2014 (2014-11-08),333 R1 A E2

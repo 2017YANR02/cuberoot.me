@@ -1,11 +1,11 @@
 # Scramble samples — pair / xxxcross_pair / BGWY / bin 8
-# Population in this bin: 475
+# Population in this bin: 478
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
-2500839001,F2 R2 F2 D2 R B2 F2 R2 D L D2 U2 B' R2 B U2 F' U,B,Ohio State RPAC Cube Clash 2023 (2023-02-18),333 R1 C #4
+5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
 4413237001,R F2 U' R' F2 U2 B2 R' F2 U2 D' B' L' D2 F' R' U' B,W,Gem City Ohio Showdown 2025 (2025-01-11),333 Final A #1
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
 2979253001,R2 U2 F2 D F2 D L2 B2 U2 R B' F L D' F' R' D' F L,B,Nacionales El Salvador 2023 (2023-08-11~13),333 R1 A #4

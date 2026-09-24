@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGWY / bin 7
-# Population in this bin: 55
-# Samples listed: 55 (all entries in this bin)
+# Population in this bin: 56
+# Samples listed: 56 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 64414001,F2 R' F U' B' L' D R U D2 F2 R' U2 R U2 D2 R2 L B2 R',B,Harvard Fall 2014 (2014-10-11),333 R1 A #2
@@ -60,3 +60,4 @@
 5252645001,U' B L2 F L2 B2 L' U2 L U2 R F2 L B' D' L2 F' D B2 L,B,Swisscubing Cup Final 2025 (2025-12-06~07),333 Final A #2
 5433363068,B2 R2 U R2 F2 D2 U' F2 D B' U B' R' B' D U' B2 L D' F L' F2,B,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
 5542051001,R2 L' B R F' D2 R2 B' D B2 L R2 U' F2 D' L2 D2 R2 B2,B,Ushuaia Open 2026 (2026-04-11),333 R1 A #4
+5833180001,L U' B' R' F B L' U2 D R2 U' L2 D B2 R2 U F2 L2 F L',B,Ansan Autumn 2026 (2026-09-19),333oh R1 B E2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / W / bin 5
-# Population in this bin: 658
+# Population in this bin: 661
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2349420001,F' U2 L F' D' B D' B2 L D2 F L2 D2 L2 D2 F' U L,W,TCG Power Up 2022 (2022-12-03~04),333 R2 A #3
@@ -133,7 +133,7 @@
 5307370001,D' R' L2 D2 B D2 U2 B' L2 R2 B R2 B' U R D B' U F' U',W,Lugo Open 2026 (2026-01-03),333 R1 B #3
 730614001,U2 R L' D2 F D R' U2 R' F' L F' D2 B2 U2 B' L2 F U2,W,BarbeCubing 2018 (2018-03-17),333 R1 C E1
 5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,W,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
-5529936001,L U2 B D' F2 D B' D F2 D2 L' U2 R2 B2 R2 F' D' L2,W,Richmond Spring 2026 (2026-04-11),333 R1 C #5
+5834201001,D L' F' U R' L F D L B' R D2 B2 D2 L' D2 R2 B',W,Shin Kong Cube Open - Hualien 2026 (2026-09-20),333 R1 E E1
 5673878001,U R B2 U F2 R2 F' R2 U2 L2 R2 B2 L R2 U B' D' R' U,W,Sydals Open 2026 (2026-05-30~31),333 Final A #1
 751928001,B R' B' R F2 U2 B' U R2 D F2 D' R2 U2 B2 R2 U2,W,Saint-Maurice Sunday Open 2018 (2018-04-15),333oh Final B #1
 2634138007,F' L R2 B' R2 U2 L2 U2 B2 D' R U2 L D' F R2 F L' B',W,Taiwan Blind Day 2023 (2023-04-16),333mbf Final A #1

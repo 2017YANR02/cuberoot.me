@@ -57,7 +57,7 @@ Batch 1 取证基线：实施前仓库 `HEAD` 与 `origin/main` 均为 `3c6b7a8b
 | Platform | 活跃产品已迁入 `client`、`server`、`shared` 并完成 P0-P8 发布验收；P9 的 Test 与两个部署 workflow 已全绿，线上角色态待验收。`core/packages/platform` 是 workspace 外历史归档，不测试、不部署、不新增产品功能 | 不建 `apps/platform-web`；RET-04 非仓库资产处置已完成，仓库删除由所有者自行执行，不阻塞无重叠的架构调查与规划 |
 | 共享能力 | `app-ui`、`shared`、`visualcube`、`stack-kernel`、`timer-ui`、`event-icon` 等已有边界 | `app-ui` 只承载五端 React 产品层；运行时中性契约与多消费者能力进入 shared package，宿主系统调用不进入共享层 |
 | 离线任务 | 四个 builder 已归位到 `core/jobs` | 保持离线运行和生成物所有权边界 |
-| 根脚本 | 根目录只保留统一 `sync_upstream.ps1` 入口，私有实现在 `scripts/upstream` | 新同步能力继续挂入统一入口，不回添散落根脚本 |
+| 根脚本 | 根目录统一 `sync_upstream.ts` 入口，私有实现在 `scripts/upstream` | 新同步能力继续挂入统一入口，不回添散落根脚本 |
 | 大数据与 fork | `stats/`、`tools/` 与当前静态发布链耦合 | 本轮不迁仓、不重排 |
 
 ## 4. 已确定决策

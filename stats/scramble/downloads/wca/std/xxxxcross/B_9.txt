@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / B / bin 9
-# Population in this bin: 22
-# Samples listed: 22 (all entries in this bin)
+# Population in this bin: 23
+# Samples listed: 23 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 102864001,U2 F2 D L2 B2 U R2 U' F' R' D F2 R2 F2 U' R D' U2 F2,B,Eretum Open 2015 (2015-01-11),333 Final A #2
@@ -27,3 +27,4 @@
 4790660001,U2 F' U2 B' R2 D2 B2 D2 B' R B R2 D' F2 U' L2 U2 R D,B,One Shamelin Cube Open 2025 (2025-06-07~08),333 R1 D #1
 5363526001,R2 U2 B' L' B2 R2 B R2 F U2 B' D' U' R B U L' D',B,Di Tella Arranca 2026 (2026-01-31~02-01),333oh R1 A #2
 5398699001,L F2 R D2 L2 F' U2 D' L2 F' L F2 R2 U' D2 R2 B2 U2,B,Megaminx og Meget Mere Hvidovre 2026 (2026-02-21~22),333oh R2 A E1
+5831508001,B D2 U2 F' R2 F' R2 U' F' U' B2 R' F R' U' L D2 U2,B,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 D E2

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / BGORWY / bin 3
-# Population in this bin: 223
+# Population in this bin: 224
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 17106001,U F2 U' D' F D' L' D L2 F2 D' R2 F2 L2 B2 D2 F2 U2,B,SLS Chorzow 2014 (2014-05-03~04),333oh R1 C #5
@@ -162,7 +162,7 @@
 4167371001,L' D' R U2 F R' F' R D' F D2 B' L2 D2 B' D2 B' L2,G,Zottegem Saturday Open 2024 (2024-10-05),333oh Final B #5
 4189180001,B' D2 B2 R2 U' L2 F U' F2 L B2 L2 B2 L2 U' R2 D2 L2,R,Thailand Championship 2024 (2024-10-11~13),333 R1 E #2
 4202190001,F' D L2 B' U2 R2 B2 R2 B L2 R2 U F2 R2 D F D R' D2,W,Solving at Sycamore TN 2024 (2024-10-19),333 R2 C #5
-4215752001,U' L2 U F2 L2 D2 B2 R2 D' F R D2 F' U' L U F U,B,La Sillan't Monterrey 2024 (2024-10-19~20),333oh R2 A #2
+5833318001,B R' B2 L2 R D2 B2 L' B D F' R' B' F2 L' U2 B' L B,W,Manchester September 2026 (2026-09-19),333bf Final B E1
 4251056001,F2 R2 B' L2 D2 B U' R' F' D L F2 R' L2 U2 F2 L2 B2 L' B2 L2 U,B,Rubik's UK Championship 2024 (2024-11-01~03),333bf R1 A #1
 4257398001,U' R F' R B2 U F2 D' B2 U' R D' B2 F2 L U' R,Y,IISER Pune Autumn Open 2024 (2024-11-09),333 R1 E #4
 4257481001,U' B U' L2 U B2 L2 D' B2 L' D' L' D L2 D' L2 B U2,W,IISER Pune Autumn Open 2024 (2024-11-09),333oh R1 C #3

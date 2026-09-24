@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / R / bin 6
-# Population in this bin: 575
+# Population in this bin: 579
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 10957001,U2 L' F2 D2 R2 F2 L' F2 D2 R F L' F2 L2 R' F' R D,R,Lexington Spring 2014 (2014-04-12),333oh R1 B #2
@@ -157,7 +157,7 @@
 2933702001,L U2 L F2 U2 R' F2 R B2 R' F2 R F' U' B2 L D' R' U' L2,R,Studio 21 Open Saturday 2023 (2023-07-22),333 R1 H E2
 5798222001,L2 U2 R2 U F2 R2 F2 D' R2 B D B L' D F' L2 R2 B L2,R,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R2 D #5
 2073451001,R2 F2 D2 R U2 R2 D2 B2 L F2 R' D L U' B2 L2 R' D,R,Turning in Townsville 2022 (2022-08-06~07),333 R1 C #3
-891892017,D2 R' U2 L' B2 L' U2 F2 U B2 F' L B2 R' B' R2 B2 U2 F2 L B2,R,China Championship 2018 (2018-10-02~04),333mbf Final A #3
+5837135001,L' D2 F2 R B2 R2 B2 R' F R2 U2 L R2 U L' R',R,UNSA Speedcubing Otoño II 2026 (2026-09-19),333 R1 B #2
 893719001,D2 R2 D' F2 U2 B2 D2 L2 U' L2 R F2 R' B2 L' U B D,R,RVAutumn 2018 (2018-10-06),333 R2 C #5
 1510284001,U2 L' R' F2 R B2 R' F U2 B2 U' F' R' U2 F' R2 B' R',R,North Star Cubing Challenge 2020 (2020-01-18~19),333oh R1 A #5
 4950429001,R D2 R' U2 B' L2 B U2 F2 U2 L2 B2 D' B2 D' F2 D R2,R,Virginia Championship 2025 (2025-08-16~17),333 R1 B #4

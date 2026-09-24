@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / WY / bin 2
-# Population in this bin: 291
+# Population in this bin: 293
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4280293025,L' F' D L' D2 L' F B' L B2 U' R2 L2 U' R2 D L2 U' B',W,Kubing in Kapiti 2024 (2024-11-09),333mbf Final A #1
@@ -28,7 +28,7 @@
 417944001,F2 U' R L2 U' B' U' B U B U F2 R2 L2 U L2 U B2,W,Cubing Complexity 2016 (2016-12-17~18),333 R2 H #1
 427203001,R2 D' B' D R' U' R' L U B' L B2 R2 L2 U L2 F2 D F2,Y,Dayton Winter 2017 (2017-01-07),333 R1 C #3
 5307557060,B2 D2 L' F2 R2 B2 F2 R' F2 U' L' U2 R2 U' B D B2 D2 U' L2,W,Multi Mayhem VA 2026 (2026-01-02~04),333mbf R1 A #2
-451192001,R F B D F' U2 B' U' L' D' B' L2 U2 D2 B L2 F R2 L2,Y,P3 Grand Open - Feb 2017 (2017-02-26),333 R1 A E2
+5835824013,R2 D' L' U2 L2 F2 D2 L2 U2 F' L2 F D F2 L' D L D' U' L' F,W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 456178001,D2 B U2 B' R2 F' D2 B2 L' B' L R2 D' B U R2 F2 U2 B',Y,Puget Sound Winter 2017 (2017-02-25),333 R1 B #4
 4677168001,D' R' F' D2 B L2 B U2 L2 D2 R F2 D2 R B R2 B' D,W,Cube Factory League Brzeziny Spring 2025 (2025-04-26~27),333 R2 D E1
 462095001,B' U2 L2 B U2 B U2 L2 B' U2 R' U2 B' D' F2 L' D2 F' D2 F',W,Nacionales Uruguayas UCHI 2017 (2017-03-04~05),333 R2 B #4

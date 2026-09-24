@@ -1,4 +1,4 @@
-// Local preview of prepare-music.ps1 output; media stays outside the repository.
+// Local preview of prepare-music.ts output; media stays outside the repository.
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import path from 'node:path';

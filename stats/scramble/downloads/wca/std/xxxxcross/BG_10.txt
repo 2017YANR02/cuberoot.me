@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 741
+# Population in this bin: 743
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -143,7 +143,7 @@
 3555402001,F2 R' D2 L2 F U2 D' B R L2 U2 R' F2 R D F2 U',B,Cube4fun in Lublin 2024 (2024-03-03),333 Final A #1
 1208414001,D2 U2 B F D2 F' U2 L B' F2 R D2 B' L2 F2 L D L2,G,YJ Fest Moscow 2019 (2019-06-28~30),333oh R1 D #5
 3065819001,D2 F R D B D' R' B' L2 U2 L U2 F2 L2 U' F2 L2 U' F2,B,Kent Summer 2023 (2023-09-09),333 R1 C #4
-4391670001,B' R2 D' B2 F2 U L2 D2 U' B2 F' D L' R2 B' U' L' F L,B,Penang Cube Masters 2024 (2024-12-28~29),333 R2 B #5
+5833296001,L2 U2 F2 R' U' L2 B2 L2 D U2 R2 B2 F' L' D' U2 F2 L2 F',G,Manchester September 2026 (2026-09-19),333 R1 B #5
 682702001,U2 B F D2 R2 D2 L2 B' L2 F2 L' D' B' R' U L U L F' D,G,Shaastra Cube Open 2018 (2018-01-06~07),333oh Final B E1
 5253234001,U B' D' B L' D L U' B' F2 U F2 R2 D2 R2 D2 R,G,Cubeando en Navidad Caracas 2025 (2025-12-07),333 Final B #2
 5052807001,B L' F' L' B F R2 D2 B R2 F2 L U B D' R D,B,Montserrat Open Serra 2025 (2025-09-27~28),333oh R1 A #3

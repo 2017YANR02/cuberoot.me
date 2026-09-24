@@ -1,8 +1,8 @@
 # Scramble samples — pair / xcross_pair / WY / bin 4
-# Population in this bin: 629
+# Population in this bin: 631
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5126395001,L' B2 L2 U F L' F' D L R2 F D2 L2 F' B' D2 B2 U2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final A #1
@@ -26,7 +26,7 @@
 2969807010,L' D2 F' R2 F2 U2 B2 D' L2 R2 U2 R D R2 F U2 R B R2 D',W,Turkish Nationals 2023 (2023-08-10~13),333mbf Final A #2
 4998897001,L2 U' L' D B2 R2 U F D F' R L U2 F2 R U2 R',Y,Mofunland Speedcubing Singapore 2025 (2025-09-06),333 R3 A #3
 2278021001,U' F' R D2 L2 D B2 D R2 B2 D F D L' R D' U' F2 L,Y,Floripa ao Cubo 2022 (2022-10-29~30),333 R2 B #4
-154603001,U2 R2 F2 U2 L' D2 L2 R2 B2 R' U B2 L R' F U B' F' D U L',Y,Santarém Open 2015 (2015-06-20),333 R1 B E2
+5841986001,D2 B2 L B L U B' L2 U2 B R2 B2 D2 F2 R2 L F R,Y,Legio Open 2026 (2026-09-19~20),333 R1 D E2
 156123001,B R2 F2 R2 U B' L U' F2 U' L2 U2 F R2 L2 F' D2 B2,W,Dayton 2015 (2015-06-27),333oh Final A #5
 166748001,L' D' F2 D2 R' L2 D' R F' R2 U2 F' R2 F' L2 U2 F U2 B',Y,World Rubik's Cube Championship 2015 (2015-07-17~19),333oh R3 B #3
 181469001,U2 L2 B2 D2 F2 D F2 L2 D' B2 D2 F L F' R U2 B2 R2,W,Rubik's Cube Philippine Open 2015 (2015-08-21~23),333 R2 B #1

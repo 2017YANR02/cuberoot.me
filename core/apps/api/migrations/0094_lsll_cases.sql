@@ -11,7 +11,7 @@
 --
 -- 主键 = LSLL canonical key 的 **base36 串**(client `lib/lsll/model.keyToString`,也是 URL 的 ?k=),
 -- 直接对齐前端与 CSV,省掉一层进制转换。40bit 的 key base36 最长 8 字符。
--- 数据不入 migration(148,384 行):本地 solver/lsll 跑完 → export_cases.mjs → update_lsll.ps1 增量灌库。
+-- 数据不入 migration(148,384 行):本地 solver/lsll 跑完 → export_cases.mjs → update_lsll.mts 增量灌库。
 CREATE TABLE IF NOT EXISTS lsll_cases (
   canonical_key VARCHAR(12) PRIMARY KEY,
   htm           SMALLINT    NOT NULL,

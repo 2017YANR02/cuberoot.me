@@ -12,7 +12,7 @@
 
 从 `core/` 执行：
 
-```powershell
+```sh
 pnpm --filter @cuberoot/server dev
 pnpm --filter @cuberoot/server typecheck
 pnpm --filter @cuberoot/server test

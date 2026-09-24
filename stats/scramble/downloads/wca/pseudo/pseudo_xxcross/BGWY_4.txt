@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGWY / bin 4
-# Population in this bin: 693
+# Population in this bin: 695
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1882840001,U2 B2 R2 D U' L2 F2 U F R2 D' R2 B' D' L' U2 F U L,B,Paris Open 2022 (2022-04-16~18),333 R2 C #1
@@ -27,7 +27,7 @@
 4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',G,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
 102864001,U2 F2 D L2 B2 U R2 U' F' R' D F2 R2 F2 U' R D' U2 F2,B,Eretum Open 2015 (2015-01-11),333 Final A #2
 2625231001,F' U2 F U2 B R2 B D2 F L D' R D' L2 B D2 F L2 D2 L2 B R2,W,Essex Spring 2023 (2023-04-08~09),333bf R1 B #3
-3243855001,B2 R U F2 U F' R' F' U L2 U' R2 D' B2 L2 D F2 R2,Y,NIT Trichy Cube Open 2023 (2023-11-05),333 Final B #4
+5837018001,R D' B2 U' F D2 R D' R2 L D2 B2 L2 F2 R' L2 D2 F L' B' L,Y,Visé Sunday Open 2026 (2026-09-13),333bf R1 B #4
 2464062020,D F' R F' B2 L' F2 L' F U2 R2 D2 L2 F B2 R2 F2 U2 R2 B' L2,W,CubingZA Cape Cubes Summer 2023 (2023-01-28~29),333mbf Final B #2
 1246262001,D' F L' D2 F L F D2 F' U' F2 R2 F2 B2 U2 L' F2 D2 L',W,CIC Pasto Open 2019 (2019-08-03~04),333 R1 D #4
 4980454006,F' D' L' U R D R' D2 L' D' L2 D' R2 U' R2 L2 B U' B' L,G,Israel Championship 2025 (2025-08-25~28),333mbf Final A #2

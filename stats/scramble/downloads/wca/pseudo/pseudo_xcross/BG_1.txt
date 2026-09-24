@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BG / bin 1
-# Population in this bin: 23
-# Samples listed: 23 (all entries in this bin)
+# Population in this bin: 24
+# Samples listed: 24 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,G,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
@@ -28,3 +28,4 @@
 4883556001,R' F2 R D2 F2 R' U B' U F L' F2 U2 L2 U2 B' L,G,Harbin Open 2025 (2025-07-20),333 R1 B E2
 4951582001,L' D2 L F2 R' F2 D2 R F2 L2 F L B2 R' F' U' L' B' U,G,Cube Plan Baie 2025 (2025-08-15~17),333oh R1 A #2
 5522222001,F2 B' U2 L D2 L' F' U2 F L' D' R2 U2 R2 F2 D L2 D2 F,B,Jesuitinas Txantrea Open 2026 (2026-04-11~12),333 R2 A #1
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1

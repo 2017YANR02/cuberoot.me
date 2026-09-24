@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / O / bin 7
-# Population in this bin: 910
+# Population in this bin: 914
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 23001,D2 U L2 B2 R2 F2 R2 U2 R2 D' R' D B2 U B' R B' D B' L',O,Galeries Dorian Open 2014 (2014-03-15),333bf Final A #2
@@ -85,7 +85,7 @@
 5073941001,L2 F U F D2 B D' F' R' F2 R' B2 U2 R2 L D L' F',O,Swiss Science Open 2025 (2025-10-04~05),333 R1 A #4
 1553188001,B2 R2 B' L2 R2 U2 L2 R2 B' R2 D' F D B' L2 D2 L' F' L' F2,O,MathSoc Delhi Open 2020 (2020-02-15~16),333oh R1 D #5
 3061510001,L2 D2 L2 F2 D2 F2 U' L2 R2 U R D L F' D R' B' U2 L' U',O,Cerrado Open 2023 (2023-09-08~10),333oh Final A E1
-320869001,F R U2 L U R' B R2 D F2 B U2 B2 L2 U D F2 D2 L2,O,Cape Town Open 2016 (2016-06-26),333oh Final B #2
+5831994010,L F B' U R2 B2 R F' U2 R2 F' B2 U2 D2 R' D R' D L B2,O,Les Beaupreau du Blind 2026 (2026-09-12~13),333mbf Final A #3
 2120477016,R2 U F2 L F' B R F R B2 D2 F' B U2 B' L2 R' D2 B R2,O,Silence in Tlaxcala 2022 (2022-08-20~21),333mbf Final A #2
 1075587001,B2 U R2 D2 U' L2 U' F L2 R2 D2 B R' F2 L2 U2 L U2,O,Sumaré Open 2019 (2019-03-30~31),333 R1 D #2
 340777001,L' B' R B R2 B U D2 F2 U' L' U L2 U' F2 U D2 L2,O,Cube Camp in Kanazawa 2016 (2016-08-05~07),333 R1 B #2

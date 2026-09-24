@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / ORWY / bin 3
-# Population in this bin: 232
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5770627001,F' U F' D2 R B D B D R U2 B2 L2 F2 U2 L' U2 L' D2 B R,Y,Super Side Summer Fürth 2026 (2026-07-31~08-02),333bf R2 B E2
@@ -122,7 +122,7 @@
 2811899001,U2 B L R D2 U2 L' U2 F2 R D R' U B D' R2 F' D2 U2,Y,Bucharest Cubing A 2023 (2023-06-17),333 R2 A #3
 2937828001,L2 B L2 F' R' F' B' D2 R2 U2 L2 D R2 D B2 R2 D B D,O,Bangalore Cube Open July 2023 (2023-07-29~30),333 R2 B E2
 2954196026,D F' U L' U2 L D2 F2 R2 B2 R B2 D' R' D2 U' B' D L' B' L',R,German Nationals 2023 (2023-08-04~06),333mbf Final A #1
-2980595001,R' U D' R D R' D2 B' D2 F2 B2 R D2 F2 U2 B2 L2 D' L',Y,Hyderabad Cube Open 2023 (2023-08-11~13),333oh Final B E2
+5834434001,R' U F U' B2 D' L2 D F2 D R2 F2 R F2 D2 U' F U2 R,Y,Tagum City Open 2026 (2026-09-12~13),333 R1 D #1
 3023321001,F' L' F2 L R2 U' B2 F2 R2 D' F2 B R B' L2 F R' B',O,Mysore Cube Open 2023 (2023-08-26~27),333 R2 B #2
 3030413001,U L2 D B2 D' R2 D2 L2 F2 R2 U B R D' U F U2 R F2 L2,Y,Borovany End of Summer 2023 (2023-09-02~03),333 R1 A #2
 3031137001,F2 R' F' D2 B L2 B' U2 F L2 D' L2 B2 F' U' F L D' F',O,Ski Valley Solving 2023 (2023-09-02),333oh Final B #5

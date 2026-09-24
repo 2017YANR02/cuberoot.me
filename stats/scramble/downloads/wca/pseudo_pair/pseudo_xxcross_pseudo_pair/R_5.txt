@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / R / bin 5
-# Population in this bin: 668
+# Population in this bin: 669
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2411907001,L D' B2 U L2 D2 L B2 R2 D2 F U R' D B' R D,R,Cebu New Year Open 2023 (2023-01-07),333 R2 E #2
@@ -116,7 +116,7 @@
 1240614001,R2 U' F2 B D' F B2 L2 B' D' L2 F2 D2 B2 U2 R U2 L F2,R,Ecuador Nationals 2019 (2019-07-27~28),333 R1 C #5
 5770772021,D2 F U F L2 D' U' F2 L2 D U2 F L2 F R2 D2 L F' L,R,Big Brain Battières 2026 (2026-08-01~02),333mbf Final A #1
 644641001,R2 D' L2 R2 F2 D L2 U' B2 D F2 R' B L R B R U' L D',R,Estância Open 2017 (2017-11-18),333 R1 B #3
-653276001,U2 F R2 D2 R2 B L2 F' D2 U' F2 R2 B L' B2 D B' D R2,R,Weston-super-Mare Open 2017 (2017-11-25~26),333 R1 D #5
+5836839001,U' L2 F2 D' L2 B2 D R2 U2 L F' L2 U2 R D F U2 B',R,Mina de Água Warm Up 2026 (2026-09-19),333 R1 A #4
 1908917001,B F' D2 F L2 B2 L2 U' B' L D B' R' U2 R F' L' D',R,Rose City First-Timers B 2022 (2022-05-08),333 R2 C #1
 660509020,B U2 R2 F2 D2 R2 B L2 B2 R' U' F' R2 D2 B2 R2 U R' U L2 D2,R,Les Santes Open 2014 (2014-07-18~19),333mbf Final A #2
 4730819001,F2 U' L2 U2 R2 U R2 L' U F2 B R2 B' U2 B' U2 F D2,R,St. Louis Spring 2025 (2025-05-17),333 R1 A E1

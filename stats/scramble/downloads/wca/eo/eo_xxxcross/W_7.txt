@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / W / bin 7
-# Population in this bin: 10
-# Samples listed: 10 (all entries in this bin)
+# Population in this bin: 11
+# Samples listed: 11 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 115238001,D R' U L' U2 B U2 L2 B' L' U' B2 U2 R2 U L2 D L2 B2,W,Summit City Open 2015 (2015-03-07),333 R2 A E1
@@ -15,3 +15,4 @@
 4850256001,D R' B2 R B2 R' B2 R2 D2 F R' B2 U' L R2 B' L B,W,Rubik's WCA World Championship 2025 (2025-07-03~06),333 R2 D E1
 5350697001,B2 U D2 L2 F2 R D' F2 D2 L2 F B' R2 F2 B' D F',W,Chipichape al Cubo II 2026 (2026-01-24),333 R1 C #3
 5447077001,D2 F U' L2 F' L' B D B2 L2 B' U2 R2 F' R2 U2 B' U' F2,W,Stevenage March 2026 (2026-03-14~15),333 R2 A #4
+5831025001,U2 F2 L U2 F' L F B' R2 L D2 F2 L2 D2 R B' D2,W,Road to Nats Maracay II 2026 (2026-09-13),333 R1 B E2

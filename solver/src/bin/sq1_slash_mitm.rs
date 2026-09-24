@@ -11,7 +11,7 @@
 // `id,t` (t = slash-optimal move count) or `id,INFEASIBLE`. Purely additive — does
 // not touch Sq1Solver / Sq1WcaSolver / dfs_slash_alt.
 //
-// run: cargo build --release --bin sq1_slash_mitm -j 14
+// run: cargo build --release --bin sq1_slash_mitm
 use cube_solver::sq1_solver::{state_from_scramble, Sq1State};
 use std::collections::HashMap;
 use std::io::{self, BufRead, Write};

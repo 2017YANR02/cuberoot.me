@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BG / bin 8
-# Population in this bin: 230
+# Population in this bin: 232
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2210001,U' R2 F2 D2 L2 D F2 U L2 D' F L2 U L' R2 U F2 D U' L B',G,IIT Roorkee Open 2014 (2014-03-21),333bf Final A E1
@@ -61,7 +61,7 @@
 5514017001,R' U2 F2 L D' L' F B2 D F2 B2 D' R2 U2 R2 U2 B R' F,G,Otsu Biwako Spring 2026 (2026-04-11),333 R1 B #4
 803026001,U2 F2 D2 R' D2 F2 U2 R2 F2 R2 U L2 B2 D2 R' D' F' D2,G,Voronezh Open 2018 (2018-06-10~11),333 R1 B E2
 812053001,L B' U2 L D F L2 D2 R2 U B' R2 U2 B2 R2 U2 F R2,G,Fairview Cube Day 2018 (2018-06-24),333oh R1 B #3
-837328001,D2 B2 L2 B2 D' B2 R2 U' B2 U B U2 R' D' U F' D' R' B R',B,Chekaad Summer 2018 (2018-07-20),333 R1 A E2
+5836737001,B2 L' F L2 B2 R F L' F B2 U2 R2 U' B2 D2 F2 D' L2 D',B,Sandnes Open 2026 (2026-09-19~20),333oh R2 A E2
 842540001,B2 U2 L D2 L' U2 R' F2 L B' D' B' U2 L' R U' R' D2 R',B,VCP Invierno 2018 (2018-07-28),333 R1 A #2
 862510001,D' B2 L2 D' B2 D U R D2 U F2 U2 B' F D2 L F' D2 U',B,Caarn Ahmedabad Cube Open 2018 (2018-08-25),333 R2 B #3
 863029001,B2 R' B2 U' B' L2 U2 D2 R U' L' B2 D L2 F2 U R2 L2,G,Ural Open 2018 (2018-08-25~26),333 R1 A #1
@@ -118,7 +118,7 @@
 2536911001,D R' B2 D2 F B2 R2 D R F L' B2 L' U2 L' D2 F2 L B2,B,Bulgarian Aniversary 2023 (2023-03-04~05),333oh Final B #3
 2567610001,U2 F' R2 F2 U' F L F R D2 L D2 R' U2 F2 L F2 U2 R,B,Huancayo Summer 2023 (2023-03-18~19),333 Final A #1
 5820336039,L' U' B D F2 L2 F2 R2 U' L2 R2 F U F' D B F U B R,G,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf Final B #1
-5667886001,R L2 F2 D B R2 L U2 F R2 B L2 U2 F' D2 L2 B U' F',G,Cherry Hill Mini May 2026 (2026-05-28),333oh R1 B #2
+5833006001,D2 F2 R' F2 R' U' R D2 L' D' B' R' D' F' R D2,G,Ansan Autumn 2026 (2026-09-19),333oh R1 F #1
 2649971001,B R' B' U2 L2 B2 D L2 D B2 L2 F' D L B2 L2 B2 U2,G,The Legacy Begins 2023 (2023-04-15),333 R2 A #4
 2661804001,F2 D2 L F2 R' D2 L F2 D' U' L' U' L' B2 D L2 F' R2,G,Country Roads Huntington 2023 (2023-04-22),333 Final A #1
 2712927001,U2 L2 F' L U B2 D R2 D R' F2 D2 R U2 F2 R2 U R2,G,Cube4fun in Jarosław 2023 (2023-05-06~07),333 R2 A #4

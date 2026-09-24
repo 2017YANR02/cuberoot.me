@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGOR / bin 7
-# Population in this bin: 260
+# Population in this bin: 261
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -107,7 +107,7 @@
 1353166001,R' U2 L R2 F2 D2 U L2 D2 F L' F' D L' D B2 D',O,KubeKids Vila Velha 2019 (2019-10-12~13),333 R1 E #3
 4682526001,U' L2 B' R D2 B L D2 B2 L' B L2 U' F2 U2 D' R2 D',B,UNSA Speedcubing Otoño 2025 (2025-04-26),333 R2 F E2
 4892565001,L' D2 B' U2 B D F L' B2 U2 R' B2 L2 D2 L' F2 B2,B,Cuenca Open 2025 (2025-07-26~27),333oh R1 A #2
-1453885001,D' L2 F2 D L2 F2 D2 L2 R D' L B L2 D2 F2 D' U B2 F2,O,NEU Open 2019 (2019-12-15),333 R2 A #3
+5832143001,B2 F2 R' B2 L2 U2 R' F' D' L2 D' R' B L' R B2 D' U2,R,Cosgeek Open 2026 (2026-09-12~13),333 R1 E E1
 1477785001,F2 D2 B' R2 B F' R2 B2 L2 U' B U' B F2 L' U2 B2 U' B,R,Cubing Chiriquí 2019 (2019-12-21~22),333bf Final B E1
 5678427001,R' B L2 F2 D2 R' L U' F' U' L' U B2 R2 B2 D F2 U D,R,Gif-sûr de PR 2026 (2026-05-30~31),333oh R1 C #4
 5136631001,L2 F2 U R2 D2 F2 D2 U' R' U F U2 L' B' U2 R2 D L,R,Beijing University Cube League 2025 (2025-10-25~26),333 R1 C #2

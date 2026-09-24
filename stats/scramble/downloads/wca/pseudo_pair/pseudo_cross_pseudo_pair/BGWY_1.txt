@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGWY / bin 1
-# Population in this bin: 692
+# Population in this bin: 694
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -97,7 +97,7 @@
 4659103001,F L2 B2 D2 L2 B R B' R2 U B2 D2 F' U' R F L2,B,İstanbul April 2025 (2025-04-12~13),333 R2 B E1
 3209899001,L' D2 B2 D2 U F2 R2 D R2 U L' D2 R B2 F' D F L2 R',W,Odd Olympia 2023 (2023-10-28),333 R1 B E1
 3232951001,B2 U L2 U B2 D2 F2 D L F D2 L F D U2 R F U2,W,Cubing Kazakhstan Nationals 2023 (2023-11-03~05),333oh R1 A #5
-3252201001,L2 F U D2 B2 R F R2 F2 R F2 L F2 L B2 U2 L2 B R2,G,The Last Frontier Fall 2023 (2023-11-04),333 R1 C E2
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
 1125495001,D F D L' D F B2 R B' U B' U2 L U2 R D2 R' D2 F2,W,Guiyang Open 2019 (2019-05-01~02),333 R1 A #4
 4514977001,D' R' F2 D2 L2 R F2 U2 L' U2 B2 D2 R' U' F' R F D R B' D',Y,Risbjerg Februar 2025 (2025-02-22~23),333 R1 D #2
 497284001,L2 F' U2 L2 R2 B' L2 U2 R2 B' R2 U R U F2 U F' D' U2 R,W,Red Cross Cubing Open 2017 (2017-04-22),333 Final E #1

@@ -214,7 +214,7 @@ provider_uid = unionid（优先）或 openid（平台未返回 UnionID 时兼容
 
 在 `core/` 运行：
 
-```powershell
+```sh
 pnpm --filter @cuberoot/miniprogram dev
 pnpm --filter @cuberoot/miniprogram check
 pnpm --filter @cuberoot/miniprogram check:douyin

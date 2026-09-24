@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxcross_pair / Y / bin 6
-# Population in this bin: 249
+# Population in this bin: 251
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 9262001,D2 F' R2 U2 F' L2 B2 D2 B D B' D R2 D' U B L D' R2,Y,SLS Tarnowskie Gory 2014 (2014-04-05),333oh Final C #3
@@ -125,7 +125,7 @@
 2540556001,U2 B L' B2 L2 U' B2 L2 D L2 R F' L2 D' F' R' D' F,Y,Oman Open 2023 (2023-03-11),333oh Final B #5
 2565891001,B2 L2 B' F' D2 F' D' F D' U B U' F U2 R' D,Y,Mölnlycke Open 2023 (2023-03-18~19),333 Final A #4
 2703941001,D2 B' R D2 B D L F' U2 F2 D' R2 F2 U' D' F2 R F' D',Y,Larissa Spring Open 2023 (2023-05-06~07),333 R3 B #1
-2758670001,D R B' L2 U' L' U L' U2 B' D2 F' B R2 U' F2 D2,Y,Kent Spring 2023 (2023-05-27),333 R1 C #5
+5834302001,R' B L' B' D2 L2 F2 R2 U2 B2 U B2 U' R' F L2 R' D,Y,Sumgait Fall Open 2026 (2026-09-19),333 R1 A #1
 2762496001,U D R2 D2 L B U R2 F L' D U2 L U2 R F2 B2 R',Y,General Trias Speedcubing Open 2023 (2023-05-28),333 R1 C #4
 5292536034,B D2 F R2 F2 L2 R2 F D2 R F R F D' R' D R' B R2,Y,MYHM Bolivia Nationals 2025 (2025-12-20~22),333mbf Final B #1
 2791974001,F D2 B2 F U2 B' L2 F2 U' R' D2 R F2 D R B' L2 D' R2,Y,Laguna Speedcubing Open II 2023 (2023-06-11),333 Final A #3

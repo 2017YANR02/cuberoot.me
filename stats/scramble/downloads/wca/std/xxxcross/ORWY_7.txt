@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / ORWY / bin 7
-# Population in this bin: 301
+# Population in this bin: 303
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4049432001,L B D2 L' D L2 B2 U B2 U2 F2 R' U' L B2 F2 U2,R,Telangana Cube Championship 2024 (2024-08-23~25),333oh R1 E E1
@@ -78,7 +78,7 @@
 4652357001,B' R2 B D F2 U' B2 L2 B2 L2 U B L F U2 B F2 R2,O,Shenyang Spring 2025 (2025-04-13),333 R1 D E1
 863994001,B' D2 F' U F2 B R U' F2 R L2 U2 B L2 F2 B' R2 F2,Y,Ark 2018 (2018-08-24~26),333 R2 C E1
 864998001,F2 D F' R2 U F2 L' U' F R D2 B2 U2 B2 R F2 L F2 L F2,R,Geethanjali Monsoon Open 2018 (2018-08-25~26),333oh Final B #4
-866642001,L2 U2 B2 R D2 R F2 D2 R B2 D' R F' R2 F' D' U B',O,Canada's Best in the West 2018 (2018-08-24~26),333 R1 F E1
+5832143001,B2 F2 R' B2 L2 U2 R' F' D' L2 D' R' B L' R B2 D' U2,R,Cosgeek Open 2026 (2026-09-12~13),333 R1 E E1
 866883001,L B' D B2 L U2 B' R' L2 B2 U2 L2 U' R2 U2 B2 R2 D' L2,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 C #2
 880129001,L' F' L D L D' L2 F' R' F2 U D L2 D' R2 D L2 D',R,No 3x3x3 Mississauga 2018 (2018-09-15),333ft Final A #3
 896538023,L2 U' B2 U' F2 D2 L2 B2 R D B2 F' D U' F' U2 B2 L' R U2 L' F',R,Australian Nationals 2018 (2018-10-06~07),333mbf Final A #1
@@ -98,7 +98,7 @@
 1028250001,D2 F' D2 B' D2 F L2 D2 B2 D B' U B2 D2 L' R U B2,Y,Idéale Nabeul Open 2019 (2019-02-16~17),333 Final A #4
 5164135001,F L2 B R2 D2 L2 F D2 R2 U' B R2 B2 D2 R U2 R' D' F',O,Sequoia Cubing 2025 (2025-11-01),333oh R1 B #2
 1043469001,L' D2 L F2 D2 R2 U2 L D2 F2 U L2 F U' L2 B2 L2 R' B2,R,3x3 Only Calgary 2019 (2019-03-09),333 R2 B E2
-4780009001,U F L F U F2 D' B2 D' R2 B2 U B L D' U R' B R2,R,Utah Speedcubing Pride 2025 (2025-06-07),333 R1 B #2
+5831025001,U2 F2 L U2 F' L F B' R2 L D2 F2 L2 D2 R B' D2,W,Road to Nats Maracay II 2026 (2026-09-13),333 R1 B E2
 1065348001,U R2 F' D B R' F B2 D B2 L U' B2 L2 U2 R2 U' D2,R,Speedsolving Huancayo 2019 (2019-03-24),333oh R1 A #3
 1071682001,F2 U L2 U B2 U2 B2 U' L2 U' F' U' B2 U' L' R D L2 U' L D',W,Trinity Valley Open Spring 2019 (2019-03-30),333bf R1 B #2
 1123503001,D' R2 B2 R2 F2 D2 B2 D' L2 B' L D2 U L' B U2 B D' B U2,O,New Challenge Santa Cruz 2019 (2019-04-27~28),333oh Final A #2

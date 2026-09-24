@@ -2,7 +2,7 @@
 # Population in this bin: 15
 # Samples listed: 15 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 245724001,D' B2 U' B2 D2 L2 F2 D F2 R F' R' D2 F2 R' B2 R' D' L',G,Shaastra Cube Open 2016 (2016-01-23~24),333oh R2 H E2

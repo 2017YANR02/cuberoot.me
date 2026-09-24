@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / B / bin 4
-# Population in this bin: 163
-# Samples listed: 163 (all entries in this bin)
+# Population in this bin: 164
+# Samples listed: 164 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
@@ -168,3 +168,4 @@
 5785733001,U L F' D R2 D' R2 F2 L2 B R2 F' U2 F' L2 B2 L,B,Oakridge Independence Cube Open 2026 (2026-08-15~16),333oh Final A E2
 5803984001,D2 U2 B' F' L2 U2 L R' U L R2 U' L' R U' L D2 B R',B,PBQ Žilina 2026 (2026-08-28),333bf R1 A #3
 5828436001,B' L2 B' U D F' R' F R' U B' U B2 D R2 D2 F2 U2 F2,B,Chau Invierno En Di Tella 2026 (2026-09-12~13),333oh R1 A #1
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1

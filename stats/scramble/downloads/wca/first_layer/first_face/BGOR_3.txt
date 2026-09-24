@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / BGOR / bin 3
-# Population in this bin: 219
+# Population in this bin: 220
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 28786001,R' F' B' L' U' B2 L' B2 D2 R' F' U2 R D2 L D2 R D2,O,New Albany Open 2014 (2014-06-21),333oh Final A #4
@@ -160,7 +160,7 @@
 4099139001,D2 F2 D2 U' L2 B2 U' R D2 F' U2 F' L U B' R2 B2 R,O,Ambato Open 2024 (2024-09-14),333 Final B #5
 4110347001,R' U2 R2 D' R2 B2 D B2 D B D' B' U2 F R' D2 L B,R,West Coast 4: Göteborg 2024 (2024-09-14~15),333 R1 A E1
 4115603034,F2 L2 B2 L F2 R F2 R' D L' D2 R' U R' B D U2 B L',O,Only Cubes in Wellington 2024 (2024-09-14~15),333mbf Final A #1
-5741081021,U F L' B' D R B L' D' B2 R' U2 F2 R U2 B2 R' L2 B' L' F',G,Saucisse Vergèze et Légumes Sans Peau au PBQ 2026 (2026-07-04~05),333mbf Final B #1
+5832556001,R U2 R2 B D2 R2 B' R2 F' R2 L' U F2 U R' B2 D R2 F2,G,Visé Saturday Open 2026 (2026-09-12),333 Final A E1
 4179547001,D2 F' U2 B' L2 F' U2 B' R2 F L B' D' U F' L2 F' L2 U' B',R,Zottegem Sunday Open 2024 (2024-10-06),333 R1 B #1
 4180774050,U' L' F' R2 F2 U2 L U2 L' B2 L' R' D B' F2 D B R2 B2 D,R,Bara Multi-Blind i Borås 2024 (2024-10-12),333mbf R1 A #1
 4180822038,L F D F' U' D' R' L B' L B F2 U' F2 R2 U D2 R2 U B2 L' F,O,Glasgow Autumn - Scottish Blind Off 2024 (2024-10-12),333mbf Final A #2

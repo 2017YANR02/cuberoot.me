@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / BGORWY / bin 6
-# Population in this bin: 610
+# Population in this bin: 612
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1682873001,F2 D L' D2 B' U2 D2 F' R2 F2 U2 L2 D2 B' D' L',W,Empire State Summer B 2021 (2021-08-01),333oh R2 B #3
@@ -103,7 +103,7 @@
 3893935001,B2 L2 B R2 B' U2 L' D B2 R' D2 F D F R D' F',B,Oslo Open 2024 (2024-06-21~23),333 R2 A E2
 4279476001,U2 F R2 D' L2 B2 L2 R2 D L2 B D' B D' U R F L' R,B,Delhi Cube Challenge 2024 (2024-11-09~10),333oh Final A #3
 3115470026,D R U' R' F2 R2 D L D L' B R2 L2 D2 F' L2 B L2 D,G,BMME 3x3 Day 2023 (2023-09-23),333mbf Final B #1
-651317001,D U B2 D' F2 D U' R' D U2 R' B2 R' D' R' D2 L2 B,B,Cariri Open 2017 (2017-11-18~19),333 Final A #2
+5833829001,R' B' R F U2 R' D2 R D2 F2 R2 D L' D2 L R2 F2 D',R,Roswell Rumble Fall 2026 (2026-09-19),333 R1 D #5
 3749785001,R2 B2 U2 B L2 F' D2 L2 B2 L2 F U' R' D' U F D R' D,Y,Cube4fun Low Limits Jarosław 2024 (2024-05-11~12),333oh Final A E2
 1469533001,B' D2 B2 U2 F' R L2 B2 L' B U2 B2 L D2 F2 R2 B2 R2,B,New Year in PSU 2019 (2019-12-21),333 R2 A E1
 2910188001,U L U L2 D R2 B2 D2 B2 L' D L' D2 L D' F,R,Israel Championship 2023 (2023-07-17~20),333 R3 A #4

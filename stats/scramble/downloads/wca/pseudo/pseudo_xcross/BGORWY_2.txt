@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xcross / BGORWY / bin 2
-# Population in this bin: 830
+# Population in this bin: 831
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2261741080,B' L F' B D2 B L' F2 R D B2 D' R2 U2 F2 L' F L',Y,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #1
@@ -85,7 +85,7 @@
 351082001,F2 D2 B2 R U2 L' F2 U2 F2 D2 L2 B D' F2 L' D F R2 B2 L2,O,CCC Summer Open 2016 (2016-08-20~21),333 R2 B E2
 5453935036,F' L' R2 B2 L2 R2 U' F' R' U2 L R B L2 F' L2 U B' L2,G,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2
 3085588001,F L' F2 D2 R U2 R U2 L2 F2 R' D' R D2 F D' U' F U L,O,Muggiò & Chill Open 2023 (2023-09-16~17),333bf Final A E1
-3928498001,D2 B2 D2 R' U2 F' L2 B' L2 D2 F' D' B F D' F' R2,W,Viljandi Open 2024 (2024-07-13),333 R1 B E2
+5834098001,F B' R U B2 D' B2 U B L2 F' R2 U2 R2 B2 R2 D L2 U L',G,SacQuiet Fall 2026 (2026-09-19),333mbf Final A #1
 371360001,L U D2 F2 R2 B' R' B U2 F' U D B2 R2 D' R2 U R2 B2,Y,Asian Championship 2016 (2016-10-01~03),333 R1 G #3
 2051231001,L' D B2 R2 L U B L' B' U' L2 U L2 D' R2 U' R2 L2 D' F2 D2,R,Surabaya Open 2022 (2022-07-23),333bf Final B #3
 3537029001,D' L F' L2 F' D' F' R' B2 L' B2 D2 L' B2 R B2 D2 B2 R B' L',G,Gran Asociación Open 2024 (2024-02-24~25),333bf Final A E1

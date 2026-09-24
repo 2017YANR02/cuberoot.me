@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / O / bin 11
-# Population in this bin: 613
+# Population in this bin: 616
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3315260001,R2 U' R' U2 L U2 R B2 R' U F R F' D' F2 R B',O,ZGZ Open 2023 (2023-12-02~03),333 R1 D E2
@@ -67,7 +67,7 @@
 3906116001,R2 B R2 B' D2 B R2 B' R2 B2 R' B R' D' B2 F2 L B2,O,Dandong Yalu River Open 2024 (2024-06-29),333oh R1 B E1
 4229823001,U' F R L F U2 B D' L B2 U2 R2 B2 D2 B' U2 D2,O,Dutch Open 2024 (2024-10-26~27),333 R2 A #1
 3857046001,U2 F2 D L2 U' R2 L2 B' L' B R2 F2 D2 B R2 D2 B L,O,Energy Cube Ciechanów 2024 (2024-06-15~16),333 R2 B #1
-4441953001,B L2 U F2 L2 U' L2 U B2 D' F2 R2 D2 L B2 R2 F R F2 R',O,Franconia Winter 2025 (2025-01-24~25),333 R1 B E2
+5837736038,L' B L U F L' B R2 F U B2 D' R2 U' F2 R2 L' D',O,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final B #1
 384653001,R2 U2 R2 D2 F2 U2 L D2 B2 R' D U2 L' D2 B2 F D U F U',O,Santarém Open II 2016 (2016-10-22),333 Final A #2
 3163390001,F D F2 R' U D2 R F B D2 F2 B2 R D2 B2 U B2 L' F,O,Beskid Cubing 2023 (2023-10-14~15),333bf Final A #1
 404601001,L U2 L F2 L2 U2 R B2 R B F2 U' R2 B' D' R' F2 U R',O,Brasília Spring 2016 (2016-11-26~27),333oh R1 A #5

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / R / bin 8
-# Population in this bin: 981
+# Population in this bin: 988
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4676817001,R' U2 B U2 B' R2 F U' B' F' U' F D R2 D2 L2 B,R,Let's Twist Again Landsbro 2025 (2025-04-26~27),333 Final B #1
@@ -12,7 +12,7 @@
 786434010,U2 B2 R D2 R' D2 U2 R' U2 R' U L' U' L' B2 U' B2 L2,R,YJ Fest 2018 (2018-05-18~20),333mbf Final A #1
 4325994001,B' L B' R2 U' R2 B D2 R2 U' F2 D F2 D' R2 D L' U,R,Minnesota Championship 2024 (2024-11-30~12-01),333 R2 A E2
 797815001,U2 F D2 B2 R2 D2 F' U2 L2 U L F U2 L' F2 U' L2 D2 U,R,Colegio Arabe Open 2018 (2018-06-02),333ft Final A #3
-2239410001,F' D' F R B2 R F2 D2 L D2 L' D F' D F2 R D2 B2,R,Pucallpa Cubea 2022 (2022-10-16),333 R2 B #1
+5835824052,B2 U F2 U' B2 D' F2 U2 R2 F' R2 F2 U' F' R' B' L R B2 L2 B' L2,R,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 3775447001,F' B2 L' B2 U2 R' F2 R2 D2 B D' R2 D' L D2 R2 F L B,R,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R2 A #4
 5016301001,U' L2 B R' L' D' L2 D R' F2 R2 D' F2,R,Willimiehen Kuutiopäivät 2025 (2025-09-13~14),333 R2 A #2
 35186001,U2 B2 D2 B2 L2 B2 F L2 R2 D' B2 D B' L2 U F U' R2,R,Mallorca Open Rubik 2014 (2014-07-04~06),333ft Final A #3
@@ -20,7 +20,7 @@
 58191001,U2 L2 U2 R2 B2 R D2 B2 L B2 D2 F' U R B2 F U B2 R2 F' L',R,Champagne Summer Open 2014 (2014-09-13~14),333 R2 A E2
 59534001,R2 B D2 L2 U2 F2 L2 F L2 F' R' U F U R2 D' L R U',R,Swedish Championship 2014 (2014-09-20~21),333 R1 C #3
 4185126027,R B U2 R' F2 R2 D2 L U2 R' U' B L D2 F U' L2 D R2 B,R,Taboão Bigs & Blinds 2024 (2024-10-13),333mbf Final B #1
-66277001,F R2 B U2 F L2 B' R2 F U' L' B D2 L F L2 D L',R,Japan Contest Autumn 2014 (2014-10-13),333 R1 C #2
+5838585001,D' B2 F2 U' R2 D U' R2 U L F L2 D2 F U2 B2 D' B U,R,Murdoch University Open 2026 (2026-09-19~20),333 R1 B #4
 3821734001,F2 D' L2 R2 D' L2 U2 F2 U' L2 U L D B R2 B2 L' B2 F L',R,See Georgia: Lake Russell B 2024 (2024-06-02),333 R1 C E1
 3424626001,B2 U' B' D R B R2 U L' U2 B2 D' F2 D L2 D2 F' L2,R,Negros Speedcubing Cup 2024 (2024-01-13~14),333 R2 A E1
 68670001,D F' L' D2 B D2 R2 D' B' D L2 D R2 L2 F2 U L2 B2 U',R,Hungarian Open 2014 (2014-10-17~19),333 R1 C #4
@@ -106,7 +106,7 @@
 5678420001,U R2 D R F2 B' D R' B U' L2 U2 B2 D L2 B2 R',R,Gif-sûr de PR 2026 (2026-05-30~31),333oh R1 B #4
 394331001,F U D' F' D' L' B' L2 B2 L F' U2 B' L2 B' R2 D2 L2 U2,R,Wuhan Open 2016 (2016-11-06),333 R1 A #1
 410766001,U2 L U2 R' U2 L2 D2 B2 R2 B D L2 D' B L2 D F' U2,R,Urdaneta City Fiesta Open 2016 (2016-12-04),333 Final B #4
-4619587001,R2 F2 D2 R L2 B2 R' F U R B2 L2 U2 D' F2 B2 R2 U' D',R,Crazy Cubing in Christchurch 2025 (2025-04-05~06),333 R2 A E2
+5839550001,L2 D2 R2 U2 B R2 B' D' R F2 U F' L' B L' D B' L2,R,Les Hérault de Claret Open 2026 (2026-09-19~20),333 R1 A #2
 412344001,F2 D U F2 D L2 F2 U2 L2 R B2 R' F' U' L2 D2 R' D2 F',R,Mega Minnesota Winter 2016 (2016-12-10~11),333 R2 B #2
 5244206001,U' F2 D' F2 U R2 F2 U2 B2 L U B' R D2 R F' U' F R' D,R,Evanston Fall Favorites A 2025 (2025-12-06),333 R1 A #2
 5422539042,F R' F D' L U L' B R2 B2 R2 L' B2 L B2 U2 R' U' R2 D,R,BL&D BLD Binningen 2026 (2026-02-28),333mbf Final A #1
@@ -162,7 +162,7 @@
 5744976001,R L2 B' L F L B L F2 D2 L2 U R2 D B2 U2 F2 D',R,Mumbai Monsoon Mayhem 2026 (2026-07-05),333 R1 C #2
 2365686001,B' D2 L2 D2 R2 F' U' B' D' B2 F' L D2 F' L' D2 L',R,Mongolian Open 2022 (2022-12-11),333 R1 J #3
 2018573049,F D2 F2 D2 L2 B D2 U2 R2 D2 B' R B2 F D U2 B' F2 D' B' L2,R,Rubik's WCA European Championship 2022 (2022-07-14~17),333mbf Final B #1
-622566001,U2 R2 D2 U2 F2 U2 L2 F' L D' B' U B' D' B' L2 D' R2,R,Cebu Masters 2017 (2017-10-21~22),333oh Final B #5
+5836812001,R2 U2 L B R' D R2 B' D' L' U2 F L2 F L2 B2 L2 U2,R,Mina de Água Warm Up 2026 (2026-09-19),333 R1 A #3
 4081851001,L D2 F L2 R2 U2 R2 B L2 B2 L' U' L' F U L R2 B',R,Cambodia Championship 2024 (2024-09-08),333 R1 F #2
 5066320001,B2 R U2 L2 F' D2 L2 B' R2 D2 F2 R F2 R2 D B F L' R,R,Puerto Real Camaleón Open 2025 (2025-10-04~05),333 R2 B #4
 1826143001,L D2 F2 U' R2 F2 U R2 F2 D' R' B' F L' B2 D' F2 U' L' F' L2 U',R,Lyttelton Autumn 2022 (2022-03-05~06),333bf R1 A #2

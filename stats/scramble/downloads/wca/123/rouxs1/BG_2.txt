@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BG / bin 2
-# Population in this bin: 262
+# Population in this bin: 264
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -118,7 +118,7 @@
 2124466001,L2 F R2 F R' U' R' D' R2 U2 B R2 F B' L2 D2 B2 R2,G,Estonian Open 2022 (2022-08-27~28),333 R1 C #2
 2171209001,U F2 D R2 U2 B2 D' L2 B2 U B' D' U R' F' D R' D R2,G,Sandnes Open 2022 (2022-09-17~18),333 R1 A #5
 5067130001,U2 L2 B' U2 L2 F R U' F R' F' U' R2 D' U L2 U2,B,Chorzów Cubing Days 2025 (2025-10-04~05),333oh R1 A #2
-2261742009,D2 B2 F' R2 D2 F L F' L2 B F R2 D' R2 D2 B' D2 B',B,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final B #2
+5838058001,F2 D2 B' R2 U2 B R2 B2 R2 D' F R D U' B' R' D2 L' U',B,Beaver Falls Open 2026 (2026-09-19),333 Final B #1
 2281032001,F' D2 F' U2 R D2 R' F R2 F R2 U2 R2 B D F2 R2,B,Paraguay Nationals 2022 (2022-10-29~30),333 Final A #4
 4792849001,L' D2 B2 L2 R B2 R2 F' L U' B2 D' R D' L R B U',B,SMA Open 2025 (2025-06-07~08),333 R2 C E1
 2330063001,D R' F D2 R B2 L2 F R2 L2 F2 D' L2 D' B2 L2 D' F U',B,Monterrey Cube 2022 (2022-11-27),333 R1 B #1
@@ -180,7 +180,7 @@
 3716477014,U L2 D2 U' F2 D L2 U2 L2 B U' L' F2 R' F D L' U2 F R D2,B,UNSA Speedcubing Otoño 2024 (2024-04-27~28),333mbf Final A #2
 5796695001,R B2 L2 D2 R B2 L D U' R' F' L2 U2 F' R F' U' R',G,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R1 G #1
 3769628001,D B2 L2 F2 U' L2 B' D2 L D2 R2 U' L2 D F2 U' D2,G,Katerini Beach Open 2024 (2024-05-18~19),333 R1 C E2
-5020880001,L B L' B2 U L2 D' R D2 B2 L2 F R2 B U2 R2 U2 R2 U2 B,G,Criciúma Open 2025 (2025-09-13~14),333oh Final A E1
+5834413001,D' L F2 U D' F R' F2 D2 L' D2 L' B2 D2 R2 F2 L' B',B,Tagum City Open 2026 (2026-09-12~13),333 Final A #1
 5267926001,L B' U2 B U' L2 R' U' L U' F' R' F R2 B' L',G,UNESP Rio Preto Open 2025 (2025-12-13~14),333bf Final B #1
 3851153001,D' F2 D' R D2 R F2 L2 U2 L' D L2 F U R' U L2 D2,B,Gniezno Open 2024 (2024-06-09),333 R1 B #2
 5696209037,B2 R B2 L2 D' B2 U L2 U2 L B2 L' F D' F2 D2 L R D',G,Manchester Cubing League - Third 2026 (2026-06-13),333mbf Final B #1

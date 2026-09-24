@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BG / bin 8
-# Population in this bin: 883
+# Population in this bin: 887
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1626433016,R2 F2 U' F2 U B2 L2 D' F2 R' D R B L F' R2 D' U F' L B,G,Turn Around Tassie 2020 (2020-12-12~13),333mbf Final A #1
@@ -179,8 +179,8 @@
 3384974001,R2 D2 B2 L2 D2 U' L2 D' L' U L' R' D2 F R2 F' L2 R2 U',B,Saideira Brasília 2023 (2023-12-29~30),333 Final A #1
 701670001,R F2 R2 F U D2 B' L' F' R2 F' R2 U2 L B2 R L2 B2,B,CCP 2018 (2018-02-03),333 R2 A E2
 704992001,U2 F2 L' D2 B2 L F2 R' F2 D2 L B F' D' L D F' L D' F2,G,Arctic Open 2018 (2018-02-10~11),333 R2 A E2
-3933621001,B U' L' F U' F2 R B2 U B2 U D2 B2 U2 D' L' F' L,B,Cube4fun in Biała Podlaska 2024 (2024-07-12~14),333 R2 B #1
-4693226001,B2 R2 B2 D2 R2 D2 R' B' R B2 R2 D2 U' L' U2 R F,G,Berkeley April Weekday Tricubealon 2025 (2025-04-28),333oh R1 B #3
+5836737001,B2 L' F L2 B2 R F L' F B2 U2 R2 U' B2 D2 F2 D' L2 D',B,Sandnes Open 2026 (2026-09-19~20),333oh R2 A E2
+5837076001,L2 U L2 U2 L2 F2 D B2 U B R' U' L D R B' L,G,Visé Sunday Open 2026 (2026-09-13),333 Final A E2
 2781018016,L' F D2 R2 F2 L2 U' L2 B2 F2 U L' B U B2 D' R' B2 R D,B,Side N Blind Narre Warren 2023 (2023-06-03~04),333mbf Final A #1
 2847081001,U F U F D B' D' L2 U2 F2 B' L2 F' U2 R F' D2 F2,B,Valenzuela Cubing Open 2023 (2023-07-02),333oh Final C #3
 824138001,F U D2 R2 F2 U' R U F' B R2 L2 D' B2 U2 F2 D' R2 D,B,Chaco De Invierno 2018 (2018-07-07~08),333oh R1 A #1

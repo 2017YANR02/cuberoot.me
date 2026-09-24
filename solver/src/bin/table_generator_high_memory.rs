@@ -14,7 +14,7 @@ fn main() {
         );
     }
 
-    let threads = table_profile::configure_rayon_threads(14);
+    let threads = rayon::current_num_threads();
     std::env::set_var("CUBE_ALLOW_HUGE_TABLES", "1");
 
     cube_solver::logo::print_logo_block();

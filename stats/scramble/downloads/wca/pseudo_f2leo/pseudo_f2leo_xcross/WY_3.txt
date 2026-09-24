@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / WY / bin 3
-# Population in this bin: 725
+# Population in this bin: 728
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4641929001,R2 D F B R' D R F2 L B2 U' L' B2 L D2 F2 R2 F2 L,Y,Rexburg Rumble 2025 (2025-04-12),333 R1 C #3
@@ -111,7 +111,7 @@
 615083001,R' D R' F2 U L' U' D B' R' B' R2 B2 L' U2 R D2 R F2,Y,Tathva Cube Open 2017 (2017-10-14),333oh R1 E #4
 3762992001,D2 F' R2 B2 L2 U2 F2 U2 L' B2 U F U F' D' U F U' L' F2,W,Howrah Cube Open 2024 (2024-05-11~12),333bf Final A #3
 618907001,F' L' U D2 F2 D2 L F2 R' B' U2 R2 D2 L2 U L2 U' B2 U',W,Spanish Championship 2017 (2017-10-13~15),333 R1 A E1
-620564001,L D2 B2 R U2 R' F2 R' D2 U2 R2 F L' F D U B2 R U L2,Y,Speed Days Kielce 2017 (2017-10-14~15),333 R1 B E1
+5837327001,L2 D2 F2 D2 F U2 D B' D2 B R2 B D' L2 B' U R',Y,UNSA Speedcubing Otoño II 2026 (2026-09-19),333 R1 G E2
 621132001,D2 B' D2 B2 U2 R2 F' L2 B' L2 F' D' F' L B F D L F' R2,W,Zhanjiang Open 2017 (2017-10-22),333oh Final A #3
 3011739023,R B2 U D2 B2 L B2 L R2 U2 B2 R2 B D2 B' L2 U2 L2 D2 B',W,Silent Brasília 2023 (2023-08-26~27),333mbf Final B #1
 638113001,B2 F2 U2 L2 D F2 D2 R2 D R' B' R D' L B R' U2 B' D2 L B R,W,Hudson Valley Fall 2017 (2017-11-05),333bf Final A #2

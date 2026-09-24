@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / OR / bin 1
-# Population in this bin: 358
+# Population in this bin: 360
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4311551041,B' D F B R2 F2 L B' U2 D2 B U2 R2 D2 B2 U R' F L',R,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1
@@ -153,7 +153,7 @@
 5040538001,B' D2 B2 R2 U2 B2 L2 F2 L D B' L' D' B L' B U2 L' R',O,San Ramon Fall 2025 (2025-09-20),333 R2 A E2
 1800609001,D' L2 F2 L2 U2 B2 F L2 F R2 U' L' D' U B' U2 R' F2 R,R,Speedcubing i Lille Friheden 2022 (2022-02-06),333 Final B #5
 4785366001,F R2 U2 F2 U' R2 D2 F D2 L F' D' L' F R F U',O,Hong Kong Cube Day 2025 (2025-06-07),333 R2 B #2
-1917237001,D2 R B2 U R2 U2 L2 U2 F2 D2 L B2 F L' B2 D' B2 R2 U',O,Chester Spring 2022 (2022-05-14~15),333 R1 B #1
+5832709052,R' F' R2 B2 D2 B' D2 F2 D R D B2 F' U' R' U' R' U2 L' F2,O,Czech Quiet Championship 2026 (2026-09-12~13),333mbf Final B #2
 1968967001,D2 B D2 R2 B' F2 D2 L2 F2 L' D F D' U2 L D' U2 L2 R',R,Bluegrass Spring 2022 (2022-06-11),333 Final A E1
 1985315001,D2 R' U R' U' B L2 D2 F' R' B D2 F2 U2 R2 B R2 B,R,Lake Erie Showdown 2022 (2022-06-25),333 R1 E E2
 2001150001,F' R U' B L' B L B F2 U2 F2 L' B2 R2 F2 R B' D' F',O,School Winter Lima 2022 (2022-07-02~03),333 R2 D #1

@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / OR / bin 8
-# Population in this bin: 878
+# Population in this bin: 882
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2308611044,R' U R2 F' D L' D L' B R B2 D' F2 U D2 F2 L2 D' F L2 U2,R,Colorado Sensory Shutdown 2022 (2022-11-19),333mbf Final B #2
@@ -143,7 +143,7 @@
 2710593001,F' U R D' F D' R' U2 L2 F2 U' F2 L2 F' R2 B D2 B',O,French Championship 2023 (2023-05-06~08),333 R2 A #2
 659459001,U' R2 U' B2 R2 F2 D F2 L2 D F R2 D' R' D' F D,R,Rocky Top 2017 (2017-12-02~03),333 Final A E2
 660441030,D2 R2 B2 D2 F U2 B L2 B2 R2 D' L U' F R B2 L U2 B R B2 L,R,Welwyn Garden City Open 2014 (2014-04-05~06),333mbf Final A #1
-4376590001,R' D2 U' B2 L2 U2 R2 D2 L D F' L U L' D' U' R' U',O,Open Christmas Cube Huancayo 2024 (2024-12-14~15),333 R1 A E2
+5831978002,L B' U2 R' U2 F2 L' U' R2 U' F2 D F2 B2 U2 F2 R B' R B' L',O,Les Beaupreau du Blind 2026 (2026-09-12~13),333mbf Final A #1
 660547028,B2 F2 D B2 L2 R2 D2 R2 F2 U' L B R U R B D' U R2 D' L B,O,Swedish Championship 2014 (2014-09-20~21),333mbf Final A #1
 792315001,U L2 B2 L' F2 L F L U2 D' F' D2 B R2 D2 B2 U2 F',O,Colorado Qualifier 2018 (2018-05-26~27),333 R2 A #2
 5194927001,F2 U2 R' U2 L F2 L' U' B' D B R' D R2 F2 L2 U',O,Vienna Autumn 2025 (2025-11-15~16),333oh R1 A E1

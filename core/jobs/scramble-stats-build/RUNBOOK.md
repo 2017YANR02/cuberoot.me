@@ -1,96 +1,29 @@
-# 更新打乱统计 — A. 三阶阶段难度 (手动增量管道, 按需触发非定时)
+# 打乱统计本地管道与发布
 
-> 这是「更新打乱统计」的**三阶部分**(skill `update-scramble-stats` 管道 A)。非 3x3 整解(二阶/金字塔/斜转/未来 SQ1)是平行的管道 B,走 `update_puzzle_stats.ps1` + `build_puzzle_examples.ts`,与本文件解耦,见 skill 与 `solver/VARIANT_PLAYBOOK.md` §8。
+在 `core/` 运行 `pnpm stats:scramble:local`，默认增量运行 stages、333opt、puzzles。只选一个作业，例如 `pnpm stats:scramble:local --jobs 333opt`；可选 `stages`、`333opt`、`puzzles`，多个用逗号分隔。`--plan` 只读显示目录和作业；`--use-cached` 使用已有 WCA export；`--dry-run` 只读检查 stages 新增规模。此入口不会提交、推送、上传或修改线上 PG。
 
-把 WCA 新公示的打乱(三阶 / 单手 / 脚拧 / 三盲 / 多盲 / FMC)增量算进 `cross / xc / xxc / xxxc / xxxxc × 6 底色` 的统计,刷新 `/scramble/stats` 全局分布图 + `/scramble/analyzer` 的真实打乱池。
+数据根默认为仓库同级的 `scramble/`，可用 `CUBEROOT_DATA_ROOT`、`CUBEROOT_WCA_DATA_DIR`、`CUBEROOT_PUZZLE_DATA_DIR`、`CUBEROOT_XCROSS_DATA_DIR` 覆盖；求解器表根为 `CUBE_TABLE_DIR`，默认 `solver/tables/`。分析器按系统选择无后缀或 `.exe`，Rayon 默认使用本机可用并行度。H48 h10 和 SQ1 大表都应由 `solver/` 的 `cargo run --release --bin table_generator` 生成。
 
-**只能在本地跑**:solver 需要 ~34 GB 剪枝表 + 运行时十几 GB 内存,云服务器(2G)跑不动。
+## 本地流程
 
-## 一键
+1. `src/incremental.ts` 下载或复用 WCA export，抽取 TSV 和新打乱；`std_analyzer` 计算标准阶段。每条结果按 ID 幂等追加到 CSV、master 语料和多盲拆分元数据。
+2. 选中的阶段变体按 master 与各 CSV 的 ID 差集分块补齐，逐块校验行数后落盘。`--variants eo,pseudo` 选择变体；`--max-chunks 1` 限每个变体一块；`--chunk-size N` 覆盖默认块大小。未完成块可续。
+3. puzzles 从同一 TSV 增量抽取 222、pyraminx、skewb、clock、sq1。SQ1 的 WCA 12c4 精确与 slash 最优经 `scripts/stats/sq1.ts` 共用逻辑；先啃有超时标记的难题，再生成分布、示例和首次出现时间线。非 WCA 离线采样默认关闭；单独用 `scripts/stats/puzzles-cli.ts --sampled` 才启用。
+4. 三阶整解通过原生 H48 h10 按 ID 续解，并在 stages 构建后注入 333 分布、首次出现时间线和最优打乱 CSV。长度、近期打乱、步骤索引和下载包随后构建。
+5. `solver/tables/stats-local-*.json` 记录本次阶段结果，`stats-pipeline-times.csv` 记录总耗时。
 
-```pwsh
-pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1
-```
+独立补 xcross 数据集时在仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/backfill-xcross.ts --variant pseudo_f2leo`；可选 `--hours N`、`--chunk-size N`、`--max-chunks N`。它只补 CSV。样本未满时不得重建分布，以免呈现残缺样本数。
 
-下载最新 results export → 挑出未处理的新打乱 → std_analyzer 全 5 阶段 → 追加 master → 默认再跟 std 锁步补全 6 变体 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo(按 id 缺补,分块可续)→ 重算 JSON → commit & push + scp static。任一步失败即停。
+独立维护 SQ1：`./core/node_modules/.bin/tsx scripts/stats/sq1.ts wca|slash|grind`。`wca --build-only` 只并入上次已完成的块；`slash --merge-only` 只合并；`grind` 默认 10 分钟每条上限并检查是否已有 SQ1 analyzer 在运行，防止两份 13 GiB 表并行占满内存。
 
-### 交互向导
+## 显式发布
 
-**真人终端裸跑(无任何参数)会自动进向导**。UI 移植自 `D:\cube\upload-video\upload.ps1`(原生配色 + `SetCursorPosition` 原地重绘):`↑↓` 移动、`Space` 多选切换、`Enter` 确认、`Esc` 取消。先在取数**前**问 TSV 来源,取数后扫描各变体待补条数并按实测速率估时,逐项问:
+获得本次发布授权后，在 `core/` 运行 `pnpm stats:scramble:publish --publish`。这会先运行本地管道，再做静态增量上传和线上 PG 增量灌库；`--publish-only` 跳过本地计算；`--jobs` 选发布范围。Git 提交和 push 另需加 `--push`。没有 `--publish` 时入口拒绝运行。
 
-0. **TSV 来源**(单选,仅当 `cache/` 有可用 zip 才问):下载官方最新 export / 用本地缓存最新 zip 不联网(后者等价 `-UseCached`,export_date 从文件名还原,stamp 仍稳定)。
-1. **补哪些变体**(多选 ■/□,带每变体待补数 + 估时):**初始全 6 勾选**(全是默认);快捷键 `[A]`ll 全选、`[D]` 收窄到核心快组 `eo/pseudo/pseudo_pair`、`[O]` 收窄到重型组 `pair/f2leo/pseudo_f2leo`;数字 `1..6` 切单项。
-2. **每变体最多跑几块**(单选,数字键直选):补满 / 1 / 2 / 5 块(等价 `-MaxChunks N`)。
-3. **是否发布**(Yes/No,`●`/`○`):发布(push + scp)/ 仅本地(等价 `-NoPublish`)。
+静态发布器使用 `scramble_manifest.mjs` 的 SHA1 清单和元数据缓存。缓存只加速扫描；只有远端上传、解包、删除都成功后才更新发布基线。初次无基线自动全量 tar；增量只传内容变化的文件并删远端孤儿。只读差异预览：仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`；`--verify-all` 强制重新计算每个哈希。文件生成与发布必须串行。
 
-最后打印「计划」总览 + 开始/取消 确认;选择直接套回 `$Variants/$MaxChunks/$NoPublish`,后续与 flag 路径完全一致。三个菜单函数 `Read-MultiSelect`/`Read-SingleSelect`/`Read-Confirm`;`Esc` 任一步取消都不改动 master/JSON。**顶部 `[Console]::OutputEncoding = UTF8` 是必须的** —— 否则中文 Windows 默认 GBK(936) 码页会把 `›`/`■`/`●` 等非 GBK 字形渲染成 `?`。
+`pg_incremental_diff.mjs` 为 optimal 与 steps 产行级差异及新清单。PG 成功后才推进对应 manifest；失败保留旧基线以便下次重试。镜像从线上比赛行数判断需补的比赛。服务器密码只在服务器端从 `/root/core-api/.env` 读取，不写入仓库。
 
-触发判据:`-Interactive` 强制开;否则仅当**无任何参数 + 交互终端**(`[Console]::IsInputRedirected=False`)。**AI 工具 / 带任意 flag / 非交互终端(stdin 重定向)一律不弹**,走旧一键 —— 故 AI 自动化与定时任务行为不变。
+## 轻量验证
 
-### 开关
-
-| flag | 作用 |
-|---|---|
-| `-Interactive` | 强制走交互向导(见上);裸跑+真人终端时自动开,无需显式传 |
-| `-UseCached` | 取数不联网,用 `incremental/cache/` 里最新 `WCA_export_*.tsv.zip`(向导里也会问);无缓存则报错 |
-| `-DryRun` | 不下载(配 `-SourceCsv`)、不发布,验证流程 |
-| `-SourceCsv <path>` | 用本地 `input` 形状 csv 当源替代下载(测试) |
-| `-NoPublish` | 跑完只更新本地 std.csv + JSON,不 commit/push/scp(想先 review) |
-| `-SkipSolve` | 调试:跳过 incremental + std 解算,复用上次取数/solver 产出(`new_no_wide_move.txt` + `_std.csv`),直接走追加/变体/发布。需上一次正常 run 留下的产物 |
-| `-Variants <list>` | 跟 std 锁步补缺的变体,**默认全 6** `eo,pseudo,pseudo_pair,pair,f2leo,pseudo_f2leo`(2026-06-09 起 pair/f2leo/pseudo_f2leo 也入默认);`@()`=只 std。瓶颈始终是 eo ~0.9/s。pair 速率两处记法不一(RUNBOOK 暖表 ~200/s,脚本 `$VARIANT_RATE` 记 2/s——未现测,沿用脚本估时偏保守);f2leo/pseudo_f2leo 走大表快路径(真实打乱实测 f2leo huge 联合表 ~31/s、pseudo_f2leo huge 电池 ~81/s,均需 `CUBE_ALLOW_HUGE_TABLES=1` 已默认设)。增量只补 delta;想快跑显式 `-Variants eo,pseudo,pseudo_pair` 跳过重型三项 |
-| `-ChunkSize <n>` | 变体补缺分块大小(显式则覆盖每变体默认 `$VARIANT_CHUNK`:eo/pair=2000、其余 20000):逐块校验+追加,中断只丢当前块、下次自动续 |
-| `-MaxChunks <n>` | **每个变体最多跑 N 块就停**,之后照常重算 + 发布(还差的下次 run 自动续);`0`=补满(默认)。用于"只跑一两块"而无需人工中途 kill。例:`-Variants eo -MaxChunks 1` = 跑一块 eo(2000≈40min)→ 发布 |
-
-## 前置(一次性)
-
-- **solver 表**:`D:\cube\cuberoot.me\solver\tables\` 已生成(~34 GB)。没有就先 `cd D:\cube\cuberoot.me\solver; cargo build --release; .\target\release\table_generator.exe`(1-2 小时)。
-- **uv**:`incremental.py` 依赖 pandas,`uv run` 自动装。
-- **免密 ssh**:`ssh root@cuberoot` 通(scp 发布用)。
-- **CWD 无所谓**:脚本内部全用绝对路径 + `CUBE_TABLE_DIR`,不依赖当前目录。
-- **算力限额**:脚本顶部已钉 `RAYON_NUM_THREADS=14`(7 核 14 线程,留 1 核给系统)+ 本进程 `BelowNormal` 优先级,长跑 analyzer 不吃满核、不卡系统。手动直接跑某个 `*_analyzer.exe` 时记得自己带 `$env:RAYON_NUM_THREADS=14`。
-
-## 步骤
-
-1. **取数** `incremental.py`:下 `results/v2/tsv`(~344 MB,按 export_date 缓存)→ 抽 `Scrambles.tsv` + `Competitions.tsv` → 过滤 333 系列 & **未处理的 scrambleId**(对 `std.csv` 已处理集合做差,能接住回填)→ 拆多盲(`|`→行)+ 去宽层 → `incremental/new_no_wide_move.txt`。顺便刷新 `competitions.tsv` + 写 `export_date.txt`。(std 无新增也**不早退**,继续走变体补缺。)
-2. **std solver** `std_analyzer.exe`:`CUBE_TABLE_DIR` + `CUBE_ALLOW_HUGE_TABLES=1` + `CUBE_RUN_FULL_STD=1`,stdin 喂文件名,`[PROG] N/total` 实时进度。热态 **std ~115 条/秒**(旧 16 核满核基准;现钉 14 线程略低),冷启首条多花几分钟 mmap 巨表。
-3. **追加 std master**(LF 安全):`stats/std.csv` ← solver 输出;`wca_scrambles_no_wide_move.txt` ← 新打乱(=变体补缺基准);`input/wca_scrambles_split_mbf.csv` ← 新元数据。
-4. **变体补缺**(`-Variants`,默认全 6 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo):每个变体算 `master no_wide_move 的 id − 该变体 csv 已有 id = 待补` → 对应 analyzer(`solver/target/release/<v>_analyzer.exe`,env 同需 huge)**分块 solve + 逐块校验行数后追加**,中断可续(下次重算 missing 自动接上)。实测速率(旧 16 核满核、huge 表全模式,2026-05-30 核实;现钉 14 线程略低):**pseudo ~390/s、pseudo_pair ~47/s**(旧记 18/35 偏低)、**eo ~0.9/s**(~13M 节点/条,全量 89.5k ≈ 27h,最慢长极)、pair ~200/s(暖表)。**analyzer 是整块 `rayon par_iter` 攒进内存 Vec、跑完才一次性写 CSV**(`executor.rs::run_batch`),故中断丢在飞的整块 → chunk 越小 save point 越密。每变体默认 chunk 见脚本 `$VARIANT_CHUNK`(eo=2000≈37min、pair=2000 暖表≈10s/块、其余=20000≈9-18min),显式 `-ChunkSize` 覆盖全部。**pair/f2leo/pseudo_f2leo 2026-06-09 起入默认**(增量只补 delta;想跳过显式 `-Variants eo,pseudo,pseudo_pair`)。pair 速率有争议:本 RUNBOOK/SKILL 记暖表 ~200/s(首块冷读 huge 表 ~95s,之后 page cache 命中,全量 ~1.7h),但脚本 `$VARIANT_RATE` 仍记 2/s——**未现测核实,沿用脚本估时偏保守**。f2leo/pseudo_f2leo 走 huge 表快路径(脚本估 f2leo ~31/s、pseudo_f2leo ~81/s;早期"小表 ~40MB 不碰 huge"版 ~7.4/s 已被取代),首跑全量回填 ~1.29M id(WCA 集现已近满,只差增量)。
-5. **重算**:`build`(distribution.json + examples.json + 下载 txt,**读全部变体故任一变即重算**)+ 仅当有新 std 时再跑 `build:wca-cross`(6 色池,每条带完整 `id` 含后三位)+ `build:comp-steps`(每场预计算表 `comp_steps/<id>.json`,gen 页"秒出")。RNG 固定种子 + `SCRAMBLE_STATS_STAMP`=export_date → 数据不变则产物逐字节不变。
-6. **发布**:`git add stats/scramble` → commit(英文 msg)→ `pull --rebase --autostash` → push(触发 Vercel)→ tar 打包 `scp` 到 static(self-hosted nginx + Vercel fallback 都从这服)。
-
-## id 编码
-
-`final_id = str(scrambleId) + zfill(3, seq)`。非多盲 `seq=001`(如 `22001`);多盲一把多条 → `001..00n`。`scrambleId = int(id) // 1000` 可逆。这个完整 id(含后三位)会写进 `wca_cross/*.json` 每条样本,网页端展示打乱序号。
-
-## 数据(全 gitignore 在 `D:\cube\scramble\wca_scramble\`)
-
-`stats/{std,eo,pseudo,pseudo_pair,pair,f2leo,pseudo_f2leo}.csv`(各变体统计,表头统一 `id`+`_z0/_z2/_z3/_z1/_x3/_x1`;f2leo/pseudo_f2leo 只 4 阶段无 xxxxcross,大表快路径产出) `wca_scrambles_no_wide_move.txt`(打乱文本=变体补缺基准) `input/wca_scrambles_split_mbf.csv`(元数据) `competitions.tsv`(比赛名/日期) `incremental/`(每次的中间产物 + 变体补缺的 `sync_*.txt`/`sync_*_*.csv`)。
-
-## 排错
-
-| 症状 | 原因 / 解决 |
-|---|---|
-| solver 卡在 `Scanning depth N` / `State Space` | `CUBE_TABLE_DIR` 没指对,在重新生成表。确认指向 `solver\tables\` |
-| `huge table requires CUBE_ALLOW_HUGE_TABLES=1` | 缺 env,脚本已设;手动跑记得带 |
-| GBK 编码报错 | python 已 `reconfigure utf-8`;手动跑前 `$env:PYTHONUTF8=1` |
-| 下载慢/断 | export ~344 MB;脚本按 export_date 缓存到 `incremental/cache/`,重跑跳过已下 |
-
-## 发布前的文件扫描
-
-`publish_scramble_incremental.ps1` 用 SHA1 比较本地文件与上次成功发布的清单，只上传内容变化的文件并删除远端孤儿；这一步是增量发布的变化检测，不是每次必须重新读取全部内容的安全审计。
-
-`scramble_manifest.mjs` 用 Node 原生文件 API、最多 8 个并发任务扫描，缓存文件大小、纳秒修改/变更时间、创建时间和文件标识。未变化文件复用 SHA1，新增或元数据变化的文件重算；损坏缓存回退重算。缓存独立于发布基线，发布失败不推进基线。首次运行建立缓存，以后自动复用；文件生成和发布须串行。
-
-2026-09-11 本机隔离实测 235,940 个文件：无指纹缓存全量读取 19.5 秒，全部命中缓存约 5–6 秒；不含打包和网络上传，也不代表磁盘冷启动耗时。全量结果已逐文件用独立 .NET SHA1 核对，缓存结果与全量清单一致。
-
-在仓库根运行 `pwsh core/jobs/scramble-stats-build/publish_scramble_incremental.ps1 -DryRun` 只扫描并预览差异；加 `-VerifyAll` 忽略缓存重新读取全部文件。不要在已有发布进程运行期间再次调用发布脚本。
-
-本地回归：在 `core/` 运行 `pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/scramble_manifest.test.mjs`；在仓库根运行 `pwsh -NoProfile -File core/jobs/scramble-stats-build/tests/publish_scramble_manifest.test.ps1`，后者只用隔离目录和模拟进程，不连接远端。
-
-## 可选:定时
-
-终端进度固定显示，输出到文件时每五分钟记录一次。SQ1 的 Logo 和详细输出保存到原日志，原进度文件继续更新；求解和续跑方式不变。文件检查只显示简短进度及完成用时。输出回归：`pwsh -NoProfile -File core/jobs/scramble-stats-build/tests/stats_progress.test.ps1`（仓库根运行，只用模拟程序）。
-
-用户选了手动一键。若要无人值守,Windows 任务计划程序加一条每周触发:
-`pwsh -NoProfile -File D:\cube\cuberoot.me\core\jobs\scramble-stats-build\update_cross_stats.ps1`
-(机器需开机 + 已登录态;失败会非零退出,可在任务里配重试/告警。)
+在仓库根运行 `./core/node_modules/.bin/tsx --test scripts/stats/*.test.ts`；静态 SHA1 缓存回归在 `core/` 运行 `pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/scramble_manifest.test.mjs`。这些测试只使用隔离目录和模拟命令，不上传也不灌库。真正全量统计与发布应单独按授权执行。

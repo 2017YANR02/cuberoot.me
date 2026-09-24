@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGOR / bin 5
-# Population in this bin: 473
+# Population in this bin: 476
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -32,7 +32,7 @@
 3875407036,L D2 R F' B2 R2 F R' B' D B2 R2 L B2 L F2 D2 R' B2 L B2,B,Swisscubing Cup Mental Breakdown I 2024 (2024-06-15~16),333mbf Final A #2
 258720001,B2 D' R2 D' B2 D B2 D2 R2 U R U2 R2 F' D' L2 B L' F' D2 L' F,G,Ignus Open 2016 (2016-02-28),333bf Final B #2
 4813248001,L U' F2 L2 D2 B F R2 B' D2 F U L2 U' L' U' R' D,R,McBaja II 2025 (2025-06-21),333 Final A #3
-5117341001,D B2 D' L2 D2 R2 U F' U2 B' F2 R' F' D2 L' U2 R F2,B,Regina Twist 'N Treat 2025 (2025-10-18),333 R1 A #2
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
 4776336001,R B2 L D' U2 R2 U F2 U2 B2 U L D2 F' U2 B D R',O,Surrey Monday Open 2025 (2025-06-02),333 Final A E1
 3960674001,L2 F2 U F2 D2 U F2 L' D F2 R' F' D B2 D L2 D2 U' L' F',R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf Final A #1
 4020647001,L U F B R D R B' R' D' B2 L U2 B2 U2 B2 U2 R',G,Davis Summer 2024 (2024-08-17),333 R2 C E1

@@ -1,17 +1,17 @@
 # Scramble samples — pair / cross_pair / BG / bin 8
-# Population in this bin: 429
+# Population in this bin: 433
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
-679001,R2 U2 B2 R2 U B2 D' U' L' D R F2 D' L' B F2 U L' R2,B,Cube Kingdom II 2014 (2014-03-15),333 Final A #5
+5836296001,R' U' F D' U L2 U' L2 F2 R F2 U F2 R2 D2 F L' F L2 R2 F2 R' U' F,B,VERK XVIII 2026 (2026-09-19~20),333fm R1 A #2
 4881870001,D2 F2 U' L F U' R' U D' R' L2 D2 B R2 L2 F2 D2 F' R2 B',B,SA State Championship 2025 (2025-07-19~20),333oh R1 B #3
 14248001,F2 L2 D2 R U2 R2 U2 R U2 R' D2 B L' B2 F' D' F' R2 U L' D',B,Israel Championship 2014 (2014-04-16~17),333bf R1 A #2
 5512709001,U' R L F' B2 R2 L2 D' L2 F U2 B' R2 L2 U2 B U2 B U' F2,B,Round Rock Splash & Solve 2026 (2026-04-04),333 R1 E #5
 5773900001,D' B U' L' D2 F2 R D2 B2 L2 B' L2 R' U L' B L' D',B,Egypt National 2026 (2026-07-31~08-01),333 Final A #1
 4170756001,D2 F D2 B2 D' L U B R B' F2 D' R2 D F2 B2 R2 F2 L2,B,Rubik's German Nationals 2024 (2024-10-04~06),333 R1 B #3
-50436001,B' F2 D2 F' U2 R2 F2 U2 B2 D2 R' B2 U2 B R' U B D' L R' F2,B,Indian Cube Challenge 2014 (2014-08-15~17),333 R1 E E1
+5838417004,U B2 R' U D' L' D F B R2 L2 U' L2 D2 R2 U' F2 L U L2,B,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final C #2
 55435001,B' R U' F' D' L F2 D F2 R U2 F R2 U2 B2 D2 L2 B L2,B,Mogi Open 2014 (2014-08-30~31),333oh R1 A #2
 59883001,U R2 D' F2 D2 L2 B2 R2 F2 U' F' U L R' D' R' B' D2 F D2 R',B,FMAT Championship 2014 (2014-09-27),333 R1 A #5
 81477001,D F D F2 D2 B D B2 L F2 R' U L2 F2 U' L2 U2 D' B2 D',B,Sydney Spring 2014 (2014-11-23),333 R1 C #5
@@ -23,7 +23,7 @@
 5075097001,R' B' R' B2 L' R' U2 B2 L' F' D F' U' B2 F' L R',B,Axemann Fall 2025 (2025-10-04),333 Final B #3
 113159001,F' B L2 U' D' F' R B2 L F' D' B2 R F2 D2 L B2 D2 L2 D2,B,SP Open 2015 (2015-02-28~03-01),333 R1 G #3
 2892685033,D L' F' B2 D2 L' U R L2 D2 F2 R2 F2 R D2 F2 B2 D' F' U' F' D',B,FLIP Open 2023 (2023-07-14~16),333mbf Final A #1
-116127001,U B2 L2 D' B2 D R2 D2 F2 L2 D R' D2 L U B' U2 R2 D' B L,B,Ural Winter 2015 (2015-03-14~15),333 Final B E1
+5833900001,B2 R2 F' U2 B L2 F2 U2 F' D2 R B2 D' R2 D' F D R B2 U,B,Gouverneur Sprint 2026 (2026-09-19),333 Final B #1
 5264131001,D2 L' D F2 D2 F2 L2 F2 L' U2 R' D U L' F' U' L2 R2 F',B,Temecula Valley Winter 2025 (2025-12-13),333 R1 D #1
 136036001,F R F U' D F L' F2 B' R2 F2 U' B2 D F2 R2 B2 D2 L2 D',B,Japan Contest Spring 2015 (2015-05-03),333oh R1 B #3
 211903001,D B2 U F2 D' B2 U' R F D' F' L' F2 U B R' B2 D2 F',B,APJ BLD Open 2015 (2015-10-31~11-01),333 R1 B #1

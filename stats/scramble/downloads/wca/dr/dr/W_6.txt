@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / W / bin 6
-# Population in this bin: 636
+# Population in this bin: 639
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',W,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -57,7 +57,7 @@
 1217493001,L2 U R2 U' L U R' D R' L' U2 D' F2 L2 B2 L2 D2 L2,W,West Branch Summer 2019 (2019-07-13),333 R1 B #5
 297369001,D' L2 F2 L2 B2 D2 U' F2 R2 D2 L' B' D' L2 B2 F2 U2 R2 F,W,Torneo Nacional Colombia 2016 (2016-05-07~09),333 R1 A #5
 4860230034,U2 B2 U F2 D L2 U B2 L2 U' B' U B2 R' B2 D' L B2 L B2,W,Cool Down Szczecin 2025 (2025-07-11~13),333mbf Final A #1
-3641570025,D' L2 B2 U' B2 U' B2 U F2 L U R B D R' B2 F2 L D,W,Pocos Cupos Bogotá VIII 2024 (2024-04-06),333mbf Final A #3
+5840357001,B' R2 D' F U2 R2 D2 F2 D2 F R D R F' U' F2 R' U,W,Galgotias Cube Open 2026 (2026-09-19~20),333 R2 B #3
 319053001,D' B2 F2 L2 B2 U F2 D' L2 U' R' F2 R' B R' B D B' R',W,West Friesche Open 2016 (2016-06-26),333 R1 B #3
 2871819001,L2 F2 U2 R2 U' R2 B2 D F2 L2 U L B' L2 R2 B' F R' D,W,Irish Championship 2023 (2023-07-07~09),333oh R1 C E1
 334010001,R2 U' B2 R2 B2 D2 R2 D2 U' F' R B R' U2 F2 U2 L' U,W,Westlake Open 2016 (2016-07-23),333 R1 C #3
