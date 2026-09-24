@@ -228,6 +228,7 @@ jobs:
             /sync_upstream.ts
             /.sync/
             /scripts/upstream/
+            /scripts/stats/
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
@@ -448,6 +449,7 @@ jobs:
             /sync_upstream.ts
             /.sync/
             /scripts/upstream/
+            /scripts/stats/
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
