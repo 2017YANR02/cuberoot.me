@@ -71,7 +71,7 @@ function registeredHookTargets(field: 'command' | 'commandWindows'): Map<string,
   for (const group of config.hooks.PreToolUse) {
     for (const hook of group.hooks) {
       const command = String(hook[field] ?? '');
-      for (const match of command.matchAll(/(?:^|\s)(?:"([^"]+\.(?:ps1|mjs|cjs))"|'([^']+\.(?:ps1|mjs|cjs))'|([^\s"']+\.(?:ps1|mjs|cjs)))/g)) {
+      for (const match of command.matchAll(/(?:^|\s)(?:"([^"]+\.(?:ps1|mts|mjs|cjs))"|'([^']+\.(?:ps1|mts|mjs|cjs))'|([^\s"']+\.(?:ps1|mts|mjs|cjs)))/g)) {
         const target = match[1] ?? match[2] ?? match[3];
         const name = basename(target.replaceAll('\\', '/'));
         if (name.startsWith('adapt-codex-')) continue;
