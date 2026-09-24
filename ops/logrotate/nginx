@@ -33,3 +33,16 @@
     delaycompress
     copytruncate
 }
+
+# Sanitized Vercel request records for same-hour, seven-day traffic baselines.
+# The API opens the path for each append, so normal rename rotation is safe.
+/var/lib/cuberoot/traffic/vercel.ndjson {
+    daily
+    rotate 14
+    maxage 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0600 root root
+}
