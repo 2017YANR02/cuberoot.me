@@ -4,7 +4,7 @@
 
 `@app-foundation/sms` 0.1.1 已通过固定的 v0.3.1 GitHub Release URL 和 lockfile 完整性接入 API。`utils/sms.ts` 保留原环境变量、`smsConfigured()` 和 `sendSmsCode()` 契约；标准阿里云 Dysmsapi 请求由共享包生成，本站仍负责验证码、冷却、账号状态与核销。共享包不读本站环境或数据库，不自动重发；供应商受理不代表手机送达，也不等同 PNVS 验证。
 
-本地定向短信适配测试 3 项、API 类型检查及冻结锁文件安装通过；`/dev/auth` 已复核为流程不变。未用真实凭据或手机联调。CubeRoot 其他在途改动不属于本切片，实际部署与收码验收须独立记录。
+本地定向短信适配测试 3 项、API 类型检查及冻结锁文件安装通过；`/dev/auth` 已复核为流程不变。固定提交 `59fc35e7467268c33cf88c8b38f0aaaefac09e60` 的 [Deploy Core 35964608858](https://github.com/2017YANR02/cuberoot.me/actions/runs/35964608858) 与 [Deploy Next 35964608901](https://github.com/2017YANR02/cuberoot.me/actions/runs/35964608901) 均成功，公网 API `/v1/health` 返回 `status: ok`、数据库连通；没有真实凭据或手机收码验收。整体 Test 工作流 `35964608861` 两次均因独立智能魔方移动端 UI 断言失败，不能称全绿；短信/API 定向检查通过。CubeRoot 其他本机在途改动未纳入本次推送。
 
 更新：2026-09-19。本次先修 CubeRoot 自己的邮箱认证事务，随后在共享仓库另行获准发布 v0.2.0 后接入固定发行包；不依赖未发布包，不替换既有摘要、不合并账号系统。不读应用环境文件、真实数据库或发送真实邮件。本批未提交、push 或部署；最终提交/发布状态由主任务另行记录。
 
