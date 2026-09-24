@@ -7,7 +7,7 @@
 | 范围 | 起点 | 当前 | 工作与验收 |
 | --- | ---: | --- | --- |
 | API 本地开发 | 3 | 全部迁移：本地开发、种表与 `apps/api/scripts/update_sor.mts` 均有 TS 入口 | SOR `--dry-run` 与四套 TSV 小 fixture 已验；真实 sorcalc 长跑和线上 PG 未执行。 |
-| 打乱统计 | 12 | 全部迁移：`scripts/stats/` 提供一键统计发布、显式本地模式、增量静态发布、PG 灌库、SQ1 和 xcross 入口 | `pnpm stats:scramble` 恢复旧脚本默认的统计后发布并推送语义；`pnpm stats:scramble:local` 明确只写本地。迁移后的真实 scp/PG 发布仍待端到端验收。 |
+| 打乱统计 | 12 | 全部迁移：`scripts/stats/` 提供一键统计发布、显式本地模式、增量静态发布、PG 灌库、SQ1 和 xcross 入口 | `pnpm stats:scramble` 恢复旧脚本默认的统计后发布并推送语义；`pnpm stats:scramble:local` 明确只写本地。2026-09-24 已用 `--publish-only` 验证 PG 灌库与静态发布成功，随后静态差异复查为 0。 |
 | `.codex/hooks` | 17 | 已迁移：17 个 PS1 包装层移入回收站；活动 hook 与适配器现为 `.mts`，共用现有 Node 精判器 | `.codex/hooks.json`、`/dev/guards`、测试与文档已同步；Node 24 可直接运行 `.mts`。真实 JSON 的允许/拒绝路径已由针对性测试覆盖；新 Codex 会话中的 `/hooks` 信任和工具拦截仍需会话级验收。 |
 | 上游同步与 `.sync` | 9 | 已迁移为 `scripts/upstream/*.ts` 和共享 `lib.ts`；旧入口已移除（根入口另计） | 保留 `--only`、dry-run、版本标记及 fork 边界；TypeScript 合同测试和 workflow 已切换。真实上游同步未在本次迁移中执行。 |
 | 音乐 | 2 | 已迁移：`scripts/music/prepare-music.ts` 与 `publish-music.ts`；旧 PS1 移入回收站 | 预处理保留一个批次、20 GiB 硬门槛、保守分类与幂等；发布默认仅本地校验，显式 `--publish` 才连接远端。临时 fixture 验证了只读源、sidecar 绑定、重跑一致、哈希拒绝与本地 rollback；未执行线上发布。 |
