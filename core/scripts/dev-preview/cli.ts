@@ -4,7 +4,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
-import { resolve4 } from 'node:dns/promises';
+import { Resolver } from 'node:dns/promises';
+
+// Local proxies can synthesize 198.18/15 addresses. Verify public DNS independently.
+const dns = new Resolver({ timeout: 5000, tries: 2 });
+dns.setServers(['223.5.5.5', '1.1.1.1']);
 import { allocate, authorizeScript, hostOf, idOf, nginx, origins, publicKey, sh, slug, userOf, validate, type Machine, type Registry } from './model.ts';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -80,7 +84,7 @@ async function main() {
     }
     case 'certificate': {
       const m = machine(); if (m.status === 'revoked') throw Error('Device revoked');
-      const host = hostOf(r, m), addresses = await resolve4(host);
+      const host = hostOf(r, m), addresses = await dns.resolve4(host);
       if (!addresses.includes(r.server) || addresses.some(a => a !== r.server)) throw Error('DNS does not point exclusively to the preview server');
       const hosts = r.machines.filter(x => x.certificate === m.certificate && x.status !== 'revoked').flatMap(x => [hostOf(r, x), ...x.aliases.filter(a => a !== 'dev.cuberoot.me')]);
       console.log(ssh(`set -eu\nnginx -t\ncertbot certonly --webroot -w /www/wwwroot/cuberoot-spa --non-interactive --cert-name ${sh(m.certificate)} --expand --keep-until-expiring ${hosts.map(h => '-d ' + sh(h)).join(' ')}\n`)); return;
@@ -100,7 +104,7 @@ async function main() {
     case 'verify': {
       const m = machine(), host = hostOf(r, m);
       if (m.status !== 'active') throw Error('Registry is not active');
-      const addresses = await resolve4(host);
+      const addresses = await dns.resolve4(host);
       if (!addresses.includes(r.server)) throw Error('DNS mismatch');
       const htmlResponse = await fetch(`https://${host}/zh`, { signal: AbortSignal.timeout(45_000) });
       const html = await htmlResponse.text();
