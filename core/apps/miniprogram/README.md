@@ -6,7 +6,7 @@
 
 从 `core/` 运行：
 
-```powershell
+```sh
 pnpm --filter @cuberoot/miniprogram dev
 pnpm --filter @cuberoot/miniprogram dev:douyin
 pnpm --filter @cuberoot/miniprogram check:all

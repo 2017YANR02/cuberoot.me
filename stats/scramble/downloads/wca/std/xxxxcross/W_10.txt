@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 10
-# Population in this bin: 359
+# Population in this bin: 360
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3
@@ -83,7 +83,7 @@
 4991650016,L F' L2 D' F' B2 L U' R' F L2 F2 U B2 L2 D' B2 U' L B2,W,West Coast Cubing Western Championship 2025 (2025-08-29~31),333mbf Final A #2
 5485817001,L' U' R2 F2 U' F2 R2 F2 D' F' D B2 R' B' L' D' U2 L2 B,W,Budapest Open 2026 (2026-03-28~29),333 R2 B #5
 3886816001,R2 D2 B' D F L F2 B2 R U2 L U' R2 U2 F2 D' L2 U',W,Desafio Hungria em SP 2024 (2024-06-22),333 R2 B #2
-5607135001,D' F' B2 U' R2 F2 U2 R2 U R2 F R2 F2 R' F2 R D' B' F2,W,Zhongshan Open 2026 (2026-05-02),333 R2 C #3
+5835502001,B D2 R D' B' D L B2 L2 F2 U2 R2 U' F2 B2 U' B D' R',W,Brampton Autumn 2026 (2026-09-20),333oh R1 B #2
 5448288001,L B' U2 F D2 U2 L2 D2 U2 F' D' L' F U2 R U2 R' D' U2,W,Iruña Open 2026 (2026-03-14~15),333 R1 C E1
 781002012,L2 F2 L2 U L2 U B U2 B' D' U L' R2 U F2 L R' D',W,SPB Island 2018 (2018-05-12~13),333mbf Final A #1
 783602001,D U B2 U' B2 L2 U F2 U2 B U L2 F' D F2 L D' R' F',W,Balakən 2018 (2018-05-21),333oh Final B #2

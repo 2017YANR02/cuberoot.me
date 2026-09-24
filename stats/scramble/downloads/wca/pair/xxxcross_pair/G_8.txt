@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / G / bin 8
-# Population in this bin: 120
-# Samples listed: 120 (all entries in this bin)
+# Population in this bin: 121
+# Samples listed: 121 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2210001,U' R2 F2 D2 L2 D F2 U L2 D' F L2 U L' R2 U F2 D U' L B',G,IIT Roorkee Open 2014 (2014-03-21),333bf Final A E1
@@ -125,3 +125,4 @@
 5801933001,D' R2 D' L' B2 F2 L' F2 R2 U2 R U B R B' F2 L D F',G,Makati Heroes Speedcubing 2026 (2026-08-23),333 Final A #2
 5808706001,D B2 L2 D2 L2 B' D2 B' U' B U2 B' R2 D' L' U2 B R',G,Road to Nats Valencia 2026 (2026-08-30),333 R1 B #4
 5820336039,L' U' B D F2 L2 F2 R2 U' L2 R2 F U F' D B F U B R,G,New York Big and Quiet Championship 2026 (2026-09-05~07),333mbf Final B #1
+5833006001,D2 F2 R' F2 R' U' R D2 L' D' B' R' D' F' R D2,G,Ansan Autumn 2026 (2026-09-19),333oh R1 F #1

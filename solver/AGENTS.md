@@ -1,12 +1,18 @@
 # AGENTS.md
 
-三阶魔方 Cross / F2L 阶段最优解分析器,从 D:\cube\solver(C++17)移植到 Rust。当前是部分移植产物 — 详细路线图见 README.md,设计决策见 PORTING_NOTES.md。
+求解器磁盘表的唯一日常生成入口是 `cargo run --release --bin table_generator`（CWD=`solver/`）；仅补 SQ1/H48 h10 分别追加 `-- --only sq1` / `-- --only h48-h10`。小档位建表验证追加 `-- --only h48-h7`，H7 不替代统计所需的 H10。三阶整解离线统计使用 `333opt/solve_h10.mts` 读取 H10，不再生成 cubeopt9。不要让后续 AI 直接跑 ignored 建表测试、`333opt/gen-table.mjs` 或上游 nissy-core 工具。表目录由 `CUBE_TABLE_DIR` 控制，生成器自动记录逐表耗时与峰值内存；H48 h10 的 RSS 警戒线 57 GiB，线程默认使用可用并行度。完整命令、源码入口、进度查看与验收记录见 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md)。
 
-本仓库**同时**承载两类 binary,共享 cube_common / move_tables:
+H48 建表禁止用 file-backed mmap / MAP_SHARED 将输出 `.tmp` 当工作内存。先在进程内存生成，调用 `nissy_checkdata` 校验，顺序写 `.tmp` 并同步后原子改名；不可因旧 H11 内存事故直接退回文件映射。本机实测该映射方式慢几个数量级。已完成表在求解时只读映射是另一条路径。当前生成器与进度查看器支持 H7/H10，原生求解器和 TS 统计入口使用 H10；nissy-core 此版本 64 位 `H48_HMAX=11`，H11 表为 60,670,567,784 字节（56.50 GiB），H12 不能只改数字，须先有上游算法支持。未来升级 H11 时同步各入口、表大小、内存预算、进度和文档，不得只替换单个常量后宣称可用。
+
+修改 H48 遍历或进度前，先读 [vendor/nissy-core/VENDOR.md](vendor/nissy-core/VENDOR.md)：保留固定上游的短状态遍历边界及分布校验基准，不得为凑进度 100% 多处理最后一个哈希槽，或修改期望分布掩盖差异。计算路径有改动时先用统一入口完成 H7 建表与上游校验，再重新生成 H10；H7 成功不能代替 H10 自身验收。
+
+三阶魔方 Cross / F2L 阶段最优解分析器,从 D:\cube\solver(C++17)移植到 Rust。下方 2026-05-28 快照记录当时的移植进度；当前生成与统计入口以上文和 HIGH_MEMORY_TABLE_PROFILE.md 为准，设计决策见 PORTING_NOTES.md。
+
+本仓库**同时**承载以下两类历史核心 binary，并已新增其他求解器，详见 `src/bin/`；共享 cube_common / move_tables:
 - **solver 系列** (`*_analyzer`):IDA* + prune table 解单个 scramble,源 = `D:\cube\solver`
 - **dist 系列** (`dist_*`):完整 BFS + 聚合算分布,源 = `D:\cube\solver_wip\*`
 
-## 当前状态(2026-05-28)
+## 移植快照(2026-05-28；当前建表状态以上文与 HIGH_MEMORY_TABLE_PROFILE.md 为准)
 
 - ✅ 基础层 cube_common / move_tables / prune_tables / prune_create 100% 移植,36 张 Canon pt 表的 gen 函数已就绪
 - ✅ std_analyzer 二进制可用:Cross(默认)+ XCross(env CUBE_RUN_FULL_STD=1)+ XXCross/XXXCross/XXXXCross(再加 CUBE_ALLOW_HUGE_TABLES=1),全 30 列 **golden bit-exact**(前 20 scramble 对齐 scramble_1000_std.txt,83.7s)
@@ -14,7 +20,7 @@
 - ✅ pair_analyzer 全 4 阶段、eo_cross_analyzer 全 5 阶段:均强制 CUBE_ALLOW_HUGE_TABLES=1,**已 golden bit-exact**(前 20 scramble 对齐 D:\cube\solver\golden\scramble_1000_pair.txt / scramble_20_eo.txt,pair 25 列 / eo 31 列全匹配)
 - ✅ pseudo_pair_analyzer 全 4 阶段(强制 CUBE_ALLOW_HUGE_TABLES=1),**已 golden bit-exact**(前 20 scramble × id+24 列全匹配 scramble_100_pseudo_pair.txt,该文件只 20 行)。曾有 bug:ins_C_diff / pspair_CE 两个 16-元数组按 corner-major 构建却按 edge-major(`slot1*4+pslot1`)访问,非对角槽位读错表,已改 edge-major 构建
 - ℹ️ std XXCross+ 关键事实:C++ search_2/3/4 仅靠 huge 表(C4C5E0E1 相邻 / C4C6E0E2 对角)剪枝,逐槽 SlotView move-table 查表是重构死代码(只赋值从不剪枝),Rust 端直接省去,等价且更快
-- 🧪 table_generator 独立 binary:默认 73 张表(12 mt + 61 pt)沿用已验收路径;总物理内存 ≥56 GiB 自动追加的 5 张 EO high-memory 表仅代码就绪,等待 64 GB 机器生成和验收;已存在跳过支持断点续跑;≥1G 状态的大表跑 C++ 式 DistributionPrinter 进度;两张 10GB huge 表原位打包峰值 ~21GB(vs C++ ~32GB)
+- 🧪 table_generator 独立 binary:默认 73 张表(12 mt + 61 pt)沿用已验收路径;总物理内存 ≥56 GiB 自动追加的 5 张 EO high-memory 表已在 64 GiB Mac 上生成，SQ1 与 H48 h10 也由统一入口生成;已存在表可跳过;当前生成实测见 HIGH_MEMORY_TABLE_PROFILE.md
 - ✅ dist_xcross_1col 单色底不固定槽 XCross 分布,bit-exact 对齐 golden(total=695,280,402,432,000;聚合 ~6.7s,vs C++ AVX2 6.24s)
 - ✅ dist_xcross_1col_fixed 单色底固定 BL 槽 XCross 分布,11 深度 bit-exact (total=72,990,720, 1s)
 - ✅ dist_xxcross_1col_{adj,diag} 单色底固定双槽 XXCross 13 深度分布,bit-exact (total=21,459,271,680;adj 144s vs cpp 161s,diag 132s vs cpp 178s)
@@ -48,19 +54,17 @@
 
 ## 构建 / 运行 / 测试
 
-```powershell
+```sh
 cargo check
 cargo build --release
-cargo test --release                  # 55 默认通过(含 e2e Cross)
-cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseudo unit + e2e pseudo)
-"testdata\scramble_5.txt" | .\target\release\std_analyzer.exe   # 输出 scramble_5_std.csv
-"testdata\scramble_5.txt" | .\target\release\pseudo_analyzer.exe   # 输出 scramble_5_pseudo.csv
+cargo test --release
+printf '%s\n' 'testdata/scramble_5.txt' | ./target/release/std_analyzer
+printf '%s\n' 'testdata/scramble_5.txt' | ./target/release/pseudo_analyzer
 ```
 
-启用 std XCross:`$env:CUBE_RUN_FULL_STD = "1"` 后再跑。首次会生成 52MB pt 表(BFS,几十秒)。
-启用 pseudo XXXCross:`$env:CUBE_ALLOW_HUGE_TABLES = "1"`,首次生成 1.8GB huge 表(~70s)。
-**全 analyzer × scramble_5/100 的端到端验证 + 计时 + diff golden,用 `verify.ps1`**(需 huge 表在 `./tables/`):
-`pwsh verify.ps1`(对照 golden)/ `pwsh verify.ps1 -Generate`(重建 golden 基线)。详见 TESTING.md。
+仅需补表时使用统一入口，例如 `cargo run --release --bin table_generator -- --only h48-h10`；可选目标为 `rust`、`sq1`、`h48-h7`、`h48-h10`。启用 std XCross 时给分析器命令设置 `CUBE_RUN_FULL_STD=1`；启用 pseudo XXXCross 时设置 `CUBE_ALLOW_HUGE_TABLES=1`。
+**全 analyzer × scramble_5/100 的端到端验证 + 计时 + diff golden,用 `scripts/verify.mts`**(需 huge 表在 `./tables/`):
+从仓库根运行 `pnpm --dir core solver:verify`(对照 golden)/ `pnpm --dir core solver:verify --generate`(重建 golden 基线)。详见 TESTING.md。
 
 ## 文件地图
 
@@ -96,8 +100,8 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `src/bin/dist_cross_{1col,2col,6col}.rs` | 1/2/6 色 Cross 分布(_2col 走 W/Y 独立 495×495 mask 容斥;_6col 走 6 BFS + AVX2 32-batch min-reduction,`--faces` 收窄取 min 的面集) |
 | `src/bin/dist_xcross_2col.rs` | 双色 XCross 分布(D4h 16-elem,8 张 109MB pruning 表,70 partition × 24 perm × 16 ori × AVX2 conv3,11 深度),~17 分钟 |
 | `src/bin/dist_tracked.rs` | 通用 tracked-piece 分布:A×B 两因子(Corners/Edges/EdgePos/EoWord/**EdgeSet** 分量拼)+ 多源 packed4 BFS;目标集开关 `fold_y`(两条 EO 轴取最短)/ `d_offset`(伪口径);`verify` 对八条金标 + 三条恒等式;大 preset 走 `CUBE_ALLOW_HUGE_TABLES=1` |
-| `src/bin/first_layer_gods_number.rs` | First Layer 258.66 亿态严格直径证明器,2-bit 6.02GiB,≤14线程,25GB硬限,不进浏览器 |
-| `run_first_layer_gods_number.ps1` | First Layer God 数一键运行:A/B 整层断点、资源门、低优先级、实时进度/ETA/日志 |
+| `src/bin/first_layer_gods_number.rs` | First Layer 258.66 亿态严格直径证明器,2-bit 6.02GiB,默认使用可用 CPU 并行度,25GB硬限,不进浏览器 |
+| `scripts/run_first_layer_gods_number.mts` | First Layer God 数一键运行:A/B 整层断点、资源门、实时进度/ETA/日志 |
 | `EXACT_DIST_EXPANSION.md` | 站内「完整状态空间」缺的那些格子的台账:坐标 / 内存 / 算法 / 跑法 / 回填清单 |
 | `src/bin/dist_*_0f.rs` | 11 个 0 步状态数 bin(容斥;1col 子空间 / 2col,6col 全空间 + cube laws) |
 | `src/bin/state_cross_1col.rs` | 单色 cross 1..8 步 scramble,输出 1..8.txt(190K 行) |
@@ -107,54 +111,26 @@ cargo test --release -- --ignored     # 8 个 ignored(中表 + e2e XCross + pseu
 | `tests/e2e_cross.rs` | default e2e,Cross 13 列对照 golden |
 | `tests/e2e_xcross.rs` | ignored e2e,XCross 13 列对照 golden |
 | `tests/e2e_pseudo.rs` | ignored e2e,PsCross+XC+XXC 18 列 + 全 24 列两个测试 |
-| `verify.ps1` | 一键跑全 5 analyzer × scramble_5/100、计时、diff golden;`-Generate` 重建基线 |
+| `scripts/verify.mts` | 一键跑全 5 analyzer × scramble_5/100、计时、diff golden;`--generate` 重建基线 |
 | `testdata/scramble_{5,100}.txt`、`testdata/golden/` | e2e 输入(上游测试打乱)+ 期望输出(golden = 本程序受信任输出,前 20 行已对齐 C++) |
 | `DEFINITIONS.md` | 块/槽/位置图 + 5 analyzer 阶段语义 + 索引约定对照(从上游 README 移植,使仓库自包含) |
-| `TESTING.md` | 测试输入/golden 说明 + verify.ps1 用法 + scramble_5/100 实测耗时表 |
+| `TESTING.md` | 测试输入/golden 说明 + scripts/verify.mts 用法 + scramble_5/100 实测耗时表 |
 | `PORTING_NOTES.md` | 5 个 phase 的设计决策、C++ 端歧义、表 magic 升级、命名差异。**改代码前必读** |
 | `README.md` | 进度表 + 上手命令 + env 清单 + 路线图 |
-| `HIGH_MEMORY_TABLE_PROFILE.md` | 333-eo 自动内存选档、55 GB 文件预算、生成命令与 64 GB 机器验收清单 |
-| `333opt/` | **不是 Rust** —— cubeopt/h48 整方最优管道(Node + WASM),详见下节 |
+| `HIGH_MEMORY_TABLE_PROFILE.md` | 333-eo 自动内存选档、表预算、H10 生成实测与后续验收项 |
+| `333opt/` | 三阶整解最优统计：TypeScript 编排 + 原生 nissy-core H48 h10，详见下节 |
 | `lsll/` | 同上,LSLL 最优解管道。`corpus.txt` **579,368 个 case**(`node solve_loop.mjs`),每个展开 16 个首尾 AUF 像取最短 ⇒ 9,268,992 次求解。**算的是 case 的最优不是代表元的最优**,判据 = 解的首末招不是 U 系。详见其 README |
 
-## 整方最优解:走 cubeopt/h48,别自己造(2026-07-27)
+## 三阶整解最优 HTM：统一 H48 h10
 
-**本仓库的 Rust 全是「阶段」求解器(cross / xcross / pair / eo / dr / htr / block / roux …)。
-要「整个三阶的 HTM 最优解」不在这些里,已有成品:**
+离线三阶整解统计由 `solver/333opt/solve_h10.mts` 调用原生 nissy-core H48 h10。表为
+`solver/tables/h48-nissy-core/h48h10.dat`，由统一 `table_generator` 生成，大小固定
+30,336,314,216 字节。从 `core/` 运行 `pnpm stats:scramble:local --jobs 333opt` 自动续解、注入统计；
+完整命令、数据口径和本地一键入口见 `solver/333opt/README.md`。
 
-- 引擎:`core/packages/client/public/cubeopt/cube48opt{1..9}.mjs`(h48 最优解 WASM,memory64)
-- 表:`solver/tables/h48/h48prun31h{5,6,9}.dat`(972M / 1.95G / **15.6G**,gitignored,本机已有)
-- 管道 + 实测成本:**`solver/333opt/README.md`**(断点续跑、崩溃自重启、进度行都在里面)
-- 操作入口:skill **`update-scramble-stats` §C**(`update_cross_stats.ps1 -Jobs 333opt`)
-- 服务端封装:`core/apps/api/src/cubeopt/`(daemon + mem-arbiter,与 cube555 互斥)
-
-实测:opt9 15.6G 表 **~250ms/解**(12 线程,~4 解/s),对象是 18 步随机态 —— 最难的一档。
-opt5 972M 表要 ~43s/解,差 170 倍:**这类问题的成败在表大小,不在代码。**
-
-**内存受限时换小表,必须同时 `INPROC=1`。** `solve.mjs` 按表大小自动选模式:
->4GB 走 in-proc(**一份**表,K 线程共享);**≤4GB 走 fork(K 个进程各载一份完整表)**。
-所以裸换 h5 = 12 × 928MB = **11.1GB**,比 h9 单份没省多少还慢 170 倍;h6 更是 12 × 1.81GB
-= 21.7GB 直接打爆。`INPROC=1` 后 h6 只占 1.81GB。本机四张表:h3 232MB(在 `.playwright-mcp/`)、
-h5 928MB、h6 1.81GB、h9 14.5GB(h9 要 ~16GB 空闲,换页到磁盘比小表更惨)。
-
-**选表前先拿真实工作量量一遍**:上面的 43s/250ms 是 18 步随机态,浅局面(如 LSLL 的 12–14 步)
-各表都快得多、差距明显收窄,别照搬随机态的比例。表只影响速度不影响答案(都是可采纳剪枝表),
-而 `solve.mjs` 按 id 续跑 ⇒ **小表先起跑、内存空了再换大表接着跑同一个 csv,零重做**
-(前提是解集穷尽;若只取前 N 条,不同表的搜索顺序可能给出不同子集,那就不能混)。
-
-**`solve_scramble(scr, n_threads, n_group, debug)` 的第 3 个参数是「同时解几条」,不是解数上限**
-(多条打乱 `\n` 分隔;只喂 1 条却传 8 会空转返回)。所以 **h48 吐不出「全部最优解」**:
-embind 只导出 `get_mem_ptr/init/get_table_size/get_table_name/solve_scramble`,`get_prun_idx()` 与
-`std::vector<sol_t>` 都没导出。要枚举并列最优只能自建定深枚举或重编 wasm(见 `lsll/README.md`)。
-批量(n_group>1)还有个坑:debug 输出是多线程裸 printf,**行内互相插队**,解文本会串味
-(见过两条解首尾相接、中间出现 `B B`),**默认走 n_group=1**。
-
-**浅局面实测(LSLL 12–16 步,12 线程,1 条/次)**:opt5 928M 58ms/解、opt6 1856M **51ms/解**。
-和 18 步随机态那张表(43s vs 250ms)完全不是一个量级 —— 印证「先拿真实工作量量一遍」。
-
-> 2026-07-27 有过一次教训:LSLL 最优求解写了一套自包含 22.8MB 投影 PDB + IDA*(已退役),
-> 11 步的 T-perm 求最优 1.68s、枚举到 opt+2 要 233s,比 h48 慢 1–2 个数量级。原因就是本节
-> 之前不存在 —— 文件地图只列 Rust,h48 表 gitignored 看不见,于是从零造轮。**动手前先看这节。**
+以后更新三阶整解统计也用 H10。旧 `solver/333opt/solve.mjs`、`solve_loop.mjs` 和
+`gen-table.mjs` 是历史 opt9 路线，不要作为统计或建表入口。`core/apps/api/src/cubeopt/`
+及 `/scramble/solver` 的在线服务另有运行边界；LSLL 子阶段的旧 WASM 流程也不等于三阶整解统计。
 
 ## 表格式(Rust 自有,不兼容 C++ .bin)
 

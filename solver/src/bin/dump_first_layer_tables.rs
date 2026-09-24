@@ -1,7 +1,7 @@
 //! 生成浏览器 First Face / First Layer 求解器的预构建 bundle。
 //!
 //! 用法：cargo run --release --bin dump_first_layer_tables -- [output]
-//! 默认写入 tables/opt_first_layer.bin；再由 build_wasm.ps1 gzip。
+//! 默认写入 tables/opt_first_layer.bin；再由 scripts/build_wasm.mts gzip。
 
 use std::fs::File;
 use std::io::{BufWriter, Write};

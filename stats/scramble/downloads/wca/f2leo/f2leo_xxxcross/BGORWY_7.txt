@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGORWY / bin 7
-# Population in this bin: 404
+# Population in this bin: 406
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3017221001,U2 L2 B D' F2 R F2 D' L' U2 L2 U2 F' L2 F B2 U2 D' L,B,WA Open 2023 (2023-08-26~27),333bf Final B E1
@@ -124,7 +124,7 @@
 1017548001,D' U2 R2 D2 U' B2 L2 R2 U' R B' R B U R D R' F,W,Izhevsk Winter Cube 2019 (2019-02-09~10),333 R1 D E2
 4614811001,L' F R2 U L F L' B' F2 L U2 R' B2 L F2 B2 L' U' R,G,Chiclayo Classic 2025 (2025-03-30),333oh Final B #3
 1040957029,D2 F2 D2 F D2 L2 B U2 L2 U2 L' U' F' D' F2 U' L R D F2 L2 U,O,PBQ Berkeley Spring 2019 (2019-03-09),333mbf Final C #2
-4595731001,B2 R2 U2 D2 R' L U' R' F2 D' B2 L2 F2 L2 B U2 B L,Y,Orono Open 2025 (2025-03-22),333 R2 B #4
+5832143001,B2 F2 R' B2 L2 U2 R' F' D' L2 D' R' B L' R B2 D' U2,R,Cosgeek Open 2026 (2026-09-12~13),333 R1 E E1
 1050870001,F2 B U L U2 B2 U2 D2 B D' F R2 U D' R2 F2 U' B2 D,O,Blue Water Winter 2019 (2019-03-09),333 R1 A #5
 1065348001,U R2 F' D B R' F B2 D B2 L U' B2 L2 U2 R2 U' D2,R,Speedsolving Huancayo 2019 (2019-03-24),333oh R1 A #3
 1071682001,F2 U L2 U B2 U2 B2 U' L2 U' F' U' B2 U' L' R D L2 U' L D',W,Trinity Valley Open Spring 2019 (2019-03-30),333bf R1 B #2
@@ -165,7 +165,7 @@
 1675715001,U R' B' L2 F2 D F2 L2 B2 U' R' U' B' U' R2 F R',O,Bucharest Cubing Days 2021 (2021-07-24~25),333 R2 A #1
 1677658001,D L2 U' L D2 U2 B2 L B2 R B' F U' B F D' F2 L',Y,Stowhio Open 2021 (2021-07-22),333 R1 E #5
 5432779001,U' R' D R' B' D L U2 F L2 B L2 D2 F2 R2 U2 F D,W,Wiltshire Spring 2026 (2026-03-07~08),333 R3 C E2
-3613091001,D2 B D B R D2 R2 D' B U' D B2 L2 D L2 F,W,Mololoa Open 2024 (2024-03-23~24),333 R1 B #2
+5831025001,U2 F2 L U2 F' L F B' R2 L D2 F2 L2 D2 R B' D2,W,Road to Nats Maracay II 2026 (2026-09-13),333 R1 B E2
 2878030001,L2 U' L2 U2 F2 R2 F' L B F2 U2 B' L' B2 U2 L2,G,Bolivia Nationals 2023 (2023-07-07~09),333oh R1 B #1
 1691035001,F2 D L2 D U F2 D F2 R F' D' F U' B2 R2 B2 L' F',G,September Speedcubing Tour Rzeszów 2021 (2021-09-11~12),333 R1 A E2
 1734900001,F D2 R2 B2 U2 R B' L' B2 D' B D2 L D' L B2,B,Slow N Steady Fall 2021 (2021-11-20),333 R2 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / OR / bin 6
-# Population in this bin: 459
+# Population in this bin: 461
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2405783001,U D2 F R2 D L' B2 U' B' L B U2 B R2 L2 F D2 R2 B' L2 U2,O,BrizZon Sylwester Open 2022 (2022-12-31),333bf Final E #1
@@ -92,7 +92,7 @@
 5583469028,F L2 D2 F U' B2 L U' D' F' R2 B R2 U2 B' D' B2 L2 U2,O,CubingUSA Southeast Championship 2026 (2026-04-25~26),333mbf Final A #1
 661113106,R2 U2 B2 L2 B U2 R2 U2 B2 L2 U' R' F2 U2 L' F' L B F L' B',R,Champagne Open 2016 (2016-09-10~11),333mbf Final A #1
 4648880001,B D2 B2 D2 U2 L2 F L' D2 L' R2 D' F2 U R D' F U2,O,Birmingham Spring 2025 (2025-04-12~13),333oh R1 B #3
-661166021,D B2 D' R2 D2 R2 D2 L' F2 L' D' B L F D2 U B' L',O,Melbourne Cube Days 2016 (2016-11-05~06),333mbf Final A #2
+5837785001,B2 R2 U2 R2 D2 R2 U R' U F L2 D2 R' F' L' D2 R F2,O,Lopes Up AZ Fall 2026 (2026-09-20),333 R1 B #3
 661342008,D U L2 B2 L2 D' L F D' B2 U2 F L2 B' F R' F L B' L',O,Meguro 2017 (2017-05-05),333mbf Final A #3
 661373008,B2 U2 L2 U L2 F2 U B2 U' B R' U B2 D2 F U B L' D U B R2,O,Swedish Championship 2017 (2017-05-26~28),333mbf Final A #2
 3493156001,R F2 U2 R2 F2 U2 R2 B U2 B' U R' U2 B2 U2 F2 R2 U' R2,O,Hiroshima Winter 2024 (2024-02-10),333 R1 D E2

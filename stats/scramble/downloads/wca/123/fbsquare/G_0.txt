@@ -1,8 +1,8 @@
 # Scramble samples — 123 / fbsquare / G / bin 0
-# Population in this bin: 821
+# Population in this bin: 826
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5390296001,D2 F2 R' D2 L F2 R F2 U' R2 D' U2 R F L2 U2 R2 B2,G,Guangdong Open - Revival & Rival 2026 (2026-02-06~08),333 R3 A E1
@@ -153,14 +153,14 @@
 4124782001,U' D' R2 D B L U2 D' R' U R U B2 D2 L2 F2 D',G,HCMC Cubing Autumn 2024 (2024-09-21~22),333 R2 D #5
 2597558001,B U L' U' L2 U2 B U2 R2 F' D2 R' B2 D2 R2 F2 R B2,G,UPDS Open 2023 (2023-04-01),333 R1 E E2
 661264012,F' D2 L2 D2 F' D2 B' U2 L2 R' F2 L D' F' U2 L' B2 D2 F2 L',G,Alzira mueve las piezas 2017 (2017-02-25~26),333mbf Final A #1
-5134959001,L2 B' D2 R2 F2 L2 F' D2 B' L2 R D' R' B F L2 U2 R F2,G,VR Bengaluru Cube Open A 2025 (2025-10-26),333oh Final B E2
+5833006001,D2 F2 R' F2 R' U' R D2 L' D' B' R' D' F' R D2,G,Ansan Autumn 2026 (2026-09-19),333oh R1 F #1
 2855587001,L B R' U' B2 R' F L' D2 R2 U2 D2 F D2 B R2 U2 B U2 B L2 U2,G,Bay Area Speedcubin' 49 - Berkeley 2023 (2023-07-08),333bf R1 A #3
 661457098,D2 L2 U' R2 F2 D' F2 D' B' R2 B R' B2 U L' B' R2 U2 B R2 B R2,G,Northwest Championships 2017 (2017-08-11~13),333mbf Final A #1
 4528520001,R F D L2 F2 D2 U2 R2 B D2 B U R2 D2 U L R' D2,G,Kyiv Big & Blind Winter 2025 (2025-02-22~23),333 R1 C #1
 3526033019,L F2 L' F2 D2 B2 U2 R U2 R' U B D R B L2 D F2 L2,G,Glasgow Winter - Scottish Blind Off 2024 (2024-02-17~18),333mbf R1 A #2
 665880001,B2 F' L2 D2 F' L2 D2 B' U' F R2 D' L B R D2 B2 D' R B' L,G,Cubic Meltdown 2017 (2017-12-09),333bf Final A #3
 3048421001,L B' L2 U' F2 U' L2 D R2 U L' F2 D2 B' D L' B L' U,G,Tbilisi September Open 2023 (2023-09-03),333 R2 B E1
-5448586001,R2 B' U D2 R2 F' R U2 R2 D2 B2 L' B2 L D B U F2,G,Cubing in the 'Cuse 2026 (2026-03-14~15),333oh Final A #1
+5833924001,R B2 L2 B R2 F R2 D' U B2 D2 B' D' U' B D' R',G,Gouverneur Sprint 2026 (2026-09-19),333 Final B #2
 681340021,U2 L2 D2 B U2 F' D2 F' L2 D L' R F R2 U2 B' D' U F2 U L B',G,Dnepr Super Blind 2018 (2018-01-06~07),333mbf R1 A #1
 5761613001,U2 L' B2 L D2 U2 F2 L U2 L F L2 D2 B' R U B' R2 B R',G,Cubing at Sri Eshwar Coimbatore 2026 (2026-07-26),333 R1 F E1
 5575063001,B' U2 F U2 F' R2 F R2 L U' B L2 U B U2 L' B U L2,G,Munich Open 2026 (2026-04-25~26),333 R2 A #5

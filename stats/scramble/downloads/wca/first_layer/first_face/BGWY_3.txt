@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / BGWY / bin 3
-# Population in this bin: 227
+# Population in this bin: 230
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 48062001,F2 L2 D' F2 U L2 F2 R2 U2 F2 L B' L2 B2 L2 R U2 R' U,G,Rubik's Cube European Championships 2014 (2014-08-08~10),333oh R1 B E1
@@ -69,7 +69,7 @@
 1169525001,D' L2 D U' L2 F2 U B2 U R' D2 R2 F D F' R2 B' U,W,Metro Speedcubing Open 2019 (2019-06-01~02),333 R1 A #4
 1178772001,D2 U L2 B2 U' F2 D' B R D' U R U2 L' R2 U L U' F2,Y,Murcia 2019 (2019-06-08),333 R1 B E2
 5800056001,F L2 U' D2 L' B L B' R D R U2 D' R2 B2 U2 D F2 U',G,Fuzhou Summer 2026 (2026-08-23),333 R2 A #5
-1235531001,B2 R F' L' B' L' F' L2 F L' D L2 U2 D' R2 B2 D R2 L2 U',G,Sherwood Park Summer 2019 (2019-07-27),333oh R1 D #4
+5834434001,R' U F U' B2 D' L2 D F2 D R2 F2 R F2 D2 U' F U2 R,Y,Tagum City Open 2026 (2026-09-12~13),333 R1 D #1
 1258388001,B2 L' F2 L B L2 U' F2 D B2 L' U2 L2 B L2 B' U2 B L2 F',Y,V ETEC Jacareí Open 2019 (2019-08-10),333 R2 C #3
 5770627001,F' U F' D2 R B D B D R U2 B2 L2 F2 U2 L' U2 L' D2 B R,Y,Super Side Summer Fürth 2026 (2026-07-31~08-02),333bf R2 B E2
 1363001001,R' B' D R2 L' U2 F2 D L2 B' R2 F2 R D2 F2 L D2 R2 U2,Y,Winnipeg Open 2019 (2019-10-19~20),333 R1 A #3
@@ -162,10 +162,10 @@
 4223443001,F2 D L2 U' F' D' B R D' B' U2 L' U2 L' U2 R D2 B2 D2 R',W,Cubing Mine Rybnik II 2024 (2024-10-26),333 R2 A #1
 4225944001,B' L2 U L' U' D R F R B D2 B2 L2 U' B2 D R2 F',B,Mix-up in Lucena 2024 (2024-10-27),333 R1 B E2
 4243223001,R F' R' D2 R2 B L B2 R2 D' B2 D2 B U2 F' R2 B,B,Bremium Cubing 2024 (2024-11-02~03),333 R1 E #2
-4243397001,R2 L F' B' D F' U2 L2 B' D2 L2 D2 B2 D2 B2 R D2 L F2 L' F',B,Bremium Cubing 2024 (2024-11-02~03),333bf R1 B E1
+5832556001,R U2 R2 B D2 R2 B' R2 F' R2 L' U F2 U R' B2 D R2 F2,G,Visé Saturday Open 2026 (2026-09-12),333 Final A E1
 4276692055,U2 F' R L2 D2 R' L' U F2 R2 U2 D B2 U B2 F D B L B',G,Colombian Nationals Avenida Chile 2024 (2024-11-09~11),333mbf Final B #1
 4277218001,F2 R2 B' R' D' F U' R' B R' U R2 U2 L2 B2 D F2 D' L2,G,NCSU Wolfpack 2024 (2024-11-10),333 R1 C #1
-4304074001,U B2 L' B D' R U' R D L' D2 R U2 D2 B2 L D2 R2 D',Y,Speedcubes Bloemfontein 2024 (2024-11-23),333oh Final B #4
+5836998001,D F R L2 D' L D' F B' L' F D2 R2 L2 D' R2 U2 L' F,W,Visé Sunday Open 2026 (2026-09-13),333bf R1 B #3
 4340024001,D2 B2 U' R2 U2 D' B' D2 B2 L R2 U' B2 R2 L2 U' R2 B,G,Tierra del Fuego 2024 (2024-12-07~08),333 R1 B #1
 4357098036,F' B' L' F' D2 R L U F' R F U2 D L2 F2 L2 F2 U2 D L2 U,W,New Zealand Nationals 2024 (2024-12-13~15),333mbf Final A #2
 4357863005,F2 U2 R' D2 R' U2 L F2 L2 R2 F' L2 U' F L B L' R' D2 B' L2,G,Nacionales Guatemala 2024 (2024-12-06~08),333mbf Final A #1

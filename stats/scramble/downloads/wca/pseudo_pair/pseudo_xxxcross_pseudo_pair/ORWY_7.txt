@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / ORWY / bin 7
-# Population in this bin: 489
+# Population in this bin: 491
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2198244038,B U' D' B2 L B' U B2 D2 F2 L2 U2 L2 B2 U' F2 U' R B,W,Trondheim Mental Breakdown 2022 (2022-09-24~25),333mbf Final A #3
@@ -166,7 +166,7 @@
 1327415027,B R2 F' L2 D2 B2 F' D2 L2 F D' B' L' R F' U B L' D L D2 B' L,R,Comas Speedsolving 2019 (2019-09-28~29),333mbf Final A #1
 5671196001,D R2 F' D' L D2 F' R2 L2 B2 U F2 L2 U R2 U' B2 U2 F2,R,Magnolia State Cubing 2026 (2026-05-30),333 R2 B E2
 1358238001,U D' R U L' F' D L2 B L B2 L2 D2 F' U2 L2 F' R2 F,O,Nordic Championship 2019 (2019-10-17~20),333 R1 E E1
-1381975001,D2 F' L2 B' L2 B2 D2 L2 B2 U' B' U2 L R U B D2 B2 L2 F,O,Cubetcha 2019 (2019-11-02~03),333 R3 A E1
+5839550001,L2 D2 R2 U2 B R2 B' D' R F2 U F' L' B L' D B' L2,Y,Les Hérault de Claret Open 2026 (2026-09-19~20),333 R1 A #2
 1387348001,D2 R' D2 U2 L' D2 L D2 U2 F L D' F L2 B' U2 L R2,O,CCC Qualification Yakutsk 2019 (2019-11-02~03),333 R2 A #2
 4780871001,L R2 D' B2 R2 U F2 D' F2 L2 U2 B' L R F R' F2 D' B L2 U,O,Cartagena UPCT Open 2025 (2025-06-07~08),333bf Final B #1
 1437789001,R L' U B' L2 U' D' R2 U B D R2 D' R2 B2 D2 B2 R2 B2,O,Bay Area Speedcubin' 21 2019 (2019-12-01),333 R2 B E2

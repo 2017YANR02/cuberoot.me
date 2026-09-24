@@ -10,7 +10,7 @@ scramble source in `/scramble/gen`. Loaded as a classic Web Worker by
 - `scramble/*.js` — per-puzzle scramble + register via `scrMgr.reg`
 - `scrambler.worker.js` — our thin bridge: importScripts the above, postMessage API
 
-Sync via root `sync_upstream.ps1 -Only cstimer`; the implementation is
-`scripts/upstream/sync-cstimer-scramble.ps1`.
+Sync via `pnpm --dir core upstream:sync --only cstimer` from the repository root;
+the implementation is `scripts/upstream/sync-cstimer-scramble.ts`.
 
 License: GPLv3 (see `LICENSE`).

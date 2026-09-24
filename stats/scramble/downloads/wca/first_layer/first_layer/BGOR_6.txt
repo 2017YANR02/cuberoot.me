@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / BGOR / bin 6
-# Population in this bin: 912
+# Population in this bin: 915
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -140,7 +140,7 @@
 3897339001,B2 L' F2 U F2 U L2 D2 U R2 B' F' R D2 R F' U' F,B,Gdańska Liga Speedcubingu IV 2024 (2024-06-29~30),333 R2 A E1
 636869012,B2 L2 U2 B R2 F' R2 D2 F' U2 F L' D2 B2 L D' R B R U2 B' L',O,Villanueva Open 2017 (2017-11-04~05),333mbf Final A #1
 638781001,B2 L U2 B R F' B2 U2 R U' B2 L2 B2 L2 U F2 U L2 D',B,Weston Fall 2017 (2017-11-11),333 R1 B #2
-640953001,R2 F2 U2 B2 D' L2 U2 F2 U2 B L F2 U' B U2 F R D' R,B,CubeHub Open 2017 (2017-11-11~12),333 R2 B E2
+5836812001,R2 U2 L B R' D R2 B' D' L' U2 F L2 F L2 B2 L2 U2,G,Mina de Água Warm Up 2026 (2026-09-19),333 R1 A #3
 1078510001,U2 F' U2 F R2 D2 F D2 L' D L2 D U2 L2 R F D U' L',R,Rocky Mountain Spring 2019 (2019-03-30),333 R1 F #3
 4179101001,D' R U2 R2 U2 F' L2 B D2 F R2 B2 D' B L' F2 R2 U L,G,CubingUSA Great Lakes Championship 2024 (2024-10-04~06),333oh R2 B E1
 4134643001,D L F2 U2 L D2 F2 R2 F L2 U' B' U2 R2 U' L2 U' B',B,Italian Open 2024 (2024-09-21~22),333 R1 F E2

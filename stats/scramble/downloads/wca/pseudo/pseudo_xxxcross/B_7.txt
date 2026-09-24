@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / B / bin 7
-# Population in this bin: 948
+# Population in this bin: 950
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2624052001,D' B F2 U2 F2 R B2 U2 R U2 F D' F2 D2 B L U B' R,B,Eretum 2: Easter Boogaloo 2023 (2023-04-08),333 R1 A #5
@@ -175,7 +175,7 @@
 669905001,D2 R U2 L2 D2 U2 L' U2 R' B2 D' R F' D2 B' R B L',B,New Zealand Nationals 2017 (2017-12-08~10),333 R1 C E2
 5374229024,B2 R2 F2 R2 D L2 U L' B D2 L2 D' L' F' D' R B R2 B R,B,Glasgow Winter - Scottish Blind Off 2026 (2026-02-07~08),333mbf Final A #2
 681044001,D2 L2 D2 R' B2 D2 R' B2 U' L B' L' R' F R2 U2 F2 D2 F2,B,Cusco Speedcubing 2018 (2018-01-06),333 Final B #1
-2020902001,R B D2 B2 R2 B2 U B2 U' L' F U' F L U2 R F' D2,B,Idaho French Fried 2022 (2022-07-16),333 R1 C #5
+5831717001,U2 R F' R2 U' F2 L2 R2 U R2 F2 L U' F D2 R2 F2 L2,B,Belgrave Open 2026 (2026-09-12~13),333oh R1 B #5
 3324305001,U' L' U2 R' F2 R' B2 L' D L' D2 L2 R' B2 L' U' B' U2,B,Concordia Turning Fall 2023 (2023-12-09),333 R1 C E2
 694676001,B2 L2 R2 D U F2 U R2 B L' U2 F D' L F D L2 B U,B,Univalle Big Cubes 2018 (2018-01-27~28),333 R1 B #2
 1513138001,R2 B L2 F' D2 B' U2 B' D2 R' F U B2 D U2 F D' L',B,Berlin Winter Cubing 2020 (2020-01-18~19),333oh Final B #5

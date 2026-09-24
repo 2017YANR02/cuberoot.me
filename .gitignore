@@ -10,6 +10,10 @@ _deploy/
 # Root workspace dependencies
 /node_modules/
 
+# Local macOS and Harmony build metadata
+.DS_Store
+.hvigor/
+
 # 数据库配置（含密码，禁止提交）
 database.yml
 

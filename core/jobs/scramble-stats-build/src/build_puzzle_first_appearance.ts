@@ -1,3 +1,4 @@
+import { wcaDir, puzzleDir } from './local_data_paths.js';
 // 非 3x3 puzzle 整解步数「首次出现」时间线数据生成(对等 build_first_appearance.ts 的 3x3 难度版)。
 //
 // 对每个 (puzzle, 步数 bin) 找出**最早**出现该步数的那条真实比赛打乱:
@@ -184,14 +185,14 @@ async function main() {
   const repoRoot = path.resolve(pkgRoot, '..', '..', '..');
 
   const configPath = path.join(pkgRoot, 'config.yml');
-  let dataRoot = 'D:/cube/scramble/puzzle';
+  let dataRoot = puzzleDir;
   if (fs.existsSync(configPath)) {
     const config = YAML.parse(fs.readFileSync(configPath, 'utf-8')) as { puzzle_data_dir?: string };
     if (config?.puzzle_data_dir) dataRoot = config.puzzle_data_dir;
   }
 
-  const scramblesTsv = 'D:/cube/scramble/wca_scramble/incremental/tsv/Scrambles.tsv';
-  const compTsv = 'D:/cube/scramble/wca_scramble/competitions.tsv';
+  const scramblesTsv = path.join(wcaDir, 'incremental/tsv/Scrambles.tsv');
+  const compTsv = path.join(wcaDir, 'competitions.tsv');
 
   // 只对 puzzle_distribution.json 里 live 的 key 产(与 build_puzzle_examples 一致)。
   const distPath = path.join(repoRoot, 'stats', 'scramble', 'puzzle_distribution.json');
@@ -226,7 +227,7 @@ async function main() {
       const rlc = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
       for await (const line of rlc) if (line && line.includes(',')) corpus++;
       if (idToLen.size < corpus * 0.995) {
-        throw new Error(`[${spec.key}] ${spec.valueCsv} covers ${idToLen.size}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (update_puzzle_stats.ps1 step 2.9)`);
+        throw new Error(`[${spec.key}] ${spec.valueCsv} covers ${idToLen.size}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (scripts/stats/puzzles-cli.ts step 2.9)`);
       }
     }
 

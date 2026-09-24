@@ -1,3 +1,8 @@
+import { availableParallelism } from 'node:os';
+import { wcaDir } from './data_paths.mjs';
+if (process.env.CUBEROOT_ALLOW_LEGACY_OPT9 !== '1') {
+  throw new Error('旧 opt9 整解入口已停用；请在 core/ 运行 pnpm exec tsx ../solver/333opt/solve_h10.mts');
+}
 // Step 2 — optimal-HTM solver over the canonical merged 3x3 pool → out.*.csv (id,htm), resumable.
 //
 // Corpus = wca_scrambles_no_wide_move.txt (id,scramble per line; wide moves already stripped, mbf
@@ -18,10 +23,10 @@
 // out.<c>.csv. Output rows are `id,htm,solution` — solution = the OPTIMAL solve sequence (the optimal
 // *scramble* reaching the same state is its inverse). Parent aggregates the htm column → counts.json.
 //
-// Usage: node solve.mjs [K=12]
+// Usage: node solve.mjs [K=可用 CPU 线程数]
 //   env MODULE  default cube48opt9.mjs   (15G opt9 — production; set opt5 + 972M table for sampling)
 //   env TABLE   default solver/tables/h48/h48prun31h9.dat
-//   env CORPUS  default D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt (cross-stats master)
+//   env CORPUS  default <repo sibling>/scramble/wca_scramble/wca_scrambles_no_wide_move.txt (cross-stats master)
 //   env INPROC  0|1     force mode (default: auto by table size)
 import { readFileSync, writeFileSync, existsSync, appendFileSync, openSync, readSync, closeSync, fstatSync, statSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -35,10 +40,10 @@ const MJS = process.env.MODULE
   : resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs');
 const DAT = process.env.TABLE
   ? resolve(process.env.TABLE)
-  : resolve(repoRoot, 'solver/tables/h48/h48prun31h9.dat');
+  : resolve(process.env.CUBE_TABLE_DIR || resolve(repoRoot, 'solver/tables'), 'h48/h48prun31h9.dat');
 const CORPUS = process.env.CORPUS
   ? resolve(process.env.CORPUS)
-  : 'D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt';
+  : resolve(wcaDir, 'wca_scrambles_no_wide_move.txt');
 const partFile = (c) => resolve(__dirname, `out.${c}.csv`);
 
 // corpus line = "id,scramble" (id before the first comma) → [[id, scramble], ...].
@@ -80,7 +85,7 @@ async function makeSolver(threads) {
   };
 }
 
-const K = Number(process.argv[2] ?? process.env.THREADS ?? 12);
+const K = Number(process.argv[2] ?? process.env.THREADS ?? availableParallelism());
 const datSize = statSync(DAT).size;
 const HUGE = 4 * 1024 * 1024 * 1024;
 const inproc = process.env.INPROC === '1' || (process.env.INPROC !== '0' && datSize > HUGE);

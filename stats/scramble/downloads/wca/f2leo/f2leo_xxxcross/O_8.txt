@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / O / bin 8
-# Population in this bin: 896
+# Population in this bin: 897
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 9064001,R F2 L F2 D2 F2 L' F' L R' F' L B' L U' L2 F D,O,SESC Santo Amaro 2014 (2014-04-05~06),333 R1 B #1
@@ -48,7 +48,7 @@
 5821807001,F R F' B' R2 B R' D2 L2 F D' R2 D R2 U2 R2 B2 D2,O,Jogjakarta Happy Solving 2026 (2026-09-05),333 R1 C E1
 3676188002,U2 L' D2 R B2 D2 B2 L B2 D R2 B' U2 R2 U2 B' D' F L,O,Kyiv Mental Breakdown April 2024 (2024-04-13~14),333mbf Final A #1
 2180201001,B D R2 F2 D' L2 F2 D2 L2 B' L B' R2 F R2 U' L R2,O,Hanoi Open 2022 (2022-09-18),333oh Final E E2
-193380001,D B2 D B2 U2 B2 D F2 R B' D2 U' F L2 R D' R' U2 R,O,Cochabamba Open 2015 (2015-09-26~27),333oh R1 C #2
+5835803043,L2 U L2 B U2 L2 D B' D F2 R' L2 D2 F2 R2 B2 L U' B,O,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #1
 197104001,B F2 D2 F' D2 L2 B' D2 F2 U2 L' B D' B L F2 U R U2 F2,O,Torneo Medellín Explora 2015 (2015-10-04),333 R2 A #3
 2973134001,D' L U2 F2 R2 U B2 U' R' F D' L2 B2 U2 F2 D' R',O,Montevideo Winter Open 2023 (2023-08-13),333 R1 B #3
 208331001,F2 U2 L2 B' L2 F L2 B2 D2 B' D' L' R B D2 B2 R2 F' R' D' L' F2,O,Saint Petersburg Autumn Open 2015 (2015-10-24~25),333bf Final A #3

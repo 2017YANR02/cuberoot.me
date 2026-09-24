@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 2
-# Population in this bin: 964
+# Population in this bin: 971
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 866875001,L2 F B' L2 F U2 D2 B U R2 L2 F2 D F2 L2 D R2 F2 D,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 B #1
@@ -10,7 +10,7 @@
 5312442001,U R2 F2 D2 L2 D' L' U R B2 L R2 D L' B2 L' D,Y,OKC Winter 2026 (2026-01-10),333 R2 B #1
 3533937001,U R U R' L U L' U2 F' R2 B R2 F' D2 B2 D2 U L',Y,Osijek Open 2024 (2024-02-24~25),333 R1 C #5
 5360500001,F2 R' U' F2 L' B2 R U' R U' R2 U2 D2 B2 U R',Y,Gurizão em Osório 2026 (2026-01-30~02-01),333oh Final B E1
-3727704001,L D' L2 F2 U L2 D U2 F2 R U B2 F2 R2 F2 U',Y,UPB Cubing 2024 (2024-04-27),333 R2 A E1
+5838220029,U' R' D' U2 F' D2 R2 B' U2 B2 D' B' L' D2 U' B' U' R B' L2,Y,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final B #3
 4317081001,U R U R2 U L2 F2 D B2 U F D' L' U2 L' B2 F2 D',Y,Taoyuan Airport Cube Day 2024 (2024-11-23~24),333 R1 I #3
 42804001,D2 B2 F' D2 U2 F' D2 B2 R2 U2 L' U' B U' L R F2 D2 L,Y,Taiwan Summer Open 2014 (2014-08-02~03),333 Final A #2
 4632653001,F U F R2 B D2 F R2 B' D B2 F U' F L2 R2 D2,Y,Plaza Center Cube Lima VI 2025 (2025-04-05~06),333oh R2 B E2

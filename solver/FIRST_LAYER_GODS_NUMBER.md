@@ -23,7 +23,7 @@ only the final First Layer target is constrained.
 - checked peak budget: below 7.1 decimal GB;
 - hard process-plan ceiling: 25,000,000,000 bytes;
 - two alternating crash-safe checkpoint slots: 12,933,051,392 bytes total;
-- threads: 1..14, default `min(logical CPUs, 14)`.
+- threads: defaults to all available CPU parallelism; no fixed thread cap.
 
 The two frontier colours alternate between `current` and `next`; processed and
 unseen are the other two values. Therefore the representation has no 4-bit
@@ -40,48 +40,44 @@ whole layer, including both histograms.
 
 ## One-click command
 
-From PowerShell 7, run:
+From `core/` on macOS, Linux, or Windows, run:
 
-```powershell
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_first_layer_gods_number.ps1
+```bash
+pnpm solver:first-layer
 ```
 
 The script builds the release binary, runs the dry resource gate, requires at
-least 8 GiB free RAM and enough checkpoint disk, lowers process priority, then
+least 8 GiB free RAM and enough checkpoint disk, then
 streams depth/count/percentage/rate/ETA/checkpoint progress to both the console
 and a timestamped log. Run the same command after interruption to resume.
 
 Options:
 
-```powershell
+```bash
 # Skip the incremental Cargo build; still run all resource gates.
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_first_layer_gods_number.ps1 -SkipBuild
+pnpm solver:first-layer --skip-build
 
 # Verify the one-click entry without starting the full BFS.
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_first_layer_gods_number.ps1 -DryRunOnly
+pnpm solver:first-layer --dry-run-only
 
-# Store the two checkpoint slots on another drive.
-pwsh -NoProfile -ExecutionPolicy Bypass -File .\run_first_layer_gods_number.ps1 `
-  -CheckpointDir 'E:\cube-checkpoints\first-layer-god'
+# Store the two checkpoint slots elsewhere.
+pnpm solver:first-layer --checkpoint-dir /path/to/first-layer-god
 ```
 
 ## Manual commands
 
-Build and inspect the plan without allocating the 6 GiB frontier:
+From `solver/`, build and inspect the plan without allocating the 6 GiB frontier:
 
-```powershell
-cargo build --release --bin first_layer_gods_number -j 8
-.\target\release\first_layer_gods_number.exe --dry-run --threads 14
+```bash
+cargo build --release --bin first_layer_gods_number
+./target/release/first_layer_gods_number --dry-run
 ```
 
 Run later, after confirming enough free physical memory:
 
-```powershell
-$env:CUBE_ALLOW_HUGE_TABLES='1'
-$env:RAYON_NUM_THREADS='14'
-.\target\release\first_layer_gods_number.exe --threads 14 `
-  --checkpoint-dir '.\checkpoints\first-layer-god' 2>&1 |
-  Tee-Object first-layer-god.log
+```bash
+CUBE_ALLOW_HUGE_TABLES=1 ./target/release/first_layer_gods_number \
+  --checkpoint-dir checkpoints/first-layer-god 2>&1 | tee first-layer-god.log
 ```
 
 The full run prints one progress line per completed depth and finishes with:

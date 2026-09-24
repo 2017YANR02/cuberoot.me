@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / BGORWY / bin 3
-# Population in this bin: 339
+# Population in this bin: 342
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 28786001,R' F' B' L' U' B2 L' B2 D2 R' F' U2 R D2 L D2 R D2,O,New Albany Open 2014 (2014-06-21),333oh Final A #4
@@ -76,7 +76,7 @@
 5037743001,B2 R F2 L2 R2 U' B2 L2 D' B2 U' B2 R U' F' L' U2 R' D2,R,Edinburgh Autumn 2025 (2025-09-20~21),333 R2 A #1
 866625001,U2 L B' U' F D2 L2 U D2 F D R2 F2 D' F2 U2 B2 D',B,Canada's Best in the West 2018 (2018-08-24~26),333 R1 D #3
 3931292001,U2 L' B L D' U R2 U' F2 U L F2 L D2 B U' L',Y,After Cube Party Lima 2024 (2024-07-14),333oh R1 B #5
-873432001,L2 B D2 B U2 R2 B2 L2 R' U' F L2 D' F L B2 L F L',B,Skywalk 2018 (2018-09-09),333 R1 B #5
+5832556001,R U2 R2 B D2 R2 B' R2 F' R2 L' U F2 U R' B2 D R2 F2,G,Visé Saturday Open 2026 (2026-09-12),333 Final A E1
 3630617001,B2 L' F2 L B2 R' F2 U L' R2 F L2 B R' F2 D R' F2,W,Welcome Back Hong Kong 2024 (2024-03-31),333oh R1 A #1
 4532594018,D' B2 D' U2 B2 D2 L2 R' F' R B2 R2 B D U B' L2 U' L B',R,Side n' Blind Nové Mesto 2025 (2025-03-01~02),333mbf Final A #1
 4696027001,L' U2 L D2 U2 L' R2 B2 U' L D B' F2 R2 U2 R' D R B2,R,Chimehuin al Cubo 2025 (2025-05-03),333oh Final A #1

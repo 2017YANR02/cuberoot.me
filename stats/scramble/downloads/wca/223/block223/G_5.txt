@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / G / bin 5
-# Population in this bin: 854
+# Population in this bin: 858
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -40,7 +40,7 @@
 143883001,F2 L2 U B2 D' U B D L U' L U R D' F L2 F' U2,G,San Diego Summer Splash 2015 (2015-05-23),333oh Final A E1
 144836001,D' L2 D' R B L2 F2 R D' B' R2 F' L2 D2 F' B2 U2 B2 D2,G,HEM MariCubik Open 2015 (2015-05-31),333 R1 A #3
 162760001,R2 B2 R' U2 B U' B' L2 D' R L2 B2 L2 F2 U' L2 U2 B2,G,Taiwan Open 2015 (2015-07-11~12),333 R3 A #2
-166270001,R' B2 R' B2 D2 L D2 L2 U R2 B' D' L' D2 B' L' D R D2 L2 U,G,World Rubik's Cube Championship 2015 (2015-07-17~19),333bf R1 F E1
+5838211004,F U L B' D2 R2 B2 D2 L2 F' R2 U2 L' B D2 R U' L' B2 F2 L B2,G,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final B #2
 3659194001,R' U2 B2 F2 D B2 F2 U' R2 F2 D2 B2 R' B L' B U2,G,Ho Chi Minh Spring 2024 (2024-04-06~07),333 R2 E #2
 4098806001,U L' U2 L' B2 R' D2 R2 B' D2 B U' F' U' L B2 F2 U,G,Tokai Open PM 2024 (2024-09-15),333 Final A #1
 2894139001,F2 B L U B R U D R F2 B' R2 U2 B L2 U2 F R2 U2 D2 L2 U,G,Lebrija 2023 (2023-07-16),333bf Final B #1

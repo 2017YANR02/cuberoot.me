@@ -1,3 +1,4 @@
+import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { expect, it } from 'vitest';
 import { adminEnvironment } from '@/lib/admin-environment';
 
@@ -11,7 +12,7 @@ it('uses the dev tunnel on phones and iPad desktop mode, loopback on desktops', 
   expect(adminEnvironment('cuberoot.me', { userAgent: 'Windows', platform: 'Win32', maxTouchPoints: 10 }).localOrigin).toBe('http://localhost:3000');
 });
 it('treats the tunnel and loopback as development environments', () => {
-  for (const host of ['localhost', '127.0.0.1', '[::1]', 'dev.cuberoot.me']) {
+  for (const host of ['localhost', '127.0.0.1', '[::1]', ...DEV_PREVIEW_HOSTS]) {
     expect(adminEnvironment(host, { userAgent: 'iPhone', platform: '', maxTouchPoints: 1 }).current).toBe('local');
   }
 });

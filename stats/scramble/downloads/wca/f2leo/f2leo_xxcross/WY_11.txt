@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / WY / bin 11
-# Population in this bin: 585
+# Population in this bin: 588
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5665273001,U' L2 R' U2 R' B2 D2 U2 L2 F2 R D2 F D2 L' D' B L D U,W,Hangzhou Open 2026 (2026-05-23),333 R1 F #3
@@ -52,7 +52,7 @@
 4229411001,F R' U' L' U2 B R' U F2 U' R2 U2 F2 B2 L2 D R' B2 D R,W,Oso Cubing Fest I Lima 2024 (2024-10-19~20),333oh R1 B #4
 2561162001,L' D L2 D2 L2 U2 R2 F2 R' B2 L' U2 F U' B D' F U F' U2,W,Pickering A 2023 (2023-03-18),333 R2 C #5
 1758994001,B2 L' U' R B D' F' L2 U2 F2 D2 F2 L2 B2 L' B2 U2 B2 D2 F U,W,Perth 10 Year Anniversary 2021 (2021-12-11),333 R2 B #1
-5036586001,R L' D R' B' R F' R2 B2 R' F2 D2 R L2 B2 U2 D L2 U',W,Tivat Summer 2025 (2025-09-20),333 R2 A #5
+5834116001,B2 U' L F' B' R L B' U B2 R2 U2 F2 D2 B2 L' U2 D2 B2 R',W,Shin Kong Cube Open - Hualien 2026 (2026-09-20),333 R2 B #1
 5680014001,D' R2 D' F2 D' F' R L' B R2 F2 L2 F2 D F2 U R2 F2 D2 B,W,GAN Manila Speedcubing Open 2026 (2026-05-31),333 R2 B #2
 315307001,B U' R F2 L U' R' D' R2 U' F2 L2 F D2 F' L2 B D2 R2 B',W,La Plata Open 2016 (2016-06-18~19),333oh R1 B #3
 3143340001,L' D F U2 L U2 B' R' U' D2 R2 F R2 F2 D2 B' L2 F' U2 D2,W,Gurugram Cube Open 2023 (2023-10-07~08),333 R1 A #5

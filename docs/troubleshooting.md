@@ -3,20 +3,19 @@
 ## CI/CD 问题
 
 ### 统计未更新？
-1. 检查 [Actions 页面](https://github.com/RuiminYan/cuberoot.me/actions) 是否有错误
-2. 确认 `stats.yml` 中设置了 `permissions: contents: write`
-3. 确保提交信息包含 `[skip ci]` 避免递归触发
+1. 检查 [Actions 页面](https://github.com/2017YANR02/cuberoot.me/actions) 中的 `Update Stats` 与 `Sync static toolkit` 是否成功。
+2. `stats.yml` 定时或手动运行全量 WCA 统计；普通代码 push 只触发语法检查。打乱统计另走 `core/` 下的 `pnpm stats:scramble:local`，该命令只写本地文件。
+3. 核对生成的 JSON 已提交、`sync_toolkit.yml` 已同步静态文件；CI 自动提交会自行处理 `[skip ci]` 和静态同步，不要靠手工加提交标记修复发布。
 
 ### 镜像未更新？
-1. 检查 "Deploy Mirror to cuberoot" 是否全绿
-2. 查看日志定位错误（通常是 SSH 连接或 rsync 问题）
+1. 检查 `Sync static toolkit` workflow 是否成功；大量文件变更导致路径过滤未触发时，可在获得发布授权后手动运行 `gh workflow run sync_toolkit.yml`。
+2. 查看该 workflow 的 rsync/SSH 日志与 `static.cuberoot.me` 实际资源响应。
 
 ### 页面 404？
-- 检查 Nginx 配置是否包含 `$uri.html`
-- vhost source 在 `ops/nginx/www.cuberoot.me.conf`,push main 自动部署
+- 核对对应 Next 路由与 `ops/nginx/www.cuberoot.me.conf`；nginx 配置由 `deploy_nginx.yml` 发布，普通页面代码由 `deploy_next.yml` 发布。
 
 ### SSH 连接失败？
-- 检查阿某里某云安全组 22 端口
+- 检查服务器安全组的 SSH 端口
 - 确认 `/root/.ssh/authorized_keys` 包含部署公钥
 
 ### SSL 证书过期？
@@ -26,41 +25,20 @@
 ## 常见开发问题
 
 ### 内存不足
-- GitHub Actions 上限 7GB
-- 本地统计建议：`$env:NODE_OPTIONS='--expose-gc --max-old-space-size=6144'`
+- WCA 统计的 CI 内存参数以 `.github/workflows/stats.yml` 为准；本地从 `core/` 运行 `pnpm --filter @cuberoot/stats-build compute:all` 前先确认 MySQL 和可用内存。
 - 全量查询统计（如 `wr_dominance`）在 333 上可能很慢，建议先用小项目验证
-
-### Windows → Linux 权限
-- 从 Windows 复制的脚本在 Linux 上丢失可执行权限
-- 解决：在 workflow 中用 `ruby script.rb` 而非 `./script.rb`
 
 ### GitHub Actions 默认权限
 - `GITHUB_TOKEN` 默认只读（2023 年后的新仓库）
 - 解决：workflow 中声明 `permissions: contents: write`
 
 ### TypeScript 类型检查
-```powershell
+从 `core/` 运行：
+
+```sh
 pnpm --filter @cuberoot/stats-build typecheck
 ```
 
 ## 自动化测试（Playwright）
 
-需要验证 DOM 交互行为时，使用 Playwright 临时脚本：
-
-```python
-from playwright.sync_api import sync_playwright
-
-with sync_playwright() as p:
-    browser = p.chromium.launch()
-    page = browser.new_page()
-    page.goto('http://127.0.0.1:4000/stats/wr_metric', wait_until='networkidle')
-    page.click('.event-btn[data-event="777"]')
-    page.wait_for_timeout(500)
-    bao5 = page.query_selector('.metric-dropdown-item[data-id="bao5"]')
-    print("BAo5 classes:", bao5.get_attribute('class'))
-    browser.close()
-```
-
-安装：`pip install playwright && playwright install chromium`
-
-> 验证完即删，不提交到 git。
+需要验证 DOM 交互时，使用仓库现有的 Playwright MCP 或 `@playwright/test` TypeScript 测试；本地 Web 默认在 `http://127.0.0.1:3000/`。验证命令须对应实际测试文件，不再安装 Python Playwright 或沿用旧的 `localhost:4000/stats` 示例。

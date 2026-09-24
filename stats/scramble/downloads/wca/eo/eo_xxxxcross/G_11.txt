@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / G / bin 11
-# Population in this bin: 555
+# Population in this bin: 557
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13942001,L' D2 B2 R' U2 R U2 B R B2 U2 L' U F U F R F,G,Toronto Open Spring 2014 (2014-04-26),333 R2 B #1
@@ -66,7 +66,7 @@
 4107411001,D' L B2 D F U F' U2 L2 D2 F2 L2 U' L2 D' B2 U' F' D2,G,Ivrea: Back to Square One 2024 (2024-09-14~15),333 R1 C E2
 5138452001,D2 F B U L' U F U2 D2 F2 R F2 B2 U2 R' B L2 F2,G,AstroCubing Oruro 2025 (2025-10-26),333 R1 B #4
 4840366001,F R D' B2 L2 D U R' B' U' B' R2 U' F' U R2,G,Abruzzo al Cubo 2025 (2025-06-28~29),333 Final B #1
-465807001,L' B2 L U' B' L' U' L U B' R' D2 R' F2 L2 F2 L2 B2,G,Staszic Open 2017 (2017-03-11~12),333oh R1 C #3
+5834583001,R' F' L2 F2 D2 B U2 B' D2 F R' U2 L2 F' D' L2 U2 R',G,Tagum City Open 2026 (2026-09-12~13),333oh Final B #5
 475992001,R2 L2 F2 U' F' U' F B' U2 D' B R2 F2 R L' F2 B2 L' D2,G,Madrid Open 2017 (2017-03-25~26),333 R1 A E2
 4931926001,D R' B U R2 U2 B2 D' U2 F2 U B' D B U R F D,G,Zibo Open 2025 (2025-08-10),333 R1 A #4
 483293001,U R2 D R2 B2 F2 D L2 B2 R2 B' D2 B' D' B U F L' F' D2,G,Ban Parity Open 2017 (2017-04-08~09),333oh R1 C E2
@@ -200,7 +200,7 @@
 1410600001,D2 L2 U B2 F2 U F2 U' R2 F2 U' L F R2 B R2 U' L' U2,G,Palacio del Cubo 2019 (2019-11-16~17),333 R2 B #5
 5151851001,F2 U' B U' R U L B2 L2 B' U2 D2 L2 D2 F2 U2 D F D2 L' F',G,Eretum IV 2025 (2025-11-02),333bf Final B E2
 5804933001,U2 R2 F R2 D2 R2 F' U2 F2 L D2 L2 B L D,G,Calgary Fall 2026 (2026-08-29),333 R1 H #2
-1459942001,B U' L B' R' U L D' R F' L F U2 F2 U2 R2 F' B',G,Tirol Open 2019 (2019-12-14~15),333 R2 A #3
+5836580001,R2 F2 D2 B' R2 B2 U2 R2 F R' D L F R' D F2 D U' F,G,Sandnes Open 2026 (2026-09-19~20),333 R2 B #1
 3760401007,L2 B2 L2 B2 F' U2 B' L2 U2 D B' R U' B2 U' B2 R2 B2 L' B R2,G,Wommelgem Open 2024 (2024-05-10~12),333mbf Final B #1
 4163806001,R2 B2 L' D2 U2 R' F2 L D' L' B2 L2 B D B2 U2 B',G,DuPage Fall 2024 (2024-09-28~29),333oh R1 C E2
 1474911008,R2 B2 R2 U2 B D R2 B U2 R2 B L2 B F' U F L2 U2,G,Dallas Cubemas 2019 (2019-12-21~22),333mbf Final B #2

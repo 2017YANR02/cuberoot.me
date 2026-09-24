@@ -112,7 +112,7 @@
 
 ## 待办
 
-- [ ] **批量求解管道**(本地,≤14 线程)。**引擎 = cubeopt/h48 `cube48opt9` + 15.6G 表**
+- [ ] **批量求解管道**(本地，线程默认使用可用 CPU 并行度)。**引擎 = cubeopt/h48 `cube48opt9` + 15.6G 表**
       (用户 2026-07-27 定)。自己写的那套 Rust `lsll_solver`(22.8MB 投影 PDB + IDA*)**已退役**
       (git `b2e21a52b9`),原因见「耗时评估」的实测对照:比 h48 慢 1–2 个数量级。
       runbook 走 `solver/333opt/README.md` + skill `update-scramble-stats` §C,别再造轮。
@@ -172,7 +172,7 @@
       实测全覆盖),回溯即得打乱,43 万条回放校验 10s。**这 9 条之外别乱加**:`R2 U R2` /
       `F U F'` / `R' U R` 会把 DRB / DLF 角送进顶层,收不回来。
       求解 `node solve_loop.mjs`:**固定 opt9 + 15.6G 表**(用户 2026-07-28 定,内存自己腾)、
-      12 线程、**每个 case 算完即落盘**(Ctrl-C 最多丢当前那一个,≤16 次求解)、
+      默认使用可用 CPU 并行度、**每个 case 算完即落盘**(Ctrl-C 最多丢当前那一个,≤16 次求解)、
       **全程只占一行原地覆盖**(重启走 `QUIET=1`,几百次重启也不刷屏)、每条解回放验证、
       启动时自动截掉写残的末行。换表只改速度不改答案,按 key 续跑 ⇒ 中途换表零重做。
 
@@ -199,8 +199,8 @@
       `canonical_key`(base36,= URL 的 `?k=`)PK、`htm`、`qtm`、`exhaustive`、
       `optimal_algs jsonb`、`stm` / `mcc_order` 预留。category / eo / co / setup **不入库** ——
       前端拿 key 现算(`classify` / `setupForCase`),别存第二份。
-      灌库走 `solver/lsll/update_lsll.ps1`(照 `update_cross_stats.ps1` 的 `Load-*ToPg`:
-      复用 `pg_incremental_diff.mjs` 做行级 sha1 增量,manifest 灌成功才落盘;`-Local` 灌本机 pg13)。
+      灌库走 `solver/lsll/update_lsll.mts`，复用 `pg_incremental_diff.mjs` 做行级 sha1 增量，
+      manifest 灌成功才落盘；`--local` 灌本机 pg13。
       API `GET /v1/alg/lsll/case/:key`(`max-age=300, s-maxage=86400`;未回填 `{status:'pending'}` + `no-store`)
       与 `GET /v1/alg/lsll/dist`(步数直方图)。case 页「HTM 最优解」区已接;`exhaustive=false` 时
       明写「只有一条最优解,QTM 并列未穷尽」。404 也当 pending —— 端点没部署到本环境时别显示成报错。

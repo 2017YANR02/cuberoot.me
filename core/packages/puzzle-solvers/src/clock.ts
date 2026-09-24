@@ -226,7 +226,13 @@ const TOKEN_RE = /^([A-Z+]+)(\d+)([+-])$/;
 export function parseClockMoves(alg: string): ClockMove[] {
   const out: ClockMove[] = [];
   let side: 0 | 1 = 0;
+  let finalPins = false;
   for (const raw of alg.trim().split(/\s+/).filter(Boolean)) {
+    if (/^(UR|DR|DL|UL)$/.test(raw)) {
+      finalPins = true; // WCA 打乱末尾的上针位置不改变表盘状态
+      continue;
+    }
+    if (finalPins) throw new Error(`bad clock token after final pins: ${raw}`);
     if (raw === 'y2') { side = side === 0 ? 1 : 0; continue; }
     if (/^[UDud]{4}$/.test(raw)) continue; // tnoodle 末尾的针脚状态描述,与状态无关
     const m = TOKEN_RE.exec(raw);

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / WY / bin 2
-# Population in this bin: 831
+# Population in this bin: 834
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4311551015,B2 U2 R2 B2 F2 D2 U' R2 F2 R' U' B L' U' B' F L2 F' D2 B R',Y,East Bay Big and Blind 2024 (2024-11-24),333mbf Final A #1
@@ -56,7 +56,7 @@
 4229403001,B2 L2 U R2 D2 F' U F D L2 B2 U F2 U' R2 U L',W,Oso Cubing Fest I Lima 2024 (2024-10-19~20),333oh R1 A #3
 3755283022,F2 U' L F' U R2 B2 U B2 L2 R2 D L R2 U' F2 L2 U2 R2 B' L2,Y,Blind Faith Denver 2024 (2024-05-11~12),333mbf R1 B #2
 2743549001,U' F U' B' D2 R' U2 R F2 B' R2 B R2 U2 F' U F D2,Y,Pavillion Cube Open 2023 (2023-05-20~21),333 R1 G E2
-305586001,L' B2 R' F2 L U' F2 R U' L' U F2 U' F2 R2 B2 R2 U2,W,Connor's Cube Day 2016 (2016-05-29),333 R1 D #2
+5837509001,R' D' L2 F' R' U' R2 D' F' D2 B2 L2 F2 L2 U2 L2 U L',W,Moore Cubes in Loudoun 2026 (2026-09-19),333 Final A E2
 3034465037,D' R' F2 B L' F' L D' L' F' D2 R B2 L' U2 L' F L2,W,Nacionales Argentinas 2023 (2023-09-01~03),333mbf Final A #1
 944801001,D2 F' U2 F L2 B F2 U2 F R2 D R' F' L2 F' U' B2 L' D B,W,Morocco Autumn 2018 (2018-12-02),333 R1 C #5
 995940001,D R2 F2 U F2 L2 F2 U2 L2 R' D2 U' L2 R' B D' R' D B',Y,Hong Kong Cube Day 2019 (2019-01-26),333 R1 B E2
@@ -90,7 +90,7 @@
 473176001,F2 L2 D2 B U2 B2 R2 U2 L2 F U' L2 D2 L' F2 D2 L D' L2 F,W,Dixon Spring 2017 (2017-03-25),333oh R1 B E2
 2775066047,L' F D2 B2 D' R U D R2 F R' B' U2 F' B' R2 D2 F U2 L',Y,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final A #1
 484144001,B2 L2 R2 U R2 U' L2 B2 U' B2 U' L' B2 L2 B L2 D L2 B',W,Shaker Spring 2017 (2017-04-08),333 R2 B E2
-5829611022,F R F2 R2 B' U2 R' D L2 U' F2 U R2 B' U' L' D,Y,Kukulcán Open Quetzaltenango 2026 (2026-09-11~13),333mbf Final A #1
+5831451001,B D2 F2 R' D' F B D F' U2 B' L2 U F2 D2 R2 F2 D L2,W,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 A #5
 488100001,F2 B D' L F2 B' L2 D R B' U2 R2 B2 D2 R' L' U2 R F2 B2,Y,Zuidplas Open 2017 (2017-04-15),333 R1 A #5
 2671858010,U B' L2 D2 B' L2 U2 B U2 F2 U R' F D' U L F L2 F' L',Y,Please Be Quiet at UTS 2023 (2023-04-30),333mbf Final A #1
 490585001,F' D2 U2 R2 B D2 F D' R2 F D' U2 B' L2 B F' L U2,W,Copa Rubik Poligato 2017 (2017-04-15~16),333 R1 D E1

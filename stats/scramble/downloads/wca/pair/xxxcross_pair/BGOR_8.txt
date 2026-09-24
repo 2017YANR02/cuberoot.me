@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 461
+# Population in this bin: 463
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -63,7 +63,7 @@
 427523001,R B' R B R2 D' L F' U' L2 U B' L2 F' U2 F' U2 F2,B,P3 Grand Open - Jan 2017 (2017-01-08),333 R2 D #2
 2864808001,B' U2 L' B R2 D R2 D U' F U' L' U R D2 L2,G,Dragon Cubing 2023 (2023-07-08~09),333 R1 B #3
 5796003001,B' L' R2 B' L2 B' R2 B R U2 L2 R2 U' L' F2 D2 B' L2,O,Capelle Chaos B 2026 (2026-08-23),333bf Final B #5
-442484001,D2 B' R2 F2 U2 B L2 U2 F2 D2 L' B R F2 U R2 U' F2 D B' L B',G,Mental Breakdown Germany 2017 (2017-02-11~12),333bf R2 A #3
+5833006001,D2 F2 R' F2 R' U' R D2 L' D' B' R' D' F' R D2,G,Ansan Autumn 2026 (2026-09-19),333oh R1 F #1
 442645001,R2 D' B2 D R2 B2 D' U' R2 U2 F U B' F L' B2 L' U R2,R,Rubi-Xtreme Piatra Neamt 2017 (2017-02-11),333 R1 A E2
 3295598001,D' R D L2 D2 L2 F2 L2 B2 R2 D B F2 L2 F D2 R' U,R,Poznań Autumn 2023 (2023-11-25~26),333 Final A E1
 5768671001,R' B U' B2 D2 F U2 B' U2 R2 B' L D U B2 R,O,Cubalaya LA 2026 (2026-07-25),333 R1 A #4
@@ -175,7 +175,7 @@
 1415886001,B2 U R' U' R2 F' U2 F2 L' D L D2 F D2 R2 F R2 B2,G,Ezhou Open 2019 (2019-11-23~24),333oh R2 A #1
 1421317001,B2 U2 R B2 U2 R' D2 R2 D2 B2 R' B D' R' B' F' R' F' L,B,Kosovo Open 2019 (2019-11-23),333 R1 A E2
 4520789001,F R2 D2 F2 L F2 L2 R U2 R2 B' U' F2 R' F U' L' R2 D,B,Hampshire Winter 2025 (2025-02-22~23),333 R2 C E2
-1474339001,F2 D' U' R2 D U2 F' D' B2 F' R F' D' L R F D U' B R',R,Florida Winter Break 2019 (2019-12-21~22),333mbf Final A #2
+5836737001,B2 L' F L2 B2 R F L' F B2 U2 R2 U' B2 D2 F2 D' L2 D',B,Sandnes Open 2026 (2026-09-19~20),333oh R2 A E2
 1475121001,L F R L2 F' U' B L2 U2 L' D2 F' D2 L2 B U2,O,Taiyuan Winter 2019 (2019-12-22),333 Final A #5
 2748347001,B2 L2 U2 F B L D' L2 D2 R2 L2 B R2 F' D2 B' L B',R,Kanazawa Challenge Spring AM 2023 (2023-05-27),333 Final A E1
 2372946041,R2 F' L' F' D' L2 U' F2 R' B2 U F2 D' B2 R2 F2 D' F2 B L B',R,Ota Blind Winter 2022 (2022-12-18),333mbf Final B #1

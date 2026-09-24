@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGOR / bin 7
-# Population in this bin: 516
+# Population in this bin: 517
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5226045001,F2 B2 L' U2 L2 U2 D' B L U' L2 B2 D' F2 D F2 L2 D2 R2 B,G,Guadix Open 2025 (2025-11-29~30),333 R2 C E1
@@ -180,7 +180,7 @@
 3867206001,L F U L D' R' B L U' F' L U2 L' D2 F2 U2 R2 U2 B' L' F,O,MnM Bulacan Speedcubing Open 2024 (2024-06-15),333bf Final A #2
 3309719001,U R F2 R2 F2 U B D2 L' R2 F R2 F' U2 B' D2 F' L,G,Navidad Aves Maria Teams 2023 (2023-12-02~03),333 R2 B E2
 5523458001,L' F2 U B R F' R' B2 D L2 U2 F2 B2 U F2 B2 D2 B',O,Cube Against Cancer Minnesota 2026 (2026-04-11),333oh R1 B #5
-3423098001,L' D F2 U L2 D L2 U' F2 B' D B F U2 R' U2 B U2,G,Iguatemi Fortaleza 2024 (2024-01-13~14),333 Final B #3
+5832709009,L U2 F2 L2 B' R2 F' U2 B F' D' F U' L F' U' F D2 U2 L',R,Czech Quiet Championship 2026 (2026-09-12~13),333mbf Final B #2
 4323597001,D2 B' D F B' D R' F2 L B' U' B2 L2 D L2 D2 B2 L2,B,BUAP: Ingenieros Open 2024 (2024-11-30~12-01),333 R1 C #4
 1358238001,U D' R U L' F' D L2 B L B2 L2 D2 F' U2 L2 F' R2 F,O,Nordic Championship 2019 (2019-10-17~20),333 R1 E E1
 1359594001,F' D2 R2 D2 R2 B2 L2 F' R D2 R F' D2 L B' L' F2 U',G,Spanish Championship 2019 (2019-10-11~13),333 R3 A #3

@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / OR / bin 2
-# Population in this bin: 282
+# Population in this bin: 286
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13936001,B' L2 F U2 L2 F2 R' F2 U L' U' R2 D2 L2 F R2 L2 B',R,Toronto Open Spring 2014 (2014-04-26),333 R2 A #2
@@ -63,7 +63,7 @@
 5763768001,B2 D2 R B2 D2 U2 L' D2 R' F2 L2 U' B' U' F U2 L2 U' F',R,Carberry Open 2026 (2026-07-25),333 R1 C #5
 661068025,B2 F2 L2 B2 D' R2 D R2 B2 L' B' U' F' D' R F R U' L' D' L B,R,Game Pro Tour 2016 (2016-08-13~14),333mbf Final A #2
 661089033,D2 L' F2 R2 F2 L' U2 R2 D F L R D2 L' F2 U2 B' U B',R,KJSCE Mumbai Open 2016 (2016-08-27~28),333mbf Final A #1
-661264012,F' D2 L2 D2 F' D2 B' U2 L2 R' F2 L D' F' U2 L' B2 D2 F2 L',O,Alzira mueve las piezas 2017 (2017-02-25~26),333mbf Final A #1
+5831707001,B2 R' L' D L B2 L U' R2 U2 L2 U' R2 F2 D' R2 F' R D,O,Belgrave Open 2026 (2026-09-12~13),333oh Final A #5
 5355244033,B2 D2 B2 L U2 R2 B2 F2 L' B U' F' D F' L2 U' R2 D2 F' L' F2,O,BrizZon Side Open 2026 (2026-01-31~02-01),333mbf Final A #2
 661369015,R2 B2 U2 B2 R2 B2 D' L B2 D' B2 L2 B D L2 B' D' L D2,R,Wuhan NxN Open 2017 (2017-05-20~21),333mbf Final A #2
 5296639001,D' B2 D' U2 R2 U2 B U2 R D2 L' F' R F U F' D2,R,Just Cube and Go Pangasinan 2025 (2025-12-27),333 Final B #4
@@ -157,7 +157,7 @@
 5176612001,D2 B2 L' U2 D' R B' R' D' R U2 F U F2 D,O,Palais'10Open 2025 (2025-11-08~09),333 R1 C #1
 4954416001,L U2 F' U F2 U' R2 F' B2 R D2 L' F2 L D2 R L F' D',O,South India Cube Championship 2025 (2025-08-14~17),333oh R1 F #5
 2593606001,R' D2 F2 R B2 F2 L2 B2 L' F' L2 F2 L' D2 B2 L' D' F',O,Oculus Cube Open 2023 (2023-03-25~26),333 Final A #1
-5218339001,R' B' U F' D2 B' L' D' R F2 R D2 B2 R2 L' F2 U2 L' F2 D,O,Metropolis Lara League III 2025 (2025-11-22~23),333 Final B #1
+5837736028,R2 B L2 D2 B2 D2 L F2 L' U2 B2 F' L F2 D B' U2 L F' L',O,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final B #1
 2659245001,D' U' R2 F2 D2 B2 D F2 L' F' D L' U2 F2 L U2 R' U L,R,DC Open April Saturday 2023 (2023-04-22),333 R1 A #4
 4356570001,L2 U2 L2 B' R2 U R D2 R2 U2 L2 B U2 B' R2 F' D',O,Kirkland Pyra Fest 2024 (2024-12-14),333oh R1 B #3
 5154037020,R L2 B' D' B L D' U2 B U2 F2 L2 U2 F R2 U2 F U2 L B2,R,Hungarian Open 2025 (2025-10-31~11-02),333mbf Final A #1

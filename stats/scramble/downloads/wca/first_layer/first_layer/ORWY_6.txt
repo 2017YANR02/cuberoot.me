@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / ORWY / bin 6
-# Population in this bin: 938
+# Population in this bin: 943
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4772898001,D2 U' F2 U2 F2 R2 F2 L' F D2 F' L2 F U R B' F2 R U' B' L',Y,Kewbz Scottish Championship 2025 (2025-05-30~06-01),333bf Final A E2
@@ -61,7 +61,7 @@
 5020771001,R F' R D2 L' F' B2 R2 D L2 D' R2 B2 U F' L,W,Criciúma Open 2025 (2025-09-13~14),333 R2 A #5
 4646227001,B' R D' F2 U2 R2 D R B' L F' L D2 R2 U2 B,R,Caloocan Speedcubing Open 2025 (2025-04-13),333 R1 A E1
 3296646001,R D' L2 D' F D' R U F2 R' B' U2 L2 U2 F' D2 R2 B' D2,R,Reykjavík Windy Open 2023 (2023-11-25),333 R2 B E1
-3971917001,D2 R' B' L2 D' L2 U D2 F U' F2 D2 B2 L' F2 U2 R' F2 U2,O,South Luzon Championship 2024 (2024-07-27),333oh Final B #4
+5837736028,R2 B L2 D2 B2 D2 L F2 L' U2 B2 F' L F2 D B' U2 L F' L',W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final B #1
 2387465001,F2 D2 R2 B2 D' L2 D R2 L U' R U' R' B' L2 B' U R U',Y,Sunmarke Dubai Open 2022 (2022-12-16~17),333 R1 D #5
 2401319001,R' U' F L D R B' U2 D2 B L' B' U' R2 U' B2 L2 B2 D2 B2 U' R U2 R' U' F,W,Cambridge Holiday FMC 2022 (2022-12-30),333fm Final A #3
 949104001,U' R2 U' F2 D' F2 D L2 R2 F2 D' F' D F U L B' D2 U2 B,Y,Bengaluru Winter Open 2018 (2018-12-01~02),333oh R1 A #2
@@ -149,7 +149,7 @@
 625427001,D2 R' F' L F2 L' D' R2 B2 U' F' R2 D2 F2 D2 F' L2 D2 B,R,Rubikku Champ 2017 (2017-10-21~22),333oh Final B E1
 4533225001,R2 F' L2 B D' F L' U2 B2 L' B2 R B2 U2 R D2 R' B2,Y,Velilla Open 2025 (2025-03-01~02),333 R2 C #4
 3707947001,F U2 B2 F L2 D2 F D2 F2 R U2 R' F L' U L' R' U,R,Puerto Rico Open 2024 (2024-04-27),333 R2 A #5
-789264001,B F' R2 D2 B2 U2 B' F' R' F' L D2 F D' R2 B' L2 D2 L,R,CK Cubing Party 2018 (2018-05-27),333 R2 A #1
+5832291001,U2 D R B' L2 F2 R U B' R B' U2 D2 R2 U2 F2 U2 B' L,Y,Balam Cubes Citywalk 2026 (2026-09-12~13),333oh R1 A #4
 636869012,B2 L2 U2 B R2 F' R2 D2 F' U2 F L' D2 B2 L D' R B R U2 B' L',O,Villanueva Open 2017 (2017-11-04~05),333mbf Final A #1
 638957001,R' F' L' F U' D' L' B2 L2 U B' R2 B2 D R2 U2 L2 F2 D2,Y,Reno Fall 2017 (2017-11-11),333oh Final A E2
 5641660001,F U' B2 D2 R2 D2 F R2 D2 F U2 R2 L' D' F2 D2 L D2 U' L2,Y,Great Peconic Bay 2026 (2026-05-17),333bf Final B #2

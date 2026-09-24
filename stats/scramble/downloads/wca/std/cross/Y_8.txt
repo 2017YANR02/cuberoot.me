@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / Y / bin 8
-# Population in this bin: 694
+# Population in this bin: 697
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 561001,B U L2 F' U' F R' B D' L F U2 B' R2 F U2 D2 F',Y,Hessen Open 2014 (2014-03-15~16),333 R2 A #2
@@ -130,7 +130,7 @@
 3727670001,R2 D U2 B2 L2 B2 F2 U R2 D2 R2 F' U' B2 F' R' D' B' L F',Y,UPB Cubing 2024 (2024-04-27),333 R1 A E2
 3682555001,F2 U2 R' L' F' L' B' R' D B2 L2 B D2 F2 B' L2 F' U2 D2 R2,Y,German Open 2024 (2024-04-20~21),333 Final B #5
 667317001,B2 U B2 U2 L2 R2 F2 U' F2 R2 F2 R' B L' D' F' L D B2 U',Y,MTD Spring 2017 (2017-12-09~10),333 R1 E #4
-667666001,L2 F U2 B R2 F' U2 L2 R2 U L' F U' F2 U' R D' L' D,Y,Capivara 2017 (2017-12-09~10),333 R1 B #4
+5840790001,R' B2 R' U2 R' D2 F2 R' B' D' L' B2 L2 D' L2 F2 R2 B L2 U',Y,Wellesley Fall 2026 (2026-09-19),333bf R2 A #3
 5544897001,B2 R2 B2 U2 B2 D B2 U' R2 U2 L' U B L F' L R' F U2 L2,Y,Cube4fun Biała Rawska Spring 2026 (2026-04-18),333 R1 C #1
 677076001,R2 U2 L2 R2 U2 F U2 B2 L2 B' U' R2 D L' F' R B L' B2 D' U2,Y,Rubik's Cube Mumbai Open 2017 (2017-12-26~27),333 Final A #3
 690824001,D' U2 B2 L2 U B2 U' L2 F2 U2 L' D R F2 U F' D2 L B R' F L B',Y,Cubing Under the Stars 2018 (2018-01-20),333bf R2 A E1
@@ -161,7 +161,7 @@
 4215407001,R' B D R D F R' L' U' R U D' F2 B2 L2 U' L2 D B2 L2,Y,IIT Patna Unscramble 2024 (2024-10-18~19),333oh Final A E1
 5592797025,U L' U2 L D' F' B' U2 F2 D' F2 D' L2 F2 D' B' U2 B L B R',Y,Brizzon Side Open III 2026 (2026-05-01~03),333mbf Final A #2
 4619468001,B' U2 F' R2 B L2 U2 L2 R' U F2 D2 B' F' D' U F' L2 R,Y,Middle Georgia Big Cube Showdown 2025 (2025-04-05),333 Final A #2
-804007001,D' B2 D' F2 R2 B2 D2 F2 U' R2 B R U R B' D L R' B F',Y,Indian Nationals 2018 (2018-05-25~27),333oh Final A #2
+5838216024,D B' R' F2 U' L2 R2 F2 U2 L2 R D' F' D' B U' F' D U L2,Y,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final A #3
 2559899001,F U' F2 L' B R F B2 D L2 U' B2 D2 R' F2 R' D2 L',Y,Stockholmsligan 5: The Reds 2023 (2023-03-16),333 Final A #4
 815461001,D' L2 U' L2 B2 D' L2 D U2 L2 R F' R B' U' B2 L U B2 F2 U2,Y,Cube Factory League Final 2018 (2018-06-23),333 R1 A #5
 4726318001,F2 U F U2 F2 U2 F' D2 F' R2 B L F R' D' B' F' U2 R',Y,Cube Against Cancer Roswell 2025 (2025-05-17),333 R1 D #3

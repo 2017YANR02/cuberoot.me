@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / BGORWY / bin 4
-# Population in this bin: 475
+# Population in this bin: 477
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5023707001,U2 B U2 L' D' L2 U2 B2 U' R2 U' F R B' D F' D2 F2 L' F',B,Clásico Tlaxcala 2025 (2025-09-13~14),333bf R1 B #3
@@ -95,7 +95,7 @@
 739447001,L' U' R B2 D F' R F2 D F L U R2 D F2 U D F2 L2,W,Happy Autumn MDQ 2018 (2018-03-30~31),333oh R1 E #5
 741316001,R2 F U2 B2 D2 L2 F U F D U2 B' U2 B' U B L B,B,Cross-strait Cubing Exchange 2018 (2018-04-06~07),333oh Final A #3
 5085065001,F' D2 R2 F2 L B2 U2 R2 U' R' F2 L' F' L F' R B2,B,Cubing for Yuval Israel 2025 (2025-10-08~09),333oh R1 A #5
-767324001,F' D' R F2 D R2 U L D2 F' L' F2 U2 L' D2 B2 L' B2 L,W,U.R.A. Spring of Colors 2018 (2018-04-28~29),333 R1 C #4
+5831410001,L D B2 R2 U L2 D' L2 D2 B U B L D U R2 D' B,R,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 E #3
 3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B,Hong Kong Championship 2023 (2023-10-21~22),333 R2 A #1
 3038810001,B' L B2 D2 L D2 F2 R B2 L' R2 U F R' F' U' B L,G,Bilbao Open 2023 (2023-09-02~03),333 R1 D #1
 781796001,D2 L D2 B2 D2 B2 L2 U2 L' B' U R B2 U' L F2 L R' F',O,Shanghai Love in ECNU 2018 (2018-05-19~20),333 R1 D #1
@@ -163,7 +163,7 @@
 1239812047,B2 L2 U' B2 U' R2 D U2 F D2 L F' R' D2 B2 D' U F U2 B',O,China Championship 2019 (2019-07-26~28),333mbf Final A #2
 1243665012,L2 D2 L' R' B2 U2 R B2 D2 U B' D R F' D R2 U' R' U' B,O,Massachusetts Championship 2019 (2019-07-26~28),333mbf Final A #1
 1246242001,B2 R2 U' R2 F2 L2 D R2 U' B R D U2 B' R' B D R2 U' L2,W,CIC Pasto Open 2019 (2019-08-03~04),333 R1 A #5
-1265184001,F' R' L U L2 U D' F R F' R' B2 L2 D2 R U2 R' B2 L2 B2,G,Kharkiv Open 2019 (2019-08-17~18),333ft Final B #4
+5836428001,U D2 B' L2 F2 D2 F U2 L2 F2 D2 L' U F U L' B D U',O,VERK XVIII 2026 (2026-09-19~20),333oh R1 A #5
 1278459001,F2 R2 U2 F' R2 B' D2 F2 U2 L2 R D2 B' D L D' U R2 F',G,Teresina Open 2019 (2019-08-24~25),333 R1 C #3
 1283987001,R' D2 R U2 B2 L' D2 U2 L' R' F2 D B D2 B' L2 U' R' F2 L2,Y,San Diego Summer 2019 (2019-08-31),333oh Final A #2
 1286244001,B L2 F R2 B2 F' U2 F2 D2 L2 D2 L D' F' L' F R' F2 D' B2,Y,Cubing in Cill Chainnigh 2019 (2019-08-31~09-01),333 R2 A #2

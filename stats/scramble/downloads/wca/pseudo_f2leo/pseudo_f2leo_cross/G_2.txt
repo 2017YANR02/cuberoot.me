@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 442
+# Population in this bin: 444
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -22,7 +22,7 @@
 4799189001,B2 D2 L2 F2 L2 D' R2 D2 R2 F R F L2 R2 F R2 D F' D' L' F,G,Kansai Odd and BLD 2025 (2025-06-15),333bf Final A E2
 5741453001,L' D L2 F2 D2 U R2 B2 D' U2 R2 L D2 B' L B2 R U' L,G,Gwada Cubing 2026 (2026-07-04~05),333 Final A #2
 2401503001,R2 D2 U R2 U2 R B2 R2 D2 F' R' B' F U' L' D B D2,G,Race the Clock Minnesota 2022 (2022-12-31),333 R1 C #2
-2592590001,R2 B F2 R B2 R2 B2 U2 L B U B R U' B' F2 D F,G,Save Ramir Cubing Kazakhstan 2023 (2023-03-25~26),333 R2 B #2
+5835824002,L2 D B2 R2 U2 F2 R2 U F' D' B2 D2 L B L U' B F' D L2,G,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 179448001,B2 L F2 D2 R D2 L' U2 F2 R F' R B2 F D' R2 B F2 L' U' L2 U2,G,San Lorenzo Invierno 2015 (2015-08-15~16),333bf Final C E2
 189955001,F2 R' U L' U2 F2 R' L' B D2 B U B2 U2 B2 D' L2 F2,G,Brisbane Spring 2015 (2015-09-19),333 R1 H #2
 4340425001,B' D2 U2 B L2 B' D2 B U2 B2 L2 R D2 L2 F R D2 L D',G,Na'Guara Metropolis Lara 2024 (2024-12-07),333 R1 D #4
@@ -169,7 +169,7 @@
 2947968001,L F2 D B2 U' D' B' R U' R2 U' R2 F2 L2 D' F2 R F2,G,Winchester Weeknights IV 2023 (2023-08-02),333 R1 A #2
 1183648022,L2 F2 D' F2 U R2 U2 B2 D' B L2 U F' U L D2 R' D L2 D' B R',G,Malaysia 10th Anniversary Cube Open 2019 (2019-06-15~16),333mbf Final A #1
 5539271001,R2 D F' U2 L' U' F' L U R2 F2 B2 D' B2 D B2 D2 B2,G,Adelaide Autumn 2026 (2026-04-12),333oh R1 A #2
-4433309064,U2 R2 F B2 R2 B2 D2 U' B2 F2 L2 D' U2 R' B U B2 F R D2 L B2,G,UCSD Big and Blind 2025 (2025-01-19),333mbf Final B #2
+5838118001,F2 D' R2 B2 D B2 D F2 R' F R' B L2 U B2 F' R2 F2 D',G,Beaver Falls Open 2026 (2026-09-19),333 R1 B #4
 4183944001,B' U R B R2 U2 F2 L B2 U F2 D' R2 F2 D' L2 F2 D R,G,Lloydminster Border Battle 2024 (2024-10-12),333 R2 C #3
 5620757001,L2 R2 B' R2 D2 B R2 U2 F2 R D' U2 F2 R F R' U2 B D,G,Welcome Back Hamilton 2026 (2026-05-09~10),333oh R1 B #5
 1225872001,U2 F' L U2 R' F U' F' D2 F' R' U2 R2 F2 B2 U2 B2 L' B2 R',G,Pekalongan Mini 2019 (2019-07-21),333oh Final A #2

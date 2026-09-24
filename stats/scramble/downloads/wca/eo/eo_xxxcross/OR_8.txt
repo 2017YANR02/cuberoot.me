@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / OR / bin 8
-# Population in this bin: 250
+# Population in this bin: 251
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5225508001,B' D2 U2 F R2 B2 R2 F' U' R' U' R F' L' F2 R U B,R,Hvidovre Open 2025 (2025-11-29~30),333 R2 A #1
@@ -106,7 +106,7 @@
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,O,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
 1938404001,B2 L B2 L2 F R2 F R2 F2 R D F2 D2 R D2 B' F2 D',O,Lake Constance Cubing 2022 (2022-05-21~22),333oh Final A #2
 1940173001,B2 R2 U2 L D2 U2 B2 U2 R2 U2 L2 R D' B2 L F L2 D R',O,3x3x3 Only Hamilton B 2022 (2022-05-29),333 R1 E #1
-2007470003,U F2 D2 R2 U' R2 B2 U B2 D' L U R U2 L2 D' B R U2 L' F',R,Parla Open 2022 (2022-07-09~10),333mbf Final A #1
+5831537001,U' B2 L' B2 D' B2 L2 D2 L2 D2 U' B D2 U L2 D B2 F R',R,Belgrave Open 2026 (2026-09-12~13),333 R2 A #1
 5094099017,L2 R2 F R2 F R2 D2 F' U2 B' L D2 L2 F' L' U2 B R' B' L',O,Rhein-Neckar Complete Breakdown 2025 (2025-10-09~12),333mbf Final A #2
 2122767001,U' R U2 F2 U D R' U' L2 B U2 F D2 F' B' U2 R',O,Swisscubing Cup IV 2022 (2022-08-20~21),333 Final A #1
 2159291001,B L D2 R B' R D2 L' F U' B' D2 R2 B2 R2 F D2,R,AOpen in Rome 2022 (2022-09-10~11),333 R1 A E2

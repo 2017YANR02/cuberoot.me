@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / R / bin 5
-# Population in this bin: 896
+# Population in this bin: 898
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3626799001,B U2 F2 D2 L2 U R2 U' F2 R2 U' B2 L B2 D2 F' L B R2 D,R,Red Stick Spring 2024 (2024-03-30),333 R2 B #3
@@ -54,7 +54,7 @@
 4845313001,L F B' D L D R' U2 L F2 D B2 D' L2 F2 U' L2 F2 D2,R,Waihopai Winter 2025 (2025-07-05~06),333oh R1 B #5
 1937346001,U B' U' B' R' D2 B' D2 F' B2 R D2 R U2 B2 U2 R2 B2 R,R,Ponikva Open 2022 (2022-05-21),333oh R1 A #1
 4885928001,R F' U R2 D R2 B R' B2 U' B' U2 F R2 F2 L2 F,R,Singapore Megaland July 2025 (2025-07-26),333 R2 A #4
-3914034001,L2 B U2 R2 B2 D2 U2 L2 F2 D2 F2 D L F2 L F' D' B' U L,R,Vacaciones Cuenca Open 2024 (2024-07-06),333 R1 B #4
+5834102003,R B R2 U2 D2 B U2 L D' F D2 R2 D2 L2 F2 B R2 D2 F' R2 B R,R,SacQuiet Fall 2026 (2026-09-19),333mbf Final A #2
 5122870001,U L U' D2 B' U F2 D2 B' U' F' B U2 L2 F2 B' L2 B,R,FSUbers 10.0 2025 (2025-10-18),333 R2 A #1
 4925231001,B2 L2 U B U' B R2 F' R L F' R2 B' L2 U2,R,Lawrence Summer 2025 (2025-08-09),333oh R1 B #5
 3081682001,D2 F D' F2 D2 F2 R2 L' B2 L R2 F2 D2 R F' R2,R,Kericho Open 2023 (2023-09-16),333 Final D E1

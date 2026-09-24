@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / WY / bin 6
-# Population in this bin: 480
+# Population in this bin: 483
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 27659001,B2 L B2 L D2 R F2 D2 R2 D' F2 R' F2 D' F2 D' B' L2 U,Y,Nottingham Summer 2014 (2014-06-14~15),333oh R1 B #3

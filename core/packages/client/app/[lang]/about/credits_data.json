@@ -1,5 +1,11 @@
 [
   {
+    "name": "nissy-core H48 / Sebastiano Tronto and Enrico Tenuti",
+    "url": "https://github.com/sebastianotronto/nissy-core",
+    "zh": "H48 h11 原生整解表使用 nissy-core 源码生成；源码按 GPL-3.0-or-later 保留在 solver/vendor/nissy-core，表只在本机生成。",
+    "en": "The native H48 h11 whole-cube table is generated with nissy-core. Its GPL-3.0-or-later source is retained in solver/vendor/nissy-core; the table is generated locally."
+  },
+  {
     "name": "The Math Flow: Rubik’s Cube ring animation",
     "url": "https://x.com/themathflow/status/2101154346583154801",
     "zh": "魔方与图论页面的圆环布局视觉参考，扇形参考见 GitHub issue #81。位置映射和交互独立实现，未复制第三方源码或将原视频、图片用作运行资源；发布账号不作为原作者归属证明。",

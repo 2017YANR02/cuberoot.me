@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / O / bin 7
-# Population in this bin: 820
+# Population in this bin: 823
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1284434015,R2 F' U2 F L2 D2 B2 D2 U' L' U B D U' B' D2 B2 L D B' L',O,Croatian Nationals 2019 (2019-08-31~09-01),333mbf Final A #1
@@ -63,7 +63,7 @@
 5028044001,U2 L' R2 B2 L R' U' L2 R2 F L2 B L B U2 F2 U,O,Athens Never Ending Summer A 2025 (2025-09-13),333 Final A #5
 1870191027,U B D2 R2 B L2 B' U2 L D U2 F2 R B U2 L R2 U' L B',O,Swisscubing Cup II 2022 (2022-04-09~10),333mbf Final A #2
 216584001,F2 U2 L F' U F R U R' D B2 U2 L' U2 R' L2 U2 B2 L,O,Würfelä im Drachenäscht 2015 (2015-11-13~14),333 Final A #2
-5720621001,R L F' B2 R' F' U' R B2 U2 D' B2 L2 U R2 U' F2 U F',O,Jawa Timur Open 2026 (2026-06-20~21),333 R2 B #1
+5836556001,B2 R D2 B U F2 U R D' L2 U' L F2 L2 F2 R' F2 L' U2,O,Sandnes Open 2026 (2026-09-19~20),333 R1 A #1
 224325001,R2 B2 L2 B R2 D2 L2 D2 U F D2 U B F U2 L' R2 F' L',O,Johannesburg Open 2015 (2015-11-29~30),333 Final A #3
 233963001,R2 F' L2 D2 B U2 F' R2 B2 F' R' F U2 B2 D' U2 B2 R2 U',O,Kyushu Open 2015 (2015-12-27),333 R2 A #2
 4578226001,R D R' B R2 B' L2 F2 D2 F' D2 F' L' D2 F U F',O,Wichita Art Museum 2025 (2025-03-22),333 Final A #1

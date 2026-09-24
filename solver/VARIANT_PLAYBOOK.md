@@ -73,7 +73,7 @@ Petrus 223 两方法 4 阶段 flat stage id 0..3,微表 eager、5.3M 表 RefCell
 更快、内存更宽松的 u8/现场构建路径。First Layer 的 `opt_first_layer` 是大冷启动范本。
 
 **重建仪式**(改 Rust 后必走,顺序固定):
-1. `build_wasm.ps1` 的 `$names` 数组加新表名(若引了新 mt/pt)→ `pwsh solver/build_wasm.ps1`。
+1. `solver/scripts/build_wasm.mts` 的 `names` 数组加新表名(若引了新 mt/pt)→ 从仓库根运行 `pnpm --dir core solver:build-wasm`。
 2. copy `pkg-web/cross_solver.js`、`cross_solver_bg.wasm`(+两个 `.d.ts`)→ `tools/solver/rust-cross/`;
    新表 `pkg-web/tables/<t>.bin.gz` → `tools/solver/rust-cross/tables/`。
 3. **worker 是手维护源** `tools/solver/rust-cross/cross-solver-worker.js`(pkg-web 里那份是旧的):
@@ -106,14 +106,11 @@ COEP 注意:analyzer 页用 classic worker、**不发 COOP/COEP**;别把新页�
 
 步骤:
 1. **首灌全量**:master 本身就是合法输入(`id,scramble` 行),直接
-   `Push-Location <数据目录>; "<master文件名>`nexit" | & block222_analyzer.exe` 跑完
-   把 `<master名>_<v>.csv` move 成 `stats\<v>.csv`。env:`CUBE_TABLE_DIR=solver\tables`、
-   `RAYON_NUM_THREADS=14`(全局限核)。慢变体(IDA* 搜索类)别一把梭,用第 3 步脚本分块。
-2. **注册增量管道** `core/jobs/scramble-stats-build/update_cross_stats.ps1` 五处:
-   `$VARIANT_EXE` / `$VARIANT_CHUNK` / `$VARIANT_RATE`(实测)/ 默认 `-Variants` 数组 / 向导 `$order`。
-   **数字开头的变体名(如 222)hashtable 键必须加引号**,否则 int 键查 string 查不到。
-3. **xcross 集**:`backfill_xcross_variant.ps1` 的 `ValidateSet` + `$EXE` 两处;快变体直接
-   `-Variant <v>` 跑完,慢变体用 `-Hours/-Threads/-MaxChunks` 分次。
+   在数据目录运行对应 analyzer，输入文件和输出文件按 analyzer 约定指定，跑完
+   把 `<master名>_<v>.csv` 移到 `stats/<v>.csv`。表根用 `CUBE_TABLE_DIR` 指定，线程默认使用机器可用并行度。慢变体(IDA* 搜索类)用第 3 步脚本分块。
+2. **注册增量管道**：在 `scripts/stats/update-local.ts` 的 `variantBins` 和 `defaultChunks` 注册变体，保持其 analyzer 名与实际输出一致。
+3. **xcross 集**：在 `scripts/stats/backfill-xcross.ts` 的 `analyzers` 注册变体。快变体直接
+   `--variant <v>` 跑完，慢变体用 `--hours/--max-chunks` 分次。
 4. **build 侧** `scramble-stats-build/src/build.ts` 的 `VARIANTS` 加 spec
    (`key/file/stages/angleToColor: ANGLE_COLOR_STD/colFor`)。distribution/examples/downloads
    全 spec 驱动,加完即生效;CSV 缺的 set 自动跳过。
@@ -123,8 +120,7 @@ COEP 注意:analyzer 页用 classic worker、**不发 COOP/COEP**;别把新页�
 6. **重算 + 发布**:
    `$env:SCRAMBLE_STATS_STAMP=(Get-Content ...\incremental\export_date.txt).Trim()`(字节稳定)
    → `pnpm --filter @cuberoot/scramble-stats-build build` → 核对 distribution.json 新变体的
-   sample_count/直方图 → 发布走 `update_cross_stats.ps1 -PublishOnly`(git commit stats/scramble +
-   push + tar+scp static 原子替换),或手动照它第 6 步。
+   sample_count/直方图 → 获授权后在 `core/` 运行 `pnpm stats:scramble:publish --publish --publish-only --jobs stages`；需 Git push 时另加 `--push`。
 7. **看板** `/dev/solvers`:调 `solvers-tables` skill(TABLES/NATIVE/BROWSER/hero 文案)。
 
 **标准集成(2026-06-10 起新变体默认全做,别漏)**:
@@ -237,10 +233,10 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
 
 1. **analyzer bin**(范本 `cube222_analyzer.rs`):CSV 两列 `id,<key>`,值 = 整解最优步数;
    key 用 puzzle 名(222 / pyraminx / skewb / sq1)。
-2. **管道脚本** `scramble-stats-build/update_puzzle_stats.ps1` 的 `$PUZZLE` 表加一行
+2. **管道脚本** `scripts/stats/puzzles.ts` 的 puzzle 注册表加一行
    (key → WCA event_id + analyzer exe)。语料自动从 3x3 管道抽好的
    `incremental/tsv/Scrambles.tsv` 按 event_id 过滤(缺则从 cache zip 流式抽),增量落
-   `D:\cube\scramble\puzzle\<key>\scrambles.txt` + `<key>.csv`(id 差集分块解算)。
+   由 `CUBEROOT_DATA_ROOT` 指定的数据根下的 `puzzle/<key>/scrambles.txt` + `<key>.csv`(id 差集分块解算)。
 3. **build 侧** `src/build_puzzle_dist.ts` 的 `PUZZLES` 加一行(key/event/label/label_zh/metric)
    → 产 `stats/scramble/puzzle_distribution.json`:`puzzles.<key> = { event, label, label_zh,
    metric, sample_count, dist:{min,max,counts} }`(dist 形状 = distribution.json 的 HistEntry,
@@ -259,6 +255,6 @@ eoline 的 yk 与 yk+2 同目标(get_stats/enumerate 只跑 yk 0/1),dr 对 y 完
    (不要另起 tab / 内部下拉);选中 → `PuzzleDistView`(直方图 + 摘要统计 + **可点 bin → 示例卡片**,
    示例预览走 `ScramblePreview2D event=<event_id>`,非 333)。3x3 专属的合并/数据集开关对 puzzle 隐藏。
 
-小样本验形:`pwsh update_puzzle_stats.ps1 -Puzzles <key> -MaxNew 300`(分布)+ 跑 examples build;
+小样本验形：从仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/puzzles-cli.ts --puzzles <key> --max-new 300`(分布)+ 跑 examples build；
 **全量灌注 + static 发布 = MANUAL**(`puzzle_distribution.json` + `puzzle_examples.json` 一起
 tar+scp,跟 stats/scramble 同仪式)。

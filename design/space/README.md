@@ -11,7 +11,7 @@ Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、
 | 25 份可编辑原工程 | `design/space/scenes/*.blend` | 后续使用 Git LFS；当前暂缓启用，本地保留并单独备份 |
 | 首次导入清单 | `design/space/scenes/*.import.json` | 跟踪首次导入，不代表后续编辑状态 |
 | 网页模型、共享纹理 | `core/packages/client/public/assets/space/blender-v1/` | GLB 和纹理单独打包，JSON 清单入库 |
-| Blender 软件 | `E:/Apps/Blender/blender.exe` | 仓库外 |
+| Blender 软件 | `blender`（从 `PATH` 查找，可用 `CUBEROOT_BLENDER` 指定） | 仓库外 |
 | 首次捕获和导出中间文件 | `E:/CubeRoot-Assets/space/` | 缓存，不是源工程 |
 | 检查截图、导出日志 | `.tmp/png/space-blender/` | 临时文件 |
 
@@ -23,11 +23,11 @@ Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、
 2. 保存工程。后台导出读取磁盘版本，无法读取尚未保存的界面修改。
 3. 在仓库根目录运行指定资产的导出命令：
 
-   ```powershell
-   pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset modern-original
+   ```sh
+   cd core && pnpm space:batch --asset modern-original
    ```
 
-   导出全部使用 `-Mode all`，仅原环境住宅使用 `-Mode original`，海岛及上海住宅使用 `-Mode variants`，仅城市使用 `-Mode city`。可用 `-Blender` 指定其他安装位置。脚本按顺序运行，最多 14 线程，后台低优先级；不会重新导入或保存覆盖 `.blend`。
+   导出全部使用 `--mode all`，仅原环境住宅使用 `--mode original`，海岛及上海住宅使用 `--mode variants`，仅城市使用 `--mode city`。可用 `--blender` 指定其他安装位置，`--plan` 只打印执行计划。脚本按顺序运行，Blender 使用系统可用 CPU 并行度；不会重新导入或保存覆盖 `.blend`。
 
 4. 刷新 [本地魔方空间](http://localhost:3000/zh/space)，选择对应风格与环境。JSON 清单不缓存，模型 URL 带导出内容哈希；同内容纹理共享文件。
 5. 检查外观、室内视角、反射、魔方放置，上海还需检查白天、夜景、交通和水面。文件能导出不代表画面已经合格。
@@ -36,12 +36,12 @@ Blender 是静态场景的编辑源，Three.js 是网页运行引擎。住宅、
 
 ## 后台工作，不占用桌面
 
-自动处理默认使用 Blender 后台 Python 和无头浏览器，不激活可见窗口、不发送鼠标键盘输入。批处理隐藏窗口、低优先级，最多 14 线程。预览默认使用 CPU，让显卡留给日常桌面；仍会使用 CPU、内存和磁盘。
+自动处理默认使用 Blender 后台 Python 和无头浏览器，不激活可见窗口、不发送鼠标键盘输入。批处理隐藏窗口，使用系统可用 CPU 并行度。预览默认使用 CPU；仍会使用 CPU、内存和磁盘。
 
 保存工程后，可直接渲染某个已有相机：
 
-```powershell
-pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -PreviewCamera Bathroom
+```sh
+cd core && pnpm space:batch --asset italian-original --preview-camera Bathroom
 ```
 
 住宅相机可用 `Overview`、`"Living room"`、`Study`、`Bedroom`、`Bathroom`、`Courtyard`、`Garage`、`Cinema`、`Gym`；公司工程预置 `Overview`、`"Living room"`、`Study`、`Courtyard`；城市工程预置 `Overview`、`"Jin Mao"`、`"Jin Mao crown"`，以及园区的 `"Alibaba whole campus"`、`"Alibaba X Art Tower"`、`"Alibaba campus"`、`"Alibaba courtyard"`、`"Alibaba Z campus"`、`"Alibaba Z courtyard"`。图片和日志输出到 `.tmp/png/space-blender/`。预览不会保存修改源工程，也不会导出网页资源。
@@ -54,7 +54,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 - 碰撞框和运行灯光分别来自根对象的 `spaceObstacles / spaceLights`；可放置表面由网格的 `spaceSurface` 标记识别。改变房屋布局、墙体或家具占地时，需要同步更新碰撞与灯光数据，并检查表面标记，不能只移动外观网格。改变整个场景坐标会影响网页的预设相机与动态路线。
 - 交通模型作为动态实例模板使用；调整其几何后应应用对象变换并检查网页朝向。不要删除动态绑定对象。
 - 室内默认相机坐标共用 `core/packages/client/app/[lang]/space/space-room-cameras.json`，Blender 按坐标轴约定转换。`repair_scene_cameras.py` 仅修正首次迁移留下的旧预览相机，保留已被手工修改的位置和朝向；普通模型编辑不需要运行它。
-- `capture.ts`、`import_scene.py`、`upgrade_scene.py` 仅用于首次迁移及旧合同升级；日常只使用 `batch.ps1` / `export_scene.py`。不要用旧程序重新生成已手工编辑的工程。
+- `capture.ts`、`import_scene.py`、`upgrade_scene.py` 仅用于首次迁移及旧合同升级；日常只使用 `batch.mts` / `export_scene.py`。不要用旧程序重新生成已手工编辑的工程。
 
 ## 验收
 
@@ -86,7 +86,7 @@ pwsh -NoProfile -File design/space/scripts/batch.ps1 -Asset italian-original -Pr
 
 Blender 和 glTF 插件来源已加入网页的“来源与致谢”，统一数据在 `credits_data.json`；建筑及天气等既有资料见 [来源记录](../../docs/space-sources.md)，迁移状态见 [跟踪文档](../../docs/space-blender-tracker.md)。
 
-阿里巴巴徐汇滨江 X/Y/Z 三块园区已保存 `alibaba-xuhui-y-20260912` 与 `alibaba-xz-20260912` 修订并导出到本地网页，入口为“阿里园区全景”“X 区艺岛”“Y 区主楼”“Y 区中庭”“Z 区方案”“Z 区中庭”。X/Y 对照建成照片；Z 采用 SOM 2022 年设计资料，尚未核实竣工状态，三块园区仍有估算尺寸。`refine_alibaba_campus.py`、`refine_alibaba_districts.py` 都是首次增量脚本，已有各自修订时拒绝重建；后续编辑当前 `shanghai.blend`，再运行 `batch.ps1 -Asset shanghai`。实拍、来源和待修细部见[园区参考档案](references/alibaba-xuhui.md)。下文和平饭店与环球金融中心未保存候选仍保持候选状态；其旧源指纹已因园区保存失效，合入前必须以当前工程重新生成增量候选，禁止用旧候选整城覆盖。
+阿里巴巴徐汇滨江 X/Y/Z 三块园区已保存 `alibaba-xuhui-y-20260912` 与 `alibaba-xz-20260912` 修订并导出到本地网页，入口为“阿里园区全景”“X 区艺岛”“Y 区主楼”“Y 区中庭”“Z 区方案”“Z 区中庭”。X/Y 对照建成照片；Z 采用 SOM 2022 年设计资料，尚未核实竣工状态，三块园区仍有估算尺寸。`refine_alibaba_campus.py`、`refine_alibaba_districts.py` 都是首次增量脚本，已有各自修订时拒绝重建；后续编辑当前 `shanghai.blend`，再运行 `batch.mts --asset shanghai`。实拍、来源和待修细部见[园区参考档案](references/alibaba-xuhui.md)。下文和平饭店与环球金融中心未保存候选仍保持候选状态；其旧源指纹已因园区保存失效，合入前必须以当前工程重新生成增量候选，禁止用旧候选整城覆盖。
 
 Y/Z 中庭已分别保存 `alibaba-y-court-light-20260912`、`alibaba-z-court-light-20260912`，该批完成时有五组 Blender 作者灯，网页共用六盏近景灯；Y 夜间每盏 850 cd，Z 夜间四盏 1,200 cd、两盏 500 cd。`refine_alibaba_courtyard_lighting.py` 是首次增量工具，已有对应灯组时拒绝重跑；后续编辑现有灯具并正常导出。地面和标识配光为网页目测校准，尚非实测光度，远景照明仍需改进。
 
@@ -100,7 +100,7 @@ Y/Z 中庭已分别保存 `alibaba-y-court-light-20260912`、`alibaba-z-court-li
 
 金茂的实拍对照、首次精修脚本和后续编辑边界见[参考档案](references/jin-mao.md)。已有精修标记的工程禁止用首次建模脚本覆盖；日常继续编辑 `.blend` 并导出。
 
-环球金融中心、上海中心与外滩 24 栋的实拍对照、细部增量及审图见[上海地标档案](references/shanghai-landmarks.md)。`refine_shanghai_landmarks.py` 同样是首次增量工具；已保存版本带修订标记，重复执行会拒绝覆盖。可加 `--review-saved` 只生成检查图，不修改源工程；日常导出仍运行 `batch.ps1 -Asset shanghai`。
+环球金融中心、上海中心与外滩 24 栋的实拍对照、细部增量及审图见[上海地标档案](references/shanghai-landmarks.md)。`refine_shanghai_landmarks.py` 同样是首次增量工具；已保存版本带修订标记，重复执行会拒绝覆盖。可加 `--review-saved` 只生成检查图，不修改源工程；日常导出仍运行 `batch.mts --asset shanghai`。
 
 亚细亚凹廊与上海总会双亭的增量工具为 `refine_bund_galleries.py`，本地工程已带 `bund-galleries-20260909` 标记。后续审图仅用 `--review-saved --focus 1`（亚细亚）或 `--focus 2`（总会），可加 `--night`；禁止重新运行 `--apply` 覆盖艺术编辑。继续建模应编辑现有工程，再导出。
 

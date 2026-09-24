@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / Y / bin 9
-# Population in this bin: 372
+# Population in this bin: 373
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2643001,D2 B2 L2 D2 U2 B2 R' D2 L D2 L2 D B' L2 U2 F' D2 R' B U' L,Y,CMI Fiesta Open 2014 (2014-03-21~23),333 R2 C #4
@@ -51,7 +51,7 @@
 538544001,R' D2 L' F2 R2 F2 R2 U2 R2 B' L' U F L2 B' D2 R' B2 U' L2,Y,National Cubing Region Open 2017 (2017-06-23~25),333oh R1 B #3
 549373001,D2 U2 L' D2 R' D2 L2 D2 F' U' R B' D' L R D R' D F2,Y,CubingUSA Nationals 2017 (2017-07-07~09),333 R1 AH #2
 4983881009,L' B' L B2 L' F U F R D' F' R2 B2 U D2 F2 U2 D' B2 L,Y,Romanian National Championship 2025 (2025-08-21~24),333mbf Final B #2
-585924001,F2 L2 U R2 U' B2 L2 D2 F' L' R B R2 B2 U L2 F' L2 B2,Y,Imbabura Open 2017 (2017-09-02),333oh R1 B E2
+5834178001,L2 U' F2 U' B2 U2 F2 R2 F' R' U' L' D' F R F2 R U R',Y,Shin Kong Cube Open - Hualien 2026 (2026-09-20),333 Final A #5
 4866313001,B L F D R B' R2 L2 U2 D F2 U2 B2 D R2 F2 R F2 R',Y,Hawaiian Island Tour - Honolulu 2025 (2025-07-16),333 R1 D #2
 5518298001,U R U R D2 B2 R2 D U2 R2 D2 F' R D' U R' B' L' R',Y,Ephrata Spring 2026 (2026-04-11),333 R2 A #5
 623306001,R2 F L2 D R L' U' D B' D B L2 F D2 R2 U2 R2 F' B' R2 L2,Y,Guatemala Championship 2017 (2017-10-21~22),333 R2 A E1

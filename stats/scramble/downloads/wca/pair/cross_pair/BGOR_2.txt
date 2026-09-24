@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGOR / bin 2
-# Population in this bin: 796
+# Population in this bin: 800
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3187898001,D2 L2 U2 L' U2 L' U2 L' D2 B2 U B2 F2 R2 F' D F' U,B,Zamiin-Uud Open 2023 (2023-10-21),333 R1 H E1
@@ -120,7 +120,7 @@
 1312932001,D R2 D R2 B2 U' F2 L' B L2 D2 U2 B R D2 U2 L U,G,Shenzhen Open 2019 (2019-09-21~22),333 R1 E #1
 5768808001,U' B' L D' F2 D' B2 R2 U R2 D2 L F R' U F U2 L' B',B,Kansai Mega Day 2026 (2026-08-01),333 R1 C #4
 3940648001,B' U R B2 L2 D' R L2 D2 R2 D2 B U2 F R2 L' F' L,G,Camino al SAC Aves María 2024 (2024-07-13~14),333 R1 B #5
-633373001,R U' R2 U' B2 D' B2 U2 L D2 F2 B U2 D2 F R2 F R2,R,Shri Ram Cubing Challenge 2017 (2017-11-04~05),333 Final A #1
+5837585001,U R2 F2 R2 U F2 D' U' F' L D' B2 D2 L2 F U2 R' U' F2,B,Speedcubing à Saint Symphorien 2026 (2026-09-19~20),333 Final B #2
 5749996001,B U R2 U2 B' L' F' D L2 U D2 F B' R2 B U2 D,G,Warm Up Lent 2026 (2026-07-10~12),333 R3 B E2
 4269348022,F2 L2 B L2 B' D2 U2 B' R2 D' L' R D' F R D B2 L R' B' L2,R,Norrlandsmästerskapet 2024 (2024-11-08~10),333mbf Final A #1
 642388001,R' F R2 D' L2 B' R L2 B D' L' B2 L' U2 D2 F2 R U2 B2 D2,G,SSL 4 Mora 2017 (2017-11-11~12),333oh R1 A #4

@@ -33,11 +33,11 @@ case 按定义是双陪集 ⟨U⟩·S·⟨U⟩ —— 起手对准顶层那个 A
 
 ```bash
 # 1) 造语料(半分钟,只需一次;换了 zbls 库或 model 才要重跑)
-cd D:/cube/cuberoot.me/core
+cd core
 NODE_OPTIONS=--no-experimental-strip-types pnpm --filter @cuberoot/client exec tsx scripts/lsll-corpus.mts
 
 # 2) 全量(默认 opt9 + 15.6G 表;可随时 Ctrl-C,再跑接着算)
-cd D:/cube/cuberoot.me/solver/lsll
+cd ../solver/lsll
 node solve_loop.mjs
 ```
 
@@ -50,22 +50,21 @@ Emscripten `unwind`,子进程会安静退出;每个 case 即落盘所以重启�
 LIMIT=200 node solve.mjs      # 只啃 200 个 case,给出 case/s 与 解/s
 ```
 
-## 一键:`run_lsll.ps1`
+## 一键：`run_lsll.mts`
 
-```powershell
-pwsh run_lsll.ps1                                # 开跑(1 进程 × 12 线程 + h9,压低优先级)+ 自动进监控
-pwsh run_lsll.ps1 -Watch                         # 回来接着看那一行(Ctrl-C 只关显示,求解照跑)
-pwsh run_lsll.ps1 -Status                        # 一次性快照:到哪儿了 + 实测速率 + 剩几小时
-pwsh run_lsll.ps1 -Stop                          # 停(随停随续)
-pwsh run_lsll.ps1 -Merge                         # 分片结果并进 out.csv(灌库前跑一次)
+从仓库根目录运行：
+
+```bash
+cd core && pnpm solver:lsll             # 开跑，默认使用可用 CPU 并行度和 h9 表
+cd core && pnpm solver:lsll --watch     # 回来看同一行进度；Ctrl-C 只关显示
+cd core && pnpm solver:lsll --status    # 一次性进度快照
+cd core && pnpm solver:lsll --stop      # 停止，可按 key 续跑
+cd core && pnpm solver:lsll --merge     # 把分片结果并进 out.csv
 ```
 
-开跑之后直接接上监控,不用另开一个窗口;无人值守 / 计划任务加 `-NoWatch` 起完就退。
-读进度用的是 `FileShare.ReadWrite`:分片的 node 每算完一个 case 就 append 一次,
-默认的 `[StreamReader]::new($path)`(FileShare.Read)会在撞上那个窗口时抛
-「being used by another process」—— 求解没事,炸的只是显示。别改回去。
+开跑之后直接接上监控；无人值守加 `--no-watch` 起完就退。TypeScript 读取结果文件时允许求解进程同时追加。
 
-`-Procs N` 开 N 个进程分片并跑,各写各的 out。**单进程吃不满 CPU** —— LSLL 局面只有 12~14 步,
+`--procs N` 开 N 个进程分片并跑，各写各的 out；默认每进程线程数为可用并行度除以进程数，也可用 `--threads N` 指定，无 14 线程上限。**单进程吃不满 CPU** —— LSLL 局面只有 12~14 步,
 一次求解 44ms 就结束,12 个线程来不及铺开,实测系统总 CPU 只到 30%。把核分给几个互相独立的
 搜索,利用率才上得来。2026-07-28 实测(16 逻辑核 / 31.8G):
 
@@ -78,16 +77,7 @@ pwsh run_lsll.ps1 -Merge                         # 分片结果并进 out.csv(�
 小表多进程快 5.2 倍,内存还更省。**换表不改答案**(都是可采纳剪枝表,htm 是同一个最优值);
 变的只是并列最优解里吐出哪一条,即 out.csv 的 solution 列 —— 灌库时行级 sha 清单会多几行 diff。
 
-想让它占低优先级在后台跑(`run_lsll.ps1` 已经这么做了,这是手跑的写法):
-
-```powershell
-# Start-Process 没有 -PriorityClass(那是 Process 对象的属性),要 -PassThru 拿到进程再设
-$p = Start-Process node -ArgumentList 'solve_loop.mjs' -WorkingDirectory D:\cube\cuberoot.me\solver\lsll `
-  -RedirectStandardOutput solve.log -RedirectStandardError solve.err.log -NoNewWindow -PassThru
-$p.PriorityClass = 'BelowNormal'
-```
-
-重定向之后就不是 TTY 了,进度从"原地覆盖一行"退化成每 1% 落一条(全程约 100 行)。
+分片日志在 `solver/lsll/shards/log_*.txt` 和 `err_*.txt`；`--watch` 的进度只占一行。
 
 ## 中断与续跑
 
@@ -236,15 +226,15 @@ Solution found!: B' R2 D  F' L2 B  L2 F  B' D  U' R' L2 U  R  U2 B  L2 R  D2 B  
 
 ## 灌库(→ 页面)
 
-跑完(或跑到一半想先看看)走 `update_lsll.ps1`,照 `update_cross_stats.ps1` 的 `Load-*ToPg` 那套
+跑完(或跑到一半想先看看)走 `update_lsll.mts`,照统计管道的增量灌库规则
 行级增量:本地照常导出**全量** CSV,灌库时只 UPSERT 内容真变的行 + DELETE 已消失的键
 (复用同一个 `pg_incremental_diff.mjs`,自然键 = 第 1 个逗号字段)。
 
-```powershell
-pwsh update_lsll.ps1              # 导出 + 增量灌【线上】PG
-pwsh update_lsll.ps1 -Local       # 导出 + 灌【本地 pg13】(docker,5433)—— 配 dev:local 预览
-pwsh update_lsll.ps1 -ExportOnly  # 只出 lsll_cases.csv,不碰任何库
-pwsh update_lsll.ps1 -Solve       # 先把 corpus.txt 跑完,再导出 + 灌
+```bash
+cd core && pnpm solver:lsll:update                # 导出 + 增量灌线上 PG
+cd core && pnpm solver:lsll:update --local        # 导出 + 灌本地 pg13
+cd core && pnpm solver:lsll:update --export-only  # 只出 CSV，不碰数据库
+cd core && pnpm solver:lsll:update --solve        # 先求解，再导出 + 灌库
 ```
 
 灌库前 `export_cases.mjs` 会整表复核「首末招不是 U 系」——旧口径的 `out.csv` 在这一步一定炸,

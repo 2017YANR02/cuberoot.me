@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / BGOR / bin 3
-# Population in this bin: 805
+# Population in this bin: 809
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -65,7 +65,7 @@
 5161473001,R F R D' F R2 U2 F' D2 B F' L' B F' L' F2 L' B',B,Cubing Comicfest Cali II 2025 (2025-11-01~02),333 R1 A E2
 2720332001,R' F2 R L2 D' R L' B2 U L' R2 F2 U L2 U R2 U L2,O,Cube4fun in Lublin 2023 (2023-05-13),333 R1 A #4
 4748245004,D' B2 U2 D F' L U2 F D R D F U2 F2 D2 R2 L2 F' L B,R,May the Cube Be Solved CO 2025 (2025-05-25),333mbf Final B #1
-5365455001,D' R L2 U F2 D R2 U' F2 L2 B2 R B R' B2 U' B' D R,G,San Cristóbal 2026 (2026-01-31),333 R1 A #1
+5839455001,R' U F' L2 F2 D2 B' U2 R2 B' L2 R B R2 U2 B' F2,R,Canberra Spring Open 2026 (2026-09-19),333 R2 C #4
 324792001,L F' D2 R' U2 R2 B L' F2 R B2 R' B2 R B2 R2 U2 L,B,Bolivia Nationals 2016 (2016-07-01~03),333 R1 A #3
 331474001,U2 F2 D L' D' R2 B L' B' L U2 R2 U2 F D2 B',R,Happy Cubing Taiwan 2016 (2016-07-24),333 Final A #4
 332418001,U2 F2 D' L2 F2 U' F' R2 U' B U' B D U2 F' R2 U',G,National Cubing Region Open 2016 (2016-07-23~24),333 R2 I #3
@@ -119,7 +119,7 @@
 1076319001,F B2 L' F' B' L D2 L' D2 F U D L2 F2 B2 D2 R2 U,B,Norwegian Championship 2019 (2019-03-29~31),333 R3 B #2
 609557001,B F' R2 F' R' U2 L2 R' U' F' L2 B L U2 B2,G,CET Cubing Paradox 2017 (2017-10-01~02),333 Final B #5
 616819001,D2 R D2 B2 R F2 D2 U2 R' D L' B' D R' U2 B R F' R,B,Hungarian Open 2017 (2017-10-13~15),333oh R2 B #5
-5653592001,F2 R' L' D' F2 R' L' U B2 L U' D' L2 U F2 B2 U B2,R,Hobart Autumn 2026 (2026-05-24),333 R1 D #4
+5833447001,B2 R B' U' R F2 U' L B2 R' U L D2 R2 U2 B2 L F2,G,Astana NxNxN 2026 (2026-09-13),333 R1 C #5
 627491001,B' D2 L2 B' D2 L2 B' L' B' D2 L R2 B R2 B2 L2 F' R',B,Toulon Open 2017 (2017-10-27~29),333oh R2 B E2
 5487567001,D2 B F2 L2 B D' B R' U' R' F2 L2 U B' R2 B',R,Big Sky's Huckleberry Hurrah 2026 (2026-03-28),333 R1 B #5
 3844261001,F' U' B U L2 R2 U2 F' D2 U2 R2 F U' B' U2 B' U2 L R,G,Sri Lankan Nationals 2024 (2024-06-07~09),333 R1 A #5
@@ -146,7 +146,7 @@
 661204003,L2 F L2 D2 F L2 B' U2 F2 L D2 U' F' U B R D2 L D' L B2,G,Fuenlabrada Open 2016 (2016-12-10~11),333mbf Final A #1
 4430003001,F2 L2 D U2 L2 D U' B D2 B L' R2 B' F' L R2 D' U',R,Aachen Open 2025 (2025-01-18~19),333 R2 B #5
 661245017,L2 F2 D2 F2 R2 U R2 U' B2 F2 D' B F D' F U' R F' R2 U' F2 L2,R,Bogor Open 2017 (2017-02-11~12),333mbf Final A #1
-661335027,R2 U' L2 F2 U' R2 U B2 D' B2 U2 L U L2 R' B' D' L D L',R,Please Be Quiet UCLA 2017 (2017-04-29~30),333mbf Final A #2
+5837585001,U R2 F2 R2 U F2 D' U' F' L D' B2 D2 L2 F U2 R' U' F2,B,Speedcubing à Saint Symphorien 2026 (2026-09-19~20),333 Final B #2
 661390037,D2 R2 D' B2 F2 R2 D' F L' U L' R' B2 F' L' U F2 U2 B' L2,B,Speed Days Kraśnik 2017 (2017-06-10~11),333mbf Final A #2
 4712666001,U R F' R' F R B' U L2 D2 F2 R2 D2 F' L2 B L,O,Spring Bozeman 2025 (2025-05-10),333oh Final A E1
 4283696001,L' U2 F2 U2 F2 D L2 U' L2 U2 L' U' F' U F D2 F' D U',R,Arizona Mini 2024 (2024-11-16),333 Final A #3

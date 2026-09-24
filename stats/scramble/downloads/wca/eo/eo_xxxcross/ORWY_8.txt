@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / ORWY / bin 8
-# Population in this bin: 479
+# Population in this bin: 480
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3369381001,B2 D2 U2 L' F2 D2 L R2 U2 B U B' R F' R2 D' R2 B',W,Sydney Summer 2023 (2023-12-16~17),333 Final A #5
@@ -59,7 +59,7 @@
 444617001,B' R2 U2 B' U2 F2 D' R2 F' R D F' L' R' F' L' R2,Y,Forest City Open 2017 (2017-02-11),333oh Final C #1
 2655130001,U2 L2 B' D2 B2 D2 L2 F' R2 U' F R U' L D2 F' D R2 B,O,Swallow Spring 2023 (2023-04-22),333 R1 B #5
 5489750001,U2 L2 D' B2 U' L2 R2 U B2 F' D' F R2 U' R U2 B2 L',W,Kopli NxN Rampage 2026 (2026-03-28~29),333 R1 A #2
-489828001,U2 L2 D' B' U D2 L U L2 F B2 U2 L F2 D2 F2 U2 L2 F2,W,USM Penang Cube 2017 (2017-04-15),333 R2 B #1
+5831537001,U' B2 L' B2 D' B2 L2 D2 L2 D2 U' B D2 U L2 D B2 F R',R,Belgrave Open 2026 (2026-09-12~13),333 R2 A #1
 495871001,U' F' B2 R2 F U' B2 L' F R' D L2 F2 D2 F2 B L2,R,Torneio Mestre Álvaro 2017 (2017-04-22~23),333 R1 F #1
 511853001,D2 U L2 D' B2 D2 F2 D2 F U R U R' B2 U B' F L',W,Bay Area Speedcubin' 10 2017 (2017-05-20),333 R2 A #2
 5416353001,D2 U2 L2 R2 F2 L R' B' D2 L' U2 R2 F L F R F,Y,Good Solves in Gibson Park 2026 (2026-03-01),333 R1 C #5

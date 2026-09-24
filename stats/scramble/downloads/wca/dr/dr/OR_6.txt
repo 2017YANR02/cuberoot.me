@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / OR / bin 6
-# Population in this bin: 575
+# Population in this bin: 579
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 10957001,U2 L' F2 D2 R2 F2 L' F2 D2 R F L' F2 L2 R' F' R D,O,Lexington Spring 2014 (2014-04-12),333oh R1 B #2
@@ -49,7 +49,7 @@
 248479001,B2 U B2 U R2 D' U2 L D2 L D' B' R2 U2 B2 U2 L U2,O,Slow N Steady Winter 2016 (2016-01-30),333oh R1 J #3
 5420132036,B' L' U2 F U' F2 R' B' L2 D R' F U2 B R2 F2 L2 U2 L' F',O,Madison Manor PBQ 2026 (2026-03-01),333mbf Final A #1
 259656001,B2 R2 D2 L' U2 B2 L' F2 R D2 R2 D B' F' L2 F2 L' B' F2,O,MathSoc Open 2016 (2016-02-27~28),333oh R1 B #4
-261368001,U2 F2 D2 R U2 F2 R2 U2 F2 R' D2 F D F D2 L' R2 U,O,Mishawaka 3x3 Day 2016 (2016-02-27),333 R2 C E2
+5835803014,U2 R' B L2 D2 L2 F U2 B L2 D B2 D' B2 F' D2 L R2 B L B',O,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #1
 5569161001,U2 D2 R B' U B D2 R2 U2 L U2 D' B2 U D2 F2,O,Twist and Turn Ghent 2026 (2026-04-18~19),333 Final A #3
 267473001,R2 D' F2 L2 F2 D' R2 B' R' D F R B D' L2 U B' R,O,Cube Ala-eh 2016 (2016-03-13),333 Final B #4
 3011276001,U L2 B' U2 B2 U2 B' D2 R2 B L2 F' L' D' U2 F R2 F' D,O,Begastri Open 2023 (2023-08-26~27),333 R2 C E1
@@ -158,7 +158,7 @@
 5798222001,L2 U2 R2 U F2 R2 F2 D' R2 B D B L' D F' L2 R2 B L2,O,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R2 D #5
 885992001,B2 L R' F2 R2 D2 F2 L F2 D' L' U2 R B D F D' U2 L2 D2 L B,O,Monnem City Cubing 2018 (2018-09-22~23),333bf Final B E1
 891892017,D2 R' U2 L' B2 L' U2 F2 U B2 F' L B2 R' B' R2 B2 U2 F2 L B2,O,China Championship 2018 (2018-10-02~04),333mbf Final A #3
-3237937001,F2 R U2 L R2 D' U2 F2 R2 D2 B L B L2 F2 R' U2,O,North Carolina Championship 2023 (2023-11-04~05),333 Final A #1
+5837135001,L' D2 F2 R B2 R2 B2 R' F R2 U2 L R2 U L' R',O,UNSA Speedcubing Otoño II 2026 (2026-09-19),333 R1 B #2
 3746111001,D' R U L U2 F2 U' L' B' U F L2 F D2 L2 D2 F' B' U2,O,Minxville Indiana 2024 (2024-05-04),333 Final A #2
 4289618001,L2 U2 B2 R B2 L2 B2 U2 L' D2 L F2 B U' B' R2 D2 F2,O,Campeonato Brasileiro de Cubo Mágico 2024 (2024-11-15~17),333 R2 A #4
 898771029,D2 R' D2 B2 D2 R B2 D2 L R' U B D B R2 B' F' R' F R2 B' L,O,OSU Blind Weekend 2018 (2018-10-06~07),333mbf Final A #1

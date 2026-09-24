@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGWY / bin 8
-# Population in this bin: 300
+# Population in this bin: 301
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5768603001,B L F' U2 R' U B2 D' B D2 B' D2 R F2 R L2 U2 B2 L B' L2,B,Cubalaya LA 2026 (2026-07-25),333bf Final A #1

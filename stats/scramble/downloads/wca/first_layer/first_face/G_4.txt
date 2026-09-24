@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / G / bin 4
-# Population in this bin: 663
+# Population in this bin: 667
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3299986021,B2 D' L2 U D L' D F2 D2 L2 B L2 U2 F' U2 L B,G,No Clock in Lužice 2023 (2023-11-25~26),333mbf Final A #1
@@ -199,7 +199,7 @@
 1048458001,B2 R U2 B2 L B2 R2 B2 U F' L' D' F2 R2 U' B U' B D2,G,Pittsburgh Spring 2019 (2019-03-09~10),333 R2 A #3
 3187026001,L2 U2 F L2 B' L B D L' U2 F L D R2,G,Thailand Championship 2023 (2023-10-20~22),333 Final A #5
 4042785001,F B' L U' L' F2 L2 D' F2 L' U2 R2 F R2 F U2 B L2 F',G,Back to the Cube Ceilândia 2024 (2024-08-24~25),333 R1 A #3
-1125736001,D R' B2 R' F' D2 L U F D2 B' D2 L2 D L2 D' B2 U L2 F2,G,Xuzhou Spring 2019 (2019-05-01),333 R2 B E2
+5835309001,R L' D2 F' L2 B2 L B L U2 F2 R F2 B2 R' D2 F2 R2 U,G,Silesia Cubing Days 2026 (2026-09-19~20),333 R1 A #4
 1419982001,F2 B' U' B R2 B L2 B2 U' B R' U R2 D' F2 D2 R2 D R2,G,Baden-Württemberg Open 2019 (2019-11-23~24),333 R1 C #2
 4913056001,F R2 D2 B2 D' L2 D2 B2 F2 D' R' F L' B2 D' R B' D R,G,Mini Recife Open 2025 (2025-08-02),333oh R1 B #5
 5178083001,L2 F U' F' U2 L2 B' D2 U2 B D2 B' L U2 F2 U2 R' F' U' L',G,Tramsheds VII: Spring Saturday 2025 (2025-11-08),333 R2 A #2

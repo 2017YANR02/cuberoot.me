@@ -1,73 +1,50 @@
 # 本地开发环境
 
-## MySQL
+## WCA 统计用 MySQL
 
-| 配置 | 值 |
-|------|-----|
-| MySQL 版本 | 8.0.37 |
-| 服务名 | MySQL80 |
-| 数据目录 | `E:\mysql_data\` |
-| 数据库 | `wca_developer_database`（121 张表） |
-| Dump 文件 | `E:\mysql_data\wca-developer-database-dump.sql` |
-| 连接凭据 | `core/jobs/stats-build/database.yml`（已在 `.gitignore`） |
-
-**统计管线只用到 12 张表**，清单见 [`database.ts`](../core/jobs/stats-build/src/core/database.ts) 的 `REQUIRED_TABLES`。
+统计 job 使用 `wca_developer_database`。连接信息由 `MYSQL_HOST`、`MYSQL_USER`、`MYSQL_PASS`、`MYSQL_DB` 环境变量或本机 `core/jobs/stats-build/database.yml` 提供；必需表清单以 [`database.ts`](../core/jobs/stats-build/src/core/database.ts) 的 `REQUIRED_TABLES` 为准。MySQL 服务名和 dump 所在目录随开发电脑而异，不使用旧 Windows 绝对路径。
 
 ### 导入数据库
 
-```powershell
-# TypeScript 版一键导入（下载 + 解压 + 过滤导入 + 建索引）
-npx tsx core/jobs/stats-build/src/bin/update_database.ts
+从 `core/` 运行：
+
+```sh
+pnpm --filter @cuberoot/stats-build exec tsx src/bin/update_database.ts
 ```
 
-> **关键优化**：`innodb_flush_log_at_trx_commit = 0` 导入（9 小时 → ~10 分钟），完毕后自动恢复为 1。
+此入口会重建配置指定的数据库；运行前核对目标是专用的本地开发实例。MySQL 服务启停按本机安装方式操作，不把旧 Windows 的 `MySQL80` 服务名当作跨平台命令。
 
-**启动/关闭 MySQL**：
+## 登录配置
 
-```powershell
-sudo net start MySQL80
-sudo net stop MySQL80   # ⚠️ 绝对不要强杀 mysqld.exe，否则损坏 InnoDB
-```
-
-**启用 sudo**（首次，Windows 11 24H2+）：设置 → 系统 → 开发者选项 → 启用 sudo。
-
-## WCA OAuth
-
-| 配置 | 值 |
-|------|------|
-| 流程 | Implicit Grant（`response_type=token`，绕过 CORS） |
-| Client ID | `mPeg5FiAn7l0CcyQ9CdiSEn3XlBrcA7IMw6Vd9AOsz4` |
-| Scopes | `public` |
-| Redirect URIs | `cuberoot.me/auth/callback`、`www.cuberoot.me/auth/callback`、`localhost:5173/auth/callback` |
-
-> Implicit Grant 因为 WCA token endpoint 不开放 CORS。
+WCA OAuth 与其他登录流程以 `core/packages/client/app/[lang]/dev/auth/page.tsx`、现役 API 路由和环境配置为准；退役 Vite 开发端口 `5173` 与旧 Implicit Grant 说明不再作为配置依据。
 
 ## 前端开发服务器
 
-```powershell
-cd D:\cube\cuberoot.me\core
+从仓库的 `core/` 目录运行：
+
+```sh
 pnpm --filter @cuberoot/client dev
 # → http://127.0.0.1:3000/
 ```
 
-> `app/{tools,stats}/[...slug]/route.ts` catch-all 直接从仓库根目录 serve `/tools/` 和 `/stats/` 静态文件，无需额外服务器。
+本地 Web 的 `/v1/*` 通过 Next rewrites 代理线上 API；`/tools/`、`/stats/` 使用现役 Next route handler，静态资源的发布边界见 `.github/workflows/sync_toolkit.yml`。
 
 ## 上游同步脚本
 
 ### Solver（or18/RubiksSolverDemo）
 
-```powershell
-cd D:\cube\cuberoot.me
-pwsh -NoProfile -File .\sync_upstream.ps1 -Only solver
+在 `core/` 运行：
+
+```sh
+pnpm upstream:sync --only solver
 ```
 
 同步 `src/` 运行时、根目录依赖、13 个 HTML 页面。模板文件在 `.sync/` 目录。
 
 ### Alg-Trainers（mihlefeld/Alg-Trainers）
 
-```powershell
-cd D:\cube\cuberoot.me
-pwsh -NoProfile -File .\sync_upstream.ps1 -Only algtrainers
+```sh
+pnpm upstream:sync --only algtrainers
 ```
 
 同步 30 个训练器目录 + `src/` + `style/`，为每个训练器注入 `i18n.js`。

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 3
-# Population in this bin: 347
+# Population in this bin: 348
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 739001,U L2 F2 D' R2 D' F2 U2 R2 F2 R F L2 D L R' F' L2 U' L' R' D',W,Bogotá Cúbico 2014 (2014-03-15),333bf Final A E1
@@ -92,7 +92,7 @@
 5114782001,B U L2 U F2 B R' U B2 D L2 B2 D' F2 U' B2 L2 U' L2,W,Guilin Open 2025 (2025-10-19),333oh R1 A E2
 779453001,D2 B2 L2 B F' U2 L2 F' R' D F U' B' F' L2 F R2 D U',W,Play Cube 2018 (2018-05-13),333 R1 H #1
 785612001,L2 F' R2 D2 L2 B' U B' L' U' B2 U2 D' F2 R2 D' L2,W,Arnold Classic Africa 2018 (2018-05-18~20),333 R1 D #5
-3762559001,F2 U' F2 B' L B D' F2 D' B2 L R2 F D2 F B U2 R2 F,W,Kensington May Sunday 2024 (2024-05-12),333 R1 B #1
+5833318001,B R' B2 L2 R D2 B2 L' B D F' R' B' F2 L' U2 B' L B,W,Manchester September 2026 (2026-09-19),333bf Final B E1
 809553001,U L2 U2 R2 U R2 D' R' B' R2 U2 B' L2 U' R2 F2 R2 B',W,CubingUSA Western Championship 2018 (2018-06-15~17),333 R2 B #5
 5275026001,U D L B' D' F D2 B2 D B R D2 L F2 R L2 D2,W,Wiltshire Winter 2025 (2025-12-13~14),333 R1 A E1
 4110593016,R' L B R' L2 U F' B R U2 R2 F2 L' D2 L F2 R' D2 B2 L',W,West Coast 4: Göteborg 2024 (2024-09-14~15),333mbf Final A #1

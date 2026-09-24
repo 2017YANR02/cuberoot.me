@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BGOR / bin 2
-# Population in this bin: 536
+# Population in this bin: 542
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -13,7 +13,7 @@
 53811001,R2 F2 L2 D2 F2 R F2 L2 B' D L' D' R2 B2 F D F2 R' F',G,Fortaleza Open 2014 (2014-08-23~24),333 R2 B #5
 57538001,R U F R' B' R' U F D L2 U2 L F2 L2 B2 R' D2 B2 U2,G,Aaruush Cube Open 2014 (2014-09-13),333oh R1 B E1
 2980266001,R' F U2 R' D2 L2 R' U2 F2 L2 R U R2 B U R2 B U R,G,Hyderabad Cube Open 2023 (2023-08-11~13),333 R1 J E2
-66155001,R2 L U' F D B2 L2 F' R' B2 U' B2 U' L2 U' L2 B2 U,O,Montreal Fall 2014 (2014-10-11~12),333 R2 B E1
+5838058001,F2 D2 B' R2 U2 B R2 B2 R2 D' F R D U' B' R' D2 L' U',B,Beaver Falls Open 2026 (2026-09-19),333 Final B #1
 3881925001,F L2 B2 R2 B2 D' B2 R2 U' R2 D2 B L F R' F L' U' F,R,Cavite Speedcubing Open VIII 2024 (2024-06-23),333 R1 A E2
 5560802001,U2 R U2 R' B2 R' F2 D2 R2 F' D F' U B' U' B2 D2 L F2,G,Racing Kane 2026 (2026-04-18),333 R1 A #1
 3144274007,B' F' L2 B U2 B2 U2 L D' R' U B' L2 B D' L' R' F R2 B' L2,G,Please Be Quiet Bergen 2023 (2023-10-07~08),333mbf Final A #3
@@ -95,7 +95,7 @@
 1931196001,L' R2 U' R2 D' L2 R2 D2 R2 B2 D F R' F' U2 B L2 D L2,G,Cuenca Open 2022 (2022-05-21),333 Final B #5
 637985001,R' U D B2 D2 F' U2 D R L2 U2 B U2 L2 B2 R2 B',G,Raleigh Rubik's Rally 2017 (2017-11-04),333oh Final A E2
 2261740064,U' L' B2 U' R' F' U2 R2 U L D' F2 L2 F' R2 L2 F' U2 R2 B R',R,Mini Mental Breakdown San Diego 2022 (2022-10-23),333mbf Final A #2
-652536001,R2 U' F2 D B2 U L2 U L' D F L2 D B' F U' F L U',O,WHU Rubik's Cube Days 2017 (2017-11-25~26),333oh R1 A E1
+5837736028,R2 B L2 D2 B2 D2 L F2 L' U2 B2 F' L F2 D B' U2 L F' L',O,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final B #1
 5569300001,B' F2 L U2 L D2 F2 L U' R2 F D2 L R' F2 L' R' B2,R,Twist and Turn Ghent 2026 (2026-04-18~19),333oh Final B #5
 659418001,R D' B2 R B' U F L2 D L' U L U2 F2 R2 B2 D2 R' D2,G,Rocky Top 2017 (2017-12-02~03),333 R1 D #1
 3443719001,L' D' L U2 B' U2 L2 B' D2 R' F U' F' R2 U',B,Melbourne Summer 2024 (2024-01-19~21),333 R2 B #2
@@ -172,7 +172,7 @@
 1037511001,L2 D' F2 R D B' L' U2 L F' U L2 U2 R2 D2 B2 R2 L2,G,Voronezh Open 2019 (2019-03-02~03),333oh R1 A #1
 4865983001,B D2 R' B2 R D2 R' B2 D2 B' D R D' U2 F2 D B D2,G,Cavite Speedcubing Open XI 2025 (2025-07-12~13),333 R2 B E1
 1052340001,U F2 R2 U' L2 D' U F L2 B F2 D2 B' U R' U' F2,O,Anaadyanta Cube Open 2019 (2019-03-08~09),333oh Final B E1
-4800714019,F U2 R' B R' D2 L' F2 R' B2 R2 B R U' B2 F2 L D' B' L2,B,Risbjerg Juni 2025 (2025-06-14~15),333mbf Final A #1
+5835647001,U' B2 U2 B2 F2 U' F2 U2 L B' R2 U B' D2 U' B2 D2 L,O,Cliffside Cubing Billings 2026 (2026-09-19),333 R2 A #2
 1066468001,U2 L F2 D2 L F2 U2 D R' U B' U D2 R2 U' B2 U' R2 B2,O,Utah Spring Open 2019 (2019-03-23),333 R1 B #1
 3176902001,R2 F2 R B2 D2 L' D' U' R D B2 D2 U2 B' D2 F' R,B,San Gil Plaza 2023 (2023-10-21),333 R1 B E1
 2890892001,D' B L B2 R2 B D' L' B U R2 F' R2 F' U2 B,R,Canadian Championship 2023 (2023-07-13~16),333 R3 A #4
@@ -180,7 +180,7 @@
 5133615001,R2 U' B' D2 F' R2 D2 U2 R2 B R' B2 D' L R' B2 R2 F',R,Rocky Mountain Championship 2025 (2025-10-24~26),333 R1 D #4
 1121679001,B2 D2 B2 D' B2 D' B2 R2 D' B L' D2 L U' B L D' B' L',G,Virginia Qualifier 2019 (2019-04-27~28),333 R2 A #4
 3945009001,L' F2 U' R2 F' D2 R2 U2 R2 B D2 B' D L B2 L B L2 R',G,America's School Speedcubing II Huaraz 2024 (2024-07-13),333 Final B E1
-1480418001,L U' B L D2 F U R2 U F2 U2 L2 D2 L' U2 F2 R2 L' D2,G,Surf Coast Cubing 2019 (2019-12-29),333 R2 B #3
+5834413001,D' L F2 U D' F R' F2 D2 L' D2 L' B2 D2 R2 F2 L' B',B,Tagum City Open 2026 (2026-09-12~13),333 Final A #1
 4375823001,D2 R' F L' D' F2 R2 U2 R B U L2 F2 U' B2 U' F2 U R2 D2,R,Hangzhou Open 2024 (2024-12-15),333bf R1 A E2
 3240211001,B R2 D2 L2 D2 B' L' B D' L2 B' L2 D2 B D2 B R' D,R,Basauri Open 2023 (2023-11-03~05),333 Final A #2
 3515708001,U' F2 U L F' U B2 R' F R2 F' R' D2 R B2 L2 U2 R2,R,Naticube 2024 (2024-02-17),333 Final A #1

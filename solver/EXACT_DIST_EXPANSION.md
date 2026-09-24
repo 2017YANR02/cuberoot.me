@@ -12,7 +12,7 @@
 | 有路线 | 路线清楚,代码还没写 | 有算法段,没命令行 |
 | 够不着 | 现有硬件够不着 | 不列在这里(格子里直接写要多少) |
 
-跑之前先读 `AGENTS.md` 的硬约束:重活 ≤ 14 线程,别吃满核;huge 表要显式
+跑之前先读 `AGENTS.md` 的硬约束:线程默认使用机器可用并行度;huge 表要显式
 `CUBE_ALLOW_HUGE_TABLES=1`;表落 `./tables/`,别污染测试目录。
 
 ---
@@ -53,9 +53,9 @@ E3 在这份台账里躺过一阵:51 亿态、11.24 GB nibble、「等机时」�
 
 ### 正确性怎么来的
 
-```powershell
+```sh
 cargo build --release --bin dist_tracked
-.\target\release\dist_tracked.exe verify     # ~10s
+./target/release/dist_tracked verify
 ```
 
 一次比七条已知曲线 + 一组等价性检查:
@@ -114,9 +114,9 @@ cargo build --release --bin dist_tracked
   真实 **212,889,600**,nibble 753 MB。逐档 ×24 回到站内分母 5,109,350,400
 * 命令(两条都不用 huge 开关):
 
-  ```powershell
-  .\target\release\dist_tracked.exe f2leo_cross          # 两条轴取最短 = 站内口径
-  .\target\release\dist_tracked.exe f2leo_cross_1axis    # 固定一条轴 = 上界
+  ```sh
+  ./target/release/dist_tracked f2leo_cross          # 两条轴取最短 = 站内口径
+  ./target/release/dist_tracked f2leo_cross_1axis    # 固定一条轴 = 上界
   ```
 
 * 实测各 2.6s
@@ -150,7 +150,7 @@ cargo build --release --bin dist_tracked
 * 引擎：`src/bin/first_layer_gods_number.rs` + `dist/packed2.rs`；每态只存
   `未见 / 当前层 / 下一层 / 已处理` 四态，2 bit，总计 6,466,521,600 B。
 * 深度无 nibble 14 层上限；完整 BFS 的最后非空层就是严格 God 数，逐层计数就是完整分布。
-* 运行门：硬限 25,000,000,000 B、线程 ≤14、正式跑必须显式
+* 运行门：硬限 25,000,000,000 B、线程默认使用可用并行度、正式跑必须显式
   `CUBE_ALLOW_HUGE_TABLES=1`。命令、输出和见证复核见 `FIRST_LAYER_GODS_NUMBER.md`。
 * A/B 双槽整层断点固定占 12,933,051,392 B；同趟按层额外计数
   `edge4=CROSS_SOLVED`，给出「十字已好 → First Layer」严格分布和直径。

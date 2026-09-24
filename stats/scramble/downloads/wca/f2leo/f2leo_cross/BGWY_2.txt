@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 598
+# Population in this bin: 600
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
@@ -132,7 +132,7 @@
 751859001,B' L2 B' F2 R2 B R2 D2 U F U' L2 F2 D2 R' B2 L U,B,Saint-Maurice Sunday Open 2018 (2018-04-15),333 R1 B #2
 2100661007,B2 U' L F R2 D2 U2 B' F' U2 L' B' D' R2 F2 R D2 L B',B,SoCal Silent Spectacular 2022 (2022-08-13~14),333mbf Final A #2
 766379001,L F' L U L' U2 L' D' B R2 B' R2 D2 F2 U2 F2 U R2,Y,Oakville Limited Spring 2018 (2018-04-28),333oh R1 C #5
-2401493001,F' L2 B2 L2 R2 U2 B L2 F L2 R' D' F2 L2 B2 U' R' D2,G,Race the Clock Minnesota 2022 (2022-12-31),333 R1 A E1
+5835824013,R2 D' L' U2 L2 F2 D2 L2 U2 F' L2 F D F2 L' D L D' U' L' F,W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 3828324014,U2 R B R2 B2 F2 D2 U' R2 D L2 U' B2 R F2 U2 L2 B' U F2 L B',W,Rio Cubolympics 2024 (2024-05-30~06-02),333mbf Final A #2
 4844388001,F' L2 B F R2 U2 D B' D' L D2 L2 F2 U' F' U' L',Y,Kublördag Landvetter I: 2025 (2025-07-05),333 R1 A #2
 826425001,U2 F2 R2 F2 L D2 U2 B' D B2 D2 B2 F2 R' D U2 B D2,Y,Adelaide Winter 2018 (2018-07-14),333 R2 A #5

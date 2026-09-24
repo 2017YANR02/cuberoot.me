@@ -12,7 +12,7 @@ import { processClockBlock } from '../src/clock_analyzer.mts';
 
 const SCRAMBLES = new Map([
   ['101', 'UR2+ y2 DL3-'],
-  ['102', 'UR3+ DR2- DL1+ UL4- U2+ R1- D3+ L2- ALL5+ y2 U1- R2+ D3- L4+ ALL6+'],
+  ['102', 'UR3+ DR2- DL1+ UL4- U2+ R1- D3+ L2- ALL5+ y2 U1- R2+ D3- L4+ ALL6+ UR DR DL UL'],
 ]);
 
 function verifyCsv(csvPath: string): void {

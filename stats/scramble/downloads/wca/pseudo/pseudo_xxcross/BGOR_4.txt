@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGOR / bin 4
-# Population in this bin: 713
+# Population in this bin: 718
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1863333001,D2 R2 D2 B2 D2 L' D2 L B2 R U' L B' L' U L' F2 L,G,Romerike Easter Open 2022 (2022-04-09~10),333 R2 A E1
@@ -15,7 +15,7 @@
 40662001,F2 D L2 D' L2 U2 R2 B2 U' B' F2 D' U2 R D2 R' D' L' U2,G,Ha Noi Open 2014 (2014-07-26~27),333 R2 C #2
 2261587001,R D R B2 D' R L D' B U2 L2 U2 B' R2 U2 F' D,G,Minyons de Terrassa Open 2022 (2022-10-22),333 R1 C #5
 5224746001,B U B U L D2 F2 D2 F2 R' D2 F' R' F' R2 B2 D2,G,Kamppi Cube Weekend 2025 (2025-11-29~30),333 R2 A #2
-1577026001,F' U2 L2 B' U' B L2 B R U2 D F R2 U2 L2 F' R2 F2,G,Saraswati Open 2020 (2020-02-23),333oh R1 B E2
+5834558001,U2 B2 R' B2 L F' R D R' U' D2 R2 L2 B2 D R2 F2 R2 U2,O,Tagum City Open 2026 (2026-09-12~13),333oh R1 A #5
 4503300001,R' D R2 L' F2 R' L2 B' D2 R U2 R2 D2 B2 R' F2 L2,G,Avenida Chile XX 2025 (2025-02-15~16),333 Final A E1
 3521690022,D2 B' F L2 U2 D' B' U' B' D L U L2 D2 B L D',R,Belgrade Winter 2024 (2024-02-17~18),333mbf Final A #1
 3555232001,L' R' F2 D2 R2 F2 U2 R B2 R' B U F D' L2 D' R2 B R2,G,Cube4fun in Warsaw 2024 (2024-03-02),333 R2 A E1
@@ -120,7 +120,7 @@
 2624066001,U B2 D' F2 R2 F2 D R2 D2 B' D R' U R D' F' L2 R2,G,Eretum 2: Easter Boogaloo 2023 (2023-04-08),333 R1 C #5
 655983001,B2 D2 B' R2 D2 R2 U' R U2 D2 B' R2 F U2 B' L2 U2 B L2,G,MPEI Open 2017 (2017-11-24~26),333oh R1 B E2
 660549021,F U2 L2 D2 B' L2 U' B' U L B D2 L B2 U2 L2 F L B,R,GCC Fall 2014 (2014-09-27),333mbf Final A #1
-1239812047,B2 L2 U' B2 U' R2 D U2 F D2 L F' R' D2 B2 D' U F U2 B',O,China Championship 2019 (2019-07-26~28),333mbf Final A #2
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
 1467171001,F2 D F2 D' R2 B2 R D' R2 U2 B2 U' F D' F D2 U,O,Pejaten Village Speedcubing 2019 (2019-12-14),333 R1 A #3
 660804002,L2 F2 L2 R2 D F2 D2 R2 F R2 U2 R2 B' U' R U2 B2 R' F2 L B,O,Italian Championship 2015 (2015-08-29~30),333mbf Final A #1
 2831437001,R2 U R2 U B2 D' R2 U B' D R' D F2 R' U R2 U2 F2 U,O,Little Giant Open 2023 (2023-06-24),333 R1 B #2
@@ -188,7 +188,7 @@
 923728001,B' L2 R2 F' L2 B2 L2 R2 B U2 F' L U' F' D' B2 U' R B' R' B2 L B',O,UNESP Open 2018 (2018-11-03~04),333bf Final A #3
 924001001,D2 R D2 R' B D B2 R2 F' U' R2 F B2 R2 B' R2 L2 B U2,G,SWA Cup 2018 (2018-11-03),333 R2 B #4
 5299977001,B2 D2 R2 B U2 R2 F' L' D L' B2 L D L2 D' U2 B',B,Korean Championship 2025 (2025-12-27~28),333 R2 C E2
-4173602014,R' D' L' D2 B D' R' F2 L2 U2 F2 B' D2 F2 R2 D2 R F2 U' L2 U',B,Götalandsmästerskapet 2024 (2024-10-05~06),333mbf Final B #1
+5831410001,L D B2 R2 U L2 D' L2 D2 B U B L D U R2 D' B,R,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R2 E #3
 936038001,U' R2 U' L2 U2 F2 D' B' F' L' D R2 B2 F2 R' D L B2 U2,G,Nanjing Autumn 2018 (2018-11-17~18),333oh R1 A E2
 5668787001,U F U L' R2 F R2 B' R2 F' L2 R' F2 D B2 R2 F2 L2,O,Hungarian All-Rounder 4 2026 (2026-05-30),333 R1 A #5
 3960674001,L2 F2 U F2 D2 U F2 L' D F2 R' F' D B2 D L2 D2 U' L' F',R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf Final A #1
@@ -204,4 +204,4 @@
 1923963001,R' D2 R D2 R' F' R B U B R F' D' U2 B D',G,Adelaide Autumn 2022 (2022-05-22),333 R1 C #2
 1826406001,R2 F' D2 L' R2 F2 R' B2 R' D2 R2 B' U2 R D' R' D' F,B,Florida Spring B 2022 (2022-03-12),333oh R1 B #5
 1868697001,B' D' R' B' D F' D F2 D' B2 U2 R B2 D2 R' L2 U2 L,O,Cubing Returns Raipur 2022 (2022-04-09~10),333 Final A #3
-2306282001,D' F2 L2 D2 L2 D2 B' L2 F' R2 D2 U2 R' U2 R U' L2 B L2 D,B,Posthaste Potato Solving 2022 (2022-11-19),333oh Final A #2
+5834102003,R B R2 U2 D2 B U2 L D' F D2 R2 D2 L2 F2 B R2 D2 F' R2 B R,R,SacQuiet Fall 2026 (2026-09-19),333mbf Final A #2

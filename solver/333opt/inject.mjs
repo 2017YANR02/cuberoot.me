@@ -1,3 +1,4 @@
+import { wcaDir } from './data_paths.mjs';
 // Step 3 — fold the solved histogram into stats/scramble/{distribution,examples}.json as the
 // "333" method (variant '333', single stage '333') under sets.wca. Reads out.*.csv (id,htm) +
 // the corpus master (id,scramble for the sampled example ids).
@@ -23,9 +24,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '../..');
 const DIST = process.env.DIST ? resolve(process.env.DIST) : resolve(repoRoot, 'stats/scramble/distribution.json');
 const EX = process.env.EX ? resolve(process.env.EX) : resolve(repoRoot, 'stats/scramble/examples.json');
-const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : 'D:/cube/scramble/wca_scramble/wca_scrambles_no_wide_move.txt';
-const META = process.env.META ? resolve(process.env.META) : 'D:/cube/scramble/wca_scramble/input/wca_scrambles_split_mbf.csv';
-const COMP_TSV = process.env.COMPS ? resolve(process.env.COMPS) : 'D:/cube/scramble/wca_scramble/competitions.tsv';
+const CORPUS = process.env.CORPUS ? resolve(process.env.CORPUS) : resolve(wcaDir, 'wca_scrambles_no_wide_move.txt');
+const META = process.env.META ? resolve(process.env.META) : resolve(wcaDir, 'input/wca_scrambles_split_mbf.csv');
+const COMP_TSV = process.env.COMPS ? resolve(process.env.COMPS) : resolve(wcaDir, 'competitions.tsv');
 const PER_BIN = 12;
 
 // 口径同 comp_date.ts dateDisplay
@@ -60,7 +61,7 @@ for (const f of readdirSync(__dirname).filter((f) => /^out\.\d+\.csv$/.test(f)))
 }
 const ids = Object.keys(lens);
 const total = ids.length;
-if (!total) { console.error('out.*.csv 为空,先跑 solve.mjs'); process.exit(1); }
+if (!total) { console.error('out.*.csv 为空,先跑 solve_h10.mts'); process.exit(1); }
 
 // ---- 2. counts 直方图 ----
 const counts = {};

@@ -1,93 +1,46 @@
 ---
 name: pretooluse-hook
-description: "用户说写 hook、改 hook、PreToolUse、拦截钩子、写入即拦、permissionDecision，或 hook 不生效/没拦住时使用。覆盖 pwsh 和 Node JSON deny、scope 与豁免、fail-open、exit 0，以及真实工具调用验证。"
+description: "用户说写 hook、改 hook、PreToolUse、拦截钩子、写入即拦、permissionDecision，或 hook 不生效/没拦住时使用。覆盖跨平台 Node/TypeScript JSON deny、scope 与豁免、fail-open、exit 0，以及真实工具调用验证。"
 ---
 
-# 写 Codex 拦截钩子(PreToolUse）
+# 写 Codex 拦截钩子（PreToolUse）
 
-要在**写入 / 命令执行那一刻**拦住违规(裸 `history.*`、`onClick` 当导航、手写繁体、危险命令、自启浏览器…),写一个 PreToolUse 钩子。
+项目钩子放 `<repo>/.codex/hooks/`，注册在 `<repo>/.codex/hooks.json`。仓库使用 `.node-version` 指定的 Node 24，hook 源码写 TypeScript `.mts`，由 Node 直接运行；不引入 PowerShell 包装层。写入匹配 `apply_patch`，命令匹配 Codex 规范名 `Bash`。新增约束时同步 CI 守卫和 `/dev/guards` 索引。
 
-项目钩子放 `<repo>/.codex/hooks/`,注册在 `<repo>/.codex/hooks.json`。写入匹配 `apply_patch`,命令必须匹配 Codex hook 的规范名 `Bash`(不是工具 API 名 `shell_command`)。修改配置后新开 Codex 会话,再用 `/hooks` 信任当前定义哈希。
+当前 Codex 的 `apply_patch` 补丁在 `tool_input.command`。项目的 `adapt-codex-write-payload.mts` 将补丁拆为 `{file_path,content}`，`adapt-codex-command-payload.mts` 规范化命令。复用它们，不再手写第二套解析。
 
-当前 Codex 的 `apply_patch` 原始补丁位于 `tool_input.command`,命令同样位于 `tool_input.command`;复用旧结构化写入检测器时先经项目 `adapt-codex-write-payload.mjs` 转成 `{file_path,content}`。
+## 拦截契约
 
-## 铁律 1:拦截用 JSON deny,**禁 `exit 2`**
-
-本环境的自动权限模式会静默忽略 `exit 2`:钩子会运行,工具仍可能执行。统一输出 JSON deny 并 `exit 0`。
-
-**只有往 stdout 打 JSON `permissionDecision:"deny"` + `exit 0` 各模式都生效。** 命中违规就输出这段:
+违规时向 stdout 输出 JSON deny，退出码为 0：
 
 ```json
 {"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"为什么拦 + 怎么改"}}
 ```
 
-`permissionDecision` 取值 `allow|deny|ask|defer`;放行 = 无输出 + `exit 0`(= defer,走正常权限流)。
+`exit 2` 在本环境自动权限模式下可能被静默忽略，不能用于拦截。放行时无输出并退出 0。无效 JSON、缺文件或运行条件不满足应 fail-open；CI 是完整文件的最终兜底。
 
-### pwsh 模板
-
-```powershell
-$ErrorActionPreference = 'SilentlyContinue'
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8   # 出 CJK reason 必设,否则乱码
-$raw = [Console]::In.ReadToEnd()
-try { $j = $raw | ConvertFrom-Json } catch { exit 0 }      # 解析失败 fail-open
-
-$fp = "$($j.tool_input.file_path)" -replace '\\','/'
-if ($fp -notmatch '\.(tsx|ts)$') { exit 0 }               # scope:只管该管的
-# 收新增内容(Edit:new_string / Write:content / MultiEdit:edits[].new_string)
-$content = "$($j.tool_input.content)$($j.tool_input.new_string)"
-foreach ($e in $j.tool_input.edits) { $content += "`n$($e.new_string)" }
-
-if ($content -notmatch '违规正则') { exit 0 }              # 不违规放行
-if ($content -match 'allow-xxx') { exit 0 }                # 豁免:行内注释
-
-$reason = '为什么拦 + 怎么改 + 豁免方式'
-(@{ hookSpecificOutput = @{ hookEventName='PreToolUse'; permissionDecision='deny'; permissionDecisionReason=$reason } } | ConvertTo-Json -Compress)
-exit 0
+```ts
+let raw = '';
+for await (const chunk of process.stdin) raw += chunk;
+let request: { tool_input?: { command?: string } };
+try { request = JSON.parse(raw || '{}'); } catch { process.exit(0); }
+const command = request.tool_input?.command ?? '';
+if (!/违规条件/.test(command)) process.exit(0);
+process.stdout.write(JSON.stringify({ hookSpecificOutput: {
+  hookEventName: 'PreToolUse',
+  permissionDecision: 'deny',
+  permissionDecisionReason: '为什么拦 + 怎么改',
+} }));
 ```
 
-### node 模板
+只检查应管的路径和新增内容，跳过 `node_modules`、`.next`、`dist`、测试 fixture 等不相关输入。需要豁免时用行内 `allow-xxx` 注释或 `.codex/<rule>-allowlist.txt`，并说明理由。路径从 `import.meta.url` 解析，不能依赖会话 CWD。
 
-```js
-let raw=''; process.stdin.setEncoding('utf8');
-process.stdin.on('data',c=>raw+=c);
-process.stdin.on('end',()=>{
-  let ti; try { ti = JSON.parse(raw||'{}').tool_input||{}; } catch { process.exit(0); }
-  const cmd = ti.command || '';                 // 或按 tool 取 content/new_string
-  if (!/违规正则/.test(cmd)) process.exit(0);
-  process.stdout.write(JSON.stringify({ hookSpecificOutput:{
-    hookEventName:'PreToolUse', permissionDecision:'deny', permissionDecisionReason:'为什么拦 + 怎么改' }}));
-  process.exit(0);
-});
-```
+## 验证
 
-### pwsh wrapper 委托 node(快速门 + 精判,省 node 开销)
+修改配置后新开 Codex 会话，用 `/hooks` 信任定义哈希，再用真实 `apply_patch` 或 Bash 工具调用触发一次：违规写入应被拒且文件不存在，合法输入应放行。单独向 `.mts` 送 JSON 只能验证脚本逻辑，不能证明 Codex harness 采纳决定。若当前会话不能重载配置，应明确记录尚待新会话验证。
 
-```powershell
-if ($payload -notmatch '[㐀-䶿一-鿿豈-﫿]') { exit 0 }   # 无关内容快速放行
-$payload | & node $detector                              # node 命中→打 deny JSON→exit 0
-exit $LASTEXITCODE                                       # wrapper 原样透传 stdout
-```
-
-## 铁律 2:**必须真触发验证**(别只喂管道)
-
-改完**必须新开会话并在 `/hooks` 信任当前哈希,再用真的 `apply_patch` / shell 工具调用触发一次**,确认被拒。**禁**只 `echo $json | pwsh hook.ps1` 看 exit code —— 那只验脚本逻辑,不验 harness 是否采纳决定。
-
-- 测写入违规:文件**被拒 = 没创建**即成功。
-- 测命令违规:注意你的**测试命令本身可能含触发串而自拦**(曾用 `chrome --headless` 测,自己的 PowerShell 调用被拦了 —— 恰好是端到端证明)。
-- 测完删测试文件(被拒的本就没建)。
-
-## 其它约定(照现有钩子)
-
-- **scope 过滤**:只扫该管的文件 / 命令(`.tsx/.ts`、跳 `node_modules/.next/dist/test`)。
-- **豁免两途**:违规处行内注释 `allow-xxx`(eslint-disable 风格)+ 项目 `.codex/<rule>-allowlist.txt`(范例见 `block-raw-history-url-state.ps1`)。
-- **fail-open**:解析失败 / 工具缺失一律 `exit 0`,别把正常编辑卡死;**CI 是最终兜底**。
-- **分层**:写入即拦(本钩子)+ CI vitest 守卫两层都铺(全局 AGENTS.md「立约束要分层」)。
-- 路径用 `$PSScriptRoot` 自解析,别依赖会话 cwd(可能在 repo 根或 core/,拼错会 fail-open)。
-
-## 现成范例
-
-- Codex `apply_patch` 多文件补丁解析:`core/packages/client/scripts/hook-detect-nested-links.mjs`
-- pwsh→node 委托:`<repo>/.codex/hooks/block-component-reimplementation.ps1`
-- 命令守卫:`<repo>/.codex/hooks/recon-ground-truth-gate.ps1`
+- 多文件补丁范例：`core/packages/client/scripts/hook-detect-nested-links.mjs`
+- 写入适配：`.codex/hooks/adapt-codex-write-payload.mts`
+- 命令守卫：`.codex/hooks/recon-ground-truth-gate.mts`
 
 规范名、输入结构与信任流程以 `https://learn.chatgpt.com/docs/hooks` 为准。

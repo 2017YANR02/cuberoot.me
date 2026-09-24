@@ -53,7 +53,7 @@ cascade 各阶段启发式现状 + 小表替代候选:
 - 小表是 admissible 的 → IDA* 仍返回最优,逐格必须 == golden。**有一格不等就是错的**,
   不许放宽成"接近"。
 - 性能只参考,不苛求(用户原话)。
-- 验法:`pwsh verify.ps1 -Inputs scramble_5.txt`,或对应 cargo test。
+- 验法:从仓库根运行 `pnpm --dir core solver:verify --inputs scramble_5.txt`,或对应 cargo test。
 
 ## Phases
 
@@ -85,7 +85,7 @@ cascade 各阶段启发式现状 + 小表替代候选:
   最坏 ~6-18s。用户明说性能不苛求 → 候选 A 采纳,xxxxc 走 web worker 不卡 UI + 进度提示。
 - 整合二进制(6 视角全 cascade)scramble_5 = 12.2s / 5 条,5.6 亿节点,零 huge 表。
 
-## Phase 3 产物(`pkg-web/`,跑 `pwsh build_wasm.ps1` 复现)
+## Phase 3 产物(`pkg-web/`,从仓库根跑 `pnpm --dir core solver:build-wasm` 复现)
 
 | 文件 | 大小 | 说明 |
 |---|---|---|
@@ -99,7 +99,7 @@ WASM API:`new CrossSolverWasm(pt_cross, pt_cross_C4E0, mt_edge2, mt_edge4, mt_co
 `solve(scramble, variant)→Uint32Array[6]`(variant 0..4=cross/xc/xxc/xxxc/xxxxc,6 视角),
 `solve_cumulative(scramble, variant)`(累计变体)。
 
-构建踩坑(已固化进 `build_wasm.ps1` / `.cargo/config.toml` / `Cargo.toml`):
+构建踩坑(已固化进 `scripts/build_wasm.mts` / `.cargo/config.toml` / `Cargo.toml`):
 - `.cargo/config.toml` 的 `target-cpu=native` 必须 cfg 限定到 non-wasm,否则 rustc 报 skylake/+fma。
 - wasm-bindgen CLI 必须与 Cargo.toml 的 `wasm-bindgen` crate **精确同版本**(0.2.122);
   rustc 1.95 默认开 reference-types,CLI 太旧报 `clone_ref` intrinsic。
@@ -143,7 +143,7 @@ init(wasm + 27MB 表 fetch + 解压)525-601ms;UI 页对 T-perm 正确给出全 0
 - 搜索:`src/cross_solver.rs`(Cross IDA*)、`src/xcross_solver.rs`(XC/XXC/XXXC/XXXXC,search_1/2/3/4)
 - 表:`src/prune_tables.rs`(`PackedPruneTable`,启发式接口)、`src/move_tables.rs`、`src/prune_create.rs`(BFS 生成)
 - 坐标 / state:`src/cube_common.rs`、`DEFINITIONS.md`
-- 测试:`TESTING.md`、`verify.ps1`、`testdata/golden/scramble_5_std.csv`
+- 测试:`TESTING.md`、`scripts/verify.mts`、`testdata/golden/scramble_5_std.csv`
 - 移植决策:`PORTING_NOTES.md`
 
 ## 性能:xxxxcross(2026-05-29 实测 + 定论)

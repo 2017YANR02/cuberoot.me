@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / R / bin 13
-# Population in this bin: 218
+# Population in this bin: 220
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 18553001,R' D F' R2 B L' U' D' F L U2 F2 U L2 D R2 F2 R2 F2 D,R,Oficina Open 2014 (2014-05-03~04),333oh R1 A #5
@@ -63,7 +63,7 @@
 919488001,L' U R' B' U R2 F D B' R' U F L2 F R2 B L2 B',R,Reencuentro Mérida 2018 (2018-10-27),333 R2 B #2
 929509001,L2 D B2 F2 U R2 D' B2 L' F D2 R' F2 U B' D F D2 R,R,Umnugovi Autumn 2018 (2018-11-10),333 R1 B E1
 5379647001,D R2 F B' R' D' B U2 R B' D' F2 D F2 U L2 B2 U2 F2 D2,R,Kublördag Jönköping X - 2026 (2026-02-14),333 R1 B E2
-953059001,L' B2 D2 F2 L2 U2 F2 U2 F2 R F' D' U2 B L' R D' U L' B' L' F',R,Santa Pola Open 2018 (2018-12-08~09),333bf Final A #3
+5841140001,L F2 R2 B2 D2 B2 U L2 U' F2 U' R2 B L2 R' D2 B' D2 B2 L',R,USFA Spring 2026 (2026-09-19~20),333 R2 C #2
 953288001,U' F' B' R2 U' D L' B L2 U' R L2 U' L2 B2 U D L2 D2,R,Swisscubing Cup Final 2018 (2018-12-08~09),333 R2 A #3
 953343011,D2 B' L2 D2 B' D2 B2 U2 B' R2 B' U' B' F D L D2 F R' B2 U L B',R,Swisscubing Cup Final 2018 (2018-12-08~09),333mbf Final A #2
 956165001,R' U2 L2 B2 R' D2 R U2 F2 L' F' D L' D2 U' R B' D2 L' F L',R,Cambridge Open 2018 (2018-12-15~16),333bf R1 A E2

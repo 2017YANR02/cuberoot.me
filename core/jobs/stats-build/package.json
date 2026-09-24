@@ -7,8 +7,10 @@
   },
   "type": "module",
   "scripts": {
+    "backup:recon": "tsx src/bin/backup_recon.ts",
     "build:deps": "pnpm --filter @cuberoot/shared build",
     "compute": "tsx src/bin/compute.ts",
+    "compute:all": "tsx src/bin/compute_all.ts",
     "validate-queries": "tsx src/bin/validate_queries.ts",
     "nemesizer": "tsx src/bin/nemesizer.ts",
     "gen-persons-search": "tsx src/bin/gen_persons_search.ts",

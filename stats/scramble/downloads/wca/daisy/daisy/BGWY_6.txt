@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BGWY / bin 6
-# Population in this bin: 889
+# Population in this bin: 893
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1498719001,F2 D' F' U L U' F' R U2 B' L2 D2 F2 B2 U B2 U' D' B2 L2,B,GLS Gdynia 2020 (2020-01-04~05),333 R1 F E1
@@ -37,7 +37,7 @@
 3149567001,L2 D B2 D' R2 D' U' L' R' U' F2 L' F' D L R2 F L,B,Balkan Open 2023 (2023-10-07~08),333oh R1 A #1
 3342120001,U2 R2 D' F2 D2 U' F U2 R' D2 B L R F' D' U2 L R,B,Pickering Favourites Autumn 2023 (2023-12-16),333oh Final B #2
 146041001,B2 R B2 L' B2 R' D2 B2 R' B2 D' U' L D2 U2 B2 F L B L2,B,Good Cube Show Korea 2015 (2015-05-30~31),333oh R1 B #5
-2225366001,R' U' L D2 B R2 U' R' F' B2 R B2 L F2 L F,B,Rockies Rager Fall 2022 (2022-10-08),333 R2 C #2
+5831500001,B' U L B' D F2 L2 D F2 R2 U2 R' D L U' F D' R2,B,Shin Kong Cube Open - Kaohsiung 2026 (2026-09-13),333 R1 A E2
 3807693001,R' D U2 R2 U2 F2 R B2 F2 U2 L' R' D F' L B' L' R' F2 L,B,Muzaffarpur Cube Open 2024 (2024-05-26),333oh Final B #4
 158066001,F2 D B2 L2 B2 F2 D' F2 R2 U2 R D' L' U' B2 F R B F2 D' L' B,B,SoCal Supercomp 2015 (2015-06-27~28),333bf Final A #1
 4290756024,R U R' U2 L' F2 L F R' L B D' F2 D' L2 D2 F2 L2 U L2 U2,B,Ottawa Blindfolded 2024 (2024-11-16),333mbf Final A #2
@@ -135,7 +135,7 @@
 2774052001,U' R2 D R2 D B2 U' B2 L' U' F D' F' L' R B2 D' B' D2 L' F,B,Sydney Square-1v1 2023 (2023-06-03~04),333bf R1 A E1
 4525827001,U' B' R2 U2 R' F2 L' B2 L U2 B2 D2 R' D F' L D2 B L R2,B,Delacuesta al Cubo VI 2025 (2025-02-22),333oh Final A #3
 4810699001,B2 L2 B2 L F2 U R D' F B D2 L2 D2 B2 L D2 R B2 D2,B,Lexington Weeknights II 2025 (2025-06-16),333 R1 B #1
-4571668001,F' D2 B D2 B2 U B D' R' L B' U2 F2 B L2 F2 B' D2,B,Wiltshire Spring 2025 (2025-03-15~16),333 Final B #2
+5837786001,L' B2 D2 L' F U2 D R L' D' R2 F U2 F R2 U2 F U2 D2 L2,B,Lopes Up AZ Fall 2026 (2026-09-20),333oh Final B #3
 4882410001,F2 D' F' D' R2 U2 D R U' B2 U2 L2 B D2 F' U2 B R B,B,New Rochelle Night Favorites 2 2025 (2025-07-22),333oh Final B #4
 5389820001,F B' R L' F' U2 B' D' L2 U F2 B2 D' F2 B2 L' B2 D L',B,Rīga Open 2026 (2026-02-15),333oh Final B #2
 582374001,U B2 L2 R2 D R2 B2 R2 U2 L D2 U' F' D' R' D U R B' R,B,SacCubing II 2017 (2017-08-26),333 R1 C #2

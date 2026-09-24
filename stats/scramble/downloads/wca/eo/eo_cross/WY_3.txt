@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / WY / bin 3
-# Population in this bin: 435
+# Population in this bin: 437
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 13167001,B2 R2 F2 U' B2 F2 D' F2 U F2 U' B' U2 B' D2 F D B2 R U,Y,Velbert Easter Open 2014 (2014-04-18~20),333oh Final A E1
@@ -71,7 +71,7 @@
 635983001,B' D2 U2 F U2 F2 U2 B' U2 R2 U' F' D2 B D B F' R,Y,Speedcubes Cape Town 2017 (2017-11-05),333oh Final A #5
 3960220001,D F U F' D F U' R L2 F B2 U' D2 R2 U' F2 R2 L2,Y,Rubik's WCA South American Championship 2024 (2024-07-22~25),333 R3 B #5
 4620764001,F R L B' R F B' L' D' F R F2 R' F2 D2 F2 B2 R L' B',Y,Cube Against Cancer Buffalo 2025 (2025-04-05),333bf Final A #1
-650148001,U2 L2 B' L2 F' R2 F2 U B' R2 B U' F R2 U B R,Y,Longhorn Cube Day 2017 (2017-11-18),333 R2 B E1
+5835824013,R2 D' L' U2 L2 F2 D2 L2 U2 F' L2 F D F2 L' D L D' U' L' F,W,Swisscubing Cup Mental Breakdown II 2026 (2026-09-19~20),333mbf Final A #2
 651935001,D B2 L2 R2 D2 U' R2 U B' D' B2 R2 F L2 D2 B U B2,Y,Tuscany Open 2017 (2017-11-25),333 R2 C #3
 2014266028,U R2 B2 D2 F2 D L2 D L2 F2 B' L2 D' U F2 D' F' D2 B',Y,Abbotsford Blind Challenge 2022 (2022-07-10),333mbf Final A #1
 660507003,B' F D2 L2 F' D2 B' D2 L B L' U' F U L F2 L B2 F L' F,W,Welcome To Cambridge 2014 (2014-07-12~13),333mbf Final A #1
@@ -114,7 +114,7 @@
 848934019,F2 D2 B2 U B2 L2 B2 D R2 D F' L2 U' B2 R F2 U B2 D2 U L,Y,Project Radom 2018 (2018-08-04~05),333mbf Final A #1
 5793911013,U L' U2 B' F D2 R2 B R B2 R' D2 U' B2 U' F2 L' F,Y,BrizZon Side Open IV 2026 (2026-08-22~23),333mbf Final A #2
 863994001,B' D2 F' U F2 B R U' F2 R L2 U2 B L2 F2 B' R2 F2,Y,Ark 2018 (2018-08-24~26),333 R2 C E1
-4828902071,D2 F' B2 L2 U' L2 D B2 U' B2 R2 L' F' L' U F L' U2 B' L B2,Y,Worlds Prep in Palisades 2025 (2025-06-20~22),333mbf Final B #1
+5834454001,L2 F' U2 F L2 B D2 U2 F R2 U R2 U R F2 D2 B2 L2 B',Y,Tagum City Open 2026 (2026-09-12~13),333 Final A #2
 3339849001,L D2 R2 F' L2 B U2 F' D2 B' L' B' U B2 F2 L' D B' R2,W,CubingZA Cape Cubes Challenge 2023 (2023-12-09~10),333 R1 B #4
 880772021,F' R2 F L2 B L2 B' L2 F2 L2 U' F U L U R' U R U L' F',W,Berkeley Summer 2018 (2018-09-15~16),333mbf Final C #1
 4938393001,U' R2 U2 F D2 B' L2 B U' B' F' L F' U B' F U' B',W,Clockerup i Otterup 2025 (2025-08-16~17),333oh R1 B E1

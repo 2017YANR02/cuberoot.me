@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGORWY / bin 8
-# Population in this bin: 705
+# Population in this bin: 708
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2661804001,F2 D2 L F2 R' D2 L F2 D' U' L' U' L' B2 D L2 F' R2,G,Country Roads Huntington 2023 (2023-04-22),333 Final A #1
@@ -33,7 +33,7 @@
 1552689001,F2 D U2 B2 U' L2 F2 L2 F D2 F R' F' R2 D2 B2 F' L' R',W,Cebu Open 2020 (2020-02-15~16),333 R2 B E1
 4884331034,U F R F R2 D2 R2 B' U2 B' F2 U2 B' L' F2 D F2 L2 F' U' L2 U,R,Mini Mental Delft 2025 (2025-07-25),333mbf Final A #1
 3630978001,B U' B2 U R' B' D B R' F' B D2 L2 F L2 B2 R2 D',W,New to Sherwood Park 2024 (2024-03-30),333 R2 D #4
-179549001,F' L2 B D2 F2 U2 B' R U B U2 F D2 F' U' L2 R' B2,Y,San Lorenzo Invierno 2015 (2015-08-15~16),333 R1 E #5
+5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
 2204503048,D' F2 D' F U' R' D U2 R2 B' R2 U2 B' R2 L2 F B' R B D2 B R2,B,Finnish Championship 2022 (2022-09-24~25),333mbf Final A #1
 5038173001,D L' D L2 U2 D B U L2 F' U R2 U' F2 R2 U' L2 D2 R' B,O,Desafio Nipo-Brasileiro BH 2025 (2025-09-20~21),333bf Final B #1
 4531874025,L2 F2 L2 B D2 F R2 L D R2 D2 U2 F' D2 R' U L' F R B,B,5BLD Masters Opole 2025 (2025-03-01~02),333mbf Final A #1

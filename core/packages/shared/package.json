@@ -12,6 +12,7 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./dev-preview": "runtime-neutral",
       "./timer/reconstruct/recap": "runtime-neutral",
       "./timer/replay-encode": "runtime-neutral",
       "./smart-cube/orientation": "runtime-neutral",
@@ -57,6 +58,7 @@
       "./competition-index": "runtime-neutral",
       "./alg": "mixed",
       "./alg-notation": "runtime-neutral",
+      "./normalize-wca-scramble": "runtime-neutral",
       "./alg-transform": "runtime-neutral",
       "./alg-mirror": "runtime-neutral",
       "./skewb-pyramid-svg": "runtime-neutral",
@@ -143,6 +145,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./dev-preview": { "node": "./dist/dev-preview.js", "default": "./src/dev-preview.ts" },
     "./timer/reconstruct/recap": { "node": "./dist/timer/reconstruct/recap.js", "default": "./src/timer/reconstruct/recap.ts" },
     "./timer/replay-encode": { "node": "./dist/timer/replay_encode.js", "default": "./src/timer/replay_encode.ts" },
     "./smart-cube/orientation": {
@@ -294,6 +297,10 @@
     "./alg-notation": {
       "node": "./dist/alg_notation.js",
       "default": "./src/alg_notation.ts"
+    },
+    "./normalize-wca-scramble": {
+      "node": "./dist/normalize_wca_scramble.js",
+      "default": "./src/normalize_wca_scramble.ts"
     },
     "./alg-transform": {
       "node": "./dist/alg_transform.js",

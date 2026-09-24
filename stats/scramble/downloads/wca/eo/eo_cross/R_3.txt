@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / R / bin 3
-# Population in this bin: 218
+# Population in this bin: 219
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 24457001,L2 D2 F L2 B U2 L2 B' R U' L2 D' B' L' D R' B2 F U',R,C3 Cube Open 2014 (2014-05-26~27),333oh R1 C #5
@@ -170,7 +170,7 @@
 4007579001,B D B2 D2 B2 L R2 U2 L' U2 F' R F2 D F2 D B2,R,Norwegian Championship 2024 (2024-08-09~11),333oh R2 B E1
 4129861001,U R2 B R2 U2 B' L2 B2 D F2 D R2 D2 R2 B D' R' U,R,Wiltshire September 2024 (2024-09-21~22),333 Final B #1
 5258303003,D' F D2 L2 U2 B' R2 B2 D2 F' D B' F' D2 L' U2 L U' L2 U2,R,Portugal Championship 2025 (2025-11-29~12-01),333mbf Final A #1
-4183963001,U' B2 D R D' F2 D2 R' D B U2 D' L2 U2 F2 B2 R2,R,Lloydminster Border Battle 2024 (2024-10-12),333 Final B #1
+5839455001,R' U F' L2 F2 D2 B' U2 R2 B' L2 R B R2 U2 B' F2,R,Canberra Spring Open 2026 (2026-09-19),333 R2 C #4
 5739988001,L' U' L2 F2 B' U L2 F U R2 F' R2 U2 F U2 B' U2 F D',R,Slovak Championship 2026 (2026-07-02~05),333bf Final B #3
 5747867004,U2 L' D F R' F2 L B2 R' F R2 D2 F2 U2 B' D2 B' L2 B',R,Bigs & MBLD Vila Velha 2026 (2026-07-12),333mbf Final A #2
 4368948003,D' R' L2 U B2 D' L' D2 L2 U2 F2 L2 F2 L2 U' L2 D B2 L2 U',R,Success For Candy Stockholm 2024 (2024-12-15),333mbf Final A #1

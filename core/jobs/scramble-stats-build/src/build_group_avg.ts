@@ -2,7 +2,7 @@
 // 的各阶段步数取**平均**(moX / 不去尾),再对这些「组平均」做直方图 —— 与 build.ts 的
 // 「单条打乱」直方图并列,由 /scramble/stats 的「单个 / 组平均」PillToggle 切换。
 //
-// 只重读现成的 stat CSV(D:/cube/scramble/<set>/stat/*.csv,步数已算好)+ 分组元数据
+// 只重读现成的 stat CSV(<data_root>/<set>/stat/*.csv,步数已算好)+ 分组元数据
 // (input/wca_scrambles_split_mbf.csv 的 comp/event/round/group/is_extra),**不跑 solver**。
 // 产出 stats/scramble/distribution_avg.json:
 //   sets.wca            —— 全部六个三阶项目的组平均混合池(对齐 distribution.json 的合并池)

@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / ORWY / bin 3
-# Population in this bin: 824
+# Population in this bin: 827
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4486321001,B2 D2 L2 D L2 F2 U' R' B2 D L' U F2 D L' R' D2 B,O,NxNs at Finprov 2025 (2025-02-16),333 R1 B E2
@@ -137,7 +137,7 @@
 3889367001,U D' R' U2 R U2 R2 U' D2 B R2 U2 F U2 L2 F' U2 L2 B',O,Bucharest Cubing June 2024 (2024-06-22),333 Final A E2
 5258303003,D' F D2 L2 U2 B' R2 B2 D2 F' D B' F' D2 L' U2 L U' L2 U2,R,Portugal Championship 2025 (2025-11-29~12-01),333mbf Final A #1
 650148001,U2 L2 B' L2 F' R2 F2 U B' R2 B U' F R2 U B R,Y,Longhorn Cube Day 2017 (2017-11-18),333 R2 B E1
-5611558001,L' F D L' D R2 B2 R F R2 L2 F2 L2 F' L2 B2 D' L',W,Dawgs at Denny UW 2026 (2026-05-09),333 R2 A E2
+5839455001,R' U F' L2 F2 D2 B' U2 R2 B' L2 R B R2 U2 B' F2,R,Canberra Spring Open 2026 (2026-09-19),333 R2 C #4
 4303725001,L2 D F2 U L2 B2 F2 U F2 U' B' D L2 D B2 D2 R' B',W,Middle Georgia Gives Thanks 2024 (2024-11-23),333 R2 A #1
 3920789001,U' R' B' D' B2 U2 R2 B2 D2 R2 U2 R' D' F D2 F2 D2 R' U2,O,Katano Milky Way 2024 (2024-07-07),333 R1 J #5
 660507003,B' F D2 L2 F' D2 B' D2 L B L' U' F U L F2 L B2 F L' F,W,Welcome To Cambridge 2014 (2014-07-12~13),333mbf Final A #1

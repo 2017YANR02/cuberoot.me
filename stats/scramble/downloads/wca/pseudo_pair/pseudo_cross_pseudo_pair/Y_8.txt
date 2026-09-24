@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / Y / bin 8
-# Population in this bin: 107
-# Samples listed: 107 (all entries in this bin)
+# Population in this bin: 109
+# Samples listed: 109 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 1705001,B' F2 R2 F' L2 U2 F2 L2 B2 U' R U' B2 L2 U' F' L' R' U F',Y,Kansai Open 2014 (2014-03-21~22),333 R1 B #5
@@ -112,3 +112,5 @@
 5782971017,U F2 U F U2 B D2 F D2 F' D2 B2 U' L R' B' U' R' B2 D,Y,Kewbz UK Blindfolded Championship 2026 (2026-08-15),333mbf Final B #1
 5798415001,R F R' D L2 F' D' U2 L' F2 R2 F2 R2 D2 R' B2 F' D' L,Y,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 Final C #3
 5829818001,L' U F L B' D B' F2 D2 L B2 D2 R2 L D2 L' B R B' R2,Y,Kukulcán Open Quetzaltenango 2026 (2026-09-11~13),333 Final A E1
+5838216024,D B' R' F2 U' L2 R2 F2 U2 L2 R D' F' D' B U' F' D U L2,Y,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final A #3
+5840790001,R' B2 R' U2 R' D2 F2 R' B' D' L' B2 L2 D' L2 F2 R2 B L2 U',Y,Wellesley Fall 2026 (2026-09-19),333bf R2 A #3

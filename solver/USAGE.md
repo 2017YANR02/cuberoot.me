@@ -4,7 +4,9 @@
 
 ## 1. 构建
 
-```powershell
+在 `solver/` 运行：
+
+```sh
 cargo build --release
 ```
 
@@ -12,14 +14,13 @@ cargo build --release
 
 ## 2. 生成表(首次必跑)
 
-```powershell
-.\target\release\table_generator.exe
+```sh
+cargo run --release --bin table_generator
 ```
 
-- 顺序生成 12 张 mt 表 + 61 张 pt 表,共 **~25 GB**,首次约 1-2 小时
-- 默认放 `./tables/`,可用 `$env:CUBE_TABLE_DIR = "D:\my-tables"` 覆盖
-- 已存在的表自动跳过(支持中断后续跑)
-- 嫌 huge 表占盘:`$env:CUBE_DISABLE_HUGE_TABLES = "1"` 跳过 ≥800 MB 的 5 张(约省 23 GB,但 pair/eo_cross/pseudo_pair/std XXC+ 跑不了)
+- 默认档顺序生成 12 张 mt 表 + 61 张 pt 表，约 36 GB；高内存档额外生成 EO 5 张、SQ1 精确表与 H48 h10。实际空间、内存和本机验收见 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md)。
+- 默认放 `./tables/`，可用 `CUBE_TABLE_DIR` 环境变量覆盖；已完成的表会跳过。
+- 只补某类表时仍用同一个 binary，例如 `cargo run --release --bin table_generator -- --only h48-h10`；可选目标为 `rust`、`sq1`、`h48-h7`、`h48-h10`。`CUBE_DISABLE_HUGE_TABLES=1` 会跳过大表，不能用于完整统计所需的表集。
 
 各 analyzer 自身也会在启动时自动生成缺的表(懒加载),但推荐先全跑一次,避免运行时等待。
 
@@ -42,12 +43,12 @@ CSV,每行 `id` + 数据列(各 analyzer 列数不同,见下表)。
 
 ### 通用调用
 
-```powershell
-"scramble_1000.txt" | .\target\release\<analyzer>.exe
+```sh
+printf '%s\n' 'scramble_1000.txt' | ./target/release/std_analyzer
 # 处理完输出 scramble_1000_<suffix>.csv 同目录
 ```
 
-退出:输入 `exit` 或 Ctrl-Z。
+交互模式输入 `exit` 退出；macOS/Linux 可用 Ctrl-D 结束输入，Windows 可用 Ctrl-Z。
 
 ## 4. 五个 analyzer
 
@@ -77,41 +78,36 @@ CSV,每行 `id` + 数据列(各 analyzer 列数不同,见下表)。
 
 ## 6. 示例
 
-```powershell
-# 1. 一次性生成所有表(~1-2h)
-.\target\release\table_generator.exe
+```sh
+# 1. 从 solver/ 用统一入口生成当前机器档位的表
+cargo run --release --bin table_generator
 
 # 2. 用 std_analyzer 跑 Cross+XCross
-$env:CUBE_RUN_FULL_STD = "1"
-"scramble_5.txt" | .\target\release\std_analyzer.exe
+CUBE_RUN_FULL_STD=1 ./target/release/std_analyzer <<<'testdata/scramble_5.txt'
 
 # 3. 用 pseudo_analyzer 跑全 4 阶段
-$env:CUBE_ALLOW_HUGE_TABLES = "1"
-"scramble_5.txt" | .\target\release\pseudo_analyzer.exe
+CUBE_ALLOW_HUGE_TABLES=1 ./target/release/pseudo_analyzer <<<'testdata/scramble_5.txt'
 
 # 4. 用 eo_cross_analyzer 跑 EO 5 阶段(无 diagonal,省 10GB)
-$env:CUBE_ALLOW_HUGE_TABLES = "1"
-$env:CUBE_EO_NO_DIAG = "1"
-"scramble_5.txt" | .\target\release\eo_cross_analyzer.exe
+CUBE_ALLOW_HUGE_TABLES=1 CUBE_EO_NO_DIAG=1 ./target/release/eo_cross_analyzer <<<'testdata/scramble_5.txt'
 ```
 
 输出 `scramble_5_std.csv` / `scramble_5_pseudo.csv` / `scramble_5_eo.csv` 在当前目录。
 
 ## 7. 性能 / 资源
 
-- **磁盘**:全表 ~25 GB。基础表 ~140 KB,中表 ~200-500 MB,5 张 huge 表占 22+ GB
-- **RAM**:运行时各 analyzer 仅 mmap(零拷贝),实际驻留 ~1-3 GB;生成 huge 表时 BFS 临时缓冲峰值 ~3 GB
+- **磁盘 / 建表内存**:按所选 profile 与表集变化；以 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md) 的实测和警戒线为准。
 - **并行**:CSV 内多任务用 rayon 自动多核;搜索内层 IDA* 单线程
-- **首次冷启动**:生成 + 运行 5 任务,约 1-2 分钟(`pseudo_analyzer` 默认模式)到 1-2 小时(全表 + huge)
+- **首次冷启动**:先用统一 `table_generator` 生成所需表；不要沿用旧机器的耗时估计。
 - **二次启动**:表 mmap reload 秒级,主要耗时是搜索本身(几秒到几十秒/scramble)
 
 ## 8. 故障排查
 
 | 症状 | 原因 | 解决 |
 |---|---|---|
-| panic `huge table requires CUBE_ALLOW_HUGE_TABLES=1` | 默认禁了 ≥800 MB 表 | `$env:CUBE_ALLOW_HUGE_TABLES = "1"` |
+| panic `huge table requires CUBE_ALLOW_HUGE_TABLES=1` | 分析器需要大表开关 | 运行该分析器时设置 `CUBE_ALLOW_HUGE_TABLES=1` |
 | binary 启动直接 `[ERROR] requires CUBE_ALLOW_HUGE_TABLES=1` | pair / eo_cross / pseudo_pair 强制要 huge | 同上 |
-| 表损坏 / magic mismatch | 旧版本生成的表跨版本不兼容 | 删 `./tables/` 重新生成 |
+| 表损坏 / magic mismatch | 表可能与当前格式不兼容 | 核对表路径与格式；确认损坏后只重建受影响的表，别清空整个表目录 |
 | 磁盘满 | huge 表占盘 | `CUBE_DISABLE_HUGE_TABLES=1` 生成精简版,或换 `CUBE_TABLE_DIR` 到大盘 |
 
 ## 9. 参考

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / G / bin 1
-# Population in this bin: 82
-# Samples listed: 82 (all entries in this bin)
+# Population in this bin: 83
+# Samples listed: 83 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 4997001,R' B' U' B' U2 F U' F2 R' F R2 L2 D' R2 B2 U2 L2 F2 D2,G,Tula Open 2014 (2014-03-28~30),333 R1 A #5
@@ -87,3 +87,4 @@
 5511331001,B2 U2 F R2 F' L2 R2 B2 D2 R F' L2 F' L U2 L F' D2,G,French Championship 2026 (2026-04-04~06),333 R1 E #3
 5515724001,D2 R' L2 B2 L2 U' L2 U2 B2 D R2 F D' L2 U L2 U R,G,Cube in Luanda 2026 (2026-04-11),333 Final B E2
 5631005027,F' D2 B' F2 D2 U2 F' L R B2 L' F2 L' B L R F',G,Toledo Big & Blind 2026 (2026-05-16),333mbf Final A #1
+5832886001,L2 D F' L2 B2 L2 D U' R2 D2 B' D' B U2 L2 R,G,Singapore Polytechnic September Showdown 2026 (2026-09-19),333oh R1 A #5

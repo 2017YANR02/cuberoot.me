@@ -12,11 +12,12 @@
 // Ctrl-C 随时可停:每个 case 一算完就落盘,重跑同一条命令按 key 续上。
 import { spawnSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
+import { availableParallelism } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-// OUT 也认 env —— 多分片并行时每个分片写自己那份(run_lsll.ps1),否则几个进程抢同一个文件
+// OUT 也认 env —— 多分片并行时每个分片写自己那份(run_lsll.mts),否则几个进程抢同一个文件
 const OUT = resolve(process.env.OUT || resolve(__dirname, 'out.csv'));
 // 相对路径按**脚本所在目录**算,不按 cwd —— 从别处调时 CORPUS=corpus_rest.txt 才不会指空
 const CORPUS = resolve(__dirname, process.env.CORPUS || 'corpus.txt');
@@ -29,7 +30,7 @@ const corpusKeys = new Set(
   readFileSync(CORPUS, 'utf8').split('\n').filter((l) => l.includes(',')).map((l) => l.slice(0, l.indexOf(','))),
 );
 const TOTAL = corpusKeys.size;
-const THREADS = String(process.env.THREADS || '12');
+const THREADS = String(process.env.THREADS || availableParallelism());
 // 只数**属于本语料**的行。数总行数会在旁边留着旧口径 out.csv 时误判「全部完成」,
 // 把没算的静默丢掉。
 const lines = () => (existsSync(OUT)

@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / OR / bin 4
-# Population in this bin: 906
+# Population in this bin: 908
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2658293001,L2 B' D' L2 D' F2 R2 B2 U B L' R' U2 B' F2 L2 U' L2,R,Cube Ta Liwat Iloilo 2023 (2023-04-23),333 R2 B E2
@@ -198,7 +198,7 @@
 1285066001,U2 L2 F U2 F U2 F' R2 B D' U' R2 D' R' D2 B R U L',O,Sfax Summer Open 2019 (2019-08-18),333 Final C #3
 950507001,D2 B' U2 R2 B' U2 B L2 F2 D2 L' U2 L' D2 L U' B' R',O,Melbourne Cube Days 2018 (2018-12-08~09),333oh R2 A #5
 2292290001,B2 L2 D2 R' U' F U F' L' F U2 B2 U2 L2 F L2 F' L2 F2,R,Cubing Kazakhstan Nationals 2022 (2022-11-04~06),333 R1 F #3
-724878001,L2 U2 B2 F L2 R2 D2 L2 B F U B D L R2 B2 U' R' U' L',R,Longhorn Spring 2018 (2018-03-10),333 R1 D #5
+5832004001,R U F' U' D L' B' L2 B2 U' L2 U2 B2 D L2 F2 L2 F R' B,O,Les Beaupreau du Blind 2026 (2026-09-12~13),333bf Final A #5
 3775102001,L U B L' F L2 U2 B' R' U2 L2 D2 B2 R' L2 U B2 L2,O,CubeX Summer Open Bangalore 2024 (2024-05-18~19),333 R1 C #3
 4626879012,R B2 R F2 R2 D2 R2 D B' L2 D B2 D2 U B L D' L' F,R,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 A #2
 2372839001,F D2 R2 D' R2 U' L2 U2 F2 U2 B2 R' D' U B L' F R' U',R,Back to Square-1 Idaho 2022 (2022-12-17),333 R2 B E1

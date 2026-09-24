@@ -16,7 +16,7 @@ const ACTIVE: usize = 17;
 fn ev_label(i: usize) -> &'static str { RANK_EVENTS[i] }
 
 // Data dir holding pe.tsv / persons.tsv / hrs_snapshot.tsv / no_podium.tsv and outputs.
-// CI sets SOR_DATA_DIR; local manual runs default to cwd (update_sor.ps1 sets it explicitly).
+// CI sets SOR_DATA_DIR; local manual runs default to cwd (update_sor.mts sets it explicitly).
 fn base() -> String {
     std::env::var("SOR_DATA_DIR").unwrap_or_else(|_| ".".to_string())
 }

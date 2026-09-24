@@ -89,7 +89,7 @@ test('empty directory and cache copied from another root', async () => {
 
 test('invalid concurrency and output inside root fail before writing', async () => {
   const f = await fixture();
-  await expect(buildManifest({ ...f, concurrency: 15 })).rejects.toThrow('1..14');
+  await expect(buildManifest({ ...f, concurrency: 0 })).rejects.toThrow('positive');
   await expect(buildManifest({ ...f, output: path.join(f.root, 'manifest') })).rejects.toThrow('outside');
 });
 

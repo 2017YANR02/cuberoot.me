@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxcross / R / bin 8
-# Population in this bin: 126
-# Samples listed: 126 (all entries in this bin)
+# Population in this bin: 127
+# Samples listed: 127 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 28574001,D2 L2 U2 R' B2 F2 U2 F2 L' F2 U L D L2 B' R2 D' L2 U,R,BASC 3: Flagj Day 2014 (2014-06-14),333 R2 A E1
@@ -131,3 +131,4 @@
 5782510001,R' F2 L U' B2 U B' U' L2 B2 R2 U B2 L2 F' D2 R2 D',R,Mid-Atlantic Warm-Up 2026 (2026-08-09),333 R1 F #2
 5797052001,L F' U' D2 B' L2 D' L2 U' F R2 D2 R2 F2 U D2 F2,R,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R1 F E2
 5797473001,F2 D U F2 U' B2 F L' F2 L F2 D' L2 B' F2 U2,R,Nanning Open 2026 (2026-08-23),333 R2 A #5
+5831537001,U' B2 L' B2 D' B2 L2 D2 L2 D2 U' B D2 U L2 D B2 F R',R,Belgrave Open 2026 (2026-09-12~13),333 R2 A #1

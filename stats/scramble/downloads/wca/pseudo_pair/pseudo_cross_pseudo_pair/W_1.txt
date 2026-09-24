@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / W / bin 1
-# Population in this bin: 203
+# Population in this bin: 204
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -173,7 +173,7 @@
 4692595001,L2 B R2 D2 B' F2 R2 U2 L F2 D2 B2 U F2 U R U2 R2,W,The Battle of Lexington Semiquincentennial 2025 (2025-04-26~27),333 R1 B #2
 4712373001,U R2 D U L2 B2 D B2 U' L2 R' B F2 D' B' R2 D' R D2,W,UMBC Spring 2025 (2025-05-10),333 R1 D E1
 4732670001,L2 F2 D' F U2 R2 B' R D2 R' L2 B2 R L2 B2 U' L' D2,W,Tivat Open 2025 (2025-05-17~18),333oh Final A #2
-4761054001,D2 R2 D' F2 R2 F2 D F2 L2 D' B' L2 R' F2 U2 F' D' L U',W,Naperville Mini 2025 (2025-05-31),333oh R1 B E2
+5833002001,D R U L' B2 U' B' D B' D2 R' L2 D L2 U R2 U B2 R2,W,Ansan Autumn 2026 (2026-09-19),333oh R1 E #1
 4793717001,R D B2 L' F' U D R2 L' U2 B2 U2 L B2 R' U2 F U' L2,W,Cubestuff Challenge Centurion Q2 2025 (2025-06-07~08),333oh R1 C #2
 4844589001,U2 R' D' R F' R2 F D2 L' B2 D2 L' D2 F2 D2 R' B2,W,Aníbal ao Cubo 2025 (2025-07-05),333 Final A #4
 4954026001,L F2 D' R' U2 B U' F2 L U' R2 D' L2 B2 U F2 B2 U' R,W,South India Cube Championship 2025 (2025-08-14~17),333 R1 I #5

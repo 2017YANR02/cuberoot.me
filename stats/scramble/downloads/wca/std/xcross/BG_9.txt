@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / BG / bin 9
-# Population in this bin: 369
+# Population in this bin: 370
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3749098035,D F' B2 U R2 B' L' U' R' B' L' D2 B2 R' L D2 B R',B,Kensington May Upstairs 2024 (2024-05-11~12),333mbf Final A #1
@@ -87,7 +87,7 @@
 796733001,R2 D2 L2 R2 U F2 L' B R' F2 D' U' L2 F D2 R' U' B R,B,Please Be Quiet Waterloo 2018 (2018-06-03),333bf R1 B E1
 800782008,R2 D2 F L2 F R2 F' D2 F2 L2 U' L R' U2 B2 U F U' L2 U' L B,B,Melbourne Winter 2018 (2018-06-02~03),333mbf Final A #1
 806313001,D2 B' D L2 F B' R D' L' U' F' L D2 L2 B2 L' B2 R,B,New Hope Open Spring 2018 (2018-06-16),333 R2 A E1
-829493002,D2 L2 B' L2 D2 B U2 L2 F L2 U' L2 R B L D B2 F' L' B F2 L2 U2,B,FLIP Open 2018 (2018-07-14~15),333mbf Final A #1
+5836296001,R' U' F D' U L2 U' L2 F2 R F2 U F2 R2 D2 F L' F L2 R2 F2 R' U' F,B,VERK XVIII 2026 (2026-09-19~20),333fm R1 A #2
 3977993001,B2 U F2 L2 D U R2 F2 L2 B' L' F2 U' F' D L R B L2 F2,B,Westport Summer 2024 (2024-07-27),333 Final A #4
 3277256001,U R D R2 L' U F2 R2 B U' F' R2 F' U2 B2 L2 F' R2 D2,B,Chongqing Open 2023 (2023-11-18),333 Final A E2
 839765001,B' D2 L' U2 F2 R2 L' D' B' U L' B2 U2 F2 R F2 B2 R' D2 F2 R2,B,Erciyes Weekend 2018 (2018-07-21~22),333 R1 A E2

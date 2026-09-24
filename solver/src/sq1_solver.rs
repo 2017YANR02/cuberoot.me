@@ -2217,6 +2217,34 @@ impl Sq1WcaSolver {
         Vec::new()
     }
 
+    /// 总生成器使用的精简入口；只建这张表，不初始化 WCA 求解器的其它大表。
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn generate_jsq_full_table() -> std::io::Result<bool> {
+        let path = crate::move_tables::table_path("sq1_wca_jsqfull.bin");
+        if std::fs::metadata(&path).is_ok_and(|m| m.len() == JSQ_FULL_SIZE as u64) {
+            eprintln!("[SKIP] {} ({} bytes)", path.display(), JSQ_FULL_SIZE);
+            return Ok(false);
+        }
+        eprintln!("[sq1] building {} exact phase-2 states", JSQ_FULL_SIZE);
+        let table = Self::build_jsq_full(Sq1Solver::shared());
+        if table.len() != JSQ_FULL_SIZE || table[full_idx(&Sq1State::SOLVED)] != 0 {
+            return Err(std::io::Error::other("SQ1 full table validation failed"));
+        }
+        if let Some(dir) = path.parent() {
+            std::fs::create_dir_all(dir)?;
+        }
+        let tmp = path.with_extension("bin.tmp");
+        {
+            use std::io::Write;
+            let mut file = std::fs::File::create(&tmp)?;
+            file.write_all(&table)?;
+            file.sync_all()?;
+        }
+        std::fs::rename(tmp, &path)?;
+        eprintln!("[sq1] wrote {} ({} bytes)", path.display(), JSQ_FULL_SIZE);
+        Ok(true)
+    }
+
     /// jsq_full 精确方形态 BFS:scan-based(峰值仅表本身 13GB,in-place 转换无 2×)。seed =
     /// full_idx(SOLVED)。边 = **真实方形 move**:slash(方形结果)+ 方形保形旋转 turn(a,b)≠0
     /// (各 cost1),直接对精确态算 `full_idx` —— 与 `p2_dfs_wca` 子节点生成同语义 ⇒ 表值 = 真精确
@@ -2257,6 +2285,8 @@ impl Sq1WcaSolver {
     /// uniform-cost BFS 投影表:从 solved 投影起,turn(到合法对位)+slash 边均 1 步,
     /// dist = BFS 层。投影同态 ⇒ 表值 ≤ 真 WCA dist。**禁** free-rotation 闭包
     /// (那是 twist 专属;WCA 每对位独立)。
+    // 原生正式构建使用并行版；串行版保留给一致性测试和 WASM 分支。
+    #[cfg(any(test, target_arch = "wasm32"))]
     fn build_proj_wca(
         base: &Sq1Solver,
         size: usize,

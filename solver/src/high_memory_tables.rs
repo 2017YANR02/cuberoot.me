@@ -3,14 +3,23 @@
 use std::io::Write;
 use std::time::Instant;
 
-use crate::{move_tables, prune_tables, table_profile};
+use crate::{move_tables, prune_tables, table_profile, table_timing};
 
 fn step(name: &str, f: impl FnOnce()) {
+    let path = move_tables::table_path(&format!("{name}.bin"));
+    let before = std::fs::metadata(&path).ok();
     let started = Instant::now();
     eprint!("[GEN high-memory] {:<42} ", name);
     let _ = std::io::stderr().flush();
     f();
-    eprintln!("done in {:>6.1}s", started.elapsed().as_secs_f64());
+    let elapsed = started.elapsed();
+    eprintln!("done in {:>6.1}s", elapsed.as_secs_f64());
+    let after = std::fs::metadata(&path).ok();
+    let size = after.as_ref().map(|m| m.len()).unwrap_or(0);
+    let unchanged = before.as_ref().zip(after.as_ref()).is_some_and(|(a, b)| {
+        a.len() == b.len() && a.modified().ok() == b.modified().ok()
+    });
+    table_timing::record(name, elapsed, size, if unchanged { "skipped" } else { "generated" });
 }
 
 pub fn generate() {

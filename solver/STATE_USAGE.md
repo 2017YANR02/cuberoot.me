@@ -15,7 +15,7 @@
 
 ## 构建
 
-```powershell
+```sh
 cargo build --release --bin state_cross_1col --bin state_cross_2col --bin state_xcross_1col_fixed_10f
 ```
 
@@ -47,11 +47,12 @@ move,回溯出 scramble。
 
 **示例**:
 
-```powershell
-mkdir out_cross_1col -Force; cd out_cross_1col
-..\target\release\state_cross_1col.exe
+```sh
+mkdir -p out_cross_1col
+cd out_cross_1col
+../target/release/state_cross_1col
 # 产出 1.txt..8.txt
-Get-Content 1.txt -First 3
+head -n 3 1.txt
 # L
 # L'
 # L2
@@ -81,11 +82,12 @@ Get-Content 1.txt -First 3
 
 **示例**:
 
-```powershell
-mkdir out_cross_2col -Force; cd out_cross_2col
-..\target\release\state_cross_2col.exe
+```sh
+mkdir -p out_cross_2col
+cd out_cross_2col
+../target/release/state_cross_2col
 # 产出 cross_2_col_state.txt
-Get-Content cross_2_col_state.txt -First 3
+head -n 3 cross_2_col_state.txt
 # 1. U F' R D L D2 U2 B' F' D
 # 2. U F' R D L D2 U2 B' D F'
 # 3. B R L B' F R2 U' L' F2 D'
@@ -121,11 +123,12 @@ move-from-parent),总 ~650 MB RAM。
 
 **示例**:
 
-```powershell
-mkdir out_xcross_fixed -Force; cd out_xcross_fixed
-..\target\release\state_xcross_1col_fixed_10f.exe
+```sh
+mkdir -p out_xcross_fixed
+cd out_xcross_fixed
+../target/release/state_xcross_1col_fixed_10f
 # 产出 1.txt..10.txt,总 73M 行,~1 GB 数据
-Get-Content 10.txt -First 3
+head -n 3 10.txt
 # D L' U' R D R F' L R F'
 # D R' F2 R' D L2 R F L' U
 # D L U B' L2 F' D2 L2 U B'
@@ -187,4 +190,4 @@ count 与 cpp golden line 数完全一致(state_cross_2col 跟 cpp 30s 跑的 st
 | **state_*** | 无 | 各深度所有状态对应的 scramble | 枚举特定深度状态供训练/分析 |
 
 跑 analyzer 看 `USAGE.md`;跑 dist 看 `AGENTS.md` 文件地图,直接
-`.\target\release\dist_<name>.exe`,大多数 1s 内跑完。
+`./target/release/dist_<name>`（从 `solver/` 运行）。

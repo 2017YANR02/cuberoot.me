@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGOR / bin 1
-# Population in this bin: 697
+# Population in this bin: 700
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 3220764001,F L F' R2 B D2 R2 D2 R2 B2 L2 B U L' U L2 D2 L2 B2,R,Broome Open 2023 (2023-11-04),333 Final A #3
@@ -33,7 +33,7 @@
 1914317001,L U R2 U' L2 B2 F2 U' L2 U' F2 L2 F' L B2 U2 R' D' F2 L',O,R&Cubers La Paz 2022 (2022-05-07~08),333 R2 B #1
 1348821001,R2 D2 R2 D2 F' U2 B2 L F D' R F L2 D' R F U' B,G,Yakima Side Events 2019 (2019-10-12),333 R1 B #3
 2342098001,U2 R' F2 U' D L2 U F' L U' R2 U R2 D' R2 L2 D2 F2 D' B2 F',R,Jerusalem Open 2022 (2022-12-03~04),333 R2 D E2
-179448001,B2 L F2 D2 R D2 L' U2 F2 R F' R B2 F D' R2 B F2 L' U' L2 U2,G,San Lorenzo Invierno 2015 (2015-08-15~16),333bf Final C E2
+5835412001,B' U F R F' B L D2 R2 F2 L2 F2 L2 D' L2 U2 F2 B' D',O,Silesia Cubing Days 2026 (2026-09-19~20),333 R1 B E1
 5694947001,D' L2 U L2 U' R2 D U2 F2 R' U R F L F D R2 F2 L',O,Huanggang Open 2026 (2026-06-07),333 R1 B E2
 200599001,B' R' F' R2 U L2 F' U' F' U2 R' D2 L' D2 L' F2 U2 B2 D2 F2,B,Venezuela Nationals 2015 (2015-10-09~11),333 R1 E #5
 1368428001,L B2 U2 L F2 U2 L D2 F L' F' U' L' D2 B' D2 L2 F U2,O,Santa Marta Open 2019 (2019-10-19),333oh R1 B #5
@@ -67,7 +67,7 @@
 1074146011,L B2 D2 R' D2 L' U2 F2 D2 R2 B' D' R' B' F' D' F' L2 F2 U L2 U',B,Le Barcarès Mental Breakdown 2019 (2019-03-30~31),333mbf Final A #1
 1020684001,D2 F L2 D2 R2 B' U2 B2 L B L' D2 F' L' B' L D2 L' F2,R,Bremium Cubing 2019 (2019-02-16~17),333bf R1 B E2
 5000504001,D B U2 D' R B' D' B U2 R2 U2 R' U2 B2 U2 D R' U2,G,Clock on the Madison Rocks 2025 (2025-09-05~06),333 Final A #1
-1250849001,D' L2 D' F2 D B2 D U2 L2 U R' B R' D L F' R2 B2 R D,G,CubingUSA Nationals 2019 (2019-08-01~04),333oh R1 A E2
+5832709052,R' F' R2 B2 D2 B' D2 F2 D R D B2 F' U' R' U' R' U2 L' F2,O,Czech Quiet Championship 2026 (2026-09-12~13),333mbf Final B #2
 4634815001,B' U B R' U R F2 B2 L D2 B' L2 B' R2 U2 R2 U2 L' F2,G,Gliwice Open 2025 (2025-04-12),333bf Final A #3
 1407759001,B2 L U' D' R F' U B2 U F2 D' F2 R2 B2 L' U2 R L2 D2,G,Austin Fall 2019 (2019-11-16),333oh R1 A #1
 4713211001,B2 L2 F2 U' B2 F2 D U R' B R B D U2 B2 R' U F2 R2,B,Móstoles Open 2025 (2025-05-10~11),333oh R1 B #4

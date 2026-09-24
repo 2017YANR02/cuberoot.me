@@ -446,19 +446,19 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     fail('solver.tables-wasm: missing version and table hash recording policy');
   }
 
-  const helperPath = resolve(root, '.sync/sync_utils.ps1');
+  const helperPath = resolve(root, 'scripts/upstream/lib.ts');
   if (!existsSync(helperPath)) {
     fail('missing shared upstream sync helper');
   } else {
     const helperSource = readFileSync(helperPath, 'utf8');
     for (const marker of [
-      'function Write-UpstreamVersionRecord',
+      'function versionRecord(',
       "'rev-parse', '--verify', 'HEAD'",
-      '[System.IO.Path]::IsPathRooted',
-      '[System.IO.Path]::GetFullPath',
-      '.StartsWith($repoPrefix',
+      "artifact.versionRecord.path",
+      'resolve(root, output ?? artifact.versionRecord.path)',
+      'recordPath.startsWith(resolve(root) + sep)',
     ]) {
-      if (!helperSource.includes(marker)) fail(`sync_utils.ps1 version writer is missing guard: ${marker}`);
+      if (!helperSource.includes(marker)) fail(`scripts/upstream/lib.ts version writer is missing guard: ${marker}`);
     }
   }
 
@@ -468,12 +468,12 @@ export function validateLedger(ledger, { root = repoRoot } = {}) {
     if (!existsSync(writerPath)) continue;
     const writerSource = readFileSync(writerPath, 'utf8');
     if (artifact.kind === 'vendored-sync') {
-      if (!writerSource.includes('Write-UpstreamVersionRecord')
+      if (!writerSource.includes('versionRecord(')
           || !writerSource.includes(`'${artifact.id}'`)) {
         fail(`${artifact.id}: writer is not connected to the shared version-record helper`);
       }
     } else if (!writerSource.includes("'rev-parse', 'HEAD'")
-        || !writerSource.includes('WriteAllText($refPath')) {
+        || !writerSource.includes('writeUtf8(refPath')) {
       fail(`${artifact.id}: writer no longer records the verified clone HEAD`);
     }
   }

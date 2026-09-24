@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxxcross / BGWY / bin 7
-# Population in this bin: 281
+# Population in this bin: 282
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -182,7 +182,7 @@
 3655466001,F' D' B' U2 B2 D2 F2 R2 F' U2 L2 R2 U L2 F L' F L2 U2 F L' F,G,Deep South Solving Cape Town 2024 (2024-04-06~07),333bf Final B #1
 4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B,Brazuca al Cubo I 2025 (2025-02-08),333 R2 A #5
 3689773001,B D2 U2 B' D2 R2 D2 U2 F' R' D U2 L D' U' R2 U' F L,G,NZ South Island Championship 2024 (2024-04-19~21),333 R1 A #2
-4680700063,R U2 R' D2 L2 F U' F2 R' D2 L D2 L2 U2 B2 R' B2 D B L' F2,W,Please Be Quiet Korea Spring 2025 (2025-04-27),333mbf Final A #1
+5831025001,U2 F2 L U2 F' L F B' R2 L D2 F2 L2 D2 R B' D2,W,Road to Nats Maracay II 2026 (2026-09-13),333 R1 B E2
 4892565001,L' D2 B' U2 B D F L' B2 U2 R' B2 L2 D2 L' F2 B2,B,Cuenca Open 2025 (2025-07-26~27),333oh R1 A #2
 4628911020,R' D' F' D2 R2 F' U2 L2 U2 L2 U' L B L2 F' U L R2 F' D',Y,Nevada Quiet Championship 2025 (2025-04-05),333mbf Final A #2
 4805783058,U F U' B2 U' D2 L' D2 B R2 D' L2 D B2 D' L2 R' D2 L B2,Y,New York Multimate PBQ II 2025 (2025-06-13~15),333mbf Final A #2

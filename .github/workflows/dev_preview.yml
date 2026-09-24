@@ -1,0 +1,38 @@
+name: Dev preview onboarding
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'core/scripts/dev-preview/**'
+      - 'core/packages/shared/src/dev-preview.ts'
+      - 'ops/dev-preview/**'
+      - 'ops/nginx/dev-machines.conf'
+      - '.github/workflows/dev_preview.yml'
+  pull_request:
+    paths:
+      - 'core/scripts/dev-preview/**'
+      - 'core/packages/shared/src/dev-preview.ts'
+      - 'ops/dev-preview/**'
+      - 'ops/nginx/dev-machines.conf'
+      - '.github/workflows/dev_preview.yml'
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            core/scripts/dev-preview
+            core/packages/shared/src/dev-preview.ts
+            ops/dev-preview
+            ops/nginx/dev-machines.conf
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test core/scripts/dev-preview/model.test.ts

@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / O / bin 5
-# Population in this bin: 881
+# Population in this bin: 884
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5428457001,F D2 F' U' F2 D2 F2 R2 U' B2 D' R U B2 L2 U' R D R,O,Megaminx Madness AZ 2026 (2026-03-07),333 Final D E2
@@ -171,7 +171,7 @@
 4682705006,D2 B2 R' F' U F' L F2 U B R2 F' D2 F L2 F2 D F' L B,O,UNSA Speedcubing Otoño 2025 (2025-04-26),333mbf Final A #1
 1683706001,F2 U2 B2 F2 L R D2 L B2 D' R2 B U2 L U2 L R' U' F2,O,Wyoming Summer 2021 (2021-07-31),333oh Final D #3
 3830824061,B2 U R2 D L' U2 L2 D2 L F2 R D B U' R2 F R' F2 D',O,Gniezno Side Open 2024 (2024-06-08),333mbf Final B #1
-1028965004,B2 F2 D B2 R2 D U2 F2 U B' D U B' R B2 L2 D2 F' L' F2 L B',O,CFL Goes Sideways 2019 (2019-02-16~17),333mbf Final A #2
+5838211004,F U L B' D2 R2 B2 D2 L2 F' R2 U2 L' B D2 R U' L' B2 F2 L B2,O,Gouverneur Quiet 2026 (2026-09-19~20),333mbf Final B #2
 1142358001,R2 F U' R2 U F U' R2 U L2 B L2 U2 R2 F2 L2 F2,O,Cochabamba Open 2019 (2019-05-12),333 R1 C E2
 4951126004,R F R' F2 R' D' F2 U2 D2 B' D' L2 B2 U R2 B2 D2 L2 U',O,Couffouleux Open 2025 (2025-08-15~17),333mbf Final A #1
 4888655001,R' D' L2 F R2 D2 B2 L2 R2 U2 B D' R2 B2 U2 F D' R2,O,Dragon Cubing X 2025 (2025-07-26~27),333 R2 B #2

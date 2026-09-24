@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / BGWY / bin 1
-# Population in this bin: 362
+# Population in this bin: 363
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,G,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -203,5 +203,5 @@
 2937476001,F2 L' B2 L' B2 L2 U R' U2 F2 U R2 F' U2 B U' B2,B,Geelong Winter 2023 (2023-07-29~30),333 R1 A E1
 2937682001,D2 R D' R2 L2 B' U2 R D2 B2 D2 L2 U2 R2 U' F2 L' D,G,Geelong Winter 2023 (2023-07-29~30),333oh R1 C #1
 5716213022,D' F' B U2 B' U' R F' R2 F2 U D2 L2 D2 B2 D' R' U' L B,B,Flinders Park Side Events 2026 (2026-06-20~21),333mbf Final A #1
-2941565001,B U' F2 R' D B R' D2 F D' R U2 D2 L2 F2 D2 R' D2 B2,B,CubingUSA Nationals 2023 (2023-07-27~30),333 R2 B E2
+5833318001,B R' B2 L2 R D2 B2 L' B D F' R' B' F2 L' U2 B' L B,G,Manchester September 2026 (2026-09-19),333bf Final B E1
 2943074001,U L2 R2 B D2 L2 D2 B' R2 B F2 U L U' B2 U B F D2,B,Isle of Wight Summer 2023 (2023-07-29~30),333 Final B #5

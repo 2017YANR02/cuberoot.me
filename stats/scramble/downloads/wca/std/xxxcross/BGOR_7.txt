@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxcross / BGOR / bin 7
-# Population in this bin: 290
+# Population in this bin: 291
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -82,7 +82,7 @@
 848934005,F2 R2 F2 D2 L2 F2 R F2 R B D' B' L2 D F2 L2 B U2 B2 L,G,Project Radom 2018 (2018-08-04~05),333mbf Final A #1
 864998001,F2 D F' R2 U F2 L' U' F R D2 B2 U2 B2 R F2 L F2 L F2,R,Geethanjali Monsoon Open 2018 (2018-08-25~26),333oh Final B #4
 866642001,L2 U2 B2 R D2 R F2 D2 R B2 D' R F' R2 F' D' U B',O,Canada's Best in the West 2018 (2018-08-24~26),333 R1 F E1
-4753269001,F2 R' D2 R' U2 F2 D2 R2 U R2 B' R F' D2 B' D R' U' F,R,North Carolina Championship 2025 (2025-05-24~25),333oh Final A #2
+5832143001,B2 F2 R' B2 L2 U2 R' F' D' L2 D' R' B L' R B2 D' U2,R,Cosgeek Open 2026 (2026-09-12~13),333 R1 E E1
 896538023,L2 U' B2 U' F2 D2 L2 B2 R D B2 F' D U' F' U2 B2 L' R U2 L' F',R,Australian Nationals 2018 (2018-10-06~07),333mbf Final A #1
 907121001,D R' D' B U' B2 D2 F2 B' L' D2 B2 D R2 F2 L2 U2,O,Gravitas Cube Open 2018 (2018-10-13~14),333oh R1 F #5
 5746768001,L U2 F2 R' D F U L2 D' U' L' F L R' F',R,Seattle Summer 2026 (2026-07-11),333 R2 B #3

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / B / bin 1
-# Population in this bin: 164
-# Samples listed: 164 (all entries in this bin)
+# Population in this bin: 165
+# Samples listed: 165 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-16
+# Generated: 2026-09-24
 # Columns: id,scramble,bottom_color,competition,round
 
 22227001,U2 F2 D2 F D2 F' R2 B' R B U' R2 B U' L F2 U B U B',B,Zhejiang University Open 2014 (2014-05-24),333bf Final A #3
@@ -169,3 +169,4 @@
 5782235001,U2 R L2 U' R2 U' L2 U' F2 U B R' F2 R U' F U' B D,B,Blenkir Junín 2026 (2026-08-08~09),333 R2 C E1
 5797914001,F' D F R D2 L' U' B' L2 D L2 U2 F R2 F R2 U2 L2,B,Mid-Atlantic Speedcubing Championship 2026 (2026-08-14~16),333 R1 F #1
 5821448001,B' U' B2 D' R L D B2 L U2 F2 R D2 F2 L' U2 D R2 F2 L' F2,B,Florida Championship 2026 (2026-09-05~06),333bf R1 A E2
+5837276001,D' F D2 R' F2 R' B2 U2 D R F U' F R' D' U' L',B,UNSA Speedcubing Otoño II 2026 (2026-09-19),333oh Final B E1
