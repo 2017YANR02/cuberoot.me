@@ -44,9 +44,6 @@ jobs:
           for file in /www/wwwlogs/www.cuberoot.me.log*; do
             [ -f "$file" ] && files+=(--nginx "$file")
           done
-          for file in /var/lib/cuberoot/traffic/vercel.ndjson*; do
-            [ -f "$file" ] && files+=(--vercel "$file")
-          done
           [ "${#files[@]}" -gt 0 ] || exit 1
           node --experimental-strip-types /tmp/cuberoot-traffic-monitor.ts "${files[@]}"
           REMOTE
