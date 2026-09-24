@@ -20,8 +20,8 @@ describe('Drive contract', () => {
     const headers = ['authorization', 'content-type', 'idempotency-key', 'upload-offset', 'upload-checksum'];
     for (const origin of [
       'https://cuberoot.me', 'https://next.cuberoot.me', 'https://dev.cuberoot.me',
-      'https://dev-mac-mini.cuberoot.me', 'https://dev-alienware.cuberoot.me',
-      'https://dev-macbook-pro.cuberoot.me', 'https://dev-other.cuberoot.me',
+      'https://dev-mac-mini.cuberoot.me', 'https://dev-ruimin-mac-mini.cuberoot.me', 'https://dev-alienware.cuberoot.me', 'https://dev-ruimin-alienware.cuberoot.me',
+      'https://dev-macbook-pro.cuberoot.me', 'https://dev-ruimin-macbook-pro.cuberoot.me', 'https://dev-other.cuberoot.me',
       'https://evil.example',
     ]) {
       const response = await app.request('/v1/drive/uploads/00000000-0000-4000-8000-000000000000', {
