@@ -7,11 +7,11 @@
     "{packages/miniprogram,apps/miniprogram}/scripts/release-check-lib.d.mts",
     "packages/client/app/[lang]/timer/_lib/scramble/invert.ts"
   ],
-  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun"],
+  "ignoreBinaries": ["netstat", "wasm-pack", "pwsh", "xcrun", "ssh-keygen", "plutil", "launchctl", "whoami.exe", "icacls.exe", "taskkill.exe", "schtasks.exe"],
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/build-shanghai-space.mjs", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs"]
+      "entry": ["scripts/build-shanghai-space.mjs", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts"]
     },
     "{packages/client,apps/web}": {
       "entry": [
