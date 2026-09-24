@@ -8,6 +8,10 @@ export const apiCors = cors({
       'https://www.cuberoot.me',            // 主域
       'https://cuberoot.me',                // 裸域
       'https://next.cuberoot.me',           // Next 子域并行验证
+      'https://dev.cuberoot.me',            // Mac Mini 开发预览旧入口
+      'https://dev-mac-mini.cuberoot.me',   // Mac Mini 开发预览
+      'https://dev-alienware.cuberoot.me',  // Alienware 开发预览
+      'https://dev-macbook-pro.cuberoot.me', // MacBook Pro 开发预览
       'capacitor://localhost',              // Capacitor iOS app webview origin
       'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
       'tauri://localhost',                  // Tauri macOS app webview origin
