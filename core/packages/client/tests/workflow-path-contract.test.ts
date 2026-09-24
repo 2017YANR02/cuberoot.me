@@ -253,7 +253,6 @@ const TEST_PATHS = [
   `!${packagePath('platform', '**')}`,
   repoPath('docs', 'platform-capability-manifest.json'),
   repoPath('docs', 'platform-unification-plan.md'),
-  '*.ps1',
   'sync_upstream.ts',
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
@@ -576,9 +575,7 @@ describe('deployment workflow path contracts', () => {
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'api.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('.github', 'workflows', 'stats.yml')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('sync_upstream.ts')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('_sync_blddb.ps1')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('_sync_cstimer.ps1')])).toBe(true);
-      expect(workflowTriggers(paths, [repoPath('nested', '_sync_cstimer.ps1')])).toBe(false);
+      expect(workflowTriggers(paths, [repoPath('nested', 'sync_upstream.ts')])).toBe(false);
       expect(workflowTriggers(paths, [repoPath('.sync', 'page_config.json')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('scripts', 'upstream', 'sync-all.ts')])).toBe(true);
       expect(workflowTriggers(paths, [packagePath('platform', 'README.md')])).toBe(false);
