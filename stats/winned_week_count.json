@@ -174,15 +174,15 @@
           10
         ],
         [
+          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
+          10
+        ],
+        [
           "[Carlos Méndez García-Barroso](https://www.worldcubeassociation.org/persons/2010GARC02)",
           9
         ],
         [
           "[Lucas Etter](https://www.worldcubeassociation.org/persons/2011ETTE01)",
-          9
-        ],
-        [
-          "[Brian Johnson](https://www.worldcubeassociation.org/persons/2013JOHN10)",
           9
         ],
         [
@@ -436,15 +436,15 @@
           10
         ],
         [
+          "[Emmanuel Kao](https://www.worldcubeassociation.org/persons/2022KAOE01)",
+          10
+        ],
+        [
           "[Lin Chen (陈霖)](https://www.worldcubeassociation.org/persons/2010CHEN20)",
           9
         ],
         [
           "[Mattia Furlan](https://www.worldcubeassociation.org/persons/2013FURL01)",
-          9
-        ],
-        [
-          "[Emmanuel Kao](https://www.worldcubeassociation.org/persons/2022KAOE01)",
           9
         ]
       ]
@@ -487,7 +487,7 @@
         ],
         [
           "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
-          27
+          28
         ],
         [
           "[Seung Hyuk Nahm (남승혁)](https://www.worldcubeassociation.org/persons/2013NAHM01)",
@@ -597,7 +597,7 @@
         ],
         [
           "[Yifan Wang (王逸帆)](https://www.worldcubeassociation.org/persons/2017WANY29)",
-          16
+          15
         ],
         [
           "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
@@ -698,12 +698,12 @@
           13
         ],
         [
-          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
+          "[Chris Chi](https://www.worldcubeassociation.org/persons/2014CHIC01)",
           13
         ],
         [
-          "[Clément Gallet](https://www.worldcubeassociation.org/persons/2004GALL02)",
-          12
+          "[Carter Kucala](https://www.worldcubeassociation.org/persons/2015KUCA01)",
+          13
         ]
       ]
     },
@@ -749,7 +749,7 @@
         ],
         [
           "[Juliette Sébastien](https://www.worldcubeassociation.org/persons/2014SEBA01)",
-          14
+          15
         ],
         [
           "[Arifumi Fushimi (伏見有史)](https://www.worldcubeassociation.org/persons/2009FUSH01)",
@@ -810,11 +810,11 @@
           36
         ],
         [
-          "[Nicolas Naing](https://www.worldcubeassociation.org/persons/2015NAIN01)",
-          30
+          "[Tristan Chua Yong](https://www.worldcubeassociation.org/persons/2016YONG02)",
+          31
         ],
         [
-          "[Tristan Chua Yong](https://www.worldcubeassociation.org/persons/2016YONG02)",
+          "[Nicolas Naing](https://www.worldcubeassociation.org/persons/2015NAIN01)",
           30
         ],
         [
@@ -1100,15 +1100,15 @@
           8
         ],
         [
+          "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
+          8
+        ],
+        [
           "[Carlos Méndez García-Barroso](https://www.worldcubeassociation.org/persons/2010GARC02)",
           7
         ],
         [
           "[Daniel Wallin](https://www.worldcubeassociation.org/persons/2013WALL03)",
-          7
-        ],
-        [
-          "[Oskar Hanuszkiewicz](https://www.worldcubeassociation.org/persons/2018HANU02)",
           7
         ],
         [
@@ -1143,7 +1143,7 @@
       "rows": [
         [
           "[Hassan Khanani](https://www.worldcubeassociation.org/persons/2018KHAN26)",
-          47
+          48
         ],
         [
           "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)",
@@ -1241,7 +1241,7 @@
         ],
         [
           "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
-          23
+          24
         ],
         [
           "[Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01)",
@@ -1289,7 +1289,7 @@
         ],
         [
           "[Simon Praschl](https://www.worldcubeassociation.org/persons/2021PRAS02)",
-          10
+          11
         ],
         [
           "[Bill Wang](https://www.worldcubeassociation.org/persons/2010WANG68)",
@@ -1330,11 +1330,11 @@
           28
         ],
         [
-          "[Roman Strakhov](https://www.worldcubeassociation.org/persons/2012STRA02)",
-          27
+          "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+          28
         ],
         [
-          "[Ryan Eckersley](https://www.worldcubeassociation.org/persons/2019ECKE02)",
+          "[Roman Strakhov](https://www.worldcubeassociation.org/persons/2012STRA02)",
           27
         ],
         [
@@ -1401,7 +1401,7 @@
       "rows": [
         [
           "[Graham Siggins](https://www.worldcubeassociation.org/persons/2016SIGG01)",
-          44
+          45
         ],
         [
           "[Yucheng Chen (陈裕铖)](https://www.worldcubeassociation.org/persons/2015CHEN49)",
@@ -2878,6 +2878,11 @@
       57
     ],
     [
+      "2013JOHN10",
+      "222",
+      10
+    ],
+    [
       "2013KOSK01",
       "skewb",
       26
@@ -2990,7 +2995,7 @@
     [
       "2014CHIC01",
       "333fm",
-      12
+      13
     ],
     [
       "2014DETL01",
@@ -3040,7 +3045,7 @@
     [
       "2014SEBA01",
       "333oh",
-      14
+      15
     ],
     [
       "2014WENW01",
@@ -3190,7 +3195,7 @@
     [
       "2016SIGG01",
       "333mbf",
-      44
+      45
     ],
     [
       "2016SIGG01",
@@ -3225,7 +3230,7 @@
     [
       "2016YONG02",
       "minx",
-      30
+      31
     ],
     [
       "2016KELL12",
@@ -3260,7 +3265,7 @@
     [
       "2016HUNG08",
       "777",
-      27
+      28
     ],
     [
       "2016EPST02",
@@ -3365,7 +3370,7 @@
     [
       "2017WANY29",
       "333bf",
-      16
+      15
     ],
     [
       "2018BERE01",
@@ -3395,7 +3400,7 @@
     [
       "2018KHAN26",
       "sq1",
-      47
+      48
     ],
     [
       "2018KHAN28",
@@ -3455,12 +3460,12 @@
     [
       "2019ECKE02",
       "444bf",
-      23
+      24
     ],
     [
       "2019ECKE02",
       "555bf",
-      27
+      28
     ],
     [
       "2019ROGO04",
@@ -3525,7 +3530,7 @@
     [
       "2021PRAS02",
       "444bf",
-      10
+      11
     ],
     [
       "2021ZAJD03",
@@ -3546,6 +3551,11 @@
       "2021DUNA01",
       "clock",
       12
+    ],
+    [
+      "2022KAOE01",
+      "666",
+      10
     ],
     [
       "2022KAPU01",

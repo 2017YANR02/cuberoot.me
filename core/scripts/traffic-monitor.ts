@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 export type Source = "nginx" | "vercel";
 export type RequestSample = {
   source: Source;
+  clientAddress?: string;
   timestamp: number;
   path: string;
   status: number;
@@ -14,7 +15,7 @@ export type RequestSample = {
   userAgent: string;
 };
 
-const NGINX_LINE = /^\S+ \S+ \S+ \[([^\]]+)\] "([^"]*)" (\d{3}) \S+ "([^"]*)" "([^"]*)"/;
+const NGINX_LINE = /^(\S+) \S+ \S+ \[([^\]]+)\] "([^"]*)" (\d{3}) \S+ "([^"]*)" "([^"]*)"/;
 const NGINX_DATE = /^(\d{2})\/([A-Za-z]{3})\/(\d{4}):(\d{2}):(\d{2}):(\d{2}) ([+-]\d{2})(\d{2})$/;
 const MONTHS = new Map(["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((name, index) => [name, index + 1]));
 const HOUR = 3_600_000;
@@ -39,11 +40,11 @@ function timestampFromNginx(value: string): number | null {
 export function parseNginxLine(line: string): RequestSample | null {
   const match = NGINX_LINE.exec(line);
   if (!match) return null;
-  const timestamp = timestampFromNginx(match[1]);
+  const timestamp = timestampFromNginx(match[2]);
   if (timestamp === null) return null;
-  const [method, path] = match[2].split(" ");
+  const [method, path] = match[3].split(" ");
   if (!method || !path) return null;
-  return { source: "nginx", timestamp, method, path, status: Number(match[3]), referrer: match[4], userAgent: match[5] };
+  return { source: "nginx", clientAddress: match[1], timestamp, method, path, status: Number(match[4]), referrer: match[5], userAgent: match[6] };
 }
 
 export function parseVercelLine(line: string): (RequestSample & { id: string }) | null {
@@ -112,9 +113,18 @@ export function referrerDomain(raw: string): string {
 }
 
 export function agentClass(raw: string): string {
-  if (/bot|spider|crawler|slurp|headless/i.test(raw)) return "self-declared bot";
+  if (/bot|spider|crawler|slurp|headless|lightpanda|playwright|puppeteer|selenium/i.test(raw)) return "declared automation";
   if (!raw) return "unknown";
-  return "other";
+  return "browser claim or unknown client";
+}
+
+function browserClaim(raw: string): string {
+  if (/lightpanda/i.test(raw)) return "Lightpanda";
+  if (/Edg\//.test(raw)) return "Edge claim";
+  if (/Firefox\//.test(raw)) return "Firefox claim";
+  if (/Chrome\//.test(raw)) return "Chrome claim";
+  if (!raw) return "missing User-Agent";
+  return "other User-Agent";
 }
 
 export function isPageCandidate(sample: RequestSample): boolean {
@@ -127,6 +137,19 @@ export function isPageCandidate(sample: RequestSample): boolean {
 
 type Counts = { requests: number; pageCandidates: number; errors5xx: number };
 type Bucket = Counts & { routes: Map<string, number>; referrers: Map<string, number>; agents: Map<string, number> };
+type SourceEvidence = {
+  requests: number;
+  pageCandidates: number;
+  routes: Map<string, number>;
+  referrers: Map<string, number>;
+  browsers: Map<string, number>;
+  minutes: Map<number, number>;
+  declaredAutomation: number;
+};
+
+function sourceEvidence(): SourceEvidence {
+  return { requests: 0, pageCandidates: 0, routes: new Map(), referrers: new Map(), browsers: new Map(), minutes: new Map(), declaredAutomation: 0 };
+}
 
 function bucket(): Bucket {
   return { requests: 0, pageCandidates: 0, errors5xx: 0, routes: new Map(), referrers: new Map(), agents: new Map() };
@@ -146,6 +169,7 @@ export class TrafficAccumulator {
   private readonly sourceBuckets = new Map<string, Bucket>();
   private readonly inputs = new Set<Source>();
   private readonly vercelIds = new Set<string>();
+  private readonly nginxSources = new Map<string, SourceEvidence>();
 
   constructor(now = Date.now()) {
     this.end = Math.floor(now / HOUR) * HOUR;
@@ -167,6 +191,19 @@ export class TrafficAccumulator {
     if (!current) { current = bucket(); sourceBuckets.set(key, current); }
     current.requests += 1;
     if (sample.status >= 500 && sample.status < 600) current.errors5xx += 1;
+    if (sample.source === "nginx" && sample.timestamp >= start && sample.clientAddress && sample.clientAddress !== "-") {
+      let evidence = this.nginxSources.get(sample.clientAddress);
+      if (!evidence) { evidence = sourceEvidence(); this.nginxSources.set(sample.clientAddress, evidence); }
+      evidence.requests++;
+      if (isPageCandidate(sample)) {
+        evidence.pageCandidates++;
+        increment(evidence.routes, routeGroup(sample.path));
+        increment(evidence.referrers, referrerDomain(sample.referrer));
+        increment(evidence.browsers, browserClaim(sample.userAgent));
+        increment(evidence.minutes, Math.floor(sample.timestamp / 60_000));
+        if (agentClass(sample.userAgent) === "declared automation") evidence.declaredAutomation++;
+      }
+    }
     if (isPageCandidate(sample)) {
       current.pageCandidates += 1;
       increment(current.routes, routeGroup(sample.path));
@@ -176,23 +213,42 @@ export class TrafficAccumulator {
   }
 
   report() {
-  const { start, end, sourceBuckets } = this;
-  const lines = (["nginx", "vercel"] as Source[]).map((source) => {
-    const current = sourceBuckets.get(`${source}:${start}`) || bucket();
-    const history = Array.from({ length: 7 }, (_, i) => sourceBuckets.get(`${source}:${start - (i + 1) * 24 * HOUR}`)?.pageCandidates ?? null);
-    const observed = history.filter((value): value is number => value !== null).sort((a, b) => a - b);
-    const baseline = observed.length ? observed[Math.floor(observed.length / 2)] : null;
-    const alerts: string[] = [];
-    if (baseline !== null && current.pageCandidates >= 100 && current.pageCandidates >= 4 * Math.max(baseline, 1) && current.pageCandidates - baseline >= 100) alerts.push("page_candidates_spike");
-    if (current.requests >= 100 && current.errors5xx / current.requests >= 0.05) alerts.push("server_errors_high");
-    return {
-      source, coverage: !this.inputs.has(source) ? "not_connected" : sourceBuckets.has(`${source}:${start}`) ? "observed" : "no_matching_requests",
-      requests: current.requests, pageCandidates: current.pageCandidates, errors5xx: current.errors5xx,
-      baselineSameHourDays: observed.length, baselinePageCandidates: baseline, alerts,
-      topRoutes: top(current.routes), topReferrers: top(current.referrers), agentClasses: top(current.agents),
-    };
-  });
-  return { windowStart: new Date(start).toISOString(), windowEnd: new Date(end).toISOString(), note: "Request counts are not unique visitors; pageCandidates are a URL heuristic, not Analytics page views.", sources: lines };
+    const { start, end, sourceBuckets } = this;
+    const rankedSources = [...this.nginxSources.values()].sort((a, b) => b.pageCandidates - a.pageCandidates || b.requests - a.requests);
+    const topSources = rankedSources.slice(0, 10).map((entry, index) => {
+      const peakMinute = Math.max(0, ...entry.minutes.values());
+      const signal = entry.declaredAutomation > 0 ? "declared_automation"
+        : entry.pageCandidates >= 60 && (entry.routes.size >= 20 || peakMinute >= 20) ? "suspected_automation"
+        : "unverified";
+      return {
+        source: `source-${index + 1}`, requests: entry.requests, pageCandidates: entry.pageCandidates,
+        distinctRouteGroups: entry.routes.size, peakPageCandidatesPerMinute: peakMinute, signal,
+        declaredAutomationPageCandidates: entry.declaredAutomation,
+        topRoutes: top(entry.routes, 3), topReferrers: top(entry.referrers, 3), browserClaims: top(entry.browsers, 3),
+      };
+    });
+    const lines = (["nginx", "vercel"] as Source[]).map((source) => {
+      const current = sourceBuckets.get(`${source}:${start}`) || bucket();
+      const history = Array.from({ length: 7 }, (_, i) => sourceBuckets.get(`${source}:${start - (i + 1) * 24 * HOUR}`)?.pageCandidates ?? null);
+      const observed = history.filter((value): value is number => value !== null).sort((a, b) => a - b);
+      const baseline = observed.length ? observed[Math.floor(observed.length / 2)] : null;
+      const alerts: string[] = [];
+      if (baseline !== null && current.pageCandidates >= 100 && current.pageCandidates >= 4 * Math.max(baseline, 1) && current.pageCandidates - baseline >= 100) alerts.push("page_candidates_spike");
+      if (current.requests >= 100 && current.errors5xx / current.requests >= 0.05) alerts.push("server_errors_high");
+      return {
+        source, coverage: !this.inputs.has(source) ? "not_connected" : sourceBuckets.has(`${source}:${start}`) ? "observed" : "no_matching_requests",
+        requests: current.requests, pageCandidates: current.pageCandidates, errors5xx: current.errors5xx,
+        baselineSameHourDays: observed.length, baselinePageCandidates: baseline, alerts,
+        topRoutes: top(current.routes), topReferrers: top(current.referrers), agentClasses: top(current.agents),
+        ...(source === "nginx" ? { attribution: {
+          loggedSourceAddresses: this.nginxSources.size,
+          leadingSourceShareOfPageCandidates: current.pageCandidates ? Number(((rankedSources[0]?.pageCandidates || 0) / current.pageCandidates).toFixed(3)) : 0,
+          topSources,
+          note: "Source labels are temporary and contain no IP. The logged address may be a proxy. Browser strings can be spoofed. Unverified does not mean human.",
+        } } : {}),
+      };
+    });
+    return { windowStart: new Date(start).toISOString(), windowEnd: new Date(end).toISOString(), note: "Request counts are not unique visitors; pageCandidates are a URL heuristic, not Analytics page views.", sources: lines };
   }
 }
 

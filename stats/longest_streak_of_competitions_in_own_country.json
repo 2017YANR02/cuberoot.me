@@ -45,7 +45,7 @@
       null
     ],
     [
-      113,
+      114,
       "[Chia-Leo Lin (林珈樂)](https://www.worldcubeassociation.org/persons/2006LINC01)",
       "Chinese Taipei",
       "[Maru Cube Day 2016](https://www.worldcubeassociation.org/competitions/MaruCubeDay2016)",
@@ -361,9 +361,23 @@
     ],
     [
       32,
+      "[Kacper Paweł Dworak](https://www.worldcubeassociation.org/persons/2020DWOR01)",
+      "Poland",
+      "[SLS Styczeń 2024](https://www.worldcubeassociation.org/competitions/SLSStyczen2024)",
+      null
+    ],
+    [
+      32,
       "[Natthaphat Mahtani (ณัฐภัทร จี มาทานี)](https://www.worldcubeassociation.org/persons/2011MAHT02)",
       "Thailand",
       "[TCA Championship 2011](https://www.worldcubeassociation.org/competitions/TCAChampionship2011)",
+      null
+    ],
+    [
+      32,
+      "[Carmen Teo Bin Jie (张斌婕)](https://www.worldcubeassociation.org/persons/2012JIET01)",
+      "Singapore",
+      "[Singapore Megaland July 2025](https://www.worldcubeassociation.org/competitions/SingaporeMegalandJuly2025)",
       null
     ],
     [
@@ -396,13 +410,6 @@
     ],
     [
       31,
-      "[Kacper Paweł Dworak](https://www.worldcubeassociation.org/persons/2020DWOR01)",
-      "Poland",
-      "[Rzeszów Open 2024](https://www.worldcubeassociation.org/competitions/RzeszowOpen2024)",
-      null
-    ],
-    [
-      31,
       "[Kirstine Buus Aagaard](https://www.worldcubeassociation.org/persons/2006BUUS02)",
       "Denmark",
       "[Danish Open 2008](https://www.worldcubeassociation.org/competitions/DanishOpen2008)",
@@ -413,13 +420,6 @@
       "[Laurids Abelsen Holm](https://www.worldcubeassociation.org/persons/2016HOLM04)",
       "Denmark",
       "[Vinderup Open 2016](https://www.worldcubeassociation.org/competitions/VinderupOpen2016)",
-      null
-    ],
-    [
-      31,
-      "[Carmen Teo Bin Jie (张斌婕)](https://www.worldcubeassociation.org/persons/2012JIET01)",
-      "Singapore",
-      "[Singapore Megaland July 2025](https://www.worldcubeassociation.org/competitions/SingaporeMegalandJuly2025)",
       null
     ],
     [
@@ -655,6 +655,13 @@
     ],
     [
       25,
+      "[Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02)",
+      "Brazil",
+      "[Mogi Open 2014](https://www.worldcubeassociation.org/competitions/MogiOpen2014)",
+      null
+    ],
+    [
+      25,
       "[Tsang Hon Pong (曾漢邦)](https://www.worldcubeassociation.org/persons/2014PONG01)",
       "Hong Kong, China",
       "[Back To Cubing Hong Kong 2015](https://www.worldcubeassociation.org/competitions/BackToCubingHongKong2015)",
@@ -721,13 +728,6 @@
       "[DaYeong Kim (김다영)](https://www.worldcubeassociation.org/persons/2016KIMD05)",
       "Republic of Korea",
       "[Daegu Autumn Open 2019](https://www.worldcubeassociation.org/competitions/DaeguAutumnOpen2019)",
-      null
-    ],
-    [
-      24,
-      "[Fabio Bini Graciose](https://www.worldcubeassociation.org/persons/2010GRAC02)",
-      "Brazil",
-      "[Mogi Open 2014](https://www.worldcubeassociation.org/competitions/MogiOpen2014)",
       null
     ],
     [
