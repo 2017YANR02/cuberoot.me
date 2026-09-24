@@ -41,6 +41,9 @@ importers:
       '@app-foundation/payments':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz
+      '@app-foundation/sms':
+        specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz
+        version: https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz
       '@app-foundation/verification':
         specifier: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
         version: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz
@@ -1043,6 +1046,11 @@ packages:
     resolution: {integrity: sha512-zLVBAkpOSzXdtlYduCHTgcNRiQZjqrx0kGKGawLnm7iGzXsJMN+6OOIIePy5MLpXq15AWxFgXI6NgCLjqCRwXw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz}
     version: 0.1.0
     engines: {node: '>=22'}
+
+  '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz':
+    resolution: {integrity: sha512-WSasNetrvPDkwxlhJKELS3veXktnU5sibgWFactbN1SBVCEr68pDPQgX99F6o0l9SyInc08Sm1ZwazDd8aTBHA==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz}
+    version: 0.1.1
+    engines: {node: '>=16.13'}
 
   '@app-foundation/verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz':
     resolution: {integrity: sha512-z/wHi7+xhpQUAyIPgxRsfTiNQ5bP8IUPo8HYr5MA4mnOWEYgdceryQ4LXXAteSgd6sxYhTdoAmeGK9iaecLLpw==, tarball: https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz}
@@ -6175,6 +6183,8 @@ snapshots:
   '@app-foundation/messaging@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-messaging-0.1.0.tgz': {}
 
   '@app-foundation/payments@https://github.com/2017YANR02/app-foundation/releases/download/v0.1.0/app-foundation-payments-0.1.0.tgz': {}
+
+  '@app-foundation/sms@https://github.com/2017YANR02/app-foundation/releases/download/v0.3.1/app-foundation-sms-0.1.1.tgz': {}
 
   '@app-foundation/verification@https://github.com/2017YANR02/app-foundation/releases/download/v0.2.0/app-foundation-verification-0.1.0.tgz': {}
 
