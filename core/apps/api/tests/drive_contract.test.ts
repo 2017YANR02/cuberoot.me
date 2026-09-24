@@ -18,7 +18,12 @@ describe('Drive contract', () => {
   it('allows browser upload preflights only from trusted origins', async () => {
     const app = new Hono().use('*', apiCors);
     const headers = ['authorization', 'content-type', 'idempotency-key', 'upload-offset', 'upload-checksum'];
-    for (const origin of ['https://cuberoot.me', 'https://next.cuberoot.me', 'https://evil.example']) {
+    for (const origin of [
+      'https://cuberoot.me', 'https://next.cuberoot.me', 'https://dev.cuberoot.me',
+      'https://dev-mac-mini.cuberoot.me', 'https://dev-alienware.cuberoot.me',
+      'https://dev-macbook-pro.cuberoot.me', 'https://dev-other.cuberoot.me',
+      'https://evil.example',
+    ]) {
       const response = await app.request('/v1/drive/uploads/00000000-0000-4000-8000-000000000000', {
         method: 'OPTIONS',
         headers: {
@@ -27,7 +32,7 @@ describe('Drive contract', () => {
           'Access-Control-Request-Headers': headers.join(','),
         },
       });
-      if (origin === 'https://evil.example') {
+      if (origin === 'https://evil.example' || origin === 'https://dev-other.cuberoot.me') {
         expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
         continue;
       }
