@@ -228,6 +228,7 @@ jobs:
             /sync_upstream.ts
             /.sync/
             /scripts/upstream/
+            /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
             /ops/systemd/cuberoot-drive-compression.service
@@ -447,6 +448,7 @@ jobs:
             /sync_upstream.ts
             /.sync/
             /scripts/upstream/
+            /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
             /ops/systemd/cuberoot-drive-compression.service

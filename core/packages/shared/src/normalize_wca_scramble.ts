@@ -1,4 +1,4 @@
-import { flattenAlg, tokenizeMoves } from './alg_notation.js';
+import { flattenAlg, tokenizeMoves } from './alg_notation';
 
 type Face = 'U' | 'D' | 'F' | 'B' | 'R' | 'L';
 const FACES: Face[] = ['U', 'D', 'F', 'B', 'R', 'L'];

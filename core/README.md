@@ -48,7 +48,8 @@ pnpm --filter @cuberoot/client dev          # 前端 dev,127.0.0.1:3000
 pnpm --filter @cuberoot/client typecheck     # tsgo
 pnpm --filter @cuberoot/client build
 pnpm --filter @cuberoot/server typecheck
-pnpm stats:scramble:local                    # 跑打乱统计
+pnpm stats:scramble                          # 跑打乱统计，完成后自动发布
+pnpm stats:scramble:local                    # 只生成本地统计
 
 cd apps/fmc-solver
 cargo test -p cubelib-server
