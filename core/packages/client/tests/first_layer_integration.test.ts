@@ -27,10 +27,10 @@ describe('First Face / First Layer 全链路登记', () => {
   });
 
   it('native 增量、难题集、comp steps 与近期打乱都使用同一 CSV 契约', () => {
-    expect(readScrambleJob('update_cross_stats.ps1'))
-      .toMatch(/first_layer\s*=\s*'first_layer_analyzer\.exe'/);
-    expect(readScrambleJob('backfill_xcross_variant.ps1'))
-      .toContain("first_layer = 'first_layer_analyzer.exe'");
+    expect(read('scripts/stats/update-local.ts'))
+      .toMatch(/first_layer:\s*'first_layer_analyzer'/);
+    expect(read('scripts/stats/backfill-xcross.ts'))
+      .toMatch(/first_layer:\s*'first_layer_analyzer'/);
     expect(readScrambleJob('src/variants.ts'))
       .toContain("stages: ['first_face', 'first_layer']");
     expect(readScrambleJob('src/build_comp_steps.ts'))

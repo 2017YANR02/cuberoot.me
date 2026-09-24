@@ -1,33 +1,25 @@
-本流程的“顶部授权规则”见 [skill 入口](../SKILL.md)；执行前仍须遵守其中共同规则。
+本流程的发布授权见 [skill 入口](../SKILL.md)。以下命令从 `core/` 执行，除非另有说明。
 
-## A. 三阶阶段难度(`update_cross_stats.ps1`)
+## A. 三阶阶段难度
 
-一键(脚本名留 `cross` 是历史:十字是主阶段,实跑全阶段):
-
-```pwsh
-pwsh core/jobs/scramble-stats-build/update_cross_stats.ps1
+```sh
+pnpm stats:scramble:local --jobs stages
+pnpm stats:scramble:local --jobs stages --plan
+pnpm stats:scramble:local --jobs stages --dry-run --source-csv /path/to/input.csv
 ```
 
-下 results export → 增量挑新打乱 → std_analyzer 全 5 阶段 → 追加 std.csv → 默认再跟 std 锁步补全 6 变体 eo/pseudo/pseudo_pair/pair/f2leo/pseudo_f2leo(按 id 缺补,分块可续)→ 重算 distribution/wca_cross/comp_steps → git push + scp static。
+TypeScript 入口下载或复用 WCA export，抽取新增打乱，运行 `std_analyzer`，按 ID 幂等追加 std CSV、master 和多盲元数据。随后按 master 与各变体 CSV 的 ID 差集补缺，再重算 distribution、wca_cross、comp_steps、近期打乱和首次出现时间线。默认补 daisy、first_layer、eo、pseudo、pseudo_pair、pair、f2leo、pseudo_f2leo、222、roux、223、eoline、dr、f2b；用 `--variants eo,pseudo` 缩小范围，`--max-chunks 1` 控制每个变体最多一块，`--chunk-size N` 覆盖块大小。中断后重跑按 ID 续算。
 
-- **交互向导**:真人终端裸跑(无参数)自动进向导,全程**方向键菜单**(↑↓ / Space 多选 / 数字字母快捷 / Enter / Esc)—— 取数前问「TSV 来源(下载官方最新 / 用本地缓存不联网)」,取数后列各变体待补 + 估时,多选「跑哪些变体」+ 单选「每变体几块 / 是否发布」,总览确认再跑;`-Interactive` 强制开,`-UseCached` 单独走不联网取数。AI/带任意 flag/非交互终端不弹;AI 必须按顶部授权规则显式决定是否加 `-NoPublish`。
-- **长操作都有进度**:下载(每 5%)、解压大 TSV(每 128MB)、扫描(每 2M 行)、solver([PROG] 每 1%)、build(每 20 万行 `\r`)、scp(每 3s 远端字节)。
-- 先 `-DryRun` 看新增规模(只读);落后多就大补、solver 跑几小时。
-- **pair / f2leo / pseudo_f2leo 已入默认**(2026-06-09);增量只补 delta。瓶颈始终是 eo ~0.9/s。想快跑显式 `-Variants eo,pseudo,pseudo_pair` 跳过三重型项。
-- f2leo/pseudo_f2leo 走大表快路径(`CUBE_ALLOW_HUGE_TABLES=1` 已默认;f2leo huge ~31/s、pseudo_f2leo huge ~81/s)。
-- 想本地看不发布:`-NoPublish`。细节/开关/排错:`core/jobs/scramble-stats-build/RUNBOOK.md`。
+分析器走 `CUBE_TABLE_DIR` 与 `CUBE_ALLOW_HUGE_TABLES=1`，Rayon 默认使用机器可用并行度。性能估计须读取本机实际进度；旧机器的 eo、pair 等速率不能作为本机承诺。产物自动记录各阶段耗时。若更改分布 JSON 结构，应同时更新前端类型和资源版本。
 
-### 第二套数据集:xcross_2_col_10f(双色底 10f xcross)
+### 第二套数据集：xcross_2_col_10f
 
-`/scramble/stats` 三阶有**两个 set**(`config.yml`):`wca`(全 7 变体,走上面)+ `xcross_2_col_10f`(静态 1,271,727 条难打乱,数据在 `D:\cube\scramble\xcross_2_col_10f\stat\`,master=同目录 `scrambles.txt`)。后者**只缺 f2leo/pseudo_f2leo**,与 update_cross_stats **解耦**,走独立脚本:
+它与 WCA 增量管道解耦。只补 CSV，在仓库根运行：
 
-```pwsh
-pwsh core/jobs/scramble-stats-build/backfill_xcross_variant.ps1 -Variant pseudo_f2leo -Hours 5 -Threads 10
+```sh
+./core/node_modules/.bin/tsx scripts/stats/backfill-xcross.ts --variant pseudo_f2leo --hours 5
 ```
 
-- 限时(`-Hours`,到点 chunk 边界停 + 末块裁剪;省略=补满)/ 限线程 / 分块可续。两变体都要补:`-Variant pseudo_f2leo`(暖态 ~21/s,全集 ~17h)、`-Variant f2leo`(暖态 ~40/s,全集 ~8.8h,但 20GB pair huge 表冷启慢)。
-- **只攒 csv,partial 千万别 build**(否则该变体 sample_count 残缺误导)。补满 1,271,727 后才 `pnpm -F @cuberoot/scramble-stats-build build` → 验 `distribution.json` `sets.xcross_2_col_10f.variants.pseudo_f2leo.sample_count==1271727` → push + tar/scp static。
-- 进度:`D:\cube\scramble\xcross_2_col_10f\_backfill\backfill_<variant>.log`。详见 memory `project_xcross_2col_f2leo_backfill`。
+可选 `--variant f2leo`、`--chunk-size N`、`--max-chunks N`。默认线程使用机器可用并行度，不固定 10/14。目标 master 是 `CUBEROOT_XCROSS_DATA_DIR`（默认数据根下 `xcross_2_col_10f`）的 `scrambles.txt`；结果写同目录 `stat/<variant>.csv`。只在该 CSV 与 master 的 ID 集合完全一致后，才重建并发布对应分布，避免不完整样本被当作全量。
 
----
-
+发布入口需单独获得授权：`pnpm stats:scramble:publish --publish --jobs stages`。仅预览静态差异可运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`（仓库根）。

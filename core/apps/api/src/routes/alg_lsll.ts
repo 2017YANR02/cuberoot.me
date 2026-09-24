@@ -4,7 +4,7 @@
  *   - GET /v1/alg/lsll/htm?keys=   — 一批 case 只要步数(训练器挑 mid-AUF 用,见下)
  *   - GET /v1/alg/lsll/dist        — HTM 步数直方图 + 覆盖数(大类页 / case 页顶栏用)
  *
- * 数据来自本地管道 `solver/lsll`(cubeopt/h48 求解 → export_cases.mjs → update_lsll.ps1 增量灌),
+ * 数据来自本地管道 `solver/lsll`(cubeopt/h48 求解 → export_cases.mjs → update_lsll.mts 增量灌),
  * 表 schema 见 migrations/0094_lsll_cases.sql。**只读**,没有写端点:公式库那套 admin 通道
  * 管的是人类公式(alg_cases),这张表是机器算出来的,重灌即真源。
  *

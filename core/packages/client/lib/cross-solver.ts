@@ -12,6 +12,7 @@
 // L=Orange — so each face's 4 edges are a fixed piece set (no rotation needed).
 
 import { flattenAlg, tokenizeMoves } from '@cuberoot/shared/alg-notation';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 
 export type CrossColor = 'White' | 'Yellow' | 'Red' | 'Orange' | 'Blue' | 'Green';
 
@@ -229,9 +230,7 @@ export function bottomColorIdx(scramble: string): number {
  * a pure-HTM scramble round-trips to itself.
  */
 export function normalizeScramble(scramble: string): string | null {
-  const idx = parseScramble(scramble);
-  if (idx === null) return null;
-  return idx.map((i) => MOVE_NAMES[i]).join(' ');
+  return normalizeWcaScramble(scramble);
 }
 
 export interface CrossSolution {

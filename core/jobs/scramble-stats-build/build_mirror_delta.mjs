@@ -38,7 +38,7 @@ if (!scramblesPath || !prodCountsPath || !outDelta || !outComps) {
   process.exit(2);
 }
 
-// incremental.py 同款列名归一化(抗 camelCase/snake_case 漂移)。
+// src/incremental.ts 同款列名归一化(抗 camelCase/snake_case 漂移)。
 const norm = (s) => s.trim().toLowerCase().replace(/[_\s]/g, '');
 function colmap(header, aliases) {
   const idx = new Map();

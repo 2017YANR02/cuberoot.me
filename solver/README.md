@@ -2,7 +2,7 @@
 
 三阶魔方 Cross / F2L 阶段最优解分析器。Rust 移植自 `D:\cube\solver`(C++17)。
 
-C++ 端的 6 个 analyzer + 表生成器已全部移植为 Rust,均 golden bit-exact。
+下表所列的 5 个 Cross/F2L analyzer 与表生成器已移植为 Rust；历史 golden 对照范围见 [TESTING.md](TESTING.md)。
 
 块 / 槽 / 各阶段语义定义见 [DEFINITIONS.md](DEFINITIONS.md);移植设计决策见 PORTING_NOTES.md。
 
@@ -19,20 +19,19 @@ C++ 端的 6 个 analyzer + 表生成器已全部移植为 Rust,均 golden bit-e
 | pseudo_analyzer | XXXCross       | OK,env CUBE_ALLOW_HUGE_TABLES=1 | + pscross_E0E1E2 957 MB + C4C5C6 822 MB + mt_edge3/corn3 |
 | pair_analyzer   | 全 4 阶段      | OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1 | ~20 GB(2 张 huge + ins_C4 + pair) |
 | pseudo_pair_analyzer | 全 4 阶段 | OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1 | ~3 GB(全 pseudo 表 + 16 × ins/pspair) |
-| eo_cross_analyzer | 全 5 阶段    | 默认档 OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1；high-memory 档代码就绪、待 64 GB 机器验收 | 默认加载约 23.1 GB；含可选 diagonal 的默认 full 33.8 GB；high-memory full 43.2 GB |
-| table_generator | -              | 默认档批量顺序生成 73 张表；high-memory 自动追加 5 张，待硬件验收 | 默认档 ~25 GB；high-memory 另加 9.35 GB |
+| eo_cross_analyzer | 全 5 阶段    | 默认档 OK,**golden bit-exact**(前 20 scramble),需 CUBE_ALLOW_HUGE_TABLES=1；high-memory 档本机表已生成，分析器待验收 | 默认加载约 23.1 GB；含可选 diagonal 的默认 full 33.8 GB；high-memory full 43.2 GB |
+| table_generator | -              | 统一磁盘建表入口：默认档 73 张，high-memory 追加 EO 5 张、SQ1 精确表与原生 H48 h10 | 本机生成与资源记录见 [HIGH_MEMORY_TABLE_PROFILE.md](HIGH_MEMORY_TABLE_PROFILE.md)；本地统计从 `core/` 运行 `pnpm stats:scramble:local` |
 
 底层 (cube_common / move_tables / prune_tables / prune_create / executor /
 cross_solver / xcross_solver) 全部完成,golden bit-exact。
 
 ## 构建
 
-```powershell
+```sh
 cargo build --release
 ```
 
-需要 Rust stable(edition 2021)。无外部 C 依赖,只用 crates.io 上的
-`memmap2` + `rayon`。
+需要 Rust stable(edition 2021)。Rust 分析器只用 crates.io 上的 `memmap2` + `rayon`；生成及读取 H48 h10 还需本机 C 编译器。
 
 ## 运行
 
@@ -41,13 +40,12 @@ cargo build --release
 
 ### pseudo_analyzer 快速上手
 
-```powershell
+```sh
 # 默认:Cross + XCross + XXCross = 18/24 数据列(~415 MB 表,首次几十秒生成)
-"scramble_1000.txt" | .\target\release\pseudo_analyzer.exe
+printf '%s\n' 'scramble_1000.txt' | ./target/release/pseudo_analyzer
 
 # 全 4 阶段(+ XXXCross,~1.8 GB 额外 huge 表,首次 ~70s 生成)
-$env:CUBE_ALLOW_HUGE_TABLES = "1"
-"scramble_1000.txt" | .\target\release\pseudo_analyzer.exe
+CUBE_ALLOW_HUGE_TABLES=1 ./target/release/pseudo_analyzer <<<'scramble_1000.txt'
 ```
 
 输出 25 列 CSV:`id + pseudo_{cross,xcross,xxcross,xxxcross}_{z0..x1}`。
@@ -58,11 +56,10 @@ PseudoXXXCross 默认 skip,需 `CUBE_ALLOW_HUGE_TABLES=1` 才会启用。
 
 三者都强制要求 `CUBE_ALLOW_HUGE_TABLES=1`(依赖 mt_edge6 或 ≥800MB pt 表):
 
-```powershell
-$env:CUBE_ALLOW_HUGE_TABLES = "1"
-"scramble_1000.txt" | .\target\release\pair_analyzer.exe         # 25 列 scramble+4阶段
-"scramble_1000.txt" | .\target\release\eo_cross_analyzer.exe     # 31 列 id+5阶段
-"scramble_1000.txt" | .\target\release\pseudo_pair_analyzer.exe  # 25 列 id+4阶段
+```sh
+CUBE_ALLOW_HUGE_TABLES=1 ./target/release/pair_analyzer <<<'scramble_1000.txt'         # 25 列 scramble+4阶段
+CUBE_ALLOW_HUGE_TABLES=1 ./target/release/eo_cross_analyzer <<<'scramble_1000.txt'     # 31 列 id+5阶段
+CUBE_ALLOW_HUGE_TABLES=1 ./target/release/pseudo_pair_analyzer <<<'scramble_1000.txt'  # 25 列 id+4阶段
 ```
 
 可选 env:
@@ -73,9 +70,9 @@ $env:CUBE_ALLOW_HUGE_TABLES = "1"
 
 ### std_analyzer 默认(仅 Cross,~140 KB 表,首次约几秒生成)
 
-```powershell
+```sh
 # 把任务文件放在当前目录,然后 echo 文件名给程序
-"scramble_1000.txt" | .\target\release\std_analyzer.exe
+printf '%s\n' 'scramble_1000.txt' | ./target/release/std_analyzer
 ```
 
 输出 `scramble_1000_std.csv`,30 列:`id,cross_z0..cross_x1,xcross_*,xxcross_*,xxxcross_*,xxxxcross_*`。
@@ -83,9 +80,8 @@ $env:CUBE_ALLOW_HUGE_TABLES = "1"
 
 ### 启用 XCross(+52 MB pt_cross_C4E0,首次约 30-60s 生成)
 
-```powershell
-$env:CUBE_RUN_FULL_STD = "1"
-"scramble_1000.txt" | .\target\release\std_analyzer.exe
+```sh
+CUBE_RUN_FULL_STD=1 ./target/release/std_analyzer <<<'scramble_1000.txt'
 ```
 
 xcross_* 6 列填真实数据,xxcross+ 仍是 0(未开 huge)。
@@ -96,28 +92,26 @@ XXCross / XXXCross / XXXXCross 依赖 `pt_cross_C4C5E0E1`(~10 GB)+
 `pt_cross_C4C6E0E2`(~10 GB)+ `mt_edge6`(~3 GB)+ `mt_corn2`(35 KB)。
 同时设两个 env 后,全 30 列填真实数据(golden bit-exact)。
 
-```powershell
-$env:CUBE_ALLOW_HUGE_TABLES = "1"
-$env:CUBE_RUN_FULL_STD = "1"
-"scramble_1000.txt" | .\target\release\std_analyzer.exe
+```sh
+CUBE_ALLOW_HUGE_TABLES=1 CUBE_RUN_FULL_STD=1 ./target/release/std_analyzer <<<'scramble_1000.txt'
 ```
 
 ## 表文件
 
 默认放在 `./tables/`。可用 `CUBE_TABLE_DIR` 覆盖:
 
-```powershell
-$env:CUBE_TABLE_DIR = "D:\my-cube-tables"
+```sh
+CUBE_TABLE_DIR=/path/to/cube-tables cargo run --release --bin table_generator
 ```
 
-每张表都是 BFS 自动生成 + mmap 复用,首次运行慢,后续秒级 load。
+由统一 `table_generator` 生成或补齐表；完成的表可在求解时只读加载。
 Rust 端表格式与 C++ `.bin` **不兼容**(Rust 加了 magic header,详见
-`PORTING_NOTES.md` Phase 1 / Phase 3)。要重新生成所有表,把目录清掉即可。
+`PORTING_NOTES.md` Phase 1 / Phase 3)。只重建受影响的表，先确认文件与表目录，不清空整个目录。
 
 ## 测试
 
-```powershell
-# 默认套件:54 个单元测试 + 1 e2e Cross,全部秒级跑完
+```sh
+# 默认套件
 cargo test --release
 
 # 中表 + XCross e2e:多花几十秒生成 52 MB pt_cross_C4E0
@@ -128,16 +122,18 @@ cargo test --release -- --ignored
 testdata/ 下的 `scramble_5.txt` / `scramble_100.txt`(上游测试打乱)+ `golden/`
 是测试源,已 commit;`testdata/` 不在 `.gitignore` 里。
 
-### 全 analyzer 端到端验证(verify.ps1)
+### 全 analyzer 端到端验证(scripts/verify.mts)
 
-5 个 analyzer × scramble_5/100 的一键验证 + 计时 + diff golden,用 `verify.ps1`
+5 个 analyzer × scramble_5/100 的一键验证 + 计时 + diff golden,用 `scripts/verify.mts`
 (需 `./tables/` 已含 huge 表)。golden = 本程序受信任输出(前 20 行已对齐 C++ golden
 bit-exact,余下由本程序产出)。
 
-```powershell
-pwsh verify.ps1                 # 对照 golden,打印每个 analyzer 的耗时 + OK/FAIL
-pwsh verify.ps1 -Generate       # 重建 golden 基线
-pwsh verify.ps1 -Inputs scramble_5.txt   # 只跑某个输入
+从仓库的 `core/` 目录运行：
+
+```sh
+pnpm solver:verify                              # 对照 golden,打印耗时 + OK/FAIL
+pnpm solver:verify --generate                   # 重建 golden 基线
+pnpm solver:verify --inputs scramble_5.txt      # 只跑某个输入
 ```
 
 实测耗时见 [TESTING.md](TESTING.md)。
@@ -187,4 +183,4 @@ solver 系列(6 analyzer + table_generator)全部移植并 golden bit-exact。�
 - pair_analyzer:Phase 7,golden bit-exact(前 20 scramble,pair 25 列)
 - eo_cross_analyzer:Phase 8,golden bit-exact(前 20 scramble,eo 31 列)
 - pseudo_pair_analyzer:Phase 9,golden bit-exact(前 20 scramble,25 列;修了 ins_C_diff/pspair_CE 数组 corner/edge 转置 bug)
-- table_generator:默认档顺序生成 73 表；high-memory 档追加 5 表（代码就绪、待 64 GB 机器验收）；既有大表使用 C++ 式分布进度 + 原位打包(默认档峰值 ~21GB)
+- table_generator:默认档顺序生成 73 表；high-memory 档追加 5 表（64 GiB Mac 本机已生成）；既有大表使用 C++ 式分布进度 + 原位打包，本机完整生成峰值 RSS 24.54 GB

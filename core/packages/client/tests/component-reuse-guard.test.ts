@@ -325,7 +325,7 @@ describe('component reuse rule registry', () => {
     const preTool = codex.hooks?.PreToolUse ?? [];
     expect(preTool.some((group: { matcher?: string; hooks?: Array<{ command?: string }> }) =>
       group.matcher === 'apply_patch'
-      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mjs')
+      && group.hooks?.some((hook) => hook.command?.includes('adapt-codex-write-payload.mts')
         && hook.command.includes('hook-detect-component-reimplementation.mjs')),
     ), 'missing adapted component-reuse hook for apply_patch').toBe(true);
     expect(existsSync(join(REPO_ROOT, 'core', 'packages', 'client', 'scripts', 'hook-detect-component-reimplementation.mjs'))).toBe(true);

@@ -134,7 +134,7 @@ $env:MOBILE_UPLOAD_STORE_PASSWORD = '<from password manager>'
 $env:MOBILE_UPLOAD_KEY_ALIAS = 'cuberoot-upload'
 $env:MOBILE_UPLOAD_KEY_PASSWORD = '<from password manager>'
 $env:MOBILE_REQUIRE_RELEASE_SIGNING = 'true'
-./gradlew.bat clean assembleRelease bundleRelease --no-daemon --max-workers=14
+./gradlew.bat clean assembleRelease bundleRelease --no-daemon
 ```
 
 The Play upload artifact is `app/build/outputs/bundle/release/app-release.aab`. CI uses a disposable key to prove that release signing works; it is not the production upload key. Enroll the real key in Play App Signing, back it up through the password-management process, and verify internal-track upgrade/rollback before production.

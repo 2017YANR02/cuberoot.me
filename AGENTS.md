@@ -29,6 +29,14 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 新代码归属：页面和平台适配留在所属 app；稳定、运行时中性且有真实多端消费者的契约/纯逻辑才进共享 package；只因两份文件相似不拆 package。
 
+新的一般业务代码、统计/生成 job 和仓库自动化优先 TypeScript，求解器与大表生成优先 Rust；现存 Python 的迁移状态和必须保留的 Blender/研究/上游例外见 `docs/python-to-typescript-rust-tracker.md`。新增 Python 入口前先核对该跟踪表，避免把已经迁出的管道接回 Python。
+
+仓库自有 PowerShell 脚本已迁为 TypeScript 或退役，清单和验证边界见 `docs/powershell-to-typescript-tracker.md`。新增自动化入口使用 TypeScript；调用方、CI、hook 配置和文档不得重新引入 `.ps1` 或把 `pwsh` 当作 TS 入口的依赖。
+
+打乱统计的本地一键入口在 `core/` 运行 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `--plan`。此入口由 TypeScript 编排，默认全部本地运行，不做 commit、push、scp 或线上 PG 写入；发布分支迁移状态见跟踪表。
+
+创建或修改 Mac 快捷指令用 [mac-shortcuts skill](.agents/skills/mac-shortcuts/SKILL.md)；本机「跑打乱统计」实例见 [docs/mac-stats-shortcut.md](docs/mac-stats-shortcut.md)。
+
 改 `core/apps/miniprogram/src/` 后必须在 `core/` 运行 `pnpm --filter @cuberoot/miniprogram build` 刷新开发者工具读取的 `dist/`；该命令不跑测试。
 WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过小程序 build 并在微信开发者工具关闭项目后重开做干净编译。
 
@@ -43,7 +51,7 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 | Solver | `/solver` | 根目录静态(Vercel 走 `tools/[...slug]` 反代) | fork of or18/RubiksSolverDemo | ❌ |
 | Alg Trainer | `/alg-trainers` | 同上 | fork of mihlefeld/Alg-Trainers | ❌ |
 | csTimer | `/cstimer` | iframe → `/tools/cstimer/` | cs0x7f/cstimer | ❌ |
-| BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,统一入口 `sync_upstream.ps1 -Only blddb`) | nbwzx/blddb v2 | ❌ |
+| BLDDB | `/blddb` | iframe → `/tools/blddb/`(next build 静态导出,统一入口 `cd core && pnpm upstream:sync --only blddb`) | nbwzx/blddb v2 | ❌ |
 | 盲拧公式查询 | `/alg/3bld/lookup` | client,吃 `tools/blddb/data/*Manmade.json`(三阶六套) | 自有 UI + blddb 数据 | ✅ |
 | WCA Stats | `/wca` | `jobs/stats-build` | jonatanklosko/wca_statistics TS 重写 | ⚠️ 管道重写,UI 自有 |
 | Score Calculator | `/calc` | client `app/[lang]/calc/` | ported from carykh/hthgrapher | ✅ |
@@ -82,9 +90,13 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 - client 页面默认 SSG:根 layout 禁动态 API(cookies/headers),全局组件禁 render 调 `useSearchParams`;语言归属在 `[lang]/layout`。
 - 省 Vercel 配额:①高基数/响应式 href/离开本页的 `<Link>` 必 `prefetch={false}`;②无 SEO 的动态 `[param]` 页走静态哨兵壳(`dynamicParams=false` + `generateStaticParams` 返 `['_']` + beforeFiles rewrite + client 读 `window.location`);③`public/` 大资产必设 `Cache-Control`;④取证看 `/www/wwwlogs/www.cuberoot.me.log`(全 IP+UA)。
 
+## 开发预览域名接入
+
+用户说“帮我配置 dev，名字是…电脑是…”、新增同事开发域名或撤销某台电脑时，读取 `.agents/skills/dev-preview/SKILL.md` 和 `docs/dev-preview-onboarding.md`。以 `ops/dev-preview/machines.json` 为唯一设备清单，使用 `core/scripts/dev-preview/cli.ts` 和 `client.ts` 完成登记、授权、DNS、证书、部署、电脑自启和验收；不能只改 DNS 就报完成。新增同事使用每设备独立 SSH 密钥，不分发现有 FRP 共用令牌。
+
 ## 开发命令
 
-使用 pnpm 12.6.0、pwsh；运行 core 命令前核实 CWD，在仓库根时先 `Set-Location core`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
+使用 pnpm 12.6.0；运行 core 命令前核实 CWD，在仓库根时先进入 `core/`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
 - shell 路径相对 `core/` 写(`packages/...`),禁加 `core/` 前缀(会变 `core/core/`)。含 `[lang]` 等方括号的路径一律单引号,必要时 `git add ':(literal)packages/.../[lang]/x.tsx'`。
@@ -179,6 +191,8 @@ pnpm --filter @cuberoot/client lint
 
 ## 主题/颜色
 
+`/dev/infrastructure` 的设备图片必须是实际透明背景的产品抠图，不能把白底、棋盘格或其他底色烘焙进图片。仅检查 PNG/WebP 的 `hasAlpha` 不够：还要检查产品外空白区域的像素透明度，并在深色、浅色背景上预览。这个页面的透明 WebP 用 `next/image` 时保留 `unoptimized`，本地曾实测 Next 图片优化把它们转成白底 JPEG。替换已浏览过的同名图片时更换资源 URL，避免缓存继续显示旧图。
+
 写任何 CSS 色值前调 `theme-tokens` skill(token 表 + dark-locked 页清单 + color-mix 规则);禁 `#888 #aaa` 等硬码灰阶。
 
 透明背景材质只在 `glass-material.css` 定义，旧样式由 `site-surfaces.css` 适配；新表面复用 `data-site-surface="panel|popover|heading"`，禁页面另造透明度/blur，保留状态色和无障碍回退，详 `theme-tokens` skill。
@@ -212,7 +226,15 @@ Space 的 `.blend` 源工程及必要原始贴图纳入版本管理时必须使�
 
 ## 造 SQ1 最优求解器 loop
 
-`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 推进;≤15GB 大表、禁 OOM、线程 12/14。
+`/loop 继续造 SQ1 最优求解器`(或"造 SQ1 最优")= 读 `solver/SQ1_WCA_LOOP.md` + `solver/SQ1_WCA_GODS_NUMBER.md` 全文,按前者 §0 推进;≤15GB 大表、禁 OOM；线程默认用机器可用并行度。
+
+## 求解器磁盘表生成
+
+执行命令、源码入口、进度查看与验收记录见 [solver/HIGH_MEMORY_TABLE_PROFILE.md](solver/HIGH_MEMORY_TABLE_PROFILE.md)。修改 H48 遍历或进度前先读 [solver/vendor/nissy-core/VENDOR.md](solver/vendor/nissy-core/VENDOR.md)，保留固定上游的计算边界及分布校验基准。
+
+需要生成、补齐或重建 solver 磁盘大表时，统一从 `solver/` 运行 `cargo run --release --bin table_generator`。SQ1 精确表与 H48 h10 也由这个入口生成；只补单表用同一 binary 的 `--only sq1` / `--only h48-h10`，H48 小档位流程验证用 `--only h48-h7`，不要把 ignored test、`333opt/gen-table.mjs` 或上游工具当作给 AI 的独立建表步骤。H7 只验证生成和校验流程，不替代统计管道所需的 H10。三阶整解离线统计统一使用原生 H48 h10，经 `solver/333opt/solve_h10.mts` 接入；不再生成 cubeopt9。表根目录由 `CUBE_TABLE_DIR` 指定，默认 `solver/tables/`；逐表耗时和峰值 RSS 由生成器写入该目录。64 GiB Mac 上 H48 h10 的 RSS 警戒线为 57 GiB，触线停下报告；线程使用可用 CPU 并行度，不手工钳制 12/14。
+
+H48 **建表**不得把正在写的表文件映射为计算缓冲区（禁止 file-backed mmap / MAP_SHARED 生成）：先在进程内存中生成，完成上游校验，再顺序写入临时文件、同步落盘并原子改名。2026-09-24 本机有上限对比显示文件映射 256 个短状态约 163 秒，而内存生成的上游加锁算法 32,768 个约 35 秒；不得为降低 RSS 擅自改回文件映射。读已完成表的只读映射与建表写入是不同用途。当前统一入口支持 H7 流程验证与正式 H10；nissy-core 此版本最高 H11（约 56.50 GiB 表），H12 不受支持。换更大 Mac 后不能只改 `h10` 字符串：要同步生成器大小和资源警戒、原生求解器、TS 编排、统计管道、进度查看与 `/dev/solvers` 快照，并用真实表与样例验收。
 
 ## 造非 WCA 小魔方求解器 loop
 

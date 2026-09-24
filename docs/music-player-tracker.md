@@ -1,5 +1,7 @@
 # 音乐播放器跟踪表
 
+2026-09-24：当前媒体入口已迁至 `core/` 下的 `pnpm music:prepare` 和 `pnpm music:publish`。下方历史记录中的 `.ps1` 名称仅说明当时执行的版本；新发布入口默认只校验本地，显式 `--publish` 并提供远端参数才会连接服务器。
+
 状态：`ACTIVE`。最后更新：2026-09-03。
 
 ## 目标
@@ -156,12 +158,12 @@ type MusicTrackV1 = {
 
 ### staging 与磁盘硬门槛
 
-- staging 根目录固定为 `Z:\cuberoot-music-staging\`；内容哈希资产进入共享 `library/`，每批回执独立写入 `inventory/batches/`，同时只运行一个批次。
-- 每批预计最终输出上限为 1 GiB；批次估算增加 15% 后必须小于批次开始时 `Z:` 可用空间减 20 GiB 的结果。任一条件不满足立即停止，不静默换盘。
+- staging 根目录由 `--staging-root` 或 `MUSIC_STAGING_ROOT` 指定；内容哈希资产进入其 `library/`，每批回执独立写入 `inventory/batches/`，同时只运行一个批次。历史 Windows 机器使用 `Z:\cuberoot-music-staging\`。
+- 每批预计最终输出上限为 1 GiB；批次估算增加 15% 后必须小于 staging 所在卷可用空间减 20 GiB 的结果。任一条件不满足立即停止，不静默换盘。
 - 峰值预算包含音频、封面、歌词、清单、转码临时文件和失败残留；预检按源文件估算并增加 15% 余量。
-- `E:` 可用空间不计入预算，因为源盘不得承接输出或临时文件。
+- 源盘可用空间不计入预算，因为只读源不得承接输出或临时文件。
 - 每首先写 `.part`，再用 ffprobe 校验恰好一个音频流、没有视频流且时长合理；通过后计算实际输出 SHA-256 并原子改名。全量独立复核再次验证 486/486 输出。
-- 可重复运行脚本为 `scripts/music/prepare-music.ps1`。默认输出 `Z:\cuberoot-music-staging\library`，私有源清单、续跑索引、sidecar 绑定、人工队列和批次回执位于相邻 `inventory/`；`-WhatIf` 只规划，`-Pilot` 只跑固定 9 文件样本，普通调用每次最多处理一个批次。
+- 可重复运行入口为 `scripts/music/prepare-music.ts`。在 `core/` 执行 `pnpm music:prepare --source-root <只读媒体目录> --staging-root <暂存目录> --plan` 只规划；移除 `--plan` 每次处理一个最多 1 GiB 的批次；`--pilot` 只选固定 9 种扩展名样本，`--replay-last-batch` 复核上一批。私有源清单、续跑索引、sidecar 绑定、人工队列和批次回执位于相邻 `inventory/`。
 - staging 清理必须在发布回读和清单校验后单独执行，遵守仓库的回收站规则；不得以清理 staging 为由触碰 `E:\Music`。
 
 ## 封面与歌词
@@ -186,6 +188,7 @@ type MusicTrackV1 = {
 - 支持 `GET`、`HEAD` 和必要的 `OPTIONS`；CORS 只开放播放和清单读取所需方法与响应头。
 - 禁目录列表、源路径泄露和临时扩展名访问；只发布清单引用的已验收文件。
 - 发布采用版本目录或原子清单切换：先上传内容哈希资产，全部回读成功后再切换 manifest，避免清单先引用不存在的媒体。
+- 在 `core/` 执行 `pnpm music:publish --library <staging/library>` 只做本地完整哈希校验，不连接远端。显式加 `--publish --remote-host <SSH别名> --remote-document-root <绝对路径> --remote-staging-root <公开目录外绝对路径> --public-base-uri <HTTPS地址>` 才发布；远端先逐资产复核、检查容量及同一文件系统、上传缺失资产、二次全量核验后原子切换 manifest。HTTP 回读不合格时恢复上一个 manifest，资产不删除。
 - `staticUrl('/music/...')` 是客户端 URL 入口；不得硬编码静态域 origin。
 
 第一阶段不需要后端代理音频。若以后引入权限曲目，必须另立 API、鉴权、Range 转发、缓存和带宽方案，不能复用当前公开静态 URL 假装有权限控制。
@@ -287,7 +290,7 @@ type MusicTrackV1 = {
 - 2026-09-10：本地 `http://127.0.0.1:3000/zh/music` 实测加载 486 首/50 首同步歌词；《不能说的秘密》实际播放、34 行歌词、当前行高亮与歌词点击跳转通过，390px 窄屏无横向溢出，截图 `.tmp/png/music-local-lyrics-mobile.png`。客户端 typecheck 与资源/播放器/语言代理聚焦测试 16/16 通过；未 push、未上传或发布远端。
 
 - 2026-09-10：使用 LRCGET 2.2.0 为 `Z:\cuberoot-music-staging\library\tracks` 批量获取现成歌词；用户选择仅补充缺同步歌词的曲目、自动导出 `.lrc`，不嵌入音频。界面 `284/284` 是处理数，导出 84 个 sidecar，其中 83 个属于当前 486 首 manifest。当前导入结果为同步歌词 50 首、LRCGET 纯音乐标记 32 首、可疑匹配 1 首、无 sidecar 403 首；无 sidecar 不等于有人声且缺歌词，扫描也未覆盖所有音频格式。
-- 2026-09-10：新增 `scripts/music/import-lrcget.py`，默认只读报告，`uv run python -B -X utf8 scripts/music/import-lrcget.py --apply` 才写本地歌词资产、`inventory/lrcget-import.v1.json` 和 manifest。按音频哈希文件名精确绑定，校验 UTF-8、时间戳与录音时长，跳过纯音乐标记；Kenny G《The Joy Of Life》此次下载的可疑人声歌词按内容哈希隔离，等待人工核对。格式检查不保证版本匹配或每句内容准确，未做逐首听音验收。
+- 2026-09-10：新增歌词侧车导入工具；现用 `scripts/music/import-lrcget.ts`，默认只读报告。在 `core/` 执行 `pnpm exec tsx ../scripts/music/import-lrcget.ts --library <目录> --apply` 才写本地歌词资产、`inventory/lrcget-import.v1.json` 和 manifest。按音频哈希文件名精确绑定，校验 UTF-8、时间戳与录音时长，跳过纯音乐标记；Kenny G《The Joy Of Life》此次下载的可疑人声歌词按内容哈希隔离，等待人工核对。格式检查不保证版本匹配或每句内容准确，未做逐首听音验收。
 - 2026-09-10：此次 LRCGET 导入替换旧歌词绑定，旧 manifest 自动备份为 `inventory/manifest-before-lrcget-<sha256>.json`，已有媒体文件保留；`prepare-music.ps1` 在生成清单时最后应用导入报告并校验歌词资产哈希，避免后续 replay 恢复旧匹配。原始 `E:\Music` 未写入，音频与封面不变，导入不访问网络或发布。
 - 2026-09-10：导入 fixture 的时间戳边界、只读模式、精确绑定、媒体保持、备份、幂等、空结果保护与路径拒绝通过；PowerShell 语法、真实 486 条报告覆盖、50 条绑定一致性和缺失资产拒绝通过，播放器现有测试 4/4 通过。发布器仅本地验证通过 486 首、543 个唯一资产、5.01 GiB，候选 manifest SHA-256 为 `7470d819cba2d45d45ed3dabd554c9ec5863ceac15505d393aca57bf5f3f58ea`；本批尚未上传或上线。
 

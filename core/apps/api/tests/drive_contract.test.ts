@@ -1,3 +1,4 @@
+import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { readFile } from 'node:fs/promises';
 import {
   DRIVE_CHUNK_BYTES,
@@ -18,7 +19,11 @@ describe('Drive contract', () => {
   it('allows browser upload preflights only from trusted origins', async () => {
     const app = new Hono().use('*', apiCors);
     const headers = ['authorization', 'content-type', 'idempotency-key', 'upload-offset', 'upload-checksum'];
-    for (const origin of ['https://cuberoot.me', 'https://next.cuberoot.me', 'https://evil.example']) {
+    for (const origin of [
+      'https://cuberoot.me', 'https://next.cuberoot.me',
+      ...DEV_PREVIEW_HOSTS.map(host => `https://${host}`), 'https://dev-other.cuberoot.me',
+      'https://evil.example',
+    ]) {
       const response = await app.request('/v1/drive/uploads/00000000-0000-4000-8000-000000000000', {
         method: 'OPTIONS',
         headers: {
@@ -27,7 +32,7 @@ describe('Drive contract', () => {
           'Access-Control-Request-Headers': headers.join(','),
         },
       });
-      if (origin === 'https://evil.example') {
+      if (origin === 'https://evil.example' || origin === 'https://dev-other.cuberoot.me') {
         expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
         continue;
       }

@@ -19,6 +19,18 @@
   },
   "manualContracts": [
     {
+      "id": "server-sor-manual-refresh",
+      "from": "apps/api/scripts/update_sor.mts",
+      "to": "local sorcalc plus explicitly requested production SSH publish",
+      "phase": "subprocess-native",
+      "mechanism": "Shell-free spawn adapter for sorcalc, scp and ssh; dry-run and no-publish modes keep production untouched",
+      "owner": "server",
+      "rationale": "Preserve the manual fallback for the scheduled SOR build while deriving local paths and thread count from the current machine.",
+      "replacement": "Keep the remote write behind an explicit invocation of the manual command; do not invoke it from application request handlers.",
+      "subprocessCalls": [{"file":"apps/api/scripts/update_sor.mts","mechanism":"spawn","target":"<dynamic>","count":1}],
+      "evidence": [{"file":"core/apps/api/scripts/update_sor.mts","contains":"const noPublish = process.argv.includes('--no-publish')"}]
+    },
+    {
       "id": "server-isolated-postgresql-test-runners",
       "from": "apps/api authentication and membership regression runners",
       "to": "disposable loopback PostgreSQL and local vitest processes",
@@ -127,13 +139,13 @@
       "from": "jobs/scramble-stats-build",
       "to": "repo stats/scramble and solver native analyzers/tables",
       "phase": "build-artifact",
-      "mechanism": "PowerShell orchestration plus JSON/binary artifact generation",
+      "mechanism": "TypeScript orchestration plus JSON/binary artifact generation",
       "owner": "scramble-stats-build",
       "rationale": "The offline job consumes non-workspace solver binaries and publishes versioned static data outside core.",
-      "replacement": "Keep the job boundary explicit; PS1-01 must map callers before any script relocation.",
+      "replacement": "Keep the job boundary explicit; local generation and explicit publication use scripts/stats TypeScript entries.",
       "evidence": [
-        {"file":"core/jobs/scramble-stats-build/update_cross_stats.ps1","contains":"$SolverDir   = 'D:\\cube\\cuberoot.me\\solver'"},
-        {"file":"core/jobs/scramble-stats-build/update_cross_stats.ps1","contains":"$env:CUBE_TABLE_DIR = Join-Path $SolverDir 'tables'"}
+        {"file":"scripts/stats/common.ts","contains":"export const solverDir = join(repoRoot, 'solver')"},
+        {"file":"core/jobs/scramble-stats-build/pipeline_paths.mjs","contains":"export const tableDir = resolve(process.env.CUBE_TABLE_DIR || join(repoRoot, 'solver/tables'))"}
       ]
     },
     {
@@ -428,18 +440,24 @@
     },
     {
       "file": "jobs/scramble-stats-build/build_length_opt.mjs",
-      "mechanism": "path-literal",
-      "rule": "cross-package-path",
-      "sourceKind": "build",
-      "specifier": "core/packages/client/public/cubeopt/cube48opt5.mjs",
-      "target": "client"
+      "mechanism": "spawnSync",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "<dynamic>"
     },
     {
       "file": "jobs/scramble-stats-build/build_length_opt.mjs",
       "mechanism": "spawnSync",
       "rule": "subprocess-call",
       "sourceKind": "subprocess",
-      "target": "<dynamic>"
+      "target": "pnpm"
+    },
+    {
+      "file": "jobs/scramble-stats-build/src/incremental.ts",
+      "mechanism": "spawn",
+      "rule": "subprocess-call",
+      "sourceKind": "subprocess",
+      "target": "tar"
     },
     {
       "file": "jobs/stats-build/src/bin/compute_all.ts",

@@ -41,7 +41,7 @@
 // 进度显示:TTY 下**只有一行,原地覆盖**,不滚屏;重定向进日志时改成每 1% 落一条。
 // env QUIET=1 连启动那行横幅也不打(solve_loop 重启时用,免得几百次重启把日志刷满)。
 //
-// Usage: node solve.mjs [THREADS=12]
+// Usage: node solve.mjs [THREADS=available CPU parallelism]
 //   env MODULE  默认 cube48opt9.mjs          env TABLE  默认 solver/tables/h48/h48prun31h9.dat
 //   env GROUP   默认 1(见上,需整除 THREADS)  env CORPUS 默认 ./corpus.txt  env OUT 默认 ./out.csv
 //   env LIMIT   只跑前 N 个未完成的 case(抽样量成本用,默认全跑)
@@ -49,7 +49,7 @@
 // 默认 **opt9 + 15.6G 表**,与 `solver/333opt`(skill `update-scramble-stats` §C)同一档,
 // 也是这条管道认定要用的那张 —— 要 ~16G 空闲物理内存,别让它换页到磁盘。
 // 换表只改速度不改答案(都是可采纳剪枝表),而且按 key 续跑,所以中途停下来换表零重做。
-import { freemem } from 'node:os';
+import { availableParallelism, freemem } from 'node:os';
 import {
   readFileSync, writeFileSync, appendFileSync, existsSync, openSync, readSync, closeSync, statSync,
 } from 'node:fs';
@@ -59,11 +59,11 @@ import { dirname, resolve } from 'node:path';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
 const MJS = resolve(process.env.MODULE || resolve(repoRoot, 'core/packages/client/public/cubeopt/cube48opt9.mjs'));
-const DAT = resolve(process.env.TABLE || resolve(repoRoot, 'solver/tables/h48/h48prun31h9.dat'));
-// 相对路径按**脚本所在目录**算,不按 cwd —— 从别处调(update_lsll.ps1)时才不会指空
+const DAT = resolve(process.env.TABLE || resolve(process.env.CUBE_TABLE_DIR || resolve(repoRoot, 'solver/tables'), 'h48/h48prun31h9.dat'));
+// 相对路径按**脚本所在目录**算,不按 cwd —— 从别处调(update_lsll.mts)时才不会指空
 const CORPUS = resolve(__dirname, process.env.CORPUS || 'corpus.txt');
 const OUT = resolve(process.env.OUT || resolve(__dirname, 'out.csv'));
-const THREADS = Number(process.argv[2] ?? process.env.THREADS ?? 12);
+const THREADS = Number(process.argv[2] ?? process.env.THREADS ?? availableParallelism());
 const GROUP = Number(process.env.GROUP ?? 1);
 const LIMIT = Number(process.env.LIMIT ?? 0);
 const QUIET = process.env.QUIET === '1';
@@ -164,7 +164,7 @@ for (const l of existing) {
   if (U_END_RE.test(sol)) {
     console.error(`out.csv 里有旧口径的行(解首/末是 U 系):${l.slice(0, 70)}`);
     console.error('旧口径算的是「展示相位那个代表元」的最优,不是这个 case 的最优,不能混用。');
-    console.error(`先把它挪走再跑:pwsh -NoProfile -File "$HOME/.codex/bin/trash.ps1" ${OUT}`);
+    console.error(`先把它移到备份目录再跑: ${OUT}`);
     process.exit(2);
   }
 }

@@ -1,3 +1,4 @@
+import { wcaDir, puzzleDir } from './local_data_paths.js';
 /*
  * build_puzzle_metrics — precompute per-scramble "by move-count" metrics over the WCA-real scramble
  * corpus, so BOTH the /scramble distribution panel (难度 metric selector) and the timer's "按步数"
@@ -47,7 +48,7 @@ function pyraV(scr: string): number {
   return Number.isFinite(best) ? best : 0;
 }
 
-const DATA_ROOT = process.env.PUZZLE_DATA_DIR || 'D:/cube/scramble/puzzle';
+const DATA_ROOT = process.env.PUZZLE_DATA_DIR || puzzleDir;
 const FLUSH_EVERY = 20000; // 批量 append,兼顾崩溃可续跑与内存。
 
 interface Spec {

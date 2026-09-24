@@ -1,3 +1,4 @@
+import { wcaDir, puzzleDir } from './local_data_paths.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
@@ -421,15 +422,15 @@ async function main() {
   const repoRoot = path.resolve(pkgRoot, '..', '..', '..');
 
   const configPath = path.join(pkgRoot, 'config.yml');
-  let dataRoot = 'D:/cube/scramble/puzzle';
+  let dataRoot = puzzleDir;
   if (fs.existsSync(configPath)) {
     const config = YAML.parse(fs.readFileSync(configPath, 'utf-8')) as { puzzle_data_dir?: string };
     if (config?.puzzle_data_dir) dataRoot = config.puzzle_data_dir;
   }
 
-  // 比赛元数据源(与 update_puzzle_stats.ps1 / 3x3 管道一致):
-  const scramblesTsv = 'D:/cube/scramble/wca_scramble/incremental/tsv/Scrambles.tsv';
-  const compTsv = 'D:/cube/scramble/wca_scramble/competitions.tsv';
+  // 比赛元数据源(与 scripts/stats/puzzles-cli.ts / 3x3 管道一致):
+  const scramblesTsv = path.join(wcaDir, 'incremental/tsv/Scrambles.tsv');
+  const compTsv = path.join(wcaDir, 'competitions.tsv');
   // compId → 国家名(前端 loadFlagData 用的同一份;countryDist 按国聚合用)。仓库根 stats/comp_countries.json。
   const compCountries = await loadCompCountries(path.join(repoRoot, 'stats', 'comp_countries.json'));
   if (compCountries.size === 0) console.warn('  [countryDist] comp_countries.json 缺失/空 → 跳过国家聚合');
@@ -468,7 +469,7 @@ async function main() {
         let rows = 0;
         for (const ids of perMetricFull[spec.metricsCsv.cols[0]].values()) rows += ids.length;
         if (rows < corpus * 0.995) {
-          throw new Error(`[${spec.key}] metrics CSV covers ${rows}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (update_puzzle_stats.ps1 step 2.9)`);
+          throw new Error(`[${spec.key}] metrics CSV covers ${rows}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (scripts/stats/puzzles-cli.ts step 2.9)`);
         }
       }
       const wantedIds = new Set<string>();

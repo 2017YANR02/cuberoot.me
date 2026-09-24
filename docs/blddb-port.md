@@ -4,7 +4,7 @@
 以及还剩什么没搬。最后更新 2026-08-01。
 
 > 上游 clone 在本机 `D:\cube\blddb`(**不在仓库里**,CI 上不存在)。仓库里的是它的静态导出
-> (`tools/blddb/`)和数据(`tools/blddb/data/`),由统一入口调度 `scripts/upstream/sync-blddb.ps1` 同步。
+> (`tools/blddb/`)和数据(`tools/blddb/data/`),由统一入口调度 `scripts/upstream/sync-blddb.ts` 同步。
 
 ---
 
@@ -86,11 +86,11 @@
 
 ## 3. 同步与数据
 
-```powershell
-pwsh -NoProfile -File .\sync_upstream.ps1 -Only blddb  # 拉上游 → next build 静态导出 → 拷 tools/blddb/ → 第 7 步后处理
+```sh
+pnpm --dir core upstream:sync --only blddb  # 拉上游 → next build 静态导出 → 拷 tools/blddb/ → 第 7 步后处理
 ```
 
-人工和仓库外调用统一使用 `sync_upstream.ps1 -Only blddb`，canonical 实现在 `scripts/upstream/sync-blddb.ps1`。
+人工和仓库外调用统一使用 `pnpm --dir core upstream:sync --only blddb`，canonical 实现在 `scripts/upstream/sync-blddb.ts`。
 
 第 7 步 `.sync/blddb_postprocess.mjs` 干四件事,幂等:
 
@@ -171,7 +171,7 @@ pwsh -NoProfile -File .\sync_upstream.ps1 -Only blddb  # 拉上游 → next buil
 
 | 干什么 | 在哪 |
 |---|---|
-| 同步 | 根 `sync_upstream.ps1 -Only blddb`；canonical 实现为 `scripts/upstream/sync-blddb.ps1`，后处理为 `.sync/blddb_postprocess.mjs` |
+| 同步 | 根 `pnpm --dir core upstream:sync --only blddb`；canonical 实现为 `scripts/upstream/sync-blddb.ts`，后处理为 `.sync/blddb_postprocess.mjs` |
 | 编码 / 取数 | `core/packages/client/app/[lang]/alg/3bld/_lib/blddb.ts` |
 | 页面 | 同目录 `lookup/`、`tables/`、`sheets/` |
 | 显示偏好 | `_store/blddb-prefs-store.ts`、`_components/BlddbOptions.tsx` |

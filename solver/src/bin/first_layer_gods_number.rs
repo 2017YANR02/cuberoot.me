@@ -9,7 +9,7 @@
 //!
 //! Safety gates:
 //! - the computed peak plan is checked against a hard 25 GB cap;
-//! - at most 14 Rayon threads;
+//! - Rayon defaults to all available CPU parallelism;
 //! - a real run requires `CUBE_ALLOW_HUGE_TABLES=1`;
 //! - `--dry-run` prints the exact resource plan without allocating the table.
 //! - checksummed A/B snapshots resume only at completed layer boundaries.
@@ -37,7 +37,6 @@ use cube_solver::first_layer_solver::{
 
 const TRACKED_CORNERS: [i32; 4] = [4, 5, 6, 7];
 const TRACKED_EDGES: [i32; 4] = [8, 9, 10, 11];
-const MAX_THREADS: usize = 14;
 /// Decimal gigabytes: honour the user's ceiling conservatively rather than
 /// treating 25 GB as 25 GiB.
 const MEMORY_CAP_BYTES: u64 = 25_000_000_000;
@@ -79,8 +78,7 @@ fn parse_args() -> Result<Args, String> {
     let mut dry_run = false;
     let default_threads = std::thread::available_parallelism()
         .map(|n| n.get())
-        .unwrap_or(4)
-        .min(MAX_THREADS);
+        .unwrap_or(1);
     let mut threads = env::var("RAYON_NUM_THREADS")
         .ok()
         .and_then(|v| v.parse::<usize>().ok())
@@ -124,10 +122,8 @@ fn parse_args() -> Result<Args, String> {
             _ => return Err(format!("unknown argument: {arg}")),
         }
     }
-    if threads == 0 || threads > MAX_THREADS {
-        return Err(format!(
-            "threads must be in 1..={MAX_THREADS}, got {threads}"
-        ));
+    if threads == 0 {
+        return Err("threads must be at least 1".to_owned());
     }
     if checkpoint_every == 0 {
         return Err("checkpoint interval must be at least one layer".to_owned());
@@ -177,7 +173,7 @@ fn gib(bytes: u64) -> f64 {
 fn print_plan(plan: MemoryPlan, args: &Args) {
     println!("First Layer exact HTM diameter proof");
     println!("states={FIRST_LAYER_STATES}");
-    println!("threads={} (hard max {MAX_THREADS})", args.threads);
+    println!("threads={}", args.threads);
     println!(
         "frontier={} bytes ({:.3} GiB, two bits/state)",
         plan.frontier_bytes,

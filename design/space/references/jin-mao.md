@@ -26,7 +26,7 @@
 
 新增 `Jin Mao` 和 `Jin Mao crown` 相机不导出。孤立模型 Cycles 审图用于比较几何与材质，临时环境光和夜间自发光不是网页照明的精确复现。网页完整光照及周边环境必须另验，不用 Blender 图片宣称网页达到电影级。
 
-源文件保存后仍走现有 `batch.ps1 -Asset shanghai`，只导出这一份城市资产。页面来源与本文共用相同原始网址，维护入口是 `credits_data.json`。
+源文件保存后运行 `cd core && pnpm space:batch --asset shanghai`，只导出这一份城市资产。页面来源与本文共用相同原始网址，维护入口是 `credits_data.json`。
 
 ## 2026-09-13 塔冠增量精修
 

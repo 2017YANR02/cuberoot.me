@@ -1332,7 +1332,7 @@ fn build_pt_eo_xcross_high_memory(slot: usize) -> (u64, Vec<u8>) {
     let eo = mtm.ensure_eo12_alt();
     let target_ep5 = [8, 9, 10, 11, SLOT_EDGE_POS[slot]];
     create_pt_dim3(
-        array_to_index(&target_ep5, 5, 1, 12),
+        array_to_index(&target_ep5, 5, 1, 12) as u64,
         SLOT_CORNER[slot] as u64,
         0,
         state_space::EP5 as u64,

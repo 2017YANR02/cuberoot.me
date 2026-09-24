@@ -1,3 +1,4 @@
+import { wcaDir, puzzleDir } from './local_data_paths.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline';
@@ -18,7 +19,7 @@ import { buildCubeshapeTable, cubeshapeSlashes } from './sq1_cubeshape';
 // 前端 DiscreteHistogram / computeStats 可直接复用;客户端类型在
 // client/lib/puzzle-distribution.ts(改 shape 必须两处同步 + bump fetch v= 参数)。
 //
-// 输入:update_puzzle_stats.ps1 产出的 <puzzle_data_dir>/<key>/<key>.csv(两列 id,<key>,
+// 输入:scripts/stats/puzzles-cli.ts 产出的 <puzzle_data_dir>/<key>/<key>.csv(两列 id,<key>,
 // 值 = 该打乱整解最优步数)。缺 CSV 的 puzzle 跳过并打警告(对齐 build.ts 变体语义)。
 
 // sq1 专用:整个主口径直接取「精确 WCA 12c4 最优」(Sq1WcaSolver,独立 exact CSV + 未 ingest 块)。
@@ -50,7 +51,7 @@ interface PuzzleSpec {
   exactPrimary?: PuzzleExactPrimary; // sq1:主口径 = 精确 WCA 12c4 最优(取代退役的近最优)
 }
 
-// 新 puzzle 注册处:加一行 + update_puzzle_stats.ps1 的 $PUZZLE 表加对应 analyzer 即可。
+// 新 puzzle 注册处:加一行 + scripts/stats/puzzles.ts 的 registered 表加对应 analyzer 即可。
 const PUZZLES: PuzzleSpec[] = [
   // 2×2 / 金字塔:多口径「按步数」(值来自 build_puzzle_metrics.mts 的 <key>_metrics.csv)。
   { key: '222', event: '222', label: '2x2x2', label_zh: '二阶', metric: 'htm', metricsCsv: { file: '222_metrics.csv', cols: ['face', 'layer', 'htm', 'qtm'], default: 'htm' } },
@@ -82,7 +83,7 @@ function bump(h: Hist, v: number) {
 
 // SQ1 精确档聚合:同时产 WCA 12c4(可证最优,wca_exact 列)+ slash(WCA-最优解里的 / 数,slash-最优紧上界)两口径。
 //
-// 关键:全量灌注(inject_sq1_wca_exact.ps1)把所有块喂给一个长跑 analyzer,主 CSV 只在进程启动/结束各 ingest 一次
+// 关键:全量灌注(scripts/stats/sq1.ts wca)把所有块喂给一个长跑 analyzer,主 CSV 只在进程启动/结束各 ingest 一次
 // (8 天级长跑期间主 CSV 一直停在初始行数)。完成的块堆在 sq1/_exact_chunks/*_sq1.csv 里。故这里**额外读这些块**
 // (只读不删,绝不碰运行中的 job),按 id 去重(主 CSV 优先),才能让网站反映真实进度而非停在初始值。
 async function aggregateExactSq1(exCsvPath: string, wcaCol: string, slashCsvPath?: string): Promise<{
@@ -242,7 +243,7 @@ async function assertMetricsCoverage(key: string, sampleCount: number, txtPath: 
   const rl = readline.createInterface({ input: fs.createReadStream(txtPath, 'utf-8'), crlfDelay: Infinity });
   for await (const line of rl) if (line && line.includes(',')) corpus++;
   if (sampleCount < corpus * 0.995) {
-    throw new Error(`[${key}] metrics CSV covers ${sampleCount}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (update_puzzle_stats.ps1 step 2.9)`);
+    throw new Error(`[${key}] metrics CSV covers ${sampleCount}/${corpus} corpus scrambles — run build_puzzle_metrics.mts first (scripts/stats/puzzles-cli.ts step 2.9)`);
   }
 }
 
@@ -252,7 +253,7 @@ async function main() {
   const repoRoot = path.resolve(pkgRoot, '..', '..', '..');
 
   const configPath = path.join(pkgRoot, 'config.yml');
-  let dataRoot = 'D:/cube/scramble/puzzle';
+  let dataRoot = puzzleDir;
   if (fs.existsSync(configPath)) {
     const config = YAML.parse(fs.readFileSync(configPath, 'utf-8')) as { puzzle_data_dir?: string };
     if (config?.puzzle_data_dir) dataRoot = config.puzzle_data_dir;

@@ -98,13 +98,13 @@ const BROWSER_BY_KEY: Record<string, string> = {
 };
 const BROWSER_MAP: Record<string, BrowserSolver> = Object.fromEntries(BROWSER.map((b) => [b.key, b]));
 
-// 每个原生分析器 mmap 的磁盘表；现有项为真实文件字节，plan 项为格式推导的预期字节数。
+// 每个原生分析器 mmap 的磁盘表；eo high-memory 的 plan 项已在 Mac 本机核对真实文件字节。
 // 源码核实自 solver/ (std_analyzer.rs / eo_cross_solver.rs / pseudo_analyzer.rs /
 // pseudo_pair_solver.rs / pair_solver.rs / f2leo_solver.rs / pseudo_f2leo_solver.rs),
 // 口径 = 权威 full 全模式 (CUBE_ALLOW_HUGE_TABLES=1, 无 *_NO_DIAG / *_SKIP)。
 // cnt>1 = 同规格一组; cond = 对角剪枝表, 仅全模式载, 设 *_NO_DIAG 可跳过 (各省 ~10GB).
 interface Tbl { n: string; b: number; cnt?: number; cond?: boolean }
-interface TablePlan { profile: string; move: Tbl[]; prune: Tbl[]; note: { zh: string; en: string } }
+interface TablePlan { profile: string; move: Tbl[]; prune: Tbl[]; note: { zh: string; en: string }; replacesBase?: boolean; generated?: boolean }
 interface SolverTbls { move: Tbl[]; prune: Tbl[]; builtZh?: string; builtEn?: string; plan?: TablePlan }
 
 const TABLES: Record<string, SolverTbls> = {
@@ -143,8 +143,8 @@ const TABLES: Record<string, SolverTbls> = {
         { n: 'pt_eo_xcross_slot3_high_memory', b: 2335703056 },
       ],
       note: {
-        zh: '仅代码就绪，等待 64 GB 机器生成。总物理内存达到 56 GiB 时自动选择；32 GB 或识别失败时保持默认档，不探测、不加载这些文件。SHA-256、构建峰值、RSS、mmap 工作集和新吞吐量均待实测。',
-        en: 'Code only, awaiting generation on the 64 GB machine. It is selected automatically at 56 GiB total physical memory; 32 GB machines and detection failures stay on the default tier without probing or loading these files. SHA-256, build peak, RSS, mmap working set, and new throughput all remain unmeasured.',
+        zh: '2026-09-23 已在 64 GiB Mac 本机生成并核对 5 个文件：合计 9,349,655,116 字节；18 个 Rayon 线程，生成器峰值 RSS 24.5 GB。表文件仅在本机，未随仓库或网站发布；分析器稳态 RSS、mmap 工作集和新吞吐量仍待实测。总物理内存达到 56 GiB 时自动选择；识别失败时回落默认档。',
+        en: 'Generated and verified all five files on a 64 GiB Mac on 2026-09-23: 9,349,655,116 bytes total, using 18 Rayon threads with a 24.5 GB generator peak RSS. The files remain local and are not shipped with the repository or website. Analyzer steady-state RSS, mmap working set, and new throughput remain unmeasured. Auto-selection starts at 56 GiB total physical memory; detection failure falls back to the default tier.',
       },
     },
   },
@@ -188,9 +188,9 @@ const TABLES: Record<string, SolverTbls> = {
 },
   '333': {
     move: [],
-    prune: [{ n: 'h48prun31h9', b: 15565455360 }],
-    builtZh: 'Tronto cube48opt 最优解器 (h48 坐标, God 数 HTM 整解):离线统计用 15G opt9 表和 12 解线程; /scramble/solver 云端用托管的 7.8GB opt8 表和 14 线程,本地模式可选 30M~15G 各档表',
-    builtEn: 'Tronto cube48opt optimal solver (h48 coordinate, God\'s-number HTM whole solve): offline statistics use the 15G opt9 table with 12 solve threads; /scramble/solver cloud mode uses a hosted 7.8GB opt8 table with 14 threads, while local mode offers 30M–15G tiers'
+    prune: [{ n: 'h48-nissy-core/h48h10.dat', b: 30336314216 }],
+    builtZh: '离线三阶整解统计使用原生 nissy-core H48 h10。2026-09-24 本机表已生成并通过上游表头分布及实际内容分布校验：30,336,314,216 字节（28.25 GiB），耗时 3,772.659 秒，峰值 RSS 30,419,353,600 字节（28.33 GiB）。使用 18 个可用 CPU 线程在内存中生成，校验后顺序写盘；求解时只读映射。统计运行与吞吐验收待完成，GPU 计算路径尚未实现。H7 仅用于建表验证。/scramble/solver 云端仍使用托管 opt8 表。',
+    builtEn: 'Offline 3x3 optimal statistics use native nissy-core H48 h10. On 2026-09-24, the local table was generated and passed upstream checks of both preamble and actual content distributions: 30,336,314,216 bytes (28.25 GiB), 3,772.659 seconds, and peak RSS of 30,419,353,600 bytes (28.33 GiB). Generation used 18 available CPU threads in memory, then streamed to disk after validation; solving maps the completed file read-only. The statistics run and throughput verification remain pending; no GPU compute path exists yet. H7 is only for build verification. Cloud /scramble/solver still uses its hosted opt8 table.',
   },
   '222': {
     move: [{ n: 'mt_edge3', b: 760332 }, { n: 'mt_corn', b: 1740 }],
@@ -274,8 +274,8 @@ const TABLES: Record<string, SolverTbls> = {
 
 // 内存档共享文案 (原「内存与剪枝表」三卡: huge / small / mid + 并行约束).
 const MEM_HUGE = {
-  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 默认档工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap；high-memory 档尚未实测。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。333 整解最优是例外:离线统计的 Tronto h48 opt9 15G 表分块拷入 emscripten 堆 (非 mmap 共享);16GB 线上服务另驻留 opt8 7.8GB 表,两者都与 Rust 表无关。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
-  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. The default eo tier peaks at ~24GB working set but only ~0.1GB private — read-only shared mmap; the high-memory tier remains unmeasured. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. 333 whole-cube optimal is the exception: offline statistics copy the Tronto h48 opt9 15G table into the emscripten heap in chunks (not a shared mmap); the 16GB online service separately keeps the 7.8GB opt8 table resident. Both are independent of the Rust tables. sq1 uses a 13G jsq_full + two 283MB projection disk tables (the slash metric is a separate ~43MB zero-disk in-RAM build).',
+  zh: 'mmap GB 级联合/电池剪枝表 (CEE/CCE/C4C5C6 / pair huge / E0E1E2 等)。eo 默认档工作集峰值 ~24GB, 但 private 仅 ~0.1GB — 表是只读共享 mmap；high-memory 档已在 Mac 本机生成，分析器工作集尚未实测。f2leo 复用 std 的 pair huge 表 (各 ~10GB);pseudo_f2leo 用 pseudo 电池 (corner3 862MB + edge3 1GB 等), 各仅多叶子自由棱 EO 门控。离线 333 整解最优使用原生 nissy-core H48 h10 的 28.25 GiB 表；2026-09-24 本机生成并通过上游校验，耗时 3,772.659 秒、生成峰值 RSS 28.33 GiB，统计吞吐待实测。H7 仅用于建表验证。云端 /scramble/solver 仍使用托管 opt8。sq1 用 13G jsq_full + 双 283MB 投影磁盘表 (slash 口径另零盘 ~43MB 现场建)。',
+  en: 'GB-scale joint/battery prune tables (CEE/CCE/C4C5C6 / pair huge / E0E1E2) via mmap. The default eo tier peaks at ~24GB working set but only ~0.1GB private — read-only shared mmap; the high-memory tier was generated locally on a Mac, while its analyzer working set remains unmeasured. f2leo reuses std pair huge tables (~10GB each); pseudo_f2leo uses the pseudo battery (corner3 862MB + edge3 1GB), each adding only leaf free-edge EO gating. Offline 333 optimal solving uses a native nissy-core H48 h10 table of 28.25 GiB, generated locally and validated by upstream checks on 2026-09-24 in 3,772.659 seconds with peak build RSS of 28.33 GiB; statistics throughput remains unmeasured. H7 is only for build verification. Cloud /scramble/solver still uses its hosted opt8 table. SQ1 uses a 13G jsq_full plus two 283MB projection disk tables (the slash metric is a separate ~43MB in-RAM build).',
 };
 const MEM_SMALL = {
   zh: '333-daisy 与 333-first_layer 的 native 分析器复用 mt_edge4 (17.4MB)并现场建距离/PDB；first_layer 实测稳定约 107MiB、建表峰值约 258MiB。浏览器 first_layer 另拉 26.3MiB gzip 的预构建 bundle（54.7MiB 解压,4-bit PDB）,零现场 BFS。333-222/333-123/333-223 仅微移动表；其余 small 变体按各自微表现场建。无 GB 级依赖,可与任意 huge 变体并发。',
@@ -483,7 +483,7 @@ export default function SolversPage() {
     const plannedBytes = t.plan
       ? [...t.plan.move, ...t.plan.prune].reduce((sum, x) => sum + x.b * (x.cnt ?? 1), 0)
       : 0;
-    const plannedFullTotal = t.plan ? tblFullTotal(t) + plannedBytes : 0;
+    const plannedFullTotal = t.plan ? (t.plan.replacesBase ? plannedBytes : tblFullTotal(t) + plannedBytes) : 0;
     return (
       <>
         <div className="solv-tbl-item"><span className="solv-tbl-name">{zh ? '档位 / 计入总和' : 'tier / counted total'}</span><span className="solv-tbl-sz">{s.tier} · {total > 0 ? fmtBytes(total) : (zh ? '零盘 (现场建)' : 'in-RAM')}</span></div>
@@ -506,8 +506,8 @@ export default function SolversPage() {
         {t.plan && (
           <div className="solv-tbl-grp">
             <div className="solv-tbl-grp-h">{tr({
-              zh: `计划档 ${t.plan.profile} 完整文件集: ${fmtProfileBytes(plannedFullTotal)}`,
-              en: `planned tier ${t.plan.profile}, complete file set: ${fmtProfileBytes(plannedFullTotal)}`,
+              zh: `${t.plan.generated === false ? '待生成' : '本机已生成'} ${t.plan.profile} 文件集: ${fmtProfileBytes(plannedFullTotal)}`,
+              en: `${t.plan.generated === false ? 'pending' : 'locally generated'} ${t.plan.profile} file set: ${fmtProfileBytes(plannedFullTotal)}`,
             })}</div>
             {t.plan.move.map(tblItem)}
             {t.plan.prune.map(tblItem)}
@@ -575,8 +575,8 @@ export default function SolversPage() {
       title: zh ? '每个求解器的表' : 'Tables per analyzer',
       sub: zh ? '源码核实 · full 全模式 · mmap' : 'source-verified · full mode · mmap',
       body: <p className="solv-modal-p">{zh
-        ? '每个原生分析器 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式可采纳下界);现有项为磁盘真实文件字节，未生成的计划档为格式推导的预期字节数。零盘表的求解器启动或首查时内存现场 BFS, 不落盘。† 对角剪枝表 (各 ~10GB) 可选, 不计入总和。点任一「表」单元看该求解器完整表清单 + 构造说明。'
-        : 'The move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer mmaps. Existing entries use real on-disk file bytes; ungenerated planned tiers use format-derived expected bytes. Zero-disk solvers BFS-build everything in RAM at startup or first query. † diagonal prune tables (~10GB each) are optional, excluded from the total. Tap any “tables” cell for the full per-solver list + build notes.'}</p>,
+        ? '每个原生分析器 mmap 的移动表 (mt_*, 状态转移) 与剪枝表 (pt_*, 启发式可采纳下界);eo high-memory 档已在 Mac 本机生成并核对真实文件字节，尚未随仓库发布。零盘表的求解器启动或首查时内存现场 BFS, 不落盘。† 对角剪枝表 (各 ~10GB) 可选, 不计入总和。点任一「表」单元看该求解器完整表清单 + 构造说明。'
+        : 'The move tables (mt_*, state transitions) and prune tables (pt_*, admissible heuristics) each native analyzer mmaps. The eo high-memory tier was generated on a Mac and its file sizes verified, but is not shipped with the repository. Zero-disk solvers BFS-build everything in RAM at startup or first query. † diagonal prune tables (~10GB each) are optional, excluded from the total. Tap any “tables” cell for the full per-solver list + build notes.'}</p>,
     }),
     brow: () => ({
       title: zh ? '浏览器端 WASM' : 'Browser WASM',

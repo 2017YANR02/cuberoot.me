@@ -56,7 +56,7 @@ pnpm --filter @cuberoot/mobile assets:android
 pnpm --filter @cuberoot/mobile cap:sync:android
 ```
 
-进入 `apps/mobile/android` 后运行 `./gradlew.bat :app:assembleDebug --max-workers=14`。正式包另走现有签名发布流程，不用调试包代替。不能提交密钥/私钥或含它们的临时配置。
+进入 `apps/mobile/android` 后，在 macOS/Linux 运行 `./gradlew :app:assembleDebug`，Windows 运行 `.\\gradlew.bat :app:assembleDebug`。正式包另走现有签名发布流程，不用调试包代替。不能提交密钥/私钥或含它们的临时配置。
 
 联调使用单个所有者测试账号与测试设备，不在个推控制台选择全量推送。需要分别实测：拒绝/允许/撤销权限、本人 PR 自动命中、订阅筛选、前台/后台/杀进程、断网重连、退出及切换账号、卸载重装、点击通知打开对应比赛。通知内容只含公开纪录和比赛链接，可能显示在锁屏；当前点击打开 canonical 网站比赛页，尚非 App 内比赛深链。
 

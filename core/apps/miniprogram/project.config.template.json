@@ -8,6 +8,7 @@
     "coverView": true,
     "es6": true,
     "enhance": true,
+    "swc": false,
     "minified": true,
     "minifyWXML": true,
     "minifyWXSS": true,
