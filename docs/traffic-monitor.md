@@ -2,6 +2,8 @@
 
 Status: nginx request monitor deployed on 2026-09-23. The first manual GitHub Actions run succeeded. No additional paid service was enabled.
 
+Current incident controls and recovery: [Traffic defense and cost protection](traffic-defense.md). On 2026-09-24 Web Analytics collection was disabled and the Vercel production project was paused; do not assume either is currently collecting or serving without checking the dashboard.
+
 ## Live coverage
 
 `Traffic Monitor` runs hourly from GitHub Actions, reads the existing `www.cuberoot.me` nginx access logs over SSH, and writes an hourly UTC report to the Action summary. It uses the existing Bark secret for alerts. The repository is public, so the hosted Actions workflow does not add a private-repository minutes charge.
@@ -12,7 +14,7 @@ The script strips URL query strings, source IPs, complete User-Agents, and refer
 
 ## Vercel line without an additional paid service
 
-The existing Vercel Web Analytics dashboard remains the source for visitors, page views, page/referrer breakdown, and overseas-line traffic. Its [public Web Analytics API](https://vercel.com/docs/analytics/web-analytics-api) can query the same aggregate dataset using an access token and project/team IDs; no new event collection or Drain is needed to read existing data. No token has been configured for the monitor, so its `vercel` source displays `not_connected`. Do not add nginx request counts to Analytics visitors or page views: they measure different things and the delivery lines may overlap.
+When enabled, Vercel Web Analytics reports collected browser events, visitors and page/referrer breakdowns; it is not proof that the corresponding pages were served through Vercel. The client mounts Analytics and the nginx source configuration forwards `/_vercel/insights/` to Vercel, so self-hosted pages may also contribute events. Verify the deployed script and nginx configuration before attributing traffic to a delivery line. Its [public Web Analytics API](https://vercel.com/docs/analytics/web-analytics-api) can query the same aggregate dataset using an access token and project/team IDs. No token has been configured for the monitor, so its `vercel` source displays `not_connected`. Do not add nginx request counts to Analytics visitors or page views. Collection was disabled on 2026-09-24 for cost control; use existing Firewall and Logs for current request investigation, and do not re-enable paid collection merely to inspect this incident.
 
 Vercel Log Drains are billed separately and are **not enabled**. The previously prepared Drain receiver was removed when the owner chose zero additional paid services. Do not add a Log Drain or Web Analytics Plus subscription for this monitor.
 
