@@ -84,6 +84,8 @@ WXML 表达式直接写 `&&` / `||`，禁 HTML 实体；改 WXML 后必须通过
 
 ## 开发命令
 
+流量异常排查先读 [`docs/traffic-monitor.md`](docs/traffic-monitor.md)，2026-09-22 `/zh/calc` 峰值的证据与结论见 [`docs/traffic-incident-2026-09-22.md`](docs/traffic-incident-2026-09-22.md)。先核对报表的 `coverage`：自动来源分析目前只覆盖自有服务器 nginx；Vercel 线路需在现有 Analytics 和 Logs 中按时间与路径核查。User-Agent 和浏览器名称不能证明是真人；不要把 nginx 请求数当作全站访客数，也不要为监控启用额外收费项。
+
 使用 pnpm 11、pwsh；运行 core 命令前核实 CWD，在仓库根时先 `Set-Location core`；`ERR_PNPM_NO_PKG_MANIFEST` 时先检查执行目录。
 改 `core/packages/shared/src/**` 后完成前必须在 `core/` 运行 `pnpm --filter @cuberoot/shared build` 刷新 `dist`;“不用检查”只跳过测试/校验,不跳过该构建。
 
