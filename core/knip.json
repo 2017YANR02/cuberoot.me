@@ -11,7 +11,7 @@
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/build-shanghai-space.mjs"]
+      "entry": ["scripts/build-shanghai-space.mjs", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs"]
     },
     "{packages/client,apps/web}": {
       "entry": [
