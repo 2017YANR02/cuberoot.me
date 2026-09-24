@@ -51,18 +51,36 @@ jobs:
           node -e 'const r=require("./traffic-report.json"); if(!r.sources?.length) process.exit(1); console.log(`${r.windowStart} ${r.sources.map(s=>`${s.source}:${s.coverage}:${s.requests}`).join(" ")}`)'
           {
             echo '### Hourly traffic report'
-            echo 'Request counts are not unique visitors. Check each source coverage field before comparing lines.'
-            echo '```json'
-            cat traffic-report.json
-            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          const report = require("./traffic-report.json");
+          console.log(`UTC ${report.windowStart} to ${report.windowEnd}. Request counts are not unique visitors.`);
+          for (const source of report.sources) {
+            console.log(`\n#### ${source.source}: ${source.coverage}`);
+            if (source.coverage !== "observed") continue;
+            console.log(`Requests: ${source.requests}; page candidates: ${source.pageCandidates}; 5xx: ${source.errors5xx}; same-hour baseline: ${source.baselinePageCandidates ?? "unavailable"}.`);
+            console.log(`Alerts: ${source.alerts.join(", ") || "none"}.`);
+            console.log(`Top routes: ${source.topRoutes.slice(0, 3).map(x => `${x.name} (${x.count})`).join(", ") || "none"}.`);
+            console.log(`Referrers: ${source.topReferrers.slice(0, 3).map(x => `${x.name} (${x.count})`).join(", ") || "none"}.`);
+            if (source.attribution) {
+              console.log(`Logged source addresses: ${source.attribution.loggedSourceAddresses}; leading source share of page candidates: ${(source.attribution.leadingSourceShareOfPageCandidates * 100).toFixed(1)}%.`);
+              for (const item of source.attribution.topSources.slice(0, 5)) {
+                console.log(`- ${item.source}: ${item.pageCandidates} page candidates, ${item.requests} requests; ${item.signal}; peak ${item.peakPageCandidatesPerMinute}/minute; routes ${item.topRoutes.map(x => x.name).join(", ") || "none"}; referrers ${item.topReferrers.map(x => x.name).join(", ") || "none"}; User-Agent ${item.browserClaims.map(x => x.name).join(", ") || "none"}.`);
+              }
+              console.log("Source labels change each hour. User-Agent strings can be spoofed, and unverified does not mean human.");
+            }
+          }
+          console.log("\n<details><summary>Full JSON report</summary>\n\n```json");
+          console.log(JSON.stringify(report, null, 2));
+          console.log("```\n</details>");
+          NODE
 
       - name: Alert on traffic anomaly
         env:
           BARK_KEY: ${{ secrets.BARK_KEY }}
         run: |
           # shellcheck disable=SC2016
-          message=$(node -e 'const r=require("./traffic-report.json"); const a=r.sources.flatMap(s=>s.alerts.map(x=>`${s.source}: ${x}, ${s.pageCandidates} page candidates, ${s.errors5xx} 5xx`)); process.stdout.write(a.join("; "))')
+          message=$(node -e 'const r=require("./traffic-report.json"); const a=r.sources.flatMap(s=>s.alerts.map(x=>`${s.source}: ${x}, ${s.pageCandidates} page candidates, route ${s.topRoutes[0]?.name || "unknown"}, leading source ${s.attribution?.topSources[0]?.signal || "unverified"}, ${s.errors5xx} 5xx`)); process.stdout.write(a.join("; "))')
           [ -n "$message" ] || exit 0
           echo "::warning::$message"
           [ -n "$BARK_KEY" ] || exit 0
