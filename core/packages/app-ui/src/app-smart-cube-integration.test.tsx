@@ -273,7 +273,7 @@ describe('installed App GAN lifecycle integration', () => {
     await vi.waitFor(async () => { await settle(); expect(document.body.textContent).toContain('Move stream (3)'); }, { timeout: 5_000 });
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#1');
     await act(async () => document.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!.click());
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
 
     // A second real attempt must be independent of the closed detail. Exercise
     // both the automatic recap entry and the actual history row activation.
@@ -295,7 +295,7 @@ describe('installed App GAN lifecycle integration', () => {
     await settle();
     expect(document.querySelector('[role="dialog"] h2')?.textContent).toBe('#2');
     await act(async () => document.querySelector<HTMLButtonElement>('[data-history-action-id="solve.detail.close"]')!.click());
-    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    await vi.waitFor(() => expect(document.querySelector('[role="dialog"]')).toBeNull());
     const firstRow = Array.from(container.querySelectorAll<HTMLButtonElement>('.timer-history-row'))
       .find((row) => row.querySelector('.idx')?.textContent === '1')!;
     await act(async () => firstRow.click());

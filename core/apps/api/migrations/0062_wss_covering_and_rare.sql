@@ -4,7 +4,7 @@
 --      SELECT 只需自然键 → 加 INCLUDE 后 s 扫描变 index-only,消灭「按 rnd 序随机回堆」
 --      (606MB 表实测回堆 2.1GB IO / 8.2s;index-only 顺序读索引页,常见 bin LIMIT 提前停
 --      只读几十页,冷缓存也是 ms 级)。依赖可见性地图:管道灌完必须 VACUUM ANALYZE
---      (scripts/stats/publish-pg.ts 的 loadStepsToPg 已带),否则静默退化回堆探测。
+--      (update_cross_stats.ps1 Load-StepsToPg 已带),否则静默退化回堆探测。
 --   2) 稀有档侧表 wca_scramble_steps_rare:离线 builder 把「单槽位值计数 ≤ K」的尾部行
 --      逐 (slot, val) 导出(K/尾部值表在 wca_scramble_steps_meta.layout.tails,与本表同
 --      事务替换,保证路由元数据与行集一致)。子集稀有 bin 按色拆分支直查本表(PK 前缀

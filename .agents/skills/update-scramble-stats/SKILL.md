@@ -5,18 +5,19 @@ description: "用户说更新打乱统计、更新十字/阶段难度、更新 p
 
 # 更新打乱统计
 
-日常本地一条龙在 `core/` 运行 `pnpm stats:scramble:local`。它只更新本地 CSV/JSON/索引和计时文件，不 commit、push、scp 或写线上 PG。默认跑 `stages,333opt,puzzles`，可用 `--jobs` 选子集。`--plan` 只读显示路径与作业。Mac、Windows 采用同一 TypeScript 命令，分析器继续用 Rust。
+日常一条龙在 `core/` 运行 `pnpm stats:scramble`。它默认跑 `stages,333opt,puzzles`，计算成功后自动灌线上 PG、上传 static，并提交推送统计文件；可用 `--jobs` 选子集。Mac、Windows 采用同一 TypeScript 命令，分析器继续用 Rust。明确只要本地产物时才运行 `pnpm stats:scramble:local`；`--plan` 用本地入口只读查看路径与作业。
 
 ```sh
 cd core
+pnpm stats:scramble
+pnpm stats:scramble --jobs 333opt
+pnpm stats:scramble --jobs stages,puzzles
+pnpm stats:scramble --jobs puzzles --puzzles sq1
 pnpm stats:scramble:local
-pnpm stats:scramble:local --jobs 333opt
-pnpm stats:scramble:local --jobs stages,puzzles
-pnpm stats:scramble:local --jobs puzzles --puzzles sq1
 pnpm stats:scramble:local --plan
 ```
 
-获得本次发布授权后才运行 `pnpm stats:scramble:publish --publish`。它先跑相同本地管道，再做静态 SHA1 增量上传和线上 PG 增量灌库；`--publish-only` 发布已有本地产物。只有显式再加 `--push` 才会 Git commit/push。不能把旧版自动发布行为视作当前授权。发布失败时保持原 SHA1/PG manifest，供下次重试。只读静态差异预览在仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`，`--verify-all` 忽略哈希缓存重算。
+用户运行日常一键命令或明确要求跑完自动发布时，按该次授权执行发布。已有本地产物只需发布时运行 `pnpm stats:scramble --publish-only`，不重复计算。底层 `stats:scramble:publish --publish` 仍可只灌 PG、传 static；它不推送 Git，需加 `--push` 才完整发布。发布失败时保持原 SHA1/PG manifest，供下次重试。只读静态差异预览在仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`，`--verify-all` 忽略哈希缓存重算。
 
 | job | 内容 | 主要产物 |
 | --- | --- | --- |

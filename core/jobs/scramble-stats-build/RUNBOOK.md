@@ -1,6 +1,6 @@
 # 打乱统计本地管道与发布
 
-在 `core/` 运行 `pnpm stats:scramble:local`，默认增量运行 stages、333opt、puzzles。只选一个作业，例如 `pnpm stats:scramble:local --jobs 333opt`；可选 `stages`、`333opt`、`puzzles`，多个用逗号分隔。`--plan` 只读显示目录和作业；`--use-cached` 使用已有 WCA export；`--dry-run` 只读检查 stages 新增规模。此入口不会提交、推送、上传或修改线上 PG。
+在 `core/` 运行 `pnpm stats:scramble`，默认增量运行 stages、333opt、puzzles，全部成功后自动灌线上 PG、上传 static，并提交推送统计文件。只选一个作业，例如 `pnpm stats:scramble --jobs 333opt`；可选 `stages`、`333opt`、`puzzles`，多个用逗号分隔。明确只在本地计算时用 `pnpm stats:scramble:local`；`pnpm stats:scramble:local --plan` 只读显示目录和作业，`--dry-run` 只读检查 stages 新增规模。`--use-cached` 使用已有 WCA export。
 
 数据根默认为仓库同级的 `scramble/`，可用 `CUBEROOT_DATA_ROOT`、`CUBEROOT_WCA_DATA_DIR`、`CUBEROOT_PUZZLE_DATA_DIR`、`CUBEROOT_XCROSS_DATA_DIR` 覆盖；求解器表根为 `CUBE_TABLE_DIR`，默认 `solver/tables/`。分析器按系统选择无后缀或 `.exe`，Rayon 默认使用本机可用并行度。H48 h10 和 SQ1 大表都应由 `solver/` 的 `cargo run --release --bin table_generator` 生成。
 
@@ -16,9 +16,9 @@
 
 独立维护 SQ1：`./core/node_modules/.bin/tsx scripts/stats/sq1.ts wca|slash|grind`。`wca --build-only` 只并入上次已完成的块；`slash --merge-only` 只合并；`grind` 默认 10 分钟每条上限并检查是否已有 SQ1 analyzer 在运行，防止两份 13 GiB 表并行占满内存。
 
-## 显式发布
+## 已有本地产物补发布
 
-获得本次发布授权后，在 `core/` 运行 `pnpm stats:scramble:publish --publish`。这会先运行本地管道，再做静态增量上传和线上 PG 增量灌库；`--publish-only` 跳过本地计算；`--jobs` 选发布范围。Git 提交和 push 另需加 `--push`。没有 `--publish` 时入口拒绝运行。
+在 `core/` 运行 `pnpm stats:scramble --publish-only`，跳过本地计算，灌线上 PG、上传 static 并提交推送统计文件；`--jobs` 可选发布范围。底层 `pnpm stats:scramble:publish --publish` 只做 PG 和 static，另加 `--push` 才推送 Git。
 
 静态发布器使用 `scramble_manifest.mjs` 的 SHA1 清单和元数据缓存。缓存只加速扫描；只有远端上传、解包、删除都成功后才更新发布基线。初次无基线自动全量 tar；增量只传内容变化的文件并删远端孤儿。只读差异预览：仓库根运行 `./core/node_modules/.bin/tsx scripts/stats/publish-static.ts --dry-run`；`--verify-all` 强制重新计算每个哈希。文件生成与发布必须串行。
 

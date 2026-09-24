@@ -33,7 +33,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 仓库自有 PowerShell 脚本已迁为 TypeScript 或退役，清单和验证边界见 `docs/powershell-to-typescript-tracker.md`。新增自动化入口使用 TypeScript；调用方、CI、hook 配置和文档不得重新引入 `.ps1` 或把 `pwsh` 当作 TS 入口的依赖。
 
-打乱统计的本地一键入口在 `core/` 运行 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `--plan`。此入口由 TypeScript 编排，默认全部本地运行，不做 commit、push、scp 或线上 PG 写入；发布分支迁移状态见跟踪表。
+打乱统计的日常一键入口在 `core/` 运行 `pnpm stats:scramble`：默认增量运行全部作业，成功后自动灌线上 PG、上传 static，并提交推送统计文件，与旧 `update_cross_stats.ps1` 的默认发布语义一致。明确只想本地计算时用 `pnpm stats:scramble:local`；仅跑指定作业用 `--jobs stages|333opt|puzzles`，只读查看路径与计划用 `pnpm stats:scramble:local --plan`。运行日常一键命令即明确授权本轮统计发布；其他代码 push 仍遵守部署章节。
 
 创建或修改 Mac 快捷指令用 [mac-shortcuts skill](.agents/skills/mac-shortcuts/SKILL.md)；本机「跑打乱统计」实例见 [docs/mac-stats-shortcut.md](docs/mac-stats-shortcut.md)。
 
