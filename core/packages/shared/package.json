@@ -12,6 +12,7 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./dev-preview": "runtime-neutral",
       "./timer/reconstruct/recap": "runtime-neutral",
       "./timer/replay-encode": "runtime-neutral",
       "./smart-cube/orientation": "runtime-neutral",
@@ -143,6 +144,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./dev-preview": { "node": "./dist/dev-preview.js", "default": "./src/dev-preview.ts" },
     "./timer/reconstruct/recap": { "node": "./dist/timer/reconstruct/recap.js", "default": "./src/timer/reconstruct/recap.ts" },
     "./timer/replay-encode": { "node": "./dist/timer/replay_encode.js", "default": "./src/timer/replay_encode.ts" },
     "./smart-cube/orientation": {

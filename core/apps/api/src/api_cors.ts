@@ -1,20 +1,15 @@
+import { DEV_PREVIEW_HOSTS } from '@cuberoot/shared/dev-preview';
 import { cors } from 'hono/cors';
 
 export const apiCors = cors({
   origin: (origin) => {
     const allowed = new Set([
+      ...DEV_PREVIEW_HOSTS.map(host => `https://${host}`),
       'http://localhost:3000',              // Next dev server
       'http://127.0.0.1:3000',              // Next dev server (binds 127.0.0.1; SSE bypasses the dev proxy → direct CORS call)
       'https://www.cuberoot.me',            // 主域
       'https://cuberoot.me',                // 裸域
       'https://next.cuberoot.me',           // Next 子域并行验证
-      'https://dev.cuberoot.me',            // Mac Mini 开发预览旧入口
-      'https://dev-mac-mini.cuberoot.me',
-      'https://dev-ruimin-mac-mini.cuberoot.me',   // Mac Mini 开发预览
-      'https://dev-alienware.cuberoot.me',
-      'https://dev-ruimin-alienware.cuberoot.me',  // Alienware 开发预览
-      'https://dev-macbook-pro.cuberoot.me',
-      'https://dev-ruimin-macbook-pro.cuberoot.me', // MacBook Pro 开发预览
       'capacitor://localhost',              // Capacitor iOS app webview origin
       'https://localhost',                  // Capacitor Android app webview origin (androidScheme: https)
       'tauri://localhost',                  // Tauri macOS app webview origin
