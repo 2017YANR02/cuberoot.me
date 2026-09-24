@@ -73,7 +73,7 @@ export async function publishScrambleIncremental(options: PublishOptions = {}): 
       const archive = join(scratch, 'full.tgz');
       const remote = '/tmp/_scramble_full.tgz';
       const parent = posix.dirname(destination);
-      await exec('tar', ['--exclude=scramble/steps/wca_scramble_steps.csv', '-czf', archive, '-C', dirname(root), 'scramble']);
+      await exec('tar', ['--no-xattrs', '--exclude=scramble/steps/wca_scramble_steps.csv', '-czf', archive, '-C', dirname(root), 'scramble']);
       await exec('scp', [archive, `${host}:${remote}`]);
       await exec('ssh', [host, `set -e; cd ${shellQuote(parent)}; rm -rf scramble.new scramble.prev; mkdir scramble.new; tar -xzf ${shellQuote(remote)} -C scramble.new --strip-components=1; if [ -d scramble ]; then mv scramble scramble.prev; fi; mv scramble.new scramble; rm -rf scramble.prev ${shellQuote(remote)}`]);
     } else {
@@ -82,7 +82,7 @@ export async function publishScrambleIncremental(options: PublishOptions = {}): 
         const archive = join(scratch, 'delta.tgz');
         const remote = '/tmp/_scramble_delta.tgz';
         await writeFile(list, `${changed.join('\n')}\n`);
-        await exec('tar', ['-czf', archive, '-C', root, '-T', list]);
+        await exec('tar', ['--no-xattrs', '-czf', archive, '-C', root, '-T', list]);
         await exec('scp', [archive, `${host}:${remote}`]);
         await exec('ssh', [host, `set -e; cd ${shellQuote(destination)}; tar -xzf ${shellQuote(remote)}; rm -f ${shellQuote(remote)}`]);
       }
