@@ -1,36 +1,35 @@
 # CubeRoot traffic monitor
 
-Status: local implementation, 2026-09-23. No production rollout or Vercel Drain has been enabled.
+Status: nginx request monitor deployed on 2026-09-23. The first manual GitHub Actions run succeeded. No additional paid service was enabled.
 
-## What it measures
+## Live coverage
 
-`core/scripts/traffic-monitor.ts` reads the existing nginx combined access logs and, when available, sanitized Vercel Log Drain NDJSON files. It produces a UTC report for the last complete hour, separately for `nginx` and `vercel`. A GitHub Actions hourly workflow runs both available inputs using the existing deployment SSH secret and sends an existing Bark notification only when an alert rule fires. The workflow is not live until it is pushed to `main`.
+`Traffic Monitor` runs hourly from GitHub Actions, reads the existing `www.cuberoot.me` nginx access logs over SSH, and writes an hourly UTC report to the Action summary. It uses the existing Bark secret for alerts. The repository is public, so the hosted Actions workflow does not add a private-repository minutes charge.
 
-The report contains request counts, likely document requests, 5xx counts, a same-hour seven-day median, leading route groups, referrer hostnames, and declared bot User-Agent counts. A fourfold increase of at least 100 likely document requests or a 5xx rate of at least 5% over 100 requests raises an alert. Counts from the two delivery lines are kept separate. `pageCandidates` is a URL heuristic and includes possible prefetches; it is **not** unique visitors, Web Analytics page views, or a bot verdict. The `self-declared bot` class is based on an untrusted User-Agent string.
+The report includes request count, likely document requests, 5xx count, same-hour seven-day median, leading route groups, referrer hostnames, and self-declared bot User-Agent count. A fourfold increase of at least 100 likely document requests or a 5xx rate of at least 5% over 100 requests raises an alert. `pageCandidates` is a URL heuristic and can include prefetches; it is **not** unique visitors or Web Analytics page views. A self-declared bot classification is based on an untrusted User-Agent string.
 
-`/admin/users` measures registrations and memberships, not site traffic. The former `pageviews` and `traffic_daily` database tables were intentionally removed in migration 0125, so this monitor does not recreate or write to them.
+The script strips URL query strings, source IPs, complete User-Agents, and referrer paths from its report. Unknown and high-cardinality routes are grouped. It does not persist a second copy of raw nginx requests.
 
-## Privacy and coverage
+## Vercel line without an additional paid service
 
-The report drops URL query strings, source IPs, complete User-Agents, and referrer paths. Unknown and high-cardinality routes are grouped before they appear in output. Referrers are hostnames only. It does not persist raw Vercel or nginx requests. The source `coverage` field says `not_connected` when no input file for that delivery line was supplied. `no_matching_requests` can mean either no requests or a gap in the supplied files; do not turn it into a zero-traffic claim.
+The existing Vercel Web Analytics dashboard remains the source for visitors, page views, page/referrer breakdown, and overseas-line traffic. Its [public Web Analytics API](https://vercel.com/docs/analytics/web-analytics-api) can query the same aggregate dataset using an access token and project/team IDs; no new event collection or Drain is needed to read existing data. No token has been configured for the monitor, so its `vercel` source displays `not_connected`. Do not add nginx request counts to Analytics visitors or page views: they measure different things and the delivery lines may overlap.
 
-The scheduled workflow reads `/var/lib/cuberoot/traffic/vercel.ndjson*` only after Vercel Log Drain has been connected. The receiver at `https://api.cuberoot.me/v1/ops/traffic/drain` checks the official HMAC signature and writes a restricted NDJSON file with query strings, IPs, full User-Agents, and referrer paths removed. The server needs `VERCEL_TRAFFIC_DRAIN_SECRET` set to the Drain signature secret; without it the endpoint returns 503. Vercel Drains are a separately billed Pro feature, so choose production-only logs, JSON array format, HTTPS destination, and a measured sampling/cost policy before activation. The file uses 14 daily rotations. An Analytics Drain, if added later, is a separate stream of page-view events and must not be added to HTTP request totals.
+Vercel Log Drains are billed separately and are **not enabled**. The previously prepared Drain receiver was removed when the owner chose zero additional paid services. Do not add a Log Drain or Web Analytics Plus subscription for this monitor.
 
-## Run locally
+`/admin/users` measures registrations and memberships, not site traffic. The former `pageviews` and `traffic_daily` tables were intentionally removed in migration 0125, so this monitor does not recreate or write to them.
 
-Node 24 can run the TypeScript file directly:
+## Run and verify
+
+The [Traffic Monitor workflow](../.github/workflows/traffic_monitor.yml) can be started manually. The report is in the run's Summary. The first manual run reported the UTC hour beginning 2026-09-24 00:00:00: 2,901 nginx requests, with `vercel:not_connected` displayed explicitly. A successful report means the SSH and parser path worked; Bark sends a message only when an alert rule fires.
+
+Node 24 can also read existing logs directly:
 
 ```bash
 node --experimental-strip-types core/scripts/traffic-monitor.ts \
   --nginx /path/to/www.cuberoot.me.log \
-  --nginx /path/to/www.cuberoot.me.log-20260923.gz \
-  --vercel /path/to/sanitized-vercel.ndjson
+  --nginx /path/to/www.cuberoot.me.log-20260923.gz
 ```
 
-Repeat `--nginx` and `--vercel` for each input file. `--now 2026-09-23T19:07:00Z` fixes the report clock for incident replay. Use `node --experimental-strip-types --test core/scripts/traffic-monitor.test.mjs` for the narrow parser and alert checks. The report is JSON on stdout; parse errors and missing input files fail the process.
+Repeat `--nginx` for each file. `--now 2026-09-23T19:07:00Z` fixes the report clock for an incident replay. The narrow parser and alert checks run with `node --experimental-strip-types --test core/scripts/traffic-monitor.test.mjs`. The report is JSON on stdout; parse errors and missing input files fail the process.
 
-## Rollout boundary
-
-Before scheduling production alerts, confirm the workflow's SSH and Bark secrets still resolve, check one full hourly report against the same nginx time window, and verify the first scheduled run. For Vercel, deploy the receiver and retention rule, configure the signature secret on the API host, then connect the Drain and compare the two request lines with Web Analytics in the same UTC hour. No drain, new secret, paid service, firewall rule, or GA4 tag is configured by this change.
-
-References: [Vercel Log Drain schema](https://vercel.com/docs/drains/reference/logs), [Drain signatures](https://vercel.com/docs/drains/security), [Web Analytics measurement](https://vercel.com/docs/analytics).
+Reference: [Vercel Web Analytics](https://vercel.com/docs/analytics), [Web Analytics API](https://vercel.com/docs/analytics/web-analytics-api).
