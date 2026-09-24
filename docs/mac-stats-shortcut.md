@@ -1,13 +1,13 @@
 # Mac「跑打乱统计」快捷指令
 
-这是本机 Mac mini 的个人启动方式。仓库内跨平台的正式入口仍是在 `core/` 运行 `pnpm stats:scramble:local`；统计编排由 `scripts/stats/update-local.ts` 实现。只看计划可运行 `pnpm stats:scramble:local --plan`。
+这是本机 Mac mini 的个人启动方式。仓库内跨平台的日常入口是在 `core/` 运行 `pnpm stats:scramble`，统计成功后自动发布；只生成本地产物用 `pnpm stats:scramble:local`，只看计划用 `pnpm stats:scramble:local --plan`。
 
 ## 本机配置
 
 - Apple「快捷指令」中有「跑打乱统计」，已添加到 Dock。
 - 该快捷指令只有一个「运行Shell脚本」操作，内容为 `open -a Terminal "$HOME/.local/bin/跑打乱统计.command"`，Shell 选 `zsh`，不以管理员身份运行。
 - 在「快捷指令 → 设置 → 高级」中，用户已开启「允许运行脚本」。
-- `~/.local/bin/跑打乱统计.command` 是本机文件，不在仓库中。它进入 `${CUBEROOT_REPO:-$HOME/Documents/cuberoot.me}/core`，检测是否已有 `scripts/stats/update-local.ts` 进程；没有时运行 `pnpm stats:scramble:local`，结束后保留终端窗口以便查看结果。换电脑时先确认文件和仓库路径是否存在，不能只复制快捷指令。
+- `~/.local/bin/跑打乱统计.command` 是本机文件，不在仓库中。它进入 `${CUBEROOT_REPO:-$HOME/Documents/cuberoot.me}/core`，检测是否已有统计管道进程；没有时运行 `pnpm stats:scramble`，结束后保留终端窗口以便查看结果。换电脑时先确认文件和仓库路径是否存在，不能只复制快捷指令。
 
 ## 2026-09-24 排查记录
 

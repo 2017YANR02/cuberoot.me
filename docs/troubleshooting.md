@@ -4,7 +4,7 @@
 
 ### 统计未更新？
 1. 检查 [Actions 页面](https://github.com/2017YANR02/cuberoot.me/actions) 中的 `Update Stats` 与 `Sync static toolkit` 是否成功。
-2. `stats.yml` 定时或手动运行全量 WCA 统计；普通代码 push 只触发语法检查。打乱统计另走 `core/` 下的 `pnpm stats:scramble:local`，该命令只写本地文件。
+2. `stats.yml` 定时或手动运行全量 WCA 统计；普通代码 push 只触发语法检查。打乱统计另走 `core/` 下的 `pnpm stats:scramble`，统计成功后自动发布。明确只要本地产物时用 `pnpm stats:scramble:local`。
 3. 核对生成的 JSON 已提交、`sync_toolkit.yml` 已同步静态文件；CI 自动提交会自行处理 `[skip ci]` 和静态同步，不要靠手工加提交标记修复发布。
 
 ### 镜像未更新？
