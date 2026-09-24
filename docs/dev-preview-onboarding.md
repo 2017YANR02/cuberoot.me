@@ -116,7 +116,7 @@ node scripts/dev-preview/cli.ts verify --id xiaoming-macbook-pro
 node scripts/dev-preview/client.ts check --id xiaoming-macbook-pro
 ```
 
-verify 检查 DNS、可信 HTTPS、CubeRoot 页面、HTML 声明的全部 Next 启动 JS 和 API CORS。再通过浏览器真实打开页面，确认没有启动失败提示；若任务要求手机验收，再用真实手机测试。UI 服务能打开不等于登录/支付等全部业务已验收。
+verify 使用公共 DNS 核对解析（避免本机网络代理的虚拟 IP 造成误判），并检查可信 HTTPS、CubeRoot 页面、HTML 声明的全部 Next 启动 JS 和 API CORS。再通过浏览器真实打开页面，确认没有启动失败提示；若任务要求手机验收，再用真实手机测试。UI 服务能打开不等于登录/支付等全部业务已验收。
 
 另检查 `launchctl print gui/<uid>/me.cuberoot.dev.<id>` 或 Windows 计划任务状态和日志。未实际登出/重启时应写“登录自启已登记，重启未实测”。
 
