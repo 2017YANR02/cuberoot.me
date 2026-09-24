@@ -45,7 +45,7 @@ node scripts/dev-preview/client.ts init --id xiaoming-macbook-pro
 node scripts/dev-preview/cli.ts authorize --id xiaoming-macbook-pro --request /实际路径/request.json --out /实际路径/connection.json
 ```
 
-管理器创建专用 `crdev-<hash>` 系统账号，以该用户的 Match 块限制权限；校验 `sshd -t` 和 `sshd -T` 后仅 reload，不重启现有 SSH 会话。端口有服务器侧保留记录和操作锁。已有不同公钥时拒绝覆盖，应先确认身份并明确撤销旧设备。
+管理器创建专用 `crdev-<hash>` 系统账号，以该用户的 Match 块限制权限；校验 `sshd -t` 和 `sshd -T` 后仅 reload，不重启现有 SSH 会话。端口有服务器侧保留记录和操作锁。已有不同公钥时拒绝覆盖。丢失密钥或更换电脑时，先确认身份，使用新的设备标识（例如 macbook-pro-2）完成接入，再明确撤销旧设备；当前工具不原地覆盖或复活已撤销身份。
 
 `connection.json` 只有公钥、服务器公开地址/主机公钥、专用用户和分配端口。主机公钥通过已信任的管理员 SSH 取得；目标电脑使用严格主机密钥验证，不能用 `StrictHostKeyChecking=no`。
 
