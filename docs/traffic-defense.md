@@ -1,6 +1,6 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-24 09:25 PDT（16:25 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-24 09:43 PDT（16:43 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
 ## 当前结论
 
@@ -9,6 +9,15 @@
 **用户已要求停止 Vercel 访问。`cuberoot-me` 生产部署已暂停。** 控制台显示项目已暂停；09:25 PDT 对 `https://cuberoot-me.vercel.app/` 的实际 HEAD 请求返回 HTTP 503、`x-vercel-error: DEPLOYMENT_PAUSED`。
 
 Vercel 的 Pause Project 仅停止生产部署，预览部署、配置和数据保留。自有服务器 nginx 和独立 API 不受此操作控制；不要描述为整个团队或全部互联网入口已经关闭。
+
+### 静态维护公告已上线
+
+用户随后要求主域显示自定义公告。09:36 PDT nginx 发布成功（[运行 36028329042](https://github.com/2017YANR02/cuberoot.me/actions/runs/36028329042)，提交 `8fdd9ab`），09:42 左右浏览器打开 `https://cuberoot.me/` 已实际显示中英文维护公告。文案说明大量异常自动化访问和暂时停站，不断言数据泄露或操作者身份。
+
+- `ops/nginx/00-maintenance.conf` 是维护开关和独立 HTML 的单一来源；当前 `default 1`。主域全部页面和 Next 代理路径直接返回约 2 KB HTML、HTTP 503、`Retry-After: 600`，不运行 Next、Analytics 或调用 API。证书 ACME 验证路径除外。
+- 实测 `/zh/calc` 与 `/api/comp/maintenance-check` 返回 `X-CubeRoot-Maintenance: 2026-09-24`；`www` 返回 308 到裸域。独立 `api`、`static` 和 `next` 域名仍是独立入口，不能宣称全部停机。
+- 阿里云 DNS 的 `@` 和 `www` 两条「境外」A 记录均从 `216.198.79.1` 改为 `47.97.30.181`，TTL 从 30 分钟改为 10 分钟；原 `www` 权重 1 保留，其他国内/默认 A 记录原本已指向该自有服务器。两条记录均已在控制台核实保存，Google DNS 查询也返回新 IP、TTL 600。旧缓存可能继续显示 Vercel 暂停页，不能保证所有递归 DNS 同时刷新。
+- 09:39 再次实测 `cuberoot-me.vercel.app` 仍返回 `503 DEPLOYMENT_PAUSED`，未恢复 Vercel 项目，也未开通新增付费服务。公告由现有服务器承载，仍会消耗少量服务器带宽，不等于网络流量完全归零。
 
 ## 已执行措施
 
@@ -47,6 +56,25 @@ Vercel 的 Pause Project 仅停止生产部署，预览部署、配置和数据�
 
 ## 三条入口分别检查
 
+### 请求来源国家快照
+
+2026-09-24 约 09:35 PDT 查询 Firewall Query Builder：`Firewall Actions Count Sum`，按 `IP Country` 分组，未筛选动作；窗口从 09-23 09:30 PDT 到查询时（界面结束刻度为 09-24 09:45）。计数包含正常放行、验证、拒绝等动作，**不是独立 IP 数，也不是已确认的攻击次数**。IP 所在国家不代表操作者所在地。
+
+| 国家 | 界面计数（约） |
+| --- | ---: |
+| 美国 | 142,000 |
+| 孟加拉国 | 111,000 |
+| 巴西 | 99,000 |
+| 印度 | 95,000 |
+| 巴基斯坦 | 71,000 |
+| 越南 | 51,000 |
+| 阿根廷 | 40,000 |
+| 南非 | 32,000 |
+| 印度尼西亚 | 32,000 |
+| 阿联酋 | 23,000 |
+
+### 入口覆盖
+
 1. **Vercel 生产**：Firewall、Logs、Usage；本次已暂停。预览部署另查访问保护，不自动视为关闭。
 2. **自有 nginx → Next**：`ops/nginx/www.cuberoot.me.conf`、`/www/wwwlogs/www.cuberoot.me.log` 和现有监控；Vercel WAF 不能替它限流。
 3. **独立 API**：`api.cuberoot.me` → Hono。Next `/api/comp/[slug]` 会代理到此处；只限制代理入口不等于独立 API 受保护。
@@ -76,6 +104,8 @@ Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面�
 ## 恢复步骤
 
 当前用户要求停止访问，未经后续恢复指令不得自行恢复。
+
+恢复前还须处理本次维护公告和 DNS：准备好防护后，将 `ops/nginx/00-maintenance.conf` 的维护开关 `default 1` 改为 `default 0`，通过 `deploy_nginx.yml` 发布。若恢复原境外 Vercel 线路，将 `@` 和 `www` 的「境外」A 记录恢复为 `216.198.79.1`、TTL 30 分钟（www 权重 1）。先确认目标服务和防护已就绪，再切 DNS；不要只恢复某一个开关便宣称全站恢复。
 
 1. 先完成所需防护并检查实际接口负载。项目 Settings → General → Resume Project 可恢复生产服务，无需重新部署。
 2. 如要恢复计算器，还需在 Firewall Rules 单独停用 `Emergency deny /zh/calc during traffic spike` 并发布；Resume 不会自动撤销这条规则。保留或调整已验证的限流。
