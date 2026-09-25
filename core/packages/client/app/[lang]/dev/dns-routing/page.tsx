@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, CircleHelp, Globe2, MapPin, Server, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Globe2, MapPin, Server } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import JsonLd, { articleJsonLd } from '@/components/JsonLd';
@@ -11,120 +11,165 @@ import { PAGE_META } from '@/lib/page-meta';
 import './dns-routing.css';
 
 const SOURCES = [
-  { href: 'https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/', zh: 'Cloudflare：免费版的完整 DNS 接入', en: 'Cloudflare: full DNS setup on Free' },
+  { href: 'https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/', zh: 'Cloudflare：完整接入与 NS', en: 'Cloudflare: full setup and nameservers' },
   { href: 'https://developers.cloudflare.com/dns/zone-setups/partial-setup/', zh: 'Cloudflare：保留外部 DNS 的部分接入', en: 'Cloudflare: partial setup with external DNS' },
-  { href: 'https://developers.cloudflare.com/pages/configuration/custom-domains/', zh: 'Cloudflare Pages：外部 DNS 接入子域名', en: 'Cloudflare Pages: a subdomain on external DNS' },
-  { href: 'https://www.alibabacloud.com/help/en/dns/pubz-intelligent-parsing-related-faq', zh: '阿里云：智能解析如何判断来源', en: 'Alibaba Cloud: how geo routing determines location' },
-  { href: 'https://www.alibabacloud.com/help/en/dns/pubz-faq-related-to-domain-name-resolution-resolution-records', zh: '阿里云：URL 转发及 HTTPS 限制', en: 'Alibaba Cloud: URL forwarding and HTTPS' },
-  { href: 'https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/', zh: 'Cloudflare Workers：部署 Next.js', en: 'Cloudflare Workers: deploy Next.js' },
-  { href: 'https://developers.cloudflare.com/workers/platform/limits/', zh: 'Cloudflare Workers：免费额度与资源限制', en: 'Cloudflare Workers: Free limits' },
-  { href: 'https://developers.cloudflare.com/china-network/get-started/', zh: 'Cloudflare：中国网络是单独的 Enterprise 订阅', en: 'Cloudflare: China Network is a separate Enterprise subscription' },
-  { href: 'https://ynca.miit.gov.cn/zwgk/zcwj/flfg/art/2024/art_2e96227c42924af9b49b7f13b81fd124.html', zh: '工信部：非经营性互联网信息服务备案管理办法', en: 'MIIT: ICP filing rules for non-commercial internet services' },
-  { href: 'https://www.cac.gov.cn/2024-03/22/c_1712776611775634.htm', zh: '国家网信办：促进和规范数据跨境流动规定', en: 'CAC: rules on cross-border data flows' },
+  { href: 'https://developers.cloudflare.com/pages/configuration/custom-domains/', zh: 'Cloudflare Pages：子域名与裸域', en: 'Cloudflare Pages: subdomains and apex domains' },
+  { href: 'https://www.alibabacloud.com/help/en/dns/pubz-intelligent-parsing-related-faq', zh: '阿里云：智能解析的来源判断', en: 'Alibaba Cloud: how geo DNS determines location' },
+  { href: 'https://www.alibabacloud.com/help/en/dns/pubz-faq-related-to-domain-name-resolution-resolution-records', zh: '阿里云：URL 转发与 HTTPS 限制', en: 'Alibaba Cloud: URL forwarding and HTTPS' },
+  { href: 'https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/', zh: 'Cloudflare Workers：Next.js 部署', en: 'Cloudflare Workers: Next.js deployment' },
+  { href: 'https://developers.cloudflare.com/workers/platform/limits/', zh: 'Cloudflare Workers：套餐与静态资产限制', en: 'Cloudflare Workers: plan and asset limits' },
+  { href: 'https://developers.cloudflare.com/china-network/get-started/', zh: 'Cloudflare：中国网络的订阅条件', en: 'Cloudflare: China Network requirements' },
+  { href: 'https://ynca.miit.gov.cn/zwgk/zcwj/flfg/art/2024/art_2e96227c42924af9b49b7f13b81fd124.html', zh: '工信部：非经营性互联网信息服务备案管理办法', en: 'MIIT: ICP filing rules' },
+  { href: 'https://www.cac.gov.cn/2024-03/22/c_1712776611775634.htm', zh: '国家网信办：促进和规范数据跨境流动规定', en: 'CAC: cross-border data flow rules' },
 ] as const;
 
 export default function DnsRoutingPage() {
   const t = useT();
   const lang = useLang();
   const meta = PAGE_META['dev/dns-routing'];
+  const url = 'https://cuberoot.me/' + (lang === 'zh' ? 'zh/' : '') + 'dev/dns-routing';
   const toc = [
-    ['answer', t('先看答案', 'The answer')],
-    ['today', t('现在的真实路径', 'The current route')],
-    ['words', t('NS、DNS 与 301', 'NS, DNS and 301')],
-    ['options', t('三种 CF 方案', 'Three CF options')],
-    ['migration', t('迁移与合规', 'Migration and compliance')],
-    ['sources', t('官方资料', 'Primary sources')],
+    ['request', t('打开网页时发生什么', 'How a page opens')],
+    ['current', t('本站现在怎么走', 'The current routes')],
+    ['nameservers', t('NS 到底是什么', 'What NS means')],
+    ['redirect', t('分流与跳转', 'Routing versus redirects')],
+    ['cloudflare', t('CF 免费版能做到什么', 'What CF Free allows')],
+    ['operations', t('迁移和合规', 'Migration and compliance')],
   ];
 
-  return <main className="dns-page">
-    <JsonLd data={articleJsonLd({ headline: tr(meta.title), description: tr(meta.description!), url: `https://cuberoot.me/${lang === 'zh' ? 'zh/' : ''}dev/dns-routing`, lang, partOfName: 'CubeRoot Dev', partOfUrl: `https://cuberoot.me/${lang === 'zh' ? 'zh/' : ''}dev` })} />
-    <div className="dns-wrap">
-      <header className="dns-topbar">
-        <AppLink href="/dev" prefetch={false} className="dns-brand">CubeRoot <span>/ dev / network</span></AppLink>
-        <HeaderToggles />
-      </header>
-
-      <article>
-        <header className="dns-hero">
-          <div className="dns-kicker"><span className="dns-pulse" /> {t('网络架构图解', 'NETWORK FIELD GUIDE')} <span>001 / 2026.09.25</span></div>
-          <h1>{t('同一个网址，\n两条不同的路。', 'One address.\nTwo different paths.')}</h1>
-          <p className="dns-lead">{t('打开的都是 cuberoot.me，国内和国外却可能到达不同的服务器。NS 决定谁回答“去哪儿”，DNS 分线路决定回答什么地址，301 才会改浏览器地址栏。', 'Everyone opens cuberoot.me, yet visitors in China and overseas may reach different servers. NS chooses who answers “where”; DNS routing chooses the answer; only an HTTP redirect changes the address bar.')}</p>
-          <div className="dns-hero-meta"><span>{t('阅读时间约 8 分钟', 'About 8 min read')}</span><span>{t('以 2026-09-25 的配置为准', 'Configuration snapshot: 2026-09-25')}</span></div>
-          <figure className="dns-hero-art">
-            <Image src="/assets/dev/dns-routing/hero.png" alt={t('抽象示意：一个入口分成通往国内服务器和海外云平台的两条发光路径', 'Concept illustration: one entry divides into paths toward a domestic server and an overseas cloud')} width={1536} height={1024} priority unoptimized />
-            <figcaption>{t('概念插画，不代表真实地理位置或网络拓扑。下方流程图才标出实际服务。', 'Concept art, not a geographic map or literal topology. The diagram below names the actual services.')}</figcaption>
-          </figure>
+  return (
+    <main className="dns-page">
+      <JsonLd data={articleJsonLd({
+        headline: tr(meta.title),
+        description: tr(meta.description!),
+        url,
+        lang,
+        partOfName: 'CubeRoot Dev',
+        partOfUrl: 'https://cuberoot.me/' + (lang === 'zh' ? 'zh/' : '') + 'dev',
+      })} />
+      <div className="dns-wrap">
+        <header className="dns-topbar">
+          <AppLink href="/dev" prefetch={false} className="dns-brand">CubeRoot <span>/ dev / DNS</span></AppLink>
+          <HeaderToggles />
         </header>
 
-        <nav className="dns-toc" aria-label={t('本页目录', 'On this page')}>
-          {toc.map(([id, label], index) => <a href={`#${id}`} key={id}><span>0{index + 1}</span>{label}<ArrowRight size={14} /></a>)}
-        </nav>
+        <article>
+          <header className="dns-hero">
+            <p className="dns-series">{t('网络基础 · 第 01 篇', 'NETWORK BASICS · 01')}</p>
+            <h1>{t('同一个网址，为什么会打开不同的服务器？', 'Why can one URL reach different servers?')}</h1>
+            <p className="dns-deck">{t('以 cuberoot.me 为例，从浏览器输入网址开始，逐步拆开域名解析、国内外分线路、301 跳转，以及 Cloudflare 免费版的实际边界。', 'Using cuberoot.me, this guide follows a visit from the address bar through DNS, regional routing and HTTP redirects, then examines the practical limits of Cloudflare Free.')}</p>
+            <div className="dns-hero-rule"><span>cuberoot.me</span><span>{t('访问路径说明 · 2026 年 9 月 25 日快照', 'Request routing · snapshot from 25 Sep 2026')}</span></div>
+            <figure className="dns-cover">
+              <Image src="/assets/dev/dns-routing/route-map.svg?v=2" alt={t('示意图：同一个网址先经过 DNS 查询，然后国内和海外连接分别到达阿里云服务器与 Vercel', 'Diagram: the same URL is resolved by DNS, then China and overseas connections reach Alibaba Cloud and Vercel respectively')} width={1200} height={560} priority unoptimized />
+              <figcaption>{t('这是一张访问过程示意图。线路由 DNS 查询来源决定，不表示精确地理位置。', 'A process illustration. DNS query origin influences the route; positions are not geographic coordinates.')}</figcaption>
+            </figure>
+          </header>
 
-        <section className="dns-section" id="answer">
-          <SectionTitle number="01" eyebrow={t('一句话结论', 'THE SHORT ANSWER')} title={t('四个条件，不能同时满足', 'These four requirements do not fit together')} />
-          <p className="dns-prose">{t('如果你的要求是：①地址栏始终只显示 cuberoot.me；②国内用户直达阿里云；③国外用户直达 Cloudflare 托管的整站；④Cloudflare 免费，同时让阿里云 DNS 继续管理主域的国内外分线路——答案是“不行”。卡住的不是网址写法，而是 Cloudflare 免费版对主域的接入方式。', 'If you require one visible URL (cuberoot.me), a direct Alibaba Cloud route in China, a direct Cloudflare-hosted full site overseas, Cloudflare Free, and Alibaba Cloud DNS retaining the regional split, the answer is no. The obstacle is how Cloudflare Free attaches the apex domain, not how the URL is spelled.')}</p>
-          <div className="dns-verdict" data-site-surface="panel"><div className="dns-verdict-icon"><X size={31} strokeWidth={2.5} /></div><div><span>{t('你提出的完整组合', 'YOUR EXACT COMBINATION')}</span><strong>{t('否，免费方案无法原样实现', 'No, not as specified on Free')}</strong><p>{t('可以保住同一个网址，也可以保留阿里 DNS 分线路；但按官方支持的接入方式，不能再同时免费地让国外主域直接落到 CF 托管的整站。下面逐项解释。', 'You can preserve the same URL, or preserve Alibaba DNS regional routing. Officially supported setup does not provide all of those conditions together for free with the overseas apex directly on a CF-hosted full site.')}</p></div></div>
-          <div className="dns-condition-grid">{[
-            [t('同一网址', 'One visible URL'), 'cuberoot.me', true],
-            [t('国内直达阿里云', 'Direct to Alibaba in China'), t('不经过 CF 代理', 'No CF proxy'), true],
-            [t('海外直达 CF 整站', 'Direct to full CF site overseas'), t('不是跳到子域名', 'No subdomain redirect'), true],
-            [t('阿里 DNS 分流 + CF 免费', 'AliDNS split + CF Free'), t('两项必须并存', 'Both at once'), false],
-          ].map(([title, value, possible]) => <div key={String(title)}><span className={possible ? 'dns-good' : 'dns-bad'}>{possible ? <Check size={16} /> : <X size={16} />}</span><strong>{title}</strong><small>{value}</small></div>)}</div>
-        </section>
+          <nav className="dns-toc" aria-label={t('文章目录', 'Contents')}>
+            {toc.map(([id, label], index) => <a href={'#' + id} key={id}><span>{String(index + 1).padStart(2, '0')}</span>{label}</a>)}
+          </nav>
 
-        <section className="dns-section" id="today">
-          <SectionTitle number="02" eyebrow={t('当前站点', 'CURRENT DEPLOYMENT')} title={t('现在，用户实际会看到什么', 'What visitors actually see today')} />
-          <p className="dns-prose">{t('cuberoot.me 当前把域名的权威 NS 放在阿里云（dns3.hichina.com / dns4.hichina.com）。阿里 DNS 按解析来源给出不同的主站地址：国内线路指向阿里云自有服务器，海外线路指向 Vercel。浏览器没有发生 301 跳转，所以两边地址栏仍是 cuberoot.me。', 'The authoritative nameservers for cuberoot.me currently sit at Alibaba Cloud (dns3.hichina.com / dns4.hichina.com). AliDNS returns different main-site addresses by resolution source: the China route reaches the self-hosted Alibaba server, and the overseas route reaches Vercel. There is no 301 redirect, so both visitors keep cuberoot.me in the address bar.')}</p>
-          <figure className="dns-flow" data-site-surface="panel">
-            <div className="dns-flow-start"><Globe2 size={25} /><div><small>{t('访客输入', 'VISITOR TYPES')}</small><strong>https://cuberoot.me</strong></div></div>
-            <div className="dns-flow-drop"><ArrowDown size={19} /><span>{t('查询“这个域名去哪儿？”', 'Asks “where does this name go?”')}</span></div>
-            <div className="dns-flow-ns"><span>NS</span><div><strong>{t('阿里云权威 DNS', 'Alibaba authoritative DNS')}</strong><small>dns3 / dns4.hichina.com</small></div></div>
-            <div className="dns-flow-fork"><span>{t('按解析来源返回不同记录', 'Different records by query source')}</span></div>
-            <div className="dns-flow-lanes">
-              <div className="dns-lane dns-lane-cn"><div className="dns-lane-icon"><MapPin size={21} /></div><span className="dns-lane-region">{t('中国大陆解析线路', 'CHINA DNS LINE')}</span><strong>47.97.30.181</strong><p>{t('阿里云服务器 → nginx → Next.js', 'Alibaba server → nginx → Next.js')}</p><div className="dns-browser">🔒 cuberoot.me <Check size={15} /></div></div>
-              <div className="dns-lane dns-lane-world"><div className="dns-lane-icon"><Globe2 size={21} /></div><span className="dns-lane-region">{t('海外解析线路', 'OVERSEAS DNS LINE')}</span><strong>216.198.79.1</strong><p>Vercel → Next.js</p><div className="dns-browser">🔒 cuberoot.me <Check size={15} /></div></div>
+          <section className="dns-section dns-intro" id="request">
+            <SectionTitle number="01" label={t('先从一次访问说起', 'START WITH A PAGE VISIT')} title={t('输入网址后，浏览器做了四件事', 'Four steps between a URL and a page')} />
+            <p className="dns-prose">{t('“网址”和“服务器地址”不是一回事。浏览器认识 cuberoot.me 这个名字，但建立连接需要 IP 地址。因此，打开页面时先有 DNS 查询，之后才有 HTTPS 请求。', 'A domain name and a server address are different things. The browser knows the name cuberoot.me, but needs an IP address to connect. DNS resolution happens before the HTTPS request.')}</p>
+            <ol className="dns-steps">
+              <li><span>1</span><div><h3>{t('输入网址', 'Enter the URL')}</h3><p>{t('地址栏是 https://cuberoot.me。此时还没有联系网站服务器。', 'The address bar contains https://cuberoot.me. No site server has been contacted yet.')}</p></div></li>
+              <li><span>2</span><div><h3>{t('查询 DNS', 'Resolve the domain')}</h3><p>{t('浏览器通过递归 DNS 找到这个域名的权威名称服务器，再得到一个可连接的地址。', 'A recursive resolver finds the authoritative nameservers and obtains a connectable address.')}</p></div></li>
+              <li><span>3</span><div><h3>{t('建立 HTTPS 连接', 'Connect with HTTPS')}</h3><p>{t('浏览器连接 DNS 给出的目标，并验证服务器证书是否覆盖 cuberoot.me。', 'The browser connects to the returned destination and checks that its certificate covers cuberoot.me.')}</p></div></li>
+              <li><span>4</span><div><h3>{t('取得页面', 'Receive the page')}</h3><p>{t('服务器返回 HTML、脚本、图片和数据。只有服务器另发 301/302，浏览器才会改写地址栏。', 'The server returns HTML, scripts, images and data. The address bar changes only if the server sends a redirect such as 301 or 302.')}</p></div></li>
+            </ol>
+          </section>
+
+          <section className="dns-section" id="current">
+            <SectionTitle number="02" label={t('本站的实际配置', 'THE SITE TODAY')} title={t('国内与海外，网址相同，目标不同', 'The URL stays the same; the destination differs')} />
+            <p className="dns-prose">{t('截至 2026 年 9 月 25 日，cuberoot.me 的权威 NS 是阿里云的 dns3.hichina.com 与 dns4.hichina.com。阿里云 DNS 为主域配置了分线路解析。国内查询得到 47.97.30.181，进入自有服务器的 nginx 和 Next.js；海外查询得到 216.198.79.1，进入 Vercel。', 'On 25 September 2026, the authoritative NS for cuberoot.me were Alibaba’s dns3.hichina.com and dns4.hichina.com. AliDNS returned 47.97.30.181 for the China line, reaching the self-hosted nginx and Next.js server, and 216.198.79.1 for the overseas line, reaching Vercel.')}</p>
+            <figure className="dns-flow">
+              <div className="dns-flow-visitor"><Globe2 size={20} /><span>https://cuberoot.me</span></div>
+              <div className="dns-flow-arrow"><ArrowDown size={17} /><small>{t('查询 DNS', 'DNS query')}</small></div>
+              <div className="dns-flow-resolver"><strong>{t('阿里云权威 DNS', 'Alibaba authoritative DNS')}</strong><small>dns3.hichina.com · dns4.hichina.com</small></div>
+              <div className="dns-flow-branches">
+                <div className="dns-flow-branch">
+                  <MapPin size={20} />
+                  <span>{t('国内解析线路', 'China DNS line')}</span>
+                  <strong>47.97.30.181</strong>
+                  <small>{t('阿里云服务器 → nginx → Next.js', 'Alibaba server → nginx → Next.js')}</small>
+                  <div className="dns-address">🔒 cuberoot.me</div>
+                </div>
+                <div className="dns-flow-branch">
+                  <Globe2 size={20} />
+                  <span>{t('海外解析线路', 'Overseas DNS line')}</span>
+                  <strong>216.198.79.1</strong>
+                  <small>Vercel → Next.js</small>
+                  <div className="dns-address">🔒 cuberoot.me</div>
+                </div>
+              </div>
+              <figcaption>{t('图中省略独立的 API、静态资源、博客等域名。IP 是当日使用国内与海外客户端子网查询所得，后续调整 DNS 时会变化。', 'Independent API, static and blog hosts are omitted. IPs came from China and overseas client-subnet queries on the stated date and may change.')}</figcaption>
+            </figure>
+            <div className="dns-aside"><strong>{t('为什么写“解析线路”，不直接写“国内用户”？', 'Why say “DNS line” rather than “visitor location”?')}</strong><p>{t('阿里云智能解析主要依据递归 DNS 的出口 IP 判断来源。有些解析器还会传客户端子网。使用海外 DNS、VPN 或某些运营商网络时，实际用户所在地与命中的线路可能不一致。因此，这是一种访问优化机制，不是严格的地域隔离。', 'AliDNS mainly determines location from the recursive resolver’s egress IP; some resolvers also pass a client subnet. An overseas resolver, VPN or network configuration can make the selected line differ from the visitor’s physical location. It is a routing optimization, not a strict geographic boundary.')}</p></div>
+          </section>
+
+          <section className="dns-section" id="nameservers">
+            <SectionTitle number="03" label={t('名词解释', 'THE FIRST TERM')} title={t('NS 是“由谁回答 DNS”的指定', 'NS specifies who answers DNS queries')} />
+            <p className="dns-prose">{t('NS 是 Name Server 的缩写，中文常称“名称服务器”。域名注册商和权威 DNS 可以是不同服务商：域名继续在阿里云注册，同时把 NS 改成 Cloudflare，并不矛盾。但主域一旦改用 Cloudflare 的 NS，公开查询将由 Cloudflare 的权威 DNS 回答，原先在阿里云 DNS 控制台设置的主域分线路规则便不再控制访问。', 'NS stands for Name Server. The registrar and authoritative DNS provider can be different: a domain can remain registered at Alibaba while its NS points to Cloudflare. Once the apex uses Cloudflare NS, public queries are answered by Cloudflare authoritative DNS, not by the main-domain regional rules in the AliDNS console.')}</p>
+            <div className="dns-definition">
+              <div><span>{t('注册商', 'REGISTRAR')}</span><strong>{t('域名登记在哪里', 'Where the domain is registered')}</strong><p>{t('管理域名所有权、续费和 NS 指向。', 'Manages ownership, renewal and the NS delegation.')}</p></div>
+              <ArrowRight size={21} />
+              <div><span>{t('权威 NS', 'AUTHORITATIVE NS')}</span><strong>{t('谁回答解析请求', 'Who answers DNS queries')}</strong><p>{t('阿里云或 Cloudflare 等服务商。', 'Alibaba, Cloudflare or another DNS provider.')}</p></div>
+              <ArrowRight size={21} />
+              <div><span>{t('解析记录', 'DNS RECORD')}</span><strong>{t('回答哪个目标', 'Which target is returned')}</strong><p>{t('可以按线路返回不同地址。', 'Different lines can return different addresses.')}</p></div>
             </div>
-            <figcaption>{t('2026-09-25 用不同客户端子网模拟国内/海外 DNS 查询得到的地址；服务配置可变化。智能解析主要依据递归 DNS 的出口 IP（有时参考客户端子网），不能保证每个访客都命中预期线路。API、static 和博客是独立入口，图中省略。', 'Addresses observed on 2026-09-25 using China and overseas client-subnet DNS queries; configuration can change. Geo DNS mainly uses the recursive resolver’s egress IP (sometimes client-subnet information), so each visitor is not guaranteed the expected lane. Independent API, static, and blog hosts are omitted.')}</figcaption>
-          </figure>
-          <div className="dns-note"><CircleHelp size={20} /><p>{t('“域名在阿里”有两层含义：域名可以继续在阿里云注册，但权威 NS 指向别家；也可以注册和权威 DNS 都在阿里。真正决定谁回答解析请求的是 NS，不是注册商。', '“The domain is at Alibaba” can refer to registration or authoritative DNS. You may keep the registrar at Alibaba while pointing NS elsewhere. NS, rather than the registrar, determines who answers DNS queries.')}</p></div>
-        </section>
+            <p className="dns-caption">{t('“域名在阿里”只说明注册位置时，并不能推断 DNS 也由阿里负责；要看实际 NS 记录。', '“Registered at Alibaba” alone does not establish where DNS is hosted; check the actual NS records.')}</p>
+          </section>
 
-        <section className="dns-section" id="words">
-          <SectionTitle number="03" eyebrow={t('三个容易混淆的词', 'THREE DIFFERENT LAYERS')} title={t('NS、DNS 分流、301 各管一件事', 'NS, DNS routing and 301 do different jobs')} />
-          <div className="dns-terms">
-            <div data-site-surface="panel"><span>01 / NS</span><h3>Name Server</h3><p>{t('“谁来回答”。注册商公布 cuberoot.me 的权威名称服务器。指向阿里，阿里 DNS 规则生效；改指向 CF，阿里 DNS 的主域分线路规则就不再负责公开解析。', '“Who answers?” The registrar publishes the authoritative nameservers. Pointing them to Alibaba makes AliDNS rules authoritative. Pointing them to CF removes Alibaba’s main-domain geo rules from public resolution.')}</p></div>
-            <div data-site-surface="panel"><span>02 / DNS</span><h3>{t('分线路解析', 'Regional answers')}</h3><p>{t('“回答哪个地址”。同一个 cuberoot.me 可以按解析线路返回不同目标。用户仍输入、看到相同的网址。它不读取页面，也不执行网页跳转。', '“Which destination?” The same cuberoot.me can resolve to different targets by DNS line. Visitors type and see the same URL. DNS does not load a page or issue a web redirect.')}</p></div>
-            <div data-site-surface="panel"><span>03 / HTTP</span><h3>301 Redirect</h3><p>{t('“让浏览器改去另一个 URL”。服务器先收到请求，再发 301 和新地址。如果目标是 global.cuberoot.me，浏览器地址栏就会变成它；如果目标仍是原地址，就可能无限跳转。', '“Send the browser to another URL.” A server first receives the request, then sends a 301 and a new location. Redirect to global.cuberoot.me and the address bar changes; redirect back to itself and a loop can result.')}</p></div>
-          </div>
-          <figure className="dns-compare" data-site-surface="panel"><div><span>{t('DNS 分流：地址栏不变', 'DNS ROUTING: URL STAYS')}</span><div className="dns-mini-browser">🔒 cuberoot.me <ArrowRight size={16} /> <b>🔒 cuberoot.me</b></div><p>{t('不同用户可能连不同服务，URL 仍相同。', 'Different users can reach different services under one URL.')}</p></div><div><span>{t('301 跳转：地址栏改变', '301 REDIRECT: URL CHANGES')}</span><div className="dns-mini-browser">🔒 cuberoot.me <ArrowRight size={16} /> <b>🔒 global.cuberoot.me</b></div><p>{t('这是两个主机名。可以让用户自动过去，但不能说网址完全相同。', 'These are two hostnames. Automatic navigation does not make them the same URL.')}</p></div><figcaption>{t('DNS 回答发生在建立 HTTPS 连接之前；301 是拿到 HTTP 响应之后的动作。阿里云 DNS 自带的 URL 转发不支持 HTTPS 来源，不能直接承担 https://cuberoot.me 的跳转。', 'DNS resolution precedes the HTTPS connection; a 301 is an HTTP response. AliDNS built-in URL forwarding does not support an HTTPS source URL and cannot directly redirect https://cuberoot.me.')}</figcaption></figure>
-        </section>
+          <section className="dns-section" id="redirect">
+            <SectionTitle number="04" label={t('两种完全不同的动作', 'TWO DIFFERENT MECHANISMS')} title={t('DNS 分流不改网址；301 会改网址', 'DNS routing keeps the URL; a 301 changes it')} />
+            <p className="dns-prose">{t('DNS 分流发生在建立 HTTPS 连接之前。它只给出目标地址，浏览器仍请求 cuberoot.me。301 是服务器返回的 HTTP 响应，包含另一个 URL；浏览器接到后会访问新地址。把海外线路的服务写成 301 到 global.cuberoot.me，最后显示的就是 global.cuberoot.me。', 'DNS routing happens before the HTTPS connection and returns a destination for the same hostname. A 301 is an HTTP response containing another URL. If the overseas server redirects to global.cuberoot.me, that is the address ultimately displayed.')}</p>
+            <div className="dns-browser-pair">
+              <div><span>{t('DNS 分线路', 'DNS ROUTING')}</span><div className="dns-bar">🔒 cuberoot.me <ArrowRight size={15} /> <strong>🔒 cuberoot.me</strong></div><p>{t('服务器可变，地址栏不变。', 'The server may change while the address bar stays the same.')}</p></div>
+              <div><span>{t('HTTP 301 跳转', 'HTTP 301 REDIRECT')}</span><div className="dns-bar">🔒 cuberoot.me <ArrowRight size={15} /> <strong>🔒 global.cuberoot.me</strong></div><p>{t('跳转后是另一个主机名；自动跳转也仍是两个网址。', 'The destination has another hostname; automatic navigation does not make the URLs identical.')}</p></div>
+            </div>
+            <p className="dns-caption">{t('301 不能“跳到自己”：如果每次请求 cuberoot.me 都返回指向 cuberoot.me 的 301，浏览器会陷入循环。阿里云 DNS 自带的 URL 转发不支持 HTTPS 来源，不能直接为 https://cuberoot.me 完成这个动作。', 'A self-redirect can loop indefinitely. AliDNS built-in URL forwarding also does not support HTTPS source URLs, so it cannot directly redirect https://cuberoot.me.')}</p>
+          </section>
 
-        <section className="dns-section" id="options">
-          <SectionTitle number="04" eyebrow={t('方案对照', 'THE OPTIONS')} title={t('Cloudflare 免费，究竟能做到哪一步', 'What Cloudflare Free can actually do')} />
-          <div className="dns-option-list">
-            <Option n="A" status={t('免费，但网址会变', 'Free; URL changes')} title={t('阿里 DNS 保持原样，海外跳到 CF 子域名', 'Keep AliDNS; redirect overseas to a CF subdomain')} body={t('可在 CF Pages 给 global.cuberoot.me 绑定自定义子域名，并在阿里 DNS 加 CNAME。海外访客先到 cuberoot.me 的某个 HTTPS 服务，再由它返回 301/302 到 global.cuberoot.me。国内继续走阿里云。这个方案需要真正的海外 HTTPS 跳转入口，不能把 DNS 记录写成“301”。如果是完整 Next.js 站点，Pages 的子域名能力也不等于原项目已经能运行；还需适配 Workers 并逐项验收。', 'CF Pages can attach global.cuberoot.me through a CNAME in AliDNS. Overseas visitors first reach an HTTPS service for cuberoot.me, which responds with a 301/302 to global.cuberoot.me. China can keep its Alibaba route. This requires a real HTTPS redirect endpoint; DNS cannot emit a 301. A Pages custom subdomain also does not prove the full Next.js app will run without Workers adaptation and validation.')} result={t('用户最后看到 global.cuberoot.me，不符合“网址完全一样”。', 'Visitors end at global.cuberoot.me, so the URL requirement fails.')} />
-            <Option n="B" status={t('免费，保留同一网址', 'Free; one URL')} title={t('把主域 NS 改到 Cloudflare', 'Move the main domain’s NS to Cloudflare')} body={t('Cloudflare Free/Pro 官方只提供完整接入：主域权威 NS 改到 CF，DNS 记录在 CF 管理。浏览器可继续显示 cuberoot.me，也可以让 CF 回源到阿里云；但是阿里 DNS 原有的国内外分线路此时不再控制主域解析。如果 CF 代理国内请求，国内访客也会先经过 CF；这已不是“国内直达阿里云”。', 'Cloudflare Free/Pro officially support full setup: move the authoritative NS to CF and manage DNS there. The browser can still show cuberoot.me, and CF can proxy to Alibaba as origin. Alibaba’s existing regional rules no longer control the apex, though; if CF proxies China traffic, those visitors pass through CF before Alibaba.')} result={t('满足同一网址；不能同时保留“阿里 DNS 分流 + 国内直达”。', 'One URL survives; the AliDNS split and direct China route do not.')} />
-            <Option n="C" status={t('需要付费及主域能力核对', 'Paid; apex needs review')} title={t('保留阿里权威 DNS，只让海外主域进 CF', 'Keep Alibaba authoritative; send overseas apex to CF')} body={t('Cloudflare 的 CNAME/partial setup 允许保留外部权威 DNS，但官方仅开放给 Business/Enterprise。它通常为单独子域名配置 CNAME；对 cuberoot.me 这个裸域还需要权威 DNS 支持 CNAME Flattening/ALIAS 或其他官方支持的入口，并核查阿里当前套餐及线路记录能否配置。不能把普通 CNAME 直接放在裸域上，也不能把付费 partial setup 当成免费能力。', 'Cloudflare’s CNAME/partial setup can keep external authoritative DNS, but is limited to Business/Enterprise. It normally uses CNAMEs for individual subdomains. The apex cuberoot.me also needs supported flattening/ALIAS or another approved entry, and the available Alibaba DNS plan and line records must be checked. An ordinary apex CNAME is invalid, and partial setup is not a Free feature.')} result={t('方向上接近你的目标；需付费、核对主域接入并完成技术与合规验证。', 'Closest to the target; requires payment plus apex, technical, and compliance validation.')} />
-          </div>
-          <div className="dns-rule"><strong>{t('关键区别', 'THE KEY DISTINCTION')}</strong><p>{t('“阿里 DNS 里填一个 CF 地址”不等于“CF 免费托管主域”。CF Pages 文档确实允许外部 DNS 给子域名做 CNAME；它同时明确裸域作为 Pages 自定义域名要先成为该 CF 账户中的 zone。CF 对主域的部分接入又是 Business/Enterprise 功能。', 'Putting a CF target in AliDNS does not by itself make an apex domain a CF Free hosted site. Pages documentation allows an external-DNS CNAME for a subdomain, but requires the apex custom domain to be a zone in the CF account. Partial setup for the apex is a Business/Enterprise feature.')}</p></div>
-        </section>
+          <section className="dns-section" id="cloudflare">
+            <SectionTitle number="05" label={t('方案逐一核对', 'CLOUDFLARE OPTIONS')} title={t('“用 CF，而且免费”有哪些含义', 'What “use CF for free” can mean')} />
+            <p className="dns-prose">{t('这里把“国内继续用阿里云”理解为国内请求直达现有服务器，不先经过 Cloudflare；把“网址完全相同”理解为国内外地址栏都只显示 cuberoot.me。按照这两个条件比较，结果如下。', 'For this comparison, “China remains on Alibaba” means a direct path to the existing server without first passing through Cloudflare. “Exactly the same URL” means both address bars show cuberoot.me.')}</p>
+            <div className="dns-options">
+              <Option letter="A" title={t('阿里 DNS 保持分流，海外跳到 CF 子域名', 'Keep AliDNS routing; redirect overseas to a CF subdomain')} body={t('CF Pages 可以在外部 DNS 下绑定 global.cuberoot.me：先在 Pages 项目中添加该自定义域名，再在阿里 DNS 写 CNAME。海外线路还需要一个真正接收 HTTPS 请求的服务，负责返回 301/302。DNS 记录本身不会发 301。完整 Next.js 站点仍需另做 Workers 适配。', 'CF Pages can attach global.cuberoot.me while DNS remains external: add the custom domain in Pages, then create its CNAME in AliDNS. The overseas line still needs an HTTPS service to return the 301/302; a DNS record cannot do that. The full Next.js app still needs Workers adaptation.')} china={t('直达阿里云', 'Direct to Alibaba')} abroad="global.cuberoot.me" url={t('不同', 'Different')} cost={t('CF 子域名可免费试用', 'CF subdomain can be tried on Free')} />
+              <Option letter="B" title={t('主域 NS 交给 CF 免费版', 'Move the apex NS to CF Free')} body={t('Cloudflare Free/Pro 的常规接入是把权威 NS 改到 CF。cuberoot.me 可以继续显示在地址栏，阿里云也可作为回源服务器；但原来阿里 DNS 的国内外规则不再回答主域查询。若国内请求由 CF 代理，再转回阿里服务器，就不再是国内直达。', 'Cloudflare Free/Pro normally use full setup with CF authoritative NS. cuberoot.me can remain visible and Alibaba can be an origin, but AliDNS regional rules no longer answer apex queries. If CF proxies China requests to Alibaba, the China path is no longer direct.')} china={t('路径改变', 'Path changes')} abroad="cuberoot.me" url={t('相同', 'Same')} cost={t('CF 可免费开始', 'CF can start on Free')} />
+              <Option letter="C" title={t('阿里继续做权威 DNS，海外主域接 CF', 'Keep Alibaba DNS; put the overseas apex on CF')} body={t('最接近目标的是 Cloudflare 的 CNAME/partial setup，但官方仅向 Business/Enterprise 开放。cuberoot.me 又是裸域，不能直接放普通 CNAME；还需核对阿里 DNS 的 CNAME Flattening/ALIAS 支持、套餐和分线路能力。它不能被当作已验证的免费方案。', 'Cloudflare CNAME/partial setup is closest to the requested design, but is available only on Business/Enterprise. The apex cuberoot.me cannot use an ordinary CNAME; Alibaba DNS flattening/ALIAS support, plan and regional records also need checking. This is not a verified Free path.')} china={t('目标是直达', 'Intended direct path')} abroad="cuberoot.me" url={t('目标是相同', 'Intended same URL')} cost={t('付费且需核对', 'Paid; needs verification')} />
+            </div>
+            <div className="dns-answer"><span>{t('回答最初的问题', 'ANSWER TO THE ORIGINAL QUESTION')}</span><p>{t('要求“同一个 cuberoot.me、国内直达阿里云、海外直达 CF 整站、阿里 DNS 继续分线路、CF 免费”同时成立：按目前官方提供的接入方式，答案是否。免费方案 A 改变海外网址；免费方案 B 改变权威 DNS 和国内访问路径；方案 C 不免费，还需核对裸域能否按现有配置接入。', 'The combination of one cuberoot.me URL, direct China delivery from Alibaba, direct overseas delivery from a CF-hosted full site, AliDNS regional routing and CF Free is not available through the currently documented setups. Free option A changes the overseas URL; Free option B changes authoritative DNS and the China path; option C is paid and still needs apex validation.')}</p></div>
+          </section>
 
-        <section className="dns-section" id="migration">
-          <SectionTitle number="05" eyebrow={t('从图纸到上线', 'BEFORE A MIGRATION')} title={t('即使 DNS 可配，整站迁移还要过两关', 'DNS is only one part of a site migration')} />
-          <div className="dns-migration-grid"><div data-site-surface="panel"><Server size={25} /><h3>{t('应用能否运行', 'Application compatibility')}</h3><p>{t('CubeRoot 是带服务端路由的 Next.js 站点，不是只上传静态 HTML。Cloudflare 的完整 Next.js 方案走 Workers，需要适配和测试。当前仓库还有 node:fs 路由、按 VERCEL 判断的分支、依赖静态站的回退，以及约 31.2 MiB 的 ffmpeg-core.wasm；它超过 Workers 单个静态资产 25 MiB 限制。需要逐项搬迁或改交付路径。', 'CubeRoot is a Next.js app with server routes, not just static HTML. Full Next.js on Cloudflare uses Workers and needs compatibility testing. The repository also has node:fs routes, VERCEL-gated behavior, static-host fallbacks, and an approximately 31.2 MiB ffmpeg-core.wasm, above the Workers 25 MiB per-static-asset limit. Each needs a migration or alternate delivery path.')}</p></div><div data-site-surface="panel"><Globe2 size={25} /><h3>{t('流量与数据走哪里', 'Where traffic and data go')}</h3><p>{t('国内服务器和备案信息不能因为换 DNS 就自动延续到海外处理链。若国内用户经过 CF 代理，或登录、账号、IP 等信息进入海外 Worker，应先画明数据流，核对备案接入信息、隐私告知及适用的数据出境要求。Cloudflare 中国网络是单独的 Enterprise 订阅，不能把免费版当作中国境内节点。DNS 地理判断也会有误路由，不能当作严格的境内外隔离边界。这里是实施核对项，不是对现状作违法判断。', 'Changing DNS does not automatically carry domestic hosting and filing assumptions into an overseas processing path. If China traffic traverses CF or login, account, and IP data reach an overseas Worker, map the data flow and review filing, privacy notice, and applicable cross-border requirements. Cloudflare China Network is a separate Enterprise subscription, not a Free-plan China edge. Geo DNS can misroute and is not a strict isolation boundary. These are implementation checks, not a claim that the present setup is unlawful.')}</p></div></div>
-          <div className="dns-end"><div><span>{t('给 cuberoot.me 的建议', 'FOR CUBEROOT.ME')}</span><h3>{t('先确定哪个条件可以调整', 'Choose which requirement can move')}</h3></div><ol><li>{t('必须免费、必须同一个网址：可评估全站迁到 CF NS / Workers，但国内访问路径与现有分流会变。', 'Free + same URL: evaluate CF NS / Workers, knowing the China path and current split change.')}</li><li>{t('必须免费、必须保留阿里分流：可以先用 CF 子域名，但海外最终网址会变。', 'Free + AliDNS split: use a CF subdomain, accepting a changed overseas URL.')}</li><li>{t('必须四项全保留：不能按免费方案承诺，应核对付费 partial setup、裸域能力和完整迁移成本。', 'All four requirements: do not promise a Free implementation; evaluate paid partial setup, apex support, and full migration cost.')}</li></ol></div>
-        </section>
+          <section className="dns-section" id="operations">
+            <SectionTitle number="06" label={t('落地前还要检查', 'BEFORE A CUTOVER')} title={t('DNS 配好，不代表网站已经迁好', 'Working DNS does not complete a migration')} />
+            <div className="dns-operations">
+              <div><Server size={22} /><h3>{t('应用适配', 'Application compatibility')}</h3><p>{t('CubeRoot 是含服务端路由的 Next.js 网站。Cloudflare 的完整 Next.js 交付走 Workers，需要逐页验证。仓库中存在 node:fs 路由、按 VERCEL 环境分支的逻辑和静态站回退；ffmpeg-core.wasm 约 31.2 MiB，超过 Workers 单个静态资产 25 MiB 的限制。应明确改由哪里交付这些资源。', 'CubeRoot has server-side Next.js routes. Full delivery on Cloudflare uses Workers and requires route-by-route validation. The repository contains node:fs routes, VERCEL-specific behavior and static-host fallbacks. ffmpeg-core.wasm is about 31.2 MiB, above the Workers 25 MiB per-asset limit; its delivery path must be decided.')}</p></div>
+              <div><Globe2 size={22} /><h3>{t('备案与数据流', 'Filing and data flow')}</h3><p>{t('换 DNS 不会自动改变或消除备案、接入服务商信息和个人信息处理责任。若国内流量经过海外代理，或账号、IP 等信息进入境外 Worker，应画出实际数据流，再核对备案信息、隐私告知与适用的数据出境规则。Cloudflare 中国网络是另外的 Enterprise 订阅，免费版不能视作中国境内节点。这里列出审查事项，不对现状作违法判断。', 'Changing DNS does not remove filing, access-provider or personal-data obligations. If China traffic crosses an overseas proxy, or account and IP data reach an overseas Worker, map the actual flow and review filing details, privacy notices and applicable cross-border rules. Cloudflare China Network is a separate Enterprise subscription; Free is not a China edge service. These are review items, not a finding that the current site violates a rule.')}</p></div>
+            </div>
+            <div className="dns-next"><h3>{t('如何决定下一步', 'How to choose a path')}</h3><ol><li>{t('若必须免费且网址相同：研究 CF NS + Workers，但需接受国内访问路径改变，并先做完整应用适配。', 'If Free and one URL are essential, assess CF NS + Workers, accepting a changed China path and completing app compatibility work first.')}</li><li>{t('若必须免费且保留阿里分流：可试 CF 子域名，但海外最终显示另一个网址。', 'If Free and AliDNS routing are essential, a CF subdomain is possible, but the overseas URL changes.')}</li><li>{t('若四项都必须保留：评估付费 partial setup 与裸域接入，不能按免费迁移承诺。', 'If every requirement is fixed, assess paid partial setup and apex support; do not plan it as a Free migration.')}</li></ol></div>
+          </section>
 
-        <footer className="dns-sources dns-section" id="sources"><SectionTitle number="06" eyebrow={t('可追溯的依据', 'PRIMARY SOURCES')} title={t('官方资料与更新边界', 'Official documentation and scope')} /><p>{t('产品套餐、限制与站点配置都会变化。方案判断以页面撰写时的官方文档与 2026-09-25 的 DNS 查询为依据；真正切换前需要重新核实。', 'Plans, limits, and site configuration can change. This assessment uses official documentation and DNS observations from 2026-09-25; verify again before any cutover.')}</p><div className="dns-source-list">{SOURCES.map((source, index) => <a key={source.href} href={source.href} target="_blank" rel="noreferrer"><span>{String(index + 1).padStart(2, '0')}</span>{t(source.zh, source.en)}<ArrowUpRight size={16} /></a>)}</div><div className="dns-footer-nav"><AppLink href="/dev/architecture/flow" prefetch={false}>{t('继续看整站请求拓扑', 'Explore the full request map')} <ArrowRight size={16} /></AppLink><AppLink href="/dev" prefetch={false}>{t('返回开发目录', 'Back to dev index')} <ArrowRight size={16} /></AppLink></div><small>CubeRoot · {t('DNS 与交付架构笔记', 'DNS and delivery architecture note')} · 2026.09.25</small></footer>
-      </article>
-    </div>
-  </main>;
+          <footer className="dns-sources">
+            <SectionTitle number="07" label={t('延伸阅读', 'REFERENCES')} title={t('依据与时间边界', 'Sources and date of this guide')} />
+            <p>{t('产品套餐和本站 DNS 配置都可能改变。以下是文中涉及的官方资料；当前路径与 IP 记录于 2026 年 9 月 25 日，实际切换前需要重新查询。', 'Plans and site DNS configuration can change. The official references below support the product details. Current routes and IPs were observed on 25 September 2026 and must be checked again before a cutover.')}</p>
+            <div className="dns-source-list">{SOURCES.map((source, index) => <a key={source.href} href={source.href} target="_blank" rel="noreferrer"><span>{String(index + 1).padStart(2, '0')}</span>{t(source.zh, source.en)}<ArrowUpRight size={15} /></a>)}</div>
+            <div className="dns-footer-nav"><AppLink href="/dev/architecture/flow" prefetch={false}>{t('查看整站请求拓扑', 'Full request map')} <ArrowRight size={16} /></AppLink><AppLink href="/dev" prefetch={false}>{t('返回开发目录', 'Dev index')} <ArrowRight size={16} /></AppLink></div>
+          </footer>
+        </article>
+      </div>
+    </main>
+  );
 }
 
-function SectionTitle({ number, eyebrow, title }: { number: string; eyebrow: string; title: string }) {
-  return <div className="dns-section-heading"><span>{number} / {eyebrow}</span><h2>{title}</h2></div>;
+function SectionTitle({ number, label, title }: { number: string; label: string; title: string }) {
+  return <div className="dns-section-heading"><span>{number} / {label}</span><h2>{title}</h2></div>;
 }
 
-function Option({ n, status, title, body, result }: { n: string; status: string; title: string; body: string; result: string }) {
-  return <div className="dns-option" data-site-surface="panel"><div className="dns-option-head"><span>{n}</span><small>{status}</small></div><div><h3>{title}</h3><p>{body}</p><strong>{result}</strong></div></div>;
+function Option({ letter, title, body, china, abroad, url, cost }: {
+  letter: string; title: string; body: string; china: string; abroad: string; url: string; cost: string;
+}) {
+  const t = useT();
+  return <section className="dns-option"><div className="dns-option-index">{letter}</div><div><h3>{title}</h3><p>{body}</p><dl><div><dt>{t('国内访问', 'China')}</dt><dd>{china}</dd></div><div><dt>{t('海外结果', 'Overseas')}</dt><dd>{abroad}</dd></div><div><dt>{t('同一网址', 'Same URL')}</dt><dd>{url}</dd></div><div><dt>{t('费用', 'Cost')}</dt><dd>{cost}</dd></div></dl></div></section>;
 }
