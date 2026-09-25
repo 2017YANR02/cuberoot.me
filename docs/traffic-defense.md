@@ -1,6 +1,10 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-25 01:15 PDT（2026-09-25 08:15 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-25 01:26 PDT（2026-09-25 08:26 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+
+## 09-25 恢复窗口（进行中）
+
+用户授权恢复访问，并要求流量再异常时立即停站。提交 `35aa69d8ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36112690515) 成功部署，直连阿里云主站 `/zh` 返回 200，`/zh/calc` 继续返回 403。Vercel 项目已 Resume，但目前 Production Deployment 仍是旧提交 `548aa0f8f5`；暂停期间的 Blocked 构建不能直接 Redeploy，控制台要求从新提交构建。正在触发最新主分支构建，完成前不能声称新的 robots 与比赛代理校验已经在 Vercel 生效。Attack Mode、Bot Protection、AI Bots、计算器拒绝、单 IP 限流、$10 超额预算暂停和停用 Analytics 的状态保持原样。开放窗口继续分别监看 Vercel Firewall Live、阿里云主站和独立 API，不把十分钟历史总数当成当前每分钟请求率。
 
 ## 09-25 防护加固
 
@@ -29,7 +33,7 @@ Vercel 的[新 Web 提交](https://vercel.com/cube-root/cuberoot-me/7rHLrAmHw2Rn
 - [WCA robots 源码](https://github.com/thewca/worldcubeassociation.org/blob/main/app/views/static_pages/robots.txt.erb)限制搜索和带参数的排名／纪录页面；[API 限流源码](https://github.com/thewca/worldcubeassociation.org/blob/main/app/controllers/concerns/api_rate_limiting.rb)在生产环境为来源 IP 设置 60 次／分钟，但 Rails 默认按控制器分桶，不能视为全站总限额。[公开 WCIF 控制器](https://github.com/thewca/worldcubeassociation.org/blob/main/app/controllers/api/v0/competitions_controller.rb)使用 ETag、Last-Modified、短时 HTTP 缓存和对象缓存。[官方数据文档](https://docs.worldcubeassociation.org/knowledge_base/wca_data_overview)引导大批量使用者获取定期导出。公开源码无法证明 WCA 当前托管层的全部 WAF 规则。
 - 2026-09-25 实测 `cubing.com` 响应表明它使用阿里云 ESA：比赛页为 `X-Site-Cache-Status: DYNAMIC`，静态资源可在边缘 HIT；[ESA 文档](https://www.alibabacloud.com/help/en/edge-security-acceleration/esa/user-guide/default-cache-rule)解释这两个缓存状态。其当前 `robots.txt` 对通用爬虫未禁路径；[公开 CubingChina 仓库](https://github.com/CubingChina/cubingchina/blob/master/README.md)仍是 Yii/PHP，而线上响应显示 Nuxt，不能把仓库里的旧限流或缓存代码当作线上配置。公开响应也不能证明它启用了哪些 WAF／验证码阈值。
 
-## 当前结论
+## 前次暂停结论（历史）
 
 **用户要求再次禁止主站访问。Vercel `cuberoot-me` 生产项目已重新 Pause；阿里云 nginx 维护开关已重新开启。** Vercel 控制台显示 `Project paused`，23:09 PDT 对 `cuberoot-me.vercel.app` 和公网 `cuberoot.me` 的同类页面请求均返回 `503 DEPLOYMENT_PAUSED`。提交 `82f96a3e06` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36101396673) 成功发布；23:08 PDT 直连阿里云 IP 请求 `/zh` 返回 503 和 `X-CubeRoot-Maintenance: 2026-09-24`。DNS 未更改：境外仍指向 Vercel，国内/默认线路仍指向阿里云。独立 `api`、`static`、`next` 域名和预览部署不由这两个暂停操作关闭。
 
