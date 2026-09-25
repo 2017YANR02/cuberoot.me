@@ -99,8 +99,39 @@ jobs:
             exit 1
           fi
 
+          # nginx -s reload can exit 0 after signaling the master even when the
+          # master rejects the new shared-memory zone configuration. Confirm a
+          # new child process starts before declaring the deployment successful.
+          MASTER_PID=$(cat /www/server/nginx/logs/nginx.pid)
+          OLD_CHILDREN=" $(pgrep -P "$MASTER_PID" | tr '\n' ' ' || true) "
           nginx -s reload
-          echo "OK: nginx reloaded; backups at ${VHOST_DIR}/*.bak-${TS}"
+          RELOADED=0
+          for attempt in {1..10}; do
+            sleep 1
+            for pid in $(pgrep -P "$MASTER_PID" || true); do
+              case "$OLD_CHILDREN" in
+                *" $pid "*) ;;
+                *) RELOADED=1; break ;;
+              esac
+            done
+            [ "$RELOADED" -eq 1 ] && break
+          done
+          if [ "$RELOADED" -ne 1 ]; then
+            echo "ERROR: nginx master did not start new workers; rolling back"
+            for entry in "${BACKUPS[@]}"; do
+              backup="${entry%%:*}"
+              live="${entry##*:}"
+              if [ -z "$backup" ]; then
+                rm -f "$live"
+              else
+                cp "$backup" "$live"
+              fi
+            done
+            nginx -t 2>&1 || echo "WARN: rollback validation also failed!"
+            nginx -s reload || true
+            exit 1
+          fi
+          echo "OK: nginx reloaded with new workers; backups at ${VHOST_DIR}/*.bak-${TS}"
           REMOTE
 
       - name: Apply logrotate policy (with validation and rollback)
