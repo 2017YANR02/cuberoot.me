@@ -4,7 +4,7 @@
 
 ## 09-25 恢复窗口（进行中）
 
-用户授权恢复访问，并要求流量再异常时立即停站。提交 `35aa69d8ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36112690515) 成功部署，直连阿里云主站 `/zh` 返回 200，`/zh/calc` 继续返回 403。Vercel 项目已 Resume，但目前 Production Deployment 仍是旧提交 `548aa0f8f5`；暂停期间的 Blocked 构建不能直接 Redeploy，控制台要求从新提交构建。正在触发最新主分支构建，完成前不能声称新的 robots 与比赛代理校验已经在 Vercel 生效。Attack Mode、Bot Protection、AI Bots、计算器拒绝、单 IP 限流、$10 超额预算暂停和停用 Analytics 的状态保持原样。开放窗口继续分别监看 Vercel Firewall Live、阿里云主站和独立 API，不把十分钟历史总数当成当前每分钟请求率。
+用户授权恢复访问，并要求流量再异常时立即停站。提交 `35aa69d8ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36112690515) 成功部署，直连阿里云主站 `/zh` 返回 200，`/zh/calc` 继续返回 403。Vercel 控制台于约 01:27 PDT 确认 `Project resumed`，但目前 Production Deployment 仍是旧提交 `548aa0f8f5`；暂停期间的 Blocked 构建不能直接 Redeploy，控制台要求从新提交构建。提交 `f250d23872` 发生在项目实际恢复之前，也被标为 Blocked，因此需再推送一笔新提交触发构建。构建完成前不能声称新的 robots 与比赛代理校验已经在 Vercel 生效。Attack Mode、Bot Protection、AI Bots、计算器拒绝、单 IP 限流、$10 超额预算暂停和停用 Analytics 的状态保持原样。开放窗口继续分别监看 Vercel Firewall Live、阿里云主站和独立 API，不把十分钟历史总数当成当前每分钟请求率。
 
 ## 09-25 防护加固
 
