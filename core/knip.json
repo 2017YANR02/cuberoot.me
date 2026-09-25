@@ -11,7 +11,7 @@
   "ignoreDependencies": ["tsx"],
   "workspaces": {
     ".": {
-      "entry": ["scripts/build-shanghai-space.mjs", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts"]
+      "entry": ["scripts/build-shanghai-space.mjs", "scripts/traffic-monitor.ts", "scripts/traffic-monitor.test.mjs", "scripts/traffic-guard.ts", "scripts/traffic-guard.test.mjs", "scripts/dev-preview/cli.ts", "scripts/dev-preview/client.ts", "scripts/dev-preview/model.test.ts"]
     },
     "{packages/client,apps/web}": {
       "entry": [
