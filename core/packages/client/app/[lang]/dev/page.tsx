@@ -19,8 +19,8 @@ const CARDS: Card[] = [
     href: '/dev/dns-routing',
     glyph: '⌁',
     accent: 'var(--signal-info)',
-    zh: { title: '同一个网址，两条路', sub: 'DNS · NS · Cloudflare', tagline: '用图解看懂 cuberoot.me 的国内外分线路、301 跳转、Cloudflare 免费方案和合规边界', meta: '实测路径 / 方案比较 / 迁移条件' },
-    en: { title: 'One address, two paths', sub: 'DNS · NS · Cloudflare', tagline: 'A visual guide to CubeRoot’s regional routing, redirects, Cloudflare Free options and compliance boundaries', meta: 'Observed routes / options / migration' },
+    zh: { title: '域名解析与分线路', sub: 'DNS · NS · Cloudflare', tagline: '从一次网页访问讲起，解释 cuberoot.me 的国内外解析、301 跳转与 Cloudflare 免费版限制', meta: '访问过程 / 路线图 / 官方依据' },
+    en: { title: 'DNS and regional routing', sub: 'DNS · NS · Cloudflare', tagline: 'Follow a page visit to understand CubeRoot’s DNS routes, HTTP redirects and Cloudflare Free limits', meta: 'Request steps / route diagrams / sources' },
   },
   {
     href: '/dev/traffic-incident-2026-09',
