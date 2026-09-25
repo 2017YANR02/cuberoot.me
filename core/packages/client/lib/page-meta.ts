@@ -384,8 +384,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/llm/fable': { title: { zh: 'Claude Fable 5', en: 'Claude Fable 5' } },
   'dev/llm/sonnet-5': { title: { zh: 'Claude Sonnet 5', en: 'Claude Sonnet 5' } },
   'dev/traffic-incident-2026-09': {
-    title: { zh: '当流量突然涌来：2026 年 9 月事件复盘', en: 'When traffic comes flooding in: September 2026 incident review' },
-    description: { zh: 'CubeRoot 流量事件公开日志：真实 Vercel 截图、请求与人数的区别、暂停与恢复时间线、自动防护的覆盖边界，以及一次判断纠正。', en: 'A public CubeRoot incident journal with actual Vercel screenshots, requests versus people, a response timeline, automatic protection boundaries and a corrected diagnosis.' },
+    title: { zh: '2026 年 9 月流量事件记录', en: 'September 2026 traffic incident' },
+    description: { zh: 'CubeRoot 9 月 22—25 日流量事件记录：Vercel 截图、日志分析、停站与恢复过程、防护措施和待解决的问题。', en: 'CubeRoot traffic incident, September 22–25: Vercel screenshots, log analysis, pauses, reopening, protection changes and remaining issues.' },
   },
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
