@@ -57,7 +57,7 @@ export default function DnsRoutingPage() {
           <header className="dns-hero">
             <p className="dns-series">{t('网络基础 · 第 01 篇', 'NETWORK BASICS · 01')}</p>
             <h1>{t('同一个网址，为什么会打开不同的服务器？', 'Why can one URL reach different servers?')}</h1>
-            <p className="dns-deck">{t('以 cuberoot.me 为例，从浏览器输入网址开始，逐步拆开域名解析、国内外分线路、301 跳转，以及 Cloudflare 免费版的实际边界。', 'Using cuberoot.me, this guide follows a visit from the address bar through DNS, regional routing and HTTP redirects, then examines the practical limits of Cloudflare Free.')}</p>
+            <p className="dns-deck">{t('以 cuberoot.me 为例，说明浏览器怎样找到网站、国内外为何会走不同线路、301 为何会改网址；最后回答：Cloudflare 免费版能否让国内走阿里云、国外走 CF，同时保持 cuberoot.me 不变。', 'Using cuberoot.me, this guide explains how a browser finds the site, why China and overseas traffic can take different routes, and why a 301 changes the URL. It then asks whether Cloudflare Free can serve the overseas route while China stays on Alibaba and the URL remains cuberoot.me.')}</p>
             <div className="dns-hero-rule"><span>cuberoot.me</span><span>{t('访问路径说明 · 2026 年 9 月 25 日快照', 'Request routing · snapshot from 25 Sep 2026')}</span></div>
             <figure className="dns-cover">
               <Image src="/assets/dev/dns-routing/route-map.svg?v=2" alt={t('示意图：同一个网址先经过 DNS 查询，然后国内和海外连接分别到达阿里云服务器与 Vercel', 'Diagram: the same URL is resolved by DNS, then China and overseas connections reach Alibaba Cloud and Vercel respectively')} width={1200} height={560} priority unoptimized />
