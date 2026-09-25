@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { TrafficAccumulator, apiRouteGroup, parseNginxLine, parseVercelLine, routeGroup, referrerDomain } from "./traffic-monitor.ts";
+import { TrafficAccumulator, apiRouteGroup, parseNginxLine, parseVercelLine, routeGroup, referrerDomain, formatTrafficNotification } from "./traffic-monitor.ts";
 
 test("normalizes nginx requests without keeping query values or personal paths", () => {
   const line = '1.2.3.4 - - [23/Sep/2026:18:57:00 +0800] "GET /zh/calc?name0=Private HTTP/2.0" 200 123 "https://example.com/link?token=Secret" "Mozilla/5.0"';
@@ -103,4 +103,71 @@ test("reports the public Next alias as its own source", () => {
   assert.equal(next.pageCandidates, 1);
   assert.deepEqual(next.topRoutes, [{ name: "/zh/wca/comp/:id", count: 1 }]);
   assert.doesNotMatch(JSON.stringify(next), /PrivateComp|1\.2\.3\.4/);
+});
+
+const maintenanceLine = (status, suffix = "", ua = "test") =>
+  `1.2.3.4 - - [25/Sep/2026:21:15:00 +0000] "GET /v1/cubing-live/PrivateComp HTTP/2.0" ${status} 592 "-" "${ua}"${suffix}`;
+
+test("maintenance marker comes only from the server-owned log suffix", () => {
+  assert.equal(parseNginxLine(maintenanceLine(503, " maintenance=1"), "api").maintenance, true);
+  assert.equal(parseNginxLine(maintenanceLine(503, " maintenance=0"), "api").maintenance, false);
+  assert.equal(parseNginxLine(maintenanceLine(503), "api").maintenance, undefined);
+  assert.equal(parseNginxLine(maintenanceLine(503, "", "maintenance=1"), "api").maintenance, undefined);
+});
+
+test("confirmed maintenance is blocked traffic, not a service failure, even after reopening", () => {
+  const accumulator = new TrafficAccumulator(Date.parse("2026-09-25T22:16:00Z"), false);
+  accumulator.addInput("api");
+  for (let i = 0; i < 41384; i++) accumulator.add(parseNginxLine(maintenanceLine(503, " maintenance=1"), "api"));
+  const report = accumulator.report();
+  const api = report.sources.find(s => s.source === "api");
+  assert.equal(api.requests, 41384);
+  assert.equal(api.blockedRequests, 41384);
+  assert.equal(api.maintenanceBlocked503, 41384);
+  assert.equal(api.successfulResponses, 0);
+  assert.equal(api.unexpected5xx, 0);
+  assert.deepEqual(api.alerts, ["maintenance_traffic"]);
+  const notification = formatTrafficNotification(report);
+  assert.equal(notification.title, "CubeRoot 访问量提醒");
+  assert.match(notification.body, /09-26 05:00 至 09-26 06:00（北京时间，整小时，非实时）/);
+  assert.match(notification.body, /收到 41,384 次请求，确认拦截 41,384 次，成功响应 0 次/);
+  assert.match(notification.body, /当前维护开关已关闭/);
+  assert.match(notification.body, /不包含 Vercel/);
+  assert.doesNotMatch(notification.body, /server_errors_high|PrivateComp|1\.2\.3\.4/);
+});
+
+test("legacy 503s stay unclassified, never silently assigned to current maintenance", () => {
+  const accumulator = new TrafficAccumulator(Date.parse("2026-09-25T22:16:00Z"), true);
+  accumulator.addInput("api");
+  for (let i = 0; i < 100; i++) accumulator.add(parseNginxLine(maintenanceLine(503), "api"));
+  const report = accumulator.report();
+  const api = report.sources.find(s => s.source === "api");
+  assert.equal(api.blockedRequests, 0);
+  assert.equal(api.unclassified503, 100);
+  assert.deepEqual(api.alerts, ["unclassified_503_high"]);
+  const notification = formatTrafficNotification(report);
+  assert.equal(notification.title, "CubeRoot 访问情况待核对");
+  assert.match(notification.body, /100 次旧日志 503 缺少维护标记/);
+});
+
+test("mixed outcomes reconcile and real errors remain visible during maintenance", () => {
+  const accumulator = new TrafficAccumulator(Date.parse("2026-09-25T22:16:00Z"), true);
+  accumulator.addInput("api");
+  for (const [count, status, marker] of [[100,503,"1"],[100,503,"0"],[100,502,"1"],[100,429,"0"],[100,403,"0"],[100,200,"0"],[100,404,"0"]]) {
+    for(let i=0;i<count;i++) accumulator.add(parseNginxLine(maintenanceLine(status, ` maintenance=${marker}`), "api"));
+  }
+  const report = accumulator.report();
+  const api = report.sources.find(s=>s.source==="api");
+  assert.equal(api.requests, 700);
+  assert.equal(api.blockedRequests, 300);
+  assert.equal(api.successfulResponses, 100);
+  assert.equal(api.unexpected5xx, 200);
+  assert.equal(api.unclassified503, 0);
+  assert.equal(formatTrafficNotification(report).title, "CubeRoot 服务异常");
+  assert.match(formatTrafficNotification(report).body, /其他响应 100 次/);
+  assert.deepEqual(api.alerts, ["rate_limited_high", "server_errors_high", "maintenance_traffic"]);
+});
+
+test("quiet reports do not send notifications", () => {
+  assert.equal(formatTrafficNotification(new TrafficAccumulator().report()), null);
 });

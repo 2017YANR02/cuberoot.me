@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
@@ -13,6 +13,7 @@ export type RequestSample = {
   method: string;
   referrer: string;
   userAgent: string;
+  maintenance?: boolean;
 };
 
 const NGINX_LINE = /^(\S+) \S+ \S+ \[([^\]]+)\] "([^"]*)" (\d{3}) \S+ "([^"]*)" "([^"]*)"/;
@@ -44,7 +45,13 @@ export function parseNginxLine(line: string, source: "nginx" | "next" | "api" = 
   if (timestamp === null) return null;
   const [method, path] = match[3].split(" ");
   if (!method || !path) return null;
-  return { source, clientAddress: match[1], timestamp, method, path, status: Number(match[4]), referrer: match[5], userAgent: match[6] };
+  const marker = /^ maintenance=([01])\s*$/.exec(line.slice(match[0].length));
+  return { source, clientAddress: match[1], timestamp, method, path, status: Number(match[4]), referrer: match[5], userAgent: match[6],
+    ...(marker ? { maintenance: marker[1] === "1" } : {}) };
+}
+
+export function isMaintenanceResponse(sample: RequestSample): boolean {
+  return sample.maintenance === true && sample.status === 503;
 }
 
 export function parseVercelLine(line: string): (RequestSample & { id: string }) | null {
@@ -147,7 +154,8 @@ export function isPageCandidate(sample: RequestSample): boolean {
   return !/\.[a-z0-9]{1,8}$/i.test(path);
 }
 
-type Counts = { requests: number; pageCandidates: number; errors5xx: number; rateLimited429: number };
+type Counts = { requests: number; pageCandidates: number; errors5xx: number; rateLimited429: number;
+  maintenanceBlocked503: number; unclassified503: number; unexpected5xx: number; denied403: number; successfulResponses: number };
 type Bucket = Counts & { routes: Map<string, number>; referrers: Map<string, number>; agents: Map<string, number> };
 type SourceEvidence = {
   requests: number;
@@ -164,7 +172,9 @@ function sourceEvidence(): SourceEvidence {
 }
 
 function bucket(): Bucket {
-  return { requests: 0, pageCandidates: 0, errors5xx: 0, rateLimited429: 0, routes: new Map(), referrers: new Map(), agents: new Map() };
+  return { requests: 0, pageCandidates: 0, errors5xx: 0, rateLimited429: 0,
+    maintenanceBlocked503: 0, unclassified503: 0, unexpected5xx: 0, denied403: 0, successfulResponses: 0,
+    routes: new Map(), referrers: new Map(), agents: new Map() };
 }
 
 function increment(map: Map<string, number>, key: string): void {
@@ -182,8 +192,10 @@ export class TrafficAccumulator {
   private readonly inputs = new Set<Source>();
   private readonly vercelIds = new Set<string>();
   private readonly nginxSources = new Map<string, SourceEvidence>();
+  private readonly maintenanceNow: boolean | null;
 
-  constructor(now = Date.now()) {
+  constructor(now = Date.now(), maintenanceNow: boolean | null = null) {
+    this.maintenanceNow = maintenanceNow;
     this.end = Math.floor(now / HOUR) * HOUR;
     this.start = this.end - HOUR;
   }
@@ -203,7 +215,12 @@ export class TrafficAccumulator {
     if (!current) { current = bucket(); sourceBuckets.set(key, current); }
     current.requests += 1;
     if (sample.status >= 500 && sample.status < 600) current.errors5xx += 1;
+    if (isMaintenanceResponse(sample)) current.maintenanceBlocked503 += 1;
+    else if (sample.status === 503 && sample.maintenance === undefined) current.unclassified503 += 1;
+    else if (sample.status >= 500 && sample.status < 600) current.unexpected5xx += 1;
     if (sample.status === 429) current.rateLimited429 += 1;
+    if (sample.status === 403) current.denied403 += 1;
+    if (sample.status >= 200 && sample.status < 400) current.successfulResponses += 1;
     if (sample.source === "api") increment(current.routes, apiRouteGroup(sample.path));
     if (sample.source === "nginx" && sample.timestamp >= start && sample.clientAddress && sample.clientAddress !== "-") {
       let evidence = this.nginxSources.get(sample.clientAddress);
@@ -254,10 +271,18 @@ export class TrafficAccumulator {
         if (baseline !== null && current.requests >= 500 && current.requests >= 4 * Math.max(baseline, 1) && current.requests - baseline >= 500) alerts.push("api_requests_spike");
         if (current.rateLimited429 >= 10) alerts.push("rate_limited_high");
       } else if (baseline !== null && current.pageCandidates >= 100 && current.pageCandidates >= 4 * Math.max(baseline, 1) && current.pageCandidates - baseline >= 100) alerts.push("page_candidates_spike");
-      if (current.requests >= 100 && current.errors5xx / current.requests >= 0.05) alerts.push("server_errors_high");
+      // Only confirmed maintenance responses are excluded. Never infer a past
+      // response's cause from the switch's current state or hide real 502/503s.
+      const nonMaintenanceRequests = current.requests - current.maintenanceBlocked503;
+      if (nonMaintenanceRequests >= 100 && current.unexpected5xx / nonMaintenanceRequests >= 0.05) alerts.push("server_errors_high");
+      if (current.requests >= 100 && current.unclassified503 / current.requests >= 0.05) alerts.push("unclassified_503_high");
+      if (current.maintenanceBlocked503 >= 100) alerts.push("maintenance_traffic");
       return {
         source, coverage: !this.inputs.has(source) ? "not_connected" : sourceBuckets.has(`${source}:${start}`) ? "observed" : "no_matching_requests",
         requests: current.requests, pageCandidates: current.pageCandidates, errors5xx: current.errors5xx, rateLimited429: current.rateLimited429,
+        maintenanceBlocked503: current.maintenanceBlocked503, unclassified503: current.unclassified503, unexpected5xx: current.unexpected5xx,
+        denied403: current.denied403, successfulResponses: current.successfulResponses,
+        blockedRequests: current.maintenanceBlocked503 + current.rateLimited429 + current.denied403,
         baselineSameHourDays: observed.length,
         baselinePageCandidates: source === "api" ? null : baseline,
         baselineRequests: source === "api" ? baseline : null,
@@ -271,8 +296,40 @@ export class TrafficAccumulator {
         } } : {}),
       };
     });
-    return { windowStart: new Date(start).toISOString(), windowEnd: new Date(end).toISOString(), note: "Request counts are not unique visitors; pageCandidates are a URL heuristic, not Analytics page views.", sources: lines };
+    return { windowStart: new Date(start).toISOString(), windowEnd: new Date(end).toISOString(), maintenanceNow: this.maintenanceNow,
+      note: "Request counts are not unique visitors; pageCandidates are a URL heuristic, not Analytics page views.", sources: lines };
   }
+}
+
+/** Operator notification, deliberately separate from the machine-readable report. */
+export function formatTrafficNotification(report: ReturnType<TrafficAccumulator["report"]>) {
+  if (!report.sources.some(source => source.alerts.length)) return null;
+  const sources = report.sources.filter(source => source.coverage === "observed");
+  const formatTime = (iso: string) => new Date(Date.parse(iso) + 8 * HOUR).toISOString().slice(5, 16).replace("T", " ");
+  const names: Record<Source, string> = { nginx: "阿里云主站", next: "预览入口", api: "数据接口", vercel: "Vercel" };
+  const hasErrors = sources.some(source => source.alerts.includes("server_errors_high"));
+  const unknown = sources.some(source => source.alerts.includes("unclassified_503_high"));
+  const lines = [
+    `统计：${formatTime(report.windowStart)} 至 ${formatTime(report.windowEnd)}（北京时间，整小时，非实时）。`,
+    report.maintenanceNow === null ? "阿里云当前维护开关：未读取。"
+      : report.maintenanceNow ? "阿里云当前处于维护状态。" : "阿里云当前维护开关已关闭。",
+  ];
+  for (const source of sources) {
+    const n = (value: number) => value.toLocaleString("en-US");
+    lines.push(`${names[source.source]}：收到 ${n(source.requests)} 次请求，确认拦截 ${n(source.blockedRequests)} 次，成功响应 ${n(source.successfulResponses)} 次。`);
+    lines.push(`拦截明细：维护 ${n(source.maintenanceBlocked503)} 次，限流 ${n(source.rateLimited429)} 次，拒绝访问 ${n(source.denied403)} 次。`);
+    if (source.maintenanceBlocked503) lines.push("维护拦截的请求未进入应用。");
+    if (source.unexpected5xx) lines.push(`${source.unexpected5xx.toLocaleString("en-US")} 次非维护的服务错误，需要排查。`);
+    if (source.unclassified503) lines.push(`${source.unclassified503.toLocaleString("en-US")} 次旧日志 503 缺少维护标记，原因待核对，不能直接算作应用故障。`);
+    const other = source.requests - source.blockedRequests - source.successfulResponses - source.unclassified503 - source.unexpected5xx;
+    if (other) lines.push(`其他响应 ${n(other)} 次（含 404、连接中断等，未计入确认拦截）。`);
+    if (source.alerts.includes("api_requests_spike")) lines.push("请求量超过过去同一时段基线的 4 倍；这不代表都已放行或都是攻击。");
+    if (source.alerts.includes("page_candidates_spike")) lines.push("成功页面请求明显增加，需核对来源。");
+    const route = source.topRoutes[0]?.name;
+    if (route) lines.push(`主要路径：${route}。`);
+  }
+  if (report.sources.some(source => source.source === "vercel" && source.coverage === "not_connected")) lines.push("此报告不包含 Vercel 流量；请求次数不等于访问人数。");
+  return { title: hasErrors ? "CubeRoot 服务异常" : unknown ? "CubeRoot 访问情况待核对" : "CubeRoot 访问量提醒", body: lines.join("\n") };
 }
 
 export function summarize(samples: RequestSample[], now = Date.now()) {
@@ -290,15 +347,21 @@ async function* readLines(file: string): AsyncGenerator<string> {
 async function main(args: string[]): Promise<void> {
   const files: Array<{ source: Source; path: string }> = [];
   let now = Date.now();
+  let maintenanceNow: boolean | null = null;
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (["--nginx", "--next", "--api", "--vercel", "--now"].includes(flag) && !args[index + 1]) throw new Error(`${flag} needs a value`);
+    if (["--nginx", "--next", "--api", "--vercel", "--now", "--maintenance-state"].includes(flag) && !args[index + 1]) throw new Error(`${flag} needs a value`);
     if (flag === "--nginx" || flag === "--next" || flag === "--api" || flag === "--vercel") files.push({ source: flag.slice(2) as Source, path: args[++index] });
     else if (flag === "--now") { now = Date.parse(args[++index]); if (!Number.isFinite(now)) throw new Error("Invalid --now timestamp"); }
+    else if (flag === "--maintenance-state") {
+      const state = readFileSync(args[++index], "utf8").trim();
+      if (state !== "default 0;" && state !== "default 1;") throw new Error("Invalid maintenance state");
+      maintenanceNow = state === "default 1;";
+    }
     else throw new Error(`Unknown option: ${flag}`);
   }
   if (files.length === 0) throw new Error("At least one --nginx, --next, --api or --vercel file is required");
-  const accumulator = new TrafficAccumulator(now);
+  const accumulator = new TrafficAccumulator(now, maintenanceNow);
   for (const file of files) {
     accumulator.addInput(file.source);
     for await (const line of readLines(file.path)) {
@@ -307,7 +370,8 @@ async function main(args: string[]): Promise<void> {
       accumulator.add(sample);
     }
   }
-  console.log(JSON.stringify(accumulator.report(), null, 2));
+  const report = accumulator.report();
+  console.log(JSON.stringify({ ...report, notification: formatTrafficNotification(report) }, null, 2));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
