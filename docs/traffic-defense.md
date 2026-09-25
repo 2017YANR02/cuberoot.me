@@ -1,12 +1,16 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-25 00:50 PDT（2026-09-25 07:50 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-25 00:58 PDT（2026-09-25 07:58 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
 ## 09-25 防护加固
 
 **主站仍暂停。** 00:48 PDT 已在 Vercel Firewall 发布两项调整：新增中英文比赛与选手详情路径的单 IP 30 次／60 秒限流，超额发起 Challenge（比赛统计与来源说明页除外）；原计算器 5 次／60 秒、超额 429 的规则扩展到 `/calc` 和 `/zh/calc`。原 `/zh/calc` Deny 排在限流之前，仍继续拒绝该路径。控制台显示规则启用并提示发布成功；由于生产项目暂停，尚不能用恢复后的真实流量证明命中率或正常用户影响。Attack Mode、Bot Protection、AI Bots、`/api/comp/` 规则和预算设置未在此次调整中更改。
 
 本次仓库变更给自有 nginx 的比赛／选手详情、计算器、`/api/comp/` 代理、独立 `/v1/cubing-live/:slug` 设置分路径单 IP 与跨 IP 总量上限，并给独立 API 全站设置 30 次／秒、允许 100 次突发的保护；比赛数据接口另限制并发 20。`/api/comp/` 和 `/v1/cubing-live/` 缓存键按有效参数规范化，保留响应版本 `v`。Next 比赛代理在回源前拒绝未知、重复或畸形查询参数；`robots.txt` 补齐 `/zh` 详情路径，并禁止计算器的带参数 URL 被合作爬虫抓取。这些仓库变更的线上生效状态以对应提交的部署结果和实测为准。
+
+提交 `52bafaee57` 的 [nginx 配置部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36109806721)、[Next 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36109806719)和[测试](https://github.com/2017YANR02/cuberoot.me/actions/runs/36109806706)均成功。线上 nginx 配置哈希与仓库一致、`nginx -t` 通过；`next.cuberoot.me/robots.txt` 已含中英文新规则，非法比赛代理查询返回 400。阿里云主站仍为维护 503，Vercel 生产别名仍为 `DEPLOYMENT_PAUSED` 503，独立 API 普通请求返回 200。以上只证明配置发布和基础健康；限流实际命中及恢复后的正常用户影响尚待开放窗口观察。
+
+后续监控变更使现有 [Traffic Monitor](traffic-monitor.md) 同时覆盖独立 API 的 nginx 日志，分别报告 API 的 429、5xx 与请求量突增；该监控不新增 Vercel Log Drain 或恢复 Web Analytics，也不能替代 Vercel Firewall 的实时窗口。
 
 初始阈值来自阿里云线路的短暂开放窗口及独立 API 日志：比赛与选手详情合计最高约 69 次／分钟，直播比赛数据约 7 次／分钟；API 全站最高 81 次／秒、10 秒内 241 次。按日志秒级回放，API 30 次／秒、100 次突发未模拟出拒绝；该回放不能代替真实 nginx 毫秒级执行，也没有覆盖 Vercel 请求。恢复后需观察 429、Challenge、5xx、回源率和真实用户反馈，再调整阈值。主站不能仅因配置已发布就自动恢复。
 

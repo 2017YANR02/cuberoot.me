@@ -3,7 +3,7 @@ import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
 
-export type Source = "nginx" | "vercel";
+export type Source = "nginx" | "api" | "vercel";
 export type RequestSample = {
   source: Source;
   clientAddress?: string;
@@ -37,14 +37,14 @@ function timestampFromNginx(value: string): number | null {
   return Number.isFinite(timestamp) ? timestamp : null;
 }
 
-export function parseNginxLine(line: string): RequestSample | null {
+export function parseNginxLine(line: string, source: "nginx" | "api" = "nginx"): RequestSample | null {
   const match = NGINX_LINE.exec(line);
   if (!match) return null;
   const timestamp = timestampFromNginx(match[2]);
   if (timestamp === null) return null;
   const [method, path] = match[3].split(" ");
   if (!method || !path) return null;
-  return { source: "nginx", clientAddress: match[1], timestamp, method, path, status: Number(match[4]), referrer: match[5], userAgent: match[6] };
+  return { source, clientAddress: match[1], timestamp, method, path, status: Number(match[4]), referrer: match[5], userAgent: match[6] };
 }
 
 export function parseVercelLine(line: string): (RequestSample & { id: string }) | null {
@@ -101,6 +101,18 @@ export function routeGroup(raw: string): string {
   return `${language}/${parts[0]}/:detail`;
 }
 
+export function apiRouteGroup(raw: string): string {
+  let parts: string[];
+  try { parts = new URL(raw, "https://api.cuberoot.me").pathname.split("/").filter(Boolean); }
+  catch { return "/(invalid)"; }
+  if (parts[0] !== "v1") return "/:other";
+  if (parts[1] === "cubing-live") return "/v1/cubing-live/:id";
+  if (parts[1] === "cubing-live-stream") return "/v1/cubing-live-stream/:id";
+  if (parts[1] === "wca") return "/v1/wca/:endpoint";
+  if (["nav", "alg", "timer", "visualcube.svg", "cn-comp-names", "page-notices"].includes(parts[1] || "")) return `/v1/${parts[1]}`;
+  return "/v1/:other";
+}
+
 export function referrerDomain(raw: string): string {
   if (!raw || raw === "-") return "(none)";
   try {
@@ -135,7 +147,7 @@ export function isPageCandidate(sample: RequestSample): boolean {
   return !/\.[a-z0-9]{1,8}$/i.test(path);
 }
 
-type Counts = { requests: number; pageCandidates: number; errors5xx: number };
+type Counts = { requests: number; pageCandidates: number; errors5xx: number; rateLimited429: number };
 type Bucket = Counts & { routes: Map<string, number>; referrers: Map<string, number>; agents: Map<string, number> };
 type SourceEvidence = {
   requests: number;
@@ -152,7 +164,7 @@ function sourceEvidence(): SourceEvidence {
 }
 
 function bucket(): Bucket {
-  return { requests: 0, pageCandidates: 0, errors5xx: 0, routes: new Map(), referrers: new Map(), agents: new Map() };
+  return { requests: 0, pageCandidates: 0, errors5xx: 0, rateLimited429: 0, routes: new Map(), referrers: new Map(), agents: new Map() };
 }
 
 function increment(map: Map<string, number>, key: string): void {
@@ -191,6 +203,8 @@ export class TrafficAccumulator {
     if (!current) { current = bucket(); sourceBuckets.set(key, current); }
     current.requests += 1;
     if (sample.status >= 500 && sample.status < 600) current.errors5xx += 1;
+    if (sample.status === 429) current.rateLimited429 += 1;
+    if (sample.source === "api") increment(current.routes, apiRouteGroup(sample.path));
     if (sample.source === "nginx" && sample.timestamp >= start && sample.clientAddress && sample.clientAddress !== "-") {
       let evidence = this.nginxSources.get(sample.clientAddress);
       if (!evidence) { evidence = sourceEvidence(); this.nginxSources.set(sample.clientAddress, evidence); }
@@ -227,18 +241,27 @@ export class TrafficAccumulator {
         topRoutes: top(entry.routes, 3), topReferrers: top(entry.referrers, 3), browserClaims: top(entry.browsers, 3),
       };
     });
-    const lines = (["nginx", "vercel"] as Source[]).map((source) => {
+    const lines = (["nginx", "vercel", "api"] as Source[]).map((source) => {
       const current = sourceBuckets.get(`${source}:${start}`) || bucket();
-      const history = Array.from({ length: 7 }, (_, i) => sourceBuckets.get(`${source}:${start - (i + 1) * 24 * HOUR}`)?.pageCandidates ?? null);
+      const history = Array.from({ length: 7 }, (_, i) => {
+        const previous = sourceBuckets.get(`${source}:${start - (i + 1) * 24 * HOUR}`);
+        return previous ? (source === "api" ? previous.requests : previous.pageCandidates) : null;
+      });
       const observed = history.filter((value): value is number => value !== null).sort((a, b) => a - b);
       const baseline = observed.length ? observed[Math.floor(observed.length / 2)] : null;
       const alerts: string[] = [];
-      if (baseline !== null && current.pageCandidates >= 100 && current.pageCandidates >= 4 * Math.max(baseline, 1) && current.pageCandidates - baseline >= 100) alerts.push("page_candidates_spike");
+      if (source === "api") {
+        if (baseline !== null && current.requests >= 500 && current.requests >= 4 * Math.max(baseline, 1) && current.requests - baseline >= 500) alerts.push("api_requests_spike");
+        if (current.rateLimited429 >= 10) alerts.push("rate_limited_high");
+      } else if (baseline !== null && current.pageCandidates >= 100 && current.pageCandidates >= 4 * Math.max(baseline, 1) && current.pageCandidates - baseline >= 100) alerts.push("page_candidates_spike");
       if (current.requests >= 100 && current.errors5xx / current.requests >= 0.05) alerts.push("server_errors_high");
       return {
         source, coverage: !this.inputs.has(source) ? "not_connected" : sourceBuckets.has(`${source}:${start}`) ? "observed" : "no_matching_requests",
-        requests: current.requests, pageCandidates: current.pageCandidates, errors5xx: current.errors5xx,
-        baselineSameHourDays: observed.length, baselinePageCandidates: baseline, alerts,
+        requests: current.requests, pageCandidates: current.pageCandidates, errors5xx: current.errors5xx, rateLimited429: current.rateLimited429,
+        baselineSameHourDays: observed.length,
+        baselinePageCandidates: source === "api" ? null : baseline,
+        baselineRequests: source === "api" ? baseline : null,
+        alerts,
         topRoutes: top(current.routes), topReferrers: top(current.referrers), agentClasses: top(current.agents),
         ...(source === "nginx" ? { attribution: {
           loggedSourceAddresses: this.nginxSources.size,
@@ -269,17 +292,17 @@ async function main(args: string[]): Promise<void> {
   let now = Date.now();
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (["--nginx", "--vercel", "--now"].includes(flag) && !args[index + 1]) throw new Error(`${flag} needs a value`);
-    if (flag === "--nginx" || flag === "--vercel") files.push({ source: flag.slice(2) as Source, path: args[++index] });
+    if (["--nginx", "--api", "--vercel", "--now"].includes(flag) && !args[index + 1]) throw new Error(`${flag} needs a value`);
+    if (flag === "--nginx" || flag === "--api" || flag === "--vercel") files.push({ source: flag.slice(2) as Source, path: args[++index] });
     else if (flag === "--now") { now = Date.parse(args[++index]); if (!Number.isFinite(now)) throw new Error("Invalid --now timestamp"); }
     else throw new Error(`Unknown option: ${flag}`);
   }
-  if (files.length === 0) throw new Error("At least one --nginx or --vercel file is required");
+  if (files.length === 0) throw new Error("At least one --nginx, --api or --vercel file is required");
   const accumulator = new TrafficAccumulator(now);
   for (const file of files) {
     accumulator.addInput(file.source);
     for await (const line of readLines(file.path)) {
-      const sample = file.source === "nginx" ? parseNginxLine(line) : parseVercelLine(line);
+      const sample = file.source === "vercel" ? parseVercelLine(line) : parseNginxLine(line, file.source);
       if (!sample) continue;
       accumulator.add(sample);
     }
