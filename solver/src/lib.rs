@@ -75,6 +75,8 @@ pub mod pseudo_pair_solver;
 // pseudo:native(manager,4×54MB 表)+ wasm(PseudoSmallSolver,cross+corner 表现建)。
 // manager 构造已门控,模块自包含 wasm 可编。pseudo_xxcross/xxxcross 仍 native-only。
 pub mod pseudo_xcross_solver;
+#[cfg(any(test, target_arch = "wasm32"))]
+mod unique_solutions;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod pseudo_xxcross_solver;
 #[cfg(not(target_arch = "wasm32"))]

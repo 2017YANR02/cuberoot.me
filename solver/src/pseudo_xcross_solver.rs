@@ -840,7 +840,10 @@ impl PseudoSmallSolver {
         depth: u32,
         prev: u8,
         path: &mut Vec<u8>,
-        out: &mut Vec<Vec<u8>>,
+        out: &mut Vec<(String, Vec<usize>, Vec<u8>)>,
+        seen: &mut std::collections::HashSet<Vec<u8>>,
+        rot: &str,
+        combo: &[usize],
         cap: usize,
     ) {
         if out.len() >= cap {
@@ -904,12 +907,12 @@ impl PseudoSmallSolver {
             let real_m = cj[m][inv_ref];
             path.push(real_m);
             if depth == 1 {
-                if solved {
-                    out.push(path.clone());
+                if solved && seen.insert(path.clone()) {
+                    out.push((rot.to_string(), combo.to_vec(), path.clone()));
                 }
             } else if !solved {
                 // 全解却仍要走 depth-1 步 = 更短解 + 无效尾动,跳过。
-                self.enum_pairs(&next[..n], depth - 1, m as u8, path, out, cap);
+                self.enum_pairs(&next[..n], depth - 1, m as u8, path, out, seen, rot, combo, cap);
             }
             path.pop();
         }
@@ -991,7 +994,8 @@ impl PseudoSmallSolver {
 
     /// 给定 stage(0=cross / 1=xcross / 2=xxcross / 3=xxxcross),与 pseudo_get_stage_small
     /// 同口径挑最优 task(corner slot 集),枚举**所有并列最优**(在同一 best_len 解出)的
-    /// combo,各自 best_len..best_len+extra 步全部解(真实 rot 帧 move 索引路径,cap 封顶)。
+    /// combo,各自 best_len..best_len+extra 步的不同解(同一路径命中多个 task 时保留首次
+    /// 匹配的 combo,cap 计不同路径;真实 rot 帧 move 索引路径)。
     /// pseudo 系无 frame:每条解的 frame = 传入的 `rot`。
     /// 返回 (best_len, 每条解 (frame=rot, combo corner 槽位, move 路径))。
     /// `force`:用户指定的目标槽位集合(索引 ⊂ {0,1,2,3},0=BL/1=BR/2=FR/3=FL);空 =
@@ -1096,17 +1100,14 @@ impl PseudoSmallSolver {
             .map(|(pairs, _)| pairs)
             .collect();
         let mut path = Vec::new();
+        let mut seen = std::collections::HashSet::new();
         'outer: for d in best_len..=(best_len + extra).min(18) {
             for pairs in &tied {
                 if out.len() >= cap {
                     break 'outer;
                 }
                 let combo: Vec<usize> = pairs.iter().map(|p| p.slot).collect();
-                let mut task_out: Vec<Vec<u8>> = Vec::new();
-                self.enum_pairs(pairs, d, 18, &mut path, &mut task_out, cap - out.len());
-                for sol in task_out {
-                    out.push((rot.to_string(), combo.clone(), sol));
-                }
+                self.enum_pairs(pairs, d, 18, &mut path, &mut out, &mut seen, rot, &combo, cap);
             }
         }
         (best_len, out)
@@ -1351,7 +1352,10 @@ impl PseudoSmallSolver {
         depth: u32,
         prev: u8,
         path: &mut Vec<u8>,
-        out: &mut Vec<Vec<u8>>,
+        out: &mut Vec<(String, Vec<usize>, Vec<u8>)>,
+        seen: &mut std::collections::HashSet<Vec<u8>>,
+        rot: &str,
+        combo: &[usize],
         cap: usize,
         vm: &ValidMovesTable,
     ) {
@@ -1415,11 +1419,11 @@ impl PseudoSmallSolver {
             let real_m = cj[m][inv_ref];
             path.push(real_m);
             if depth == 1 {
-                if solved {
-                    out.push(path.clone());
+                if solved && seen.insert(path.clone()) {
+                    out.push((rot.to_string(), combo.to_vec(), path.clone()));
                 }
             } else if !solved {
-                self.enum_pairs_masked(&next[..n], depth - 1, m as u8, path, out, cap, vm);
+                self.enum_pairs_masked(&next[..n], depth - 1, m as u8, path, out, seen, rot, combo, cap, vm);
             }
             path.pop();
         }
@@ -1527,25 +1531,25 @@ impl PseudoSmallSolver {
             .map(|(pairs, _)| pairs)
             .collect();
         let mut path = Vec::new();
+        let mut seen = std::collections::HashSet::new();
         'outer: for d in best_len..=(best_len + extra).min(cap_d) {
             for pairs in &tied {
                 if out.len() >= cap {
                     break 'outer;
                 }
                 let combo: Vec<usize> = pairs.iter().map(|p| p.slot).collect();
-                let mut task_out: Vec<Vec<u8>> = Vec::new();
                 self.enum_pairs_masked(
                     pairs,
                     d,
                     18,
                     &mut path,
-                    &mut task_out,
-                    cap - out.len(),
+                    &mut out,
+                    &mut seen,
+                    rot,
+                    &combo,
+                    cap,
                     &vm,
                 );
-                for sol in task_out {
-                    out.push((rot.to_string(), combo.clone(), sol));
-                }
             }
         }
         (best_len, out)
@@ -1746,6 +1750,25 @@ mod tests {
         ));
         let pt_pscross = Arc::new(PackedPruneTable::from_bin(&read("pt_pscross.bin")));
         PseudoSmallSolver::from_tables(mt_edge2, mt_edge4, mt_corn, mt_edge, pt_pscross)
+    }
+
+    /// 同一公式可能命中多个伪源件 task；数量上限应计不同公式。
+    /// 使用用户报告的伪 XXXCross 红底真题，覆盖默认 10 条与步数松弛 +2。
+    #[test]
+    #[ignore = "requires local solver tables"]
+    fn pseudo_xxxcross_unique_solutions_with_cap() {
+        let _lock = test_env_lock().lock().unwrap_or_else(|e| e.into_inner());
+        let solver = load_small_solver();
+        let alg = string_to_alg("L2 R' F U2 R' U' R B' R2 D2 L2 R U L2 R' F' L2");
+        let (best, results) = solver.enumerate_small(&alg, "z", 3, 2, 10, &[]);
+        let unique: std::collections::HashSet<_> = results.iter().map(|(_, _, path)| path).collect();
+        assert_eq!(best, 5);
+        assert_eq!(results.len(), 8);
+        assert_eq!(unique.len(), results.len());
+        let (short_best, limited) = solver.enumerate_small(&alg, "z", 3, 2, 5, &[]);
+        assert_eq!(short_best, best);
+        assert_eq!(limited.len(), 5);
+        assert_eq!(limited, results[..5]);
     }
 
     /// enumerate_small 输出的 move 序列正确性(新返回形状 (best_len, Vec<(frame, combo, sol)>)):

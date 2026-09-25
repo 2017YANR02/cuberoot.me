@@ -18,7 +18,7 @@ import { BASE, TV, claimXCrossGz, releaseXCrossGz, tablesBaseUrl } from './rust-
 
 // 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
 // 每次重建 wasm/worker 必须 bump。
-const V = 'v=20260811c';
+const V = 'v=20260925a';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
