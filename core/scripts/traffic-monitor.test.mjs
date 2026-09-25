@@ -91,3 +91,16 @@ test("keeps independent API coverage and alerts separate from page traffic", () 
   assert.deepEqual(api.topRoutes, [{ name: "/v1/cubing-live/:id", count: 600 }]);
   assert.doesNotMatch(JSON.stringify(api), /PrivateComp|PrivateAgent|1\.2\.3\.4/);
 });
+
+test("reports the public Next alias as its own source", () => {
+  const now = Date.parse("2026-09-25T12:07:00Z");
+  const accumulator = new TrafficAccumulator(now);
+  accumulator.addInput("next");
+  const sample = parseNginxLine('1.2.3.4 - - [25/Sep/2026:19:15:00 +0800] "GET /zh/wca/comp/PrivateComp HTTP/2.0" 200 123 "-" "Mozilla/5.0"', "next");
+  accumulator.add(sample);
+  const next = accumulator.report().sources.find((source) => source.source === "next");
+  assert.equal(next.coverage, "observed");
+  assert.equal(next.pageCandidates, 1);
+  assert.deepEqual(next.topRoutes, [{ name: "/zh/wca/comp/:id", count: 1 }]);
+  assert.doesNotMatch(JSON.stringify(next), /PrivateComp|1\.2\.3\.4/);
+});

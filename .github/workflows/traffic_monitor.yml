@@ -44,6 +44,9 @@ jobs:
           for file in /www/wwwlogs/www.cuberoot.me.log*; do
             [ -f "$file" ] && files+=(--nginx "$file")
           done
+          for file in /www/wwwlogs/next.cuberoot.me.log*; do
+            [ -f "$file" ] && files+=(--next "$file")
+          done
           for file in /www/wwwlogs/api.cuberoot.me.log*; do
             [ -f "$file" ] && files+=(--api "$file")
           done
