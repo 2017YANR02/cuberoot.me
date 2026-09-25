@@ -31,14 +31,18 @@ export function evaluate(samples: RequestSample[], now = Date.now()): { window: 
   const [webLast, webPrev] = window.web;
   const [apiLast, apiPrev] = window.api;
   const reasons: string[] = [];
-  // A single extreme minute trips quickly; sustained lower spikes need two
-  // complete minutes. These exceed the 2026-09-25 observed normal peaks.
-  if (webLast.pages >= 1_000 || (webLast.pages >= 350 && webPrev.pages >= 350)) reasons.push("web_page_spike");
-  if (webLast.requests >= 4_000 || (webLast.requests >= 1_500 && webPrev.requests >= 1_500)) reasons.push("web_request_spike");
-  if (apiLast.requests >= 4_000 || (apiLast.requests >= 1_200 && apiPrev.requests >= 1_200)) reasons.push("api_request_spike");
+  // Keep the emergency page threshold above nginx's 600/minute + 30 burst.
+  // 429s remain visible in the report, but blocked requests alone must not
+  // turn a working limiter into a whole-site shutdown.
+  const webLastAdmitted = webLast.requests - webLast.limited;
+  const webPrevAdmitted = webPrev.requests - webPrev.limited;
+  const apiLastAdmitted = apiLast.requests - apiLast.limited;
+  const apiPrevAdmitted = apiPrev.requests - apiPrev.limited;
+  if (webLast.pages >= 1_000 || (webLast.pages >= 800 && webPrev.pages >= 800)) reasons.push("web_page_spike");
+  if (webLastAdmitted >= 4_000 || (webLastAdmitted >= 1_500 && webPrevAdmitted >= 1_500)) reasons.push("web_request_spike");
+  if (apiLastAdmitted >= 4_000 || (apiLastAdmitted >= 1_200 && apiPrevAdmitted >= 1_200)) reasons.push("api_request_spike");
   if (webLast.errors >= 100 || (webLast.errors >= 40 && webPrev.errors >= 40)) reasons.push("web_5xx_spike");
   if (apiLast.errors >= 100 || (apiLast.errors >= 40 && apiPrev.errors >= 40)) reasons.push("api_5xx_spike");
-  if (apiLast.limited >= 300 || (apiLast.limited >= 100 && apiPrev.limited >= 100)) reasons.push("api_429_spike");
   return { window, reasons };
 }
 
@@ -90,8 +94,11 @@ async function main(): Promise<void> {
     }
   }
   const result = evaluate(samples, now);
-  console.log(JSON.stringify({ at: new Date(now).toISOString(), ...result }));
-  if (process.argv.includes("--apply") && result.reasons.length) await trip(result.reasons);
+  const maintenance = (await readFile(STATE, "utf8")).trim() === "default 1;";
+  // Maintenance responses are expected 503s, not evidence of a new outage.
+  if (maintenance) result.reasons = [];
+  console.log(JSON.stringify({ at: new Date(now).toISOString(), maintenance, ...result }));
+  if (!maintenance && process.argv.includes("--apply") && result.reasons.length) await trip(result.reasons);
 }
 
 if (process.argv[1]?.endsWith("traffic-guard.ts")) {
