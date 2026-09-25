@@ -1,5 +1,7 @@
 # 2026-09-22 `/zh/calc` traffic spike
 
+Follow-up: [September 22–25 public incident review](traffic-incident-2026-09-22-25.md), including the subsequent pauses, reopening, corrected prefetch diagnosis, and automatic-guard coverage.
+
 Observed on 2026-09-23 using the project's existing Vercel Analytics and Logs. The incident date and hours below use the dashboard's America/Los_Angeles timezone. No paid logging service was enabled.
 
 ## Evidence
