@@ -16,6 +16,13 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    href: '/dev/traffic-incident-2026-09',
+    glyph: '↗',
+    accent: 'var(--accent)',
+    zh: { title: '当流量突然涌来', sub: '2026.09 · 事件日志', tagline: '从真实 Vercel 曲线到暂停与恢复：一场流量事件的证据、判断纠正和自动防护边界', meta: '原始截图 / 可视化 / 工程复盘' },
+    en: { title: 'When traffic comes flooding in', sub: '2026.09 · Incident journal', tagline: 'From actual Vercel charts to pauses and reopening: evidence, a corrected diagnosis, and the limits of automatic protection', meta: 'Dashboard captures / diagrams / engineering review' },
+  },
+  {
     href: '/dev/auth',
     glyph: '⇄',
     accent: 'var(--accent)',
@@ -413,6 +420,7 @@ export default function DevIndexPage() {
             <Link
               key={c.href}
               href={c.href}
+              prefetch={false}
               className="code-index-card"
               style={{ ['--accent' as string]: c.accent }}
             >

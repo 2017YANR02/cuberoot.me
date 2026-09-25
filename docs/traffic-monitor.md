@@ -1,5 +1,7 @@
 # CubeRoot traffic monitor
 
+Public incident review: [2026-09-22–25 journal](traffic-incident-2026-09-22-25.md), with dashboard evidence and diagrams at `/dev/traffic-incident-2026-09` (`/zh/dev/traffic-incident-2026-09` in Chinese).
+
 Status: main-domain nginx request monitor deployed on 2026-09-23. On 2026-09-25 the same hourly workflow was extended to the independent `api.cuberoot.me` and public `next.cuberoot.me` nginx logs. No additional paid service was enabled.
 
 ## Automatic emergency guard

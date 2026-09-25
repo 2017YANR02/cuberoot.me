@@ -383,6 +383,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/llm': { title: { zh: '大模型', en: 'Large Language Models' } },
   'dev/llm/fable': { title: { zh: 'Claude Fable 5', en: 'Claude Fable 5' } },
   'dev/llm/sonnet-5': { title: { zh: 'Claude Sonnet 5', en: 'Claude Sonnet 5' } },
+  'dev/traffic-incident-2026-09': {
+    title: { zh: '当流量突然涌来：2026 年 9 月事件复盘', en: 'When traffic comes flooding in: September 2026 incident review' },
+    description: { zh: 'CubeRoot 流量事件公开日志：真实 Vercel 截图、请求与人数的区别、暂停与恢复时间线、自动防护的覆盖边界，以及一次判断纠正。', en: 'A public CubeRoot incident journal with actual Vercel screenshots, requests versus people, a response timeline, automatic protection boundaries and a corrected diagnosis.' },
+  },
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
   'dev/solvers': { title: { zh: '求解器', en: 'Solvers' } },
