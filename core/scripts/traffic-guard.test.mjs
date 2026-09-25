@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { evaluate } from "./traffic-guard.ts";
+import { evaluate, formatGuardAlert } from "./traffic-guard.ts";
 
 const now = Date.parse("2026-09-25T09:00:00Z");
 const sample = (minute, source, path, status = 200) => ({
@@ -70,4 +70,19 @@ test("previous maintenance traffic cannot retrip the guard after reopening", () 
   assert.equal(result.window.api[0].maintenance, 4100);
   assert.equal(result.window.api[0].limited, 0);
   assert.equal(result.window.api[0].errors, 0);
+});
+
+test("denied requests alone do not shut down the site", () => {
+  const rows = Array.from({length: 4100}, () => sample(1, "nginx", "/zh/calc", 403));
+  assert.deepEqual(evaluate(rows, now).reasons, []);
+});
+
+test("shutdown notification explains the reason and received/blocked counts", () => {
+  const rows = [1,2].flatMap(minute => Array.from({length:1210}, () => sample(minute,"api","/v1/a")));
+  rows.push(...Array.from({length:20}, () => sample(1,"api","/v1/a",429)));
+  const message = formatGuardAlert(evaluate(rows,now),now);
+  assert.match(message,/原因：数据接口未被拦截的请求过多/);
+  assert.match(message,/数据接口：收到 2440 次，记录到拦截 20 次/);
+  assert.match(message,/两个完整分钟/);
+  assert.doesNotMatch(message,/api_request_spike/);
 });

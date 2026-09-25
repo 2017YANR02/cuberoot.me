@@ -12,8 +12,8 @@ const LOGS = {
   api: "/www/wwwlogs/api.cuberoot.me.log",
 } as const;
 
-type Minute = { requests: number; pages: number; errors: number; limited: number; maintenance: number };
-const blank = (): Minute => ({ requests: 0, pages: 0, errors: 0, limited: 0, maintenance: 0 });
+type Minute = { requests: number; pages: number; errors: number; limited: number; maintenance: number; denied: number };
+const blank = (): Minute => ({ requests: 0, pages: 0, errors: 0, limited: 0, maintenance: 0, denied: 0 });
 type Window = { web: Minute[]; api: Minute[] };
 
 export function evaluate(samples: RequestSample[], now = Date.now()): { window: Window; reasons: string[] } {
@@ -29,6 +29,7 @@ export function evaluate(samples: RequestSample[], now = Date.now()): { window: 
     if (isMaintenanceResponse(sample)) { item.maintenance++; continue; }
     if (sample.status >= 500 && sample.status < 600 && !sample.path.startsWith("/_vercel/insights/")) item.errors++;
     if (sample.status === 429) item.limited++;
+    if (sample.status === 403) item.denied++;
     if (sample.source !== "api" && isPageCandidate(sample)) item.pages++;
   }
   const [webLast, webPrev] = window.web;
@@ -37,16 +38,36 @@ export function evaluate(samples: RequestSample[], now = Date.now()): { window: 
   // Keep the emergency page threshold above nginx's 600/minute + 30 burst.
   // 429s remain visible in the report, but blocked requests alone must not
   // turn a working limiter into a whole-site shutdown.
-  const webLastAdmitted = webLast.requests - webLast.limited - webLast.maintenance;
-  const webPrevAdmitted = webPrev.requests - webPrev.limited - webPrev.maintenance;
-  const apiLastAdmitted = apiLast.requests - apiLast.limited - apiLast.maintenance;
-  const apiPrevAdmitted = apiPrev.requests - apiPrev.limited - apiPrev.maintenance;
+  const webLastAdmitted = webLast.requests - webLast.limited - webLast.maintenance - webLast.denied;
+  const webPrevAdmitted = webPrev.requests - webPrev.limited - webPrev.maintenance - webPrev.denied;
+  const apiLastAdmitted = apiLast.requests - apiLast.limited - apiLast.maintenance - apiLast.denied;
+  const apiPrevAdmitted = apiPrev.requests - apiPrev.limited - apiPrev.maintenance - apiPrev.denied;
   if (webLast.pages >= 1_000 || (webLast.pages >= 800 && webPrev.pages >= 800)) reasons.push("web_page_spike");
   if (webLastAdmitted >= 4_000 || (webLastAdmitted >= 1_500 && webPrevAdmitted >= 1_500)) reasons.push("web_request_spike");
   if (apiLastAdmitted >= 4_000 || (apiLastAdmitted >= 1_200 && apiPrevAdmitted >= 1_200)) reasons.push("api_request_spike");
   if (webLast.errors >= 100 || (webLast.errors >= 40 && webPrev.errors >= 40)) reasons.push("web_5xx_spike");
   if (apiLast.errors >= 100 || (apiLast.errors >= 40 && apiPrev.errors >= 40)) reasons.push("api_5xx_spike");
   return { window, reasons };
+}
+
+export function formatGuardAlert(result: ReturnType<typeof evaluate>, now = Date.now()): string {
+  const labels: Record<string, string> = {
+    web_page_spike: "成功页面请求过多", web_request_spike: "主站和预览入口未被拦截的请求过多",
+    api_request_spike: "数据接口未被拦截的请求过多", web_5xx_spike: "主站或预览入口服务错误过多",
+    api_5xx_spike: "数据接口服务错误过多",
+  };
+  const end = Math.floor(now / MINUTE) * MINUTE;
+  const time = (value: number) => new Date(value + 8 * 3_600_000).toISOString().slice(5, 16).replace("T", " ");
+  const lines = ["已将阿里云主站、预览入口和数据接口切换为维护。",
+    `原因：${result.reasons.map(reason => labels[reason] || "达到保护阈值").join("；")}。`,
+    `停站前统计：${time(end - 2 * MINUTE)} 至 ${time(end)}（北京时间，两个完整分钟）。`];
+  for (const [key, label] of [["web", "主站及预览入口"], ["api", "数据接口"]] as const) {
+    const rows = result.window[key];
+    const sum = (field: keyof Minute) => rows.reduce((n, row) => n + row[field], 0);
+    lines.push(`${label}：收到 ${sum("requests")} 次，记录到拦截 ${sum("limited") + sum("maintenance") + sum("denied")} 次（维护 ${sum("maintenance")}、限流 ${sum("limited")}、拒绝访问 ${sum("denied")}），其他 5xx ${sum("errors")} 次。`);
+  }
+  lines.push("此操作不包含 Vercel；网站不会自动恢复，请核查后手动恢复。");
+  return lines.join("\n");
 }
 
 async function tail(file: string, maxBytes = 32 * 1024 * 1024): Promise<string[]> {
@@ -69,7 +90,7 @@ async function alert(message: string): Promise<void> {
   if (!response.ok) throw new Error(`Bark HTTP ${response.status}`);
 }
 
-async function trip(reasons: string[]): Promise<void> {
+async function trip(reasons: string[], message: string): Promise<void> {
   const previous = await readFile(STATE, "utf8");
   if (previous.trim() === "default 1;") return;
   if (previous.trim() !== "default 0;") throw new Error("Unexpected maintenance state; refusing to edit");
@@ -84,7 +105,7 @@ async function trip(reasons: string[]): Promise<void> {
     throw error;
   }
   console.error(`traffic guard tripped: ${reasons.join(",")}`);
-  await alert(`阿里云主站已切换维护页：${reasons.join(", ")}`).catch(error => console.error(`alert failed: ${error}`));
+  await alert(message).catch(error => console.error(`alert failed: ${error}`));
 }
 
 async function main(): Promise<void> {
@@ -101,7 +122,7 @@ async function main(): Promise<void> {
   // Maintenance responses are expected 503s, not evidence of a new outage.
   if (maintenance) result.reasons = [];
   console.log(JSON.stringify({ at: new Date(now).toISOString(), maintenance, ...result }));
-  if (!maintenance && process.argv.includes("--apply") && result.reasons.length) await trip(result.reasons);
+  if (!maintenance && process.argv.includes("--apply") && result.reasons.length) await trip(result.reasons, formatGuardAlert(result, now));
 }
 
 if (process.argv[1]?.endsWith("traffic-guard.ts")) {
