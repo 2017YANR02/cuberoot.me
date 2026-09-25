@@ -1,0 +1,10 @@
+[Unit]
+Description=CubeRoot traffic guard (self-hosted entry)
+After=nginx.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/cuberoot/traffic-guard.env
+ExecStart=/bin/bash -lc 'source /root/.nvm/nvm.sh && node --experimental-strip-types /usr/local/lib/cuberoot/traffic-guard.ts --apply'
+TimeoutStartSec=45
+

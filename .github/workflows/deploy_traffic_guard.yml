@@ -1,0 +1,59 @@
+name: Deploy traffic guard
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'core/scripts/traffic-guard.ts'
+      - 'core/scripts/traffic-guard.test.mjs'
+      - 'core/scripts/traffic-monitor.ts'
+      - 'ops/systemd/cuberoot-traffic-guard.*'
+      - '.github/workflows/deploy_traffic_guard.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check guard decisions
+        run: node --experimental-strip-types --test core/scripts/traffic-guard.test.mjs
+      - name: Setup SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id
+          chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Upload guard
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          scp -i ~/.ssh/id core/scripts/traffic-guard.ts core/scripts/traffic-monitor.ts \
+            ops/systemd/cuberoot-traffic-guard.service ops/systemd/cuberoot-traffic-guard.timer \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+      - name: Install and check
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          BARK_KEY: ${{ secrets.BARK_KEY }}
+        run: |
+          # The existing Bark key stays in a root-only server file, never in logs.
+          printf 'BARK_KEY=%s\n' "$BARK_KEY" | ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
+            'umask 077; mkdir -p /etc/cuberoot; cat > /etc/cuberoot/traffic-guard.env'
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          install -d -m 0755 /usr/local/lib/cuberoot
+          install -m 0644 /tmp/traffic-monitor.ts /usr/local/lib/cuberoot/traffic-monitor.ts
+          install -m 0644 /tmp/traffic-guard.ts /usr/local/lib/cuberoot/traffic-guard.ts
+          install -m 0644 /tmp/cuberoot-traffic-guard.service /etc/systemd/system/cuberoot-traffic-guard.service
+          install -m 0644 /tmp/cuberoot-traffic-guard.timer /etc/systemd/system/cuberoot-traffic-guard.timer
+          systemd-analyze verify /etc/systemd/system/cuberoot-traffic-guard.service /etc/systemd/system/cuberoot-traffic-guard.timer
+          systemctl daemon-reload
+          systemctl enable --now cuberoot-traffic-guard.timer
+          node --experimental-strip-types /usr/local/lib/cuberoot/traffic-guard.ts
+          systemctl list-timers cuberoot-traffic-guard.timer --no-pager
+          REMOTE
