@@ -10198,6 +10198,13 @@
       "David Remolina Amórtegui"
     ],
     [
+      "2014MELL03",
+      "2015BELO02",
+      26,
+      "Gabriel Sargeiro Gomes de Mello",
+      "Pedro Henrique Maciel Ceccopieri Belo (陈昊然)"
+    ],
+    [
       "2015TERR01",
       "2021MOSC02",
       26,
@@ -10210,6 +10217,13 @@
       26,
       "Jonathan Truchot",
       "Sameer Aggarwal"
+    ],
+    [
+      "2023GOME14",
+      "2018RODR43",
+      26,
+      "Leandro Paredes",
+      "Louis Rodriguez Guerrero"
     ],
     [
       "2015BOUS03",
@@ -10889,13 +10903,6 @@
       25,
       "Pedro Santos Guimarães",
       "Rafael Carreiro Campos"
-    ],
-    [
-      "2014MELL03",
-      "2015BELO02",
-      25,
-      "Gabriel Sargeiro Gomes de Mello",
-      "Pedro Henrique Maciel Ceccopieri Belo (陈昊然)"
     ],
     [
       "2011RHEI01",
@@ -13486,13 +13493,6 @@
       22,
       "Richmond Mico Rigor",
       "Robbie Villarica"
-    ],
-    [
-      "2023GOME14",
-      "2018RODR43",
-      22,
-      "Leandro Paredes",
-      "Louis Rodriguez Guerrero"
     ],
     [
       "2014SEBA01",
@@ -16764,6 +16764,13 @@
       "Burno Li Chak Kwan (李澤堃)"
     ],
     [
+      "2018DULL02",
+      "2018MEDE01",
+      19,
+      "Gustavo Dias Dullens",
+      "Victor Rampinelli Villar de Medeiros"
+    ],
+    [
       "2011HAMS01",
       "2012BRED01",
       19,
@@ -19963,13 +19970,6 @@
       "Nathan Soria"
     ],
     [
-      "2018DULL02",
-      "2018MEDE01",
-      17,
-      "Gustavo Dias Dullens",
-      "Victor Rampinelli Villar de Medeiros"
-    ],
-    [
       "2013GERH01",
       "2010SCHM01",
       17,
@@ -20850,6 +20850,13 @@
       17,
       "Cristhian Damián Fernández Pineda",
       "Dereck Samuel Marin Suarez"
+    ],
+    [
+      "2023STRA33",
+      "2022GONC01",
+      17,
+      "Eduardo Ribeiro Strauch",
+      "Mariana Castro Gonçalves"
     ],
     [
       "2012LICH04",
@@ -24163,6 +24170,13 @@
       "Tom Stanton-Barnett"
     ],
     [
+      "2018DULL02",
+      "2015BELO02",
+      15,
+      "Gustavo Dias Dullens",
+      "Pedro Henrique Maciel Ceccopieri Belo (陈昊然)"
+    ],
+    [
       "2017KIMM01",
       "2018GREN02",
       15,
@@ -25668,13 +25682,6 @@
       "Karl Abarquez"
     ],
     [
-      "2023STRA33",
-      "2022GONC01",
-      15,
-      "Eduardo Ribeiro Strauch",
-      "Mariana Castro Gonçalves"
-    ],
-    [
       "2013ROGA02",
       "2020GROD01",
       15,
@@ -26771,13 +26778,6 @@
       "2015BELO02",
       14,
       "Lucas Ichiro Yunomae",
-      "Pedro Henrique Maciel Ceccopieri Belo (陈昊然)"
-    ],
-    [
-      "2018DULL02",
-      "2015BELO02",
-      14,
-      "Gustavo Dias Dullens",
       "Pedro Henrique Maciel Ceccopieri Belo (陈昊然)"
     ],
     [
@@ -29040,6 +29040,13 @@
       13,
       "Aidan McKenzie",
       "Roger Lightbody III"
+    ],
+    [
+      "2023RODR80",
+      "2011EDUA01",
+      13,
+      "Axel Juan Pablo Moreno Rodriguez",
+      "Eduard Esteban García Domínguez"
     ],
     [
       "2018YAPL01",
@@ -32407,6 +32414,13 @@
       12,
       "Daniel C. Bedoya",
       "Enrique Adolfo Delgado"
+    ],
+    [
+      "2023MITZ02",
+      "2022CHRI09",
+      12,
+      "Andreas Mitzithras",
+      "Panagiotis Christopoulos"
     ],
     [
       "2012TYCK01",
@@ -36987,13 +37001,6 @@
       "Timofei Tarasenko"
     ],
     [
-      "2023MITZ02",
-      "2022CHRI09",
-      11,
-      "Andreas Mitzithras",
-      "Panagiotis Christopoulos"
-    ],
-    [
       "2017PITK01",
       "2016ELOV01",
       11,
@@ -37188,13 +37195,6 @@
       11,
       "Ben Tibbetts",
       "Ryan Schock"
-    ],
-    [
-      "2023RODR80",
-      "2011EDUA01",
-      11,
-      "Axel Juan Pablo Moreno Rodriguez",
-      "Eduard Esteban García Domínguez"
     ],
     [
       "2023ALLE01",
@@ -38378,6 +38378,13 @@
       11,
       "Jaden Thompson",
       "Michael Larsen"
+    ],
+    [
+      "2023GOME14",
+      "2023GONZ30",
+      11,
+      "Leandro Paredes",
+      "Miguel González"
     ],
     [
       "2017SIAU02",
