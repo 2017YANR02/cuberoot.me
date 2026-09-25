@@ -1,10 +1,14 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-25 01:26 PDT（2026-09-25 08:26 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-25 01:44 PDT（2026-09-25 08:44 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
-## 09-25 恢复窗口（进行中）
+## 09-25 受控恢复与初始观察
 
-用户授权恢复访问，并要求流量再异常时立即停站。提交 `35aa69d8ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36112690515) 成功部署，直连阿里云主站 `/zh` 返回 200，`/zh/calc` 继续返回 403。Vercel 控制台于约 01:27 PDT 确认 `Project resumed`，但目前 Production Deployment 仍是旧提交 `548aa0f8f5`；暂停期间的 Blocked 构建不能直接 Redeploy，控制台要求从新提交构建。提交 `f250d23872` 发生在项目实际恢复之前，也被标为 Blocked，因此需再推送一笔新提交触发构建。构建完成前不能声称新的 robots 与比赛代理校验已经在 Vercel 生效。Attack Mode、Bot Protection、AI Bots、计算器拒绝、单 IP 限流、$10 超额预算暂停和停用 Analytics 的状态保持原样。开放窗口继续分别监看 Vercel Firewall Live、阿里云主站和独立 API，不把十分钟历史总数当成当前每分钟请求率。
+用户授权恢复访问，并要求流量再异常时立即停站。提交 `35aa69d8ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36112690515) 成功部署；直连阿里云主站 `/zh` 返回 200，`/zh/calc` 继续返回 403。Vercel 控制台于约 01:27 PDT 确认 `Project resumed`。暂停期间的 Blocked 构建不能直接 Redeploy；实际恢复后推送的提交 `8c62bcde6a` 已于 08:33:54 UTC 构建为 Ready，Deployment 详情的 Current Domains 包含 `cuberoot.me`，因此此前的 robots 与比赛代理校验已经进入 Vercel 当前生产代码。命令行访问 Vercel 入口仍得到 Challenge，不能用 curl 的状态码替代真人完成挑战后的页面验收。
+
+08:34–08:44 UTC 自有主站 nginx 记录 1,503 次请求，其中 1,125 次为 `/_next/` 静态资源，比赛／选手详情 12 次，最高完整一分钟 271 次；48 次 403、14 次 502，后者全部是停用 Analytics 后仍代理 `/_vercel/insights/script.js` 的外部连接失败，未见 Next 页面 5xx。独立 API 同窗口 1,541 次请求，最高完整一分钟 223 次，无 429 或 5xx；约 19.6 MiB 响应量包含论坛视频分段下载。约 08:44 UTC 的 Vercel Firewall Live 十分钟窗口显示 781 Allowed、6 Denied、153 Challenged。这些是请求或动作，不是人数；阿里云与 Vercel 窗口可能有边界偏差，不能相加当全站独立访问量。
+
+初始窗口未见高成本路径或业务回源错误异常，主站保持开放；费用报表存在延迟，本轮未用它判断新增账单。Attack Mode、Bot Protection、AI Bots、计算器拒绝、单 IP 限流、$10 超额预算暂停和停用 Analytics 的状态保持原样。Attack Mode 控制台当时约剩 7 小时 14 分，届时会自动到期；费用预算不是逐请求硬断路器。若后续发现持续异常，应立即 Pause Vercel 项目并将阿里云维护开关恢复为 `default 1`，分别验证生产别名 `DEPLOYMENT_PAUSED` 与阿里云主站维护 503。当前自动 Traffic Monitor 仍按小时运行，且 `vercel:not_connected`；本次人工分钟级观察不能承诺无人值守期间也能立即发现并自动停站。
 
 ## 09-25 防护加固
 
