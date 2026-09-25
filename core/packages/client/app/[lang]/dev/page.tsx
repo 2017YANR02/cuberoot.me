@@ -19,8 +19,8 @@ const CARDS: Card[] = [
     href: '/dev/dns-routing',
     glyph: '⌁',
     accent: 'var(--signal-info)',
-    zh: { title: '同一个网址，为何连到不同服务器？', sub: 'DNS · NS · Cloudflare', tagline: '从打开网页讲起：301 为什么会改地址栏，CF 免费版能否让国内走阿里云、国外走 CF', meta: '访问过程 / 路线图 / 官方文档' },
-    en: { title: 'DNS and regional routing', sub: 'DNS · NS · Cloudflare', tagline: 'Follow a page visit to understand CubeRoot’s DNS routes, HTTP redirects and Cloudflare Free limits', meta: 'Request steps / route diagrams / sources' },
+    zh: { title: '同一个网址，为何连到不同服务器？', sub: '域名 · 跳转 · Cloudflare', tagline: '从打开网页讲起：网址为何会变，Cloudflare 免费版能否让国内走阿里云、国外走 Cloudflare', meta: '访问过程 / 路线图 / 官方文档' },
+    en: { title: 'One address, different servers', sub: 'Domain · Redirect · Cloudflare', tagline: 'Follow a page visit to see why the address bar changes and what Cloudflare Free can do for overseas visitors', meta: 'Visit steps / route diagrams / sources' },
   },
   {
     href: '/dev/traffic-incident-2026-09',
