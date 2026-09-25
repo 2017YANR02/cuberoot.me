@@ -388,8 +388,8 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     description: { zh: 'CubeRoot 9 月 22—25 日流量事件记录：Vercel 截图、日志分析、停站与恢复过程、防护措施和待解决的问题。', en: 'CubeRoot traffic incident, September 22–25: Vercel screenshots, log analysis, pauses, reopening, protection changes and remaining issues.' },
   },
   'dev/dns-routing': {
-    title: { zh: '同一个网址，两条路：DNS 分线路与 Cloudflare', en: 'One address, two paths: DNS routing and Cloudflare' },
-    description: { zh: '图解 cuberoot.me 当前国内阿里云、国外 Vercel 的 DNS 分线路，解释 NS、301、Cloudflare 免费版限制，以及保持同一网址的可行方案。', en: 'A visual guide to CubeRoot’s China and overseas DNS routing, nameservers, redirects, Cloudflare Free limits, and ways to keep one URL.' },
+    title: { zh: '域名解析与分线路：cuberoot.me 的访问过程', en: 'DNS and regional routing: how cuberoot.me is reached' },
+    description: { zh: '从浏览器访问过程解释 NS、DNS 分线路和 301，并核对 cuberoot.me 当前的阿里云与 Vercel 路线、Cloudflare 免费版限制和迁移条件。', en: 'A step-by-step explanation of nameservers, geo DNS and redirects using CubeRoot’s Alibaba and Vercel routes, with Cloudflare Free migration limits.' },
   },
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
