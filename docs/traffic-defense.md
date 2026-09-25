@@ -6,6 +6,20 @@
 
 状态记录：2026-09-25 01:44 PDT（2026-09-25 08:44 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
+## 09-25 20:37 UTC 自动停站与比赛子页限流
+
+20:35、20:36 UTC 独立 API 分别收到 1,419、1,057 次请求，其中 184、138 次返回 429。322 次 429 全部来自 `/v1/cubing-live/:slug`：251 次命中单 IP 限额，71 次命中比赛 API 总量限额。20:37:16 UTC，本地守护程序因 `api_429_spike` 将维护开关设为 `default 1;`。这是限流次数触发，不能直接等同于服务器过载或已确认的攻击。
+
+同一窗口的比赛接口有 506 次 `node` 请求，涉及 379 场比赛、410 个不同请求路径及参数组合。Vercel 日志已对上 SwedishChampionship2011 的页面访问、`/api/comp/` 代理及返回 429 的阿里云回源链路。仓库 GitHub Actions 在流量上升至停站的窗口内没有任务运行；`node` 不能据此归因为 CI。非 `node` API 请求另有 388 个去重日志 IP，不等于人数或攻击者数量。
+
+原 nginx 和 Vercel 详情页规则以比赛 slug 结尾，遗漏 `/result/...` 等子页。本次将比赛详情及全部子路径纳入原计数桶，英文与中文合并计数，仍保留比赛列表、`stats`、`sources` 页面；选手详情原范围不变。
+
+- Vercel：每 IP 每 60 秒 30 次，超额 Challenge；控制台已确认发布成功。比赛代理 `/api/comp/` 原有每 IP 每 60 秒 20 次、超额 429 的规则继续保留。计数按 Vercel 区域执行，不是跨区域总量上限，也不能阻止大量 IP 各自低频访问。
+- nginx：原共享区每 IP 30 次／分钟、突发 10，以及总量 5 次／秒、突发 30，新增覆盖比赛子页，超额 429。主域与 `next.cuberoot.me` 共用计数。发布提交为 `dc753e48f9`，部署结果以该提交的 Deploy Web Ops Config 运行及线上配置核对为准。
+- 验证：服务器独立 loopback nginx 实例通过 6 个受限路径和 8 个排除路径检查，连续子页请求实际出现 429；未对生产应用做压力测试。
+
+本次不恢复维护开关，也不修改自动停站阈值。Vercel Attack Mode 在本次读取时已到期（控制台显示 Enable），Bot Protection 和 AI Bots 规则仍启用。未添加付费监控服务。
+
 ## 09-25 受控恢复与初始观察
 
 用户授权恢复访问，并要求流量再异常时立即停站。提交 `35aa69d8ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36112690515) 成功部署；直连阿里云主站 `/zh` 返回 200，`/zh/calc` 继续返回 403。Vercel 控制台于约 01:27 PDT 确认 `Project resumed`。暂停期间的 Blocked 构建不能直接 Redeploy；实际恢复后推送的提交 `8c62bcde6a` 已于 08:33:54 UTC 构建为 Ready，Deployment 详情的 Current Domains 包含 `cuberoot.me`，因此此前的 robots 与比赛代理校验已经进入 Vercel 当前生产代码。命令行访问 Vercel 入口仍得到 Challenge，不能用 curl 的状态码替代真人完成挑战后的页面验收。
