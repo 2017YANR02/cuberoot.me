@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { TrafficAccumulator, parseNginxLine, parseVercelLine, routeGroup, referrerDomain } from "./traffic-monitor.ts";
+import { TrafficAccumulator, apiRouteGroup, parseNginxLine, parseVercelLine, routeGroup, referrerDomain } from "./traffic-monitor.ts";
 
 test("normalizes nginx requests without keeping query values or personal paths", () => {
   const line = '1.2.3.4 - - [23/Sep/2026:18:57:00 +0800] "GET /zh/calc?name0=Private HTTP/2.0" 200 123 "https://example.com/link?token=Secret" "Mozilla/5.0"';
@@ -67,4 +67,27 @@ test("reads sanitized drain records without restoring removed values", () => {
     method: "GET", status: 200, path: "/zh/calc", referrer: "https://example.com/", userAgent: "self-declared bot" }));
   assert.equal(sample?.path, "/zh/calc");
   assert.equal(sample?.referrer, "https://example.com/");
+});
+
+test("keeps independent API coverage and alerts separate from page traffic", () => {
+  const now = Date.parse("2026-09-25T12:07:00Z");
+  const current = Date.parse("2026-09-25T11:15:00Z");
+  const accumulator = new TrafficAccumulator(now);
+  accumulator.addInput("api");
+  const raw = '1.2.3.4 - - [25/Sep/2026:19:15:00 +0800] "GET /v1/cubing-live/PrivateComp?v=4 HTTP/2.0" 429 123 "-" "PrivateAgent"';
+  const parsed = parseNginxLine(raw, "api");
+  assert.equal(parsed?.source, "api");
+  assert.equal(apiRouteGroup(parsed.path), "/v1/cubing-live/:id");
+  for (let day = 1; day <= 7; day++) {
+    for (let i = 0; i < 100; i++) accumulator.add({ ...parsed, status: 200, timestamp: current - day * 86_400_000 });
+  }
+  for (let i = 0; i < 600; i++) accumulator.add({ ...parsed, status: i < 10 ? 429 : 200, timestamp: current });
+  const api = accumulator.report().sources.find((source) => source.source === "api");
+  assert.equal(api.coverage, "observed");
+  assert.equal(api.requests, 600);
+  assert.equal(api.rateLimited429, 10);
+  assert.equal(api.baselineRequests, 100);
+  assert.deepEqual(api.alerts, ["api_requests_spike", "rate_limited_high"]);
+  assert.deepEqual(api.topRoutes, [{ name: "/v1/cubing-live/:id", count: 600 }]);
+  assert.doesNotMatch(JSON.stringify(api), /PrivateComp|PrivateAgent|1\.2\.3\.4/);
 });
