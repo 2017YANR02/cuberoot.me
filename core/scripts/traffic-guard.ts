@@ -1,7 +1,7 @@
 import { open, readFile, rename, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { parseNginxLine, isPageCandidate, type RequestSample } from "./traffic-monitor.ts";
+import { parseNginxLine, isPageCandidate, isMaintenanceResponse, type RequestSample } from "./traffic-monitor.ts";
 
 const exec = promisify(execFile);
 const MINUTE = 60_000;
@@ -12,8 +12,8 @@ const LOGS = {
   api: "/www/wwwlogs/api.cuberoot.me.log",
 } as const;
 
-type Minute = { requests: number; pages: number; errors: number; limited: number };
-const blank = (): Minute => ({ requests: 0, pages: 0, errors: 0, limited: 0 });
+type Minute = { requests: number; pages: number; errors: number; limited: number; maintenance: number };
+const blank = (): Minute => ({ requests: 0, pages: 0, errors: 0, limited: 0, maintenance: 0 });
 type Window = { web: Minute[]; api: Minute[] };
 
 export function evaluate(samples: RequestSample[], now = Date.now()): { window: Window; reasons: string[] } {
@@ -24,6 +24,9 @@ export function evaluate(samples: RequestSample[], now = Date.now()): { window: 
     if (age < 0 || age > 1) continue;
     const item = (sample.source === "api" ? window.api : window.web)[age];
     item.requests++;
+    // A maintenance response in the previous minute remains expected even
+    // after reopening. Keep its traffic count, but don't retrip the site.
+    if (isMaintenanceResponse(sample)) { item.maintenance++; continue; }
     if (sample.status >= 500 && sample.status < 600 && !sample.path.startsWith("/_vercel/insights/")) item.errors++;
     if (sample.status === 429) item.limited++;
     if (sample.source !== "api" && isPageCandidate(sample)) item.pages++;
@@ -34,10 +37,10 @@ export function evaluate(samples: RequestSample[], now = Date.now()): { window: 
   // Keep the emergency page threshold above nginx's 600/minute + 30 burst.
   // 429s remain visible in the report, but blocked requests alone must not
   // turn a working limiter into a whole-site shutdown.
-  const webLastAdmitted = webLast.requests - webLast.limited;
-  const webPrevAdmitted = webPrev.requests - webPrev.limited;
-  const apiLastAdmitted = apiLast.requests - apiLast.limited;
-  const apiPrevAdmitted = apiPrev.requests - apiPrev.limited;
+  const webLastAdmitted = webLast.requests - webLast.limited - webLast.maintenance;
+  const webPrevAdmitted = webPrev.requests - webPrev.limited - webPrev.maintenance;
+  const apiLastAdmitted = apiLast.requests - apiLast.limited - apiLast.maintenance;
+  const apiPrevAdmitted = apiPrev.requests - apiPrev.limited - apiPrev.maintenance;
   if (webLast.pages >= 1_000 || (webLast.pages >= 800 && webPrev.pages >= 800)) reasons.push("web_page_spike");
   if (webLastAdmitted >= 4_000 || (webLastAdmitted >= 1_500 && webPrevAdmitted >= 1_500)) reasons.push("web_request_spike");
   if (apiLastAdmitted >= 4_000 || (apiLastAdmitted >= 1_200 && apiPrevAdmitted >= 1_200)) reasons.push("api_request_spike");
