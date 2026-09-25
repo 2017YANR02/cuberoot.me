@@ -36,6 +36,16 @@ const EXPENSIVE_PATHS = [
   '/wca/persons/',
   '/wca/comp/',
 ];
+// The English routes are bare, while Chinese routes start with /zh. Robots
+// rules match URL paths from the site root, so the bare rules miss /zh URLs.
+const DISALLOWED_PATHS = [
+  ...EXPENSIVE_PATHS,
+  ...EXPENSIVE_PATHS.map((path) => `/zh${path}`),
+  // Keep the calculator landing page crawlable without inviting crawlers to
+  // enumerate per-competition and per-person query-string variants.
+  '/calc?',
+  '/zh/calc?',
+];
 
 // Real content pages that happen to sit inside a disallowed prefix.
 // `/wca/comp/` is meant to exclude the ~17k per-competition slugs, but the same
@@ -48,7 +58,11 @@ const ALLOW_EXCEPTIONS = [
   '/wca/comp/sources',
 ];
 
-const ALLOW = ['/', ...ALLOW_EXCEPTIONS];
+const ALLOW = [
+  '/',
+  ...ALLOW_EXCEPTIONS,
+  ...ALLOW_EXCEPTIONS.map((path) => `/zh${path}`),
+];
 
 // Tier 3 — third-party SEO-audit crawlers. Pure load, zero search visibility,
 // nobody reads their index but their own paying customers. Still fully banned.
@@ -92,7 +106,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       // Everyone (real search engines + citation bots) — full site minus the
       // expensive trees.
-      { userAgent: '*', allow: ALLOW, disallow: EXPENSIVE_PATHS },
+      { userAgent: '*', allow: ALLOW, disallow: DISALLOWED_PATHS },
 
       // Sogou renders JS but caches NOTHING: 1,228 pages crawled cost 38,713
       // requests (~32 per page, every shared chunk re-downloaded at 200, never
@@ -100,7 +114,7 @@ export default function robots(): MetadataRoute.Robots {
       // self-hosted origin (China DNS route), so it burns no Vercel quota — but
       // there is no reason to serve the same bundle 749 times. Crawl-delay is
       // the one knob Sogou documents.
-      { userAgent: 'Sogou web spider', allow: ALLOW, disallow: EXPENSIVE_PATHS, crawlDelay: 5 },
+      { userAgent: 'Sogou web spider', allow: ALLOW, disallow: DISALLOWED_PATHS, crawlDelay: 5 },
 
       { userAgent: AI_TRAINING_BOTS, disallow: '/' },
       { userAgent: SEO_AUDIT_BOTS, disallow: '/' },

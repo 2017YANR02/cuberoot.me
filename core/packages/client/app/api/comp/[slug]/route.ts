@@ -36,12 +36,18 @@ export async function GET(
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(slug)) {
     return Response.json({ error: 'invalid slug' }, { status: 400, headers: { 'cache-control': 'no-store' } });
   }
-  // 首屏分片:?only=<event> 只要当前项目 (WC2023 380KB → 数 KB)。查询串进边缘缓存键,
-  // 分片与全量各自成条目;上游认不出的 only 会自己回全量,这里只做形状校验。
-  const only = new URL(req.url).searchParams.get('only');
-  const onlyQs = only && /^(auto|[A-Za-z0-9]+(:[A-Za-z0-9]+)?)$/.test(only)
-    ? `?v=4&only=${encodeURIComponent(only)}`
-    : '?v=4';
+  // Only these two parameters affect the client cache key. Reject arbitrary
+  // variants before they trigger an upstream request (and one cache entry each).
+  const query = new URL(req.url).searchParams;
+  const only = query.get('only');
+  const version = query.get('v');
+  if ([...query.keys()].some((key) => key !== 'only' && key !== 'v')
+    || query.getAll('only').length > 1 || query.getAll('v').length > 1
+    || (version !== null && !/^\d{1,2}$/.test(version))
+    || (only !== null && !/^(auto|[A-Za-z0-9]{1,32}(:[A-Za-z0-9]{1,32})?)$/.test(only))) {
+    return Response.json({ error: 'invalid query' }, { status: 400, headers: { 'cache-control': 'no-store' } });
+  }
+  const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
 
   let upstream: Response;
   try {
