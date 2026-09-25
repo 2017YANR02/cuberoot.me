@@ -15,7 +15,7 @@
 原 nginx 和 Vercel 详情页规则以比赛 slug 结尾，遗漏 `/result/...` 等子页。本次将比赛详情及全部子路径纳入原计数桶，英文与中文合并计数，仍保留比赛列表、`stats`、`sources` 页面；选手详情原范围不变。
 
 - Vercel：每 IP 每 60 秒 30 次，超额 Challenge；控制台已确认发布成功。比赛代理 `/api/comp/` 原有每 IP 每 60 秒 20 次、超额 429 的规则继续保留。计数按 Vercel 区域执行，不是跨区域总量上限，也不能阻止大量 IP 各自低频访问。
-- nginx：原共享区每 IP 30 次／分钟、突发 10，以及总量 5 次／秒、突发 30，新增覆盖比赛子页，超额 429。主域与 `next.cuberoot.me` 共用计数。发布提交为 `dc753e48f9`，部署结果以该提交的 Deploy Web Ops Config 运行及线上配置核对为准。
+- nginx：原共享区每 IP 30 次／分钟、突发 10，以及总量 5 次／秒、突发 30，新增覆盖比赛子页，超额 429。主域与 `next.cuberoot.me` 共用计数。提交 `dc753e48f9` 的 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36193190977) 于 21:46:33 UTC 成功完成；线上已读到新表达式，nginx 新 worker 于 21:46:23 UTC 启动，主站仍实测为维护 503。
 - 验证：服务器独立 loopback nginx 实例通过 6 个受限路径和 8 个排除路径检查，连续子页请求实际出现 429；未对生产应用做压力测试。
 
 本次不恢复维护开关，也不修改自动停站阈值。Vercel Attack Mode 在本次读取时已到期（控制台显示 Enable），Bot Protection 和 AI Bots 规则仍启用。未添加付费监控服务。
