@@ -1,8 +1,16 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-24 22:35 PDT（2026-09-25 05:35 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-24 23:10 PDT（2026-09-25 06:10 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
 ## 当前结论
+
+**用户要求再次禁止主站访问。Vercel `cuberoot-me` 生产项目已重新 Pause；阿里云 nginx 维护开关已重新开启。** Vercel 控制台显示 `Project paused`，23:09 PDT 对 `cuberoot-me.vercel.app` 和公网 `cuberoot.me` 的同类页面请求均返回 `503 DEPLOYMENT_PAUSED`。提交 `82f96a3e06` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36101396673) 成功发布；23:08 PDT 直连阿里云 IP 请求 `/zh` 返回 503 和 `X-CubeRoot-Maintenance: 2026-09-24`。DNS 未更改：境外仍指向 Vercel，国内/默认线路仍指向阿里云。独立 `api`、`static`、`next` 域名和预览部署不由这两个暂停操作关闭。
+
+**短暂开放期间仍有密集请求，不能因为十分钟总量低于前次峰值就说没有异常。** 约 23:05 PDT 的 Vercel [Logs](https://vercel.com/cube-root/cuberoot-me/logs) 显示连续遍历 `/wca/prediction/333/*`、`/zh/alg/3x3/vls` 等路径的 200 请求；23:09 刷新时最新一行仍为 23:05:44，早于约 23:06 的暂停。暂停前读取的 Firewall Live 十分钟窗口约有 939 Allowed、125 Challenged、8 Denied；这是请求/规则动作数，不是人数，也不能仅凭这组数据确认操作者。阿里云现有 [Traffic Monitor 运行](https://github.com/2017YANR02/cuberoot.me/actions/runs/36101419183) 报告的是 **05:00–06:00 UTC 完整上一小时**：nginx 13,033 次请求、1,173 个页面候选、同小时七日基线 768、355 次 5xx，报警阈值未触发；它不覆盖 06:00 后刚关闭前的阿里云流量，也不覆盖 Vercel。
+
+Vercel Attack Mode、计算器拒绝规则、Bot Protection、AI Bots 和两条单 IP 限流仍保留；Web Analytics 仍关闭，团队额外用量预算 $10、Pause On 仍保留。暂停后仍可能有请求到达边缘或进入日志，当前已实证的是上述生产页面不再返回应用内容；不能把“仍有访问尝试”当成“生产部署仍在服务”。
+
+## 22:35 短暂恢复窗口（历史）
 
 **应用户恢复访问的要求，Vercel 生产项目已 Resume，阿里云 nginx 维护开关已关闭。** Vercel 控制台显示 `Project resumed`；阿里云配置由提交 `f47c7890ac` 经 [Deploy Web Ops Config](https://github.com/2017YANR02/cuberoot.me/actions/runs/36099065986) 成功发布。22:35 PDT 直连阿里云 IP、指定 `cuberoot.me` Host/SNI 实测 `/zh` 返回 200、`/` 返回 307 到 `/en`，均不再是维护页。境外 DNS 仍为 Vercel，国内/默认线路仍为阿里云，本次未改 DNS。
 
@@ -113,7 +121,7 @@ Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面�
 
 ## 恢复步骤
 
-2026-09-24 22:35 PDT 已按用户的新指令恢复 Vercel 生产项目及阿里云其他页面；用户要求继续保留临时拦截，计算器页面仍受限。
+2026-09-24 22:35 PDT 曾短暂恢复 Vercel 生产项目及阿里云其他页面；约 23:06–23:08 又按用户的新指令暂停。用户要求继续保留临时拦截。
 
 维护公告已通过将 `ops/nginx/00-maintenance.conf` 的开关改为 `default 0` 并运行 `deploy_nginx.yml` 关闭；境外 DNS 已于 09:48–09:49 恢复原 Vercel 地址。以下保留此次恢复时的操作边界，未来再停站与恢复仍须先核对实时状态。
 
