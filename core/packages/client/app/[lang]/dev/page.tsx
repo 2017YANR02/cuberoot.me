@@ -19,7 +19,7 @@ const CARDS: Card[] = [
     href: '/dev/dns-routing',
     glyph: '⌁',
     accent: 'var(--signal-info)',
-    zh: { title: '域名解析与分线路', sub: 'DNS · NS · Cloudflare', tagline: '从一次网页访问讲起，解释 cuberoot.me 的国内外解析、301 跳转与 Cloudflare 免费版限制', meta: '访问过程 / 路线图 / 官方依据' },
+    zh: { title: '同一个网址，为何连到不同服务器？', sub: 'DNS · NS · Cloudflare', tagline: '从打开网页讲起：301 为什么会改地址栏，CF 免费版能否让国内走阿里云、国外走 CF', meta: '访问过程 / 路线图 / 官方文档' },
     en: { title: 'DNS and regional routing', sub: 'DNS · NS · Cloudflare', tagline: 'Follow a page visit to understand CubeRoot’s DNS routes, HTTP redirects and Cloudflare Free limits', meta: 'Request steps / route diagrams / sources' },
   },
   {
