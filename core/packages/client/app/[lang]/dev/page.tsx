@@ -19,8 +19,8 @@ const CARDS: Card[] = [
     href: '/dev/traffic-incident-2026-09',
     glyph: '↗',
     accent: 'var(--accent)',
-    zh: { title: '当流量突然涌来', sub: '2026.09 · 事件日志', tagline: '从真实 Vercel 曲线到暂停与恢复：一场流量事件的证据、判断纠正和自动防护边界', meta: '原始截图 / 可视化 / 工程复盘' },
-    en: { title: 'When traffic comes flooding in', sub: '2026.09 · Incident journal', tagline: 'From actual Vercel charts to pauses and reopening: evidence, a corrected diagnosis, and the limits of automatic protection', meta: 'Dashboard captures / diagrams / engineering review' },
+    zh: { title: '9 月流量事件记录', sub: '2026.09.22–25', tagline: '计算器访问量突增后的日志排查、停站与恢复记录，以及新增的防护措施', meta: 'Vercel 截图 / 请求统计 / 处置记录' },
+    en: { title: 'September traffic incident', sub: '2026.09.22–25', tagline: 'Log analysis, service pauses, reopening and protection changes after the calculator traffic spike', meta: 'Vercel screenshots / request counts / response log' },
   },
   {
     href: '/dev/auth',
