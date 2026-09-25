@@ -1,6 +1,19 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-24 23:10 PDT（2026-09-25 06:10 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-25 00:50 PDT（2026-09-25 07:50 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+
+## 09-25 防护加固
+
+**主站仍暂停。** 00:48 PDT 已在 Vercel Firewall 发布两项调整：新增中英文比赛与选手详情路径的单 IP 30 次／60 秒限流，超额发起 Challenge（比赛统计与来源说明页除外）；原计算器 5 次／60 秒、超额 429 的规则扩展到 `/calc` 和 `/zh/calc`。原 `/zh/calc` Deny 排在限流之前，仍继续拒绝该路径。控制台显示规则启用并提示发布成功；由于生产项目暂停，尚不能用恢复后的真实流量证明命中率或正常用户影响。Attack Mode、Bot Protection、AI Bots、`/api/comp/` 规则和预算设置未在此次调整中更改。
+
+本次仓库变更给自有 nginx 的比赛／选手详情、计算器、`/api/comp/` 代理、独立 `/v1/cubing-live/:slug` 设置分路径单 IP 与跨 IP 总量上限，并给独立 API 全站设置 30 次／秒、允许 100 次突发的保护；比赛数据接口另限制并发 20。`/api/comp/` 和 `/v1/cubing-live/` 缓存键按有效参数规范化，保留响应版本 `v`。Next 比赛代理在回源前拒绝未知、重复或畸形查询参数；`robots.txt` 补齐 `/zh` 详情路径，并禁止计算器的带参数 URL 被合作爬虫抓取。这些仓库变更的线上生效状态以对应提交的部署结果和实测为准。
+
+初始阈值来自阿里云线路的短暂开放窗口及独立 API 日志：比赛与选手详情合计最高约 69 次／分钟，直播比赛数据约 7 次／分钟；API 全站最高 81 次／秒、10 秒内 241 次。按日志秒级回放，API 30 次／秒、100 次突发未模拟出拒绝；该回放不能代替真实 nginx 毫秒级执行，也没有覆盖 Vercel 请求。恢复后需观察 429、Challenge、5xx、回源率和真实用户反馈，再调整阈值。主站不能仅因配置已发布就自动恢复。
+
+### 对照 WCA 与粗饼公开证据
+
+- [WCA robots 源码](https://github.com/thewca/worldcubeassociation.org/blob/main/app/views/static_pages/robots.txt.erb)限制搜索和带参数的排名／纪录页面；[API 限流源码](https://github.com/thewca/worldcubeassociation.org/blob/main/app/controllers/concerns/api_rate_limiting.rb)在生产环境为来源 IP 设置 60 次／分钟，但 Rails 默认按控制器分桶，不能视为全站总限额。[公开 WCIF 控制器](https://github.com/thewca/worldcubeassociation.org/blob/main/app/controllers/api/v0/competitions_controller.rb)使用 ETag、Last-Modified、短时 HTTP 缓存和对象缓存。[官方数据文档](https://docs.worldcubeassociation.org/knowledge_base/wca_data_overview)引导大批量使用者获取定期导出。公开源码无法证明 WCA 当前托管层的全部 WAF 规则。
+- 2026-09-25 实测 `cubing.com` 响应表明它使用阿里云 ESA：比赛页为 `X-Site-Cache-Status: DYNAMIC`，静态资源可在边缘 HIT；[ESA 文档](https://www.alibabacloud.com/help/en/edge-security-acceleration/esa/user-guide/default-cache-rule)解释这两个缓存状态。其当前 `robots.txt` 对通用爬虫未禁路径；[公开 CubingChina 仓库](https://github.com/CubingChina/cubingchina/blob/master/README.md)仍是 Yii/PHP，而线上响应显示 Nuxt，不能把仓库里的旧限流或缓存代码当作线上配置。公开响应也不能证明它启用了哪些 WAF／验证码阈值。
 
 ## 当前结论
 
@@ -99,13 +112,13 @@ Vercel 的 Pause Project 仅停止生产部署，预览部署、配置和数据�
 
 Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面线路。源码根 layout 无条件加载 Analytics；nginx 源码将 `/_vercel/insights/` 代理到 Vercel，所以自有线路也可能上报。具体线上覆盖需要核对当次部署脚本及实际 nginx 配置；不得将 nginx 请求数与 Analytics 访客数相加。
 
-## 长期措施清单（尚未实现，不得报已完成）
+## 长期措施清单
 
-- [ ] 在真正昂贵的接口处增加共享总请求量和并发上限，并按账号或可靠会话分配个人额度。不能仅在每个 serverless 实例内存中计数来冒充全局限额；匿名 Cookie 可重建，不能单独当安全边界。
-- [ ] 核对 Vercel、nginx、独立 API、预览域名的全部入口；避免从旁路绕过限额。参数需校验，缓存键需规范化。
-- [ ] 对重复比赛数据复用缓存，合并并发的相同回源；确认实际费用路径后确定额度和 TTL。可变数据浏览器缓存不超过仓库规定，暂态和空结果不得长缓存。
+- [x] 在独立 API 的 nginx 入口增加共享总请求量与比赛数据并发上限；单 IP 和跨 IP 限额均在 nginx shared zone 计数，不依赖 serverless 实例内存。若未来要按账号分配个人额度，需另行设计可信身份与数据层计数；匿名 Cookie 可重建，不能单独当安全边界。
+- [ ] 核对 Vercel、nginx、独立 API、预览域名的全部入口；本次已覆盖三个生产入口的高成本比赛路径，预览域名与其他 API 高成本路径仍需审计。比赛代理参数已校验，两个比赛缓存键已规范化。
+- [x] 已有重复比赛数据缓存与并发相同回源合并；本次规范化 nginx 缓存键，保留版本号。需在恢复后复核实际回源率与费用路径。可变数据浏览器缓存不超过仓库规定，暂态和空结果不得长缓存。
 - [ ] 评估把计算器自动获取比赛/选手资料改为用户明确操作，降低只打开页面造成的负担。
-- [ ] 补齐 robots 的中文比赛/选手路径和计算器参数 URL 规则，评估成绩链接 nofollow。已有 `prefetch=false`，不能把这次问题直接归为预取故障。robots/nofollow 只约束合作爬虫。
+- [x] 补齐 robots 的中文比赛/选手路径和计算器参数 URL 规则。成绩链接是否需要 nofollow 尚未决定；已有 `prefetch=false`，不能把这次问题直接归为预取故障。robots/nofollow 只约束合作爬虫。
 - [ ] 用完整的措施后窗口检查 429、5xx、响应时间、回源次数、计费量和正常用户影响，再决定恢复访问。
 
 单 IP 限流挡不住大量低频 IP 的合计流量。Vercel 限流按区域计数；常见浏览器共享 JA4，不能因一个指纹占比高就认定都是攻击者。也不能仅凭云厂商 IP、国家或浏览器声明封禁大片正常流量。
