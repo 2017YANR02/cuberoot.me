@@ -26,7 +26,7 @@ For a Vercel Analytics spike, open the page filter and time range in Analytics, 
 
 ## Run and verify
 
-The [Traffic Monitor workflow](../.github/workflows/traffic_monitor.yml) can be started manually. The report is in the run's Summary. The first manual run reported the UTC hour beginning 2026-09-24 00:00:00: 2,901 main-domain nginx requests, with `vercel:not_connected` displayed explicitly. The [first run with API coverage](https://github.com/2017YANR02/cuberoot.me/actions/runs/36110433177) succeeded for 2026-09-25 06:00–07:00 UTC and reported `nginx:observed:5055`, `api:observed:7330`, and `vercel:not_connected:0`. A successful report means the SSH and parser path worked; Bark sends a message only when an alert rule fires.
+The [Traffic Monitor workflow](../.github/workflows/traffic_monitor.yml) can be started manually. The report is in the run's Summary. The first manual run reported the UTC hour beginning 2026-09-24 00:00:00: 2,901 main-domain nginx requests, with `vercel:not_connected` displayed explicitly. The [first run with API coverage](https://github.com/2017YANR02/cuberoot.me/actions/runs/36110433177) succeeded for 2026-09-25 06:00–07:00 UTC. The [first run with all three nginx sources](https://github.com/2017YANR02/cuberoot.me/actions/runs/36111796838) succeeded for 07:00–08:00 UTC and reported `nginx:observed:1428`, `next:observed:238`, `api:observed:2837`, and `vercel:not_connected:0`. A successful report means the SSH and parser path worked; Bark sends a message only when an alert rule fires.
 
 Node 24 can also read existing logs directly:
 
