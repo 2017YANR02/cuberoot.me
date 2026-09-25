@@ -1,6 +1,6 @@
 # 网络异常流量防护与费用止损
 
-状态记录：2026-09-25 00:58 PDT（2026-09-25 07:58 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
+状态记录：2026-09-25 01:00 PDT（2026-09-25 08:00 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
 ## 09-25 防护加固
 
@@ -10,7 +10,13 @@
 
 提交 `52bafaee57` 的 [nginx 配置部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36109806721)、[Next 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36109806719)和[测试](https://github.com/2017YANR02/cuberoot.me/actions/runs/36109806706)均成功。线上 nginx 配置哈希与仓库一致、`nginx -t` 通过；`next.cuberoot.me/robots.txt` 已含中英文新规则，非法比赛代理查询返回 400。阿里云主站仍为维护 503，Vercel 生产别名仍为 `DEPLOYMENT_PAUSED` 503，独立 API 普通请求返回 200。以上只证明配置发布和基础健康；限流实际命中及恢复后的正常用户影响尚待开放窗口观察。
 
-后续监控变更使现有 [Traffic Monitor](traffic-monitor.md) 同时覆盖独立 API 的 nginx 日志，分别报告 API 的 429、5xx 与请求量突增；该监控不新增 Vercel Log Drain 或恢复 Web Analytics，也不能替代 Vercel Firewall 的实时窗口。
+Vercel 的[新 Web 提交](https://vercel.com/cube-root/cuberoot-me/7rHLrAmHw2RnG3aZEYNtCCz7PmnN)显示 `Deployment Blocked`，页面明确说明项目暂停导致无法构建；当前 Production Deployment 仍指向旧提交 `548aa0f8f5`。因此防火墙规则已经发布，但新的 robots 与比赛代理校验**尚未部署到 Vercel 生产**。恢复 Vercel 时必须先处理这个构建差异，不能把 GitHub push 或阿里云 Next 部署成功当作 Vercel 已更新。
+
+后续监控变更使现有 [Traffic Monitor](traffic-monitor.md) 同时覆盖公开 `next.cuberoot.me` 和独立 API 的 nginx 日志，分别报告 API 的 429、5xx 与请求量突增；该监控不新增 Vercel Log Drain 或恢复 Web Analytics，也不能替代 Vercel Firewall 的实时窗口。
+
+`next.cuberoot.me` 直达与主域相同的 Next 服务。本次补充让它复用主域的详情、计算器和 `/api/comp/` 限流共享区，并对 `/zh/calc` 返回 403；否则攻击者可绕开主域规则直接消耗同一后端。其他开发预览域名仍须按各自入口审计。
+
+[手动监控运行 36110433177](https://github.com/2017YANR02/cuberoot.me/actions/runs/36110433177)成功，完整 06:00–07:00 UTC 窗口分别报告主站 nginx 5,055 次请求、独立 API 7,330 次请求，Vercel 标明 `not_connected`。这些是不同入口的请求数，不是访客数，不能相加推断独立用户。
 
 初始阈值来自阿里云线路的短暂开放窗口及独立 API 日志：比赛与选手详情合计最高约 69 次／分钟，直播比赛数据约 7 次／分钟；API 全站最高 81 次／秒、10 秒内 241 次。按日志秒级回放，API 30 次／秒、100 次突发未模拟出拒绝；该回放不能代替真实 nginx 毫秒级执行，也没有覆盖 Vercel 请求。恢复后需观察 429、Challenge、5xx、回源率和真实用户反馈，再调整阈值。主站不能仅因配置已发布就自动恢复。
 
@@ -119,7 +125,7 @@ Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面�
 ## 长期措施清单
 
 - [x] 在独立 API 的 nginx 入口增加共享总请求量与比赛数据并发上限；单 IP 和跨 IP 限额均在 nginx shared zone 计数，不依赖 serverless 实例内存。若未来要按账号分配个人额度，需另行设计可信身份与数据层计数；匿名 Cookie 可重建，不能单独当安全边界。
-- [ ] 核对 Vercel、nginx、独立 API、预览域名的全部入口；本次已覆盖三个生产入口的高成本比赛路径，预览域名与其他 API 高成本路径仍需审计。比赛代理参数已校验，两个比赛缓存键已规范化。
+- [ ] 核对 Vercel、nginx、独立 API、预览域名的全部入口；本次已覆盖三个生产入口及公开 `next` 别名的高成本比赛路径，开发预览域名与其他 API 高成本路径仍需审计。比赛代理参数已校验，两个比赛缓存键已规范化。
 - [x] 已有重复比赛数据缓存与并发相同回源合并；本次规范化 nginx 缓存键，保留版本号。需在恢复后复核实际回源率与费用路径。可变数据浏览器缓存不超过仓库规定，暂态和空结果不得长缓存。
 - [ ] 评估把计算器自动获取比赛/选手资料改为用户明确操作，降低只打开页面造成的负担。
 - [x] 补齐 robots 的中文比赛/选手路径和计算器参数 URL 规则。成绩链接是否需要 nofollow 尚未决定；已有 `prefetch=false`，不能把这次问题直接归为预取故障。robots/nofollow 只约束合作爬虫。
@@ -142,7 +148,7 @@ Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面�
 
 维护公告已通过将 `ops/nginx/00-maintenance.conf` 的开关改为 `default 0` 并运行 `deploy_nginx.yml` 关闭；境外 DNS 已于 09:48–09:49 恢复原 Vercel 地址。以下保留此次恢复时的操作边界，未来再停站与恢复仍须先核对实时状态。
 
-1. 先完成所需防护并检查实际接口负载。项目 Settings → General → Resume Project 可恢复生产服务，无需重新部署。
+1. 先完成所需防护并检查实际接口负载。当前项目暂停导致新提交的 Vercel 构建被 Blocked；Resume Project 只会先恢复旧 Production Deployment。恢复时先核对 Attack Mode 是否仍有效及防火墙规则，随后为最新 `main` 提交重新触发 Vercel 生产构建，确认 Ready、提交 SHA 与新 robots／代理接口，再考虑对普通访客开放。不能把 Resume 当作自动部署新代码。
 2. 如要恢复计算器，还需在 Firewall Rules 单独停用 `Emergency deny /zh/calc during traffic spike` 并发布；Resume 不会自动撤销这条规则。保留或调整已验证的限流。
 3. Attack Mode 到期不会自动恢复暂停项目；恢复项目也不等于所有挑战被撤销。逐项核对。
 4. Web Analytics 恢复是单独决策，重新启用会恢复事件采集和相应按量计费。

@@ -1,12 +1,12 @@
 # CubeRoot traffic monitor
 
-Status: main-domain nginx request monitor deployed on 2026-09-23. On 2026-09-25 the same hourly workflow was extended to the independent `api.cuberoot.me` nginx logs. No additional paid service was enabled.
+Status: main-domain nginx request monitor deployed on 2026-09-23. On 2026-09-25 the same hourly workflow was extended to the independent `api.cuberoot.me` and public `next.cuberoot.me` nginx logs. No additional paid service was enabled.
 
 Current incident controls and recovery: [Traffic defense and cost protection](traffic-defense.md). On 2026-09-24 Web Analytics collection was disabled and the Vercel production project was paused; do not assume either is currently collecting or serving without checking the dashboard.
 
 ## Live coverage
 
-`Traffic Monitor` runs hourly from GitHub Actions, reads the existing `www.cuberoot.me` and `api.cuberoot.me` nginx access logs over SSH, and writes an hourly UTC report to the Action summary. It uses the existing Bark secret for alerts. The repository is public, so the hosted Actions workflow does not add a private-repository minutes charge. The two nginx sources are reported separately; `vercel:not_connected` remains a separate coverage gap.
+`Traffic Monitor` runs hourly from GitHub Actions, reads the existing `www.cuberoot.me`, `next.cuberoot.me`, and `api.cuberoot.me` nginx access logs over SSH, and writes an hourly UTC report to the Action summary. It uses the existing Bark secret for alerts. The repository is public, so the hosted Actions workflow does not add a private-repository minutes charge. The three nginx sources are reported separately; `vercel:not_connected` remains a separate coverage gap. The `next` source uses the same page-candidate rules as the main nginx source but does not publish source-address attribution.
 
 The report includes request count, likely document requests, 5xx count, same-hour seven-day median, leading route groups, referrer hostnames, and declared automation User-Agent count. For the current nginx hour it also ranks temporary source labels by document requests and shows their request volume, leading route/referrer groups, browser claims, and peak requests per minute. A source is `declared_automation` when its User-Agent explicitly identifies a crawler or headless browser; `suspected_automation` means at least 60 document requests and either 20 route groups or 20 document requests in one minute. Everything else is `unverified`, **not** verified human. A fourfold increase of at least 100 likely document requests or a 5xx rate of at least 5% over 100 requests raises an alert. The Bark alert includes the leading route and source signal; the Action summary has the evidence. `pageCandidates` is a URL heuristic and can include prefetches; it is **not** unique visitors or Web Analytics page views. User-Agent strings can be forged, and the nginx logged address can be a proxy.
 
@@ -26,17 +26,18 @@ For a Vercel Analytics spike, open the page filter and time range in Analytics, 
 
 ## Run and verify
 
-The [Traffic Monitor workflow](../.github/workflows/traffic_monitor.yml) can be started manually. The report is in the run's Summary. The first manual run reported the UTC hour beginning 2026-09-24 00:00:00: 2,901 nginx requests, with `vercel:not_connected` displayed explicitly. A successful report means the SSH and parser path worked; Bark sends a message only when an alert rule fires.
+The [Traffic Monitor workflow](../.github/workflows/traffic_monitor.yml) can be started manually. The report is in the run's Summary. The first manual run reported the UTC hour beginning 2026-09-24 00:00:00: 2,901 main-domain nginx requests, with `vercel:not_connected` displayed explicitly. The [first run with API coverage](https://github.com/2017YANR02/cuberoot.me/actions/runs/36110433177) succeeded for 2026-09-25 06:00–07:00 UTC and reported `nginx:observed:5055`, `api:observed:7330`, and `vercel:not_connected:0`. A successful report means the SSH and parser path worked; Bark sends a message only when an alert rule fires.
 
 Node 24 can also read existing logs directly:
 
 ```bash
 node --experimental-strip-types core/scripts/traffic-monitor.ts \
   --nginx /path/to/www.cuberoot.me.log \
+  --next /path/to/next.cuberoot.me.log \
   --api /path/to/api.cuberoot.me.log \
   --nginx /path/to/www.cuberoot.me.log-20260923.gz
 ```
 
-Repeat `--nginx` or `--api` for each source file. `--now 2026-09-23T19:07:00Z` fixes the report clock for an incident replay. The narrow parser and alert checks run with `node --experimental-strip-types --test core/scripts/traffic-monitor.test.mjs`. The report is JSON on stdout; parse errors and missing input files fail the process.
+Repeat `--nginx`, `--next`, or `--api` for each source file. `--now 2026-09-23T19:07:00Z` fixes the report clock for an incident replay. The narrow parser and alert checks run with `node --experimental-strip-types --test core/scripts/traffic-monitor.test.mjs`. The report is JSON on stdout; parse errors and missing input files fail the process.
 
 Reference: [Vercel Web Analytics](https://vercel.com/docs/analytics), [Web Analytics API](https://vercel.com/docs/analytics/web-analytics-api).

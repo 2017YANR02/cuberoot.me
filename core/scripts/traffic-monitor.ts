@@ -3,7 +3,7 @@ import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
 import { pathToFileURL } from "node:url";
 
-export type Source = "nginx" | "api" | "vercel";
+export type Source = "nginx" | "next" | "api" | "vercel";
 export type RequestSample = {
   source: Source;
   clientAddress?: string;
@@ -37,7 +37,7 @@ function timestampFromNginx(value: string): number | null {
   return Number.isFinite(timestamp) ? timestamp : null;
 }
 
-export function parseNginxLine(line: string, source: "nginx" | "api" = "nginx"): RequestSample | null {
+export function parseNginxLine(line: string, source: "nginx" | "next" | "api" = "nginx"): RequestSample | null {
   const match = NGINX_LINE.exec(line);
   if (!match) return null;
   const timestamp = timestampFromNginx(match[2]);
@@ -241,7 +241,7 @@ export class TrafficAccumulator {
         topRoutes: top(entry.routes, 3), topReferrers: top(entry.referrers, 3), browserClaims: top(entry.browsers, 3),
       };
     });
-    const lines = (["nginx", "vercel", "api"] as Source[]).map((source) => {
+    const lines = (["nginx", "vercel", "api", "next"] as Source[]).map((source) => {
       const current = sourceBuckets.get(`${source}:${start}`) || bucket();
       const history = Array.from({ length: 7 }, (_, i) => {
         const previous = sourceBuckets.get(`${source}:${start - (i + 1) * 24 * HOUR}`);
@@ -292,12 +292,12 @@ async function main(args: string[]): Promise<void> {
   let now = Date.now();
   for (let index = 0; index < args.length; index++) {
     const flag = args[index];
-    if (["--nginx", "--api", "--vercel", "--now"].includes(flag) && !args[index + 1]) throw new Error(`${flag} needs a value`);
-    if (flag === "--nginx" || flag === "--api" || flag === "--vercel") files.push({ source: flag.slice(2) as Source, path: args[++index] });
+    if (["--nginx", "--next", "--api", "--vercel", "--now"].includes(flag) && !args[index + 1]) throw new Error(`${flag} needs a value`);
+    if (flag === "--nginx" || flag === "--next" || flag === "--api" || flag === "--vercel") files.push({ source: flag.slice(2) as Source, path: args[++index] });
     else if (flag === "--now") { now = Date.parse(args[++index]); if (!Number.isFinite(now)) throw new Error("Invalid --now timestamp"); }
     else throw new Error(`Unknown option: ${flag}`);
   }
-  if (files.length === 0) throw new Error("At least one --nginx, --api or --vercel file is required");
+  if (files.length === 0) throw new Error("At least one --nginx, --next, --api or --vercel file is required");
   const accumulator = new TrafficAccumulator(now);
   for (const file of files) {
     accumulator.addInput(file.source);
