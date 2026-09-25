@@ -16,6 +16,13 @@ interface Card {
 
 const CARDS: Card[] = [
   {
+    href: '/dev/dns-routing',
+    glyph: '⌁',
+    accent: 'var(--signal-info)',
+    zh: { title: '同一个网址，两条路', sub: 'DNS · NS · Cloudflare', tagline: '用图解看懂 cuberoot.me 的国内外分线路、301 跳转、Cloudflare 免费方案和合规边界', meta: '实测路径 / 方案比较 / 迁移条件' },
+    en: { title: 'One address, two paths', sub: 'DNS · NS · Cloudflare', tagline: 'A visual guide to CubeRoot’s regional routing, redirects, Cloudflare Free options and compliance boundaries', meta: 'Observed routes / options / migration' },
+  },
+  {
     href: '/dev/traffic-incident-2026-09',
     glyph: '↗',
     accent: 'var(--accent)',
