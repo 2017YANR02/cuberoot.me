@@ -53,6 +53,12 @@ jobs:
           set -e
           VHOST_DIR=/etc/nginx/vhost.d
           TS=$(date +%s)
+          # Runtime incident state is independent of repository config and must
+          # survive every subsequent nginx deployment.
+          if [ ! -f /etc/nginx/cuberoot-maintenance-state.conf ]; then
+            printf 'default 0;\n' > /etc/nginx/cuberoot-maintenance-state.conf
+            chmod 0600 /etc/nginx/cuberoot-maintenance-state.conf
+          fi
           # Snapshot every confs that will be (re)written, so a single failure
           # rolls back the whole batch — atomic apply across all conf files.
           declare -a CHANGED=()
