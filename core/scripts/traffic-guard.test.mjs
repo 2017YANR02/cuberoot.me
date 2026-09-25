@@ -60,3 +60,14 @@ test("disabled Analytics proxy failures do not trigger a 5xx trip", () => {
   const rows = [1, 2].flatMap(minute => Array.from({ length: 150 }, () => sample(minute, "nginx", "/_vercel/insights/script.js", 502)));
   assert.deepEqual(evaluate(rows, now).reasons, []);
 });
+
+test("previous maintenance traffic cannot retrip the guard after reopening", () => {
+  const rows = [1, 2].flatMap(minute => Array.from({ length: 4100 }, () => ({
+    ...sample(minute, "api", "/v1/cubing-live/A", 503), maintenance: true,
+  })));
+  const result = evaluate(rows, now);
+  assert.deepEqual(result.reasons, []);
+  assert.equal(result.window.api[0].maintenance, 4100);
+  assert.equal(result.window.api[0].limited, 0);
+  assert.equal(result.window.api[0].errors, 0);
+});

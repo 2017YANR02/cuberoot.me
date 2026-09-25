@@ -51,7 +51,8 @@ jobs:
             [ -f "$file" ] && files+=(--api "$file")
           done
           [ "${#files[@]}" -gt 0 ] || exit 1
-          node --experimental-strip-types /tmp/cuberoot-traffic-monitor.ts "${files[@]}"
+          node --experimental-strip-types /tmp/cuberoot-traffic-monitor.ts "${files[@]}" \
+            --maintenance-state /etc/nginx/cuberoot-maintenance-state.conf
           REMOTE
           # shellcheck disable=SC2016
           node -e 'const r=require("./traffic-report.json"); if(!r.sources?.length) process.exit(1); console.log(`${r.windowStart} ${r.sources.map(s=>`${s.source}:${s.coverage}:${s.requests}`).join(" ")}`)'
@@ -60,14 +61,15 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           node <<'NODE' >> "$GITHUB_STEP_SUMMARY"
           const report = require("./traffic-report.json");
+          if (report.notification) console.log(`### ${report.notification.title}\n\n${report.notification.body}\n`);
           console.log(`UTC ${report.windowStart} to ${report.windowEnd}. Request counts are not unique visitors.`);
           for (const source of report.sources) {
             console.log(`\n#### ${source.source}: ${source.coverage}`);
             if (source.coverage !== "observed") continue;
             if (source.source === "api") {
-              console.log(`Requests: ${source.requests}; 429: ${source.rateLimited429}; 5xx: ${source.errors5xx}; same-hour request baseline: ${source.baselineRequests ?? "unavailable"}.`);
+              console.log(`Requests: ${source.requests}; confirmed blocked: ${source.blockedRequests}; maintenance: ${source.maintenanceBlocked503}; 429: ${source.rateLimited429}; unexpected 5xx: ${source.unexpected5xx}; unclassified old 503: ${source.unclassified503}; same-hour request baseline: ${source.baselineRequests ?? "unavailable"}.`);
             } else {
-              console.log(`Requests: ${source.requests}; page candidates: ${source.pageCandidates}; 429: ${source.rateLimited429}; 5xx: ${source.errors5xx}; same-hour page baseline: ${source.baselinePageCandidates ?? "unavailable"}.`);
+              console.log(`Requests: ${source.requests}; confirmed blocked: ${source.blockedRequests}; maintenance: ${source.maintenanceBlocked503}; page candidates: ${source.pageCandidates}; 429: ${source.rateLimited429}; unexpected 5xx: ${source.unexpected5xx}; unclassified old 503: ${source.unclassified503}; same-hour page baseline: ${source.baselinePageCandidates ?? "unavailable"}.`);
             }
             console.log(`Alerts: ${source.alerts.join(", ") || "none"}.`);
             console.log(`Top routes: ${source.topRoutes.slice(0, 3).map(x => `${x.name} (${x.count})`).join(", ") || "none"}.`);
@@ -90,12 +92,13 @@ jobs:
           BARK_KEY: ${{ secrets.BARK_KEY }}
         run: |
           # shellcheck disable=SC2016
-          message=$(node -e 'const r=require("./traffic-report.json"); const a=r.sources.flatMap(s=>s.alerts.map(x=>`${s.source}: ${x}, ${s.requests} requests, ${s.pageCandidates} page candidates, ${s.rateLimited429} 429, route ${s.topRoutes[0]?.name || "unknown"}, ${s.errors5xx} 5xx`)); process.stdout.write(a.join("; "))')
+          message=$(node -e 'process.stdout.write(require("./traffic-report.json").notification?.body || "")')
           [ -n "$message" ] || exit 0
-          echo "::warning::$message"
+          title=$(node -e 'process.stdout.write(require("./traffic-report.json").notification.title)')
+          printf '%s\n%s\n' "$title" "$message"
           [ -n "$BARK_KEY" ] || exit 0
           curl -fsS -m 10 -X POST "https://api.day.app/$BARK_KEY" \
-            --data-urlencode 'title=CubeRoot 流量异常' \
+            --data-urlencode "title=$title" \
             --data-urlencode "body=$message" \
             --data-urlencode 'group=cuberoot-monitor' \
             --data-urlencode "url=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
