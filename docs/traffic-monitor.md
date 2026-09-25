@@ -2,6 +2,14 @@
 
 Status: main-domain nginx request monitor deployed on 2026-09-23. On 2026-09-25 the same hourly workflow was extended to the independent `api.cuberoot.me` and public `next.cuberoot.me` nginx logs. No additional paid service was enabled.
 
+## Automatic emergency guard
+
+The server-local `cuberoot-traffic-guard.timer` checks the three nginx access logs once per minute, 15 seconds after the minute boundary. It evaluates the last two complete minutes. A very large one-minute spike or two sustained high minutes in successful page requests, all web requests, API requests, API 429s, or 5xx responses trips the root-owned `/etc/nginx/cuberoot-maintenance-state.conf` switch and reloads nginx. The main site shows the existing maintenance notice; `next.cuberoot.me` and `api.cuberoot.me` return 503. ACME validation stays reachable. The guard sends a Bark alert using the existing key stored root-only on the server. It never auto-reopens; inspect the incident and explicitly set `default 0;` in the state file, then run `nginx -t && nginx -s reload`.
+
+Initial thresholds: two complete minutes with at least 350 successful document candidates, 1,500 web requests, 1,200 API requests, 40 non-Analytics web/API 5xx, or 100 API 429 per minute. An extreme single minute at 1,000 document candidates, 4,000 web/API requests, 100 5xx, or 300 API 429 also trips. These are emergency thresholds above the 2026-09-25 observed short-window peaks; they are not bot classification and can still affect real visitors. The runtime switch survives later nginx deployments. The hourly report below remains useful for context and baseline analysis.
+
+This local guard **does not see Vercel-only traffic**. Vercel's existing DDoS mitigation, WAF rules, Attack Mode while enabled, and spend pause operate independently. The Firewall Actions API reports actions by rule/IP, not all allowed requests, so it cannot make a reliable minute-by-minute all-traffic stop decision. Do not describe this as an automatic global shutdown. No Log Drain or Web Analytics collection has been enabled for it.
+
 Current incident controls and recovery: [Traffic defense and cost protection](traffic-defense.md). On 2026-09-24 Web Analytics collection was disabled and the Vercel production project was paused; do not assume either is currently collecting or serving without checking the dashboard.
 
 ## Live coverage
