@@ -14,6 +14,16 @@ This local guard **does not see Vercel-only traffic**. Vercel's existing DDoS mi
 
 Current incident controls and recovery: [Traffic defense and cost protection](traffic-defense.md). On 2026-09-24 Web Analytics collection was disabled and the Vercel production project was paused; do not assume either is currently collecting or serving without checking the dashboard.
 
+## Maintenance-aware notifications (2026-09-25)
+
+The three nginx access logs retain their combined-log fields and append a server-owned `maintenance=0|1` marker. Only a 503 with `maintenance=1` counts as a confirmed maintenance block. A 503 with `maintenance=0`, or another 5xx, remains an unexpected service error. Historical 503s without the marker are reported separately as unclassified; the current maintenance switch never retroactively labels past requests.
+
+Each report keeps total requests, confirmed blocks (maintenance 503 + rate-limit 429 + denied 403), successful 2xx/3xx responses, unexpected 5xx, unclassified old 503s and other responses distinct. Requests are not people; successful responses include redirects and cache hits. Only maintenance blocks are described as not entering the application. Minute guard reports keep maintenance and 429 counts separate, and previous maintenance responses cannot retrip the guard immediately after reopening.
+
+Bark notifications now use Chinese descriptions, an explicit complete-hour window in Beijing time, current Aliyun maintenance state, and per-entry received/blocked/successful counts with a block breakdown. Maintenance traffic uses “CubeRoot 访问量提醒”; old unclassified 503s use “CubeRoot 访问情况待核对”; confirmed non-maintenance errors use “CubeRoot 服务异常”. The source report retains machine-readable alert codes. Vercel coverage remains explicitly absent. No monitoring subscriptions were enabled.
+
+`traffic_monitor.yml` reads the maintenance switch over the existing SSH connection and sends the same notification text included in the report. A high request volume during maintenance can still produce an informational traffic notification; it does not imply that requests were admitted, that the app crashed, or that every requester is malicious.
+
 ## Live coverage
 
 `Traffic Monitor` runs hourly from GitHub Actions, reads the existing `www.cuberoot.me`, `next.cuberoot.me`, and `api.cuberoot.me` nginx access logs over SSH, and writes an hourly UTC report to the Action summary. It uses the existing Bark secret for alerts. The repository is public, so the hosted Actions workflow does not add a private-repository minutes charge. The three nginx sources are reported separately; `vercel:not_connected` remains a separate coverage gap. The `next` source uses the same page-candidate rules as the main nginx source but does not publish source-address attribution.
