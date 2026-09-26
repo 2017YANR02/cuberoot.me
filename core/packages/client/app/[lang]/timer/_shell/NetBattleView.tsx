@@ -1828,17 +1828,23 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                 }
               } : undefined}
             >
-              {mixedEvents && (
-                <EventIcon
-                  event={netEventToSelectorId(pEvent)}
-                  className="net-p-event"
-                  title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
-                />
-              )}
-              {p.id === room.admin && (
-                <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />
-              )}
-              {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
+              <span className="net-p-event-slot">
+                {mixedEvents && (
+                  <EventIcon
+                    event={netEventToSelectorId(pEvent)}
+                    className="net-p-event"
+                    title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
+                  />
+                )}
+              </span>
+              <span className="net-p-host-slot">
+                {p.id === room.admin && (
+                  <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />
+                )}
+              </span>
+              <span className="net-p-flag-slot">
+                {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
+              </span>
               {/* 自己的名字可点开改(登录用户除外:他们的名字就是账号 / WCA 名册上的名字)。 */}
               {mine && !authUser ? (
                 <button

@@ -230,8 +230,9 @@
   padding: 8px 16px 4px;
 }
 .net-player {
-  display: flex;
-  align-items: baseline;
+  display: grid;
+  grid-template-columns: 18px 18px 18px minmax(0, 10em) max-content max-content;
+  align-items: center;
   gap: 8px;
   min-width: 0;
   min-height: 32px;
@@ -253,6 +254,18 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.net-p-event-slot,
+.net-p-host-slot,
+.net-p-flag-slot {
+  display: inline-flex;
+  width: 18px;
+  height: 20px;
+  align-items: center;
+  justify-content: flex-start;
+}
+.net-p-event-slot:empty,
+.net-p-host-slot:empty,
+.net-p-flag-slot:empty { visibility: hidden; }
 .net-player.is-me .net-p-name { font-weight: 700; }
 /* 访客点自己的名字改名 —— 剥掉 UA 按钮样式,看上去仍是玩家条里的一个名字,
    只有下划虚线提示「这个能点」。 */
@@ -673,6 +686,10 @@
      省掉前面「房间」二字正好把这一格补回来,不必让整条右组换行。 */
   .net-code-label { display: none; }
   .net-players { gap: 2px; padding-top: 6px; }
+  .net-player { grid-template-columns: 16px 16px 16px minmax(0, 7em) max-content max-content; gap: 6px; }
+  .net-p-event-slot,
+  .net-p-host-slot,
+  .net-p-flag-slot { width: 16px; }
   .net-p-name { max-width: 7em; }
   .net-lobby { margin-top: 24px; }
   .net-stats-overlay { padding: 3vh 10px; }
