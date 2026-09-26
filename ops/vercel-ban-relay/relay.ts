@@ -28,13 +28,17 @@ export function managedRule(ips: string[], index = 0) {
   };
 }
 /** Keep existing slots, reserve two for incident rules, and queue excess IPs. */
-export function planCapacity(ips: string[], otherRules: number, existingRules: number) {
+export function planCapacity(ips: string[], otherRules: number, existingRules: number, maxManagedIps = 24000) {
+  // Production accepts 24,000 entries; larger configs return INTERNAL_ERROR.
+  // This is an observed deployment budget, not a published Vercel IP limit.
+  if (!Number.isSafeInteger(maxManagedIps) || maxManagedIps < 1) throw new Error('Invalid managed IP budget');
   if (otherRules + existingRules > 40) throw new Error('Custom rule capacity exceeded; preserve existing rules');
   const available = Math.max(existingRules, 40 - otherRules - 2);
   if (available < 1) throw new Error('No custom rule capacity available for IP bans');
-  const count = Math.max(1, existingRules, Math.min(Math.ceil(ips.length / 1875), available));
-  const admitted = ips.slice(0, count * 1875);
-  return { count, admitted, pending: ips.length - admitted.length, capacity: available * 1875 };
+  const capacity = Math.min(maxManagedIps, available * 1875);
+  const admitted = ips.slice(0, capacity);
+  const count = Math.max(1, existingRules, Math.ceil(admitted.length / 1875));
+  return { count, admitted, pending: ips.length - admitted.length, capacity };
 }
 /** Advance only through complete windows; split busy windows instead of skipping them. */
 export async function collectEvents(state: Ledger, now: number, read: (start: number, end: number) => Promise<BanEvent[]>, budget = 30) {
@@ -95,7 +99,7 @@ export async function run() {
   let active = await api('config/active');
   const own = (r: {name: string}) => r.name === MANAGED_NAME || /^Rolling 30-day incident IP bans \d+$/.test(r.name);
   if (active.rules?.[0]?.id !== 'rule_china_mainland_traffic_exemption_aOC64j') throw new Error('China exemption order changed; operator review required');
-  const plan = planCapacity(ips, active.rules.filter((r: {name: string}) => !own(r)).length, active.rules.filter(own).length);
+  const plan = planCapacity(ips, active.rules.filter((r: {name: string}) => !own(r)).length, active.rules.filter(own).length, config.maxManagedIps ?? 24000);
   const { count } = plan;
   for (let i = 0; i < count; i++) {
     const part = plan.admitted.slice(i * 1875, (i + 1) * 1875);

@@ -85,12 +85,15 @@ test('an incomplete or failed event window cannot advance the cursor past unobse
 
 test('capacity follows actual slots, reserves two rules, and queues without dropping records', async () => {
  const {planCapacity}=await import('./relay.ts');const ips=Array.from({length:67847},(_,i)=>String(i));
- const plan=planCapacity(ips,10,13);assert.equal(plan.count,28);assert.equal(plan.capacity,52500);assert.equal(plan.admitted.length,52500);assert.equal(plan.pending,15347);assert.equal(ips.length,67847);
+ const plan=planCapacity(ips,10,13,52500);assert.equal(plan.count,28);assert.equal(plan.capacity,52500);assert.equal(plan.admitted.length,52500);assert.equal(plan.pending,15347);assert.equal(ips.length,67847);
  assert.deepEqual(plan.admitted,ips.slice(0,52500));
  assert.equal(planCapacity([],10,13).count,13);
- assert.equal(planCapacity(ips,10,30).capacity,56250);
+ assert.equal(planCapacity(ips,10,30,56250).capacity,56250);
  assert.throws(()=>planCapacity(ips,40,0),/No custom/);
  assert.throws(()=>planCapacity(ips,40,1),/capacity exceeded/);
+ const production=planCapacity(ips,10,13);assert.equal(production.capacity,24000);assert.equal(production.count,13);assert.equal(production.pending,43847);assert.deepEqual(production.admitted,ips.slice(0,24000));
+ assert.throws(()=>planCapacity(ips,10,13,0),/Invalid managed/);
+ assert.throws(()=>planCapacity(ips,10,13,NaN),/Invalid managed/);
 });
 
 test('a full queue still publishes admitted IPs and removes expired bans on the next sync', async () => {
