@@ -15,6 +15,7 @@
 // 直连 SSE,不进这里.
 
 import dns from 'node:dns';
+import { COMPETITION_SERVICE_HEADER, createCompetitionProof } from '@cuberoot/shared/competition-access';
 
 // Node fetch 默认 IPv6-first,api.cuberoot.me 的 AAAA 查询会挂起到超时 (next.config
 // 在主进程设过,但 route handler 运行时 / Vercel serverless function 不一定继承,
@@ -49,11 +50,14 @@ export async function GET(
   }
   const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
 
+  const upstreamPath = `/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`;
+  const secret = process.env.COMPETITION_ACCESS_SECRET;
+  const proof = secret ? await createCompetitionProof(secret, 'service', upstreamPath) : '';
   let upstream: Response;
   try {
     upstream = await fetch(`${UPSTREAM}/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`, {
       signal: AbortSignal.timeout(28_000),
-      headers: { accept: 'application/json' },
+      headers: { accept: 'application/json', ...(proof ? { [COMPETITION_SERVICE_HEADER]: proof } : {}) },
     });
   } catch {
     return Response.json({ error: 'upstream error' }, { status: 502, headers: { 'cache-control': 'no-store' } });

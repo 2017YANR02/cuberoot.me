@@ -294,6 +294,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'nemesizer', m: 'GET', p: '/v1/nemesizer/stats', g: 'public', zh: '汇总统计', en: 'Stats' },
 
   // ---- live ----
+  { d: 'live', m: 'GET', p: '/v1/competition-access/check', g: 'public', c: 'no-store', zh: '比赛访问凭证校验（中国大陆 IP 豁免）', en: 'Competition access proof check (mainland China IP exemption)' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug', g: 'public', zh: '比赛实时成绩(L2 缓存)', en: 'Live comp results (L2 cache)' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/round/:event/:round', g: 'public', zh: '粗饼单轮成绩刷新', en: 'Cubing China round refresh' },
   { d: 'live', m: 'GET', p: '/v1/cubing-live/:slug/stream', g: 'public', c: 'no-store', zh: '粗饼成绩更新事件', en: 'Cubing China live result events' },
