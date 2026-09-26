@@ -1,6 +1,7 @@
 // Dev-only catch-all that serves /tools/* from the repo root's tools/ directory.
 // See app/stats/[...slug]/route.ts for the same pattern + rationale.
 
+import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,7 +86,24 @@ export async function GET(
       // Vercel 函数 → 自有 static 源是一跳跨境 server-to-server 请求,会整段不通
       // (实测 undici 默认 10s connect timeout 全部打满)。正常命中在 1s 级,所以
       // 卡 6s 就判死、别把整个函数吊在那儿。
-      const upstream = await fetch(upstreamUrl, { signal: AbortSignal.timeout(6000) });
+      // The static origin protects HTML too. This short proof authorizes only
+      // this exact upstream path, after the site-wide proxy verified the visitor.
+      const needsProof = !path.extname(rel) || /\.html?$/i.test(rel);
+      const serviceProof = needsProof
+        ? await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', 'service', '/tools/' + rel)
+        : '';
+      const upstream = await fetch(upstreamUrl, {
+        signal: AbortSignal.timeout(6000), redirect: 'manual',
+        headers: serviceProof ? { [COMPETITION_SERVICE_HEADER]: serviceProof } : {},
+      });
+      if ([301, 302, 307, 308].includes(upstream.status)) {
+        const location = upstream.headers.get('location');
+        const target = location ? new URL(location, upstreamUrl) : null;
+        if (target?.origin === 'https://static.cuberoot.me' && target.pathname.startsWith('/tools/')) {
+          return new Response(null, { status: 307, headers: { location: target.pathname + target.search, 'cache-control': 'no-store' } });
+        }
+        return new Response('upstream verification failed', { status: 403, headers: { 'cache-control': 'no-store' } });
+      }
       if (!upstream.ok) return new Response('not found', { status: upstream.status });
       // 已知扩展名优先用我们的映射(尤其 .wasm),纠正 upstream 可能给错的 MIME。
       const ext = path.extname(rel).toLowerCase();
