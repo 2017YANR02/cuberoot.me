@@ -720,8 +720,16 @@
   transform: translateY(-clamp(24px, 6vh, 72px));
 }
 
+.net-shell .timing-surface--scramble-above .timing-surface-scramble-top {
+  top: clamp(36px, 5vh, 72px);
+}
+
 @media (max-width: 720px) {
   .net-shell .timing-surface--scramble-above .timing-surface-core {
     transform: translateY(-clamp(12px, 3vh, 32px));
+  }
+
+  .net-shell .timing-surface--scramble-above .timing-surface-scramble-top {
+    top: 28px;
   }
 }
