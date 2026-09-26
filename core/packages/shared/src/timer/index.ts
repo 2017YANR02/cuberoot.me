@@ -43,6 +43,7 @@ export * from './timing-display';
 export * from './solution-hints';
 export * from './source-revision';
 export * from './smart-cube-move-recorder';
+export * from './smart-cube-attempt';
 export * from './stage-segments';
 export * from './stage-segments-producer';
 export * from './reconstruct/solve-metrics';
