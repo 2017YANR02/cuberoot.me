@@ -55,7 +55,7 @@ const CSTIMER_KEYS: Partial<Record<EventId, CstimerScrambleSpec>> = {
   fto:      { key: 'ftoso' },
   gear:     { key: 'gearso' },
   ivy:      { key: 'ivyso' },
-  redi:     { key: CSTIMER_REDI_KEY },
+  redi:     { key: CSTIMER_REDI_KEY, length: 8 },
 };
 
 // Gear and Ivy keep their csTimer keys above for import/export compatibility

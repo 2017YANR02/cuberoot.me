@@ -67,7 +67,7 @@ export const TNOODLE_WCA_EVENTS = [
 
 // cubing.js `twizzleEvents` 里非 WCA 但已支持 random-state 打乱的项目。
 // 跟 https://experiments.cubing.net/cubing.js/mark3 暴露的对齐；Redi 单独
-// 走 csTimer 的 rediso，避免两处生成口径不同。
+// 走 csTimer 的 redim (MoYu) 模式，避免两处生成口径不同。
 // id 形态保持 cubing.js 一致(master_tetraminx 等下划线),
 // EventIcon 把它们映到 cubing-icons 的 `unofficial-*` class。
 export const TWIZZLE_NONWCA_EVENTS = [
@@ -233,8 +233,8 @@ on222ModeChange(() => {
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
-  // Redi uses csTimer's canonical random-state generator. cubing.js exposes a
-  // different generator/notation, so keep the generator and timer on rediso.
+  // Redi uses csTimer's canonical MoYu generator. cubing.js exposes a
+  // different generator/notation, so keep the generator and timer on redim.
   if (wcaId === 'redi_cube') return cstimerScramble(wcaId);
   // 2x2: cubing.js 0.63 把 222 路由到 WASM twips,generator 是 U/F/L/R 四面 —— 出的打乱含 L,
   // 违反 WCA 4b3(二阶固定 DBL 角,只用 U/R/F)。改走站内 TNoodle 移植(lib/pocket-scramble):

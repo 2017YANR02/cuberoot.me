@@ -46,7 +46,7 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   kilominx: 'klmso',
   gear: 'gearso',
   ivy: 'ivyso',
-  redi: 'rediso',
+  redi: 'redim',
   mpyram: 'mpyrso',
   r3: 'r3',
   r4: 'r4',
