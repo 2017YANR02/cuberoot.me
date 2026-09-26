@@ -18,6 +18,10 @@
 
 本地验收：API 4 项、客户端访问与路由专项 30 项、账号文档 64 项通过，前后端类型检查通过。真实浏览器使用本地隔离挑战处理器验证错误答案被拒、正确输入后回跳；390px 视口无横向溢出，检查四种明暗组合。该浏览器过程是测试环境证据，生产部署与实际凭证验收另行记账。验证码页面不索引、不列入 sitemap；不改变账号登录流程。
 
+生产记录（2026-09-26 05:20 UTC）：代码 `daaaa2596d` 的 [API 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36220072897)、[Next 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36220072861)成功，Vercel production 部署 `dpl_EPtYkwPEh7pJePVp6dCRx3A1GHbc` 为 READY。线上新挑战实测错误输入 400、正确输入 200 并签 cookie、同题重放 400、凭证检查 204、比赛数据 200、去掉 cookie 后同一缓存数据 403。真实 Chrome 访问阿里云 next 别名的比赛详情先 307 至输入页；输入图片字符后浏览器保存 Domain=.cuberoot.me 的 HttpOnly/Secure cookie，并返回原比赛页。中国出口访问 Vercel 比赛页与独立 API 均为 200。最新两分钟监控无维护、无 5xx、无停站原因；不能据此宣称后续没有自动访问。
+
+首轮 CI 的一个样式守卫失败：新页面使用了后代 button/input 选择器，存在影响共享控件的风险。已改成控件专属 class 并通过对应守卫；发布与 CI 结果以修正提交对应运行另行核对。验证码验签与上述线上通行测试已通过。
+
 ## 09-26 Vercel 比赛入口验证（以下为手动验证码上线前的记录）
 
 ### 独立比赛 API 通行凭证（2026-09-26 04:49 UTC 已启用）
