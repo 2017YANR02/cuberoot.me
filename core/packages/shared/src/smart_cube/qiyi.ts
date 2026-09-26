@@ -55,7 +55,7 @@ function validFacelets(value: string): string | null {
   return 'URFDLB'.split('').every((face) => value.split(face).length - 1 === 9) ? value : null;
 }
 
-function parseFacelets(msg: Uint8Array): string | null {
+export function parseQiyiFacelets(msg: Uint8Array): string | null {
   if (msg.length < 34) return null;
   let output = '';
   for (let index = 0; index < 54; index++) {
@@ -135,11 +135,11 @@ export function decodeQiyiNotification(
   const timestamp = view.getUint32(3, false);
   const battery = msg[35] <= 100 ? msg[35] : null;
   const result = { ...empty, opcode, timestamp, latestTimestamp: timestamp, battery };
-  if (opcode === QIYI_OP_HELLO) {
+  if (opcode === QIYI_OP_HELLO || opcode === QIYI_OP_SYNC) {
     if (timestamp < previousTimestamp) {
       return { ...result, battery: null, latestTimestamp: previousTimestamp };
     }
-    return { ...result, state: parseFacelets(msg) };
+    return { ...result, state: parseQiyiFacelets(msg) };
   }
   if (opcode !== QIYI_OP_STATE) return result;
   const candidates: Array<{ code: number; ts: number }> = [{ code: msg[34], ts: timestamp }];
@@ -165,6 +165,6 @@ export function decodeQiyiNotification(
   return {
     ...result,
     latestTimestamp,
-    state: timestamp >= previousTimestamp ? parseFacelets(msg) : null,
+    state: timestamp >= previousTimestamp ? parseQiyiFacelets(msg) : null,
   };
 }
