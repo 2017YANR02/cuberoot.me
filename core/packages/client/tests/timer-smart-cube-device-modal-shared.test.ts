@@ -103,6 +103,27 @@ describe('shared smart-cube device modal', () => {
     expect(onScan).toHaveBeenCalledOnce();
   });
 
+  it('does not render actions disabled by the host capability contract', async () => {
+    const onResetState = vi.fn(async () => {});
+    const onResetGyro = vi.fn();
+    const onDisconnect = vi.fn(async () => {});
+
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+      capabilities: { disconnect: true },
+      language: 'en',
+      onClose: vi.fn(),
+      onDisconnect,
+      onResetGyro,
+      onResetState,
+      snapshot: connectedSnapshot,
+    })));
+
+    const dialog = document.body.querySelector<HTMLElement>('[role="dialog"]')!;
+    expect(dialog.textContent).toContain('Disconnect');
+    expect(dialog.textContent).not.toContain('Reset state');
+    expect(dialog.textContent).not.toContain('Reset gyroscope');
+  });
+
   it('keeps rejected actions contained and protects busy or drag-out dismissal', async () => {
     let finishReset!: () => void;
     const onClose = vi.fn();

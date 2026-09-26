@@ -31,7 +31,11 @@ describe('TimerSmartCubeMoveRecorder', () => {
   it('is the recorder used by every website smart-cube timing mode', () => {
     const solo = readFileSync(new URL('../app/[lang]/timer/_shell/SoloView.tsx', import.meta.url), 'utf8');
     const net = readFileSync(new URL('../app/[lang]/timer/_shell/NetBattleView.tsx', import.meta.url), 'utf8');
-    for (const source of [solo, net]) {
+    expect(solo).toContain('new SmartCubeAttemptProducer()');
+    expect(solo).toContain('smartCubeAttemptProducerRef.current.begin(');
+    expect(solo).toContain('smartCubeAttemptProducerRef.current.recordMove(');
+    expect(solo).not.toMatch(/movesRef|solveStartTsRef/);
+    for (const source of [net]) {
       expect(source).toContain('new TimerSmartCubeMoveRecorder()');
       expect(source).toContain('moveRecorderRef.current.begin(');
       expect(source).toContain('moveRecorderRef.current.record(');

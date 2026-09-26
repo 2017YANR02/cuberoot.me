@@ -4,6 +4,7 @@ import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cu
 import { matchesMoyu32Name, MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { matchesQiyiName, QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
 import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
+import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -73,7 +74,7 @@ function modelForDeviceName(name: string): InstalledCubeModel | null {
 
 export function useInstalledSmartCube(
   createTransport: () => BleTransport,
-  { language, onMove, onSolved, onGyro }: InstalledAppSmartCubeOptions,
+  { language, onMove, onSolved, onGyro, onConnectionEvent }: InstalledAppSmartCubeOptions,
 ): InstalledAppSmartCube {
   const transportRef = useRef<BleTransport | null>(null);
   if (!transportRef.current) transportRef.current = createTransport();
@@ -93,9 +94,11 @@ export function useInstalledSmartCube(
   const onMoveRef = useRef(onMove);
   const onSolvedRef = useRef(onSolved);
   const onGyroRef = useRef(onGyro);
+  const onConnectionEventRef = useRef(onConnectionEvent);
   onMoveRef.current = onMove;
   onSolvedRef.current = onSolved;
   onGyroRef.current = onGyro;
+  onConnectionEventRef.current = onConnectionEvent;
   const [phase, setPhase] = useState<InstalledAppSmartCube['phase']>('idle');
   const [availableDevices, setAvailableDevices] = useState<readonly BleDeviceRef[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -240,6 +243,7 @@ export function useInstalledSmartCube(
       const connectionCallbacks = {
         onDisconnect: () => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
+          onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
           connectionRef.current = null;
           setDeviceName('');
           resetCubeState();
@@ -255,6 +259,11 @@ export function useInstalledSmartCube(
         },
         onProtocolError: () => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
+          const event: TimerDeviceConnectionEvent = {
+            kind: 'error',
+            error: { code: 'protocol-error', retryable: true },
+          };
+          onConnectionEventRef.current?.(event);
           connectionRef.current = null;
           void disposeConnection(connection);
           setDeviceName('');
@@ -301,6 +310,14 @@ export function useInstalledSmartCube(
       return device.name;
     } catch (error) {
       if (current()) {
+        onConnectionEventRef.current?.({
+          kind: 'error',
+          error: {
+            code: 'connection-failed',
+            message: error instanceof Error ? error.message : String(error),
+            retryable: true,
+          },
+        });
         const cleanup = disconnect();
         const cleanupGeneration = generationRef.current;
         await cleanup;

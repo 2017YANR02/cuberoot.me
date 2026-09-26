@@ -10,32 +10,22 @@ import { createPortal } from 'react-dom';
 
 import { modalFocusableElements } from './modal-focus';
 import type { TimerUiLanguage } from './TimerColorSubsetPicker';
+import type {
+  TimerDeviceAvailableDevice,
+  TimerDeviceCapabilities,
+  TimerDeviceConnectionPhase,
+  TimerDeviceSnapshot,
+} from '@cuberoot/shared/timer/device-contract';
 
-export type TimerSmartCubeConnectionPhase =
-  | 'idle'
-  | 'requesting'
-  | 'connecting'
-  | 'connected'
-  | 'error';
+export type TimerSmartCubeConnectionPhase = TimerDeviceConnectionPhase;
 
-export interface TimerSmartCubeDeviceSnapshot {
-  battery?: number | null;
-  deviceName?: string | null;
-  hasGyro?: boolean;
-  lastMove?: string | null;
-  phase: TimerSmartCubeConnectionPhase;
-  protocol?: string | null;
-  solved?: boolean | null;
-}
+export type TimerSmartCubeDeviceSnapshot = TimerDeviceSnapshot;
 
-export interface TimerSmartCubeAvailableDevice {
-  id: string;
-  name: string;
-  rssi?: number;
-}
+export type TimerSmartCubeAvailableDevice = TimerDeviceAvailableDevice;
 
 export interface TimerSmartCubeDeviceModalProps {
   availableDevices?: readonly TimerSmartCubeAvailableDevice[];
+  capabilities?: TimerDeviceCapabilities;
   className?: string;
   connectionFailure?: ReactNode;
   intro?: ReactNode;
@@ -120,6 +110,7 @@ type DeviceAction = 'connect' | 'disconnect' | 'reset' | null;
 /** Shared smart-cube status and recovery surface. Hosts only provide transport actions. */
 export function TimerSmartCubeDeviceModal({
   availableDevices,
+  capabilities,
   className,
   connectionFailure,
   intro,
@@ -149,7 +140,12 @@ export function TimerSmartCubeDeviceModal({
   onCloseRef.current = onClose;
 
   const connected = snapshot.phase === 'connected';
-  const listMode = availableDevices !== undefined && onScan !== undefined;
+  const canConnect = capabilities ? capabilities.connect === true : onConnect !== undefined;
+  const canDisconnect = capabilities ? capabilities.disconnect === true : onDisconnect !== undefined;
+  const canReset = capabilities ? capabilities.reset === true : onResetState !== undefined;
+  const canResetGyro = capabilities ? capabilities.gyro === true : onResetGyro !== undefined;
+  const canScan = capabilities ? capabilities.scan === true : onScan !== undefined;
+  const listMode = availableDevices !== undefined && canScan && onScan !== undefined;
   const connecting = action === 'connect'
     || snapshot.phase === 'requesting'
     || snapshot.phase === 'connecting';
@@ -404,7 +400,7 @@ export function TimerSmartCubeDeviceModal({
                 )}
               </section>
             )}
-            {!connected && !listMode && !connecting && onConnect && (
+            {!connected && !listMode && !connecting && canConnect && onConnect && (
               <button
                 className="timer-smart-cube-device__connect bt-connect-btn"
                 onClick={() => { void runConnect(); }}
@@ -416,9 +412,9 @@ export function TimerSmartCubeDeviceModal({
             )}
 
             {feedback && <p className="timer-smart-cube-device__feedback" role="status">{feedback}</p>}
-            {(onResetState || onResetGyro || onDisconnect) && (
+            {(canReset && onResetState || canResetGyro && onResetGyro || canDisconnect && onDisconnect) && (
               <div className="timer-smart-cube-device__actions bt-connected-actions modal-actions">
-                {onResetState && (
+                {canReset && onResetState && (
                   <button
                     className="timer-smart-cube-device__action modal-action-btn"
                     disabled={action !== null || !connected || connecting}
@@ -428,7 +424,7 @@ export function TimerSmartCubeDeviceModal({
                     {copy.resetState}
                   </button>
                 )}
-                {onResetGyro && (
+                {canResetGyro && onResetGyro && (
                   <button
                     className="timer-smart-cube-device__action modal-action-btn"
                     disabled={action !== null || !connected || connecting || !snapshot.hasGyro}
@@ -439,7 +435,7 @@ export function TimerSmartCubeDeviceModal({
                     {copy.resetGyro}
                   </button>
                 )}
-                {onDisconnect && (
+                {canDisconnect && onDisconnect && (
                   <button
                     className="timer-smart-cube-device__action timer-smart-cube-device__action--danger modal-action-btn danger"
                     disabled={action !== null}

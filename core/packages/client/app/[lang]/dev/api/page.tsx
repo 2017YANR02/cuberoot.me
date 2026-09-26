@@ -71,7 +71,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   mcp mcp_oauth
+//   mcp mcp_oauth timer_replay_shares
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
   { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },

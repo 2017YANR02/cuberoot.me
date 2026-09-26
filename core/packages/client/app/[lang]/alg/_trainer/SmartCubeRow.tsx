@@ -14,9 +14,10 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Bluetooth, Check, X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
+import { TimerDeviceCenter } from '@cuberoot/timer-ui';
 import { detectBluetoothEnv, envAdvice } from '../../timer/_lib/bluetooth';
 import type { CubeStep } from '../../timer/_lib/cube/steps';
 import type { TrainerCubeState } from './useTrainerCube';
@@ -82,29 +83,35 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
   return (
     <>
       <div className="trainer-opts-row">
-        {cube.status.connected ? (
+        {cube.status.connected && (
           <>
             <span className="trainer-opts-label">{cube.status.deviceName}</span>
             {cube.status.battery !== null && (
               <span className="trainer-opts-label">{cube.status.battery}%</span>
             )}
-            <button type="button" className="trainer-opts-btn is-ghost" onClick={cube.disconnect}>
-              {tr({ zh: '断开', en: 'Disconnect' })}
-            </button>
           </>
-        ) : (
-          <button
-            type="button"
-            className="trainer-opts-btn"
-            onClick={() => void doConnect()}
-            disabled={busy || !!advice}
-          >
-            <Bluetooth size={13} />
-            {busy
-              ? tr({ zh: '连接中', en: 'Connecting' })
-              : tr({ zh: '智能魔方', en: 'Smart cube' })}
-          </button>
         )}
+        <TimerDeviceCenter
+          ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+          className="trainer-device-center"
+          items={[{
+            active: cube.status.connected,
+            disabled: busy || !!advice,
+            id: 'smart-cube',
+            kind: 'smart-cube',
+            label: cube.status.connected
+              ? tr({ zh: '断开智能魔方', en: 'Disconnect smart cube' })
+              : busy
+                ? tr({ zh: '连接中', en: 'Connecting' })
+                : tr({ zh: '智能魔方', en: 'Smart cube' }),
+            onSelect: () => {
+              if (cube.status.connected) void cube.disconnect();
+              else void doConnect();
+            },
+          }]}
+          menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
+          triggerLabel={tr({ zh: '设备', en: 'Devices' })}
+        />
       </div>
 
       {cube.status.connected && (
