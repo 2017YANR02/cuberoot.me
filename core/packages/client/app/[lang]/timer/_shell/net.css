@@ -692,20 +692,6 @@
     background: var(--glass-dialog-bg);
   }
 }
-.net-device-center {
-  position: static;
-  flex: 0 0 auto;
-}
-
-.net-device-center .shell-device-center-menu {
-  /* Align the menu's 28px icon column with the 40px Bluetooth trigger.
-     Right-aligning the panel puts the child icon far to the right. */
-  left: calc(50% - 30px);
-  top: calc(100% + 8px);
-  right: auto;
-  bottom: auto;
-}
-
 /* Keep the scramble and readout closer together in online rooms. The shared
    surface centers the whole timer canvas, while the scramble is pinned above
    it, which leaves an oversized gap on this room layout. */
