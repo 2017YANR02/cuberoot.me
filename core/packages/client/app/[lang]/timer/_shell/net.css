@@ -221,13 +221,17 @@
 
 /* ── 房间内玩家条 ─────────────────────────────────────────── */
 .net-players {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
   width: fit-content;
   max-width: min(100%, 360px);
-  padding: 8px 16px 4px;
+  padding: 8px 16px 4px 0;
 }
 .net-player {
   display: grid;
