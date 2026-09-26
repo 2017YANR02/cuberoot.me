@@ -18,6 +18,8 @@
 
 校验结果：前后端专项 31 项通过，API 与客户端类型检查通过。服务器独立 loopback nginx 实测五种比赛／直播／代理路径：无凭证 403、有效凭证 200、缓存 HIT 后无凭证仍 403；服务凭证换路径被拒绝、伪造国家头被拒绝、CN 免验证、无关 API 不受影响。生产完整 nginx 配置校验通过。此次测试没有调用生产比赛数据接口。账号流程文档已说明浏览器验证不代表账号登录。
 
+首轮发布 `7fc0cde9db`：Vercel、Next 与 nginx 成功；API 在切换前被历史 migration 校验拦下。只读比对生产 251 条迁移账本，发现 `0082_wso_whole_solve_index.sql`、`0094_lsll_cases.sql` 两份文件在自动化迁移提交 `c17e382bb9` 中改过注释，SQL 执行语句未变。恢复该提交之前的原始文件字节后，两份 SHA-256 与生产账本完全一致；没有修改账本、跳过校验或执行新的 schema 变更。历史迁移注释中的旧脚本名仅保留历史记录，不作为现行运行入口。
+
 边界：浏览器凭证跨 `cuberoot.me` 子域使用。非 CN 的 localhost、跨站 preview 或直接访问阿里云的访客不能在那里签发凭证，应从 Vercel 主站完成验证；后台合法 HTTP 抓取需使用服务端签名，不应添加 User-Agent 白名单。服务器内部预热直接调用数据函数，不经过 HTTP 验证入口。
 
 用户要求不封 IP，直接为比赛页加验证。已在 Vercel 发布并刷新核对启用 `Competition entry verification`（`rule_competition_entry_verification_dzBLG1`）：Request Path 匹配 `^/(?:(?:zh/|en/)?wca/comp(?:/.*)?|api/comp(?:/.*)?)$` → Challenge。覆盖比赛列表、详情、全部子页与同源比赛代理接口，不再等待每分钟 30 次阈值才验证。中国大陆 CN Bypass 仍置顶；原限流保留，没有新增 IP 封禁。配置直接发布，不需要应用重新构建。
