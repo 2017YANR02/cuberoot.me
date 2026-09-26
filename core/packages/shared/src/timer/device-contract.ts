@@ -8,6 +8,30 @@
 
 export type TimerDeviceKind = 'smart-cube' | 'smart-timer' | 'stackmat';
 
+export type TimerDeviceConnectionPhase =
+  | 'idle'
+  | 'requesting'
+  | 'connecting'
+  | 'connected'
+  | 'reconnecting'
+  | 'error';
+
+export interface TimerDeviceAvailableDevice {
+  id: string;
+  name: string;
+  rssi?: number;
+}
+
+export interface TimerDeviceSnapshot {
+  battery?: number | null;
+  deviceName?: string | null;
+  hasGyro?: boolean;
+  lastMove?: string | null;
+  phase: TimerDeviceConnectionPhase;
+  protocol?: string | null;
+  solved?: boolean | null;
+}
+
 export type TimerDeviceCapability =
   | 'scan'
   | 'connect'
