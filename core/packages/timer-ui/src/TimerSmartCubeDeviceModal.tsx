@@ -10,30 +10,18 @@ import { createPortal } from 'react-dom';
 
 import { modalFocusableElements } from './modal-focus';
 import type { TimerUiLanguage } from './TimerColorSubsetPicker';
-import type { TimerDeviceCapabilities } from '@cuberoot/shared/timer/device-contract';
+import type {
+  TimerDeviceAvailableDevice,
+  TimerDeviceCapabilities,
+  TimerDeviceConnectionPhase,
+  TimerDeviceSnapshot,
+} from '@cuberoot/shared/timer/device-contract';
 
-export type TimerSmartCubeConnectionPhase =
-  | 'idle'
-  | 'requesting'
-  | 'connecting'
-  | 'connected'
-  | 'error';
+export type TimerSmartCubeConnectionPhase = TimerDeviceConnectionPhase;
 
-export interface TimerSmartCubeDeviceSnapshot {
-  battery?: number | null;
-  deviceName?: string | null;
-  hasGyro?: boolean;
-  lastMove?: string | null;
-  phase: TimerSmartCubeConnectionPhase;
-  protocol?: string | null;
-  solved?: boolean | null;
-}
+export type TimerSmartCubeDeviceSnapshot = TimerDeviceSnapshot;
 
-export interface TimerSmartCubeAvailableDevice {
-  id: string;
-  name: string;
-  rssi?: number;
-}
+export type TimerSmartCubeAvailableDevice = TimerDeviceAvailableDevice;
 
 export interface TimerSmartCubeDeviceModalProps {
   availableDevices?: readonly TimerSmartCubeAvailableDevice[];
