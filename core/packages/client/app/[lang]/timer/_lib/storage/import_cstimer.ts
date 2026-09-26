@@ -65,7 +65,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'kilominx': 'kilominx', 'klmso': 'kilominx', 'kilo': 'kilominx',
   'gear': 'gear', 'gearso': 'gear', 'gearo': 'gear',
   'ivy': 'ivy', 'ivyso': 'ivy', 'ivyo': 'ivy',
-  'redi': 'redi', 'rediso': 'redi',
+  'redi': 'redi', 'redim': 'redi', 'rediso': 'redi',
   'mpyram': 'mpyram', 'mpyrso': 'mpyram', 'mpyr': 'mpyram',
 };
 
