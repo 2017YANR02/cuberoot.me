@@ -1,4 +1,4 @@
-import { Bluetooth, Mic, Timer, ChevronUp } from 'lucide-react';
+import { Bluetooth, Mic, Timer } from 'lucide-react';
 import { useRef, useState, type ReactNode } from 'react';
 
 import type { TimerDeviceKind } from '@cuberoot/shared/timer/device-contract';
@@ -35,7 +35,6 @@ export function TimerDeviceCenter({
   className,
   items,
   menuLabel,
-  triggerLabel,
 }: TimerDeviceCenterProps) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -58,8 +57,6 @@ export function TimerDeviceCenter({
         type="button"
       >
         <Bluetooth aria-hidden="true" size={16} />
-        <span>{triggerLabel}</span>
-        <ChevronUp aria-hidden="true" className={open ? 'is-open' : undefined} size={14} />
       </button>
       {open && (
         <div
