@@ -14,10 +14,20 @@ describe('competition access proof', () => {
       [proof.slice(0, -1) + (proof.endsWith('0') ? '1' : '0'), 'browser', 'browser-a', now, secret],
       [proof, 'browser', 'browser-b', now, secret],
       [proof, 'service', 'browser-a', now, secret],
-      [proof, 'browser', 'browser-a', now + 1800_000, secret],
+      [proof, 'browser', 'browser-a', now + 604800_000, secret],
       [proof, 'browser', 'browser-a', now - 1000, secret],
       [proof, 'browser', 'browser-a', now, secret + 'x'],
     ] as const) expect(await verifyCompetitionProof(key, token, purpose, context, time)).toBe(false);
+  });
+  it('keeps browser access for exactly one week and honors older shorter grants', async () => {
+    const proof = await createCompetitionProof(secret, 'browser', 'browser-a', now);
+    expect(Number(proof.split('.')[2]) - now / 1000).toBe(604800);
+    expect(await verifyCompetitionProof(secret, proof, 'browser', 'browser-a', now + 604799_000)).toBe(true);
+    expect(await verifyCompetitionProof(secret, proof, 'browser', 'browser-a', now + 604800_000)).toBe(false);
+    const legacy = await createCompetitionProof(secret, 'browser', 'browser-a', now, 1800);
+    expect(await verifyCompetitionProof(secret, legacy, 'browser', 'browser-a', now + 1799_000)).toBe(true);
+    expect(await verifyCompetitionProof(secret, legacy, 'browser', 'browser-a', now + 1800_000)).toBe(false);
+    await expect(createCompetitionProof(secret, 'browser', 'browser-a', now, 604801)).rejects.toThrow();
   });
   it('binds service proofs to an exact URL and rejects duplicate cookies', async () => {
     const proof = await createCompetitionProof(secret, 'service', '/v1/cubing-live/A?v=4', now);
