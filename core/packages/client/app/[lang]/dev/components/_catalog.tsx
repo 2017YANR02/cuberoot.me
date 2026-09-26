@@ -1524,6 +1524,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The smart-cube status and recovery modal shared by Web and all five installed clients. Device name, battery, protocol, connected/solved state, reset/state refresh, gyro calibration, disconnect, focus trapping, and dismissal live in one implementation. Hosts inject only BLE transport actions; Web may add browser environment advice, failure detail, and MAC entry.',
   },
   {
+    name: 'TimerDeviceCenter',
+    import: "import { TimerDeviceCenter } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的设备中心触发器和能力列表；只显示宿主真实 adapter 注册的设备，统一入口、活动态、设备详情、键盘 Escape、点外关闭和焦点恢复。连接、权限和协议动作仍由宿主注入。',
+    en: 'The device-center trigger and capability list shared by Web and all five installed clients. It only shows devices registered by a real host adapter and owns the common trigger, active state, device detail, Escape/outside dismissal, and focus return. Hosts still inject connection, permission, and protocol actions.',
+  },
+  {
     name: 'TimerScramble222Config',
     import: "import { TimerScramble222Config } from '@cuberoot/timer-ui';",
     category: 'more',

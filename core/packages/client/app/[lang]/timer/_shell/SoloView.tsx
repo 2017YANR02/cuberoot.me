@@ -242,7 +242,7 @@ import LiveCubeState from '../_components/LiveCubeState';
 import {
   GestureWheel,
   SegmentTime,
-  TimerDeviceActions,
+  TimerDeviceCenter,
   TimerInfoToast,
   TimerAttemptSplitStatus,
   TimerPuzzlePicker,
@@ -261,6 +261,10 @@ import {
 } from '@cuberoot/timer-ui';
 import SolveRecapPlaceholder from '@cuberoot/timer-ui/solve-recap-placeholder';
 import { histBack, histForward, histPush } from '@cuberoot/shared/timer';
+import {
+  createTimerDeviceRegistry,
+  TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { persistItem } from '@/lib/safe-storage';
 import { onIdle } from '@/lib/on-idle';
@@ -282,6 +286,11 @@ const ReconstructModal = dynamic(() => import('../_components/ReconstructModal')
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
 const BluetoothTimerModal = dynamic(() => import('../_components/BluetoothTimerModal'), { ssr: false });
 const StackmatModal = dynamic(() => import('../_components/StackmatModal'), { ssr: false });
+
+const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
+  adapterIds: ['smart-cube', 'smart-timer', 'stackmat'],
+  registrations: TIMER_DEVICE_REGISTRATIONS,
+});
 const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
 const StatsModal = dynamic(() => import('../_components/StatsModal'), { ssr: false });
 const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal'), { ssr: false });
@@ -2357,6 +2366,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     void attempt.catch(() => undefined); // The status dialog displays failures.
   }, [bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
 
+  const connectSmartCubeCenter = useCallback(() => {
+    setBluetoothOpen(true);
+    if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
+    const attempt = bluetoothCube.connect();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.catch(() => undefined);
+  }, [bluetoothCube]);
+
   const connectStackmat = useCallback(() => {
     setStackmatOpen(true);
     if (stackmat.status.listening || stackmatConnectingRef.current) return;
@@ -2577,10 +2594,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [onPressDown]);
 
   // ── External devices + More menu items ──────────────────────────
-  const deviceActive = bluetoothCube.status.connected
-    || bluetoothTimer.status.connected
-    || stackmat.status.listening;
-
   const moreItems = useMemo<MoreMenuItem[]>(() => visibleTimerMoreActions({
     compactViewport: isMobile,
     drillActive: drillTarget !== null,
@@ -3226,14 +3239,42 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        <TimerDeviceActions
-          active={deviceActive}
-          connectAriaLabel={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
-          connectLabel={tr({ zh: '连接', en: 'Connect' })}
-          microphoneActive={stackmat.status.listening}
-          microphoneAriaLabel={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
-          onConnect={connectExternalBluetooth}
-          onMicrophone={connectStackmat}
+        <TimerDeviceCenter
+          ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+          items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+            ? {
+                active: bluetoothCube.status.connected,
+                detail: bluetoothCube.status.connected
+                  ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
+                  : undefined,
+                id: device.id,
+                kind: device.kind,
+                label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+                onSelect: connectSmartCubeCenter,
+              }
+            : device.kind === 'smart-timer'
+              ? {
+                  active: bluetoothTimer.status.connected,
+                  detail: bluetoothTimer.status.connected
+                    ? tr({ zh: '已连接', en: 'Connected' })
+                    : undefined,
+                  id: device.id,
+                  kind: device.kind,
+                  label: tr({ zh: '智能计时器', en: 'Smart timer' }),
+                  onSelect: connectExternalBluetooth,
+                }
+              : {
+                  active: stackmat.status.listening,
+                  detail: stackmat.status.listening
+                    ? tr({ zh: '监听中', en: 'Listening' })
+                    : undefined,
+                  id: device.id,
+                  kind: device.kind,
+                  label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
+                  onSelect: connectStackmat,
+                })}
+          menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
+          triggerLabel={tr({ zh: '设备', en: 'Devices' })}
         />
 
         {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——

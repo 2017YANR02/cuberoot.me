@@ -2,7 +2,7 @@ import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
   createTimerDeviceRegistry,
-  SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+  TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
 import { GyroRecorder, encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
@@ -182,7 +182,7 @@ import {
   GestureWheel,
   ManualScrambleQueueEditor,
   SegmentTime,
-  TimerDeviceActions,
+  TimerDeviceCenter,
   TimerSmartCubeDeviceModal,
   TimerInfoToast,
   TimerAttemptSplitSettings,
@@ -513,7 +513,7 @@ function MobileHistoryItem({
 export function App({ host }: { host: InstalledAppHost }) {
   const timerDeviceRegistry = useMemo(() => createTimerDeviceRegistry({
     adapterIds: ['smart-cube'],
-    registrations: SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+    registrations: TIMER_DEVICE_REGISTRATIONS,
   }), []);
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
@@ -4779,15 +4779,24 @@ export function App({ host }: { host: InstalledAppHost }) {
       )}
 
       {view === 'timer' && timerMode === 1 && (
-        <TimerDeviceActions
-          active={smartCube.phase === 'connected'}
-          connectAriaLabel={smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connectBluetooth}
-          connectLabel={smartCube.phase === 'connected'
-            ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-            : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-              ? copy.connectingBluetooth
-              : copy.connect}
-          onConnect={openSmartCubeDevice}
+        <TimerDeviceCenter
+          ariaLabel={copy.connectBluetooth}
+          items={timerDeviceRegistry.list()
+            .filter((device) => device.kind === 'smart-cube')
+            .map((device) => ({
+              active: smartCube.phase === 'connected',
+              detail: smartCube.phase === 'connected'
+                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+                  ? copy.connectingBluetooth
+                  : undefined,
+              id: device.id,
+              kind: device.kind,
+              label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
+              onSelect: openSmartCubeDevice,
+            }))}
+          menuLabel={copy.connectBluetooth}
+          triggerLabel={copy.connect}
         />
       )}
 
