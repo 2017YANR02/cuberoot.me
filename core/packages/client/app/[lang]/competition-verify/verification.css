@@ -1,15 +1,15 @@
 .competition-verification { max-width: 480px; margin: 0 auto; padding: 32px 20px 64px; color: var(--foreground); }
 .competition-verification header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
-.competition-verification section { padding: 28px; border: 1px solid var(--border-default); border-radius: 20px; }
+.competition-verification section { padding: 28px; border: 1px solid var(--border-default); border-radius: 20px; text-align: center; }
 .competition-verification h1 { margin: 0 0 16px; font-size: 26px; }
 .competition-verification p { line-height: 1.7; color: var(--muted-foreground); }
-.competition-verification-image { min-height: 76px; margin: 24px 0 8px; }
+.competition-verification-image { display: flex; justify-content: center; align-items: center; min-height: 76px; margin: 24px 0 8px; }
 .competition-verification-image img { max-width: 100%; height: auto; border-radius: 8px; }
 .competition-verification-action { appearance: none; font: inherit; cursor: pointer; border: 1px solid var(--border-default); background: var(--card); color: var(--foreground); padding: 8px 14px; border-radius: 8px; }
 .competition-verification-action:disabled { opacity: 0.5; cursor: default; }
 .competition-verification label { display: block; margin: 24px 0 8px; }
 .competition-verification-input { position: relative; }
-.competition-verification-code { width: 100%; box-sizing: border-box; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); padding: 12px 40px 12px 12px; font: inherit; letter-spacing: 0.15em; }
+.competition-verification-code { width: 100%; box-sizing: border-box; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); padding: 12px 40px; font: inherit; letter-spacing: 0.15em; text-align: center; }
 .competition-verification-code:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .competition-verification #competition-code-status { min-height: 1.7em; color: var(--destructive); font-size: 14px; }
 .competition-verification .competition-verification-submit { width: 100%; background: var(--primary); color: var(--primary-foreground); padding: 12px; }
