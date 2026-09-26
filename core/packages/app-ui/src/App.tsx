@@ -1,5 +1,9 @@
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
+import {
+  createTimerDeviceRegistry,
+  SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
 import { GyroRecorder, encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
@@ -507,6 +511,10 @@ function MobileHistoryItem({
 }
 
 export function App({ host }: { host: InstalledAppHost }) {
+  const timerDeviceRegistry = useMemo(() => createTimerDeviceRegistry({
+    adapterIds: ['smart-cube'],
+    registrations: SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+  }), []);
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
@@ -4742,6 +4750,11 @@ export function App({ host }: { host: InstalledAppHost }) {
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
           availableDevices={smartCube.availableDevices}
+          capabilities={{
+            ...timerDeviceRegistry.get('smart-cube')?.capabilities,
+            gyro: Boolean(smartCube.quaternion),
+            scan: Boolean(smartCube.scanDevices),
+          }}
           connectionFailure={smartCube.phase === 'error'
             ? <p className="timer-smart-cube-device__failure">{copy.smartCubeError}</p>
             : undefined}
