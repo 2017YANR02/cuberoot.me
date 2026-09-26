@@ -56,7 +56,7 @@ export default function CompetitionVerifyPage() {
         <p id="competition-code-status" role="status">{error}</p>
         <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
       </form>
-      <p className="competition-verification-note">{t('验证通过后可访问 30 分钟。中国大陆 IP 继续豁免。', 'Verification lasts 30 minutes. Mainland China IP addresses remain exempt.')}</p>
+      <p className="competition-verification-note">{t('验证通过后可访问 7 天。中国大陆 IP 继续豁免。', 'Verification lasts 7 days. Mainland China IP addresses remain exempt.')}</p>
     </section>
   </main>;
 }

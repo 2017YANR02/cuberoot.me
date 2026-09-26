@@ -98,7 +98,12 @@ export async function submitCompetitionCaptcha(c: Context) {
   if (!body || typeof body.id !== 'string' || !/^[a-f0-9]{48}$/.test(body.id)
     || typeof body.answer !== 'string' || body.answer.length > 12
     || !store.consume(body.id, body.answer, browser)) return c.json({ code: 'captcha_incorrect_or_expired' }, 400);
-  const proof = await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET!, 'browser', c.req.header('user-agent') ?? '');
-  c.header('Set-Cookie', `${COMPETITION_ACCESS_COOKIE}=${proof}; Domain=cuberoot.me; Path=/; Max-Age=${COMPETITION_ACCESS_TTL}; HttpOnly; Secure; SameSite=Lax`);
-  return c.json({ expiresIn: COMPETITION_ACCESS_TTL });
+  // During a rolling release, issue the shorter legacy lifetime until all
+  // verifiers accept the new maximum. Cookie and signed expiry always agree.
+  const configuredTtl = Number(process.env.COMPETITION_ACCESS_ISSUE_TTL_SECONDS ?? COMPETITION_ACCESS_TTL);
+  const issueTtl = Number.isSafeInteger(configuredTtl) && configuredTtl > 0 && configuredTtl <= COMPETITION_ACCESS_TTL
+    ? configuredTtl : COMPETITION_ACCESS_TTL;
+  const proof = await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET!, 'browser', c.req.header('user-agent') ?? '', Date.now(), issueTtl);
+  c.header('Set-Cookie', `${COMPETITION_ACCESS_COOKIE}=${proof}; Domain=cuberoot.me; Path=/; Max-Age=${issueTtl}; HttpOnly; Secure; SameSite=Lax`);
+  return c.json({ expiresIn: issueTtl });
 }
