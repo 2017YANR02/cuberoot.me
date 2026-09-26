@@ -41,10 +41,13 @@ http {
   set_real_ip_from 127.0.0.1;
   real_ip_header X-Test-Client-IP;
   geo $remote_addr $cuberoot_cn_exempt { default 0; 113.250.213.167 1; }
+  map $uri $cuberoot_comp_check { default 0; /v1/comp/test 1; }
   ${policy}
   server {
     listen 127.0.0.1:${port};
     server_name cuberoot.me;
+    location = /wca/comp/unverified { add_header X-CubeRoot-Verification-Required 1 always; return 307 /competition-verify; }
+    location = /v1/comp/test { return 403; }
     location / { content_by_lua_block { ngx.say("mock application") } }
   }
 }
@@ -118,6 +121,16 @@ try {
   await expectStatus('/healthy', '2001:db8::123', 403);
   await expectStatus('/healthy', '198.51.100.250', 200);
 
+  // Combined web/API refusals trigger one hour. CAPTCHA visits do not count.
+  for (let i=0; i<15; i++) await expectStatus('/competition-verify', '198.51.100.180', 200);
+  for (let i=0; i<10; i++) await expectStatus('/wca/comp/unverified', '198.51.100.180', 307);
+  await expectStatus('/healthy', '198.51.100.180', 200);
+  await expectStatus('/v1/comp/test', '198.51.100.180', 403, 'api.cuberoot.me');
+  const banned = await expectStatus('/healthy', '198.51.100.180', 403);
+  assert.ok(Number(banned.headers['retry-after']) <= 3600 && Number(banned.headers['retry-after']) >= 3595);
+  for (let i=0; i<12; i++) await expectStatus('/wca/comp/unverified', '113.250.213.167', 307);
+  await expectStatus('/healthy', '113.250.213.167', 200);
+
   // A graceful reload preserves active bans across workers.
   child.kill('SIGHUP');
   await delay(150);
@@ -135,6 +148,7 @@ try {
   await expectStatus('/healthy', '198.51.100.1', 403);
   await expectStatus('/healthy', '2001:db8::123', 403);
   await expectStatus('/healthy', '198.51.100.250', 200);
+  await expectStatus('/healthy', '198.51.100.180', 403);
   assert.equal(readFileSync(journal, 'utf8'), expiryBefore, 'restart must not extend bans');
   const log = readFileSync(join(dir, 'error.log'), 'utf8');
   assert(!/\[error\]|\[emerg\]/.test(log), log);

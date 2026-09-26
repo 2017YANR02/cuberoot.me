@@ -1,0 +1,11 @@
+{
+  "name": "Repeated unverified competition requests - 1 hour ban",
+  "description": "Non-CN clients without the manual verification cookie: over 10 competition page/API requests per minute triggers 1h deny. CAPTCHA page and assets excluded. Cookie signature still checked by application.",
+  "active": true,
+  "conditionGroup": [{"conditions": [
+    {"type": "path", "op": "re", "value": "^/(?:(?:zh/|en/)?wca/comp(?:/.*)?|api/comp/(?!access(?:/|$)).*)$"},
+    {"type": "cookie", "key": "__Secure-cuberoot_comp_manual", "op": "nex"},
+    {"type": "geo_country", "op": "neq", "value": "CN"}
+  ]}],
+  "action": {"mitigate": {"action": "rate_limit", "rateLimit": {"algo": "fixed_window", "window": 60, "limit": 10, "keys": ["ip"], "action": "deny"}, "actionDuration": "1h"}}
+}

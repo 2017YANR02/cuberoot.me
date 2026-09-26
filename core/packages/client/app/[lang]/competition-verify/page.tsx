@@ -47,6 +47,7 @@ export default function CompetitionVerifyPage() {
     <section data-site-surface="panel">
       <h1>{t('输入验证码', 'Enter the image code')}</h1>
       <p>{t('查看比赛内容前，请输入图片中的 6 位字符，不区分大小写。', 'Before viewing competitions, enter the 6 characters in the image. Letters are not case-sensitive.')}</p>
+      <p>{t('未完成验证时，同一 IP 每分钟请求比赛页面或接口超过 10 次，将被封禁 1 小时。停留或关闭此页不会触发封禁。共享网络下，其他人的请求也会计入该 IP。', 'Without verification, more than 10 competition page or API requests per minute from one IP will trigger a 1-hour ban. Staying on or closing this page does not trigger a ban. Requests from others on the same network count toward the same IP.')}</p>
       <form onSubmit={submit}>
         <div className="competition-verification-image">{challenge ? <img src={challenge.image} width="240" height="76" alt={t('六位字符验证码', 'Six-character verification image')} /> : <span>{busy ? t('正在加载…', 'Loading…') : t('图片未加载', 'Image unavailable')}</span>}</div>
         <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('换一张', 'New image')}</button>
