@@ -45,7 +45,22 @@ it('HTTP endpoints never expose an answer, reject bad origin, and mint only afte
   expect(good.status).toBe(200);
   const cookie = good.headers.get('set-cookie')!;
   expect(cookie).toContain('HttpOnly; Secure; SameSite=Lax');
+  expect(cookie).toContain('Max-Age=604800');
+  expect(await good.json()).toEqual({ expiresIn: 604800 });
   const proof = cookie.split(';')[0].slice(COMPETITION_ACCESS_COOKIE.length + 1);
   expect(await verifyCompetitionProof(secret, proof, 'browser', 'test-browser')).toBe(true);
   expect((await submit(answer)).status).toBe(400);
+});
+
+it('uses the same temporary rollout lifetime for the cookie and signed proof', async () => {
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('COMPETITION_ACCESS_ISSUE_TTL_SECONDS', '1800');
+  const app = new Hono(); app.get('/challenge', issueCompetitionCaptcha); app.post('/verify', submitCompetitionCaptcha);
+  const issued = vi.spyOn(CompetitionCaptchaStore.prototype, 'issue');
+  const headers = { 'user-agent': 'rollout-test-browser', origin: 'https://cuberoot.me', 'content-type': 'application/json' };
+  const body = await (await app.request('/challenge', { headers })).json();
+  const response = await app.request('/verify', { method: 'POST', headers, body: JSON.stringify({ id: body.id, answer: issued.mock.results[0].value.answer }) });
+  expect(response.status).toBe(200); expect(await response.json()).toEqual({ expiresIn: 1800 });
+  const cookie = response.headers.get('set-cookie'); expect(cookie).toContain('Max-Age=1800');
+  const proof = cookie.split(';')[0].slice(COMPETITION_ACCESS_COOKIE.length + 1);
+  expect(await verifyCompetitionProof(secret, proof, 'browser', headers['user-agent'], Date.now() + 1800_000)).toBe(false);
 });
