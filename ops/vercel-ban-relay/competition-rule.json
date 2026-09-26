@@ -1,0 +1,41 @@
+{
+  "name": "Repeated unverified site requests - 1 hour ban",
+  "description": "Non-CN clients without the manual verification cookie: over 10 protected page/API requests per minute triggers 1h deny. Verification, callbacks and asset delivery excluded. Application validates cookie signatures.",
+  "active": true,
+  "conditionGroup": [
+    {
+      "conditions": [
+        {
+          "type": "path",
+          "op": "re",
+          "value": "^/(?:api/comp/(?!access(?:/|$)).*|(?!(?:(?:zh/|en/)?competition-verify/?$|_next/|_vercel/|api(?:/|$)|v1(?:/|$)|auth/(?:social/)?callback/?$|callback\\.html$|\\.well-known/|(?:robots\\.txt|sitemap[^/]*\\.xml)$|(?:_assets|account-locations|analyze-worker|assets|card|cases|contact|cubeopt|cubing-chunks|data|deskpet|donate|ffmpeg|fonts|icons|images|oll_pic|scramble-card-art|sim/hands|textures|vendor|why-cube|tools|stats|music/library)/.*\\.(?:js|mjs|css|map|json|geojson|xml|txt|ico|png|jpe?g|gif|webp|avif|svg|woff2?|ttf|otf|wasm|bin|dat|mp4|webm|mp3|ogg|wav|pdf|glb|gltf|ktx2|basis|zip|gz|br|pbf|csv|tsv|webmanifest)$|[^/]+\\.(?:js|mjs|css|map|json|geojson|xml|txt|ico|png|jpe?g|gif|webp|avif|svg|woff2?|ttf|otf|wasm|bin|dat|mp4|webm|mp3|ogg|wav|pdf|glb|gltf|ktx2|basis|zip|gz|br|pbf|csv|tsv|webmanifest)$)).*)$"
+        },
+        {
+          "type": "cookie",
+          "key": "__Secure-cuberoot_comp_manual",
+          "op": "nex"
+        },
+        {
+          "type": "geo_country",
+          "op": "neq",
+          "value": "CN"
+        }
+      ]
+    }
+  ],
+  "action": {
+    "mitigate": {
+      "action": "rate_limit",
+      "rateLimit": {
+        "algo": "fixed_window",
+        "window": 60,
+        "limit": 10,
+        "keys": [
+          "ip"
+        ],
+        "action": "deny"
+      },
+      "actionDuration": "1h"
+    }
+  }
+}
