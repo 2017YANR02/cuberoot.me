@@ -3914,11 +3914,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                         quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                       />
                     </div>
-                    {smartCubeRenderedView === '3d' && store!.settings.gyroEnabled && smartCube.quaternion && (
-                      <button type="button" className="live-cube-calibrate" onClick={() => setSmartCubeCalibration((value) => value + 1)}>
-                        {{ en: 'Calibrate', zh: '校准' }[language]}
-                      </button>
-                    )}
                   </div>
                 ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
                   <div className="mobile-cube-preview" data-no-timer>
@@ -3936,6 +3931,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 interactive={scrambleReady}
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
+                scrambleAbove
                 scrambleSlot={(
                   <TimerScrambleStrip
                     copiedLabel={copy.copied}

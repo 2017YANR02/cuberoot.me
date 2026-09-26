@@ -41,6 +41,16 @@ describe('Mobile capability surface guard', () => {
     expect(app).not.toContain('onConnect={toggleSmartCube}');
   });
 
+  it('keeps the installed timer surface aligned with the shared Web layout contract', () => {
+    expect(app).toContain('<TimingSurface');
+    expect(app).toContain('scrambleAbove');
+    expect(app).toContain('<TimerScrambleStrip');
+    expect(app).toContain('<LiveCubeState');
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
+    expect(app).toContain('<TimerDeviceCenter');
+    expect(app).not.toContain('className="live-cube-calibrate"');
+  });
+
   it('routes clipboard writes through the installed host capability', () => {
     expect(app).toContain('host.writeClipboardText');
     expect(battleModes).toContain('writeClipboardText(room.code)');
