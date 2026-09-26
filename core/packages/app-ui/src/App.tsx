@@ -2598,6 +2598,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   }), [attemptSplitRecorder]);
   const smartCube = host.useSmartCube({
     language,
+    onConnectionEvent: (event) => {
+      if (event.kind === 'disconnected') announce(copy.smartCubeDisconnected);
+      else if (event.kind === 'error') announce(copy.smartCubeError);
+    },
     onGyro: (quaternion, timestamp) => {
       smartCubeQuatRef.current = quaternion;
       if (timerModeRef.current === 1 && timerPhaseRef.current === 'running'
