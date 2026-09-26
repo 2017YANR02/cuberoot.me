@@ -46,7 +46,8 @@ export default function CompetitionVerifyPage() {
     <header><span>CubeRoot</span><HeaderToggles /></header>
     <section data-site-surface="panel">
       <h1>{t('输入验证码', 'Enter the image code')}</h1>
-      <p>{t('查看比赛内容前，请输入图片中的 6 位字符，不区分大小写。', 'Before viewing competitions, enter the 6 characters in the image. Letters are not case-sensitive.')}</p>
+      <p>{t('进入网站前，请输入图片中的 6 位字符，不区分大小写。', 'Before entering the website, enter the 6 characters in the image. Letters are not case-sensitive.')}</p>
+      <p>{t('未完成验证时，同一 IP 每分钟请求网站页面或受保护接口超过 10 次，将被封禁 1 小时。停留或关闭此页不会触发封禁。共享网络下，其他人的请求也会计入该 IP。', 'Without verification, more than 10 protected page or API requests per minute from one IP will trigger a 1-hour ban. Staying on or closing this page does not trigger a ban. Requests from others on the same network count toward the same IP.')}</p>
       <form onSubmit={submit}>
         <div className="competition-verification-image">{challenge ? <img src={challenge.image} width="240" height="76" alt={t('六位字符验证码', 'Six-character verification image')} /> : <span>{busy ? t('正在加载…', 'Loading…') : t('图片未加载', 'Image unavailable')}</span>}</div>
         <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('换一张', 'New image')}</button>
@@ -55,7 +56,7 @@ export default function CompetitionVerifyPage() {
         <p id="competition-code-status" role="status">{error}</p>
         <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
       </form>
-      <p className="competition-verification-note">{t('验证通过后可访问 30 分钟。中国大陆 IP 继续豁免。', 'Verification lasts 30 minutes. Mainland China IP addresses remain exempt.')}</p>
+      <p className="competition-verification-note">{t('验证通过后可访问 7 天。中国大陆 IP 继续豁免。', 'Verification lasts 7 days. Mainland China IP addresses remain exempt.')}</p>
     </section>
   </main>;
 }

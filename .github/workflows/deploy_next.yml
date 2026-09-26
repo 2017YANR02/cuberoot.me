@@ -218,10 +218,12 @@ jobs:
           # Health check: wait up to 15s for port 3002 to respond AND serve
           # an actual rendered HTML page (not just any 2xx — Next can return
           # 200 while route handlers crash, so verify the landing markup).
+          # The loopback health probe uses the same trusted exemption header as nginx,
+          # so it still checks the landing page rather than following the CAPTCHA.
           # Hit /en/ directly because root `/` 308-redirects via proxy.ts
           # middleware to /en or /zh (plain-text body, no `<html` marker).
           for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-            BODY=$(curl -fsSL http://127.0.0.1:3002/en/ 2>/dev/null || true)
+            BODY=$(curl -fsSL -H "X-Cuberoot-CN-Exempt: 1" http://127.0.0.1:3002/en/ 2>/dev/null || true)
             if echo "$BODY" | grep -q "<html"; then
               echo "OK: cuberoot-next responding on :3002 with html marker"
               exit 0
