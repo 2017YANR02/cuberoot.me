@@ -18,6 +18,7 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - 'ops/vercel-ban-relay/competition-rule.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
@@ -42,6 +43,7 @@ on:
       - '.sync/**'
       - 'scripts/upstream/**'
       - 'ops/nginx/**'
+      - 'ops/vercel-ban-relay/competition-rule.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
@@ -114,6 +116,7 @@ jobs:
               - '.sync/**'
               - 'scripts/upstream/**'
               - 'ops/nginx/**'
+              - 'ops/vercel-ban-relay/competition-rule.json'
               - 'ops/systemd/cuberoot-drive-compression.service'
               - '.github/workflows/backup_recon.yml'
               - '.github/workflows/best2x2_drift.yml'
@@ -232,6 +235,7 @@ jobs:
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
+            /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
@@ -453,6 +457,7 @@ jobs:
             /ops/contests/recordranks-ref.txt
             /ops/nginx/platform.cuberoot.me.conf
             /ops/nginx/www.cuberoot.me.conf
+            /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
