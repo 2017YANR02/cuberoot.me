@@ -1,7 +1,7 @@
 /** Web gateway / independent API proof contract. Secrets stay server-side. */
 export const COMPETITION_ACCESS_COOKIE = '__Secure-cuberoot_comp_manual';
 export const COMPETITION_SERVICE_HEADER = 'x-cuberoot-comp-service';
-export const COMPETITION_ACCESS_TTL = 1800;
+export const COMPETITION_ACCESS_TTL = 7 * 24 * 60 * 60;
 const encoder = new TextEncoder();
 const hex = (bytes: ArrayBuffer) => Array.from(new Uint8Array(bytes), b => b.toString(16).padStart(2, '0')).join('');
 async function contextHash(context: string) {
@@ -11,8 +11,9 @@ async function key(secret: string) {
   if (secret.length < 32) throw new Error('Competition access signing key is not configured');
   return crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
 }
-export async function createCompetitionProof(secret: string, purpose: 'browser' | 'service', context: string, now = Date.now()) {
-  const expires = Math.floor(now / 1000) + (purpose === 'browser' ? COMPETITION_ACCESS_TTL : 60);
+export async function createCompetitionProof(secret: string, purpose: 'browser' | 'service', context: string, now = Date.now(), browserTtl = COMPETITION_ACCESS_TTL) {
+  if (!Number.isSafeInteger(browserTtl) || browserTtl <= 0 || browserTtl > COMPETITION_ACCESS_TTL) throw new Error('Invalid browser proof lifetime');
+  const expires = Math.floor(now / 1000) + (purpose === 'browser' ? browserTtl : 60);
   // v2 revokes automatic browser grants AND old proxies that signed without
   // checking a manual browser proof first.
   const payload = `v2.${purpose}.${expires}.${await contextHash(context)}`;

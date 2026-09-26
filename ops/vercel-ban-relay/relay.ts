@@ -27,6 +27,15 @@ export function managedRule(ips: string[], index = 0) {
     action: { mitigate: { action: 'deny', actionDuration: null } },
   };
 }
+/** Keep existing slots, reserve two for incident rules, and queue excess IPs. */
+export function planCapacity(ips: string[], otherRules: number, existingRules: number) {
+  if (otherRules + existingRules > 40) throw new Error('Custom rule capacity exceeded; preserve existing rules');
+  const available = Math.max(existingRules, 40 - otherRules - 2);
+  if (available < 1) throw new Error('No custom rule capacity available for IP bans');
+  const count = Math.max(1, existingRules, Math.min(Math.ceil(ips.length / 1875), available));
+  const admitted = ips.slice(0, count * 1875);
+  return { count, admitted, pending: ips.length - admitted.length, capacity: available * 1875 };
+}
 export async function run() {
   const root = process.env.CUBEROOT_BAN_STATE_DIR || '/var/lib/cuberoot-vercel-bans';
   const config = JSON.parse(readFileSync(process.env.CUBEROOT_BAN_CONFIG || '/etc/cuberoot-vercel-bans.json', 'utf8'));
@@ -69,14 +78,13 @@ export async function run() {
   // outage cannot discard source events after Vercel retention expires.
   writeFileSync(`${root}/state.tmp`, JSON.stringify(state), { mode: 0o600 });
   renameSync(`${root}/state.tmp`, `${root}/state.json`);
-  if (ips.length > 50000) throw new Error('30-day list exceeds 50000 IPs; new events saved, existing rules retained; capacity review required');
   let active = await api('config/active');
   const own = (r: {name: string}) => r.name === MANAGED_NAME || /^Rolling 30-day incident IP bans \d+$/.test(r.name);
   if (active.rules?.[0]?.id !== 'rule_china_mainland_traffic_exemption_aOC64j') throw new Error('China exemption order changed; operator review required');
-  const count = Math.max(1, Math.ceil(ips.length / 1875), active.rules.filter(own).length);
-  if (active.rules.filter((r: {name: string}) => !own(r)).length + count > 40) throw new Error('Custom rule capacity exceeded; preserve existing rules');
+  const plan = planCapacity(ips, active.rules.filter((r: {name: string}) => !own(r)).length, active.rules.filter(own).length);
+  const { count } = plan;
   for (let i = 0; i < count; i++) {
-    const part = ips.slice(i * 1875, (i + 1) * 1875);
+    const part = plan.admitted.slice(i * 1875, (i + 1) * 1875);
     const value = managedRule(part, i);
     let changed = false;
     let existing = active.rules.find((r: {name: string}) => r.name === value.name);
@@ -106,7 +114,8 @@ export async function run() {
   state.lastSyncedAt = now;
   writeFileSync(`${root}/state.tmp`, JSON.stringify(state), { mode: 0o600 });
   renameSync(`${root}/state.tmp`, `${root}/state.json`);
-  console.log(JSON.stringify({ bannedIps: ips.length, through: new Date(state.cursor).toISOString(), ruleId: state.ruleId, expiryDays: 30 }));
+  console.log(JSON.stringify({ bannedIps: plan.admitted.length, pendingIps: plan.pending, capacityIps: plan.capacity, observedIps: ips.length, through: new Date(state.cursor).toISOString(), ruleId: state.ruleId, expiryDays: 30 }));
+  if (plan.pending) await alertOnce('capacity', '已同步 ' + plan.admitted.length + ' 个 IP 的 30 天封禁，还有 ' + plan.pending + ' 个等待规则容量。账本保留全部记录，到期解除继续执行；排队项不能视为已获得 30 天封禁。');
 }
 async function alertOnce(kind: string, message: string) {
   const key = process.env.BARK_KEY;
