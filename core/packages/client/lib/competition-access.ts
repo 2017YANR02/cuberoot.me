@@ -4,23 +4,20 @@ import { tr } from '@/i18n/tr';
 let pending: Promise<void> | undefined;
 let validUntil = 0;
 
-/** CN visitors, including the Aliyun delivery line, need no Vercel issuer. */
+/** CN visitors are exempt; everyone else must complete the manual image form. */
 export function ensureCompetitionAccess(): Promise<void> {
   if (Date.now() < validUntil) return Promise.resolve();
   if (pending) return pending;
   pending = (async () => {
     const check = await fetch(apiUrl('/v1/competition-access/check'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
-    // The old API has no check route during the staged rollout.
-    if (check.ok || check.status === 404) { validUntil = Date.now() + 60_000; return; }
+    if (check.ok) { validUntil = Date.now() + 60_000; return; }
     if (check.status !== 403) throw new Error(tr({ en: 'Verification is temporarily unavailable. Please retry.', zh: '验证暂时不可用，请重试。' }));
-    const grant = await fetch('/api/comp/access', { credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
-    if (grant.ok) { validUntil = Date.now() + 60_000; return; }
-    if (grant.headers.get('x-vercel-mitigated') === 'challenge' && typeof window !== 'undefined') {
-      // A fetch cannot display the checkpoint. Verify as a document, then return.
+    if (typeof window !== 'undefined') {
       const returnTo = window.location.pathname + window.location.search + window.location.hash;
-      window.location.assign('/api/comp/access?returnTo=' + encodeURIComponent(returnTo));
+      const prefix = window.location.pathname.startsWith('/zh/') ? '/zh' : '';
+      window.location.assign(prefix + '/competition-verify?returnTo=' + encodeURIComponent(returnTo));
     }
-    throw new Error(tr({ en: 'Browser verification is required. Open the main website to continue.', zh: '需要浏览器验证，请从主站进入后继续。' }));
+    throw new Error(tr({ en: 'Enter the image code to continue.', zh: '请输入图片验证码后继续。' }));
   })().finally(() => { pending = undefined; });
   return pending;
 }
