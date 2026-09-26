@@ -7,7 +7,7 @@
 -- 缺的只有采样列 + 索引:飞镖采样要每行一个永久随机序(同 wca_scramble_steps.rnd 的做法),
 -- 否则「某步数随机取 n 条」只能 ORDER BY random() 扫全表(18 步一档就 88 万行)。
 -- DEFAULT random() 是 volatile → ADD COLUMN 会重写全表并逐行取不同值(正是要的);
--- 后续增量灌库(scripts/stats/publish-pg.ts 的 UPSERT / \copy,列清单均显式列出 8 列)
+-- 后续增量灌库(update_cross_stats.ps1 步骤 6b 的 UPSERT / \copy,列清单均显式列出 8 列)
 -- 不写 rnd,新行走默认、老行保留,无需改管道。
 ALTER TABLE wca_scramble_optimal
   ADD COLUMN IF NOT EXISTS rnd DOUBLE PRECISION NOT NULL DEFAULT random();
