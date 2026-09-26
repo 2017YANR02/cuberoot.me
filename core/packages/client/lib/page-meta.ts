@@ -66,6 +66,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Find practical CLL, EG, TCLL, and LS solutions for any 2×2 scramble, with bottom-color and build-depth filters plus ergonomic ranking.',
     },
   },
+  'competition-verify': { title: { zh: '输入验证码', en: 'Enter the image code' } },
   'about': {
     title: { zh: '关于', en: 'About' },
     description: {
