@@ -10,6 +10,7 @@ it('gates every language and subpage before cached content; API denial is JSON',
   for (const path of ['/wca/comp', '/zh/wca/comp/A/results', '/en/wca/comp/A']) {
     const response = await competitionGate(new NextRequest('https://cuberoot.me' + path));
     expect(response?.status).toBe(307);
+    expect(response?.headers.get('x-cuberoot-verification-required')).toBe('1');
     expect(response?.headers.get('cache-control')).toBe('private, no-store');
     expect(response?.headers.get('location')).toContain('competition-verify?returnTo=');
   }
