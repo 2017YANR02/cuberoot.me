@@ -12,28 +12,33 @@ const LOGS = {
   api: "/www/wwwlogs/api.cuberoot.me.log",
 } as const;
 
-type Minute = { requests: number; pages: number; errors: number; limited: number; maintenance: number; denied: number };
-const blank = (): Minute => ({ requests: 0, pages: 0, errors: 0, limited: 0, maintenance: 0, denied: 0 });
+type Minute = { requests: number; pages: number; errors: number; limited: number; maintenance: number; denied: number; exempt: number };
+const blank = (): Minute => ({ requests: 0, pages: 0, errors: 0, limited: 0, maintenance: 0, denied: 0, exempt: 0 });
 type Window = { web: Minute[]; api: Minute[] };
 
 export function evaluate(samples: RequestSample[], now = Date.now()): { window: Window; reasons: string[] } {
   const current = Math.floor(now / MINUTE) * MINUTE;
   const window: Window = { web: [blank(), blank()], api: [blank(), blank()] };
+  const restricted: Window = { web: [blank(), blank()], api: [blank(), blank()] };
   for (const sample of samples) {
     const age = Math.floor((current - sample.timestamp - 1) / MINUTE);
     if (age < 0 || age > 1) continue;
     const item = (sample.source === "api" ? window.api : window.web)[age];
-    item.requests++;
-    // A maintenance response in the previous minute remains expected even
-    // after reopening. Keep its traffic count, but don't retrip the site.
-    if (isMaintenanceResponse(sample)) { item.maintenance++; continue; }
-    if (sample.status >= 500 && sample.status < 600 && !sample.path.startsWith("/_vercel/insights/")) item.errors++;
-    if (sample.status === 429) item.limited++;
-    if (sample.status === 403) item.denied++;
-    if (sample.source !== "api" && isPageCandidate(sample)) item.pages++;
+    if (sample.cnExempt) item.exempt++;
+    const rows = sample.cnExempt ? [item] : [item, restricted[sample.source === "api" ? "api" : "web"][age]];
+    for (const item of rows) {
+      item.requests++;
+      // A maintenance response in the previous minute remains expected even
+      // after reopening. Keep its traffic count, but don't retrip the site.
+      if (isMaintenanceResponse(sample)) { item.maintenance++; continue; }
+      if (sample.status >= 500 && sample.status < 600 && !sample.path.startsWith("/_vercel/insights/")) item.errors++;
+      if (sample.status === 429) item.limited++;
+      if (sample.status === 403) item.denied++;
+      if (sample.source !== "api" && isPageCandidate(sample)) item.pages++;
+    }
   }
-  const [webLast, webPrev] = window.web;
-  const [apiLast, apiPrev] = window.api;
+  const [webLast, webPrev] = restricted.web;
+  const [apiLast, apiPrev] = restricted.api;
   const reasons: string[] = [];
   // Keep the emergency page threshold above nginx's 600/minute + 30 burst.
   // 429s remain visible in the report, but blocked requests alone must not
@@ -58,15 +63,15 @@ export function formatGuardAlert(result: ReturnType<typeof evaluate>, now = Date
   };
   const end = Math.floor(now / MINUTE) * MINUTE;
   const time = (value: number) => new Date(value + 8 * 3_600_000).toISOString().slice(5, 16).replace("T", " ");
-  const lines = ["已将阿里云主站、预览入口和数据接口切换为维护。",
+  const lines = ["已将阿里云主站、预览入口和数据接口的非中国大陆访问切换为维护；中国大陆 IP 继续开放。",
     `原因：${result.reasons.map(reason => labels[reason] || "达到保护阈值").join("；")}。`,
     `停站前统计：${time(end - 2 * MINUTE)} 至 ${time(end)}（北京时间，两个完整分钟）。`];
   for (const [key, label] of [["web", "主站及预览入口"], ["api", "数据接口"]] as const) {
     const rows = result.window[key];
     const sum = (field: keyof Minute) => rows.reduce((n, row) => n + row[field], 0);
-    lines.push(`${label}：收到 ${sum("requests")} 次，记录到拦截 ${sum("limited") + sum("maintenance") + sum("denied")} 次（维护 ${sum("maintenance")}、限流 ${sum("limited")}、拒绝访问 ${sum("denied")}），其他 5xx ${sum("errors")} 次。`);
+    lines.push(`${label}：收到 ${sum("requests")} 次，记录到拦截 ${sum("limited") + sum("maintenance") + sum("denied")} 次（维护 ${sum("maintenance")}、限流 ${sum("limited")}、拒绝访问 ${sum("denied")}），其他 5xx ${sum("errors")} 次；中国大陆豁免 ${sum("exempt")} 次。`);
   }
-  lines.push("此操作不包含 Vercel；网站不会自动恢复，请核查后手动恢复。");
+  lines.push("中国大陆豁免请求不参与自动停站判断。此操作不包含 Vercel；受限地区不会自动恢复，请核查后手动恢复。");
   return lines.join("\n");
 }
 

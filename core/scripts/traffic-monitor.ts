@@ -14,6 +14,7 @@ export type RequestSample = {
   referrer: string;
   userAgent: string;
   maintenance?: boolean;
+  cnExempt?: boolean;
 };
 
 const NGINX_LINE = /^(\S+) \S+ \S+ \[([^\]]+)\] "([^"]*)" (\d{3}) \S+ "([^"]*)" "([^"]*)"/;
@@ -45,9 +46,9 @@ export function parseNginxLine(line: string, source: "nginx" | "next" | "api" = 
   if (timestamp === null) return null;
   const [method, path] = match[3].split(" ");
   if (!method || !path) return null;
-  const marker = /^ maintenance=([01])\s*$/.exec(line.slice(match[0].length));
+  const marker = /^ maintenance=([01])(?: cn_exempt=([01]))?\s*$/.exec(line.slice(match[0].length));
   return { source, clientAddress: match[1], timestamp, method, path, status: Number(match[4]), referrer: match[5], userAgent: match[6],
-    ...(marker ? { maintenance: marker[1] === "1" } : {}) };
+    ...(marker ? { maintenance: marker[1] === "1", ...(marker[2] ? { cnExempt: marker[2] === "1" } : {}) } : {}) };
 }
 
 export function isMaintenanceResponse(sample: RequestSample): boolean {
@@ -312,7 +313,7 @@ export function formatTrafficNotification(report: ReturnType<TrafficAccumulator[
   const lines = [
     `统计：${formatTime(report.windowStart)} 至 ${formatTime(report.windowEnd)}（北京时间，整小时，非实时）。`,
     report.maintenanceNow === null ? "阿里云当前维护开关：未读取。"
-      : report.maintenanceNow ? "阿里云当前处于维护状态。" : "阿里云当前维护开关已关闭。",
+      : report.maintenanceNow ? "阿里云当前对非中国大陆 IP 开启维护；中国大陆 IP 豁免。" : "阿里云当前维护开关已关闭。",
   ];
   for (const source of sources) {
     const n = (value: number) => value.toLocaleString("en-US");
