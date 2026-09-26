@@ -5,6 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
+EnvironmentFile=-/etc/cuberoot/traffic-guard.env
 ExecStart=/usr/bin/flock -n /var/lib/cuberoot-vercel-bans/run.lock /root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /opt/cuberoot-vercel-bans/relay.ts
 TimeoutStartSec=180
 UMask=0077
