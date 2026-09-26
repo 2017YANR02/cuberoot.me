@@ -6,6 +6,7 @@ export * from './by-steps';
 export * from './by-steps-worker';
 export * from './compound-scramble';
 export * from './color-subsets';
+export * from './device-contract';
 export * from './event-catalog';
 export * from './history';
 export * from './history-compare';

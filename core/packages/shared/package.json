@@ -107,6 +107,7 @@
       "./cuber-name-display": "runtime-neutral",
       "./wca-person": "runtime-neutral",
       "./timer": "runtime-neutral",
+      "./timer/device-contract": "runtime-neutral",
       "./timer/reconstruct/apply-token": "runtime-neutral",
       "./timer/reconstruct/cfop-detect": "runtime-neutral",
       "./timer/reconstruct/cfop-recognize": "runtime-neutral",
@@ -445,6 +446,10 @@
     "./cuber-name-display": "./src/cuber_name_display.ts",
     "./wca-person": "./src/wca_person.ts",
     "./timer": "./src/timer/index.ts",
+    "./timer/device-contract": {
+      "node": "./dist/timer/device-contract.js",
+      "default": "./src/timer/device-contract.ts"
+    },
     "./timer/reconstruct/apply-token": "./src/timer/reconstruct/apply-token.ts",
     "./timer/reconstruct/cfop-detect": "./src/timer/reconstruct/cfop-detect.ts",
     "./timer/reconstruct/cfop-recognize": "./src/timer/reconstruct/cfop-recognize.ts",
