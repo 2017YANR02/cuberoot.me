@@ -107,6 +107,7 @@
       "./cuber-name-display": "runtime-neutral",
       "./wca-person": "runtime-neutral",
       "./timer": "runtime-neutral",
+      "./timer/smart-cube-attempt": "runtime-neutral",
       "./timer/device-contract": "runtime-neutral",
       "./timer/reconstruct/apply-token": "runtime-neutral",
       "./timer/reconstruct/cfop-detect": "runtime-neutral",
@@ -446,6 +447,10 @@
     "./cuber-name-display": "./src/cuber_name_display.ts",
     "./wca-person": "./src/wca_person.ts",
     "./timer": "./src/timer/index.ts",
+    "./timer/smart-cube-attempt": {
+      "node": "./dist/timer/smart-cube-attempt.js",
+      "default": "./src/timer/smart-cube-attempt.ts"
+    },
     "./timer/device-contract": {
       "node": "./dist/timer/device-contract.js",
       "default": "./src/timer/device-contract.ts"
