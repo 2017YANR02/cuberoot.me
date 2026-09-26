@@ -22,39 +22,25 @@ describe('competition access proof', () => {
   it('binds service proofs to an exact URL and rejects duplicate cookies', async () => {
     const proof = await createCompetitionProof(secret, 'service', '/v1/cubing-live/A?v=4', now);
     expect(await verifyCompetitionProof(secret, proof, 'service', '/v1/cubing-live/A?v=4', now)).toBe(true);
+    expect(await verifyCompetitionProof(secret, proof.replace('v2.', 'v1.'), 'service', '/v1/cubing-live/A?v=4', now)).toBe(false);
     expect(await verifyCompetitionProof(secret, proof, 'service', '/v1/cubing-live/B?v=4', now)).toBe(false);
     expect(await verifyCompetitionProof(secret, proof, 'service', '/v1/cubing-live/A?v=4', now + 60_000)).toBe(false);
     expect(competitionCookie(`${COMPETITION_ACCESS_COOKIE}=a; ${COMPETITION_ACCESS_COOKIE}=b`)).toBe('');
   });
-  it('only mints on the production Vercel canonical domain, without shared caching', async () => {
-    vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
-    vi.stubEnv('VERCEL', '1'); vi.stubEnv('VERCEL_ENV', 'production');
-    const ok = await GET(new Request('https://cuberoot.me/api/comp/access', { headers: { 'user-agent': 'browser-a' } }));
-    expect(ok.status).toBe(200);
-    expect(ok.headers.get('cache-control')).toBe('private, no-store');
-    expect(ok.headers.get('set-cookie')).toContain('HttpOnly; Secure; SameSite=Lax');
-    for (const to of ['//evil.example', '/\\evil.example', '/api/comp/access']) {
-      expect((await GET(new Request('https://cuberoot.me/api/comp/access?returnTo=' + encodeURIComponent(to)))).status).toBe(400);
-    }
-    expect((await GET(new Request('https://preview.vercel.app/api/comp/access'))).status).toBe(503);
-    vi.stubEnv('VERCEL_ENV', 'preview');
-    expect((await GET(new Request('https://cuberoot.me/api/comp/access'))).status).toBe(503);
-    vi.stubEnv('VERCEL_ENV', 'production'); vi.stubEnv('VERCEL', '');
-    expect((await GET(new Request('https://cuberoot.me/api/comp/access'))).status).toBe(503);
+  it('never automatically mints a browser proof', async () => {
+    const response = await GET();
+    expect(response.status).toBe(403);
+    expect(response.headers.get('set-cookie')).toBeNull();
   });
-  it('retries a rejected API request only after acquiring a proof', async () => {
+  it('requires manual verification instead of retrying after an automatic grant', async () => {
     const request = vi.fn()
       .mockResolvedValueOnce(Response.json({ code: 'competition_verification_required' }, { status: 403 }))
-      .mockResolvedValueOnce(new Response(null, { status: 403 }))
-      .mockResolvedValueOnce(Response.json({ expiresIn: 1800 }))
-      .mockResolvedValueOnce(Response.json({ ok: true }));
+      .mockResolvedValueOnce(new Response(null, { status: 403 }));
     vi.stubGlobal('fetch', request);
+    vi.stubGlobal('window', { location: { pathname: '/zh/wca/comp/A', search: '', hash: '', assign: vi.fn() } });
     const { competitionFetch } = await import('@/lib/competition-access');
-    expect((await competitionFetch('https://api.cuberoot.me/v1/cubing-live/A')).status).toBe(200);
-    expect(request.mock.calls.map(call => call[0])).toEqual([
-      'https://api.cuberoot.me/v1/cubing-live/A', 'https://api.cuberoot.me/v1/competition-access/check',
-      '/api/comp/access', 'https://api.cuberoot.me/v1/cubing-live/A',
-    ]);
-    expect(request.mock.calls[3][1].credentials).toBe('include');
+    await expect(competitionFetch('https://api.cuberoot.me/v1/cubing-live/A')).rejects.toThrow();
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(window.location.assign).toHaveBeenCalledWith('/zh/competition-verify?returnTo=%2Fzh%2Fwca%2Fcomp%2FA');
   });
 });
