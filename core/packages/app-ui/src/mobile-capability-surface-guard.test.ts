@@ -74,10 +74,10 @@ describe('Mobile capability surface guard', () => {
     expect(controller).toContain('isTimingEnabled: () => timingEnabledRef.current');
     expect(controller).toContain("autoReadyOnScramble: () => storeRef.current?.settings.bluetoothAutoReady === 'scrambled'");
     expect(controller).toContain('startFromCube: (timestamp) => timerRef.current.startFromCube(timestamp)');
-    expect(controller).toContain('smartCubeMoveRecorderRef.current.record(move, timestamp)');
+    expect(controller).toContain('smartCubeAttemptProducerRef.current.recordMove(move, timestamp)');
     expect(controller).toContain('attemptSplitRecorder.observeMoves');
     expect(controller).toContain('smartCubeMoveSubscribersRef.current');
-    expect(app).toContain('smartCubeMoveRecorderRef.current.begin(startedAtMs)');
+    expect(app).toContain('smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current)');
     expect(app).toContain('new SmartCubeSoloTimerController');
     expect(app).toContain('id: currentScrambleEntry.id');
     expect(app).toContain('smartCubeSoloController.setConnected(connected)');
@@ -90,7 +90,7 @@ describe('Mobile capability surface guard', () => {
     expect(app).not.toContain('verifySmartCubeScramble');
     expect(app).not.toContain('createSmartCubeFixupRequester');
     expect(app).not.toContain('smartCubeGuidanceCompleteRef');
-    expect(app).toMatch(/smartCubeMoveRecorderRef\.current\.take\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
+    expect(app).toMatch(/smartCubeAttemptProducerRef\.current\.finish\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
     expect(app).toMatch(/repository\.addSolve\(solve, sessionId\)[\s\S]*?setPendingSolves/);
     expect(app).toContain('repository.addSolve(pending.solve, pending.sessionId)');
     expect(app).toContain('onUndo={retryPendingSolve}');
