@@ -757,6 +757,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 还原即停表、赛前自动预备。手动 MAC 输入沿用 Solo 那套「延迟 promise」:
   // hook 需要 MAC 时挂起,弹窗把用户输入的值 resolve 回去。
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
   const macResolverRef = useRef<((m: string | null) => void) | null>(null);
   const requestMac = useCallback((deviceName: string, isWrongKey?: boolean) => new Promise<string | null>((resolve) => {
@@ -840,6 +841,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       );
     },
   });
+  const connectSmartCubeCenter = useCallback(() => {
+    setBluetoothOpen(true);
+    if (bluetoothCube.status.connected) return;
+    const attempt = bluetoothCube.connect();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.catch(() => undefined);
+  }, [bluetoothCube]);
   const cubeConnected = bluetoothCube.status.connected;
   useEffect(() => {
     onPresenceChange?.({
@@ -1306,7 +1314,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                 id: device.id,
                 kind: device.kind,
                 label: tr({ zh: '智能魔方', en: 'Smart cube' }),
-                onSelect: () => setBluetoothOpen(true),
+                onSelect: connectSmartCubeCenter,
               }))}
               menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
               triggerLabel={tr({ zh: '设备', en: 'Devices' })}
@@ -1974,11 +1982,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         <BluetoothModal
           isZh={isZh}
           cube={bluetoothCube}
+          connectAttempt={bluetoothConnectAttempt}
           onResetGyro={() => setCalibrateNonce(n => n + 1)}
           macPrompt={macPrompt}
           onSubmitMac={(mac) => resolveMac(mac)}
           onCancelMac={() => resolveMac(null)}
-          onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
+          onClose={() => {
+            if (macResolverRef.current) resolveMac(null);
+            setBluetoothOpen(false);
+            setBluetoothConnectAttempt(null);
+          }}
           // 失败也交给弹窗:它知道断在哪一步(选设备 / GATT / 握手),说得比这里清楚,
           // 而且 Solo、对战、房间三处不会再各报各的。
           onConnect={pick => bluetoothCube.connect(pick)}
