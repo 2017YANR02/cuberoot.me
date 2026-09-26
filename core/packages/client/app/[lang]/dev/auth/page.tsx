@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "c8d9167b6b42393d2de8e35fb14d99bab815daed1769fea557813e81e71816ae", "reason": "复核抖音网站扫码、小程序登录、绑定和解绑：两端分别取同主体 AlliedID 识别同一用户，历史小程序身份在再次登录后补齐跨应用别名；不同账号持有相同标识时拒绝合并，解绑抖音时清除全部别名。六位绑定码仍限制尝试次数。并核对最新 App.tsx 变动仅涉及桌面智能魔方设备扫描，不改变安装版登录流程；微信及其他登录方式不变。本次短信改动仅将阿里云标准短信发送实现换为固定版本共享传输包，本站仍负责验证码生成、冷却、存储与核销，手机号登录及绑定流程不变；供应商受理不代表手机实际送达。"}
+{"fingerprint": "da91ac1c568cfd43e9ac61e62c171e988ece1409302e9f671dd1f1c2dd655fc0", "reason": "复核抖音网站扫码、小程序登录、绑定和解绑：两端分别取同主体 AlliedID 识别同一用户，历史小程序身份在再次登录后补齐跨应用别名；不同账号持有相同标识时拒绝合并，解绑抖音时清除全部别名。六位绑定码仍限制尝试次数。并核对最新 App.tsx 变动仅涉及桌面智能魔方设备扫描，不改变安装版登录流程；微信及其他登录方式不变。本次短信改动仅将阿里云标准短信发送实现换为固定版本共享传输包，本站仍负责验证码生成、冷却、存储与核销，手机号登录及绑定流程不变；供应商受理不代表手机实际送达。本次 index.ts 增加比赛数据访问凭证校验：只保护 cubing-live 与直播流，CN 来源由 nginx 识别后豁免；凭证不包含账号身份，不修改登录、绑定、合并、退出、注销或角色预览的认证规则，因此账号流程图保持不变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -34,6 +34,7 @@ export default function AuthFlowPage() {
       <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
       <p className="auth-map-note">{t('源码核对：2026-09-21。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-21. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
       <p className="auth-map-note">{t('本次邮箱发送状态与账号事务加固已完成本地隔离验证，尚未部署；短信发送生命周期与账号合并仍使用各自原有流程，不能由邮箱测试推断已完成同样改造。', 'Email delivery state and account transactions have passed isolated local checks and are not deployed. SMS delivery and account merging retain their existing flows; email tests do not prove those flows have received the same changes.')}</p>
+      <p className="auth-map-note">{t('比赛页的浏览器验证只授予短时数据访问权限，不代表登录，不授予账号或管理员权限；账号退出与账号会话仍按下图处理。', 'Competition browser verification grants only short-lived data access. It does not sign in a user or grant account or administrator permissions; account sessions and sign-out follow the flows below.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
         <AppLink href="#signin" prefetch={false}>{t('登录 / 注册', 'Sign in / register')}</AppLink>

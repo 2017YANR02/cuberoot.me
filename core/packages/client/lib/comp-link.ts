@@ -87,7 +87,8 @@ export function prefetchComp(compId: string): void {
   fetch(statsUrl(`/stats/comp/${encodeURIComponent(compId)}.json`), { cache: 'force-cache' })
     .then(r => {
       if (r.ok) return;
-      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`), { cache: 'force-cache' })
+      // Background hover prefetch must not navigate to a verification page.
+      fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compId)}`), { cache: 'force-cache', credentials: 'include' })
         .catch(() => { _prefetched.delete(compId); });
     })
     .catch(() => { _prefetched.delete(compId); });
