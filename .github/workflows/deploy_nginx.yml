@@ -49,6 +49,8 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-cn-ranges.conf.new"
           scp -i ~/.ssh/id ops/nginx/competition-access.inc \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-competition-access.inc.conf.new"
+          scp -i ~/.ssh/id ops/nginx/site-access.integration.ts \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/site-access.integration.ts"
           scp -i ~/.ssh/id ops/nginx/scanner-ban.integration.ts \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/scanner-ban.integration.ts"
           scp -i ~/.ssh/id ops/vercel-ban-relay/relay.ts ops/vercel-ban-relay/cuberoot-vercel-bans.service ops/vercel-ban-relay/cuberoot-vercel-bans.timer \
@@ -72,6 +74,8 @@ jobs:
         run: |
           ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
             '/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /tmp/scanner-ban.integration.ts /tmp/02-scanner-ban.conf.new'
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
+            '/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /tmp/site-access.integration.ts /tmp/01-traffic-limits.conf.new /tmp/cuberoot-competition-access.inc.conf.new'
 
       - name: Install Vercel ban relay (activate only when credentials are configured)
         env:
