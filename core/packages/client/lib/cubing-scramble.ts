@@ -19,6 +19,7 @@
  *      other events stay at 3 since their solver is single-worker anyway.
  */
 import { cstimerScramble444 } from './cstimer-444';
+import { cstimerScramble } from './cstimer-scramble';
 import { fetch555Scramble, fetch555ScrambleBatch } from './scramble-555-server';
 import { get555Mode, on555ModeChange } from './scramble-555-mode';
 import { get333Mode, on333ModeChange } from './scramble-333-mode';
@@ -65,11 +66,12 @@ export const TNOODLE_WCA_EVENTS = [
 ] as const;
 
 // cubing.js `twizzleEvents` 里非 WCA 但已支持 random-state 打乱的项目。
-// 跟 https://experiments.cubing.net/cubing.js/mark3 暴露的对齐。
-// id 形态保持 cubing.js 一致(redi_cube / master_tetraminx 等下划线),
+// 跟 https://experiments.cubing.net/cubing.js/mark3 暴露的对齐；Redi 单独
+// 走 csTimer 的 rediso，避免两处生成口径不同。
+// id 形态保持 cubing.js 一致(master_tetraminx 等下划线),
 // EventIcon 把它们映到 cubing-icons 的 `unofficial-*` class。
 export const TWIZZLE_NONWCA_EVENTS = [
-  'fto', 'master_tetraminx', 'kilominx', 'redi_cube', 'baby_fto',
+  'fto', 'master_tetraminx', 'kilominx', 'baby_fto',
 ] as const;
 
 /**
@@ -81,7 +83,6 @@ export const TWIZZLE_NONWCA_APPEND: ReadonlyArray<{ id: string; iconClass: strin
   { id: 'fto', iconClass: 'unofficial-fto' },
   { id: 'master_tetraminx', iconClass: 'unofficial-mtetram' },
   { id: 'kilominx', iconClass: 'unofficial-kilominx' },
-  { id: 'redi_cube', iconClass: 'unofficial-redi' },
   { id: 'baby_fto', iconClass: 'unofficial-baby_fto' },
 ];
 
@@ -232,6 +233,9 @@ on222ModeChange(() => {
  */
 async function generateScramble(wcaId: string): Promise<string> {
   if (wcaId === '444') return cstimerScramble444();
+  // Redi uses csTimer's canonical random-state generator. cubing.js exposes a
+  // different generator/notation, so keep the generator and timer on rediso.
+  if (wcaId === 'redi_cube') return cstimerScramble(wcaId);
   // 2x2: cubing.js 0.63 把 222 路由到 WASM twips,generator 是 U/F/L/R 四面 —— 出的打乱含 L,
   // 违反 WCA 4b3(二阶固定 DBL 角,只用 U/R/F)。改走站内 TNoodle 移植(lib/pocket-scramble):
   // wca = 恰好 11 步、握位代价最小(与赛场一致);optimal = HTM 最短 + Q|H,同样握位代价最小。
