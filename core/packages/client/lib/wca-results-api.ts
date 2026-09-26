@@ -1,3 +1,4 @@
+import { competitionFetch } from '@/lib/competition-access';
 /**
  * WCA public competition results / scrambles API — ported from packages/client-vite/src/utils/wca_results_api.ts.
  * Module-level promise cache; proxy via cuberoot server with direct WCA fallback.
@@ -366,7 +367,7 @@ const cubingLiveCache = new Map<string, { expires: number; promise: Promise<Cubi
 function loadCubingLive(compWcaId: string): Promise<CubingLiveData | null> {
   const hit = cubingLiveCache.get(compWcaId);
   if (hit && hit.expires > Date.now()) return hit.promise;
-  const p = fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=5`))
+  const p = competitionFetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(compWcaId)}?v=5`))
       .then(r => r.ok ? r.json() as Promise<CubingLiveData> : null)
       .catch(() => null);
   cubingLiveCache.set(compWcaId, { expires: Date.now() + 15_000, promise: p });
