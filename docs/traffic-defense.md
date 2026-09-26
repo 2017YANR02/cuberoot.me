@@ -12,6 +12,10 @@
 
 发布前验证：27 项专项检查通过；线上服务器的隔离 nginx 实例使用新配置，CN IPv4/IPv6 共 720 次测试请求全部为 200；非 CN 的 60 次详情请求为 11 次 200、49 次 429；伪造国家／转发请求头不能绕过计算器 403。隔离维护模式下非 CN 为 503，CN IPv4 计算器与 CN IPv6 比赛 API 均为 200。隔离测试没有调用生产应用。生产发布结果另行记账。
 
+生产确认（2026-09-26 02:51 UTC）：代码 `574a1712b2` 的[守护程序部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36212650176)及[Test](https://github.com/2017YANR02/cuberoot.me/actions/runs/36212650290)成功。首轮 nginx 发布因 server-if 中的 `add_header` 不被允许而自动回滚；修正 `fe716cdbcc` 经完整服务器配置校验及 [nginx 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36212871938)成功，新 worker 接管。四个 nginx 文件与监控、守护程序的线上 SHA-256 均与源码一致。运行时维护开关为 `default 0;`，流量守护及国家网段刷新 timer 均为 active。通过真实中国出口回访阿里云中文计算器和 API 均为 200；计算器访问日志带 `maintenance=0 cn_exempt=1`，外部直连主站亦为 200。
+
+Vercel 同期已发布置顶的 `China mainland traffic exemption`（`rule_china_mainland_traffic_exemption_aOC64j`）：Country Equals CN → Bypass，执行在原有计算器拒绝、限流和 Bot Management 之前，控制台确认发布成功。从杭州服务器强制访问 Vercel 线路的 `/zh/calc` 得到 200。该规则不绕过 Vercel 系统 DDoS 防护、项目暂停或预算暂停；不能宣称中国访客在云平台层面永远无任何限制。[Vercel 官方规则说明](https://vercel.com/docs/vercel-firewall/firewall-concepts)。
+
 用户已自行恢复 Vercel，并要求恢复阿里云。会话网络权限恢复后，通过 SSH 核对 Next 与 API 的本机健康请求均为 200、nginx 配置检查通过、自动停站 timer 为 active。备份运行时状态文件后，将 `/etc/nginx/cuberoot-maintenance-state.conf` 从 `default 1;` 改为 `default 0;`，检查 nginx 配置并 reload。
 
 新 worker 接管后，服务器本机经 HTTPS/SNI 分别访问主站 `/zh`、`next.cuberoot.me/zh`、API `/v1/nav/home-locks` 均为 200；外部关闭本机代理、指定阿里云 IP 验证主站和 API，也均为 200。reload 刚发出时的首组请求仍返回旧 worker 的 503，后续验收确认已切换。没有修改 DNS、限流阈值或自动停站配置；中文计算器临时拒绝仍保留。中国 IP 豁免尚未实施，不能将本次恢复说成中国 IP 不受限制。
