@@ -61,7 +61,9 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(net).toContain('publishLiveMove(move)');
     expect(net).toContain('cornerSlot={activePkLock ? ownLiveCubeSlot : selectedCubeSlot}');
     expect(net).toContain('className="net-pk-arena"');
-    expect(net).toContain('className="net-live-cube-switch"');
+    expect(net).toContain('const selectedRemoteId = viewedCubePlayerId && viewedCubePlayerId !== pid');
+    expect(net).toContain('setViewedCubePlayerId(p.id)');
+    expect(css).toContain('.net-player.is-live-target:focus-visible');
     expect(net).toContain('useGyro={false}');
     expect(css).toContain("grid-template-areas: 'self opponent'");
     expect(css).toContain("'opponent'\n      'self'");
