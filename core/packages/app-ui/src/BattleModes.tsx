@@ -58,10 +58,14 @@ import {
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
 import {
+  createTimerDeviceRegistry,
+  TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
+import {
   SegmentTime,
   Flag,
   RoomQrModal,
-  TimerDeviceActions,
+  TimerDeviceCenter,
   TimerPlayersSelect,
   TimerCubePreview,
   TimerPuzzlePicker,
@@ -82,6 +86,11 @@ import {
 } from 'react';
 
 import type { COPY, SupportedLanguage } from './copy';
+
+const INSTALLED_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
+  adapterIds: ['smart-cube'],
+  registrations: TIMER_DEVICE_REGISTRATIONS,
+});
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import {
   getWcaPerson,
@@ -641,23 +650,29 @@ export function LocalBattleMode({
           <details>
             <summary>{copy.battleSmartCube}</summary>
             <p>{copy.battleSharedCubeDetail}</p>
-            <TimerDeviceActions
-              active={smartCube.phase === 'connected'}
-              connectAriaLabel={smartCube.phase === 'connected'
-                ? copy.disconnectBluetooth
-                : copy.connectBluetooth}
-              connectLabel={smartCube.phase === 'connected'
-                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                  ? copy.connectingBluetooth
-                  : copy.connect}
-              onConnect={() => {
-                if (smartCube.phase === 'connected') {
-                  void smartCube.disconnect().catch(() => setStorageError(copy.smartCubeError));
-                } else {
-                  void smartCube.connect().catch(() => setStorageError(copy.smartCubeError));
-                }
-              }}
+            <TimerDeviceCenter
+              ariaLabel={copy.connectBluetooth}
+              className="battle-device-center"
+              items={INSTALLED_TIMER_DEVICE_REGISTRY.list().map((device) => ({
+                active: smartCube.phase === 'connected',
+                detail: smartCube.phase === 'connected'
+                  ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+                  : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+                    ? copy.connectingBluetooth
+                    : undefined,
+                id: device.id,
+                kind: device.kind,
+                label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.battleSmartCube,
+                onSelect: () => {
+                  if (smartCube.phase === 'connected') {
+                    void smartCube.disconnect().catch(() => setStorageError(copy.smartCubeError));
+                  } else {
+                    void smartCube.connect().catch(() => setStorageError(copy.smartCubeError));
+                  }
+                },
+              }))}
+              menuLabel={copy.battleSmartCube}
+              triggerLabel={copy.battleSmartCube}
             />
             <div className="battle-cube-holders">
               {visiblePlayers.map((player) => (
@@ -1640,23 +1655,29 @@ export function NetBattleMode({
             surfaceRef={surfaceRef}
           />
           {smartCube && (
-            <TimerDeviceActions
-              active={smartCube.phase === 'connected'}
-              connectAriaLabel={smartCube.phase === 'connected'
-                ? copy.disconnectBluetooth
-                : copy.connectBluetooth}
-              connectLabel={smartCube.phase === 'connected'
-                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                  ? copy.connectingBluetooth
-                  : copy.connect}
-              onConnect={() => {
-                if (smartCube.phase === 'connected') {
-                  void smartCube.disconnect().catch(() => setError(copy.smartCubeError));
-                } else {
-                  void smartCube.connect().catch(() => setError(copy.smartCubeError));
-                }
-              }}
+            <TimerDeviceCenter
+              ariaLabel={copy.connectBluetooth}
+              className="battle-device-center"
+              items={INSTALLED_TIMER_DEVICE_REGISTRY.list().map((device) => ({
+                active: smartCube.phase === 'connected',
+                detail: smartCube.phase === 'connected'
+                  ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+                  : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+                    ? copy.connectingBluetooth
+                    : undefined,
+                id: device.id,
+                kind: device.kind,
+                label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.battleSmartCube,
+                onSelect: () => {
+                  if (smartCube.phase === 'connected') {
+                    void smartCube.disconnect().catch(() => setError(copy.smartCubeError));
+                  } else {
+                    void smartCube.connect().catch(() => setError(copy.smartCubeError));
+                  }
+                },
+              }))}
+              menuLabel={copy.battleSmartCube}
+              triggerLabel={copy.battleSmartCube}
             />
           )}
           {currentResult && pendingCount(room) > 0 && (
