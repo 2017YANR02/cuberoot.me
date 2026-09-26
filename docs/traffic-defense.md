@@ -28,11 +28,11 @@ Vercel 扫描规则通过 REST API 发布到 active 配置 v13，`actionDuration
 
 用户提出不输入验证码就封 IP。本次以**重复请求行为**触发：非 CN、未验证时，同一 IP 每分钟请求比赛页面或比赛 API 超过 10 次，封禁 1 小时；仅停留或关闭验证码页不触发。中英文验证页提示阈值、时长与共享网络的影响。它不是“拒绝输入”的主观判定，也不把一次访问判成攻击。
 
-- Vercel：`Repeated unverified competition requests - 1 hour ban` 在比赛 challenge 前执行。条件为比赛路径 + 缺少 `__Secure-cuberoot_comp_manual` cookie + 非 CN，60 秒固定窗口、10 次/IP，超出 deny，`actionDuration: 1h`。active v50 读回 valid。WAF 只能检查 cookie 是否存在，签名仍由应用验证；伪造 cookie 不能获取比赛内容，但会跳过这条“缺少 cookie”的计数。保留原比赛/接口限流与抓取特征规则，不声称这条规则单独防住所有自动化。尚无真实命中事件证明平台实际执行的到期时长，不能仅凭配置值作此断言。
+- Vercel：`Repeated unverified competition requests - 1 hour ban` 在比赛 challenge 前执行。条件为比赛路径 + 缺少 `__Secure-cuberoot_comp_manual` cookie + 非 CN，60 秒固定窗口、10 次/IP，超出 deny，`actionDuration: 1h`。active v50 读回 valid。WAF 只能检查 cookie 是否存在，签名仍由应用验证；伪造 cookie 不能获取比赛内容，但会跳过这条“缺少 cookie”的计数。保留原比赛/接口限流与抓取特征规则，不声称这条规则单独防住所有自动化。08:11:55–08:16:55 UTC 已出现真实命中：1 个 IP、17 次拒绝；事件 endTime − startTime 为 3,599.998 秒，确认平台执行约 1 小时。
 - 阿里云：只计 Next 返回验证拒绝标记或受保护 API 返回的 403；计数跨主站、next 与 API 共用。第 11 次拒绝后记录 3,600 秒封禁，此后的请求在 nginx 进入应用前返回 403 + Retry-After。已通过验证的请求、验证码页、静态资源、中国大陆 IP 不计数。签名无效的 cookie 仍被识别为未验证。沿用扫描封禁的共享表与磁盘日志，reload/完整重启保留剩余期限。
 - 隔离验收：162 项 nginx 检查，包括十次拒绝尚未封、混合页面/API 第十一次触发、其后普通路径被拒、1 小时时长、验证码页 15 次不计数、CN 例外、重启保留。客户端签名与路由专项 6 项通过，新增拒绝标记已验；类型检查通过。生产发布：`2af555da0e` 的 [Next 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36228647294)、[CI](https://github.com/2017YANR02/cuberoot.me/actions/runs/36228647288) 与 [nginx 部署重试](https://github.com/2017YANR02/cuberoot.me/actions/runs/36228647287)成功。首轮 nginx 发布在 Vercel API 500 时停在同步步骤，下一轮 timer 自行恢复，重试部署成功；未将失败算作上线。Vercel `dpl_BaSRUXxoAMaVqkLbnXEty3EhKQBj` 为 READY，主域别名已绑定。阿里云生产浏览器已看到阈值与封禁时长提示，API/Next 健康检查 200。
 
-补查持续进入验证码页的请求发现首轮漏列两种 UA：Mac Chrome 119 与 Mac Firefox 121。分别按 UA 查询 JA4，各约 52K 次请求集中于本次指纹，其他指纹只数十次；仅将两种精确 UA 加入同一指纹条件，未扩大为所有 Mac 浏览器。08:06:56–08:11:56 UTC 原生事件记录 1,757 个不同 IP、1,759 次拒绝。08:11 UTC 的 30 天精确名单为 21,529 个去重 IP，12 条有效分组规则，CN 仍置顶。同步器使用插入顺序分组，新来源只更新末尾分组，避免每分钟重写全部名单；到期仍移除。
+补查持续进入验证码页的请求发现首轮漏列两种 UA：Mac Chrome 119 与 Mac Firefox 121。分别按 UA 查询 JA4，各约 52K 次请求集中于本次指纹，其他指纹只数十次；仅将两种精确 UA 加入同一指纹条件，未扩大为所有 Mac 浏览器。08:06:56–08:11:56 UTC 原生事件记录 1,757 个不同 IP、1,759 次拒绝。08:11 UTC 的 30 天精确名单为 21,529 个去重 IP，12 条有效分组规则，CN 仍置顶。同步器使用插入顺序分组，新来源只更新末尾分组，避免每分钟重写全部名单；到期仍移除。优化提交 `c3a19de648` 的 [部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36229157941)成功，线上源码哈希与仓库一致；一次同步由约 30 秒降至 7 秒。08:17:23 UTC 已同步 23,036 个不同 IP，timer 为 enabled/active。08:11:55–08:16:55 UTC，抓取特征规则另外记录 1,286 个不同 IP、1,287 次拒绝；两类规则数分别报告，不等同全站访问量。
 
 用户提供的 `hg2z2-1790405072556-3b40385744c2` 是 06:44:32 UTC 的历史请求，早于抓取指纹规则启用：Firefox 121 声明，Firewall Allowed，应用 307 跳到验证码页，No outgoing requests；这条详情未显示来源 IP。不能拿它证明后来的规则失效或比赛内容已被读取。
 
