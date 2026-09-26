@@ -1,11 +1,32 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { evaluate, formatGuardAlert } from "./traffic-guard.ts";
+import { parseNginxLine } from "./traffic-monitor.ts";
 
 const now = Date.parse("2026-09-25T09:00:00Z");
 const sample = (minute, source, path, status = 200) => ({
   timestamp: now - minute * 60_000 + 10_000,
   source, path, status, method: "GET", referrer: "-", userAgent: "test",
+});
+
+test("CN requests remain visible but cannot trip volume or error shutdown", () => {
+  const rows = [1, 2].flatMap(minute => ["nginx", "api"].flatMap(source =>
+    Array.from({ length: 5000 }, () => ({ ...sample(minute, source, "/zh", 502), cnExempt: true }))));
+  const result = evaluate(rows, now);
+  assert.deepEqual(result.reasons, []);
+  assert.equal(result.window.api[0].requests, 5000);
+  assert.equal(result.window.api[0].exempt, 5000);
+  assert.equal(result.window.api[0].errors, 5000);
+  rows.push(...Array.from({ length: 100 }, () => sample(1, "api", "/v1/a", 502)));
+  assert.deepEqual(evaluate(rows, now).reasons, ["api_5xx_spike"]);
+});
+
+test("CN exemption only comes from the server-owned log suffix", () => {
+  const line = '1.0.1.1 - - [25/Sep/2026:08:59:00 +0000] "GET /zh HTTP/1.1" 200 10 "-" "cn_exempt=1"';
+  assert.equal(parseNginxLine(line).cnExempt, undefined);
+  assert.equal(parseNginxLine(`${line} maintenance=0 cn_exempt=1`).cnExempt, true);
+  assert.equal(parseNginxLine(`${line} maintenance=1 cn_exempt=0`).maintenance, true);
+  assert.equal(parseNginxLine(`${line} maintenance=0`).cnExempt, undefined);
 });
 
 test("normal asset burst and one minute of pages do not close the site", () => {
