@@ -16,6 +16,30 @@ export type TimerDeviceConnectionPhase =
   | 'reconnecting'
   | 'error';
 
+export type TimerDeviceErrorCode =
+  | 'permission-denied'
+  | 'bluetooth-unavailable'
+  | 'device-not-found'
+  | 'connection-failed'
+  | 'protocol-error'
+  | 'disconnected'
+  | 'timeout'
+  | 'cancelled'
+  | 'unknown';
+
+export interface TimerDeviceError {
+  code: TimerDeviceErrorCode;
+  message?: string;
+  retryable: boolean;
+}
+
+export type TimerDeviceConnectionEvent =
+  | { kind: 'disconnected'; reason: 'gatt-lost' | 'manual' }
+  | { kind: 'reconnecting'; attempt: number; maxAttempts: number; delayMs: number }
+  | { kind: 'reconnected' }
+  | { kind: 'reconnect-failed'; attempts: number }
+  | { kind: 'error'; error: TimerDeviceError };
+
 export interface TimerDeviceAvailableDevice {
   id: string;
   name: string;
