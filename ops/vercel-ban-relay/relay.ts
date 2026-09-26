@@ -36,6 +36,27 @@ export function planCapacity(ips: string[], otherRules: number, existingRules: n
   const admitted = ips.slice(0, count * 1875);
   return { count, admitted, pending: ips.length - admitted.length, capacity: available * 1875 };
 }
+/** Advance only through complete windows; split busy windows instead of skipping them. */
+export async function collectEvents(state: Ledger, now: number, read: (start: number, end: number) => Promise<BanEvent[]>, budget = 30) {
+  let cursor = Math.max(state.cursor - 120000, now - DAY);
+  const deadline = Date.now() + 45000;
+  let requests = 0;
+  while (cursor < now && requests < budget && Date.now() < deadline) {
+    let end = Math.min(cursor + 60000, now);
+    while (true) {
+      if (requests >= budget || Date.now() >= deadline) return;
+      requests++;
+      const events = await read(cursor, end);
+      if (!Array.isArray(events)) throw new Error('Invalid event response');
+      absorb(state, events, now);
+      if (events.length < 1000) break;
+      if (end - cursor <= 1) throw new Error('WAF event millisecond exceeds response limit; cursor retained');
+      end = cursor + Math.max(1, Math.floor((end - cursor) / 2));
+    }
+    cursor = end;
+    state.cursor = Math.max(state.cursor, cursor);
+  }
+}
 export async function run() {
   const root = process.env.CUBEROOT_BAN_STATE_DIR || '/var/lib/cuberoot-vercel-bans';
   const config = JSON.parse(readFileSync(process.env.CUBEROOT_BAN_CONFIG || '/etc/cuberoot-vercel-bans.json', 'utf8'));
@@ -56,21 +77,14 @@ export async function run() {
     if (!response.ok) throw new Error(`Vercel ${method} ${path}: HTTP ${response.status}`);
     return response.json();
   }
-  // One-minute windows prevent a large overlap query silently losing events.
-  // Re-read two minutes for ingestion delay. A gap >24h is reported, never hidden.
-  if (now - state.cursor > DAY) throw new Error('WAF event gap exceeds 24h; manual recovery required');
-  let cursor = Math.max(state.cursor - 120000, now - DAY);
-  let windows = 0;
+  // Event ingestion must not prevent publishing known bans or removing expiries.
+  // Re-read two minutes for ingestion delay; bounded batches catch up each minute.
+  let eventError: string | undefined;
   absorb(state, [], now);
-  while (cursor < now && windows++ < 30) {
-    const end = Math.min(cursor + 60000, now);
-    const result = await api('events', 'GET', undefined, { startTimestamp: String(cursor), endTimestamp: String(end) });
-    if (!Array.isArray(result.actions)) throw new Error('Invalid event response');
-    if (result.actions.length >= 1000) throw new Error('Event window possibly truncated; preserve cursor and retry after review');
-    absorb(state, result.actions, now);
-    cursor = end;
-  }
-  state.cursor = Math.max(state.cursor, cursor);
+  try {
+    if (now - state.cursor > DAY) throw new Error('WAF event gap exceeds 24h; manual recovery required');
+    await collectEvents(state, now, async (start, end) => (await api('events', 'GET', undefined, { startTimestamp: String(start), endTimestamp: String(end) })).actions);
+  } catch (error) { eventError = error instanceof Error ? error.message : String(error); }
   // Keep insertion order: new IPs append to the final rule instead of rewriting
   // every earlier bucket on each minute. Expired IPs are still removed.
   const ips = Object.keys(state.bans);
@@ -114,7 +128,8 @@ export async function run() {
   state.lastSyncedAt = now;
   writeFileSync(`${root}/state.tmp`, JSON.stringify(state), { mode: 0o600 });
   renameSync(`${root}/state.tmp`, `${root}/state.json`);
-  console.log(JSON.stringify({ bannedIps: plan.admitted.length, pendingIps: plan.pending, capacityIps: plan.capacity, observedIps: ips.length, through: new Date(state.cursor).toISOString(), ruleId: state.ruleId, expiryDays: 30 }));
+  console.log(JSON.stringify({ bannedIps: plan.admitted.length, pendingIps: plan.pending, capacityIps: plan.capacity, observedIps: ips.length, through: new Date(state.cursor).toISOString(), eventLagSeconds: Math.ceil((now - state.cursor) / 1000), eventError, ruleId: state.ruleId, expiryDays: 30 }));
+  if (eventError) await alertOnce('events', '已同步现有名单并处理到期解除，但新事件读取受阻：' + eventError + '。采集进度保留，新 IP 可能延迟加入。');
   if (plan.pending) await alertOnce('capacity', '已同步 ' + plan.admitted.length + ' 个 IP 的 30 天封禁，还有 ' + plan.pending + ' 个等待规则容量。账本保留全部记录，到期解除继续执行；排队项不能视为已获得 30 天封禁。');
 }
 async function alertOnce(kind: string, message: string) {
