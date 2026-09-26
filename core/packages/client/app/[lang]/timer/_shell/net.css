@@ -222,21 +222,28 @@
 /* ── 房间内玩家条 ─────────────────────────────────────────── */
 .net-players {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px 12px;
-  padding: 8px 16px 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: fit-content;
+  max-width: min(100%, 360px);
+  padding: 8px 16px 4px;
 }
 .net-player {
   display: flex;
   align-items: baseline;
   gap: 8px;
   min-width: 0;
+  min-height: 32px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 120ms ease, color 120ms ease;
 }
-.net-player + .net-player {
-  border-left: 1px solid color-mix(in srgb, var(--foreground) 18%, transparent);
-  padding-left: 12px;
-}
+.net-player.is-live-target { cursor: pointer; }
+.net-player.is-live-target:hover { background: var(--shell-hover); }
+.net-player.is-live-target:active { background: var(--accent-soft); }
+.net-player.is-live-target:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.net-player.is-active { background: var(--accent-soft); }
 .net-player.is-offline { opacity: 0.45; }
 .net-p-name {
   font-size: 13px;
@@ -291,43 +298,6 @@
   white-space: nowrap;
 }
 .net-p-time.is-dnf { color: var(--destructive); }
-
-/* 智能魔方实况入口:多人房默认看自己,有实况的玩家可切换观察对象。 */
-.net-live-cube-switch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex: none;
-  padding: 0;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-  touch-action: manipulation;
-  transition: transform 120ms ease, background 120ms ease, color 120ms ease;
-}
-.net-live-cube-switch[aria-pressed='true'] {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-.net-live-cube-switch:active { transform: scale(0.96); }
-.net-live-cube-switch:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-@media (hover: hover) {
-  .net-live-cube-switch:hover {
-    background: var(--shell-hover);
-    color: var(--foreground);
-  }
-  .net-live-cube-switch[aria-pressed='true']:hover {
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
-    color: var(--accent);
-  }
-}
 
 .net-cube-owner,
 .net-cube-connection-state {
@@ -702,8 +672,7 @@
   /* 顶栏右侧多了「智能魔方」按钮,窄屏一行要挤;房间码本身就够辨识,
      省掉前面「房间」二字正好把这一格补回来,不必让整条右组换行。 */
   .net-code-label { display: none; }
-  .net-players { gap: 2px 8px; padding-top: 6px; }
-  .net-player + .net-player { padding-left: 8px; }
+  .net-players { gap: 2px; padding-top: 6px; }
   .net-p-name { max-width: 7em; }
   .net-lobby { margin-top: 24px; }
   .net-stats-overlay { padding: 3vh 10px; }
