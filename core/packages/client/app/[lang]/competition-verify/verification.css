@@ -5,12 +5,12 @@
 .competition-verification p { line-height: 1.7; color: var(--muted-foreground); }
 .competition-verification-image { min-height: 76px; margin: 24px 0 8px; }
 .competition-verification-image img { max-width: 100%; height: auto; border-radius: 8px; }
-.competition-verification form > button { appearance: none; font: inherit; cursor: pointer; border: 1px solid var(--border-default); background: var(--card); color: var(--foreground); padding: 8px 14px; border-radius: 8px; }
-.competition-verification form > button:disabled { opacity: 0.5; cursor: default; }
+.competition-verification-action { appearance: none; font: inherit; cursor: pointer; border: 1px solid var(--border-default); background: var(--card); color: var(--foreground); padding: 8px 14px; border-radius: 8px; }
+.competition-verification-action:disabled { opacity: 0.5; cursor: default; }
 .competition-verification label { display: block; margin: 24px 0 8px; }
 .competition-verification-input { position: relative; }
-.competition-verification input { width: 100%; box-sizing: border-box; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); padding: 12px 40px 12px 12px; font: inherit; letter-spacing: 0.15em; }
-.competition-verification input:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.competition-verification-code { width: 100%; box-sizing: border-box; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); padding: 12px 40px 12px 12px; font: inherit; letter-spacing: 0.15em; }
+.competition-verification-code:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .competition-verification #competition-code-status { min-height: 1.7em; color: var(--destructive); font-size: 14px; }
 .competition-verification .competition-verification-submit { width: 100%; background: var(--primary); color: var(--primary-foreground); padding: 12px; }
 .competition-verification-note { font-size: 13px; margin-bottom: 0; }
