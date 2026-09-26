@@ -62,7 +62,9 @@ export async function run() {
     cursor = end;
   }
   state.cursor = Math.max(state.cursor, cursor);
-  const ips = Object.keys(state.bans).sort();
+  // Keep insertion order: new IPs append to the final rule instead of rewriting
+  // every earlier bucket on each minute. Expired IPs are still removed.
+  const ips = Object.keys(state.bans);
   // Persist observations before a potentially failing WAF write, so a capacity/API
   // outage cannot discard source events after Vercel retention expires.
   writeFileSync(`${root}/state.tmp`, JSON.stringify(state), { mode: 0o600 });
@@ -76,8 +78,10 @@ export async function run() {
   for (let i = 0; i < count; i++) {
     const part = ips.slice(i * 1875, (i + 1) * 1875);
     const value = managedRule(part, i);
+    let changed = false;
     let existing = active.rules.find((r: {name: string}) => r.name === value.name);
     if (!existing) {
+      changed = true;
       await api('config', 'PATCH', { action: 'rules.insert', value });
       active = await api('config/active');
       existing = active.rules.find((r: {name: string}) => r.name === value.name);
@@ -85,11 +89,15 @@ export async function run() {
     } else {
       const liveIps = existing.conditionGroup.flatMap((g: any) => g.conditions.find((c: any) => c.type === 'ip_address')?.value || []);
       if (JSON.stringify(liveIps) !== JSON.stringify(part.length ? part : ['192.0.2.1']) || existing.active !== value.active) {
+        changed = true;
         await api('config', 'PATCH', { action: 'rules.update', id: existing.id, value });
       }
     }
-    if (active.rules[i + 1]?.id !== existing.id) await api('config', 'PATCH', { action: 'rules.priority', id: existing.id, value: i + 1 });
-    active = await api('config/active');
+    if (active.rules[i + 1]?.id !== existing.id) {
+      changed = true;
+      await api('config', 'PATCH', { action: 'rules.priority', id: existing.id, value: i + 1 });
+    }
+    if (changed) active = await api('config/active');
     const live = active.rules[i + 1];
     const liveIps = live?.conditionGroup?.flatMap((g: any) => g.conditions.find((c: any) => c.type === 'ip_address')?.value || []);
     if (active.rules[0]?.id !== 'rule_china_mainland_traffic_exemption_aOC64j' || live?.id !== existing.id || !live?.valid || live.active !== value.active || JSON.stringify(liveIps) !== JSON.stringify(part.length ? part : ['192.0.2.1'])) throw new Error('Managed IP rule readback mismatch');
