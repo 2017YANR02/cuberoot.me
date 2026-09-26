@@ -27,6 +27,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { fillPlatformParams, matchPlatformRoute } from './lib/platform-routes';
+import { competitionGate } from './lib/competition-gate';
 
 const SUPPORTED_LOCALES = ['en', 'zh'] as const;
 type Locale = typeof SUPPORTED_LOCALES[number];
@@ -151,7 +152,9 @@ function setSeoLinkHeaders(res: NextResponse, rest: string, locale: Locale) {
 }
 
 // Homepage card visibility never gates page delivery or adds an API dependency.
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
+  const challenge = await competitionGate(req);
+  if (challenge) return challenge;
   return routeLanguage(req);
 }
 

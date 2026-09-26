@@ -1,5 +1,5 @@
 /** Web gateway / independent API proof contract. Secrets stay server-side. */
-export const COMPETITION_ACCESS_COOKIE = '__Secure-cuberoot_comp_access';
+export const COMPETITION_ACCESS_COOKIE = '__Secure-cuberoot_comp_manual';
 export const COMPETITION_SERVICE_HEADER = 'x-cuberoot-comp-service';
 export const COMPETITION_ACCESS_TTL = 1800;
 const encoder = new TextEncoder();
@@ -13,12 +13,14 @@ async function key(secret: string) {
 }
 export async function createCompetitionProof(secret: string, purpose: 'browser' | 'service', context: string, now = Date.now()) {
   const expires = Math.floor(now / 1000) + (purpose === 'browser' ? COMPETITION_ACCESS_TTL : 60);
-  const payload = `v1.${purpose}.${expires}.${await contextHash(context)}`;
+  // v2 revokes automatic browser grants AND old proxies that signed without
+  // checking a manual browser proof first.
+  const payload = `v2.${purpose}.${expires}.${await contextHash(context)}`;
   return `${payload}.${hex(await crypto.subtle.sign('HMAC', await key(secret), encoder.encode(payload)))}`;
 }
 export async function verifyCompetitionProof(secret: string, proof: string, purpose: 'browser' | 'service', context: string, now = Date.now()) {
   if (secret.length < 32 || proof.length > 256) return false;
-  const match = /^v1\.(browser|service)\.(\d{10})\.([a-f0-9]{64})\.([a-f0-9]{64})$/.exec(proof);
+  const match = /^v2\.(browser|service)\.(\d{10})\.([a-f0-9]{64})\.([a-f0-9]{64})$/.exec(proof);
   if (!match || match[1] !== purpose) return false;
   const remaining = Number(match[2]) - Math.floor(now / 1000);
   if (remaining <= 0 || remaining > (purpose === 'browser' ? COMPETITION_ACCESS_TTL : 60)) return false;
