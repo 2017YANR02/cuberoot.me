@@ -129,7 +129,13 @@
   bottom: 10px;
   z-index: 4;
   display: inline-flex;
+  width: 40px;
+  height: 40px;
   min-height: 40px;
+  flex: 0 0 40px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--border-default);
   border-radius: 12px;
   background: var(--accent-soft);
@@ -143,11 +149,13 @@
 }
 
 .shell-device-center-trigger {
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
+  display: grid;
+  place-items: center;
+  height: 40px;
   width: 40px;
-  padding: 7px;
+  min-height: 40px;
+  padding: 0;
+  box-sizing: border-box;
   border: 0;
   background: transparent;
   color: inherit;
@@ -211,11 +219,10 @@
 }
 
 .shell-device-center-item-icon {
-  display: inline-flex;
+  display: grid;
   width: 28px;
   height: 28px;
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   line-height: 0;
 }
 
