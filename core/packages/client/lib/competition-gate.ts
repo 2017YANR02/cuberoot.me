@@ -12,7 +12,7 @@ export async function competitionGate(req: NextRequest) {
   if (cn) return null;
   const proof = competitionCookie(req.headers.get('cookie') ?? '');
   if (await verifyCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', proof, 'browser', req.headers.get('user-agent') ?? '')) return null;
-  const headers = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow' };
+  const headers = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow', 'x-cuberoot-verification-required': '1' };
   if (path.startsWith('/api/')) return NextResponse.json({ code: 'competition_verification_required' }, { status: 403, headers });
   const target = req.nextUrl.clone();
   target.pathname = path.startsWith('/zh/') ? '/zh/competition-verify' : '/competition-verify';
