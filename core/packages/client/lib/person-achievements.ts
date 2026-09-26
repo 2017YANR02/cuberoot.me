@@ -1,3 +1,4 @@
+import { competitionFetch } from './competition-access';
 import { calculateCompetitionStreak, calculatePersonalRecordStreak } from '@cuberoot/shared/pr-streak';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { ALL_EVENT_IDS, CANCELLED_EVENT_IDS } from './event-constants';
@@ -428,7 +429,7 @@ export async function fetchFemalePersonRecords(
 ): Promise<{ rows: FemalePersonRecord[]; nationalComplete: boolean }> {
   const root = '/stats/records/history/gender/f';
   const get = async (url: string) => {
-    const response = await fetch(url, { signal });
+    const response = await (url.includes('/v1/cubing-live/') ? competitionFetch : fetch)(url, { signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return response.json();
   };
