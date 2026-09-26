@@ -49,11 +49,11 @@ export default function CompetitionVerifyPage() {
       <p>{t('查看比赛内容前，请输入图片中的 6 位字符，不区分大小写。', 'Before viewing competitions, enter the 6 characters in the image. Letters are not case-sensitive.')}</p>
       <form onSubmit={submit}>
         <div className="competition-verification-image">{challenge ? <img src={challenge.image} width="240" height="76" alt={t('六位字符验证码', 'Six-character verification image')} /> : <span>{busy ? t('正在加载…', 'Loading…') : t('图片未加载', 'Image unavailable')}</span>}</div>
-        <button type="button" onClick={() => void refresh()} disabled={busy}>{t('换一张', 'New image')}</button>
+        <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('换一张', 'New image')}</button>
         <label htmlFor="competition-code">{t('图片中的字符', 'Characters in the image')}</label>
-        <div className="competition-verification-input"><input id="competition-code" value={answer} onChange={e => setAnswer(e.target.value)} maxLength={6} autoComplete="off" autoCapitalize="characters" spellCheck={false} required aria-describedby="competition-code-status" />{answer && <ClearButton onClick={() => setAnswer('')} />}</div>
+        <div className="competition-verification-input"><input className="competition-verification-code" id="competition-code" value={answer} onChange={e => setAnswer(e.target.value)} maxLength={6} autoComplete="off" autoCapitalize="characters" spellCheck={false} required aria-describedby="competition-code-status" />{answer && <ClearButton onClick={() => setAnswer('')} />}</div>
         <p id="competition-code-status" role="status">{error}</p>
-        <button className="competition-verification-submit" type="submit" disabled={busy || !challenge || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
+        <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
       </form>
       <p className="competition-verification-note">{t('验证通过后可访问 30 分钟。中国大陆 IP 继续豁免。', 'Verification lasts 30 minutes. Mainland China IP addresses remain exempt.')}</p>
     </section>
