@@ -33,6 +33,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['alg_submission_reads', 'wca_id'],    // 公式提交的已读位置
   ['scramble_marks', 'wca_id'],          // 打乱标记
   ['timer_backups', 'wca_id'],           // 计时器云备份
+  ['timer_replay_shares', 'user_id'],    // 计时器复盘分享
   ['timer_sessions', 'wca_id'],          // 计时器会话
   ['recon_videos', 'owner_wca_id'],      // 未提交的复盘视频上传
   ['train_results', 'user_id'],          // 训练成绩
