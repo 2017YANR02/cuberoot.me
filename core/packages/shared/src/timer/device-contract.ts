@@ -110,3 +110,19 @@ export const SMART_CUBE_TIMER_DEVICE_REGISTRATIONS: readonly TimerDeviceRegistra
     },
   },
 ];
+
+export const TIMER_DEVICE_REGISTRATIONS: readonly TimerDeviceRegistration[] = [
+  ...SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+  {
+    id: 'smart-timer',
+    kind: 'smart-timer',
+    labelKey: 'smartTimer',
+    capabilities: { connect: true, disconnect: true, autoTiming: true },
+  },
+  {
+    id: 'stackmat',
+    kind: 'stackmat',
+    labelKey: 'stackmat',
+    capabilities: { connect: true, disconnect: true, autoTiming: true },
+  },
+];
