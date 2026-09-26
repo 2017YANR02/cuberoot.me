@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { absorb, managedRule, SOURCES } from './relay.ts';
+import { absorb, collectEvents, managedRule, SOURCES } from './relay.ts';
 const now = Date.parse('2026-09-26T07:00:00Z');
 const event = { startTime: '2026-09-26 06:55:00.000', public_ip: '198.51.100.1', ruleId: [...SOURCES][0], action: 'deny' };
 test('30-day expiry, repeated events do not extend, expiry is removed', () => {
@@ -63,6 +63,26 @@ test('relay publishes chunked rules, verifies order, avoids redundant writes and
 });
 function MANAGED_NAME_FOR_TEST(){return 'Rolling 30-day incident IP bans';}
 
+test('dense event windows split without skipping events and resume after a request budget', async () => {
+ const state={cursor:now-180000,bans:{}};
+ const events=Array.from({length:2400},(_,i)=>({...event,startTime:new Date(now-60000+i*20).toISOString(),public_ip:`10.3.${Math.floor(i/250)}.${i%250+1}`}));
+ const read=async(start,end)=>events.filter(e=>Date.parse(e.startTime)>=start&&Date.parse(e.startTime)<end).slice(0,1000);
+ await collectEvents(state,now,read,5);
+ assert.ok(state.cursor<now);
+ await collectEvents(state,now,read,30);
+ assert.equal(state.cursor,now);assert.equal(Object.keys(state.bans).length,2400);
+});
+
+test('an incomplete or failed event window cannot advance the cursor past unobserved data', async () => {
+ const state={cursor:now-60000,bans:{}};let calls=0;
+ await assert.rejects(collectEvents(state,now,async()=>{if(++calls===3)throw new Error('network down');return [];}),/network down/);
+ assert.equal(state.cursor,now-60000);
+ const saturated={cursor:now-1,bans:{}};
+ await assert.rejects(collectEvents(saturated,now,async()=>Array(1000).fill(event),30),/millisecond/);
+ assert.equal(saturated.cursor,now-1);
+ assert.ok(saturated.bans[event.public_ip]);
+});
+
 test('capacity follows actual slots, reserves two rules, and queues without dropping records', async () => {
  const {planCapacity}=await import('./relay.ts');const ips=Array.from({length:67847},(_,i)=>String(i));
  const plan=planCapacity(ips,10,13);assert.equal(plan.count,28);assert.equal(plan.capacity,52500);assert.equal(plan.admitted.length,52500);assert.equal(plan.pending,15347);assert.equal(ips.length,67847);
@@ -83,6 +103,7 @@ test('a full queue still publishes admitted IPs and removes expired bans on the 
  global.fetch=async(url,init)=>{const u=new URL(url);if(u.pathname.endsWith('/events'))return Response.json({actions:[]});if(init.method==='PATCH'){const b=JSON.parse(init.body);if(b.action==='rules.insert')rules.push({...b.value,id:'managed',valid:true});if(b.action==='rules.update')rules=rules.map(r=>r.id===b.id?{...b.value,id:b.id,valid:true}:r);if(b.action==='rules.priority'){const [r]=rules.splice(rules.findIndex(r=>r.id===b.id),1);rules.splice(b.value,0,r);}return Response.json({});}return Response.json({rules});};
  const installed=()=>rules[1].conditionGroup.flatMap(g=>g.conditions[0].value);
  try {writeFileSync(join(dir,'state.json'),JSON.stringify({cursor:now,bans}));await run();assert.equal(rules.length,38);assert.deepEqual(installed(),ips.slice(0,1875));let state=JSON.parse(readFileSync(join(dir,'state.json')));assert.equal(Object.keys(state.bans).length,4000);assert.ok(state.lastSyncedAt);
+ const workingFetch=global.fetch;global.fetch=async(url,init)=>new URL(url).pathname.endsWith('/events')?Response.json({error:'temporary'},{status:503}):workingFetch(url,init);
  for(const ip of ips.slice(0,10))state.bans[ip]=now-1;writeFileSync(join(dir,'state.json'),JSON.stringify(state));await run();assert.deepEqual(installed(),ips.slice(10,1885));assert.equal(Object.keys(JSON.parse(readFileSync(join(dir,'state.json'))).bans).length,3990);
  }finally{global.fetch=previous.fetch;for(const [key,value] of [['CUBEROOT_BAN_CONFIG',previous.config],['CUBEROOT_BAN_STATE_DIR',previous.state],['BARK_KEY',previous.bark]]){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
 });
