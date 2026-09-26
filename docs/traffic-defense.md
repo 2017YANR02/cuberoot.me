@@ -6,6 +6,14 @@
 
 最新恢复记录：2026-09-25 19:20 PDT（2026-09-26 02:20 UTC）。后续操作先重新读取平台状态，不能把本文件当作永久有效的配置。
 
+## 09-26 Vercel 比赛入口验证
+
+用户要求不封 IP，直接为比赛页加验证。已在 Vercel 发布并刷新核对启用 `Competition entry verification`（`rule_competition_entry_verification_dzBLG1`）：Request Path 匹配 `^/(?:(?:zh/|en/)?wca/comp(?:/.*)?|api/comp(?:/.*)?)$` → Challenge。覆盖比赛列表、详情、全部子页与同源比赛代理接口，不再等待每分钟 30 次阈值才验证。中国大陆 CN Bypass 仍置顶；原限流保留，没有新增 IP 封禁。配置直接发布，不需要应用重新构建。
+
+发布后实测：非 CN 出口指定 Vercel 地址访问 `/zh/wca/comp` 和 `/api/comp/SwedishChampionship2011` 均返回 429、`x-vercel-mitigated: challenge`，前者正文为 Vercel Security Checkpoint；杭州服务器指定同一 Vercel 地址访问比赛列表返回 200。这里的 429 是验证挑战，不能记成限流拒绝，也不能声称已完成真人通过验证后的浏览器验收。此规则使用 Vercel 浏览器验证，不是已接入 Turnstile，也没有自行设定 30 分钟通行有效期。
+
+覆盖边界：阿里云 nginx 与独立 `api.cuberoot.me` 不执行 Vercel WAF；直连 `/v1/cubing-live/*` 仍使用原有限流与 CN 豁免。客户端部分刷新、直播、选手页也会直连该 API，后续接入通行凭证需同时处理这些调用，不能只保护页面后声称接口也有验证码。Cloudflare 控制台当前未登录、尚未取得 Turnstile 站点密钥与服务端密钥；跨线路验证码尚未部署。
+
 ## 09-26 02:20 UTC 恢复阿里云主站与 API
 
 后续中国大陆 IP 豁免：按用户要求为 CN 来源配置流量豁免。阿里云以连接 IP 匹配 [DB-IP Country Lite](https://db-ip.com/db/download/ip-to-country-lite) 的 IPv4/IPv6 网段，使页面／详情／计算器／比赛代理／比赛数据／独立 API 的限流与并发计数键为空；中文计算器的临时 403 和维护 503 也豁免。CN 请求仍被记录，但不参与自动停站阈值。其他地区与未知归属继续使用原阈值。地理库每月更新、定时检查；不能通过 `X-Forwarded-For` 或国家请求头自行取得豁免。IP 归属可能有误差，代理回源按连接地址识别，不能保证还原原访客国家。此豁免针对本次流量防护，不改变账号认证、业务写入限制或云平台基础防护。
