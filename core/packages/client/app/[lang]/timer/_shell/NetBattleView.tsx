@@ -32,7 +32,7 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode, Box } from 'lucide-react';
+import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode } from 'lucide-react';
 
 import { SegmentTime, TimerDeviceCenter, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { TimerSmartCubeMoveRecorder, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
@@ -1658,6 +1658,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   const ownTimingSurface = (
     <TimingSurface
+      scrambleAbove
       phase={timer.phase}
       colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
       fontSize={fontSize}
@@ -1784,7 +1785,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       {/* 玩家条:名字 + 胜场 + 实时状态(计时中滚动读数为本地推算)。
           放在 shell-main 里(TimingSurface 上方)—— timer-shell 在桌面端是命名
           区域 grid,直接做它的子元素会落进隐式格被挤出视口。 */}
-      <div className="net-players surface-chrome" data-no-timer>
+      {!activePkLock && <div className="net-players surface-chrome" data-no-timer>
         {players.map((p) => {
           const mine = p.id === pid;
           const online = isNetOnline(p, room.now);
@@ -1820,7 +1821,20 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
             ? cubeConnected && !!bluetoothCube.facelets
             : !!pLive?.connected && pLive.smart && pLive.round === room.round && !!pLive.facelets);
           return (
-            <div key={p.id} className={`net-player${mine ? ' is-me' : ''}${online ? '' : ' is-offline'}`}>
+            <div
+              key={p.id}
+              className={`net-player${mine ? ' is-me' : ''}${online ? '' : ' is-offline'}${canViewLiveCube ? ' is-live-target' : ''}${canViewLiveCube && viewedCubePlayerId === p.id ? ' is-active' : ''}`}
+              role={canViewLiveCube ? 'button' : undefined}
+              tabIndex={canViewLiveCube ? 0 : undefined}
+              aria-pressed={canViewLiveCube ? viewedCubePlayerId === p.id : undefined}
+              onClick={canViewLiveCube ? () => setViewedCubePlayerId(p.id) : undefined}
+              onKeyDown={canViewLiveCube ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setViewedCubePlayerId(p.id);
+                }
+              } : undefined}
+            >
               {mixedEvents && (
                 <EventIcon
                   event={netEventToSelectorId(pEvent)}
@@ -1837,7 +1851,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                 <button
                   type="button"
                   className="net-p-name net-p-name-btn"
-                  onClick={() => { setName(baseName(p.name)); setRenameOpen(true); }}
+                  onClick={(event) => { event.stopPropagation(); setName(baseName(p.name)); setRenameOpen(true); }}
                   title={tr({ zh: '改名', en: 'Change name' })}
                 >
                   {netPlayerName(p, isZh)}
@@ -1854,25 +1868,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                 {room.scores[p.id] ?? 0}
               </span>
               {statusNode}
-              {canViewLiveCube && (
-                <button
-                  type="button"
-                  className="net-live-cube-switch"
-                  onClick={() => setViewedCubePlayerId(p.id)}
-                  aria-label={tr({
-                    zh: `查看${mine ? '自己' : netPlayerName(p, isZh)}的智能魔方实况`,
-                    en: `View ${mine ? 'your' : `${netPlayerName(p, isZh)}'s`} live smart cube`,
-                  })}
-                  aria-pressed={viewedCubePlayerId === p.id}
-                  title={tr({ zh: '查看智能魔方实况', en: 'View live smart cube' })}
-                >
-                  <Box size={16} />
-                </button>
-              )}
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* 视频画面:放玩家条下方、计时器上方 —— 与玩家条同属「房间里有谁」这一层信息,
           而计时器是自己的事。没开视频时这里什么都不渲染(开关在顶栏)。 */}
