@@ -437,7 +437,8 @@ button {
   margin-inline-start: max(12px, env(safe-area-inset-left));
 }
 
-.app-shell--device-footer > .shell-device-actions {
+.app-shell--device-footer > .shell-device-actions,
+.app-shell--device-footer > .shell-device-center {
   position: static;
   min-width: 0;
   max-width: calc(100% - 24px);
@@ -446,14 +447,16 @@ button {
   transform: none;
 }
 
-.app-shell--device-footer > .shell-device-actions .shell-device-connect {
+.app-shell--device-footer > .shell-device-actions .shell-device-connect,
+.app-shell--device-footer > .shell-device-center .shell-device-center-trigger {
   min-width: 0;
   min-height: 44px;
   max-width: 100%;
   white-space: normal;
 }
 
-.app-shell--device-footer > .shell-device-actions .shell-device-connect span {
+.app-shell--device-footer > .shell-device-actions .shell-device-connect span,
+.app-shell--device-footer > .shell-device-center .shell-device-center-trigger span {
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -945,6 +948,7 @@ button {
 .app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail,
 .app-shell--timer-fullscreen .mobile-timer-stage > .mobile-solution-hints,
 .app-shell--timer-fullscreen > .shell-device-actions,
+.app-shell--timer-fullscreen > .shell-device-center,
 .app-shell--timer-fullscreen > .primary-nav {
   display: none;
 }
@@ -1096,7 +1100,9 @@ button {
 }
 
 .battle-local-tools .shell-device-actions,
-.battle-net-timer > .shell-device-actions {
+.battle-net-timer > .shell-device-actions,
+.battle-local-tools .shell-device-center,
+.battle-net-timer > .shell-device-center {
   position: static;
   flex: 0 0 auto;
   max-width: calc(100% - 24px);
@@ -1108,6 +1114,14 @@ button {
 }
 
 .battle-net-timer > .shell-device-actions {
+  margin: 2px 0 10px;
+}
+
+.battle-local-tools .shell-device-center {
+  margin: 10px 0 0;
+}
+
+.battle-net-timer > .shell-device-center {
   margin: 2px 0 10px;
 }
 

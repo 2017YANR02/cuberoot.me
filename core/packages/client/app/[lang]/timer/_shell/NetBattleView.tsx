@@ -32,7 +32,7 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, Bluetooth, QrCode, Box } from 'lucide-react';
+import { Bluetooth, Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode } from 'lucide-react';
 
 import { SegmentTime, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { TimerSmartCubeMoveRecorder, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
@@ -218,6 +218,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const roomRef = useRef(room); roomRef.current = room;
   const activeRoomCodeRef = useRef<string | null>(null);
   const acceptedStateRef = useRef<NetRoomState | null>(null);
+  /** Keep each device on the completed round until that device asks to continue. */
+  const holdAdvancedRoundRef = useRef(true);
+  const pendingAdvancedStateRef = useRef<NetRoomState | null>(null);
   /** Synchronous latch + monotonic intent; React state alone cannot stop same-tick double submit. */
   const admissionGateRef = useRef<ReturnType<typeof createNetAdmissionGate> | null>(null);
   admissionGateRef.current ??= createNetAdmissionGate();
@@ -269,15 +272,33 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const identityRef = useRef(identity); identityRef.current = identity;
 
   const applyState = useCallback((st: NetRoomState) => {
+    const current = roomRef.current;
+    if (current && st.round > current.round && holdAdvancedRoundRef.current) {
+      pendingAdvancedStateRef.current = preferLatestNetRoomState(pendingAdvancedStateRef.current, st);
+      // 保持上一轮的成绩/轮次，但更新时钟和在线心跳，避免等待期间把对手误判为离线。
+      setRoom(prev => {
+        if (!prev || prev.round >= st.round) return prev;
+        const players = Object.fromEntries(Object.entries(prev.players).map(([id, player]) => {
+          const latest = st.players[id];
+          return [id, latest ? { ...player, seen: latest.seen } : player];
+        })) as NetRoomState['players'];
+        return { ...prev, now: st.now, players };
+      });
+      return;
+    }
     const accepted = acceptNetRoomResponse(activeRoomCodeRef.current, acceptedStateRef.current, st);
     if (accepted !== st) return;
     acceptedStateRef.current = st;
     offsetRef.current = blendClockOffset(offsetRef.current, st.now, Date.now());
+    holdAdvancedRoundRef.current = true;
+    pendingAdvancedStateRef.current = null;
     setRoom(prev => preferLatestNetRoomState(prev, st));
   }, []);
 
   const adopt = useCallback((state: NetRoomState, credentials: NetBattleCredentials, nm: string) => {
     activeRoomCodeRef.current = state.code;
+    holdAdvancedRoundRef.current = true;
+    pendingAdvancedStateRef.current = null;
     setPid(credentials.playerId);
     setPlayerToken(credentials.playerToken);
     applyState(state);
@@ -303,7 +324,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       恒 false(那是同时起表门控的口径),单独用它会让一个人开好房等朋友时既看到
       「还差 0 人」,又按不动空格开下一轮。 */
   const roundSettled = !!room && (complete || waiting === 0);
-  const canAdvance = !!room && !!pid && !!myResult;
   const canSolveRef = useRef(canSolve); canSolveRef.current = canSolve;
 
   // ── 房主 / 同时开始 ─────────────────────────────────────────
@@ -323,20 +343,19 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const advance = useCallback((force = false) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth || advBusyRef.current) return;
+    holdAdvancedRoundRef.current = false;
     advBusyRef.current = true;
     // 服务端为开轮者项目生成新打乱；客户端不能自报有利打乱。
     void nextNetRound(r.code, auth, r.round, force)
       .then(applyState)
       .catch((e: Error) => setErr(tr(netErrorMessage(e))))
-      .finally(() => { advBusyRef.current = false; });
+      .finally(() => {
+        advBusyRef.current = false;
+        holdAdvancedRoundRef.current = true;
+      });
   }, [applyState]);
 
-  // 全员交卷(或当前已无人可等)后自动开下一轮。每个客户端都可能同时触发,
-  // 服务端用 round CAS 保证只推进一次;room 每次轮询变化也让失败请求自动重试。
-  useEffect(() => {
-    if (!canAdvance || !roundSettled) return;
-    advance(false);
-  }, [advance, canAdvance, room, roundSettled]);
+  // 双方交卷后不自动推进；每台设备在自己的下一次操作时独立进入下一轮。
 
   // 改自己的项目(仅本轮尚未交卷时可改)。服务端用共享生成器 set-if-absent 回填。
   const changeEvent = useCallback((selId: string) => {
@@ -714,6 +733,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     admissionGate.cancel();
     setBusy(false);
     acceptedStateRef.current = null;
+    holdAdvancedRoundRef.current = true;
+    pendingAdvancedStateRef.current = null;
     setRoom(null); setPid(null); setPlayerToken(null); setErr(null);
     autoJoinRef.current = false;
     prevRoundRef.current = null;
@@ -728,6 +749,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 还原即停表、赛前自动预备。手动 MAC 输入沿用 Solo 那套「延迟 promise」:
   // hook 需要 MAC 时挂起,弹窗把用户输入的值 resolve 回去。
   const [bluetoothOpen, setBluetoothOpen] = useState(false);
+  const [bluetoothConnectAttempt, setBluetoothConnectAttempt] = useState<Promise<void> | null>(null);
   const [macPrompt, setMacPrompt] = useState<{ deviceName: string; isWrongKey?: boolean } | null>(null);
   const macResolverRef = useRef<((m: string | null) => void) | null>(null);
   const requestMac = useCallback((deviceName: string, isWrongKey?: boolean) => new Promise<string | null>((resolve) => {
@@ -777,6 +799,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const bluetoothCube = useBluetoothCube({
     onGyro: settings.gyroEnabled ? (q) => { gyroQuatRef.current = q; } : undefined,
     onMove: (move, ts, _facelets, metadata) => {
+      // 双方都交卷后，自己的下一次转动才切到下一轮；另一台设备继续保留结算画面。
+      if (myResult && roundSettled && !advBusyRef.current) advance(false);
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
       // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
       // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。
@@ -809,6 +833,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       );
     },
   });
+  const connectSmartCubeCenter = useCallback(() => {
+    setBluetoothOpen(true);
+    if (bluetoothCube.status.connected) return;
+    const attempt = bluetoothCube.connect();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.catch(() => undefined);
+  }, [bluetoothCube]);
   const cubeConnected = bluetoothCube.status.connected;
   useEffect(() => {
     onPresenceChange?.({
@@ -1072,14 +1103,15 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const pressDown = useCallback(() => {
     if (phaseRef.current === 'running') { timer.onPressDown(); return; }
     if (!canSolveRef.current) {
-      // 已交卷:等自动推进,不让按压重复开轮。
+      // 已交卷时按下也视为本机进入下一轮的明确动作。
+      if (myResult && roundSettled) advance(false);
       return;
     }
     // 房间要求同时起表且还没进倒计时:按压 = 切换「准备」,不直接起表
     if (gateRef.current) { toggleReady(); return; }
     timer.onPressDown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toggleReady]);
+  }, [advance, myResult, roundSettled, toggleReady]);
   const pressDownRef = useRef(pressDown); pressDownRef.current = pressDown;
   const pressUpRef = useRef(timer.onPressUp); pressUpRef.current = timer.onPressUp;
 
@@ -1265,17 +1297,12 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           <>
             <button
               type="button"
-              className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
-              onClick={() => setBluetoothOpen(true)}
-              title={bluetoothCube.status.connected
-                ? tr({
-                    zh: `已连接 ${bluetoothCube.status.deviceName}（还原即停表）`,
-                    en: `Connected: ${bluetoothCube.status.deviceName} (solving the cube stops the timer)`,
-                  })
-                : tr({ zh: '智能魔方', en: 'Smart cube' })}
-              aria-label={tr({ zh: '智能魔方', en: 'Smart cube' })}
+              className={`tb-btn net-device-connect${bluetoothCube.status.connected ? ' connected' : ''}`}
+              onClick={connectSmartCubeCenter}
+              aria-label={tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}
+              title={tr({ zh: bluetoothCube.status.connected ? '智能魔方已连接' : '连接智能魔方', en: bluetoothCube.status.connected ? 'Smart cube connected' : 'Connect smart cube' })}
             >
-              <Bluetooth size={14} />
+              <Bluetooth size={16} />
             </button>
             <button
               type="button"
@@ -1624,6 +1651,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   const ownTimingSurface = (
     <TimingSurface
+      scrambleAbove
       phase={timer.phase}
       colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
       fontSize={fontSize}
@@ -1667,11 +1695,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
               isRoundComplete 在「在线不足 2 人」时恒 false(那是同时起表门控的
               口径),照它渲染的话,一个人开好房等朋友时会看到「还差 0 人」。 */}
           {roundSettled ? (
-            <div className="net-round-result">
-              {winners.length > 0
-                ? <><Trophy size={14} className="net-p-trophy" /><span>{winnerNames}</span></>
-                : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
-            </div>
+            <>
+              <div className="net-round-result">
+                {winners.length > 0
+                  ? <><Trophy size={14} className="net-p-trophy" /><span>{winnerNames}</span></>
+                  : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
+              </div>
+              <div className="net-substate-hint">
+                {tr({ zh: '转动魔方或按下计时区，开始下一把', en: 'Turn the cube or press the timer to start the next round' })}
+              </div>
+            </>
           ) : (
             <>
               <div className="net-substate-hint">
@@ -1745,7 +1778,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       {/* 玩家条:名字 + 胜场 + 实时状态(计时中滚动读数为本地推算)。
           放在 shell-main 里(TimingSurface 上方)—— timer-shell 在桌面端是命名
           区域 grid,直接做它的子元素会落进隐式格被挤出视口。 */}
-      <div className="net-players surface-chrome" data-no-timer>
+      {!activePkLock && <div className="net-players surface-chrome" data-no-timer>
         {players.map((p) => {
           const mine = p.id === pid;
           const online = isNetOnline(p, room.now);
@@ -1781,24 +1814,43 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
             ? cubeConnected && !!bluetoothCube.facelets
             : !!pLive?.connected && pLive.smart && pLive.round === room.round && !!pLive.facelets);
           return (
-            <div key={p.id} className={`net-player${mine ? ' is-me' : ''}${online ? '' : ' is-offline'}`}>
-              {mixedEvents && (
-                <EventIcon
-                  event={netEventToSelectorId(pEvent)}
-                  className="net-p-event"
-                  title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
-                />
-              )}
-              {p.id === room.admin && (
-                <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />
-              )}
-              {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
+            <div
+              key={p.id}
+              className={`net-player${mine ? ' is-me' : ''}${online ? '' : ' is-offline'}${canViewLiveCube ? ' is-live-target' : ''}${canViewLiveCube && viewedCubePlayerId === p.id ? ' is-active' : ''}`}
+              role={canViewLiveCube ? 'button' : undefined}
+              tabIndex={canViewLiveCube ? 0 : undefined}
+              aria-pressed={canViewLiveCube ? viewedCubePlayerId === p.id : undefined}
+              onClick={canViewLiveCube ? () => setViewedCubePlayerId(p.id) : undefined}
+              onKeyDown={canViewLiveCube ? (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setViewedCubePlayerId(p.id);
+                }
+              } : undefined}
+            >
+              <span className="net-p-event-slot">
+                {mixedEvents && (
+                  <EventIcon
+                    event={netEventToSelectorId(pEvent)}
+                    className="net-p-event"
+                    title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
+                  />
+                )}
+              </span>
+              <span className="net-p-host-slot">
+                {p.id === room.admin && (
+                  <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />
+                )}
+              </span>
+              <span className="net-p-flag-slot">
+                {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
+              </span>
               {/* 自己的名字可点开改(登录用户除外:他们的名字就是账号 / WCA 名册上的名字)。 */}
               {mine && !authUser ? (
                 <button
                   type="button"
                   className="net-p-name net-p-name-btn"
-                  onClick={() => { setName(baseName(p.name)); setRenameOpen(true); }}
+                  onClick={(event) => { event.stopPropagation(); setName(baseName(p.name)); setRenameOpen(true); }}
                   title={tr({ zh: '改名', en: 'Change name' })}
                 >
                   {netPlayerName(p, isZh)}
@@ -1815,25 +1867,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
                 {room.scores[p.id] ?? 0}
               </span>
               {statusNode}
-              {canViewLiveCube && (
-                <button
-                  type="button"
-                  className="net-live-cube-switch"
-                  onClick={() => setViewedCubePlayerId(p.id)}
-                  aria-label={tr({
-                    zh: `查看${mine ? '自己' : netPlayerName(p, isZh)}的智能魔方实况`,
-                    en: `View ${mine ? 'your' : `${netPlayerName(p, isZh)}'s`} live smart cube`,
-                  })}
-                  aria-pressed={viewedCubePlayerId === p.id}
-                  title={tr({ zh: '查看智能魔方实况', en: 'View live smart cube' })}
-                >
-                  <Box size={16} />
-                </button>
-              )}
             </div>
           );
         })}
-      </div>
+      </div>}
 
       {/* 视频画面:放玩家条下方、计时器上方 —— 与玩家条同属「房间里有谁」这一层信息,
           而计时器是自己的事。没开视频时这里什么都不渲染(开关在顶栏)。 */}
@@ -1936,11 +1973,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         <BluetoothModal
           isZh={isZh}
           cube={bluetoothCube}
+          connectAttempt={bluetoothConnectAttempt}
           onResetGyro={() => setCalibrateNonce(n => n + 1)}
           macPrompt={macPrompt}
           onSubmitMac={(mac) => resolveMac(mac)}
           onCancelMac={() => resolveMac(null)}
-          onClose={() => { if (macResolverRef.current) resolveMac(null); setBluetoothOpen(false); }}
+          onClose={() => {
+            if (macResolverRef.current) resolveMac(null);
+            setBluetoothOpen(false);
+            setBluetoothConnectAttempt(null);
+          }}
           // 失败也交给弹窗:它知道断在哪一步(选设备 / GATT / 握手),说得比这里清楚,
           // 而且 Solo、对战、房间三处不会再各报各的。
           onConnect={pick => bluetoothCube.connect(pick)}

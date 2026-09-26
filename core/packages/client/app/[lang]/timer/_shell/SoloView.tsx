@@ -166,7 +166,7 @@ import {
   TIMER_EVENT_PICKER_GROUPS,
   TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY,
   TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR,
-  TimerSmartCubeMoveRecorder,
+  SmartCubeAttemptProducer,
   startTimerRealScrambleRetry,
   timerEventIdFromSelector,
   timerRealScrambleReady,
@@ -198,7 +198,6 @@ import {
 } from '../_lib/bluetooth/unified_picker';
 import type { TimerPresenceReport } from '../_lib/presence';
 import { mirrorForBrand, readDevQuatSource, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
-import { GyroRecorder, encodeGyroTrack } from '../_lib/bluetooth/gyro_track';
 import {
   fromFaceletString,
   toFaceletString,
@@ -222,6 +221,7 @@ import CaseStatsPanel from '../_components/CaseStatsPanel';
 import HistoryPanel from '../_components/HistoryPanel';
 import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
+import { fetchServerReplayShare } from '../_lib/share/server';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
@@ -241,7 +241,7 @@ import LiveCubeState from '../_components/LiveCubeState';
 import {
   GestureWheel,
   SegmentTime,
-  TimerDeviceActions,
+  TimerDeviceCenter,
   TimerInfoToast,
   TimerAttemptSplitStatus,
   TimerPuzzlePicker,
@@ -260,6 +260,10 @@ import {
 } from '@cuberoot/timer-ui';
 import SolveRecapPlaceholder from '@cuberoot/timer-ui/solve-recap-placeholder';
 import { histBack, histForward, histPush } from '@cuberoot/shared/timer';
+import {
+  createTimerDeviceRegistry,
+  TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { persistItem } from '@/lib/safe-storage';
 import { onIdle } from '@/lib/on-idle';
@@ -281,6 +285,11 @@ const ReconstructModal = dynamic(() => import('../_components/ReconstructModal')
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
 const BluetoothTimerModal = dynamic(() => import('../_components/BluetoothTimerModal'), { ssr: false });
 const StackmatModal = dynamic(() => import('../_components/StackmatModal'), { ssr: false });
+
+const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
+  adapterIds: ['smart-cube', 'smart-timer', 'stackmat'],
+  registrations: TIMER_DEVICE_REGISTRATIONS,
+});
 const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
 const StatsModal = dynamic(() => import('../_components/StatsModal'), { ssr: false });
 const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal'), { ssr: false });
@@ -1307,12 +1316,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
-  const moveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
+  const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
   /** The smart cube connected when the attempt STARTED. Snapshotted with the
    *  other at-start refs so a mid-solve disconnect can't erase who solved it. */
-  const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
 
   const multiStageActive = settings.multiStage && timerSupportsStageSplits(event);
   const bldMemoActive = settings.bldMemo && isBldEvent(event);
@@ -1325,7 +1333,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (competitionRef.current.enabled) {
       const faces = bluetoothCubeRef.current?.getFaces();
       const currentRun = competitionRef.current.run();
-      if (currentRun) competitionRef.current.complete(res.timeMs, moveRecorderRef.current.snapshot(),
+      if (currentRun) competitionRef.current.complete(res.timeMs, smartCubeAttemptProducerRef.current.snapshotMoves(),
         faces ? toFaceletString(faces) : currentRun.startFacelets, !competitionSolvedRef.current);
       competitionSolvedRef.current = false;
       return;
@@ -1346,16 +1354,17 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
-    const moves = moveRecorderRef.current.snapshot();
+    const attemptRecording = smartCubeAttemptProducerRef.current.finish();
+    const moves = attemptRecording.moves;
     if (moves.length > 0) solve.moves = moves;
     // 姿态流。没开录 / 魔方没报姿态 / 一次都没动 → take() 是空的,编码给 null,
     // 字段整个不出现 —— 回放面板就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
-    const gyro = encodeGyroTrack(gyroRecRef.current.take());
+    const gyro = attemptRecording.gyro;
     if (gyro && solve.moves) solve.gyro = gyro;
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
     // Which cube solved it — only meaningful when the solve has a move stream.
-    if (solve.moves && deviceAtStartRef.current) solve.device = deviceAtStartRef.current;
+    if (solve.moves && attemptRecording.device) solve.device = attemptRecording.device;
     // CFOP segmentation, computed now so the case labels and stage splits are
     // in storage from the moment the solve lands. Everything downstream reads
     // the stored segments rather than recomputing (case stats, the OLL/PLL
@@ -1427,10 +1436,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       bldMemo: settings.bldMemo && isBldEvent(eventAtStartRef.current),
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
-    moveRecorderRef.current.begin(startedAtMs);
+    const bt = bluetoothCubeRef.current?.status;
+    smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
+      ? { model: bt.brand, name: bt.deviceName }
+      : undefined);
   });
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
-  useLayoutEffect(() => { timer.reset(); moveRecorderRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
+  useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
   timerDisplayMsRef.current = timer.displayMs;
 
   // Set when the smart cube started this attempt. That path has already done
@@ -1447,13 +1459,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       eventAtStartRef.current = event;
       caseIdAtStartRef.current = currentScrambleEntry.caseId
         ?? (timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
-      const bt = bluetoothCubeRef.current?.status;
-      deviceAtStartRef.current = bt?.connected
-        ? { model: bt.brand, name: bt.deviceName }
-        : null;
     } else if (!cubeStartedRef.current) {
       const startedAtMs = performance.now();
-      gyroRecRef.current.reset();
+      smartCubeAttemptProducerRef.current.reset();
       gyroStartRef.current = startedAtMs;
     }
   }, [
@@ -1512,7 +1520,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 姿态流录制。样本时刻用 performance.now() 而不是动作 recorder 的起点 ——
   // 「魔方起表」那条路用的是**设备时钟**,而陀螺仪回调根本不带时间戳,两个
   // 时钟相减出来的是垃圾。这里自己记一个本地起点。
-  const gyroRecRef = useRef(new GyroRecorder());
   const gyroStartRef = useRef(0);
   const timerHandleRef = useRef(timer);
   timerHandleRef.current = timer;
@@ -1548,10 +1555,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
     },
     recordMove: ({ move, timestamp }) => {
-      if (!moveRecorderRef.current.record(move, timestamp)) return;
+      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
       attemptSplitRecorder.observeMoves({
         event: eventAtStartRef.current,
-        moves: moveRecorderRef.current.snapshot(),
+        moves: smartCubeAttemptProducerRef.current.snapshotMoves(),
         scramble: scrambleAtStartRef.current,
         timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
       });
@@ -1565,7 +1572,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!timerHandleRef.current.startFromCube(timestamp)) return false;
       phaseSnapshotRef.current = 'running';
       cubeStartedRef.current = true;
-      gyroRecRef.current.reset();
+      smartCubeAttemptProducerRef.current.reset();
       gyroStartRef.current = performance.now();
       return true;
     },
@@ -1594,7 +1601,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const q = readDevQuatSource(performance.now());
       if (!q) return;
       gyroQuatRef.current = q;
-      gyroRecRef.current.push(q, performance.now() - gyroStartRef.current);
+      smartCubeAttemptProducerRef.current.recordGyro(q, performance.now() - gyroStartRef.current);
     }, 40);
     return () => clearInterval(id);
   }, [settings.recordGyro, timer.phase]);
@@ -1608,7 +1615,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         gyroQuatRef.current = q;
         // 只在真的在计时的时候录:观察阶段和拧完之后的姿态不属于这一把。
         if (settings.recordGyro && phaseSnapshotRef.current === 'running') {
-          gyroRecRef.current.push(q, performance.now() - gyroStartRef.current);
+          smartCubeAttemptProducerRef.current.recordGyro(q, performance.now() - gyroStartRef.current);
         }
       }
       : undefined,
@@ -1628,7 +1635,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         const currentRun = competitionRef.current.run();
         if (currentRun) {
           const faces = bluetoothCubeRef.current?.getFaces();
-          const moves = moveRecorderRef.current.snapshot();
+          const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
           competitionRef.current.complete(Math.max(timerDisplayMsRef.current, moves.at(-1)?.ts ?? 0), moves,
             faces ? toFaceletString(faces) : currentRun.startFacelets, true);
         }
@@ -2261,6 +2268,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     void setReplay(null);
   }, [replay, setReplay, byEvent]);
 
+  // Server-backed share links contain only `?share=<random id>`. Fetch once,
+  // turn the stored solve into the same read-only reconstruction, then remove
+  // the transient locator from the address bar.
+  const [shareId, setShareId] = useQueryState('share', parseAsString.withOptions({ history: 'replace' }));
+  useEffect(() => {
+    if (!shareId) return;
+    let cancelled = false;
+    void fetchServerReplayShare(shareId).then((solve) => {
+      if (!cancelled && solve) setReconstructSolve(solve);
+      if (!cancelled) void setShareId(null);
+    });
+    return () => { cancelled = true; };
+  }, [shareId, setShareId]);
+
   const handlePasteReplay = useCallback(() => {
     const raw = window.prompt(tr({ zh: '粘贴 replay URL 或 token：', en: 'Paste a replay URL or token:'
     }), '');
@@ -2341,6 +2362,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined); // The status dialog displays failures.
   }, [bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
+
+  const connectSmartCubeCenter = useCallback(() => {
+    setBluetoothOpen(true);
+    if (bluetoothCube.status.connected || bluetoothConnectingRef.current) return;
+    const attempt = bluetoothCube.connect();
+    setBluetoothConnectAttempt(attempt);
+    void attempt.catch(() => undefined);
+  }, [bluetoothCube]);
 
   const connectStackmat = useCallback(() => {
     setStackmatOpen(true);
@@ -2562,10 +2591,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   }, [onPressDown]);
 
   // ── External devices + More menu items ──────────────────────────
-  const deviceActive = bluetoothCube.status.connected
-    || bluetoothTimer.status.connected
-    || stackmat.status.listening;
-
   const moreItems = useMemo<MoreMenuItem[]>(() => visibleTimerMoreActions({
     compactViewport: isMobile,
     drillActive: drillTarget !== null,
@@ -2918,7 +2943,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               onClick={async () => {
                 const faces = bluetoothCube.getFaces();
                 if (!faces || !scrambleTarget || toFaceletString(faces) !== scrambleTarget || bluetoothCube.hijacked) return;
-                moveRecorderRef.current.reset(); timer.reset();
+                smartCubeAttemptProducerRef.current.reset(); timer.reset();
                 if (!await competition.begin(scrambleTarget, bluetoothCube.status)) return;
                 const latest = bluetoothCubeRef.current;
                 const latestFaces = latest?.getFaces();
@@ -3211,14 +3236,42 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        <TimerDeviceActions
-          active={deviceActive}
-          connectAriaLabel={tr({ zh: '连接蓝牙设备', en: 'Connect Bluetooth device' })}
-          connectLabel={tr({ zh: '连接', en: 'Connect' })}
-          microphoneActive={stackmat.status.listening}
-          microphoneAriaLabel={tr({ zh: '连接 Stackmat 麦克风计时器', en: 'Connect Stackmat microphone timer' })}
-          onConnect={connectExternalBluetooth}
-          onMicrophone={connectStackmat}
+        <TimerDeviceCenter
+          ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+          items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+            ? {
+                active: bluetoothCube.status.connected,
+                detail: bluetoothCube.status.connected
+                  ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
+                  : undefined,
+                id: device.id,
+                kind: device.kind,
+                label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+                onSelect: connectSmartCubeCenter,
+              }
+            : device.kind === 'smart-timer'
+              ? {
+                  active: bluetoothTimer.status.connected,
+                  detail: bluetoothTimer.status.connected
+                    ? tr({ zh: '已连接', en: 'Connected' })
+                    : undefined,
+                  id: device.id,
+                  kind: device.kind,
+                  label: tr({ zh: '智能计时器', en: 'Smart timer' }),
+                  onSelect: connectExternalBluetooth,
+                }
+              : {
+                  active: stackmat.status.listening,
+                  detail: stackmat.status.listening
+                    ? tr({ zh: '监听中', en: 'Listening' })
+                    : undefined,
+                  id: device.id,
+                  kind: device.kind,
+                  label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
+                  onSelect: connectStackmat,
+                })}
+          menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
+          triggerLabel={tr({ zh: '设备', en: 'Devices' })}
         />
 
         {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——

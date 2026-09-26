@@ -1,7 +1,8 @@
 import { miniProgramApi } from '../platform';
 import {
-  buildQiyiPacket,
+  createQiyiAckCommand,
   createQiyiCipher,
+  createQiyiHelloCommand,
   decodeQiyiNotification,
   matchesQiyiName,
   QIYI_CHARACTERISTIC_UUID,
@@ -61,11 +62,7 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
       return named ? { source: 'device-name-default', value: named } : null;
     },
     createCipher: () => createQiyiCipher(),
-    initialFrames: (mac) => {
-      const content = [0x00, 0x6b, 0x01, 0x00, 0x00, 0x22, 0x06, 0x00, 0x02, 0x08, 0x00];
-      for (let index = 5; index >= 0; index--) content.push(mac[index]);
-      return [buildQiyiPacket(content)];
-    },
+    initialFrames: (mac) => [createQiyiHelloCommand(mac)],
     isReadyFrame: (frame) => {
       const notification = decodeQiyiNotification(frame, 0);
       return notification.opcode === QIYI_OP_HELLO || notification.opcode === QIYI_OP_STATE;
@@ -93,13 +90,7 @@ export async function connectQiyi(options: ConnectQiyiOptions = {}): Promise<Qiy
       }
       if (notification.opcode === QIYI_OP_HELLO || notification.opcode === QIYI_OP_STATE) {
         const ts = notification.timestamp ?? 0;
-        void write(buildQiyiPacket([
-          notification.opcode,
-          (ts >>> 24) & 0xff,
-          (ts >>> 16) & 0xff,
-          (ts >>> 8) & 0xff,
-          ts & 0xff,
-        ])).catch(() => {});
+        void write(createQiyiAckCommand(notification.opcode, ts)).catch(() => {});
       }
       for (const move of notification.moves) options.onMove?.(move.mv, move.ts);
       if (notification.state) options.onState?.(notification.state);

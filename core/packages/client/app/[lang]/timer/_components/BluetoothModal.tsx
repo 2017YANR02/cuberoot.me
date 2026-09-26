@@ -11,6 +11,10 @@
  */
 
 import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';
+import {
+  createTimerDeviceRegistry,
+  SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
 import { useEffect, useState, type CSSProperties } from 'react';
 import {
   BluetoothConnectError,
@@ -85,6 +89,11 @@ const GYRO_TAG_STYLE: CSSProperties = {
   color: 'var(--accent)',
   background: 'color-mix(in srgb, var(--accent) 14%, transparent)',
 };
+
+const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
+  adapterIds: ['smart-cube'],
+  registrations: SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
+});
 
 function ConnectFailure() {
   return (
@@ -259,6 +268,10 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
 
   return (
     <TimerSmartCubeDeviceModal
+      capabilities={{
+        ...WEB_TIMER_DEVICE_REGISTRY.get('smart-cube')?.capabilities,
+        gyro: Boolean(onResetGyro),
+      }}
       className={`timer-modal bluetooth-modal${!macPrompt && !connectError ? ' bt-connected-modal' : ''}`}
       connectionFailure={connectError ? <ConnectFailure /> : undefined}
       intro={intro}

@@ -1505,3 +1505,12 @@
     background: var(--glass-popover-bg);
   }
 }
+.trainer-device-center {
+  position: static;
+  flex: 0 0 auto;
+}
+
+.trainer-device-center .shell-device-center-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+}

@@ -21,7 +21,7 @@ describe('Mobile capability surface guard', () => {
   });
 
   it('does not expose Stackmat without a native microphone adapter', () => {
-    const deviceActions = app.match(/<TimerDeviceActions[\s\S]*?\/>/)?.[0];
+    const deviceActions = app.match(/<TimerDeviceCenter[\s\S]*?\/>/)?.[0];
 
     expect(deviceActions).toBeDefined();
     expect(deviceActions).not.toContain('onMicrophone');
@@ -37,8 +37,18 @@ describe('Mobile capability surface guard', () => {
     expect(app).toContain('openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice');
     expect(app).toContain("if (smartCube.phase === 'idle' || smartCube.phase === 'error')");
     expect(app).toContain('void connectSmartCube().catch(() => undefined)');
-    expect(app).toContain('onConnect={openSmartCubeDevice}');
+    expect(app).toContain('onSelect: openSmartCubeDevice');
     expect(app).not.toContain('onConnect={toggleSmartCube}');
+  });
+
+  it('keeps the installed timer surface aligned with the shared Web layout contract', () => {
+    expect(app).toContain('<TimingSurface');
+    expect(app).toContain('scrambleAbove');
+    expect(app).toContain('<TimerScrambleStrip');
+    expect(app).toContain('<LiveCubeState');
+    expect(app).toContain('<TimerSmartCubeDeviceModal');
+    expect(app).toContain('<TimerDeviceCenter');
+    expect(app).not.toContain('className="live-cube-calibrate"');
   });
 
   it('routes clipboard writes through the installed host capability', () => {
@@ -64,10 +74,10 @@ describe('Mobile capability surface guard', () => {
     expect(controller).toContain('isTimingEnabled: () => timingEnabledRef.current');
     expect(controller).toContain("autoReadyOnScramble: () => storeRef.current?.settings.bluetoothAutoReady === 'scrambled'");
     expect(controller).toContain('startFromCube: (timestamp) => timerRef.current.startFromCube(timestamp)');
-    expect(controller).toContain('smartCubeMoveRecorderRef.current.record(move, timestamp)');
+    expect(controller).toContain('smartCubeAttemptProducerRef.current.recordMove(move, timestamp)');
     expect(controller).toContain('attemptSplitRecorder.observeMoves');
     expect(controller).toContain('smartCubeMoveSubscribersRef.current');
-    expect(app).toContain('smartCubeMoveRecorderRef.current.begin(startedAtMs)');
+    expect(app).toContain('smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current)');
     expect(app).toContain('new SmartCubeSoloTimerController');
     expect(app).toContain('id: currentScrambleEntry.id');
     expect(app).toContain('smartCubeSoloController.setConnected(connected)');
@@ -80,7 +90,7 @@ describe('Mobile capability surface guard', () => {
     expect(app).not.toContain('verifySmartCubeScramble');
     expect(app).not.toContain('createSmartCubeFixupRequester');
     expect(app).not.toContain('smartCubeGuidanceCompleteRef');
-    expect(app).toMatch(/smartCubeMoveRecorderRef\.current\.take\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
+    expect(app).toMatch(/smartCubeAttemptProducerRef\.current\.finish\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
     expect(app).toMatch(/repository\.addSolve\(solve, sessionId\)[\s\S]*?setPendingSolves/);
     expect(app).toContain('repository.addSolve(pending.solve, pending.sessionId)');
     expect(app).toContain('onUndo={retryPendingSolve}');
