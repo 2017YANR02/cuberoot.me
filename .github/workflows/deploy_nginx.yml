@@ -89,8 +89,14 @@ jobs:
           install -m 0644 /tmp/cuberoot-vercel-bans.service /tmp/cuberoot-vercel-bans.timer /etc/systemd/system/
           systemctl daemon-reload
           if [ -s /etc/cuberoot-vercel-bans.json ]; then
-            systemctl start cuberoot-vercel-bans.service
             systemctl enable --now cuberoot-vercel-bans.timer
+            # A separate provider's sync failure must not block local nginx protection.
+            # Keep the timer enabled and report failure; the relay also sends its alert.
+            if ! systemctl start cuberoot-vercel-bans.service; then
+              echo '::warning::Vercel ban relay sync failed; existing rules retained, timer will retry. Check its journal and alert.'
+              journalctl -u cuberoot-vercel-bans.service --no-pager -n 8
+            fi
+            systemctl is-active --quiet cuberoot-vercel-bans.timer
           else
             echo 'NOT ACTIVE: Vercel 30-day relay awaits a dedicated access token'
           fi
