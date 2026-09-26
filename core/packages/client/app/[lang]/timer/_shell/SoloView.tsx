@@ -222,6 +222,7 @@ import CaseStatsPanel from '../_components/CaseStatsPanel';
 import HistoryPanel from '../_components/HistoryPanel';
 import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
+import { fetchServerReplayShare } from '../_lib/share/server';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
@@ -2260,6 +2261,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
     void setReplay(null);
   }, [replay, setReplay, byEvent]);
+
+  // Server-backed share links contain only `?share=<random id>`. Fetch once,
+  // turn the stored solve into the same read-only reconstruction, then remove
+  // the transient locator from the address bar.
+  const [shareId, setShareId] = useQueryState('share', parseAsString.withOptions({ history: 'replace' }));
+  useEffect(() => {
+    if (!shareId) return;
+    let cancelled = false;
+    void fetchServerReplayShare(shareId).then((solve) => {
+      if (!cancelled && solve) setReconstructSolve(solve);
+      if (!cancelled) void setShareId(null);
+    });
+    return () => { cancelled = true; };
+  }, [shareId, setShareId]);
 
   const handlePasteReplay = useCallback(() => {
     const raw = window.prompt(tr({ zh: '粘贴 replay URL 或 token：', en: 'Paste a replay URL or token:'
