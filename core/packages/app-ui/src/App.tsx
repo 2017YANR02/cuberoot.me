@@ -1,6 +1,10 @@
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
-import { GyroRecorder, encodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
+import {
+  createTimerDeviceRegistry,
+  TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
+import { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 import { encodeReplayUrl } from '@cuberoot/shared/timer/replay-encode';
@@ -133,7 +137,6 @@ import {
   timerSupportsStageSplits,
   timerSupportsSmartCubeAutoTiming,
   TimerAttemptSplitRecorder,
-  TimerSmartCubeMoveRecorder,
   TimerWcaFinitePoolProgressTracker,
   timerTracksTrainerCase,
   toggleTimerHistoryPenalty,
@@ -178,7 +181,7 @@ import {
   GestureWheel,
   ManualScrambleQueueEditor,
   SegmentTime,
-  TimerDeviceActions,
+  TimerDeviceCenter,
   TimerSmartCubeDeviceModal,
   TimerInfoToast,
   TimerAttemptSplitSettings,
@@ -507,6 +510,10 @@ function MobileHistoryItem({
 }
 
 export function App({ host }: { host: InstalledAppHost }) {
+  const timerDeviceRegistry = useMemo(() => createTimerDeviceRegistry({
+    adapterIds: ['smart-cube'],
+    registrations: TIMER_DEVICE_REGISTRATIONS,
+  }), []);
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
@@ -2382,13 +2389,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const attemptCanStartRef = useRef(attemptCanStart);
   attemptCanStartRef.current = attemptCanStart;
   const attemptRef = useRef<MobileScrambleAttemptSnapshot | null>(null);
-  const smartCubeMoveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
-  const smartCubeGyroRecorderRef = useRef(new GyroRecorder());
+  const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const smartCubeMoveSubscribersRef = useRef(new Set<(move: string, timestamp: number) => void>());
   const smartCubeQuatRef = useRef<Quat | null>(null);
   const [smartCubeCalibration, setSmartCubeCalibration] = useState(0);
   const [smartCubeRenderedView, setSmartCubeRenderedView] = useState('net');
-  const smartCubeDeviceAtStartRef = useRef<Solve['device']>(undefined);
   const connectedSmartCubeRef = useRef<Solve['device']>(undefined);
   const [attemptSplitState, setAttemptSplitState] = useState<TimerAttemptSplitState>({ stages: {} });
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
@@ -2407,12 +2412,11 @@ export function App({ host }: { host: InstalledAppHost }) {
       announce(copy.actionFailed);
       return;
     }
-    const recordedMoves = smartCubeMoveRecorderRef.current.take();
-    const moves = recordedMoves.length > 0 ? recordedMoves : undefined;
-    const gyro = encodeGyroTrack(smartCubeGyroRecorderRef.current.take());
-    const device = moves ? smartCubeDeviceAtStartRef.current : undefined;
+    const attemptRecording = smartCubeAttemptProducerRef.current.finish();
+    const moves = attemptRecording.moves.length > 0 ? attemptRecording.moves : undefined;
+    const gyro = attemptRecording.gyro;
+    const device = attemptRecording.device;
     const { bld, stages } = splitResult;
-    smartCubeDeviceAtStartRef.current = undefined;
     advanceDisplayedScramble();
     const revision = storeSnapshotGateRef.current.beginMutation();
     const solve: Omit<Solve, 'id' | 'ts'> = {
@@ -2509,12 +2513,10 @@ export function App({ host }: { host: InstalledAppHost }) {
         multiStage: (storeRef.current?.settings.multiStage ?? false)
           && timerSupportsStageSplits(entry.event),
       });
-      smartCubeMoveRecorderRef.current.begin(startedAtMs);
-      smartCubeGyroRecorderRef.current.reset();
+      smartCubeAttemptProducerRef.current.begin(startedAtMs, connectedSmartCubeRef.current);
       if (storeRef.current?.settings.recordGyro && smartCubeQuatRef.current) {
-        smartCubeGyroRecorderRef.current.push(smartCubeQuatRef.current, 0);
+        smartCubeAttemptProducerRef.current.recordGyro(smartCubeQuatRef.current, 0);
       }
-      smartCubeDeviceAtStartRef.current = connectedSmartCubeRef.current;
       timerPhaseRef.current = 'running';
     },
   });
@@ -2570,12 +2572,12 @@ export function App({ host }: { host: InstalledAppHost }) {
       for (const subscriber of smartCubeMoveSubscribersRef.current) subscriber(move, timestamp);
     },
     recordMove: ({ move, timestamp }) => {
-      if (!smartCubeMoveRecorderRef.current.record(move, timestamp)) return;
+      if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
       const attempt = attemptRef.current;
       if (!attempt) return;
       attemptSplitRecorder.observeMoves({
         event: attempt.event,
-        moves: smartCubeMoveRecorderRef.current.snapshot(),
+        moves: smartCubeAttemptProducerRef.current.snapshotMoves(),
         scramble: attempt.scramble,
         timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
       });
@@ -2590,11 +2592,15 @@ export function App({ host }: { host: InstalledAppHost }) {
   }), [attemptSplitRecorder]);
   const smartCube = host.useSmartCube({
     language,
+    onConnectionEvent: (event) => {
+      if (event.kind === 'disconnected') announce(copy.smartCubeDisconnected);
+      else if (event.kind === 'error') announce(copy.smartCubeError);
+    },
     onGyro: (quaternion, timestamp) => {
       smartCubeQuatRef.current = quaternion;
       if (timerModeRef.current === 1 && timerPhaseRef.current === 'running'
         && storeRef.current?.settings.recordGyro) {
-        smartCubeGyroRecorderRef.current.push(quaternion, timestamp - attemptStartedAtRef.current);
+        smartCubeAttemptProducerRef.current.recordGyro(quaternion, timestamp - attemptStartedAtRef.current);
       }
     },
     onMove: (move, timestamp, facelets, metadata) => {
@@ -3902,11 +3908,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                         quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                       />
                     </div>
-                    {smartCubeRenderedView === '3d' && store!.settings.gyroEnabled && smartCube.quaternion && (
-                      <button type="button" className="live-cube-calibrate" onClick={() => setSmartCubeCalibration((value) => value + 1)}>
-                        {{ en: 'Calibrate', zh: '校准' }[language]}
-                      </button>
-                    )}
                   </div>
                 ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
                   <div className="mobile-cube-preview" data-no-timer>
@@ -3924,6 +3925,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 interactive={scrambleReady}
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
+                scrambleAbove
                 scrambleSlot={(
                   <TimerScrambleStrip
                     copiedLabel={copy.copied}
@@ -4742,6 +4744,11 @@ export function App({ host }: { host: InstalledAppHost }) {
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
           availableDevices={smartCube.availableDevices}
+          capabilities={{
+            ...timerDeviceRegistry.get('smart-cube')?.capabilities,
+            gyro: Boolean(smartCube.quaternion),
+            scan: Boolean(smartCube.scanDevices),
+          }}
           connectionFailure={smartCube.phase === 'error'
             ? <p className="timer-smart-cube-device__failure">{copy.smartCubeError}</p>
             : undefined}
@@ -4766,15 +4773,24 @@ export function App({ host }: { host: InstalledAppHost }) {
       )}
 
       {view === 'timer' && timerMode === 1 && (
-        <TimerDeviceActions
-          active={smartCube.phase === 'connected'}
-          connectAriaLabel={smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connectBluetooth}
-          connectLabel={smartCube.phase === 'connected'
-            ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-            : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-              ? copy.connectingBluetooth
-              : copy.connect}
-          onConnect={openSmartCubeDevice}
+        <TimerDeviceCenter
+          ariaLabel={copy.connectBluetooth}
+          items={timerDeviceRegistry.list()
+            .filter((device) => device.kind === 'smart-cube')
+            .map((device) => ({
+              active: smartCube.phase === 'connected',
+              detail: smartCube.phase === 'connected'
+                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+                  ? copy.connectingBluetooth
+                  : undefined,
+              id: device.id,
+              kind: device.kind,
+              label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
+              onSelect: openSmartCubeDevice,
+            }))}
+          menuLabel={copy.connectBluetooth}
+          triggerLabel={copy.connect}
         />
       )}
 

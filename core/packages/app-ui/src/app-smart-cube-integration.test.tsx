@@ -134,8 +134,9 @@ describe('installed App GAN lifecycle integration', () => {
     }));
     await settle();
 
-    const trigger = container.querySelector<HTMLButtonElement>('.shell-device-connect')!;
+    const trigger = container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
     await act(async () => trigger.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
     await settle();
     expect(connect).not.toHaveBeenCalled();
 
@@ -158,6 +159,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
 
     await act(async () => trigger.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
     expect(document.querySelector('.timer-smart-cube-device__modal')).not.toBeNull();
     await act(async () => backListener?.());
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
@@ -178,7 +180,8 @@ describe('installed App GAN lifecycle integration', () => {
     }));
     await settle();
 
-    await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-connect')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
     await settle();
     expect(scanDevices).toHaveBeenCalledOnce();
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;

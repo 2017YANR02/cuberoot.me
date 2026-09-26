@@ -57,6 +57,7 @@ import {
   SmartCubeSessionController,
   type SmartCubeSessionLease,
 } from '@cuberoot/shared/smart-cube/session';
+import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
 import { armedFakeCube } from './fake_cube';
 import { applyHijack, makeHijack, type StateHijack } from './state_hijack';
 import { toFaceletString, fromFaceletString } from '../cube/state';
@@ -106,11 +107,7 @@ export function normalizeMiniProgramCubeBrand(brand: string | undefined): CubeBr
 /*  Connection-state event surface                                    */
 /* ------------------------------------------------------------------ */
 
-export type BluetoothConnectionEvent =
-  | { kind: 'disconnected'; reason: 'gatt-lost' | 'manual' }
-  | { kind: 'reconnecting'; attempt: number; maxAttempts: number; delayMs: number }
-  | { kind: 'reconnected' }
-  | { kind: 'reconnect-failed'; attempts: number };
+export type BluetoothConnectionEvent = TimerDeviceConnectionEvent;
 
 const RECONNECT_BACKOFF_MS = [1000, 2000, 4000, 8000, 16000];
 const RECONNECT_MAX_ATTEMPTS = RECONNECT_BACKOFF_MS.length;

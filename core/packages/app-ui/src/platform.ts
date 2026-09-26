@@ -6,6 +6,9 @@ import type {
 import type {
   NetBattleClient,
   NetBattleSession,
+  TimerDeviceAvailableDevice,
+  TimerDeviceConnectionEvent,
+  TimerDeviceConnectionPhase,
   TimerPhase,
 } from '@cuberoot/shared/timer';
 
@@ -31,6 +34,7 @@ export interface InstalledSmartCubeMoveMetadata {
 
 export interface InstalledAppSmartCubeOptions {
   language: SupportedLanguage;
+  onConnectionEvent?(event: TimerDeviceConnectionEvent): void;
   onMove(
     move: string,
     timestamp: number,
@@ -41,21 +45,18 @@ export interface InstalledAppSmartCubeOptions {
   onGyro?(quaternion: GyroQuaternion, timestamp: number, velocity?: GyroVelocity): void;
 }
 
-export interface InstalledAppSmartCubeDevice {
-  id: string;
-  name: string;
-  rssi?: number;
-}
+/** @deprecated Use TimerDeviceAvailableDevice from @cuberoot/shared/timer. */
+export type InstalledAppSmartCubeDevice = TimerDeviceAvailableDevice;
 
 export interface InstalledAppSmartCube {
-  availableDevices?: readonly InstalledAppSmartCubeDevice[];
+  availableDevices?: readonly TimerDeviceAvailableDevice[];
   connect(deviceId?: string): Promise<string>;
   deviceName: string;
   model?: string | null;
   disconnect(): Promise<void>;
   facelets: string;
   lastMove: string;
-  phase: 'idle' | 'requesting' | 'connecting' | 'connected' | 'error';
+  phase: TimerDeviceConnectionPhase;
   /** Optional for older host/test adapters; the shared smart-cube adapter supplies these. */
   quaternion?: GyroQuaternion | null;
   status?: GanV4CubeStatus | Moyu32CubeStatus | QiyiCubeStatus | null;
