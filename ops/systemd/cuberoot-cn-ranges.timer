@@ -1,0 +1,10 @@
+[Unit]
+Description=Refresh CubeRoot China IP ranges when a new monthly release is available
+
+[Timer]
+OnCalendar=*-*-* 05:40:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
