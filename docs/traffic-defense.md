@@ -8,7 +8,7 @@
 
 ## 09-26 Vercel 比赛入口验证
 
-### 独立比赛 API 通行凭证（代码完成，发布验收另记）
+### 独立比赛 API 通行凭证（2026-09-26 04:49 UTC 已启用）
 
 复用 Vercel Challenge，不引入 Cloudflare。`/api/comp/access` 也在现有 WAF 保护范围内，仅 Vercel production 的主域可签发 30 分钟通行 cookie（Secure、HttpOnly、SameSite=Lax，绑定 User-Agent）；独立 API 验签，不接受客户端自报验证成功。Vercel 比赛代理用同一服务端密钥签发有效期 60 秒、绑定准确上游路径和查询串的服务凭证，浏览器凭证不能充当服务凭证。密钥只在生产服务端环境中存储，不进入源码或 NEXT_PUBLIC 配置。不能将此机制说成所有通过者均为真人。
 
@@ -20,13 +20,30 @@
 
 首轮发布 `7fc0cde9db`：Vercel、Next 与 nginx 成功；API 在切换前被历史 migration 校验拦下。只读比对生产 251 条迁移账本，发现 `0082_wso_whole_solve_index.sql`、`0094_lsll_cases.sql` 两份文件在自动化迁移提交 `c17e382bb9` 中改过注释，SQL 执行语句未变。恢复该提交之前的原始文件字节后，两份 SHA-256 与生产账本完全一致；没有修改账本、跳过校验或执行新的 schema 变更。历史迁移注释中的旧脚本名仅保留历史记录，不作为现行运行入口。
 
+生产验收：修复提交 `3b58db480d` 的 [API 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36218490846)与 [CI](https://github.com/2017YANR02/cuberoot.me/actions/runs/36218490854)成功；首轮 [Next 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36218111241)、[nginx 部署](https://github.com/2017YANR02/cuberoot.me/actions/runs/36218111242)成功，Vercel production 为 READY。API 健康检查通过后，将两个强制验证开关改为 1，重载 API 与 nginx。线上实测如下：
+
+| 请求 | 结果 |
+| --- | --- |
+| 境外直连比赛 API，无凭证 | 403，`competition_verification_required` |
+| 携带生产签发的有效 cookie，User-Agent 相符 | 200，缓存 HIT |
+| 同一已缓存地址去掉 cookie | 403 |
+| 伪造 cookie、CN 请求头或 X-Forwarded-For | 403 |
+| 单轮成绩、直播流，无凭证 | 403 |
+| 中国出口直接访问比赛 API，无凭证 | 200 |
+| 中国出口经过 Vercel 比赛代理 | 200 |
+| 无关 API `/v1/nav/home-locks` | 200 |
+
+有效 cookie 通过中国出口取得，用于验证签发、传递和验签链路；没有声称完成境外真人交互挑战验收。已打开的页面需刷新以加载携带凭证的新客户端。04:50 UTC 守护检查显示维护关闭、`reasons: []`；其中一个 API 日志窗口有 1 次 5xx，不能把发布期间说成零错误。
+
+代理回源日志进一步确认：04:49:51 UTC，Vercel 的境外 Node 回源通过校验并得到 200。04:51:33 UTC，另一次 Vercel 缓存 MISS 得到 429，nginx error log 明确记录命中 `cuberoot_live_ip`，不是验签失败。原有单 IP 30 次/分钟限制仍作用于 Vercel 共享出口，繁忙时可能连带影响正常代理请求；本轮没有擅自放宽限流或将 Vercel IP 全部放行。通过验证不代表免限流，也不代表请求一定来自真人。
+
 边界：浏览器凭证跨 `cuberoot.me` 子域使用。非 CN 的 localhost、跨站 preview 或直接访问阿里云的访客不能在那里签发凭证，应从 Vercel 主站完成验证；后台合法 HTTP 抓取需使用服务端签名，不应添加 User-Agent 白名单。服务器内部预热直接调用数据函数，不经过 HTTP 验证入口。
 
 用户要求不封 IP，直接为比赛页加验证。已在 Vercel 发布并刷新核对启用 `Competition entry verification`（`rule_competition_entry_verification_dzBLG1`）：Request Path 匹配 `^/(?:(?:zh/|en/)?wca/comp(?:/.*)?|api/comp(?:/.*)?)$` → Challenge。覆盖比赛列表、详情、全部子页与同源比赛代理接口，不再等待每分钟 30 次阈值才验证。中国大陆 CN Bypass 仍置顶；原限流保留，没有新增 IP 封禁。配置直接发布，不需要应用重新构建。
 
-发布后实测：非 CN 出口指定 Vercel 地址访问 `/zh/wca/comp` 和 `/api/comp/SwedishChampionship2011` 均返回 429、`x-vercel-mitigated: challenge`，前者正文为 Vercel Security Checkpoint；杭州服务器指定同一 Vercel 地址访问比赛列表返回 200。这里的 429 是验证挑战，不能记成限流拒绝，也不能声称已完成真人通过验证后的浏览器验收。此规则使用 Vercel 浏览器验证，不是已接入 Turnstile，也没有自行设定 30 分钟通行有效期。
+最初发布 WAF 后实测：非 CN 出口指定 Vercel 地址访问 `/zh/wca/comp` 和 `/api/comp/SwedishChampionship2011` 均返回 429、`x-vercel-mitigated: challenge`，前者正文为 Vercel Security Checkpoint；杭州服务器指定同一 Vercel 地址访问比赛列表返回 200。这里的 429 是验证挑战，不能记成限流拒绝，也不能声称已完成真人通过验证后的浏览器验收。此规则使用 Vercel 浏览器验证，不是 Turnstile；上文的 30 分钟是后来新增的 API cookie 有效期，与 Vercel 自身的挑战会话分开。
 
-覆盖边界：阿里云 nginx 与独立 `api.cuberoot.me` 不执行 Vercel WAF；直连 `/v1/cubing-live/*` 仍使用原有限流与 CN 豁免。客户端部分刷新、直播、选手页也会直连该 API，后续接入通行凭证需同时处理这些调用，不能只保护页面后声称接口也有验证码。Cloudflare 控制台当前未登录、尚未取得 Turnstile 站点密钥与服务端密钥；跨线路验证码尚未部署。
+最初仅有 WAF 时的覆盖缺口：阿里云 nginx 与独立 `api.cuberoot.me` 不执行 Vercel WAF，直连接口只有原有限流与 CN 豁免。上文的签名凭证现已覆盖比赛读取、单轮刷新和直播调用；验证复用 Vercel，没有接入 Cloudflare Turnstile。
 
 ## 09-26 02:20 UTC 恢复阿里云主站与 API
 
