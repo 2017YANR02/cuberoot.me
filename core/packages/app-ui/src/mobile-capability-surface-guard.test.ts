@@ -21,7 +21,7 @@ describe('Mobile capability surface guard', () => {
   });
 
   it('does not expose Stackmat without a native microphone adapter', () => {
-    const deviceActions = app.match(/<TimerDeviceActions[\s\S]*?\/>/)?.[0];
+    const deviceActions = app.match(/<TimerDeviceCenter[\s\S]*?\/>/)?.[0];
 
     expect(deviceActions).toBeDefined();
     expect(deviceActions).not.toContain('onMicrophone');
@@ -37,7 +37,7 @@ describe('Mobile capability surface guard', () => {
     expect(app).toContain('openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice');
     expect(app).toContain("if (smartCube.phase === 'idle' || smartCube.phase === 'error')");
     expect(app).toContain('void connectSmartCube().catch(() => undefined)');
-    expect(app).toContain('onConnect={openSmartCubeDevice}');
+    expect(app).toContain('onSelect: openSmartCubeDevice');
     expect(app).not.toContain('onConnect={toggleSmartCube}');
   });
 
