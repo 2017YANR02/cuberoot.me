@@ -9,6 +9,8 @@ on:
     branches: [main]
     paths:
       - 'ops/nginx/**'
+      - 'ops/geoip/update-cn-ranges*'
+      - 'ops/systemd/cuberoot-cn-ranges.*'
       - 'ops/logrotate/nginx'
       - 'ops/journald/**'
       - '.github/workflows/deploy_nginx.yml'
@@ -18,6 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Validate and generate China IP ranges
+        run: |
+          node --experimental-strip-types --test ops/geoip/update-cn-ranges.test.mjs
+          node --experimental-strip-types ops/geoip/update-cn-ranges.ts --output /tmp/cuberoot-cn-ranges.generated
 
       - name: Setup SSH
         env:
@@ -34,6 +43,10 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
+          scp -i ~/.ssh/id /tmp/cuberoot-cn-ranges.generated \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-cn-ranges.conf.new"
+          scp -i ~/.ssh/id ops/geoip/update-cn-ranges.ts ops/systemd/cuberoot-cn-ranges.service ops/systemd/cuberoot-cn-ranges.timer \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
           for f in ops/nginx/*.conf; do
             name=$(basename "$f")
             scp -i ~/.ssh/id "$f" \
@@ -67,6 +80,7 @@ jobs:
           for staging in /tmp/*.conf.new; do
             name=$(basename "$staging" .new)
             live="${VHOST_DIR}/${name}"
+            [ "$name" != cuberoot-cn-ranges.conf ] || live="/etc/nginx/$name"
             if [ -f "$live" ] && cmp -s "$live" "$staging"; then
               rm -f "$staging"
               continue
@@ -217,4 +231,19 @@ jobs:
           systemctl restart systemd-journald
           journalctl --vacuum-size=512M >/dev/null
           echo "OK: journald disk cap applied"
+          REMOTE
+
+      - name: Install monthly country database refresh
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -euo pipefail
+          install -d -m 0755 /usr/local/lib/cuberoot
+          install -m 0644 /tmp/update-cn-ranges.ts /usr/local/lib/cuberoot/update-cn-ranges.ts
+          install -m 0644 /tmp/cuberoot-cn-ranges.service /tmp/cuberoot-cn-ranges.timer /etc/systemd/system/
+          systemd-analyze verify /etc/systemd/system/cuberoot-cn-ranges.service /etc/systemd/system/cuberoot-cn-ranges.timer
+          systemctl daemon-reload
+          systemctl enable --now cuberoot-cn-ranges.timer
           REMOTE
