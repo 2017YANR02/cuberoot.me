@@ -218,6 +218,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const roomRef = useRef(room); roomRef.current = room;
   const activeRoomCodeRef = useRef<string | null>(null);
   const acceptedStateRef = useRef<NetRoomState | null>(null);
+  /** Keep each device on the completed round until that device asks to continue. */
+  const holdAdvancedRoundRef = useRef(true);
+  const pendingAdvancedStateRef = useRef<NetRoomState | null>(null);
   /** Synchronous latch + monotonic intent; React state alone cannot stop same-tick double submit. */
   const admissionGateRef = useRef<ReturnType<typeof createNetAdmissionGate> | null>(null);
   admissionGateRef.current ??= createNetAdmissionGate();
@@ -269,15 +272,33 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const identityRef = useRef(identity); identityRef.current = identity;
 
   const applyState = useCallback((st: NetRoomState) => {
+    const current = roomRef.current;
+    if (current && st.round > current.round && holdAdvancedRoundRef.current) {
+      pendingAdvancedStateRef.current = preferLatestNetRoomState(pendingAdvancedStateRef.current, st);
+      // 保持上一轮的成绩/轮次，但更新时钟和在线心跳，避免等待期间把对手误判为离线。
+      setRoom(prev => {
+        if (!prev || prev.round >= st.round) return prev;
+        const players = Object.fromEntries(Object.entries(prev.players).map(([id, player]) => {
+          const latest = st.players[id];
+          return [id, latest ? { ...player, seen: latest.seen } : player];
+        })) as NetRoomState['players'];
+        return { ...prev, now: st.now, players };
+      });
+      return;
+    }
     const accepted = acceptNetRoomResponse(activeRoomCodeRef.current, acceptedStateRef.current, st);
     if (accepted !== st) return;
     acceptedStateRef.current = st;
     offsetRef.current = blendClockOffset(offsetRef.current, st.now, Date.now());
+    holdAdvancedRoundRef.current = true;
+    pendingAdvancedStateRef.current = null;
     setRoom(prev => preferLatestNetRoomState(prev, st));
   }, []);
 
   const adopt = useCallback((state: NetRoomState, credentials: NetBattleCredentials, nm: string) => {
     activeRoomCodeRef.current = state.code;
+    holdAdvancedRoundRef.current = true;
+    pendingAdvancedStateRef.current = null;
     setPid(credentials.playerId);
     setPlayerToken(credentials.playerToken);
     applyState(state);
@@ -303,7 +324,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       恒 false(那是同时起表门控的口径),单独用它会让一个人开好房等朋友时既看到
       「还差 0 人」,又按不动空格开下一轮。 */
   const roundSettled = !!room && (complete || waiting === 0);
-  const canAdvance = !!room && !!pid && !!myResult;
   const canSolveRef = useRef(canSolve); canSolveRef.current = canSolve;
 
   // ── 房主 / 同时开始 ─────────────────────────────────────────
@@ -323,20 +343,19 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const advance = useCallback((force = false) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth || advBusyRef.current) return;
+    holdAdvancedRoundRef.current = false;
     advBusyRef.current = true;
     // 服务端为开轮者项目生成新打乱；客户端不能自报有利打乱。
     void nextNetRound(r.code, auth, r.round, force)
       .then(applyState)
       .catch((e: Error) => setErr(tr(netErrorMessage(e))))
-      .finally(() => { advBusyRef.current = false; });
+      .finally(() => {
+        advBusyRef.current = false;
+        holdAdvancedRoundRef.current = true;
+      });
   }, [applyState]);
 
-  // 全员交卷(或当前已无人可等)后自动开下一轮。每个客户端都可能同时触发,
-  // 服务端用 round CAS 保证只推进一次;room 每次轮询变化也让失败请求自动重试。
-  useEffect(() => {
-    if (!canAdvance || !roundSettled) return;
-    advance(false);
-  }, [advance, canAdvance, room, roundSettled]);
+  // 双方交卷后不自动推进；每台设备在自己的下一次操作时独立进入下一轮。
 
   // 改自己的项目(仅本轮尚未交卷时可改)。服务端用共享生成器 set-if-absent 回填。
   const changeEvent = useCallback((selId: string) => {
@@ -714,6 +733,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     admissionGate.cancel();
     setBusy(false);
     acceptedStateRef.current = null;
+    holdAdvancedRoundRef.current = true;
+    pendingAdvancedStateRef.current = null;
     setRoom(null); setPid(null); setPlayerToken(null); setErr(null);
     autoJoinRef.current = false;
     prevRoundRef.current = null;
@@ -777,6 +798,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const bluetoothCube = useBluetoothCube({
     onGyro: settings.gyroEnabled ? (q) => { gyroQuatRef.current = q; } : undefined,
     onMove: (move, ts, _facelets, metadata) => {
+      // 双方都交卷后，自己的下一次转动才切到下一轮；另一台设备继续保留结算画面。
+      if (myResult && roundSettled && !advBusyRef.current) advance(false);
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
       // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
       // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。
@@ -1072,14 +1095,15 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const pressDown = useCallback(() => {
     if (phaseRef.current === 'running') { timer.onPressDown(); return; }
     if (!canSolveRef.current) {
-      // 已交卷:等自动推进,不让按压重复开轮。
+      // 已交卷时按下也视为本机进入下一轮的明确动作。
+      if (myResult && roundSettled) advance(false);
       return;
     }
     // 房间要求同时起表且还没进倒计时:按压 = 切换「准备」,不直接起表
     if (gateRef.current) { toggleReady(); return; }
     timer.onPressDown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [toggleReady]);
+  }, [advance, myResult, roundSettled, toggleReady]);
   const pressDownRef = useRef(pressDown); pressDownRef.current = pressDown;
   const pressUpRef = useRef(timer.onPressUp); pressUpRef.current = timer.onPressUp;
 
@@ -1667,11 +1691,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
               isRoundComplete 在「在线不足 2 人」时恒 false(那是同时起表门控的
               口径),照它渲染的话,一个人开好房等朋友时会看到「还差 0 人」。 */}
           {roundSettled ? (
-            <div className="net-round-result">
-              {winners.length > 0
-                ? <><Trophy size={14} className="net-p-trophy" /><span>{winnerNames}</span></>
-                : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
-            </div>
+            <>
+              <div className="net-round-result">
+                {winners.length > 0
+                  ? <><Trophy size={14} className="net-p-trophy" /><span>{winnerNames}</span></>
+                  : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
+              </div>
+              <div className="net-substate-hint">
+                {tr({ zh: '转动魔方或按下计时区，开始下一把', en: 'Turn the cube or press the timer to start the next round' })}
+              </div>
+            </>
           ) : (
             <>
               <div className="net-substate-hint">
