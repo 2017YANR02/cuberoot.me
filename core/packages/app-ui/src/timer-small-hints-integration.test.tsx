@@ -40,7 +40,7 @@ describe('Mobile Timer small-puzzle hints integration', () => {
     const timingIndex = appSource.indexOf('<TimingSurface');
     const statsIndex = appSource.indexOf('<TimerStatRail', timingIndex);
     const hintsIndex = appSource.indexOf('<MobileSmallPuzzleHints', statsIndex);
-    const deviceIndex = appSource.indexOf('<TimerDeviceActions', hintsIndex);
+    const deviceIndex = appSource.indexOf('<TimerDeviceCenter', hintsIndex);
     expect(timingIndex).toBeGreaterThan(-1);
     expect(statsIndex).toBeGreaterThan(timingIndex);
     expect(hintsIndex).toBeGreaterThan(statsIndex);

@@ -32,10 +32,14 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, Bluetooth, QrCode, Box } from 'lucide-react';
+import { Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode, Box } from 'lucide-react';
 
-import { SegmentTime, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerDeviceCenter, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { TimerSmartCubeMoveRecorder, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
+import {
+  createTimerDeviceRegistry,
+  TIMER_DEVICE_REGISTRATIONS,
+} from '@cuberoot/shared/timer/device-contract';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
@@ -102,6 +106,10 @@ const LS_NAME = 'net_battle_name';
 const SS_KEY = 'net_battle_session';
 /** 访客不填昵称时的回落名(与服务端 sanitizeName 的默认值一致)。 */
 const GUEST_NAME = 'Cuber';
+const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
+  adapterIds: ['smart-cube'],
+  registrations: TIMER_DEVICE_REGISTRATIONS,
+});
 type SavedSession = NetBattleSession;
 
 /** 服务端给重名加的「 (2)」尾巴。 */
@@ -1287,20 +1295,22 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         {presenceControl}
         {room && (
           <>
-            <button
-              type="button"
-              className={`tb-btn${bluetoothCube.status.connected ? ' connected' : ''}`}
-              onClick={() => setBluetoothOpen(true)}
-              title={bluetoothCube.status.connected
-                ? tr({
-                    zh: `已连接 ${bluetoothCube.status.deviceName}（还原即停表）`,
-                    en: `Connected: ${bluetoothCube.status.deviceName} (solving the cube stops the timer)`,
-                  })
-                : tr({ zh: '智能魔方', en: 'Smart cube' })}
-              aria-label={tr({ zh: '智能魔方', en: 'Smart cube' })}
-            >
-              <Bluetooth size={14} />
-            </button>
+            <TimerDeviceCenter
+              ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+              className="net-device-center"
+              items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => ({
+                active: bluetoothCube.status.connected,
+                detail: bluetoothCube.status.connected
+                  ? tr({ zh: `已连接 ${bluetoothCube.status.deviceName}`, en: `Connected: ${bluetoothCube.status.deviceName}` })
+                  : undefined,
+                id: device.id,
+                kind: device.kind,
+                label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+                onSelect: () => setBluetoothOpen(true),
+              }))}
+              menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
+              triggerLabel={tr({ zh: '设备', en: 'Devices' })}
+            />
             <button
               type="button"
               className="tb-btn"
