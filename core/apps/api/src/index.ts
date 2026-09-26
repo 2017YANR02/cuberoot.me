@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
+import { issueCompetitionCaptcha, submitCompetitionCaptcha } from './utils/competition_captcha.js';
 import { startRecordPushSweep } from './utils/record_push.js';
 import { requestDiagnostics } from './observability/request.js';
 import { startRuntimeDiagnostics } from './observability/runtime.js';
@@ -122,6 +124,8 @@ const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', apiCors);
 app.get('/v1/competition-access/check', checkCompetitionAccess);
+app.get('/v1/competition-access/challenge', issueCompetitionCaptcha);
+app.post('/v1/competition-access/verify', bodyLimit({ maxSize: 512 }), submitCompetitionCaptcha);
 app.use('/v1/cubing-live/*', requireCompetitionAccess);
 app.use('/v1/cubing-live-stream/*', requireCompetitionAccess);
 app.use('/v1/*', rolePreviewGuard);
