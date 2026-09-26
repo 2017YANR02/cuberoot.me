@@ -1,4 +1,5 @@
 'use client';
+import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 
 /**
  * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
@@ -1163,14 +1164,16 @@ export default function CompDetailPage() {
       resolveOnce();
     };
 
-    const startSse = () => {
+    const startSse = async () => {
+      try { await ensureCompetitionAccess(); } catch (error) { failWith((error as Error).message); return; }
+      if (done || apiAbort.signal.aborted) return;
       const q = sourceParam ? `?v=4&source=${encodeURIComponent(sourceParam)}` : '?v=4';
       const url = apiUrl(`/v1/cubing-live-stream/${encodeURIComponent(slug)}${q}`);
-      es = new EventSource(url);
+      es = new EventSource(url, { withCredentials: true });
       const fallback = () => {
         if (done) return;
         es?.close();
-        fetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`), { signal: apiAbort.signal })
+        competitionFetch(apiUrl(`/v1/cubing-live/${encodeURIComponent(slug)}${q}`), { signal: apiAbort.signal })
           .then(async r => {
             if (!r.ok) {
               const j = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
@@ -1214,7 +1217,7 @@ export default function CompDetailPage() {
       startSse();
     } else {
       const onlyQs = only ? `?v=4&only=${encodeURIComponent(only)}` : '?v=4';
-      fetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
+      competitionFetch(`/api/comp/${encodeURIComponent(slug)}${onlyQs}`, { signal: apiAbort.signal })
         .then(async r => {
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           return r.json();
@@ -1249,7 +1252,7 @@ export default function CompDetailPage() {
     if (!slug || !dataReady || fullLoaded || fullReqRef.current) return;
     fullReqRef.current = true;
     const ac = new AbortController();
-    fetch(`/api/comp/${encodeURIComponent(slug)}?v=4`, { signal: ac.signal })
+    competitionFetch(`/api/comp/${encodeURIComponent(slug)}?v=4`, { signal: ac.signal })
       .then(r => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
       .then((j: CompData) => { setData(j); setFullLoaded(true); })
       .catch(() => { fullReqRef.current = false; });
