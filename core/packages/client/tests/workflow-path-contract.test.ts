@@ -257,6 +257,7 @@ const TEST_PATHS = [
   repoPath('.sync', '**'),
   repoPath('scripts', 'upstream', '**'),
   repoPath('ops', 'nginx', '**'),
+  repoPath('ops', 'vercel-ban-relay', 'competition-rule.json'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),
@@ -573,6 +574,7 @@ describe('deployment workflow path contracts', () => {
     for (const paths of [testPushPaths, testPullRequestPaths]) {
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'www.cuberoot.me.conf')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('ops', 'nginx', 'api.cuberoot.me.conf')])).toBe(true);
+      expect(workflowTriggers(paths, [repoPath('ops', 'vercel-ban-relay', 'competition-rule.json')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('.github', 'workflows', 'stats.yml')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('sync_upstream.ts')])).toBe(true);
       expect(workflowTriggers(paths, [repoPath('nested', 'sync_upstream.ts')])).toBe(false);
