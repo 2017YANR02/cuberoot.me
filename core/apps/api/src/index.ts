@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { checkCompetitionAccess, requireCompetitionAccess } from './utils/competition_access.js';
 import { startRecordPushSweep } from './utils/record_push.js';
 import { requestDiagnostics } from './observability/request.js';
 import { startRuntimeDiagnostics } from './observability/runtime.js';
@@ -120,6 +121,9 @@ const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 // Phase 4 (2026-05-27): 主域全员切 Next; vite.cuberoot.me 已下线。
 // *.vercel.app 用 function 形式兜底,Vercel preview 每 PR 一个新 URL 全开。
 app.use('*', apiCors);
+app.get('/v1/competition-access/check', checkCompetitionAccess);
+app.use('/v1/cubing-live/*', requireCompetitionAccess);
+app.use('/v1/cubing-live-stream/*', requireCompetitionAccess);
 app.use('/v1/*', rolePreviewGuard);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式

@@ -1,3 +1,4 @@
+import { competitionFetch } from '@/lib/competition-access';
 // Fetch public WCIF for a WCA comp + competition metadata. 24h localStorage cache.
 // Ported from packages/client-vite/src/utils/comp_wcif.ts.
 
@@ -176,7 +177,7 @@ function normalizePersonEventIds(value: unknown): string[] {
 /** 读取比赛详情心理表所用名单；null 表示该来源无法确认项目。 */
 async function fetchCompLivePersonEventIds(compId: string, wcaId: string): Promise<string[] | null> {
   try {
-    const response = await fetch(`/api/comp/${encodeURIComponent(compId)}`);
+    const response = await competitionFetch(`/api/comp/${encodeURIComponent(compId)}`);
     if (!response.ok) return null;
     const data = await response.json() as { users?: Record<string, CompLivePersonRaw> };
     const person = Object.values(data.users ?? {}).find((candidate) => (

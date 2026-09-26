@@ -45,6 +45,8 @@ jobs:
         run: |
           scp -i ~/.ssh/id /tmp/cuberoot-cn-ranges.generated \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-cn-ranges.conf.new"
+          scp -i ~/.ssh/id ops/nginx/competition-access.inc \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-competition-access.inc.conf.new"
           scp -i ~/.ssh/id ops/geoip/update-cn-ranges.ts ops/systemd/cuberoot-cn-ranges.service ops/systemd/cuberoot-cn-ranges.timer \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
           for f in ops/nginx/*.conf; do
@@ -72,6 +74,11 @@ jobs:
             printf 'default 0;\n' > /etc/nginx/cuberoot-maintenance-state.conf
             chmod 0600 /etc/nginx/cuberoot-maintenance-state.conf
           fi
+          # Enable only after the API verifier and browser support are deployed.
+          if [ ! -f /etc/nginx/cuberoot-comp-verification-state.conf ]; then
+            printf 'default 0;\n' > /etc/nginx/cuberoot-comp-verification-state.conf
+            chmod 0600 /etc/nginx/cuberoot-comp-verification-state.conf
+          fi
           # Snapshot every confs that will be (re)written, so a single failure
           # rolls back the whole batch — atomic apply across all conf files.
           declare -a CHANGED=()
@@ -81,6 +88,7 @@ jobs:
             name=$(basename "$staging" .new)
             live="${VHOST_DIR}/${name}"
             [ "$name" != cuberoot-cn-ranges.conf ] || live="/etc/nginx/$name"
+            [ "$name" != cuberoot-competition-access.inc.conf ] || live=/etc/nginx/cuberoot-competition-access.inc
             if [ -f "$live" ] && cmp -s "$live" "$staging"; then
               rm -f "$staging"
               continue

@@ -8,6 +8,18 @@
 
 ## 09-26 Vercel 比赛入口验证
 
+### 独立比赛 API 通行凭证（代码完成，发布验收另记）
+
+复用 Vercel Challenge，不引入 Cloudflare。`/api/comp/access` 也在现有 WAF 保护范围内，仅 Vercel production 的主域可签发 30 分钟通行 cookie（Secure、HttpOnly、SameSite=Lax，绑定 User-Agent）；独立 API 验签，不接受客户端自报验证成功。Vercel 比赛代理用同一服务端密钥签发有效期 60 秒、绑定准确上游路径和查询串的服务凭证，浏览器凭证不能充当服务凭证。密钥只在生产服务端环境中存储，不进入源码或 NEXT_PUBLIC 配置。不能将此机制说成所有通过者均为真人。
+
+保护范围为 `/v1/cubing-live/*`、`/v1/cubing-live-stream/*` 及阿里云主域／next 别名的 `/api/comp/*` 数据代理。nginx `auth_request` 在缓存命中之前校验，Hono 路由再次检查；直播 EventSource 带 credentials，单轮刷新与比赛数据请求在 403 时补领凭证再重试。hover 预取不会自动跳验证页。中国大陆仍按 nginx 的连接 IP 豁免；Hono 仅信任来自 loopback nginx 的国家标记，伪造国家头和 X-Forwarded-For 不获豁免。登录、账号权限、其他 API 的规则不变。
+
+部署开关：服务器 `/root/core-api/.env` 的 `COMPETITION_ACCESS_ENFORCE=1` 与 `/etc/nginx/cuberoot-comp-verification-state.conf` 的 `default 1;` 共同启用；首次配置均为 0，必须等 Vercel、Next 和 API 部署成功后再开启。只关闭 nginx 开关不能关闭 Hono 校验；回滚需先评估旧版网页是否携带凭证，并同步两个开关。`COMPETITION_ACCESS_SECRET` 在 Vercel production、API env 和 `/etc/cuberoot-competition-access.env` 中一致，Next systemd drop-in 读取后者。部署保留运行时开关。
+
+校验结果：前后端专项 31 项通过，API 与客户端类型检查通过。服务器独立 loopback nginx 实测五种比赛／直播／代理路径：无凭证 403、有效凭证 200、缓存 HIT 后无凭证仍 403；服务凭证换路径被拒绝、伪造国家头被拒绝、CN 免验证、无关 API 不受影响。生产完整 nginx 配置校验通过。此次测试没有调用生产比赛数据接口。账号流程文档已说明浏览器验证不代表账号登录。
+
+边界：浏览器凭证跨 `cuberoot.me` 子域使用。非 CN 的 localhost、跨站 preview 或直接访问阿里云的访客不能在那里签发凭证，应从 Vercel 主站完成验证；后台合法 HTTP 抓取需使用服务端签名，不应添加 User-Agent 白名单。服务器内部预热直接调用数据函数，不经过 HTTP 验证入口。
+
 用户要求不封 IP，直接为比赛页加验证。已在 Vercel 发布并刷新核对启用 `Competition entry verification`（`rule_competition_entry_verification_dzBLG1`）：Request Path 匹配 `^/(?:(?:zh/|en/)?wca/comp(?:/.*)?|api/comp(?:/.*)?)$` → Challenge。覆盖比赛列表、详情、全部子页与同源比赛代理接口，不再等待每分钟 30 次阈值才验证。中国大陆 CN Bypass 仍置顶；原限流保留，没有新增 IP 封禁。配置直接发布，不需要应用重新构建。
 
 发布后实测：非 CN 出口指定 Vercel 地址访问 `/zh/wca/comp` 和 `/api/comp/SwedishChampionship2011` 均返回 429、`x-vercel-mitigated: challenge`，前者正文为 Vercel Security Checkpoint；杭州服务器指定同一 Vercel 地址访问比赛列表返回 200。这里的 429 是验证挑战，不能记成限流拒绝，也不能声称已完成真人通过验证后的浏览器验收。此规则使用 Vercel 浏览器验证，不是已接入 Turnstile，也没有自行设定 30 分钟通行有效期。

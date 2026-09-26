@@ -1,3 +1,4 @@
+import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-access';
 import { useEffect, useRef, useState } from 'react';
 import type { fetchCubingLiveRound } from '@cuberoot/shared/cubing-live';
 import { apiUrl } from '@/lib/api-base';
@@ -124,7 +125,7 @@ export function useLiveStream({ cubingSlug, focusRound, rounds, applyPatch }: Us
         for (let offset = 0; offset < targets.length; offset += 3) {
           const batch = await Promise.allSettled(targets.slice(offset, offset + 3).map(async target => {
             const { eventId, roundTypeId, roundNumber } = target;
-            const response = await fetch(apiUrl('/v1/cubing-live/' + encodeURIComponent(cubingSlug)
+            const response = await competitionFetch(apiUrl('/v1/cubing-live/' + encodeURIComponent(cubingSlug)
               + '/round/' + encodeURIComponent(eventId) + '/' + roundNumber
               + '?roundTypeId=' + encodeURIComponent(roundTypeId) + '&v=5'), {
               signal: AbortSignal.any([abort.signal, AbortSignal.timeout(20_000)]),
@@ -155,9 +156,15 @@ export function useLiveStream({ cubingSlug, focusRound, rounds, applyPatch }: Us
         }
       }
     };
-    const connect = () => {
+    let connecting = false;
+    const connect = async () => {
+      if (connecting || cancelled) return;
+      connecting = true;
+      try { await ensureCompetitionAccess(); } catch { if (!cancelled) setStatus('error'); return; }
+      finally { connecting = false; }
+      if (cancelled) return;
       if (stream || typeof EventSource === 'undefined' || document.visibilityState === 'hidden') return;
-      stream = new EventSource(apiUrl('/v1/cubing-live/' + encodeURIComponent(cubingSlug) + '/stream?v=5'));
+      stream = new EventSource(apiUrl('/v1/cubing-live/' + encodeURIComponent(cubingSlug) + '/stream?v=5'), { withCredentials: true });
       const invalidate = (event?: Event) => {
         let target: LiveRoundRef | undefined;
         try {

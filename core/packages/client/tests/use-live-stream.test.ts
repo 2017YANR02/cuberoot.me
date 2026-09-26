@@ -6,6 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyResultPatch, mergeLiveRoundRows, useLiveStream, type LivePatch, type LiveResultRow } from '@/hooks/useLiveStream';
 
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => path }));
+vi.mock('@/lib/competition-access', () => ({
+  competitionFetch: (...args: Parameters<typeof fetch>) => fetch(...args),
+  ensureCompetitionAccess: () => Promise.resolve(),
+}));
 
 function resultRow(overrides: Partial<LiveResultRow> = {}): LiveResultRow {
   return {
