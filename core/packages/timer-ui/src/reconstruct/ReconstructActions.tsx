@@ -27,7 +27,7 @@ export default function ReconstructActions({
 
   const handleCopyShare = async () => {
     try {
-      await host.writeClipboardText(host.replayUrl(solve));
+      await host.writeClipboardText(await host.replayUrl(solve));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (err) {
