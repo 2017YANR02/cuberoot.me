@@ -9,7 +9,7 @@ export type ReconstructLocalize = <T>(text: { en: T; zh: T }) => T;
 export interface ReconstructHost {
   localize: ReconstructLocalize;
   writeClipboardText: (text: string) => Promise<void>;
-  replayUrl: (solve: Solve) => string;
+  replayUrl: (solve: Solve) => string | Promise<string>;
   recordGyro: boolean;
   onEnableGyro?: () => void;
   BoolToggle?: ComponentType<BoolToggleProps>;
