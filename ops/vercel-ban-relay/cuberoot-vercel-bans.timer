@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync CubeRoot incident IP bans every minute
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=60s
+Unit=cuberoot-vercel-bans.service
+
+[Install]
+WantedBy=timers.target

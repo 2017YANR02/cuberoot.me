@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'ops/nginx/**'
+      - 'ops/vercel-ban-relay/**'
       - 'ops/geoip/update-cn-ranges*'
       - 'ops/systemd/cuberoot-cn-ranges.*'
       - 'ops/logrotate/nginx'
@@ -26,6 +27,7 @@ jobs:
       - name: Validate and generate China IP ranges
         run: |
           node --experimental-strip-types --test ops/geoip/update-cn-ranges.test.mjs
+          node --experimental-strip-types --test ops/vercel-ban-relay/relay.test.mjs
           node --experimental-strip-types ops/geoip/update-cn-ranges.ts --output /tmp/cuberoot-cn-ranges.generated
 
       - name: Setup SSH
@@ -47,6 +49,10 @@ jobs:
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-cn-ranges.conf.new"
           scp -i ~/.ssh/id ops/nginx/competition-access.inc \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-competition-access.inc.conf.new"
+          scp -i ~/.ssh/id ops/nginx/scanner-ban.integration.ts \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/scanner-ban.integration.ts"
+          scp -i ~/.ssh/id ops/vercel-ban-relay/relay.ts ops/vercel-ban-relay/cuberoot-vercel-bans.service ops/vercel-ban-relay/cuberoot-vercel-bans.timer \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
           scp -i ~/.ssh/id ops/geoip/update-cn-ranges.ts ops/systemd/cuberoot-cn-ranges.service ops/systemd/cuberoot-cn-ranges.timer \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
           for f in ops/nginx/*.conf; do
@@ -59,6 +65,33 @@ jobs:
           scp -i ~/.ssh/id ops/journald/10-cuberoot-disk-cap.conf \
             "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-journald.new"
 
+      - name: Verify scanner bans in isolated nginx
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" \
+            '/root/.nvm/versions/node/v24.14.0/bin/node --experimental-strip-types /tmp/scanner-ban.integration.ts /tmp/02-scanner-ban.conf.new'
+
+      - name: Install Vercel ban relay (activate only when credentials are configured)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          ssh -i ~/.ssh/id "$DEPLOY_USER@$DEPLOY_HOST" bash -s <<'REMOTE'
+          set -e
+          install -d -m 0700 /opt/cuberoot-vercel-bans /var/lib/cuberoot-vercel-bans
+          install -m 0600 /tmp/relay.ts /opt/cuberoot-vercel-bans/relay.ts
+          install -m 0644 /tmp/cuberoot-vercel-bans.service /tmp/cuberoot-vercel-bans.timer /etc/systemd/system/
+          systemctl daemon-reload
+          if [ -s /etc/cuberoot-vercel-bans.json ]; then
+            systemctl start cuberoot-vercel-bans.service
+            systemctl enable --now cuberoot-vercel-bans.timer
+          else
+            echo 'NOT ACTIVE: Vercel 30-day relay awaits a dedicated access token'
+          fi
+          REMOTE
+
       - name: Apply + validate + reload (with rollback on failure)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -68,6 +101,11 @@ jobs:
           set -e
           VHOST_DIR=/etc/nginx/vhost.d
           TS=$(date +%s)
+          # Preserve the 30-day journal across deploys and full nginx restarts.
+          install -d -o www -g www -m 0700 /var/lib/cuberoot-scanner
+          touch /var/lib/cuberoot-scanner/bans.tsv
+          chown www:www /var/lib/cuberoot-scanner/bans.tsv
+          chmod 0600 /var/lib/cuberoot-scanner/bans.tsv
           # Runtime incident state is independent of repository config and must
           # survive every subsequent nginx deployment.
           if [ ! -f /etc/nginx/cuberoot-maintenance-state.conf ]; then
