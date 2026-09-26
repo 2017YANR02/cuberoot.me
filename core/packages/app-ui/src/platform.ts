@@ -7,6 +7,7 @@ import type {
   NetBattleClient,
   NetBattleSession,
   TimerDeviceAvailableDevice,
+  TimerDeviceConnectionEvent,
   TimerDeviceConnectionPhase,
   TimerPhase,
 } from '@cuberoot/shared/timer';
@@ -33,6 +34,7 @@ export interface InstalledSmartCubeMoveMetadata {
 
 export interface InstalledAppSmartCubeOptions {
   language: SupportedLanguage;
+  onConnectionEvent?(event: TimerDeviceConnectionEvent): void;
   onMove(
     move: string,
     timestamp: number,
