@@ -35,7 +35,7 @@ import { useQueryState } from 'nuqs';
 import { Bluetooth, Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode } from 'lucide-react';
 
 import { SegmentTime, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
-import { TimerSmartCubeMoveRecorder, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
+import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
@@ -49,7 +49,6 @@ import { useNetBattleLiveCube, type NetBattleLiveCubePlayer } from '../_lib/net-
 import { useTimer, type SolveResult } from '../_shared/useTimer';
 import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
 import { appendSolves, makeSolve, updateSolves } from '../_lib/storage/db';
-import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
@@ -372,14 +371,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   /**
    * 这一把的转动流(智能魔方才有)。房间只收一个成绩数字,所以在此之前,联机房里
    * 用智能魔方拧的每一把都是**扔掉的** —— 没有复盘、没有回放、不进统计。
-   * 记下来之后走的是和 Solo 完全同一条:同样的 `makeSolve` + `stageSegmentsFor`
+   * 记下来之后走的是和 Solo 完全同一条:同样的 `makeSolve` + `finishSolveFields`
    * + `appendSolves`,于是复盘 / 回放 / 分段统计一行新代码都不用写就都有了。
    */
-  const moveRecorderRef = useRef(new TimerSmartCubeMoveRecorder());
+  const attemptProducerRef = useRef(new SmartCubeAttemptProducer());
   /** 起表那一刻的打乱与设备 —— 中途换轮 / 掉线都不该改写这一把记的是什么。 */
   const scrambleAtStartRef = useRef('');
   const eventAtStartRef = useRef<EventId>('333');
-  const deviceAtStartRef = useRef<{ model: string; name: string } | null>(null);
 
   /** 刚留档的那条本机记录 —— 之后改罚时要跟着改,别让两边对同一把给出两个判罚。 */
   const localSolveRef = useRef<{ event: EventId; solve: Solve } | null>(null);
@@ -388,8 +386,12 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const r = roomRef.current, auth = credentialsRef.current;
     // 本机留档先做:上传失败也不该连自己的复盘一起丢。
     localSolveRef.current = null;
-    const moves = moveRecorderRef.current.take();
-    if (moves.length > 0 && scrambleAtStartRef.current) {
+    const fields = attemptProducerRef.current.finishSolveFields({
+      event: eventAtStartRef.current,
+      scramble: scrambleAtStartRef.current,
+      timeMs: res.timeMs,
+    });
+    if (fields.moves && scrambleAtStartRef.current) {
       const ev = eventAtStartRef.current;
       const solve = makeSolve({
         timeMs: res.timeMs,
@@ -397,11 +399,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         event: ev,
         penalty: res.autoPenalty,
       });
-      solve.moves = moves;
+      Object.assign(solve, fields);
       if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
-      if (deviceAtStartRef.current) solve.device = deviceAtStartRef.current;
-      const segs = stageSegmentsFor(solve);
-      if (segs) solve.stageSegments = segs;
+
       appendSolves(ev, [solve]);
       localSolveRef.current = { event: ev, solve };
     }
@@ -417,51 +417,25 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       });
   }, [applyState]);
 
-  const timer = useTimer(onSolve);
-  const phaseRef = useRef(timer.phase); phaseRef.current = timer.phase;
-
-  /**
-   * 起表前把「这一把记的是什么」定住,起表瞬间把缓冲清空 —— 和 Solo 逐字同一条
-   * (那边是 `cubeStartedRef`)。`cubeStarted` 那个分支不能重做清空:魔方起表走的是
-   * 同步路径,起表那一手**已经**在缓冲里了,再清一次就把这一把的第一步丢了。
-   */
-  const cubeStartedRef = useRef(false);
-
-  /**
-   * 起表**瞬间**才做的事:清缓冲 + 定零点。依赖只能有 `timer.phase`。
-   *
-   * 这两件事和「快照」原本写在同一个 effect 里,而快照要跟着 `room` 走 —— 房间每秒
-   * 轮询一次,`getNetRoom` 每次都是新解析出来的对象,`room` 的身份就每秒换一次,于是
-   * 这个 effect 在**计时中**每秒重跑一遍,把已经录到的转动全冲掉、零点往后挪一秒。
-   * 实测:一把 6.2 秒 20 手的成绩,存下来只剩最后 3 手。魔方起表那条路因为
-   * `cubeStartedRef` 挡着看不出来,而按键起表和「同时开始」倒计时起表全中 ——
-   * 后者是联机房里智能魔方唯一的起表方式,等于每一把都坏。
-   *
-   * Solo 那边同样一段之所以没事,是因为它的依赖是 `[timer.phase, scramble, event]`,
-   * 三个都不会在一把中间变。
-   */
-  useEffect(() => {
-    if (timer.phase !== 'running') { cubeStartedRef.current = false; return; }
-    // 魔方起表走的是同步路径,起表那一手**已经**在缓冲里了,再清一次就把第一步丢了。
-    if (cubeStartedRef.current) return;
-    moveRecorderRef.current.begin(performance.now());
-  }, [timer.phase]);
-
-  /** 「这一把记的是什么」—— 没起表时一直跟着房间走(换轮 / 换项目都会改打乱)。 */
-  useEffect(() => {
-    if (timer.phase === 'running') return;
+  // Every start path (keys, countdown and cube) freezes the context synchronously.
+  // A room poll or the running-phase effect must never reset the first BLE move.
+  const timer = useTimer(onSolve, (startedAtMs: number) => {
     const r = roomRef.current, id = pidRef.current;
     scrambleAtStartRef.current = (r && id ? myScramble(r, id) : null) ?? '';
     eventAtStartRef.current = (r && id
       ? netEventToSelectorId(playerEventOf(r, id))
       : '333') as EventId;
+    solvingRoundRef.current = r?.round ?? 0;
     const bt = btStatusRef.current;
-    deviceAtStartRef.current = bt?.connected ? { model: bt.brand, name: bt.deviceName } : null;
-  }, [timer.phase, room]);
-
-  // 起表瞬间锁定「这条打乱属于第几轮」:交卷投递到该轮,轮次已被推进则服务端拒收
+    attemptProducerRef.current.begin(startedAtMs, bt?.connected
+      ? { model: bt.brand, name: bt.deviceName } : undefined);
+    phaseRef.current = 'running';
+  });
+  const phaseRef = useRef(timer.phase); phaseRef.current = timer.phase;
+  const cubeStartedRef = useRef(false);
   useEffect(() => {
-    if (timer.phase === 'running') solvingRoundRef.current = roomRef.current?.round ?? 0;
+    if (timer.phase !== 'running') cubeStartedRef.current = false;
+    if (timer.phase === 'idle') attemptProducerRef.current.reset();
   }, [timer.phase]);
 
   // 实时状态上报(观察中/计时中)— 纯装饰,失败静默
@@ -789,10 +763,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   startFromCubeRef.current = (ts: number) => {
     if (gateRef.current || startAtRef.current !== null || !canSolveRef.current) return;
     if (!timer.startFromCube(ts)) return;
-    // 起表那一手也属于这一把,所以缓冲要在**这里**清干净并把零点定在它身上。
-    // 交给上面那个 phase effect 做就晚了一个 React 周期,第一步会被清掉。
+    // useTimer has already begun the producer synchronously in onStart.
     cubeStartedRef.current = true;
-    moveRecorderRef.current.begin(ts);
     phaseRef.current = 'running';
   };
 
@@ -1031,7 +1003,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const subs = btSubscribersRef.current;
     const recorder = (m: string, ts: number) => {
       if (phaseRef.current !== 'running') return;
-      moveRecorderRef.current.record(m, ts);
+      attemptProducerRef.current.recordMove(m, ts);
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };

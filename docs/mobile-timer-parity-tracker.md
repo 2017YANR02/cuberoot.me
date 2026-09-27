@@ -4,6 +4,13 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：Web 本地多人 / 联机接入统一 attempt
+
+- `useBattleCubes` 每槽位改用 `SmartCubeAttemptProducer`，统一动作、姿态、设备与分段输出；保留 owner/startTime 隔离和仅 P1 写入个人历史的规则。设备在该 attempt 首次录制时复制当前连接信息，不再在停表时读取可变设备引用；按键起表也能带上设备信息。
+- `NetBattleView` 改用同一 producer，打乱、项目、设备和房间轮次在 `useTimer.onStart` 同步冻结，移除 running effect 中的第二次 begin；取消回 idle 清理录制。网络成绩上传仍走原房间流程，联机姿态仍只用于实时预览，本轮没有新增联机姿态持久化。
+- 验证：新增 5 项执行真实宿主回调的回归通过，覆盖首末手、阶段/姿态输出、换持有者、取消、下一把、重复完成及房间更新/断连后的上下文保持；原 battle store、Solo 起表、producer 回归 43 项通过；录制同源守卫 2 项通过；全部 confirmed ground-truth 4 项及 client typecheck 通过。另 1 项既有实况 UI 守卫要求 `net-live-cube-switch`，本轮修改前 HEAD 已无该类名，保持失败记录，未改动该 UI 契约。
+- 下一项为五端 `app-ui/BattleModes` 的对战录制与个人历史保存链路接入；本轮只关闭 Web 两种对战模式的 producer/成绩字段重复实现，不能据此标记五端对战完整一致。未进行浏览器或实体魔方验证。
+
 ### 2026-09-27：智能魔方 attempt 成绩字段同源
 
 - Web `SoloView` 与五端 `App` 的动作、设备、陀螺仪和 CFOP 分段写入规则统一由 shared `SmartCubeAttemptProducer.finishSolveFields` 生成；宿主仍负责起停、成绩上下文、仓储与保存失败重试。不改变持久化 schema。
