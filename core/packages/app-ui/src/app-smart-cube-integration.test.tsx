@@ -137,15 +137,30 @@ describe('installed App GAN lifecycle integration', () => {
   });
 
   it('applies shared typography settings to the installed timing surface', async () => {
-    const nav = container.querySelectorAll<HTMLButtonElement>('.primary-nav button');
     await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('.tfp-trigger')!.click());
-    const inter = [...container.querySelectorAll<HTMLButtonElement>('.tfp-item')].find(node => node.textContent?.includes('Inter'))!;
+    const timerNode = container.querySelector('.timing-surface');
+    const dialog = document.querySelector<HTMLElement>('.settings-modal')!;
+    expect(dialog).not.toBeNull();
+    await act(async () => move('R', 2_000));
+    expect(phase).toBe('idle');
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }));
+    });
+    expect(phase).toBe('idle');
+    const category = dialog.querySelector<HTMLSelectElement>('.settings-category-select')!;
+    await act(async () => { category.value = 'appearance'; category.dispatchEvent(new Event('change', { bubbles: true })); });
+    await act(async () => dialog.querySelector<HTMLButtonElement>('.tfp-trigger')!.click());
+    const inter = [...document.querySelectorAll<HTMLButtonElement>('.tfp-item')].find(node => node.textContent?.includes('Inter'))!;
     await act(async () => inter.click());
     await settle();
     expect((memory.data as TimerStoreData).settings.timerFont).toBe('sans');
-    await act(async () => nav[0].click());
+    await act(async () => dialog.querySelector<HTMLButtonElement>('.settings-modal-close')!.click());
+    expect(container.querySelector('.timing-surface')).toBe(timerNode);
     expect(container.querySelector('.tf-sans')).not.toBeNull();
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    await act(async () => backListener?.());
+    expect(document.querySelector('.settings-modal')).toBeNull();
   });
 
   it.each(['2', '3', '4'])('shares device operations in %s-player mode without disconnecting on entry', async (mode) => {
