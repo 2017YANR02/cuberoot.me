@@ -147,7 +147,7 @@ export function createChatController(options: ChatControllerOptions) {
   }
   async function send(clientMessageId?: string) {
     const peer = state.peerId;
-    if (!peer || !state.page?.canSend || disposed) return;
+    if (!peer || !state.page?.canSend || disposed || state.listError === 'UNAUTHENTICATED') return;
     const old = clientMessageId ? state.pending.find((p) => p.clientMessageId === clientMessageId) : undefined;
     if (clientMessageId && (!old || old.status === 'sending')) return;
     const body = old?.body ?? normalizeChatBody(state.draft);
@@ -187,7 +187,8 @@ export function createChatController(options: ChatControllerOptions) {
     if (disposed || peer === state.peerId) return;
     stopPeer(); generation++; cursor = null; failures = 0; atBottom = false;
     publish({ peerId: peer, page: null, messages: [], pending: peer ? outbox.get(peer) ?? [] : [],
-      draft: peer ? drafts.get(peer) ?? '' : '', loading: !!peer, loadingOlder: false, hasOlder: false, hasNewerGap: false, error: null });
+      draft: peer ? drafts.get(peer) ?? '' : '', loading: !!peer && state.listError !== 'UNAUTHENTICATED', loadingOlder: false,
+      hasOlder: false, hasNewerGap: false, error: state.listError === 'UNAUTHENTICATED' ? 'UNAUTHENTICATED' : null });
     void refreshMessages();
   }
   function setActive(value: boolean) {

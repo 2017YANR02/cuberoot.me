@@ -117,6 +117,8 @@ describe('shared chat controller', () => {
     controller.refresh(); await flush();
     expect(unauthorized).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(30_000); expect(client.messages).toHaveBeenCalledTimes(2);
+    controller.selectPeer(3);
+    expect(controller.getSnapshot()).toMatchObject({ error: 'UNAUTHENTICATED', loading: false });
     controller.dispose(); controller.setDraft('private'); expect(controller.getSnapshot().draft).toBe('');
   });
   it('honors retry-after and does not overlap slow polling requests', async () => {
