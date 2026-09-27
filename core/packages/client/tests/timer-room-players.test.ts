@@ -2,12 +2,40 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
-import { TimerRoomLayout, TimerRoomPlayers, TimerRoomAdmin, timerRoomPlayerName } from '@cuberoot/timer-ui';
+import { TimerRoomLayout, TimerRoomPlayers, TimerRoomAdmin, TimerRoomRoundStatus, timerRoomPlayerName } from '@cuberoot/timer-ui';
 import type { NetRoomState } from '@cuberoot/shared/timer';
 
 it('preserves guest nicknames and WCA duplicate suffixes', () => {
   expect(timerRoomPlayerName({ name: 'Guest (alias)' }, 'zh')).toBe('Guest (alias)');
   expect(timerRoomPlayerName({ name: 'Ruimin Yan (颜瑞民) (2)', wcaId: '2017YANR02' }, 'zh')).toBe('颜瑞民 (2)');
+});
+
+it('shares ready, waiting, result correction and next-round actions', async () => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const room: NetRoomState = {
+    code: '1234', revision: 1, videoGeneration: 'test', roundRoster: [], event: '333', round: 1,
+    scrambles: {}, admin: 'self', syncStart: true, startAt: null, now: 1_000,
+    players: { self: { name: 'Me', ph: 'idle', joined: 1, seen: 1_000, at: 0 }, other: { name: 'Guest', ph: 'idle', joined: 2, seen: 1_000, at: 0 } },
+    results: {}, scores: {}, history: [],
+  };
+  const host = document.createElement('div'); const root = createRoot(host);
+  const ready = vi.fn(); const next = vi.fn(); const penalty = vi.fn();
+  const render = () => act(async () => root.render(createElement(TimerRoomRoundStatus, {
+    room, currentPlayerId: 'self', language: 'en', idle: true, countdown: false, onPenalty: penalty, onReady: ready, onNext: next,
+  })));
+  try {
+    await render();
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-pressed="false"]')!.click());
+    expect(ready).toHaveBeenCalledOnce();
+    room.results['1'] = { self: { t: 1000, p: 'ok' } }; await render();
+    expect(host.textContent).toContain('Waiting for others to finish (1 left)');
+    await act(async () => [...host.querySelectorAll('button')].find((button) => button.textContent === '+2')!.click());
+    expect(penalty).toHaveBeenCalledWith('+2');
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-actions button')!.click()); expect(next).toHaveBeenLastCalledWith(true);
+    room.results['1'].other = { t: 2000, p: 'dnf' }; await render();
+    expect(host.textContent).toContain('Me');
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-actions button')!.click()); expect(next).toHaveBeenLastCalledWith(false);
+  } finally { await act(async () => root.unmount()); vi.unstubAllGlobals(); }
 });
 
 it.each(['en', 'zh'] as const)('requires confirmation and contains keyboard focus in the shared %s admin dialog', async (language) => {

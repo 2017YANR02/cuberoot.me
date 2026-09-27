@@ -75,6 +75,9 @@
 .timer-room-history-event p { overflow-wrap: anywhere; margin: 0 0 8px; }
 .timer-room-history-result { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
 .timer-room-history-result > span { overflow-wrap: anywhere; }
+.timer-room-round-status { display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 100%; padding: 8px; text-align: center; font-size: 13px; }
+.timer-room-round-status p { margin: 0; }
+.timer-room-round-status .timer-room-actions { margin-inline-start: 0; }
 .timer-room-lobby { width: min(100%, 560px); margin: auto; padding: 24px 16px; box-sizing: border-box; }
 .timer-room-lobby h2 { margin: 0 0 20px; font-size: 20px; }
 .timer-room-lobby-fields, .timer-room-lobby-actions, .timer-room-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }

@@ -60,6 +60,7 @@ import {
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
+  TimerRoomRoundStatus,
   TimerRoomLobby,
   TimerRoomIdentity,
   TimerRoomDialog,
@@ -1313,6 +1314,24 @@ export function NetBattleMode({
     <section className="battle-mode battle-mode--net" aria-label={copy.battleOnlineTitle}>
       <TimerTopbar
         controls={(
+          <>
+          <TimerPuzzlePicker
+            dataNoTimer
+            disabled={active || Boolean(currentResult)}
+            groups={eventPickerGroups}
+            onSelect={(selectorId) => {
+              const next = selectorIdToNetEvent(selectorId);
+              if (!next || next === event) return;
+              void capability.client.postNetEvent(room.code, credentials, next)
+                .then((nextRoom) => {
+                  timer.reset();
+                  applyRoom(nextRoom);
+                })
+                .catch(fail);
+            }}
+            puzzleLabel={copy.puzzle}
+            selectedEvent={event}
+          />
           <TimerPlayersSelect
             ariaLabel={copy.onePlayer}
             disabled={active}
@@ -1321,37 +1340,9 @@ export function NetBattleMode({
             playerLabel={copy.players}
             value="net"
           />
+          </>
         )}
       />
-      <TimerRoomToolbar language={language} code={room.code} round={room.round}
-        syncStart={room.syncStart} copied={copied} copyKind="code" disabled={active}
-        historyOpen={showHistory} adminOpen={showAdmin}
-        onCopy={() => {
-          void writeClipboardText(room.code).then(() => {
-            if (!mountedRef.current) return;
-            setCopied(true);
-            if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
-            copiedResetRef.current = window.setTimeout(() => setCopied(false), 1_500);
-          }).catch((reason: unknown) => { if (mountedRef.current) fail(reason); });
-        }}
-        onQr={() => setQrOpen(true)}
-        onHistory={() => { setShowHistory(true); setShowAdmin(false); }}
-        onAdmin={amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined}
-        onLeave={() => void leaveRoom()}
-      >
-        {gate.gated && (
-          <button
-            aria-pressed={gate.ready}
-            onClick={() => {
-              const phase = gate.ready ? 'idle' : 'ready';
-              void capability.client.postNetStatus(room.code, credentials, phase)
-                .then(applyRoom)
-                .catch(fail);
-            }}
-            type="button"
-          >{copy.battleReady}{gate.waiting > 0 ? ` · ${gate.waiting}` : ''}</button>
-        )}
-      </TimerRoomToolbar>
       {showAdmin && amAdmin && <TimerRoomAdmin room={room} currentPlayerId={credentials.playerId}
         language={language} busy={roomActionTarget !== null} onClose={() => setShowAdmin(false)}
         onSyncStart={(value) => {
@@ -1382,7 +1373,23 @@ export function NetBattleMode({
             .catch(fail).finally(() => setBusy(false));
         }}>{copy.save}</button></div>
       </TimerRoomDialog>}
-      <TimerRoomLayout players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
+      <TimerRoomLayout devices={smartCube && deviceControls} toolbar={<TimerRoomToolbar language={language} code={room.code} round={room.round}
+        syncStart={room.syncStart} copied={copied} copyKind="code" disabled={active}
+        historyOpen={showHistory} adminOpen={showAdmin}
+        onCopy={() => {
+          void writeClipboardText(room.code).then(() => {
+            if (!mountedRef.current) return;
+            setCopied(true);
+            if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
+            copiedResetRef.current = window.setTimeout(() => setCopied(false), 1_500);
+          }).catch((reason: unknown) => { if (mountedRef.current) fail(reason); });
+        }}
+        onQr={() => setQrOpen(true)}
+        onHistory={() => { setShowHistory(true); setShowAdmin(false); }}
+        onAdmin={amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined}
+        onLeave={() => void leaveRoom()}
+      />}
+        players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
         language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)}
         onRename={!accountIdentity ? (name) => {
           const player = room.players[credentials.playerId];
@@ -1392,23 +1399,6 @@ export function NetBattleMode({
         } : undefined} />}
       >
         <div className="battle-net-timer">
-          <TimerPuzzlePicker
-            dataNoTimer
-            disabled={active || Boolean(currentResult)}
-            groups={eventPickerGroups}
-            onSelect={(selectorId) => {
-              const next = selectorIdToNetEvent(selectorId);
-              if (!next || next === event) return;
-              void capability.client.postNetEvent(room.code, credentials, next)
-                .then((nextRoom) => {
-                  timer.reset();
-                  applyRoom(nextRoom);
-                })
-                .catch(fail);
-            }}
-            puzzleLabel={copy.puzzle}
-            selectedEvent={event}
-          />
           <TimingSurface
             layout="net"
             ariaLabel={copy.timer}
@@ -1468,30 +1458,14 @@ export function NetBattleMode({
               />
             )}
             surfaceRef={surfaceRef}
-          />
-          {smartCube && deviceControls}
-          {currentResult && pendingCount(room) > 0 && (
-            <TimerPenaltyActions
-              language={language}
-              value={currentResult.p}
-              onChange={(penalty) => {
-                void capability.client.postNetResult(
-                  room.code,
-                  credentials,
-                  room.round,
-                  currentResult.t,
-                  penalty,
-                ).then(applyRoom).catch(fail);
-              }}
-            />
-          )}
-          {currentResult && (
-            <button
-              className="battle-primary-action"
-              onClick={() => advanceRound(true)}
-              type="button"
-            >{copy.battleSkipWaiting}</button>
-          )}
+          >
+            <TimerRoomRoundStatus room={room} currentPlayerId={credentials.playerId} language={language}
+              idle={timerPhase === 'idle' || timerPhase === 'stopped'} countdown={countdownMs !== null}
+              cubeAutoReadySuspended={smartCube?.phase === 'connected'}
+              onReady={() => { void capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready').then(applyRoom).catch(fail); }}
+              onPenalty={(penalty) => { if (currentResult) void capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty).then(applyRoom).catch(fail); }}
+              onNext={advanceRound} />
+          </TimingSurface>
         </div>
       </TimerRoomLayout>
       {error && <p aria-live="assertive" className="battle-error">{error}</p>}
