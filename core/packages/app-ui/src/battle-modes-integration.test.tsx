@@ -8,7 +8,7 @@ import type {
 import { generateTimerScramble } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
-import { act, createElement } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -28,19 +28,22 @@ vi.mock('@cuberoot/shared/timer', async (importOriginal) => {
   };
 });
 
-vi.mock('@cuberoot/timer-ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@cuberoot/timer-ui')>();
-  return {
-    ...actual,
-    TimerCubePreview: ({ ariaLabel, visualization }: {
-      ariaLabel?: string;
-      visualization?: '2D' | '3D';
-    }) => createElement('div', {
-      'aria-label': ariaLabel,
-      'data-preview-visualization': visualization,
-      role: 'img',
-    }),
-  };
+// Mock the browser renderer itself: shared panels also import previews internally,
+// and jsdom does not implement the adoptedStyleSheets API used by TwistyPlayer.
+vi.mock('cubing/twisty', () => {
+  class MockTwistyPlayer extends HTMLElement {
+    constructor(init: Record<string, unknown>) {
+      super();
+      this.dataset.puzzle = String(init.puzzle ?? '');
+      this.dataset.visualization = String(init.visualization ?? '');
+    }
+
+    set experimentalSetupAlg(value: string) {
+      this.dataset.scramble = value;
+    }
+  }
+  customElements.define('mock-twisty-player', MockTwistyPlayer);
+  return { TwistyPlayer: MockTwistyPlayer };
 });
 
 const eventGroups = [{
@@ -236,8 +239,12 @@ describe('installed app multiplayer modes', () => {
     const preview = host.querySelector<HTMLElement>('.timing-surface-cube .mobile-cube-preview[data-no-timer]');
     expect(preview).not.toBeNull();
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
-    expect(preview?.querySelector<HTMLElement>('[role="img"]')
-      ?.dataset.previewVisualization).toBe('3D');
+    await vi.waitFor(() => {
+      expect(preview?.querySelector<HTMLElement>('mock-twisty-player')
+        ?.dataset.visualization).toBe('3D');
+      expect(preview?.querySelector<HTMLElement>('mock-twisty-player')
+        ?.dataset.scramble).toBe("R U R'");
+    });
     const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
     const postNetStatus = vi.mocked(client.postNetStatus);
     await act(async () => {
