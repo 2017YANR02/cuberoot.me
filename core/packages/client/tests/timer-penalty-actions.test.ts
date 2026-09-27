@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -15,7 +14,7 @@ beforeEach(() => {
   host = document.createElement('div'); document.body.append(host);
   root = createRoot(host);
   style = document.createElement('style');
-  style.textContent = readFileSync(resolve(process.cwd(), '../timer-ui/src/timer-penalty-actions.css'), 'utf8');
+  style.textContent = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-penalty-actions.css')), 'utf8');
   document.head.append(style);
 });
 afterEach(async () => {

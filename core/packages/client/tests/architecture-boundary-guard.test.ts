@@ -44,11 +44,11 @@ function rules(file: string, content: string): string[] {
 
 describe('architecture boundary guard', () => {
   it('pins the complete current dependency baseline by exact finding identity', () => {
-    expect(MANIFEST.legacyFindings).toHaveLength(196);
+    expect(MANIFEST.legacyFindings).toHaveLength(194);
     expect(compareFindings(uncontractedFindings(CURRENT, MANIFEST.manualContracts), MANIFEST.legacyFindings)).toEqual({ additions: [], stale: [] });
     // Reviewed FFmpeg/psql adapters, isolated email/payment PG fixtures, and manual SOR refresh.
     expect(CURRENT).toHaveLength(MANIFEST.legacyFindings.length + 5);
-    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(150);
+    expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'shared-root-import')).toHaveLength(148);
     expect(MANIFEST.legacyFindings.filter((finding: { rule: string }) => finding.rule === 'cross-package-alias-import')).toHaveLength(0);
   });
 
