@@ -90,7 +90,7 @@ describe('Mobile capability surface guard', () => {
     expect(app).not.toContain('verifySmartCubeScramble');
     expect(app).not.toContain('createSmartCubeFixupRequester');
     expect(app).not.toContain('smartCubeGuidanceCompleteRef');
-    expect(app).toMatch(/smartCubeAttemptProducerRef\.current\.finish\(\)[\s\S]*?stageSegmentsFor\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
+    expect(app).toMatch(/smartCubeAttemptProducerRef\.current\.finishSolveFields\(solve\)[\s\S]*?repository\.addSolve\(solve, sessionId\)/);
     expect(app).toMatch(/repository\.addSolve\(solve, sessionId\)[\s\S]*?setPendingSolves/);
     expect(app).toContain('repository.addSolve(pending.solve, pending.sessionId)');
     expect(app).toContain('onUndo={retryPendingSolve}');
