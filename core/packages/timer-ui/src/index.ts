@@ -15,6 +15,7 @@ export { TimerRoomHistory, type TimerRoomHistoryProps } from './TimerRoomHistory
 export { TimerRoomPlayers, timerRoomPlayerName } from './TimerRoomPlayers';
 export type { TimerRoomPlayersProps } from './TimerRoomPlayers';
 export { TimerBattlePlayer } from './TimerBattlePlayer';
+export { TimerBattleHistory, type TimerBattleHistoryProps } from './TimerBattleHistory';
 export type { TimerBattlePlayerProps } from './TimerBattlePlayer';
 export { TimerBattleLayout, TimerBattleLayoutControls } from './TimerBattleLayout';
 export type { TimerBattleLayoutProps, TimerBattleCell } from './TimerBattleLayout';
