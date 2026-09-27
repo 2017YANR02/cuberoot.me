@@ -8,6 +8,7 @@ export { TimerRoomLayout } from './TimerRoomLayout';
 export { TimerRoomToolbar, type TimerRoomToolbarProps } from './TimerRoomToolbar';
 export { TimerRoomDialog, type TimerRoomDialogProps } from './TimerRoomDialog';
 export { TimerRoomLobby, type TimerRoomLobbyProps } from './TimerRoomLobby';
+export { TimerRoomRoundStatus, type TimerRoomRoundStatusProps } from './TimerRoomRoundStatus';
 export { TimerRoomIdentity, type TimerRoomIdentityProps } from './TimerRoomIdentity';
 export { TimerRoomAdmin, type TimerRoomAdminProps } from './TimerRoomAdmin';
 export { TimerRoomHistory, type TimerRoomHistoryProps } from './TimerRoomHistory';
