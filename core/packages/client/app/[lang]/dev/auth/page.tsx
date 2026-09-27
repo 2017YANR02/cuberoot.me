@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "610d2ea39cc3e9ae2ccad356382ac360622e5dc79cebe2f372e05d011415c53e", "reason": "复核账号合并后的会话生命周期：待并入账号 B 的其他旧 UID 会话立即失效，不得解析到保留账号 A 或续期；无法区分合并前来源的旧版无 UID WCA 会话也需重新登录，原始 WCA 授权仍可验证。合并请求成功签发的新 A 会话继续可用；已同步中英文流程说明，绑定和找回路径未变。"}
+{"fingerprint": "50975d3cf2df00b6e260e4ba5f3f2c5761acd48e940b782bcc3f26a8917c04ff", "reason": "复核短信验证码、手机号账号操作与合并事务：短信须由服务商确认接受后激活，手机号登录、绑定、换绑的验码与账号写入共用事务，手机找回验码与账号查询共用事务；正确合并码仅随成功迁移核销，失败迁移保留证明供有效期内重试。已同步中英文流程和本地验证状态；合并旧会话失效规则保持不变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -33,7 +33,7 @@ export default function AuthFlowPage() {
       <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
       <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
       <p className="auth-map-note">{t('源码核对：2026-09-21。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-21. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
-      <p className="auth-map-note">{t('本次邮箱发送状态与账号事务加固已完成本地隔离验证，尚未部署；短信发送生命周期与账号合并仍使用各自原有流程，不能由邮箱测试推断已完成同样改造。', 'Email delivery state and account transactions have passed isolated local checks and are not deployed. SMS delivery and account merging retain their existing flows; email tests do not prove those flows have received the same changes.')}</p>
+      <p className="auth-map-note">{t('邮箱发送状态与账号事务已通过隔离数据库验证；短信发送受理状态、手机号账号操作及合并码核销完成聚焦本地检查。短信与合并仍待隔离数据库验证，短信另待真实服务商和设备验收；本轮均未部署。', 'Email delivery state and account transactions passed isolated database checks. SMS provider acceptance, phone account actions, and merge-code consumption passed focused local checks. SMS and merging still need isolated database checks; SMS also needs real-provider and device acceptance. None of these changes are deployed.')}</p>
       <p className="auth-map-note">{t('全站图片验证码通过后可访问页面及受保护数据 7 天，不代表登录，不授予账号或管理员权限；第三方登录回调保留通路，账号退出与账号会话仍按下图处理。', 'Site image verification grants page and protected data access for 7 days. It does not sign in a user or grant account or administrator permissions; OAuth callbacks remain reachable, and account sessions and sign-out follow the flows below.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
@@ -95,9 +95,9 @@ export default function AuthFlowPage() {
         <div className="auth-map-current-paths">
           <section><h3>{t('邮箱 / 手机号 / 密码', 'Email / phone / password')}</h3><Steps items={[
             t('选择邮箱或手机号，使用验证码；已设密码也可用密码登录', 'Choose email or phone and verify a code; an existing password is another sign-in option'),
-            t('邮箱验证码：发送服务确认接受后才可验证；发送失败或结果未知时不能登录，不自动重发', 'Email codes become usable only after the delivery service confirms acceptance; failed or unknown sends cannot sign in and are not automatically retried'),
+            t('邮箱或短信验证码：发送服务确认接受后才可验证；发送失败或结果未知时不能登录，不自动重发', 'Email or SMS codes become usable only after the provider confirms acceptance; failed or unknown sends cannot sign in and are not automatically retried'),
             t('验证通过 → 已有凭据直接进入原账号；陌生凭据先问是否已有账号，不自动注册', 'Verification succeeds → existing credentials sign in directly; unknown credentials ask whether you have an account, without automatic registration'),
-            t('邮箱验证与登录或账号选择票据一起保存；保存失败不消耗成功验证码，错误猜测仍计次', 'Email verification commits with sign-in or the account-choice ticket; a failed save preserves a correct code, while wrong guesses still count'),
+            t('邮箱与短信验证和登录或账号选择票据一起保存；保存失败不消耗正确验证码，错误猜测仍计次', 'Email and SMS verification commit with sign-in or the account-choice ticket; a failed save preserves a correct code, while wrong guesses still count'),
             t('有旧号：验证原账号并确认绑定；没有：明确选择创建新账号', 'Existing account: authenticate and confirm linking. No account: explicitly choose to create one'),
           ]} /><p className="auth-map-note">{t('忘记密码时才走：验证原账号已绑定的邮箱或手机 → 设置新密码。不是每次登录都要重设。', 'Only if you forgot your password: verify the linked email or phone → set a new password. This is not required on every sign-in.')}</p><p className="auth-map-note">{t('密码登录不创建账号。「绑定已有账号」中的验证只认旧号，不会用陌生邮箱、手机号悄悄注册。', 'Password sign-in does not create accounts. Verification inside existing-account linking accepts existing accounts only; an unknown email or phone does not silently register.')}</p></section>
           <section><h3>{t('第三方登录', 'Provider sign-in')}</h3><Steps items={[
@@ -217,7 +217,7 @@ export default function AuthFlowPage() {
         <section><h3>{t('新增登录方式', 'Add a sign-in method')}</h3><Steps items={[
           t('先登录要保留的 CubeRoot 账号', 'Sign in to the CubeRoot account you want to keep'),
           t('选择绑定方式 → 验证新邮箱 / 手机号，或完成第三方授权', 'Choose a method → verify the new email / phone, or authorize the provider'),
-          t('邮箱绑定或换绑与验证码核销一起完成；冲突或保存失败时都不生效', 'Email linking or replacement commits together with code consumption; conflicts or save failures apply neither change'),
+          t('邮箱或手机号绑定与换绑和验证码核销一起完成；冲突或保存失败时都不生效', 'Email or phone linking and replacement commit together with code consumption; conflicts or save failures apply neither change'),
           t('归属检查通过 → 新登录方式挂到当前账号，会员不另开一份', 'Ownership checks pass → attach the method to this account, without creating a second membership'),
         ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link.')}</p></section>
         <section><h3>{t('解绑或换绑', 'Unlink or replace')}</h3><Steps items={[
@@ -241,7 +241,7 @@ export default function AuthFlowPage() {
         ]} />
         <div className="auth-map-current-paths auth-map-results">
           <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据、已领养宠物和登录方式转入 A，当前会话切到 A；B 的其他旧会话失效，B 不再作为独立账号使用。不能撤销。', 'Supported data, adopted pets, and sign-in methods move to A; the current session switches to A. Other old B sessions become invalid, and B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
-          <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；处理后可能需要在 A 重新生成合并码，不要反复点确认。', 'Explain the conflict and stop. After resolving it, a new code from A may be required; do not repeatedly submit.')}</small></FlowNode>
+          <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；正确且未过期的合并码保留，可在解决冲突后重试；过期则在 A 重新生成。', 'Explain the conflict and stop. A correct, unexpired merge code remains available for retry after resolving the conflict; generate a new one in A if it expires.')}</small></FlowNode>
         </div>
         <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。合并后旧版 WCA 会话需要重新登录。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts. Older WCA sessions require sign-in again after a merge.')}</figcaption>
       </figure>

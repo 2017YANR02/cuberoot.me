@@ -26,7 +26,7 @@ import { signSession, verifySession, hasFreshEmailGrant, hasFreshPhonePasswordRe
 import { beginIdentityLogin, beginWechatPhoneIdentityLogin, completeIdentityChoice, IdentityChoiceError, issueIdentityLinkCode, previewIdentityLinkCode } from '../utils/identity_choice.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
-  issueCode, verifyCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
+  issueCode, withVerifiedCode, loginWithIdentity, IdentityNotFoundError, addIdentity, removeIdentity, replaceCredentialIdentity,
   getIdentities, getUserById, findUserByIdentity, publicUser,
   migrateIdentityProviderUid,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
@@ -45,7 +45,8 @@ import { AccountMergeError, mergeAccounts, parseAccountMergeCode } from '../util
 import { consumeWechatWcaLink, issueWechatWcaLink } from '../utils/web_session_ticket.js';
 import { emailConfigured } from '../utils/email.js';
 import { EmailCodeActionError, issueEmailCode, loginWithEmailCode, bindEmailWithCode } from '../utils/email_code_auth.js';
-import { smsConfigured, sendSmsCode } from '../utils/sms.js';
+import { smsConfigured } from '../utils/sms.js';
+import { PhoneCodeActionError, issuePhoneCode, loginWithPhoneCode, resetPasswordWithPhoneCode, bindPhoneWithCode } from '../utils/phone_code_auth.js';
 import { googleConfigured, googleClientId, googleRelayUrl, verifyGoogleAssertion } from '../utils/google.js';
 import { AppleLoginError, appleAuthorize, appleCallbackUrl, appleConfigured, exchangeAppleCode } from '../utils/apple_login.js';
 import {
@@ -723,14 +724,11 @@ accountAuthRoutes.post('/auth/phone/send', async (c) => {
   const norm = normalizePhone(phone ?? '');
   const purpose = parsePhoneCodePurpose(rawPurpose);
   if (!isValidPhone(norm) || !purpose) return c.json({ error: 'invalid phone' }, 400);
-  const issued = await issueCode('phone', norm, purpose);
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendSmsCode(norm, issued.code);
-  } catch (e) {
-    // 服务商的拒绝理由(余额不足 / 签名未报备 / 模板停用)只有这一处能看到,吞掉就只剩前端一句
-    // 「发送失败」,线上无从定位。只打 message —— 里面是阿里云的 Code+Message,不含验证码。
-    console.error('[auth] sms send failed:', e instanceof Error ? e.message : e);
+    const issued = await issuePhoneCode(norm, purpose);
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch (error) {
+    if (!(error instanceof PhoneCodeActionError)) throw error;
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -749,23 +747,25 @@ accountAuthRoutes.post('/auth/phone/verify', async (c) => {
   const norm = normalizePhone(phone ?? '');
   const purpose = parsePhoneCodePurpose(rawPurpose);
   if (!isValidPhone(norm) || !purpose || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, purpose, code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
   if (purpose === 'password_reset') {
-    const user = await findUserByIdentity('phone', norm);
-    if (!user) return c.json({ error: 'phone not linked to an account' }, 404);
+    const checked = await resetPasswordWithPhoneCode(norm, code as string).catch((error: unknown) => {
+      if (error instanceof IdentityNotFoundError) return null;
+      throw error;
+    });
+    if (!checked) return c.json({ error: 'phone not linked to an account' }, 404);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+    const user = checked.value;
     await captureAccountDevice(user.id, c.req.header('User-Agent'));
     const token = signSession({ uid: user.id, wcaId: user.wca_id, name: user.display_name, amr: 'phone_password_reset' });
     return c.json({ token, user: publicUser(user) });
   }
-  const name = `尾号${norm.slice(-4)}`;
-  const result = await (existingOnly === true
-    ? loginWithIdentity('phone', norm, { name }, undefined, { createIfMissing: false })
-    : beginIdentityLogin({ provider: 'phone', providerUid: norm, profile: { name } })).catch((error: unknown) => {
-      if (error instanceof IdentityNotFoundError) return null;
-      throw error;
-    });
-  if (!result) return c.json({ error: 'account not found' }, 400);
+  const checked = await loginWithPhoneCode(norm, code as string, existingOnly === true).catch((error: unknown) => {
+    if (error instanceof IdentityNotFoundError) return null;
+    throw error;
+  });
+  if (!checked) return c.json({ error: 'account not found' }, 400);
+  if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  const result = checked.value;
   if ('pending' in result) return c.json(result, 409);
   const { user, isNew } = result;
   await captureAccountDevice(user.id, c.req.header('User-Agent'));
@@ -891,11 +891,14 @@ accountAuthRoutes.post('/auth/phone/replace', async (c) => {
   const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await replaceCredentialIdentity(uid, 'phone', norm);
-  if (r === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
-  if (r === 'none') return c.json({ error: 'no phone to replace' }, 409);
+  try {
+    const checked = await bindPhoneWithCode(uid, norm, code as string, true);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof PhoneCodeActionError && error.code === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+    if (error instanceof PhoneCodeActionError && error.code === 'none') return c.json({ error: 'no phone to replace' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -907,14 +910,11 @@ accountAuthRoutes.post('/auth/link/phone/send', async (c) => {
   const { phone } = await c.req.json<{ phone?: string }>().catch(() => ({ phone: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm)) return c.json({ error: 'invalid phone' }, 400);
-  const issued = await issueCode('phone', norm, 'link');
-  if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
   try {
-    await sendSmsCode(norm, issued.code);
-  } catch (e) {
-    // 服务商的拒绝理由(余额不足 / 签名未报备 / 模板停用)只有这一处能看到,吞掉就只剩前端一句
-    // 「发送失败」,线上无从定位。只打 message —— 里面是阿里云的 Code+Message,不含验证码。
-    console.error('[auth] sms send failed:', e instanceof Error ? e.message : e);
+    const issued = await issuePhoneCode(norm, 'link');
+    if ('error' in issued) return c.json({ error: 'too frequent' }, 429);
+  } catch (error) {
+    if (!(error instanceof PhoneCodeActionError)) throw error;
     return c.json({ error: 'send failed' }, 502);
   }
   return c.json({ ok: true });
@@ -927,11 +927,14 @@ accountAuthRoutes.post('/auth/link/phone/verify', async (c) => {
   const { phone, code } = await c.req.json<{ phone?: string; code?: string }>().catch(() => ({ phone: undefined, code: undefined }));
   const norm = normalizePhone(phone ?? '');
   if (!isValidPhone(norm) || !/^\d{6}$/.test(code ?? '')) return c.json({ error: 'invalid input' }, 400);
-  const ok = await verifyCode('phone', norm, 'link', code as string);
-  if (!ok) return c.json({ error: 'wrong or expired code' }, 401);
-  const r = await addIdentity(uid, 'phone', norm);
-  if (r === 'has-phone') return c.json({ error: 'account already has a phone' }, 409);
-  if (r === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+  try {
+    const checked = await bindPhoneWithCode(uid, norm, code as string);
+    if (!checked.verified) return c.json({ error: 'wrong or expired code' }, 401);
+  } catch (error) {
+    if (error instanceof PhoneCodeActionError && error.code === 'has-phone') return c.json({ error: 'account already has a phone' }, 409);
+    if (error instanceof PhoneCodeActionError && error.code === 'conflict') return c.json({ error: 'phone already linked to another account' }, 409);
+    throw error;
+  }
   return c.json({ ok: true, identities: await getIdentities(uid) });
 });
 
@@ -1664,11 +1667,10 @@ accountAuthRoutes.post('/auth/account/merge', async (c) => {
   if (body?.expectedSourceUid !== sourceUserId) return c.json({ error: 'account changed; sign in again', code: 'ACCOUNT_CHANGED' }, 409);
   const parsed = parseAccountMergeCode(body.code);
   if (!parsed || parsed.targetUserId === sourceUserId) return c.json({ error: 'invalid merge code' }, 400);
-  const verified = await verifyCode('merge', String(parsed.targetUserId), 'account_merge', parsed.code);
-  if (!verified) return c.json({ error: 'wrong or expired merge code' }, 400);
-
   try {
-    await mergeAccounts(sourceUserId, parsed.targetUserId);
+    const checked = await withVerifiedCode('merge', String(parsed.targetUserId), 'account_merge', parsed.code,
+      transaction => mergeAccounts(sourceUserId, parsed.targetUserId, transaction));
+    if (!checked.verified) return c.json({ error: 'wrong or expired merge code' }, 400);
   } catch (error) {
     if (error instanceof AccountMergeError) return c.json({ error: error.code }, error.code === 'not_found' ? 404 : 409);
     throw error;
