@@ -32,9 +32,9 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Bluetooth, Swords, Trophy, X, ShieldCheck, UserMinus } from 'lucide-react';
+import { Bluetooth, Swords, Trophy, X } from 'lucide-react';
 
-import { SegmentTime, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -61,7 +61,6 @@ import { RoomCodeInput } from '@/components/RoomCodeInput';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
-import { Flag } from '@/components/Flag';
 import { getPerson, type WcaPersonLite } from '@/lib/wca-api';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { useAuthStore } from '@/lib/auth-store';
@@ -82,14 +81,13 @@ import {
 import {
   effectiveNetMs, roundWinners, sortedNetPlayers, isNetOnline, blendClockOffset,
   isRoundComplete, pendingCount, NET_EVENTS, netEventToSelectorId, selectorIdToNetEvent,
-  playerEventOf, myScramble, playerStats, playerTimeline, roundViews, netErrorMessage,
+  playerEventOf, myScramble, netErrorMessage,
   isNetAdmin, syncGate, normalizeNetBattleRoomCode,
   isNetRoundParticipant,
   decodeNetBattleSession, isNetBattleRoomCode, preferLatestNetRoomState, type NetBattleSession,
   acceptNetRoomResponse,
   createNetAdmissionGate,
 } from '@/lib/battle-room-logic';
-import BoolToggle from '@/components/BoolToggle';
 
 // BluetoothModal 与打乱条(.scramble-strip / .timer-modal*)的样式都在 timer.css。
 import '../timer.css';
@@ -1731,10 +1729,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       </TimerRoomLayout>
 
       {showAdmin && iAmAdmin && (
-        <NetAdminPanel
+        <TimerRoomAdmin
           room={room}
-          pid={pid}
-          isZh={isZh}
+          currentPlayerId={pid}
+          language={isZh ? 'zh' : 'en'}
           onSyncStart={setSyncStart}
           onTransfer={transferAdmin}
           onKick={kickPlayer}
@@ -1776,10 +1774,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       )}
 
       {showStats && (
-        <NetStatsPanel
+        <TimerRoomHistory
           room={room}
-          pid={pid}
-          isZh={isZh}
+          currentPlayerId={pid}
+          language={isZh ? 'zh' : 'en'}
           precision={settings.precision}
           onClose={() => setShowStats(false)}
         />
@@ -1804,249 +1802,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onConnect={pick => bluetoothCube.connect(pick)}
         />
       )}
-    </div>
-  );
-}
-
-// ── 房间管理面板(仅房主可见:房设 + 转让房主 + 踢人)──────────────────────────
-interface NetAdminPanelProps {
-  room: NetRoomState;
-  pid: string | null;
-  isZh: boolean;
-  onSyncStart: (v: boolean) => void;
-  onTransfer: (target: string) => void;
-  onKick: (target: string) => void;
-  onClose: () => void;
-}
-
-function NetAdminPanel({ room, pid, isZh, onSyncStart, onTransfer, onKick, onClose }: NetAdminPanelProps) {
-  const players = sortedNetPlayers(room.players);
-  // 踢人两步确认:误点一下不会直接把人踢出去(对战中很恼人)。
-  const [confirmKick, setConfirmKick] = useState<string | null>(null);
-
-  return (
-    <div className="net-stats-overlay" onClick={onClose} role="presentation">
-      <div className="net-stats-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <header className="net-stats-head">
-          <h2 className="net-stats-title net-admin-title">
-            <ShieldCheck size={16} />
-            {tr({ zh: '房间管理', en: 'Room settings' })}
-          </h2>
-          <button
-            type="button"
-            className="tb-btn"
-            onClick={onClose}
-            title={tr({ zh: '关闭', en: 'Close' })}
-            aria-label={tr({ zh: '关闭', en: 'Close' })}
-          >
-            <X size={16} />
-          </button>
-        </header>
-
-        <div className="net-admin-setting">
-          <BoolToggle
-            value={room.syncStart}
-            onChange={onSyncStart}
-            label={tr({ zh: '同时开始计时', en: 'Synchronized start' })}
-          />
-        </div>
-
-        <div className="net-admin-list">
-          {players.map((p) => {
-            const isAdminRow = p.id === room.admin;
-            const mine = p.id === pid;
-            return (
-              <div key={p.id} className="net-admin-row">
-                {isAdminRow && <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />}
-                {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
-                <span className="net-admin-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{netPlayerName(p, isZh)}</span>
-                {mine ? (
-                  <span className="net-admin-metext">{tr({ zh: '(我)', en: '(me)' })}</span>
-                ) : (
-                  <>
-                    <button type="button" className="net-btn is-ghost" onClick={() => onTransfer(p.id)}>
-                      {tr({ zh: '设为房主', en: 'Make host' })}
-                    </button>
-                    <button
-                      type="button"
-                      className={`net-btn is-ghost net-admin-kick${confirmKick === p.id ? ' is-confirm' : ''}`}
-                      onClick={() => {
-                        if (confirmKick === p.id) { onKick(p.id); setConfirmKick(null); }
-                        else setConfirmKick(p.id);
-                      }}
-                      onBlur={() => setConfirmKick((c) => (c === p.id ? null : c))}
-                    >
-                      <UserMinus size={12} />
-                      {confirmKick === p.id ? tr({ zh: '确认踢出', en: 'Confirm' }) : tr({ zh: '踢出', en: 'Kick' })}
-                    </button>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── 战绩面板(single / ao5 / moX 榜 + 每轮回放:打乱公式 + 打乱图 + 各方成绩)──────────
-type Precision = 0 | 1 | 2 | 3;
-
-interface NetStatsPanelProps {
-  room: NetRoomState;
-  pid: string | null;
-  isZh: boolean;
-  precision: Precision;
-  onClose: () => void;
-}
-
-/** 统计值格式化:null(无成绩)→ —,Infinity(DNF)→ DNF,否则计时串。 */
-function fmtStat(v: number | null, precision: Precision): string {
-  if (v === null) return '—';
-  if (!Number.isFinite(v)) return 'DNF';
-  return formatMs(v, precision);
-}
-
-/** 单次成绩格式化(含罚时角标)。 */
-function fmtNetResult(r: NetResult | undefined, precision: Precision): string {
-  if (!r) return '—';
-  if (r.p === 'dnf') return 'DNF';
-  return formatMs(effectiveNetMs(r), precision) + (r.p === '+2' ? '+' : '');
-}
-
-function NetStatsPanel({ room, pid, isZh, precision, onClose }: NetStatsPanelProps) {
-  const players = sortedNetPlayers(room.players);
-  const views = roundViews(room);
-
-  return (
-    <div className="net-stats-overlay" onClick={onClose} role="presentation">
-      <div className="net-stats-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <header className="net-stats-head">
-          <h2 className="net-stats-title">
-            <Trophy size={16} />
-            {tr({ zh: '历史打乱与战绩', en: 'Scramble history and results' })}
-          </h2>
-          <button
-            type="button"
-            className="tb-btn"
-            onClick={onClose}
-            title={tr({ zh: '关闭', en: 'Close' })}
-            aria-label={tr({ zh: '关闭', en: 'Close' })}
-          >
-            <X size={16} />
-          </button>
-        </header>
-
-        {/* 榜:每人 single / ao5 / moX + 累计胜场 */}
-        <div className="net-standings-scroll">
-          <table className="net-standings">
-            <thead>
-              <tr>
-                <th className="net-st-name">{tr({ zh: '选手', en: 'Player' })}</th>
-                <th>{tr({ zh: '胜场', en: 'Wins' })}</th>
-                <th>{tr({ zh: '最佳', en: 'Single' })}</th>
-                <th>ao5</th>
-                <th>{tr({ zh: '平均', en: 'Mean' })}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {players.map((p) => {
-                const stats = playerStats(playerTimeline(room, p.id));
-                const pEvent = p.event || room.event;
-                const mine = p.id === pid;
-                return (
-                  <tr key={p.id} className={mine ? 'is-me' : undefined}>
-                    <td className="net-st-name">
-                      <EventIcon
-                        event={netEventToSelectorId(pEvent)}
-                        className="net-st-eventicon"
-                        title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
-                      />
-                      {p.iso2 && <Flag iso2={p.iso2} className="net-st-flag" />}
-                      <span className="net-st-nametext" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>{netPlayerName(p, isZh)}</span>
-                    </td>
-                    <td className="net-st-wins">{room.scores[p.id] ?? 0}</td>
-                    <td>{fmtStat(stats.single, precision)}</td>
-                    <td>{fmtStat(stats.ao5, precision)}</td>
-                    <td>
-                      {fmtStat(stats.mean, precision)}
-                      <span className="net-st-mox">mo{stats.count}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <h3 className="net-rounds-title">{tr({ zh: '历史打乱', en: 'Scramble history' })}</h3>
-
-        {/* 每轮回放:按项目分组显示打乱公式 + 打乱图 + 该项目各方成绩 */}
-        <div className="net-rounds">
-          {views.map((rv) => {
-            // 本轮参赛者按项目分组(playerEvents 快照);逐组一条打乱一张图。
-            const groups = new Map<NetBattleEventId, string[]>();
-            for (const [id, ev] of Object.entries(rv.playerEvents)) {
-              const arr = groups.get(ev) ?? [];
-              arr.push(id);
-              groups.set(ev, arr);
-            }
-            return (
-              <div key={rv.round} className="net-round-card">
-                <div className="net-round-head">
-                  {tr({ zh: `第 ${rv.round} 把`, en: `Round ${rv.round}` })}
-                  {rv.live && <span className="net-round-live">{tr({ zh: '进行中', en: 'live' })}</span>}
-                </div>
-                {[...groups.entries()].map(([ev, ids]) => {
-                  const scr = rv.scrambles[ev];
-                  const selId = netEventToSelectorId(ev);
-                  // 该组按有效成绩升序;缺成绩者垫底
-                  const ordered = [...ids].sort((a, b) => {
-                    const ra = rv.results[a], rb = rv.results[b];
-                    return (ra ? effectiveNetMs(ra) : Infinity) - (rb ? effectiveNetMs(rb) : Infinity);
-                  });
-                  return (
-                    <div key={ev} className="net-round-egroup">
-                      {scr ? (
-                        <div className="net-round-cube">
-                          <CubePreview event={ev as EventId} scramble={scr} height="52px" visualization="2D" />
-                        </div>
-                      ) : null}
-                      <div className="net-round-body">
-                        <div className="net-round-scr">
-                          <EventIcon event={selId} className="net-round-eventicon" title={eventDisplayName(selId, isZh)} />
-                          <span className="net-round-scrtext">
-                            {scr ? formatScrambleForEvent(ev, scr) : tr({ zh: '(打乱未生成)', en: '(no scramble)' })}
-                          </span>
-                        </div>
-                        <div className="net-round-rows">
-                          {ordered.map((id) => {
-                            const won = rv.winners.includes(id);
-                            const dnf = rv.results[id]?.p === 'dnf';
-                            const rp = room.players[id];
-                            return (
-                              <div key={id} className={`net-round-row${won ? ' is-winner' : ''}`}>
-                                <span className="net-round-pname" title={rp?.name ?? '?'}>
-                                  {won && <Trophy size={11} className="net-p-trophy" />}
-                                  {rp ? netPlayerName(rp, isZh) : '?'}
-                                </span>
-                                <span className={`net-round-ptime${dnf ? ' is-dnf' : ''}`}>
-                                  {fmtNetResult(rv.results[id], precision)}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
     </div>
   );
 }

@@ -299,9 +299,10 @@ describe('installed app multiplayer modes', () => {
     )!.click());
     expect(writeClipboardText).toHaveBeenCalledWith('1234');
     expect(host.textContent).toContain(COPY.en.battleInviteCopied);
-    const syncStart = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
-      .find((button) => button.textContent === 'Synchronized start')!;
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Room settings"]')!.click());
+    const syncStart = document.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Synchronized start"]')!;
     await act(async () => syncStart.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog [aria-label="Close"]')!.click());
     expect(client.postNetSyncStart).toHaveBeenCalledWith('1234', credentials, true);
     const qrButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
       .find((button) => button.getAttribute('aria-label') === 'Room QR code')!;
@@ -532,27 +533,36 @@ describe('installed app multiplayer modes', () => {
     };
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
+    let closeOverlay: (() => void) | null = null;
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability}
+      onOverlayCloseChange={(close) => { closeOverlay = close; }} />));
     await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
 
     const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
       .find((button) => button.getAttribute('aria-label') === 'Scramble history and results')!;
     await act(async () => historyButton.click());
-    expect(host.querySelector('.battle-history-panel')?.textContent).toContain('Xuanyi Geng');
-    expect(host.querySelector('.battle-history-panel')?.textContent).toContain('Best');
-    expect(host.querySelector('.battle-history-panel')?.textContent).toContain('U R U\'');
+    expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('Xuanyi Geng');
+    expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('Best');
+    expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('U R U\'');
 
+    expect(closeOverlay).not.toBeNull();
+    await act(async () => { closeOverlay?.(); });
+    expect(document.querySelector('.timer-room-dialog')).toBeNull();
     const adminButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
       .find((button) => button.getAttribute('aria-label') === 'Room settings')!;
     await act(async () => adminButton.click());
-    const makeHost = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-admin-list button'))
+    const makeHost = Array.from(document.querySelectorAll<HTMLButtonElement>('.timer-room-admin-list button'))
       .find((button) => button.textContent === 'Make host')!;
+    await act(async () => makeHost.click());
+    expect(postNetAdmin).not.toHaveBeenCalled();
     await act(async () => makeHost.click());
     expect(postNetAdmin).toHaveBeenCalledWith('1234', credentials, 'ghijkl');
 
     await act(async () => adminButton.click());
-    const remove = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-admin-list button'))
+    const remove = Array.from(document.querySelectorAll<HTMLButtonElement>('.timer-room-admin-list button'))
       .find((button) => button.textContent === 'Remove')!;
+    await act(async () => remove.click());
+    expect(postNetKick).not.toHaveBeenCalled();
     await act(async () => remove.click());
     expect(postNetKick).toHaveBeenCalledWith('1234', credentials, 'ghijkl');
   });

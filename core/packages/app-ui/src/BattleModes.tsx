@@ -26,12 +26,8 @@ import {
   normalizeNetBattleRoomCode,
   pendingCount,
   playerEventOf,
-  playerStats,
-  playerTimeline,
   preferLatestNetRoomState,
-  roundViews,
   selectorIdToNetEvent,
-  sortedNetPlayers,
   summarizeLocalBattleRounds,
   syncGate,
   timerEventIdFromSelector,
@@ -65,6 +61,8 @@ import {
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
+  TimerRoomAdmin,
+  TimerRoomHistory,
   TimerRoomToolbar,
   TimerRoomLayout,
   TimerRoomPlayers,
@@ -782,6 +780,7 @@ export function LocalBattleMode({
 }
 
 export interface NetBattleModeProps extends BattleModeBaseProps {
+  onOverlayCloseChange?(close: (() => void) | null): void;
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
   onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
@@ -797,10 +796,6 @@ function netResultText(timeMs: number, penalty: NetPenalty, precision: 2 | 3): s
     : formatMs(timeMs, precision);
 }
 
-function netStatText(value: number | null, precision: 2 | 3): string {
-  if (value === null) return '—';
-  return Number.isFinite(value) ? formatMs(value, precision) : 'DNF';
-}
 
 /** Shared-contract online room host; no room DTO, scoring or transport is reimplemented here. */
 export function NetBattleMode({
@@ -816,6 +811,7 @@ export function NetBattleMode({
   language,
   onActivityChange,
   onModeChange,
+  onOverlayCloseChange,
   onSmartCubeHandlersChange,
   precision,
   runningPrecision,
@@ -834,6 +830,12 @@ export function NetBattleMode({
   const [showHistory, setShowHistory] = useState(false);
   const [roomActionTarget, setRoomActionTarget] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
+  useEffect(() => {
+    onOverlayCloseChange?.(qrOpen ? () => setQrOpen(false)
+      : showAdmin ? () => setShowAdmin(false)
+        : showHistory ? () => setShowHistory(false) : null);
+    return () => onOverlayCloseChange?.(null);
+  }, [onOverlayCloseChange, qrOpen, showAdmin, showHistory]);
   const [joinCode, setJoinCode] = useState('');
   const [lobbyEvent, setLobbyEvent] = useState<NetBattleEventId>('333');
   const [busy, setBusy] = useState(false);
@@ -946,7 +948,7 @@ export function NetBattleMode({
   }, [applyRoom, capability, fail]);
 
   const timer = useTimerController({
-    canStart: !inputBlocked && Boolean(room && credentials && scramble && !myResult),
+    canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && Boolean(room && credentials && scramble && !myResult),
     holdMs,
     inspectionSec,
     onComplete,
@@ -1382,7 +1384,6 @@ export function NetBattleMode({
     );
   }
 
-  const players = sortedNetPlayers(room.players);
   const currentResult = room.results[String(room.round)]?.[credentials.playerId];
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
@@ -1406,7 +1407,6 @@ export function NetBattleMode({
         });
   const colorClass = currentResult?.p === 'dnf' ? 'dnf' : timer.machine.phase;
   const amAdmin = isNetAdmin(room, credentials.playerId);
-  const historyRounds = roundViews(room);
 
   return (
     <section className="battle-mode battle-mode--net" aria-label={copy.battleOnlineTitle}>
@@ -1438,20 +1438,6 @@ export function NetBattleMode({
         onAdmin={amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined}
         onLeave={() => void leaveRoom()}
       >
-        {isNetAdmin(room, credentials.playerId) && (
-          <button
-            aria-pressed={room.syncStart}
-            disabled={active}
-            onClick={() => {
-              void capability.client.postNetSyncStart(
-                room.code,
-                credentials,
-                !room.syncStart,
-              ).then(applyRoom).catch(fail);
-            }}
-            type="button"
-          >{copy.battleSyncStart}</button>
-        )}
         {gate.gated && (
           <button
             aria-pressed={gate.ready}
@@ -1465,107 +1451,26 @@ export function NetBattleMode({
           >{copy.battleReady}{gate.waiting > 0 ? ` · ${gate.waiting}` : ''}</button>
         )}
       </TimerRoomToolbar>
-      {showAdmin && amAdmin && (
-        <section className="battle-room-panel" data-no-timer>
-          <h3>{copy.battleAdmin}</h3>
-          <ul className="battle-admin-list">
-            {players.filter((player) => player.id !== credentials.playerId).map((player) => {
-              const displayName = displayCuberName(player.name, language === 'zh');
-              return (
-                <li key={player.id}>
-                  <span>
-                    {player.iso2 && <Flag className="battle-person-flag" iso2={player.iso2} />}
-                    <strong>{displayName}</strong>
-                    {player.wcaId && <small>{player.wcaId}</small>}
-                  </span>
-                  <span>
-                    <button
-                      disabled={roomActionTarget !== null}
-                      onClick={() => {
-                        if (!window.confirm(copy.battleTransferAdminConfirm(displayName))) return;
-                        setRoomActionTarget(player.id);
-                        void capability.client.postNetAdmin(room.code, credentials, player.id)
-                          .then((nextRoom) => {
-                            applyRoom(nextRoom);
-                            setShowAdmin(false);
-                          })
-                          .catch(fail)
-                          .finally(() => setRoomActionTarget(null));
-                      }}
-                      type="button"
-                    >{copy.battleTransferAdmin}</button>
-                    <button
-                      disabled={roomActionTarget !== null}
-                      onClick={() => {
-                        if (!window.confirm(copy.battleKickConfirm(displayName))) return;
-                        setRoomActionTarget(player.id);
-                        void capability.client.postNetKick(room.code, credentials, player.id)
-                          .then(applyRoom)
-                          .catch(fail)
-                          .finally(() => setRoomActionTarget(null));
-                      }}
-                      type="button"
-                    >{copy.battleKick}</button>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-          {players.length <= 1 && <p>{copy.battleNoOtherPlayers}</p>}
-        </section>
-      )}
-      {showHistory && (
-        <section className="battle-room-panel battle-history-panel" data-no-timer>
-          <h3>{copy.battleHistory}</h3>
-          <div className="battle-summary-grid">
-            {players.map((player) => {
-              const stats = playerStats(playerTimeline(room, player.id));
-              return (
-                <div key={player.id}>
-                  <strong>
-                    {player.iso2 && <Flag className="battle-person-flag" iso2={player.iso2} />}
-                    {displayCuberName(player.name, language === 'zh')}
-                  </strong>
-                  <span>{copy.battleScore(room.scores[player.id] ?? 0)}</span>
-                  <span>{copy.count}: {stats.count}</span>
-                  <span>{copy.best}: {netStatText(stats.single, precision)}</span>
-                  <span>{copy.mean}: {netStatText(stats.mean, precision)}</span>
-                  <span>{copy.ao5}: {netStatText(stats.ao5, precision)}</span>
-                </div>
-              );
-            })}
-          </div>
-          <ol className="battle-net-history">
-            {historyRounds.map((round) => (
-              <li key={`${round.round}-${round.live ? 'live' : 'past'}`}>
-                <h4>
-                  {copy.battleRoundLabel(round.round)}
-                  {round.live && <small>{copy.battleLiveRound}</small>}
-                </h4>
-                <div className="battle-round-scrambles">
-                  {Object.entries(round.scrambles).map(([roundEvent, roundScramble]) => (
-                    <span key={roundEvent}><strong>{roundEvent}</strong> <code>{roundScramble}</code></span>
-                  ))}
-                </div>
-                <ul>
-                  {Object.entries(round.results).map(([playerId, result]) => {
-                    const player = room.players[playerId];
-                    return (
-                      <li key={playerId}>
-                        <span>{player
-                          ? displayCuberName(player.name, language === 'zh')
-                          : playerId}</span>
-                        <strong>{netResultText(result.t, result.p, precision)}</strong>
-                        {round.winners.includes(playerId) && <small>{copy.battleWinner}</small>}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      {showAdmin && amAdmin && <TimerRoomAdmin room={room} currentPlayerId={credentials.playerId}
+        language={language} busy={roomActionTarget !== null} onClose={() => setShowAdmin(false)}
+        onSyncStart={(value) => {
+          setRoomActionTarget('sync');
+          void capability.client.postNetSyncStart(room.code, credentials, value)
+            .then(applyRoom).catch(fail).finally(() => setRoomActionTarget(null));
+        }}
+        onTransfer={(id) => {
+          setRoomActionTarget(id);
+          void capability.client.postNetAdmin(room.code, credentials, id)
+            .then((nextRoom) => { applyRoom(nextRoom); setShowAdmin(false); })
+            .catch(fail).finally(() => setRoomActionTarget(null));
+        }}
+        onKick={(id) => {
+          setRoomActionTarget(id);
+          void capability.client.postNetKick(room.code, credentials, id)
+            .then(applyRoom).catch(fail).finally(() => setRoomActionTarget(null));
+        }} />}
+      {showHistory && <TimerRoomHistory room={room} currentPlayerId={credentials.playerId}
+        language={language} precision={precision} onClose={() => setShowHistory(false)} />}
       <TimerRoomLayout players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
         language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)} />}
       >

@@ -2,12 +2,41 @@
 import { act, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
-import { TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName } from '@cuberoot/timer-ui';
+import { TimerRoomLayout, TimerRoomPlayers, TimerRoomAdmin, timerRoomPlayerName } from '@cuberoot/timer-ui';
 import type { NetRoomState } from '@cuberoot/shared/timer';
 
 it('preserves guest nicknames and WCA duplicate suffixes', () => {
   expect(timerRoomPlayerName({ name: 'Guest (alias)' }, 'zh')).toBe('Guest (alias)');
   expect(timerRoomPlayerName({ name: 'Ruimin Yan (颜瑞民) (2)', wcaId: '2017YANR02' }, 'zh')).toBe('颜瑞民 (2)');
+});
+
+it.each(['en', 'zh'] as const)('requires confirmation and contains keyboard focus in the shared %s admin dialog', async (language) => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const room: NetRoomState = {
+    code: '1234', revision: 1, videoGeneration: 'test', roundRoster: [], event: '333', round: 1,
+    scrambles: {}, admin: 'self', syncStart: false, startAt: null, now: 1_000,
+    players: { self: { name: 'Me', ph: 'idle', joined: 1, seen: 1_000, at: 0 }, other: { name: 'Guest', ph: 'idle', joined: 2, seen: 1_000, at: 0 } },
+    results: {}, scores: {}, history: [],
+  };
+  const trigger = document.createElement('button'); document.body.append(trigger); trigger.focus();
+  const host = document.createElement('div'); const root = createRoot(host);
+  const kick = vi.fn(); const close = vi.fn(); const leaked = vi.fn();
+  window.addEventListener('keydown', leaked);
+  try {
+    await act(async () => root.render(createElement(TimerRoomAdmin, { room, currentPlayerId: 'self', language, onSyncStart: vi.fn(), onTransfer: vi.fn(), onKick: kick, onClose: close })));
+    const dialog = document.querySelector<HTMLElement>('.timer-room-dialog')!;
+    const buttons = [...dialog.querySelectorAll<HTMLButtonElement>('button')];
+    const remove = buttons.at(-1)!;
+    await act(async () => remove.click()); expect(kick).not.toHaveBeenCalled();
+    await act(async () => remove.click()); expect(kick).toHaveBeenCalledWith('other');
+    await act(async () => { remove.focus(); remove.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); });
+    expect(document.activeElement).toBe(buttons[0]);
+    await act(async () => buttons[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(close).toHaveBeenCalledOnce(); expect(leaked).not.toHaveBeenCalled();
+    await act(async () => root.unmount()); expect(document.activeElement).toBe(trigger);
+  } finally {
+    window.removeEventListener('keydown', leaked); trigger.remove(); vi.unstubAllGlobals();
+  }
 });
 
 it.each(['en', 'zh'] as const)('shares room order, results and live/rename actions in %s', async (language) => {
