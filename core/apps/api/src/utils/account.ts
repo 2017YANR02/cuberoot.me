@@ -590,6 +590,12 @@ export async function loginWithIdentity(
 export const SINGLE_PER_ACCOUNT = ['email', 'phone'] as const;
 export type SingleProvider = (typeof SINGLE_PER_ACCOUNT)[number];
 
+function uniqueConstraintName(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null;
+  const pg = error as { code?: unknown; constraint_name?: unknown };
+  return pg.code === '23505' && typeof pg.constraint_name === 'string' ? pg.constraint_name : null;
+}
+
 /**
  * 给「当前已登录用户」绑定一个新身份。返回:
  *   'ok'        绑定成功(或该身份本就属于本人 → 幂等)
@@ -688,20 +694,20 @@ export async function addIdentity(
     });
     return status as 'ok' | 'conflict' | `has-${SingleProvider}`;
   } catch (e) {
+    const constraint = uniqueConstraintName(e);
     if (appleCredential) {
       // A concurrent login/link may have won; retry only its exact owner, never swallow storage errors.
-      if ((e as { code?: string }).code !== '23505') throw e;
+      if (constraint !== 'uq_auth_identity') throw e;
       const raced = await findUserByIdentity(provider, providerUid, run);
       if (raced?.id !== userId) return 'conflict';
       await begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
       return 'ok';
     }
-    // 并发绑第二个邮箱 / 手机时晚到的那条落这里 —— 认约束名还原成准确状态,别混进「已被他人占用」。
-    const detail = `${(e as { constraint_name?: string }).constraint_name ?? ''} ${(e as Error).message ?? ''}`;
-    if (detail.includes('uq_auth_identity_one_email')) return 'has-email';
-    if (detail.includes('uq_auth_identity_one_phone')) return 'has-phone';
-    // 其余唯一约束(provider,uid 或 wca 镜像)冲突 → 视为已被他人占用。
-    return 'conflict';
+    // Only known uniqueness races become account conflicts. Storage/trigger failures must surface.
+    if (provider === 'email' && constraint === 'uq_auth_identity_one_email') return 'has-email';
+    if (provider === 'phone' && constraint === 'uq_auth_identity_one_phone') return 'has-phone';
+    if (constraint === 'uq_auth_identity' || (provider === 'wca' && constraint === 'uq_app_users_wca')) return 'conflict';
+    throw e;
   }
 }
 
@@ -740,9 +746,10 @@ export async function replaceCredentialIdentity(
         WHERE id = ${rows[0].id}`;
       return 'ok';
     });
-  } catch {
-    // 唯一约束 (provider, provider_uid):新地址在我们检查之后被别人抢注。
-    return 'conflict';
+  } catch (error) {
+    // A concurrent owner can win the exact provider/UID unique key after our lookup.
+    if (uniqueConstraintName(error) === 'uq_auth_identity') return 'conflict';
+    throw error;
   }
 }
 
