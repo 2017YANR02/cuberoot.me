@@ -1,6 +1,9 @@
 import './timing-surface.css';
 import './timer-chrome.css';
 import './timer-stage-layout.css';
+import './timer-battle-layout.css';
+export { TimerBattleLayout, TimerBattleLayoutControls } from './TimerBattleLayout';
+export type { TimerBattleLayoutProps, TimerBattleCell } from './TimerBattleLayout';
 import './timer-penalty-actions.css';
 export { TimerPenaltyActions } from './TimerPenaltyActions';
 export type { TimerPenaltyActionsProps } from './TimerPenaltyActions';

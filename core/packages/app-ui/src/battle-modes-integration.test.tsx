@@ -177,9 +177,9 @@ describe('installed app multiplayer modes', () => {
     );
     await act(async () => draw(true, false));
     const readout = host.querySelector('.timer-display');
-    expect(host.querySelectorAll('.timing-surface-cube-frame [data-preview-visualization="2D"]')).toHaveLength(playerCount);
+    expect(host.querySelectorAll('[data-preview-visualization="2D"]')).toHaveLength(2);
     await act(async () => draw(true, true));
-    expect(host.querySelectorAll('[data-preview-visualization="3D"]')).toHaveLength(playerCount);
+    expect(host.querySelectorAll('[data-preview-visualization="3D"]')).toHaveLength(2);
     expect(host.querySelector('.timer-display')).toBe(readout);
     await act(async () => draw(false, true));
     expect(host.querySelector('.timing-surface-cube-frame')).toBeNull();
@@ -412,13 +412,13 @@ describe('installed app multiplayer modes', () => {
     expect(holderButtons[1].getAttribute('aria-pressed')).toBe('true');
     expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(1);
     const penalties = host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button');
-    const originalSeconds = Number.parseFloat(host.querySelector('.battle-player .timer-display')!.textContent!);
+    const originalSeconds = Number.parseFloat(host.querySelector('[data-player-id="0"] .battle-player .timer-display')!.textContent!);
     await act(async () => penalties[1].click());
     expect(penalties[1].getAttribute('aria-pressed')).toBe('true');
-    expect(Number.parseFloat(host.querySelector('.battle-player .timer-display')!.textContent!))
+    expect(Number.parseFloat(host.querySelector('[data-player-id="0"] .battle-player .timer-display')!.textContent!))
       .toBeCloseTo(originalSeconds + 2, 3);
     await act(async () => penalties[2].click());
-    expect(host.querySelector('.battle-player .timer-display')?.textContent).toBe('DNF');
+    expect(host.querySelector('[data-player-id="0"] .battle-player .timer-display')?.textContent).toBe('DNF');
   });
 
   it('keeps manual input disabled while the server owns a synchronized countdown', async () => {

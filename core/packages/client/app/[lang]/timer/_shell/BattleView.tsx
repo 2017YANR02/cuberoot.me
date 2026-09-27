@@ -36,7 +36,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
-import { TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
+import { TimerBattleLayout, TimerBattleLayoutControls, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
 import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
@@ -1304,22 +1304,6 @@ export default function BattleView({ playerCount, playersControl, presenceContro
     document.documentElement.style.setProperty('--scramble-scale', String(store.scrambleScale));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // NOTE: 自动检测横竖屏 — 横屏自动切 side 布局，竖屏自动切 versus
-  useEffect(() => {
-    if (mode !== '1v1' || playerCount !== 2) return;
-
-    const mql = window.matchMedia('(orientation: landscape)');
-    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-      const s = useBattleStore.getState();
-      if (s.mode !== '1v1') return;
-      s.setLayout(e.matches ? 'side' : 'versus');
-    };
-    handleChange(mql);
-
-    mql.addEventListener('change', handleChange);
-    return () => mql.removeEventListener('change', handleChange);
-  }, [mode, playerCount]);
-
   const closeSettings = useCallback(() => {
     setSettingsOpen(false);
     if (mode === 'solo') {
@@ -1364,81 +1348,22 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
       <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
-      {/* === 田字格布局：上排旋转 180° 面向对面;3 人时上排单区跨两列 ===
-          同排一对玩家共用一条打乱时,由 .grid-scramble-row 统一渲染,各 TimerArea 传
-          hideScramble 抹掉格内那份;共享行未启用则 :empty 塌陷。
-          上/下各自包一层 .grid-half(共享打乱行 + 双格 flex:1),两半各占外层 grid 的一个
-          1fr 行 —— 不共享打乱时打乱图改画在各自格内、撑高那一侧的 1fr,若不这样包一层,
-          "auto 打乱行 + 1fr 格行" 两条独立 track 各自等分,会让有共享打乱的那半天然比
-          没有的那半矮/高一截(4 部分面积不相等)。 */}
-      {isGrid && (
-        <div className="grid-players">
-          {playerCount === 4 ? (
-            <div className="grid-half">
-              {/* 翻转时共享打乱行在物理顶部(整块旋转 180° 后对面玩家看到「时间上/打乱下」);
-                  不翻转时移到玩家下方,与底排结构一致(时间上、打乱下)。 */}
-              {flipTop && (
-                <div className="grid-scramble-row rotated">
-                  {topSame && <ScramblePanel ids={[2, 3]} />}
-                </div>
-              )}
-              <div className="grid-half-players">
-                <TimerArea playerId={2} rotated={flipTop} hideScramble={topSame} cellClass="grid-col-left" controlsCorner={flipTop ? 'right' : 'left'} />
-                <TimerArea playerId={3} rotated={flipTop} hideScramble={topSame} controlsCorner={flipTop ? 'left' : 'right'} />
-              </div>
-              {!flipTop && (
-                <div className="grid-scramble-row">
-                  {topSame && <ScramblePanel ids={[2, 3]} />}
-                </div>
-              )}
-            </div>
-          ) : (
-            <TimerArea playerId={2} rotated={flipTop} controlsCorner="center" />
-          )}
-          {middleBar}
-          <div className="grid-half">
-            <div className="grid-half-players">
-              <TimerArea playerId={0} hideScramble={bottomSame} cellClass="grid-col-left" controlsCorner="left" />
-              <TimerArea playerId={1} hideScramble={bottomSame} controlsCorner="right" />
-            </div>
-            <div className="grid-scramble-row">
-              {bottomSame && <ScramblePanel ids={[0, 1]} />}
-            </div>
-          </div>
-        </div>
+      {mode === '1v1' && <TimerBattleLayoutControls
+        playerCount={playerCount as 2 | 3 | 4} layout={store.layout} flipTopRow={flipTop}
+        language={store.locale === 'zh' ? 'zh' : 'en'} onLayoutChange={store.setLayout} onFlipChange={store.setFlipTopRow}
+      />}
+      {mode === '1v1' && (
+        <TimerBattleLayout
+          playerCount={playerCount as 2 | 3 | 4}
+          layout={store.layout}
+          flipTopRow={flipTop}
+          middle={middleBar}
+          bottomScramble={bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined}
+          topScramble={topSame ? <ScramblePanel ids={[2, 3]} /> : undefined}
+          renderPlayer={(playerId, cell) => <TimerArea playerId={playerId}
+            hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} />}
+        />
       )}
-
-      {/* === Side 布局：左右分屏(两人同向并坐)。同项目时共用一份打乱,放在页面
-          底部一条横带(文字 + 图 + 来源),两侧上方只留计时,不再左右各画一份重复
-          的打乱;不同项目则各侧沿用格内独立打乱,不出底部横带。 === */}
-      {mode === '1v1' && !isGrid && store.layout === 'side' && (
-        <>
-          {middleBar}
-          <div className="side-players">
-            <TimerArea playerId={0} hideScramble={bottomSame} />
-            <div className="side-divider" />
-            <TimerArea playerId={1} hideScramble={bottomSame} />
-          </div>
-          {bottomSame && (
-            <div className="side-scramble-row">
-              {/* imgHeight 走共享令牌 --timer-cube-h(shell.css,单人 --cube-h 同源):
-                  CubingPreview 无 height 时按 size*14 出固定小尺寸、CSS max-height 只能缩
-                  不能放大 → 必须传显式 height 才能对齐单人。 */}
-              <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" />
-            </div>
-          )}
-        </>
-      )}
-
-      {/* === Versus 布局：上下分屏(上方玩家默认旋转,可关) === */}
-      {mode === '1v1' && !isGrid && store.layout === 'versus' && (
-        <>
-          <TimerArea playerId={1} rotated={flipTop} />
-          {middleBar}
-          <TimerArea playerId={0} />
-        </>
-      )}
-
       {/* === Solo 模式 === */}
       {mode === 'solo' && (
         <TimerArea playerId={0} />
