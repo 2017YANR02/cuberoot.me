@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
   withTransaction: vi.fn(),
 }));
 
-vi.mock('../src/db/connection.js', () => ({ withTransaction: mocks.withTransaction }));
+vi.mock('../src/db/connection.js', () => ({ withTransaction: mocks.withTransaction, transactionQuery: (tx: unknown) => tx }));
 vi.mock('../src/utils/account_delete.js', () => ({
   PURGE_TABLES: [['owned_rows', 'owner_key']],
   ANONYMIZE_TABLES: [],
@@ -61,6 +61,20 @@ describe('account merge code', () => {
       expect.stringContaining('merged_into_user_id = ?'),
       [330, 655],
     ]);
+  });
+
+  it('runs inside a caller-owned proof transaction without opening another transaction', async () => {
+    mocks.tx.mockImplementation(async (text: string) => {
+      if (text.includes('SELECT id, wca_id, password_hash, merged_into_user_id')) return [
+        { id: 330, wca_id: null, password_hash: null, merged_into_user_id: null },
+        { id: 655, wca_id: null, password_hash: null, merged_into_user_id: null },
+      ];
+      return [];
+    });
+
+    await mergeAccounts(655, 330, mocks.tx as never);
+    expect(mocks.withTransaction).not.toHaveBeenCalled();
+    expect(mocks.tx.mock.calls.some(([statement]) => String(statement).includes('merged_into_user_id = ?'))).toBe(true);
   });
 
   it.skipIf(process.env.DESKPET_TEST_PG !== '1')('merges pet ownership without losing higher growth, and rolls back with the account transaction', async () => {
