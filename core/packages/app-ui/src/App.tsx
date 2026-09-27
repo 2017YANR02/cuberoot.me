@@ -3075,6 +3075,21 @@ export function App({ host }: { host: InstalledAppHost }) {
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
   const recapSolve = solves.find((solve) => solve.id === recapSolveId) ?? null;
+  const solveRecap = recapSolve && (
+    <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
+      <SolveRecap
+        key={recapSolve.id}
+        history={solves}
+        host={reconstructionHost}
+        isZh={language === 'zh'}
+        onDismiss={() => setRecapSolveId(null)}
+        onFull={() => { setView('history'); openHistorySolveDetail(recapSolve); }}
+        onReconFeedback={(reconOk) => updateSolve(recapSolve, { reconOk })}
+        onUseScramble={useReconstructionScramble}
+        solve={recapSolve}
+      />
+    </Suspense>
+  );
 
   const updateHistoryFilter = useCallback(<Key extends keyof TimerHistoryFilters,>(
     key: Key,
@@ -3701,7 +3716,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         viewHeader
       )}
 
-      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible} panelOpen={dockHistory}>
+      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible} panelOpen={dockHistory} recap={solveRecap}>
         {timerVisible && timerMode === 1 && (
           <section className="timer-view timer-workspace-main timer-workspace-main--with-toolbar" aria-labelledby="timer-title">
             <h1 className="sr-only" id="timer-title">{copy.timer}</h1>
@@ -4105,20 +4120,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
               </TimingSurface>
-              {recapSolve && (
-                <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
-                  <SolveRecap
-                    history={solves}
-                    host={reconstructionHost}
-                    isZh={language === 'zh'}
-                    onDismiss={() => setRecapSolveId(null)}
-                    onFull={() => { setView('history'); openHistorySolveDetail(recapSolve); }}
-                    onReconFeedback={(reconOk) => updateSolve(recapSolve, { reconOk })}
-                    onUseScramble={useReconstructionScramble}
-                    solve={recapSolve}
-                  />
-                </Suspense>
-              )}
+              {!wideLayout && solveRecap}
 
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
                 <TimerDrillPicker

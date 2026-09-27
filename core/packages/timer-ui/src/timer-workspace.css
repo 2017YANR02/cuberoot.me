@@ -32,4 +32,8 @@
     overflow: hidden;
   }
   .timer-workspace-panel-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+  .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
+  .shell-recap-rail > .shell-recap { flex: 1; min-width: 0; height: 100%; border-top: 0; }
+  .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
+  .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

@@ -785,13 +785,6 @@
 .shell-chart-canvas { display: flex; justify-content: center; }
 .shell-panel-statgrid { margin-bottom: 8px; }
 
-/* Recap content adapts to the shared desktop dock. */
-@media (min-width: 1024px) {
-  .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
-  .shell-recap-rail > .shell-recap { flex: 1; min-width: 0; height: 100%; border-top: 0; }
-  .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
-  .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 /* 平板与窄桌面:中列按 max-content 参与三列布局时,右侧工具会被项目/来源控件挤出视口。
    这里提前切成两列,左侧允许折行,右侧工具始终保留完整宽度。 */
 /* ── Phone (<480px) ─────────────────────────────────────── */
