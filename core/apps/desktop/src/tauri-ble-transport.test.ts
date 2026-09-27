@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const bleMocks = vi.hoisted(() => ({
+  invoke: vi.fn(),
   connect: vi.fn(),
   disconnect: vi.fn(),
   listServices: vi.fn(),
@@ -9,6 +10,11 @@ const bleMocks = vi.hoisted(() => ({
   stopScan: vi.fn(),
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
+}));
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: bleMocks.invoke,
+  Channel: class { onmessage = (_value: number[]) => {}; },
 }));
 
 vi.mock('@mnlphlp/plugin-blec', () => ({
@@ -29,6 +35,7 @@ vi.mock('@mnlphlp/plugin-blec', () => ({
 import { namedDevices, nearestNamedDevice, TauriBleTransport } from './tauri-ble-transport';
 
 beforeEach(() => {
+  bleMocks.invoke.mockResolvedValue(undefined);
   bleMocks.connect.mockResolvedValue(undefined);
   bleMocks.disconnect.mockResolvedValue(undefined);
   bleMocks.listServices.mockResolvedValue([]);
@@ -45,6 +52,62 @@ afterEach(() => {
 });
 
 describe('nearestNamedDevice', () => {
+  it('reports IPC failure once and waits for native cleanup before reconnecting', async () => {
+    const transport = new TauriBleTransport();
+    const lost = vi.fn();
+    await transport.connect('cube', lost);
+    await transport.subscribe('cube', 'service', 'notify', vi.fn());
+    const channel = bleMocks.invoke.mock.calls[0][1].onError;
+    let finish!: () => void;
+    bleMocks.disconnect.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    channel.onmessage();
+    channel.onmessage();
+    expect(lost).toHaveBeenCalledTimes(1);
+    expect(bleMocks.disconnect).toHaveBeenCalledTimes(1);
+    const reconnect = transport.connect('cube', vi.fn());
+    await Promise.resolve();
+    expect(bleMocks.connect).toHaveBeenCalledTimes(1);
+    finish();
+    await reconnect;
+    expect(bleMocks.connect).toHaveBeenCalledTimes(2);
+    channel.onmessage();
+    expect(bleMocks.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores an old subscription error after a new connection owns the transport', async () => {
+    const transport = new TauriBleTransport();
+    const oldLost = vi.fn();
+    const newLost = vi.fn();
+    await transport.connect('cube', oldLost);
+    await transport.subscribe('cube', 'service', 'notify', vi.fn());
+    const oldError = bleMocks.invoke.mock.calls[0][1].onError;
+    await transport.disconnect('cube');
+    await transport.connect('cube', newLost);
+    oldError.onmessage();
+    expect(oldLost).not.toHaveBeenCalled();
+    expect(newLost).not.toHaveBeenCalled();
+    expect(bleMocks.disconnect).toHaveBeenCalledTimes(1);
+  });
+
+  it('forwards a burst through the native IPC subscription in order and ignores stopped callbacks', async () => {
+    const transport = new TauriBleTransport();
+    const received: number[] = [];
+    const stop = await transport.subscribe('cube', 'service', 'notify', (value) => {
+      received.push(value.getUint16(0));
+    });
+    expect(bleMocks.subscribe).not.toHaveBeenCalled();
+    expect(bleMocks.invoke).toHaveBeenCalledWith('ble_subscribe', expect.objectContaining({
+      service: 'service', characteristic: 'notify',
+    }));
+    const channel = bleMocks.invoke.mock.calls[0][1].onData;
+    for (let index = 0; index < 4096; index++) channel.onmessage([index >> 8, index & 255]);
+    expect(received).toEqual(Array.from({ length: 4096 }, (_, index) => index));
+    await stop();
+    channel.onmessage([255, 255]);
+    await stop();
+    expect(received).toHaveLength(4096);
+    expect(bleMocks.unsubscribe).toHaveBeenCalledTimes(1);
+  });
   it('selects the strongest matching GAN advertisement', () => {
     const device = nearestNamedDevice([
       { address: '1', name: 'Other', rssi: -1, isConnected: false, isBonded: false, services: [], manufacturerData: {}, serviceData: {} },
