@@ -142,12 +142,6 @@ button {
   grid-template-rows: auto minmax(0, 1fr) auto;
 }
 
-/* Reserve a real row for device controls: long timer content scrolls above
- * it instead of pushing Connect behind the navigation / home indicator. */
-.app-shell--device-footer {
-  grid-template-rows: minmax(0, 1fr) auto auto;
-}
-
 .app-titlebar {
   position: relative;
   display: grid;
@@ -415,39 +409,6 @@ button {
   position: absolute;
   bottom: 0;
   right: 0;
-}
-
-/* Content stays in scrollable normal flow; device controls have their own
- * app-shell row. The shared chrome defaults remain absolute for Web. */
-.mobile-timer-stage > .shell-stat-rail {
-  position: static;
-  flex: 0 0 auto;
-  align-self: flex-start;
-  margin-inline-start: max(12px, env(safe-area-inset-left));
-}
-
-.app-shell--device-footer > .shell-device-actions,
-.app-shell--device-footer > .shell-device-center {
-  position: static;
-  min-width: 0;
-  max-width: calc(100% - 24px);
-  justify-self: center;
-  margin: 2px 0 10px;
-  transform: none;
-}
-
-.app-shell--device-footer > .shell-device-actions .shell-device-connect,
-.app-shell--device-footer > .shell-device-center .shell-device-center-trigger {
-  min-width: 0;
-  min-height: 44px;
-  max-width: 100%;
-  white-space: normal;
-}
-
-.app-shell--device-footer > .shell-device-actions .shell-device-connect span,
-.app-shell--device-footer > .shell-device-center .shell-device-center-trigger span {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .timer-view .timing-surface-scramble {
@@ -1093,7 +1054,6 @@ button {
 
 /* Keep the menu anchored to its trigger when the device center is placed in
    normal flow. Static positioning sends bottom: 100% above the viewport. */
-.app-shell--device-footer > .shell-device-center,
 .battle-local-tools .shell-device-center,
 .battle-net-timer > .shell-device-center {
   position: relative;

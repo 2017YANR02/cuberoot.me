@@ -34,14 +34,6 @@
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
 /* ── Main column ────────────────────────────────────────── */
-.shell-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  position: relative;
-}
 
 /* Scramble slot — sits in the sub stack directly above the cube net. */
 /* /timer 打乱展示尺寸令牌 —— 共享 TimerScrambleStrip 消费 --timer-scramble-fs；单人

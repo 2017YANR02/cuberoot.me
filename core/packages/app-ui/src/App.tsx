@@ -213,6 +213,7 @@ import {
   TimerSessionSwitcher,
   timerSessionSwitcherLabels,
   TimerStatRail,
+  TimerStageLayout,
   TimerStatsPanel,
   TimerRollingStatsPicker,
   TimerBooleanSettingRow,
@@ -366,7 +367,6 @@ interface RealPoolRequest {
   cancel(): void;
   promise: Promise<TimerRealScrambleRetryOutcome<RealScramble[]>>;
 }
-
 
 function siteUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh` : `${SITE_ORIGIN}/`;
@@ -3608,7 +3608,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   return (
     <main
-      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${view === 'timer' && timerMode === 1 ? ' app-shell--device-footer' : ''}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
       style={shellViewport.style}
     >
       <TimerPrintController
@@ -3744,106 +3744,82 @@ export function App({ host }: { host: InstalledAppHost }) {
                 </>
               )}
             />
-            {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-wca-source-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerWcaSourceConfig
-                  adapter={wcaSourceAdapter}
-                  competitionDisplayName={(competitionId, canonicalName) => (
-                    displayMobileWcaCompetitionName(competitionId, canonicalName, language)
-                  )}
-                  disabled={!sourceControlsEnabled}
-                  labels={wcaSourceLabels}
-                  maxDate={toLocalIsoDate()}
-                  minDate={TIMER_WCA_MIN_DATE}
-                  onChange={updateWcaSourceSettings}
-                  onOpenChange={handleTimerOverlayOpenChange}
-                  open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}
-                  renderCountry={(country) => <Flag iso2={country} />}
-                  renderDateRange={(props) => (
-                    <DateRangeInput
-                      ariaLabel={props.ariaLabel}
-                      className="mobile-wca-date-range"
-                      disabled={props.disabled}
-                      from={props.from}
-                      labels={dateRangeLabels}
-                      max={props.max}
-                      min={props.min}
-                      onChange={props.onChange}
-                      size="compact"
-                      to={props.to}
+            <TimerStageLayout
+              className="mobile-timer-stage"
+              fullscreen={fullscreen}
+              source={<>
+                {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-wca-source-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <TimerWcaSourceConfig
+                      adapter={wcaSourceAdapter}
+                      competitionDisplayName={(competitionId, canonicalName) => (
+                        displayMobileWcaCompetitionName(competitionId, canonicalName, language)
+                      )}
+                      disabled={!sourceControlsEnabled}
+                      labels={wcaSourceLabels}
+                      maxDate={toLocalIsoDate()}
+                      minDate={TIMER_WCA_MIN_DATE}
+                      onChange={updateWcaSourceSettings}
+                      onOpenChange={handleTimerOverlayOpenChange}
+                      open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}
+                      renderCountry={(country) => <Flag iso2={country} />}
+                      renderDateRange={(props) => (
+                        <DateRangeInput
+                          ariaLabel={props.ariaLabel}
+                          className="mobile-wca-date-range"
+                          disabled={props.disabled}
+                          from={props.from}
+                          labels={dateRangeLabels}
+                          max={props.max}
+                          min={props.min}
+                          onChange={props.onChange}
+                          size="compact"
+                          to={props.to}
+                        />
+                      )}
+                      roundLabel={timerWcaRoundShortLabel}
+                      settings={wcaSourceSettings}
+                      trailingControls={(
+                        <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
+                      )}
+                      wcaEventId={timerWcaScrambleEventId(activeEvent)}
                     />
-                  )}
-                  roundLabel={timerWcaRoundShortLabel}
-                  settings={wcaSourceSettings}
-                  trailingControls={(
-                    <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
-                  )}
-                  wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                />
-                <TimerWcaDifficultyConfig
-                  adapter={mobileTimerWcaDifficultyAdapter}
-                  disabled={!sourceControlsEnabled}
-                  language={language}
-                  labels={wcaDifficultyLabels}
-                  onChange={updateWcaSourceSettings}
-                  onCoverageChange={setWcaDifficultyCoverage}
-                  settings={wcaSourceSettings}
-                  topControlsSlot={wcaTopControlsSlot}
-                  toggleSlot={wcaDifficultyToggleSlot}
-                  wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                />
-              </fieldset>
-            )}
-            {scrambleSource === 'random' && canTrainerDifficulty(activeEvent) && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-random-difficulty-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerRandomDifficultyConfig
-                  disabled={!sourceControlsEnabled}
-                  language={language}
-                  onChange={updateRandomDifficultySettings}
-                  settings={randomDifficultySettings}
-                  toggleSlot={wcaDifficultyToggleSlot}
-                />
-              </fieldset>
-            )}
-            {activeEvent === '222' && scrambleSource !== 'manual' && scramble222Type !== 'full' && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-scramble-222-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerScramble222Config
-                  active222
-                  disabled={!sourceControlsEnabled}
-                  labels={scramble222Labels}
-                  mode={scramble222Mode}
-                  onModeChange={updateScramble222Mode}
-                  onTypeChange={updateScramble222Type}
-                  showLabel={false}
-                  showModeWithSpecialType={scrambleSource === 'wca'}
-                  showSpecialTypes
-                  type={scramble222Type}
-                  typeOptions={scrambleSource === 'random'
-                    ? SCRAMBLE_222_TYPES
-                    : WCA_SCRAMBLE_222_TYPES}
-                />
-              </fieldset>
-            )}
-            {scrambleSource !== 'manual'
-              && stepPuzzleOf(activeEvent)
-              && (activeEvent !== '222' || scramble222Type === 'full') && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-scramble-222-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerByStepsConfig
-                  disabled={!sourceControlsEnabled}
-                  event={activeEvent}
-                  extraTopRow={activeEvent === '222' ? (
+                    <TimerWcaDifficultyConfig
+                      adapter={mobileTimerWcaDifficultyAdapter}
+                      disabled={!sourceControlsEnabled}
+                      language={language}
+                      labels={wcaDifficultyLabels}
+                      onChange={updateWcaSourceSettings}
+                      onCoverageChange={setWcaDifficultyCoverage}
+                      settings={wcaSourceSettings}
+                      topControlsSlot={wcaTopControlsSlot}
+                      toggleSlot={wcaDifficultyToggleSlot}
+                      wcaEventId={timerWcaScrambleEventId(activeEvent)}
+                    />
+                  </fieldset>
+                )}
+                {scrambleSource === 'random' && canTrainerDifficulty(activeEvent) && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-random-difficulty-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <TimerRandomDifficultyConfig
+                      disabled={!sourceControlsEnabled}
+                      language={language}
+                      onChange={updateRandomDifficultySettings}
+                      settings={randomDifficultySettings}
+                      toggleSlot={wcaDifficultyToggleSlot}
+                    />
+                  </fieldset>
+                )}
+                {activeEvent === '222' && scrambleSource !== 'manual' && scramble222Type !== 'full' && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-scramble-222-config"
+                    disabled={!sourceControlsEnabled}
+                  >
                     <TimerScramble222Config
                       active222
                       disabled={!sourceControlsEnabled}
@@ -3859,29 +3835,95 @@ export function App({ host }: { host: InstalledAppHost }) {
                         ? SCRAMBLE_222_TYPES
                         : WCA_SCRAMBLE_222_TYPES}
                     />
-                  ) : undefined}
-                  labels={byStepsLabels}
-                  onChange={updateByStepsSettings}
-                  settings={byStepsSettings}
-                  source={scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
-                    ? 'wca'
-                    : 'random'}
+                  </fieldset>
+                )}
+                {scrambleSource !== 'manual'
+                  && stepPuzzleOf(activeEvent)
+                  && (activeEvent !== '222' || scramble222Type === 'full') && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-scramble-222-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <TimerByStepsConfig
+                      disabled={!sourceControlsEnabled}
+                      event={activeEvent}
+                      extraTopRow={activeEvent === '222' ? (
+                        <TimerScramble222Config
+                          active222
+                          disabled={!sourceControlsEnabled}
+                          labels={scramble222Labels}
+                          mode={scramble222Mode}
+                          onModeChange={updateScramble222Mode}
+                          onTypeChange={updateScramble222Type}
+                          showLabel={false}
+                          showModeWithSpecialType={scrambleSource === 'wca'}
+                          showSpecialTypes
+                          type={scramble222Type}
+                          typeOptions={scrambleSource === 'random'
+                            ? SCRAMBLE_222_TYPES
+                            : WCA_SCRAMBLE_222_TYPES}
+                        />
+                      ) : undefined}
+                      labels={byStepsLabels}
+                      onChange={updateByStepsSettings}
+                      settings={byStepsSettings}
+                      source={scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
+                        ? 'wca'
+                        : 'random'}
+                    />
+                  </fieldset>
+                )}
+                {scrambleSource === 'manual' && (
+                  <fieldset
+                    className="mobile-scramble-source-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <ManualScrambleQueueEditor
+                      ariaLabel={copy.manualScrambles}
+                      onChange={updateManualScrambles}
+                      value={manualScrambles}
+                    />
+                  </fieldset>
+                )}
+                  </>}
+              statistics={
+                <TimerStatRail
+                  disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
+                  emptyLabel={copy.times}
+                  items={stats.count > 0 ? [
+                    { label: copy.solved, value: `${stats.solved}/${stats.count}` },
+                    { label: 'mean', value: stats.mean },
+                    { label: copy.best, value: stats.best },
+                    { label: 'mo3', value: stats.mo3 },
+                    { label: 'ao5', value: stats.ao5 },
+                    { label: 'ao12', value: stats.ao12 },
+                  ] : []}
+                  onClick={() => setView('history')}
+                  title={copy.openTimes}
                 />
-              </fieldset>
-            )}
-            {scrambleSource === 'manual' && (
-              <fieldset
-                className="mobile-scramble-source-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <ManualScrambleQueueEditor
-                  ariaLabel={copy.manualScrambles}
-                  onChange={updateManualScrambles}
-                  value={manualScrambles}
+              }
+              devices={
+                <TimerDeviceCenter
+                  ariaLabel={copy.connectBluetooth}
+                  items={timerDeviceRegistry.list()
+                    .filter((device) => device.kind === 'smart-cube')
+                    .map((device) => ({
+                      active: smartCube.phase === 'connected',
+                      detail: smartCube.phase === 'connected'
+                        ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+                        : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+                          ? copy.connectingBluetooth
+                          : undefined,
+                      id: device.id,
+                      kind: device.kind,
+                      label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
+                      onSelect: openSmartCubeDevice,
+                    }))}
+                  menuLabel={copy.connectBluetooth}
+                  triggerLabel={copy.connect}
                 />
-              </fieldset>
-            )}
-            <div className="mobile-timer-stage">
+              }
+            >
               <TimingSurface
                 ariaLabel={copy.timer}
                 colorClass={timerColorClass}
@@ -4059,20 +4101,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 </Suspense>
               )}
-              <TimerStatRail
-                disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                emptyLabel={copy.times}
-                items={stats.count > 0 ? [
-                  { label: copy.solved, value: `${stats.solved}/${stats.count}` },
-                  { label: 'mean', value: stats.mean },
-                  { label: copy.best, value: stats.best },
-                  { label: 'mo3', value: stats.mo3 },
-                  { label: 'ao5', value: stats.ao5 },
-                  { label: 'ao12', value: stats.ao12 },
-                ] : []}
-                onClick={() => setView('history')}
-                title={copy.openTimes}
-              />
+
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
                 <TimerDrillPicker
                   activeCase={effectiveDrillTarget}
@@ -4092,7 +4121,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 phase={timer.machine.phase}
                 scramble={scramble}
               />
-            </div>
+            </TimerStageLayout>
           </section>
         )}
 
@@ -4756,28 +4785,6 @@ export function App({ host }: { host: InstalledAppHost }) {
             protocol: smartCube.status?.protocol ?? smartCube.model,
             solved: smartCube.solved,
           }}
-        />
-      )}
-
-      {view === 'timer' && timerMode === 1 && (
-        <TimerDeviceCenter
-          ariaLabel={copy.connectBluetooth}
-          items={timerDeviceRegistry.list()
-            .filter((device) => device.kind === 'smart-cube')
-            .map((device) => ({
-              active: smartCube.phase === 'connected',
-              detail: smartCube.phase === 'connected'
-                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                  ? copy.connectingBluetooth
-                  : undefined,
-              id: device.id,
-              kind: device.kind,
-              label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
-              onSelect: openSmartCubeDevice,
-            }))}
-          menuLabel={copy.connectBluetooth}
-          triggerLabel={copy.connect}
         />
       )}
 

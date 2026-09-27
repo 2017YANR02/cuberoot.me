@@ -1,5 +1,6 @@
 import './timing-surface.css';
 import './timer-chrome.css';
+import './timer-stage-layout.css';
 import './puzzle-picker.css';
 import './manual-scramble-queue.css';
 import './scramble-source-select.css';
@@ -35,6 +36,8 @@ import './smart-cube-device-modal.css';
 
 export { default as TimingSurface } from './TimingSurface';
 export type { TimingSurfaceProps } from './TimingSurface';
+export { TimerStageLayout } from './TimerStageLayout';
+export type { TimerStageLayoutProps } from './TimerStageLayout';
 export { SegmentTime } from './SegmentTime';
 export { ClearButton } from './ClearButton';
 export type { ClearButtonProps } from './ClearButton';

@@ -7,12 +7,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 const styles = document.createElement('style');
 const here = dirname(fileURLToPath(import.meta.url));
 styles.textContent = readFileSync(resolve(here, '../../timer-ui/src/timer-chrome.css'), 'utf8')
+  + readFileSync(resolve(here, '../../timer-ui/src/timer-stage-layout.css'), 'utf8')
   + readFileSync(resolve(here, 'app.css'), 'utf8');
 
 afterEach(() => { styles.remove(); document.body.replaceChildren(); });
 
 describe('installed device menu containing block', () => {
-  it.each(['app-shell app-shell--device-footer', 'battle-local-tools', 'battle-net-timer'])(
+  it.each(['timer-stage-footer', 'battle-local-tools', 'battle-net-timer'])(
     'anchors the absolute menu inside the normal-flow %s trigger', (className) => {
       document.head.append(styles);
       const parent = document.createElement('div');
