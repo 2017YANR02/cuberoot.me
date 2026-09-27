@@ -19,8 +19,8 @@ import {
 export interface TimingSurfaceProps {
   phase: 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
   colorClass: string;
-  /** Solo owns the shared readout scale, scramble placement and spacing. */
-  layout?: 'default' | 'solo';
+  /** Solo and online rooms share the readout scale, scramble placement and spacing. */
+  layout?: 'default' | 'solo' | 'net';
   fontScale?: number;
   fontSize?: string;
   digits: ReactNode;
@@ -67,7 +67,8 @@ export default function TimingSurface({
   onPointerDown,
   onPointerUp,
 }: TimingSurfaceProps) {
-  const scrambleAbove = layout === 'solo' || placeScrambleAbove;
+  const sharedLayout = layout === 'solo' || layout === 'net';
+  const scrambleAbove = sharedLayout || placeScrambleAbove;
   const running = phase === 'running';
   const coreRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLSpanElement>(null);
@@ -137,7 +138,7 @@ export default function TimingSurface({
     <div
       ref={surfaceRef}
       aria-label={ariaLabel}
-      className={`timing-surface${layout === 'solo' ? ' timing-surface--solo' : ''}${scrambleAbove ? ' timing-surface--scramble-above' : ''}${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
+      className={`timing-surface${sharedLayout ? ` timing-surface--${layout}` : ''}${scrambleAbove ? ' timing-surface--scramble-above' : ''}${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
       data-timer-pad={interactive ? '' : undefined}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
@@ -164,7 +165,7 @@ export default function TimingSurface({
           {children}
           {!scrambleAbove && scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
           {cornerSlot && <div className="timing-surface-cube surface-chrome">
-            {layout === 'solo'
+            {sharedLayout
               ? <div className="timing-surface-cube-frame" data-no-timer>{cornerSlot}</div>
               : cornerSlot}
           </div>}

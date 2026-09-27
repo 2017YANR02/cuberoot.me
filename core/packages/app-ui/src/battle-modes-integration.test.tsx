@@ -252,12 +252,16 @@ describe('installed app multiplayer modes', () => {
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
     expect(host.textContent).toContain('1234');
     expect(host.querySelectorAll('.battle-player-list li')).toHaveLength(1);
-    const preview = host.querySelector<HTMLElement>('.timing-surface-cube .mobile-cube-preview[data-no-timer]');
+    const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame[data-no-timer]');
     expect(preview).not.toBeNull();
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
     expect(preview?.querySelector<HTMLElement>('[role="img"]')
       ?.dataset.previewVisualization).toBe('3D');
     const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
+    expect(surface.classList.contains('timing-surface--net')).toBe(true);
+    expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);
+    expect(surface.querySelector<HTMLElement>('.timer-display')!.style.fontSize)
+      .toContain('clamp(48px, 10vw, 132px)');
     const postNetStatus = vi.mocked(client.postNetStatus);
     await act(async () => {
       dispatchPointer(surface, 'pointerdown', 1);

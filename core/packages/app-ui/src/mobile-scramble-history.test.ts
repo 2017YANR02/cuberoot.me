@@ -280,7 +280,7 @@ describe('mobile displayed-scramble history', () => {
 
   it('uses the shared stage footer without changing timer gestures', () => {
     const stage = app.indexOf('<TimerStageLayout');
-    const footer = app.indexOf('<TimerDeviceCenter', stage);
+    const footer = app.indexOf('devices={smartCubeDeviceCenter}', stage);
     const stageEnd = app.indexOf('</TimerStageLayout>', stage);
     expect(stage).toBeGreaterThan(-1);
     expect(footer).toBeGreaterThan(stage);

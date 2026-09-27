@@ -1577,21 +1577,19 @@ export function NetBattleMode({
             selectedEvent={event}
           />
           <TimingSurface
+            layout="net"
             ariaLabel={copy.timer}
             colorClass={colorClass}
             cornerSlot={scramblePreviewSettings.showCubePreview && scramble ? (
-              <div className="mobile-cube-preview" data-no-timer>
-                <TimerCubePreview
-                  ariaLabel={copy.cubeState}
-                  event={event}
-                  fill
-                  scramble={scramble}
-                  visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
-                />
-              </div>
+              <TimerCubePreview
+                ariaLabel={copy.cubeState}
+                event={event}
+                fill
+                scramble={scramble}
+                visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
+              />
             ) : undefined}
             digits={<SegmentTime text={timerText} />}
-            fontSize="clamp(4rem, 20vw, 8rem)"
             interactive={Boolean(scramble && !currentResult && inRoundRoster && (
               gate.gated || canManuallyStart || timerPhase === 'running'
             ))}
@@ -1627,7 +1625,6 @@ export function NetBattleMode({
             phase={timer.machine.phase}
             scrambleSlot={(
               <TimerScrambleStrip
-                compact
                 copiedLabel={copy.copied}
                 fallback={copy.battleNoScramble}
                 fallbackKind="custom"

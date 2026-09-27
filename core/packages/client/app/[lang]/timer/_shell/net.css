@@ -385,6 +385,7 @@
 }
 .net-pk-side > .timing-surface {
   min-height: 0;
+  flex-basis: 0;
   --timer-cube-h: min(18vw, 24dvh, 220px);
 }
 .net-pk-side .timing-surface-sub { gap: 8px; }
