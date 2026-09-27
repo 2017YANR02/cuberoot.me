@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { renderSVG } from 'uqr';
 
 import './room-qr-modal.css';
+import { useModalBackdrop } from './useModalDismiss';
 
 export interface RoomQrModalLabels {
   close: string;
@@ -38,6 +39,7 @@ export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: 
   const mountedRef = useRef(true);
   const onCloseRef = useRef(onClose);
   const resetRef = useRef<number | null>(null);
+  const backdrop = useModalBackdrop(() => onCloseRef.current());
   const titleId = useId();
   onCloseRef.current = onClose;
   const svg = useMemo(
@@ -99,7 +101,7 @@ export function RoomQrModal({ code, labels, onClose, url, writeClipboardText }: 
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className="room-qr-backdrop" onClick={() => onCloseRef.current()}>
+    <div className="room-qr-backdrop" {...backdrop}>
       <div
         aria-labelledby={titleId}
         aria-modal="true"
