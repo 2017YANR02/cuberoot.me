@@ -11,12 +11,16 @@
     },
     "runtime": {
       ".": "react-dom",
-      "./app.css": "asset"
+      "./app.css": "asset",
+      "./chat": "react-dom",
+      "./chat.css": "asset"
     }
   },
   "exports": {
     ".": "./src/index.ts",
-    "./app.css": "./src/app.css"
+    "./app.css": "./src/app.css",
+    "./chat": "./src/chat/index.ts",
+    "./chat.css": "./src/chat/chat.css"
   },
   "sideEffects": true,
   "scripts": {

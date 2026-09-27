@@ -44,6 +44,7 @@ const KIND_ICON: Record<NotificationKind, typeof MessageSquare> = {
   teaching_message: MessagesSquare,
   friend_request: UserPlus,
   friend_accepted: UserCheck,
+  friend_message: MessagesSquare,
 };
 
 /** TIMESTAMPTZ → 本地 `yyyy-mm-dd hh:mm`。 */
@@ -85,6 +86,7 @@ export default function NotificationsPage() {
     teaching_message: t('发送了教学消息', 'sent a teaching message'),
     friend_request: t('申请添加你为好友', 'sent you a friend request'),
     friend_accepted: t('接受了你的好友申请', 'accepted your friend request'),
+    friend_message: t('发来了消息', 'sent you a message'),
   }[k]);
 
   const load = useCallback(() => {

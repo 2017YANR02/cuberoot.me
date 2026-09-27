@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
   // Pages without slashes still work because the [...slug] route handler accepts either.
   skipTrailingSlashRedirect: true,
 
-  transpilePackages: ["mp4box", "mediainfo.js", "@cuberoot/timer-ui"],
+  transpilePackages: ["@cuberoot/app-ui", "mp4box", "mediainfo.js", "@cuberoot/timer-ui"],
   // cubing.js worker compat is generated once by core/scripts/build-cubing-worker.mjs
   // into each host's public assets. The patched dependency always requests the
   // stable /cubing-chunks/search-worker-entry.js URL.

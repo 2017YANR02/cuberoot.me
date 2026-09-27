@@ -102,6 +102,7 @@ jobs:
               - 'core/scripts/**'
               - 'core/apps/web/**'
               - 'core/packages/client/**'
+              - 'core/packages/app-ui/**'
               - 'core/packages/event-icon/**'
               - 'core/packages/puzzle-render-core/**'
               - 'core/packages/puzzle-solvers/**'
