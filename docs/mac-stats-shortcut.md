@@ -7,7 +7,7 @@
 - Apple「快捷指令」中有「跑打乱统计」，已添加到 Dock。
 - 该快捷指令只有一个「运行Shell脚本」操作，内容为 `open -a Terminal "$HOME/.local/bin/跑打乱统计.command"`，Shell 选 `zsh`，不以管理员身份运行。
 - 在「快捷指令 → 设置 → 高级」中，用户已开启「允许运行脚本」。
-- `~/.local/bin/跑打乱统计.command` 是本机文件，不在仓库中。它进入 `${CUBEROOT_REPO:-$HOME/Documents/cuberoot.me}/core`，检测是否已有统计管道进程；没有时运行 `pnpm stats:scramble`。终端显示阶段、实际变化的取数与分析器进度及最终结果；短操作只显示一条，重复 ZIP 校验不显示，仅耗时变化的重复状态会被过滤。完整输出写入 `~/.local/state/cuberoot/scramble-stats/` 的时间戳日志，失败时附上日志末尾。结束后窗口保留，便于查看结果。换电脑时先确认文件和仓库路径是否存在，不能只复制快捷指令。
+- `~/.local/bin/跑打乱统计.command` 是本机文件，不在仓库中。它进入 `${CUBEROOT_REPO:-$HOME/Documents/cuberoot.me}/core`，检测是否已有统计管道进程；没有时运行 `pnpm stats:scramble`。终端显示阶段、实际变化的取数与分析器进度、每个统计变体的一条完成行及最终结果；短操作只显示一条，重复 ZIP 校验不显示，仅耗时变化的重复状态会被过滤。完整输出写入 `~/.local/state/cuberoot/scramble-stats/` 的时间戳日志，失败时附上日志末尾。结束后窗口保留，便于查看结果。换电脑时先确认文件和仓库路径是否存在，不能只复制快捷指令。
 
 ## 2026-09-24 排查记录
 
