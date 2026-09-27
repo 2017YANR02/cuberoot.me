@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / BGWY / bin 5
-# Population in this bin: 466
+# Population in this bin: 467
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5695560015,F2 L R' B2 F2 R U2 B2 D B' U2 B2 D' B' L F D F' D2,B,Jog Your Memory Joondalup 2026 (2026-06-13),333mbf Final A #1
@@ -91,7 +91,7 @@
 2581859001,U2 F2 U F' D2 F L2 B' F2 D' U' L2 B R' B2 D2 F',Y,Aarhus Spring 2023 (2023-03-25~26),333 R2 A #5
 660629009,U B2 L2 F2 R2 D U' F R' D R U' F2 R' D2 R F U L',G,Eretum Open 2015 (2015-01-11),333mbf Final A #1
 5073976001,D B R2 D' B' D2 R2 B' L2 D2 F2 U' B' R D2 R' U F',W,Swiss Science Open 2025 (2025-10-04~05),333 Final B #4
-4723528001,D2 U2 R2 D2 F' L2 F U2 L2 D B2 U' L' B2 D2 B2 L R,Y,Ankara May A 2025 (2025-05-10),333 R1 C #3
+5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 2810410001,R U' R2 U B' D2 F' B2 L' F' B' R' U2 R U2 B2 D2 R',Y,Vegas Speedcubing Summer 2023 (2023-06-17),333 R1 B E2
 3429771001,L' R2 U2 L' F2 L2 U2 R' F2 D B L R' U L B' U R D,Y,GLS I 2024 (2024-01-20~21),333 R1 B #2
 660851016,D2 R2 D2 F L2 R2 D2 B F' D2 F' L' U2 B U' R B L2 R2 U' L2 U',W,Two days in Vitebsk 2015 (2015-10-31~11-01),333mbf Final A #1

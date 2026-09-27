@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 9
-# Population in this bin: 375
+# Population in this bin: 376
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 4659675010,F L2 F L2 R2 B2 F' R' B2 L2 B R' B2 U' F' U2 L' D B2 L,W,Rhein-Neckar Please Be Squiet 2025 (2025-04-19~20),333mbf Final A #1
@@ -85,7 +85,7 @@
 5637080001,F R2 B2 F U2 B F2 R D' U B2 L2 D2 U' F' D' B' L',W,Hessen Open 2026 (2026-05-16~17),333oh R1 A E1
 693201001,B2 L F D B' R2 U R' B' R' D2 F2 R U2 L' F2 U2 R' B2 R,W,Pecel Cube Weekend 2018 (2018-01-27~28),333 R2 B #4
 4307393001,R' U' L2 R2 F' D2 B' U2 B' R2 L U' F' D' B L' D B',W,Meridiano Mosquera 2024 (2024-11-24),333 R1 A E2
-3755924001,F2 U' L2 U F2 D' U2 L2 F2 L R' B' D2 U F L' R B' D2,W,Dhaka Summer Open A 2024 (2024-05-10),333 R1 A #3
+5844046001,B2 D' F2 U2 L U' F L B D B2 L B2 L U2 F2 R2 U2 F2 D2,W,Ribeirão ao Cubo 2026 (2026-09-19~20),333 Final A #1
 4482912001,D' L' B' F2 L2 B2 F U2 F U L U R' B2 F U' L2 D,W,Chengdu Spring Open 2025 (2025-02-08~09),333 R1 F #1
 702190001,U L2 B2 L2 B2 R2 D R2 D2 R2 B L F' U L' R D R U' R D2,W,Penn Cube Day Winter 2018 (2018-02-04),333 R2 A E2
 718535001,B' D2 F2 L2 U2 L2 U2 R2 B' R2 F' L' U F' R' B' L D' L2 D2 F,W,STEM Educ8 2018 (2018-02-24),333 R2 B #1

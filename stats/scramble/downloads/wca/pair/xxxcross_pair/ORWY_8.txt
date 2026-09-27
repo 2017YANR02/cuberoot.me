@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / ORWY / bin 8
-# Population in this bin: 478
+# Population in this bin: 480
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 4311529001,R' U' F U' D' R D2 F2 R F' U B' R2 F B D2 L2 F2 R2 F R' F R' U' F,O,East Bay Big and Blind 2024 (2024-11-24),333fm Final A #2
@@ -98,7 +98,7 @@
 735915002,U2 L2 F' D2 U2 F2 L2 R B' L2 R2 U' R F2 U2 L2 D2 B L2 U,Y,More Than One Cube 2018 (2018-03-31~04-01),333mbf Final B #1
 4308288001,U B2 D' L B2 L F2 D2 B2 R' U2 B U' L2 B2 D' U' F D' L' F',R,Winnipeg Big & Blind 2024 (2024-11-23),333bf Final A E1
 3732954001,R D' B R2 U' R F R D2 F2 L' D2 F2 R' L B2 D' F' U,R,Ottawa Spring 2024 (2024-05-04),333 R1 E #3
-4509788001,U' B' L2 D' U' L2 U F' L B L' B' F D2 U R',W,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R2 D #2
+5844142001,D F R2 B' U2 B2 F D2 L F U2 L2 D2 U' B' U' R2 D',W,Ribeirão ao Cubo 2026 (2026-09-19~20),333 R2 A #3
 5645041001,R' B2 R D2 L U2 B' R U' B2 U F2 R' D2 L2 D2 U',O,Instituto Apontar Rio 2026 (2026-05-16),333 R1 B #5
 2320100001,R2 F2 L D2 L2 U' F2 D2 R2 B2 L2 F' U' R2 D' B' F R2 B,R,Dragon Cubing 2022 (2022-11-19~20),333oh Final B E2
 762713001,U D2 R2 D2 F U' D' L' B D2 R L2 B2 U B2 U' F2 B2 R2,O,Novokuznetsk Open 2018 (2018-04-15),333 R1 A #2
@@ -150,7 +150,7 @@
 1111500025,F L2 U2 L2 R2 B2 F' D2 B' R2 F' L' U L' D2 U B U B R2 B' L2,O,YJ Petersburg Special 2019 (2019-04-20~21),333mbf Final A #2
 1117595001,B' U2 B2 D2 R2 B2 R2 U2 B' L2 F' L D2 B2 U' B U2 F' R,O,Tullinge Basement Blind 2019 (2019-04-27),333ft Final A #2
 3749098038,D' L' U2 L' F2 L2 U F R L F2 B2 D2 L2 U2 R2 F' R F' L' F,O,Kensington May Upstairs 2024 (2024-05-11~12),333mbf Final A #1
-2944684025,R2 D2 L2 B2 U2 B' R' L F R L2 F2 U D2 F2 D2 R2 U2 B,Y,Big Blind Bucharest 2023 (2023-07-29~30),333mbf Final A #3
+5844986001,D2 F' U2 B L2 U2 B' F' U2 F2 D' F D2 F D' L' B L' R',R,Learn How To Cube in Laguna 2026 (2026-09-26),333 R2 B #5
 3065118001,L B U2 R' D2 R' F' L U' R' L2 U2 R' B2 L2 B',Y,Simple Sydney Sunday 2023 (2023-09-10),333 R1 E #4
 2666479001,F' R' D L D2 B2 L F2 R' F2 L B2 U B U' R D2 U' R',R,Twisters in Tulsa 2023 (2023-04-23),333 R2 B #5
 2121879001,U F R' U2 L' B2 L U2 L' B2 L B L' D' L2 B' R2 U' R2,Y,Edmonton Summer Twist 2022 (2022-08-21),333 R1 L #3

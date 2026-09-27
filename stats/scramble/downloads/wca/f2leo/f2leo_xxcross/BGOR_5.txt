@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGOR / bin 5
-# Population in this bin: 251
+# Population in this bin: 252
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5433363044,D' R' B2 D' L F' U2 B' U2 R' D2 L U2 D2 L F2 R U2 L B,O,BrizZon Side Open II 2026 (2026-03-07~08),333mbf Final A #2
@@ -53,7 +53,7 @@
 5167573001,F' B2 D' F' R2 D L B2 L U' D2 R F2 R2 U2 B2 R2 L' F2,B,Guangzhou Small Cubes 2025 (2025-11-09),333 R2 D E1
 700700001,D F2 L2 U' F2 B' L' D2 L2 U R' U L2 U F2 D B2 L2 U2 L2,O,Medan Open 2018 (2018-01-27~28),333oh R1 A #2
 708988001,U2 D' B2 U' F' R U' R' B U B2 L2 U2 R2 F' U2 F' B2 L2,O,Ural Winter 2018 (2018-02-17~18),333 Final A #2
-5660738011,L' D' F2 R2 U L' B2 U' R B L' U2 B2 R' U2 F2 R B L B',R,Ileseum Cube Open 2026 (2026-05-24),333mbf Final A #1
+5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 720637001,F2 L R2 D2 R2 D L2 F2 R2 F2 L' D2 R F' L2 F,B,Takshashila Cube Open 2018 (2018-03-03),333oh R1 D #2
 724374001,L2 B' L' D' B2 U2 B U B2 D L2 F U2 B D2 R2 B L2,R,RGIT Cube Open 2018 (2018-03-10),333oh R1 A #4
 733249020,F2 U' B2 U2 L2 B2 F2 D F2 U2 F' D' F U' R2 F2 U' L F L B2,R,Nacionales Uruguayas UCHI 2018 (2018-03-24~25),333mbf Final B #2

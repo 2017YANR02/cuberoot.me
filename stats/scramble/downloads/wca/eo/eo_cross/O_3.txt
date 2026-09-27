@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / O / bin 3
-# Population in this bin: 191
-# Samples listed: 191 (all entries in this bin)
+# Population in this bin: 192
+# Samples listed: 192 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
@@ -196,3 +196,4 @@
 5780074001,B U2 F2 D' L' U' L2 B2 U' F U2 R2 B2 U L2 U2 F2 D2 B2,O,Missouri Championship 2026 (2026-08-07~09),333 R2 C #3
 5820706001,R2 B2 U2 F2 U2 F U' F' U' F2 U' R' B R' B' R2 F,O,Santos Mágico Open 2026 (2026-09-06~07),333 R1 E #2
 5830670001,U2 F D2 F2 U2 R' U2 L' D2 F2 L2 B L' B2 L2 D2 F L2,O,Ohio Championship 2026 (2026-09-11~13),333oh R1 C #3
+5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,O,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3

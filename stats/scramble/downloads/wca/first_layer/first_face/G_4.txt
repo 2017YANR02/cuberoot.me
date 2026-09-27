@@ -2,7 +2,7 @@
 # Population in this bin: 667
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 3299986021,B2 D' L2 U D L' D F2 D2 L2 B L2 U2 F' U2 L B,G,No Clock in Lužice 2023 (2023-11-25~26),333mbf Final A #1

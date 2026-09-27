@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / WY / bin 1
-# Population in this bin: 203
+# Population in this bin: 204
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 6462001,U L2 D U2 R2 U R2 B F' L' U F' L R2 B' F' D',W,Rumia Open 2014 (2014-03-29~30),333bf R1 A E2
@@ -155,7 +155,7 @@
 4417372001,D2 F R2 L D F2 D B R' U2 F U2 L2 U2 F R2 U2 F2 R,W,Ottawa Mini Winter C 2025 (2025-01-11),333 R2 A E1
 4428634001,D2 F U2 R' D2 L2 D2 L' U' L2 U2 B2 D2 L' D2 R U2 F2 L,Y,Gdańska Liga Speedcubingu I 2025 (2025-01-18~19),333 R1 C #2
 4454766001,B2 F2 D2 L2 U B2 U' R2 F' D2 U' R B F2 L' F D F R,W,Ropaži Winter 2025 (2025-01-25~26),333oh Final B #5
-4467026016,U F R2 D R2 U F2 D U B2 R' B' F2 U2 B' F2 L2 D R B',W,Parets Open 2025 (2025-02-01~02),333mbf Final A #1
+5843752001,F2 U' R F L' U2 L' D2 B2 R D2 L D L B' R D L2 B,W,IFBA 2026 (2026-09-19),333 Final B #2
 4471267013,D' R2 F' R U2 B2 R2 F' D' R B F2 D' F2 U' D' L2 D' F2 D',W,DFW Mega Mental Breakdown 2025 (2025-02-01~02),333mbf Final A #1
 4486510001,F' R' F U2 F2 D2 B U2 L2 U R F L2 D U' B U2 R',W,Franconia Spring 2025 (2025-02-14~15),333 Final B #1
 4509755001,U2 L2 D2 U2 R' F2 D2 L' R U B R' F D F2 L2 F' R2 D',Y,LA PRE Pucallpa Speedcubing 2025 (2025-02-22),333 R1 D #4
