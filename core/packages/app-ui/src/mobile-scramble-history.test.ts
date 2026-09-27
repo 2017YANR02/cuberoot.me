@@ -234,7 +234,8 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('histBack(scrambleHistoryRef.current)');
     expect(app).toContain('histForward(scrambleHistoryRef.current)');
     expect(app).toContain('const { wheelRef: gestureWheelRef } = useGestureWheel({');
-    expect(app).toMatch(/active: storeLoaded\s+&& view === 'timer'/);
+    expect(app).toMatch(/active: storeLoaded\s+&& view !== 'settings'\s+&& timerVisible\s+&& openOverlay === null\s+&& !moreOpen\s+&& !manualEntryOpen/);
+    expect(app).toMatch(/const modalState = \(\) => \(\s+viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
     expect(app).toContain('&& openOverlay === null');
     expect(app).toContain('<GestureWheel ref={gestureWheelRef}');
     for (const actionId of TIMER_GESTURE_ACTION_IDS) {
