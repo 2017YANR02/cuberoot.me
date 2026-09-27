@@ -1566,6 +1566,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared OK, +2, and DNF actions for Web online rooms and installed battles, with common selection, 44px touch targets, keyboard focus, and disabled states. Hosts update the result.',
   },
   {
+    name: 'TimerTypographySettings',
+    import: "import { TimerTypographySettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的计时、打乱字体预览和字号设置；字体资产由 timer-ui 打包，宿主只负责保存设置。',
+    en: 'Shared timer and scramble font previews and size controls. Font assets ship with timer-ui; hosts persist the selected settings.',
+  },
+  {
     name: 'TimerStageLayout',
     import: "import { TimerStageLayout } from '@cuberoot/timer-ui';",
     category: 'more',
