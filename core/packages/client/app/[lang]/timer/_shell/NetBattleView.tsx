@@ -32,9 +32,9 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Bluetooth, Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode } from 'lucide-react';
+import { Bluetooth, Swords, Trophy, X, ShieldCheck, UserMinus } from 'lucide-react';
 
-import { SegmentTime, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -1249,16 +1249,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         )}
         <VideoToggle video={video} />
         {playersControl}
-        {room && (
-          <span className="net-round-chip">
-            {tr({ zh: `第 ${room.round} 把`, en: `Round ${room.round}` })}
-          </span>
-        )}
-        {room?.syncStart && (
-          <span className="net-sync-chip" title={tr({ zh: '本房要求全员同时起表', en: 'This room requires a synchronized start' })}>
-            {tr({ zh: '同时起表', en: 'Sync start' })}
-          </span>
-        )}
       </div>
       <div className="shell-topbar-right">
         {presenceControl}
@@ -1272,54 +1262,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
               title={tr({ zh: bluetoothCube.status.connected ? '智能魔方已连接' : '连接智能魔方', en: bluetoothCube.status.connected ? 'Smart cube connected' : 'Connect smart cube' })}
             >
               <Bluetooth size={16} />
-            </button>
-            <button
-              type="button"
-              className="tb-btn"
-              onClick={() => setShowStats(true)}
-              title={tr({ zh: '历史打乱与战绩', en: 'Scramble history and results' })}
-              aria-label={tr({ zh: '历史打乱与战绩', en: 'Scramble history and results' })}
-            >
-              <History size={14} />
-            </button>
-            {iAmAdmin && (
-              <button
-                type="button"
-                className="tb-btn net-admin-btn"
-                onClick={() => setShowAdmin(true)}
-                title={tr({ zh: '房间管理', en: 'Room settings' })}
-                aria-label={tr({ zh: '房间管理', en: 'Room settings' })}
-              >
-                <ShieldCheck size={14} />
-              </button>
-            )}
-            <button
-              type="button"
-              className="net-code-badge"
-              onClick={copyLink}
-              title={tr({ zh: '复制邀请链接', en: 'Copy invite link' })}
-            >
-              <span className="net-code-label">{tr({ zh: '房间', en: 'Room' })}</span>
-              <span className="net-code-code">{room.code}</span>
-              {linkCopied ? <Check size={13} /> : <Copy size={13} />}
-            </button>
-            <button
-              type="button"
-              className="tb-btn"
-              onClick={() => setQrOpen(true)}
-              title={tr({ zh: '二维码(队友扫码加入)', en: 'QR code (teammates scan to join)' })}
-              aria-label={tr({ zh: '房间二维码', en: 'Room QR code' })}
-            >
-              <QrCode size={14} />
-            </button>
-            <button
-              type="button"
-              className="tb-btn"
-              onClick={doLeave}
-              title={tr({ zh: '离开房间', en: 'Leave room' })}
-              aria-label={tr({ zh: '离开房间', en: 'Leave room' })}
-            >
-              <LogOut size={14} />
             </button>
           </>
         )}
@@ -1730,6 +1672,11 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     <div className="timer-shell net-shell" data-solving={timer.phase === 'running' ? 'true' : undefined}>
       {topbar}
 
+      <TimerRoomToolbar language={isZh ? 'zh' : 'en'} code={room.code} round={room.round}
+        syncStart={room.syncStart} copied={linkCopied} copyKind="invite" disabled={timer.phase !== 'idle' && timer.phase !== 'stopped'}
+        historyOpen={showStats} adminOpen={showAdmin} onCopy={copyLink}
+        onQr={() => setQrOpen(true)} onHistory={() => setShowStats(true)}
+        onAdmin={iAmAdmin ? () => setShowAdmin(true) : undefined} onLeave={doLeave} />
       <TimerRoomLayout className="shell-main"
         players={!activePkLock && <TimerRoomPlayers room={room} currentPlayerId={pid}
           language={isZh ? 'zh' : 'en'} precision={settings.precision} nowMs={serverNowEst}

@@ -5,6 +5,7 @@ import './timer-battle-layout.css';
 import './timer-battle-player.css';
 import './timer-room.css';
 export { TimerRoomLayout } from './TimerRoomLayout';
+export { TimerRoomToolbar, type TimerRoomToolbarProps } from './TimerRoomToolbar';
 export { TimerRoomPlayers, timerRoomPlayerName } from './TimerRoomPlayers';
 export type { TimerRoomPlayersProps } from './TimerRoomPlayers';
 export { TimerBattlePlayer } from './TimerBattlePlayer';
