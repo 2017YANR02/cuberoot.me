@@ -265,11 +265,6 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
     const accounts = await tx`SELECT id FROM app_users WHERE id = ${userId} FOR UPDATE`;
     if (!accounts.length) return;
 
-    // Clear both inboxes before the account FK cascades remove conversation IDs.
-    await tx`DELETE FROM notifications WHERE kind = 'friend_message'
-      AND dedupe_key IN (SELECT 'friend-chat:' || id::text FROM friend_chat_conversations
-        WHERE user_low_id = ${userId} OR user_high_id = ${userId})`;
-
     // Contract writes lock the same account first, so creation cannot race past deletion.
     const contracts = await tx`
       SELECT id FROM membership_contracts
@@ -315,6 +310,12 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       SELECT provider, provider_uid, apple_refresh_token_encrypted, apple_token_key_version
       FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
     await revokeAppleIdentities(ids as unknown as AppleRevocationIdentity[]);
+    // Keep all mutations after deletion guards and Apple revocation; clear both
+    // inboxes before the account FK cascades remove conversation IDs.
+    await tx`DELETE FROM notifications WHERE kind = 'friend_message'
+      AND dedupe_key IN (SELECT 'friend-chat:' || id::text FROM friend_chat_conversations
+        WHERE user_low_id = ${userId} OR user_high_id = ${userId})`;
+
     const targets = (ids as unknown as { provider: string; provider_uid: string }[])
       .filter((i) => i.provider === 'email' || i.provider === 'phone')
       .map((i) => i.provider_uid);
