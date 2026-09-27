@@ -113,9 +113,7 @@ async function runTar(args: string[], stdoutFile?: string): Promise<string> {
 }
 async function validZip(file: string): Promise<boolean> {
   if (!await exists(file)) return false;
-  const stop = intakeProgress('检查 ZIP 目录');
   try { await runTar(['-tf', file]); return true; } catch { return false; }
-  finally { stop(); }
 }
 async function download(url: string, dest: string): Promise<void> {
   const part = `${dest}.part`;
