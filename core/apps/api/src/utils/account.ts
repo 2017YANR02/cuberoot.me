@@ -7,6 +7,7 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import { decideCredentialClaim, decideCredentialRemoval } from '@app-foundation/account-policy';
 import { generateNumericCode, constantTimeEqualHex, remainingCooldownMs } from '@app-foundation/verification';
 import type { TransactionSql } from 'postgres';
 import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/account';
@@ -620,8 +621,13 @@ export async function addIdentity(
   const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
     (transaction ? transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
   const owner = await findUserByIdentity(provider, providerUid, run);
-  if (owner) {
-    if (owner.id !== userId) return 'conflict';
+  const ownerDecision = decideCredentialClaim({
+    intent: 'add',
+    candidateOwner: !owner ? 'unclaimed' : owner.id === userId ? 'same-account' : 'other-account',
+    currentSlot: owner?.id === userId ? 'same-candidate' : 'empty',
+  });
+  if (ownerDecision === 'owner-conflict') return 'conflict';
+  if (ownerDecision === 'already-bound') {
     if (appleCredential) {
       await begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
     }
@@ -685,7 +691,10 @@ export async function addIdentity(
         const dup = await tx`
           SELECT 1 FROM auth_identities
           WHERE user_id = ${userId} AND provider = ${provider} LIMIT 1`;
-        if (dup.count > 0) return `has-${provider}`;
+        const decision = decideCredentialClaim({
+          intent: 'add', candidateOwner: 'unclaimed', currentSlot: dup.count > 0 ? 'different' : 'empty',
+        });
+        if (decision === 'slot-occupied') return `has-${provider}`;
       }
       await tx`
         INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at, apple_refresh_token_encrypted, apple_token_key_version)
@@ -732,14 +741,22 @@ export async function replaceCredentialIdentity(
   const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
     (transaction ? transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
   const owner = await findUserByIdentity(provider, newUid, run);
-  if (owner && owner.id !== userId) return 'conflict';
+  const candidateOwner = !owner ? 'unclaimed' : owner.id === userId ? 'same-account' : 'other-account';
+  if (decideCredentialClaim({ intent: 'replace', candidateOwner, currentSlot: 'different' }) === 'owner-conflict') {
+    return 'conflict';
+  }
   try {
     return await begin(async (tx) => {
       // 锁住本账号那一行:并发两次换绑各读到旧值再各改一次,后写的赢且前一次静默丢失。
       const rows = await tx`
-        SELECT id FROM auth_identities
+        SELECT id, provider_uid FROM auth_identities
         WHERE user_id = ${userId} AND provider = ${provider} FOR UPDATE`;
-      if (rows.count === 0) return 'none';
+      const currentSlot = rows.count === 0 ? 'empty' : rows[0].provider_uid === newUid ? 'same-candidate' : 'different';
+      const decision = decideCredentialClaim({
+        intent: 'replace', candidateOwner: currentSlot === 'same-candidate' ? 'same-account' : candidateOwner,
+        currentSlot,
+      });
+      if (decision === 'missing-current') return 'none';
       await tx`
         UPDATE auth_identities
         SET provider_uid = ${newUid}, verified_at = NOW()
@@ -817,8 +834,9 @@ export async function removeIdentity(
     const toRemove = all.filter(
       (r) => r.provider === provider && (providerUid == null || r.provider_uid === providerUid),
     );
-    if (!toRemove.length) return 'not_found';
-    if (all.length - toRemove.length < 1) return 'last';
+    const decision = decideCredentialRemoval({ activeMethodCount: all.length, selectedMethodCount: toRemove.length });
+    if (decision === 'method-absent') return 'not_found';
+    if (decision === 'last-method') return 'last';
     await revokeAppleIdentities(toRemove);
     if (providerUid == null) {
       await tx`DELETE FROM auth_identities WHERE user_id = ${userId} AND provider = ${provider}`;

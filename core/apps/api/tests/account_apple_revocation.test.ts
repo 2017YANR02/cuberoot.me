@@ -21,6 +21,20 @@ beforeEach(() => {
   });
 });
 describe('Apple revocation inside existing account lifecycle', () => {
+  it('counts all selected provider aliases before allowing removal', async () => {
+    const douyinOpen = { provider: 'douyin', provider_uid: 'open' };
+    const douyinUnion = { provider: 'douyin', provider_uid: 'union' };
+    identities = [douyinOpen, douyinUnion];
+    expect(await removeIdentity(42, 'douyin')).toBe('last');
+    expect(mocks.revoke).not.toHaveBeenCalled();
+
+    identities.push({ provider: 'wca', provider_uid: '2026TEST01' });
+    expect(await removeIdentity(42, 'douyin')).toBe('ok');
+    expect(mocks.revoke).toHaveBeenCalledWith([douyinOpen, douyinUnion]);
+    const statements = mocks.tx.mock.calls.map(([parts]) => parts.join('?'));
+    expect(statements.some((statement) => statement.startsWith('DELETE FROM auth_identities'))).toBe(true);
+  });
+
   it('revokes before unlinking but never revokes the last login identity', async () => {
     identities = [apple];
     expect(await removeIdentity(42, 'apple')).toBe('last');
