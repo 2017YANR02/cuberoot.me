@@ -110,6 +110,33 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it.each(['2', '3', '4'])('shares device operations in %s-player mode without disconnecting on entry', async (mode) => {
+    const disconnect = vi.fn(async () => undefined);
+    const resetState = vi.fn();
+    await act(async () => setRadio({ ...radio, disconnect, resetState }));
+    const selector = container.querySelector<HTMLSelectElement>('.shell-players-select')!;
+    await act(async () => {
+      selector.value = mode;
+      selector.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await settle();
+    const details = container.querySelector<HTMLDetailsElement>('.battle-local-tools details')!;
+    details.open = true;
+    await act(async () => details.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
+    // Both the chooser and the connected shortcut lead to the same operation dialog.
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
+    const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
+    expect(dialog).not.toBeNull();
+    expect(disconnect).not.toHaveBeenCalled();
+    const reset = [...dialog.querySelectorAll<HTMLButtonElement>('button')]
+      .find((button) => button.textContent?.includes('Reset state'))!;
+    await act(async () => reset.click());
+    expect(resetState).toHaveBeenCalledOnce();
+    await act(async () => backListener?.());
+    expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
+    expect(container.querySelectorAll('.battle-player')).toHaveLength(Number(mode));
+  });
+
   it('opens the disconnected device menu and starts scanning from its action', async () => {
     const scanDevices = vi.fn(async () => undefined);
     await act(async () => setRadio({ ...radio, phase: 'idle', deviceName: '', scanDevices }));
@@ -150,7 +177,7 @@ describe('installed App GAN lifecycle integration', () => {
 
     const trigger = container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
     await act(async () => trigger.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     await settle();
     expect(connect).not.toHaveBeenCalled();
 
@@ -173,7 +200,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
 
     await act(async () => trigger.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     expect(document.querySelector('.timer-smart-cube-device__modal')).not.toBeNull();
     await act(async () => backListener?.());
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
@@ -195,7 +222,7 @@ describe('installed App GAN lifecycle integration', () => {
     await settle();
 
     await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     await settle();
     expect(scanDevices).toHaveBeenCalledOnce();
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;

@@ -2244,7 +2244,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     let removeListener: (() => Promise<void>) | undefined;
     void host.addBackButtonListener(() => {
       const current = viewRef.current;
-      if (current === 'timer' && timerModeRef.current !== 1) {
+      if (current === 'timer' && timerModeRef.current !== 1 && openOverlayRef.current === null) {
         if (battleModeActiveRef.current) {
           announce(copy.finishAttemptFirst);
           return;
@@ -2718,17 +2718,13 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [smartCube]);
 
   const openSmartCubeDevice = useCallback(() => {
-    if (!timerSupportsSmartCubeAutoTiming(activeEvent)) {
-      announce(copy.smartCubeOnly333);
-      return;
-    }
     openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice;
     setOpenOverlay(TIMER_OVERLAY_IDS.smartCubeDevice);
     if (smartCube.phase === 'idle' || smartCube.phase === 'error') {
       if (smartCube.scanDevices) void scanSmartCubes().catch(() => undefined);
       else void connectSmartCube().catch(() => undefined);
     }
-  }, [activeEvent, announce, connectSmartCube, copy.smartCubeOnly333, scanSmartCubes, smartCube]);
+  }, [connectSmartCube, scanSmartCubes, smartCube]);
 
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
@@ -3604,6 +3600,27 @@ export function App({ host }: { host: InstalledAppHost }) {
     scrambleReady,
     scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
   );
+  const smartCubeDeviceCenter = (
+    <TimerDeviceCenter
+      ariaLabel={copy.connectBluetooth}
+      items={timerDeviceRegistry.list()
+        .filter((device) => device.kind === 'smart-cube')
+        .map((device) => ({
+          active: smartCube.phase === 'connected',
+          detail: smartCube.phase === 'connected'
+            ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+            : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+              ? copy.connectingBluetooth
+              : undefined,
+          id: device.id,
+          kind: device.kind,
+          label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
+          onSelect: openSmartCubeDevice,
+        }))}
+      menuLabel={copy.connectBluetooth}
+      triggerLabel={copy.connect}
+    />
+  );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
 
   return (
@@ -3894,27 +3911,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onClick={() => setView('history')}
                 />
               }
-              devices={
-                <TimerDeviceCenter
-                  ariaLabel={copy.connectBluetooth}
-                  items={timerDeviceRegistry.list()
-                    .filter((device) => device.kind === 'smart-cube')
-                    .map((device) => ({
-                      active: smartCube.phase === 'connected',
-                      detail: smartCube.phase === 'connected'
-                        ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                        : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                          ? copy.connectingBluetooth
-                          : undefined,
-                      id: device.id,
-                      kind: device.kind,
-                      label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
-                      onSelect: openSmartCubeDevice,
-                    }))}
-                  menuLabel={copy.connectBluetooth}
-                  triggerLabel={copy.connect}
-                />
-              }
+              devices={smartCubeDeviceCenter}
             >
               <TimingSurface
                 ariaLabel={copy.timer}
@@ -4125,6 +4122,8 @@ export function App({ host }: { host: InstalledAppHost }) {
             holdMs={store!.settings.holdMs}
             inspectionSec={store!.settings.inspectionSec}
             language={language}
+            deviceControls={smartCubeDeviceCenter}
+            inputBlocked={openOverlay !== null}
             onActivityChange={setBattleModeActive}
             onModeChange={(mode) => {
               timerModeRef.current = mode;
@@ -4151,6 +4150,8 @@ export function App({ host }: { host: InstalledAppHost }) {
             holdMs={store!.settings.holdMs}
             inspectionSec={store!.settings.inspectionSec}
             language={language}
+            deviceControls={smartCubeDeviceCenter}
+            inputBlocked={openOverlay !== null}
             onActivityChange={setBattleModeActive}
             onModeChange={(mode) => {
               timerModeRef.current = mode;
