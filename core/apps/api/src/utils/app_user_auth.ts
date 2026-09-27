@@ -17,7 +17,8 @@ export async function requireAppUserId(c: Context): Promise<number> {
   const sessionUserId = canonicalUserId(user.uid);
   if (sessionUserId != null) {
     const row = await getUserById(sessionUserId);
-    if (row) return row.id;
+    if (row?.id !== sessionUserId) throw new Error('Authentication required');
+    return row.id;
   }
   if (user.realWcaId) {
     const row = await findUserByWcaId(user.realWcaId);

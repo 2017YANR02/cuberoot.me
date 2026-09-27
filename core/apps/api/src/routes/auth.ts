@@ -13,6 +13,7 @@ import { requireAuth } from '../utils/recon_helpers.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
   findUserByWcaId,
+  findUserForLegacyWcaSession,
   getUserById,
   publicUser,
   isValidCountryIso2,
@@ -249,9 +250,11 @@ authRoutes.get('/auth/me', async (c) => {
     const account = payload.uid != null
       ? await getUserById(payload.uid)
       : payload.wcaId
-        ? await findUserByWcaId(payload.wcaId)
+        ? await findUserForLegacyWcaSession(payload.wcaId)
         : null;
-    if (!account) return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
+    if (!account || (payload.uid != null && account.id !== payload.uid)) {
+      return c.json(webSessionError('INVALID_SESSION', 'Invalid token'), 401);
+    }
     await captureAccountDevice(account.id, c.req.header('User-Agent'));
     const response: WebSessionUserEnvelope = { user: publicUser(account) };
     return c.json(response);
@@ -349,13 +352,13 @@ authRoutes.post('/auth/refresh', async (c) => {
     // uid token 直接续;老 wca-only token 借机升级(按真实 wcaId 查库补 uid)。
     let uid = payload.uid ?? null;
     if (uid == null && payload.wcaId) {
-      const u = await findUserByWcaId(payload.wcaId);
+      const u = await findUserForLegacyWcaSession(payload.wcaId);
       if (u) uid = u.id;
     }
     if (uid == null) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
     // 按账号最新态续签(可能刚绑了新的 wca / 改了名)。查不到账号 → 强制重登。
     const u = await getUserById(uid);
-    if (!u) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
+    if (!u || u.id !== uid) return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
     await captureAccountDevice(u.id, c.req.header('User-Agent'));
     const fresh = signSession({ uid: u.id, wcaId: u.wca_id, name: u.display_name || (payload.name ?? '') });
     const session: WebSession = { token: fresh, user: publicUser(u) };

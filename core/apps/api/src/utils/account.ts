@@ -322,11 +322,8 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
 // ── 账号 / 身份 ──
 export async function getUserById(id: number, run: QueryRunner = query): Promise<AppUser | null> {
   const rows = await run<AppUserRow>(
-    `SELECT canonical.id, canonical.display_name, canonical.avatar_url, canonical.avatar_source,
-            canonical.avatar_preset, canonical.wca_id, canonical.is_admin
-     FROM app_users requested
-     JOIN app_users canonical ON canonical.id = COALESCE(requested.merged_into_user_id, requested.id)
-     WHERE requested.id = ?`,
+    `SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin
+     FROM app_users WHERE id = ? AND merged_into_user_id IS NULL`,
     [id],
   );
   return firstAppUser(rows);
@@ -476,6 +473,17 @@ export async function resetAvatarToWca(id: number): Promise<AppUser | null> {
 export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
   const rows = await query<AppUserRow>(
     'SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin FROM app_users WHERE wca_id = ?',
+    [wcaId],
+  );
+  return firstAppUser(rows);
+}
+
+/** A UID-less legacy JWT cannot identify which side of a completed merge issued it. */
+export async function findUserForLegacyWcaSession(wcaId: string): Promise<AppUser | null> {
+  const rows = await query<AppUserRow>(
+    `SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin
+     FROM app_users active WHERE wca_id = ? AND merged_into_user_id IS NULL
+       AND NOT EXISTS (SELECT 1 FROM app_users retired WHERE retired.merged_into_user_id = active.id)`,
     [wcaId],
   );
   return firstAppUser(rows);

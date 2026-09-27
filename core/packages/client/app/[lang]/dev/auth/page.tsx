@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "23c26c5c3e06de0b046a49bacf4a294efddb2969ba418de1360f941ac02468cb", "reason": "复核比赛访问从局部接口凭证改为全站图片验证码：验证码只签发页面与受保护数据访问凭证，不改变登录、绑定、合并、退出、注销或管理员权限；OAuth 回调、API 客户端和静态资源保持可达。同步核对本次 timer 与桌面智能魔方改动没有改变安装版登录生命周期，短信、微信、第三方身份及账号会话流程保持不变。"}
+{"fingerprint": "610d2ea39cc3e9ae2ccad356382ac360622e5dc79cebe2f372e05d011415c53e", "reason": "复核账号合并后的会话生命周期：待并入账号 B 的其他旧 UID 会话立即失效，不得解析到保留账号 A 或续期；无法区分合并前来源的旧版无 UID WCA 会话也需重新登录，原始 WCA 授权仍可验证。合并请求成功签发的新 A 会话继续可用；已同步中英文流程说明，绑定和找回路径未变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -240,10 +240,10 @@ export default function AuthFlowPage() {
           t('④ 服务端检查两个账号、合并码、凭据冲突和数据迁移条件', '④ Server checks both accounts, the code, credential conflicts, and data migration constraints'),
         ]} />
         <div className="auth-map-current-paths auth-map-results">
-          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据、已领养宠物和登录方式转入 A，当前会话切到 A；B 不再作为独立账号使用。不能撤销。', 'Supported data, adopted pets, and sign-in methods move to A; the current session switches to A. B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
+          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据、已领养宠物和登录方式转入 A，当前会话切到 A；B 的其他旧会话失效，B 不再作为独立账号使用。不能撤销。', 'Supported data, adopted pets, and sign-in methods move to A; the current session switches to A. Other old B sessions become invalid, and B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
           <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；处理后可能需要在 A 重新生成合并码，不要反复点确认。', 'Explain the conflict and stop. After resolving it, a new code from A may be required; do not repeatedly submit.')}</small></FlowNode>
         </div>
-        <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts.')}</figcaption>
+        <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。合并后旧版 WCA 会话需要重新登录。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts. Older WCA sessions require sign-in again after a merge.')}</figcaption>
       </figure>
       <details className="auth-map-current"><summary>{t('哪些情况会被拦住？会员怎么处理？', 'What blocks a merge? What happens to membership?')}</summary>
         <ul className="auth-map-list">

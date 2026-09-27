@@ -52,13 +52,20 @@ describe('canonical app user authentication', () => {
     expect(findUserByWcaIdMock).toHaveBeenCalledWith('2020TEST01');
   });
 
-  it('falls back to the surviving WCA account when a merged session uid was deleted', async () => {
+  it('rejects a retired uid even when its old session carries a WCA ID', async () => {
     requireAuthMock.mockResolvedValue({ uid: 749, realWcaId: '2020TEST01' });
     getUserByIdMock.mockResolvedValue(null);
-    findUserByWcaIdMock.mockResolvedValue({ id: 748 });
 
-    await expect(requireAppUserId({} as never)).resolves.toBe(748);
-    expect(findUserByWcaIdMock).toHaveBeenCalledWith('2020TEST01');
+    await expect(requireAppUserId({} as never)).rejects.toThrow('Authentication required');
+    expect(findUserByWcaIdMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a session whose uid resolves to a different account', async () => {
+    requireAuthMock.mockResolvedValue({ uid: 749, realWcaId: '2020TEST01' });
+    getUserByIdMock.mockResolvedValue({ id: 748 });
+
+    await expect(requireAppUserId({} as never)).rejects.toThrow('Authentication required');
+    expect(findUserByWcaIdMock).not.toHaveBeenCalled();
   });
 
   it('rejects a merged session whose deleted uid has no surviving identity in the token', async () => {
