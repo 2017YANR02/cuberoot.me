@@ -26,7 +26,7 @@ import type { BluetoothCubeHandle } from '../_lib/bluetooth';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { useBattleStore } from './engine/battle_store';
 import { useBattleCubes } from './useBattleCubes';
-import PillToggle from '@/components/PillToggle/PillToggle';
+import { TimerBattleCubeControls, TimerDeviceCenter } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
 
 interface BattleCubesCtx {
@@ -139,69 +139,12 @@ export function BattleCubeSettingsGroup() {
   const setCubeHolder = useBattleStore(s => s.setCubeHolder);
   const playerCount = useBattleStore(s => s.playerCount);
 
-  const shared = cubeMode === 'shared';
-
-  return (
-    <div className="settings-group">
-      <div className="settings-label">{tr({ zh: '智能魔方', en: 'Smart cube' })}</div>
-
-      <div className="setting-item">
-        <span>{tr({ zh: '几颗魔方', en: 'How many cubes' })}</span>
-        <PillToggle
-          value={shared}
-          onChange={(v) => setCubeMode(v ? 'shared' : 'own')}
-          offLabel={tr({ zh: '每人一颗', en: 'One each' })}
-          onLabel={tr({ zh: '一颗轮流', en: 'Pass around' })}
-          ariaLabel={tr({ zh: '智能魔方语义', en: 'Smart cube mode' })}
-        />
-      </div>
-
-      {shared ? (
-        <>
-          <div className="setting-item">
-            <span>{tr({ zh: '这颗魔方', en: 'The cube' })}</span>
-            <CubeConnectButton playerId={cubeHolder} />
-          </div>
-          <div className="setting-item">
-            <span>{tr({ zh: '轮到', en: 'Now up' })}</span>
-            <div className="bc-holder-row">
-              {Array.from({ length: playerCount }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={`bc-holder-btn${i === cubeHolder ? ' is-holder' : ''}`}
-                  onClick={() => setCubeHolder(i)}
-                >
-                  {`P${i + 1}`}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        Array.from({ length: playerCount }, (_, i) => (
-          <div className="setting-item" key={i}>
-            <span>{`P${i + 1}`}</span>
-            <CubeConnectButton playerId={i} />
-          </div>
-        ))
-      )}
-
-      <div className="bc-hint">
-        {shared
-          ? tr({
-              zh: '拧到打乱即预备,第一下转动起表,还原停表;这一位停表后自动传给下一位。',
-              en: 'Match the scramble to arm, first turn starts, solved stops — then it passes to the next player.',
-            })
-          : tr({
-              zh: '拧到打乱即预备,第一下转动起表,还原停表。没连魔方的人照常用按键。',
-              en: 'Match the scramble to arm, first turn starts, solved stops. Players without a cube keep using keys.',
-            })}
-      </div>
-    </div>
-  );
+  const { i18n } = useTranslation();
+  return <TimerBattleCubeControls language={i18n.language === 'zh' ? 'zh' : 'en'}
+    mode={cubeMode} onModeChange={setCubeMode} holder={cubeHolder} onHolderChange={setCubeHolder}
+    players={Array.from({ length: playerCount }, (_, id) => ({ id }))}
+    deviceControl={(playerId) => <CubeConnectButton playerId={playerId} />} />;
 }
-
 function CubeConnectButton({ playerId }: { playerId: number }) {
   const { handleFor, open } = useBattleCubesCtx();
   const handle = handleFor(playerId);
@@ -218,6 +161,20 @@ function CubeConnectButton({ playerId }: { playerId: number }) {
         : tr({ zh: '连接', en: 'Connect' })}
     </button>
   );
+}
+
+export function BattleDeviceCenter() {
+  const { handleFor, open } = useBattleCubesCtx();
+  const mode = useBattleStore((state) => state.cubeMode);
+  const holder = useBattleStore((state) => state.cubeHolder);
+  const count = useBattleStore((state) => state.playerCount);
+  return <TimerDeviceCenter ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
+    menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })} triggerLabel={tr({ en: 'Devices', zh: '设备' })}
+    items={(mode === 'shared' ? [holder] : Array.from({ length: count }, (_, id) => id)).map((id) => ({
+      id: String(id), kind: 'smart-cube', active: !!handleFor(id)?.status.connected,
+      label: tr({ en: `Player ${id + 1} · Smart cube`, zh: `玩家 ${id + 1} · 智能魔方` }),
+      detail: handleFor(id)?.status.deviceName ?? undefined, onSelect: () => open(id),
+    }))} />;
 }
 
 /* ------------------------------------------------------------------ */

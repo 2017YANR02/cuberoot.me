@@ -432,9 +432,11 @@ describe('installed app multiplayer modes', () => {
     await act(async () => handlers!.onMove('U', at + 10, 'U'.repeat(54)));
     await act(async () => handlers!.onSolved(at + 1_010));
 
-    const holderButtons = host.querySelectorAll<HTMLButtonElement>('.battle-cube-holders button');
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    const holderButtons = document.querySelectorAll<HTMLButtonElement>('.timer-battle-cube-controls [aria-label="Now up"] button');
     expect(holderButtons[0].getAttribute('aria-pressed')).toBe('false');
     expect(holderButtons[1].getAttribute('aria-pressed')).toBe('true');
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog [aria-label="Close"]')!.click());
     expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(1);
     const penalties = host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button');
     const originalSeconds = Number.parseFloat(host.querySelector('[data-player-id="0"] .battle-player .timer-display')!.textContent!);

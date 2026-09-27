@@ -4,6 +4,12 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：多人设置、按键和操作栏共享
+
+- `TimerBattleSettings` / `TimerBattleKeyBindings` 统一公共设置、按键录入/取消和弹窗；App 直接更新原有设置 repository，Web 注入 battle store。`TimerBattleCubeControls` 共用轮流/逐人连接区及持有者控件，仅展示真实 adapter 支持的模式。
+- `TimerBattleToolbar` 放进同一多人布局中间插槽，App 不再单独放在页面顶端；两端使用 `TimerStageLayout` 的设备底栏。布局翻转复用 BoolToggle。App 设置/历史期间同时阻止按键和智能魔方新起表。
+- Web 原有来源、背景、语音/分段和同步开关仍由宿主提供；App 现有本地 reducer 不支持多路 BLE、WCA 多人来源及部分扩展设置，未添加无效入口。精度/观察候选遵守各宿主有效契约。
+- 共享设置/按键与本地规则 12 项、布局 4 项、App 对战 13 项和三包 typecheck 通过；目录已登记。仍无真机视觉验收。
 ### 2026-09-27：本地多人历史与详情共享
 
 - `TimerBattleHistory` 统一玩家统计、完整轮次列表、按稳定 round id 打开详情、同项目/同打乱去重预览及删除确认；App 移除仅最近 20 轮的简化列表，补齐单轮删除与详情。Web 保留旧记录恢复告警、CSV 与本机复盘适配，不把不确定的旧记录拼成轮次。
