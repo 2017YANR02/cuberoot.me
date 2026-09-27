@@ -337,7 +337,8 @@ describe('installed App GAN lifecycle integration', () => {
     expect(clipboard).not.toHaveBeenCalled();
   });
 
-  it('routes the live cube, first/final turns, recorded gyro, saved recap and full history report', async () => {
+  it.each([false, true])('routes the live cube, saved recap and full report (wide=%s)', async (wide) => {
+    await act(async () => { wideViewport = wide; mediaListeners.forEach(fn => fn()); });
     expect(container.querySelector('[aria-label="Live 3D smart-cube state"]')).not.toBeNull();
     await act(async () => move('R', 1_000));
     expect(container.querySelector('[aria-label="Live 3D smart-cube state"]')?.textContent).toBe('R');
@@ -361,6 +362,22 @@ describe('installed App GAN lifecycle integration', () => {
     await settle();
     expect(saved()).toHaveLength(1);
     await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap')).not.toBeNull(); });
+    expect(container.querySelector('.timer-workspace > .shell-recap-rail .shell-recap') !== null).toBe(wide);
+    expect(container.querySelector('.timer-view .shell-recap') !== null).toBe(!wide);
+    expect(container.querySelector('.timer-workspace[data-recap-open]') !== null).toBe(wide);
+    if (wide) {
+      const timerNode = container.querySelector('.timing-surface');
+      await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+      expect(container.querySelector('.shell-recap-rail')).toBeNull();
+      expect(container.querySelector('.timer-workspace[data-recap-open]')).toBeNull();
+      expect(container.querySelector('.timing-surface')).toBe(timerNode);
+      await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button')!.click());
+      await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
+      expect(container.querySelector('.shell-recap-rail')).toBeNull();
+      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.timer-view .shell-recap')).not.toBeNull(); });
+      await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
+      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap-rail .shell-recap')).not.toBeNull(); });
+    }
     const full = container.querySelector<HTMLButtonElement>('.shell-recap-btn')!;
     await act(async () => full.click());
     await settle();

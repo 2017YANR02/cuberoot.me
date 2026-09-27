@@ -2933,7 +2933,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   return (
-    <TimerWorkspace panelOpen={Boolean(panelTab || recapSolve)} recapOpen={Boolean(recapSolve && !panelTab)}
+    <TimerWorkspace panelOpen={Boolean(panelTab)} recap={solveRecap}
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve) ? ' panel-open' : ''}${isDesktop && recapSolve && !panelTab ? ' recap-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
@@ -3268,11 +3268,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
           入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
           非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
-      {isDesktop && !panelTab && solveRecap && (
-        <aside className="timer-workspace-panel shell-panel--rail shell-recap-rail" data-site-surface="panel" data-no-timer>
-          {solveRecap}
-        </aside>
-      )}
       {panelTab && (
         <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">
