@@ -4,6 +4,12 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：单人来源区与底栏组合共享
+
+- 新增 `@cuberoot/timer-ui/TimerStageLayout`，Web `SoloView` 与五端 `App` 共用来源配置→计时/辅助内容→统计及设备底栏的 DOM 顺序。统计在左、设备在右，底栏留在正常流中；设备中心保留相对定位与 44px 按钮，避免菜单脱离按钮锚点。全屏由共享 source/footer 的 hidden 状态统一控制。
+- 删除 App 私有的第三行设备 footer、统计/设备定位覆盖，以及 Web 主区的重复基础 flex 布局。Android 导航、安全区、外部滚动与桌面侧栏仍为宿主边界；来源配置的业务适配和内容差异没有在本轮宣称全部关闭。组件已登记 `/dev/components`。
+- 验证：三包 typecheck 通过；Web 布局/读数/设备 12 项、组件目录 5 项、App history/viewport/hints/菜单定位 26 项及未连接设备窗口→扫描调用 1 项通过。Mobile production build 与 Capacitor Android sync 完成。未运行浏览器截图或真机安装，桌面窄窗口、Android 横屏/软键盘和其他宿主视觉矩阵继续待验。
+
 ### 2026-09-27：App 蓝牙入口菜单定位修复
 
 - 用户在 Android 单人页未连接时点击底部蓝牙按钮无可见反馈。源码定位为 App 的正常流布局将 `.shell-device-center` 设成 `static`，共享菜单的 `position:absolute; bottom:calc(100% + 8px)` 因而失去按钮锚点，可被放到视口上方；此时尚未进入扫描/权限流程。

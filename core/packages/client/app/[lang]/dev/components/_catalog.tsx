@@ -1538,6 +1538,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The controlled 2x2 scramble type/style UI shared by the Web, Android, and iOS timers. Its type select, WCA 11-move/Optimal pill, pointer drag, keyboard semantics, and narrow layout live in one implementation. The 11 random and 10 real-WCA types come from @cuberoot/shared/timer; hosts only wire persistence and translated labels.',
   },
   {
+    name: 'TimerStageLayout',
+    import: "import { TimerStageLayout } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端单人计时页的共享布局：来源配置在上、计时内容居中、统计和设备入口分列底栏两侧；统一全屏隐藏和设备菜单定位。',
+    en: 'Shared solo timer composition for Web and installed apps: source controls above the timing content, statistics and devices on opposite sides of the footer, with common fullscreen visibility and menu anchoring.',
+  },
+  {
     name: 'TimerStatsPanel',
     import: "import { TimerStatsPanel } from '@cuberoot/timer-ui';",
     category: 'more',
