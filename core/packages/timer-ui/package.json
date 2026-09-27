@@ -41,6 +41,7 @@
       "./wca-person-picker": "react-dom",
       "./wca-person-picker.css": "react-dom",
       "./room-code-input": "react-dom",
+      "./modal-dismiss": "react-dom",
       "./clear-button": "react-dom",
       "./date-input": "react-dom",
       "./date-input.css": "react-dom",
@@ -51,6 +52,10 @@
       "./gesture-wheel.css": "react-dom",
       "./room-qr-modal": "react-dom",
       "./room-qr-modal.css": "react-dom",
+      "./timing-surface.css": "react-dom",
+      "./timer-chrome.css": "react-dom",
+      "./timer-stage-layout.css": "react-dom",
+      "./timer-penalty-actions.css": "react-dom",
       "./scramble-strip.css": "react-dom"
     }
   },
@@ -82,6 +87,7 @@
     "./wca-person-picker": "./src/WcaPersonPicker.tsx",
     "./wca-person-picker.css": "./src/wca-person-picker.css",
     "./room-code-input": "./src/RoomCodeInput.tsx",
+    "./modal-dismiss": "./src/useModalDismiss.ts",
     "./clear-button": "./src/ClearButton.tsx",
     "./date-input": "./src/DateInput.tsx",
     "./date-input.css": "./src/date-input.css",
@@ -92,6 +98,10 @@
     "./gesture-wheel.css": "./src/gesture-wheel.css",
     "./room-qr-modal": "./src/RoomQrModal.tsx",
     "./room-qr-modal.css": "./src/room-qr-modal.css",
+    "./timing-surface.css": "./src/timing-surface.css",
+    "./timer-chrome.css": "./src/timer-chrome.css",
+    "./timer-stage-layout.css": "./src/timer-stage-layout.css",
+    "./timer-penalty-actions.css": "./src/timer-penalty-actions.css",
     "./scramble-strip.css": "./src/scramble-strip.css"
   },
   "sideEffects": true,

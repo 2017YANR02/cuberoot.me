@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { modalFocusableElements } from './modal-focus';
+import { useModalBackdrop } from './useModalDismiss';
 
 export interface TimerRoomDialogProps {
   title: string;
@@ -14,6 +15,7 @@ export function TimerRoomDialog({ title, language, onClose, children }: TimerRoo
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const backdrop = useModalBackdrop(() => closeRef.current());
   const titleId = useId();
   useEffect(() => {
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -32,9 +34,7 @@ export function TimerRoomDialog({ title, language, onClose, children }: TimerRoo
   }, []);
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
-  return createPortal(<div className="timer-room-overlay" data-no-timer onClick={(event) => {
-    if (event.target === event.currentTarget) closeRef.current();
-  }}>
+  return createPortal(<div className="timer-room-overlay" data-no-timer {...backdrop}>
     <div className="timer-room-dialog" data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();

@@ -55,6 +55,24 @@ it.each(['en', 'zh'] as const)('requires confirmation and contains keyboard focu
     const dialog = document.querySelector<HTMLElement>('.timer-room-dialog')!;
     const buttons = [...dialog.querySelectorAll<HTMLButtonElement>('button')];
     const remove = buttons.at(-1)!;
+    const backdrop = dialog.parentElement!;
+    await act(async () => {
+      dialog.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      backdrop.click();
+    });
+    expect(close).not.toHaveBeenCalled();
+    await act(async () => {
+      backdrop.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      backdrop.dispatchEvent(new Event('pointercancel', { bubbles: true }));
+      backdrop.click();
+    });
+    expect(close).not.toHaveBeenCalled();
+    await act(async () => {
+      backdrop.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }));
+      backdrop.click();
+    });
+    expect(close).toHaveBeenCalledOnce();
+    close.mockClear();
     await act(async () => remove.click()); expect(kick).not.toHaveBeenCalled();
     await act(async () => remove.click()); expect(kick).toHaveBeenCalledWith('other');
     await act(async () => { remove.focus(); remove.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true })); });

@@ -4,6 +4,12 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：共享弹窗关闭契约
+
+- Web 原有 `useModalDismiss` / `useModalBackdrop` 实现迁入 timer-ui，原 hooks 路径只重导出。共享房间/多人历史/设置及邀请二维码窗口复用同一遮罩手势，内部拖出和 pointercancel 不误关；保持原有 Escape、焦点与宿主 Back 行为。
+- 房间遮罩补齐 Web 未定义 `--modal-overlay` 时的主题 token 回退；公共 CSS 子入口显式登记 package exports/runtime，供布局验证与消费者使用。
+- 共享弹窗关闭、焦点/确认和遮罩 guard 12 项与 timer-ui typecheck 通过；组件 hook 目录同步。
+
 ### 2026-09-27：本地多人打乱与项目菜单同源
 
 - Web 本地多人移除旧打乱 HTML、私有预览/出处行和全区域项目菜单，接入 `TimerScrambleStrip`、`TimerCubePreview`、`TimerWcaScrambleSource` 与 `TimerPuzzlePicker`。菜单继续受 battle store 控制，保留打开期间的计时抑制。
