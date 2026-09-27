@@ -1015,7 +1015,7 @@ body.solo .player-area {
   }
 
   body[data-site-scenery] .ao-detail-panel {
-    background: var(--glass-surface-bg);
+    background: var(--glass-dialog-bg);
     border-color: var(--glass-border);
     box-shadow: var(--glass-shadow);
     -webkit-backdrop-filter: var(--glass-filter);
