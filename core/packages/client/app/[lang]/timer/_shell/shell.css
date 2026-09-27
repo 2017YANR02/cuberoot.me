@@ -667,24 +667,7 @@
 /* Scramble + cube fade (opacity:0) but KEEP their box while running, so the
    centered column's height is constant and the readout never jumps on start. */
 
-/* 例外:连着智能魔方时那颗**实时**魔方,计时中照常显示。
-   淡出这一套是给「静态打乱图 + 打乱文字」设计的 —— 那些讲的是你要拧到哪儿去,
-   拧起来之后确实只剩干扰。实时魔方讲的是你现在拧到哪儿了,它每一手都在变,恰恰
-   只有计时中才有内容(拧完就停在还原态)。把它一起淡掉,等于在唯一有意义的那段
-   时间里关掉它 —— /alg 训练器的实时魔方全程都在,这里对齐。
-   `:has(.timer-live-cube)` 精确挑出「实时」那一种:同一个格子的另一位租客是静态
-   CubePreview(见 SoloView 的 centerCubeSlot),那个照旧淡出。
-   `hide-ui`(用户显式选的「计时中隐藏全部界面」)仍然一票否决。 */
-.timer-shell.is-solving:not(.hide-ui) .timing-surface .timing-surface-cube:has(.timer-live-cube) {
-  opacity: 1;
-  pointer-events: auto;
-}
-/* 留下的是那颗魔方,不是它底下的按钮:校准是拧之前摆正朝向的动作,计时中没人按它,
-   留着只是在专注模式里多一个亮着的控件。 */
-.timer-shell.is-solving .timing-surface-cube .live-cube-calibrate {
-  opacity: 0;
-  pointer-events: none;
-}
+/* Live-cube visibility while solving is owned by timer-ui/live-cube.css. */
 
 /* "Hide all UI while running" (opt-in setting). Goes further than .is-solving:
    that only touches .surface-chrome, which leaves the side panel and the solver
