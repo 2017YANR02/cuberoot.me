@@ -185,6 +185,8 @@ const TABLES: Table[] = [
   { name: 'app_users', domain: 'account', origin: '0064', evolved: [68, 71, 72, 172, 186, 194, 200, 201, 206, 210, 214], purpose: { zh: '站内统一账号；微信、WCA、邮箱和手机等身份最终都归到同一用户', en: 'Canonical site accounts shared by Weixin, WCA, email, phone, and other identities' } },
   { name: 'account_last_devices', domain: 'account', origin: '0199', purpose: { zh: '每个账号最近使用设备的粗粒度类型、系统、浏览器和时间；不保存原始 User-Agent、IP 或设备指纹', en: 'Coarse latest-device type, OS, browser, and time per account; raw User-Agent, IP, and device fingerprints are not stored' } },
   { name: 'user_friendships', domain: 'account', origin: '0175', purpose: { zh: '好友申请与已接受的双向好友关系；每对账号只保留一条规范记录', en: 'Pending requests and accepted two-way friendships, with one canonical row per account pair' } },
+  { name: 'friend_chat_conversations', domain: 'account', origin: '0249', purpose: { zh: '每对账号唯一的私聊会话，记录最新消息序号和双方已读位置；任一参与账号注销时级联删除', en: 'One private conversation per account pair, with the latest message sequence and both read positions; cascades on either participant account deletion' }, cols: [{ name: 'user_low_id, user_high_id' }, { name: 'last_sequence, last_message_at' }, { name: 'low_read_sequence, high_read_sequence' }] },
+  { name: 'friend_chat_messages', domain: 'account', origin: '0249', purpose: { zh: '按会话递增序号保存文字消息，以发送者和客户端消息 ID 保证重试幂等；随会话删除', en: 'Text messages ordered by conversation sequence, with sender and client message ID ensuring idempotent retries; deleted with the conversation' }, cols: [{ name: 'conversation_id, sequence' }, { name: 'sender_user_id, client_message_id' }, { name: 'body, created_at' }] },
   { name: 'user_blocks', domain: 'account', origin: '0175', purpose: { zh: '单向黑名单；拉黑时同步切断好友关系与待处理申请', en: 'Directed blocks; blocking also removes friendships and pending requests' } },
   { name: 'user_wca_friend_contacts', domain: 'account', origin: '0178', purpose: { zh: '账号私有的 WCA 好友条目；对方未注册时只保存在本人列表，不代表双向好友或已发送申请', en: 'Account-private WCA friend entries; an unregistered person is only saved to the owner\'s list and does not imply a mutual friendship or delivered request' } },
   { name: 'vault_user_keys', domain: 'storage', origin: '0192', purpose: { zh: '资料库公钥与由用户口令加密的私钥；服务端无法解密私钥', en: 'Vault public keys and passphrase-encrypted private keys that the server cannot decrypt' } },
@@ -786,6 +788,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 246, slug: 'user_impersonation', desc: { zh: '增加超级管理员指定用户只读查看会话、理由记录与服务端写入拦截。', en: 'Add superadministrator specific-user read-only sessions, recorded reasons, and server-side write blocking.' } },
   { n: 247, slug: 'auth_identity_pending_attempts', desc: { zh: '限制六位账号绑定码的尝试次数，防止反复猜测。', en: 'Limit attempts on six-digit account-link codes to prevent repeated guessing.' } },
   { n: 248, slug: 'timer_replay_shares', desc: { zh: '计时器复盘分享。', en: 'Timer replay shares.' } },
+  { n: 249, slug: 'friend_chat', desc: { zh: '新增好友私聊会话与文字消息，包含递增序号、双方已读位置、发送幂等约束和账号注销级联删除。', en: 'Add private friend conversations and text messages with ordered sequences, participant read positions, send idempotency, and cascades on account deletion.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

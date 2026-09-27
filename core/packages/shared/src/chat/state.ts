@@ -1,7 +1,7 @@
 import {
   CHAT_LIST_POLL_MS, CHAT_MESSAGE_LIMIT, CHAT_POLL_MS, ChatError, compareChatSequence, normalizeChatBody,
   type ChatClient, type ChatConversation, type ChatErrorCode, type ChatMessage, type ChatMessagesPage,
-} from './contract.js';
+} from './contract';
 
 export interface PendingChatMessage { clientMessageId: string; body: string; status: 'sending' | 'failed' }
 export interface ChatSnapshot {

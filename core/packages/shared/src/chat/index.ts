@@ -1,3 +1,3 @@
-export * from './contract.js';
-export * from './client.js';
-export * from './state.js';
+export * from './contract';
+export * from './client';
+export * from './state';
