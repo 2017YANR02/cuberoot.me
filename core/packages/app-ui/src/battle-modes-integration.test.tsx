@@ -290,7 +290,7 @@ describe('installed app multiplayer modes', () => {
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
     expect(preview?.querySelector<HTMLElement>('[role="img"]')
       ?.dataset.previewVisualization).toBe('3D');
-    const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
+    const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
     expect(surface.classList.contains('timing-surface--net')).toBe(true);
     expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);
     expect(surface.querySelector<HTMLElement>('.timer-display')!.style.fontSize)
@@ -471,7 +471,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
 
-    const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
+    const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
     expect(surface.getAttribute('role')).toBeNull();
     expect(surface.querySelector('.timer-display')?.textContent).toBe('3');
   });

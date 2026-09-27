@@ -4,6 +4,14 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：移除宿主旧布局覆盖与私有联机控件
+
+- Web 联机项目菜单、打乱预览改用 `TimerPuzzlePicker` / `TimerCubePreview`。App 联机不再包私有高度容器，两端都由 `TimerRoomLayout` 和 `TimingSurface layout="net"` 决定排布。
+- 移除 Web 旧 side/grid 根类以及已退役的打乱、项目、罚时、房间名单/大厅/历史/设置 CSS；App 移除对应私有面板和按钮规则。公共多人打乱字号、来源行字号和菜单层级由 timer-ui 控制，Web 不再覆盖 local surface 的共享尺寸。
+- 测试改为读取 timer-ui 公共 CSS 子入口，移除两条已消除的 shared root-import baseline（196→194），没有放宽架构边界。App 的设备/对战/视口/来源定向 55 项、Web UI 与复盘入口定向验证通过，三包 typecheck 通过。
+- `test:recon-ground-truth` 当前 4 条 confirmed 通过。Mobile production build 和 `cap:sync:android` 已完成；未安装 APK、未运行浏览器或真机视觉矩阵。App 全量测试发现一项独立可复现的 `real-scramble-retry` malformed-response 用例失败（断言固定 6 次微任务后应已有退避任务）；没有改动其实现或放宽测试，不能声称全量绿。
+- 本轮收敛公共展示的重复实现；Web 视频/PK、多路 BLE、WCA 多人来源和复盘入口等仍取决于宿主能力，不给 App 添加无效控件。单人完整设置/专项/复盘能力与五端真机矩阵仍按下方 PAR 条目跟踪，整体继续 `ACTIVE — NOT COMPLETE`。
+
 ### 2026-09-27：共享弹窗关闭契约
 
 - Web 原有 `useModalDismiss` / `useModalBackdrop` 实现迁入 timer-ui，原 hooks 路径只重导出。共享房间/多人历史/设置及邀请二维码窗口复用同一遮罩手势，内部拖出和 pointercancel 不误关；保持原有 Escape、焦点与宿主 Back 行为。

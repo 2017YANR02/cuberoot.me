@@ -1328,7 +1328,7 @@ export function NetBattleMode({
           setRenameOpen(true);
         } : undefined} />}
       >
-        <div className="battle-net-timer">
+        <>
           <TimingSurface
             layout="net"
             ariaLabel={copy.timer}
@@ -1396,7 +1396,7 @@ export function NetBattleMode({
               onPenalty={(penalty) => { if (currentResult) void capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty).then(applyRoom).catch(fail); }}
               onNext={advanceRound} />
           </TimingSurface>
-        </div>
+        </>
       </TimerRoomLayout>
       {error && <p aria-live="assertive" className="battle-error">{error}</p>}
       {qrOpen && (

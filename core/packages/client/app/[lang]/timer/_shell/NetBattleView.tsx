@@ -34,8 +34,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useQueryState } from 'nuqs';
 
 
-import { SegmentTime, TimerTopbar, TimerDeviceCenter, TimerRoomRoundStatus, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
-import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
+import { TimerPuzzlePicker, TimerCubePreview, SegmentTime, TimerTopbar, TimerDeviceCenter, TimerRoomRoundStatus, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { TIMER_EVENT_PICKER_GROUPS, SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
@@ -54,9 +54,7 @@ import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
 import { formatMs } from '../_lib/stats';
 import type { EventId, Solve } from '../_lib/types';
-import { CubePreview } from '../_lib/cube';
 import CubeRootLogo from '@/components/CubeRootLogo';
-import { EventSelect } from '@/components/EventSelect';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
 import { getPerson, type WcaPersonLite } from '@/lib/wca-api';
@@ -1222,16 +1220,22 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const video = useVideoRoom(room?.code ?? null, pid, playerToken, room?.videoGeneration ?? null);
 
   // ── 渲染 ────────────────────────────────────────────────────
+  const eventPickerGroups = TIMER_EVENT_PICKER_GROUPS.map(group => ({
+    id: group.id, label: [group.nameEn, group.nameZh][Number(isZh)],
+    items: group.items.filter(item => NET_SELECTOR_EVENTS.includes(item.id)).map(item => ({
+      id: item.id, label: [item.nameEn, item.nameZh][Number(isZh)],
+      iconClass: item.iconClass, textLabel: item.textLabel,
+    })),
+  }));
   const topbar = (
     <TimerTopbar brand={<CubeRootLogo className="shell-topbar-brand" />} controls={<>
         {room && (
           // 我的项目:本轮未交卷时可改(每人独立选,默认房间项目);已交卷则显示为静态芯片。
           !myResult && inRoundRoster ? (
             <span className="net-my-event" title={tr({ zh: '选择你的项目', en: 'Choose your event' })}>
-              <EventSelect
-                events={NET_SELECTOR_EVENTS}
-                value={netEventToSelectorId(myEvent)}
-                onChange={changeEvent}
+              <TimerPuzzlePicker dataNoTimer groups={eventPickerGroups} puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })}
+                selectedEvent={netEventToSelectorId(myEvent)}
+                onSelect={changeEvent}
               />
             </span>
           ) : (
@@ -1255,8 +1259,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       {topbar}
       <div className="shell-main">
         <TimerRoomLobby language={isZh ? 'zh' : 'en'} identity={identityField}
-          event={<EventSelect events={NET_SELECTOR_EVENTS} value={netEventToSelectorId(lobbyEvent)}
-            onChange={(id) => { const event = selectorIdToNetEvent(id); if (event) setLobbyEvent(event); }} />}
+          event={<TimerPuzzlePicker dataNoTimer groups={eventPickerGroups} puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })} selectedEvent={netEventToSelectorId(lobbyEvent)}
+            disabled={busy} onSelect={(id) => { const event = selectorIdToNetEvent(id); if (event) setLobbyEvent(event); }} />}
           code={joinCode} busy={busy} error={err} inviteCode={roomParam?.trim().toUpperCase()}
           onCodeChange={setJoinCode} onJoin={doJoin} onCreate={doCreate}
           onCancelInvite={() => { setErr(null); void setRoomParam(null); }} onExit={onExitNet} />
@@ -1329,18 +1333,12 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const ownDefaultCubeSlot = (cubeConnected || cubeStartedRef.current) && ownLiveCubeSlot
     ? ownLiveCubeSlot
     : settings.showCubePreview && myScr ? (
-        <div className="shell-corner-net">
-          <div className="shell-corner-net-imgbox">
-            <div className="shell-corner-net-img">
-              <CubePreview
+        <TimerCubePreview
                 event={myEvent as EventId}
                 scramble={myScr}
-                height="var(--cube-h)"
+                height="var(--timer-cube-h)"
                 visualization={settings.prefer3D ? '3D' : '2D'}
-              />
-            </div>
-          </div>
-        </div>
+               fill ariaLabel={tr({ en: 'Scramble preview', zh: '打乱预览' })} />
       ) : undefined;
   const selectedRemoteId = viewedCubePlayerId && viewedCubePlayerId !== pid
     ? viewedCubePlayerId

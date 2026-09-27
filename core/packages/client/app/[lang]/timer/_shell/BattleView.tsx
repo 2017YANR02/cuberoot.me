@@ -731,8 +731,6 @@ export default function BattleView({ playerCount, playersControl, presenceContro
     return <div className="battle-container" />;
   }
 
-  // 3/4 人:田字格布局(忽略 versus/side,横竖屏同构)
-  const isGrid = mode === '1v1' && playerCount > 2;
   // 同排一对玩家 puzzle 相同时(同 puzzle 打乱本就相等,见 loadNewScramble),
   // 只在两格之间渲染一份共享打乱;不同项目则各自沿用格内打乱(共享行塌陷)。
   const bottomSame = store.puzzleIds[0] === store.puzzleIds[1];
@@ -746,7 +744,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   return (
     <BattleCubesProvider>
       <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
-      <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
+      <div className="battle-container">
 
       <TimerStageLayout devices={mode === '1v1' ? <BattleDeviceCenter /> : undefined}>
       {mode === '1v1' && <TimerBattleLayoutControls

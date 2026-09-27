@@ -35,14 +35,8 @@
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
 /* ── Main column ────────────────────────────────────────── */
 
-/* Scramble slot — sits in the sub stack directly above the cube net. */
-/* /timer 打乱展示尺寸令牌 —— 共享 TimerScrambleStrip 消费 --timer-scramble-fs；单人
-   (.timing-surface 内 .scramble-strip /
-   .shell-corner-net / .scramble-src)与双人 side 共享打乱(battle.css 的
-   .side-scramble-row)引用同一套尺寸的唯一真源。两棵子树不共享 DOM 祖先(TimerShell
-   只渲染其一),故挂在各自根(.timing-surface / .battle-container)上,一处改两边一起变。 */
-.timing-surface:not(.timing-surface--solo),
-.battle-container {
+/* Default surfaces outside the shared solo/net/local layouts. */
+.timing-surface:not(.timing-surface--solo):not(.timing-surface--net):not(.timing-surface--local) {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
   --timer-cube-h: min(30vw, 26dvh, 260px);
   /* 来源行(国旗 + 比赛名 + 项目 + 轮次)是背景信息,不该跟打乱公式抢视线 —— 取原先 24px 的一半。 */
@@ -57,17 +51,12 @@
 /* Legacy battle RAF writes remain attached to this inner node; geometry and
    typography now come from the shared local TimingSurface. */
 .battle-container .timer-battle-cell > .player-area { padding: 0; gap: 0; }
-.battle-container .middle-bar { justify-content: center; }
-.battle-container .middle-actions { flex-wrap: wrap; justify-content: center; }
 .player-area .timing-surface--local .time-display {
   font-size: inherit;
   font-family: inherit;
   line-height: inherit;
   min-height: 0;
   margin-top: 0;
-}
-.player-area .timing-surface--local .scramble-text {
-  font-size: calc(var(--timer-scramble-fs) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
 }
 
 .shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }

@@ -120,9 +120,7 @@ describe('installed App GAN lifecycle integration', () => {
       selector.dispatchEvent(new Event('change', { bubbles: true }));
     });
     await settle();
-    const details = container.querySelector<HTMLDetailsElement>('.battle-local-tools details')!;
-    details.open = true;
-    await act(async () => details.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.timer-stage-footer .shell-device-center-trigger')!.click());
     // Both the chooser and the connected shortcut lead to the same operation dialog.
     await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
