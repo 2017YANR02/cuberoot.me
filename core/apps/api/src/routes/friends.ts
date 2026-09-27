@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { friendPair as pair, friendUser as toUser, lockFriendUsers as lockedUsers, removeAcceptedFriend, type FriendUserRow as UserRow } from '../utils/friend_relationships.js';
 import type postgres from 'postgres';
 import { sql } from '../db/connection.js';
 import { ownerKey } from '../utils/account.js';
@@ -10,15 +11,6 @@ import { checkRateLimit } from '../utils/recon_helpers.js';
 export const friendRoutes = new Hono();
 
 type Tx = postgres.TransactionSql;
-
-interface UserRow {
-  id: number | string;
-  display_name: string;
-  avatar_url: string | null;
-  avatar_source: 'auto' | 'clawd' | 'upload';
-  avatar_preset: string | null;
-  wca_id: string | null;
-}
 
 interface FriendshipRow {
   status: 'pending' | 'accepted';
@@ -57,10 +49,6 @@ function parseUserId(value: unknown): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-function pair(a: number, b: number): [number, number] {
-  return a < b ? [a, b] : [b, a];
-}
-
 async function revokeVaultAccess(tx: Tx, userId: number, targetUserId: number): Promise<void> {
   await tx`
     DELETE FROM vault_item_access access
@@ -82,36 +70,8 @@ function parseWcaContact(value: unknown): WcaContactInput | null {
   return { wcaId, name, countryIso2 };
 }
 
-function toUser(row: UserRow) {
-  return {
-    userId: Number(row.id),
-    name: row.display_name,
-    avatarUrl: row.avatar_url,
-    avatarSource: row.avatar_source,
-    avatarPreset: row.avatar_preset,
-    wcaId: row.wca_id,
-  };
-}
-
 function keyFor(row: UserRow): string {
   return ownerKey(Number(row.id), row.wca_id);
-}
-
-async function lockedUsers(
-  tx: Tx,
-  currentUserId: number,
-  targetUserId: number,
-): Promise<{ current: UserRow; target: UserRow } | null> {
-  const rows = await tx<UserRow[]>`
-    SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id
-      FROM app_users
-     WHERE id = ANY(${[currentUserId, targetUserId]}::bigint[])
-     ORDER BY id
-     FOR UPDATE`;
-  if (rows.length !== 2) return null;
-  const current = rows.find((row) => Number(row.id) === currentUserId);
-  const target = rows.find((row) => Number(row.id) === targetUserId);
-  return current && target ? { current, target } : null;
 }
 
 async function requestFriend(tx: Tx, currentUserId: number, targetUserId: number): Promise<FriendRequestResult> {
@@ -419,13 +379,8 @@ friendRoutes.delete('/friends/:userId', async (c) => {
   const userId = await requireAppUserId(c);
   const targetUserId = parseUserId(c.req.param('userId'));
   if (!targetUserId || targetUserId === userId) return c.json({ error: 'invalid userId' }, 400);
-  const [low, high] = pair(userId, targetUserId);
   const removed = await sql.begin(async (tx) => {
-    const rows = await tx`
-      DELETE FROM user_friendships
-       WHERE user_low_id = ${low} AND user_high_id = ${high} AND status = 'accepted'
-       RETURNING user_low_id`;
-    if (!rows.length) return false;
+    if (!await removeAcceptedFriend(tx, userId, targetUserId)) return false;
     await revokeVaultAccess(tx, userId, targetUserId);
     return true;
   });

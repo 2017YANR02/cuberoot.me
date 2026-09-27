@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "23c26c5c3e06de0b046a49bacf4a294efddb2969ba418de1360f941ac02468cb", "reason": "复核比赛访问从局部接口凭证改为全站图片验证码：验证码只签发页面与受保护数据访问凭证，不改变登录、绑定、合并、退出、注销或管理员权限；OAuth 回调、API 客户端和静态资源保持可达。同步核对本次 timer 与桌面智能魔方改动没有改变安装版登录生命周期，短信、微信、第三方身份及账号会话流程保持不变。"}
+{"fingerprint": "82bf9fb2dcd482e266b1431649997c30c56b26644bdb379cdcea887273615c09", "reason": "新增共享好友聊天：复用平台账号鉴权，退出和切账号清理内存聊天状态；注销删除该账号参与的整段聊天及双方提醒，已同步注销说明；聊天归属数据沿用 linked_data 合并限制。登录、身份绑定、验证码、安装版会话及管理员权限流程不变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -273,6 +273,7 @@ export default function AuthFlowPage() {
         ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
+        <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天数据仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat data follows the existing linked_data rule for unsupported account merges.')}</li>
         <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
         <li>{t('私有数据按清单删除，包括私人宠物领养与养成记录；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data, including private pet adoptions and care records, is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
         <li>{t('不能声称远程清空所有手机。App 本地记录、导出备份和其他设备副本需要另外管理；注销的是 CubeRoot 账号，不是 Apple、Google 或微信账号。', 'This does not remotely wipe every phone. Manage local App records, exported backups, and other device copies separately. You delete CubeRoot, not your Apple, Google, or WeChat account.')}</li>
