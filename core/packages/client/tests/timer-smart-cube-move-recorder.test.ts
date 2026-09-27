@@ -36,16 +36,18 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(solo).toContain('smartCubeAttemptProducerRef.current.recordMove(');
     expect(solo).not.toMatch(/movesRef|solveStartTsRef/);
     for (const source of [net]) {
-      expect(source).toContain('new TimerSmartCubeMoveRecorder()');
-      expect(source).toContain('moveRecorderRef.current.begin(');
-      expect(source).toContain('moveRecorderRef.current.record(');
+      expect(source).toContain('new SmartCubeAttemptProducer()');
+      expect(source).toContain('attemptProducerRef.current.begin(');
+      expect(source).toContain('attemptProducerRef.current.recordMove(');
+      expect(source).toContain('attemptProducerRef.current.finishSolveFields(');
       expect(source).not.toMatch(/movesRef|solveStartTsRef/);
     }
 
     const local = readFileSync(new URL('../app/[lang]/timer/_battle/useBattleCubes.ts', import.meta.url), 'utf8');
-    expect(local).toContain('new TimerSmartCubeMoveRecorder()');
-    expect(local).toContain('recorder.begin(p.startTime)');
-    expect(local).toContain('recorder.record(move, ts)');
+    expect(local).toContain('new SmartCubeAttemptProducer()');
+    expect(local).toContain('recorder.begin(p.startTime,');
+    expect(local).toContain('recorder.recordMove(move, ts)');
+    expect(local).toContain('recorder.finishSolveFields(solve)');
     expect(local).not.toMatch(/moves:\s*\[|t0:/);
   });
 
