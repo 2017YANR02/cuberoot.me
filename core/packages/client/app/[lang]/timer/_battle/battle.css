@@ -1,30 +1,9 @@
-/* ==========================================================
-   1v1 Battle Timer — 对战计时器样式
-   1:1 迁移自 battle/battle.css
-   NOTE: 纯黑背景，AMOLED 友好，与原始 Flutter 应用一致
-
-   ⚠️ 本文件在 /timer 上「无条件加载」:TimerShell 静态 import BattleView,
-   BattleView import 本文件,所以单人模式(?players=1)也会带上它,而且排在
-   timer.css / shell.css 之后 —— 任何裸类名规则都会作用到单人 DOM 上并在同特异性下取胜。
-   .history-panel / .scramble-text 等曾因此漏进单人(单人打乱一度选不中,因为基类带
-   user-select:none)。新增只属于对战的规则一律写成 :where(.battle-container) .foo:
-   用 :where() 而非直接加前缀,是因为它不贡献特异性,本文件内部的层叠关系保持不变
-   (例:.vs-history-panel .history-header 排在裸 .history-header 之前,抬特异性会被反超)。
-   守卫:tests/battle-css-no-solo-leak.test.ts
-   ========================================================== */
-
-/* NOTE: JetBrains Mono 的 @import 已删 —— 1:1 迁移时抄过来的,全站没有一条 font-family
-   引用它,却让每次 /timer 加载(单人也算)多发一条 render-blocking 的 fonts.googleapis.com
-   跨域请求。字体一律自托管,见 app/fonts.css。 */
-
+/* Web battle adapters: backgrounds, RAF readouts and legacy history. Layout and shared controls live in timer-ui. */
 :root {
     --scramble-scale: 1;
 }
 
 .battle-container {
-    /* dual-theme: chrome 走 token,跟随用户主题翻 light/dark(见 globals.css 已移除
-       的 html:has(.battle-container) dark-lock)。每位玩家自定义背景(--bg-color/
-       --bg-image)只盖 .player-area::before,不影响 chrome token。 */
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--background);
     color: var(--foreground);
@@ -35,19 +14,13 @@
     -webkit-user-select: none;
     -webkit-touch-callout: none;
     overflow: hidden;
-    /* NOTE: 禁止下拉刷新和弹性滚动 */
     overscroll-behavior: none;
     touch-action: none;
-    /* NOTE: iPhone 安全区 — 填充刘海/灵动岛两侧空白 */
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
 }
-
-/* ==========================================================
-   布局：上下两个玩家区域 + 中间栏
-   ========================================================== */
 
 .player-area {
     flex: 1;
@@ -59,13 +32,11 @@
     touch-action: none;
     -webkit-tap-highlight-color: transparent;
     cursor: pointer;
-    padding: 6px 12px;
+    padding: 0;
     transition: background-color 0.2s ease;
-    gap: 4px;
-    overflow: hidden;
+    gap: 0;
+    overflow: visible;
 }
-
-/* NOTE: 伪元素渲染自定义背景，opacity 独立于前景文字 */
 .player-area::before {
     content: '';
     position: absolute;
@@ -78,19 +49,13 @@
     z-index: 0;
     pointer-events: none;
 }
-
-/* NOTE: 确保前景内容在伪元素之上 */
 .player-area>* {
     position: relative;
     z-index: 1;
 }
-
-/* NOTE: Player 2（上方）旋转 180°，让对面的人能看 */
 .player-area.rotated {
     transform: rotate(180deg);
 }
-
-/* NOTE: 红灯/绿灯状态 — 通过时间文字颜色传达，不覆盖自定义背景 */
 .player-area.state-ready .time-display {
     color: var(--timer-holding);
 }
@@ -98,111 +63,9 @@
 .player-area.state-can-start .time-display {
     color: var(--timer-ready);
 }
-
-/* NOTE: 观察中时间显示为警示色（warn token） */
 .player-area.state-inspecting .time-display {
     color: var(--signal-warning);
 }
-
-/* ==========================================================
-   打乱公式显示
-   ========================================================== */
-
-:where(.battle-container) .scramble-text {
-    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-    font-size: calc(clamp(0.8rem, 2.8vw, 1.1rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
-    color: var(--scramble-color, var(--player-text-color, var(--scramble-fg)));
-    text-shadow: none;
-    text-align: center;
-    line-height: 1.35;
-    padding: 0 12px;
-    word-break: break-word;
-    max-width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 1;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-:where(.battle-container) .scramble-text.hidden {
-    visibility: hidden;
-}
-
-:where(.battle-container) .scramble-text .loading {
-    color: var(--faint-foreground);
-    font-style: italic;
-}
-
-/* timer-battle: the scramble text is click-to-copy, so it must capture taps
-   (base .scramble-text is pointer-events:none so taps fall through to arm the
-   timer). */
-.player-area .scramble-text {
-    pointer-events: auto;
-    cursor: pointer;
-}
-.player-area .scramble-text.hidden {
-    pointer-events: none;
-}
-
-.battle-scramble-copied {
-    text-align: center;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent);
-    margin-top: 4px;
-    pointer-events: none;
-}
-
-/* WCA 来源行(真实比赛打乱):国旗 + 比赛名 · 轮次/组别,打乱图正下方居中。 */
-.battle-scramble-src {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 6px;
-    font-size: 11px;
-    color: var(--muted-foreground);
-    pointer-events: none;
-}
-.battle-src-flag {
-    width: 18px;
-    height: 12px;
-    flex: none;
-    object-fit: cover;
-    border-radius: 2px;
-}
-.battle-src-name { color: var(--foreground); }
-.battle-src-meta { color: var(--faint-foreground); }
-
-/* NOTE: 打乱图居中显示 */
-.scramble-img {
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-}
-
-.scramble-svg-img {
-    max-height: clamp(140px, 22vh, 260px);
-    max-width: 90%;
-    object-fit: contain;
-    opacity: 0.9;
-    /* 无背景框 — 与单人模式打乱预览一致(去掉了 background / border-radius / padding). */
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-drag: none;
-}
-
-.player-area .scramble-img.hidden {
-    visibility: hidden;
-}
-
-/* ==========================================================
-   计时数字
-   ========================================================== */
 
 .time-display {
     margin-top: 14px;
@@ -228,8 +91,6 @@
     min-height: 1.2em;
     letter-spacing: 0.02em;
 }
-
-/* NOTE: 专门针对冒号的样式 */
 .time-display .colon,
 .ao5-display .colon {
     font-family: 'Roboto Mono', monospace;
@@ -244,8 +105,6 @@
     vertical-align: 0.3em;
     margin-left: 2px;
 }
-
-/* ===== 状态颜色变化 ===== */
 .time-display.penalty-plus2 {
     color: var(--timer-plus2);
 }
@@ -253,335 +112,6 @@
 .time-display.penalty-dnf {
     color: var(--timer-dnf);
 }
-
-/* ==========================================================
-   罚时按钮组
-   ========================================================== */
-
-.penalty-dropdown {
-    position: relative;
-    display: inline-flex;
-    touch-action: manipulation;
-    margin-top: -4px;
-}
-
-.penalty-trigger {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border-radius: 6px;
-    border: 1px solid var(--border-strong);
-    background: transparent;
-    color: var(--muted-foreground);
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    touch-action: manipulation;
-    white-space: nowrap;
-}
-
-.penalty-trigger:not(:disabled):hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    color: var(--foreground);
-    border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
-}
-
-.penalty-trigger:disabled {
-    opacity: 0.35;
-    cursor: default;
-}
-
-.penalty-arrow {
-    font-size: 0.6rem;
-    transition: transform 0.15s ease;
-    display: inline-block;
-    opacity: 0.6;
-}
-
-.penalty-dropdown.open .penalty-arrow {
-    transform: rotate(180deg);
-}
-
-.penalty-menu {
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%) scaleY(0.8);
-    transform-origin: bottom center;
-    min-width: 100px;
-    background: var(--popover);
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    padding: 4px 0;
-    list-style: none;
-    z-index: 50;
-    box-shadow: 0 -4px 16px color-mix(in srgb, var(--foreground) 24%, transparent);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.penalty-dropdown.open .penalty-menu {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateX(-50%) scaleY(1);
-}
-
-.penalty-option {
-    padding: 8px 18px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--muted-foreground);
-    cursor: pointer;
-    text-align: center;
-    transition: background 0.1s ease;
-    touch-action: manipulation;
-}
-
-.penalty-option:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    color: var(--foreground);
-}
-
-.penalty-option.active {
-    color: var(--foreground);
-    background: color-mix(in srgb, var(--foreground) 12%, transparent);
-}
-
-/* NOTE: 中间栏内的罚时菜单 — 向下弹出（朝各自玩家区域）
-   player2 score-section 已 rotate(180°)，top 在屏幕上=朝上=朝玩家2区域 ✓
-   player1 score-section 未旋转，top=朝下=朝玩家1区域 ✓ */
-.middle-bar .penalty-menu {
-    bottom: auto;
-    top: calc(100% + 6px);
-    transform-origin: top center;
-    transform: translateX(-50%) scaleY(0.8);
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--foreground) 24%, transparent);
-}
-
-.middle-bar .penalty-dropdown.open .penalty-menu {
-    transform: translateX(-50%) scaleY(1);
-}
-
-/* ==========================================================
-   中间栏 trigger 按钮(BattleEventPicker) + 全区域 overlay
-   ========================================================== */
-
-.event-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--border-default);
-    background: transparent;
-    color: var(--muted-foreground);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-    transition: background 0.15s ease, border-color 0.15s ease;
-    font-size: 18px;
-    line-height: 1;
-}
-
-.event-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    border-color: var(--border-strong);
-}
-
-.event-btn.active {
-    background: var(--accent-soft);
-    border-color: var(--accent);
-    color: var(--foreground);
-}
-
-/* NOTE: 非 WCA 项目(FTO/Kilo)无 cubing-icon → 落回简写文字 chip */
-.event-fallback {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    color: inherit;
-    line-height: 1;
-}
-
-/* NOTE: 全 player-area 覆盖的项目网格 — 自适应,不会溢出
-   inset:0 充满父级 .player-area;rotation 由父级继承(player2 已 rotate 180°) */
-.event-overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 5;
-    background: color-mix(in srgb, var(--background) 92%, transparent);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    overflow: auto;
-}
-
-.event-overlay-grid {
-    display: grid;
-    /* NOTE: auto-fit + minmax 自适应任意宽度 */
-    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
-    gap: 8px;
-    width: 100%;
-    max-width: 720px;
-    align-content: center;
-}
-
-.event-overlay-item {
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-default);
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--foreground) 4%, transparent);
-    color: var(--muted-foreground);
-    cursor: pointer;
-    padding: 0;
-    transition: background 0.1s ease, border-color 0.1s ease, color 0.1s ease;
-    touch-action: manipulation;
-    font-family: inherit;
-    line-height: 1;
-}
-
-.event-overlay-item .cubing-icon {
-    font-size: 38px;
-}
-
-/* NOTE: FTO / Kilominx 等无 cubing-icon 的项目,fallback 文字占图标位 */
-.event-overlay-item .event-fallback {
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-}
-
-.event-overlay-item:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    border-color: var(--border-strong);
-    color: var(--foreground);
-}
-
-.event-overlay-item.active {
-    background: var(--signal-success);
-    border-color: var(--signal-success);
-    color: var(--accent-foreground);
-}
-
-@media (max-width: 480px) {
-    .event-overlay {
-        padding: 8px;
-    }
-    .event-overlay-grid {
-        grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
-        gap: 6px;
-    }
-    .event-overlay-item .cubing-icon {
-        font-size: 30px;
-    }
-    .event-overlay-item .event-fallback {
-        font-size: 0.85rem;
-    }
-}
-
-/* ==========================================================
-   中间栏（比分 + 设置）
-   ========================================================== */
-
-.middle-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 4px 12px;
-    --bar-color-left: var(--background);
-    --bar-color-right: var(--background);
-    --bar-text-color: var(--muted-foreground);
-    background: linear-gradient(to right, var(--bar-color-left), var(--background), var(--bar-color-right));
-    border-top: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
-    min-height: 40px;
-    flex-shrink: 0;
-    color: var(--bar-text-color);
-}
-
-.score-section {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.9rem;
-    color: var(--muted-foreground);
-}
-
-/* NOTE: Player 2（左侧）的比分旋转 180° — 仅 versus 布局（side 布局不旋转） */
-.middle-bar>.score-section:first-child {
-    transform: rotate(180deg);
-}
-
-.side-layout .middle-bar>.score-section:first-child {
-    transform: none;
-}
-
-.score-value {
-    font-family: 'Segment7Standard', monospace;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--foreground);
-    font-variant-numeric: tabular-nums;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-}
-
-.score-trophy {
-    color: var(--signal-success);
-    margin: 0 4px;
-    vertical-align: middle;
-}
-
-.middle-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.middle-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: none;
-    background: transparent;
-    color: var(--muted-foreground);
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.middle-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 8%, transparent);
-    color: var(--foreground);
-}
-
-/* 窄屏:键盘提示已隐藏,整条工具栏收紧 —— versus 布局这一条必须保持单行
-   (夹在上下两个旋转的玩家区中间,无法换行),故逐项压缩内边距/间距而非堆叠。 */
-@media (max-width: 480px) {
-    .middle-bar { padding: 4px 6px; }
-    .middle-actions { gap: 4px; }
-    .score-section { gap: 4px; }
-    /* 罚时下拉是单行最大头(默认 padding 6/14 + gap 8),收紧但保持 >=32px 触摸目标 */
-    .penalty-trigger { padding: 5px 8px; gap: 4px; font-size: 0.8rem; }
-    /* logo 在分隔条上纯装饰(导航走全站桌宠 + 浏览器返回),窄屏隐藏给比分/控件让位。
-       提高特异性盖过其后的基础 .middle-logo{display:flex},否则被源码顺序反超。 */
-    .middle-bar .middle-logo { display: none; }
-}
-
-/* NOTE: CubeRoot logo — 限制尺寸与中间按钮对齐 */
 .middle-logo {
     display: flex;
     align-items: center;
@@ -591,83 +121,6 @@
 .middle-logo img {
     height: 24px;
     width: auto;
-}
-
-/* ==========================================================
-   设置弹窗（模态面板）
-   ========================================================== */
-
-.settings-overlay {
-    position: fixed;
-    inset: 0;
-    background: transparent;
-    z-index: 200;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-}
-
-.settings-overlay.visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.settings-panel {
-    background: var(--card);
-    color: var(--card-foreground);
-    padding: 24px;
-    position: fixed;
-    inset: 0;
-    overflow-y: auto;
-    transform: translateY(100%);
-    transition: transform 0.25s ease;
-    border-top: 1px solid var(--border-default);
-}
-
-.settings-overlay.visible .settings-panel {
-    transform: translateY(0);
-}
-
-.settings-header-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    margin-bottom: 16px;
-}
-
-.settings-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    text-align: center;
-    color: var(--foreground);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.settings-x-btn {
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    color: var(--muted-foreground);
-    width: 44px;
-    height: 44px;
-    font-size: 1rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.2s, color 0.2s;
-}
-
-.settings-x-btn:hover {
-    border-color: var(--destructive);
-    color: var(--destructive);
 }
 
 .settings-group {
@@ -708,56 +161,9 @@
     text-align: right;
 }
 
-/* --- 项目选择网格 --- */
-.puzzle-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
-}
-
-.puzzle-btn {
-    padding: 8px 4px;
-    border-radius: 6px;
-    border: 1px solid var(--border-default);
-    background: transparent;
-    color: var(--muted-foreground);
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: center;
-    /* NOTE: 图标 + 名称两行布局 */
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    line-height: 1.1;
-}
-
-.puzzle-btn .cubing-icon {
-    font-size: 22px;
-}
-
-.puzzle-btn .event-fallback {
-    font-size: 0.75rem;
-    font-weight: 700;
-}
-
 .puzzle-btn-name {
     font-size: 0.75rem;
 }
-
-.puzzle-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-
-.puzzle-btn.active {
-    background: var(--accent-soft);
-    border-color: var(--accent);
-    color: var(--foreground);
-}
-
-/* --- 设置操作按钮 --- */
 .settings-action-btn {
     width: 100%;
     padding: 10px;
@@ -788,8 +194,6 @@
 .settings-action-btn.danger:hover {
     background: color-mix(in srgb, var(--destructive) 12%, transparent);
 }
-
-/* Toggle Switch 样式 */
 .switch {
     position: relative;
     display: inline-block;
@@ -834,8 +238,6 @@ input:checked+.slider {
 input:checked+.slider:before {
     transform: translateX(24px);
 }
-
-/* NOTE: 设置面板下拉选择框 */
 .settings-select {
     background: var(--background);
     color: var(--foreground);
@@ -850,8 +252,6 @@ input:checked+.slider:before {
 .settings-select:focus {
     border-color: var(--accent);
 }
-
-/* NOTE: 设置面板按键自定义按钮 —— 点击进入录键态,按下任意键即绑定(Esc 取消) */
 .key-bind-btn {
     background: var(--background);
     color: var(--foreground);
@@ -872,19 +272,6 @@ input:checked+.slider:before {
     border-color: var(--accent);
     color: var(--accent);
 }
-
-/* ==========================================================
-   Solo 模式布局
-   ========================================================== */
-
-/* NOTE: Solo 模式隐藏比分区 */
-body.solo .score-section {
-    display: none;
-}
-
-/* ==========================================================
-   底部导航栏（Solo 模式）
-   ========================================================== */
 
 .bottom-nav {
     display: none;
@@ -925,27 +312,13 @@ body.solo .bottom-nav {
 .nav-tab.active {
     color: var(--accent);
 }
-
-/* NOTE: 计时 tab 图标已是 lucide SVG(currentColor),颜色直接跟 .nav-tab/.active
-   走 token — 不再用旧 PNG 的 grayscale/hue-rotate filter(那会盖掉 token 色)。 */
 .nav-tab .nav-tab-icon,
 .nav-tab svg {
     transition: color 0.15s;
 }
-
-/* NOTE: Solo 模式下为底部导航栏留出空间 */
 body.solo .player-area {
     padding-bottom: 56px;
 }
-
-/* NOTE: Solo 模式下打乱图往上推 */
-body.solo .scramble-img {
-    bottom: 64px;
-}
-
-/* ==========================================================
-   里程碑 Toast
-   ========================================================== */
 
 .milestone-toast {
     position: fixed;
@@ -972,14 +345,9 @@ body.solo .scramble-img {
     opacity: 1;
 }
 
-/* ==========================================================
-   历史面板（Solo 模式）
-   ========================================================== */
-
 .history-overlay {
     position: fixed;
     inset: 0;
-    /* NOTE: 全屏铺满,跟随主题背景 */
     background: var(--background);
     z-index: 200;
     display: flex;
@@ -997,32 +365,12 @@ body.solo .scramble-img {
 :where(.battle-container) .history-panel {
     background: var(--background);
     width: 100%;
-    /* NOTE: 全屏高度，底部为导航栏留 56px 空间 */
     height: calc(100vh - 56px);
     height: calc(100dvh - 56px);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
 }
-
-/* NOTE: 1v1 对战历史面板 — 全屏（无底部导航栏） */
-.vs-history-panel {
-    height: 100vh;
-    height: 100dvh;
-    padding-bottom: env(safe-area-inset-bottom);
-}
-
-.vs-history-panel .history-header {
-    position: relative;
-}
-
-.vs-history-panel .settings-x-btn {
-    position: static;
-    transform: none;
-    margin-left: auto;
-}
-
-/* NOTE: 对战轮次行 — 各方成绩(2~4 人) vs 串联 + 日期 + 删除 */
 .vs-round {
     display: flex;
     align-items: stretch;
@@ -1041,7 +389,7 @@ body.solo .scramble-img {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 0;
 }
 
 .vs-round-summary {
@@ -1094,223 +442,11 @@ body.solo .scramble-img {
     color: var(--faint-foreground);
     text-align: center;
 }
-
-/* NOTE: history 行内的 EventIcon — 标识双方不同项目 */
 .vs-event-mini {
     font-size: 14px;
     margin-right: 4px;
     vertical-align: middle;
     opacity: 0.85;
-}
-
-/* ==========================================================
-   单轮详情弹窗(RoundDetailModal)
-   ========================================================== */
-
-.round-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: color-mix(in srgb, var(--foreground) 55%, transparent);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding:
-        max(16px, env(safe-area-inset-top))
-        max(16px, env(safe-area-inset-right))
-        max(16px, env(safe-area-inset-bottom))
-        max(16px, env(safe-area-inset-left));
-}
-
-.round-modal {
-    background: var(--popover);
-    color: var(--popover-foreground);
-    border: 1px solid var(--border-default);
-    border-radius: 12px;
-    width: 100%;
-    max-width: 560px;
-    max-height: 90vh;
-    max-height: 90dvh;
-    overflow-y: auto;
-    box-shadow: 0 8px 32px color-mix(in srgb, var(--foreground) 28%, transparent);
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px 18px 18px;
-}
-
-.round-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.round-modal-title {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--foreground);
-}
-
-.round-modal-date {
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--muted-foreground);
-}
-
-/* NOTE: 2 人一行两块;3/4 人 flex wrap 成 2x2 */
-.round-modal-times {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 12px;
-    background: color-mix(in srgb, var(--foreground) 4%, transparent);
-    border-radius: 8px;
-}
-
-.round-modal-times .round-modal-side {
-    flex: 1 1 40%;
-    min-width: 0;
-}
-
-.round-modal-side {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-
-.round-modal-pid {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.85rem;
-    color: var(--muted-foreground);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-}
-
-.round-modal-event {
-    font-size: 18px;
-}
-
-.round-modal-time-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.round-modal-time {
-    font-family: 'Segment7Standard', monospace;
-    font-size: 2.4rem;
-    font-weight: 700;
-    color: var(--foreground);
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-}
-
-.round-modal-side.is-winner .round-modal-time {
-    color: var(--signal-success);
-}
-
-.round-modal-penalty {
-    font-size: 0.75rem;
-    color: var(--signal-warning);
-    font-weight: 700;
-}
-
-.round-modal-scrambles {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.round-modal-scramble-block {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.round-modal-scramble-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--muted-foreground);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.round-modal-scramble-text {
-    font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-    font-size: 1rem;
-    line-height: 1.5;
-    color: var(--foreground);
-    word-break: break-word;
-    background: color-mix(in srgb, var(--foreground) 4%, transparent);
-    border: 1px solid var(--border-default);
-    border-radius: 6px;
-    padding: 10px 12px;
-    user-select: text;
-}
-
-.round-modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-}
-
-.round-modal-delete {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--destructive) 35%, transparent);
-    color: var(--destructive);
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-}
-
-.round-modal-delete:hover {
-    background: color-mix(in srgb, var(--destructive) 12%, transparent);
-    border-color: var(--destructive);
-}
-
-/* 复盘入口。只在这一轮 P1 真的有转动流(智能魔方拧的)时才渲染 —— 出现本身就是
-   「这一把能看」的信号,所以带文字而不是只留一个图标让人猜。 */
-.round-modal-recon {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
-    color: var(--accent);
-    min-height: 44px;
-    padding: 0 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.15s, border-color 0.15s;
-}
-
-.round-modal-recon:hover {
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    border-color: var(--accent);
-}
-
-@media (max-width: 480px) {
-    .round-modal-time {
-        font-size: 2rem;
-    }
-    .round-modal-scramble-text {
-        font-size: 0.9rem;
-    }
 }
 
 :where(.battle-container) .history-header {
@@ -1450,9 +586,6 @@ body.solo .scramble-img {
     color: var(--destructive);
     background: color-mix(in srgb, var(--destructive) 12%, transparent);
 }
-
-/* 复盘入口。只在这一把真的有转动流(智能魔方拧的)时才渲染,所以不做常显 ——
-   出现本身就是「这一把能看」的信号。样式跟着删除按钮走,一行里两个图标才是一套。 */
 .h-recon {
     background: none;
     border: none;
@@ -1477,8 +610,6 @@ body.solo .scramble-img {
     color: var(--accent);
     background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
-
-/* NOTE: 触屏没 hover,直接保持比较亮 */
 @media (hover: none) and (pointer: coarse) {
     .h-delete,
     .h-recon {
@@ -1503,10 +634,6 @@ body.solo .scramble-img {
     white-space: nowrap;
     flex-shrink: 0;
 }
-
-/* ==========================================================
-   趋势图
-   ========================================================== */
 
 .trend-chart {
     padding: 8px 12px;
@@ -1533,10 +660,6 @@ body.solo .scramble-img {
     gap: 3px;
 }
 
-/* ==========================================================
-   百分位 chip 栏（sub-X %）
-   ========================================================== */
-
 .subx-chip-bar {
     display: flex;
     flex-wrap: wrap;
@@ -1556,10 +679,6 @@ body.solo .scramble-img {
     letter-spacing: 0.5px;
     white-space: nowrap;
 }
-
-/* ==========================================================
-   Ao 详情弹窗
-   ========================================================== */
 
 .ao-detail-overlay {
     position: fixed;
@@ -1651,10 +770,6 @@ body.solo .scramble-img {
     }
 }
 
-/* ==========================================================
-   历史面板功能按钮行
-   ========================================================== */
-
 .history-tools {
     display: flex;
     flex-wrap: wrap;
@@ -1685,10 +800,6 @@ body.solo .scramble-img {
 .history-tool-btn:active {
     background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
-
-/* ==========================================================
-   背景/打乱文字颜色控件
-   ========================================================== */
 
 .bg-row {
     display: flex;
@@ -1769,10 +880,6 @@ body.solo .scramble-img {
     text-align: center;
     flex-basis: 100%;
 }
-
-/* ==========================================================
-   分布图 + 模拟赛 + 热力图 + Session 概览
-   ========================================================== */
 
 .segmented-btn {
     padding: 4px 14px;
@@ -1857,284 +964,11 @@ body.solo .scramble-img {
     max-width: 100%;
     height: auto;
 }
-
-/* ==========================================================
-   Side-by-Side 布局（并排模式）
-   NOTE: 两人坐在相邻位置，共享打乱，左右各一个计时区
-   ========================================================== */
-
-/* 容器切换为网格布局(2 行:中间栏 auto + 双人区 1fr)。同项目共享打乱时加
-   .side-shared 变体:插一条 auto 打乱行 + 一条 0.5fr 底部留白(空 track),把共享
-   打乱从贴底抬到「中部靠下」。不共享时保持 2 行,双人区占满全高不留空。 */
-.battle-container.side-layout {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    grid-template-columns: 1fr;
-}
-.battle-container.side-layout.side-shared {
-    grid-template-rows: auto 1fr auto 0.5fr;
-}
-
-/* 左右双人区域容器 */
-.side-players {
-    display: flex;
-    flex-direction: row;
-    flex: 1;
-    min-height: 0;
-    position: relative;
-}
-
-/* side 布局下 player-area 样式覆盖 */
-.side-layout .player-area {
-    flex: 1;
-    min-width: 0;
-}
-
-/* side 布局下时间字体缩小以适应横屏 */
-.side-layout .time-display {
-    font-size: clamp(2.5rem, 10vw, 5rem);
-}
-
-/* 中间分隔线 — 细微的竖直线 */
-.side-divider {
-    width: 1px;
-    background: linear-gradient(to bottom,
-            transparent 5%,
-            color-mix(in srgb, var(--foreground) 15%, transparent) 20%,
-            color-mix(in srgb, var(--foreground) 15%, transparent) 80%,
-            transparent 95%);
-    align-self: stretch;
-    flex-shrink: 0;
-}
-
-/* side 同项目:两侧共用一份打乱,全宽居中的一条打乱行(时间在上、打乱在下,与旧
-   side 每侧「时间上/打乱下」的纵向次序一致);由 .side-shared 的 0.5fr 底部留白
-   托到「中部靠下」。ScramblePanel 在 .player-area 之外,基类 .scramble-text 是
-   pointer-events:none(避免误触发计时),这里恢复可点复制(同 .grid-scramble-row)。 */
-.side-scramble-row {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    padding: 8px 16px;
-    overflow: hidden;
-}
-/* 共享打乱的文字 / 图 / 来源行尺寸对齐单人模式:三项尺寸都引用 shell.css 定义的
-   共享令牌(--timer-scramble-fs / --timer-cube-h / --timer-scramble-src-fs),单人和
-   这里同一真源,改一处两边一起变(默认 battle 尺寸偏小,这里放大到 solo 一致)。 */
-.side-scramble-row .scramble-text {
-    font-size: calc(var(--timer-scramble-fs) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
-    line-height: 1.5;
-    pointer-events: auto;
-    cursor: pointer;
-}
-.side-scramble-row .scramble-text.hidden {
-    pointer-events: none;
-}
-.side-scramble-row .scramble-svg-img {
-    max-height: var(--timer-cube-h);
-}
-.side-scramble-row .battle-scramble-src {
-    font-size: var(--timer-scramble-src-fs);
-    gap: 6px;
-    margin-top: 8px;
-}
-.side-scramble-row .battle-src-flag {
-    width: 1.25em;
-    height: 0.9em;
-}
-
-/* side 布局中间栏保持水平 */
-.side-layout .middle-bar {
-    border-top: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
-}
-
-/* side 布局下 ao5 显示适配 */
-.side-layout .ao5-display {
-    font-size: clamp(0.65rem, 2vw, 0.85rem);
-}
-
-/* ==========================================================
-   BattleView 集成新增样式 (Phase 3 — 对战并入 /timer)
-   author token-clean / 适配旧 dark-locked 表;旧 .event-overlay-grid
-   被 WcaEventSelector 替代,这里只管包裹尺寸。
-   ========================================================== */
-
-/* WcaEventSelector overlay 包裹:充满 .player-area,居中可滚动 */
-.event-overlay-inner {
-    width: 100%;
-    max-width: 760px;
-    max-height: 100%;
-    overflow: auto;
-    display: flex;
-    justify-content: center;
-}
-.event-overlay-inner .wca-stats-event-selector {
-    justify-content: center;
-}
-
-/* Solo 底部导航里的模式 pill(solo 无 middle-bar,pill 塞这里) */
 .bottom-nav-mode {
     display: flex;
     align-items: center;
     padding: 0 8px;
 }
-
-/* ==========================================================
-   多人田字格布局(3/4 人)
-   上排 cell 旋转 180° 面向对面;3 人时上排单 cell 跨两列。
-   middle-bar 夹在两排之间,跨两列只留中间操作区。
-   ========================================================== */
-
-.battle-container.grid-layout {
-    display: flex;
-    flex-direction: column;
-}
-
-/* 上/下两半各占一个 1fr 行,中间 middle-bar 一条 auto 行 —— 3/4 人共用同一模板,
-   半区内部（.grid-half）自己决定要不要一条共享打乱行,外层永远只看到两个等高的 1fr。 */
-.grid-players {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-rows: 1fr auto 1fr;
-}
-
-/* 半区:共享打乱行(auto,可 :empty 塌陷)+ 双格区(flex:1,内部再分两列)。
-   包一层是关键 —— 若把 auto 打乱行和 1fr 双格行都摊在外层 grid 当独立 track,
-   两条 1fr track 本身仍会被等分,但「有共享打乱」的那一半会比「没有」的那一半多出
-   打乱行的高度,导致视觉上四象限面积不等;包成 flex 列后整半区只贡献一个 1fr。 */
-.grid-half {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-}
-.grid-half-players {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-}
-
-/* 竖向分隔线:画在左列格的内缘(= 屏幕中线)。
-   不用「整格铺底色 + column-gap 露缝」方案——那样 1fr 行高取整时会在行缝渗出
-   一条横线(旋转的共享打乱行边界尤其明显)。改成只给左列格加边框,行方向不留底色。
-   下排左格未旋转:右缘 = 屏幕中线 → border-right。
-   上排左格随整格翻转 180°,local 左缘才是屏幕中线 → border-left(否则线跑到屏幕最左)。 */
-.grid-half-players > .player-area.grid-col-left:not(.rotated) {
-    border-right: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-}
-.grid-half-players > .player-area.grid-col-left.rotated {
-    border-left: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
-}
-
-/* 共享打乱行:同排一对玩家共用一条打乱(文字 + 图 + 来源)。
-   未共享(不同项目)时不渲染 ScramblePanel → :empty → 零高塌陷,保持半区高度稳定。 */
-.grid-scramble-row {
-    min-width: 0;
-    min-height: 0;
-    background: var(--background);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    overflow: hidden;
-}
-.grid-scramble-row:not(:empty) {
-    padding: 6px 12px 10px;
-}
-.grid-scramble-row.rotated {
-    transform: rotate(180deg);
-}
-/* 共享行不在 .player-area 内,基类 .scramble-text 是 pointer-events:none;这里恢复可点(复制) */
-.grid-scramble-row .scramble-text {
-    pointer-events: auto;
-    cursor: pointer;
-}
-.grid-scramble-row .scramble-text.hidden {
-    pointer-events: none;
-}
-
-.grid-layout .player-area {
-    min-width: 0;
-    min-height: 0;
-    background: var(--background);
-    /* cell-controls(absolute 顶部)让位 */
-    padding-top: 48px;
-}
-
-.grid-players > .middle-bar {
-    justify-content: center;
-}
-
-/* 象限内字号 / 打乱图整体收一档 */
-.grid-layout .time-display {
-    font-size: clamp(2rem, 9vw, 4rem);
-    margin-top: 6px;
-}
-
-.grid-layout .scramble-text {
-    font-size: calc(clamp(1.05rem, 2.7vw, 1.5rem) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
-}
-
-.grid-layout .scramble-svg-img {
-    max-height: clamp(120px, 22.5vh, 270px);
-}
-
-/* 多人田字格:来源行(国旗 + 比赛名 · 轮次/组别)同打乱一起放大约 1.5x */
-.grid-layout .battle-scramble-src {
-    font-size: 16.5px;
-    gap: 9px;
-    margin-top: 8px;
-}
-.grid-layout .battle-src-flag {
-    width: 27px;
-    height: 18px;
-}
-
-/* cell 控制条:比分 + 项目 + 罚时(随 cell 旋转朝向各自玩家)。
-   落在本格「玩家视角」的上角:成对格靠外侧上角(corner-left/right),
-   3 人上排单格居中(corner-center)。旋转格的 local 上角即对面玩家的上角。 */
-.cell-controls {
-    position: absolute;
-    top: 6px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    z-index: 2;
-}
-.cell-controls.corner-left {
-    left: 10px;
-    right: auto;
-}
-.cell-controls.corner-right {
-    right: 10px;
-    left: auto;
-}
-.cell-controls.corner-center {
-    left: 0;
-    right: 0;
-    justify-content: center;
-}
-
-@media (max-width: 480px) {
-    .grid-layout .player-area {
-        padding-top: 44px;
-    }
-    .grid-layout .time-display {
-        font-size: clamp(1.6rem, 10vw, 3rem);
-    }
-}
-
-/* ==========================================================
-   智能魔方(设置面板里的组 + 格子里的状态点)
-   ========================================================== */
-
-/* 逐人连接按钮。已连时按品牌名显示,所以宽度贴合内容而不钉死。 */
 .bc-connect-btn {
     display: inline-flex;
     align-items: center;
@@ -2155,39 +989,12 @@ body.solo .scramble-img {
     color: var(--signal-success);
 }
 
-/* 「轮到谁」:选项恒 ≤4 且要横着比,所以用 chip 而不是下拉。 */
-.bc-holder-row {
-    display: flex;
-    gap: 6px;
-}
-.bc-holder-btn {
-    background: var(--background);
-    color: var(--muted-foreground);
-    border: 1px solid var(--border-strong);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-.bc-holder-btn:hover {
-    background: color-mix(in srgb, var(--foreground) 5%, transparent);
-}
-.bc-holder-btn.is-holder {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
 .bc-hint {
     color: var(--faint-foreground);
     font-size: 0.8rem;
     line-height: 1.5;
     padding-top: 4px;
 }
-
-/* 状态点。挂在已有的比分/控制条上(middle-bar 的 score-section、田字格的
-   cell-controls),不另起浮层 —— 放进 player-area 的正常流会压在打乱那行上。
-   轮到本人时用品牌色,否则弱化 —— 只说这两件事。 */
 .bc-dot {
     display: inline-flex;
     align-items: center;
@@ -2197,42 +1004,21 @@ body.solo .scramble-img {
 .bc-dot.is-holding {
     color: var(--accent);
 }
-
-/* 连接弹窗的层。弹窗是从设置面板里点出来的,而 .timer-modal-overlay 是 z-index 100
-   (timer.css)、这里的 .settings-overlay 是 200 且整屏不透明 —— 同一个层叠上下文里
-   200 直接盖死 100,点「连接」就成了没反应。这一层把弹窗整个抬到面板之上。 */
 .bc-modal-layer {
     position: fixed;
     inset: 0;
     z-index: 300;
 }
-
-/* Site scenery: preserve the original surface when scenery is disabled. */
 @media screen {
   body[data-site-scenery] .battle-container {
     background: transparent;
   }
 
-  body[data-site-scenery] .penalty-menu,
-  body[data-site-scenery] .settings-panel,
-  body[data-site-scenery] .round-modal,
   body[data-site-scenery] .ao-detail-panel {
     background: var(--glass-surface-bg);
     border-color: var(--glass-border);
     box-shadow: var(--glass-shadow);
     -webkit-backdrop-filter: var(--glass-filter);
     backdrop-filter: var(--glass-filter);
-  }
-
-  body[data-site-scenery] .penalty-menu {
-    background: var(--glass-popover-bg);
-  }
-
-  body[data-site-scenery] :is(
-    .settings-panel,
-    .round-modal,
-    .ao-detail-panel
-  ) {
-    background: var(--glass-dialog-bg);
   }
 }

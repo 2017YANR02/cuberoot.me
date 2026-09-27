@@ -404,7 +404,9 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('places the shared textarea before the timer stage without horizontal overflow', () => {
-    expect(app.indexOf('mobile-scramble-source-config')).toBeLessThan(app.indexOf('mobile-timer-stage'));
+    const stage = app.slice(app.indexOf('<TimerStageLayout'), app.indexOf('</TimerStageLayout>'));
+    expect(stage).toMatch(/source=\{[\s\S]*mobile-scramble-source-config/);
+    expect(stage.indexOf('mobile-scramble-source-config')).toBeLessThan(stage.indexOf('<TimingSurface'));
     expect(css).toMatch(/\.mobile-scramble-source-config \{[^}]*min-width: 0;/s);
     expect(css).toMatch(/\.mobile-scramble-source-config \.scramble-src-manual \{[^}]*width: min\(100%, 44rem\);/s);
   });

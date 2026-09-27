@@ -1,4 +1,6 @@
 .timer-battle-layout {
+  --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
+  --timer-scramble-src-fs: 12px;
   display: flex;
   flex: 1;
   min-width: 0;
@@ -68,3 +70,6 @@
   border-color: var(--accent);
   background: var(--accent-soft);
 }
+
+/* Raise the open picker above adjacent players, including rotated cells. */
+.timer-battle-cell:has(.pp-popup) { position: relative; z-index: 2; }
