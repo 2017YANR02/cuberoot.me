@@ -1091,6 +1091,15 @@ button {
   margin: 2px 0 10px;
 }
 
+/* Keep the menu anchored to its trigger when the device center is placed in
+   normal flow. Static positioning sends bottom: 100% above the viewport. */
+.app-shell--device-footer > .shell-device-center,
+.battle-local-tools .shell-device-center,
+.battle-net-timer > .shell-device-center {
+  position: relative;
+  inset: auto;
+}
+
 .battle-local-tools .shell-device-connect,
 .battle-net-timer > .shell-device-actions .shell-device-connect {
   min-width: 0;
