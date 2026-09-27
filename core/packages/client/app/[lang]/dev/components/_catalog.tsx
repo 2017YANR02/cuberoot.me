@@ -1539,7 +1539,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerRoomPlayers',
-    import: "import { TimerRoomPlayers, TimerRoomLayout } from '@cuberoot/timer-ui';",
+    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与五端 App 共用的联机玩家列表及房间内容布局，统一房主、自己、在线状态、成绩、得分和姓名；宿主注入实况查看、改名及逐帧读数。',
     en: 'Shared online roster and room layout with host/self markers, presence, results, scores, and names. Hosts inject live-cube selection, rename, and live readout updates.',
