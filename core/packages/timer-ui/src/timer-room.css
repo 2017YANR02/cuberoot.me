@@ -53,3 +53,25 @@
 .timer-room-actions button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .timer-room-actions button:disabled { opacity: 0.5; cursor: default; }
 .timer-room-copy-status:empty { display: none; }
+.timer-room-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--modal-overlay); }
+.timer-room-dialog { width: min(100%, 720px); max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow: auto; overscroll-behavior: contain; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--card); color: var(--foreground); font-size: 14px; }
+.timer-room-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
+.timer-room-dialog-head h2 { margin: 0; font-size: 18px; }
+.timer-room-dialog-head button { display: grid; place-items: center; flex: 0 0 44px; min-height: 44px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }
+.timer-room-dialog button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-admin-list, .timer-room-history { list-style: none; padding: 0; margin: 16px 0 0; }
+.timer-room-admin-list > li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border-default); }
+.timer-room-admin-name { overflow-wrap: anywhere; }
+.timer-room-admin-name small { display: block; color: var(--muted-foreground); }
+.timer-room-standings-scroll { overflow: auto; }
+.timer-room-standings { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.timer-room-standings th, .timer-room-standings td { text-align: start; padding: 8px; border-bottom: 1px solid var(--border-default); }
+.timer-room-standings .is-me { font-weight: 700; }
+.timer-room-standings small, .timer-room-history small { color: var(--muted-foreground); font-weight: normal; }
+.timer-room-history > li { padding: 8px 0; border-top: 1px solid var(--border-default); }
+.timer-room-history h4 { margin: 8px 0; }
+.timer-room-history-event { display: flex; flex-wrap: wrap; gap: 12px; margin: 8px 0; }
+.timer-room-history-event > div { flex: 1; min-width: min(220px, 100%); }
+.timer-room-history-event p { overflow-wrap: anywhere; margin: 0 0 8px; }
+.timer-room-history-result { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
+.timer-room-history-result > span { overflow-wrap: anywhere; }
