@@ -424,7 +424,6 @@ button {
 .surface-chrome { transition: opacity 120ms ease; }
 
 .history-view,
-.settings-view,
 .recovery-screen {
   width: min(100%, 620px);
   margin: 0 auto;
@@ -438,7 +437,6 @@ button {
 }
 
 .section-heading h1,
-.settings-view > h1,
 .recovery-screen h1 {
   margin: 0;
   font-size: 2rem;
@@ -658,127 +656,6 @@ button {
 
 .settings-section {
   margin-top: 34px;
-}
-
-.settings-view .settings-section-head {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.settings-view .settings-section-head h4 {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 650;
-}
-
-.settings-view .settings-row {
-  display: flex;
-  min-width: 0;
-  min-height: 58px;
-  align-items: center;
-  gap: 16px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.settings-view .settings-row-label {
-  min-width: 0;
-  flex: 1 1 auto;
-  color: var(--foreground);
-  line-height: 1.35;
-}
-
-.settings-view .settings-row-control {
-  display: flex;
-  min-width: 0;
-  min-height: 44px;
-  flex: 0 1 auto;
-  align-items: center;
-  justify-content: flex-end;
-}
-
-.settings-view .settings-row-control > .hint:last-child:not(:first-child) {
-  min-width: 0;
-  max-width: min(40vw, 12rem);
-  margin-inline-start: 8px;
-  overflow-wrap: anywhere;
-  color: var(--muted-foreground);
-  font-size: 0.78rem;
-  line-height: 1.35;
-  text-align: end;
-  white-space: normal;
-}
-
-.settings-view .settings-row-control-input,
-.settings-view .settings-row-control-select {
-  max-width: min(48vw, 12rem);
-  min-height: 44px;
-  padding: 0 8px;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--muted-foreground);
-  font-size: 1rem;
-  text-align: right;
-}
-
-.settings-view .settings-row-control-input:focus,
-.settings-view .settings-row-control-select:focus {
-  outline: 2px solid var(--ring);
-  outline-offset: -2px;
-}
-
-@media (max-width: 540px) {
-  .settings-view .settings-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-    padding-block: 7px;
-  }
-
-  .settings-view .settings-row-control {
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-
-  .settings-view .settings-row-control > .hint:last-child:not(:first-child) {
-    max-width: 100%;
-    text-align: start;
-  }
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch {
-  width: 44px;
-  height: 44px;
-  border: 0;
-  background: transparent;
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch::before {
-  position: absolute;
-  top: 11px;
-  left: 3px;
-  width: 38px;
-  height: 22px;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  background: var(--subtle);
-  content: '';
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch.is-on::before {
-  border-color: var(--toggle-on);
-  background: var(--toggle-on);
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch .timer-222-mode-toggle-dot {
-  left: 5px;
-}
-
-.settings-view .settings-row-boolean .timer-222-mode-toggle--switch.is-on .timer-222-mode-toggle-dot {
-  left: 21px;
 }
 
 .settings-section h2 {

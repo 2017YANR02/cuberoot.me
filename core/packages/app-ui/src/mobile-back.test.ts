@@ -30,6 +30,11 @@ describe('Android Back priority', () => {
     expect(mobileBackAction({ ...BASE, phase: 'running' })).toBe('block-busy');
   });
 
+  it('dismisses settings before touching the timer or fullscreen behind it', () => {
+    expect(mobileBackAction({ ...BASE, view: 'settings', phase: 'ready', fullscreen: true }))
+      .toBe('close-subview');
+  });
+
   it('closes overlays and subviews before delegating or exiting', () => {
     expect(mobileBackAction({
       ...BASE,

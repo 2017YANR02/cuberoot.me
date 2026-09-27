@@ -158,6 +158,7 @@ import {
   type TimerPhase,
   type TimerStoreData,
   type TimerStoreSettings,
+  type TimerSettingCategoryId,
   type TimerAttemptSplitState,
   type TimerByStepsSettings,
   type TimerRandomDifficultyResult,
@@ -220,6 +221,7 @@ import {
   TimerWorkspace,
   useTimerWideLayout,
   TimerTypographySettings,
+  TimerSettingsPanel,
   TimerTimingSettingsSections,
   TimerTopbar,
   TimerWcaSourceConfig,
@@ -525,10 +527,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const recapAttemptRevisionRef = useRef(0);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [view, setView] = useState<AppView>('timer');
+  const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
   const wideLayout = useTimerWideLayout();
   const dockHistory = wideLayout && view === 'history' && timerMode === 1;
-  const timerVisible = view === 'timer' || dockHistory;
+  const timerVisible = view === 'timer' || view === 'settings' || dockHistory;
   const timerVisibleRef = useRef(timerVisible);
   timerVisibleRef.current = timerVisible;
   const [battleModeActive, setBattleModeActive] = useState(false);
@@ -2496,7 +2499,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const timer = useTimerController({
     canStart: attemptCanStart,
-    enabled: timerVisible
+    enabled: view !== 'settings' && timerVisible
       && timerMode === 1
       && timingEnabled
       && !moreOpen
@@ -2633,7 +2636,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     ? { model: smartCube.model ?? 'gan-v4', name: smartCube.deviceName }
     : undefined;
   useAutoReady({
-    enabled: timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
+    enabled: view !== 'settings' && timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
       && attemptCanStart
       && !moreOpen && !manualEntryOpen && openOverlay === null
       && (timer.machine.phase === 'idle' || timer.machine.phase === 'inspecting' || timer.machine.phase === 'stopped')
@@ -3434,7 +3437,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => {
     const modalState = () => (
-      !timerVisibleRef.current
+      viewRef.current === 'settings'
+      || !timerVisibleRef.current
       || openOverlayRef.current !== null
       || moreOpenRef.current
       || manualEntryOpenRef.current
@@ -3567,6 +3571,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     active: storeLoaded
+      && view !== 'settings'
       && timerVisible
       && openOverlay === null
       && !moreOpen
@@ -3661,7 +3666,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   return (
     <main
-      className={`app-shell app-shell--${dockHistory ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
       data-wide={wideLayout ? 'true' : undefined}
       style={shellViewport.style}
     >
@@ -3692,11 +3697,11 @@ export function App({ host }: { host: InstalledAppHost }) {
         solves={solves}
         transport={host.print}
       />
-      {!dockHistory && (view === 'history' || view === 'settings') && (
+      {!dockHistory && view === 'history' && (
         viewHeader
       )}
 
-      <TimerWorkspace className="view-container" active={timerMode === 1 && (view === 'timer' || view === 'history')} panelOpen={dockHistory}>
+      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible} panelOpen={dockHistory}>
         {timerVisible && timerMode === 1 && (
           <section className="timer-view timer-workspace-main timer-workspace-main--with-toolbar" aria-labelledby="timer-title">
             <h1 className="sr-only" id="timer-title">{copy.timer}</h1>
@@ -3717,7 +3722,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     className="timer-toolbar-icon"
                     data-no-timer
                     disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                    onClick={() => setView('settings')}
+                    onClick={() => { setSettingsCategory('timer'); setView('settings'); }}
                     type="button"
                   ><SettingsIcon aria-hidden="true" size={17} /></button>
                 </>
@@ -4555,12 +4560,18 @@ export function App({ host }: { host: InstalledAppHost }) {
         )}
 
         {view === 'settings' && (
-          <section className="settings-view" aria-labelledby="settings-title">
-            <h1 id="settings-title">{copy.settings}</h1>
+          <TimerSettingsPanel language={language} activeCategory={settingsCategory}
+            onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
+            categories={[
+              'timer', 'smart-cube', 'appearance', 'data', 'advanced',
+              ...(activeEvent !== '222' || scrambleSource === 'wca' ? ['scramble' as const] : []),
+              ...(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent) ? ['training' as const] : []),
+            ]}>
+            {settingsCategory === 'appearance' && <>
             <div className="settings-group">
-              <label className="setting-row">
-                <span>{copy.language}</span>
-                <select
+              <label className="settings-row">
+                <span className="settings-row-label">{copy.language}</span>
+                <select className="settings-row-control-select"
                   onChange={(event) => updateSettings({ language: event.target.value as SupportedLanguage })}
                   value={store!.settings.language}
                 >
@@ -4568,9 +4579,9 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <option value="zh">简体中文</option>
                 </select>
               </label>
-              <label className="setting-row">
-                <span>{copy.theme}</span>
-                <select
+              <label className="settings-row">
+                <span className="settings-row-label">{copy.theme}</span>
+                <select className="settings-row-control-select"
                   onChange={(event) => updateSettings({ theme: event.target.value as TimerStoreSettings['theme'] })}
                   value={store!.settings.theme}
                 >
@@ -4583,7 +4594,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
             <TimerTypographySettings value={store!.settings} language={language} onChange={updateSettings} />
 
-            <TimerTimingSettingsSections
+            </>}
+            <TimerTimingSettingsSections active={settingsCategory === 'timer'}
               localize={(value) => value[language]}
               onChange={updateSettings}
               renderBooleanControl={({ disabled, label, onChange, value }) => (
@@ -4597,6 +4609,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               value={store!.settings}
             />
 
+            {settingsCategory === 'smart-cube' && <>
             <section className="settings-section">
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => category.id === 'smart-cube')?.label[language]}</h2>
               <TimerSmartCubeSettingsFields
@@ -4609,7 +4622,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               />
             </section>
 
-            {(activeEvent !== '222' || scrambleSource === 'wca') && (
+            </>}
+            {settingsCategory === 'scramble' && (activeEvent !== '222' || scrambleSource === 'wca') && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'scramble'
@@ -4660,7 +4674,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
-            {(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
+            {settingsCategory === 'training' && (timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'training'
@@ -4682,6 +4696,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
+            {settingsCategory === 'appearance' && <>
             <section className="settings-section">
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                 category.id === 'appearance'
@@ -4701,6 +4716,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               />
             </section>
 
+            </>}
+            {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.account}</h2>
               {auth.loading ? <p>{copy.checking}</p> : auth.session ? (
@@ -4751,6 +4768,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               {auth.error ? <p role="alert">{copy.authError}</p> : null}
             </div>
 
+            </>}
+            {settingsCategory === 'data' && <>
             <div className="settings-section">
               <h2>{copy.data}</h2>
               <p>{solves.length} {copy.dataCount}</p>
@@ -4766,6 +4785,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               </div>
             </div>
 
+            </>}
+            {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.fullSite}</h2>
               <p>{copy.fullSiteDetail}</p>
@@ -4781,7 +4802,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               <a className="site-link" href="mailto:yrmfxc@gmail.com">{copy.support}</a>
               <span>{copy.version} {host.version}</span>
             </div>
-          </section>
+            </>}
+          </TimerSettingsPanel>
         )}
       </TimerWorkspace>
 

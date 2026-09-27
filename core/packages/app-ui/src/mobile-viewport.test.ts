@@ -122,7 +122,11 @@ describe('mobile visible viewport layout', () => {
     expect(css).not.toMatch(/\.battle-(?:local-tools|net-timer)[^{]*\.shell-device-center\s*\{/);
   });
 
-  it('lets shared setting hints wrap within narrow screens', () => {
-    expect(css).toMatch(/\.settings-view \.settings-row-control > \.hint:last-child:not\(:first-child\) \{[^}]*max-width: min\(40vw, 12rem\);[^}]*overflow-wrap: anywhere;[^}]*white-space: normal;/s);
+  it('uses the shared settings dialog and its wrapping rules on narrow screens', () => {
+    const settingsCss = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-settings-panel.css')), 'utf8');
+    expect(app).toContain('<TimerSettingsPanel');
+    expect(css).not.toContain('.settings-view');
+    expect(settingsCss).toContain('overflow-wrap: anywhere;');
+    expect(settingsCss).toMatch(/@media \(max-width: 720px\)[\s\S]*\.settings-category-nav \{ display: none; \}/);
   });
 });
