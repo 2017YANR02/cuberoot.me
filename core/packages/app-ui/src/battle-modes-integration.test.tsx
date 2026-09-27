@@ -385,7 +385,7 @@ describe('installed app multiplayer modes', () => {
     const at = performance.now();
     await act(async () => handlers!.onMove('F', at - 20, SOLVED_3X3));
     await act(async () => handlers!.onSolved(at - 10));
-    expect(host.querySelectorAll('.battle-penalties')).toHaveLength(0);
+    expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(0);
 
     await act(async () => handlers!.onMove('R', at, target));
     await act(async () => handlers!.onMove('U', at + 10, 'U'.repeat(54)));
@@ -394,7 +394,15 @@ describe('installed app multiplayer modes', () => {
     const holderButtons = host.querySelectorAll<HTMLButtonElement>('.battle-cube-holders button');
     expect(holderButtons[0].getAttribute('aria-pressed')).toBe('false');
     expect(holderButtons[1].getAttribute('aria-pressed')).toBe('true');
-    expect(host.querySelectorAll('.battle-penalties')).toHaveLength(1);
+    expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(1);
+    const penalties = host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button');
+    const originalSeconds = Number.parseFloat(host.querySelector('.battle-player .timer-display')!.textContent!);
+    await act(async () => penalties[1].click());
+    expect(penalties[1].getAttribute('aria-pressed')).toBe('true');
+    expect(Number.parseFloat(host.querySelector('.battle-player .timer-display')!.textContent!))
+      .toBeCloseTo(originalSeconds + 2, 3);
+    await act(async () => penalties[2].click());
+    expect(host.querySelector('.battle-player .timer-display')?.textContent).toBe('DNF');
   });
 
   it('keeps manual input disabled while the server owns a synchronized countdown', async () => {

@@ -440,25 +440,6 @@
   color: var(--foreground);
   text-align: center;
 }
-.net-penalty-row {
-  display: flex;
-  gap: 6px;
-}
-.net-pen-btn {
-  padding: 3px 12px;
-  font-size: 12px;
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.net-pen-btn:hover { background: color-mix(in srgb, var(--foreground) 6%, transparent); }
-.net-pen-btn.active {
-  border-color: var(--toggle-on);
-  color: var(--toggle-on);
-  font-weight: 700;
-}
 .net-copied {
   margin-left: 8px;
   font-size: 12px;

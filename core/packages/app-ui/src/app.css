@@ -974,8 +974,7 @@ button {
   margin: 0 auto;
 }
 
-.battle-top-actions,
-.battle-penalties {
+.battle-top-actions {
   display: flex;
   min-width: 0;
   align-items: center;
@@ -983,7 +982,6 @@ button {
 }
 
 .battle-top-actions button,
-.battle-penalties button,
 .battle-leave,
 .battle-room-header button,
 .battle-lobby button,
@@ -1143,7 +1141,6 @@ button {
 }
 
 .battle-top-actions button:disabled,
-.battle-penalties button:disabled,
 .battle-leave:disabled,
 .battle-lobby button:disabled {
   color: var(--faint-foreground);
@@ -1202,20 +1199,6 @@ button {
   color: var(--signal-success);
   font-size: 0.72rem;
   font-weight: 700;
-}
-
-.battle-penalties {
-  justify-content: center;
-  padding: 5px 6px 8px;
-}
-
-.battle-penalties button {
-  min-width: 48px;
-}
-
-.battle-penalties button[aria-pressed="true"] {
-  border-color: var(--accent);
-  background: var(--accent-soft);
 }
 
 .battle-round-status,
