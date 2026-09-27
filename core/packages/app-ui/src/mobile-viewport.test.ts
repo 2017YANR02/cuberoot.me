@@ -12,6 +12,7 @@ import {
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
 const css = readFileSync(new URL('./app.css', import.meta.url), 'utf8');
+const surfaceCss = readFileSync(new URL('../../timer-ui/src/timing-surface.css', import.meta.url), 'utf8');
 
 class ResizeTarget extends EventTarget {
   constructor(public height: number) {
@@ -104,9 +105,9 @@ describe('mobile visible viewport layout', () => {
     ]);
     expect(css).toMatch(/\.view-container \{[^}]*overflow-x: hidden;[^}]*overflow-y: auto;/s);
     expect(css).toMatch(/\.mobile-timer-stage \{[^}]*min-height: 520px;/s);
-    expect(css).toMatch(/\.mobile-timer-stage > \.timing-surface \{[^}]*min-height: min-content;/s);
+    expect(surfaceCss).toMatch(/\.timing-surface--solo \{[^}]*min-height: 280px;/s);
     expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage \{[^}]*min-height: 350px;/s);
-    expect(css).toMatch(/\.app-shell--compact-viewport \.mobile-timer-stage > \.timing-surface \{[^}]*padding: 8px 0;/s);
+    expect(css).not.toMatch(/\.mobile-timer-stage \.timing-surface-(?:core|sub)\s*\{/);
     expect(app).toContain('const primaryNavRef = useRef<HTMLElement>(null)');
     expect(app).toContain('primaryNavRef.current?.getBoundingClientRect().height ?? 0');
     expect(app).toContain('<nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>');

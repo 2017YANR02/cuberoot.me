@@ -49,7 +49,7 @@
    .shell-corner-net / .scramble-src)与双人 side 共享打乱(battle.css 的
    .side-scramble-row)引用同一套尺寸的唯一真源。两棵子树不共享 DOM 祖先(TimerShell
    只渲染其一),故挂在各自根(.timing-surface / .battle-container)上,一处改两边一起变。 */
-.timing-surface,
+.timing-surface:not(.timing-surface--solo),
 .battle-container {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
   --timer-cube-h: min(30vw, 26dvh, 260px);
@@ -57,15 +57,10 @@
   --timer-scramble-src-fs: 12px;
 }
 
-.timing-surface-scramble {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
 /* Cube net — centered directly under the digits (Battle-style). Lives inside
    the absolute .timing-surface-sub, so showing/hiding it never shifts the
    digits. */
-.timing-surface-cube { display: flex; justify-content: center; }
+
 /* --cube-h 同时驱动预览框和它常驻的占位框,所以显示/隐藏魔方时下面的内容不会跳动。 */
 .shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }
 .shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }

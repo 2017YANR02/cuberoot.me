@@ -23,6 +23,41 @@
   user-select: none;
 }
 
+/* Single-player geometry is shared by Web and every installed host. Hosts
+   supply the available viewport, navigation and safe-area containers only. */
+.timing-surface--solo {
+  --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
+  --timer-cube-h: min(30vw, 26dvh, 260px);
+  --timer-scramble-src-fs: 12px;
+  min-height: 280px;
+  flex: 1 0 280px;
+  margin: 0;
+  padding: 16px;
+}
+
+.timing-surface-scramble {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.timing-surface-cube {
+  display: flex;
+  justify-content: center;
+}
+
+.timing-surface-cube-frame {
+  --cube-h: var(--timer-cube-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: min(80vw, calc(var(--cube-h) * 1.5));
+  max-width: 100%;
+  height: var(--cube-h);
+}
+
+.timing-surface-cube-frame > * { max-width: 100%; }
+
 .timing-surface-core {
   display: flex;
   width: 100%;
