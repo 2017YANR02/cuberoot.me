@@ -22,7 +22,7 @@ beforeEach(() => {
   mocks.tx.mockImplementation(async (parts: TemplateStringsArray) => {
     const statement = parts.join('?');
     if (statement.includes('SELECT 1 FROM auth_identities')) return [];
-    if (statement.includes('SELECT id FROM auth_identities')) return [{ id: 7 }];
+    if (statement.includes('SELECT id, provider_uid FROM auth_identities')) return [{ id: 7, provider_uid: 'old@example.invalid' }];
     if (statement.includes('UPDATE app_users SET')) throw writeError;
     if (statement.includes('INSERT INTO auth_identities') || statement.includes('UPDATE auth_identities')) throw writeError;
     throw new Error(`unexpected account statement: ${statement}`);
@@ -30,6 +30,43 @@ beforeEach(() => {
 });
 
 describe('account identity storage error classification', () => {
+  it('keeps owner conflicts and same-owner additions distinct', async () => {
+    const owner = { id: 99, display_name: '', avatar_url: null, avatar_source: 'auto', avatar_preset: null,
+      wca_id: null, is_admin: false };
+    mocks.query.mockResolvedValueOnce([owner]);
+    expect(await addIdentity(42, 'email', 'new@example.invalid')).toBe('conflict');
+    expect(mocks.begin).not.toHaveBeenCalled();
+
+    mocks.query.mockResolvedValueOnce([{ ...owner, id: 42 }]);
+    expect(await addIdentity(42, 'email', 'new@example.invalid')).toBe('ok');
+    expect(mocks.begin).not.toHaveBeenCalled();
+  });
+
+  it('distinguishes an occupied email slot from another account owning the candidate', async () => {
+    mocks.tx.mockImplementation(async (parts: TemplateStringsArray) => {
+      const statement = parts.join('?');
+      if (statement.includes('SELECT 1 FROM auth_identities')) {
+        return Object.assign([{ present: 1 }], { count: 1 });
+      }
+      throw new Error(`unexpected account statement: ${statement}`);
+    });
+    expect(await addIdentity(42, 'email', 'new@example.invalid')).toBe('has-email');
+    expect(mocks.tx.mock.calls.some(([parts]) => parts.join('?').includes('INSERT INTO auth_identities'))).toBe(false);
+  });
+
+  it('treats a raced same-account replacement as idempotent and refreshes verification', async () => {
+    mocks.tx.mockImplementation(async (parts: TemplateStringsArray) => {
+      const statement = parts.join('?');
+      if (statement.includes('SELECT id, provider_uid FROM auth_identities')) {
+        return Object.assign([{ id: 7, provider_uid: 'new@example.invalid' }], { count: 1 });
+      }
+      if (statement.includes('UPDATE auth_identities')) return [];
+      throw new Error(`unexpected account statement: ${statement}`);
+    });
+    expect(await replaceCredentialIdentity(42, 'email', 'new@example.invalid')).toBe('ok');
+    expect(mocks.tx.mock.calls.some(([parts]) => parts.join('?').includes('UPDATE auth_identities'))).toBe(true);
+  });
+
   it.each([
     ['email', 'uq_auth_identity_one_email', 'has-email'],
     ['phone', 'uq_auth_identity_one_phone', 'has-phone'],
