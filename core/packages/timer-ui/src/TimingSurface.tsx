@@ -19,8 +19,8 @@ import {
 export interface TimingSurfaceProps {
   phase: 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
   colorClass: string;
-  /** Solo and online rooms share the readout scale, scramble placement and spacing. */
-  layout?: 'default' | 'solo' | 'net';
+  /** Shared mode layouts own readout scale, scramble placement and spacing. */
+  layout?: 'default' | 'solo' | 'net' | 'local';
   fontScale?: number;
   fontSize?: string;
   digits: ReactNode;
@@ -48,7 +48,7 @@ export default function TimingSurface({
   colorClass,
   layout = 'default',
   fontScale = 1,
-  fontSize = `calc(clamp(48px, 10vw, 132px) * ${fontScale})`,
+  fontSize = `calc(${layout === 'local' ? 'clamp(40px, 8vw, 80px)' : 'clamp(48px, 10vw, 132px)'} * ${fontScale})`,
   digits,
   digitsRef,
   surfaceRef,
@@ -67,11 +67,11 @@ export default function TimingSurface({
   onPointerDown,
   onPointerUp,
 }: TimingSurfaceProps) {
-  const sharedLayout = layout === 'solo' || layout === 'net';
+  const sharedLayout = layout !== 'default';
   const scrambleAbove = sharedLayout || placeScrambleAbove;
   const running = phase === 'running';
   const coreRef = useRef<HTMLDivElement>(null);
-  const readoutRef = useRef<HTMLSpanElement>(null);
+  const readoutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const surface = surfaceRef.current;
     if (!surface) return;
@@ -157,7 +157,7 @@ export default function TimingSurface({
             className={`timer-display ${colorClass}`}
             style={{ fontSize }}
           >
-            <span className="timer-display-value" ref={readoutRef}>{digits}</span>
+            <div className="timer-display-value" ref={readoutRef}>{digits}</div>
           </div>
           {digitsCorner && <div className="timer-display-corner surface-chrome">{digitsCorner}</div>}
         </div>

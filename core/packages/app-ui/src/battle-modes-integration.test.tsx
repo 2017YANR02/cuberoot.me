@@ -151,6 +151,8 @@ describe('installed app multiplayer modes', () => {
     await act(async () => Promise.resolve());
 
     expect(host.querySelectorAll('.battle-player')).toHaveLength(2);
+    expect(host.querySelectorAll('.timing-surface--local')).toHaveLength(2);
+    expect(host.querySelectorAll('.timing-surface-scramble-top')).toHaveLength(2);
     const selector = host.querySelector<HTMLSelectElement>('.shell-players-select')!;
     expect(Array.from(selector.options).map((option) => option.value)).toEqual(['1', '2', '3', '4', 'net']);
 
