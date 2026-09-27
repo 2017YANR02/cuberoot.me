@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "50975d3cf2df00b6e260e4ba5f3f2c5761acd48e940b782bcc3f26a8917c04ff", "reason": "复核短信验证码、手机号账号操作与合并事务：短信须由服务商确认接受后激活，手机号登录、绑定、换绑的验码与账号写入共用事务，手机找回验码与账号查询共用事务；正确合并码仅随成功迁移核销，失败迁移保留证明供有效期内重试。已同步中英文流程和本地验证状态；合并旧会话失效规则保持不变。"}
+{"fingerprint": "b174d5feaf1370b08dd3044b3f2d0800d1038240711f850713234c207a21f114", "reason": "复核身份绑定与邮箱手机号换绑的错误分类：仅已知的 PostgreSQL 唯一约束竞争返回身份冲突，连接、触发器或其他存储故障向上抛出；账号与验证码事务回滚，正确证明可在有效期内重试。已同步中英文绑定说明，短信发送、合并与旧会话流程未变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -219,7 +219,7 @@ export default function AuthFlowPage() {
           t('选择绑定方式 → 验证新邮箱 / 手机号，或完成第三方授权', 'Choose a method → verify the new email / phone, or authorize the provider'),
           t('邮箱或手机号绑定与换绑和验证码核销一起完成；冲突或保存失败时都不生效', 'Email or phone linking and replacement commit together with code consumption; conflicts or save failures apply neither change'),
           t('归属检查通过 → 新登录方式挂到当前账号，会员不另开一份', 'Ownership checks pass → attach the method to this account, without creating a second membership'),
-        ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link.')}</p></section>
+        ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。保存服务故障会提示重试，不会误报身份冲突。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link. A storage failure asks you to retry instead of reporting an identity conflict.')}</p></section>
         <section><h3>{t('解绑或换绑', 'Unlink or replace')}</h3><Steps items={[
           t('查看已绑定方式 → 选择解绑，或邮箱 / 手机号的换绑入口', 'Review linked methods → choose unlink, or replace the email / phone'),
           t('唯一登录方式不能解绑；换绑必须验证新凭据', 'The only sign-in method cannot be removed; replacing it requires verifying the new credential'),

@@ -37,7 +37,7 @@ beforeEach(() => {
     if (sql.includes('INSERT INTO auth_identities')) {
       if (failWrite) throw new Error('simulated credential storage failure');
       if (identities.some((entry) => entry.provider === values[1] && entry.sub === values[2])) {
-        throw Object.assign(new Error('duplicate identity'), { code: '23505' });
+        throw Object.assign(new Error('duplicate identity'), { code: '23505', constraint_name: 'uq_auth_identity' });
       }
       identities.push({ userId: Number(values[0]), provider: String(values[1]), sub: String(values[2]),
         token: values[3] as Buffer | null, keyVersion: values[4] as number | null });
