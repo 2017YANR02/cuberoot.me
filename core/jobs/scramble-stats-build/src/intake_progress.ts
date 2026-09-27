@@ -21,7 +21,7 @@ export function intakeProgress(label: string, detail: () => string = () => ''): 
     console.log(line);
   };
   render();
-  const timer = setInterval(render, 300_000);
+  const timer = setInterval(render, 30_000);
   timer.unref();
   return () => {
     clearInterval(timer);
