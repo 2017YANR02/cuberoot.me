@@ -43,7 +43,7 @@ describe('Mobile capability surface guard', () => {
 
   it('keeps the installed timer surface aligned with the shared Web layout contract', () => {
     expect(app).toContain('<TimingSurface');
-    expect(app).toContain('scrambleAbove');
+    expect(app).toContain('layout="solo"');
     expect(app).toContain('<TimerScrambleStrip');
     expect(app).toContain('<LiveCubeState');
     expect(app).toContain('<TimerSmartCubeDeviceModal');

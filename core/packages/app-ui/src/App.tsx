@@ -3886,38 +3886,33 @@ export function App({ host }: { host: InstalledAppHost }) {
                 ariaLabel={copy.timer}
                 colorClass={timerColorClass}
                 cornerSlot={smartCube.phase === 'connected' ? (
-                  <div className="mobile-cube-preview mobile-live-cube" data-no-timer>
-                    <div className="timer-live-cube">
-                      <LiveCubeState
-                        algAnchored={smartCubeAnchor.algAnchored}
-                        calibrateToken={smartCubeCalibration}
-                        facelets={smartCube.facelets || null}
-                        language={language}
-                        mode={store!.settings.liveCubeView}
-                        moves={[...smartCubeAnchor.moves]}
-                        onViewChange={setSmartCubeRenderedView}
-                        useGyro={store!.settings.gyroEnabled}
-                        quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
-                      />
-                    </div>
-                  </div>
-                ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
-                  <div className="mobile-cube-preview" data-no-timer>
-                    <TimerCubePreview
-                      ariaLabel={copy.cubeState}
-                      event={activeEvent}
-                      fill
-                      scramble={scramble}
-                      visualization={store!.settings.prefer3D ? '3D' : '2D'}
+                  <div className="timer-live-cube">
+                    <LiveCubeState
+                      algAnchored={smartCubeAnchor.algAnchored}
+                      calibrateToken={smartCubeCalibration}
+                      facelets={smartCube.facelets || null}
+                      language={language}
+                      mode={store!.settings.liveCubeView}
+                      moves={[...smartCubeAnchor.moves]}
+                      onViewChange={setSmartCubeRenderedView}
+                      useGyro={store!.settings.gyroEnabled}
+                      quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                     />
                   </div>
+                ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
+                  <TimerCubePreview
+                    ariaLabel={copy.cubeState}
+                    event={activeEvent}
+                    fill
+                    scramble={scramble}
+                    visualization={store!.settings.prefer3D ? '3D' : '2D'}
+                  />
                 ) : undefined}
                 digits={<SegmentTime text={timerText} />}
-                fontSize="clamp(4.8rem, 24vw, 8.5rem)"
+                layout="solo"
                 interactive={scrambleReady}
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
-                scrambleAbove
                 scrambleSlot={(
                   <TimerScrambleStrip
                     copiedLabel={copy.copied}
