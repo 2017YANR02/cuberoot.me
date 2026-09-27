@@ -4124,6 +4124,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (
           <LocalBattleMode
+            onSettingsChange={updateSettings}
             onOverlayCloseChange={onBattleOverlayCloseChange}
             copy={copy}
             eventGroups={eventPickerGroups}

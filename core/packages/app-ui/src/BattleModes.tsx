@@ -16,7 +16,6 @@ import {
   initialLocalBattleState,
   isNetAdmin,
   isLocalBattleScrambleHidden,
-  isLocalBattleAssignableKey,
   isNetBattleRoomCode,
   isNetRoundParticipant,
   localBattlePlayerForKey,
@@ -49,6 +48,7 @@ import {
   type Penalty,
   type SolveResult,
   type TimerScramblePreviewSettings,
+  type TimerStoreSettings,
 } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
@@ -72,6 +72,10 @@ import {
   TimerBattleLayout,
   TimerBattlePlayer,
   TimerBattleHistory,
+  TimerBattleToolbar,
+  TimerStageLayout,
+  TimerBattleSettings,
+  TimerBattleCubeControls,
   TimerBattleLayoutControls,
   TimingSurface,
   TimerPenaltyActions,
@@ -184,6 +188,7 @@ function nextLocalBattleRoundId(): string {
 }
 
 export interface LocalBattleModeProps extends BattleModeBaseProps {
+  onSettingsChange?(patch: Partial<TimerStoreSettings>): void;
   scramblePreviewSettings?: TimerScramblePreviewSettings;
   onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
   playerCount: 2 | 3 | 4;
@@ -213,6 +218,7 @@ export function LocalBattleMode({
   onModeChange,
   onOverlayCloseChange,
   onSmartCubeHandlersChange,
+  onSettingsChange,
   playerCount,
   precision,
   runningPrecision,
@@ -224,19 +230,23 @@ export function LocalBattleMode({
   const [winners, setWinners] = useState<number[]>([]);
   const [rounds, setRounds] = useState<LocalBattleRound[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => {
+    if (!settingsOpen) return;
+    onOverlayCloseChange?.(() => setSettingsOpen(false));
+    return () => onOverlayCloseChange?.(null);
+  }, [settingsOpen, onOverlayCloseChange]);
   const [playerKeys, setPlayerKeys] = useState<string[]>(() => [...LOCAL_BATTLE_DEFAULT_PLAYER_KEYS]);
-  const [recordingPlayer, setRecordingPlayer] = useState<number | null>(null);
   const [storageError, setStorageError] = useState('');
   const [failedScrambleEvents, setFailedScrambleEvents] = useState<Set<EventId>>(() => new Set());
   const [cubeHolder, setCubeHolder] = useState(0);
   const [layout, setLayout] = useState<'side' | 'versus'>('versus');
   const [flipTopRow, setFlipTopRow] = useState(true);
   const inputBlockedRef = useRef(inputBlocked);
-  inputBlockedRef.current = inputBlocked || historyOpen;
+  inputBlockedRef.current = inputBlocked || historyOpen || settingsOpen;
   const stateRef = useRef(state);
   const roundsRef = useRef(rounds);
   const playerKeysRef = useRef(playerKeys);
-  const recordingPlayerRef = useRef(recordingPlayer);
   const cubeHolderRef = useRef(cubeHolder);
   const roundIdRef = useRef(nextLocalBattleRoundId());
   const roundTimestampRef = useRef(Date.now());
@@ -250,7 +260,6 @@ export function LocalBattleMode({
   stateRef.current = state;
   roundsRef.current = rounds;
   playerKeysRef.current = playerKeys;
-  recordingPlayerRef.current = recordingPlayer;
   cubeHolderRef.current = cubeHolder;
   const visiblePlayers = state.players.slice(0, state.playerCount);
   const active = visiblePlayers.some((player) => (
@@ -383,6 +392,7 @@ export function LocalBattleMode({
     if (!onSmartCubeHandlersChange) return undefined;
     const handlers: BattleSmartCubeHandlers = {
       onMove(_move, timestamp, facelets) {
+        if (inputBlockedRef.current) return;
         const holder = cubeHolderRef.current;
         const player = stateRef.current.players[holder];
         if (!player || player.id >= stateRef.current.playerCount
@@ -436,31 +446,16 @@ export function LocalBattleMode({
   }, [visiblePlayers]);
 
   useEffect(() => {
-    if (!inputBlocked && !historyOpen) return;
+    if (!inputBlocked && !historyOpen && !settingsOpen) return;
     for (let playerId = 0; playerId < stateRef.current.playerCount; playerId += 1) {
       dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
     }
-  }, [dispatch, inputBlocked, historyOpen]);
+  }, [dispatch, inputBlocked, historyOpen, settingsOpen]);
 
   useEffect(() => {
     const down = new Set<string>();
     const onKeyDown = (event: KeyboardEvent) => {
       if (inputBlockedRef.current || event.repeat || down.has(event.key)) return;
-      const recording = recordingPlayerRef.current;
-      if (recording !== null) {
-        event.preventDefault();
-        if (event.key === 'Escape') {
-          setRecordingPlayer(null);
-          return;
-        }
-        if (!isLocalBattleAssignableKey(event.key)) return;
-        const nextKeys = assignLocalBattlePlayerKey(playerKeysRef.current, recording, event.key);
-        playerKeysRef.current = nextKeys;
-        setPlayerKeys(nextKeys);
-        setRecordingPlayer(null);
-        void keyStoreRef.current?.save(nextKeys).catch(() => setStorageError(copy.actionFailed));
-        return;
-      }
       const playerId = localBattlePlayerForKey(playerKeysRef.current, event.key);
       if (playerId === undefined || playerId >= stateRef.current.playerCount) return;
       if (event.target instanceof HTMLElement && (
@@ -576,29 +571,14 @@ export function LocalBattleMode({
 
   return (
     <section className="battle-mode battle-mode--local" aria-label={copy.battleLocalTitle}>
-      <TimerTopbar
-        controls={(
-          <TimerPlayersSelect
-            ariaLabel={copy.onePlayer}
-            disabled={active}
-            onlineLabel={copy.online}
-            onChange={changeMode}
-            playerLabel={copy.players}
-            value={state.playerCount as 2 | 3 | 4}
-          />
-        )}
-        actions={(
-          <div className="battle-top-actions" data-no-timer>
-            <button disabled={active || visiblePlayers.some((player) => !player.scramble)} onClick={startAll} type="button">
-              {copy.battleStartTogether}
-            </button>
-            <button disabled={active} onClick={() => setHistoryOpen(true)} type="button">{copy.battleHistory}</button>
-            <button disabled={active} onClick={nextRound} type="button">{copy.battleNextRound}</button>
-          </div>
-        )}
-      />
+      <TimerStageLayout devices={smartCube && deviceControls}>
       <TimerBattleLayoutControls playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow} language={language} onLayoutChange={setLayout} onFlipChange={setFlipTopRow} />
-      <TimerBattleLayout playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow}
+      <TimerBattleLayout middle={<TimerBattleToolbar language={language} disabled={active} onHistory={() => setHistoryOpen(true)}
+        onSettings={() => setSettingsOpen(true)} onNext={nextRound} onStart={startAll}
+        startDisabled={visiblePlayers.some((player) => !player.scramble)}
+        controls={<TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online}
+          onChange={changeMode} playerLabel={copy.players} value={state.playerCount as 2 | 3 | 4} />}
+      />} playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow}
         bottomScramble={sharedScramble([0, 1])}
         topScramble={state.playerCount === 4 ? sharedScramble([2, 3]) : undefined}
         renderPlayer={(playerId, cell) => {
@@ -692,50 +672,27 @@ export function LocalBattleMode({
           );
         }}
       />
+      </TimerStageLayout>
       {visiblePlayers.every((player) => player.result !== null) && (
         <p aria-live="polite" className="battle-round-status">{copy.battleAllFinished}</p>
       )}
       <div className="battle-local-tools" data-no-timer>
-        {smartCube && (
-          <details>
-            <summary>{copy.battleSmartCube}</summary>
-            <p>{copy.battleSharedCubeDetail}</p>
-            {deviceControls}
-            <div className="battle-cube-holders">
-              {visiblePlayers.map((player) => (
-                <button
-                  aria-pressed={cubeHolder === player.id}
-                  disabled={active || !timerSupportsLocalBattleSmartCube(player.event) || player.result !== null}
-                  key={player.id}
-                  onClick={() => setCubeHolder(player.id)}
-                  type="button"
-                >{copy.battleCubeHolder(player.id + 1)}</button>
-              ))}
-            </div>
-            {visiblePlayers.some((player) => !timerSupportsLocalBattleSmartCube(player.event)) && (
-              <small>{copy.battleSmartCubeOnly333}</small>
-            )}
-          </details>
-        )}
-        <details>
-          <summary>{copy.battleKeyBindings}</summary>
-          <div className="battle-key-grid">
-            {visiblePlayers.map((player) => (
-              <button
-                aria-pressed={recordingPlayer === player.id}
-                disabled={active}
-                key={player.id}
-                onClick={() => setRecordingPlayer((current) => current === player.id ? null : player.id)}
-                type="button"
-              >
-                <span>{copy.battlePlayer(player.id + 1)}</span>
-                <kbd>{recordingPlayer === player.id
-                  ? copy.battlePressKey
-                  : copy.battleKeyName(playerKeys[player.id] ?? '')}</kbd>
-              </button>
-            ))}
-          </div>
-        </details>
+        {settingsOpen && <TimerBattleSettings language={language} onClose={() => setSettingsOpen(false)}
+          keys={playerKeys.slice(0, state.playerCount)}
+          onKeyChange={(playerId, key) => {
+            const next = assignLocalBattlePlayerKey(playerKeysRef.current, playerId, key);
+            playerKeysRef.current = next; setPlayerKeys(next);
+            void keyStoreRef.current?.save(next).catch(() => setStorageError(copy.actionFailed));
+          }}
+          precision={onSettingsChange ? { value: precision, options: [2, 3], onChange: (value) => onSettingsChange({ precision: value as 2 | 3 }) } : undefined}
+          inspection={onSettingsChange ? { value: inspectionSec, onChange: (value) => onSettingsChange({ inspectionSec: value }) } : undefined}
+          hold={onSettingsChange ? { value: holdMs, onChange: (value) => onSettingsChange({ holdMs: value }) } : undefined}
+          preview={onSettingsChange ? { value: scramblePreviewSettings?.showCubePreview ?? false, onChange: (value) => onSettingsChange({ showCubePreview: value }) } : undefined}
+          hideTime={onSettingsChange ? { value: hideTime, onChange: (value) => onSettingsChange({ hideTime: value }) } : undefined}
+          devices={smartCube && <TimerBattleCubeControls language={language} mode="shared" holder={cubeHolder}
+            onHolderChange={setCubeHolder} deviceControl={() => deviceControls}
+            players={visiblePlayers.map((player) => ({ id: player.id, disabled: active || !timerSupportsLocalBattleSmartCube(player.event) || player.result !== null }))} />}
+        />}
         {historyOpen && <TimerBattleHistory rounds={rounds} playerCount={state.playerCount} language={language} precision={precision}
           onClose={() => setHistoryOpen(false)} onBackChange={onOverlayCloseChange}
           warning={storageError && <p role="alert">{storageError}</p>}

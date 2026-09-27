@@ -49,7 +49,7 @@ it('shares orientation adaptation and manual layout controls without touching ti
     expect(onLayoutChange).toHaveBeenLastCalledWith('side');
     await act(async () => host.querySelector('button')!.click());
     expect(onLayoutChange).toHaveBeenLastCalledWith('versus');
-    await act(async () => host.querySelector('input')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('[role="switch"]')!.click());
     expect(onFlipChange).toHaveBeenCalledWith(false);
   } finally {
     await act(async () => root.unmount());
