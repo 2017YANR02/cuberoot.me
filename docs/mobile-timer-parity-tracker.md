@@ -2,7 +2,16 @@
 
 状态：`ACTIVE — NOT COMPLETE`
 
-最后更新：2026-09-22
+最后更新：2026-09-27
+
+### 2026-09-27：智能魔方 attempt 成绩字段同源
+
+- Web `SoloView` 与五端 `App` 的动作、设备、陀螺仪和 CFOP 分段写入规则统一由 shared `SmartCubeAttemptProducer.finishSolveFields` 生成；宿主仍负责起停、成绩上下文、仓储与保存失败重试。不改变持久化 schema。
+- producer 复制起表时的设备信息；未开始、结束或 reset 后拒收姿态；没有动作流时不生成设备/姿态/分段字段。动作时间使用设备起点，姿态时间继续由宿主转换为相对时间，不能混用两种时钟。
+- 本轮验证：shared build、client/app-ui typecheck、producer + Web 起表回归 9 项、全部 confirmed reconstruction ground-truth 4 项通过。App 定向 12 项中 11 项通过，设备弹窗测试因工作区独立的 `TimerDeviceCenter` 直开弹窗改动仍查找旧菜单项而失败；该 UI 改动与测试不在本次提交范围。未运行浏览器/真机验收。
+- 下一步：本地多人和联机仍使用底层 move recorder，需逐模式核对终止、设备快照与成绩输出，再接入统一 attempt；设备错误分类与恢复交互仍需闭环；Web/App 的整体布局组合、操作弹层和输入禁用条件仍需继续核对同源，不把共享局部组件视作完整 UI parity。
+
+整体保持 `ACTIVE — NOT COMPLETE`；上述通过项仅证明此次共享成绩组装及对应回归，不代表全部宿主和实体设备已验收。
 
 产品决定：仓库所有者要求 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 的整个计时器与网站 `/timer` 保持完整 UI/UX 一致，且不得复制形成多端维护。`@cuberoot/app-ui` 是五端唯一 React 产品层；本文中早期“Mobile”证据行仍特指当时的 Android/iOS 快照，不自动升格为其他三端证据。
 

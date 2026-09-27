@@ -108,7 +108,6 @@ import {
   stepMetricsFor,
   stepPuzzleOf,
   stageLabel,
-  stageSegmentsFor,
   timerByStepsIdentity,
   timerByStepsFilter,
   canTrainerDifficulty,
@@ -2409,23 +2408,17 @@ export function App({ host }: { host: InstalledAppHost }) {
     attemptRef.current = null;
     const sessionId = storeRef.current?.database.activeSessionId;
     if (!attempt || !sessionId) {
+      smartCubeAttemptProducerRef.current.reset();
       announce(copy.actionFailed);
       return;
     }
-    const attemptRecording = smartCubeAttemptProducerRef.current.finish();
-    const moves = attemptRecording.moves.length > 0 ? attemptRecording.moves : undefined;
-    const gyro = attemptRecording.gyro;
-    const device = attemptRecording.device;
     const { bld, stages } = splitResult;
     advanceDisplayedScramble();
     const revision = storeSnapshotGateRef.current.beginMutation();
     const solve: Omit<Solve, 'id' | 'ts'> = {
       ...(attempt.caseId ? { caseId: attempt.caseId } : {}),
-      ...(device ? { device } : {}),
       event: attempt.event,
       inspectionMs: result.inspectionMs || undefined,
-      ...(moves ? { moves } : {}),
-      ...(moves && gyro ? { gyro } : {}),
       ...(bld ? { bld } : {}),
       ...(stages ? { stages } : {}),
       penalty: result.autoPenalty,
@@ -2433,8 +2426,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       scrambleSource: attempt.scrambleSource,
       timeMs: result.timeMs,
     };
-    const stageSegments = stageSegmentsFor(solve);
-    if (stageSegments) solve.stageSegments = stageSegments;
+    Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
     const ownerAtSaveStart = wcaAutoMarkOwnerKey(authSessionRef.current);
     const recapRevision = recapAttemptRevisionRef.current;
     const priorSolveIds = new Set((storeRef.current?.database.dataBySession[sessionId]?.[solve.event] ?? []).map((item) => item.id));
