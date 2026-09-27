@@ -331,7 +331,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   });
 
   it('derives categories/copy and the priority timing behavior from shared', () => {
-    expect(panel).toContain('TIMER_SETTING_CATEGORY_CONTRACTS.map');
+    expect(panel).toContain('<TimerSettingsPanel');
     expect(panel).toContain('timerSettingFieldContract(id).copy');
     expect(panel).toContain('timerSettingFieldStates({');
     expect(panel).toContain('<TimerTimingSettingsSections');
