@@ -278,19 +278,17 @@ describe('mobile displayed-scramble history', () => {
     expect(css).toContain('.app-shell--timer-fullscreen > .shell-device-actions');
   });
 
-  it('reserves a normal-flow device footer outside long content without changing timer gestures', () => {
-    const footer = app.indexOf('<TimerDeviceCenter');
-    const navigation = app.indexOf('<nav className="primary-nav"');
-    expect(footer).toBeGreaterThan(app.indexOf('settings-meta'));
-    expect(footer).toBeLessThan(navigation);
-    expect(app.slice(footer - 70, footer)).toContain("view === 'timer' && timerMode === 1");
+  it('uses the shared stage footer without changing timer gestures', () => {
+    const stage = app.indexOf('<TimerStageLayout');
+    const footer = app.indexOf('<TimerDeviceCenter', stage);
+    const stageEnd = app.indexOf('</TimerStageLayout>', stage);
+    expect(stage).toBeGreaterThan(-1);
+    expect(footer).toBeGreaterThan(stage);
+    expect(footer).toBeLessThan(stageEnd);
     expect(app.match(/<TimerDeviceCenter/g)).toHaveLength(1);
-    expect(css).toMatch(/\.app-shell--device-footer\s*\{\s*grid-template-rows: minmax\(0, 1fr\) auto auto;/);
-    expect(css).toMatch(/\.app-shell--device-footer > \.shell-device-actions,\s*\.app-shell--device-footer > \.shell-device-center\s*\{\s*position: static;/);
-    expect(css).toMatch(/\.app-shell--device-footer > \.shell-device-actions \.shell-device-connect,\s*\.app-shell--device-footer > \.shell-device-center \.shell-device-center-trigger\s*\{\s*min-width: 0;\s*min-height: 44px;/);
+    expect(app).not.toContain('app-shell--device-footer');
     expect(css).not.toContain('touch-action: pan-y');
   });
-
   it('consumes the shared history row/menu/editor and wires filters plus host effects', () => {
     const actions = timerHistoryQuickActionStates({
       menuOpen: true,
@@ -306,7 +304,7 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain("cornerSlot={smartCube.phase === 'connected'");
     expect(app).toContain(') : store!.settings.showCubePreview && scrambleReady');
     expect(app).toContain('<LiveCubeState');
-    expect(app).toContain('<div className="mobile-cube-preview" data-no-timer>');
+    expect(app).toContain('layout="solo"'); // Shared TimingSurface owns the input-safe preview frame.
     const stripStart = app.indexOf('<TimerScrambleStrip');
     const stripEnd = app.indexOf('</TimerScrambleStrip>', stripStart);
     const preview = app.indexOf('<TimerCubePreview');

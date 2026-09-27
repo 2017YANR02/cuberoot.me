@@ -250,6 +250,7 @@ import {
   TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
   TimerStatRail,
+  TimerStageLayout,
   TimerTopbar,
   TimingSurface,
   browserPrintTransport,
@@ -417,7 +418,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     trainingDestinationRef.current = parseTrainingAssignmentDestination(window.location.search);
     return startTrainingEvidenceOutbox(trainingDestinationRef.current);
   }, []);
-
 
   // 解法提示的全屏浮层由 SolverHintPanel 经同一个 URL param 开合(手机点 pill、桌面把头部的
   // 形态开关拨到「全屏」都进这一个);这里只读,用来把它算进 anyModalOpen(浮层盖住整屏时,
@@ -1805,7 +1805,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     timer.phase,
   ]);
 
-
   // ── Round simulation ────────────────────────────────────────────
   // The round is a VIEW over the solve history, not a second store: it is the
   // tail slice of this event's solves. That keeps solves as the single source
@@ -3020,9 +3019,66 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       />
 
       {/* ── Main column ─────────────────────────────────────── */}
-      <div className="shell-main">
-        {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
-        <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />
+      <TimerStageLayout
+        className="shell-main"
+        fullscreen={fullscreen}
+        source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />}
+        statistics={
+          <TimerStatRail
+            ariaExpanded={panelTab != null}
+            emptyLabel={tr({ zh: '成绩', en: 'Times' })}
+            items={solves.length > 0 ? [
+              { value: `${stats.solved}/${stats.count}` },
+              { label: 'mean', value: stats.mean },
+              { label: 'best', value: stats.best },
+              { label: 'mo3', value: stats.mo3 },
+              { label: 'ao5', value: stats.ao5 },
+              { label: 'ao12', value: stats.ao12 },
+            ] : []}
+            onClick={() => setPanelTab(t => (t ? null : 'times'))}
+            title={tr({ zh: '打开成绩 / 图表 / 统计', en: 'Open times / chart / stats' })}
+          />
+        }
+        devices={
+          <TimerDeviceCenter
+            ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+            items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+              ? {
+                  active: bluetoothCube.status.connected,
+                  detail: bluetoothCube.status.connected
+                    ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
+                    : undefined,
+                  id: device.id,
+                  kind: device.kind,
+                  label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+                  onSelect: connectSmartCubeCenter,
+                }
+              : device.kind === 'smart-timer'
+                ? {
+                    active: bluetoothTimer.status.connected,
+                    detail: bluetoothTimer.status.connected
+                      ? tr({ zh: '已连接', en: 'Connected' })
+                      : undefined,
+                    id: device.id,
+                    kind: device.kind,
+                    label: tr({ zh: '智能计时器', en: 'Smart timer' }),
+                    onSelect: connectExternalBluetooth,
+                  }
+                : {
+                    active: stackmat.status.listening,
+                    detail: stackmat.status.listening
+                      ? tr({ zh: '监听中', en: 'Listening' })
+                      : undefined,
+                    id: device.id,
+                    kind: device.kind,
+                    label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
+                    onSelect: connectStackmat,
+                  })}
+            menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
+            triggerLabel={tr({ zh: '设备', en: 'Devices' })}
+          />
+        }
+      >
         <TimingSurface
           layout="solo"
           phase={timer.phase}
@@ -3206,44 +3262,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        <TimerDeviceCenter
-          ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
-          items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
-            ? {
-                active: bluetoothCube.status.connected,
-                detail: bluetoothCube.status.connected
-                  ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
-                  : undefined,
-                id: device.id,
-                kind: device.kind,
-                label: tr({ zh: '智能魔方', en: 'Smart cube' }),
-                onSelect: connectSmartCubeCenter,
-              }
-            : device.kind === 'smart-timer'
-              ? {
-                  active: bluetoothTimer.status.connected,
-                  detail: bluetoothTimer.status.connected
-                    ? tr({ zh: '已连接', en: 'Connected' })
-                    : undefined,
-                  id: device.id,
-                  kind: device.kind,
-                  label: tr({ zh: '智能计时器', en: 'Smart timer' }),
-                  onSelect: connectExternalBluetooth,
-                }
-              : {
-                  active: stackmat.status.listening,
-                  detail: stackmat.status.listening
-                    ? tr({ zh: '监听中', en: 'Listening' })
-                    : undefined,
-                  id: device.id,
-                  kind: device.kind,
-                  label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
-                  onSelect: connectStackmat,
-                })}
-          menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
-          triggerLabel={tr({ zh: '设备', en: 'Devices' })}
-        />
-
         {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区左侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
             打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
@@ -3251,26 +3269,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {isDesktop && solverHintPanel}
         </div>
 
-        {/* Session stats — vertical cstimer-style list, bottom-left of the main area.
-            也是成绩 / 图表面板的唯一入口(底部导航条撤掉了),所以是真 <button>。
-            还没有成绩时不摆一排破折号,只留「成绩」两个字 —— 面板里有会话切换器,
-            当前会话空着的时候恰恰最需要能点进去换会话。 */}
-        <TimerStatRail
-          ariaExpanded={panelTab != null}
-          emptyLabel={tr({ zh: '成绩', en: 'Times' })}
-          items={solves.length > 0 ? [
-            { value: `${stats.solved}/${stats.count}` },
-            { label: 'mean', value: stats.mean },
-            { label: 'best', value: stats.best },
-            { label: 'mo3', value: stats.mo3 },
-            { label: 'ao5', value: stats.ao5 },
-            { label: 'ao12', value: stats.ao12 },
-          ] : []}
-          onClick={() => setPanelTab(t => (t ? null : 'times'))}
-          title={tr({ zh: '打开成绩 / 图表 / 统计', en: 'Open times / chart / stats' })}
-        />
-
-      </div>
+      </TimerStageLayout>
 
       {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
           入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。

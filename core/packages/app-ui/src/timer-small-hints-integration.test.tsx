@@ -36,15 +36,14 @@ describe('Mobile Timer small-puzzle hints integration', () => {
     vi.restoreAllMocks();
   });
 
-  it('mounts the event-only host after timing/stats and before device actions', () => {
+  it('mounts event-only hints under the timing surface inside the shared stage', () => {
     const timingIndex = appSource.indexOf('<TimingSurface');
-    const statsIndex = appSource.indexOf('<TimerStatRail', timingIndex);
-    const hintsIndex = appSource.indexOf('<MobileSmallPuzzleHints', statsIndex);
-    const deviceIndex = appSource.indexOf('<TimerDeviceCenter', hintsIndex);
+    const stageIndex = appSource.indexOf('<TimerStageLayout');
+    const hintsIndex = appSource.indexOf('<MobileSmallPuzzleHints', timingIndex);
     expect(timingIndex).toBeGreaterThan(-1);
-    expect(statsIndex).toBeGreaterThan(timingIndex);
-    expect(hintsIndex).toBeGreaterThan(statsIndex);
-    expect(deviceIndex).toBeGreaterThan(hintsIndex);
+    expect(timingIndex).toBeGreaterThan(stageIndex);
+    expect(hintsIndex).toBeGreaterThan(timingIndex);
+    expect(appSource.indexOf('</TimerStageLayout>', stageIndex)).toBeGreaterThan(hintsIndex);
 
     const hintCall = appSource.slice(hintsIndex, appSource.indexOf('/>', hintsIndex));
     expect(hintCall).toContain('event={activeEvent}');
