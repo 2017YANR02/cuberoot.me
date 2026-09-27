@@ -3026,17 +3026,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         statistics={
           <TimerStatRail
             ariaExpanded={panelTab != null}
-            emptyLabel={tr({ zh: '成绩', en: 'Times' })}
-            items={solves.length > 0 ? [
-              { value: `${stats.solved}/${stats.count}` },
-              { label: 'mean', value: stats.mean },
-              { label: 'best', value: stats.best },
-              { label: 'mo3', value: stats.mo3 },
-              { label: 'ao5', value: stats.ao5 },
-              { label: 'ao12', value: stats.ao12 },
-            ] : []}
+            language={timerLanguage}
+            summary={stats}
             onClick={() => setPanelTab(t => (t ? null : 'times'))}
-            title={tr({ zh: '打开成绩 / 图表 / 统计', en: 'Open times / chart / stats' })}
           />
         }
         devices={

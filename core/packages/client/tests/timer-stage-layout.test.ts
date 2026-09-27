@@ -16,7 +16,10 @@ it('shares source/content/footer order, real actions and fullscreen behavior acr
     createElement(TimerStageLayout, {
       className, fullscreen,
       source: createElement('select', { 'aria-label': 'Source' }, createElement('option', null, 'Random')),
-      statistics: createElement(TimerStatRail, { emptyLabel: 'Times', items: [], onClick: stats }),
+      statistics: createElement(TimerStatRail, {
+        language: 'en', onClick: stats,
+        summary: { count: 0, solved: 0, mean: '—', best: '—', mo3: '—', ao5: '—', ao12: '—' },
+      }),
       devices: createElement(TimerDeviceCenter, {
         ariaLabel: 'Devices', menuLabel: 'Available devices', triggerLabel: 'Connect',
         items: [{ id: 'cube', kind: 'smart-cube', label: 'Smart cube', onSelect: connect }],

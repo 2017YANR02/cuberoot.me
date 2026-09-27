@@ -84,21 +84,41 @@ export interface TimerStatRailProps {
   ariaExpanded?: boolean;
   className?: string;
   disabled?: boolean;
-  emptyLabel: string;
-  items: TimerStatItem[];
+  language: 'en' | 'zh';
+  summary: {
+    count: number;
+    solved: number;
+    mean: string;
+    best: string;
+    mo3: string;
+    ao5: string;
+    ao12: string;
+  };
   onClick?: () => void;
-  title?: string;
 }
+
+const STAT_RAIL_COPY = {
+  en: { empty: 'Times', title: 'Open times and statistics' },
+  zh: { empty: '成绩', title: '打开成绩与统计' },
+} as const;
 
 export function TimerStatRail({
   ariaExpanded,
   className,
   disabled = false,
-  emptyLabel,
-  items,
+  language,
+  summary,
   onClick,
-  title,
 }: TimerStatRailProps) {
+  const copy = STAT_RAIL_COPY[language];
+  const items: TimerStatItem[] = summary.count > 0 ? [
+    { value: `${summary.solved}/${summary.count}` },
+    { label: 'mean', value: summary.mean },
+    { label: 'best', value: summary.best },
+    { label: 'mo3', value: summary.mo3 },
+    { label: 'ao5', value: summary.ao5 },
+    { label: 'ao12', value: summary.ao12 },
+  ] : [];
   return (
     <button
       aria-expanded={ariaExpanded}
@@ -106,7 +126,7 @@ export function TimerStatRail({
       data-no-timer
       disabled={disabled}
       onClick={onClick}
-      title={title}
+      title={copy.title}
       type="button"
     >
       {items.length > 0 ? items.map(({ label, value }, index) => (
@@ -115,7 +135,7 @@ export function TimerStatRail({
           <span className="shell-stat-val">{value}</span>
         </span>
       )) : (
-        <span className="shell-stat"><span className="shell-stat-val">{emptyLabel}</span></span>
+        <span className="shell-stat"><span className="shell-stat-val">{copy.empty}</span></span>
       )}
     </button>
   );
