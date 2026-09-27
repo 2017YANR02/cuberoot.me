@@ -6,6 +6,7 @@ import type {
   NetRoomState,
 } from '@cuberoot/shared/timer';
 import { generateTimerScramble } from '@cuberoot/shared/timer';
+import { TwistyPlayer } from 'cubing/twisty';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
 import { act, createElement } from 'react';
@@ -22,8 +23,14 @@ import type { InstalledAppNetBattle } from './platform';
 
 // Room history uses the real shared preview component. jsdom has no
 // constructable stylesheet/WebGL implementation; isolate only its renderer.
+// cubing is a direct test dependency so this mock resolves to the same module
+// as timer-ui's lazy import rather than an unresolved virtual module.
 vi.mock('cubing/twisty', () => ({
-  TwistyPlayer: class { constructor() { return document.createElement('div'); } },
+  TwistyPlayer: vi.fn(function () {
+    const player = document.createElement('div');
+    player.dataset.testTwistyPlayer = '';
+    return player;
+  }),
 }));
 
 vi.mock('@cuberoot/shared/timer', async (importOriginal) => {
@@ -131,6 +138,7 @@ describe('installed app multiplayer modes', () => {
       }),
     });
     window.localStorage.clear();
+    vi.mocked(TwistyPlayer).mockClear();
     vi.mocked(generateTimerScramble).mockReset().mockImplementation(async ({ event }) => ({
       ok: true,
       event,
@@ -570,6 +578,10 @@ describe('installed app multiplayer modes', () => {
     expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('Xuanyi Geng');
     expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('Best');
     expect(document.querySelector('.timer-room-dialog')?.textContent).toContain('U R U\'');
+    await act(async () => { await vi.dynamicImportSettled(); });
+    expect(TwistyPlayer).toHaveBeenCalled();
+    expect(document.querySelector('.timer-room-dialog [data-test-twisty-player]')).not.toBeNull();
+    expect(vi.mocked(TwistyPlayer).mock.calls.some(([options]) => options?.puzzle === '3x3x3')).toBe(true);
 
     expect(closeOverlay).not.toBeNull();
     await act(async () => { closeOverlay?.(); });
