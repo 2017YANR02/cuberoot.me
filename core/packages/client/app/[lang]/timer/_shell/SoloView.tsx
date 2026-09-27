@@ -1437,6 +1437,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
     const bt = bluetoothCubeRef.current?.status;
+    // begin resets both streams; later start handlers must preserve this recording.
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
       : undefined);
@@ -1461,7 +1462,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         ?? (timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
     } else if (!cubeStartedRef.current) {
       const startedAtMs = performance.now();
-      smartCubeAttemptProducerRef.current.reset();
       gyroStartRef.current = startedAtMs;
     }
   }, [
@@ -1572,7 +1572,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!timerHandleRef.current.startFromCube(timestamp)) return false;
       phaseSnapshotRef.current = 'running';
       cubeStartedRef.current = true;
-      smartCubeAttemptProducerRef.current.reset();
       gyroStartRef.current = performance.now();
       return true;
     },
