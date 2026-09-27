@@ -106,12 +106,12 @@
           "[Lev Golub (Лев Голуб)](https://www.worldcubeassociation.org/persons/2014HOLU01) & [Vladyslav Hryniuk (Владислав Гринюк)](https://www.worldcubeassociation.org/persons/2016HRYN02)"
         ],
         [
-          154,
-          "[Antto Pitkänen](https://www.worldcubeassociation.org/persons/2017PITK01) & [Urho Kinnunen](https://www.worldcubeassociation.org/persons/2018KINN05)"
+          156,
+          "[Ray Bai](https://www.worldcubeassociation.org/persons/2014BAIR01) & [Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)"
         ],
         [
           154,
-          "[Ray Bai](https://www.worldcubeassociation.org/persons/2014BAIR01) & [Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)"
+          "[Antto Pitkänen](https://www.worldcubeassociation.org/persons/2017PITK01) & [Urho Kinnunen](https://www.worldcubeassociation.org/persons/2018KINN05)"
         ],
         [
           152,
@@ -608,6 +608,10 @@
           "[Aarni Salakari](https://www.worldcubeassociation.org/persons/2022SALA09) & [Luukas Lempinen](https://www.worldcubeassociation.org/persons/2021LEMP01) & [Urho Kinnunen](https://www.worldcubeassociation.org/persons/2018KINN05)"
         ],
         [
+          23,
+          "[Jadon Castillo](https://www.worldcubeassociation.org/persons/2017CAST51) & [Ray Bai](https://www.worldcubeassociation.org/persons/2014BAIR01) & [Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)"
+        ],
+        [
           22,
           "[Enoch Tangprasittipol](https://www.worldcubeassociation.org/persons/2023TANG15) & [Natthaphat Mahtani (ณัฐภัทร จี มาทานี)](https://www.worldcubeassociation.org/persons/2011MAHT02) & [Parist Pariyakanok (พริษฐ์ ปริยกนก)](https://www.worldcubeassociation.org/persons/2018PARI07)"
         ],
@@ -646,10 +650,6 @@
         [
           21,
           "[Daniel Sheppard](https://www.worldcubeassociation.org/persons/2009SHEP01) & [Evan Liu](https://www.worldcubeassociation.org/persons/2009LIUE01) & [Robert Yau](https://www.worldcubeassociation.org/persons/2009YAUR01)"
-        ],
-        [
-          21,
-          "[Jadon Castillo](https://www.worldcubeassociation.org/persons/2017CAST51) & [Ray Bai](https://www.worldcubeassociation.org/persons/2014BAIR01) & [Ryan Pilat](https://www.worldcubeassociation.org/persons/2016PILA03)"
         ],
         [
           21,
@@ -979,18 +979,18 @@
       "Vladyslav Hryniuk (Владислав Гринюк)"
     ],
     [
+      "2014BAIR01",
+      "2016PILA03",
+      156,
+      "Ray Bai",
+      "Ryan Pilat"
+    ],
+    [
       "2017PITK01",
       "2018KINN05",
       154,
       "Antto Pitkänen",
       "Urho Kinnunen"
-    ],
-    [
-      "2014BAIR01",
-      "2016PILA03",
-      154,
-      "Ray Bai",
-      "Ryan Pilat"
     ],
     [
       "2017BORG02",
@@ -1924,6 +1924,13 @@
       "Theo Goluboff"
     ],
     [
+      "2018GVAR01",
+      "2022MINA01",
+      73,
+      "Andro Gvaramadze",
+      "Giorgi Minasiani (გიორგი მინასიანი)"
+    ],
+    [
       "2015WANG09",
       "2010WUIF01",
       73,
@@ -1964,6 +1971,13 @@
       72,
       "Josete Sánchez",
       "Raúl Cuevas Castillo"
+    ],
+    [
+      "2018GVAR01",
+      "2013MARC05",
+      72,
+      "Andro Gvaramadze",
+      "Vako Marchilashvili (ვაკო მარჩილაშვილი)"
     ],
     [
       "2008BARA01",
@@ -2027,13 +2041,6 @@
       70,
       "Pedro Giuseppe Garcia Milla",
       "Ronald Fernando Remuzgo Salazar"
-    ],
-    [
-      "2018GVAR01",
-      "2013MARC05",
-      70,
-      "Andro Gvaramadze",
-      "Vako Marchilashvili (ვაკო მარჩილაშვილი)"
     ],
     [
       "2014MEND02",
@@ -2272,13 +2279,6 @@
       66,
       "Dylan Baumbach",
       "Ryan Pilat"
-    ],
-    [
-      "2018GVAR01",
-      "2022MINA01",
-      66,
-      "Andro Gvaramadze",
-      "Giorgi Minasiani (გიორგი მინასიანი)"
     ],
     [
       "2015SALO01",
@@ -5291,6 +5291,13 @@
       "Ryan Eckersley"
     ],
     [
+      "2017CARA04",
+      "2017GONZ21",
+      39,
+      "Kirby Jay Caragan",
+      "Miguel Gonzaga"
+    ],
+    [
       "2017PINT05",
       "2015UGAR01",
       39,
@@ -5560,7 +5567,7 @@
       "2017KWAN05",
       "2018ELLA01",
       38,
-      "Burno Li Chak Kwan (李澤堃)",
+      "Burno Chak Kwan Li (李澤堃)",
       "Omar Ellabban"
     ],
     [
@@ -5870,13 +5877,6 @@
       37,
       "Arnau Tous Mateu",
       "Laura Tarrés Gimeno"
-    ],
-    [
-      "2017CARA04",
-      "2017GONZ21",
-      37,
-      "Kirby Jay Caragan",
-      "Miguel Gonzaga"
     ],
     [
       "2013OLSZ02",
@@ -6786,7 +6786,7 @@
       "2017KWAN05",
       34,
       "Arhaan Sareen",
-      "Burno Li Chak Kwan (李澤堃)"
+      "Burno Chak Kwan Li (李澤堃)"
     ],
     [
       "2016PUTT01",
@@ -8070,6 +8070,13 @@
       "Manuel Popayán"
     ],
     [
+      "2022MINA01",
+      "2013MARC05",
+      30,
+      "Giorgi Minasiani (გიორგი მინასიანი)",
+      "Vako Marchilashvili (ვაკო მარჩილაშვილი)"
+    ],
+    [
       "2019KALL02",
       "2016OSTL02",
       30,
@@ -8381,7 +8388,7 @@
       "2017KWAN05",
       "2017LEEM03",
       30,
-      "Burno Li Chak Kwan (李澤堃)",
+      "Burno Chak Kwan Li (李澤堃)",
       "Matthew Lee"
     ],
     [
@@ -8840,6 +8847,13 @@
       "Hector David Martinez Argaez"
     ],
     [
+      "2017CAST51",
+      "2016PILA03",
+      29,
+      "Jadon Castillo",
+      "Ryan Pilat"
+    ],
+    [
       "2012LALO01",
       "2012REYE04",
       29,
@@ -8950,13 +8964,6 @@
       28,
       "Marcel Ručigaj",
       "Matic Omulec"
-    ],
-    [
-      "2022MINA01",
-      "2013MARC05",
-      28,
-      "Giorgi Minasiani (გიორგი მინასიანი)",
-      "Vako Marchilashvili (ვაკო მარჩილაშვილი)"
     ],
     [
       "2023WONG11",
@@ -9188,6 +9195,13 @@
       28,
       "Miguel Ángel González-Herrero García",
       "Raúl Cuevas Castillo"
+    ],
+    [
+      "2021OTSU01",
+      "2018WANG39",
+      28,
+      "Jamie Otsu",
+      "Yibo Wang (王奕博)"
     ],
     [
       "2012PARK03",
@@ -10527,13 +10541,6 @@
       "James Dyer"
     ],
     [
-      "2017CAST51",
-      "2016PILA03",
-      26,
-      "Jadon Castillo",
-      "Ryan Pilat"
-    ],
-    [
       "2013ALTA01",
       "2016OLZI01",
       26,
@@ -10996,13 +11003,6 @@
       "Jerry Yao"
     ],
     [
-      "2021OTSU01",
-      "2018WANG39",
-      25,
-      "Jamie Otsu",
-      "Yibo Wang (王奕博)"
-    ],
-    [
       "2017CHAM09",
       "2016MORA24",
       25,
@@ -11101,6 +11101,13 @@
       "Nevins Chan Pak Hoong (陈百鸿)"
     ],
     [
+      "2022HILA02",
+      "2017GONZ21",
+      25,
+      "Gabriel Angelo V. Hilado",
+      "Miguel Gonzaga"
+    ],
+    [
       "2015ARJA01",
       "2010RONK01",
       25,
@@ -11134,6 +11141,13 @@
       25,
       "Brúnó Bereczki",
       "Dániel Varga"
+    ],
+    [
+      "2017CAST51",
+      "2014BAIR01",
+      25,
+      "Jadon Castillo",
+      "Ray Bai"
     ],
     [
       "2017SZUL01",
@@ -12602,7 +12616,7 @@
       "2017KWAN05",
       "2017YEHM01",
       23,
-      "Burno Li Chak Kwan (李澤堃)",
+      "Burno Chak Kwan Li (李澤堃)",
       "Morgan Yeh"
     ],
     [
@@ -12807,13 +12821,6 @@
       23,
       "Benjamín Ochoa",
       "Ricardo Sanchez Laurencio"
-    ],
-    [
-      "2017CAST51",
-      "2014BAIR01",
-      23,
-      "Jadon Castillo",
-      "Ray Bai"
     ],
     [
       "2010YIDA01",
@@ -13596,7 +13603,7 @@
       "2017KWAN05",
       "2015XION03",
       22,
-      "Burno Li Chak Kwan (李澤堃)",
+      "Burno Chak Kwan Li (李澤堃)",
       "Max Xiong (熊锐明)"
     ],
     [
@@ -14776,13 +14783,6 @@
       "Sébastien Auroux"
     ],
     [
-      "2022HILA02",
-      "2017GONZ21",
-      21,
-      "Gabriel Angelo V. Hilado",
-      "Miguel Gonzaga"
-    ],
-    [
       "2019FARD01",
       "2021ELIA01",
       21,
@@ -14809,6 +14809,13 @@
       21,
       "Alexis Rodrigo Cazu Mendoza",
       "Stephano Saucedo Reyes"
+    ],
+    [
+      "2016ACUN04",
+      "2017GONZ21",
+      21,
+      "Brian Acuña",
+      "Miguel Gonzaga"
     ],
     [
       "2013SUCH02",
@@ -16761,7 +16768,7 @@
       "2017KWAN05",
       19,
       "Bill Wang",
-      "Burno Li Chak Kwan (李澤堃)"
+      "Burno Chak Kwan Li (李澤堃)"
     ],
     [
       "2018DULL02",
@@ -20257,6 +20264,13 @@
       "Georgy Vershinin"
     ],
     [
+      "2019GOSW01",
+      "2015DASN01",
+      17,
+      "Aditya Goswami",
+      "Nayan Jyoti Das"
+    ],
+    [
       "2012MENE01",
       "2014PHIL05",
       17,
@@ -20570,13 +20584,6 @@
       17,
       "Mattheo de Wit",
       "Midas Kiebert"
-    ],
-    [
-      "2016ACUN04",
-      "2017GONZ21",
-      17,
-      "Brian Acuña",
-      "Miguel Gonzaga"
     ],
     [
       "2015SING22",
@@ -21284,6 +21291,13 @@
       16,
       "Christian de Sena Fortunato",
       "Samuel Velho Pereira Meira"
+    ],
+    [
+      "2015BORR01",
+      "2017GONZ21",
+      16,
+      "Leo Borromeo",
+      "Miguel Gonzaga"
     ],
     [
       "2019PINH01",
@@ -22369,13 +22383,6 @@
       16,
       "Daniel Alberto Sánchez Dugarte",
       "Oscar Nieto"
-    ],
-    [
-      "2019GOSW01",
-      "2015DASN01",
-      16,
-      "Aditya Goswami",
-      "Nayan Jyoti Das"
     ],
     [
       "2013FRON01",
@@ -24051,11 +24058,11 @@
       "Lucas Ichiro Yunomae"
     ],
     [
-      "2015KHAN18",
       "2015KABE02",
+      "2015KHAN18",
       15,
-      "Muhammed Shehzad Khan",
-      "Sulaiman Mohammed Kabeer"
+      "'Sol Kabeer",
+      "Muhammed Shehzad Khan"
     ],
     [
       "2016HUNG08",
@@ -26123,13 +26130,6 @@
       "Iurii Chesnokov (Юрий Чесноков)"
     ],
     [
-      "2015BORR01",
-      "2017GONZ21",
-      14,
-      "Leo Borromeo",
-      "Miguel Gonzaga"
-    ],
-    [
       "2018BACO01",
       "2014SEBA01",
       14,
@@ -27019,6 +27019,13 @@
       "Mario Armando Takahashi Martins Dias"
     ],
     [
+      "2021OTSU01",
+      "2022BURN09",
+      14,
+      "Jamie Otsu",
+      "Joseph Burnett"
+    ],
+    [
       "2022QIUE03",
       "2023WATE01",
       14,
@@ -27108,6 +27115,13 @@
       14,
       "Max Xiong (熊锐明)",
       "Ryan Wu"
+    ],
+    [
+      "2023NIKO07",
+      "2017PRIG01",
+      14,
+      "Ilias Nikolaou",
+      "Vasilis Prigkos"
     ],
     [
       "2016REAT01",
@@ -27645,7 +27659,7 @@
       "2017KWAN05",
       "2017WURY01",
       14,
-      "Burno Li Chak Kwan (李澤堃)",
+      "Burno Chak Kwan Li (李澤堃)",
       "Ryan Wu"
     ],
     [
@@ -28060,6 +28074,13 @@
       14,
       "Noa Arthurs",
       "Tim Wong"
+    ],
+    [
+      "2016ACUN04",
+      "2022HILA02",
+      14,
+      "Brian Acuña",
+      "Gabriel Angelo V. Hilado"
     ],
     [
       "2012ACHA01",
@@ -30342,13 +30363,6 @@
       13,
       "AJ Kamal",
       "Daniel Karnaukh"
-    ],
-    [
-      "2023NIKO07",
-      "2017PRIG01",
-      13,
-      "Ilias Nikolaou",
-      "Vasilis Prigkos"
     ],
     [
       "2009CONT01",
@@ -33928,13 +33942,6 @@
       "Shaun Mack"
     ],
     [
-      "2021OTSU01",
-      "2022BURN09",
-      12,
-      "Jamie Otsu",
-      "Joseph Burnett"
-    ],
-    [
       "2012PATE01",
       "2016MATE04",
       12,
@@ -35888,6 +35895,13 @@
       "Ryan Eckersley"
     ],
     [
+      "2018GUTH01",
+      "2016PILA03",
+      12,
+      "Kari Guthrie",
+      "Ryan Pilat"
+    ],
+    [
       "2017TUNG13",
       "2012PARK03",
       12,
@@ -36256,7 +36270,7 @@
       "2023RUNG01",
       12,
       "Parist Pariyakanok (พริษฐ์ ปริยกนก)",
-      "Phumiphat Rungvichaniwat (卢釣丰)"
+      "Phumiphat Rungvichaniwat (ภูมิพัฒน์ รุ่งวิชานิวัฒน์)"
     ],
     [
       "2014ARGA01",
@@ -37558,7 +37572,7 @@
       "2017KWAN05",
       11,
       "Alexei Sinyavin",
-      "Burno Li Chak Kwan (李澤堃)"
+      "Burno Chak Kwan Li (李澤堃)"
     ],
     [
       "2023GOME14",
@@ -40214,13 +40228,6 @@
       "Reto Bubendorf"
     ],
     [
-      "2016ACUN04",
-      "2022HILA02",
-      11,
-      "Brian Acuña",
-      "Gabriel Angelo V. Hilado"
-    ],
-    [
       "2015CAMP17",
       "2014MARQ02",
       11,
@@ -40891,13 +40898,6 @@
       11,
       "Kaushik Sarma",
       "Nayan Jyoti Das"
-    ],
-    [
-      "2018GUTH01",
-      "2016PILA03",
-      11,
-      "Kari Guthrie",
-      "Ryan Pilat"
     ],
     [
       "2017LAMB06",
@@ -44190,6 +44190,13 @@
       "Vincent Hartanto Utomo"
     ],
     [
+      "2018GVAR01",
+      "2023MOYE01",
+      10,
+      "Andro Gvaramadze",
+      "Jeshurun Moyer"
+    ],
+    [
       "2013ESTE02",
       "2015FAGU01",
       10,
@@ -46979,7 +46986,7 @@
       "2017KWAN05",
       "2009LIUE01",
       10,
-      "Burno Li Chak Kwan (李澤堃)",
+      "Burno Chak Kwan Li (李澤堃)",
       "Evan Liu"
     ],
     [
@@ -47884,6 +47891,13 @@
       10,
       "Emil Henry Huber",
       "Jakub Drobný"
+    ],
+    [
+      "2021OTSU01",
+      "2021OTSU02",
+      10,
+      "Jamie Otsu",
+      "Lucas Otsu"
     ],
     [
       "2022MERC04",
