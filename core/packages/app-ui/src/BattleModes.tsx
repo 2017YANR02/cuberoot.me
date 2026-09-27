@@ -177,6 +177,7 @@ function nextLocalBattleRoundId(): string {
 }
 
 export interface LocalBattleModeProps extends BattleModeBaseProps {
+  scramblePreviewSettings?: TimerScramblePreviewSettings;
   onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
   playerCount: 2 | 3 | 4;
   smartCube?: InstalledAppSmartCube;
@@ -207,6 +208,7 @@ export function LocalBattleMode({
   playerCount,
   precision,
   runningPrecision,
+  scramblePreviewSettings,
   smartCube,
 }: LocalBattleModeProps) {
   const [state, setState] = useState<LocalBattleState>(() => initialLocalBattleState(playerCount));
@@ -570,6 +572,15 @@ export function LocalBattleMode({
                 layout="local"
                 ariaLabel={copy.battlePlayer(player.id + 1)}
                 className="battle-player-timer"
+                cornerSlot={!scrambleHidden && scramblePreviewSettings?.showCubePreview && player.scramble ? (
+                  <TimerCubePreview
+                    ariaLabel={copy.cubeState}
+                    event={player.event}
+                    fill
+                    scramble={player.scramble}
+                    visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
+                  />
+                ) : undefined}
                 colorClass={localPlayerColor(player)}
                 digits={<SegmentTime text={playerDisplay(player, nowMs, {
                   hideTime,

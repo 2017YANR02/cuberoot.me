@@ -4131,6 +4131,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             }}
             onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             playerCount={timerMode as 2 | 3 | 4}
+            scramblePreviewSettings={store!.settings}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
             smartCube={smartCube}
