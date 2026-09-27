@@ -417,17 +417,6 @@ button {
   right: 0;
 }
 
-.mobile-timer-stage > .timing-surface {
-  /* Never let flex sizing clip the readout when source controls leave less
-     room than the digits + scramble + preview intrinsically need. */
-  min-height: min-content;
-  flex: 1 0 280px;
-  margin: 0;
-  padding: 12px 0;
-  background: transparent;
-  outline: none;
-}
-
 /* Content stays in scrollable normal flow; device controls have their own
  * app-shell row. The shared chrome defaults remain absolute for Web. */
 .mobile-timer-stage > .shell-stat-rail {
@@ -459,14 +448,6 @@ button {
 .app-shell--device-footer > .shell-device-center .shell-device-center-trigger span {
   min-width: 0;
   overflow-wrap: anywhere;
-}
-
-.mobile-timer-stage .timing-surface-core {
-  gap: 10px;
-}
-
-.mobile-timer-stage .timing-surface-sub {
-  gap: 8px;
 }
 
 .timer-view .timing-surface-scramble {
@@ -1004,11 +985,6 @@ button {
     min-height: 430px;
   }
 
-  .mobile-timer-stage > .timing-surface {
-    flex-basis: 220px;
-    padding-block: 8px;
-  }
-
   .mobile-cube-preview {
     display: none;
   }
@@ -1020,16 +996,6 @@ button {
    together above the three-tab navigation. */
 .app-shell--compact-viewport .mobile-timer-stage {
   min-height: 350px;
-}
-
-.app-shell--compact-viewport .mobile-timer-stage > .timing-surface {
-  flex-basis: 220px;
-  padding: 8px 0;
-}
-
-.app-shell--compact-viewport .mobile-timer-stage .timing-surface-core,
-.app-shell--compact-viewport .mobile-timer-stage .timing-surface-sub {
-  gap: 5px;
 }
 
 .app-shell--compact-viewport .mobile-cube-preview {

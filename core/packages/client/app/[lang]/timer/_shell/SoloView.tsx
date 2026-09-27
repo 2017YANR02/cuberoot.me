@@ -1745,42 +1745,32 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // you the moves back when they don't, so a static target picture beside a
   // live one is the same fact twice.
   //
-  // Both tenants render into `.shell-corner-net-imgbox`, whose height is the
-  // `--cube-h` token. Connecting a cube therefore swaps the picture without
-  // moving anything below it.
+  // The shared solo surface owns the fixed preview frame for both states.
   const centerCubeSlot = (cubeConnected || cubeStartedRef.current) ? (
-    <div className="shell-corner-net">
-      <div className="shell-corner-net-imgbox">
-        <div
-          className="timer-live-cube"
-          data-no-timer
-          title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
-        >
-          <LiveCubeState
-            key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
-            facelets={bluetoothCube.facelets}
-            moves={[...liveMoves]}
-            algAnchored={algAnchored}
-            // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
-            // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
-            // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
-            mode={settings.liveCubeView}
-            useGyro={settings.gyroEnabled}
-            quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
-            calibrateToken={calibrateNonce}
-            sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
-            mirror={mirrorForBrand(bluetoothCube.status.brand)}
-          />
-        </div>
-      </div>
+    <div
+      className="timer-live-cube"
+      data-no-timer
+      title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
+    >
+      <LiveCubeState
+        key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
+        facelets={bluetoothCube.facelets}
+        moves={[...liveMoves]}
+        algAnchored={algAnchored}
+        // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
+        // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
+        // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
+        mode={settings.liveCubeView}
+        useGyro={settings.gyroEnabled}
+        quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
+        calibrateToken={calibrateNonce}
+        sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
+        mirror={mirrorForBrand(bluetoothCube.status.brand)}
+      />
     </div>
   ) : settings.showCubePreview ? (
-    <div className="shell-corner-net">
-      <div className="shell-corner-net-imgbox">
-        <div className="shell-corner-net-img">
-          <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
-        </div>
-      </div>
+    <div className="shell-corner-net-img">
+      <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
     </div>
   ) : undefined;
 
@@ -3034,10 +3024,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
         <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />
         <TimingSurface
-          scrambleAbove
+          layout="solo"
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
-          fontSize={fontSize}
+          fontScale={settings.timerFontScale}
           digits={<SegmentTime text={digitsText} />}
           digitsRef={digitsRef}
           surfaceRef={surfaceRef}

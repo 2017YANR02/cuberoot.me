@@ -4,6 +4,13 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：单人中央计时布局同源
+
+- Web `SoloView` 与五端 `App` 改用 `TimingSurface layout="solo"`，共享组件统一上方打乱、居中读数、下方辅助内容和魔方预览框。默认数字尺寸取 Web 的 `clamp(48px, 10vw, 132px)`，Web 字号偏好仍通过 `fontScale` 注入。
+- App 删除私有的中央计时区高度/内边距、core/sub 间距及紧凑视口覆盖，停止使用独立的 `24vw` 数字尺寸；共享 `timing-surface.css` 持有计时区最小高度、打乱字号、预览框尺寸和居中规则。Web/App 不再各自包一套单人预览尺寸框，静态/实时魔方共用 `timing-surface-cube-frame`，不会因切换预览类型重建读数节点。
+- 宿主保留导航、安全区、外部滚动与全屏容器；来源配置、统计栏、设备入口的外围组合以及多人/联机布局仍待进一步统一。智能魔方操作弹窗已共用 `TimerSmartCubeDeviceModal`，本轮没有改动工作区独立的设备中心交互修改。
+- 验证：client、app-ui、timer-ui typecheck 通过；读数 fitting/单人布局 DOM 9 项及 App viewport/capability/small-hints 18 项通过。未运行浏览器截图、真实视口排版或实体设备验收，不能将 DOM/CSS 同源作为完整视觉 parity 证据。
+
 ### 2026-09-27：Web 本地多人 / 联机接入统一 attempt
 
 - `useBattleCubes` 每槽位改用 `SmartCubeAttemptProducer`，统一动作、姿态、设备与分段输出；保留 owner/startTime 隔离和仅 P1 写入个人历史的规则。设备在该 attempt 首次录制时复制当前连接信息，不再在停表时读取可变设备引用；按键起表也能带上设备信息。
