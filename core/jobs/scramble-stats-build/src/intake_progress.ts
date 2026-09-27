@@ -15,16 +15,20 @@ export function downloadStatus(done: number, total: number, received: number, se
 
 export function intakeProgress(label: string, detail: () => string = () => ''): () => void {
   const started = Date.now();
-  const render = () => {
+  let lastDetail = detail();
+  let printed = false;
+  const render = (final = false) => {
     const extra = detail();
-    const line = `[取数] ${label}${extra ? ` | ${extra}` : ''} | 已运行 ${duration((Date.now() - started) / 1000)}`;
-    console.log(line);
+    if (!final && extra === lastDetail) return;
+    if (final && printed && extra === lastDetail) return;
+    console.log(`[取数] ${label}${extra ? ` | ${extra}` : ''} | ${final ? '用时' : '已运行'} ${duration((Date.now() - started) / 1000)}`);
+    lastDetail = extra;
+    printed = true;
   };
-  render();
   const timer = setInterval(render, 30_000);
   timer.unref();
   return () => {
     clearInterval(timer);
-    render();
+    render(true);
   };
 }
