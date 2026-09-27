@@ -4,6 +4,12 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：联机主计时区布局同源
+
+- `TimingSurface` 增加 `layout="net"`，Web 联机本人计时区与五端 App 联机页共同消费。共享层统一上方可滚动打乱、中央读数、下方预览框、基础字号与间距；Web 字号偏好通过 `fontScale` 注入，App 移除独有的 `20vw` 字号、300px 最小高度、8px 内边距和 152×114 预览框，并停止强制紧凑打乱。
+- Web 双人实况分屏保留容器专用的紧凑尺寸；对手读数、本地多人卡片、房间操作及玩家列表尚未整体收敛。本轮不涉及 BLE、录制或房间协议，不能将主计时区同源等同完整联机 parity。
+- 验证：共享布局/完整读数 10 项、App 对战/打乱历史/设备菜单定位 23 项通过；client、app-ui、timer-ui typecheck 通过；Mobile production build 与 Android sync 完成。未进行浏览器或真机视觉验证，也未安装 APK。整体继续 `ACTIVE — NOT COMPLETE`。
+
 ### 2026-09-27：五端三种模式共用设备入口与操作窗口
 
 - `app-ui/App` 单点组装 `TimerDeviceCenter`，单人、本地 2～4 人和联机通过插槽复用；移除 `BattleModes` 两套设备菜单和“详情直接断连”回调，统一进入既有 `TimerSmartCubeDeviceModal`，扫描、连接、状态重置、陀螺仪校准与断连按 adapter 能力提供。本地多人保留持有者选择。

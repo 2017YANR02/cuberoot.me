@@ -23,9 +23,10 @@
   user-select: none;
 }
 
-/* Single-player geometry is shared by Web and every installed host. Hosts
+/* Solo and online geometry is shared by Web and every installed host. Hosts
    supply the available viewport, navigation and safe-area containers only. */
-.timing-surface--solo {
+.timing-surface--solo,
+.timing-surface--net {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
   --timer-cube-h: min(30vw, 26dvh, 260px);
   --timer-scramble-src-fs: 12px;
@@ -34,6 +35,8 @@
   margin: 0;
   padding: 16px;
 }
+
+.timing-surface--net { width: 100%; box-sizing: border-box; }
 
 .timing-surface-scramble {
   width: 100%;
