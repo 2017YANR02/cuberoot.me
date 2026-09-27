@@ -65,6 +65,7 @@ import {
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
+  TimerRoomToolbar,
   TimerRoomLayout,
   TimerRoomPlayers,
   TimerBattleLayout,
@@ -1420,34 +1421,23 @@ export function NetBattleMode({
             value="net"
           />
         )}
-        actions={(
-          <button className="battle-leave" disabled={active} onClick={() => void leaveRoom()} type="button">
-            {copy.battleLeaveRoom}
-          </button>
-        )}
       />
-      <header className="battle-room-header" data-no-timer>
-        <div>
-          <span>{copy.battleCurrentRound(room.round)}</span>
-          <button
-            aria-label={copy.battleCopyCode}
-            onClick={() => {
-              void writeClipboardText(room.code).then(() => {
-                if (!mountedRef.current) return;
-                setCopied(true);
-                if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
-                copiedResetRef.current = window.setTimeout(() => setCopied(false), 1_500);
-              }).catch((reason: unknown) => {
-                if (mountedRef.current) fail(reason);
-              });
-            }}
-            type="button"
-          >{copy.battleRoomCode}: <strong>{room.code}</strong></button>
-          {copied && <span aria-live="polite">{copy.battleInviteCopied}</span>}
-          <button aria-label={copy.battleShowQr} onClick={() => setQrOpen(true)} type="button">
-            {copy.battleShowQr}
-          </button>
-        </div>
+      <TimerRoomToolbar language={language} code={room.code} round={room.round}
+        syncStart={room.syncStart} copied={copied} copyKind="code" disabled={active}
+        historyOpen={showHistory} adminOpen={showAdmin}
+        onCopy={() => {
+          void writeClipboardText(room.code).then(() => {
+            if (!mountedRef.current) return;
+            setCopied(true);
+            if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
+            copiedResetRef.current = window.setTimeout(() => setCopied(false), 1_500);
+          }).catch((reason: unknown) => { if (mountedRef.current) fail(reason); });
+        }}
+        onQr={() => setQrOpen(true)}
+        onHistory={() => { setShowHistory(true); setShowAdmin(false); }}
+        onAdmin={amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined}
+        onLeave={() => void leaveRoom()}
+      >
         {isNetAdmin(room, credentials.playerId) && (
           <button
             aria-pressed={room.syncStart}
@@ -1462,25 +1452,6 @@ export function NetBattleMode({
             type="button"
           >{copy.battleSyncStart}</button>
         )}
-        {amAdmin && (
-          <button
-            aria-expanded={showAdmin}
-            disabled={active}
-            onClick={() => {
-              setShowAdmin((current) => !current);
-              setShowHistory(false);
-            }}
-            type="button"
-          >{copy.battleAdmin}</button>
-        )}
-        <button
-          aria-expanded={showHistory}
-          onClick={() => {
-            setShowHistory((current) => !current);
-            setShowAdmin(false);
-          }}
-          type="button"
-        >{copy.battleHistory}</button>
         {gate.gated && (
           <button
             aria-pressed={gate.ready}
@@ -1493,7 +1464,7 @@ export function NetBattleMode({
             type="button"
           >{copy.battleReady}{gate.waiting > 0 ? ` · ${gate.waiting}` : ''}</button>
         )}
-      </header>
+      </TimerRoomToolbar>
       {showAdmin && amAdmin && (
         <section className="battle-room-panel" data-no-timer>
           <h3>{copy.battleAdmin}</h3>

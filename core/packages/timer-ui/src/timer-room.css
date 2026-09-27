@@ -46,3 +46,10 @@
 .timer-room-player-score { display: flex; align-items: center; gap: 4px; }
 .timer-room-player-status { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .timer-room-player-flag, .timer-room-player-icon { flex: 0 0 16px; width: 16px; }
+.timer-room-toolbar, .timer-room-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.timer-room-toolbar { flex: 0 0 auto; padding: 4px 8px; font-size: 12px; }
+.timer-room-actions { margin-inline-start: auto; }
+.timer-room-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 6px 8px; border: 1px solid var(--border-default); border-radius: 6px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.timer-room-actions button:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-actions button:disabled { opacity: 0.5; cursor: default; }
+.timer-room-copy-status:empty { display: none; }

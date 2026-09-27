@@ -299,12 +299,12 @@ describe('installed app multiplayer modes', () => {
     )!.click());
     expect(writeClipboardText).toHaveBeenCalledWith('1234');
     expect(host.textContent).toContain(COPY.en.battleInviteCopied);
-    const syncStart = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
+    const syncStart = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
       .find((button) => button.textContent === 'Synchronized start')!;
     await act(async () => syncStart.click());
     expect(client.postNetSyncStart).toHaveBeenCalledWith('1234', credentials, true);
-    const qrButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'Invite QR')!;
+    const qrButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
+      .find((button) => button.getAttribute('aria-label') === 'Room QR code')!;
     await act(async () => qrButton.click());
     expect(document.querySelector('.room-qr-code svg')).not.toBeNull();
     expect(document.querySelector('.room-qr-link')?.textContent).toContain(
@@ -535,15 +535,15 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
     await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
 
-    const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'History and statistics')!;
+    const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
+      .find((button) => button.getAttribute('aria-label') === 'Scramble history and results')!;
     await act(async () => historyButton.click());
     expect(host.querySelector('.battle-history-panel')?.textContent).toContain('Xuanyi Geng');
     expect(host.querySelector('.battle-history-panel')?.textContent).toContain('Best');
     expect(host.querySelector('.battle-history-panel')?.textContent).toContain('U R U\'');
 
-    const adminButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-room-header button'))
-      .find((button) => button.textContent === 'Room management')!;
+    const adminButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
+      .find((button) => button.getAttribute('aria-label') === 'Room settings')!;
     await act(async () => adminButton.click());
     const makeHost = Array.from(host.querySelectorAll<HTMLButtonElement>('.battle-admin-list button'))
       .find((button) => button.textContent === 'Make host')!;
