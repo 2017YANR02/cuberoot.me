@@ -90,3 +90,11 @@
 .timer-room-lobby .search-control, .timer-room-dialog .search-control, .timer-room-lobby .cuber-search-item, .timer-room-dialog .cuber-search-item { min-height: 44px; }
 .timer-room-lobby .clear-btn, .timer-room-dialog .clear-btn { width: 44px; height: 44px; right: 0; }
 .timer-room-lobby .search-control--with-clear, .timer-room-dialog .search-control--with-clear { padding-right: 44px; }
+.timer-battle-history-list { list-style: none; padding: 0; }
+.timer-battle-history-list button { display: flex; flex-wrap: wrap; width: 100%; gap: 8px 16px; min-height: 44px; padding: 12px 0; text-align: start; border: 0; border-bottom: 1px solid var(--border-default); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.timer-battle-history-list button > span:last-child { flex-basis: 100%; }
+.timer-battle-history-list time { margin-inline-start: auto; color: var(--muted-foreground); }
+.timer-battle-history-results { display: flex; flex-wrap: wrap; gap: 20px; margin-block: 20px; }
+.timer-battle-history-results > div { display: flex; flex-direction: column; gap: 8px; }
+.timer-battle-history-results strong { font: 28px var(--font-mono); }
+.timer-battle-history-scramble p { overflow-wrap: anywhere; }
