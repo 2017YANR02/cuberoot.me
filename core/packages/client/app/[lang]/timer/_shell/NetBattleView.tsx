@@ -32,9 +32,9 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Bluetooth, Swords, Trophy, X } from 'lucide-react';
+import { Bluetooth, Trophy } from 'lucide-react';
 
-import { SegmentTime, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -57,10 +57,8 @@ import type { EventId, Solve } from '../_lib/types';
 import { CubePreview } from '../_lib/cube';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { EventSelect } from '@/components/EventSelect';
-import { RoomCodeInput } from '@/components/RoomCodeInput';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
-import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { getPerson, type WcaPersonLite } from '@/lib/wca-api';
 import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { useAuthStore } from '@/lib/auth-store';
@@ -1267,133 +1265,23 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     </header>
   );
 
-  // 身份字段:登录用户直接显示其 WCA 姓名+ID(不填昵称);访客用 WcaPersonPicker
-  // (搜姓名/WCA ID,复用 recon 的选手选择器),选不到就把输入当自由昵称。
-  // 不挂「选手」标题:摆出来的就是一个人名(或一个搜人的框),没有第二种读法。
-  const identityField = (
-    <div className="net-field">
-      {authUser ? (
-        <div className="net-identity-me">
-          {authUser.avatar
-            ? <img src={authUser.avatar} alt="" className="net-identity-avatar" width={24} height={24} />
-            : null}
-          {/* 显示 identity.name 而非 authUser.name:房里挂出去的是 WCA 名册上的名字,
-              这里照着账号的 display_name 写就成了「预览的名字和房里的名字对不上」。 */}
-          {/* 不挂 WCA ID:这是给自己看的「我是谁」,一串编号在这儿没有任何用处
-              (要认人是对手的事,名单那边的 tooltip 里有)。 */}
-          <span className="net-identity-name">{netPlayerName(identity, isZh)}</span>
-        </div>
-      ) : (
-        <WcaPersonPicker
-          value={picked}
-          // 选中/清空选手都把自由昵称一并清掉(选手栏内的输入已被 picker 清空,
-          // 不清则 name 留着半截旧文字,清掉选手后会拿它当昵称)。
-          onChange={(p) => { setPicked(p); setName(''); }}
-          onQueryChange={setName}
-          // 框里先摆着上次用的名字:localStorage 里记着它、加入时也真会用它,
-          // 却给人看一个空框,等于让人以为自己还没名字。
-          defaultQuery={name}
-          isZh={isZh}
-          placeholder={tr({ zh: '昵称,或搜姓名 / WCA ID(可留空)', en: 'Nickname, or search name / WCA ID (optional)' })}
-        />
-      )}
-    </div>
-  );
+  const identityField = <TimerRoomIdentity language={isZh ? 'zh' : 'en'}
+    account={authUser ? identity : null} value={picked} defaultQuery={name}
+    onChange={(person) => { setPicked(person); setName(''); }} onQueryChange={setName} disabled={busy} />;
 
   if (!room) {
-    // 邀请链接 / 扫码进来(URL 带 room=)→ 已在上面直接加入,这里只剩两种过场:
-    // 正在进房、以及房间不在了(给明确出口)。
-    const inviteCode = roomParam ? roomParam.trim().toUpperCase() : null;
-    return (
-      <div className="timer-shell net-shell">
-        {topbar}
-        {/* shell-main 承接大厅 —— timer-shell 桌面端是命名区域 grid,大厅直接做
-            它的子元素会落进隐式格被挤出视口(同 net-players 的处理)。 */}
-        <div className="shell-main">
-        <div className="net-lobby">
-          {inviteCode ? (
-            err ? (
-              /* ───── 房间不存在 / 已过期:给明确出口 ───── */
-              <>
-                <h2 className="net-lobby-title">
-                  <Swords size={20} />
-                  {tr({ zh: '加入房间', en: 'Join room' })}
-                  <span className="net-lobby-code">{inviteCode}</span>
-                </h2>
-                <div className="net-err">{err}</div>
-                <div className="net-lobby-row">
-                  <button
-                    type="button"
-                    className="net-btn net-btn-primary net-btn-lg"
-                    onClick={() => doJoin(inviteCode)}
-                    disabled={busy}
-                  >
-                    {tr({ zh: '重试', en: 'Retry' })}
-                  </button>
-                  <button
-                    type="button"
-                    className="net-btn net-btn-lg"
-                    onClick={() => { setErr(null); void setRoomParam(null); }}
-                    disabled={busy}
-                  >
-                    {tr({ zh: '创建自己的房间', en: 'Create my own room' })}
-                  </button>
-                </div>
-                <button
-                  type="button"
-                  className="net-btn is-ghost net-lobby-switch"
-                  onClick={() => onExitNet?.()}
-                >
-                  {tr({ zh: '退出联机', en: 'Exit online mode' })}
-                </button>
-              </>
-            ) : (
-              <p className="net-lobby-hint">{tr({ zh: '正在进入房间…', en: 'Joining room…' })}</p>
-            )
-          ) : (
-            /* ───── 创建模式(直接进来)───── */
-            <>
-              {/* 项目与身份同行，项目在首位。 */}
-              <div className="net-lobby-row">
-                <div className="net-field">
-                  <EventSelect
-                    events={NET_SELECTOR_EVENTS}
-                    value={netEventToSelectorId(lobbyEvent)}
-                    onChange={(id) => {
-                      const event = selectorIdToNetEvent(id);
-                      if (event) setLobbyEvent(event);
-                    }}
-                  />
-                </div>
-                {identityField}
-              </div>
-
-              {/* 开一间 or 进一间 —— 同一个决定的两个岔路,摆一行才看得出是二选一 */}
-              <div className="net-lobby-row">
-                <button type="button" className="net-btn net-btn-primary net-btn-lg" onClick={doCreate} disabled={busy}>
-                  {tr({ zh: '创建房间', en: 'Create room' })}
-                </button>
-                <span className="net-lobby-or">{tr({ zh: '或输入', en: 'or enter' })}</span>
-                {/* 填满 4 位即自动加入,无「加入」按钮 */}
-                <RoomCodeInput
-                  className="net-input net-input-code"
-                  data-no-timer
-                  value={joinCode}
-                  onValueChange={setJoinCode}
-                  onComplete={doJoin}
-                  disabled={busy}
-                />
-              </div>
-
-              {err && <div className="net-err">{err}</div>}
-            </>
-          )}
-        </div>
-        </div>
+    return <div className="timer-shell net-shell">
+      {topbar}
+      <div className="shell-main">
+        <TimerRoomLobby language={isZh ? 'zh' : 'en'} identity={identityField}
+          event={<EventSelect events={NET_SELECTOR_EVENTS} value={netEventToSelectorId(lobbyEvent)}
+            onChange={(id) => { const event = selectorIdToNetEvent(id); if (event) setLobbyEvent(event); }} />}
+          code={joinCode} busy={busy} error={err} inviteCode={roomParam?.trim().toUpperCase()}
+          onCodeChange={setJoinCode} onJoin={doJoin} onCreate={doCreate}
+          onCancelInvite={() => { setErr(null); void setRoomParam(null); }} onExit={onExitNet} />
       </div>
-    );
+    </div>;
   }
-
   const curResults = room.results[String(room.round)] ?? {};
   const winners = roundSettled ? roundWinners(curResults, room.players) : [];
   const winnerNames = winners
@@ -1747,30 +1635,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
       {/* 改名:复用大厅那个身份字段(纯昵称 or 认领 WCA 选手,认了就带上国旗和 WCA ID)。 */}
       {renameOpen && (
-        <div className="net-stats-overlay" onClick={() => setRenameOpen(false)} role="presentation">
-          <div className="net-stats-panel net-rename-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-            <header className="net-stats-head">
-              <h2 className="net-stats-title">{tr({ zh: '改名', en: 'Change name' })}</h2>
-              <button
-                type="button"
-                className="tb-btn"
-                onClick={() => setRenameOpen(false)}
-                title={tr({ zh: '关闭', en: 'Close' })}
-                aria-label={tr({ zh: '关闭', en: 'Close' })}
-              >
-                <X size={16} />
-              </button>
-            </header>
-            {identityField}
-            <button
-              type="button"
-              className="net-btn net-btn-primary"
-              onClick={() => { doRename(identityRef.current); setRenameOpen(false); }}
-            >
-              {tr({ zh: '保存', en: 'Save' })}
-            </button>
-          </div>
-        </div>
+        <TimerRoomDialog language={isZh ? 'zh' : 'en'} title={tr({ en: 'Change name', zh: '改名' })} onClose={() => setRenameOpen(false)}>
+          {identityField}
+          <div className="timer-room-actions"><button type="button"
+            onClick={() => { doRename(identityRef.current); setRenameOpen(false); }}>
+            {tr({ en: 'Save', zh: '保存' })}
+          </button></div>
+        </TimerRoomDialog>
       )}
 
       {showStats && (
