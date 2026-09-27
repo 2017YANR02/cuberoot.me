@@ -66,6 +66,8 @@ import {
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
+  TimerBattleLayout,
+  TimerBattleLayoutControls,
   TimingSurface,
   TimerPenaltyActions,
   shouldIgnoreTimerTarget,
@@ -220,6 +222,8 @@ export function LocalBattleMode({
   const [storageError, setStorageError] = useState('');
   const [failedScrambleEvents, setFailedScrambleEvents] = useState<Set<EventId>>(() => new Set());
   const [cubeHolder, setCubeHolder] = useState(0);
+  const [layout, setLayout] = useState<'side' | 'versus'>('versus');
+  const [flipTopRow, setFlipTopRow] = useState(true);
   const inputBlockedRef = useRef(inputBlocked);
   inputBlockedRef.current = inputBlocked;
   const stateRef = useRef(state);
@@ -510,6 +514,57 @@ export function LocalBattleMode({
     }
   };
 
+  const renderPlayerScramble = (player: LocalBattlePlayerState) => {
+    const scrambleFailed = failedScrambleEvents.has(player.event);
+    const sameEventPlayerIds = visiblePlayers
+      .filter((candidate) => candidate.event === player.event)
+      .map((candidate) => candidate.id);
+    const scrambleHidden = isLocalBattleScrambleHidden(
+      visiblePlayers.map((candidate) => ({
+        hasFinished: candidate.result !== null,
+        isTiming: candidate.timer.phase === 'running',
+      })),
+      sameEventPlayerIds,
+    );
+    return !scrambleHidden ? (
+      <TimerScrambleStrip
+        copiedLabel={copy.copied}
+        fallback={scrambleFailed ? copy.retry : copy.battleNoScramble}
+        fallbackKind="custom"
+        hint={player.id === cubeHolder
+          && player.timer.phase !== 'running'
+          && smartCube?.phase === 'connected'
+          && timerSupportsLocalBattleSmartCube(player.event)
+          ? hintSmartCubeScramble(player.scramble, smartCube.facelets)
+          : null}
+        match={player.id === cubeHolder
+          && player.timer.phase !== 'running'
+          && smartCube?.phase === 'connected'
+          && smartCube.facelets
+          && timerSupportsLocalBattleSmartCube(player.event)
+          ? smartCube.facelets === smartCubeTargetFacelets(player.scramble)
+          : null}
+        onActivate={scrambleFailed
+          ? () => dispatch({ type: 'request-next-scramble', event: player.event })
+          : undefined}
+        scramble={player.scramble}
+        title={scrambleFailed ? copy.retry : undefined}
+        verificationLabels={scrambleLabels(copy)}
+      />
+          ) : undefined;
+  };
+  const sharedScramble = (ids: number[]) => {
+    const player = visiblePlayers[ids[0]];
+    if (!ids.every((id) => visiblePlayers[id]?.event === player.event)) return undefined;
+    const holder = visiblePlayers.find((candidate) => candidate.id === cubeHolder && candidate.event === player.event);
+    const strip = renderPlayerScramble(holder ?? player);
+    return <>
+      {strip}
+      {strip && scramblePreviewSettings?.showCubePreview && player.scramble && <TimerCubePreview
+        event={player.event} scramble={player.scramble} height="var(--timer-cube-h)"
+        ariaLabel={copy.cubeState} visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'} />}
+    </>;
+  };
   const summaries = summarizeLocalBattleRounds(rounds, state.playerCount);
 
   return (
@@ -534,10 +589,14 @@ export function LocalBattleMode({
           </div>
         )}
       />
-      <div className={`battle-grid battle-grid--${state.playerCount}`}>
-        {visiblePlayers.map((player) => {
+      <TimerBattleLayoutControls playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow} language={language} onLayoutChange={setLayout} onFlipChange={setFlipTopRow} />
+      <TimerBattleLayout playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow}
+        bottomScramble={sharedScramble([0, 1])}
+        topScramble={state.playerCount === 4 ? sharedScramble([2, 3]) : undefined}
+        renderPlayer={(playerId, cell) => {
+          const player = visiblePlayers[playerId];
           const result = player.result;
-          const scrambleFailed = failedScrambleEvents.has(player.event);
+
           const isWinner = result !== null && winners.includes(player.id);
           const sameEventPlayerIds = visiblePlayers
             .filter((candidate) => candidate.event === player.event)
@@ -572,7 +631,7 @@ export function LocalBattleMode({
                 layout="local"
                 ariaLabel={copy.battlePlayer(player.id + 1)}
                 className="battle-player-timer"
-                cornerSlot={!scrambleHidden && scramblePreviewSettings?.showCubePreview && player.scramble ? (
+                cornerSlot={!cell.hideScramble && !scrambleHidden && scramblePreviewSettings?.showCubePreview && player.scramble ? (
                   <TimerCubePreview
                     ariaLabel={copy.cubeState}
                     event={player.event}
@@ -616,32 +675,7 @@ export function LocalBattleMode({
                   });
                 }}
                 phase={player.timer.phase}
-                scrambleSlot={!scrambleHidden ? (
-                  <TimerScrambleStrip
-                    copiedLabel={copy.copied}
-                    fallback={scrambleFailed ? copy.retry : copy.battleNoScramble}
-                    fallbackKind="custom"
-                    hint={player.id === cubeHolder
-                      && player.timer.phase !== 'running'
-                      && smartCube?.phase === 'connected'
-                      && timerSupportsLocalBattleSmartCube(player.event)
-                      ? hintSmartCubeScramble(player.scramble, smartCube.facelets)
-                      : null}
-                    match={player.id === cubeHolder
-                      && player.timer.phase !== 'running'
-                      && smartCube?.phase === 'connected'
-                      && smartCube.facelets
-                      && timerSupportsLocalBattleSmartCube(player.event)
-                      ? smartCube.facelets === smartCubeTargetFacelets(player.scramble)
-                      : null}
-                    onActivate={scrambleFailed
-                      ? () => dispatch({ type: 'request-next-scramble', event: player.event })
-                      : undefined}
-                    scramble={player.scramble}
-                    title={scrambleFailed ? copy.retry : undefined}
-                    verificationLabels={scrambleLabels(copy)}
-                  />
-                ) : undefined}
+                scrambleSlot={!cell.hideScramble ? renderPlayerScramble(player) : undefined}
                 surfaceRef={surfaceRefs[player.id]}
               />
               {result && (
@@ -653,8 +687,8 @@ export function LocalBattleMode({
               )}
             </article>
           );
-        })}
-      </div>
+        }}
+      />
       {visiblePlayers.every((player) => player.result !== null) && (
         <p aria-live="polite" className="battle-round-status">{copy.battleAllFinished}</p>
       )}
