@@ -75,11 +75,7 @@ body {
   --ring: var(--accent);
 
   --radius: 12px;
-  /* 全站唯一等宽:自托管 Roboto Mono(跨设备一致,对标 Anthropic 自托管思路)+ 系统
-     ui-monospace 回退;CJK 黑体放 generic monospace 之前,避免系统 monospace CJK 落宋体 */
-  --font-mono: 'Roboto Mono', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  /* 正文无衬线字体单源(首页纪录、统计数字等用它),与 body 同一份栈 */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Sans and mono stacks are shared with installed hosts in timer-ui/typography.css. */
   /* 衬线展示标题单源(落地/about/wiki/统计等大标题):拉丁走 Fraunces,中文落自托管
      LXGW WenKai 楷体(标题静态子集,见 app/fonts.css + scripts/subset-cjk-heading.py),
      缺字回退系统宋体。任何衬线标题都该用 var(--font-serif),别再散写 'Fraunces' 字面栈。 */

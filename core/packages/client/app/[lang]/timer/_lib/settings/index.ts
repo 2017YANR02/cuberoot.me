@@ -13,6 +13,9 @@ import {
   DEFAULT_ROUND_CONFIG,
   DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
   DEFAULT_TIMER_TIMING_SETTINGS,
+  DEFAULT_TIMER_TYPOGRAPHY,
+  normalizeTimerTypography,
+  type TimerTypeface,
   DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   normalizeTimerSmartCubeSettings,
   normalizeTimerAttemptSplitSettings,
@@ -41,7 +44,7 @@ import {
 const KEY = 'cuberoot-timer.settings.v1';
 
 /** Big-digit typeface ids — shared vocabulary with the /alg trainer's picker. */
-export type TimerFontId = 'lcd' | 'mono' | 'liberation' | 'sans';
+export type TimerFontId = TimerTypeface;
 
 export interface TimerSettings extends
   TimerTimingSettings,
@@ -249,10 +252,7 @@ export const DEFAULTS: TimerSettings = {
   volume: 0.5,
   ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
   showDevFakeCube: true,
-  timerFontScale: 1,
-  timerFont: 'lcd',
-  scrambleFontScale: 1,
-  scrambleFont: 'liberation',
+  ...DEFAULT_TIMER_TYPOGRAPHY,
   compactScramble: false,
   preScr: '',    // (UF)
   preScrT: 'z2', // (DF) — LL cases are read yellow-up (csTimer's default)
@@ -384,6 +384,7 @@ function load(): TimerSettings {
       ...normalizedSplits,
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
+      ...normalizeTimerTypography(parsed),
       rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
@@ -492,6 +493,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
   _cache = {
     ...candidate,
     ...normalizeTimerTimingSettings(candidate),
+    ...normalizeTimerTypography(candidate),
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
     ...normalizeTimerSmartCubeSettings(candidate),

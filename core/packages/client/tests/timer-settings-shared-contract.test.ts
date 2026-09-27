@@ -24,6 +24,7 @@ import {
   TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   TIMER_TIMING_SETTING_FIELD_IDS,
   TIMER_SMART_CUBE_SETTING_FIELD_IDS,
+  TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -300,10 +301,12 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_TIMING_SETTING_FIELD_IDS,
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
+      ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
     expect(panel).toContain('<TimerSmartCubeSettingsFields');
+    expect(panel).toContain('<TimerTypographySettings');
     // Web scramble presses now use the timing surface; the legacy persisted
     // click preference remains decodable but is intentionally not configurable.
     expect(panel).not.toContain('<TimerScrambleClickActionSetting');
@@ -360,7 +363,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     );
     const directMutationRoots = [...panel.matchAll(/updateSettings\(\{\s*([A-Za-z][A-Za-z0-9]*)/g)]
       .map((match) => match[1]!);
-    expect(directMutationRoots.length).toBeGreaterThan(30);
+    // Four typography mutations now live in the checked shared field group.
+    expect(directMutationRoots.length).toBeGreaterThan(26);
     expect(directMutationRoots.filter((key) => !registeredRoots.has(key))).toEqual([]);
   });
 });
