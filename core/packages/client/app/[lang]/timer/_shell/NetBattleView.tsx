@@ -34,7 +34,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useQueryState } from 'nuqs';
 import { Bluetooth, Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode } from 'lucide-react';
 
-import { SegmentTime, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -67,7 +67,6 @@ import { shouldIgnoreTimerTarget } from '@/lib/timer-ignore-target';
 import { useAuthStore } from '@/lib/auth-store';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { eventDisplayName } from '@/lib/wca-events';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { persistItem } from '@/lib/safe-storage';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { tr } from '@/i18n/tr';
@@ -115,9 +114,7 @@ const baseName = (n: string) => n.replace(DEDUP_SUFFIX_RE, '');
  * 去重后缀留在末尾,否则两个同名的人在名单上又长得一模一样。
  */
 function netPlayerName(p: { name: string; wcaId?: string }, isZh: boolean): string {
-  if (!p.wcaId) return p.name;
-  const base = baseName(p.name);
-  return displayCuberName(base, isZh) + p.name.slice(base.length);
+  return timerRoomPlayerName(p, isZh ? 'zh' : 'en');
 }
 
 interface RemoteTimerDigitsProps {
@@ -1457,7 +1454,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     );
   }
 
-  const players = roomPlayers;
   const curResults = room.results[String(room.round)] ?? {};
   const winners = roundSettled ? roundWinners(curResults, room.players) : [];
   const winnerNames = winners
@@ -1619,7 +1615,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     ? renderRemoteCubeSlot(opponentId, opponentLive, undefined, !opponentFeedReady)
     : undefined;
   /** 房内是否存在多种项目(决定玩家条/历史是否显示各自项目图标)。 */
-  const mixedEvents = new Set(players.map((p) => p.event || room.event)).size > 1;
 
   const ownTimingSurface = (
     <TimingSurface
@@ -1735,108 +1730,21 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     <div className="timer-shell net-shell" data-solving={timer.phase === 'running' ? 'true' : undefined}>
       {topbar}
 
-      <div className="shell-main">
-      {/* 玩家条:名字 + 胜场 + 实时状态(计时中滚动读数为本地推算)。
-          放在 shell-main 里(TimingSurface 上方)—— timer-shell 在桌面端是命名
-          区域 grid,直接做它的子元素会落进隐式格被挤出视口。 */}
-      {!activePkLock && <div className="net-players surface-chrome" data-no-timer>
-        {players.map((p) => {
-          const mine = p.id === pid;
-          const online = isNetOnline(p, room.now);
-          const res = curResults[p.id];
-          const isWinner = winners.includes(p.id);
-          let statusNode: ReactNode;
-          if (res) {
-            const eff = effectiveNetMs(res);
-            statusNode = (
-              <span className={`net-p-time${res.p === 'dnf' ? ' is-dnf' : ''}`}>
-                {res.p === 'dnf' ? 'DNF' : formatMs(eff, settings.precision) + (res.p === '+2' ? '+' : '')}
-              </span>
-            );
-          } else if (!online) {
-            statusNode = <span className="net-p-status is-off">{tr({ zh: '离线', en: 'offline' })}</span>;
-          } else if (p.ph === 'solving') {
-            // 初值按轮询时刻的估算渲染,随后由 rAF 每帧写 textContent 滚动到 0.01s。
-            statusNode = (
-              <span className="net-p-status is-live net-p-live" id={`net-live-${p.id}`}>
-                {formatMs(Math.max(0, serverNowEst - p.at), 2)}
-              </span>
-            );
-          } else if (p.ph === 'inspecting') {
-            statusNode = <span className="net-p-status is-live">{tr({ zh: '观察中', en: 'inspecting' })}</span>;
-          } else if (p.ph === 'ready') {
-            statusNode = <span className="net-p-status is-ready">{tr({ zh: '已准备', en: 'ready' })}</span>;
-          } else {
-            statusNode = <span className="net-p-status">{tr({ zh: '待开始', en: 'waiting to start' })}</span>;
-          }
-          const pEvent = p.event || room.event;
-          const pLive = liveCubePlayers[p.id];
-          const canViewLiveCube = !activePkLock && (mine
-            ? cubeConnected && !!bluetoothCube.facelets
-            : !!pLive?.connected && pLive.smart && pLive.round === room.round && !!pLive.facelets);
-          return (
-            <div
-              key={p.id}
-              className={`net-player${mine ? ' is-me' : ''}${online ? '' : ' is-offline'}${canViewLiveCube ? ' is-live-target' : ''}${canViewLiveCube && viewedCubePlayerId === p.id ? ' is-active' : ''}`}
-              role={canViewLiveCube ? 'button' : undefined}
-              tabIndex={canViewLiveCube ? 0 : undefined}
-              aria-pressed={canViewLiveCube ? viewedCubePlayerId === p.id : undefined}
-              onClick={canViewLiveCube ? () => setViewedCubePlayerId(p.id) : undefined}
-              onKeyDown={canViewLiveCube ? (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  setViewedCubePlayerId(p.id);
-                }
-              } : undefined}
-            >
-              <span className="net-p-event-slot">
-                {mixedEvents && (
-                  <EventIcon
-                    event={netEventToSelectorId(pEvent)}
-                    className="net-p-event"
-                    title={eventDisplayName(netEventToSelectorId(pEvent), isZh)}
-                  />
-                )}
-              </span>
-              <span className="net-p-host-slot">
-                {p.id === room.admin && (
-                  <ShieldCheck size={13} className="net-p-host" aria-label={tr({ zh: '房主', en: 'Host' })} />
-                )}
-              </span>
-              <span className="net-p-flag-slot">
-                {p.iso2 && <Flag iso2={p.iso2} className="net-p-flag" />}
-              </span>
-              {/* 自己的名字可点开改(登录用户除外:他们的名字就是账号 / WCA 名册上的名字)。 */}
-              {mine && !authUser ? (
-                <button
-                  type="button"
-                  className="net-p-name net-p-name-btn"
-                  onClick={(event) => { event.stopPropagation(); setName(baseName(p.name)); setRenameOpen(true); }}
-                  title={tr({ zh: '改名', en: 'Change name' })}
-                >
-                  {netPlayerName(p, isZh)}
-                  <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>
-                </button>
-              ) : (
-                <span className="net-p-name" title={p.wcaId ? `${p.name} · ${p.wcaId}` : p.name}>
-                  {netPlayerName(p, isZh)}
-                  {mine && <span className="net-p-me">{tr({ zh: '(我)', en: ' (me)' })}</span>}
-                </span>
-              )}
-              <span className="net-p-score">
-                {isWinner && <Trophy size={12} className="net-p-trophy" />}
-                {room.scores[p.id] ?? 0}
-              </span>
-              {statusNode}
-            </div>
-          );
-        })}
-      </div>}
-
-      {/* 视频画面:放玩家条下方、计时器上方 —— 与玩家条同属「房间里有谁」这一层信息,
-          而计时器是自己的事。没开视频时这里什么都不渲染(开关在顶栏)。 */}
-      <VideoStrip video={video} />
-
+      <TimerRoomLayout className="shell-main"
+        players={!activePkLock && <TimerRoomPlayers room={room} currentPlayerId={pid}
+          language={isZh ? 'zh' : 'en'} precision={settings.precision} nowMs={serverNowEst}
+          viewedPlayerId={viewedCubePlayerId} onViewPlayer={setViewedCubePlayerId}
+          canViewPlayer={(id) => {
+            const live = liveCubePlayers[id];
+            return id === pid ? cubeConnected && !!bluetoothCube.facelets
+              : !!live?.connected && live.smart && live.round === room.round && !!live.facelets;
+          }}
+          onRename={!authUser ? (name) => { setName(baseName(name)); setRenameOpen(true); } : undefined}
+          runningTime={(id, elapsed) => <span id={`net-live-${id}`}>{formatMs(elapsed, 2)}</span>}
+          eventIcon={(event) => <EventIcon event={netEventToSelectorId(event)} title={eventDisplayName(netEventToSelectorId(event), isZh)} />}
+        />}
+        media={<VideoStrip video={video} />}
+      >
         {activePkLock ? (
           <div className="net-pk-arena">
             <section className="net-pk-side is-self" aria-label={tr({ zh: '我的计时与智能魔方', en: 'My timer and smart cube' })}>
@@ -1873,7 +1781,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
             </section>
           </div>
         ) : ownTimingSurface}
-      </div>
+      </TimerRoomLayout>
 
       {showAdmin && iAmAdmin && (
         <NetAdminPanel
