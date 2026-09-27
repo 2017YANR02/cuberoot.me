@@ -524,6 +524,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [view, setView] = useState<AppView>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
   const [battleModeActive, setBattleModeActive] = useState(false);
+  const battleOverlayCloseRef = useRef<(() => void) | null>(null);
+  const onBattleOverlayCloseChange = useCallback((close: (() => void) | null) => {
+    battleOverlayCloseRef.current = close;
+  }, []);
   const [openedWebViews, setOpenedWebViews] = useState({ tools: false, account: false });
   const [toolsEntryRoute, setToolsEntryRoute] = useState<string | null>(null);
   const [webSurfaceStatus, setWebSurfaceStatus] = useState<Record<MobileEmbedSurface, WebSurfaceStatus>>({
@@ -2245,6 +2249,10 @@ export function App({ host }: { host: InstalledAppHost }) {
     void host.addBackButtonListener(() => {
       const current = viewRef.current;
       if (current === 'timer' && timerModeRef.current !== 1 && openOverlayRef.current === null) {
+        if (battleOverlayCloseRef.current) {
+          battleOverlayCloseRef.current();
+          return;
+        }
         if (battleModeActiveRef.current) {
           announce(copy.finishAttemptFirst);
           return;
@@ -4140,6 +4148,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
         {view === 'timer' && timerMode === 'net' && (
           <NetBattleMode
+            onOverlayCloseChange={onBattleOverlayCloseChange}
             accountIdentity={auth.session ? {
               name: auth.session.user.name || `#${auth.session.user.uid}`,
               wcaId: auth.session.user.wcaId || undefined,
