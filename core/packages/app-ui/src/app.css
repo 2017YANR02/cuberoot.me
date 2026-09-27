@@ -1,6 +1,8 @@
+@import '@cuberoot/timer-ui/typography.css';
+
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --background: #faf9f7;
@@ -31,8 +33,6 @@
   --success-soft: rgb(57 114 79 / 14%);
   --danger: #a13f36;
   --destructive: var(--danger);
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --signal-success: var(--success);
   --signal-warning: var(--accent);
   --timer-dnf: var(--danger);
@@ -250,7 +250,7 @@ button {
 
 .timer-view {
   display: flex;
-  width: min(100%, 760px);
+  width: 100%;
   min-width: 0;
   min-height: 100%;
   flex-direction: column;
@@ -985,6 +985,35 @@ button {
 .battle-error {
   color: var(--destructive);
 }
+
+/* Host navigation offsets; shared TimerWorkspace owns the dock geometry. */
+.app-shell[data-wide='true']:not(.app-shell--timer-fullscreen) { grid-template-rows: auto minmax(0, 1fr); }
+.app-shell[data-wide='true'].app-shell--settings,
+.app-shell[data-wide='true'].app-shell--history { grid-template-rows: auto auto minmax(0, 1fr); }
+.app-shell[data-wide='true'] > .primary-nav {
+  grid-row: 1;
+  grid-template-columns: repeat(3, max-content);
+  border-top: 0;
+  border-bottom: 1px solid var(--border-default);
+  padding: 5px 16px;
+}
+.app-shell[data-wide='true'] > .primary-nav button {
+  flex-direction: row;
+  min-height: 34px;
+  padding: 0 12px;
+  gap: 6px;
+  font-size: 0.84rem;
+}
+.app-shell[data-wide='true'] > .view-container { grid-row: 2; }
+.app-shell[data-wide='true'] > .app-titlebar { grid-row: 2; }
+.app-shell[data-wide='true'] > .app-titlebar + .view-container { grid-row: 3; }
+.app-shell[data-wide='true'].app-shell--timer-fullscreen > .view-container { grid-row: 1; }
+.view-container.timer-workspace { --timer-workspace-height: 100%; }
+.app-shell[data-wide='true'] .mobile-timer-stage { min-height: 0; }
+.app-shell[data-wide='true'] .battle-mode { width: 100%; }
+.app-shell[data-wide='true'] .history-view.timer-workspace-panel { width: 100%; margin: 0; padding: 0; }
+.app-shell[data-wide='true'] .timer-workspace-panel > .app-titlebar { flex-shrink: 0; }
+.app-shell[data-wide='true'] .timer-workspace-panel-body { padding: 18px 20px 38px; }
 
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
