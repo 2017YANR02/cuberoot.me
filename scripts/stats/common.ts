@@ -116,8 +116,8 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
   let shown = '';
   const show = (status: string) => {
     const now = Date.now();
-    if (now - lastStatus < 300_000) return;
-    console.log(status);
+    if (now - lastStatus < 60_000) return;
+    console.log(`[进度] ${status}`);
     shown = status;
     lastStatus = now;
   };
@@ -157,7 +157,7 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
   await output;
   await new Promise<void>((done, fail) => { log.end(done); log.once('error', fail); });
   if (code !== 0) throw new Error(`${label} exited with ${code}; see ${logFile}`);
-  if (shown) console.log(`${label} 完成；详细日志：${logFile}`);
+  if (shown) console.log(`[进度] ${label} 完成；详细日志：${logFile}`);
 }
 export async function stamp(): Promise<string> {
   const file = join(wcaDir, 'incremental', 'export_date.txt');
