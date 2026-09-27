@@ -4,6 +4,11 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：联机阶段提示与设备底栏共享
+
+- `TimerRoomRoundStatus` 统一准备/取消、等待人数、迟到旁观、倒计时、罚时和下一轮操作。App 把原顶栏准备与计时区外成绩操作移入同源 TimingSurface 插槽，Web 移除重复状态 JSX。
+- `TimerRoomLayout` 组合现有 `TimerStageLayout`，操作栏归入主区，设备固定到同源底栏；Web 联机入口改用已有 `TimerDeviceCenter`，保留真实智能魔方 adapter。两端项目入口均位于共用 `TimerTopbar`。
+- 共享状态/名单/窗口与 Web 联机 21 项、App 对战集成 13 项及三包 typecheck 通过。未修改房间自动推进或 BLE 协议，未做真机视觉验收。
 ### 2026-09-27：大厅、身份选择和改名共享
 
 - `TimerRoomLobby` / `TimerRoomIdentity` 统一项目与身份同行、创建与四位房间码入房，以及加载/错误反馈。App 接入与 Web 相同的自动入房和防重复提交；两端改名使用同源身份选择与房间弹窗，App 补齐改名 transport。

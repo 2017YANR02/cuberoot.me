@@ -32,9 +32,9 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
-import { Bluetooth, Trophy } from 'lucide-react';
 
-import { SegmentTime, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+
+import { SegmentTime, TimerTopbar, TimerDeviceCenter, TimerRoomRoundStatus, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -77,7 +77,7 @@ import {
   type NetBattleCredentials, type NetBattleEventId,
 } from '@/lib/battle-room-api';
 import {
-  effectiveNetMs, roundWinners, sortedNetPlayers, isNetOnline, blendClockOffset,
+  effectiveNetMs, sortedNetPlayers, isNetOnline, blendClockOffset,
   isRoundComplete, pendingCount, NET_EVENTS, netEventToSelectorId, selectorIdToNetEvent,
   playerEventOf, myScramble, netErrorMessage,
   isNetAdmin, syncGate, normalizeNetBattleRoomCode,
@@ -1174,8 +1174,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [roomInviteUrl]);
 
   // ── 读数呈现(与 Solo 同口径)──────────────────────────────────
-  const inspectionLimit = settings.inspectionSec > 0 ? settings.inspectionSec : 15;
   const myPenalty: NetPenalty = myResult?.p ?? 'ok';
+  const inspectionLimit = settings.inspectionSec > 0 ? settings.inspectionSec : 15;
 
   /** 同时起表倒计时正在走(且我还没交卷)→ 读数位显示 3/2/1。 */
   const showCountdown = countdownMs !== null && !myResult;
@@ -1223,9 +1223,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   // ── 渲染 ────────────────────────────────────────────────────
   const topbar = (
-    <header className="shell-topbar surface-chrome">
-      <CubeRootLogo className="shell-topbar-brand" />
-      <div className="shell-topbar-left">
+    <TimerTopbar brand={<CubeRootLogo className="shell-topbar-brand" />} controls={<>
         {room && (
           // 我的项目:本轮未交卷时可改(每人独立选,默认房间项目);已交卷则显示为静态芯片。
           !myResult && inRoundRoster ? (
@@ -1245,24 +1243,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         )}
         <VideoToggle video={video} />
         {playersControl}
-      </div>
-      <div className="shell-topbar-right">
-        {presenceControl}
-        {room && (
-          <>
-            <button
-              type="button"
-              className={`tb-btn net-device-connect${bluetoothCube.status.connected ? ' connected' : ''}`}
-              onClick={connectSmartCubeCenter}
-              aria-label={tr({ zh: '连接智能魔方', en: 'Connect smart cube' })}
-              title={tr({ zh: bluetoothCube.status.connected ? '智能魔方已连接' : '连接智能魔方', en: bluetoothCube.status.connected ? 'Smart cube connected' : 'Connect smart cube' })}
-            >
-              <Bluetooth size={16} />
-            </button>
-          </>
-        )}
-      </div>
-    </header>
+      </>} actions={presenceControl} />
   );
 
   const identityField = <TimerRoomIdentity language={isZh ? 'zh' : 'en'}
@@ -1283,10 +1264,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     </div>;
   }
   const curResults = room.results[String(room.round)] ?? {};
-  const winners = roundSettled ? roundWinners(curResults, room.players) : [];
-  const winnerNames = winners
-    .map((w) => { const p = room.players[w]; return p ? netPlayerName(p, isZh) : '?'; })
-    .join(' / ');
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
   const displayScramble = myScr ? formatScrambleForEvent(myEvent, myScr) : '';
   const renderRemoteCubeSlot = (
@@ -1470,86 +1447,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       }
       cornerSlot={activePkLock ? ownLiveCubeSlot : selectedCubeSlot}
     >
-      {/* 读数下方的阶段提示区 */}
-      {myResult && (timer.phase === 'idle' || timer.phase === 'stopped') && (
-        <div className="net-substate" data-no-timer>
-          {/* 罚时调整:交卷后仍可改(重交同一时间) */}
-          <TimerPenaltyActions language={isZh ? 'zh' : 'en'} value={myPenalty} onChange={adjustPenalty} />
-          {/* 没人可等(complete,或房里暂时只有我)→ 自动进入下一轮。
-              isRoundComplete 在「在线不足 2 人」时恒 false(那是同时起表门控的
-              口径),照它渲染的话,一个人开好房等朋友时会看到「还差 0 人」。 */}
-          {roundSettled ? (
-            <>
-              <div className="net-round-result">
-                {winners.length > 0
-                  ? <><Trophy size={14} className="net-p-trophy" /><span>{winnerNames}</span></>
-                  : tr({ zh: '本轮无有效成绩', en: 'No valid result this round' })}
-              </div>
-              <div className="net-substate-hint">
-                {tr({ zh: '转动魔方或按下计时区，开始下一把', en: 'Turn the cube or press the timer to start the next round' })}
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="net-substate-hint">
-                {tr({
-                  zh: `等待其他玩家完成(还差 ${waiting} 人)…`,
-                  en: `Waiting for others to finish (${waiting} left)…`,
-                })}
-              </div>
-              <button type="button" className="net-btn is-ghost" onClick={() => advance(true)}>
-                {tr({ zh: '不等了,直接开下一轮', en: 'Skip waiting — next round' })}
-              </button>
-            </>
-          )}
-        </div>
-      )}
-      {/* 同时起表:全员准备才开倒计时(按空格 / 点击也等同「准备」)*/}
-      {!myResult && gate.gated && (timer.phase === 'idle' || timer.phase === 'stopped') && (
-        <div className="net-substate" data-no-timer>
-          <button
-            type="button"
-            className={`net-btn${gate.ready ? '' : ' net-btn-primary'}`}
-            onClick={toggleReady}
-          >
-            {gate.ready ? tr({ zh: '取消准备', en: 'Cancel ready' }) : tr({ zh: '我准备好了', en: "I'm ready" })}
-          </button>
-          <div className="net-substate-hint">
-            {gate.ready
-              ? tr({
-                  zh: `等其他人准备(还差 ${gate.waiting} 人)…`,
-                  en: `Waiting for others to get ready (${gate.waiting} left)…`,
-                })
-              : tr({
-                  zh: '本房要求同时起表:全员准备后 3 秒倒计时一起开始',
-                  en: 'This room starts together — a 3s countdown begins once everyone is ready',
-                })}
-          </div>
-          {/* 连了魔方且开了自动预备的人,这里要明说自动预备被停用了 —— 否则会
-              站着等魔方替自己准备,把全房卡住。 */}
-          {bluetoothCube.status.connected
-            && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick') && (
-            <div className="net-substate-hint">
-              {tr({
-                zh: '同时起表期间不自动预备:请自己点「准备」,魔方只负责还原时停表',
-                en: 'Auto-ready is off during a synchronized start — tap “ready” yourself; the cube only stops the timer',
-              })}
-            </div>
-          )}
-        </div>
-      )}
-      {!myResult && !inRoundRoster && (timer.phase === 'idle' || timer.phase === 'stopped') && (
-        <div className="net-substate" data-no-timer>
-          <div className="net-substate-hint">
-            {tr({ zh: '本轮已经开始，你可以旁观并等待下一轮', en: 'This round has started. You can watch and join the next round.' })}
-          </div>
-        </div>
-      )}
-      {showCountdown && (
-        <div className="net-substate net-substate-hint" data-no-timer>
-          {tr({ zh: '一起起表,准备!', en: 'Starting together — get ready!' })}
-        </div>
-      )}
+      <TimerRoomRoundStatus room={room} currentPlayerId={pid!} language={isZh ? 'zh' : 'en'}
+        idle={timer.phase === 'idle' || timer.phase === 'stopped'} countdown={showCountdown}
+        cubeAutoReadySuspended={cubeConnected && (settings.bluetoothAutoReady === 'still' || settings.bluetoothAutoReady === 'double-flick')}
+        onPenalty={adjustPenalty} onReady={toggleReady} onNext={advance} />
       {err && <div className="net-err" data-no-timer>{err}</div>}
     </TimingSurface>
   );
@@ -1558,12 +1459,18 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     <div className="timer-shell net-shell" data-solving={timer.phase === 'running' ? 'true' : undefined}>
       {topbar}
 
-      <TimerRoomToolbar language={isZh ? 'zh' : 'en'} code={room.code} round={room.round}
+      <TimerRoomLayout className="shell-main"
+        devices={<TimerDeviceCenter ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
+          menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })} triggerLabel={tr({ en: 'Devices', zh: '设备' })}
+          items={[{ id: 'smart-cube', kind: 'smart-cube', active: cubeConnected,
+            label: tr({ en: 'Smart cube', zh: '智能魔方' }), detail: bluetoothCube.status.deviceName ?? undefined,
+            onSelect: connectSmartCubeCenter }]} />}
+        toolbar={<TimerRoomToolbar language={isZh ? 'zh' : 'en'} code={room.code} round={room.round}
         syncStart={room.syncStart} copied={linkCopied} copyKind="invite" disabled={timer.phase !== 'idle' && timer.phase !== 'stopped'}
         historyOpen={showStats} adminOpen={showAdmin} onCopy={copyLink}
         onQr={() => setQrOpen(true)} onHistory={() => setShowStats(true)}
-        onAdmin={iAmAdmin ? () => setShowAdmin(true) : undefined} onLeave={doLeave} />
-      <TimerRoomLayout className="shell-main"
+        onAdmin={iAmAdmin ? () => setShowAdmin(true) : undefined} onLeave={doLeave} />}
+
         players={!activePkLock && <TimerRoomPlayers room={room} currentPlayerId={pid}
           language={isZh ? 'zh' : 'en'} precision={settings.precision} nowMs={serverNowEst}
           viewedPlayerId={viewedCubePlayerId} onViewPlayer={setViewedCubePlayerId}
