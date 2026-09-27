@@ -28,16 +28,16 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Settings as SettingsIcon, ClipboardList, RotateCcw, Eye, EyeOff, Timer as TimerIcon } from 'lucide-react';
+import { Settings as SettingsIcon, ClipboardList, RotateCcw, Timer as TimerIcon } from 'lucide-react';
 import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
 import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
-import { TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
-import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
+
+import { TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
+import { BattleDeviceCenter, BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
@@ -144,13 +144,6 @@ export function isBattleKeyboardExcludedTarget(target: EventTarget | null): bool
     || t.tagName === 'SELECT'
     || t.isContentEditable
     || Boolean(t.closest('[data-no-timer]'));
-}
-
-// NOTE: playerKeys 里存的是 KeyboardEvent.key 原样值,这里转成人类可读的按钮文案。
-function formatKeyLabel(key: string): string {
-  if (key === ' ') return 'Space';
-  if (key.length === 1) return key.toUpperCase();
-  return key;
 }
 
 export function useKeyboardControls(suppressed: boolean) {
@@ -621,40 +614,6 @@ function BattleEventButton({ playerId }: { playerId: number }) {
 // 1:1 翻译自 battle/index.html middle-bar 结构 + 人数下拉注入
 // 多人(>2)时左右比分区移到各 cell 的 CellControls,这里只留中间操作区
 
-function MiddleBar({
-  onSettingsClick,
-  onHistoryClick,
-  playersControl,
-  presenceControl,
-}: {
-  onSettingsClick: () => void;
-  onHistoryClick?: () => void;
-  playersControl?: React.ReactNode;
-  presenceControl?: React.ReactNode;
-}) {
-  return (
-    <div className="middle-bar" data-no-timer>
-      {/* 中间操作按钮 */}
-      <div className="middle-actions">
-        {playersControl}
-        {presenceControl}
-        <CubeRootLogo className="middle-logo" />
-        <button className="middle-btn" title={tr({ zh: '历史', en: 'History'
-        })} onClick={onHistoryClick}>
-          <ClipboardList size={16} />
-        </button>
-        <button className="middle-btn" title={tr({ zh: '设置', en: 'Settings'
-        })} onClick={onSettingsClick}>
-          <SettingsIcon size={16} />
-        </button>
-      </div>
-
-
-    </div>
-  );
-}
-
-
 // ===== BackgroundSettingsGroup 组件 =====
 
 function PlayerBgRow({ playerId, isZh }: { playerId: number; isZh: boolean }) {
@@ -764,290 +723,41 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
   const settings = useSettings();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-
-  // 录键态:捕获态期间的下一次按键(除 Esc 外)绑定给 recordingKeyFor 那个玩家。
-  // capture 阶段监听,保证先于全局 useKeyboardControls(bubble 阶段)拿到这次按键;
-  // 后者也另有 recordingKeyFor 判空守卫,双保险。
-  useEffect(() => {
-    const target = store.recordingKeyFor;
-    if (target === null) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const s = useBattleStore.getState();
-      if (e.key === 'Escape') { s.setRecordingKeyFor(null); return; }
-      if (!isLocalBattleAssignableKey(e.key)) return;
-      s.setPlayerKey(target, e.key);
-      s.setRecordingKeyFor(null);
-    };
-    window.addEventListener('keydown', onKeyDown, true);
-    return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [store.recordingKeyFor]);
-
-  // 面板关掉(visible=false,组件本身不卸载)时若还在录键态,取消它 —— 否则「按任意键…」
-  // 的提示已经看不见了,下一次按键却仍会被吞掉而不触发计时。
-  useEffect(() => {
-    if (!visible && store.recordingKeyFor !== null) store.setRecordingKeyFor(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible]);
-
-  return (
-    <div className={`settings-overlay${visible ? ' visible' : ''}`} data-no-timer onClick={(e) => {
-      if (e.target === e.currentTarget) onClose();
-    }}>
-      <div className="settings-panel">
-        <div className="settings-header-bar">
-          <span className="settings-title">
-            <SettingsIcon size={16} />
-            {tr({ zh: '设置', en: 'Settings'
-            })}
-          </span>
-          <button className="settings-x-btn" onClick={onClose}>✕</button>
-        </div>
-
-        {/* 双人模式恒为 1v1 — 顶层已有「单人」入口(SoloView),内部 solo 布局是
-            退役遗留,已移除 单人/1v1 切换。并排/对向布局由视口自动决定,无手动开关。 */}
-
-        {/* 项目选择 — 仅 Solo;1v1 已移到 middle-bar 的项目按钮 */}
-        {store.mode === 'solo' && (
-          <div className="settings-group">
-            <div className="settings-label" data-i18n="puzzle">{tr({ zh: '项目', en: 'PUZZLE'
-            })}</div>
-            <div className="puzzle-grid">
-              {PUZZLES.map(puz => (
-                <button
-                  key={puz.id}
-                  className={`puzzle-btn${puz.id === store.puzzleIds[0] ? ' active' : ''}`}
-                  onClick={() => { store.changePuzzle(0, puz.id); onClose(); }}
-                >
-                  {isWcaEvent(puz.id)
-                    ? <EventIcon event={puz.id} />
-                    : <span className="event-fallback">{puz.name.en}</span>}
-                  <span className="puzzle-btn-name">{puz.name[(i18n.language.startsWith('zh') ? 'zh' : 'en')] || puz.name.en}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* 打乱来源 — 复用 Solo 的 WcaSourceConfig + 共享 timer 设置(随机 / WCA 真实比赛打乱)。
-            Duo 同 puzzle 时双方拿同一条真实打乱(沿用共享 scramble 不变量)。 */}
-        <div className="settings-group">
-          <div className="settings-label">{tr({ zh: '打乱来源', en: 'Scramble source'
-          })}</div>
-          <div className="setting-item">
-            <span>{tr({ zh: '来源', en: 'Source'
-            })}</span>
-            <select
-              className="settings-select"
-              // 'manual'(手动输入队列)是 Solo 专属的共享设置;对战无此模式,当随机处理
-              //(battle_store 也把非 wca 一律当随机),避免下拉显示 'manual' 无匹配项而错显首项。
-              value={settings.scrambleSource === 'wca' ? 'wca' : 'random'}
-              onChange={(e) => updateSettings({ scrambleSource: e.target.value as 'random' | 'wca' })}
-            >
-              <option value="wca">{tr({ zh: 'WCA 真题', en: 'WCA real'
-              })}</option>
-              <option value="random">{tr({ zh: '随机生成', en: 'Random'
-              })}</option>
-            </select>
-          </div>
-          {settings.scrambleSource === 'wca' && (
-            <WcaSourceConfig
-              isZh={isZh}
-              event={battleToTimerEvent(store.puzzleIds[0])}
-              settings={settings}
-              updateSettings={updateSettings}
-            />
-          )}
-        </div>
-
-        {/* 计时器精确度 */}
-        <div className="settings-group">
-          <div className="setting-item">
-            <span data-i18n="precision">{tr({ zh: '精度', en: 'Precision' })}</span>
-            <select
-              className="settings-select"
-              value={store.timerPrecision}
-              onChange={e => store.setTimerPrecision(parseInt(e.target.value))}
-            >
-              <option value="0">1s</option>
-              <option value="1">0.1s</option>
-              <option value="2">0.01s</option>
-              <option value="3">0.001s</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Inspection */}
-        <div className="settings-group solo-setting">
-          <div className="setting-item">
-            <span data-i18n="inspection">{tr({ zh: '观察', en: 'Inspection'
-            })}</span>
-            <select
-              className="settings-select"
-              value={store.inspectionTime}
-              onChange={e => store.setInspectionTime(parseInt(e.target.value))}
-            >
-              <option value="0">{tr({ zh: '关闭', en: 'OFF'
-            })}</option>
-              <option value="8">8s</option>
-              <option value="15">15s (WCA)</option>
-              <option value="9999">∞</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Voice */}
-        <div className="settings-group solo-setting">
-          <div className="setting-item">
-            <BoolToggle
-              value={store.voice}
-              onChange={store.setVoice}
-              label={tr({ zh: '语音提示', en: 'Voice Alert' })}
-            />
-          </div>
-        </div>
-
-        {/* Show Image */}
-        <div className="settings-group">
-          <div className="setting-item">
-            <BoolToggle
-              value={store.showImage}
-              onChange={store.setShowImage}
-              label={tr({ zh: '显示打乱图', en: 'Show Image' })}
-            />
-          </div>
-        </div>
-
-        {/* 起表方式 — 仅多人对战:默认关(各自开始,谁准备好谁起表);开启则回到全员按住
-            一起绿灯、同一时刻起表。无论哪种,都要等全员停表才结算这一轮。 */}
-        {store.mode !== 'solo' && (
-          <div className="settings-group">
-            <div className="setting-item">
-              <BoolToggle
-                value={store.syncStart}
-                onChange={store.setSyncStart}
-                label={tr({ zh: '同时开始', en: 'Start together' })}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* 上排翻转 — 仅多人对战:围坐一桌上排面向对面(默认开);同向观看时关掉,上排正立 */}
-        {store.mode !== 'solo' && (
-          <div className="settings-group">
-            <div className="setting-item">
-              <BoolToggle
-                value={store.flipTopRow}
-                onChange={store.setFlipTopRow}
-                label={tr({ zh: '上排翻转', en: 'Flip top row' })}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* 按键 — 仅多人对战:每位玩家的计时键,点按钮进入录键态,按任意键即绑定
-            (Esc 取消);和另一位玩家已用的键冲突时自动互换,不会撞键。 */}
-        {store.mode !== 'solo' && (
-          <div className="settings-group">
-            <div className="settings-label">{tr({ zh: '按键', en: 'Key bindings' })}</div>
-            {Array.from({ length: store.playerCount }, (_, i) => i).map(i => (
-              <div className="setting-item" key={i}>
-                <span>{`P${i + 1}`}</span>
-                <button
-                  type="button"
-                  className={`key-bind-btn${store.recordingKeyFor === i ? ' recording' : ''}`}
-                  onClick={() => store.setRecordingKeyFor(store.recordingKeyFor === i ? null : i)}
-                >
-                  {store.recordingKeyFor === i
-                    ? tr({ zh: '按任意键…', en: 'Press a key…' })
-                    : formatKeyLabel(store.playerKeys[i])}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Scramble Size */}
-        <div className="settings-group">
-          <div className="setting-item slider-row">
-            <span data-i18n="scramble_size">{tr({ zh: '打乱大小', en: 'Scramble Size'
-            })}</span>
-            <input
-              type="range"
-              min="0.5"
-              max="2.0"
-              step="0.1"
-              value={store.scrambleScale}
-              onChange={e => {
-                const val = parseFloat(e.target.value);
-                store.setScrambleScale(val);
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Phases */}
-        <div className="settings-group solo-setting">
-          <div className="setting-item">
-            <span data-i18n="phases">{tr({ zh: '分段', en: 'Phases' })}</span>
-            <select
-              className="settings-select"
-              value={store.phases}
-              onChange={e => store.setPhases(parseInt(e.target.value))}
-            >
-              <option value="1">1 ({tr({ zh: '普通', en: 'Normal' })})</option>
-              <option value="2">2 (BLD)</option>
-              <option value="4">4 (CFOP)</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Start Delay */}
-        <div className="settings-group">
-          <div className="setting-item slider-row">
-            <span data-i18n="start_delay">{tr({ zh: '启动延迟', en: 'Start Delay'
-            })}</span>
-            <span className="delay-value">{(store.startDelay / 1000).toFixed(2)}s</span>
-            <input
-              type="range"
-              min="0"
-              max="1000"
-              step="50"
-              value={store.startDelay}
-              onChange={e => store.setStartDelay(parseInt(e.target.value))}
-            />
-          </div>
-        </div>
-
-        {/* 智能魔方 — 仅多人对战:选「每人一颗 / 一颗轮流」,逐人连接 */}
-        {store.mode !== 'solo' && <BattleCubeSettingsGroup />}
-
-        {/* 背景自定义 — 1v1 双人独立,Solo 只显示 P1 */}
-        <BackgroundSettingsGroup mode={store.mode} isZh={isZh} />
-
-        {/* 操作按钮 */}
-        <div className="settings-group">
-          <button className="settings-action-btn" onClick={() => {
-            store.toggleShowTime();
-            onClose();
-          }}>
-            {store.showTime ? <EyeOff size={16} /> : <Eye size={16} />}
-            {(store.showTime ? I18N_TEXT.hide_time : I18N_TEXT.show_time)[(i18n.language.startsWith('zh') ? 'zh' : 'en')]}
-          </button>
-          <button className="settings-action-btn danger" onClick={() => {
-            store.resetAll();
-            onClose();
-          }}>
-            <RotateCcw size={16} />
-            {tr({ zh: '全部重置', en: 'Reset All' })}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  if (!visible) return null;
+  return <TimerBattleSettings language={isZh ? 'zh' : 'en'} onClose={onClose}
+    keys={store.playerKeys.slice(0, store.playerCount)} onKeyChange={store.setPlayerKey}
+    precision={{ value: store.timerPrecision, onChange: store.setTimerPrecision }}
+    inspection={{ value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] }}
+    hold={{ value: store.startDelay, onChange: store.setStartDelay }}
+    preview={{ value: store.showImage, onChange: store.setShowImage }}
+    hideTime={{ value: !store.showTime, onChange: () => store.toggleShowTime() }}
+    source={<div className="settings-group">
+      <label className="setting-item"><span>{tr({ en: 'Scramble source', zh: '打乱来源' })}</span>
+        <select className="settings-select" value={settings.scrambleSource === 'wca' ? 'wca' : 'random'}
+          onChange={(event) => updateSettings({ scrambleSource: event.target.value as 'random' | 'wca' })}>
+          <option value="wca">{tr({ en: 'WCA real', zh: 'WCA 真题' })}</option>
+          <option value="random">{tr({ en: 'Random', zh: '随机生成' })}</option>
+        </select>
+      </label>
+      {settings.scrambleSource === 'wca' && <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />}
+    </div>}
+    devices={<BattleCubeSettingsGroup />}>
+    <BoolToggle value={store.syncStart} onChange={store.setSyncStart} label={tr({ en: 'Start together', zh: '同时开始' })} />
+    <BoolToggle value={store.voice} onChange={store.setVoice} label={tr({ en: 'Voice alert', zh: '语音提示' })} />
+    <label className="setting-item"><span>{tr({ en: 'Scramble size', zh: '打乱大小' })}</span>
+      <input type="range" min={0.5} max={2} step={0.1} value={store.scrambleScale} onChange={(event) => store.setScrambleScale(Number(event.target.value))} />
+    </label>
+    <label className="setting-item"><span>{tr({ en: 'Phases', zh: '分段' })}</span>
+      <select value={store.phases} onChange={(event) => store.setPhases(Number(event.target.value))}>
+        <option value={1}>1</option><option value={2}>2 (BLD)</option><option value={4}>4 (CFOP)</option>
+      </select>
+    </label>
+    <BackgroundSettingsGroup mode={store.mode} isZh={isZh} />
+    <button className="settings-action-btn danger" onClick={() => { store.resetAll(); onClose(); }}>
+      <RotateCcw size={16} />{tr({ en: 'Reset All', zh: '全部重置' })}
+    </button>
+  </TimerBattleSettings>;
 }
-
 // ===== 主组件 =====
 
 interface BattleViewProps {
@@ -1188,20 +898,15 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   // 上排是否翻转 180°(围坐一桌面向对面 = true;同向观看 = false,用户可关)。
   //   关掉后上排文字/图正立,控制条也从「对面视角上角」回到本屏上角。
   const flipTop = store.flipTopRow;
-  const middleBar = (
-    <MiddleBar
-      onSettingsClick={handleSettingsClick}
-      onHistoryClick={() => setVsHistoryOpen(true)}
-      playersControl={playersControl}
-      presenceControl={presenceControl}
-    />
-  );
-
+  const middleBar = <TimerBattleToolbar language={i18n.language === 'zh' ? 'zh' : 'en'}
+    onSettings={handleSettingsClick} onHistory={() => setVsHistoryOpen(true)}
+    controls={<>{playersControl}{presenceControl}</>} brand={<CubeRootLogo className="middle-logo" />} />;
   return (
     <BattleCubesProvider>
       <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
       <div className={`battle-container${mode === '1v1' && !isGrid && store.layout === 'side' ? ' side-layout' : ''}${mode === '1v1' && !isGrid && store.layout === 'side' && bottomSame ? ' side-shared' : ''}${isGrid ? ' grid-layout' : ''}`}>
 
+      <TimerStageLayout devices={mode === '1v1' ? <BattleDeviceCenter /> : undefined}>
       {mode === '1v1' && <TimerBattleLayoutControls
         playerCount={playerCount as 2 | 3 | 4} layout={store.layout} flipTopRow={flipTop}
         language={store.locale === 'zh' ? 'zh' : 'en'} onLayoutChange={store.setLayout} onFlipChange={store.setFlipTopRow}
@@ -1218,6 +923,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
             hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} />}
         />
       )}
+      </TimerStageLayout>
       {/* === Solo 模式 === */}
       {mode === 'solo' && (
         <TimerArea playerId={0} />

@@ -98,3 +98,14 @@
 .timer-battle-history-results > div { display: flex; flex-direction: column; gap: 8px; }
 .timer-battle-history-results strong { font: 28px var(--font-mono); }
 .timer-battle-history-scramble p { overflow-wrap: anywhere; }
+.timer-battle-settings { display: flex; flex-direction: column; gap: 16px; }
+.timer-battle-settings > label, .timer-battle-key-bindings > div, .timer-battle-cube-device { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.timer-battle-settings select, .timer-battle-key-bindings button { min-height: 44px; padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; }
+.timer-battle-key-bindings { border: 0; padding: 0; margin: 0; }
+.timer-battle-key-bindings legend { margin-bottom: 8px; }
+.timer-battle-key-bindings button { min-width: 88px; cursor: pointer; }
+.timer-battle-key-bindings button[aria-pressed="true"] { background: var(--accent-soft); }
+.timer-battle-cube-controls h3 { margin: 0 0 12px; font-size: inherit; }
+.timer-battle-cube-controls p { font-size: 13px; color: var(--muted-foreground); }
+.timer-battle-cube-device { margin-block: 12px; }
+.timer-battle-cube-device .shell-device-center { position: relative; inset: auto; }

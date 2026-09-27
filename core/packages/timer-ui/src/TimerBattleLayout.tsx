@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
+import BoolToggle from './BoolToggle';
 
 export interface TimerBattleCell {
   hideScramble: boolean;
@@ -41,9 +42,7 @@ export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, lan
     {playerCount === 2 && (['versus', 'side'] as const).map((value) => (
       <button type="button" key={value} aria-pressed={layout === value} onClick={() => onLayoutChange(value)}>{copy[value]}</button>
     ))}
-    {(playerCount > 2 || layout === 'versus') && <label>
-      <input type="checkbox" checked={flipTopRow} onChange={(event) => onFlipChange(event.target.checked)} />{copy.flip}
-    </label>}
+    {(playerCount > 2 || layout === 'versus') && <BoolToggle label={copy.flip} value={flipTopRow} onChange={onFlipChange} />}
   </div>;
 }
 
