@@ -168,6 +168,25 @@ describe('installed app multiplayer modes', () => {
     expect(host.querySelector('a[href*="timer"]')).toBeNull();
   });
 
+  it('cancels a held local key when the device dialog opens and blocks new presses', async () => {
+    const render = (inputBlocked: boolean) => root.render(
+      <LocalBattleMode {...baseProps} inputBlocked={inputBlocked} playerCount={2} />,
+    );
+    await act(async () => render(false));
+    const key = ' ';
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key })));
+    expect(host.querySelector('.timer-display.holding')).not.toBeNull();
+    await act(async () => render(true));
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keyup', { key }));
+      window.dispatchEvent(new KeyboardEvent('keydown', { key }));
+    });
+    expect(host.querySelector('.timer-display.holding, .timer-display.running')).toBeNull();
+    await act(async () => render(false));
+    await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', { key })));
+    expect(host.querySelector('.timer-display.holding')).not.toBeNull();
+  });
+
   it('renders a working retry after local scramble generation fails', async () => {
     vi.mocked(generateTimerScramble)
       .mockResolvedValueOnce({
@@ -273,6 +292,7 @@ describe('installed app multiplayer modes', () => {
   });
 
   it('routes a batched smart-cube scramble completion and first solve move through the online timer', async () => {
+    const openDevice = vi.fn();
     const state = roomState();
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const postNetResult = vi.fn(async () => state);
@@ -307,12 +327,17 @@ describe('installed app multiplayer modes', () => {
       <NetBattleMode
         {...baseProps}
         capability={capability}
+        deviceControls={<button data-device-controls onClick={openDevice}>Device operations</button>}
         onSmartCubeHandlersChange={(next) => { handlers = next; }}
         smartCube={smartCube}
       />,
     ));
     await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
     expect(handlers).not.toBeNull();
+
+    await act(async () => host.querySelector<HTMLButtonElement>('[data-device-controls]')!.click());
+    expect(openDevice).toHaveBeenCalledOnce();
+    expect(smartCube.disconnect).not.toHaveBeenCalled();
 
     const startedAt = performance.now();
     await act(async () => {
