@@ -1573,6 +1573,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared timer and scramble font previews and size controls. Font assets ship with timer-ui; hosts persist the selected settings.',
   },
   {
+    name: 'TimerWorkspace / useTimerWideLayout',
+    import: "import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享 1024px 宽屏断点、全宽计时区、360px 成绩侧栏及独立滚动；宿主只提供导航高度。',
+    en: 'Shared 1024px breakpoint, full-width timer workspace, 360px results dock and independent scrolling. Hosts provide navigation offsets.',
+  },
+  {
     name: 'TimerStageLayout',
     import: "import { TimerStageLayout } from '@cuberoot/timer-ui';",
     category: 'more',

@@ -802,49 +802,13 @@
 .shell-chart-canvas { display: flex; justify-content: center; }
 .shell-panel-statgrid { margin-bottom: 8px; }
 
-/* ── Desktop dock (>=1024px): rail on the right ─────────── */
+/* Recap content adapts to the shared desktop dock. */
 @media (min-width: 1024px) {
-  .timer-shell {
-    display: grid;
-    grid-template-columns: 1fr 0;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "topbar  panel"
-      "main    panel";
-    transition: grid-template-columns 160ms ease;
-  }
-  /* 面板打开时把壳限制在视口内，右栏内容才会在 .shell-panel-body 内形成
-     独立滚动条，而不是继续把整页往下撑长。 */
-  .timer-shell.panel-open {
-    height: calc(100dvh - var(--page-notice-h, 0px));
-    grid-template-columns: 1fr 360px;
-  }
-  /* Auto recap mounts a dense report immediately after its frame. Animating the
-     grid track would reflow that report on every frame of the 160ms expansion. */
-  .timer-shell.recap-open {
-    transition: none;
-    grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px);
-  }
   .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
-  .shell-recap-rail > .shell-recap {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    border-top: 0;
-  }
-  /* 报告按侧栏宽度排版，不能沿用宽视口的双列回放。完整表格仍可横向滚动。 */
+  .shell-recap-rail > .shell-recap { flex: 1; min-width: 0; height: 100%; border-top: 0; }
   .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
   .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .shell-topbar { grid-area: topbar; }
-  .shell-main { grid-area: main; }
-  .shell-panel--rail {
-    grid-area: panel;
-    border-left: 1px solid var(--shell-divider);
-    background: var(--background);
-    overflow: hidden;
-  }
 }
-
 /* 平板与窄桌面:中列按 max-content 参与三列布局时,右侧工具会被项目/来源控件挤出视口。
    这里提前切成两列,左侧允许折行,右侧工具始终保留完整宽度。 */
 /* ── Phone (<480px) ─────────────────────────────────────── */

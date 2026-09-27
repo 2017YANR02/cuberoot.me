@@ -64,6 +64,8 @@ const host: InstalledAppHost = {
   version: 'test',
 };
 
+let wideViewport = false;
+const mediaListeners = new Set<() => void>();
 let root: Root;
 let container: HTMLDivElement;
 const saved = () => activeTimerSolves(memory.data as TimerStoreData, '333');
@@ -80,7 +82,13 @@ beforeEach(async () => {
   backListener = null;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  wideViewport = false;
+  mediaListeners.clear();
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    get matches() { return query === '(min-width: 1024px)' && wideViewport; },
+    addEventListener: (_: string, fn: () => void) => mediaListeners.add(fn),
+    removeEventListener: (_: string, fn: () => void) => mediaListeners.delete(fn),
+  }));
   vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 503 })));
   vi.spyOn(performance, 'now').mockImplementation(() => now);
   localStorage.clear();
@@ -110,6 +118,36 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('keeps the timer mounted beside wide history and switches to a full page on narrow screens', async () => {
+    await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
+    const timerNode = container.querySelector('.timing-surface');
+    const nav = container.querySelectorAll<HTMLButtonElement>('.primary-nav button');
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+    expect(container.querySelector('.timing-surface')).toBe(timerNode);
+    expect(container.querySelector('.timer-workspace[data-panel-open]')).not.toBeNull();
+    expect(container.querySelector('.history-view .app-titlebar')).not.toBeNull();
+    await act(async () => nav[0].click());
+    expect(container.querySelector('.timing-surface')).toBe(timerNode);
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+    await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
+    expect(container.querySelector('.timing-surface')).toBeNull();
+    expect(container.querySelector('.app-shell > .app-titlebar')).not.toBeNull();
+    await act(async () => nav[0].click());
+    expect(container.querySelector('.timing-surface')).not.toBeNull();
+  });
+
+  it('applies shared typography settings to the installed timing surface', async () => {
+    const nav = container.querySelectorAll<HTMLButtonElement>('.primary-nav button');
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('.tfp-trigger')!.click());
+    const inter = [...container.querySelectorAll<HTMLButtonElement>('.tfp-item')].find(node => node.textContent?.includes('Inter'))!;
+    await act(async () => inter.click());
+    await settle();
+    expect((memory.data as TimerStoreData).settings.timerFont).toBe('sans');
+    await act(async () => nav[0].click());
+    expect(container.querySelector('.tf-sans')).not.toBeNull();
+  });
+
   it.each(['2', '3', '4'])('shares device operations in %s-player mode without disconnecting on entry', async (mode) => {
     const disconnect = vi.fn(async () => undefined);
     const resetState = vi.fn();

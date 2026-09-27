@@ -1,5 +1,7 @@
 'use client';
 
+import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
+
 /**
  * SoloView — the redesigned Solo timer (Phase 1 shell).
  *
@@ -410,7 +412,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { country: rankCountry } = useRankCountry();
 
   const isMobile = useMediaQuery('(max-width: 480px)');
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useTimerWideLayout();
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
@@ -2931,7 +2933,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   return (
-    <div
+    <TimerWorkspace panelOpen={Boolean(panelTab || recapSolve)} recapOpen={Boolean(recapSolve && !panelTab)}
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve) ? ' panel-open' : ''}${isDesktop && recapSolve && !panelTab ? ' recap-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
@@ -3020,7 +3022,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
       {/* ── Main column ─────────────────────────────────────── */}
       <TimerStageLayout
-        className="shell-main"
+        className="shell-main timer-workspace-main"
         fullscreen={fullscreen}
         source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />}
         statistics={
@@ -3267,12 +3269,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
           非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
       {isDesktop && !panelTab && solveRecap && (
-        <aside className="shell-panel--rail shell-recap-rail" data-site-surface="panel" data-no-timer>
+        <aside className="timer-workspace-panel shell-panel--rail shell-recap-rail" data-site-surface="panel" data-no-timer>
           {solveRecap}
         </aside>
       )}
       {panelTab && (
-        <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
+        <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">
             <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
           })}</button>
@@ -3283,7 +3285,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
           })}><X size={16} /></button>
           </div>
-          <div className="shell-panel-body">{renderPanelBody()}</div>
+          <div className="shell-panel-body timer-workspace-panel-body">{renderPanelBody()}</div>
         </aside>
       )}
 
@@ -3443,6 +3445,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         />
       )}
 
-    </div>
+    </TimerWorkspace>
   );
 }

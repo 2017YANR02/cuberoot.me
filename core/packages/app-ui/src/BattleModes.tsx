@@ -1,5 +1,7 @@
 import {
   BATTLE_EVENT_IDS,
+  DEFAULT_TIMER_TYPOGRAPHY,
+  type TimerTypographySettings,
   LOCAL_BATTLE_DEFAULT_PLAYER_KEYS,
   NET_EVENTS,
   assignLocalBattlePlayerKey,
@@ -189,6 +191,7 @@ function nextLocalBattleRoundId(): string {
 
 export interface LocalBattleModeProps extends BattleModeBaseProps {
   onSettingsChange?(patch: Partial<TimerStoreSettings>): void;
+  typographySettings?: TimerTypographySettings;
   scramblePreviewSettings?: TimerScramblePreviewSettings;
   onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
   playerCount: 2 | 3 | 4;
@@ -223,6 +226,7 @@ export function LocalBattleMode({
   precision,
   runningPrecision,
   scramblePreviewSettings,
+  typographySettings = DEFAULT_TIMER_TYPOGRAPHY,
   smartCube,
 }: LocalBattleModeProps) {
   const [state, setState] = useState<LocalBattleState>(() => initialLocalBattleState(playerCount));
@@ -529,7 +533,7 @@ export function LocalBattleMode({
       sameEventPlayerIds,
     );
     return !scrambleHidden ? (
-      <TimerScrambleStrip
+      <TimerScrambleStrip font={typographySettings.scrambleFont} fontScale={typographySettings.scrambleFontScale}
         copiedLabel={copy.copied}
         fallback={scrambleFailed ? copy.retry : copy.battleNoScramble}
         fallbackKind="custom"
@@ -630,7 +634,7 @@ export function LocalBattleMode({
                     visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
                   />
                 ) : undefined}
-                colorClass={localPlayerColor(player)}
+                colorClass={`${localPlayerColor(player)} tf-${typographySettings.timerFont}`} fontScale={typographySettings.timerFontScale}
                 digits={<SegmentTime text={playerDisplay(player, nowMs, {
                   hideTime,
                   inspectionSec,
@@ -716,6 +720,7 @@ export interface NetBattleModeProps extends BattleModeBaseProps {
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
   onSmartCubeHandlersChange?(handlers: BattleSmartCubeHandlers | null): void;
+  typographySettings?: TimerTypographySettings;
   scramblePreviewSettings: TimerScramblePreviewSettings;
   smartCube?: InstalledAppSmartCube;
   writeClipboardText(text: string): Promise<void>;
@@ -748,6 +753,7 @@ export function NetBattleMode({
   precision,
   runningPrecision,
   scramblePreviewSettings,
+  typographySettings = DEFAULT_TIMER_TYPOGRAPHY,
   smartCube,
   writeClipboardText,
 }: NetBattleModeProps) {
@@ -1332,7 +1338,7 @@ export function NetBattleMode({
           <TimingSurface
             layout="net"
             ariaLabel={copy.timer}
-            colorClass={colorClass}
+            colorClass={`${colorClass} tf-${typographySettings.timerFont}`} fontScale={typographySettings.timerFontScale}
             cornerSlot={scramblePreviewSettings.showCubePreview && scramble ? (
               <TimerCubePreview
                 ariaLabel={copy.cubeState}
@@ -1377,7 +1383,7 @@ export function NetBattleMode({
             }}
             phase={timer.machine.phase}
             scrambleSlot={(
-              <TimerScrambleStrip
+              <TimerScrambleStrip font={typographySettings.scrambleFont} fontScale={typographySettings.scrambleFontScale}
                 copiedLabel={copy.copied}
                 fallback={copy.battleNoScramble}
                 fallbackKind="custom"
