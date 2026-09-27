@@ -1204,25 +1204,6 @@ button {
   font-weight: 700;
 }
 
-.battle-player-timer.timing-surface {
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  padding: 8px 4px;
-  background: transparent;
-}
-
-.battle-player-timer .timing-surface-core,
-.battle-player-timer .timing-surface-sub {
-  min-width: 0;
-  gap: 7px;
-}
-
-.battle-player-timer .scramble-strip {
-  max-width: 100%;
-  font-size: 0.76rem;
-}
-
 .battle-penalties {
   justify-content: center;
   padding: 5px 6px 8px;

@@ -566,6 +566,7 @@ export function LocalBattleMode({
                 />
               </header>
               <TimingSurface
+                layout="local"
                 ariaLabel={copy.battlePlayer(player.id + 1)}
                 className="battle-player-timer"
                 colorClass={localPlayerColor(player)}
@@ -575,14 +576,13 @@ export function LocalBattleMode({
                   precision,
                   runningPrecision,
                 })} />}
-                fontSize="clamp(2.4rem, 11vw, 5.5rem)"
                 interactive={player.scramble.length > 0}
                 onContextMenu={(event) => event.preventDefault()}
                 onPointerCancel={() => dispatch({
                   type: 'player-timer', playerId: player.id, action: { type: 'cancel-press' },
                 })}
                 onPointerDown={(event) => {
-                  if (event.button !== 0) return;
+                  if (event.button !== 0 || shouldIgnoreTimerTarget(event.target)) return;
                   event.preventDefault();
                   event.currentTarget.setPointerCapture(event.pointerId);
                   setWinners([]);
@@ -593,6 +593,7 @@ export function LocalBattleMode({
                   });
                 }}
                 onPointerUp={(event) => {
+                  if (shouldIgnoreTimerTarget(event.target)) return;
                   if (event.currentTarget.hasPointerCapture(event.pointerId)) {
                     event.currentTarget.releasePointerCapture(event.pointerId);
                   }
@@ -605,7 +606,6 @@ export function LocalBattleMode({
                 phase={player.timer.phase}
                 scrambleSlot={!scrambleHidden ? (
                   <TimerScrambleStrip
-                    compact
                     copiedLabel={copy.copied}
                     fallback={scrambleFailed ? copy.retry : copy.battleNoScramble}
                     fallbackKind="custom"
