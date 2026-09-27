@@ -9,7 +9,7 @@ import LiveCubeState from '@cuberoot/timer-ui/LiveCubeState';
 const sharedCss = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/live-cube.css')), 'utf8');
 const hosts = [
   ['Web', 'timer-shell', 'app/[lang]/timer/_shell/shell.css'],
-  ['Windows / Android', 'app-shell', '../app-ui/src/app.css'],
+  ['Windows / Android', 'app-shell', new URL(import.meta.resolve('@cuberoot/app-ui/app.css'))],
 ] as const;
 
 it.each(hosts)('%s keeps the live cube visible during a solve, while static previews fade', async (_, hostClass, cssPath) => {
