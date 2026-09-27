@@ -10,7 +10,7 @@ import { syncSolver } from '../sync-rubiks-solver-demo.js';
 import { syncCstimerScramble } from '../sync-cstimer-scramble.js';
 
 const root = repositoryRoot;
-const tsx = join(root, 'core/node_modules/.bin/tsx');
+const tsx = join(root, 'core/node_modules/tsx/dist/cli.mjs');
 const directory = dirname(fileURLToPath(import.meta.url));
 const temp = () => mkdtempSync(join(tmpdir(), 'upstream-contract-'));
 const write = (path: string, value: string) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, value); };
@@ -18,16 +18,16 @@ const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, 
 
 test('all TypeScript entries validate from an unrelated current directory', () => {
   for (const entry of ['sync_upstream.ts', 'scripts/upstream/sync-all.ts', 'scripts/upstream/sync-cstimer.ts', 'scripts/upstream/sync-cstimer-scramble.ts', 'scripts/upstream/sync-rubiks-solver-demo.ts', 'scripts/upstream/sync-alg-trainers.ts', 'scripts/upstream/sync-blddb.ts', 'scripts/upstream/sync-recordranks.ts']) {
-    const result = spawnSync(tsx, [join(root, entry), '--validate-only'], { cwd: tmpdir(), encoding: 'utf8' });
+    const result = spawnSync(process.execPath, [tsx, join(root, entry), '--validate-only'], { cwd: tmpdir(), encoding: 'utf8' });
     assert.equal(result.status, 0, `${entry}: ${result.stderr}`);
   }
 });
 
 test('root rejects an incomplete RepoRoot and invalid Only without touching upstream', () => {
-  const invalidRoot = spawnSync(tsx, [join(root, 'sync_upstream.ts'), '--repo-root', tmpdir(), '--validate-only'], { cwd: tmpdir(), encoding: 'utf8' });
+  const invalidRoot = spawnSync(process.execPath, [tsx, join(root, 'sync_upstream.ts'), '--repo-root', tmpdir(), '--validate-only'], { cwd: tmpdir(), encoding: 'utf8' });
   assert.notEqual(invalidRoot.status, 0);
   assert.match(invalidRoot.stderr, /RepoRoot/);
-  const invalidOnly = spawnSync(tsx, [join(root, 'sync_upstream.ts'), '--only', 'unknown', '--validate-only'], { cwd: tmpdir(), encoding: 'utf8' });
+  const invalidOnly = spawnSync(process.execPath, [tsx, join(root, 'sync_upstream.ts'), '--only', 'unknown', '--validate-only'], { cwd: tmpdir(), encoding: 'utf8' });
   assert.notEqual(invalidOnly.status, 0);
   assert.match(invalidOnly.stderr, /--only/);
 });
@@ -79,6 +79,7 @@ test('stash guard restores only the stash created by this sync', () => {
   const clone = temp();
   try {
     git(clone, 'init', '-q');
+    git(clone, 'config', 'core.autocrlf', 'false');
     write(join(clone, 'tracked.txt'), 'base\n');
     git(clone, 'add', 'tracked.txt');
     execFileSync('git', ['-C', clone, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-qm', 'base']);
