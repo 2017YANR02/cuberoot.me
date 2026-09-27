@@ -1394,61 +1394,14 @@ button {
   padding: 5px 0;
 }
 
-.battle-net-layout {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 32%);
-}
-
 .battle-net-timer {
   display: flex;
   min-width: 0;
   min-height: 460px;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   padding-top: 8px;
-}
-
-.battle-player-list {
-  min-width: 0;
-  margin: 0;
-  padding: 8px;
-  overflow: auto;
-  border-left: 1px solid var(--border-default);
-  list-style: none;
-}
-
-.battle-player-list li {
-  display: grid;
-  min-width: 0;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 4px 8px;
-  padding: 10px;
-  border-bottom: 1px solid var(--border-default);
-}
-
-.battle-player-list li.is-me {
-  background: var(--accent-soft);
-}
-
-.battle-player-list li > span:first-child {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: 6px;
-}
-
-.battle-player-list li strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-player-list li small,
-.battle-player-list li span {
-  color: var(--muted-foreground);
 }
 
 @media (max-width: 640px) {
@@ -1460,40 +1413,15 @@ button {
     white-space: nowrap;
   }
 
-
-
-
-  .battle-net-layout {
-    display: flex;
-    flex-direction: column;
-  }
-
   .battle-net-timer {
     min-height: 400px;
-  }
-
-  .battle-player-list {
-    max-height: 260px;
-    border-top: 1px solid var(--border-default);
-    border-left: 0;
   }
 }
 
 @media (orientation: landscape) and (max-height: 560px) {
 
-  .battle-net-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(210px, 34%);
-  }
-
   .battle-net-timer {
     min-height: 320px;
-  }
-
-  .battle-player-list {
-    max-height: none;
-    border-top: 0;
-    border-left: 1px solid var(--border-default);
   }
 }
 

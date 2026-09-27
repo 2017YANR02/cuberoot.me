@@ -220,81 +220,6 @@
 }
 
 /* ── 房间内玩家条 ─────────────────────────────────────────── */
-.net-players {
-  position: absolute;
-  left: max(12px, env(safe-area-inset-left));
-  bottom: max(12px, env(safe-area-inset-bottom));
-  z-index: 3;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  width: fit-content;
-  max-width: min(100%, 360px);
-  padding: 8px 16px 4px 0;
-}
-.net-player {
-  display: grid;
-  grid-template-columns: 18px 18px 18px minmax(0, 10em) max-content max-content;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  min-height: 32px;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background 120ms ease, color 120ms ease;
-}
-.net-player.is-live-target { cursor: pointer; }
-.net-player.is-live-target:hover { background: var(--shell-hover); }
-.net-player.is-live-target:active { background: var(--accent-soft); }
-.net-player.is-live-target:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
-.net-player.is-active { background: var(--accent-soft); }
-.net-player.is-offline { opacity: 0.45; }
-.net-p-name {
-  font-size: 13px;
-  color: var(--foreground);
-  max-width: 10em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.net-p-event-slot,
-.net-p-host-slot,
-.net-p-flag-slot {
-  display: inline-flex;
-  width: 18px;
-  height: 20px;
-  align-items: center;
-  justify-content: flex-start;
-}
-.net-p-event-slot:empty,
-.net-p-host-slot:empty,
-.net-p-flag-slot:empty { visibility: hidden; }
-.net-player.is-me .net-p-name { font-weight: 700; }
-/* 访客点自己的名字改名 —— 剥掉 UA 按钮样式,看上去仍是玩家条里的一个名字,
-   只有下划虚线提示「这个能点」。 */
-.net-p-name-btn {
-  appearance: none;
-  background: none;
-  border: 0;
-  padding: 0;
-  font-family: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: underline dotted color-mix(in srgb, var(--foreground) 35%, transparent);
-  text-underline-offset: 3px;
-}
-.net-p-name-btn:hover { text-decoration-color: var(--accent); }
-.net-p-me { color: var(--faint-foreground); font-weight: 400; }
-.net-p-score {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  font-family: var(--font-mono);
-}
 .net-p-trophy { color: var(--signal-warning); }
 .net-p-status {
   font-size: 12px;
@@ -671,12 +596,9 @@
   /* 顶栏右侧多了「智能魔方」按钮,窄屏一行要挤;房间码本身就够辨识,
      省掉前面「房间」二字正好把这一格补回来,不必让整条右组换行。 */
   .net-code-label { display: none; }
-  .net-players { gap: 2px; padding-top: 6px; }
-  .net-player { grid-template-columns: 16px 16px 16px minmax(0, 7em) max-content max-content; gap: 6px; }
   .net-p-event-slot,
   .net-p-host-slot,
   .net-p-flag-slot { width: 16px; }
-  .net-p-name { max-width: 7em; }
   .net-lobby { margin-top: 24px; }
   .net-stats-overlay { padding: 3vh 10px; }
   .net-stats-panel { padding: 14px 14px 20px; }

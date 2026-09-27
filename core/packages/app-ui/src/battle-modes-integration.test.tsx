@@ -269,7 +269,7 @@ describe('installed app multiplayer modes', () => {
     expect(createNetRoom).toHaveBeenCalledWith('333', { name: 'Cuber' });
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
     expect(host.textContent).toContain('1234');
-    expect(host.querySelectorAll('.battle-player-list li')).toHaveLength(1);
+    expect(host.querySelectorAll('.timer-room-player')).toHaveLength(1);
     const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame[data-no-timer]');
     expect(preview).not.toBeNull();
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);

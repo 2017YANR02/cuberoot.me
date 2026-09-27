@@ -18,7 +18,6 @@ import {
   isLocalBattleScrambleHidden,
   isLocalBattleAssignableKey,
   isNetBattleRoomCode,
-  isNetOnline,
   isNetRoundParticipant,
   localBattlePlayerForKey,
   myScramble,
@@ -66,6 +65,8 @@ import {
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
+  TimerRoomLayout,
+  TimerRoomPlayers,
   TimerBattleLayout,
   TimerBattlePlayer,
   TimerBattleLayoutControls,
@@ -1594,7 +1595,9 @@ export function NetBattleMode({
           </ol>
         </section>
       )}
-      <div className="battle-net-layout">
+      <TimerRoomLayout players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
+        language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)} />}
+      >
         <div className="battle-net-timer">
           <TimerPuzzlePicker
             dataNoTimer
@@ -1697,28 +1700,7 @@ export function NetBattleMode({
             >{copy.battleSkipWaiting}</button>
           )}
         </div>
-        <ol className="battle-player-list" data-no-timer>
-          {players.map((player) => {
-            const result = room.results[String(room.round)]?.[player.id];
-            return (
-              <li className={player.id === credentials.playerId ? 'is-me' : ''} key={player.id}>
-                <span>
-                  {player.iso2 && <Flag className="battle-person-flag" iso2={player.iso2} />}
-                  <strong>{displayCuberName(player.name, language === 'zh')}</strong>
-                  {player.id === credentials.playerId && <small>{copy.battleYou}</small>}
-                </span>
-                <span>{copy.battleScore(room.scores[player.id] ?? 0)}</span>
-                <span>{isNetOnline(player, room.now) ? copy.battlePhase(player.ph) : copy.offline}</span>
-                <strong>{result
-                  ? netResultText(result.t, result.p, precision)
-                  : player.ph === 'solving'
-                    ? formatMs(Math.max(0, Date.now() + (offsetRef.current ?? 0) - player.at), 2)
-                    : '—'}</strong>
-              </li>
-            );
-          })}
-        </ol>
-      </div>
+      </TimerRoomLayout>
       {error && <p aria-live="assertive" className="battle-error">{error}</p>}
       {qrOpen && (
         <RoomQrModal
