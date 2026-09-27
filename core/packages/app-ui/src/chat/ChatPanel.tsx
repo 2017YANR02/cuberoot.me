@@ -41,6 +41,7 @@ export function ChatPanel({ client, userId, peerId, onSelectPeer, renderIdentity
   const [hasNew, setHasNew] = useState(false);
   const lastRendered = useRef<string | undefined>(undefined);
   const missingTail = !!state?.hasNewerGap || (!!state?.page && compareChatSequence(state.page.lastSequence, state.messages.at(-1)?.sequence ?? '0') > 0);
+  const canSend = !!state?.page?.canSend && state.listError !== 'UNAUTHENTICATED';
 
   useEffect(() => { controller?.selectPeer(peerId); bottom.current = true; lastRendered.current = undefined; setHasNew(false); }, [controller, peerId]);
   useEffect(() => {
@@ -140,7 +141,7 @@ export function ChatPanel({ client, userId, peerId, onSelectPeer, renderIdentity
         {state?.page && !state.page.canSend ? <p className="friend-chat-muted friend-chat-readonly">{t('好友关系已解除或聊天不可用，仍可查看已有记录。', 'You can still read this history, but cannot send messages while the friendship is inactive.')}</p>
           : <form className="friend-chat-composer" onSubmit={(event) => { event.preventDefault(); send(); }}>
             <label className="friend-chat-input-label" htmlFor="friend-chat-message">{t('消息', 'Message')}</label>
-            <textarea id="friend-chat-message" value={state?.draft ?? ''} rows={3} disabled={!state?.page?.canSend}
+            <textarea id="friend-chat-message" value={state?.draft ?? ''} rows={3} disabled={!canSend}
               placeholder={t('写一条消息…', 'Write a message…')} onChange={(event) => controller?.setDraft(event.target.value)}
               onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
               onKeyDown={(event) => {
@@ -148,7 +149,7 @@ export function ChatPanel({ client, userId, peerId, onSelectPeer, renderIdentity
                   && event.keyCode !== 229 && window.matchMedia('(hover: hover) and (pointer: fine)').matches) { event.preventDefault(); send(); }
               }} />
             <div className="friend-chat-compose-actions"><span className="friend-chat-muted">{Array.from(state?.draft ?? '').length}/{CHAT_BODY_LIMIT}</span>
-              <button type="submit" className="friend-chat-action is-primary" disabled={!state?.page?.canSend || !normalizeChatBody(state.draft)}><Send size={15} />{t('发送', 'Send')}</button>
+              <button type="submit" className="friend-chat-action is-primary" disabled={!canSend || !normalizeChatBody(state?.draft)}><Send size={15} />{t('发送', 'Send')}</button>
             </div>
           </form>}
       </>}
