@@ -833,6 +833,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'ChatPanel',
+    import: "import { ChatPanel, useChat } from '@cuberoot/app-ui/chat';",
+    category: 'more',
+    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、纯文本消息、失败重试和可见性已读，宿主注入鉴权传输、语言和身份组件。样式从 @cuberoot/app-ui/chat.css 引入。',
+    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, plain-text messages, retry and visible-message read receipts. Hosts inject transport, language and identity rendering; import @cuberoot/app-ui/chat.css for styles.',
+  },
+  {
     name: 'RecordSectionsView',
     import: "import { RecordSectionsView } from '@/components/wca-stats/WcaStatView.views';",
     category: 'more',

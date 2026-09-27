@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
+import { ChatPanel } from '@cuberoot/app-ui/chat';
+import type { ChatClient } from '@cuberoot/shared/chat';
+import '@cuberoot/app-ui/chat.css';
 import {
-  Ban, Check, Loader2, LogIn, Search, UserMinus, UserPlus, Users, X,
+  Ban, Check, Loader2, LogIn, MessageSquare, Search, UserMinus, UserPlus, Users, X,
 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
@@ -12,7 +15,9 @@ import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { resolveAccountAvatar } from '@/lib/account-avatar';
-import { useAuthStore, useIsAdmin } from '@/lib/auth-store';
+import { useAuthStore, useIsAdmin, refreshSessionUser, type WcaUser } from '@/lib/auth-store';
+import { createWebChatClient } from '@/lib/chat-adapter';
+import { refreshNotificationsUnread } from '@/lib/notifications-unread';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import {
   acceptFriendRequest,
@@ -34,7 +39,7 @@ import {
 import type { WcaPersonLite } from '@/lib/wca-api';
 import './friends.css';
 
-type View = 'friends' | 'requests' | 'blocked';
+type View = 'friends' | 'requests' | 'blocked' | 'chats';
 type WcaCandidate = {
   person: WcaPersonLite;
   registered: FriendSearchUser | null | undefined;
@@ -113,6 +118,9 @@ function UserRow({
             )}
             {relationship === 'friends' && (
               <>
+                <AppLink href={`/friends?view=chats&peer=${user.userId}`} className="friends-action" prefetch={false}>
+                  <MessageSquare size={14} />{t('发消息', 'Message')}
+                </AppLink>
                 <button
                   type="button"
                   className="friends-action"
@@ -206,6 +214,24 @@ function RegisteredWcaNotice({ relationship }: { relationship: FriendRelationshi
   return <>{t('该选手已关联 CubeRoot 账号，添加后会发送好友申请。', 'This competitor has linked a CubeRoot account. Adding them sends a friend request.')}</>;
 }
 
+const renderChatIdentity = (user: FriendUser) => <UserIdentity user={user} />;
+const refreshChatNotification = () => { void refreshNotificationsUnread(); };
+
+function FriendChat({ user, peerId, onSelectPeer }: { user: WcaUser; peerId: number | null; onSelectPeer: (peer: number | null) => void }) {
+  const t = useT();
+  const lang = useLang();
+  const login = useAuthStore((state) => state.login);
+  const [binding, setBinding] = useState<{ user: WcaUser; client: ChatClient } | null>(null);
+  useEffect(() => {
+    if (!user.uid) { void refreshSessionUser(); return; }
+    setBinding({ user, client: createWebChatClient() });
+  }, [user]);
+  if (!user.uid) return <p>{t('请重新登录以确认聊天账号。', 'Sign in again to confirm your chat account.')} <button type="button" className="friends-action" onClick={login}>{t('登录', 'Sign in')}</button></p>;
+  if (binding?.user !== user) return <p className="friends-muted">{t('加载中…', 'Loading…')}</p>;
+  return <ChatPanel client={binding.client} userId={user.uid} peerId={peerId} onSelectPeer={onSelectPeer}
+    renderIdentity={renderChatIdentity} t={t} locale={lang} onRead={refreshChatNotification} onSignIn={login} />;
+}
+
 export default function FriendsPage() {
   const t = useT();
   const lang = useLang();
@@ -221,10 +247,13 @@ export default function FriendsPage() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useQueryState(
     'view',
-    parseAsStringEnum<View>(['friends', 'requests', 'blocked'])
+    parseAsStringEnum<View>(['friends', 'requests', 'blocked', 'chats'])
       .withDefault('friends')
       .withOptions({ history: 'push' }),
   );
+  const [peer, setPeer] = useQueryState('peer', parseAsString.withOptions({ history: 'push' }));
+  const peerId = peer && /^[1-9]\d*$/.test(peer) && Number.isSafeInteger(Number(peer)) ? Number(peer) : null;
+  const selectChatPeer = useCallback((id: number | null) => { void setPeer(id === null ? null : String(id)); }, [setPeer]);
   const [q, setQ] = useQueryState(
     'q',
     parseAsString.withDefault('').withOptions({ history: 'replace', scroll: false }),
@@ -367,7 +396,7 @@ export default function FriendsPage() {
   const hasMainItems = Boolean(list?.length || (view === 'friends' && overview?.wcaContacts.length));
 
   return (
-    <div className="friends-page">
+    <div className={`friends-page${view === 'chats' ? ' is-chat' : ''}`}>
       <h1 className="friends-title">{t('好友', 'Friends')}</h1>
 
       {!user ? (
@@ -380,6 +409,9 @@ export default function FriendsPage() {
       ) : (
         <>
           <div className="friends-tabs" role="tablist" aria-label={t('好友视图', 'Friends view')}>
+            <button className="friends-tab" type="button" role="tab" aria-selected={view === 'chats'} onClick={() => void setView('chats')}>
+              <MessageSquare size={15} />{t('聊天', 'Chats')}
+            </button>
             <button className="friends-tab" type="button" role="tab" aria-selected={view === 'friends'} onClick={() => void setView('friends')}>
               <Users size={15} />{t('好友', 'Friends')}
             </button>
@@ -390,6 +422,8 @@ export default function FriendsPage() {
               <Ban size={15} />{t('黑名单', 'Blocked')}
             </button>
           </div>
+
+          {view === 'chats' && <FriendChat user={user} peerId={peerId} onSelectPeer={selectChatPeer} />}
 
           {view === 'friends' && (
             <section className="friends-search-section">
