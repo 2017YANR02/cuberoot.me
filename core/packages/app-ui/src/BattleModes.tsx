@@ -58,14 +58,9 @@ import {
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
 import {
-  createTimerDeviceRegistry,
-  TIMER_DEVICE_REGISTRATIONS,
-} from '@cuberoot/shared/timer/device-contract';
-import {
   SegmentTime,
   Flag,
   RoomQrModal,
-  TimerDeviceCenter,
   TimerPlayersSelect,
   TimerCubePreview,
   TimerPuzzlePicker,
@@ -77,6 +72,7 @@ import {
   type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
 import {
+  type ReactNode,
   createRef,
   useCallback,
   useEffect,
@@ -87,10 +83,6 @@ import {
 
 import type { COPY, SupportedLanguage } from './copy';
 
-const INSTALLED_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
-  adapterIds: ['smart-cube'],
-  registrations: TIMER_DEVICE_REGISTRATIONS,
-});
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import {
   getWcaPerson,
@@ -104,6 +96,8 @@ type BattleCopy = (typeof COPY)[SupportedLanguage];
 
 interface BattleModeBaseProps {
   copy: BattleCopy;
+  deviceControls?: ReactNode;
+  inputBlocked?: boolean;
   eventGroups: readonly TimerPuzzlePickerGroup[];
   hideTime: boolean;
   holdMs: number;
@@ -199,6 +193,8 @@ export interface BattleSmartCubeHandlers {
  */
 export function LocalBattleMode({
   copy,
+  deviceControls,
+  inputBlocked = false,
   eventGroups,
   hideTime,
   holdMs,
@@ -221,6 +217,8 @@ export function LocalBattleMode({
   const [storageError, setStorageError] = useState('');
   const [failedScrambleEvents, setFailedScrambleEvents] = useState<Set<EventId>>(() => new Set());
   const [cubeHolder, setCubeHolder] = useState(0);
+  const inputBlockedRef = useRef(inputBlocked);
+  inputBlockedRef.current = inputBlocked;
   const stateRef = useRef(state);
   const roundsRef = useRef(rounds);
   const playerKeysRef = useRef(playerKeys);
@@ -424,9 +422,16 @@ export function LocalBattleMode({
   }, [visiblePlayers]);
 
   useEffect(() => {
+    if (!inputBlocked) return;
+    for (let playerId = 0; playerId < stateRef.current.playerCount; playerId += 1) {
+      dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
+    }
+  }, [dispatch, inputBlocked]);
+
+  useEffect(() => {
     const down = new Set<string>();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat || down.has(event.key)) return;
+      if (inputBlockedRef.current || event.repeat || down.has(event.key)) return;
       const recording = recordingPlayerRef.current;
       if (recording !== null) {
         event.preventDefault();
@@ -457,6 +462,7 @@ export function LocalBattleMode({
     };
     const onKeyUp = (event: KeyboardEvent) => {
       if (!down.delete(event.key)) return;
+      if (inputBlockedRef.current) return;
       const playerId = localBattlePlayerForKey(playerKeysRef.current, event.key);
       if (playerId === undefined || playerId >= stateRef.current.playerCount) return;
       event.preventDefault();
@@ -650,30 +656,7 @@ export function LocalBattleMode({
           <details>
             <summary>{copy.battleSmartCube}</summary>
             <p>{copy.battleSharedCubeDetail}</p>
-            <TimerDeviceCenter
-              ariaLabel={copy.connectBluetooth}
-              className="battle-device-center"
-              items={INSTALLED_TIMER_DEVICE_REGISTRY.list().map((device) => ({
-                active: smartCube.phase === 'connected',
-                detail: smartCube.phase === 'connected'
-                  ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                  : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                    ? copy.connectingBluetooth
-                    : undefined,
-                id: device.id,
-                kind: device.kind,
-                label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.battleSmartCube,
-                onSelect: () => {
-                  if (smartCube.phase === 'connected') {
-                    void smartCube.disconnect().catch(() => setStorageError(copy.smartCubeError));
-                  } else {
-                    void smartCube.connect().catch(() => setStorageError(copy.smartCubeError));
-                  }
-                },
-              }))}
-              menuLabel={copy.battleSmartCube}
-              triggerLabel={copy.battleSmartCube}
-            />
+            {deviceControls}
             <div className="battle-cube-holders">
               {visiblePlayers.map((player) => (
                 <button
@@ -785,6 +768,8 @@ export function NetBattleMode({
   accountIdentity,
   capability,
   copy,
+  deviceControls,
+  inputBlocked = false,
   eventGroups,
   hideTime,
   holdMs,
@@ -922,7 +907,7 @@ export function NetBattleMode({
   }, [applyRoom, capability, fail]);
 
   const timer = useTimerController({
-    canStart: Boolean(room && credentials && scramble && !myResult),
+    canStart: !inputBlocked && Boolean(room && credentials && scramble && !myResult),
     holdMs,
     inspectionSec,
     onComplete,
@@ -1654,32 +1639,7 @@ export function NetBattleMode({
             )}
             surfaceRef={surfaceRef}
           />
-          {smartCube && (
-            <TimerDeviceCenter
-              ariaLabel={copy.connectBluetooth}
-              className="battle-device-center"
-              items={INSTALLED_TIMER_DEVICE_REGISTRY.list().map((device) => ({
-                active: smartCube.phase === 'connected',
-                detail: smartCube.phase === 'connected'
-                  ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                  : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                    ? copy.connectingBluetooth
-                    : undefined,
-                id: device.id,
-                kind: device.kind,
-                label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.battleSmartCube,
-                onSelect: () => {
-                  if (smartCube.phase === 'connected') {
-                    void smartCube.disconnect().catch(() => setError(copy.smartCubeError));
-                  } else {
-                    void smartCube.connect().catch(() => setError(copy.smartCubeError));
-                  }
-                },
-              }))}
-              menuLabel={copy.battleSmartCube}
-              triggerLabel={copy.battleSmartCube}
-            />
-          )}
+          {smartCube && deviceControls}
           {currentResult && pendingCount(room) > 0 && (
             <div className="battle-penalties" data-no-timer>
               {(['ok', '+2', 'dnf'] as const).map((penalty) => (

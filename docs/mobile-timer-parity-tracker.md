@@ -4,6 +4,13 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：五端三种模式共用设备入口与操作窗口
+
+- `app-ui/App` 单点组装 `TimerDeviceCenter`，单人、本地 2～4 人和联机通过插槽复用；移除 `BattleModes` 两套设备菜单和“详情直接断连”回调，统一进入既有 `TimerSmartCubeDeviceModal`，扫描、连接、状态重置、陀螺仪校准与断连按 adapter 能力提供。本地多人保留持有者选择。
+- 设备管理不再受单人项目限制，自动计时支持范围仍由各计时 controller 判断。弹窗打开时取消本地多人按键预备并阻止新按键；联机禁止新起表。Android Back 优先关闭弹窗，再处理退出对战，避免模式切回单人而弹窗残留。
+- 验证：App 智能魔方集成、对战集成、capability 守卫和设备菜单定位共 28 项通过；app-ui typecheck、Mobile production build 与 Android sync 通过。未安装 APK、未进行真机或浏览器视觉验收；工作区已有的设备中心“已连接直接开窗”改动未纳入本次提交。
+- 下一步仍需统一 Web/App 本地多人、联机的计时卡片组合与打乱位置、字号及设备区布局；本轮复用了操作入口与弹窗，不表示整个 Timer UI 已完全一致。整体继续 `ACTIVE — NOT COMPLETE`。
+
 ### 2026-09-27：左下角统计入口文案同源
 
 - `TimerStatRail` 不再接受宿主自定义行数组、空态和 tooltip，只接收语言与统计结果。Web/App 共用数量行及 `mean/best/mo3/ao5/ao12` 标签、顺序，App 移除独有的“成功/solved”和“最佳/Best”标签；空态统一“成绩/Times”，提示统一“打开成绩与统计/Open times and statistics”。统计数值计算仍使用既有 shared 规则，宿主保留打开历史/面板的导航回调。
