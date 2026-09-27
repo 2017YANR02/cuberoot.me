@@ -4,6 +4,11 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：玩家卡片与全部本地罚时操作同源
+
+- 新增 `TimerBattlePlayer`，两端共用玩家名、得分、胜者、项目操作、计时内容和底部成绩操作。Web 2 人中间栏与 3/4 人角落的重复玩家操作移到统一卡片，删除私有 `PenaltyDropdown` / `CellControls`；本地罚时也接入 `TimerPenaltyActions`，旧读数节点与原成绩处理保持接通。
+- App 移除私有玩家栏/胜者排版；Web 仍保留宿主项目选择与智能魔方状态适配。Web 操作 +2 后旧读数节点保持且时间增加两秒；相关 Web/App 集成与 CSS 隔离 31 项通过，三包 typecheck 通过。组件目录已登记；真实视口验证仍未执行。
+
 ### 2026-09-27：多人外层排布与方向控制共享
 
 - Web/App 共用 `TimerBattleLayout` 和 `TimerBattleLayoutControls`，统一 2 人并排/面对面、3 人上方单格、4 人双排、上排旋转、同项目成对共用打乱以及横竖屏布局适配。Web 移除重复 JSX 和 orientation effect，App 移除独立网格规则，并补齐同项目共用打乱及布局控制。

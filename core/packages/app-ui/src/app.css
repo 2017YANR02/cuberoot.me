@@ -1153,43 +1153,6 @@ button {
   font-weight: 700;
 }
 
-.battle-player {
-  display: flex;
-  min-width: 0;
-  min-height: 0;
-  flex-direction: column;
-  background: var(--background);
-  outline: 0 solid var(--accent);
-  outline-offset: -3px;
-}
-
-.battle-player.is-winner {
-  outline-width: 3px;
-}
-
-.battle-player-header {
-  display: flex;
-  min-width: 0;
-  min-height: 44px;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 7px;
-}
-
-.battle-player-header > strong {
-  overflow: hidden;
-  min-width: 0;
-  flex: 1;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.battle-winner {
-  color: var(--signal-success);
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
 .battle-round-status,
 .battle-error,
 .battle-empty {
@@ -1497,17 +1460,8 @@ button {
     white-space: nowrap;
   }
 
-  .battle-player-header {
-    flex-wrap: wrap;
-  }
 
-  .battle-player-header > strong {
-    flex-basis: calc(100% - 60px);
-  }
 
-  .battle-player-header > .pp {
-    margin-inline-start: auto;
-  }
 
   .battle-net-layout {
     display: flex;

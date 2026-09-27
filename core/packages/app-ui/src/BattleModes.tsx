@@ -67,6 +67,7 @@ import {
   TimerScrambleStrip,
   TimerTopbar,
   TimerBattleLayout,
+  TimerBattlePlayer,
   TimerBattleLayoutControls,
   TimingSurface,
   TimerPenaltyActions,
@@ -609,10 +610,9 @@ export function LocalBattleMode({
             sameEventPlayerIds,
           );
           return (
-            <article className={`battle-player${isWinner ? ' is-winner' : ''}`} key={player.id}>
-              <header className="battle-player-header" data-no-timer>
-                <strong>{copy.battlePlayer(player.id + 1)}</strong>
-                {isWinner && <span className="battle-winner">{copy.battleWinner}</span>}
+            <TimerBattlePlayer className="battle-player" playerNumber={player.id + 1}
+              language={language} score={summaries.find((summary) => summary.playerId === player.id)?.wins ?? 0}
+              winner={isWinner} controls={
                 <TimerPuzzlePicker
                   dataNoTimer
                   disabled={active}
@@ -626,7 +626,10 @@ export function LocalBattleMode({
                   puzzleLabel={copy.puzzle}
                   selectedEvent={player.event}
                 />
-              </header>
+              }
+              actions={result ? <TimerPenaltyActions language={language} value={player.penalty}
+                onChange={(penalty) => dispatch({ type: 'set-penalty', playerId: player.id, penalty })} /> : undefined}
+            >
               <TimingSurface
                 layout="local"
                 ariaLabel={copy.battlePlayer(player.id + 1)}
@@ -678,14 +681,7 @@ export function LocalBattleMode({
                 scrambleSlot={!cell.hideScramble ? renderPlayerScramble(player) : undefined}
                 surfaceRef={surfaceRefs[player.id]}
               />
-              {result && (
-                <TimerPenaltyActions
-                  language={language}
-                  value={player.penalty}
-                  onChange={(penalty) => dispatch({ type: 'set-penalty', playerId: player.id, penalty })}
-                />
-              )}
-            </article>
+            </TimerBattlePlayer>
           );
         }}
       />

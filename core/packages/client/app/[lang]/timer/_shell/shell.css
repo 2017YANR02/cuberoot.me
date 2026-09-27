@@ -56,6 +56,9 @@
 /* --cube-h 同时驱动预览框和它常驻的占位框,所以显示/隐藏魔方时下面的内容不会跳动。 */
 /* Legacy battle RAF writes remain attached to this inner node; geometry and
    typography now come from the shared local TimingSurface. */
+.battle-container .timer-battle-cell > .player-area { padding: 0; gap: 0; }
+.battle-container .middle-bar { justify-content: center; }
+.battle-container .middle-actions { flex-wrap: wrap; justify-content: center; }
 .player-area .timing-surface--local .time-display {
   font-size: inherit;
   font-family: inherit;

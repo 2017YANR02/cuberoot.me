@@ -28,7 +28,7 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Settings as SettingsIcon, ClipboardList, Trophy, RotateCcw, Eye, EyeOff, Timer as TimerIcon } from 'lucide-react';
+import { Settings as SettingsIcon, ClipboardList, RotateCcw, Eye, EyeOff, Timer as TimerIcon } from 'lucide-react';
 import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
 import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
@@ -36,8 +36,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
-import { TimerBattleLayout, TimerBattleLayoutControls, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
-import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
+import { TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
@@ -274,82 +273,6 @@ function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDiv
   }, [playerId, timeRef]);
 }
 
-// ===== PenaltyDropdown 组件 =====
-// 1:1 翻译自 battle/index.html penalty-dropdown 结构
-
-function PenaltyDropdown({ playerId }: { playerId: number }) {
-  const player = useBattleStore(s => s.players[playerId]);
-  const handlePenalty = useBattleStore(s => s.handlePenalty);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const isOpen = useRef(false);
-
-  const enabled = player.hasFinished && !player.isTiming && player.time > 0;
-
-  // NOTE: 原生事件阻止冒泡 — 必须用原生而非 React 合成事件
-  useEffect(() => {
-    const el = dropdownRef.current;
-    if (!el) return;
-
-    const stop = (e: PointerEvent) => {
-      e.stopPropagation();
-    };
-
-    el.addEventListener('pointerdown', stop);
-    el.addEventListener('pointerup', stop);
-    el.addEventListener('pointercancel', stop);
-
-    return () => {
-      el.removeEventListener('pointerdown', stop);
-      el.removeEventListener('pointerup', stop);
-      el.removeEventListener('pointercancel', stop);
-    };
-  }, []);
-
-  const toggleOpen = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!enabled) return;
-    isOpen.current = !isOpen.current;
-    dropdownRef.current?.classList.toggle('open', isOpen.current);
-  }, [enabled]);
-
-  const selectPenalty = useCallback((penalty: PenaltyType, e: React.MouseEvent) => {
-    e.stopPropagation();
-    handlePenalty(playerId, penalty);
-    isOpen.current = false;
-    dropdownRef.current?.classList.remove('open');
-  }, [playerId, handlePenalty]);
-
-  // NOTE: 点击外部关闭
-  useEffect(() => {
-    const handler = () => {
-      isOpen.current = false;
-      dropdownRef.current?.classList.remove('open');
-    };
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
-  }, []);
-
-  return (
-    <div className="penalty-dropdown" ref={dropdownRef}>
-      <button className="penalty-trigger" disabled={!enabled} onClick={toggleOpen}>
-        <span className="penalty-label">{player.penalty.toUpperCase()}</span>
-        <span className="penalty-arrow">▼</span>
-      </button>
-      <div className="penalty-menu">
-        {([PENALTY.OK, PENALTY.PLUS2, PENALTY.DNF] as PenaltyType[]).map(p => (
-          <div
-            key={p}
-            className={`penalty-option${player.penalty === p ? ' active' : ''}`}
-            onClick={(e) => selectPenalty(p, e)}
-          >
-            {p.toUpperCase()}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ===== ScramblePanel 组件 =====
 // 打乱文字 + 打乱图 + WCA 来源行。可被同排一对玩家共用:
 //   ids = 参与共享的玩家槽位,取 ids[0] 为代表读打乱(同 puzzle 时全组打乱相等);
@@ -453,7 +376,7 @@ export function battlePointerReleaseAction(
   return eventType === 'pointerup' ? 'up' : 'cancel';
 }
 
-export function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
+export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
@@ -577,6 +500,14 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass, controls
       ref={areaRef}
       style={bgStyle}
     >
+      <TimerBattlePlayer playerNumber={playerId + 1} language={store.locale === 'zh' ? 'zh' : 'en'}
+        score={player.points} winner={store.winners.includes(playerId)}
+        controls={<><BattleEventButton playerId={playerId} /><BattleCubeDot playerId={playerId} /></>}
+        actions={player.hasFinished && !player.isTiming && player.time > 0 ? (
+          <TimerPenaltyActions language={store.locale === 'zh' ? 'zh' : 'en'} value={player.penalty}
+            onChange={(penalty) => store.handlePenalty(playerId, penalty)} />
+        ) : undefined}
+      >
       <TimingSurface
         layout="local"
         phase={player.isTiming ? 'running' : player.isInspecting ? 'inspecting' : 'idle'}
@@ -591,53 +522,12 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass, controls
       >
         <div className="ao5-display" dangerouslySetInnerHTML={{ __html: ao5Text }} />
       </TimingSurface>
-
-      {/* 多人田字格:比分/项目/罚时归各自区域(2 人模式这些在 middle-bar) */}
-      {store.mode === '1v1' && store.playerCount > 2 && (
-        <CellControls playerId={playerId} corner={controlsCorner ?? 'center'} />
-      )}
+      </TimerBattlePlayer>
 
       {/* Event picker 全区域覆盖 — 由项目图标按钮触发,改用 WcaEventSelector */}
       {store.eventPickerOpen[playerId] && (
         <EventPickerOverlay playerId={playerId} />
       )}
-    </div>
-  );
-}
-
-// ===== CellControls — 多人田字格 cell 内控制条 =====
-// 比分 + 项目 + 罚时,随 cell 旋转朝向各自玩家;pointer 停止冒泡防误触发计时。
-// corner = 控制条落在本格「玩家视角」的哪个上角(left/right 外侧角,center 单格居中);
-// 因整格随 rotated 翻转,local 坐标即玩家坐标,旋转自动把上排镜像到对面玩家的对应角。
-function CellControls({ playerId, corner }: { playerId: number; corner: 'left' | 'right' | 'center' }) {
-  const points = useBattleStore(s => s.players[playerId].points);
-  const isWin = useBattleStore(s => s.winners.includes(playerId));
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const stop = (e: PointerEvent) => e.stopPropagation();
-    el.addEventListener('pointerdown', stop);
-    el.addEventListener('pointerup', stop);
-    el.addEventListener('pointercancel', stop);
-    return () => {
-      el.removeEventListener('pointerdown', stop);
-      el.removeEventListener('pointerup', stop);
-      el.removeEventListener('pointercancel', stop);
-    };
-  }, []);
-
-  return (
-    <div className={`cell-controls corner-${corner}`} ref={ref} data-no-timer>
-      <span className="score-value">
-        {points}
-        {isWin && <Trophy className="score-trophy" size={14} />}
-      </span>
-      <BattleEventButton playerId={playerId} />
-      <PenaltyDropdown playerId={playerId} />
-      {/* 智能魔方状态点 —— 挂在这条已有的控制条上,不另起一层浮层 */}
-      <BattleCubeDot playerId={playerId} />
     </div>
   );
 }
@@ -736,38 +626,14 @@ function MiddleBar({
   onHistoryClick,
   playersControl,
   presenceControl,
-  playerCount,
 }: {
   onSettingsClick: () => void;
   onHistoryClick?: () => void;
   playersControl?: React.ReactNode;
   presenceControl?: React.ReactNode;
-  playerCount: number;
 }) {
-  const store = useBattleStore();
-  const { players, winners, layout } = store;
-  const grid = playerCount > 2;
-
-  // NOTE: versus 布局 → P1(上方/旋转180°) 在左，P0(下方) 在右
-  //       side   布局 → P0(左) 在左，P1(右) 在右 — 与计时区域位置一致
-  const leftId  = layout === 'side' ? 0 : 1;
-  const rightId = layout === 'side' ? 1 : 0;
-
   return (
     <div className="middle-bar" data-no-timer>
-      {/* 左侧比分 + 项目 + 罚时(2 人模式) */}
-      {!grid && (
-        <div className="score-section">
-          <span className="score-value">
-            {players[leftId].points}
-            {winners.includes(leftId) && <Trophy className="score-trophy" size={14} />}
-          </span>
-          <BattleEventButton playerId={leftId} />
-          <PenaltyDropdown playerId={leftId} />
-          <BattleCubeDot playerId={leftId} />
-        </div>
-      )}
-
       {/* 中间操作按钮 */}
       <div className="middle-actions">
         {playersControl}
@@ -783,18 +649,7 @@ function MiddleBar({
         </button>
       </div>
 
-      {/* 右侧比分 + 项目 + 罚时(2 人模式) */}
-      {!grid && (
-        <div className="score-section">
-          <span className="score-value">
-            {winners.includes(rightId) && <Trophy className="score-trophy" size={14} />}
-            {players[rightId].points}
-          </span>
-          <BattleEventButton playerId={rightId} />
-          <PenaltyDropdown playerId={rightId} />
-          <BattleCubeDot playerId={rightId} />
-        </div>
-      )}
+
     </div>
   );
 }
@@ -1339,7 +1194,6 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       onHistoryClick={() => setVsHistoryOpen(true)}
       playersControl={playersControl}
       presenceControl={presenceControl}
-      playerCount={playerCount}
     />
   );
 
