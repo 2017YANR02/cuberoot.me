@@ -110,6 +110,20 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('opens the disconnected device menu and starts scanning from its action', async () => {
+    const scanDevices = vi.fn(async () => undefined);
+    await act(async () => setRadio({ ...radio, phase: 'idle', deviceName: '', scanDevices }));
+    await settle();
+    const trigger = container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
+    await act(async () => trigger.click());
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    const item = container.querySelector<HTMLButtonElement>('[role="menuitem"]');
+    expect(item).not.toBeNull();
+    await act(async () => item!.click());
+    expect(document.querySelector('.timer-smart-cube-device__modal')).not.toBeNull();
+    expect(scanDevices).toHaveBeenCalledOnce();
+  });
+
   it('opens the shared device modal and routes reset, disconnect, and Android Back', async () => {
     const connect = vi.fn(async () => 'GAN16ui');
     const disconnect = vi.fn(async () => undefined);
