@@ -1,5 +1,7 @@
 'use client';
 
+import { TimerWorkspace } from '@cuberoot/timer-ui';
+
 import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
 /**
@@ -1255,9 +1257,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     onChange={(person) => { setPicked(person); setName(''); }} onQueryChange={setName} disabled={busy} />;
 
   if (!room) {
-    return <div className="timer-shell net-shell">
+    return <TimerWorkspace className="timer-shell net-shell">
       {topbar}
-      <div className="shell-main">
+      <div className="shell-main timer-workspace-main">
         <TimerRoomLobby language={isZh ? 'zh' : 'en'} identity={identityField}
           event={<TimerPuzzlePicker dataNoTimer groups={eventPickerGroups} puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })} selectedEvent={netEventToSelectorId(lobbyEvent)}
             disabled={busy} onSelect={(id) => { const event = selectorIdToNetEvent(id); if (event) setLobbyEvent(event); }} />}
@@ -1265,7 +1267,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onCodeChange={setJoinCode} onJoin={doJoin} onCreate={doCreate}
           onCancelInvite={() => { setErr(null); void setRoomParam(null); }} onExit={onExitNet} />
       </div>
-    </div>;
+    </TimerWorkspace>;
   }
   const curResults = room.results[String(room.round)] ?? {};
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
@@ -1454,10 +1456,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   );
 
   return (
-    <div className="timer-shell net-shell" data-solving={timer.phase === 'running' ? 'true' : undefined}>
+    <TimerWorkspace className="timer-shell net-shell" data-solving={timer.phase === 'running' ? 'true' : undefined}>
       {topbar}
 
-      <TimerRoomLayout className="shell-main"
+      <TimerRoomLayout className="shell-main timer-workspace-main"
         devices={<TimerDeviceCenter ariaLabel={tr({ en: 'Timer devices', zh: '计时设备' })}
           menuLabel={tr({ en: 'Timer devices', zh: '计时设备' })} triggerLabel={tr({ en: 'Devices', zh: '设备' })}
           items={[{ id: 'smart-cube', kind: 'smart-cube', active: cubeConnected,
@@ -1578,6 +1580,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onConnect={pick => bluetoothCube.connect(pick)}
         />
       )}
-    </div>
+    </TimerWorkspace>
   );
 }

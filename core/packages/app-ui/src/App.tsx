@@ -217,6 +217,9 @@ import {
   TimerStatsPanel,
   TimerRollingStatsPicker,
   TimerBooleanSettingRow,
+  TimerWorkspace,
+  useTimerWideLayout,
+  TimerTypographySettings,
   TimerTimingSettingsSections,
   TimerTopbar,
   TimerWcaSourceConfig,
@@ -523,6 +526,11 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [view, setView] = useState<AppView>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
+  const wideLayout = useTimerWideLayout();
+  const dockHistory = wideLayout && view === 'history' && timerMode === 1;
+  const timerVisible = view === 'timer' || dockHistory;
+  const timerVisibleRef = useRef(timerVisible);
+  timerVisibleRef.current = timerVisible;
   const [battleModeActive, setBattleModeActive] = useState(false);
   const battleOverlayCloseRef = useRef<(() => void) | null>(null);
   const onBattleOverlayCloseChange = useCallback((close: (() => void) | null) => {
@@ -801,22 +809,22 @@ export function App({ host }: { host: InstalledAppHost }) {
   const randomOptimalSourceRef = useRef(randomOptimalSource);
   randomOptimalSourceRef.current = randomOptimalSource;
   useEffect(() => {
-    if (view !== 'timer' || !randomOptimalSource) {
+    if (!timerVisible || !randomOptimalSource) {
       releaseOptimal333();
       return;
     }
     prefetchOptimal333(randomOptimalSource);
     return () => releaseOptimal333();
-  }, [randomOptimalKey, randomOptimalSource, view]);
+  }, [randomOptimalKey, randomOptimalSource, timerVisible]);
   useEffect(() => {
-    if (view !== 'timer') {
+    if (!timerVisible) {
       releaseMobileRandomDifficulty();
       return;
     }
     const spec = randomDifficultySpecRef.current;
     if (spec) prefetchMobileRandomDifficulty(spec);
     else releaseMobileRandomDifficulty();
-  }, [randomDifficultySignature, view]);
+  }, [randomDifficultySignature, timerVisible]);
   const optimalAvailable = scrambleSource === 'wca'
     ? timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent))
     : randomOptimalAvailable;
@@ -1856,7 +1864,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         (openOverlay !== TIMER_OVERLAY_IDS.historyCompare || historyCompareReady)
         && (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
       )
-      : view === 'timer' && (
+      : timerVisible && (
         (openOverlay !== TIMER_OVERLAY_IDS.drillPicker
           || timerEventSupportsDrill(activeEvent))
         && (openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
@@ -1880,6 +1888,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     historyDetailSolve,
     openOverlay,
     scrambleSource,
+    timerVisible,
     view,
   ]);
 
@@ -2129,8 +2138,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useLayoutEffect(() => {
     const height = primaryNavRef.current?.getBoundingClientRect().height ?? 0;
-    setPrimaryNavBottomInset(height);
-  }, [fullscreen, storeLoaded, viewportHeight]);
+    setPrimaryNavBottomInset(wideLayout ? 0 : height);
+  }, [fullscreen, storeLoaded, viewportHeight, wideLayout]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -2487,7 +2496,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const timer = useTimerController({
     canStart: attemptCanStart,
-    enabled: view === 'timer'
+    enabled: timerVisible
       && timerMode === 1
       && timingEnabled
       && !moreOpen
@@ -2624,7 +2633,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     ? { model: smartCube.model ?? 'gan-v4', name: smartCube.deviceName }
     : undefined;
   useAutoReady({
-    enabled: view === 'timer' && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
+    enabled: timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
       && attemptCanStart
       && !moreOpen && !manualEntryOpen && openOverlay === null
       && (timer.machine.phase === 'idle' || timer.machine.phase === 'inspecting' || timer.machine.phase === 'stopped')
@@ -3425,7 +3434,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => {
     const modalState = () => (
-      viewRef.current !== 'timer'
+      !timerVisibleRef.current
       || openOverlayRef.current !== null
       || moreOpenRef.current
       || manualEntryOpenRef.current
@@ -3558,7 +3567,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     active: storeLoaded
-      && view === 'timer'
+      && timerVisible
       && openOverlay === null
       && !moreOpen
       && !manualEntryOpen,
@@ -3630,10 +3639,30 @@ export function App({ host }: { host: InstalledAppHost }) {
     />
   );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
+  const viewHeader = (
+    <header className="app-titlebar">
+      <strong>{view === 'history' ? copy.history : copy.settings}</strong>
+      <button
+        aria-label={copy.close}
+        className="app-titlebar-close"
+        onClick={() => {
+          if (view === 'history') closeHistoryCompare();
+          setView('timer');
+        }}
+        type="button"
+      ><X aria-hidden="true" size={20} /></button>
+      <span
+        aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
+        className={`network network--${connection}`}
+        role="status"
+      />
+    </header>
+  );
 
   return (
     <main
-      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      className={`app-shell app-shell--${dockHistory ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      data-wide={wideLayout ? 'true' : undefined}
       style={shellViewport.style}
     >
       <TimerPrintController
@@ -3663,29 +3692,13 @@ export function App({ host }: { host: InstalledAppHost }) {
         solves={solves}
         transport={host.print}
       />
-      {(view === 'history' || view === 'settings') && (
-        <header className="app-titlebar">
-          <strong>{view === 'history' ? copy.history : copy.settings}</strong>
-          <button
-            aria-label={copy.close}
-            className="app-titlebar-close"
-            onClick={() => {
-              if (view === 'history') closeHistoryCompare();
-              setView('timer');
-            }}
-            type="button"
-          ><X aria-hidden="true" size={20} /></button>
-          <span
-            aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
-            className={`network network--${connection}`}
-            role="status"
-          />
-        </header>
+      {!dockHistory && (view === 'history' || view === 'settings') && (
+        viewHeader
       )}
 
-      <div className="view-container">
-        {view === 'timer' && timerMode === 1 && (
-          <section className="timer-view" aria-labelledby="timer-title">
+      <TimerWorkspace className="view-container" active={timerMode === 1 && (view === 'timer' || view === 'history')} panelOpen={dockHistory}>
+        {timerVisible && timerMode === 1 && (
+          <section className="timer-view timer-workspace-main timer-workspace-main--with-toolbar" aria-labelledby="timer-title">
             <h1 className="sr-only" id="timer-title">{copy.timer}</h1>
             <TimerTopbar
               actions={(
@@ -3923,7 +3936,8 @@ export function App({ host }: { host: InstalledAppHost }) {
             >
               <TimingSurface
                 ariaLabel={copy.timer}
-                colorClass={timerColorClass}
+                colorClass={`${timerColorClass} tf-${store!.settings.timerFont}`}
+                fontScale={store!.settings.timerFontScale}
                 cornerSlot={smartCube.phase === 'connected' ? (
                   <div className="timer-live-cube">
                     <LiveCubeState
@@ -3954,6 +3968,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                 phase={timer.machine.phase}
                 scrambleSlot={(
                   <TimerScrambleStrip
+                    font={store!.settings.scrambleFont}
+                    fontScale={store!.settings.scrambleFontScale}
                     copiedLabel={copy.copied}
                     correctionActive={smartCubeGuidance.correctionActive}
                     fallback={scrambleText}
@@ -4141,6 +4157,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             }}
             onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             playerCount={timerMode as 2 | 3 | 4}
+            typographySettings={store!.settings}
             scramblePreviewSettings={store!.settings}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
@@ -4172,6 +4189,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
+            typographySettings={store!.settings}
             scramblePreviewSettings={store!.settings}
             smartCube={smartCube}
             writeClipboardText={host.writeClipboardText}
@@ -4252,7 +4270,9 @@ export function App({ host }: { host: InstalledAppHost }) {
         })}
 
         {view === 'history' && (
-          <section className="history-view" aria-labelledby="history-title">
+          <section className="history-view timer-workspace-panel" aria-labelledby="history-title" data-no-timer>
+            {dockHistory && viewHeader}
+            <div className="timer-workspace-panel-body">
             <header className="section-heading">
               <h1 id="history-title">{copy.history}</h1>
               <span>{solves.length}</span>
@@ -4530,6 +4550,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 ) : undefined}
               />
             )}
+            </div>
           </section>
         )}
 
@@ -4559,6 +4580,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                 </select>
               </label>
             </div>
+
+            <TimerTypographySettings value={store!.settings} language={language} onChange={updateSettings} />
 
             <TimerTimingSettingsSections
               localize={(value) => value[language]}
@@ -4760,7 +4783,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             </div>
           </section>
         )}
-      </div>
+      </TimerWorkspace>
 
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal

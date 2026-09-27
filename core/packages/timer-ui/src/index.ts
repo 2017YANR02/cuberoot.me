@@ -315,3 +315,5 @@ export {
 export type { FlagHtmlOpts, FlagInfo, FlagProps } from './CountryFlag';
 
 export { TimerTypographySettings, TIMER_TYPOGRAPHY_SETTING_FIELD_IDS } from './TimerTypographySettings';
+
+export { TimerWorkspace, useTimerWideLayout, TIMER_WIDE_QUERY } from './TimerWorkspace';
