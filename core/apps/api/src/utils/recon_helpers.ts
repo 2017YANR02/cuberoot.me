@@ -9,7 +9,7 @@ import { validateReconTiming } from '@cuberoot/shared/recon-completion';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
 export { ADMIN_WCA_IDS } from '@cuberoot/shared/admin';
 import { JWT_SECRET, isRolePreviewActive } from './session.js';
-import { findUserByWcaId, getUserById, ownerKey } from './account.js';
+import { findUserByWcaId, findUserForLegacyWcaSession, getUserById, ownerKey } from './account.js';
 
 // 装饰性标注字符:`·`(间隔)、`↑↓`(regrip 方向记号)、分数 `⅓⅔`、ASCII `.`、各类零宽字符。
 // 这些不是真转动,记号区校验前先剥掉(与客户端 lib/recon-alg-utils.ts 的 COSMETIC_ANNOTATION_CHARS
@@ -374,9 +374,10 @@ export async function authenticateUser(authHeader: string | undefined): Promise<
       const account = payload.uid != null
         ? await getUserById(payload.uid)
         : payload.wcaId
-          ? await findUserByWcaId(payload.wcaId)
+          ? await findUserForLegacyWcaSession(payload.wcaId)
           : null;
-      if (payload.uid != null && !account) return null;
+      // Retired UID sessions and ambiguous UID-less WCA sessions cannot survive a merge.
+      if (!account || (payload.uid != null && account.id !== payload.uid)) return null;
       return {
         wcaId: ownerKey(account?.id ?? payload.uid, account?.wca_id ?? payload.wcaId),
         name: account?.display_name ?? payload.name ?? '',

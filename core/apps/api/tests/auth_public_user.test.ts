@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   signSession: vi.fn(),
   loginWithIdentity: vi.fn(),
   findUserByWcaId: vi.fn(),
+  findUserForLegacyWcaSession: vi.fn(),
   getUserById: vi.fn(),
   publicUser: vi.fn(),
   captureAccountDevice: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.c
 vi.mock('../src/utils/account.js', () => ({
   loginWithIdentity: mocks.loginWithIdentity,
   findUserByWcaId: mocks.findUserByWcaId,
+  findUserForLegacyWcaSession: mocks.findUserForLegacyWcaSession,
   getUserById: mocks.getUserById,
   publicUser: mocks.publicUser,
   normalizeCountryIso2: (value: string) => value.trim().toUpperCase(),
@@ -53,6 +55,7 @@ describe('auth public user ID', () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset();
     mocks.findUserByWcaId.mockResolvedValue(account);
+    mocks.findUserForLegacyWcaSession.mockResolvedValue(account);
     mocks.getUserById.mockResolvedValue(account);
     mocks.publicUser.mockReturnValue(publicAccount);
     mocks.signSession.mockReturnValue('u'.repeat(20));
@@ -73,7 +76,7 @@ describe('auth public user ID', () => {
     const body = await response.json();
     expect(body).toEqual({ user: publicAccount });
     expect(decodeWebSessionUserEnvelope(body)).toEqual(body);
-    expect(mocks.findUserByWcaId).toHaveBeenCalledWith('2017YANR02');
+    expect(mocks.findUserForLegacyWcaSession).toHaveBeenCalledWith('2017YANR02');
     expect(mocks.captureAccountDevice).toHaveBeenCalledWith(66, 'test-browser');
   });
 
@@ -90,9 +93,35 @@ describe('auth public user ID', () => {
     expect(body).toEqual({ token: 'u'.repeat(20), user: publicAccount });
     expect(decodeWebSession(body)).toEqual(body);
     expect(mocks.getUserById).toHaveBeenCalledWith(66);
+    expect(mocks.findUserForLegacyWcaSession).toHaveBeenCalledWith('2017YANR02');
     expect(mocks.signSession).toHaveBeenCalledWith({
       uid: 66, wcaId: '2017YANR02', name: '颜瑞民',
     });
+  });
+
+  it('rejects a retired source session from account lookup and refresh', async () => {
+    mocks.verifySession.mockReturnValue({ uid: 749, wcaId: '2020TEST01' });
+    mocks.getUserById.mockResolvedValue({ ...account, id: 748 });
+
+    const headers = { Authorization: 'Bearer source-token' };
+    const me = await authRoutes.request('/auth/me', { headers });
+    const refresh = await authRoutes.request('/auth/refresh', { method: 'POST', headers });
+
+    expect(me.status).toBe(401);
+    expect(refresh.status).toBe(401);
+    expect(mocks.findUserByWcaId).not.toHaveBeenCalled();
+    expect(mocks.signSession).not.toHaveBeenCalled();
+  });
+
+  it('rejects a UID-less legacy WCA session when its identity has passed through a merge', async () => {
+    mocks.verifySession.mockReturnValue({ wcaId: '2020TEST01' });
+    mocks.findUserForLegacyWcaSession.mockResolvedValue(null);
+
+    const headers = { Authorization: 'Bearer old-wca-token' };
+    expect((await authRoutes.request('/auth/me', { headers })).status).toBe(401);
+    expect((await authRoutes.request('/auth/refresh', { method: 'POST', headers })).status).toBe(401);
+    expect(mocks.findUserByWcaId).not.toHaveBeenCalled();
+    expect(mocks.signSession).not.toHaveBeenCalled();
   });
 
   it('executes /auth/exchange and returns the canonical account session for a valid WCA token', async () => {
