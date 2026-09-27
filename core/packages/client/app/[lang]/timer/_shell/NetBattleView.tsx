@@ -1623,10 +1623,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   const ownTimingSurface = (
     <TimingSurface
-      scrambleAbove
+      layout="net"
       phase={timer.phase}
       colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
-      fontSize={fontSize}
+      fontScale={settings.timerFontScale}
       digits={<SegmentTime text={digitsText} />}
       surfaceRef={surfaceRef}
       scrambleSlot={

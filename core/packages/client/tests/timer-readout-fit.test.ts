@@ -34,10 +34,10 @@ describe('shared timer complete-readout fitting', () => {
   const fit = () => Number(host.querySelector<HTMLElement>('.timer-display-value')!.style.getPropertyValue('--timer-readout-fit')) || 1;
   const resize = async () => act(async () => { notify([], {} as ResizeObserver); const pending = frames.splice(0); pending.forEach((callback) => callback(0)); });
 
-  it('owns solo scramble order, shared font scale and an input-safe stable preview frame', async () => {
+  it.each(['solo', 'net'] as const)('owns %s scramble order, shared font scale and an input-safe stable preview frame', async (layout) => {
     const surfaceRef = createRef<HTMLDivElement>();
     const draw = (live: boolean) => act(async () => root.render(createElement(TimingSurface, {
-      layout: 'solo', phase: 'idle', colorClass: '', surfaceRef, fontScale: 1.2,
+      layout, phase: 'idle', colorClass: '', surfaceRef, fontScale: 1.2,
       digits: '0.00', scrambleSlot: createElement('span', null, 'R U'),
       cornerSlot: createElement('div', null, live ? 'live cube' : 'scramble preview'),
     })));
@@ -45,7 +45,7 @@ describe('shared timer complete-readout fitting', () => {
     const surface = surfaceRef.current!;
     const core = host.querySelector('.timing-surface-core');
     const frame = host.querySelector('.timing-surface-cube-frame');
-    expect(surface.classList.contains('timing-surface--solo')).toBe(true);
+    expect(surface.classList.contains(`timing-surface--${layout}`)).toBe(true);
     expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);
     expect(host.querySelector<HTMLElement>('.timer-display')!.style.fontSize)
       .toContain('clamp(48px, 10vw, 132px)');
