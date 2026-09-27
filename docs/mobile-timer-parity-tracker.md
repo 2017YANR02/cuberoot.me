@@ -4,6 +4,10 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：联机玩家列表与房间内容顺序共享
+
+- 新增 `TimerRoomPlayers` / `TimerRoomLayout`，Web/App 共用玩家名单、得分、房主/自己标记、轮次结果和状态，以及名单→媒体→计时区的内容顺序。访客昵称保持原样；WCA 姓名本地化保留去重后缀。实况查看与改名是独立按钮，Web 保留实时读数更新与媒体能力适配。
+- 共享名单及 Web 联机测试 18 项、App 对战集成 12 项通过，client/app-ui/timer-ui typecheck 通过；组件目录已登记。未进行浏览器或真机视觉验证，整体继续 `ACTIVE — NOT COMPLETE`。
 ### 2026-09-27：玩家卡片与全部本地罚时操作同源
 
 - 新增 `TimerBattlePlayer`，两端共用玩家名、得分、胜者、项目操作、计时内容和底部成绩操作。Web 2 人中间栏与 3/4 人角落的重复玩家操作移到统一卡片，删除私有 `PenaltyDropdown` / `CellControls`；本地罚时也接入 `TimerPenaltyActions`，旧读数节点与原成绩处理保持接通。
