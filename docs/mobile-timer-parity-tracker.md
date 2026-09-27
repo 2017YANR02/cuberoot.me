@@ -4,6 +4,11 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：大厅、身份选择和改名共享
+
+- `TimerRoomLobby` / `TimerRoomIdentity` 统一项目与身份同行、创建与四位房间码入房，以及加载/错误反馈。App 接入与 Web 相同的自动入房和防重复提交；两端改名使用同源身份选择与房间弹窗，App 补齐改名 transport。
+- 原 Web `WcaPersonPicker`、IME 安全 `SearchInput`、`RoomCodeInput` 和搜索样式迁入 timer-ui 显式 subpath，原 Web 入口保留为薄适配器。App 删除单独搜索 hook、候选列表和加入表单；共享选择器继续复用已有本地索引/WCA API，使用 persons-index 公共导出。
+- 验证：App 对战集成 13 项（含创建、自动加入、改名）、Web 搜索/选手/房间码 8 项通过；三包 typecheck 通过。架构扫描未发现本批新增生产跨包边，但报告前批 Timer CSS 测试的 4 条未登记路径，收尾需处理。未进行真机或浏览器视觉验收。
 ### 2026-09-27：房间管理与历史弹窗共享
 
 - Web/App 删除各自房主列表、统计表和历史列表，共用 `TimerRoomAdmin` / `TimerRoomHistory` / `TimerRoomDialog`；App 从内嵌区域改为与 Web 同源弹窗，补齐分项目轮次打乱预览。同步起表设置移到同一管理窗口，转让/移出统一二次确认。

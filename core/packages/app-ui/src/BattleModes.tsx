@@ -54,13 +54,15 @@ import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
 import {
   SegmentTime,
-  Flag,
   RoomQrModal,
   TimerPlayersSelect,
   TimerCubePreview,
   TimerPuzzlePicker,
   TimerScrambleStrip,
   TimerTopbar,
+  TimerRoomLobby,
+  TimerRoomIdentity,
+  TimerRoomDialog,
   TimerRoomAdmin,
   TimerRoomHistory,
   TimerRoomToolbar,
@@ -87,10 +89,9 @@ import {
 
 import type { COPY, SupportedLanguage } from './copy';
 
-import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
+
 import {
   getWcaPerson,
-  searchWcaPersons,
   type WcaPersonLite,
 } from '@cuberoot/shared/wca-person';
 import { useTimerController } from './hooks/use-timer-controller';
@@ -824,18 +825,18 @@ export function NetBattleMode({
   const [name, setName] = useState('');
   const [selectedPerson, setSelectedPerson] = useState<WcaPersonLite | null>(null);
   const [accountPerson, setAccountPerson] = useState<WcaPersonLite | null>(null);
-  const [personResults, setPersonResults] = useState<WcaPersonLite[]>([]);
-  const [personSearching, setPersonSearching] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [roomActionTarget, setRoomActionTarget] = useState<string | null>(null);
   const [qrOpen, setQrOpen] = useState(false);
   useEffect(() => {
     onOverlayCloseChange?.(qrOpen ? () => setQrOpen(false)
+      : renameOpen ? () => setRenameOpen(false)
       : showAdmin ? () => setShowAdmin(false)
         : showHistory ? () => setShowHistory(false) : null);
     return () => onOverlayCloseChange?.(null);
-  }, [onOverlayCloseChange, qrOpen, showAdmin, showHistory]);
+  }, [onOverlayCloseChange, qrOpen, renameOpen, showAdmin, showHistory]);
   const [joinCode, setJoinCode] = useState('');
   const [lobbyEvent, setLobbyEvent] = useState<NetBattleEventId>('333');
   const [busy, setBusy] = useState(false);
@@ -868,27 +869,6 @@ export function NetBattleMode({
     });
     return () => { cancelled = true; };
   }, [accountIdentity?.wcaId]);
-
-  useEffect(() => {
-    if (accountIdentity || selectedPerson || name.trim().length < 2) {
-      setPersonResults([]);
-      setPersonSearching(false);
-      return;
-    }
-    let cancelled = false;
-    setPersonSearching(true);
-    const timeout = window.setTimeout(() => {
-      void searchWcaPersons(name, 6).then((people) => {
-        if (!cancelled) setPersonResults(people);
-      }).finally(() => {
-        if (!cancelled) setPersonSearching(false);
-      });
-    }, 250);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-    };
-  }, [accountIdentity, name, selectedPerson]);
 
   const identity: NetIdentity = accountIdentity ? {
     ...accountIdentity,
@@ -948,7 +928,7 @@ export function NetBattleMode({
   }, [applyRoom, capability, fail]);
 
   const timer = useTimerController({
-    canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && Boolean(room && credentials && scramble && !myResult),
+    canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && !renameOpen && Boolean(room && credentials && scramble && !myResult),
     holdMs,
     inspectionSec,
     onComplete,
@@ -1213,9 +1193,9 @@ export function NetBattleMode({
       });
   };
 
-  const joinRoom = () => {
+  const joinRoom = (rawCode: string) => {
     if (!capability) return;
-    const code = normalizeNetBattleRoomCode(joinCode);
+    const code = normalizeNetBattleRoomCode(rawCode);
     if (!isNetBattleRoomCode(code)) {
       fail(new Error('invalid battle room code'));
       return;
@@ -1292,94 +1272,15 @@ export function NetBattleMode({
             value="net"
           />
         )} />
-        <div className="battle-lobby" data-no-timer>
-          <h2>{copy.battleOnlineTitle}</h2>
-          <div className="battle-identity-field">
-            <span>{copy.battleIdentity}</span>
-            {accountIdentity ? (
-              <div className="battle-person-choice">
-                {identity.iso2 && <Flag className="battle-person-flag" iso2={identity.iso2} />}
-                <strong>{displayCuberName(identity.name, language === 'zh')}</strong>
-                {identity.wcaId && <small>{identity.wcaId}</small>}
-              </div>
-            ) : selectedPerson ? (
-              <button
-                className="battle-person-choice"
-                disabled={busy}
-                onClick={() => { setSelectedPerson(null); setName(''); }}
-                type="button"
-              >
-                {selectedPerson.country_iso2 && <Flag className="battle-person-flag" iso2={selectedPerson.country_iso2} />}
-                <strong>{displayCuberName(selectedPerson.name, language === 'zh')}</strong>
-                <small>{selectedPerson.id} · {copy.clear}</small>
-              </button>
-            ) : (
-              <>
-                <input
-                  autoComplete="nickname"
-                  disabled={busy}
-                  maxLength={40}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder={copy.battleSearchIdentity}
-                  value={name}
-                />
-                {personSearching && <small>{copy.battleSearchingIdentity}</small>}
-                {personResults.length > 0 && (
-                  <ul className="battle-person-results">
-                    {personResults.map((person) => (
-                      <li key={person.id}>
-                        <button
-                          onClick={() => {
-                            setSelectedPerson(person);
-                            setPersonResults([]);
-                            setName('');
-                          }}
-                          type="button"
-                        >
-                          {person.country_iso2 && <Flag className="battle-person-flag" iso2={person.country_iso2} />}
-                          <span>{displayCuberName(person.name, language === 'zh')}</span>
-                          <small>{person.id}</small>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </>
-            )}
-          </div>
-          <TimerPuzzlePicker
-            dataNoTimer
-            disabled={busy}
-            groups={eventPickerGroups}
-            onSelect={(selectorId) => {
-              const next = selectorIdToNetEvent(selectorId);
-              if (next) setLobbyEvent(next);
-            }}
-            puzzleLabel={copy.puzzle}
-            selectedEvent={lobbyEvent}
-          />
-          <button className="battle-primary-action" disabled={busy} onClick={createRoom} type="button">
-            {copy.battleCreateRoom}
-          </button>
-          <div className="battle-join-row">
-            <label>
-              <span>{copy.battleRoomCode}</span>
-              <input
-                disabled={busy}
-                inputMode="numeric"
-                maxLength={4}
-                onChange={(event) => setJoinCode(normalizeNetBattleRoomCode(event.target.value))}
-                placeholder={copy.battleRoomCodePlaceholder}
-                value={joinCode}
-              />
-            </label>
-            <button disabled={busy || !isNetBattleRoomCode(joinCode)} onClick={joinRoom} type="button">
-              {copy.battleJoinRoom}
-            </button>
-          </div>
-          {busy && <p aria-live="polite">{copy.battleLoadingRoom}</p>}
-          {error && <p aria-live="assertive" className="battle-error">{error}</p>}
-        </div>
+        <TimerRoomLobby language={language} code={joinCode} busy={busy} error={error}
+          onCodeChange={setJoinCode} onJoin={joinRoom} onCreate={createRoom}
+          identity={<TimerRoomIdentity language={language} account={accountIdentity ? identity : null}
+            value={selectedPerson} defaultQuery={name} disabled={busy} onQueryChange={setName}
+            onChange={(person) => { setSelectedPerson(person); setName(''); }} />}
+          event={<TimerPuzzlePicker dataNoTimer disabled={busy} groups={eventPickerGroups}
+            onSelect={(selectorId) => { const next = selectorIdToNetEvent(selectorId); if (next) setLobbyEvent(next); }}
+            puzzleLabel={copy.puzzle} selectedEvent={lobbyEvent} />}
+        />
       </section>
     );
   }
@@ -1471,8 +1372,24 @@ export function NetBattleMode({
         }} />}
       {showHistory && <TimerRoomHistory room={room} currentPlayerId={credentials.playerId}
         language={language} precision={precision} onClose={() => setShowHistory(false)} />}
+      {renameOpen && <TimerRoomDialog language={language} title={{ en: 'Change name', zh: '改名' }[language]} onClose={() => setRenameOpen(false)}>
+        <TimerRoomIdentity language={language} value={selectedPerson} defaultQuery={name} disabled={busy}
+          onQueryChange={setName} onChange={(person) => { setSelectedPerson(person); setName(''); }} />
+        <div className="timer-room-actions"><button type="button" disabled={busy} onClick={() => {
+          setBusy(true);
+          void capability.client.renameNetPlayer(room.code, credentials, identity)
+            .then((nextRoom) => { applyRoom(nextRoom); setRenameOpen(false); })
+            .catch(fail).finally(() => setBusy(false));
+        }}>{copy.save}</button></div>
+      </TimerRoomDialog>}
       <TimerRoomLayout players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
-        language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)} />}
+        language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)}
+        onRename={!accountIdentity ? (name) => {
+          const player = room.players[credentials.playerId];
+          setName(name);
+          setSelectedPerson(player?.wcaId ? { id: player.wcaId, name: player.name, country_iso2: player.iso2 ?? '' } : null);
+          setRenameOpen(true);
+        } : undefined} />}
       >
         <div className="battle-net-timer">
           <TimerPuzzlePicker

@@ -1217,7 +1217,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'SearchInput',
-    import: "import { SearchInput } from '@/components/SearchInput';",
+    import: "import { SearchInput } from '@/components/SearchInput'; // @cuberoot/timer-ui/search-input",
     category: 'input',
     zh: 'IME 安全的受控文本搜索框:中文 / 日文输入法合成途中不写回外部 store,合成结束才提交,避免 nuqs / 节流 store 的重渲染打断拼音(把 bei 拼成乱码)。内置行内清除 ×。',
     en: 'IME-safe controlled text search box: during CJK composition it holds value locally and only commits on compositionend, so a nuqs / throttled-store re-render can’t corrupt the in-progress pinyin. Built-in inline clear ×.',
@@ -1462,7 +1462,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'WcaPersonPicker',
-    import: 'components/WcaPersonPicker.tsx',
+    import: '@cuberoot/timer-ui/wca-person-picker (Web adapter: components/WcaPersonPicker.tsx)',
     category: 'more',
     zh: '选手搜索选择器。默认本地索引最快,别传 searchFn(后端代理对中文 / 单字符返空)。',
     en: 'Cuber search / picker. The default local index is fastest — don’t pass searchFn (the backend proxy returns empty for Chinese / single chars).',
@@ -1539,7 +1539,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerRoomPlayers',
-    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog } from '@cuberoot/timer-ui';",
+    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与五端 App 共用的联机玩家列表及房间内容布局，统一房主、自己、在线状态、成绩、得分和姓名；宿主注入实况查看、改名及逐帧读数。',
     en: 'Shared online roster and room layout with host/self markers, presence, results, scores, and names. Hosts inject live-cube selection, rename, and live readout updates.',
@@ -2502,7 +2502,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'RoomCodeInput',
-    import: "import { RoomCodeInput } from '@/components/RoomCodeInput';",
+    import: "import { RoomCodeInput } from '@/components/RoomCodeInput'; // @cuberoot/timer-ui/room-code-input",
     category: 'more',
     zh: `统一的 4 位数字房间码输入框:过滤非数字并唤起数字键盘,填满即触发加入,同一码不会因重渲染重复提交。`,
     en: `Shared four-digit numeric room-code input: filters non-digits, opens a numeric keypad, joins when complete, and prevents duplicate submissions across rerenders.`,

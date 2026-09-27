@@ -20,6 +20,12 @@ import {
 import { COPY } from './copy';
 import type { InstalledAppNetBattle } from './platform';
 
+// Room history uses the real shared preview component. jsdom has no
+// constructable stylesheet/WebGL implementation; isolate only its renderer.
+vi.mock('cubing/twisty', () => ({
+  TwistyPlayer: class { constructor() { return document.createElement('div'); } },
+}));
+
 vi.mock('@cuberoot/shared/timer', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@cuberoot/shared/timer')>();
   return {
@@ -225,7 +231,7 @@ describe('installed app multiplayer modes', () => {
     expect(host.querySelector('.scramble-strip')?.textContent).toContain("R U R'");
   });
 
-  it('uses the injected shared room client and protected session store to create a room', async () => {
+  it.each(['create', 'join'])('uses the shared lobby to %s a room and preserves its protected session', async (entry) => {
     const state = roomState();
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const createNetRoom = vi.fn(async () => ({ state, credentials }));
@@ -233,7 +239,7 @@ describe('installed app multiplayer modes', () => {
     let saved: NetBattleSession | null = null;
     const client = {
       createNetRoom,
-      joinNetRoom: vi.fn(),
+      joinNetRoom: vi.fn(async () => ({ state, credentials })),
       getNetRoom: vi.fn(async () => state),
       postNetStatus: vi.fn(async () => state),
       postNetSyncStart: vi.fn(async () => state),
@@ -264,9 +270,18 @@ describe('installed app multiplayer modes', () => {
       />,
     ));
     await act(async () => Promise.resolve());
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
-
-    expect(createNetRoom).toHaveBeenCalledWith('333', { name: 'Cuber' });
+    if (entry === 'create') {
+      await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
+      expect(createNetRoom).toHaveBeenCalledWith('333', { name: 'Cuber' });
+    } else {
+      const codeInput = host.querySelector<HTMLInputElement>('[aria-label="Room code"]')!;
+      await act(async () => {
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(codeInput, '1234');
+        codeInput.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      expect(client.joinNetRoom).toHaveBeenCalledExactlyOnceWith('1234', { name: 'Cuber' });
+      expect(createNetRoom).not.toHaveBeenCalled();
+    }
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
     expect(host.textContent).toContain('1234');
     expect(host.querySelectorAll('.timer-room-player')).toHaveLength(1);
@@ -312,6 +327,15 @@ describe('installed app multiplayer modes', () => {
       'https://cuberoot.me/timer?players=net&room=1234',
     );
     await act(async () => document.querySelector<HTMLButtonElement>('.room-qr-close')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-player-name')!.click());
+    const nickname = document.querySelector<HTMLInputElement>('.timer-room-dialog input')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(nickname, 'Guest alias');
+      nickname.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-room-dialog .timer-room-actions button')!.click());
+    expect(client.renameNetPlayer).toHaveBeenCalledWith('1234', credentials, { name: 'Guest alias' });
+    expect(document.querySelector('.timer-room-dialog')).toBeNull();
   });
 
   it('routes a batched smart-cube scramble completion and first solve move through the online timer', async () => {
@@ -355,7 +379,7 @@ describe('installed app multiplayer modes', () => {
         smartCube={smartCube}
       />,
     ));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     expect(handlers).not.toBeNull();
 
     await act(async () => host.querySelector<HTMLButtonElement>('[data-device-controls]')!.click());
@@ -443,7 +467,7 @@ describe('installed app multiplayer modes', () => {
     };
 
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
 
     const surface = host.querySelector<HTMLElement>('.battle-net-timer .timing-surface')!;
     expect(surface.getAttribute('role')).toBeNull();
@@ -471,7 +495,7 @@ describe('installed app multiplayer modes', () => {
     };
 
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     await act(async () => Promise.resolve());
 
     expect(nextNetRound).toHaveBeenCalledWith('1234', credentials, 1, false);
@@ -536,7 +560,7 @@ describe('installed app multiplayer modes', () => {
     let closeOverlay: (() => void) | null = null;
     await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability}
       onOverlayCloseChange={(close) => { closeOverlay = close; }} />));
-    await act(async () => host.querySelector<HTMLButtonElement>('.battle-primary-action')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
 
     const historyButton = Array.from(host.querySelectorAll<HTMLButtonElement>('.timer-room-toolbar button'))
       .find((button) => button.getAttribute('aria-label') === 'Scramble history and results')!;

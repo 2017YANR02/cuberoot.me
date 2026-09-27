@@ -1,3 +1,4 @@
+@import "@cuberoot/timer-ui/search-input.css";
 @import "tailwindcss";
 /* battle dark-lock removed — battle now dual-theme (2026-06-01) */
 @source "../app/**/*.{tsx,ts,jsx,js}";
@@ -830,45 +831,6 @@ html[data-appearance-preview] body {
   margin-right: 5px;
   width: 1.25em !important;
   height: 0.9em !important;
-}
-
-/* 搜索输入框的全站默认外观。WCA 两套历史选择器与 SearchInput 共用这一契约；
- * :where() 保持零特异性，专题页只需覆盖确有差异的尺寸和排版。 */
-:where(.search-control) {
-  appearance: none;
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 40px;
-  padding: 8px 11px;
-  border: 1px solid var(--input);
-  border-radius: 8px;
-  background: var(--background);
-  color: var(--foreground);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.25;
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-:where(.search-control.search-control--with-clear) {
-  padding-right: 34px;
-}
-
-:where(.search-control)::placeholder {
-  color: var(--faint-foreground);
-  opacity: 1;
-}
-
-:where(.search-control):focus {
-  border-color: var(--ring);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ring) 24%, transparent);
-}
-
-:where(.search-control):disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 /* 屏幕键盘(components/OnScreenKeyboard.tsx)—— Vite index.css 漏移植,补回。
