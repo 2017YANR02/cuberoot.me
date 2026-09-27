@@ -129,7 +129,7 @@ async function main() {
       if (!bin) { bin = { samples: [], seen: 0 }; res[c].set(v, bin); }
       resAdd(bin, id);
     }
-    if (++rows % 200000 === 0) process.stdout.write(`  ${rows} rows\r`);
+    rows++;
   }
   console.log(`  ${rows} rows`);
 

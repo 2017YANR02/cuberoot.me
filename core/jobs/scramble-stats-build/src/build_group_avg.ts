@@ -166,7 +166,6 @@ async function processSet(setSpec: SetSpec, metaCsv: string, outSets: Record<str
         }
       }
       rows++;
-      if (rows % 200_000 === 0) process.stdout.write(`  [${spec.key}] ${rows} rows\r`);
     }
     process.stdout.write(`  [${spec.key}] ${rows} rows\n`);
 
