@@ -1,4 +1,4 @@
-import type { FriendUser } from '../friends.js';
+import type { FriendUser } from '../friends';
 
 export const CHAT_BODY_LIMIT = 2_000;
 export const CHAT_HTTP_BODY_LIMIT = 32 * 1024;

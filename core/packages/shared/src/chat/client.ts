@@ -2,7 +2,7 @@ import {
   ChatError, CHAT_REQUEST_TIMEOUT_MS, isChatMessage, isChatPeer, isChatSequence, isChatUuid,
   type ChatClient, type ChatErrorCode, type ChatConversation, type ChatConversationsPage,
   type ChatMessagesPage, type ChatReadResult,
-} from './contract.js';
+} from './contract';
 
 export interface ChatTransport {
   fetch: typeof fetch;
@@ -70,7 +70,7 @@ export function createChatClient(transport: ChatTransport): ChatClient {
     },
     send: async (peer, input, signal) => {
       const result = await request(`/peers/${peer}/messages`,
-        (v): v is { message: import('./contract.js').ChatMessage } => !!v && typeof v === 'object' && isChatMessage((v as { message: unknown }).message),
+        (v): v is { message: import('./contract').ChatMessage } => !!v && typeof v === 'object' && isChatMessage((v as { message: unknown }).message),
         signal, 'POST', input);
       if (result.message.clientMessageId !== input.clientMessageId || result.message.body !== input.body) throw new ChatError('INVALID_RESPONSE');
       return result.message;
