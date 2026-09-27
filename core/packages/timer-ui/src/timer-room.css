@@ -75,3 +75,15 @@
 .timer-room-history-event p { overflow-wrap: anywhere; margin: 0 0 8px; }
 .timer-room-history-result { display: flex; justify-content: space-between; gap: 12px; font-variant-numeric: tabular-nums; }
 .timer-room-history-result > span { overflow-wrap: anywhere; }
+.timer-room-lobby { width: min(100%, 560px); margin: auto; padding: 24px 16px; box-sizing: border-box; }
+.timer-room-lobby h2 { margin: 0 0 20px; font-size: 20px; }
+.timer-room-lobby-fields, .timer-room-lobby-actions, .timer-room-identity { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.timer-room-lobby-actions { margin-top: 20px; }
+.timer-room-lobby-actions button { min-height: 44px; padding: 8px 16px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; cursor: pointer; }
+.timer-room-lobby-actions input { width: 120px; min-height: 44px; box-sizing: border-box; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; padding: 8px; }
+.timer-room-lobby button:disabled, .timer-room-lobby input:disabled { opacity: 0.5; cursor: default; }
+.timer-room-lobby :is(button, input):focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.timer-room-lobby [role="alert"] { color: var(--destructive); }
+.timer-room-lobby .search-control, .timer-room-dialog .search-control, .timer-room-lobby .cuber-search-item, .timer-room-dialog .cuber-search-item { min-height: 44px; }
+.timer-room-lobby .clear-btn, .timer-room-dialog .clear-btn { width: 44px; height: 44px; right: 0; }
+.timer-room-lobby .search-control--with-clear, .timer-room-dialog .search-control--with-clear { padding-right: 44px; }
