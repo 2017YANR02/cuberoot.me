@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_cross / W / bin 0
-# Population in this bin: 24
-# Samples listed: 24 (all entries in this bin)
+# Population in this bin: 25
+# Samples listed: 25 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 94470001,R2 D U B2 F2 U2 R2 F U2 L' D' F2 D' R2 U F R2 U2 F,W,Kyushu Open 2014 (2014-12-28),333 Final A #4
@@ -29,3 +29,4 @@
 5424434001,B' L2 F2 U B' R' U D2 B2 L2 U2 R' D2 F2 B2 L F' R2 U2 B,W,Richardshhhon 2026 (2026-02-28~03-01),333bf R2 A #5
 5453935049,D' R' U2 R F2 D2 R' D2 F2 L' D' R2 B' L D B U' B U L',W,SCU III: FMC Triple-Scoop 2026 (2026-03-14~15),333mbf Final A #2
 5575506001,F L' D2 R' F2 L U' R' D' U R2 F' R' U' B2,W,Drammen Open 2026 (2026-04-18~19),333oh R1 A E2
+5843752001,F2 U' R F L' U2 L' D2 B2 R D2 L D L B' R D L2 B,W,IFBA 2026 (2026-09-19),333 Final B #2

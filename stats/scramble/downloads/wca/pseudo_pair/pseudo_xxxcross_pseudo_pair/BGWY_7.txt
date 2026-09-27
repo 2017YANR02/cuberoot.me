@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / BGWY / bin 7
-# Population in this bin: 500
+# Population in this bin: 501
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 2255124020,B2 D2 L' R2 D2 B2 L' F2 U F2 U' L2 F' L F' R U2 L B2,B,Westfries Open 2022 (2022-10-22~23),333mbf Final A #1
@@ -15,7 +15,7 @@
 3126076001,D2 F' D' R2 U2 R' F' D' R' U D' L2 U2 L D2 R F2 R,B,South Deerfield Side Events 2023 (2023-09-30),333 R1 C #5
 56089001,F D B' L B' L D' F D' R' B2 D2 L2 B2 L2 B2 U' L2 U R2,B,TCG Lima 2014 (2014-09-06~07),333 R1 A #1
 58172001,U2 B2 D F' L2 D' L B D R' D2 R2 B2 U2 R' F2 U2 R' U2 L2,B,Champagne Summer Open 2014 (2014-09-13~14),333 R1 D #2
-4475748001,F2 D' L' D F' D' L U L2 F' R2 D2 L' D2 R F2 R2 B2,B,Brazuca al Cubo I 2025 (2025-02-08),333 R2 A #5
+5843930001,D2 B L' D' R' B2 R2 D2 R' B R2 L2 F' U2 L2 D2,W,ArquiCube Xalapa 2026 (2026-09-19~20),333oh R1 C #4
 3850491001,D2 R2 F2 D2 R2 B' D2 L' F2 D L2 D R2 F L U B D',G,Zielona Góra Fresh Cubing 2024 (2024-06-08~09),333 R2 B #3
 2987531001,D2 R2 U2 L' D2 U2 L2 R' U F U' R' D B D' L2 F U',W,Dublin Summer Solving Saturday 2023 (2023-08-19),333 R1 D #5
 4204162001,U2 F2 U2 B' D2 R2 D2 F2 R F2 R' B D F2 U' R2 U,W,Kalvskinnet Kubing 2024 (2024-10-19~20),333 Final A E2

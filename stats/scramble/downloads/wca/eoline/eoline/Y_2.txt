@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / Y / bin 2
-# Population in this bin: 971
+# Population in this bin: 973
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 866875001,L2 F B' L2 F U2 D2 B U R2 L2 F2 D F2 L2 D R2 F2 D,Y,Canada's Best in the West 2018 (2018-08-24~26),333oh R1 B #1
@@ -199,7 +199,7 @@
 4790697001,R B2 D' L2 U2 L U R2 F2 B2 R U R2 U' L2 F2 U',Y,One Shamelin Cube Open 2025 (2025-06-07~08),333 R1 I #3
 1040952018,U2 L F2 L U2 F2 U2 R B2 U2 R D' R' U2 L2 B2 F2 U' B D2,Y,PBQ Berkeley Spring 2019 (2019-03-09),333mbf Final A #1
 730638001,F2 L2 F' R2 B' L2 F2 D2 U L2 B L2 B' D' B F2 D2,Y,Bacau Easter Open 2018 (2018-03-24),333 R1 C #2
-735672001,L2 D L2 R2 D F2 D2 F2 D F' D R2 D L' D B L F D,Y,Hudson Valley Open 2018 (2018-03-24),333 R2 B E1
+5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,Y,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3
 4940724001,L2 U2 B2 L' U' F' U R2 B' D2 F' U2 B' R2 B2 D' B2 R',Y,Avenida Chile XXV 2025 (2025-08-17),333oh Final A #1
 1806936066,R D B2 R D2 B2 U2 R2 B2 L2 B2 U L' U' B' L' F' L B L' F',Y,PoliMi Mental Breakdown 2022 (2022-02-12~13),333mbf Final A #2
 1026679001,L B2 R' D2 B2 R B2 L U2 R' D U' L' U' R' B2 U2 R' D',Y,KSF Ust-Kamenogorsk City 2019 (2019-02-16~17),333 Final A E2

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / W / bin 2
-# Population in this bin: 899
+# Population in this bin: 900
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 1100196001,F R2 F' D2 R2 B' D' F2 R2 D' F' R2 B' D F R2 D',W,SnoCo Feet Fest 2019 (2019-04-13),333 R1 A E1
@@ -42,7 +42,7 @@
 5018951001,B2 U' R2 B2 L2 F2 D2 L2 D' L2 B' R2 B R2 D2 U2 L D',W,Back to School in Ivanka 2025 (2025-09-13~14),333oh R2 B E1
 1103097001,F2 D' F2 L2 B2 U F2 D' B2 R2 D2 L B2 L F' L D' B' U' F' D L B2,W,Slovakian Spring 2019 (2019-04-13~14),333bf Final B #1
 170902001,U R2 F2 U F2 R2 B2 R U' R' F2 L' D2 U' L D2 F2,W,N8W8 Summer 2015 (2015-08-01~02),333fm Final A #2
-178913001,U2 L2 R2 D' B2 D' L2 F2 U' F' D' U2 B2 L2 D' F' R2 B',W,Norrkubing 2015 (2015-08-16),333 Final B E1
+5842917001,B U D2 R2 F2 U F2 L' U' F2 U B2 U B2 D F2 U' R,W,Take Your Time Brisbane 2026 (2026-09-19~20),333oh R1 B #3
 188075001,U' L2 U F2 L2 R2 U2 F' U' B2 D' L2 D R2 B' U,W,LMDL Open 2015 (2015-09-12),333 R1 B #3
 4062495001,D' F B2 D F B2 D' L2 U2 L2 F D2 B2 R2 L2 B L2 R U',W,Leersum Algs 24 Hours in 2024 (2024-08-31~09-01),333 R1 B #4
 812090001,F' U2 F' B D2 F' D' R' D2 R U2 R' F2 L U2 B2 D2 R2,W,Fairview Cube Day 2018 (2018-06-24),333 R1 C #5

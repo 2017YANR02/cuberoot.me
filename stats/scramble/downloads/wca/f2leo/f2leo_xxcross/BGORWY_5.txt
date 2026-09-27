@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BGORWY / bin 5
-# Population in this bin: 362
+# Population in this bin: 363
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 1779001,F U2 B' U L' F' R F' B D F R2 U R2 F2 B2 D' F2,G,Kansai Open 2014 (2014-03-21~22),333ft Final A #1
@@ -194,7 +194,7 @@
 4073507014,U2 B2 U2 L2 D' F' B2 D L F2 L' B2 L B2 R B2 L F' L' F,W,Romanian Breaking Records 2024 (2024-08-30~09-01),333mbf Final A #1
 5126406001,L' D B' U' F2 R2 U2 L F2 R' F' R' F' L' B2 D2 F2,Y,Hvidovre Liga III 2025 (2025-10-25),333 Final B #5
 2839668001,L' F2 L' D2 U2 B2 L2 F2 B D2 U' R F U' F' U2 B2 L2 U2,W,Swisscubing Cup IV 2023 (2023-06-24~25),333bf Final A E2
-2857243001,D2 B2 R2 D2 R B2 L' R2 U F2 L U B' L U2 F' R D' L2,O,Eugene Cubing 2023 (2023-07-08),333oh Final A #1
+5844209001,B' D L' B D2 B2 L' R2 D' F2 U R2 U' B2 U2 R2 U L' B',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333oh Final C #4
 3960674001,L2 F2 U F2 D2 U F2 L' D F2 R' F' D B2 D L2 D2 U' L' F',R,Rubik's WCA South American Championship 2024 (2024-07-22~25),333bf Final A #1
 3516189003,U B U B2 L2 U2 B L2 R' U2 L U B U L2 B' L2 U',G,Love Is Blind Lima 2024 (2024-02-18),333mbf Final A #1
 4151018001,R2 D' R' D L2 F2 U' L2 R2 D U2 F D U' R F2 D B' L,Y, Esprit Cube Open Bayonne 2024 (2024-09-28~29),333oh Final A E1

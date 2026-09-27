@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BGOR / bin 2
-# Population in this bin: 800
+# Population in this bin: 802
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 3187898001,D2 L2 U2 L' U2 L' U2 L' D2 B2 U B2 F2 R2 F' D F' U,B,Zamiin-Uud Open 2023 (2023-10-21),333 R1 H E1
@@ -24,7 +24,7 @@
 115559001,R2 F2 L2 F2 D R2 D2 F2 U' L' U' L B2 D2 F' R' D' F' D',R,BASC 5: Everything But 2x2 2015 (2015-02-28~03-01),333 R2 B #4
 2101177001,L D2 L F R2 U' L2 U' B' D2 R2 L' U2 F2 L2 U2,O,Rubik's WCA Asian Championship 2022 (2022-08-11~14),333 Final A #3
 4835864001,L2 D B L B2 R' D2 L' D2 U2 L' R2 F U2 F' R2 F' R2 D2,O,Warm Up Seattle 2025 (2025-06-28~29),333 R2 A #3
-5599614031,R U F2 L B' D' F L' U' D2 F2 D2 R2 L' F2 R U2 L' U' B,B,Campeonato Mineiro 2026 (2026-05-01~03),333mbf Final B #1
+5845221001,D' B' U' B R' U D F R2 B D2 R2 F2 R2 U' B U F,O,Roanoke Gone Rogue 2026 (2026-09-26),333 R1 D E2
 2843194001,D2 B2 U' F2 U B2 F2 D' U' R' B2 F2 R' U F L2 F' D2 L,R,West Side Cube Clash 2023 (2023-07-01),333 R1 A E2
 1054179001,L2 R' D2 L' B2 R B2 R2 U L B' D B F' U' F2 D' L' D2,B,Pragyan Cube Open 2019 (2019-03-17),333oh R1 C #3
 4944712001,R' U2 R F2 L' B2 F2 U R' F2 L U' L' B' D2 U L' D2,O,Cubing Express Buenavista 2025 (2025-08-16~17),333 Final A #1
