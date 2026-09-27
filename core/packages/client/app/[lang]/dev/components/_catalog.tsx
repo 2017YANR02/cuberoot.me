@@ -1538,6 +1538,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The controlled 2x2 scramble type/style UI shared by the Web, Android, and iOS timers. Its type select, WCA 11-move/Optimal pill, pointer drag, keyboard semantics, and narrow layout live in one implementation. The 11 random and 10 real-WCA types come from @cuberoot/shared/timer; hosts only wire persistence and translated labels.',
   },
   {
+    name: 'TimerPenaltyActions',
+    import: "import { TimerPenaltyActions } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 联机与五端 App 对战共用的 OK、+2、DNF 操作栏，统一选中态、44px 触控区域、键盘焦点和禁用状态；宿主负责更新成绩。',
+    en: 'Shared OK, +2, and DNF actions for Web online rooms and installed battles, with common selection, 44px touch targets, keyboard focus, and disabled states. Hosts update the result.',
+  },
+  {
     name: 'TimerStageLayout',
     import: "import { TimerStageLayout } from '@cuberoot/timer-ui';",
     category: 'more',

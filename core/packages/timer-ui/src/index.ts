@@ -1,6 +1,9 @@
 import './timing-surface.css';
 import './timer-chrome.css';
 import './timer-stage-layout.css';
+import './timer-penalty-actions.css';
+export { TimerPenaltyActions } from './TimerPenaltyActions';
+export type { TimerPenaltyActionsProps } from './TimerPenaltyActions';
 import './puzzle-picker.css';
 import './manual-scramble-queue.css';
 import './scramble-source-select.css';

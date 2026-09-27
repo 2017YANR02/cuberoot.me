@@ -4,6 +4,12 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：对战横排罚时操作共享
+
+- 新增 `TimerPenaltyActions`，Web 联机、五端 App 本地多人及联机共用 OK/+2/DNF 顺序、文案、选中态、44px 触控尺寸、焦点与禁用状态。删除三处重复按钮组及两端私有样式；宿主保留 local reducer / online result transport，罚时可编辑时机不变。组件已登记到 `/dev/components`。
+- 验证：中英文共享按钮与 CSS 触控尺寸、受控选择/禁用、实际本地成绩 +2/DNF、既有对战与联机契约共 26 项通过；client、app-ui、timer-ui typecheck 通过；Mobile production build 与 Android sync 完成。未做真机或浏览器视觉验收，未安装 APK。
+- Web 本地多人仍使用原罚时下拉菜单；多人外层排布、共用打乱行、App 本地多人预览和其他玩家操作继续待迁移。整体继续 `ACTIVE — NOT COMPLETE`。
+
 ### 2026-09-27：本地多人玩家计时区接入共享布局
 
 - `TimingSurface layout="local"` 统一玩家格的紧凑读数字号、上方可滚动打乱、中央读数与下方辅助/预览区。Web `TimerArea` 和五端 App `LocalBattleMode` 都使用这份实现；App 移除私有字号、内边距、间距及打乱字号覆盖，Web 旧读数节点继承共享字号。

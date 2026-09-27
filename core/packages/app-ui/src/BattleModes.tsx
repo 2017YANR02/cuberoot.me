@@ -67,6 +67,7 @@ import {
   TimerScrambleStrip,
   TimerTopbar,
   TimingSurface,
+  TimerPenaltyActions,
   shouldIgnoreTimerTarget,
   type TimerPlayersValue,
   type TimerPuzzlePickerGroup,
@@ -633,16 +634,11 @@ export function LocalBattleMode({
                 surfaceRef={surfaceRefs[player.id]}
               />
               {result && (
-                <div className="battle-penalties" data-no-timer>
-                  {(['ok', '+2', 'dnf'] as const).map((penalty) => (
-                    <button
-                      aria-pressed={player.penalty === penalty}
-                      key={penalty}
-                      onClick={() => dispatch({ type: 'set-penalty', playerId: player.id, penalty })}
-                      type="button"
-                    >{penalty === 'dnf' ? copy.dnf : penalty.toUpperCase()}</button>
-                  ))}
-                </div>
+                <TimerPenaltyActions
+                  language={language}
+                  value={player.penalty}
+                  onChange={(penalty) => dispatch({ type: 'set-penalty', playerId: player.id, penalty })}
+                />
               )}
             </article>
           );
@@ -1638,24 +1634,19 @@ export function NetBattleMode({
           />
           {smartCube && deviceControls}
           {currentResult && pendingCount(room) > 0 && (
-            <div className="battle-penalties" data-no-timer>
-              {(['ok', '+2', 'dnf'] as const).map((penalty) => (
-                <button
-                  aria-pressed={currentResult.p === penalty}
-                  key={penalty}
-                  onClick={() => {
-                    void capability.client.postNetResult(
-                      room.code,
-                      credentials,
-                      room.round,
-                      currentResult.t,
-                      penalty,
-                    ).then(applyRoom).catch(fail);
-                  }}
-                  type="button"
-                >{penalty === 'dnf' ? copy.dnf : penalty.toUpperCase()}</button>
-              ))}
-            </div>
+            <TimerPenaltyActions
+              language={language}
+              value={currentResult.p}
+              onChange={(penalty) => {
+                void capability.client.postNetResult(
+                  room.code,
+                  credentials,
+                  room.round,
+                  currentResult.t,
+                  penalty,
+                ).then(applyRoom).catch(fail);
+              }}
+            />
           )}
           {currentResult && (
             <button

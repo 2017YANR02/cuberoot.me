@@ -34,7 +34,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useQueryState } from 'nuqs';
 import { Bluetooth, Copy, Check, LogOut, Swords, Trophy, History, X, ShieldCheck, UserMinus, QrCode } from 'lucide-react';
 
-import { SegmentTime, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
+import { SegmentTime, TimerPenaltyActions, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
 import { SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
@@ -1651,18 +1651,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       {myResult && (timer.phase === 'idle' || timer.phase === 'stopped') && (
         <div className="net-substate" data-no-timer>
           {/* 罚时调整:交卷后仍可改(重交同一时间) */}
-          <div className="net-penalty-row">
-            {(['ok', '+2', 'dnf'] as NetPenalty[]).map((p) => (
-              <button
-                key={p}
-                type="button"
-                className={`net-pen-btn${myPenalty === p ? ' active' : ''}`}
-                onClick={() => adjustPenalty(p)}
-              >
-                {p === 'ok' ? 'OK' : p === '+2' ? '+2' : 'DNF'}
-              </button>
-            ))}
-          </div>
+          <TimerPenaltyActions language={isZh ? 'zh' : 'en'} value={myPenalty} onChange={adjustPenalty} />
           {/* 没人可等(complete,或房里暂时只有我)→ 自动进入下一轮。
               isRoundComplete 在「在线不足 2 人」时恒 false(那是同时起表门控的
               口径),照它渲染的话,一个人开好房等朋友时会看到「还差 0 人」。 */}
