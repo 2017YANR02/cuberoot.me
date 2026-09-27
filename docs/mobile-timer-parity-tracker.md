@@ -4,6 +4,12 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：App 蓝牙入口菜单定位修复
+
+- 用户在 Android 单人页未连接时点击底部蓝牙按钮无可见反馈。源码定位为 App 的正常流布局将 `.shell-device-center` 设成 `static`，共享菜单的 `position:absolute; bottom:calc(100% + 8px)` 因而失去按钮锚点，可被放到视口上方；此时尚未进入扫描/权限流程。
+- 单人、多人与联机的设备中心统一保留 `position:relative; inset:auto`，继续参与正常布局并将菜单锚定按钮。未覆盖工作区中独立的“已连接直接开窗”改动。
+- 验证：真实 App 的未连接菜单→设备窗口→扫描调用 1 项、三处宿主的实际 CSS computed-style 3 项、既有 viewport 7 项通过；Mobile production build 与 Capacitor Android sync 完成，Android assets 已含定位修复。未替换设备 APK，实体触摸/权限/扫描发现仍待本次真机复测。
+
 ### 2026-09-27：单人中央计时布局同源
 
 - Web `SoloView` 与五端 `App` 改用 `TimingSurface layout="solo"`，共享组件统一上方打乱、居中读数、下方辅助内容和魔方预览框。默认数字尺寸取 Web 的 `clamp(48px, 10vw, 132px)`，Web 字号偏好仍通过 `fontScale` 注入。
