@@ -12,6 +12,8 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./chat": "runtime-neutral",
+      "./friends": "runtime-neutral",
       "./competition-access": "runtime-neutral",
       "./dev-preview": "runtime-neutral",
       "./timer/reconstruct/recap": "runtime-neutral",
@@ -148,6 +150,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./chat": { "node": "./dist/chat/index.js", "default": "./src/chat/index.ts" },
+    "./friends": { "node": "./dist/friends.js", "default": "./src/friends.ts" },
     "./competition-access": { "node": "./dist/competition-access.js", "default": "./src/competition-access.ts" },
     "./dev-preview": { "node": "./dist/dev-preview.js", "default": "./src/dev-preview.ts" },
     "./timer/reconstruct/recap": { "node": "./dist/timer/reconstruct/recap.js", "default": "./src/timer/reconstruct/recap.ts" },
