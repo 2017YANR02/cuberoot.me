@@ -1,4 +1,4 @@
-/** Intake status stays on one terminal line; redirected logs get sparse updates. */
+/** Intake status is sparse so long jobs remain visible without flooding Terminal. */
 export function duration(seconds: number): string {
   const s = Math.max(0, Math.ceil(seconds));
   return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(n => String(n).padStart(2, '0')).join(':');
@@ -15,18 +15,16 @@ export function downloadStatus(done: number, total: number, received: number, se
 
 export function intakeProgress(label: string, detail: () => string = () => ''): () => void {
   const started = Date.now();
-  const tty = !!process.stdout.isTTY;
   const render = () => {
     const extra = detail();
     const line = `[取数] ${label}${extra ? ` | ${extra}` : ''} | 已运行 ${duration((Date.now() - started) / 1000)}`;
-    process.stdout.write(tty ? `\r\x1b[2K${line}` : `${line}\n`);
+    console.log(line);
   };
   render();
-  const timer = setInterval(render, tty ? 1000 : 60_000);
+  const timer = setInterval(render, 300_000);
   timer.unref();
   return () => {
     clearInterval(timer);
     render();
-    if (tty) process.stdout.write('\n');
   };
 }

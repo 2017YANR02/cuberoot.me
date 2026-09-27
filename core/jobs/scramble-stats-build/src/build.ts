@@ -309,9 +309,6 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     }
     if (ev !== undefined) evRowCount.set(ev, (evRowCount.get(ev) ?? 0) + 1);
     sampleCount++;
-    if (sampleCount % 200_000 === 0) {
-      process.stdout.write(`  [${spec.key}] ${sampleCount} rows\r`);
-    }
   }
   process.stdout.write(`  [${spec.key}] ${sampleCount} rows\n`);
 

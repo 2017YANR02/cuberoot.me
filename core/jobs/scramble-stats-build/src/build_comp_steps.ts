@@ -84,7 +84,7 @@ async function buildTarget(
     let m = byComp.get(comp);
     if (!m) { m = {}; byComp.set(comp, m); }
     m[key] = vals;
-    if (++rows % 200000 === 0) process.stdout.write(`  ${rows} rows\r`);
+    rows++;
   }
   fs.rmSync(outDir, { recursive: true, force: true });
   fs.mkdirSync(outDir, { recursive: true });

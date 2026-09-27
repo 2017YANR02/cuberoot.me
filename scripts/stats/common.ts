@@ -116,9 +116,8 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
   let shown = '';
   const show = (status: string) => {
     const now = Date.now();
-    if (now - lastStatus < (process.stdout.isTTY ? 1000 : 300_000)) return;
-    if (process.stdout.isTTY) process.stdout.write(`\r${status.padEnd(78)}`);
-    else console.log(status);
+    if (now - lastStatus < 300_000) return;
+    console.log(status);
     shown = status;
     lastStatus = now;
   };
@@ -157,8 +156,8 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
   finally { if (heartbeat) clearInterval(heartbeat); }
   await output;
   await new Promise<void>((done, fail) => { log.end(done); log.once('error', fail); });
-  if (process.stdout.isTTY && shown) process.stdout.write('\n');
   if (code !== 0) throw new Error(`${label} exited with ${code}; see ${logFile}`);
+  if (shown) console.log(`${label} 完成；详细日志：${logFile}`);
 }
 export async function stamp(): Promise<string> {
   const file = join(wcaDir, 'incremental', 'export_date.txt');

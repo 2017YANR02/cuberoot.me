@@ -194,7 +194,6 @@ async function aggregateVariant(
       }
     }
     rows++;
-    if (rows % 200_000 === 0) process.stdout.write(`  [${spec.key}] ${rows} rows\r`);
   }
   process.stdout.write(`  [${spec.key}] ${rows} rows\n`);
 

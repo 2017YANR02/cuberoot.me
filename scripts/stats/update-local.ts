@@ -159,9 +159,9 @@ async function syncVariant(name: string, options: Options): Promise<boolean> {
     await appendData(csvFile, output, await fileSize(csvFile) > 0);
     await unlink(output);
     chunks++;
-    console.log(`[${name}] ${Math.min(i + size, missing.length)}/${missing.length}`);
     if (options.maxChunks && chunks >= options.maxChunks) break;
   }
+  console.log(`[${name}] 已补 ${Math.min(chunks * size, missing.length)}/${missing.length} 条`);
   return true;
 }
 
