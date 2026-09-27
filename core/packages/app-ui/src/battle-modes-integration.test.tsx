@@ -170,6 +170,22 @@ describe('installed app multiplayer modes', () => {
     expect(host.querySelector('a[href*="timer"]')).toBeNull();
   });
 
+  it.each([2, 3, 4] as const)('shares local preview slots for %s players and follows preview settings', async (playerCount) => {
+    const draw = (showCubePreview: boolean, prefer3D: boolean) => root.render(
+      <LocalBattleMode {...baseProps} playerCount={playerCount}
+        scramblePreviewSettings={{ showCubePreview, prefer3D }} />,
+    );
+    await act(async () => draw(true, false));
+    const readout = host.querySelector('.timer-display');
+    expect(host.querySelectorAll('.timing-surface-cube-frame [data-preview-visualization="2D"]')).toHaveLength(playerCount);
+    await act(async () => draw(true, true));
+    expect(host.querySelectorAll('[data-preview-visualization="3D"]')).toHaveLength(playerCount);
+    expect(host.querySelector('.timer-display')).toBe(readout);
+    await act(async () => draw(false, true));
+    expect(host.querySelector('.timing-surface-cube-frame')).toBeNull();
+    expect(host.querySelector('.timer-display')).toBe(readout);
+  });
+
   it('cancels a held local key when the device dialog opens and blocks new presses', async () => {
     const render = (inputBlocked: boolean) => root.render(
       <LocalBattleMode {...baseProps} inputBlocked={inputBlocked} playerCount={2} />,
