@@ -4,6 +4,11 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：左下角统计入口文案同源
+
+- `TimerStatRail` 不再接受宿主自定义行数组、空态和 tooltip，只接收语言与统计结果。Web/App 共用数量行及 `mean/best/mo3/ao5/ao12` 标签、顺序，App 移除独有的“成功/solved”和“最佳/Best”标签；空态统一“成绩/Times”，提示统一“打开成绩与统计/Open times and statistics”。统计数值计算仍使用既有 shared 规则，宿主保留打开历史/面板的导航回调。
+- 验证：中英文、有成绩、空态、全 DNF 及共享底栏交互共 6 项通过，client/app-ui/timer-ui typecheck 通过；Mobile production build 与 Android sync 完成。未安装 APK 或进行真机视觉复测。共享源码变更需要各宿主重新构建；尚未迁移的界面与宿主传入的其他内容不会自动获得 parity。
+
 ### 2026-09-27：单人来源区与底栏组合共享
 
 - 新增 `@cuberoot/timer-ui/TimerStageLayout`，Web `SoloView` 与五端 `App` 共用来源配置→计时/辅助内容→统计及设备底栏的 DOM 顺序。统计在左、设备在右，底栏留在正常流中；设备中心保留相对定位与 44px 按钮，避免菜单脱离按钮锚点。全屏由共享 source/footer 的 hidden 状态统一控制。

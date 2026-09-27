@@ -3889,17 +3889,9 @@ export function App({ host }: { host: InstalledAppHost }) {
               statistics={
                 <TimerStatRail
                   disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                  emptyLabel={copy.times}
-                  items={stats.count > 0 ? [
-                    { label: copy.solved, value: `${stats.solved}/${stats.count}` },
-                    { label: 'mean', value: stats.mean },
-                    { label: copy.best, value: stats.best },
-                    { label: 'mo3', value: stats.mo3 },
-                    { label: 'ao5', value: stats.ao5 },
-                    { label: 'ao12', value: stats.ao12 },
-                  ] : []}
+                  language={language}
+                  summary={stats}
                   onClick={() => setView('history')}
-                  title={copy.openTimes}
                 />
               }
               devices={
