@@ -71,6 +71,7 @@ import {
   TimerRoomPlayers,
   TimerBattleLayout,
   TimerBattlePlayer,
+  TimerBattleHistory,
   TimerBattleLayoutControls,
   TimingSurface,
   TimerPenaltyActions,
@@ -101,6 +102,7 @@ import type { InstalledAppNetBattle, InstalledAppSmartCube } from './platform';
 type BattleCopy = (typeof COPY)[SupportedLanguage];
 
 interface BattleModeBaseProps {
+  onOverlayCloseChange?(close: (() => void) | null): void;
   copy: BattleCopy;
   deviceControls?: ReactNode;
   inputBlocked?: boolean;
@@ -209,6 +211,7 @@ export function LocalBattleMode({
   language,
   onActivityChange,
   onModeChange,
+  onOverlayCloseChange,
   onSmartCubeHandlersChange,
   playerCount,
   precision,
@@ -220,6 +223,7 @@ export function LocalBattleMode({
   const [nowMs, setNowMs] = useState(() => performance.now());
   const [winners, setWinners] = useState<number[]>([]);
   const [rounds, setRounds] = useState<LocalBattleRound[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [playerKeys, setPlayerKeys] = useState<string[]>(() => [...LOCAL_BATTLE_DEFAULT_PLAYER_KEYS]);
   const [recordingPlayer, setRecordingPlayer] = useState<number | null>(null);
   const [storageError, setStorageError] = useState('');
@@ -228,7 +232,7 @@ export function LocalBattleMode({
   const [layout, setLayout] = useState<'side' | 'versus'>('versus');
   const [flipTopRow, setFlipTopRow] = useState(true);
   const inputBlockedRef = useRef(inputBlocked);
-  inputBlockedRef.current = inputBlocked;
+  inputBlockedRef.current = inputBlocked || historyOpen;
   const stateRef = useRef(state);
   const roundsRef = useRef(rounds);
   const playerKeysRef = useRef(playerKeys);
@@ -432,11 +436,11 @@ export function LocalBattleMode({
   }, [visiblePlayers]);
 
   useEffect(() => {
-    if (!inputBlocked) return;
+    if (!inputBlocked && !historyOpen) return;
     for (let playerId = 0; playerId < stateRef.current.playerCount; playerId += 1) {
       dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
     }
-  }, [dispatch, inputBlocked]);
+  }, [dispatch, inputBlocked, historyOpen]);
 
   useEffect(() => {
     const down = new Set<string>();
@@ -588,6 +592,7 @@ export function LocalBattleMode({
             <button disabled={active || visiblePlayers.some((player) => !player.scramble)} onClick={startAll} type="button">
               {copy.battleStartTogether}
             </button>
+            <button disabled={active} onClick={() => setHistoryOpen(true)} type="button">{copy.battleHistory}</button>
             <button disabled={active} onClick={nextRound} type="button">{copy.battleNextRound}</button>
           </div>
         )}
@@ -658,7 +663,7 @@ export function LocalBattleMode({
                   type: 'player-timer', playerId: player.id, action: { type: 'cancel-press' },
                 })}
                 onPointerDown={(event) => {
-                  if (event.button !== 0 || shouldIgnoreTimerTarget(event.target)) return;
+                  if (inputBlockedRef.current || event.button !== 0 || shouldIgnoreTimerTarget(event.target)) return;
                   event.preventDefault();
                   event.currentTarget.setPointerCapture(event.pointerId);
                   setWinners([]);
@@ -731,50 +736,18 @@ export function LocalBattleMode({
             ))}
           </div>
         </details>
-        <details>
-          <summary>{copy.battleHistory}</summary>
-          {rounds.length === 0 ? <p>{copy.battleNoHistory}</p> : (
-            <>
-              <div className="battle-summary-grid">
-                {summaries.map((summary) => (
-                  <div key={summary.playerId}>
-                    <strong>{copy.battlePlayer(summary.playerId + 1)}</strong>
-                    <span>{copy.battleAttempts(summary.attempts)}</span>
-                    <span>{copy.battleWins(summary.wins)}</span>
-                    <span>{copy.battleBest(summary.bestMs === null ? '—' : formatMs(summary.bestMs, precision))}</span>
-                  </div>
-                ))}
-              </div>
-              <ol className="battle-local-history">
-                {[...rounds].reverse().slice(0, 20).map((round, index) => (
-                  <li key={round.id}>
-                    <span>{copy.battleRoundLabel(rounds.length - index)}</span>
-                    <time dateTime={new Date(round.ts).toISOString()}>
-                      {new Date(round.ts).toLocaleString(language === 'zh' ? 'zh-CN' : 'en-US')}
-                    </time>
-                    <span>{round.attempts.map(({ playerId, solve }) => (
-                      `${copy.battlePlayer(playerId + 1)} ${solve.penalty === 'DNF'
-                        ? copy.dnf
-                        : solve.penalty === '+2'
-                          ? `${formatMs(solve.timeMs + 2_000, precision)}+`
-                          : formatMs(solve.timeMs, precision)}`
-                    )).join(' · ')}</span>
-                  </li>
-                ))}
-              </ol>
-              <button
-                className="battle-secondary-action"
-                onClick={() => {
-                  if (!window.confirm(copy.battleClearHistoryConfirm)) return;
-                  roundsRef.current = [];
-                  setRounds([]);
-                  void roundStoreRef.current?.clear().catch(() => setStorageError(copy.actionFailed));
-                }}
-                type="button"
-              >{copy.battleClearHistory}</button>
-            </>
-          )}
-        </details>
+        {historyOpen && <TimerBattleHistory rounds={rounds} playerCount={state.playerCount} language={language} precision={precision}
+          onClose={() => setHistoryOpen(false)} onBackChange={onOverlayCloseChange}
+          warning={storageError && <p role="alert">{storageError}</p>}
+          onDelete={(id) => {
+            const next = roundsRef.current.filter((round) => round.id !== id);
+            roundsRef.current = next; setRounds(next);
+            void roundStoreRef.current?.save(next).catch(() => setStorageError(copy.actionFailed));
+          }}
+          onClear={() => {
+            roundsRef.current = []; setRounds([]);
+            void roundStoreRef.current?.clear().catch(() => setStorageError(copy.actionFailed));
+          }} />}
       </div>
       {storageError && <p aria-live="assertive" className="battle-error">{storageError}</p>}
     </section>

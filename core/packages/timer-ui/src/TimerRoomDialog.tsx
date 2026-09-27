@@ -19,6 +19,8 @@ export function TimerRoomDialog({ title, language, onClose, children }: TimerRoo
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const focusFirst = () => (ref.current && (modalFocusableElements(ref.current)[0] ?? ref.current).focus());
     const onFocus = (event: FocusEvent) => {
+      // A host can open a reconstruction dialog above a history dialog.
+      if (event.target instanceof Element && event.target.closest('[aria-modal="true"]') && event.target.closest('[aria-modal="true"]') !== ref.current) return;
       if (ref.current && event.target instanceof Node && !ref.current.contains(event.target)) focusFirst();
     };
     focusFirst();
