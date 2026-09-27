@@ -54,15 +54,13 @@ describe('site materials have one definition and shared scenery tokens', () => {
     const material = readFileSync(join(ROOT, 'components/glass-material.css'), 'utf8');
     const surfaces = readFileSync(join(ROOT, 'components/site-surfaces.css'), 'utf8');
     const timer = readFileSync(join(ROOT, 'app/[lang]/timer/timer.css'), 'utf8');
-    const net = readFileSync(join(ROOT, 'app/[lang]/timer/_shell/net.css'), 'utf8');
     const battle = readFileSync(join(ROOT, 'app/[lang]/timer/_battle/battle.css'), 'utf8');
 
     expect(material).toContain('--glass-dialog-bg: color-mix(in srgb, var(--popover) 96%, transparent);');
     expect(timer).toMatch(/body\[data-site-scenery\] \.timer-modal\s*\{\s*background: var\(--glass-dialog-bg\);/);
     expect(surfaces).toMatch(/body\[data-site-scenery\] \.solver-sheet\s*\{\s*background: var\(--glass-dialog-bg\);/);
-    expect(surfaces).toMatch(/:is\(\s*\.timer-history-compare-modal,\s*\.timer-solve-detail-modal\s*\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
-    expect(net).toMatch(/body\[data-site-scenery\] \.net-stats-panel\s*\{\s*background: var\(--glass-dialog-bg\);/);
-    expect(battle).toMatch(/:is\(\s*\.settings-panel,\s*\.round-modal,\s*\.ao-detail-panel\s*\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
+    expect(surfaces).toMatch(/:is\(\s*\.timer-history-compare-modal,\s*\.timer-solve-detail-modal,\s*\.timer-room-dialog\s*\)\s*\{\s*background: var\(--glass-dialog-bg\);/);
+    expect(battle).toMatch(/body\[data-site-scenery\] \.ao-detail-panel\s*\{\s*background: var\(--glass-dialog-bg\);/);
   });
 
   it('requires a reason on the same declaration line for intentional exceptions', () => {
