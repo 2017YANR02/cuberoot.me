@@ -54,6 +54,19 @@
    digits. */
 
 /* --cube-h 同时驱动预览框和它常驻的占位框,所以显示/隐藏魔方时下面的内容不会跳动。 */
+/* Legacy battle RAF writes remain attached to this inner node; geometry and
+   typography now come from the shared local TimingSurface. */
+.player-area .timing-surface--local .time-display {
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  min-height: 0;
+  margin-top: 0;
+}
+.player-area .timing-surface--local .scramble-text {
+  font-size: calc(var(--timer-scramble-fs) * var(--scramble-scale, 1) * var(--scramble-auto, 1));
+}
+
 .shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }
 .shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }
 .shell-corner-net-img {

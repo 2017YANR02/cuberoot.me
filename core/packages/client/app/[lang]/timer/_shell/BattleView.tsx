@@ -36,6 +36,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
+import { TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 import type { PenaltyType } from '@/app/[lang]/timer/_battle/engine/constants';
 import { BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
@@ -353,7 +354,7 @@ function PenaltyDropdown({ playerId }: { playerId: number }) {
 // 打乱文字 + 打乱图 + WCA 来源行。可被同排一对玩家共用:
 //   ids = 参与共享的玩家槽位,取 ids[0] 为代表读打乱(同 puzzle 时全组打乱相等);
 //   任一玩家计时中则整条隐藏。单人格传 [playerId],共享行传该排的一对(如 [0,1] / [2,3])。
-function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }) {
+function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHeight?: string; part?: 'all' | 'text' | 'preview' }) {
   const store = useBattleStore();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -417,22 +418,22 @@ function ScramblePanel({ ids, imgHeight }: { ids: number[]; imgHeight?: string }
   return (
     <>
       {/* 打乱文字 — 放在打乱图正上方 */}
-      <div
+      {part !== 'preview' && <div
         ref={scrambleRef}
         className={`scramble-text${anyTiming ? ' hidden' : ''}`}
         data-no-timer
         style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'default' } as React.CSSProperties}
         dangerouslySetInnerHTML={{ __html: scrambleContent }}
-      />
+      />}
       {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
-      <div className={`scramble-img${anyTiming ? ' hidden' : ''}`}>
+      {part !== 'text' && <div className={`scramble-img${anyTiming ? ' hidden' : ''}`}>
         {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
           <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" height={imgHeight} />
         )}
-      </div>
+      </div>}
 
       {/* WCA 来源行(真实比赛打乱时) */}
-      {wcaSrc && !anyTiming && (
+      {part !== 'preview' && wcaSrc && !anyTiming && (
         <div className="battle-scramble-src" data-no-timer>
           <Flag iso2={wcaSrc.iso2} className="battle-src-flag" />
           <span className="battle-src-name">{wcaSrc.name}</span>
@@ -452,10 +453,11 @@ export function battlePointerReleaseAction(
   return eventType === 'pointerup' ? 'up' : 'cancel';
 }
 
-function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
+export function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner }: { playerId: number; rotated?: boolean; hideScramble?: boolean; cellClass?: string; controlsCorner?: 'left' | 'right' | 'center' }) {
   const player = useBattleStore(s => s.players[playerId]);
   const store = useBattleStore();
   const areaRef = useRef<HTMLDivElement>(null);
+  const surfaceRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef<HTMLDivElement>(null);
 
   // NOTE: 高频计时器动画（不走 React re-render）
@@ -469,6 +471,7 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
     if (!el) return;
 
     const onDown = (e: PointerEvent) => {
+      if (shouldIgnoreTimerTarget(e.target)) return;
       const curr = useBattleStore.getState();
       const p = curr.players[playerId];
       if (p.pointerId !== null) return;
@@ -574,22 +577,20 @@ function TimerArea({ playerId, rotated, hideScramble, cellClass, controlsCorner 
       ref={areaRef}
       style={bgStyle}
     >
-      {/* 计时数字 */}
-      <div
-        className={timeClasses}
-        ref={timeRef}
-        dangerouslySetInnerHTML={{ __html: renderTimeContent() }}
-      />
-
-      {/* Ao5 统计 */}
-      <div
-        className="ao5-display"
-        dangerouslySetInnerHTML={{ __html: ao5Text }}
-      />
-
-      {/* 打乱文字 + 图 + WCA 来源。田字格里同排一对玩家共用一条打乱时 hideScramble=true,
-          改由父级在两格之间的共享行(grid-scramble-row)统一渲染一份。 */}
-      {!hideScramble && <ScramblePanel ids={[playerId]} />}
+      <TimingSurface
+        layout="local"
+        phase={player.isTiming ? 'running' : player.isInspecting ? 'inspecting' : 'idle'}
+        colorClass=""
+        surfaceRef={surfaceRef}
+        digits={<div className={timeClasses} ref={timeRef}
+          dangerouslySetInnerHTML={{ __html: renderTimeContent() }} />}
+        scrambleSlot={!hideScramble && <ScramblePanel ids={[playerId]} part="text" />}
+        cornerSlot={!hideScramble && store.showImage
+          ? <ScramblePanel ids={[playerId]} part="preview" imgHeight="var(--timer-cube-h)" />
+          : undefined}
+      >
+        <div className="ao5-display" dangerouslySetInnerHTML={{ __html: ao5Text }} />
+      </TimingSurface>
 
       {/* 多人田字格:比分/项目/罚时归各自区域(2 人模式这些在 middle-bar) */}
       {store.mode === '1v1' && store.playerCount > 2 && (
