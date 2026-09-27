@@ -24,7 +24,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import TimerFontPicker from '@/components/TimerFontPicker';
+import { TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
@@ -1338,40 +1338,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '外观', en: 'Appearance'
         })}
         >
-          <SettingRow id="settings.appearance.timer-font">
-            <TimerFontPicker
-              value={s.timerFont}
-              onChange={(id) => updateSettings({ timerFont: id })}
-            />
-          </SettingRow>
-          <SettingRow id="settings.appearance.timer-font-scale">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0.5} max={2} step={0.05}
-              value={s.timerFontScale}
-              onChange={(e) => updateSettings({ timerFontScale: Number(e.target.value) })}
-            />
-            <span className="hint">{s.timerFontScale.toFixed(2)}×</span>
-          </SettingRow>
-          <SettingRow id="settings.appearance.scramble-font">
-            <TimerFontPicker
-              value={s.scrambleFont}
-              onChange={(id) => updateSettings({ scrambleFont: id })}
-              ariaLabel={tr({ zh: '打乱字体', en: 'Scramble font' })}
-              preview="R U R' F2"
-              options={['liberation', 'mono', 'sans']}
-              previewWeight={400}
-            />
-          </SettingRow>
-          <SettingRow id="settings.appearance.scramble-font-scale">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0.6} max={2.5} step={0.05}
-              value={s.scrambleFontScale}
-              onChange={(e) => updateSettings({ scrambleFontScale: Number(e.target.value) })}
-            />
-            <span className="hint">{s.scrambleFontScale.toFixed(2)}×</span>
-          </SettingRow>
+          <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
           <BooleanSettingRow
             id="settings.appearance.compact-scramble"
             value={s.compactScramble}
