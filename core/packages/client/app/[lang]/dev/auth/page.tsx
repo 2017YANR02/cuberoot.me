@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "82bf9fb2dcd482e266b1431649997c30c56b26644bdb379cdcea887273615c09", "reason": "新增共享好友聊天：复用平台账号鉴权，退出和切账号清理内存聊天状态；注销删除该账号参与的整段聊天及双方提醒，已同步注销说明；聊天归属数据沿用 linked_data 合并限制。登录、身份绑定、验证码、安装版会话及管理员权限流程不变。"}
+{"fingerprint": "c4c38e08c1439157be125b90d163b3297836e2e0a6a26c5359f8e2e9d62a20d2", "reason": "新增共享好友聊天：复用平台账号鉴权，退出和切账号清理内存聊天状态；注销删除该账号参与的整段聊天及双方提醒，已同步注销说明；聊天归属数据沿用 linked_data 合并限制。计时器设置改用共享分类弹窗，安装端账号操作归入高级分类；仍调用原 auth.login、logoutEverywhere 与账号管理链接，登录、身份绑定、验证码、安装版会话及管理员权限流程不变。同时核对已提交的桌面 BLE 命令注册变更，安全存储与登录回跳逻辑未变。"}
 */
 
 import type { ReactNode } from 'react';
@@ -48,6 +48,7 @@ export default function AuthFlowPage() {
 
     <section id="platforms" className="auth-map-section" aria-labelledby="platform-title">
       <h2 id="platform-title">{t('从哪里进入？账号不按平台分家', 'Where do you start? Platforms do not create separate account systems')}</h2>
+      <p className="auth-map-note">{t('安装端也可从「计时器设置 → 高级」登录、管理或退出账号；此入口与「我的」共用登录和会话流程，关闭设置窗口不会退出账号。', 'Installed apps also offer sign-in, account management and sign-out under Timer settings → Advanced. These actions share the My account authentication and session flow; closing settings does not sign out.')}</p>
       <div className="auth-map-platforms">
         <article><h3>{t('网站 / PWA', 'Website / PWA')}</h3><p>{t('打开「我的」→ 在网站登录。账号管理也在同一页。', 'Open My account → sign in on the website. Account management uses that same page.')}</p><AppLink href="#signin" prefetch={false}>{t('看网站登录流程 ↓', 'Website sign-in flow ↓')}</AppLink></article>
         <article><h3>iOS App</h3><p>{t('我的 → 系统浏览器完成网站登录 → 回到 App。凭据存入 Keychain；不是另建 Apple 账号。', 'My account → website sign-in in the system browser → return to the App. The session uses Keychain, not a separate Apple-only account.')}</p><AppLink href="#app-handoff" prefetch={false}>{t('看 App 回跳流程 ↓', 'App handoff flow ↓')}</AppLink></article>
