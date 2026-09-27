@@ -171,7 +171,6 @@ import {
   timerEventIdFromSelector,
   timerRealScrambleReady,
 } from '@cuberoot/shared/timer';
-import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import {
   isNonWcaEvent,
@@ -1354,27 +1353,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
-    const attemptRecording = smartCubeAttemptProducerRef.current.finish();
-    const moves = attemptRecording.moves;
-    if (moves.length > 0) solve.moves = moves;
-    // 姿态流。没开录 / 魔方没报姿态 / 一次都没动 → take() 是空的,编码给 null,
-    // 字段整个不出现 —— 回放面板就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
-    const gyro = attemptRecording.gyro;
-    if (gyro && solve.moves) solve.gyro = gyro;
+    Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
-    // Which cube solved it — only meaningful when the solve has a move stream.
-    if (solve.moves && attemptRecording.device) solve.device = attemptRecording.device;
-    // CFOP segmentation, computed now so the case labels and stage splits are
-    // in storage from the moment the solve lands. Everything downstream reads
-    // the stored segments rather than recomputing (case stats, the OLL/PLL
-    // history filters, auto-tags, CSV export), so a solve without them is
-    // invisible to all of them until the user runs a manual re-analysis.
-    // A walk over the stream plus four recognizer lookups: 0.23ms for a real
-    // 64-turn solve, 0.51ms for a 320-turn one, and the timer has already
-    // stopped by the time we get here.
-    const segs = stageSegmentsFor(solve);
-    if (segs) solve.stageSegments = segs;
     setLastPenalty(res.autoPenalty);
 
     // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
