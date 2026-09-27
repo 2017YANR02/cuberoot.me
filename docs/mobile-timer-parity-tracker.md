@@ -4,6 +4,10 @@
 
 最后更新：2026-09-27
 
+### 2026-09-27：本地多人打乱与项目菜单同源
+
+- Web 本地多人移除旧打乱 HTML、私有预览/出处行和全区域项目菜单，接入 `TimerScrambleStrip`、`TimerCubePreview`、`TimerWcaScrambleSource` 与 `TimerPuzzlePicker`。菜单继续受 battle store 控制，保留打开期间的计时抑制。
+- 共享项目 catalog 按本地对战有效项目筛选，存储和生成仍使用原内部 ID；WCA 来源、隐藏时机和错误状态保留宿主适配。选择器/布局/键盘 14 项与 client typecheck 通过。
 ### 2026-09-27：多人设置、按键和操作栏共享
 
 - `TimerBattleSettings` / `TimerBattleKeyBindings` 统一公共设置、按键录入/取消和弹窗；App 直接更新原有设置 repository，Web 注入 battle store。`TimerBattleCubeControls` 共用轮流/逐人连接区及持有者控件，仅展示真实 adapter 支持的模式。

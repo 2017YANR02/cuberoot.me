@@ -1,28 +1,8 @@
 'use client';
 
 /**
- * BattleView — the 对战 (1v1 Battle) mode hosted inside /timer.
- *
- * This is the battle experience that used to be its own /battle route. The
- * engine (battle_store.ts) + the RAF DOM-write timer hooks are kept
- * BEHAVIORALLY UNTOUCHED — they still write timeRef.innerHTML directly with ZERO
- * per-tick React render. Components + engine now live in ../_battle, since
- * /timer is their only consumer.
- *
- * Changes vs the old standalone page:
- *   - accepts the shell `playersControl` (人数 select) and renders it into the
- *     battle middle-bar; player count itself comes in as a prop from TimerShell
- *   - mode is always 1v1 (the face of 双人/Duo); the internal solo/1v1 toggle was
- *     removed — the top-level 单人/Solo (SoloView) covers single-player
- *   - supports 2~4 players (?players= URL param): 2 keeps the original
- *     versus/side layouts; 3/4 render a 田字格 grid (top cells rotated 180°),
- *     with per-cell score/event/penalty controls (CellControls)
- *   - per-player event picker uses components/WcaEventSelector (green active)
- *     instead of BattleEventPicker + the in-area overlay grid
- *   - icon_timer.png nav icon is replaced with lucide Timer (no-emoji rule)
- *   - no RankBadge here: the WR/NR badge is a Solo-only affordance (SoloView),
- *     多人对战比的是同一条打乱下谁更快,叠一层世界排名只是噪音
- *   - imports re-pointed to timer/_shared (stats-core / format)
+ * Web adapter for the shared local battle layout, player controls and dialogs.
+ * The battle store, RAF timer nodes, WCA source and device transports stay here.
  */
 
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
@@ -30,32 +10,26 @@ import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Settings as SettingsIcon, ClipboardList, RotateCcw, Timer as TimerIcon } from 'lucide-react';
 import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
-import { PUZZLES, PENALTY, I18N_TEXT, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
+import { PUZZLES, PENALTY, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 
-import { TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
+import { TimerPuzzlePicker, TimerCubePreview, TimerScrambleStrip, TimerWcaScrambleSource, TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 import { BattleDeviceCenter, BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import CubingPreview from '@/components/CubingPreview';
-import WcaEventSelector from '@/components/WcaEventSelector';
-import { EventIcon } from '@/components/EventIcon';
-import { isWcaEvent } from '@/lib/wca-events';
-import { ALL_EVENT_IDS } from '@/lib/event-constants';
-import { eventInfo, fromWcaSpelling } from '@/app/[lang]/timer/_lib/types';
+import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, timerEventSelectorId } from '@cuberoot/shared/timer';
+import { eventInfo } from '@/app/[lang]/timer/_lib/types';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { wcaMetaFor } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
-import { Flag } from '@/components/Flag';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
-import { compSourceLine } from '@/lib/comp-schedule';
 
 import '@/app/[lang]/timer/_battle/battle.css';
 import './shell.css';
@@ -112,27 +86,7 @@ function BattlePresenceReporter({
   return null;
 }
 
-// NOTE: 根据打乱字符串长度自动计算字号缩放因子
-// ≤100 字符（2x2~3x3）= 1.0，更长则 sqrt 曲线平滑缩小，最小 0.7
-function getScrambleAutoScale(scramble: string): number {
-  if (!scramble) return 1;
-  const len = scramble.length;
-  if (len <= 100) return 1;
-  return Math.max(0.7, Math.sqrt(100 / len));
-}
-
-// NOTE: 选择器的可选集 + 「其他」追加项全部由 PUZZLES 派生(PUZZLES 本身派生自 timer 的
-// BATTLE_EVENT_IDS),不再手写第二份清单 —— 往对战里加项目只改那张表即可。
-// ALL_EVENT_IDS(WCA 21 项)里有的走官方图标网格,没有的(fto / kilominx)走 appendEvents;
-// 两者都有 unofficial-* 内联图标,故 iconClass 直接给 EventIcon 的映射键。
-// tooltip 不传 label:eventDisplayName(id, isZh) 已双语覆盖 fto / kilominx,传死字符串反而丢中文。
-const BATTLE_APPEND_EVENTS: ReadonlyArray<{ id: string; iconClass: string; textLabel?: string }> =
-  PUZZLES.filter(p => !ALL_EVENT_IDS.includes(p.id)).map(p => ({
-    id: p.id,
-    iconClass: eventInfo(fromWcaSpelling(p.id)).icon ?? '',
-    textLabel: p.name.en,
-  }));
-const BATTLE_AVAILABLE_EVENTS = new Set<string>(PUZZLES.map(p => p.id));
+const BATTLE_AVAILABLE_EVENTS = new Set(PUZZLES.map(p => p.id));
 
 // NOTE: 键盘控制 hook — 1:1 翻译自 battle.js handleKeyDown/handleKeyUp（行 755~783）
 // 输入控件聚焦时跳过(设置面板里有比赛搜索输入框,空格/字母不能被计时器吃掉)
@@ -277,89 +231,35 @@ function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHei
   const rep = ids[0];
   // 藏打乱的判据在引擎里(各自开始时要等最后一个人也起表,见 isScrambleHidden)
   const anyTiming = isScrambleHidden(store.players, ids);
-  const scrambleRef = useRef<HTMLDivElement>(null);
-  // WCA 来源行:打乱图正下方显示「国旗 + 比赛名 · 轮次/组别」。国旗 + 中文名需异步
-  // 加载的比赛索引,落地后 bump flagVer 重渲。
   const [flagVer, setFlagVer] = useState(() => flagDataVersion());
-  useEffect(() => { void loadFlagData().then((v) => setFlagVer((cur) => (v !== cur ? v : cur))); }, []);
-
-  // 打乱文字只作展示;阻止 pointer 冒泡到 .player-area，避免误起表。
-  // 共享行虽在 player-area 之外,保留此拦截无害。
-  useEffect(() => {
-    const el = scrambleRef.current;
-    if (!el) return;
-    const stop = (e: PointerEvent) => e.stopPropagation();
-    const preventDefault = (event: Event) => event.preventDefault();
-    el.addEventListener('touchstart', preventDefault, { passive: false });
-    el.addEventListener('selectstart', preventDefault);
-    el.addEventListener('contextmenu', preventDefault);
-    el.addEventListener('pointerdown', stop);
-    el.addEventListener('pointerup', stop);
-    el.addEventListener('pointercancel', stop);
-    return () => {
-      el.removeEventListener('touchstart', preventDefault);
-      el.removeEventListener('selectstart', preventDefault);
-      el.removeEventListener('contextmenu', preventDefault);
-      el.removeEventListener('pointerdown', stop);
-      el.removeEventListener('pointerup', stop);
-      el.removeEventListener('pointercancel', stop);
-    };
-  }, []);
-  const myScramble = store.scrambles[rep];
-  const myLoading = store.scrambleLoadings[rep];
-  const myPuzzle = store.puzzleIds[rep];
-  // SQ1 shows compact notation (4/-36/...) site-wide; keep the raw csTimer form
-  // (with parens) for the CubingPreview below, which cubing.js parses. Errors pass through.
-  const myScrambleDisplay = myScramble && !myScramble.startsWith('⚠️')
-    ? formatScrambleForEvent(myPuzzle, myScramble)
-    : myScramble;
-  const scrambleContent = myLoading
-    ? `<span class="loading">${I18N_TEXT.generating[store.locale]}</span>`
-    : (myScrambleDisplay || '');
-
-  // WCA 来源:当前打乱若来自真实比赛(wca_pool 派发过),显示其比赛 / 轮次 / 组别。
-  // 随机生成的打乱不在 meta 表里 → 返回 null,这行自然不显示。
-  const wmeta = (!myLoading && myScramble) ? wcaMetaFor(myScramble) : null;
-  const wcaSrc = useMemo(() => {
-    if (!wmeta) return null;
-    return {
-      iso2: compFlagIso2(wmeta.ci),
-      name: localizeCompName(wmeta.ci, wmeta.cn, isZh),
-      meta: compSourceLine(wmeta.r, wmeta.g, wmeta.n, isZh, !!wmeta.x),
-    };
-    // flagVer: 比赛索引落地后重新派生国旗 + 中文名。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wmeta, isZh, flagVer]);
-
-  return (
-    <>
-      {/* 打乱文字 — 放在打乱图正上方 */}
-      {part !== 'preview' && <div
-        ref={scrambleRef}
-        className={`scramble-text${anyTiming ? ' hidden' : ''}`}
-        data-no-timer
-        style={{ '--scramble-auto': getScrambleAutoScale(myScrambleDisplay || ''), cursor: 'default' } as React.CSSProperties}
-        dangerouslySetInnerHTML={{ __html: scrambleContent }}
-      />}
-      {/* 打乱图 — 复用 timer 的 CubingPreview（scramble-display） */}
-      {part !== 'text' && <div className={`scramble-img${anyTiming ? ' hidden' : ''}`}>
-        {myScramble && !myScramble.startsWith('⚠️') && store.showImage && (
-          <CubingPreview event={myPuzzle} scramble={myScramble} className="scramble-svg-img" height={imgHeight} />
-        )}
-      </div>}
-
-      {/* WCA 来源行(真实比赛打乱时) */}
-      {part !== 'preview' && wcaSrc && !anyTiming && (
-        <div className="battle-scramble-src" data-no-timer>
-          <Flag iso2={wcaSrc.iso2} className="battle-src-flag" />
-          <span className="battle-src-name">{wcaSrc.name}</span>
-          {wcaSrc.meta && <span className="battle-src-meta">{wcaSrc.meta}</span>}
-        </div>
-      )}
-    </>
-  );
+  useEffect(() => { void loadFlagData().then((version) => setFlagVer(version)); }, []);
+  const scramble = store.scrambles[rep];
+  const loading = store.scrambleLoadings[rep];
+  const event = battleToTimerEvent(store.puzzleIds[rep]);
+  const failed = scramble?.startsWith('⚠️');
+  const meta = !loading && scramble ? wcaMetaFor(scramble) : null;
+  const source = useMemo(() => meta ? {
+    country: compFlagIso2(meta.ci), name: localizeCompName(meta.ci, meta.cn, isZh),
+  } : null, [meta, isZh, flagVer]);
+  if (anyTiming) return null;
+  return <>
+    {part !== 'preview' && <TimerScrambleStrip scramble={loading || failed ? '' : formatScrambleForEvent(event, scramble || '')}
+      copiedLabel={tr({ en: 'Copied', zh: '已复制' })} fontScale={store.scrambleScale}
+      verificationLabels={{ copiedCorrection: tr({ en: 'Copied the scramble', zh: '已复制原打乱' }) }}
+      status={loading ? { kind: 'loading', message: tr({ en: 'Generating scramble…', zh: '生成打乱中…' }) }
+        : failed ? { kind: 'error', message: scramble } : undefined}
+      fallback={tr({ en: 'No scramble', zh: '暂无打乱' })} fallbackKind="custom">
+      {meta && source && <TimerWcaScrambleSource competitionName={source.name} country={source.country}
+        eventId={meta.e} eventLabel={isZh ? eventInfo(event).nameZh : eventInfo(event).nameEn}
+        groupId={meta.g} roundTypeId={meta.r} scrambleNumber={meta.n} isExtra={meta.x === 1}
+        href={`${isZh ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(meta.ci)}`}
+        title={tr({ en: 'View competition scrambles', zh: '查看比赛打乱' })} />}
+    </TimerScrambleStrip>}
+    {part !== 'text' && scramble && !failed && !loading && store.showImage &&
+      <TimerCubePreview event={event} scramble={scramble} height={imgHeight} fill={part === 'preview'} visualization="2D"
+        ariaLabel={tr({ en: 'Scramble preview', zh: '打乱预览' })} />}
+  </>;
 }
-
 // ===== TimerArea 组件 =====
 // 1:1 翻译自 battle/index.html player-area 结构
 
@@ -516,104 +416,40 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
         <div className="ao5-display" dangerouslySetInnerHTML={{ __html: ao5Text }} />
       </TimingSurface>
       </TimerBattlePlayer>
-
-      {/* Event picker 全区域覆盖 — 由项目图标按钮触发,改用 WcaEventSelector */}
-      {store.eventPickerOpen[playerId] && (
-        <EventPickerOverlay playerId={playerId} />
-      )}
     </div>
   );
 }
 
-// ===== EventPickerOverlay 组件 =====
-// 覆盖整个 player-area,内部用项目站全站统一的 WcaEventSelector(绿色 active)
-
-function EventPickerOverlay({ playerId }: { playerId: number }) {
-  const store = useBattleStore();
-  const { i18n } = useTranslation();
-  const isZh = i18n.language === 'zh';
-  const value = store.puzzleIds[playerId];
-  const overlayRef = useRef<HTMLDivElement>(null);
-
-  // NOTE: 父级 .player-area 用原生 addEventListener 处理 pointerdown/up 进入计时状态。
-  useEffect(() => {
-    const el = overlayRef.current;
-    if (!el) return;
-    const stop = (e: Event) => e.stopPropagation();
-    el.addEventListener('pointerdown', stop);
-    el.addEventListener('pointerup', stop);
-    el.addEventListener('pointercancel', stop);
-    return () => {
-      el.removeEventListener('pointerdown', stop);
-      el.removeEventListener('pointerup', stop);
-      el.removeEventListener('pointercancel', stop);
-    };
-  }, []);
-
-  const select = (id: string) => {
-    store.changePuzzle(playerId, id);
-    store.setEventPickerOpen(playerId, false);
-  };
-
-  return (
-    <div
-      ref={overlayRef}
-      className="event-overlay"
-      data-no-timer
-      onClick={(e) => {
-        // NOTE: 点空白处关闭
-        if (e.target === e.currentTarget) store.setEventPickerOpen(playerId, false);
-      }}
-    >
-      <div className="event-overlay-inner">
-        <WcaEventSelector presentation="inline"
-          availableEvents={BATTLE_AVAILABLE_EVENTS}
-          isZh={isZh}
-          selectedEvent={value}
-          onSelect={select}
-          appendEvents={BATTLE_APPEND_EVENTS}
-          onlyAvailable
-        />
-      </div>
-    </div>
-  );
-}
-
-// ===== BattleEventButton — middle-bar / cell 控制条上的 trigger 图标 =====
+// Keep the picker controlled by the battle store so open menus block timing.
 function BattleEventButton({ playerId }: { playerId: number }) {
   const { i18n } = useTranslation();
   const value = useBattleStore(s => s.puzzleIds[playerId]);
   const isOpen = useBattleStore(s => s.eventPickerOpen[playerId]);
   const setOpen = useBattleStore(s => s.setEventPickerOpen);
-
-  const renderIcon = (id: string) => {
-    if (isWcaEvent(id)) return <EventIcon event={id} />;
-    const p = PUZZLES.find(x => x.id === id);
-    return <span className="event-fallback">{p?.name.en || id}</span>;
-  };
-
-  const currentName = (() => {
-    const p = PUZZLES.find(x => x.id === value);
-    return p ? (p.name[(i18n.language.startsWith('zh') ? 'zh' : 'en')] || p.name.en) : value;
-  })();
-
+  const changePuzzle = useBattleStore(s => s.changePuzzle);
+  const languageIndex = Number(i18n.language === 'zh');
+  const groups = TIMER_EVENT_PICKER_GROUPS.map(group => ({
+    id: group.id,
+    label: [group.nameEn, group.nameZh][languageIndex],
+    items: group.items.filter(item => {
+      const event = timerEventIdFromSelector(item.id);
+      return event !== null && BATTLE_AVAILABLE_EVENTS.has(timerToBattleEvent(event));
+    }).map(item => ({
+      id: item.id, label: [item.nameEn, item.nameZh][languageIndex],
+      iconClass: item.iconClass, textLabel: item.textLabel,
+    })),
+  }));
   return (
-    <button
-      type="button"
-      className={`event-btn${isOpen ? ' active' : ''}`}
-      onClick={(e) => { e.stopPropagation(); setOpen(playerId, !isOpen); }}
-      aria-label={currentName}
-      title={currentName}
-    >
-      {renderIcon(value)}
-    </button>
+    <TimerPuzzlePicker dataNoTimer groups={groups}
+      puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })}
+      selectedEvent={timerEventSelectorId(battleToTimerEvent(value))}
+      open={isOpen} onOpenChange={open => setOpen(playerId, open)}
+      onSelect={id => {
+        const event = timerEventIdFromSelector(id);
+        if (event) changePuzzle(playerId, timerToBattleEvent(event));
+      }} />
   );
 }
-
-// ===== MiddleBar 组件 =====
-// 1:1 翻译自 battle/index.html middle-bar 结构 + 人数下拉注入
-// 多人(>2)时左右比分区移到各 cell 的 CellControls,这里只留中间操作区
-
 // ===== BackgroundSettingsGroup 组件 =====
 
 function PlayerBgRow({ playerId, isZh }: { playerId: number; isZh: boolean }) {
@@ -761,9 +597,15 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
 // ===== 主组件 =====
 
 interface BattleViewProps {
-  /** 参战人数(2~4),由 TimerShell 的 ?players= URL 参数驱动 */
+  /**
+ * Web adapter for the shared local battle layout, player controls and dialogs.
+ * The battle store, RAF timer nodes, WCA source and device transports stay here.
+ */
   playerCount: number;
-  /** 人数下拉(TimerShell 构建),注入到 middle-bar */
+  /**
+ * Web adapter for the shared local battle layout, player controls and dialogs.
+ * The battle store, RAF timer nodes, WCA source and device transports stay here.
+ */
   playersControl?: React.ReactNode;
   presenceControl?: React.ReactNode;
   onPresenceChange?: (report: TimerPresenceReport) => void;
