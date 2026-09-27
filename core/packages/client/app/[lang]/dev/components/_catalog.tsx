@@ -1573,6 +1573,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared OK, +2, and DNF actions for Web online rooms and installed battles, with common selection, 44px touch targets, keyboard focus, and disabled states. Hosts update the result.',
   },
   {
+    name: 'TimerSettingsPanel',
+    import: "import { TimerSettingsPanel } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的计时设置窗口：宽屏左侧分类导航，720px 及以下使用分类下拉；窗口尺寸、滚动、焦点恢复和关闭交互由共享组件维护，宿主提供可用分类和设置内容。',
+    en: 'Shared timer settings dialog for Web and installed apps: a category rail on wide screens and a dropdown at 720px or below. Dialog geometry, scrolling, focus restoration and dismissal have one implementation; hosts supply supported categories and fields.',
+  },
+  {
     name: 'TimerTypographySettings',
     import: "import { TimerTypographySettings } from '@cuberoot/timer-ui';",
     category: 'more',
