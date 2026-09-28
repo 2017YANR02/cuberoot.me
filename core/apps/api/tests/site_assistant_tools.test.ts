@@ -37,3 +37,12 @@ it('PR charts use positive strict improvements and retain the actual final avera
   expect(charts[1].points.map(p=>p.value)).toEqual([1000,900,850]);
   expect(charts[1].points.at(-1)?.label).toBe('8.50');
 });
+
+it('reads only registered statistics and preserves section scope before taking top rows',async()=>{
+  const read=vi.fn(async(url:string)=>url.endsWith('/index.json')?{categories:[{stats:[{id:'example',titleEn:'Example',titleZh:'示例'}]}]}:{header:[{label:'Result'}],sections:[{title:'World',recordScope:{region:'world'},rows:[[1],[2]]},{title:'Asia',recordScope:{region:'asia'},rows:[[3],[4]]}]});
+  const unknown=await runDataTool({tool:'statistics',id:'secrets',limit:10},'en',read);
+  expect(read).toHaveBeenCalledTimes(1);expect(unknown.artifacts).toHaveLength(0);
+  const result=await runDataTool({tool:'statistics',id:'example',tableKey:'0.2.1',limit:1},'en',read);
+  expect(result.evidence).toMatchObject({selected:{scope:{region:'asia'},rows:[[3]]}});
+  expect(result.artifacts[0]).toMatchObject({rows:[['3']]});
+});
