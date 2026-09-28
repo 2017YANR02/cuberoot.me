@@ -19,6 +19,30 @@
   },
   "manualContracts": [
     {
+      "id": "server-cubeopt-systemd-diagnostics",
+      "from": "apps/api CubeOpt diagnostics",
+      "to": "host systemd running service names",
+      "phase": "subprocess-native",
+      "mechanism": "One shell-free systemctl list-units call, fixed read-only arguments, 1.5 second deadline, 64 KiB output and 60 second snapshot cooldown",
+      "owner": "server",
+      "rationale": "User requested persistent solver incident evidence, including background tasks, on 2026-09-28.",
+      "replacement": "Keep observational and bounded; never execute service actions or accept request-provided command arguments.",
+      "subprocessCalls": [{"file":"apps/api/src/cubeopt/diagnostics.ts","mechanism":"exec","target":"systemctl","count":1}],
+      "evidence": [{"file":"core/apps/api/src/cubeopt/diagnostics.ts","contains":"timeout: 1500, maxBuffer: 65536"}]
+    },
+    {
+      "id": "server-backup-shell-regression",
+      "from": "apps/api backup regression tests",
+      "to": "repository backup shell script with disposable fixture binaries and archive",
+      "phase": "subprocess-native",
+      "mechanism": "One fixed bash spawnSync adapter; pg_dump is replaced by a fixture executable and backups go to a fresh temporary directory",
+      "owner": "server",
+      "rationale": "Verify failed dumps never replace or prune successful backups and the requested two-date retention is enforced.",
+      "replacement": "Keep test-only with synthetic SQL; do not connect fixture tests to a real database.",
+      "subprocessCalls": [{"file":"apps/api/tests/backup_recon.test.ts","mechanism":"spawnSync","target":"bash","count":1}],
+      "evidence": [{"file":"core/apps/api/tests/backup_recon.test.ts","contains":"CUBEROOT_BACKUP_DIR: archive"}]
+    },
+    {
       "id": "server-sor-manual-refresh",
       "from": "apps/api/scripts/update_sor.mts",
       "to": "local sorcalc plus explicitly requested production SSH publish",
