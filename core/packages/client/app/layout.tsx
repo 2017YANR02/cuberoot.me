@@ -93,9 +93,6 @@ export default function RootLayout({
         {BROWSER_STATIC_ORIGIN && (
           <link rel="dns-prefetch" href={BROWSER_STATIC_ORIGIN} />
         )}
-        {/* 关键字体预加载 — 正文 Inter 400 / 500 加快首屏 */}
-        <link rel="preload" href="/fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
-        <link rel="preload" href="/fonts/inter-latin-500-normal.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         {/* 主题 / 语言 bootstrap 必须在 CSS 解析前同步执行(避免 white→dark FOUC + 设对 html[lang])。
             React 19 dev 会对 inline <script> 报 "Encountered a script tag while rendering"
             (CSR 重渲染时脚本不会重跑) — 我们本来就不需要重跑,这是 false positive,prod 不显示。 */}

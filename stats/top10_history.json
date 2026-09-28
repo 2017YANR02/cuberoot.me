@@ -5765,7 +5765,7 @@
       "iso2": "GB"
     },
     "2017KWAN05": {
-      "name": "Burno Li Chak Kwan (李澤堃)",
+      "name": "Burno Chak Kwan Li (李澤堃)",
       "country": "Hong Kong",
       "iso2": "HK"
     },
@@ -33442,6 +33442,9 @@
     "TwistnTurnHydOpen2026": {
       "name": "Twist 'n Turn Hyd Open 2026"
     },
+    "MichiganMini452026": {
+      "name": "Michigan Mini 45 2026"
+    },
     "IndianaWinterOpen2008": {
       "name": "Indiana Winter Open 2008"
     },
@@ -40512,6 +40515,9 @@
     },
     "CatskillsSummer2026": {
       "name": "Catskills Summer 2026"
+    },
+    "TakeYourTimeBrisbane2026": {
+      "name": "Take Your Time Brisbane 2026"
     },
     "TallinnOpen2012": {
       "name": "Tallinn Open 2012"

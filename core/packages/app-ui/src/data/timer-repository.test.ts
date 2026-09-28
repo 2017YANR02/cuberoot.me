@@ -285,9 +285,25 @@ describe('mobile timer repository contract', () => {
     expect((driver.data as TimerStoreData).settings).toMatchObject({
       showCubePreview: true,
       prefer3D: false,
+      timerFont: 'lcd', timerFontScale: 1, scrambleFont: 'liberation', scrambleFontScale: 1,
     });
   });
 
+  it('round-trips typography and normalizes invalid stored values without changing solves', async () => {
+    const driver = new MemoryDriver();
+    const { repo } = repository(driver);
+    await repo.addSolve({ timeMs: 12340, penalty: 'ok', scramble: 'R', event: '333' });
+    const fonts = { timerFont: 'sans', timerFontScale: 1.5, scrambleFont: 'mono', scrambleFontScale: 1.25 } as const;
+    await repo.updateSettings(fonts);
+    const loaded = await repository(driver).repo.load();
+    expect(loaded.settings).toMatchObject(fonts);
+    const solves = activeTimerSolves(loaded, '333');
+    (driver.data as TimerStoreData).settings = { ...loaded.settings,
+      timerFont: 'invalid' as 'sans', timerFontScale: Infinity, scrambleFontScale: 20 };
+    const normalized = await repository(driver).repo.load();
+    expect(normalized.settings).toMatchObject({ timerFont: 'lcd', timerFontScale: 1, scrambleFont: 'mono', scrambleFontScale: 2.5 });
+    expect(activeTimerSolves(normalized, '333')).toEqual(solves);
+  });
   it('updates penalty/comment and deletes one solve', async () => {
     const { repo } = repository();
     let data = await repo.addSolve({ timeMs: 1_000, penalty: 'ok', scramble: 'R', event: '333' });

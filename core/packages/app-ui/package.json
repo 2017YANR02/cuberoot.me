@@ -11,12 +11,16 @@
     },
     "runtime": {
       ".": "react-dom",
-      "./app.css": "asset"
+      "./app.css": "asset",
+      "./chat": "react-dom",
+      "./chat.css": "asset"
     }
   },
   "exports": {
     ".": "./src/index.ts",
-    "./app.css": "./src/app.css"
+    "./app.css": "./src/app.css",
+    "./chat": "./src/chat/index.ts",
+    "./chat.css": "./src/chat/chat.css"
   },
   "sideEffects": true,
   "scripts": {
@@ -36,7 +40,7 @@
     "@types/node": "^24.13.3",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "cubing": "0.63.3",
+    "cubing": "^0.63.3",
     "lucide-react": "1.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

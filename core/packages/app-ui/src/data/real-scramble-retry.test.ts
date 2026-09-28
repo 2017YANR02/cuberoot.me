@@ -107,8 +107,9 @@ describe('mobile real-scramble retry adapter', () => {
         .mockResolvedValueOnce(real333Response()) as unknown as typeof fetch;
       const run = startRealScrambleFetchRetry('333', { fetcher, schedule });
 
-      await flushAttempt();
-      expect(tasks).toHaveLength(1);
+      // Response.json() consumes a real stream; wait for the observable retry
+      // instead of assuming a fixed number of promise turns finishes decoding.
+      await vi.waitFor(() => expect(tasks).toHaveLength(1));
       expect(tasks[0]).toMatchObject({ cancelled: false, delayMs: 1_000 });
       tasks[0].callback();
 

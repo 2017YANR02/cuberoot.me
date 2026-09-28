@@ -1,5 +1,7 @@
 'use client';
 
+import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
+
 /**
  * SoloView — the redesigned Solo timer (Phase 1 shell).
  *
@@ -171,7 +173,6 @@ import {
   timerEventIdFromSelector,
   timerRealScrambleReady,
 } from '@cuberoot/shared/timer';
-import { stageSegmentsFor } from '../_lib/reconstruct/stage_segments';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import {
   isNonWcaEvent,
@@ -251,6 +252,7 @@ import {
   TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
   TimerStatRail,
+  TimerStageLayout,
   TimerTopbar,
   TimingSurface,
   browserPrintTransport,
@@ -410,7 +412,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const { country: rankCountry } = useRankCountry();
 
   const isMobile = useMediaQuery('(max-width: 480px)');
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const isDesktop = useTimerWideLayout();
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   const trainingDestinationRef = useRef<ReturnType<typeof parseTrainingAssignmentDestination>>(null);
@@ -418,7 +420,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     trainingDestinationRef.current = parseTrainingAssignmentDestination(window.location.search);
     return startTrainingEvidenceOutbox(trainingDestinationRef.current);
   }, []);
-
 
   // 解法提示的全屏浮层由 SolverHintPanel 经同一个 URL param 开合(手机点 pill、桌面把头部的
   // 形态开关拨到「全屏」都进这一个);这里只读,用来把它算进 anyModalOpen(浮层盖住整屏时,
@@ -1354,27 +1355,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (stages) solve.stages = stages;
     if (bld) solve.bld = bld;
     if (caseIdAtStartRef.current) solve.caseId = caseIdAtStartRef.current;
-    const attemptRecording = smartCubeAttemptProducerRef.current.finish();
-    const moves = attemptRecording.moves;
-    if (moves.length > 0) solve.moves = moves;
-    // 姿态流。没开录 / 魔方没报姿态 / 一次都没动 → take() 是空的,编码给 null,
-    // 字段整个不出现 —— 回放面板就是靠「有没有这个字段」决定要不要给陀螺仪开关的。
-    const gyro = attemptRecording.gyro;
-    if (gyro && solve.moves) solve.gyro = gyro;
+    Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
     // Inspection actually used (0 when inspection was off / never entered).
     if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
-    // Which cube solved it — only meaningful when the solve has a move stream.
-    if (solve.moves && attemptRecording.device) solve.device = attemptRecording.device;
-    // CFOP segmentation, computed now so the case labels and stage splits are
-    // in storage from the moment the solve lands. Everything downstream reads
-    // the stored segments rather than recomputing (case stats, the OLL/PLL
-    // history filters, auto-tags, CSV export), so a solve without them is
-    // invisible to all of them until the user runs a manual re-analysis.
-    // A walk over the stream plus four recognizer lookups: 0.23ms for a real
-    // 64-turn solve, 0.51ms for a 320-turn one, and the timer has already
-    // stopped by the time we get here.
-    const segs = stageSegmentsFor(solve);
-    if (segs) solve.stageSegments = segs;
     setLastPenalty(res.autoPenalty);
 
     // 破纪录(单次/Ao5/Ao12)时桌宠开心一下;不再弹横幅,纪录改在统计面板用 PR 标体现。
@@ -1437,6 +1420,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       multiStage: settings.multiStage && timerSupportsStageSplits(eventAtStartRef.current),
     });
     const bt = bluetoothCubeRef.current?.status;
+    // begin resets both streams; later start handlers must preserve this recording.
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
       : undefined);
@@ -1461,7 +1445,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         ?? (timerTracksTrainerCase(event) ? getLastPickedCase(event as TrainerKind) : null);
     } else if (!cubeStartedRef.current) {
       const startedAtMs = performance.now();
-      smartCubeAttemptProducerRef.current.reset();
       gyroStartRef.current = startedAtMs;
     }
   }, [
@@ -1572,7 +1555,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       if (!timerHandleRef.current.startFromCube(timestamp)) return false;
       phaseSnapshotRef.current = 'running';
       cubeStartedRef.current = true;
-      smartCubeAttemptProducerRef.current.reset();
       gyroStartRef.current = performance.now();
       return true;
     },
@@ -1765,42 +1747,32 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // you the moves back when they don't, so a static target picture beside a
   // live one is the same fact twice.
   //
-  // Both tenants render into `.shell-corner-net-imgbox`, whose height is the
-  // `--cube-h` token. Connecting a cube therefore swaps the picture without
-  // moving anything below it.
+  // The shared solo surface owns the fixed preview frame for both states.
   const centerCubeSlot = (cubeConnected || cubeStartedRef.current) ? (
-    <div className="shell-corner-net">
-      <div className="shell-corner-net-imgbox">
-        <div
-          className="timer-live-cube"
-          data-no-timer
-          title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
-        >
-          <LiveCubeState
-            key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
-            facelets={bluetoothCube.facelets}
-            moves={[...liveMoves]}
-            algAnchored={algAnchored}
-            // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
-            // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
-            // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
-            mode={settings.liveCubeView}
-            useGyro={settings.gyroEnabled}
-            quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
-            calibrateToken={calibrateNonce}
-            sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
-            mirror={mirrorForBrand(bluetoothCube.status.brand)}
-          />
-        </div>
-      </div>
+    <div
+      className="timer-live-cube"
+      data-no-timer
+      title={tr({ zh: '智能魔方实时状态（每次拧动同步）', en: 'Live smart-cube state (updates per move)' })}
+    >
+      <LiveCubeState
+        key={bluetoothCube.status.deviceId || bluetoothCube.status.deviceName}
+        facelets={bluetoothCube.facelets}
+        moves={[...liveMoves]}
+        algAnchored={algAnchored}
+        // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
+        // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
+        // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
+        mode={settings.liveCubeView}
+        useGyro={settings.gyroEnabled}
+        quatRef={settings.gyroEnabled ? gyroQuatRef : undefined}
+        calibrateToken={calibrateNonce}
+        sensorBasis={sensorBasisForBrand(bluetoothCube.status.brand)}
+        mirror={mirrorForBrand(bluetoothCube.status.brand)}
+      />
     </div>
   ) : settings.showCubePreview ? (
-    <div className="shell-corner-net">
-      <div className="shell-corner-net-imgbox">
-        <div className="shell-corner-net-img">
-          <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
-        </div>
-      </div>
+    <div className="shell-corner-net-img">
+      <CubePreview event={event} scramble={previewScramble} height="var(--cube-h)" visualization={settings.prefer3D ? '3D' : '2D'} />
     </div>
   ) : undefined;
 
@@ -1834,7 +1806,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scrambleTarget,
     timer.phase,
   ]);
-
 
   // ── Round simulation ────────────────────────────────────────────
   // The round is a VIEW over the solve history, not a second store: it is the
@@ -2962,7 +2933,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   return (
-    <div
+    <TimerWorkspace panelOpen={Boolean(panelTab)} recap={solveRecap}
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve) ? ' panel-open' : ''}${isDesktop && recapSolve && !panelTab ? ' recap-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
     >
@@ -3050,14 +3021,63 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       />
 
       {/* ── Main column ─────────────────────────────────────── */}
-      <div className="shell-main">
-        {/* 打乱来源配置条 —— 常驻计时读数上方(全项目)。计时中随 surface-chrome 淡出。 */}
-        <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />
+      <TimerStageLayout
+        className="shell-main timer-workspace-main"
+        fullscreen={fullscreen}
+        source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />}
+        statistics={
+          <TimerStatRail
+            ariaExpanded={panelTab != null}
+            language={timerLanguage}
+            summary={stats}
+            onClick={() => setPanelTab(t => (t ? null : 'times'))}
+          />
+        }
+        devices={
+          <TimerDeviceCenter
+            ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+            items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+              ? {
+                  active: bluetoothCube.status.connected,
+                  detail: bluetoothCube.status.connected
+                    ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
+                    : undefined,
+                  id: device.id,
+                  kind: device.kind,
+                  label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+                  onSelect: connectSmartCubeCenter,
+                }
+              : device.kind === 'smart-timer'
+                ? {
+                    active: bluetoothTimer.status.connected,
+                    detail: bluetoothTimer.status.connected
+                      ? tr({ zh: '已连接', en: 'Connected' })
+                      : undefined,
+                    id: device.id,
+                    kind: device.kind,
+                    label: tr({ zh: '智能计时器', en: 'Smart timer' }),
+                    onSelect: connectExternalBluetooth,
+                  }
+                : {
+                    active: stackmat.status.listening,
+                    detail: stackmat.status.listening
+                      ? tr({ zh: '监听中', en: 'Listening' })
+                      : undefined,
+                    id: device.id,
+                    kind: device.kind,
+                    label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
+                    onSelect: connectStackmat,
+                  })}
+            menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
+            triggerLabel={tr({ zh: '设备', en: 'Devices' })}
+          />
+        }
+      >
         <TimingSurface
-          scrambleAbove
+          layout="solo"
           phase={timer.phase}
           colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
-          fontSize={fontSize}
+          fontScale={settings.timerFontScale}
           digits={<SegmentTime text={digitsText} />}
           digitsRef={digitsRef}
           surfaceRef={surfaceRef}
@@ -3236,44 +3256,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-undersurface surface-chrome"><SolverHints scramble={scramble} isZh={isZh} event={event} /></div>
         )}
 
-        <TimerDeviceCenter
-          ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
-          items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
-            ? {
-                active: bluetoothCube.status.connected,
-                detail: bluetoothCube.status.connected
-                  ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
-                  : undefined,
-                id: device.id,
-                kind: device.kind,
-                label: tr({ zh: '智能魔方', en: 'Smart cube' }),
-                onSelect: connectSmartCubeCenter,
-              }
-            : device.kind === 'smart-timer'
-              ? {
-                  active: bluetoothTimer.status.connected,
-                  detail: bluetoothTimer.status.connected
-                    ? tr({ zh: '已连接', en: 'Connected' })
-                    : undefined,
-                  id: device.id,
-                  kind: device.kind,
-                  label: tr({ zh: '智能计时器', en: 'Smart timer' }),
-                  onSelect: connectExternalBluetooth,
-                }
-              : {
-                  active: stackmat.status.listening,
-                  detail: stackmat.status.listening
-                    ? tr({ zh: '监听中', en: 'Listening' })
-                    : undefined,
-                  id: device.id,
-                  kind: device.kind,
-                  label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
-                  onSelect: connectStackmat,
-                })}
-          menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
-          triggerLabel={tr({ zh: '设备', en: 'Devices' })}
-        />
-
         {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区左侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
             打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
@@ -3281,37 +3263,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {isDesktop && solverHintPanel}
         </div>
 
-        {/* Session stats — vertical cstimer-style list, bottom-left of the main area.
-            也是成绩 / 图表面板的唯一入口(底部导航条撤掉了),所以是真 <button>。
-            还没有成绩时不摆一排破折号,只留「成绩」两个字 —— 面板里有会话切换器,
-            当前会话空着的时候恰恰最需要能点进去换会话。 */}
-        <TimerStatRail
-          ariaExpanded={panelTab != null}
-          emptyLabel={tr({ zh: '成绩', en: 'Times' })}
-          items={solves.length > 0 ? [
-            { value: `${stats.solved}/${stats.count}` },
-            { label: 'mean', value: stats.mean },
-            { label: 'best', value: stats.best },
-            { label: 'mo3', value: stats.mo3 },
-            { label: 'ao5', value: stats.ao5 },
-            { label: 'ao12', value: stats.ao12 },
-          ] : []}
-          onClick={() => setPanelTab(t => (t ? null : 'times'))}
-          title={tr({ zh: '打开成绩 / 图表 / 统计', en: 'Open times / chart / stats' })}
-        />
-
-      </div>
+      </TimerStageLayout>
 
       {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
           入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
           非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
-      {isDesktop && !panelTab && solveRecap && (
-        <aside className="shell-panel--rail shell-recap-rail" data-site-surface="panel" data-no-timer>
-          {solveRecap}
-        </aside>
-      )}
       {panelTab && (
-        <aside className={`shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
+        <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">
             <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
           })}</button>
@@ -3322,7 +3280,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             <button type="button" className="shell-panel-close" onClick={() => setPanelTab(null)} aria-label={tr({ zh: '关闭', en: 'Close'
           })}><X size={16} /></button>
           </div>
-          <div className="shell-panel-body">{renderPanelBody()}</div>
+          <div className="shell-panel-body timer-workspace-panel-body">{renderPanelBody()}</div>
         </aside>
       )}
 
@@ -3482,6 +3440,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         />
       )}
 
-    </div>
+    </TimerWorkspace>
   );
 }

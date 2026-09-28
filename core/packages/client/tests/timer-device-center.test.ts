@@ -48,6 +48,21 @@ describe('TimerDeviceCenter', () => {
     expect(onStackmat).not.toHaveBeenCalled();
   });
 
+  it.each([false, true])('opens connected cube controls directly unless disabled=%s', async (disabled) => {
+    const onSelect = vi.fn();
+    await act(async () => root.render(createElement(TimerDeviceCenter, {
+      ariaLabel: 'Timer devices',
+      items: [{ id: 'smart-cube', kind: 'smart-cube', label: 'Smart cube', active: true, disabled, onSelect }],
+      menuLabel: 'Available timer devices', triggerLabel: 'Devices',
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
+    expect(trigger.getAttribute('aria-haspopup')).toBe(disabled ? 'menu' : 'dialog');
+    await act(async () => trigger.click());
+    expect(onSelect).toHaveBeenCalledTimes(disabled ? 0 : 1);
+    expect(host.querySelector('[role="menu"]') !== null).toBe(disabled);
+    expect(trigger.getAttribute('aria-expanded')).toBe(disabled ? 'true' : null);
+  });
+
   it('closes on Escape and outside pointer-down, returning focus to the trigger', async () => {
     await act(async () => root.render(createElement(TimerDeviceCenter, {
       ariaLabel: 'Timer devices',

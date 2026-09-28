@@ -19,7 +19,10 @@ import {
 export interface TimingSurfaceProps {
   phase: 'idle' | 'inspecting' | 'holding' | 'ready' | 'running' | 'stopped';
   colorClass: string;
-  fontSize: string;
+  /** Shared mode layouts own readout scale, scramble placement and spacing. */
+  layout?: 'default' | 'solo' | 'net' | 'local';
+  fontScale?: number;
+  fontSize?: string;
   digits: ReactNode;
   digitsRef?: RefObject<HTMLDivElement | null>;
   surfaceRef: RefObject<HTMLDivElement | null>;
@@ -43,12 +46,14 @@ export interface TimingSurfaceProps {
 export default function TimingSurface({
   phase,
   colorClass,
-  fontSize,
+  layout = 'default',
+  fontScale = 1,
+  fontSize = `calc(${layout === 'local' ? 'clamp(40px, 8vw, 80px)' : 'clamp(48px, 10vw, 132px)'} * ${fontScale})`,
   digits,
   digitsRef,
   surfaceRef,
   scrambleSlot,
-  scrambleAbove = false,
+  scrambleAbove: placeScrambleAbove = false,
   cornerSlot,
   children,
   digitsCorner,
@@ -62,9 +67,11 @@ export default function TimingSurface({
   onPointerDown,
   onPointerUp,
 }: TimingSurfaceProps) {
+  const sharedLayout = layout !== 'default';
+  const scrambleAbove = sharedLayout || placeScrambleAbove;
   const running = phase === 'running';
   const coreRef = useRef<HTMLDivElement>(null);
-  const readoutRef = useRef<HTMLSpanElement>(null);
+  const readoutRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const surface = surfaceRef.current;
     if (!surface) return;
@@ -131,7 +138,7 @@ export default function TimingSurface({
     <div
       ref={surfaceRef}
       aria-label={ariaLabel}
-      className={`timing-surface${scrambleAbove ? ' timing-surface--scramble-above' : ''}${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
+      className={`timing-surface${sharedLayout ? ` timing-surface--${layout}` : ''}${scrambleAbove ? ' timing-surface--scramble-above' : ''}${running ? ' surface--running' : ''}${className ? ` ${className}` : ''}`}
       data-timer-pad={interactive ? '' : undefined}
       onContextMenu={onContextMenu}
       onMouseDown={onMouseDown}
@@ -150,14 +157,18 @@ export default function TimingSurface({
             className={`timer-display ${colorClass}`}
             style={{ fontSize }}
           >
-            <span className="timer-display-value" ref={readoutRef}>{digits}</span>
+            <div className="timer-display-value" ref={readoutRef}>{digits}</div>
           </div>
           {digitsCorner && <div className="timer-display-corner surface-chrome">{digitsCorner}</div>}
         </div>
         <div className="timing-surface-sub">
           {children}
           {!scrambleAbove && scrambleSlot && <div className="timing-surface-scramble surface-chrome">{scrambleSlot}</div>}
-          {cornerSlot && <div className="timing-surface-cube surface-chrome">{cornerSlot}</div>}
+          {cornerSlot && <div className="timing-surface-cube surface-chrome">
+            {sharedLayout
+              ? <div className="timing-surface-cube-frame" data-no-timer>{cornerSlot}</div>
+              : cornerSlot}
+          </div>}
         </div>
       </div>
     </div>

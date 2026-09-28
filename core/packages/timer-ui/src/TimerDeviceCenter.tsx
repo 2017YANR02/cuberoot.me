@@ -28,6 +28,7 @@ export interface TimerDeviceCenterProps {
  *
  * Hosts provide only real adapter-backed items and their actions. The center
  * owns the compact trigger, focus return, dismissal and the shared list shape;
+ * a connected smart cube opens its host action directly from the trigger.
  * it does not know about BLE, microphones or platform permissions.
  */
 export function TimerDeviceCenter({
@@ -44,14 +45,22 @@ export function TimerDeviceCenter({
   if (items.length === 0) return null;
 
   const active = items.some((item) => item.active);
+  const connectedCube = items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
   return (
     <div className={`shell-device-center${active ? ' is-active' : ''}${className ? ` ${className}` : ''}`} data-no-timer>
       <button
-        aria-expanded={open}
-        aria-haspopup="menu"
+        aria-expanded={connectedCube ? undefined : open}
+        aria-haspopup={connectedCube ? 'dialog' : 'menu'}
         aria-label={ariaLabel}
         className="shell-device-center-trigger"
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => {
+          if (connectedCube) {
+            setOpen(false);
+            connectedCube.onSelect();
+          } else {
+            setOpen((value) => !value);
+          }
+        }}
         ref={triggerRef}
         title={ariaLabel}
         type="button"
