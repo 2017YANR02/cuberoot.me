@@ -3,6 +3,7 @@
 // 注意 best/average 分别判断,DNF/DNS/0 一律不是 PB(且不参与最佳值更新).
 
 import { wcaResultRowKey, type WcaResultRow, type WcaCompetition } from '@/lib/wca-person-api';
+import { personalRecordFlags } from '@cuberoot/shared/wca-records';
 import { CompetitionRankTracker } from '@/lib/competition-rank';
 
 export interface ProgressFlag {
@@ -33,24 +34,7 @@ export function computeProgress(
   });
 
   const out = new Map<string, ProgressFlag>();
-  const bestSoFar = new Map<string, { single: number | null; average: number | null }>();
-
-  for (const r of sorted) {
-    const key = r.event_id;
-    const cur = bestSoFar.get(key) ?? { single: null, average: null };
-    let bestPb = false;
-    let avgPb = false;
-    if (isValidValue(r.best) && (cur.single === null || r.best < cur.single)) {
-      bestPb = true;
-      cur.single = r.best;
-    }
-    if (isValidValue(r.average) && (cur.average === null || r.average < cur.average)) {
-      avgPb = true;
-      cur.average = r.average;
-    }
-    bestSoFar.set(key, cur);
-    out.set(wcaResultRowKey(r), { bestIsPb: bestPb, averageIsPb: avgPb });
-  }
+  for (const [row, flags] of personalRecordFlags(sorted)) out.set(wcaResultRowKey(row), flags);
   return out;
 }
 
