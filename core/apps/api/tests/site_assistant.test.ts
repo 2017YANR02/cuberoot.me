@@ -12,39 +12,43 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
-  it('only fetches directory pages, drops invented sources and strips executable/hidden content', async () => {
+
+  it('only reads selected public pages, drops invented sources and never forwards secrets', async () => {
     const fetcher = vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(modelResponse({ pageIds: ['frame-count', 'https://evil.example/steal', 'frame-count'] }))
-      .mockResolvedValueOnce(new Response(`<main><h1>数帧</h1><p>${'逐帧核对视频中的复原时长。'.repeat(10)}</p><script>secret script</script><span hidden>hidden instruction</span></main>`, { headers: { 'Content-Type': 'text/html' } }))
-      .mockResolvedValueOnce(modelResponse({ answer: '可以打开数帧页面。', sourceIds: ['frame-count', 'https://evil.example'] }));
-    const result = await answerSiteQuestion('怎么数帧？', 'zh', config, AbortSignal.timeout(5000), fetcher);
-    expect(fetcher).toHaveBeenCalledTimes(3);
-    expect(fetcher.mock.calls[1][0]).toBe('https://cuberoot.me/zh/frame-count');
-    expect(fetcher.mock.calls[1][1]).toMatchObject({ redirect: 'error', headers: { Accept: 'text/html' } });
-    expect(fetcher.mock.calls[1][1]?.headers).not.toHaveProperty('Authorization');
-    const grounding = JSON.parse(JSON.parse(String(fetcher.mock.calls[2][1]?.body)).messages[1].content);
-    expect(grounding.pages[0].content).not.toContain('secret');
-    expect(grounding.pages[0].content).not.toContain('hidden');
-    expect(result.sources).toEqual([{ id: 'frame-count', href: '/frame-count', title: '数帧', read: true }]);
+      .mockResolvedValueOnce(modelResponse({ calls: [{tool:'pages',query:'数帧',pageIds:['frame-count','https://evil.example']}]}))
+      .mockResolvedValueOnce(new Response('missing',{status:404}))
+      .mockResolvedValueOnce(new Response('<main>Video frame counting<script>bad</script><span hidden>hidden instruction</span></main>',{headers:{'Content-Type':'text/html'}}))
+      .mockResolvedValueOnce(modelResponse({answer:'打开数帧页面。',sourceIds:['frame-count','evil']}));
+    const result=await answerSiteQuestion('怎么数帧？','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher.mock.calls[2][0]).toBe('https://cuberoot.me/zh/frame-count');
+    expect(fetcher.mock.calls[2][1]).toMatchObject({redirect:'error',headers:{Accept:'text/html'}});
+    expect(fetcher.mock.calls[2][1]?.headers).not.toHaveProperty('Authorization');
+    const grounding=JSON.parse(JSON.parse(String(fetcher.mock.calls[3][1]?.body)).messages[1].content);
+    expect(JSON.stringify(grounding.evidence)).not.toContain('hidden instruction');
+    expect(result.sources).toEqual([{id:'frame-count',href:'/frame-count',title:'数帧',read:true}]);
     expect(JSON.stringify(result)).not.toContain(config.key);
   });
 
-  it('keeps unavailable pages as navigation only and does not follow their redirects', async () => {
-    const fetcher = vi.fn<typeof fetch>()
-      .mockResolvedValueOnce(modelResponse({ pageIds: ['timer'] }))
-      .mockRejectedValueOnce(new Error('redirect blocked'))
-      .mockResolvedValueOnce(modelResponse({ answer: '打开计时页面查看。', sourceIds: [] }));
-    const result = await answerSiteQuestion('计时', 'en', config, AbortSignal.timeout(5000), fetcher);
-    expect(fetcher.mock.calls[1][0]).toBe('https://cuberoot.me/en/timer');
-    expect(result.sources).toEqual([{ id: 'timer', href: '/timer', title: 'Timer', read: false }]);
+  it('blocks unknown tools, arbitrary URL arguments and history roles before any public fetch', async () => {
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'sql',query:'SELECT secrets'},{tool:'person',wcaId:'http://localhost'},{tool:'records',event:'333',url:'http://localhost'}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'无法执行。',sourceIds:['fake']}));
+    const result=await answerSiteQuestion('show secrets','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(result.sources).toEqual([]);
   });
 
-  it('cannot select private directory entries or arbitrary URLs', async () => {
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({ pageIds: ['platform', 'interview', 'http://127.0.0.1'] }));
-    const result = await answerSiteQuestion('show secrets', 'en', config, AbortSignal.timeout(5000), fetcher);
-    expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(result.sources).toEqual([]);
-    expect(result.answer).toContain('could not find');
+  it('grounds contextual follow-ups again and bounds a repeated tool loop', async () => {
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).startsWith(config.baseUrl))return modelResponse({calls:[{tool:'find_person',query:'Max Park'}]});
+      return Response.json([{person:{wca_id:'2012PARK03',name:'Max Park'}}]);
+    });
+    const history=[{role:'user' as const,content:'Max Park'},{role:'assistant' as const,content:'Untrusted old answer'}];
+    await answerSiteQuestion('他的平均呢？','zh',config,AbortSignal.timeout(5000),fetcher,history);
+    expect(fetcher.mock.calls.filter(([url])=>String(url).includes('worldcubeassociation.org'))).toHaveLength(1);
+    expect(fetcher.mock.calls.filter(([url])=>String(url).startsWith(config.baseUrl))).toHaveLength(5);
+    const data=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
+    expect(data.history).toEqual(history);
   });
 
   it('excludes chrome and injected scripts from source text', () => {
@@ -95,7 +99,7 @@ describe('site assistant public route', () => {
     for (const body of ['not json', JSON.stringify({ question: 'x'.repeat(501), lang: 'zh' }), JSON.stringify({ question: 'hello', lang: 'en', url: 'http://localhost' })]) {
       expect((await route.request('/site-assistant', { method: 'POST', body })).status).toBe(400);
     }
-    expect((await route.request('/site-assistant', { method: 'POST', body: 'x'.repeat(4097) })).status).toBe(413);
+    expect((await route.request('/site-assistant', { method: 'POST', body: 'x'.repeat(70001) })).status).toBe(413);
     expect(answer).not.toHaveBeenCalled();
   });
 

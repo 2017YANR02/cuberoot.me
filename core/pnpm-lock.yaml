@@ -870,6 +870,9 @@ importers:
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
+      linkedom:
+        specifier: 0.18.12
+        version: 0.18.12
       tailwindcss:
         specifier: ^4.2.2
         version: 4.3.0

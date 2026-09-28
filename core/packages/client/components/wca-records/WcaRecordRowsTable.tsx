@@ -20,29 +20,8 @@ import { eventDisplayName } from '@/lib/wca-events';
 import { formatDateRangeIso } from '@/lib/wca-date';
 import { formatWcaResult } from '@/lib/wca-format-result';
 
-export interface WcaRecordRowsTableRow {
-  /** WCA event id. */
-  e: string;
-  /** Single or average. */
-  t: 's' | 'a';
-  /** Raw WCA result value. */
-  v: number;
-  /** Exact record marker. */
-  l: string;
-  /** WCA person id and raw name. */
-  p: string;
-  pn: string;
-  /** Optional ISO2 override; otherwise the shared person flag index is used. */
-  pc?: string;
-  /** WCA competition id and raw name. */
-  c: string;
-  cn: string;
-  /** ISO start and optional end date. */
-  d: string;
-  de?: string;
-  /** Ordered round attempts. */
-  a: number[] | null;
-}
+import type { WcaRecordRow } from '@cuberoot/shared/wca-records';
+export type WcaRecordRowsTableRow = WcaRecordRow;
 
 interface WcaRecordRowsTableProps {
   rows: WcaRecordRowsTableRow[];

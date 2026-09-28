@@ -2825,6 +2825,13 @@ export const CATALOG: ComponentEntry[] = [
     },
   },
   {
+    name: 'SiteAssistantDialog',
+    import: "import SiteAssistantDialog from '@/components/SiteAssistantDialog';",
+    category: 'more',
+    zh: '站内连续对话：真实数据表、PR 曲线、来源、语音和停止请求。',
+    en: 'Site conversation with evidence tables, PR charts, sources, voice input and cancellation.',
+  },
+  {
     name: 'SimStage',
     import: "import SimStage from '@/components/sim-embed/SimStage';",
     category: 'more',
