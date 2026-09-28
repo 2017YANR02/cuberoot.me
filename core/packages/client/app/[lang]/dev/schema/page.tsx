@@ -522,6 +522,7 @@ const TABLES: Table[] = [
     { name: 'english_stale', note: { zh: '中文保存后置为 true，英文同步成功后置为 false', en: 'set true after a Chinese save and false after a successful English sync' } },
     { name: 'content_revision', note: { zh: '每次中文保存递增，阻止旧翻译覆盖更新后的中文', en: 'increments on each Chinese save to stop stale translations from overwriting newer content' } },
   ] },
+  { name: 'site_assistant_daily_usage', domain: 'community', origin: '0251', purpose: { zh: '全站 AI 提问每日共用 100 次额度；按北京时间计数，重启不清零，不保存问题或个人信息', en: 'Durable site-wide allowance of 100 AI questions per Beijing calendar day; no questions or personal data stored' }, cols: [{ name: 'day, questions' }] },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/dev/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /dev/ops runbook' } },
   { name: 'page_notices', domain: 'community', origin: '0073', purpose: { zh: '按路径与展示位管理顶部通知、首页焦点新闻及其生效时间窗', en: 'Manage top notices and homepage featured news by path and placement, including active windows' } },
   { name: 'pattern_examples', domain: 'community', origin: '0091', purpose: { zh: '/scramble/pattern/search 的示例预设:管理员在页面上摆好图案就能存一条,q 存的就是可分享的 ?q= 编码', en: 'Example presets for /scramble/pattern/search: an admin lays out a pattern and saves it; q holds the same shareable ?q= encoding the page uses' }, cols: [
@@ -789,6 +790,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 247, slug: 'auth_identity_pending_attempts', desc: { zh: '限制六位账号绑定码的尝试次数，防止反复猜测。', en: 'Limit attempts on six-digit account-link codes to prevent repeated guessing.' } },
   { n: 248, slug: 'timer_replay_shares', desc: { zh: '计时器复盘分享。', en: 'Timer replay shares.' } },
   { n: 249, slug: 'friend_chat', desc: { zh: '新增好友私聊会话与文字消息，包含递增序号、双方已读位置、发送幂等约束和账号注销级联删除。', en: 'Add private friend conversations and text messages with ordered sequences, participant read positions, send idempotency, and cascades on account deletion.' } },
+  { n: 251, slug: 'site_assistant_daily_usage', desc: { zh: '全站 AI 提问每日 100 次持久额度，跨进程原子扣减，北京时间零点恢复。', en: 'Atomic, durable site-wide quota of 100 AI questions per Beijing calendar day.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

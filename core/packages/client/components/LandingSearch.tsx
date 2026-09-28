@@ -224,7 +224,7 @@ export default function LandingSearch({
   const wrapRef = useRef<HTMLDivElement>(null);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
-  const [assistantError, setAssistantError] = useState(false);
+  const [assistantError, setAssistantError] = useState<'daily_limit' | 'unavailable' | null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState<{
     answer: string; sources: Array<{ id: string; title: string; href: string; read: boolean }>;
   } | null>(null);
@@ -233,7 +233,7 @@ export default function LandingSearch({
     assistantRequest.current?.abort();
     assistantRequest.current = null;
     setAssistantBusy(false);
-    setAssistantError(false);
+    setAssistantError(null);
     setAssistantAnswer(null);
     return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
   }, [query, lang]);
@@ -245,7 +245,7 @@ export default function LandingSearch({
     assistantRequest.current = controller;
     setOpen(true);
     setAssistantBusy(true);
-    setAssistantError(false);
+    setAssistantError(null);
     setAssistantAnswer(null);
     const timeout = setTimeout(() => controller.abort(), 35000);
     try {
@@ -253,7 +253,11 @@ export default function LandingSearch({
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: query.trim(), lang }), signal: controller.signal,
       });
-      if (!response.ok) throw new Error('unavailable');
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null);
+        if (assistantRequest.current === controller) setAssistantError(failure?.error === 'daily_limit' ? 'daily_limit' : 'unavailable');
+        return;
+      }
       const data = await response.json();
       if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
       if (assistantRequest.current === controller) setAssistantAnswer({
@@ -261,7 +265,7 @@ export default function LandingSearch({
         sources: data.sources.filter((source: { href?: unknown }) => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)),
       });
     } catch {
-      if (assistantRequest.current === controller) setAssistantError(true);
+      if (assistantRequest.current === controller) setAssistantError('unavailable');
     } finally {
       clearTimeout(timeout);
       if (assistantRequest.current === controller) { assistantRequest.current = null; setAssistantBusy(false); }
@@ -530,7 +534,9 @@ export default function LandingSearch({
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
             {assistantBusy ? <p>{tr({ zh: '正在查找相关页面…', en: 'Finding relevant pages…' })}</p>
               : assistantError ? <>
-                <p>{tr({ zh: '暂时无法回答，请重试或使用下方搜索结果。', en: 'An answer is unavailable. Retry or use the search results below.' })}</p>
+                <p>{assistantError === 'daily_limit'
+                  ? tr({ zh: '全站今日 100 次提问额度已用完，北京时间零点恢复。你仍可使用下方搜索结果。', en: 'The site’s daily allowance of 100 questions has been used. It resets at midnight Beijing time (UTC+8). You can still use the search results below.' })
+                  : tr({ zh: '暂时无法回答，请重试或使用下方搜索结果。', en: 'An answer is unavailable. Retry or use the search results below.' })}</p>
                 {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
               </> : assistantAnswer ? <>
                 <p className="landing-search-answer-text">{assistantAnswer.answer}</p>

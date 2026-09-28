@@ -108,6 +108,20 @@ describe('LandingSearch placeholder hydration', () => {
     host.remove();
   });
 
+  it('explains the site-wide daily quota without clearing the search query', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({ error: 'daily_limit' }) }));
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
+    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(host.textContent).toContain('全站今日 100 次提问额度已用完');
+    expect(host.textContent).toContain('北京时间零点恢复');
+    expect(host.querySelector('input')?.value).toBe('世界纪录');
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
   it('服务器与客户端跨 UTC 日期时首帧仍一致,挂载后再显示当天文案', async () => {
     vi.setSystemTime(new Date('2026-08-19T12:00:00Z'));
     const html = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));
