@@ -73,7 +73,10 @@ try {
   assert.deepEqual(newer.items.map((m) => m.sequence), ['11','12']); assert.equal(newer.hasMore, true); checks++;
   await rejects(() => repo.messages(1,2,{ before:'2', after:'1' }), 'INVALID_INPUT');
   await rejects(() => repo.read(1, 2, '999'), 'INVALID_INPUT');
+  assert.equal((await repo.messages(1, 2)).peerReadSequence, '0'); checks++;
   await repo.read(2, 1, '14');
+  assert.equal((await repo.messages(1, 2, { after: '14' })).peerReadSequence, '14'); checks++;
+  assert.equal((await repo.messages(2, 1)).peerReadSequence, '0'); checks++;
   await repo.read(2, 1, '2');
   assert.equal((await repo.conversations(2)).items[0].myReadSequence, '14'); checks++;
   await Promise.all([repo.send(1, 2, input('new')), repo.read(2, 1, '14')]);

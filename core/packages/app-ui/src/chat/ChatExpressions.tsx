@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { ImagePlus, Smile, Sticker, X, Send, Star } from 'lucide-react';
 import { ChatError, CHAT_STICKER_MAX_BYTES, CHAT_STICKER_MIMES, type ChatSticker, type ChatStickerClient } from '@cuberoot/shared/chat';
+import type { ChatExpressionPack } from './ChatMessageText';
 import { ChatStickerImage } from './ChatStickerImage';
 
 const ChatEmojiPicker = lazy(() => import('./ChatEmojiPicker'));
@@ -15,11 +16,14 @@ export function stickerError(error: unknown, t: Translate) {
 }
 
 /** Inline composer drawer. Its parent keys it by account and peer to cancel stale uploads. */
-export function ChatExpressions({ client, disabled, items, loading, error, onReload, onChange, onEmoji, onSend, t }: {
+export function ChatExpressions({ packs = [], onReloadExpressions, client, disabled, items, loading, error, onReload, onChange, onEmoji, onSend, t }: {
+  packs?: ChatExpressionPack[]; onReloadExpressions?(): void;
   client?: ChatStickerClient; disabled: boolean; items: ChatSticker[]; loading: boolean; error: string | null;
   onReload(): void; onChange(items: ChatSticker[]): void; onEmoji(value: string): void; onSend(id: string): void; t: Translate;
 }) {
-  const [open, setOpen] = useState<'emoji' | 'stickers' | null>(null);
+  const [open, setOpen] = useState<string | null>(null);
+  const [packId, setPackId] = useState('wechat');
+  const pack = packs.find(item => item.id === packId) ?? packs[0];
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -60,14 +64,16 @@ export function ChatExpressions({ client, disabled, items, loading, error, onRel
   return <div ref={host} className="friend-chat-expressions">
     <div className="friend-chat-tools">
       <button type="button" className="friend-chat-action" disabled={disabled} aria-expanded={open === 'emoji'} onClick={() => setOpen(open === 'emoji' ? null : 'emoji')}><Smile size={18} />{t('表情', 'Emoji')}</button>
+      {packs.length > 0 && <button type="button" className="friend-chat-action" disabled={disabled} aria-expanded={open === 'builtin'} onClick={() => { onReloadExpressions?.(); setOpen(open === 'builtin' ? null : 'builtin'); }}><Smile size={18} />{t('内置表情', 'Built-in expressions')}</button>}
       {client && <button type="button" className="friend-chat-action" disabled={disabled} aria-expanded={open === 'stickers'} onClick={() => { setOpen(open === 'stickers' ? null : 'stickers'); if (open !== 'stickers') onReload(); }}><Sticker size={18} />{t('表情包', 'Stickers')}</button>}
     </div>
     {open && <div className="friend-chat-expression-panel" data-site-surface="panel" aria-label={t('表情面板', 'Expression picker')}>
       <div className="friend-chat-expression-heading">
-        <strong>{open === 'emoji' ? t('系统表情', 'Emoji') : t('我的表情包', 'My stickers')}</strong>
+        <strong>{open === 'emoji' ? t('系统表情', 'Emoji') : open === 'stickers' ? t('我的表情包', 'My stickers') : t('内置表情', 'Built-in expressions')}</strong>
         <button type="button" className="friend-chat-action" aria-label={t('关闭表情面板', 'Close expression picker')} onClick={() => setOpen(null)}><X size={16} /></button>
       </div>
       {open === 'emoji' ? <Suspense fallback={<p role="status">{t('加载中…', 'Loading…')}</p>}><ChatEmojiPicker disabled={disabled} onSelect={onEmoji} t={t} /></Suspense>
+        : open !== 'stickers' ? <><div className="friend-chat-emoji-controls"><select aria-label={t('表情系列', 'Expression collection')} value={pack?.id ?? ''} onChange={event => setPackId(event.target.value)}>{packs.map(item => <option key={item.id} value={item.id}>{t(item.zh, item.en)}</option>)}</select></div><div className={pack?.id.startsWith('pet:') ? 'friend-chat-sticker-grid' : 'friend-chat-emoji-grid'}>{pack?.items.map(item => <button type="button" key={item.token} className="friend-chat-action" disabled={disabled} title={t(item.zh, item.en)} aria-label={t(item.zh, item.en)} onClick={() => onEmoji(item.token)}><img src={item.src} alt="" loading="lazy" className={item.large ? "friend-chat-pet-expression" : "friend-chat-picker-image"} /></button>)}</div></>
         : <>
           <input ref={fileInput} type="file" hidden accept={CHAT_STICKER_MIMES.join(',')} onChange={(event) => { void upload(event.target.files?.[0]); event.target.value = ''; }} />
           <div className="friend-chat-tools"><button type="button" className="friend-chat-action" disabled={busy || disabled} onClick={() => fileInput.current?.click()}><ImagePlus size={16} />{busy ? t('处理中…', 'Working…') : t('添加表情包', 'Add sticker')}</button><span className="friend-chat-muted">GIF · PNG · JPG · WebP · ≤2 MB</span></div>

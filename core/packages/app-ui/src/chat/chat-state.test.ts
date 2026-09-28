@@ -24,6 +24,15 @@ function setup() {
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => { controllers.splice(0).forEach((c) => c.dispose()); vi.useRealTimers(); });
 describe('shared chat controller', () => {
+  it('updates receipts on empty polls and never moves the peer read cursor backwards', async () => {
+    const { client, controller } = setup(); await flush();
+    expect(controller.getSnapshot().page?.peerReadSequence).toBeUndefined();
+    for (const peerReadSequence of ['1', '0', undefined]) {
+      client.messages.mockResolvedValue(page([], { peerReadSequence, lastSequence: '1', nextAfterSequence: '1' }));
+      controller.refresh(); await flush();
+      expect(controller.getSnapshot().page?.peerReadSequence).toBe('1');
+    }
+  });
   it('preserves text drafts and the exact sticker ID when retrying a failed sticker send', async () => {
     const { client, controller } = setup(); await flush();
     client.send.mockRejectedValueOnce(new ChatError('NETWORK_ERROR'))

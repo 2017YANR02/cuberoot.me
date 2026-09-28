@@ -65,7 +65,7 @@ export function createChatRepository(db: typeof database = database) {
         const allowed = await canSend(tx, uid, peer);
         if (!c && !allowed) throw new ChatError('CHAT_NOT_FOUND');
         const user = friendUser(await peerUser(tx, peer));
-        if (!c) return { conversationId: null, peer: user, items: [], canSend: true, myReadSequence: '0',
+        if (!c) return { conversationId: null, peer: user, items: [], canSend: true, myReadSequence: '0', peerReadSequence: '0',
           lastSequence: '0', oldestSequence: null, nextAfterSequence: '0', hasMore: false };
         const rows = page.after !== undefined
           ? await tx<MessageRow[]>`SELECT * FROM friend_chat_messages WHERE conversation_id = ${c.id} AND sequence > ${page.after} ORDER BY sequence LIMIT ${limit + 1}`
@@ -74,7 +74,7 @@ export function createChatRepository(db: typeof database = database) {
         const visible = rows.slice(0, limit);
         if (page.after === undefined) visible.reverse();
         const items = visible.map(toMessage);
-        return { conversationId: c.id, peer: user, items, canSend: allowed, myReadSequence: readSequence(c, uid),
+        return { conversationId: c.id, peer: user, items, canSend: allowed, myReadSequence: readSequence(c, uid), peerReadSequence: readSequence(c, peer),
           lastSequence: String(c.last_sequence), oldestSequence: items[0]?.sequence ?? null,
           nextAfterSequence: items.at(-1)?.sequence ?? page.after ?? '0', hasMore: rows.length > limit };
       }) as ChatMessagesPage;
