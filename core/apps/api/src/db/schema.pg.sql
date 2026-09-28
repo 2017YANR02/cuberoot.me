@@ -8842,3 +8842,9 @@ CREATE TABLE friend_chat_sticker_favorites (
 );
 ALTER TABLE friend_chat_messages ADD COLUMN sticker_id UUID REFERENCES friend_chat_stickers(id);
 CREATE INDEX idx_chat_message_sticker ON friend_chat_messages (sticker_id) WHERE sticker_id IS NOT NULL;
+
+-- One durable, anonymous counter per Beijing calendar day, shared by all API processes.
+CREATE TABLE site_assistant_daily_usage (
+  day DATE PRIMARY KEY,
+  questions INTEGER NOT NULL CHECK (questions BETWEEN 1 AND 100)
+);
