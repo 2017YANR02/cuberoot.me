@@ -11,7 +11,7 @@
  *  - next/link Link href + useRouter().push instead of react-router
  *  - [lang] path prefix `/${lang}/...` in hrefs instead of ?lang= query
  *  - EventIcon lazy-loaded via next/dynamic (was React.lazy in Vite)
- *  - useSpeechToText / smart_paste removed for now (nice-to-have, defer)
+ *  - Browser speech recognition and smart paste reuse the shared hooks/utilities.
  */
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Link from '@/components/AppLink';
@@ -97,6 +97,18 @@ export type LandingSearchCard = SiteSearchCard;
 
 const RECON_INITIAL_CAP = 10;
 const COMP_INITIAL_CAP = 10;
+
+const SPEECH_ERRORS: Record<string, { zh: string; en: string }> = {
+  unsupported: { zh: '此浏览器不支持网页语音输入，请使用键盘上的听写功能或打字搜索。', en: 'This browser does not support voice input. Use keyboard dictation or type your search.' },
+  'not-allowed': { zh: '无法使用麦克风，请检查网站和系统的麦克风权限。', en: 'Microphone access was denied. Check microphone permissions for this site and your system.' },
+  'audio-capture': { zh: '无法获取麦克风声音，请检查输入设备。', en: 'Cannot capture audio. Check your microphone input device.' },
+  network: { zh: '无法连接语音识别服务，请重试，或使用键盘上的听写功能。', en: 'Cannot connect to speech recognition. Retry or use keyboard dictation.' },
+  'no-speech': { zh: '没有识别到文字，请重试，或使用键盘上的听写功能。', en: 'No words were recognized. Retry or use keyboard dictation.' },
+  timeout: { zh: '语音识别长时间没有返回结果，已停止。请重试，或使用键盘上的听写功能。', en: 'Speech recognition did not respond in time and has stopped. Retry or use keyboard dictation.' },
+  'language-not-supported': { zh: '语音服务不支持当前语言，请使用键盘上的听写功能。', en: 'The speech service does not support this language. Use keyboard dictation.' },
+  'service-not-allowed': { zh: '浏览器的语音识别服务不可用，请使用键盘上的听写功能或打字搜索。', en: 'The browser speech service is unavailable. Use keyboard dictation or type your search.' },
+  aborted: { zh: '语音识别已中断，请重试。', en: 'Speech recognition was interrupted. Please retry.' },
+};
 
 const PLACEHOLDERS_ZH = [
   '今天从哪里开始?',
@@ -195,7 +207,7 @@ export default function LandingSearch({
     onQueryChange?.(value);
   }, [controlledQuery, onQueryChange]);
   const [open, setOpen] = useState(false);
-  const { supported: micSupported, listening, start: micStart, stop: micStop } = useSpeechToText({
+  const { listening, status: micStatus, error: micError, start: micStart, stop: micStop } = useSpeechToText({
     lang: isZh ? 'zh-CN' : 'en-US',
     onResult: (text) => { setQuery(text); setOpen(true); },
   });
@@ -407,8 +419,9 @@ export default function LandingSearch({
               goFirstResult();
             }
           }}
-          placeholder={listening ? tr({ zh: '请说…', en: 'Listening…'
-                  }) : rotatingPlaceholder(isZh, placeholderDay)}
+          placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
+            : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
+              : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
           aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
         />
         {query !== '' && (
@@ -433,26 +446,28 @@ export default function LandingSearch({
             </button>
           </div>
         )}
-        {micSupported && (
-          <button
-            type="button"
-            className={`landing-search-mic${listening ? ' is-listening' : ''}`}
-            onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
-            title={listening
-              ? tr({ zh: '停止录音', en: 'Stop'
-                            })
-              : tr({ zh: '语音输入', en: 'Voice input'
-                            })}
-            aria-label={listening
-              ? tr({ zh: '停止录音', en: 'Stop'
-                            })
-              : tr({ zh: '语音输入', en: 'Voice input'
-                            })}
-          >
-            <Mic size={16} strokeWidth={1.75} />
-          </button>
-        )}
+        <button
+          type="button"
+          className={`landing-search-mic${listening ? ' is-listening' : ''}`}
+          aria-pressed={listening}
+          disabled={micStatus === 'stopping'}
+          onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
+          title={listening
+            ? tr({ zh: '停止录音', en: 'Stop' })
+            : tr({ zh: '语音输入', en: 'Voice input' })}
+          aria-label={listening
+            ? tr({ zh: '停止录音', en: 'Stop' })
+            : tr({ zh: '语音输入', en: 'Voice input' })}
+        >
+          <Mic size={16} strokeWidth={1.75} />
+        </button>
       </div>
+
+      {micError && (
+        <p className="landing-search-speech-status" role="status">
+          {tr(SPEECH_ERRORS[micError] ?? SPEECH_ERRORS['service-not-allowed'])}
+        </p>
+      )}
 
       {showDropdown && (
         <div className="landing-search-panel">
