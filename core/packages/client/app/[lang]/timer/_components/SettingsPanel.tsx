@@ -6,25 +6,17 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
-  Bluetooth,
   CloudDownload,
   CloudUpload,
-  Database,
-  Dices,
   Download,
   FileSpreadsheet,
   FileText,
-  Keyboard,
   LogIn,
-  Palette,
   RefreshCw,
   Target,
-  Timer as TimerIcon,
-  Trophy,
-  Volume2,
 } from 'lucide-react';
 import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import TimerFontPicker from '@/components/TimerFontPicker';
+import { TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
@@ -49,7 +41,6 @@ import { reanalyzeAll } from '../_lib/storage/reanalyze';
 import { eventInfo, type EventId } from '../_lib/types';
 import { TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/shared/timer';
 import {
-  TIMER_SETTING_CATEGORY_CONTRACTS,
   TIMER_RANK_SCOPES,
   timerSettingFieldContract,
   timerSettingFieldStates,
@@ -73,10 +64,8 @@ import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from
 import { CountryInput } from '@/components/CountryInput';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import SharedBoolToggle from '@/components/BoolToggle';
-import { ClearButton } from '@/components/ClearButton';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
 import type { RoundFormat } from '@cuberoot/shared/timer';
 import {
   TIMER_ACTIONS,
@@ -128,28 +117,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<TimerSettingCategoryId>('timer');
-  const dialogRef = useRef<HTMLDivElement | null>(null);
-  const mainRef = useRef<HTMLElement | null>(null);
-  const categoryIcons = {
-    timer: TimerIcon,
-    'smart-cube': Bluetooth,
-    scramble: Dices,
-    training: Trophy,
-    appearance: Palette,
-    sound: Volume2,
-    data: Database,
-    advanced: Keyboard,
-  } as const;
-  const categories = TIMER_SETTING_CATEGORY_CONTRACTS.map((category) => ({
-    id: category.id,
-    label: tr(category.label),
-    icon: categoryIcons[category.id],
-  }));
-  const activeCategoryMeta = categories.find((category) => category.id === activeCategory)!;
-  useModalDismiss(onClose);
-  useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0 });
-  }, [activeCategory]);
   const [seedTick, setSeedTick] = useState(0);
   const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
@@ -259,36 +226,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
       if (tapResetTimerRef.current !== null) window.clearTimeout(tapResetTimerRef.current);
     };
   }, []);
-
-  useEffect(() => {
-    const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    dialogRef.current?.focus({ preventScroll: true });
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || !dialogRef.current) return;
-      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
-      )).filter((element) => !element.hasAttribute('hidden') && element.getClientRects().length > 0);
-      if (focusable.length === 0) {
-        e.preventDefault();
-        dialogRef.current.focus();
-        return;
-      }
-      const first = focusable[0]!;
-      const last = focusable[focusable.length - 1]!;
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      previouslyFocused?.focus({ preventScroll: true });
-    };
-  }, [onClose]);
 
   // ── External timer import state ──
   const timerFileRef = useRef<HTMLInputElement | null>(null);
@@ -663,67 +600,8 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   }
 
   return (
-    <div className="timer-modal-overlay" onClick={onClose}>
-      <div
-        ref={dialogRef}
-        className="timer-modal settings-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-modal-title"
-        tabIndex={-1}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="settings-modal-head">
-          <div>
-            <h2 id="settings-modal-title">{tr({ zh: '设置', en: 'Settings' })}</h2>
-          </div>
-          <ClearButton
-            variant="standalone"
-            className="settings-modal-close"
-            onClick={onClose}
-            ariaLabel={tr({ zh: '关闭设置', en: 'Close settings' })}
-          />
-        </header>
-
-        <div className="settings-layout">
-          <aside className="settings-category-rail" aria-label={tr({ zh: '设置分类', en: 'Settings categories' })}>
-            <nav className="settings-category-nav">
-              {categories.map((category) => {
-                const Icon = category.icon;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    className="settings-category-button"
-                    data-active={activeCategory === category.id ? 'true' : undefined}
-                    aria-current={activeCategory === category.id ? 'page' : undefined}
-                    onClick={() => setActiveCategory(category.id)}
-                  >
-                    <Icon size={16} aria-hidden />
-                    <span>{category.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-            <label className="settings-category-picker">
-              <span>{tr({ zh: '分类', en: 'Category' })}</span>
-              <select
-                className="settings-category-select"
-                value={activeCategory}
-                onChange={(event) => setActiveCategory(event.target.value as TimerSettingCategoryId)}
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>{category.label}</option>
-                ))}
-              </select>
-            </label>
-          </aside>
-
-          <main ref={mainRef} className="settings-main">
-            <div className="settings-category-intro">
-              <h3>{activeCategoryMeta.label}</h3>
-            </div>
-
+    <TimerSettingsPanel language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'}
+      activeCategory={activeCategory} onCategoryChange={setActiveCategory} onClose={onClose}>
             {activeCategory === 'appearance' && (
               <div
                 className="settings-appearance-preview"
@@ -1338,40 +1216,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '外观', en: 'Appearance'
         })}
         >
-          <SettingRow id="settings.appearance.timer-font">
-            <TimerFontPicker
-              value={s.timerFont}
-              onChange={(id) => updateSettings({ timerFont: id })}
-            />
-          </SettingRow>
-          <SettingRow id="settings.appearance.timer-font-scale">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0.5} max={2} step={0.05}
-              value={s.timerFontScale}
-              onChange={(e) => updateSettings({ timerFontScale: Number(e.target.value) })}
-            />
-            <span className="hint">{s.timerFontScale.toFixed(2)}×</span>
-          </SettingRow>
-          <SettingRow id="settings.appearance.scramble-font">
-            <TimerFontPicker
-              value={s.scrambleFont}
-              onChange={(id) => updateSettings({ scrambleFont: id })}
-              ariaLabel={tr({ zh: '打乱字体', en: 'Scramble font' })}
-              preview="R U R' F2"
-              options={['liberation', 'mono', 'sans']}
-              previewWeight={400}
-            />
-          </SettingRow>
-          <SettingRow id="settings.appearance.scramble-font-scale">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0.6} max={2.5} step={0.05}
-              value={s.scrambleFontScale}
-              onChange={(e) => updateSettings({ scrambleFontScale: Number(e.target.value) })}
-            />
-            <span className="hint">{s.scrambleFontScale.toFixed(2)}×</span>
-          </SettingRow>
+          <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
           <BooleanSettingRow
             id="settings.appearance.compact-scramble"
             value={s.compactScramble}
@@ -1519,10 +1364,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               />
             </div>
         </SettingsSection>
-          </main>
-        </div>
-      </div>
-    </div>
+    </TimerSettingsPanel>
   );
 }
 

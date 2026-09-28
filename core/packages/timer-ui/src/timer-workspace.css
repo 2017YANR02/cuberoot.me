@@ -1,0 +1,39 @@
+/* Web and installed apps share page width, dock size and the viewport budget.
+ * Hosts supply navigation offsets; timer canvas geometry stays in TimingSurface. */
+.timer-workspace.timer-workspace {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+.timer-workspace-main { flex: 1; min-width: 0; min-height: 0; }
+.timer-workspace-panel { min-width: 0; min-height: 0; }
+@media (min-width: 1024px) {
+  .timer-workspace.timer-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas: 'topbar panel' 'main panel';
+    height: var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)));
+    overflow: hidden;
+  }
+  .timer-workspace[data-panel-open] { grid-template-columns: minmax(0, 1fr) 360px; }
+  .timer-workspace[data-recap-open] { grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px); }
+  .timer-workspace > .shell-topbar { grid-area: topbar; }
+  .timer-workspace-main { grid-area: main; }
+  .timer-workspace-main--with-toolbar { grid-row: 1 / -1; }
+  .timer-workspace-panel {
+    grid-area: panel;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--shell-divider);
+    background: var(--background);
+    overflow: hidden;
+  }
+  .timer-workspace-panel-body { flex: 1; min-height: 0; overflow: auto; overscroll-behavior: contain; }
+  .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
+  .shell-recap-rail > .shell-recap { flex: 1; min-width: 0; height: 100%; border-top: 0; }
+  .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
+  .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

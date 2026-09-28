@@ -108,7 +108,6 @@ import {
   stepMetricsFor,
   stepPuzzleOf,
   stageLabel,
-  stageSegmentsFor,
   timerByStepsIdentity,
   timerByStepsFilter,
   canTrainerDifficulty,
@@ -159,6 +158,7 @@ import {
   type TimerPhase,
   type TimerStoreData,
   type TimerStoreSettings,
+  type TimerSettingCategoryId,
   type TimerAttemptSplitState,
   type TimerByStepsSettings,
   type TimerRandomDifficultyResult,
@@ -214,9 +214,14 @@ import {
   TimerSessionSwitcher,
   timerSessionSwitcherLabels,
   TimerStatRail,
+  TimerStageLayout,
   TimerStatsPanel,
   TimerRollingStatsPicker,
   TimerBooleanSettingRow,
+  TimerWorkspace,
+  useTimerWideLayout,
+  TimerTypographySettings,
+  TimerSettingsPanel,
   TimerTimingSettingsSections,
   TimerTopbar,
   TimerWcaSourceConfig,
@@ -367,7 +372,6 @@ interface RealPoolRequest {
   cancel(): void;
   promise: Promise<TimerRealScrambleRetryOutcome<RealScramble[]>>;
 }
-
 
 function siteUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh` : `${SITE_ORIGIN}/`;
@@ -523,8 +527,18 @@ export function App({ host }: { host: InstalledAppHost }) {
   const recapAttemptRevisionRef = useRef(0);
   const [loadError, setLoadError] = useState<Error | null>(null);
   const [view, setView] = useState<AppView>('timer');
+  const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
+  const wideLayout = useTimerWideLayout();
+  const dockHistory = wideLayout && view === 'history' && timerMode === 1;
+  const timerVisible = view === 'timer' || view === 'settings' || dockHistory;
+  const timerVisibleRef = useRef(timerVisible);
+  timerVisibleRef.current = timerVisible;
   const [battleModeActive, setBattleModeActive] = useState(false);
+  const battleOverlayCloseRef = useRef<(() => void) | null>(null);
+  const onBattleOverlayCloseChange = useCallback((close: (() => void) | null) => {
+    battleOverlayCloseRef.current = close;
+  }, []);
   const [openedWebViews, setOpenedWebViews] = useState({ tools: false, account: false });
   const [toolsEntryRoute, setToolsEntryRoute] = useState<string | null>(null);
   const [webSurfaceStatus, setWebSurfaceStatus] = useState<Record<MobileEmbedSurface, WebSurfaceStatus>>({
@@ -798,22 +812,22 @@ export function App({ host }: { host: InstalledAppHost }) {
   const randomOptimalSourceRef = useRef(randomOptimalSource);
   randomOptimalSourceRef.current = randomOptimalSource;
   useEffect(() => {
-    if (view !== 'timer' || !randomOptimalSource) {
+    if (!timerVisible || !randomOptimalSource) {
       releaseOptimal333();
       return;
     }
     prefetchOptimal333(randomOptimalSource);
     return () => releaseOptimal333();
-  }, [randomOptimalKey, randomOptimalSource, view]);
+  }, [randomOptimalKey, randomOptimalSource, timerVisible]);
   useEffect(() => {
-    if (view !== 'timer') {
+    if (!timerVisible) {
       releaseMobileRandomDifficulty();
       return;
     }
     const spec = randomDifficultySpecRef.current;
     if (spec) prefetchMobileRandomDifficulty(spec);
     else releaseMobileRandomDifficulty();
-  }, [randomDifficultySignature, view]);
+  }, [randomDifficultySignature, timerVisible]);
   const optimalAvailable = scrambleSource === 'wca'
     ? timerWcaSupportsOptimal(timerWcaScrambleEventId(activeEvent))
     : randomOptimalAvailable;
@@ -1853,7 +1867,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         (openOverlay !== TIMER_OVERLAY_IDS.historyCompare || historyCompareReady)
         && (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
       )
-      : view === 'timer' && (
+      : timerVisible && (
         (openOverlay !== TIMER_OVERLAY_IDS.drillPicker
           || timerEventSupportsDrill(activeEvent))
         && (openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
@@ -1877,6 +1891,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     historyDetailSolve,
     openOverlay,
     scrambleSource,
+    timerVisible,
     view,
   ]);
 
@@ -2126,8 +2141,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useLayoutEffect(() => {
     const height = primaryNavRef.current?.getBoundingClientRect().height ?? 0;
-    setPrimaryNavBottomInset(height);
-  }, [fullscreen, storeLoaded, viewportHeight]);
+    setPrimaryNavBottomInset(wideLayout ? 0 : height);
+  }, [fullscreen, storeLoaded, viewportHeight, wideLayout]);
 
   useEffect(() => {
     const onMessage = (event: MessageEvent) => {
@@ -2245,7 +2260,11 @@ export function App({ host }: { host: InstalledAppHost }) {
     let removeListener: (() => Promise<void>) | undefined;
     void host.addBackButtonListener(() => {
       const current = viewRef.current;
-      if (current === 'timer' && timerModeRef.current !== 1) {
+      if (current === 'timer' && timerModeRef.current !== 1 && openOverlayRef.current === null) {
+        if (battleOverlayCloseRef.current) {
+          battleOverlayCloseRef.current();
+          return;
+        }
         if (battleModeActiveRef.current) {
           announce(copy.finishAttemptFirst);
           return;
@@ -2409,23 +2428,17 @@ export function App({ host }: { host: InstalledAppHost }) {
     attemptRef.current = null;
     const sessionId = storeRef.current?.database.activeSessionId;
     if (!attempt || !sessionId) {
+      smartCubeAttemptProducerRef.current.reset();
       announce(copy.actionFailed);
       return;
     }
-    const attemptRecording = smartCubeAttemptProducerRef.current.finish();
-    const moves = attemptRecording.moves.length > 0 ? attemptRecording.moves : undefined;
-    const gyro = attemptRecording.gyro;
-    const device = attemptRecording.device;
     const { bld, stages } = splitResult;
     advanceDisplayedScramble();
     const revision = storeSnapshotGateRef.current.beginMutation();
     const solve: Omit<Solve, 'id' | 'ts'> = {
       ...(attempt.caseId ? { caseId: attempt.caseId } : {}),
-      ...(device ? { device } : {}),
       event: attempt.event,
       inspectionMs: result.inspectionMs || undefined,
-      ...(moves ? { moves } : {}),
-      ...(moves && gyro ? { gyro } : {}),
       ...(bld ? { bld } : {}),
       ...(stages ? { stages } : {}),
       penalty: result.autoPenalty,
@@ -2433,8 +2446,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       scrambleSource: attempt.scrambleSource,
       timeMs: result.timeMs,
     };
-    const stageSegments = stageSegmentsFor(solve);
-    if (stageSegments) solve.stageSegments = stageSegments;
+    Object.assign(solve, smartCubeAttemptProducerRef.current.finishSolveFields(solve));
     const ownerAtSaveStart = wcaAutoMarkOwnerKey(authSessionRef.current);
     const recapRevision = recapAttemptRevisionRef.current;
     const priorSolveIds = new Set((storeRef.current?.database.dataBySession[sessionId]?.[solve.event] ?? []).map((item) => item.id));
@@ -2487,7 +2499,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const timer = useTimerController({
     canStart: attemptCanStart,
-    enabled: view === 'timer'
+    enabled: view !== 'settings' && timerVisible
       && timerMode === 1
       && timingEnabled
       && !moreOpen
@@ -2624,7 +2636,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     ? { model: smartCube.model ?? 'gan-v4', name: smartCube.deviceName }
     : undefined;
   useAutoReady({
-    enabled: view === 'timer' && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
+    enabled: view !== 'settings' && timerVisible && timerMode === 1 && smartCube.phase === 'connected' && timingEnabled
       && attemptCanStart
       && !moreOpen && !manualEntryOpen && openOverlay === null
       && (timer.machine.phase === 'idle' || timer.machine.phase === 'inspecting' || timer.machine.phase === 'stopped')
@@ -2726,17 +2738,13 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [smartCube]);
 
   const openSmartCubeDevice = useCallback(() => {
-    if (!timerSupportsSmartCubeAutoTiming(activeEvent)) {
-      announce(copy.smartCubeOnly333);
-      return;
-    }
     openOverlayRef.current = TIMER_OVERLAY_IDS.smartCubeDevice;
     setOpenOverlay(TIMER_OVERLAY_IDS.smartCubeDevice);
     if (smartCube.phase === 'idle' || smartCube.phase === 'error') {
       if (smartCube.scanDevices) void scanSmartCubes().catch(() => undefined);
       else void connectSmartCube().catch(() => undefined);
     }
-  }, [activeEvent, announce, connectSmartCube, copy.smartCubeOnly333, scanSmartCubes, smartCube]);
+  }, [connectSmartCube, scanSmartCubes, smartCube]);
 
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
@@ -3067,6 +3075,21 @@ export function App({ host }: { host: InstalledAppHost }) {
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
   const recapSolve = solves.find((solve) => solve.id === recapSolveId) ?? null;
+  const solveRecap = recapSolve && (
+    <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
+      <SolveRecap
+        key={recapSolve.id}
+        history={solves}
+        host={reconstructionHost}
+        isZh={language === 'zh'}
+        onDismiss={() => setRecapSolveId(null)}
+        onFull={() => { setView('history'); openHistorySolveDetail(recapSolve); }}
+        onReconFeedback={(reconOk) => updateSolve(recapSolve, { reconOk })}
+        onUseScramble={useReconstructionScramble}
+        solve={recapSolve}
+      />
+    </Suspense>
+  );
 
   const updateHistoryFilter = useCallback(<Key extends keyof TimerHistoryFilters,>(
     key: Key,
@@ -3429,7 +3452,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => {
     const modalState = () => (
-      viewRef.current !== 'timer'
+      viewRef.current === 'settings'
+      || !timerVisibleRef.current
       || openOverlayRef.current !== null
       || moreOpenRef.current
       || manualEntryOpenRef.current
@@ -3562,7 +3586,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const { wheelRef: gestureWheelRef } = useGestureWheel({
     active: storeLoaded
-      && view === 'timer'
+      && view !== 'settings'
+      && timerVisible
       && openOverlay === null
       && !moreOpen
       && !manualEntryOpen,
@@ -3612,11 +3637,52 @@ export function App({ host }: { host: InstalledAppHost }) {
     scrambleReady,
     scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
   );
+  const smartCubeDeviceCenter = (
+    <TimerDeviceCenter
+      ariaLabel={copy.connectBluetooth}
+      items={timerDeviceRegistry.list()
+        .filter((device) => device.kind === 'smart-cube')
+        .map((device) => ({
+          active: smartCube.phase === 'connected',
+          detail: smartCube.phase === 'connected'
+            ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+            : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
+              ? copy.connectingBluetooth
+              : undefined,
+          id: device.id,
+          kind: device.kind,
+          label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
+          onSelect: openSmartCubeDevice,
+        }))}
+      menuLabel={copy.connectBluetooth}
+      triggerLabel={copy.connect}
+    />
+  );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
+  const viewHeader = (
+    <header className="app-titlebar">
+      <strong>{view === 'history' ? copy.history : copy.settings}</strong>
+      <button
+        aria-label={copy.close}
+        className="app-titlebar-close"
+        onClick={() => {
+          if (view === 'history') closeHistoryCompare();
+          setView('timer');
+        }}
+        type="button"
+      ><X aria-hidden="true" size={20} /></button>
+      <span
+        aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
+        className={`network network--${connection}`}
+        role="status"
+      />
+    </header>
+  );
 
   return (
     <main
-      className={`app-shell app-shell--${view}${shellViewport.classNameSuffix}${view === 'timer' && timerMode === 1 ? ' app-shell--device-footer' : ''}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      data-wide={wideLayout ? 'true' : undefined}
       style={shellViewport.style}
     >
       <TimerPrintController
@@ -3646,29 +3712,13 @@ export function App({ host }: { host: InstalledAppHost }) {
         solves={solves}
         transport={host.print}
       />
-      {(view === 'history' || view === 'settings') && (
-        <header className="app-titlebar">
-          <strong>{view === 'history' ? copy.history : copy.settings}</strong>
-          <button
-            aria-label={copy.close}
-            className="app-titlebar-close"
-            onClick={() => {
-              if (view === 'history') closeHistoryCompare();
-              setView('timer');
-            }}
-            type="button"
-          ><X aria-hidden="true" size={20} /></button>
-          <span
-            aria-label={connection === 'checking' ? copy.checking : connection === 'online' ? copy.online : copy.offline}
-            className={`network network--${connection}`}
-            role="status"
-          />
-        </header>
+      {!dockHistory && view === 'history' && (
+        viewHeader
       )}
 
-      <div className="view-container">
-        {view === 'timer' && timerMode === 1 && (
-          <section className="timer-view" aria-labelledby="timer-title">
+      <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible} panelOpen={dockHistory} recap={solveRecap}>
+        {timerVisible && timerMode === 1 && (
+          <section className="timer-view timer-workspace-main timer-workspace-main--with-toolbar" aria-labelledby="timer-title">
             <h1 className="sr-only" id="timer-title">{copy.timer}</h1>
             <TimerTopbar
               actions={(
@@ -3687,7 +3737,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     className="timer-toolbar-icon"
                     data-no-timer
                     disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                    onClick={() => setView('settings')}
+                    onClick={() => { setSettingsCategory('timer'); setView('settings'); }}
                     type="button"
                   ><SettingsIcon aria-hidden="true" size={17} /></button>
                 </>
@@ -3752,106 +3802,82 @@ export function App({ host }: { host: InstalledAppHost }) {
                 </>
               )}
             />
-            {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-wca-source-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerWcaSourceConfig
-                  adapter={wcaSourceAdapter}
-                  competitionDisplayName={(competitionId, canonicalName) => (
-                    displayMobileWcaCompetitionName(competitionId, canonicalName, language)
-                  )}
-                  disabled={!sourceControlsEnabled}
-                  labels={wcaSourceLabels}
-                  maxDate={toLocalIsoDate()}
-                  minDate={TIMER_WCA_MIN_DATE}
-                  onChange={updateWcaSourceSettings}
-                  onOpenChange={handleTimerOverlayOpenChange}
-                  open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}
-                  renderCountry={(country) => <Flag iso2={country} />}
-                  renderDateRange={(props) => (
-                    <DateRangeInput
-                      ariaLabel={props.ariaLabel}
-                      className="mobile-wca-date-range"
-                      disabled={props.disabled}
-                      from={props.from}
-                      labels={dateRangeLabels}
-                      max={props.max}
-                      min={props.min}
-                      onChange={props.onChange}
-                      size="compact"
-                      to={props.to}
+            <TimerStageLayout
+              className="mobile-timer-stage"
+              fullscreen={fullscreen}
+              source={<>
+                {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-wca-source-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <TimerWcaSourceConfig
+                      adapter={wcaSourceAdapter}
+                      competitionDisplayName={(competitionId, canonicalName) => (
+                        displayMobileWcaCompetitionName(competitionId, canonicalName, language)
+                      )}
+                      disabled={!sourceControlsEnabled}
+                      labels={wcaSourceLabels}
+                      maxDate={toLocalIsoDate()}
+                      minDate={TIMER_WCA_MIN_DATE}
+                      onChange={updateWcaSourceSettings}
+                      onOpenChange={handleTimerOverlayOpenChange}
+                      open={openOverlay === TIMER_OVERLAY_IDS.wcaCompetition}
+                      renderCountry={(country) => <Flag iso2={country} />}
+                      renderDateRange={(props) => (
+                        <DateRangeInput
+                          ariaLabel={props.ariaLabel}
+                          className="mobile-wca-date-range"
+                          disabled={props.disabled}
+                          from={props.from}
+                          labels={dateRangeLabels}
+                          max={props.max}
+                          min={props.min}
+                          onChange={props.onChange}
+                          size="compact"
+                          to={props.to}
+                        />
+                      )}
+                      roundLabel={timerWcaRoundShortLabel}
+                      settings={wcaSourceSettings}
+                      trailingControls={(
+                        <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
+                      )}
+                      wcaEventId={timerWcaScrambleEventId(activeEvent)}
                     />
-                  )}
-                  roundLabel={timerWcaRoundShortLabel}
-                  settings={wcaSourceSettings}
-                  trailingControls={(
-                    <span className="mobile-wca-shared-controls" ref={setWcaTopControlsSlot} />
-                  )}
-                  wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                />
-                <TimerWcaDifficultyConfig
-                  adapter={mobileTimerWcaDifficultyAdapter}
-                  disabled={!sourceControlsEnabled}
-                  language={language}
-                  labels={wcaDifficultyLabels}
-                  onChange={updateWcaSourceSettings}
-                  onCoverageChange={setWcaDifficultyCoverage}
-                  settings={wcaSourceSettings}
-                  topControlsSlot={wcaTopControlsSlot}
-                  toggleSlot={wcaDifficultyToggleSlot}
-                  wcaEventId={timerWcaScrambleEventId(activeEvent)}
-                />
-              </fieldset>
-            )}
-            {scrambleSource === 'random' && canTrainerDifficulty(activeEvent) && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-random-difficulty-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerRandomDifficultyConfig
-                  disabled={!sourceControlsEnabled}
-                  language={language}
-                  onChange={updateRandomDifficultySettings}
-                  settings={randomDifficultySettings}
-                  toggleSlot={wcaDifficultyToggleSlot}
-                />
-              </fieldset>
-            )}
-            {activeEvent === '222' && scrambleSource !== 'manual' && scramble222Type !== 'full' && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-scramble-222-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerScramble222Config
-                  active222
-                  disabled={!sourceControlsEnabled}
-                  labels={scramble222Labels}
-                  mode={scramble222Mode}
-                  onModeChange={updateScramble222Mode}
-                  onTypeChange={updateScramble222Type}
-                  showLabel={false}
-                  showModeWithSpecialType={scrambleSource === 'wca'}
-                  showSpecialTypes
-                  type={scramble222Type}
-                  typeOptions={scrambleSource === 'random'
-                    ? SCRAMBLE_222_TYPES
-                    : WCA_SCRAMBLE_222_TYPES}
-                />
-              </fieldset>
-            )}
-            {scrambleSource !== 'manual'
-              && stepPuzzleOf(activeEvent)
-              && (activeEvent !== '222' || scramble222Type === 'full') && (
-              <fieldset
-                className="mobile-scramble-source-config mobile-scramble-222-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <TimerByStepsConfig
-                  disabled={!sourceControlsEnabled}
-                  event={activeEvent}
-                  extraTopRow={activeEvent === '222' ? (
+                    <TimerWcaDifficultyConfig
+                      adapter={mobileTimerWcaDifficultyAdapter}
+                      disabled={!sourceControlsEnabled}
+                      language={language}
+                      labels={wcaDifficultyLabels}
+                      onChange={updateWcaSourceSettings}
+                      onCoverageChange={setWcaDifficultyCoverage}
+                      settings={wcaSourceSettings}
+                      topControlsSlot={wcaTopControlsSlot}
+                      toggleSlot={wcaDifficultyToggleSlot}
+                      wcaEventId={timerWcaScrambleEventId(activeEvent)}
+                    />
+                  </fieldset>
+                )}
+                {scrambleSource === 'random' && canTrainerDifficulty(activeEvent) && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-random-difficulty-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <TimerRandomDifficultyConfig
+                      disabled={!sourceControlsEnabled}
+                      language={language}
+                      onChange={updateRandomDifficultySettings}
+                      settings={randomDifficultySettings}
+                      toggleSlot={wcaDifficultyToggleSlot}
+                    />
+                  </fieldset>
+                )}
+                {activeEvent === '222' && scrambleSource !== 'manual' && scramble222Type !== 'full' && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-scramble-222-config"
+                    disabled={!sourceControlsEnabled}
+                  >
                     <TimerScramble222Config
                       active222
                       disabled={!sourceControlsEnabled}
@@ -3867,67 +3893,103 @@ export function App({ host }: { host: InstalledAppHost }) {
                         ? SCRAMBLE_222_TYPES
                         : WCA_SCRAMBLE_222_TYPES}
                     />
-                  ) : undefined}
-                  labels={byStepsLabels}
-                  onChange={updateByStepsSettings}
-                  settings={byStepsSettings}
-                  source={scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
-                    ? 'wca'
-                    : 'random'}
+                  </fieldset>
+                )}
+                {scrambleSource !== 'manual'
+                  && stepPuzzleOf(activeEvent)
+                  && (activeEvent !== '222' || scramble222Type === 'full') && (
+                  <fieldset
+                    className="mobile-scramble-source-config mobile-scramble-222-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <TimerByStepsConfig
+                      disabled={!sourceControlsEnabled}
+                      event={activeEvent}
+                      extraTopRow={activeEvent === '222' ? (
+                        <TimerScramble222Config
+                          active222
+                          disabled={!sourceControlsEnabled}
+                          labels={scramble222Labels}
+                          mode={scramble222Mode}
+                          onModeChange={updateScramble222Mode}
+                          onTypeChange={updateScramble222Type}
+                          showLabel={false}
+                          showModeWithSpecialType={scrambleSource === 'wca'}
+                          showSpecialTypes
+                          type={scramble222Type}
+                          typeOptions={scrambleSource === 'random'
+                            ? SCRAMBLE_222_TYPES
+                            : WCA_SCRAMBLE_222_TYPES}
+                        />
+                      ) : undefined}
+                      labels={byStepsLabels}
+                      onChange={updateByStepsSettings}
+                      settings={byStepsSettings}
+                      source={scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
+                        ? 'wca'
+                        : 'random'}
+                    />
+                  </fieldset>
+                )}
+                {scrambleSource === 'manual' && (
+                  <fieldset
+                    className="mobile-scramble-source-config"
+                    disabled={!sourceControlsEnabled}
+                  >
+                    <ManualScrambleQueueEditor
+                      ariaLabel={copy.manualScrambles}
+                      onChange={updateManualScrambles}
+                      value={manualScrambles}
+                    />
+                  </fieldset>
+                )}
+                  </>}
+              statistics={
+                <TimerStatRail
+                  disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
+                  language={language}
+                  summary={stats}
+                  onClick={() => setView('history')}
                 />
-              </fieldset>
-            )}
-            {scrambleSource === 'manual' && (
-              <fieldset
-                className="mobile-scramble-source-config"
-                disabled={!sourceControlsEnabled}
-              >
-                <ManualScrambleQueueEditor
-                  ariaLabel={copy.manualScrambles}
-                  onChange={updateManualScrambles}
-                  value={manualScrambles}
-                />
-              </fieldset>
-            )}
-            <div className="mobile-timer-stage">
+              }
+              devices={smartCubeDeviceCenter}
+            >
               <TimingSurface
                 ariaLabel={copy.timer}
-                colorClass={timerColorClass}
+                colorClass={`${timerColorClass} tf-${store!.settings.timerFont}`}
+                fontScale={store!.settings.timerFontScale}
                 cornerSlot={smartCube.phase === 'connected' ? (
-                  <div className="mobile-cube-preview mobile-live-cube" data-no-timer>
-                    <div className="timer-live-cube">
-                      <LiveCubeState
-                        algAnchored={smartCubeAnchor.algAnchored}
-                        calibrateToken={smartCubeCalibration}
-                        facelets={smartCube.facelets || null}
-                        language={language}
-                        mode={store!.settings.liveCubeView}
-                        moves={[...smartCubeAnchor.moves]}
-                        onViewChange={setSmartCubeRenderedView}
-                        useGyro={store!.settings.gyroEnabled}
-                        quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
-                      />
-                    </div>
-                  </div>
-                ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
-                  <div className="mobile-cube-preview" data-no-timer>
-                    <TimerCubePreview
-                      ariaLabel={copy.cubeState}
-                      event={activeEvent}
-                      fill
-                      scramble={scramble}
-                      visualization={store!.settings.prefer3D ? '3D' : '2D'}
+                  <div className="timer-live-cube">
+                    <LiveCubeState
+                      algAnchored={smartCubeAnchor.algAnchored}
+                      calibrateToken={smartCubeCalibration}
+                      facelets={smartCube.facelets || null}
+                      language={language}
+                      mode={store!.settings.liveCubeView}
+                      moves={[...smartCubeAnchor.moves]}
+                      onViewChange={setSmartCubeRenderedView}
+                      useGyro={store!.settings.gyroEnabled}
+                      quatRef={store!.settings.gyroEnabled ? smartCubeQuatRef : undefined}
                     />
                   </div>
+                ) : store!.settings.showCubePreview && scrambleReady && scramble.length > 0 ? (
+                  <TimerCubePreview
+                    ariaLabel={copy.cubeState}
+                    event={activeEvent}
+                    fill
+                    scramble={scramble}
+                    visualization={store!.settings.prefer3D ? '3D' : '2D'}
+                  />
                 ) : undefined}
                 digits={<SegmentTime text={timerText} />}
-                fontSize="clamp(4.8rem, 24vw, 8.5rem)"
+                layout="solo"
                 interactive={scrambleReady}
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
-                scrambleAbove
                 scrambleSlot={(
                   <TimerScrambleStrip
+                    font={store!.settings.scrambleFont}
+                    fontScale={store!.settings.scrambleFontScale}
                     copiedLabel={copy.copied}
                     correctionActive={smartCubeGuidance.correctionActive}
                     fallback={scrambleText}
@@ -4058,34 +4120,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
               </TimingSurface>
-              {recapSolve && (
-                <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
-                  <SolveRecap
-                    history={solves}
-                    host={reconstructionHost}
-                    isZh={language === 'zh'}
-                    onDismiss={() => setRecapSolveId(null)}
-                    onFull={() => { setView('history'); openHistorySolveDetail(recapSolve); }}
-                    onReconFeedback={(reconOk) => updateSolve(recapSolve, { reconOk })}
-                    onUseScramble={useReconstructionScramble}
-                    solve={recapSolve}
-                  />
-                </Suspense>
-              )}
-              <TimerStatRail
-                disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
-                emptyLabel={copy.times}
-                items={stats.count > 0 ? [
-                  { label: copy.solved, value: `${stats.solved}/${stats.count}` },
-                  { label: 'mean', value: stats.mean },
-                  { label: copy.best, value: stats.best },
-                  { label: 'mo3', value: stats.mo3 },
-                  { label: 'ao5', value: stats.ao5 },
-                  { label: 'ao12', value: stats.ao12 },
-                ] : []}
-                onClick={() => setView('history')}
-                title={copy.openTimes}
-              />
+              {!wideLayout && solveRecap}
+
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
                 <TimerDrillPicker
                   activeCase={effectiveDrillTarget}
@@ -4105,18 +4141,22 @@ export function App({ host }: { host: InstalledAppHost }) {
                 phase={timer.machine.phase}
                 scramble={scramble}
               />
-            </div>
+            </TimerStageLayout>
           </section>
         )}
 
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (
           <LocalBattleMode
+            onSettingsChange={updateSettings}
+            onOverlayCloseChange={onBattleOverlayCloseChange}
             copy={copy}
             eventGroups={eventPickerGroups}
             hideTime={hideRunningTime}
             holdMs={store!.settings.holdMs}
             inspectionSec={store!.settings.inspectionSec}
             language={language}
+            deviceControls={smartCubeDeviceCenter}
+            inputBlocked={openOverlay !== null}
             onActivityChange={setBattleModeActive}
             onModeChange={(mode) => {
               timerModeRef.current = mode;
@@ -4124,6 +4164,8 @@ export function App({ host }: { host: InstalledAppHost }) {
             }}
             onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             playerCount={timerMode as 2 | 3 | 4}
+            typographySettings={store!.settings}
+            scramblePreviewSettings={store!.settings}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
             smartCube={smartCube}
@@ -4132,6 +4174,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
         {view === 'timer' && timerMode === 'net' && (
           <NetBattleMode
+            onOverlayCloseChange={onBattleOverlayCloseChange}
             accountIdentity={auth.session ? {
               name: auth.session.user.name || `#${auth.session.user.uid}`,
               wcaId: auth.session.user.wcaId || undefined,
@@ -4143,6 +4186,8 @@ export function App({ host }: { host: InstalledAppHost }) {
             holdMs={store!.settings.holdMs}
             inspectionSec={store!.settings.inspectionSec}
             language={language}
+            deviceControls={smartCubeDeviceCenter}
+            inputBlocked={openOverlay !== null}
             onActivityChange={setBattleModeActive}
             onModeChange={(mode) => {
               timerModeRef.current = mode;
@@ -4151,6 +4196,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             onSmartCubeHandlersChange={setBattleSmartCubeHandlers}
             precision={resultPrecision}
             runningPrecision={runningPrecision}
+            typographySettings={store!.settings}
             scramblePreviewSettings={store!.settings}
             smartCube={smartCube}
             writeClipboardText={host.writeClipboardText}
@@ -4231,7 +4277,9 @@ export function App({ host }: { host: InstalledAppHost }) {
         })}
 
         {view === 'history' && (
-          <section className="history-view" aria-labelledby="history-title">
+          <section className="history-view timer-workspace-panel" aria-labelledby="history-title" data-no-timer>
+            {dockHistory && viewHeader}
+            <div className="timer-workspace-panel-body">
             <header className="section-heading">
               <h1 id="history-title">{copy.history}</h1>
               <span>{solves.length}</span>
@@ -4509,16 +4557,23 @@ export function App({ host }: { host: InstalledAppHost }) {
                 ) : undefined}
               />
             )}
+            </div>
           </section>
         )}
 
         {view === 'settings' && (
-          <section className="settings-view" aria-labelledby="settings-title">
-            <h1 id="settings-title">{copy.settings}</h1>
+          <TimerSettingsPanel language={language} activeCategory={settingsCategory}
+            onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
+            categories={[
+              'timer', 'smart-cube', 'appearance', 'data', 'advanced',
+              ...(activeEvent !== '222' || scrambleSource === 'wca' ? ['scramble' as const] : []),
+              ...(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent) ? ['training' as const] : []),
+            ]}>
+            {settingsCategory === 'appearance' && <>
             <div className="settings-group">
-              <label className="setting-row">
-                <span>{copy.language}</span>
-                <select
+              <label className="settings-row">
+                <span className="settings-row-label">{copy.language}</span>
+                <select className="settings-row-control-select"
                   onChange={(event) => updateSettings({ language: event.target.value as SupportedLanguage })}
                   value={store!.settings.language}
                 >
@@ -4526,9 +4581,9 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <option value="zh">简体中文</option>
                 </select>
               </label>
-              <label className="setting-row">
-                <span>{copy.theme}</span>
-                <select
+              <label className="settings-row">
+                <span className="settings-row-label">{copy.theme}</span>
+                <select className="settings-row-control-select"
                   onChange={(event) => updateSettings({ theme: event.target.value as TimerStoreSettings['theme'] })}
                   value={store!.settings.theme}
                 >
@@ -4539,7 +4594,10 @@ export function App({ host }: { host: InstalledAppHost }) {
               </label>
             </div>
 
-            <TimerTimingSettingsSections
+            <TimerTypographySettings value={store!.settings} language={language} onChange={updateSettings} />
+
+            </>}
+            <TimerTimingSettingsSections active={settingsCategory === 'timer'}
               localize={(value) => value[language]}
               onChange={updateSettings}
               renderBooleanControl={({ disabled, label, onChange, value }) => (
@@ -4553,6 +4611,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               value={store!.settings}
             />
 
+            {settingsCategory === 'smart-cube' && <>
             <section className="settings-section">
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => category.id === 'smart-cube')?.label[language]}</h2>
               <TimerSmartCubeSettingsFields
@@ -4565,7 +4624,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               />
             </section>
 
-            {(activeEvent !== '222' || scrambleSource === 'wca') && (
+            </>}
+            {settingsCategory === 'scramble' && (activeEvent !== '222' || scrambleSource === 'wca') && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'scramble'
@@ -4616,7 +4676,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
-            {(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
+            {settingsCategory === 'training' && (timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'training'
@@ -4638,6 +4698,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
+            {settingsCategory === 'appearance' && <>
             <section className="settings-section">
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                 category.id === 'appearance'
@@ -4657,6 +4718,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               />
             </section>
 
+            </>}
+            {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.account}</h2>
               {auth.loading ? <p>{copy.checking}</p> : auth.session ? (
@@ -4707,6 +4770,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               {auth.error ? <p role="alert">{copy.authError}</p> : null}
             </div>
 
+            </>}
+            {settingsCategory === 'data' && <>
             <div className="settings-section">
               <h2>{copy.data}</h2>
               <p>{solves.length} {copy.dataCount}</p>
@@ -4722,6 +4787,8 @@ export function App({ host }: { host: InstalledAppHost }) {
               </div>
             </div>
 
+            </>}
+            {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.fullSite}</h2>
               <p>{copy.fullSiteDetail}</p>
@@ -4737,9 +4804,10 @@ export function App({ host }: { host: InstalledAppHost }) {
               <a className="site-link" href="mailto:yrmfxc@gmail.com">{copy.support}</a>
               <span>{copy.version} {host.version}</span>
             </div>
-          </section>
+            </>}
+          </TimerSettingsPanel>
         )}
-      </div>
+      </TimerWorkspace>
 
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
@@ -4769,28 +4837,6 @@ export function App({ host }: { host: InstalledAppHost }) {
             protocol: smartCube.status?.protocol ?? smartCube.model,
             solved: smartCube.solved,
           }}
-        />
-      )}
-
-      {view === 'timer' && timerMode === 1 && (
-        <TimerDeviceCenter
-          ariaLabel={copy.connectBluetooth}
-          items={timerDeviceRegistry.list()
-            .filter((device) => device.kind === 'smart-cube')
-            .map((device) => ({
-              active: smartCube.phase === 'connected',
-              detail: smartCube.phase === 'connected'
-                ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
-                : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
-                  ? copy.connectingBluetooth
-                  : undefined,
-              id: device.id,
-              kind: device.kind,
-              label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
-              onSelect: openSmartCubeDevice,
-            }))}
-          menuLabel={copy.connectBluetooth}
-          triggerLabel={copy.connect}
         />
       )}
 

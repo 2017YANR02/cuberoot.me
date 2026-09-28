@@ -36,16 +36,18 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(solo).toContain('smartCubeAttemptProducerRef.current.recordMove(');
     expect(solo).not.toMatch(/movesRef|solveStartTsRef/);
     for (const source of [net]) {
-      expect(source).toContain('new TimerSmartCubeMoveRecorder()');
-      expect(source).toContain('moveRecorderRef.current.begin(');
-      expect(source).toContain('moveRecorderRef.current.record(');
+      expect(source).toContain('new SmartCubeAttemptProducer()');
+      expect(source).toContain('attemptProducerRef.current.begin(');
+      expect(source).toContain('attemptProducerRef.current.recordMove(');
+      expect(source).toContain('attemptProducerRef.current.finishSolveFields(');
       expect(source).not.toMatch(/movesRef|solveStartTsRef/);
     }
 
     const local = readFileSync(new URL('../app/[lang]/timer/_battle/useBattleCubes.ts', import.meta.url), 'utf8');
-    expect(local).toContain('new TimerSmartCubeMoveRecorder()');
-    expect(local).toContain('recorder.begin(p.startTime)');
-    expect(local).toContain('recorder.record(move, ts)');
+    expect(local).toContain('new SmartCubeAttemptProducer()');
+    expect(local).toContain('recorder.begin(p.startTime,');
+    expect(local).toContain('recorder.recordMove(move, ts)');
+    expect(local).toContain('recorder.finishSolveFields(solve)');
     expect(local).not.toMatch(/moves:\s*\[|t0:/);
   });
 
@@ -61,9 +63,9 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(net).toContain('publishLiveMove(move)');
     expect(net).toContain('cornerSlot={activePkLock ? ownLiveCubeSlot : selectedCubeSlot}');
     expect(net).toContain('className="net-pk-arena"');
-    expect(net).toContain('const selectedRemoteId = viewedCubePlayerId && viewedCubePlayerId !== pid');
-    expect(net).toContain('setViewedCubePlayerId(p.id)');
-    expect(css).toContain('.net-player.is-live-target:focus-visible');
+    expect(net).toContain('<TimerRoomPlayers');
+    expect(net).toContain('viewedPlayerId={viewedCubePlayerId}');
+    expect(net).toContain('onViewPlayer={setViewedCubePlayerId}');
     expect(net).toContain('useGyro={false}');
     expect(css).toContain("grid-template-areas: 'self opponent'");
     expect(css).toContain("'opponent'\n      'self'");

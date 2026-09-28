@@ -170,8 +170,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { useModalDismiss } from '@/hooks/useModalDismiss';",
     usage: "const backdropProps = useModalDismiss(onClose, saving);\n<div className=\"modal-backdrop\" {...backdropProps}>...</div>",
     category: 'hook',
-    zh: '挂载期 Escape 关闭并锁 body 滚动;返回的 props 展开到外部遮罩,支持点击和触摸关闭,内部操作或拖出不误关。disabled 在提交中暂时禁止关闭。',
-    en: 'Escape dismissal and body scroll lock while mounted. Spread returned props onto the backdrop for outside click/tap dismissal without closing on inside clicks or drag-out. disabled temporarily blocks dismissal during submission.',
+    zh: 'Web/App 共用 timer-ui 实现。挂载期 Escape 关闭并锁 body 滚动;返回的 props 展开到外部遮罩,支持点击和触摸关闭,内部操作或拖出不误关。disabled 在提交中暂时禁止关闭。',
+    en: 'Web/App share the timer-ui implementation. Escape dismissal and body scroll lock while mounted. Spread returned props onto the backdrop for outside click/tap dismissal without closing on inside clicks or drag-out. disabled temporarily blocks dismissal during submission.',
   },
   {
     name: 'useModalBackdrop',
@@ -179,8 +179,8 @@ export const CATALOG: UtilEntry[] = [
     imp: "import { useModalBackdrop } from '@/hooks/useModalDismiss';",
     usage: "const backdropProps = useModalBackdrop(onClose, saving);\n<div className=\"modal-backdrop\" {...backdropProps}>...</div>",
     category: 'hook',
-    zh: '已有键盘与滚动生命周期的弹窗复用此 hook,仅接入外部遮罩关闭。必须在遮罩上按下并点击才关闭,内部拖到外部不关闭。',
-    en: 'Backdrop dismissal for dialogs with an existing keyboard and scroll lifecycle. Pressing and clicking the backdrop closes; dragging from inside to outside does not.',
+    zh: 'Web/App 共用 timer-ui 实现。已有键盘与滚动生命周期的弹窗复用此 hook,仅接入外部遮罩关闭。必须在遮罩上按下并点击才关闭,内部拖到外部不关闭。',
+    en: 'Shared timer-ui backdrop dismissal for Web/App dialogs with an existing keyboard and scroll lifecycle. Pressing and clicking the backdrop closes; dragging from inside to outside does not.',
   },
   {
     name: 'useSingleLineSolve',

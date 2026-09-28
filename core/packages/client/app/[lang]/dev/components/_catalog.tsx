@@ -833,6 +833,13 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'ChatPanel',
+    import: "import { ChatPanel, useChat } from '@cuberoot/app-ui/chat';",
+    category: 'more',
+    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、纯文本消息、失败重试和可见性已读，宿主注入鉴权传输、语言和身份组件。样式从 @cuberoot/app-ui/chat.css 引入。',
+    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, plain-text messages, retry and visible-message read receipts. Hosts inject transport, language and identity rendering; import @cuberoot/app-ui/chat.css for styles.',
+  },
+  {
     name: 'RecordSectionsView',
     import: "import { RecordSectionsView } from '@/components/wca-stats/WcaStatView.views';",
     category: 'more',
@@ -1217,7 +1224,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'SearchInput',
-    import: "import { SearchInput } from '@/components/SearchInput';",
+    import: "import { SearchInput } from '@/components/SearchInput'; // @cuberoot/timer-ui/search-input",
     category: 'input',
     zh: 'IME 安全的受控文本搜索框:中文 / 日文输入法合成途中不写回外部 store,合成结束才提交,避免 nuqs / 节流 store 的重渲染打断拼音(把 bei 拼成乱码)。内置行内清除 ×。',
     en: 'IME-safe controlled text search box: during CJK composition it holds value locally and only commits on compositionend, so a nuqs / throttled-store re-render can’t corrupt the in-progress pinyin. Built-in inline clear ×.',
@@ -1462,7 +1469,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'WcaPersonPicker',
-    import: 'components/WcaPersonPicker.tsx',
+    import: '@cuberoot/timer-ui/wca-person-picker (Web adapter: components/WcaPersonPicker.tsx)',
     category: 'more',
     zh: '选手搜索选择器。默认本地索引最快,别传 searchFn(后端代理对中文 / 单字符返空)。',
     en: 'Cuber search / picker. The default local index is fastest — don’t pass searchFn (the backend proxy returns empty for Chinese / single chars).',
@@ -1527,8 +1534,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerDeviceCenter',
     import: "import { TimerDeviceCenter } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与五端 App 共用的设备中心触发器和能力列表；只显示宿主真实 adapter 注册的设备，统一入口、活动态、设备详情、键盘 Escape、点外关闭和焦点恢复。连接、权限和协议动作仍由宿主注入。',
-    en: 'The device-center trigger and capability list shared by Web and all five installed clients. It only shows devices registered by a real host adapter and owns the common trigger, active state, device detail, Escape/outside dismissal, and focus return. Hosts still inject connection, permission, and protocol actions.',
+    zh: 'Web 与五端 App 共用的设备中心触发器和能力列表；只显示宿主真实 adapter 注册的设备。已连接智能魔方时，点击入口直接打开操作窗口；未连接时显示设备列表。统一活动态、设备详情、键盘 Escape、点外关闭和焦点恢复。连接、权限和协议动作仍由宿主注入。',
+    en: 'The device-center trigger and capability list shared by Web and all five installed clients. It only shows devices registered by a real host adapter. When a smart cube is connected, the trigger opens its controls directly; otherwise it shows the device list. Active state, device detail, Escape/outside dismissal, and focus return are shared. Hosts still inject connection, permission, and protocol actions.',
   },
   {
     name: 'TimerScramble222Config',
@@ -1536,6 +1543,62 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: 'Web、Android 与 iOS 计时器共用的二阶打乱类型/口径受控 UI；类型下拉、WCA 11 步/最优胶囊、触摸拖动、键盘语义和窄屏布局只维护这一份。11 项随机类型与 10 项真题类型来自 @cuberoot/shared/timer；宿主只接持久化和双语标签。',
     en: 'The controlled 2x2 scramble type/style UI shared by the Web, Android, and iOS timers. Its type select, WCA 11-move/Optimal pill, pointer drag, keyboard semantics, and narrow layout live in one implementation. The 11 random and 10 real-WCA types come from @cuberoot/shared/timer; hosts only wire persistence and translated labels.',
+  },
+  {
+    name: 'TimerRoomPlayers',
+    import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity, TimerRoomRoundStatus } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的联机玩家列表及房间内容布局，统一房主、自己、在线状态、成绩、得分和姓名；宿主注入实况查看、改名及逐帧读数。',
+    en: 'Shared online roster and room layout with host/self markers, presence, results, scores, and names. Hosts inject live-cube selection, rename, and live readout updates.',
+  },
+  {
+    name: 'TimerBattlePlayer',
+    import: "import { TimerBattlePlayer, TimerBattleHistory, TimerBattleSettings, TimerBattleKeyBindings, TimerBattleCubeControls, TimerBattleToolbar } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 的玩家卡片，共用玩家名称、得分、胜者、项目操作区、中央计时内容和底部成绩操作。',
+    en: 'Shared player card with player name, score, winner state, event controls, timing content, and result actions for Web and installed apps.',
+  },
+  {
+    name: 'TimerBattleLayout',
+    import: "import { TimerBattleLayout, TimerBattleLayoutControls } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用的 2～4 人排布、并排/面对面切换、上排旋转和成对共用打乱；宿主注入玩家内容与设置回调。',
+    en: 'Shared 2–4 player arrangement, side-by-side/face-to-face controls, top-row rotation, and paired scramble rows for Web and installed apps. Hosts supply player content and settings callbacks.',
+  },
+  {
+    name: 'TimerPenaltyActions',
+    import: "import { TimerPenaltyActions } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 联机与五端 App 对战共用的 OK、+2、DNF 操作栏，统一选中态、44px 触控区域、键盘焦点和禁用状态；宿主负责更新成绩。',
+    en: 'Shared OK, +2, and DNF actions for Web online rooms and installed battles, with common selection, 44px touch targets, keyboard focus, and disabled states. Hosts update the result.',
+  },
+  {
+    name: 'TimerSettingsPanel',
+    import: "import { TimerSettingsPanel } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的计时设置窗口：宽屏左侧分类导航，720px 及以下使用分类下拉；窗口尺寸、滚动、焦点恢复和关闭交互由共享组件维护，宿主提供可用分类和设置内容。',
+    en: 'Shared timer settings dialog for Web and installed apps: a category rail on wide screens and a dropdown at 720px or below. Dialog geometry, scrolling, focus restoration and dismissal have one implementation; hosts supply supported categories and fields.',
+  },
+  {
+    name: 'TimerTypographySettings',
+    import: "import { TimerTypographySettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的计时、打乱字体预览和字号设置；字体资产由 timer-ui 打包，宿主只负责保存设置。',
+    en: 'Shared timer and scramble font previews and size controls. Font assets ship with timer-ui; hosts persist the selected settings.',
+  },
+  {
+    name: 'TimerWorkspace / useTimerWideLayout',
+    import: "import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享 1024px 宽屏断点、全宽计时区、360px 成绩侧栏及独立滚动；宿主只提供导航高度。',
+    en: 'Shared 1024px breakpoint, full-width timer workspace, 360px results dock and independent scrolling. Hosts provide navigation offsets.',
+  },
+  {
+    name: 'TimerStageLayout',
+    import: "import { TimerStageLayout } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端单人计时页的共享布局：来源配置在上、计时内容居中、统计和设备入口分列底栏两侧；统一全屏隐藏和设备菜单定位。',
+    en: 'Shared solo timer composition for Web and installed apps: source controls above the timing content, statistics and devices on opposite sides of the footer, with common fullscreen visibility and menu anchoring.',
   },
   {
     name: 'TimerStatsPanel',
@@ -2467,7 +2530,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'RoomCodeInput',
-    import: "import { RoomCodeInput } from '@/components/RoomCodeInput';",
+    import: "import { RoomCodeInput } from '@/components/RoomCodeInput'; // @cuberoot/timer-ui/room-code-input",
     category: 'more',
     zh: `统一的 4 位数字房间码输入框:过滤非数字并唤起数字键盘,填满即触发加入,同一码不会因重渲染重复提交。`,
     en: `Shared four-digit numeric room-code input: filters non-digits, opens a numeric keypad, joins when complete, and prevents duplicate submissions across rerenders.`,

@@ -48,7 +48,7 @@
   ],
   "rows": [
     [
-      "8.66",
+      "8.67",
       9,
       "6x6x6 Cube",
       "Single",
@@ -84,7 +84,7 @@
       "[Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018)"
     ],
     [
-      "7.41",
+      "7.42",
       8,
       "4x4x4 Blindfolded",
       "Single",
@@ -651,7 +651,7 @@
       "[Dutch Open 2006](https://www.worldcubeassociation.org/competitions/DutchOpen2006)"
     ],
     [
-      "1.99",
+      "2.00",
       3,
       "5x5x5 Cube",
       "Single",
@@ -787,21 +787,21 @@
     ],
     [
       "1.71",
-      5,
-      "Megaminx",
-      "Average",
-      "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
-      "[Jaqueca Di Tella 2023](https://www.worldcubeassociation.org/competitions/JaquecaDiTella2023)",
-      "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)"
-    ],
-    [
-      "1.70",
       2,
       "Square-1",
       "Average",
       "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
       "[Gem City Ohio Showdown 2025](https://www.worldcubeassociation.org/competitions/GemCityOhioShowdown2025)",
       "Still active"
+    ],
+    [
+      "1.71",
+      5,
+      "Megaminx",
+      "Average",
+      "[Leandro Martín López](https://www.worldcubeassociation.org/persons/2018LOPE22)",
+      "[Jaqueca Di Tella 2023](https://www.worldcubeassociation.org/competitions/JaquecaDiTella2023)",
+      "[Central Asian Tour Astana 2025](https://www.worldcubeassociation.org/competitions/CentralAsianTourAstana2025)"
     ],
     [
       "1.69",
@@ -1416,7 +1416,7 @@
       "[KCRC 2007](https://www.worldcubeassociation.org/competitions/KCRC2007)"
     ],
     [
-      "0.80",
+      "0.81",
       2,
       "Megaminx",
       "Average",
@@ -1434,7 +1434,7 @@
       "[Quanzhou Summer 2026](https://www.worldcubeassociation.org/competitions/QuanzhouSummer2026)"
     ],
     [
-      "0.78",
+      "0.79",
       2,
       "2x2x2 Cube",
       "Average",
@@ -1920,6 +1920,15 @@
       "[Busan Winter 2016](https://www.worldcubeassociation.org/competitions/BusanWinter2016)"
     ],
     [
+      "0.35",
+      2,
+      "7x7x7 Cube",
+      "Single",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
+      "Still active"
+    ],
+    [
       "0.34",
       2,
       "2x2x2 Cube",
@@ -1927,15 +1936,6 @@
       "[Rami Sbahi](https://www.worldcubeassociation.org/persons/2011SBAH01)",
       "[Holy Toledo Winter 2014](https://www.worldcubeassociation.org/competitions/HolyToledoWinter2014)",
       "[Michigan 2014](https://www.worldcubeassociation.org/competitions/Michigan2014)"
-    ],
-    [
-      "0.34",
-      2,
-      "7x7x7 Cube",
-      "Single",
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
-      "Still active"
     ],
     [
       "0.31",

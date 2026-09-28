@@ -1,0 +1,75 @@
+.timer-battle-layout {
+  --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
+  --timer-scramble-src-fs: 12px;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  overflow: auto;
+}
+.timer-battle-pair {
+  display: flex;
+  flex: 1 0 auto;
+  min-width: 0;
+  flex-direction: column;
+}
+.timer-battle-row {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.timer-battle-cell {
+  display: flex;
+  flex: 1 0 280px;
+  min-width: 0;
+  min-height: 280px;
+  flex-direction: column;
+}
+.timer-battle-cell > * { flex: 1; min-width: 0; }
+.timer-battle-cell:has(.timing-surface-cube-frame) { min-height: 380px; }
+.timer-battle-cell[data-flipped] { transform: rotate(180deg); }
+.timer-battle-pair[data-flipped] { flex-direction: column-reverse; }
+.timer-battle-pair[data-flipped] > .timer-battle-scramble { transform: rotate(180deg); }
+.timer-battle-scramble {
+  --timer-cube-h: min(24vw, 18dvh, 180px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  flex: 0 0 auto;
+}
+.timer-battle-layout-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px;
+}
+.timer-battle-layout-controls > button,
+.timer-battle-layout-controls > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+}
+.timer-battle-layout-controls > button {
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+}
+.timer-battle-layout-controls > button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Raise the open picker above adjacent players, including rotated cells. */
+.timer-battle-cell:has(.pp-popup) { position: relative; z-index: 2; }

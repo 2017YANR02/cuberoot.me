@@ -1594,6 +1594,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
 
         <p className="auth-dl-head">{t('永久删除', 'Permanently deleted')}</p>
         <ul className="auth-dl">
+          <li>{t('与其他用户的整段好友聊天记录及双方相关提醒；对方已复制的内容不受影响', 'Entire friend conversations and their notifications for both participants; copies already made by others are unaffected')}</li>
           <li>{t('登录方式(邮箱 / 手机 / WCA / 第三方绑定)', 'Sign-in methods (email / phone / WCA / third-party links)')}</li>
           <li>{t('计时器云备份、训练成绩、公式掌握与记忆进度', 'Timer backups, training results, algorithm mastery and review progress')}</li>
           <li>{t('关注的比赛、打乱标记、画板作品', 'Followed competitions, scramble marks, drawings')}</li>
