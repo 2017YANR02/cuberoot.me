@@ -37,7 +37,7 @@ export default function InterviewPage() {
     <header className="admin-hub__heading">
       <p className="admin-hub__eyebrow">{t('管理员专属', 'Administrators only')}</p>
       <h1>{t('采访准备', 'Interview preparation')}</h1>
-      <p>{t('中文问答稿 · 待本人确认', 'Chinese Q&A draft · Awaiting personal confirmation')}</p>
+      <p>{t('口述稿与备稿资料', 'Spoken answers and preparation notes')}</p>
     </header>
     {!isAdmin ? <p role="status">{t('请使用管理员账号登录后查看。', 'Sign in with an administrator account to view this material.')} <AppLink href="/account" prefetch={false}>{t('前往账号页', 'Go to account')}</AppLink></p>
       : failed ? <p role="alert">{t('未能读取采访稿，请确认管理员登录状态后重试。', 'Unable to load the draft. Check your administrator session and try again.')} <button type="button" onClick={() => setAttempt(value => value + 1)}>{t('重试', 'Retry')}</button></p>
@@ -56,16 +56,31 @@ export default function InterviewPage() {
         </nav>
         {draft.questions.map(item => <section className="interview-question" id={`question-${item.id}`} key={item.id}>
           <h2>{item.id}. {item.question}</h2>
-          <p className="interview-takeaway">{item.takeaway}</p>
-          <h3>{t('建议回答', 'Suggested answer')}</h3>
-          <blockquote>{item.answer}</blockquote>
-          <div className="interview-note"><h3>{t('需要确认', 'To confirm')}</h3><p>{item.confirm}</p></div>
-          <p className="interview-example"><strong>{t('现场例子：', 'Example: ')}</strong>{item.example}</p>
+          <blockquote>{item.answer.split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</blockquote>
+          <details className="interview-note">
+            <summary>{t('备稿备注', 'Preparation notes')}</summary>
+            <p>{item.confirm}</p>
+            <p className="interview-example">{item.example}</p>
+            {item.sourceIds && <ul>{draft.research?.sources.filter(source => item.sourceIds?.includes(source.id)).map(source => <li key={source.id}><a href={source.url} target="_blank" rel="noreferrer">{source.title}</a></li>)}</ul>}
+          </details>
         </section>)}
         <section className="interview-question">
-          <h2>{t('定稿前补充', 'Before finalizing')}</h2>
-          <ul>{draft.pending.map(item => <li key={item}>{item}</li>)}</ul>
+          <details>
+            <summary>{t('尚待确认的个人信息', 'Personal details still to confirm')}</summary>
+            <ul>{draft.pending.map(item => <li key={item}>{item}</li>)}</ul>
+          </details>
         </section>
+        {draft.research && <section className="interview-question">
+          <details>
+            <summary>{t('调研资料与出处', 'Research and sources')}</summary>
+            <p>{t('查阅日期：', 'Reviewed: ')}{draft.research.checkedAt}</p>
+            <p>{draft.research.summary}</p>
+            <ol>{draft.research.sources.map(source => <li key={source.id}>
+              <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+              <p>{source.note}</p>
+            </li>)}</ol>
+          </details>
+        </section>}
       </div>}
   </main>;
 }
