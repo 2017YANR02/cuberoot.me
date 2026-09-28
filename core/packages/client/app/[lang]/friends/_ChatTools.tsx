@@ -14,7 +14,7 @@ export function ChatVoiceInput({ insert, disabled, lang }: { insert(value: strin
   const t = useT();
   const speech = useSpeechToText({ lang: lang === 'zh' ? 'zh-CN' : 'en-US', onResult: (text, final) => { if (final) insert(text); } });
   if (!speech.supported) return null;
-  return <div className="friend-chat-voice"><button type="button" className="friend-chat-action friend-chat-icon" disabled={disabled} aria-pressed={speech.listening} aria-label={speech.listening ? t('停止语音输入', 'Stop dictation') : t('语音输入', 'Dictation')} onClick={speech.listening ? speech.stop : speech.start}>{speech.listening ? <Square size={23} /> : <Mic size={25} />}</button>{'error' in speech && !!speech.error && <span className="friend-chat-error" role="alert">{t('语音输入未成功，请检查麦克风权限后重试。', 'Dictation failed. Check microphone access and try again.')}</span>}</div>;
+  return <div className="friend-chat-voice"><button type="button" className="friend-chat-action friend-chat-icon" disabled={disabled} aria-pressed={speech.listening} aria-label={speech.listening ? t('停止语音输入', 'Stop dictation') : t('语音输入', 'Dictation')} onClick={speech.listening ? speech.stop : speech.start}>{speech.listening ? <Square size={23} /> : <Mic size={25} />}</button>{'error' in speech && !!speech.error && <span className="friend-chat-error" role="alert">{t('语音输入失败，请重试。', 'Dictation failed. Try again.')}</span>}</div>;
 }
 
 export function ChatMoreTools({ insert }: { insert(value: string): void }) {
