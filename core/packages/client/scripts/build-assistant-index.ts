@@ -16,10 +16,13 @@ export function indexPublicHtml(route: string, html: string) {
   const { document } = parseHTML(html);
   if (document.querySelector('meta[name="robots"]')?.getAttribute('content')?.includes('noindex')) return null;
   const title = document.querySelector('title')?.textContent ?? route;
+  const description=document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '';
   document.querySelectorAll('div[hidden][id]').forEach(n=>{if (/^S:[0-9a-f]+$/i.test(n.id)) n.removeAttribute('hidden');});
-  document.querySelectorAll('script,style,nav,header,footer,form,button,[hidden],[aria-hidden="true"]').forEach(n=>n.remove());
-  const text=(document.querySelector('main') ?? document.body)?.textContent?.replace(/\s+/g,' ').trim() ?? '';
-  if (text.length<80) return null;
+  document.querySelectorAll('header,footer').forEach(n=>{if(!n.closest('main,article'))n.remove();});
+  document.querySelectorAll('script,style,nav,form,button,[hidden],[aria-hidden="true"]').forEach(n=>n.remove());
+  const body=(document.querySelector('main') ?? document.body)?.textContent ?? '';
+  const text=[description,body].join(' ').replace(/\s+/g,' ').trim();
+  if (text.length<80 && description.length<20) return null;
   return { lang:route.startsWith('/zh/')?'zh':'en', href:route.replace(/^\/(en|zh)/,''),title,text:text.slice(0,60000) };
 }
 
