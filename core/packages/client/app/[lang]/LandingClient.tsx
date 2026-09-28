@@ -469,6 +469,20 @@ export default function LandingPage() {
         {renderMemberSections()}
       </div>
 
+      {isAdmin && (
+        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
+          <div className="cards-section">
+            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
+            <div className="cards-container">
+              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
+              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
+              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
+            </div>
+          </div>
+          {renderMemberSections(true)}
+        </section>
+      )}
+
       <div className="footer">
         {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
         <Link href={ABOUT_FOOTER_ENTRY.href} className="footer-about" prefetch={false}>
@@ -511,19 +525,6 @@ export default function LandingPage() {
             沪公网安备31010902100930号
           </a>
         </div>
-      )}
-      {isAdmin && (
-        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
-          <div className="cards-section">
-            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
-            <div className="cards-container">
-              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
-              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
-              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
-            </div>
-          </div>
-          {renderMemberSections(true)}
-        </section>
       )}
     </div>
   );
