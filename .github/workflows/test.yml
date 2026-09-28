@@ -20,6 +20,8 @@ on:
       - 'ops/nginx/**'
       - 'ops/vercel-ban-relay/competition-rule.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
+      - 'ops/bin/pg-dump-recon.sh'
+      - 'ops/systemd/pg-dump-recon.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
       - '.github/workflows/deploy_core.yml'
@@ -45,6 +47,8 @@ on:
       - 'ops/nginx/**'
       - 'ops/vercel-ban-relay/competition-rule.json'
       - 'ops/systemd/cuberoot-drive-compression.service'
+      - 'ops/bin/pg-dump-recon.sh'
+      - 'ops/systemd/pg-dump-recon.service'
       - '.github/workflows/backup_recon.yml'
       - '.github/workflows/best2x2_drift.yml'
       - '.github/workflows/deploy_core.yml'
@@ -119,6 +123,8 @@ jobs:
               - 'ops/nginx/**'
               - 'ops/vercel-ban-relay/competition-rule.json'
               - 'ops/systemd/cuberoot-drive-compression.service'
+              - 'ops/bin/pg-dump-recon.sh'
+              - 'ops/systemd/pg-dump-recon.service'
               - '.github/workflows/backup_recon.yml'
               - '.github/workflows/best2x2_drift.yml'
               - '.github/workflows/deploy_core.yml'
@@ -238,6 +244,7 @@ jobs:
             /ops/nginx/www.cuberoot.me.conf
             /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
+            /ops/bin/pg-dump-recon.sh
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json
@@ -460,6 +467,7 @@ jobs:
             /ops/nginx/www.cuberoot.me.conf
             /ops/vercel-ban-relay/competition-rule.json
             /ops/systemd/cuberoot-drive-compression.service
+            /ops/bin/pg-dump-recon.sh
             /tools/cstimer-scramble/
             /tools/solver/rust-cross/cross-solver-worker.js
             /tools/blddb/data/cornerManmade.json
