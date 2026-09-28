@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Loader2, MessageSquare, RotateCcw, Star, CheckCheck, Circle } from 'lucide-react';
+import { MessageSquare, RotateCcw, Star, CheckCheck, Circle } from 'lucide-react';
 import { CHAT_BODY_LIMIT, compareChatSequence, normalizeChatBody, type ChatClient, type ChatErrorCode, type ChatSticker } from '@cuberoot/shared/chat';
 import type { FriendUser } from '@cuberoot/shared/friends';
 import { useChat } from './use-chat';
@@ -184,7 +184,6 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
         <p className="friend-chat-preview">{c.lastMessage.stickerId ? t('[表情包]', '[Sticker]') : <ChatMessageText body={Array.from(c.lastMessage.body).slice(0, 60).join('')} packs={expressionPacks} />}</p>
       </div>)}
       {state?.nextCursor && <button type="button" className="friend-chat-action" disabled={state.listLoading} onClick={() => void controller?.loadMoreConversations()}>{t('更多会话', 'More conversations')}</button>}
-      {state?.listLoading && <Loader2 className="friend-chat-spin" size={16} aria-label={t('加载中', 'Loading')} />}
     </aside>
     <div className="friend-chat-thread" data-site-surface="panel">
       {!peerId ? <p className="friend-chat-empty">{t('选择一段聊天。', 'Select a conversation.')}</p> : <>
