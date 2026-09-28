@@ -1,4 +1,4 @@
-.site-assistant-backdrop { position:fixed; inset:0; z-index:1800; display:grid; place-items:center; padding:24px; background:color-mix(in srgb,var(--foreground) 30%,transparent); }
+.site-assistant-backdrop { position:fixed; inset:0; z-index:100030; /* Keep the conversation controls above the floating desk pet. */ display:grid; place-items:center; padding:24px; background:color-mix(in srgb,var(--foreground) 30%,transparent); }
 .site-assistant-dialog { display:flex; flex-direction:column; width:min(100%,960px); height:min(850px,calc(100dvh - 48px)); min-height:0; border:1px solid var(--border-default); border-radius:24px; background:var(--background); color:var(--foreground); overflow:hidden; box-shadow:0 24px 80px color-mix(in srgb,var(--foreground) 15%,transparent); }
 .site-assistant-action { font:inherit; color:inherit; cursor:pointer; border:1px solid var(--border-default); border-radius:12px; background:var(--card); padding:9px; display:inline-flex; align-items:center; justify-content:center; }
 .site-assistant-action:hover { background:var(--muted); }
