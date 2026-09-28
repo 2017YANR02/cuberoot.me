@@ -6,6 +6,7 @@ import { captureDiagnostic } from './diagnostic-buffer.js';
 
 type Trace = { requestId: string; dbCalls: number; dbCallMs: number; dbMaxCallMs: number; dbErrors: number };
 const traces = new AsyncLocalStorage<Trace>();
+export function currentDiagnosticRequestId(): string | undefined { return traces.getStore()?.requestId; }
 let dbInFlight = 0;
 let dbPeak = 0;
 
