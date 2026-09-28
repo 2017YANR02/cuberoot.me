@@ -27,7 +27,7 @@
  * 接到本站的 token 上,所以它跟着全站主题走。
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { LiveKitRoom, PreJoin, type LocalUserChoices } from '@livekit/components-react';
@@ -35,6 +35,7 @@ import type { DisconnectReason } from 'livekit-client';
 import { Check, Copy, LogIn, QrCode, Video } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
+import { ClearButton } from '@/components/ClearButton';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage, type FailReason } from '@/components/video/video-call';
 import { tr } from '@/i18n/tr';
@@ -67,6 +68,7 @@ export default function MeetPage() {
   const [choices, setChoices] = useState<LocalUserChoices | null>(null);
   const [codeInput, setCodeInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const joining = useRef(false);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -100,10 +102,13 @@ export default function MeetPage() {
     () => setErr((current) => current ?? denyMessage('connect', maxParticipants)),
     [maxParticipants],
   );
+  // PreJoin uses this callback as a capture-effect dependency: keep it stable.
+  const mediaFail = useCallback(() => fail('media'), [fail]);
 
   const join = useCallback((target: string) => {
     // 到这里的码一定过了 isMeetCode,所以服务端再回 invalid 就不是用户抄错(见 stale-api)。
-    if (!isMeetCode(target)) return;
+    if (!isMeetCode(target) || joining.current) return;
+    joining.current = true;
     setBusy(true);
     setErr(null);
     getMeetToken(target)
@@ -112,7 +117,7 @@ export default function MeetPage() {
         if (!(e instanceof VideoDeniedError)) { fail('connect'); return; }
         fail(e.reason === 'invalid' ? 'stale-api' : e.reason);
       })
-      .finally(() => setBusy(false));
+      .finally(() => { joining.current = false; setBusy(false); });
   }, [fail]);
 
   const createMeeting = useCallback(() => {
@@ -154,6 +159,8 @@ export default function MeetPage() {
   // 入会前那一屏挑的设备要真的用上,否则「选了摄像头却开了另一个」。
   const roomOptions = useMemo(() => ({
     ...LIVEKIT_ROOM_OPTIONS,
+    // Request enough pixels for Retina/phone displays while retaining congestion adaptation.
+    adaptiveStream: { pixelDensity: 'screen' as const },
     videoCaptureDefaults: {
       ...LIVEKIT_ROOM_OPTIONS.videoCaptureDefaults,
       deviceId: choices?.videoDeviceId || undefined,
@@ -231,7 +238,7 @@ export default function MeetPage() {
           onDisconnected={leave}
           // onDisconnected 往往能给出「房满/另一台设备登录」等具体原因;通用错误不能覆盖它。
           onError={connectFail}
-          onMediaDeviceFailure={() => fail('media')}
+          onMediaDeviceFailure={mediaFail}
           className="meet-room"
         >
           <MeetStage />
@@ -251,6 +258,7 @@ export default function MeetPage() {
         <p className="meet-sub">
           {tr({ zh: `会议 ${code}`, en: `Meeting ${code}` })}
         </p>
+        <fieldset className="meet-prejoin-fields" disabled={busy} aria-busy={busy}>
         <PreJoin
           // 名字来自账号,不给改 —— 输入框由 meet.css 藏掉。
           defaults={{ username: user.name, videoEnabled: true, audioEnabled: true }}
@@ -259,11 +267,18 @@ export default function MeetPage() {
           // 服务端本来就不认客户端报的名字(取 token 里的),这个校验对我们没有意义。
           onValidate={() => true}
           onSubmit={(c) => { setChoices(c); join(code); }}
-          onError={() => fail('media')}
+          onError={mediaFail}
           joinLabel={busy ? tr({ zh: '接入中…', en: 'Joining…' }) : tr({ zh: '进入会议', en: 'Join' })}
           micLabel={tr({ zh: '麦克风', en: 'Microphone' })}
           camLabel={tr({ zh: '摄像头', en: 'Camera' })}
         />
+        </fieldset>
+        <button type="button" className="meet-join" disabled={busy} onClick={() => {
+          setErr(null);
+          void setRoomParam(null, { history: 'replace' });
+        }}>
+          {tr({ zh: '取消入会', en: 'Cancel joining' })}
+        </button>
         {err && <p className="vc-err">{err}</p>}
       </main>
     );
@@ -275,8 +290,8 @@ export default function MeetPage() {
       <h1 className="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</h1>
       <p className="meet-sub">
         {maxParticipants
-          ? tr({ zh: `最多 ${maxParticipants} 人,1080p,支持屏幕共享和文字聊天。`,
-                 en: `Up to ${maxParticipants} people at 1080p, with screen sharing and chat.` })
+          ? tr({ zh: `最多 ${maxParticipants} 人，最高 1080p，画质随设备和网络自动调整。支持屏幕共享和文字聊天。`,
+                 en: `Up to ${maxParticipants} people and up to 1080p, adapting to your device and connection. Includes screen sharing and chat.` })
           : tr({ zh: '多人视频会议,支持屏幕共享和文字聊天。',
                  en: 'Group video meetings with screen sharing and chat.' })}
       </p>
@@ -294,6 +309,7 @@ export default function MeetPage() {
       </div>
 
       <div className="meet-row">
+        <div className="meet-code-field">
         <input
           type="text"
           inputMode="numeric"
@@ -303,6 +319,7 @@ export default function MeetPage() {
           value={codeInput}
           // 粘整条邀请链接也认:normalizeMeetCode 会把 ?room= 挖出来。
           placeholder={tr({ zh: '4 位会议码或邀请链接', en: '4-digit code or invite link' })}
+          aria-label={tr({ zh: '会议码或邀请链接', en: 'Meeting code or invite link' })}
           onChange={(e) => setCodeInput(normalizeMeetCode(e.target.value))}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && codeInput.length === MEET_CODE_LEN) {
@@ -311,6 +328,8 @@ export default function MeetPage() {
             }
           }}
         />
+        {codeInput && <ClearButton onClick={() => setCodeInput('')} />}
+        </div>
         <button
           type="button"
           className="meet-join"

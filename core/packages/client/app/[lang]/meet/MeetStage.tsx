@@ -88,9 +88,22 @@ function MeetConnectionToast() {
 }
 
 export default function MeetStage() {
+  const stageRef = useRef<HTMLDivElement>(null);
   const [showChat, setShowChat] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
   const [unread, setUnread] = useState(0);
+
+  // Wrapped touch controls and the audio-unlock prompt can exceed the SDK's fixed 69px.
+  useEffect(() => {
+    const stage = stageRef.current;
+    const bar = stage?.querySelector<HTMLElement>('.lk-control-bar');
+    if (!stage || !bar) return;
+    const update = () => stage.style.setProperty('--meet-controls-height', `${bar.getBoundingClientRect().height}px`);
+    const observer = new ResizeObserver(update);
+    observer.observe(bar);
+    update();
+    return () => observer.disconnect();
+  }, []);
 
   const tracks = useTracks(
     [
@@ -175,7 +188,7 @@ export default function MeetStage() {
   }, []);
 
   return (
-    <div className="lk-video-conference meet-stage">
+    <div ref={stageRef} className="lk-video-conference meet-stage">
       <LayoutContextProvider value={layoutContext}>
         <div className="lk-video-conference-inner">
           {!focusTrack ? (
