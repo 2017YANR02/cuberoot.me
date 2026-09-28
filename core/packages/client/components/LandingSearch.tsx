@@ -103,7 +103,7 @@ const SPEECH_ERRORS: Record<string, { zh: string; en: string }> = {
   'not-allowed': { zh: '无法使用麦克风，请检查网站和系统的麦克风权限。', en: 'Microphone access was denied. Check microphone permissions for this site and your system.' },
   'audio-capture': { zh: '无法获取麦克风声音，请检查输入设备。', en: 'Cannot capture audio. Check your microphone input device.' },
   network: { zh: '无法连接语音识别服务，请重试，或使用键盘上的听写功能。', en: 'Cannot connect to speech recognition. Retry or use keyboard dictation.' },
-  'no-speech': { zh: '没有识别到文字，请重试，或使用键盘上的听写功能。', en: 'No words were recognized. Retry or use keyboard dictation.' },
+  'no-speech': { zh: '没有识别到文字，请检查麦克风是否静音、输入设备是否正确，然后重试。', en: 'No words were recognized. Check that the correct microphone is selected and unmuted, then retry.' },
   timeout: { zh: '语音识别长时间没有返回结果，已停止。请重试，或使用键盘上的听写功能。', en: 'Speech recognition did not respond in time and has stopped. Retry or use keyboard dictation.' },
   'language-not-supported': { zh: '语音服务不支持当前语言，请使用键盘上的听写功能。', en: 'The speech service does not support this language. Use keyboard dictation.' },
   'service-not-allowed': { zh: '浏览器的语音识别服务不可用，请使用键盘上的听写功能或打字搜索。', en: 'The browser speech service is unavailable. Use keyboard dictation or type your search.' },
@@ -207,7 +207,7 @@ export default function LandingSearch({
     onQueryChange?.(value);
   }, [controlledQuery, onQueryChange]);
   const [open, setOpen] = useState(false);
-  const { listening, status: micStatus, error: micError, start: micStart, stop: micStop } = useSpeechToText({
+  const { listening, status: micStatus, error: micError, microphone, start: micStart, stop: micStop } = useSpeechToText({
     lang: isZh ? 'zh-CN' : 'en-US',
     onResult: (text) => { setQuery(text); setOpen(true); },
   });
@@ -463,9 +463,10 @@ export default function LandingSearch({
         </button>
       </div>
 
-      {micError && (
+      {(micError || (listening && microphone)) && (
         <p className="landing-search-speech-status" role="status">
-          {tr(SPEECH_ERRORS[micError] ?? SPEECH_ERRORS['service-not-allowed'])}
+          {microphone && <span>{tr({ zh: '麦克风：', en: 'Microphone: ' })}{microphone}{micError ? ' · ' : ''}</span>}
+          {micError && tr(SPEECH_ERRORS[micError] ?? SPEECH_ERRORS['service-not-allowed'])}
         </p>
       )}
 

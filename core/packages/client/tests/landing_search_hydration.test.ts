@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
-const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, start: vi.fn(), stop: vi.fn() }));
+const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, microphone: null as string | null, start: vi.fn(), stop: vi.fn() }));
 
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/link', () => ({
@@ -51,6 +51,8 @@ describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
     routeState.lang = 'zh';
     speechState.error = null;
+    speechState.listening = false;
+    speechState.microphone = null;
     changeAppLanguage('zh');
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
@@ -170,5 +172,18 @@ describe('LandingSearch placeholder hydration', () => {
     expect(host.querySelector('[role="status"]')?.textContent).toContain(message);
     expect(host.querySelector<HTMLInputElement>('.landing-search-field')?.value).toBe('PLL');
     expect(host.querySelector('.landing-search-mic')).not.toBeNull();
+  });
+
+  it('shows the selected microphone during capture and on failure', () => {
+    speechState.listening = true;
+    speechState.microphone = 'Default - Wireless Mic Rx';
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('麦克风：Default - Wireless Mic Rx');
+    speechState.listening = false;
+    speechState.error = 'no-speech';
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('Default - Wireless Mic Rx');
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('检查麦克风是否静音');
   });
 });
