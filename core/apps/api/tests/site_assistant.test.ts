@@ -13,6 +13,16 @@ const ask = () => new Request('https://api.example/site-assistant', {
 
 describe('site assistant grounding', () => {
 
+  it('reads the canonical English page when the content index is unavailable', async () => {
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'pages',query:'frame counting',pageIds:['frame-count']}]}))
+      .mockResolvedValueOnce(new Response('missing',{status:404}))
+      .mockResolvedValueOnce(new Response('<main>Count video frames</main>',{headers:{'Content-Type':'text/html'}}))
+      .mockResolvedValueOnce(modelResponse({answer:'Count video frames.',sourceIds:['frame-count']}));
+    await answerSiteQuestion('How can I count frames?','en',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher.mock.calls[2][0]).toBe('https://cuberoot.me/frame-count');
+  });
+
   it('only reads selected public pages, drops invented sources and never forwards secrets', async () => {
     const fetcher = vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({ calls: [{tool:'pages',query:'数帧',pageIds:['frame-count','https://evil.example']}]}))
