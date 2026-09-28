@@ -24,6 +24,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('glossary'), query }).strict(),
   z.object({ tool: z.literal('forum'), query }).strict(),
   z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
+  z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]) }).strict(),
 ]);
 export type AssistantToolCall = z.infer<typeof toolCallSchema>;
@@ -47,7 +48,31 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   const out: ToolResult = { evidence: null, sources: [], artifacts: [] };
   const table = (title: string, columns: string[], rows: string[][], links?: string[]) => out.artifacts.push({ kind:'table', title, columns, rows, links });
   const freshness = async () => (await read(`${api}/wca/historical-ranks/meta`)).lastImportedAt;
-  if (call.tool === 'records') {
+  if (call.tool === 'statistics') {
+    const index=await read(stat+'/index.json');
+    const entries=index.categories.flatMap((c:any)=>c.stats);
+    const entry=entries.find((e:any)=>e.id===call.id);
+    if (!entry) {
+      out.evidence={catalog:entries.map((e:any)=>({id:e.id,titleEn:e.titleEn,titleZh:e.titleZh})),instruction:'Choose a catalog id, then inspect available tables. Never invent a stat id.'};
+      return out;
+    }
+    const data=await read(stat+'/'+entry.id+'.json');
+    const tables:Array<{key:string;title:string;scope:unknown;header:any[];rows:unknown[][]}>=[];
+    const walk=(node:any,key:string,labels:string[],header:any[])=>{
+      const nextLabels=[...labels,node.titleZh && lang==='zh' ? node.titleZh : node.title ?? (lang==='zh'?node.labelZh:node.labelEn) ?? ''].filter(Boolean);
+      const columns=node.header?.length ? node.header : header;
+      if (Array.isArray(node.rows) && node.rows.length) tables.push({key,title:nextLabels.join(' · '),scope:node.recordScope,header:columns,rows:node.rows});
+      ['metricPanels','panels','sections'].forEach((field,group)=>node[field]?.forEach((child:any,i:number)=>walk(child,key+'.'+group+'.'+i,nextLabels,columns)));
+    };
+    walk(data,'0',[],data.header ?? []);
+    const selected=tables.find(t=>t.key===call.tableKey) ?? (tables.length===1?tables[0]:undefined);
+    out.sources.push(source('stat:'+entry.id,label(entry.titleZh,entry.titleEn),'/wca/'+entry.id));
+    out.evidence={id:entry.id,note:lang==='zh'?data.noteZh:data.note,updated:data.updated ?? null,
+      instruction:'Published statistical tables may have their own cutoff. Do not claim live coverage, aggregate truncated rows, or filter a global top list as if it were a complete regional ranking.',
+      tables:tables.slice(0,160).map(t=>({key:t.key,title:t.title,recordScope:t.scope,rows:t.rows.length})),tablesTruncated:tables.length>160,
+      selected:selected?{...selected,rows:selected.rows.slice(0,call.limit)}:null};
+    if (selected) table(selected.title,selected.header.map(h=>lang==='zh'?h.labelZh ?? h.label:h.label),selected.rows.slice(0,call.limit).map(row=>row.map(v=>String(v ?? '').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'))));
+  } else if (call.tool === 'records') {
     const data = await read(`${stat}/records/history/${call.region === 'world' ? 'world' : `country/${call.region}`}.json`);
     const rows = selectCurrentRecords((data.rows as WcaRecordRow[]).filter(r => r.e === call.event));
     const href = `/wca/records?show=current&region=${call.region}&event=${call.event}`;
