@@ -4,7 +4,7 @@
 .friend-chat-conversation { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 12px 8px; border-bottom: 1px solid var(--border-default); }
 .friend-chat-conversation.is-selected { background: var(--accent-soft); border-radius: 8px; }
 .friend-chat-preview { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--muted-foreground); overflow-wrap: anywhere; }
-.friend-chat-thread { display: flex; flex-direction: column; min-width: 0; height: min(680px, 74dvh); min-height: 360px; background: var(--card); border: 1px solid var(--border-default); border-radius: 12px; overflow: hidden; }
+.friend-chat-thread { display: flex; flex-direction: column; min-width: 0; height: max(800px, calc(100dvh - 160px)); min-height: 360px; background: var(--card); border: 1px solid var(--border-default); border-radius: 12px; overflow: hidden; }
 .friend-chat-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
 .friend-chat-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; overflow-anchor: none; }
 .friend-chat-message { max-width: 88%; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--muted); flex-shrink: 0; }
@@ -31,7 +31,6 @@
   .friend-chat { grid-template-columns: minmax(0, 1fr); }
   .friend-chat:not(.has-peer) .friend-chat-thread, .friend-chat.has-peer .friend-chat-sidebar { display: none; }
   .friend-chat-show-list { display: inline-flex; }
-  .friend-chat-thread { height: 70dvh; min-height: 300px; }
   .friend-chat-composer textarea { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .friend-chat-spin { animation: none; } .friend-chat-action:active:not(:disabled) { transform: none; } }
@@ -100,7 +99,7 @@
 .friend-chat-share-card { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; border: 1px solid var(--border-default); border-radius: 8px; padding: 10px; background: var(--card); white-space: normal; }
 .friend-chat-share-card a { color: var(--foreground); }
 @media (max-width: 600px) {
-  .friend-chat-thread { height: 76dvh; }
+  .friend-chat-thread { height: max(760px, calc(100dvh - 150px)); }
   .friend-chat-composer { padding: 8px; }
   .friend-chat-input-row { gap: 2px; }
   .friend-chat-icon { width: 31px; }
