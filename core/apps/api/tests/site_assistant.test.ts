@@ -12,6 +12,15 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('does not substitute the viewer for a third-person follow-up', async () => {
+    for(const [question,expected] of [['他的平均成绩呢？',undefined],['我的平均成绩呢？','2017YANR02']]) {
+      const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'answer'}));
+      await answerSiteQuestion(question!,'zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'看看耿暄一的三阶成绩'}],'2017YANR02');
+      const context=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
+      expect(context.viewerWcaId).toBe(expected);
+      expect(context.history[0].content).toContain('耿暄一');
+    }
+  });
 
   it('reads the canonical English page when the content index is unavailable', async () => {
     const fetcher=vi.fn<typeof fetch>()
