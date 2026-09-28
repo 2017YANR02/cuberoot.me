@@ -1,0 +1,13 @@
+.interview-page { max-width: 780px; line-height: 1.85; overflow-wrap: anywhere; }
+.interview-page h2 { font-size: 1.3rem; line-height: 1.6; }
+.interview-page h3 { font-size: .9rem; margin-bottom: 6px; }
+.interview-page blockquote { margin: 12px 0 24px; padding-left: 20px; border-left: 3px solid var(--accent); font-size: 1.06rem; }
+.interview-intro > p { color: var(--muted-foreground); }
+.interview-toc { display: flex; flex-wrap: wrap; gap: 10px 24px; padding: 24px 0; border-block: 1px solid var(--border-default); }
+.interview-toc a, .interview-page a { color: var(--accent); }
+.interview-question { padding: 28px 0; border-bottom: 1px solid var(--border-default); scroll-margin-top: 80px; }
+.interview-takeaway { font-weight: 600; color: var(--accent); }
+.interview-note { padding-left: 16px; border-left: 2px solid var(--border-strong); color: var(--muted-foreground); }
+.interview-note p { margin-top: 0; }
+.interview-example { color: var(--muted-foreground); font-size: .9rem; }
+.interview-page button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--border-default); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
