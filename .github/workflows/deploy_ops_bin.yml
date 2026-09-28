@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - 'ops/bin/**'
+      - 'ops/systemd/pg-dump-recon.service'
       - '.github/workflows/deploy_ops_bin.yml'
 
 jobs:
@@ -34,6 +35,8 @@ jobs:
         run: |
           scp -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i ~/.ssh/id \
             ops/bin/*.sh "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+          scp -i ~/.ssh/id ops/systemd/pg-dump-recon.service \
+            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/cuberoot-pg-dump-recon.service"
 
       - name: Apply + bash -n + rollback on failure
         env:
@@ -95,5 +98,13 @@ jobs:
             rm -f "$f"
             echo "deployed: $base"
           done
+          # Native EnvironmentFile supplies DB_PASS even when systemd has no NVM PATH.
+          unit=/etc/systemd/system/pg-dump-recon.service
+          if ! cmp -s "$unit" /tmp/cuberoot-pg-dump-recon.service; then
+            mkdir -p /var/backups/cuberoot-ops-units
+            [ ! -f "$unit" ] || cp "$unit" "/var/backups/cuberoot-ops-units/pg-dump-recon.service.$TS"
+            install -m 644 /tmp/cuberoot-pg-dump-recon.service "$unit"
+            systemctl daemon-reload
+          fi
           echo "OK"
           REMOTE

@@ -21,6 +21,8 @@
   - 文件命名 `NNNN_short_desc.sql`,migration 文件不要写 BEGIN/COMMIT(runner 包)
   - 详细规则见 `core/apps/api/migrations/README.md`
 
+- `pg-dump-recon.sh` — 每日备份不可重建数据及 `.env`，最多保留最近两个成功日期；同日补跑原子替换当天文件。`pg-dump-recon.service` 用 systemd `EnvironmentFile` 读取 `DB_PASS`，不依赖交互终端的 NVM PATH。管道失败、gzip 校验失败、dump 缺少完成标志或配置复制失败时均不轮换旧备份。文件权限 600；这些备份未经加密。可用 `CUBEROOT_BACKUP_DIR` 和 `CUBEROOT_DB_ENV_FILE` 指定隔离验证目录。
+
 ## 部署流程
 
 改动 `ops/bin/*.sh` → push main → `.github/workflows/deploy_ops_bin.yml` 自动:
@@ -29,6 +31,8 @@
 2. `bash -n` 语法检查 — 失败 abort 不动现网
 3. 现网无变化 → no-op 跳过
 4. 否则备份现网 `${target}.bak-<unix-ts>` + cp + `chmod +x`
+
+同一 workflow 同步 `ops/systemd/pg-dump-recon.service` 并 daemon-reload；不自动补跑、不改每日 timer 的时间。补跑使用 `systemctl start pg-dump-recon.service`，随后检查 journal、gzip 完整性及隔离库恢复结果。
 
 case 列表写死，防误传别的 `.sh`。新增脚本要先在 `deploy_ops_bin.yml` 的 case 加上,否则 deploy 会 `::warning::SKIP unknown`。
 

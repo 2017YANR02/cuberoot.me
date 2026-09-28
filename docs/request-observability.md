@@ -125,3 +125,52 @@ mean collection is active. After deployment, make a harmless public permission
 request carrying a fresh UUID and verify the ID appears in both nginx and API;
 then verify one runtime/database/disk snapshot. Do not manufacture a production
 lock, fill the disk, or force real visitor timeouts to test warnings.
+
+## CubeOpt 最优求解监控（2026-09-28）
+
+`/scramble/solver` 与计时器的三阶随机最优打乱共用此监控。
+复用上面的 `diagnosticLog`、PM2 日志和已部署的七天轮换；不增加外部收费服务。
+采集启用条件为 `CUBEOPT_SOLVE_ENABLED=1`，不会为了监控主动加载或求解大表。
+
+- `cubeopt_request_started/slow/aborted/finished`：真实 SSE 请求的完整耗时、
+  加载等待、条数和成功/失败数，以现有 `X-Request-ID` 对照 nginx。
+  不把 Hono handler 返回时间当作 SSE 完成时间。
+- `cubeopt_job_received/queued/started/slow/finished`：每条任务的加载、排队、
+  求解耗时、HTM、结果分类。用 `pid + jobId` 区分进程重启，用 `requestId` 关联请求。
+  `solve_timeout`、`queue_timeout`、`queue_full`、`load_error`、`solver_error`
+  分别记录；其他进程退出/异常同时对照 `cubeopt_daemon_*`。
+- `cubeopt_daemon_spawned/ready/load_failed/recycle/exited`：记录表加载耗时、
+  子进程 PID、退出信号和回收原因（超时、低内存、空闲或内存仲裁）。
+- `cubeopt_sample`：Linux 每 10 秒采集 host MemAvailable、swap 空间及换入/换出速率、
+  CPU I/O wait，求解进程 RSS、swap、major faults/s、CPU%、进程状态，
+  队列深度及当前任务；同时记录全局与实际 cgroup v1 的 swappiness。
+  首次采样及 PID/进程启动时间变化时速率为空，避免把累计数当瞬时值。
+  不支持或不可读的 cgroup 值为空，不声称为 0。
+- `cubeopt_snapshot`：每分钟保存最多 12 个 RSS+swap 最大进程的 PID、短名称、
+  RSS/swap、cgroup，以及最多 100 个正在运行的 systemd service 名称。
+  慢请求/失败/资源异常也触发，但共享 60 秒冷却、不可重入；若被限频，使用最近快照。
+  `/proc` 扫描最多 4,096 个 PID、8 路并发；systemctl 最多 1.5 秒和 64 KiB 输出。
+  快照不是 PSS 统计，共享页可能重复计数，不应直接相加作为总内存。
+
+告警为结构化 warning 日志：请求/任务持续 10 秒；major faults >=100/s；
+I/O wait >=20%；swap-out >=256 页/s；MemAvailable <512 MiB。
+残留 swap 量单独不判定故障。后台定时任务的名字也可通过快照的 cgroup 对照
+`journalctl -u <unit> --since ... --until ...`。目前没有新增外部消息通知。
+
+只读取数值、进程短名称及服务/cgroup 名称；不读取 cmdline、environ、请求输入、
+打乱/解法、账号、cookie、密钥或任意异常消息。采集失败只记 unavailable 并在下次重试，
+不改变求解调度、超时、表、内存保护或用户响应。进程停止不能继续自报；10 秒/60 秒
+采样可能错过更短的尖峰，因此不能保证每次都能锁定最初触发者。
+
+排查入口（服务器 UTC）：
+
+```sh
+# 当前与最近一天未压缩的日志；更旧的 .gz 用 zgrep 同样过滤。
+grep '"event":"cubeopt_' /root/.pm2/logs/core-api-out.log /root/.pm2/logs/core-api-error.log
+# 拿请求 ID 关联上游；不要只用 /ready 的布尔值判断性能。
+grep '<request-id>' /www/wwwlogs/timing.api.cuberoot.me.log /root/.pm2/logs/core-api-*.log
+```
+
+验证先跑解析/限频/阶段计时/日志隐私 fixtures，再通过真实正常求解确认
+request → job → finished 的 ID 一致、至少两个资源样本以及一个进程快照。
+异常路径用合成 fixture 验证，不在生产主动制造 swap/OOM/超时。
