@@ -21,6 +21,18 @@
   line-height: 1.5;
 }
 
+.landing-search-answer p {
+  margin: 0.25rem 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+.landing-search-answer .landing-search-answer-text {
+  color: var(--foreground);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .landing-search--page .landing-search-panel {
   position: relative;
   top: auto;
