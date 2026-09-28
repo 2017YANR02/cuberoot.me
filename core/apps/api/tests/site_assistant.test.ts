@@ -93,6 +93,9 @@ describe('site assistant grounding', () => {
   it('excludes chrome and injected scripts from source text', () => {
     expect(pageText('<body><nav>Navigation</nav><main><p>Evidence</p><script>bad</script><style>bad</style></main></body>')).toBe('Evidence');
   });
+  it('retains page instructions inside a main-content header',()=>{
+    expect(pageText('<body><header>Site chrome</header><main><header>PLL: look for bars and headlights.</header></main></body>')).toBe('PLL: look for bars and headlights.');
+  });
 
   it('reads public React streamed SSR segments without executing bootstrap scripts', () => {
     expect(pageText('<html><head><meta name="description" content="Video timing"></head><body><div hidden id="S:0">Frame count<span hidden>private UI</span></div><script>bootstrap()</script></body></html>'))
