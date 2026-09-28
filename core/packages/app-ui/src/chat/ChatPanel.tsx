@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Loader2, MessageSquare, Send, RotateCcw } from 'lucide-react';
-import { CHAT_BODY_LIMIT, compareChatSequence, normalizeChatBody, type ChatClient, type ChatErrorCode } from '@cuberoot/shared/chat';
+import { Loader2, MessageSquare, Send, RotateCcw, Star } from 'lucide-react';
+import { CHAT_BODY_LIMIT, compareChatSequence, normalizeChatBody, type ChatClient, type ChatErrorCode, type ChatSticker } from '@cuberoot/shared/chat';
 import type { FriendUser } from '@cuberoot/shared/friends';
 import { useChat } from './use-chat';
+import { ChatExpressions, stickerError } from './ChatExpressions';
+import { ChatStickerImage } from './ChatStickerImage';
 
 export interface ChatPanelProps {
   client: ChatClient;
@@ -38,12 +40,61 @@ export function ChatPanel({ client, userId, peerId, onSelectPeer, renderIdentity
   const bottom = useRef(true);
   const oldScroll = useRef<{ height: number; top: number } | null>(null);
   const composing = useRef(false);
+  const textarea = useRef<HTMLTextAreaElement>(null);
+  const [favorites, setFavorites] = useState<{ client: ChatClient; items: ChatSticker[] } | null>(null);
+  const [stickerFailure, setStickerFailure] = useState<string | null>(null);
+  const [stickerLoading, setStickerLoading] = useState(false);
+  const stickerRequest = useRef<AbortController | null>(null);
+  const favoriteWrites = useRef(new Map<string, AbortController>());
+  const [savingFavorites, setSavingFavorites] = useState<string[]>([]);
   const [hasNew, setHasNew] = useState(false);
   const lastRendered = useRef<string | undefined>(undefined);
   const missingTail = !!state?.hasNewerGap || (!!state?.page && compareChatSequence(state.page.lastSequence, state.messages.at(-1)?.sequence ?? '0') > 0);
   const canSend = !!state?.page?.canSend && state.listError !== 'UNAUTHENTICATED';
+  const stickerItems = favorites?.client === client ? favorites.items : [];
+  const loadStickers = () => {
+    if (!client.stickers) return;
+    stickerRequest.current?.abort();
+    const request = new AbortController(); stickerRequest.current = request;
+    setStickerLoading(true); setStickerFailure(null);
+    void client.stickers.list(request.signal).then((items) => {
+      if (!request.signal.aborted) setFavorites({ client, items });
+    }).catch((error) => { if (!request.signal.aborted) setStickerFailure(stickerError(error, t)); })
+      .finally(() => { if (!request.signal.aborted) setStickerLoading(false); });
+  };
+  useEffect(() => {
+    setFavorites(null); setStickerFailure(null); setSavingFavorites([]); setStickerLoading(false);
+    return () => { stickerRequest.current?.abort(); for (const request of favoriteWrites.current.values()) request.abort(); favoriteWrites.current.clear(); };
+  }, [client, userId]);
+  async function saveSticker(id: string) {
+    if (!client.stickers || favoriteWrites.current.has(id)) return;
+    const request = new AbortController(); favoriteWrites.current.set(id, request);
+    setSavingFavorites((ids) => [...ids, id]); setStickerFailure(null);
+    try {
+      const items = await client.stickers.save(id, true, request.signal);
+      if (!request.signal.aborted) { stickerRequest.current?.abort(); setStickerLoading(false); setFavorites({ client, items }); }
+    } catch (error) { if (!request.signal.aborted) setStickerFailure(stickerError(error, t)); }
+    finally { if (!request.signal.aborted) { favoriteWrites.current.delete(id); setSavingFavorites((ids) => ids.filter((value) => value !== id)); } }
+  }
+  const insertEmoji = (value: string) => {
+    const input = textarea.current;
+    if (!input || !controller) return;
+    const draft = state?.draft ?? '';
+    const start = input.selectionStart;
+    const next = draft.slice(0, start) + value + draft.slice(input.selectionEnd);
+    if (Array.from(next).length > CHAT_BODY_LIMIT) return;
+    controller.setDraft(next);
+    requestAnimationFrame(() => { input.focus(); input.setSelectionRange(start + value.length, start + value.length); });
+  };
 
   useEffect(() => { controller?.selectPeer(peerId); bottom.current = true; lastRendered.current = undefined; setHasNew(false); }, [controller, peerId]);
+  useEffect(() => {
+    const element = scroll.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => { if (bottom.current) element.scrollTop = element.scrollHeight; });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [peerId]);
   useEffect(() => {
     if (!controller || !host.current) return;
     let intersecting = false;
@@ -106,7 +157,7 @@ export function ChatPanel({ client, userId, peerId, onSelectPeer, renderIdentity
         <div className="friend-chat-peer">{renderIdentity(c.peer)}</div>
         <button type="button" className="friend-chat-action" onClick={() => onSelectPeer(c.peer.userId)} aria-current={peerId === c.peer.userId ? 'true' : undefined}
           aria-label={`${t('打开聊天', 'Open conversation')}: ${c.peer.name}`}><MessageSquare size={16} />{c.unreadCount > 0 && <span>{c.unreadCount}</span>}</button>
-        <p className="friend-chat-preview">{Array.from(c.lastMessage.body).slice(0, 60).join('')}</p>
+        <p className="friend-chat-preview">{c.lastMessage.stickerId ? t('[表情包]', '[Sticker]') : Array.from(c.lastMessage.body).slice(0, 60).join('')}</p>
       </div>)}
       {state?.nextCursor && <button type="button" className="friend-chat-action" disabled={state.listLoading} onClick={() => void controller?.loadMoreConversations()}>{t('更多会话', 'More conversations')}</button>}
       {state?.listLoading && <Loader2 className="friend-chat-spin" size={16} aria-label={t('加载中', 'Loading')} />}
@@ -129,19 +180,26 @@ export function ChatPanel({ client, userId, peerId, onSelectPeer, renderIdentity
           {state?.loading && <p className="friend-chat-muted" role="status">{t('加载中…', 'Loading…')}</p>}
           {state?.page && !state.messages.length && <p className="friend-chat-muted">{t('还没有消息。', 'No messages yet.')}</p>}
           {state?.messages.map((m) => <div key={`${m.conversationId}:${m.sequence}`} className={`friend-chat-message${m.senderUserId === userId ? ' is-mine' : ''}`}>
-            <p>{m.body}</p><time dateTime={m.createdAt}>{formatTime(m.createdAt)}</time>
+            {m.stickerId && client.stickers ? <>
+              <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} />
+              <button type="button" className="friend-chat-action friend-chat-save-sticker" disabled={savingFavorites.includes(m.stickerId) || stickerItems.some((item) => item.id === m.stickerId)} onClick={() => void saveSticker(m.stickerId!)}><Star size={13} />{stickerItems.some((item) => item.id === m.stickerId) ? t('已收藏', 'Saved') : t('收藏', 'Save sticker')}</button>
+            </> : <p>{m.body}</p>}<time dateTime={m.createdAt}>{formatTime(m.createdAt)}</time>
           </div>)}
           <div ref={tail} className="friend-chat-tail" aria-hidden="true" />
           {state?.pending.map((m) => <div key={m.clientMessageId} className="friend-chat-message is-mine is-pending">
-            <p>{m.body}</p><span role="status">{m.status === 'sending' ? t('发送中', 'Sending') : t('未确认发送', 'Delivery unconfirmed')}</span>
+            {m.stickerId && client.stickers ? <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} /> : <p>{m.body}</p>}<span role="status">{m.status === 'sending' ? t('发送中', 'Sending') : t('未确认发送', 'Delivery unconfirmed')}</span>
             {m.status === 'failed' && <button type="button" className="friend-chat-action" onClick={() => void controller?.send(m.clientMessageId)}><RotateCcw size={13} />{t('重试', 'Retry')}</button>}
           </div>)}
         </div>
         {hasNew && <button type="button" className="friend-chat-action friend-chat-new" onClick={() => { bottom.current = true; controller?.latest(); setHasNew(false); }}>{t('查看新消息', 'Show new messages')}</button>}
         {state?.page && !state.page.canSend ? <p className="friend-chat-muted friend-chat-readonly">{t('好友关系已解除或聊天不可用，仍可查看已有记录。', 'You can still read this history, but cannot send messages while the friendship is inactive.')}</p>
           : <form className="friend-chat-composer" onSubmit={(event) => { event.preventDefault(); send(); }}>
+            {stickerFailure && <p className="friend-chat-error" role="alert">{stickerFailure}</p>}
+            <ChatExpressions key={`${userId}:${peerId}`} client={client.stickers} disabled={!canSend} items={stickerItems}
+              loading={stickerLoading} error={stickerFailure} onReload={loadStickers} onChange={(items) => { stickerRequest.current?.abort(); setStickerLoading(false); setFavorites({ client, items }); }}
+              onEmoji={insertEmoji} onSend={(id) => void controller?.send(undefined, id)} t={t} />
             <label className="friend-chat-input-label" htmlFor="friend-chat-message">{t('消息', 'Message')}</label>
-            <textarea id="friend-chat-message" value={state?.draft ?? ''} rows={3} disabled={!canSend}
+            <textarea ref={textarea} id="friend-chat-message" value={state?.draft ?? ''} rows={2} disabled={!canSend}
               placeholder={t('写一条消息…', 'Write a message…')} onChange={(event) => controller?.setDraft(event.target.value)}
               onCompositionStart={() => { composing.current = true; }} onCompositionEnd={() => { composing.current = false; }}
               onKeyDown={(event) => {

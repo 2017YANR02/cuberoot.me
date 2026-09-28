@@ -38,3 +38,23 @@
 }
 @media (prefers-reduced-motion: reduce) { .friend-chat-spin { animation: none; } .friend-chat-action:active:not(:disabled) { transform: none; } }
 .friend-chat-tail { width: 1px; height: 1px; flex-shrink: 0; }
+.friend-chat-composer { flex-shrink: 0; }
+.friend-chat-tools, .friend-chat-expression-heading { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.friend-chat-expression-heading { justify-content: space-between; font-size: 13px; }
+.friend-chat-expression-panel { background: var(--card); border: 1px solid var(--border-default); border-radius: 10px; padding: 8px; margin: 6px 0; max-height: min(240px, 32dvh); overflow-y: auto; overscroll-behavior: contain; }
+.friend-chat-emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 3px; }
+.friend-chat-emoji-grid .friend-chat-action { font-size: 24px; padding: 6px; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.friend-chat-sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
+.friend-chat-sticker-image { width: 144px; height: 144px; max-width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: var(--muted-foreground); }
+.friend-chat-sticker-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.friend-chat-sticker-grid .friend-chat-sticker-image { width: 72px; height: 72px; }
+.friend-chat-sticker-selection { display: flex; gap: 12px; align-items: center; }
+.friend-chat-selection-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.friend-chat-save-sticker { display: flex; padding: 4px 0; font-size: 11px; }
+.friend-chat-expression-panel .friend-chat-error { margin: 8px 0; }
+.friend-chat-tools .friend-chat-muted { font-size: 11px; }
+.friend-chat-emoji-controls { margin-bottom: 8px; }
+.friend-chat-emoji-controls select { font: inherit; font-size: 13px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; padding: 5px; max-width: 100%; }
+.friend-chat-messages { min-height: 0; }
+.friend-chat-show-list { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 600px) { .friend-chat-expression-panel { max-height: min(200px, 24dvh); } }

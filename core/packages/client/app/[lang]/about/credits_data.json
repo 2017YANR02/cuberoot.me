@@ -1,5 +1,11 @@
 [
   {
+    "name": "Emoji Mart / Missive",
+    "url": "https://github.com/missive/emoji-mart",
+    "zh": "聊天内置 emoji 分类和肤色数据来自 MIT 许可的 @emoji-mart/data；使用设备系统字体显示，未分发 Apple 表情图片。",
+    "en": "Built-in chat emoji categories and skin tones use MIT-licensed @emoji-mart/data, rendered with device fonts without distributing Apple emoji artwork."
+  },
+  {
     "name": "nissy-core H48 / Sebastiano Tronto and Enrico Tenuti",
     "url": "https://github.com/sebastianotronto/nissy-core",
     "zh": "H48 h11 原生整解表使用 nissy-core 源码生成；源码按 GPL-3.0-or-later 保留在 solver/vendor/nissy-core，表只在本机生成。",

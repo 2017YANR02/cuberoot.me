@@ -52,6 +52,38 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); observers.clear(); vi.unstubAllGlobals(); });
 
 describe('shared friend chat DOM', () => {
+  it('uploads to favorites and previews before sending, without clearing a text draft', async () => {
+    const id = '33333333-3333-4333-8333-333333333333';
+    const upload = vi.fn().mockResolvedValue({ id });
+    client.stickers = { upload, list: vi.fn().mockResolvedValue([{ id }]), image: vi.fn(), save: vi.fn() };
+    await render(); await activate(); await draft('text stays');
+    const button = (label: string) => [...host.querySelectorAll('button')].find((b) => b.textContent === label)!;
+    await act(async () => button('Stickers').click());
+    const input = host.querySelector('input[type=file]')!;
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File(['gif'], 'hello.gif', { type: 'image/gif' })] });
+    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+    expect(upload).toHaveBeenCalledOnce();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(button('Send sticker')).toBeDefined();
+    await act(async () => button('Send sticker').click());
+    expect(client.send.mock.calls[0][1].stickerId).toBe(id);
+    expect(host.querySelector('textarea')?.value).toBe('text stays');
+    expect(host.textContent).toContain('Delivery unconfirmed');
+  });
+  it('ignores upload completion after switching to another peer', async () => {
+    let complete!: (value: { id: string }) => void;
+    client.stickers = { upload: vi.fn().mockImplementation(() => new Promise((resolve) => { complete = resolve; })),
+      list: vi.fn().mockResolvedValue([]), image: vi.fn(), save: vi.fn() };
+    await render(); await activate();
+    await act(async () => [...host.querySelectorAll('button')].find((b) => b.textContent === 'Stickers')!.click());
+    const input = host.querySelector('input[type=file]')!;
+    Object.defineProperty(input, 'files', { value: [new File(['gif'], 'hello.gif', { type: 'image/gif' })] });
+    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+    await render({ peerId: 3 });
+    await act(async () => complete({ id: '33333333-3333-4333-8333-333333333333' }));
+    expect(client.send).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain('Send sticker');
+  });
   it('renders message bodies as text and waits for the message tail, not just the panel, before reading', async () => {
     await render(); await activate();
     expect(host.querySelector('.friend-chat-message p')?.textContent).toBe(body);

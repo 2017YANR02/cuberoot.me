@@ -5,7 +5,8 @@ import { readFile } from 'node:fs/promises';
 import postgres from 'postgres';
 import { createChatRepository } from '../../src/utils/chat_repository.js';
 import { removeAcceptedFriend } from '../../src/utils/friend_relationships.js';
-import { ChatError } from '@cuberoot/shared/chat';
+import { ChatError, CHAT_STICKER_BODY } from '@cuberoot/shared/chat';
+import { createStickerRepository, purgeOrphanedStickers } from '../../src/utils/chat_stickers.js';
 
 const settings = { host: process.env.DB_HOST ?? '127.0.0.1', port: Number(process.env.DB_PORT ?? 5433),
   username: process.env.DB_USER ?? 'postgres', password: process.env.DB_PASS ?? 'dev', connect_timeout: 5 };
@@ -18,7 +19,7 @@ async function rejects(run: () => Promise<unknown>, code: string) {
   await assert.rejects(run, (error: unknown) => error instanceof ChatError && error.code === code); checks++;
 }
 try {
-  await admin.unsafe(`CREATE DATABASE "${name}"`); created = true;
+  await admin.unsafe(`CREATE DATABASE "${name}" TEMPLATE template0 ENCODING 'UTF8'`); created = true;
   db = postgres({ ...settings, database: name, max: 12 });
   const sql = db;
   await sql.unsafe(`CREATE TABLE app_users (
@@ -32,7 +33,7 @@ try {
     read_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   );
   CREATE UNIQUE INDEX uq_notifications_user_kind_dedupe ON notifications (user_key, kind, dedupe_key) WHERE dedupe_key IS NOT NULL;`);
-  for (const migration of ['0175_friends.sql', '0249_friend_chat.sql']) {
+  for (const migration of ['0175_friends.sql', '0249_friend_chat.sql', '0250_chat_stickers.sql']) {
     await sql.unsafe(await readFile(new URL(`../../migrations/${migration}`, import.meta.url), 'utf8'));
   }
   await sql`INSERT INTO app_users (id, display_name) VALUES (1,'One'), (2,'Two'), (3,'Three'), (4,'Four')`;
@@ -108,6 +109,29 @@ try {
   const plan = await sql`EXPLAIN (FORMAT JSON) SELECT * FROM friend_chat_messages
     WHERE conversation_id=${first.message.conversationId} AND sequence > 0 ORDER BY sequence LIMIT 51`;
   assert.ok(plan.length); checks++;
+  const stickers = createStickerRepository(sql);
+  const gif = Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64');
+  const sticker = await stickers.upload(2, gif);
+  assert.deepEqual((await stickers.list(2)).map((s) => s.id), [sticker.id]);
+  await rejects(() => stickers.image(1, sticker.id), 'CHAT_NOT_FOUND');
+  await rejects(() => stickers.save(3, sticker.id, true), 'CHAT_NOT_FOUND');
+  const stickerInput = { ...input(CHAT_STICKER_BODY), stickerId: sticker.id };
+  const sentSticker = await repo.send(2, 1, stickerInput);
+  assert.equal(sentSticker.message.stickerId, sticker.id);
+  assert.deepEqual((await stickers.image(1, sticker.id)).data, gif);
+  assert.equal((await stickers.image(1, sticker.id)).mime, 'image/gif');
+  assert.equal((await repo.conversations(1)).items[0].lastMessage.stickerId, sticker.id);
+  assert.equal((await repo.send(2, 1, stickerInput)).replay, true);
+  await rejects(() => repo.send(2, 1, { ...stickerInput, stickerId: randomUUID() }), 'IDEMPOTENCY_CONFLICT');
+  await rejects(() => repo.send(2, 1, { ...input(CHAT_STICKER_BODY), stickerId: randomUUID() }), 'CHAT_NOT_FOUND');
+  await rejects(() => stickers.image(3, sticker.id), 'CHAT_NOT_FOUND');
+  assert.equal((await stickers.save(1, sticker.id, true))[0].id, sticker.id);
+  await stickers.save(2, sticker.id, false);
+  assert.equal((await stickers.list(2)).length, 0);
+  assert.deepEqual((await stickers.image(1, sticker.id)).data, gif);
+  await sql`DELETE FROM user_friendships WHERE user_low_id=1 AND user_high_id=2`;
+  await rejects(() => repo.send(2, 1, { ...input(CHAT_STICKER_BODY), stickerId: sticker.id }), 'CHAT_UNAVAILABLE');
+  assert.deepEqual((await stickers.image(1, sticker.id)).data, gif); checks++;
   await sql.begin(async (tx) => {
     await tx`SELECT id FROM app_users WHERE id=1 FOR UPDATE`;
     await tx`DELETE FROM notifications WHERE kind='friend_message' AND dedupe_key IN (
@@ -117,6 +141,15 @@ try {
   assert.equal((await sql`SELECT * FROM friend_chat_conversations`).length, 0);
   assert.equal((await sql`SELECT * FROM friend_chat_messages`).length, 0);
   assert.equal((await sql`SELECT * FROM notifications`).length, 0); checks++;
+  const unused = await stickers.upload(2, gif);
+  await stickers.save(3, sticker.id, true).catch((error) => { assert.equal(error.code, 'CHAT_NOT_FOUND'); });
+  // Another user's existing favorite survives uploader deletion; unused uploads do not.
+  await sql`INSERT INTO friend_chat_sticker_favorites (user_id, sticker_id) VALUES (4, ${sticker.id})`;
+  await sql.begin(async (tx) => { await tx`DELETE FROM app_users WHERE id=2`; await purgeOrphanedStickers(tx); });
+  assert.equal((await sql`SELECT id FROM friend_chat_stickers WHERE id=${unused.id}`).length, 0);
+  assert.deepEqual((await stickers.image(4, sticker.id)).data, gif);
+  await stickers.save(4, sticker.id, false);
+  assert.equal((await sql`SELECT id FROM friend_chat_stickers`).length, 0); checks++;
   console.log(`friend chat PostgreSQL fixture: ${checks} checks passed`);
 } finally {
   await db?.end({ timeout: 5 });
