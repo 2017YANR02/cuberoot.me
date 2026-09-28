@@ -83,8 +83,24 @@ API health 返回 `status:ok, db:connected`。
 `systemctl daemon-reload`，并把 PM2 cgroup 的 `memory.swappiness` 写回 60。
 不需要重启 PM2。
 
-## 旁支发现（未修改）
+## 旁支发现与后续修复
 
 `pg-dump-recon.service` 在 03:09:54 UTC 立即失败，日志为
 `database credentials unavailable: node is required to read CUBEROOT_DB_ENV_FILE`。
-该次备份未进入数据导出，不能将其认定为此次换页的来源；备份入口应另行修复。
+该次备份未进入数据导出，不能将其认定为此次换页的来源。
+
+09:19 UTC 后续 API 发布 `827ac576e0` 已增加持续诊断，详见
+[请求观测说明](request-observability.md#cubeopt-最优求解监控2026-09-28)。
+这次发布按标准流程重启 API 并重新预热求解器；与上面的免重启 cgroup 修改分开记账。
+09:24 UTC 三个相同随机状态样本完整请求分别为 3,166、1,423、2,637 ms，
+全部返回 18 HTM 解且经 cubing.js 校验还原正确。求解进程 swap 为 0，
+三个请求都没有新增 major faults。nginx、SSE 请求与求解任务的 requestId 已确认一致。
+
+每日备份已由 systemd `EnvironmentFile` 直接提供数据库凭据，绕开定时任务的
+NVM PATH；脚本改为失败不轮换、成功后最多保留两个日期。
+09:24 UTC 前补跑成功，新 dump 为 216,555,810 字节，gzip 校验通过。
+当前仅保留 2026-08-28 与 2026-09-28 两份 dump 及对应配置副本，权限均为 600。
+下载新 dump 后在独立本地 PostgreSQL 完整恢复，`ON_ERROR_STOP=1` 退出 0：
+288 张 public 表，recons 2,693 行、alg_cases 9,298 行、wca_users 406 行、
+迁移账本 253 行；恢复库约 1,406 MB。派生数据沿用原有排除清单，未改变备份范围。
+下一次定时备份为 2026-09-29 03:02:04 UTC；这是当时 timer 的下一次计划，非固定分钟承诺。
