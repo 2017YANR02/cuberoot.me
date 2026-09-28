@@ -127,7 +127,7 @@ export async function answerSiteQuestion(
     await Promise.all(selected.map(async p=>{
       if (p.content) return;
       try {
-        const response=await fetcher(`https://cuberoot.me/${lang}${p.href}`,{signal:AbortSignal.any([signal,AbortSignal.timeout(7000)]),redirect:'error',headers:{Accept:'text/html'}});
+        const response=await fetcher(`https://cuberoot.me${lang==='zh'?'/zh':''}${p.href}`,{signal:AbortSignal.any([signal,AbortSignal.timeout(7000)]),redirect:'error',headers:{Accept:'text/html'}});
         if (response.ok && response.headers.get('content-type')?.includes('text/html')) p.content=pageText(await limitedText(response,2_000_000));
       } catch { /* Evidence explicitly marks unavailable content. */ }
     }));
