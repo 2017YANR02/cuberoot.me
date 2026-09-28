@@ -898,13 +898,13 @@ export default function LandingSearch({
 
           {yearMatch && personsSection}
 
-          {totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && (
+          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && (xLoaded || !xSearchEnabled) && (
             <div className="landing-search-empty">
               {tr({ zh: '未找到匹配项', en: 'No matches found.'
             })}
             </div>
           )}
-          {totalCount === 0 && !pasteIntent && !yearMatch && xSearchEnabled && !xLoaded && (
+          {!assistantAnswer && !assistantBusy && totalCount === 0 && !pasteIntent && !yearMatch && xSearchEnabled && !xLoaded && (
             <div className="landing-search-empty">
               {tr({ zh: '搜索中…', en: 'Searching…'
             })}
