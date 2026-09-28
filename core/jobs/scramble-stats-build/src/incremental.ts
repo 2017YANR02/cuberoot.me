@@ -64,9 +64,11 @@ async function* lines(file: string, label?: string): AsyncGenerator<string> {
   const input = createReadStream(file, { encoding: 'utf8' });
   const rl = readline.createInterface({ input, crlfDelay: Infinity });
   let count = 0;
-  const stop = label ? intakeProgress(label, () => `已读 ${count.toLocaleString('en-US')} 行`) : undefined;
-  try { for await (const line of rl) { count++; yield line; } }
-  finally { stop?.(); rl.close(); input.destroy(); }
+  let completed = false;
+  const bytes = label ? (await fs.stat(file)).size : 0;
+  const stop = label ? intakeProgress(label, () => `已读 ${count.toLocaleString('en-US')} 行 (${completed ? 100 : bytes ? Math.min(99, Math.floor(100 * input.bytesRead / bytes)) : 0}%)`) : undefined;
+  try { for await (const line of rl) { count++; yield line; } completed = true; }
+  finally { stop?.(completed); rl.close(); input.destroy(); }
 }
 function ymd(y: string, m: string, d: string): string {
   if ([y, m, d].some(s => !s || s === '0' || s === 'NULL' || !/^\d+$/.test(s))) return '';
@@ -122,7 +124,7 @@ async function download(url: string, dest: string): Promise<void> {
     let done = await exists(part) ? (await fs.stat(part)).size : 0;
     let received = 0, total = 0;
     let responseAt = 0;
-    let stop: (() => void) | undefined = intakeProgress(`下载 WCA export ${attempt}/6`, () => responseAt
+    let stop: ((completed?: boolean) => void) | undefined = intakeProgress(`下载 WCA export ${attempt}/6`, () => responseAt
       ? downloadStatus(done, total, received, (Date.now() - responseAt) / 1000)
       : `${(done / 1e6).toFixed(1)} MB 已缓存，等待响应`);
     const controller = new AbortController();
@@ -159,7 +161,7 @@ async function download(url: string, dest: string): Promise<void> {
       console.log(`下载完成 ${Math.round(done / 1e6)} MB -> ${dest}`);
       return;
     } catch (error) {
-      stop?.(); stop = undefined;
+      stop?.(false); stop = undefined;
       console.warn(`下载中断 ${attempt}/6: ${String(error)}; 保留 .part 续传`);
       if (attempt === 6) throw error;
       await new Promise(resolve => setTimeout(resolve, 2_000 * attempt));
@@ -179,13 +181,15 @@ async function fetchExport(o: Options, incr: string): Promise<{ dir: string; dat
     console.log(`使用缓存 ${zip}, export_date=${date}`);
   }
   if (!zip) {
-    const stop = intakeProgress('查询 WCA export 版本', () => '等待网络响应，60 秒超时');
+    let completed = false;
+    const stop = intakeProgress('查询 WCA export 版本', () => completed ? '已收到响应' : '等待网络响应，60 秒超时');
     let meta: Record<string, string>;
     try {
       const response = await fetch(EXPORT_META_URL, { signal: AbortSignal.timeout(60_000) });
       if (!response.ok) throw new Error(`export metadata: HTTP ${response.status}`);
       meta = await response.json() as Record<string, string>;
-    } finally { stop(); }
+      completed = true;
+    } finally { stop(completed); }
     date = (meta.export_date || meta.exportDate || 'unknown').slice(0, 10);
     const url = meta.tsv_url || meta.tsvUrl;
     if (!url) throw new Error('export metadata 缺 tsv_url');
@@ -203,14 +207,16 @@ async function fetchExport(o: Options, incr: string): Promise<{ dir: string; dat
   }
   const stopListing = intakeProgress('读取 ZIP 文件清单');
   let members: string[];
-  try { members = (await runTar(['-tf', zip])).split(/\r?\n/).filter(Boolean); }
-  finally { stopListing(); }
+  let listed = false;
+  try { members = (await runTar(['-tf', zip])).split(/\r?\n/).filter(Boolean); listed = true; }
+  finally { stopListing(listed); }
   for (const [fragment, file] of [['scramble', 'Scrambles.tsv'], ['competition', 'Competitions.tsv']] as const) {
     const member = members.find(name => name.toLowerCase().includes(fragment) && name.toLowerCase().endsWith('.tsv'));
     if (!member) throw new Error(`export ZIP 缺 ${file}`);
     const stop = intakeProgress(`解压 ${file}`);
-    try { await runTar(['-xOf', zip, member], path.join(out, file)); }
-    finally { stop(); }
+    let extracted = false;
+    try { await runTar(['-xOf', zip, member], path.join(out, file)); extracted = true; }
+    finally { stop(extracted); }
     console.log(`解出 ${member} -> ${file}`);
   }
   await fs.writeFile(marker, date, 'utf8');
