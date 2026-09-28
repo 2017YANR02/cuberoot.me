@@ -33,6 +33,7 @@ describe('site assistant grounding', () => {
       .mockRejectedValueOnce(new Error('redirect blocked'))
       .mockResolvedValueOnce(modelResponse({ answer: '打开计时页面查看。', sourceIds: [] }));
     const result = await answerSiteQuestion('计时', 'en', config, AbortSignal.timeout(5000), fetcher);
+    expect(fetcher.mock.calls[1][0]).toBe('https://cuberoot.me/en/timer');
     expect(result.sources).toEqual([{ id: 'timer', href: '/timer', title: 'Timer', read: false }]);
   });
 
