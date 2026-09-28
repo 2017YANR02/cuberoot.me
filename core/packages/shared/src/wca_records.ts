@@ -1,4 +1,4 @@
-import { WCA_EVENT_ORDER } from './wca_events.js';
+import { WCA_EVENT_ORDER } from '@cuberoot/shared/wca-events';
 
 /** Published record-history row; the records page and assistant share this contract. */
 export interface WcaRecordRow {
