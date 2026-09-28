@@ -99,6 +99,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'CubeRoot administration hub for user growth, memberships, sponsorships, and moderation tools.',
     },
   },
+  'admin/interview': {
+    title: { zh: '采访准备', en: 'Interview preparation' },
+    description: { zh: '管理员专属采访准备。', en: 'Private interview preparation for administrators.' },
+  },
   'admin/users': {
     title: { zh: '用户与增长', en: 'Users and Growth' },
     description: {
