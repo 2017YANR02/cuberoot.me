@@ -47,7 +47,8 @@ export function pageText(html: string): string {
   document.querySelectorAll('div[hidden][id]').forEach(node => {
     if (/^S:[0-9a-f]+$/i.test(node.id)) node.removeAttribute('hidden');
   });
-  document.querySelectorAll('script,style,nav,header,footer,form,button,[hidden],[aria-hidden="true"]').forEach(node => node.remove());
+  document.querySelectorAll('header,footer').forEach(node=>{if(!node.closest('main,article'))node.remove();});
+  document.querySelectorAll('script,style,nav,form,button,[hidden],[aria-hidden="true"]').forEach(node => node.remove());
   const root = document.querySelector('main') ?? document.body;
   return [description, root?.textContent ?? ''].join(' ').replace(/\s+/g, ' ').trim().slice(0, 8000);
 }
