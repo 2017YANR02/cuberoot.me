@@ -24,16 +24,14 @@
 .friend-chat-composer textarea { box-sizing: border-box; width: 0; max-height: 112px; resize: none; background: var(--card); color: var(--foreground); border: 0; border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 14px; line-height: 1.5; flex: 1; min-width: 0; min-height: 42px; }
 .friend-chat-older, .friend-chat-new { align-self: center; }
 .friend-chat-readonly { padding: 8px 16px; }
-.friend-chat-spin { animation: friend-chat-spin 1s linear infinite; }
 .friend-chat-show-list { display: none; flex-shrink: 0; white-space: nowrap; }
-@keyframes friend-chat-spin { to { transform: rotate(360deg); } }
 @media (max-width: 600px) {
   .friend-chat { grid-template-columns: minmax(0, 1fr); }
   .friend-chat:not(.has-peer) .friend-chat-thread, .friend-chat.has-peer .friend-chat-sidebar { display: none; }
   .friend-chat-show-list { display: inline-flex; }
   .friend-chat-composer textarea { font-size: 16px; }
 }
-@media (prefers-reduced-motion: reduce) { .friend-chat-spin { animation: none; } .friend-chat-action:active:not(:disabled) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .friend-chat-action:active:not(:disabled) { transform: none; } }
 .friend-chat-tail { width: 1px; height: 1px; flex-shrink: 0; }
 
 .friend-chat-tools, .friend-chat-expression-heading { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
