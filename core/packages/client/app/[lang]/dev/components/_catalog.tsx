@@ -836,8 +836,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'ChatPanel',
     import: "import { ChatPanel, useChat } from '@cuberoot/app-ui/chat';",
     category: 'more',
-    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、文字与系统 emoji、图片表情包上传收藏、失败重试和可见性已读，宿主注入鉴权传输、语言、身份组件和内置表情清单（微信及已解锁的捉虫素材）。样式从 @cuberoot/app-ui/chat.css 引入。',
-    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, text and native emoji, uploaded sticker favorites, retry and visible-message read receipts. Hosts inject transport, language, identity rendering and built-in expression catalogs (WeChat and unlocked pets); import @cuberoot/app-ui/chat.css for styles.',
+    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、文字与系统 emoji、图片表情包上传收藏、失败重试和可见性已读，宿主注入鉴权传输、语言、身份组件和内置表情清单（微信及已解锁的捉虫素材）。提供紧凑输入栏、最近使用、表情搜索和宿主功能面板插槽；Web 接视频邀请、音乐分享和语音输入。样式从 @cuberoot/app-ui/chat.css 引入。',
+    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, text and native emoji, uploaded sticker favorites, retry and visible-message read receipts. Hosts inject transport, language, identity rendering and built-in expression catalogs (WeChat and unlocked pets); Compact composer, recent expressions, search and host action slots support Web meeting invites, music sharing and dictation; import @cuberoot/app-ui/chat.css for styles.',
   },
   {
     name: 'RecordSectionsView',

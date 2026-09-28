@@ -52,6 +52,18 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); observers.clear(); vi.unstubAllGlobals(); });
 
 describe('shared friend chat DOM', () => {
+  it('keeps the expression tray open while inserting, records recents and deletes whole expression tokens', async () => {
+    vi.stubGlobal('requestAnimationFrame', (run: () => void) => { run(); return 0; });
+    await render({ expressionPacks: [{ id: 'wechat', zh: '微信表情', en: 'WeChat emoji', items: [{ token: '[捂脸]', zh: '捂脸', en: 'Facepalm', src: '/face.png' }] }] }); await activate();
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Expressions"]')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Facepalm"]')!.click());
+    expect(host.querySelector('textarea')?.value).toBe('[捂脸]');
+    expect(host.querySelector('[aria-label="Expression picker"]')).not.toBeNull();
+    expect(host.textContent).toContain('Recently used');
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Delete previous expression or character"]')!.click());
+    expect(host.querySelector('textarea')?.value).toBe('');
+    expect(JSON.parse(localStorage.getItem('cuberoot.chat.recent-expressions.1')!)[0]).toBe('[捂脸]');
+  });
   it('shows per-message unread/read receipts only for sent messages and keeps the input visually empty', async () => {
     vi.mocked(client.messages).mockResolvedValue({ ...page, peerReadSequence: '1', lastSequence: '3', items: [
       { ...page.items[0], senderUserId: 1 }, { ...page.items[0], sequence: '2', senderUserId: 1 },
@@ -70,8 +82,9 @@ describe('shared friend chat DOM', () => {
     const upload = vi.fn().mockResolvedValue({ id });
     client.stickers = { upload, list: vi.fn().mockResolvedValue([{ id }]), image: vi.fn(), save: vi.fn() };
     await render(); await activate(); await draft('text stays');
-    const button = (label: string) => [...host.querySelectorAll('button')].find((b) => b.textContent === label)!;
-    await act(async () => button('Stickers').click());
+    const button = (label: string) => [...host.querySelectorAll('button')].find((b) => (b.textContent === label || b.getAttribute('aria-label') === label))!;
+    await act(async () => button('More actions').click());
+    await act(async () => button('Saved stickers').click());
     const input = host.querySelector('input[type=file]')!;
     Object.defineProperty(input, 'files', { configurable: true, value: [new File(['gif'], 'hello.gif', { type: 'image/gif' })] });
     await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
@@ -88,7 +101,8 @@ describe('shared friend chat DOM', () => {
     client.stickers = { upload: vi.fn().mockImplementation(() => new Promise((resolve) => { complete = resolve; })),
       list: vi.fn().mockResolvedValue([]), image: vi.fn(), save: vi.fn() };
     await render(); await activate();
-    await act(async () => [...host.querySelectorAll('button')].find((b) => b.textContent === 'Stickers')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="More actions"]')!.click());
+    await act(async () => [...host.querySelectorAll('button')].find((b) => b.textContent === 'Saved stickers')!.click());
     const input = host.querySelector('input[type=file]')!;
     Object.defineProperty(input, 'files', { value: [new File(['gif'], 'hello.gif', { type: 'image/gif' })] });
     await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
@@ -99,7 +113,7 @@ describe('shared friend chat DOM', () => {
   });
   it('renders message bodies as text and waits for the message tail, not just the panel, before reading', async () => {
     await render(); await activate();
-    expect(host.querySelector('.friend-chat-message p')?.textContent).toBe(body);
+    expect(host.querySelector('.friend-chat-message-body')?.textContent).toBe(body);
     expect(host.querySelector('img')).toBeNull();
     expect(client.read).not.toHaveBeenCalled();
     await intersect('.friend-chat-tail', true);

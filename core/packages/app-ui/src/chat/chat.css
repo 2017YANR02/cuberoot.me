@@ -6,7 +6,7 @@
 .friend-chat-preview { grid-column: 1 / -1; margin: 0; font-size: 13px; color: var(--muted-foreground); overflow-wrap: anywhere; }
 .friend-chat-thread { display: flex; flex-direction: column; min-width: 0; height: min(680px, 74dvh); min-height: 360px; background: var(--card); border: 1px solid var(--border-default); border-radius: 12px; overflow: hidden; }
 .friend-chat-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border-default); flex-shrink: 0; }
-.friend-chat-messages { flex: 1; min-height: 100px; overflow-y: auto; overscroll-behavior: contain; padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; overflow-anchor: none; }
+.friend-chat-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 14px; overflow-anchor: none; }
 .friend-chat-message { max-width: 88%; min-width: 0; padding: 10px 12px; border-radius: 10px; background: var(--muted); flex-shrink: 0; }
 .friend-chat-message.is-mine { align-self: flex-end; background: var(--accent-soft); }
 .friend-chat-message p { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0 0 6px; font-size: 14px; line-height: 1.65; }
@@ -20,14 +20,12 @@
 .friend-chat-muted, .friend-chat-empty { color: var(--muted-foreground); font-size: 13px; line-height: 1.65; }
 .friend-chat-empty { margin: auto; padding: 24px; }
 .friend-chat-error { color: var(--destructive); font-size: 13px; line-height: 1.6; margin: 8px 16px; }
-.friend-chat-composer { padding: 12px 16px; border-top: 1px solid var(--border-default); }
-.friend-chat-input-label { display: block; font-size: 13px; margin-bottom: 8px; }
-.friend-chat-composer textarea { box-sizing: border-box; width: 100%; max-height: 160px; resize: vertical; background: var(--background); color: var(--foreground); border: 1px solid var(--input); border-radius: 8px; padding: 10px; font: inherit; font-size: 14px; line-height: 1.5; }
-.friend-chat-compose-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+.friend-chat-composer { padding: 10px 12px; border-top: 1px solid var(--border-default); flex-shrink: 0; background: var(--muted); }
+.friend-chat-composer textarea { box-sizing: border-box; width: 0; max-height: 112px; resize: none; background: var(--card); color: var(--foreground); border: 0; border-radius: 8px; padding: 10px 12px; font: inherit; font-size: 14px; line-height: 1.5; flex: 1; min-width: 0; min-height: 42px; }
 .friend-chat-older, .friend-chat-new { align-self: center; }
 .friend-chat-readonly { padding: 8px 16px; }
 .friend-chat-spin { animation: friend-chat-spin 1s linear infinite; }
-.friend-chat-show-list { display: none; }
+.friend-chat-show-list { display: none; flex-shrink: 0; white-space: nowrap; }
 @keyframes friend-chat-spin { to { transform: rotate(360deg); } }
 @media (max-width: 600px) {
   .friend-chat { grid-template-columns: minmax(0, 1fr); }
@@ -38,12 +36,12 @@
 }
 @media (prefers-reduced-motion: reduce) { .friend-chat-spin { animation: none; } .friend-chat-action:active:not(:disabled) { transform: none; } }
 .friend-chat-tail { width: 1px; height: 1px; flex-shrink: 0; }
-.friend-chat-composer { flex-shrink: 0; }
+
 .friend-chat-tools, .friend-chat-expression-heading { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
 .friend-chat-expression-heading { justify-content: space-between; font-size: 13px; }
-.friend-chat-expression-panel { background: var(--card); border: 1px solid var(--border-default); border-radius: 10px; padding: 8px; margin: 6px 0; max-height: min(240px, 32dvh); overflow-y: auto; overscroll-behavior: contain; }
-.friend-chat-emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(38px, 1fr)); gap: 3px; }
-.friend-chat-emoji-grid .friend-chat-action { font-size: 24px; padding: 6px; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+.friend-chat-expression-panel { background: var(--muted); border: 0; border-radius: 0; padding: 0; margin: 10px -12px -10px; max-height: none; overflow-y: auto; overscroll-behavior: contain; overflow: hidden; border-top: 1px solid var(--border-default); }
+.friend-chat-emoji-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px 2px; }
+.friend-chat-emoji-grid .friend-chat-action { font-size: 24px; padding: 7px 2px; font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; min-width: 0; }
 .friend-chat-sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
 .friend-chat-sticker-image { width: 144px; height: 144px; max-width: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: var(--muted-foreground); }
 .friend-chat-sticker-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
@@ -55,11 +53,9 @@
 .friend-chat-tools .friend-chat-muted { font-size: 11px; }
 .friend-chat-emoji-controls { margin-bottom: 8px; }
 .friend-chat-emoji-controls select { font: inherit; font-size: 13px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; padding: 5px; max-width: 100%; }
-.friend-chat-messages { min-height: 0; }
-.friend-chat-show-list { flex-shrink: 0; white-space: nowrap; }
-@media (max-width: 600px) { .friend-chat-expression-panel { max-height: min(200px, 24dvh); } }
 
-.friend-chat-picker-image { width: 30px; height: 30px; object-fit: contain; }
+
+.friend-chat-picker-image { width: 32px; height: 32px; object-fit: contain; max-width: 100%; }
 .friend-chat-inline-expression { display: inline-block; width: 1.5em; height: 1.5em; object-fit: contain; vertical-align: middle; }
 .friend-chat-pet-expression { display: inline-block; width: 128px; height: 128px; max-width: 100%; object-fit: contain; vertical-align: middle; }
 .friend-chat-preview .friend-chat-pet-expression { width: 1.5em; height: 1.5em; }
@@ -67,3 +63,48 @@
 .friend-chat-receipt { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted-foreground); }
 .friend-chat-draft-preview { max-height: 100px; overflow: auto; overflow-wrap: anywhere; white-space: pre-wrap; }
 .friend-chat-sticker-grid .friend-chat-pet-expression { width: 72px; height: 72px; }
+
+/* Compact input bar and bottom trays, matching the supplied WeChat reference. */
+
+.friend-chat-input-row { display: flex; align-items: flex-end; gap: 5px; position: relative; }
+
+.friend-chat-icon { flex-shrink: 0; width: 36px; height: 42px; padding: 3px; color: var(--foreground); }
+.friend-chat-send { flex-shrink: 0; height: 40px; padding: 6px 10px; margin-bottom: 1px; }
+.friend-chat-voice { display: contents; }
+.friend-chat-voice .friend-chat-error { position: absolute; bottom: 100%; }
+
+.friend-chat-pack-strip { display: flex; align-items: center; overflow-x: auto; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border-default); scrollbar-width: thin; }
+.friend-chat-pack-strip .friend-chat-action { flex: 0 0 44px; width: 44px; height: 42px; padding: 5px; border-radius: 8px; }
+.friend-chat-pack-strip [aria-selected=true], .friend-chat-pack-strip [aria-pressed=true] { background: var(--accent-soft); color: var(--accent); }
+.friend-chat-pack-strip img { width: 36px; height: 36px; object-fit: contain; }
+.friend-chat-expression-content { height: clamp(150px, 27dvh, 250px); overflow-y: auto; overscroll-behavior: contain; padding: 0 12px 8px; }
+.friend-chat-expression-label { font-size: 12px; color: var(--muted-foreground); margin: 16px 2px 10px; }
+
+.friend-chat-expression-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 4px 12px 8px; }
+.friend-chat-expression-footer button { background: var(--card); }
+.friend-chat-search { display: flex; align-items: center; gap: 7px; margin: 10px 12px; padding: 5px 10px; border-radius: 8px; background: var(--card); }
+.friend-chat-search input { width: 100%; min-width: 0; padding: 5px 0; background: transparent; color: var(--foreground); border: 0; font: inherit; outline-offset: 3px; }
+.friend-chat-more-panel { margin: 10px -12px -10px; padding: 15px 12px; border-top: 1px solid var(--border-default); max-height: 35dvh; overflow-y: auto; background: var(--muted); display: flex; flex-wrap: wrap; align-content: flex-start; }
+.friend-chat-more-grid { display: contents; }
+.friend-chat-more-grid > button { appearance: none; border: 0; font: inherit; color: var(--muted-foreground); background: transparent; flex: 0 0 25%; min-width: 0; display: flex; align-items: center; flex-direction: column; gap: 9px; padding: 8px 3px 18px; cursor: pointer; font-size: 12px; }
+.friend-chat-more-grid > button > span { display: grid; place-items: center; background: var(--card); width: 56px; height: 56px; border-radius: 14px; color: var(--foreground); }
+.friend-chat-more-grid > button svg { width: 26px; height: 26px; }
+.friend-chat-more-grid > button:hover > span { background: var(--accent-soft); }
+.friend-chat-more-grid > button:disabled { opacity: .5; cursor: wait; }
+.friend-chat-message-body { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 6px; font-size: 14px; line-height: 1.65; }
+.friend-chat-music-picker { width: 100%; }
+.friend-chat-music-list { display: flex; flex-direction: column; }
+.friend-chat-music-track { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border-default); }
+.friend-chat-music-track > span { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+.friend-chat-music-track small { color: var(--muted-foreground); }
+.friend-chat-share-card { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; border: 1px solid var(--border-default); border-radius: 8px; padding: 10px; background: var(--card); white-space: normal; }
+.friend-chat-share-card a { color: var(--foreground); }
+@media (max-width: 600px) {
+  .friend-chat-thread { height: 76dvh; }
+  .friend-chat-composer { padding: 8px; }
+  .friend-chat-input-row { gap: 2px; }
+  .friend-chat-icon { width: 31px; }
+  .friend-chat-expression-panel, .friend-chat-more-panel { margin: 8px -8px -8px; }
+  .friend-chat-expression-content { height: clamp(130px, 26dvh, 235px); padding-left: 8px; padding-right: 8px; }
+  .friend-chat-picker-image { width: 30px; height: 30px; }
+}
