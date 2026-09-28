@@ -4,6 +4,8 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+packageExtensionsChecksum: sha256-1U/6Y3WntbPpDziXsm+/Fb56O387oglad0xk5s/pn/k=
+
 patchedDependencies:
   cubing@0.63.3: 026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6
 
@@ -488,6 +490,9 @@ importers:
       '@cuberoot/timer-ui':
         specifier: workspace:*
         version: link:../timer-ui
+      '@emoji-mart/data':
+        specifier: 1.2.1
+        version: 1.2.1
     devDependencies:
       '@types/node':
         specifier: ^24.13.3
@@ -1031,6 +1036,9 @@ importers:
         version: 5.7.3
 
 packages:
+
+  '@emoji-mart/data@1.2.1':
+    resolution: {integrity: sha512-no2pQMWiBy6gpBEiqGeU77/bFejDqUTRY7KX+0+iur13op3bqUsXdnwoZs6Xb1zbv0gAj5VvS1PWoUUckSr5Dw==}
 
   '@airwallex/airtracker@3.2.0':
     resolution: {integrity: sha512-PKE5N38ajTVg6ph9JzLpWsICNjqLtf/wWudNVU3UPX9SVy2I5s5ITc281sMSD8+LIE6RJoGjGTO+VYP/io5kig==}
@@ -6178,6 +6186,8 @@ packages:
 
 snapshots:
 
+  '@emoji-mart/data@1.2.1': {}
+
   '@airwallex/airtracker@3.2.0': {}
 
   '@airwallex/components-sdk@1.35.1':
@@ -10953,11 +10963,13 @@ snapshots:
 
   three-bvh-csg@0.0.18(three-mesh-bvh@0.9.10(three@0.183.2))(three@0.183.2):
     dependencies:
+      '@types/three': 0.183.1
       three: 0.183.2
       three-mesh-bvh: 0.9.10(three@0.183.2)
 
   three-mesh-bvh@0.9.10(three@0.183.2):
     dependencies:
+      '@types/three': 0.183.1
       three: 0.183.2
 
   three@0.170.0: {}

@@ -3,7 +3,8 @@ import type postgres from 'postgres';
 import { sql as database } from '../db/connection.js';
 import { ownerKey } from './account.js';
 import { friendPair, friendUser, lockFriendUsers, type FriendUserRow } from './friend_relationships.js';
-import { ChatError, isChatSequence, isChatUuid, normalizeChatBody,
+import { requireStickerAccess } from './chat_stickers.js';
+import { ChatError, CHAT_STICKER_BODY, isChatSequence, isChatUuid, normalizeChatBody,
   type ChatMessage, type ChatMessagesPage, type ChatConversationsPage, type ChatSendInput,
   type ChatReadResult, type ChatPageInput } from '@cuberoot/shared/chat';
 
@@ -14,12 +15,13 @@ interface ConversationRow {
   last_message_at: Date;
 }
 interface MessageRow { conversation_id: string; sequence: string; sender_user_id: string | number;
-  client_message_id: string; body: string; created_at: Date }
+  client_message_id: string; body: string; sticker_id: string | null; created_at: Date }
 type ConversationListRow = ConversationRow & MessageRow & Omit<FriendUserRow, 'id'> & {
   peer_id: string | number; unread_count: string; can_send: boolean;
 };
 const toMessage = (m: MessageRow): ChatMessage => ({ conversationId: m.conversation_id, sequence: String(m.sequence),
-  senderUserId: Number(m.sender_user_id), clientMessageId: m.client_message_id, body: m.body, createdAt: m.created_at.toISOString() });
+  senderUserId: Number(m.sender_user_id), clientMessageId: m.client_message_id, body: m.body,
+  ...(m.sticker_id ? { stickerId: m.sticker_id } : {}), createdAt: m.created_at.toISOString() });
 const readSequence = (c: ConversationRow, uid: number) => String(Number(c.user_low_id) === uid ? c.low_read_sequence : c.high_read_sequence);
 async function canSend(tx: Tx, uid: number, peer: number): Promise<boolean> {
   const [low, high] = friendPair(uid, peer);
@@ -88,7 +90,7 @@ export function createChatRepository(db: typeof database = database) {
       if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new ChatError('INVALID_INPUT');
       return await db.begin('isolation level repeatable read read only', async (tx) => {
         const rows = await tx<ConversationListRow[]>`SELECT c.*, m.conversation_id, m.sequence, m.sender_user_id,
-            m.client_message_id, m.body, m.created_at,
+            m.client_message_id, m.body, m.sticker_id, m.created_at,
             u.id AS peer_id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id,
             (SELECT count(*)::text FROM friend_chat_messages unread
               WHERE unread.conversation_id = c.id AND unread.sender_user_id <> ${uid}
@@ -114,6 +116,8 @@ export function createChatRepository(db: typeof database = database) {
       validatePeer(uid, peer);
       const body = normalizeChatBody(input.body);
       if (!body || !isChatUuid(input.clientMessageId)) throw new ChatError('INVALID_INPUT');
+      const stickerId = input.stickerId ?? null;
+      if (stickerId !== null && (!isChatUuid(stickerId) || body !== CHAT_STICKER_BODY)) throw new ChatError('INVALID_INPUT');
       return await db.begin(async (tx) => {
         const users = await lockFriendUsers(tx, uid, peer);
         if (!users) throw new ChatError('CHAT_NOT_FOUND');
@@ -122,11 +126,12 @@ export function createChatRepository(db: typeof database = database) {
           const old = await tx<MessageRow[]>`SELECT * FROM friend_chat_messages WHERE conversation_id = ${c.id}
             AND sender_user_id = ${uid} AND client_message_id = ${input.clientMessageId}`;
           if (old[0]) {
-            if (old[0].body !== body) throw new ChatError('IDEMPOTENCY_CONFLICT');
+            if (old[0].body !== body || old[0].sticker_id !== stickerId) throw new ChatError('IDEMPOTENCY_CONFLICT');
             return { message: toMessage(old[0]), replay: true };
           }
         }
         if (!await canSend(tx, uid, peer)) throw new ChatError('CHAT_UNAVAILABLE');
+        if (stickerId) await requireStickerAccess(tx, uid, stickerId);
         const recent = await tx`SELECT 1 FROM friend_chat_messages WHERE sender_user_id = ${uid}
           AND created_at > clock_timestamp() - INTERVAL '60 seconds' LIMIT 60`;
         if (recent.length >= 60) throw new ChatError('RATE_LIMITED', 60_000);
@@ -139,8 +144,8 @@ export function createChatRepository(db: typeof database = database) {
         const sequence = await tx<{ last_sequence: string; last_message_at: Date }[]>`UPDATE friend_chat_conversations
           SET last_sequence = last_sequence + 1, last_message_at = date_trunc('milliseconds', clock_timestamp())
           WHERE id = ${c.id} RETURNING last_sequence, last_message_at`;
-        const rows = await tx<MessageRow[]>`INSERT INTO friend_chat_messages (conversation_id, sequence, sender_user_id, client_message_id, body, created_at)
-          VALUES (${c.id}, ${sequence[0].last_sequence}, ${uid}, ${input.clientMessageId}, ${body}, ${sequence[0].last_message_at}) RETURNING *`;
+        const rows = await tx<MessageRow[]>`INSERT INTO friend_chat_messages (conversation_id, sequence, sender_user_id, client_message_id, body, sticker_id, created_at)
+          VALUES (${c.id}, ${sequence[0].last_sequence}, ${uid}, ${input.clientMessageId}, ${body}, ${stickerId}, ${sequence[0].last_message_at}) RETURNING *`;
         await tx`INSERT INTO notifications (user_key, kind, actor_key, actor_name, title, excerpt, link, dedupe_key)
           VALUES (${ownerKey(peer, users.target.wca_id)}, 'friend_message', ${ownerKey(uid, users.current.wca_id)},
             ${users.current.display_name.slice(0, 100)}, '好友聊天 / Friend chat', '', ${`/friends?view=chats&peer=${uid}`}, ${`friend-chat:${c.id}`})

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createChatController, createChatClient, ChatError, mergeChatMessages,
+import { createChatController, createChatClient, ChatError, mergeChatMessages, CHAT_STICKER_BODY,
   type ChatClient, type ChatMessage, type ChatMessagesPage } from '@cuberoot/shared/chat';
 const id = '11111111-1111-4111-8111-111111111111';
 const key = '22222222-2222-4222-8222-222222222222';
@@ -24,6 +24,19 @@ function setup() {
 beforeEach(() => vi.useFakeTimers());
 afterEach(() => { controllers.splice(0).forEach((c) => c.dispose()); vi.useRealTimers(); });
 describe('shared chat controller', () => {
+  it('preserves text drafts and the exact sticker ID when retrying a failed sticker send', async () => {
+    const { client, controller } = setup(); await flush();
+    client.send.mockRejectedValueOnce(new ChatError('NETWORK_ERROR'))
+      .mockResolvedValueOnce({ ...message('2', 1), body: CHAT_STICKER_BODY, stickerId: id });
+    controller.setDraft('keep this draft');
+    await controller.send(undefined, id);
+    expect(controller.getSnapshot().draft).toBe('keep this draft');
+    expect(controller.getSnapshot().pending[0].stickerId).toBe(id);
+    await controller.send(key);
+    expect(client.send.mock.calls[0][1]).toEqual(client.send.mock.calls[1][1]);
+    expect(controller.getSnapshot().draft).toBe('keep this draft');
+    expect(controller.getSnapshot().pending).toHaveLength(0);
+  });
   it('merges bigint sequences without lossy conversion or duplicate messages', () => {
     const result = mergeChatMessages([message('9007199254740993')], [message('9007199254740992'), message('9007199254740993')]);
     expect(result.map((m) => m.sequence)).toEqual(['9007199254740992', '9007199254740993']);

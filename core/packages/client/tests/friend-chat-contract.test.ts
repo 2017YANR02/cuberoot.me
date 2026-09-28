@@ -32,4 +32,11 @@ describe('shared friend chat integration contracts', () => {
     expect(repository).toContain("'好友聊天 / Friend chat', ''");
     expect(source('@cuberoot/server', 'src/utils/account_delete.ts')).toContain("kind = 'friend_message'");
   });
+  it('allows the sticker upload limit through nginx without enabling caching', () => {
+    const nginx = readFileSync(resolve(repo, 'ops/nginx/www.cuberoot.me.conf'), 'utf8');
+    const location = nginx.match(/location = \/v1\/chat\/stickers \{([^}]+)\}/)?.[1];
+    expect(location).toContain('client_max_body_size 2m;');
+    expect(location).toContain('proxy_cache off;');
+    expect(location).toContain('proxy_pass http://127.0.0.1:3001;');
+  });
 });
