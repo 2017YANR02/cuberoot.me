@@ -58,3 +58,12 @@
 .friend-chat-messages { min-height: 0; }
 .friend-chat-show-list { flex-shrink: 0; white-space: nowrap; }
 @media (max-width: 600px) { .friend-chat-expression-panel { max-height: min(200px, 24dvh); } }
+
+.friend-chat-picker-image { width: 30px; height: 30px; object-fit: contain; }
+.friend-chat-inline-expression { display: inline-block; width: 1.5em; height: 1.5em; object-fit: contain; vertical-align: middle; }
+.friend-chat-pet-expression { display: inline-block; width: 128px; height: 128px; max-width: 100%; object-fit: contain; vertical-align: middle; }
+.friend-chat-preview .friend-chat-pet-expression { width: 1.5em; height: 1.5em; }
+.friend-chat-message-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
+.friend-chat-receipt { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--muted-foreground); }
+.friend-chat-draft-preview { max-height: 100px; overflow: auto; overflow-wrap: anywhere; white-space: pre-wrap; }
+.friend-chat-sticker-grid .friend-chat-pet-expression { width: 72px; height: 72px; }

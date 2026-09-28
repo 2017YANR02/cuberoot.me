@@ -52,6 +52,19 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); observers.clear(); vi.unstubAllGlobals(); });
 
 describe('shared friend chat DOM', () => {
+  it('shows per-message unread/read receipts only for sent messages and keeps the input visually empty', async () => {
+    vi.mocked(client.messages).mockResolvedValue({ ...page, peerReadSequence: '1', lastSequence: '3', items: [
+      { ...page.items[0], senderUserId: 1 }, { ...page.items[0], sequence: '2', senderUserId: 1 },
+      { ...page.items[0], sequence: '3', senderUserId: 2 },
+    ] });
+    await render(); await activate();
+    expect(host.querySelector('[aria-label="Read by recipient"]')?.textContent).toBe('Read');
+    expect(host.querySelector('[aria-label="Not yet read by recipient"]')?.textContent).toBe('Unread');
+    expect(host.querySelectorAll('.friend-chat-receipt')).toHaveLength(2);
+    expect(host.querySelector('textarea')?.hasAttribute('placeholder')).toBe(false);
+    expect(host.querySelector('label[for="friend-chat-message"]')).toBeNull();
+    expect(host.querySelector('textarea')?.getAttribute('aria-label')).toBe('Message');
+  });
   it('uploads to favorites and previews before sending, without clearing a text draft', async () => {
     const id = '33333333-3333-4333-8333-333333333333';
     const upload = vi.fn().mockResolvedValue({ id });

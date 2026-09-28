@@ -89,6 +89,7 @@ const nextConfig: NextConfig = {
       // change covers Vercel AND the origin (nginx proxies Next's headers).
       // Art/fonts are content-stable → immutable 1y (rename to bust). Icons /
       // favicon may change → 30d so a new logo propagates without a rename.
+      { source: "/chat/wechat-58b70fb/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       {
         source: "/deskpet/:path*",
         headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],

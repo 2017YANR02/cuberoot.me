@@ -127,7 +127,9 @@ export function createChatController(options: ChatControllerOptions) {
         const merged = mergeChatMessages(state.messages, page.items, older || !atBottom || state.hasNewerGap);
         const newestKnown = maxSequence(state.messages.at(-1)?.sequence ?? '0', page.items.at(-1)?.sequence ?? '0');
         const hasNewerGap = state.hasNewerGap || compareChatSequence(newestKnown, merged.at(-1)?.sequence ?? '0') > 0;
-        publish({ page: { ...page, myReadSequence: maxSequence(page.myReadSequence, state.page?.myReadSequence ?? '0') },
+        publish({ page: { ...page, myReadSequence: maxSequence(page.myReadSequence, state.page?.myReadSequence ?? '0'),
+          peerReadSequence: page.peerReadSequence === undefined ? state.page?.peerReadSequence
+            : maxSequence(page.peerReadSequence, state.page?.peerReadSequence ?? '0') },
           messages: merged, hasNewerGap, pending,
           hasOlder: older || initial ? page.hasMore : state.hasOlder || state.messages.length + page.items.length > CHAT_MESSAGE_LIMIT,
           error: null });

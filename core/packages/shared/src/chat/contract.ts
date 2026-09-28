@@ -44,6 +44,8 @@ export interface ChatConversation {
 }
 export interface ChatConversationsPage { items: ChatConversation[]; nextCursor: string | null }
 export interface ChatMessagesPage {
+  /** Omitted by older servers; do not infer unread from missing receipts. */
+  peerReadSequence?: string;
   conversationId: string | null;
   peer: FriendUser;
   items: ChatMessage[];

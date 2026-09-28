@@ -1,5 +1,11 @@
 [
   {
+    "name": "WeChat emoji / Tencent · xxk8",
+    "url": "https://github.com/xxk8/wechat-emojis",
+    "zh": "微信表情图片版权归腾讯；非官方整理来自 xxk8/wechat-emojis，按其非商业用途说明收录，固定版本与声明随素材保留。",
+    "en": "WeChat artwork copyright Tencent; unofficial collection from xxk8/wechat-emojis, included under its noncommercial-use notice with pinned provenance."
+  },
+  {
     "name": "Emoji Mart / Missive",
     "url": "https://github.com/missive/emoji-mart",
     "zh": "聊天内置 emoji 分类和肤色数据来自 MIT 许可的 @emoji-mart/data；使用设备系统字体显示，未分发 Apple 表情图片。",

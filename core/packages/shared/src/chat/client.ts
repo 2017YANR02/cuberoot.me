@@ -24,6 +24,7 @@ function messages(value: unknown): value is ChatMessagesPage {
     && Array.isArray(v.items) && v.items.every(isChatMessage)
     && v.items.every((m) => m.conversationId === v.conversationId)
     && isChatSequence(v.myReadSequence) && isChatSequence(v.lastSequence)
+    && (v.peerReadSequence === undefined || (isChatSequence(v.peerReadSequence) && BigInt(v.peerReadSequence) <= BigInt(v.lastSequence)))
     && (v.oldestSequence === null || isChatSequence(v.oldestSequence))
     && isChatSequence(v.nextAfterSequence) && typeof v.canSend === 'boolean' && typeof v.hasMore === 'boolean';
 }
@@ -40,7 +41,7 @@ export function createChatClient(transport: ChatTransport): ChatClient {
     const timeout = setTimeout(abort, CHAT_REQUEST_TIMEOUT_MS);
     try {
       const raw = typeof Blob !== 'undefined' && body instanceof Blob;
-      const response = await transport.fetch(transport.url(`/v1/chat${path}${path.includes('?') ? '&' : '?'}v=2`), {
+      const response = await transport.fetch(transport.url(`/v1/chat${path}${path.includes('?') ? '&' : '?'}v=3`), {
         method, headers: { ...transport.headers(), ...(body === undefined ? {} : { 'Content-Type': raw ? body.type : 'application/json' }) },
         cache: 'no-store', signal: controller.signal, body: raw ? body : body === undefined ? undefined : JSON.stringify(body),
       });
