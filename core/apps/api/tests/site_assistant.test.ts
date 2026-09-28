@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSiteAssistantRoutes } from '../src/routes/site_assistant.js';
+import { createSiteAssistantRoutes as createRoutes } from '../src/routes/site_assistant.js';
 import { answerSiteQuestion, pageText } from '../src/utils/site_assistant.js';
+
+const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0], 'reserve'> & { reserve?: () => Promise<{ allowed: boolean; retryAfter: number }> }) => createRoutes({ reserve: async () => ({ allowed: true, retryAfter: 60 }), ...deps });
 
 const config = { key: 'test-secret', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' };
 const modelResponse = (value: unknown) => Response.json({ choices: [{ message: { content: JSON.stringify(value) } }] });
@@ -56,6 +58,37 @@ describe('site assistant grounding', () => {
 });
 
 describe('site assistant public route', () => {
+  it('rejects the 101st question across route instances, including failed model requests', async () => {
+    let used = 0;
+    let now = 120000;
+    const reserve = vi.fn(async () => ({ allowed: ++used <= 100, retryAfter: 3600 }));
+    const answer = vi.fn().mockResolvedValue({ answer: 'answer', sources: [] });
+    const deps = { answer, config: () => config, now: () => now, reserve };
+    for (let i = 0; i < 100; i++) {
+      now += 60000;
+      // A fresh route has no in-memory history; it must still share the quota.
+      expect((await createSiteAssistantRoutes(deps).fetch(ask())).status).toBe(200);
+    }
+    const response = await createSiteAssistantRoutes(deps).fetch(ask());
+    expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('3600');
+    expect(await response.json()).toEqual({ error: 'daily_limit' });
+    expect(answer).toHaveBeenCalledTimes(100);
+    used = 99;
+    answer.mockRejectedValue(new Error('upstream failure'));
+    expect((await createSiteAssistantRoutes(deps).fetch(ask())).status).toBe(503);
+    expect((await createSiteAssistantRoutes(deps).fetch(ask())).status).toBe(429);
+    expect(answer).toHaveBeenCalledTimes(101);
+  });
+
+  it('fails closed when the persistent quota cannot be read', async () => {
+    const answer = vi.fn();
+    const route = createSiteAssistantRoutes({ answer, config: () => config, now: Date.now,
+      reserve: async () => { throw new Error('database unavailable'); } });
+    expect((await route.fetch(ask())).status).toBe(503);
+    expect(answer).not.toHaveBeenCalled();
+  });
+
   it('rejects oversized, malformed and unexpected fields before spending tokens', async () => {
     const answer = vi.fn();
     const route = createSiteAssistantRoutes({ answer, config: () => config, now: () => 120000 });
