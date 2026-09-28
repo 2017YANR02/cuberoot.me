@@ -102,6 +102,7 @@ jobs:
               - 'core/scripts/**'
               - 'core/apps/web/**'
               - 'core/packages/client/**'
+              - 'core/packages/app-ui/**'
               - 'core/packages/event-icon/**'
               - 'core/packages/puzzle-render-core/**'
               - 'core/packages/puzzle-solvers/**'
@@ -726,6 +727,8 @@ jobs:
         run: |
           pnpm --filter @cuberoot/desktop test
           pnpm --filter @cuberoot/desktop exec tauri build --no-bundle
+          cd apps/desktop/src-tauri
+          cargo test --release --lib ble_notifications::tests --locked
 
   # analyzer_worker 会做深度搜索并加载多份 WASM。独占 runner 可避免与 360+ 个快测文件
   # 互抢 CPU；它与主 test job 并行，所以既保留精确回归，也缩短整条 workflow 墙钟。

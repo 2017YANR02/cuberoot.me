@@ -47,7 +47,7 @@ export type NotificationKind =
   | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'
-  | 'friend_request' | 'friend_accepted'
+  | 'friend_request' | 'friend_accepted' | 'friend_message'
   | 'sponsor_claim_pending' | 'sponsor_claim_approved'
   | 'sponsor_claim_rejected' | 'sponsor_claim_revoked';
 
@@ -98,6 +98,7 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   teaching_message: { zh: '发送了教学消息', en: 'sent a teaching message' },
   friend_request: { zh: '申请添加你为好友', en: 'sent you a friend request' },
   friend_accepted: { zh: '接受了你的好友申请', en: 'accepted your friend request' },
+  friend_message: { zh: '发来了消息', en: 'sent you a message' },
   sponsor_claim_pending: { zh: '提交了赞助认领申请', en: 'submitted a supporter claim' },
   sponsor_claim_approved: { zh: '通过了你的赞助认领', en: 'approved your supporter claim' },
   sponsor_claim_rejected: { zh: '驳回了你的赞助认领', en: 'declined your supporter claim' },

@@ -1,0 +1,24 @@
+.timer-battle-player {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  flex-direction: column;
+  outline: 0 solid var(--accent);
+  outline-offset: -3px;
+}
+.timer-battle-player.is-winner { outline-width: 3px; }
+.timer-battle-player-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-height: 44px;
+  gap: 6px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.timer-battle-player-header > strong { flex: 1; min-width: 0; }
+.timer-battle-player-controls { display: flex; align-items: center; gap: 6px; }
+.timer-battle-player-winner { color: var(--signal-success); font-weight: 700; }
+.timer-battle-player-actions { flex: 0 0 auto; }

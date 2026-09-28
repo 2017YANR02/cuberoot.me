@@ -35,6 +35,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@cuberoot/app-ui": "workspace:*",
     "@airwallex/components-sdk": "^1.35.1",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.3",

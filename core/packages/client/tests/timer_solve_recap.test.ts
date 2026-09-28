@@ -107,7 +107,7 @@ describe('复原后自动复盘', () => {
 
   it('桌面继续在计时页右栏渲染复盘', () => {
     expect(src).toMatch(/<SolveRecap\b/);
-    expect(src).toMatch(/\{isDesktop && !panelTab && solveRecap && \(/);
+    expect(src).toContain('panelOpen={Boolean(panelTab)} recap={solveRecap}');
   });
 
   it('移动端停表后直接打开带来源标记的整屏详情', () => {
@@ -202,10 +202,9 @@ describe('复盘异步加载时先稳定容器', () => {
   });
 
   it('桌面自动复盘不在完整报告挂载时动画改变栏宽', () => {
-    const css = read(SHELL_CSS);
-    const rule = css.match(/\.timer-shell\.recap-open\s*\{([^}]*)\}/);
-    expect(rule, 'shell.css 里没有自动复盘右栏规则').not.toBeNull();
-    expect(rule![1]).toMatch(/transition:\s*none/);
+    const css = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
+    expect(css).toContain('.timer-workspace[data-recap-open]');
+    expect(css).not.toMatch(/transition\s*:/);
   });
 
   it('报告自身的 lazy 边界也保留正文占位', () => {
@@ -224,25 +223,25 @@ describe('复盘异步加载时先稳定容器', () => {
 });
 
 describe('计时中那颗智能魔方留在屏幕上', () => {
-  const css = read(SHELL_CSS);
+  const css = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/live-cube.css')));
 
   it('专注模式对实时魔方开了例外', () => {
     // `:has(.timer-live-cube)` 精确挑出实时那一种:同一个格子的另一位租客是静态
     // 打乱图,那个照旧淡出。
     const rule = css.match(
-      /\.timer-shell\.is-solving[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)\s*\{([^}]*)\}/,
+      /\.is-solving[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)\s*\{([^}]*)\}/,
     );
-    expect(rule, 'shell.css 里没有「计时中保留实时魔方」那条规则').not.toBeNull();
+    expect(rule, '共享 live-cube.css 中缺少计时中保留实时魔方的规则').not.toBeNull();
     expect(rule![1]).toMatch(/opacity:\s*1/);
   });
 
   it('例外不越过用户显式选的「计时中隐藏全部界面」', () => {
-    expect(css).toMatch(/\.timer-shell\.is-solving:not\(\.hide-ui\)[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)/);
+    expect(css).toMatch(/\.is-solving:not\(\.hide-ui\)[^{]*\.timing-surface-cube:has\(\.timer-live-cube\)/);
   });
 
   it('留下的是魔方本身,不是它底下的校准按钮', () => {
     // 校准是拧之前摆正朝向的动作,计时中没人按它。
-    expect(css).toMatch(/\.timer-shell\.is-solving[^{]*\.live-cube-calibrate\s*\{[^}]*opacity:\s*0/);
+    expect(css).toMatch(/\.is-solving[^{]*\.live-cube-calibrate\s*\{[^}]*opacity:\s*0/);
   });
 });
 
@@ -266,13 +265,16 @@ describe('移动端复盘不再挤压计时区', () => {
   });
 
   it('桌面右栏形态保持不变', () => {
-    expect(src).toMatch(/\{isDesktop && !panelTab && solveRecap && \(/);
-    expect(shell).toMatch(/\.shell-recap-rail/);
+    expect(src).toContain('panelOpen={Boolean(panelTab)} recap={solveRecap}');
+    const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
+    expect(workspaceCss).toMatch(/\.shell-recap-rail > \.shell-recap\s*\{[^}]*height:\s*100%/);
+    expect(shell).not.toMatch(/\.shell-recap-rail/);
   });
 
   it('普通态和桌面侧栏态都扣除页面通知栏高度', () => {
     const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
     expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\s*\{[^}]*min-height:\s*${visibleHeight}`));
-    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\.panel-open\s*\{[^}]*height:\s*${visibleHeight}`));
+    const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
+    expect(workspaceCss).toContain('var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)))');
   });
 });

@@ -3,7 +3,7 @@ import { act, createElement, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@cuberoot/shared', () => ({
+vi.mock('@cuberoot/shared/persons-index', () => ({
   isPersonsIndexReady: () => true,
   loadPersonsIndex: () => Promise.resolve(),
   searchLocalPersons: () => [],
@@ -62,6 +62,6 @@ describe('WcaPersonPicker free-text identity', () => {
 
     expect(queries.at(-1)).toBe('孙卓远');
     expect(input?.value).toBe('孙卓远');
-    expect(host.textContent).toContain('No WCA match; the typed name will be saved');
+    expect(host.textContent).toContain('未匹配 WCA 选手,将按输入姓名保存');
   });
 });

@@ -154,6 +154,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   auth_web_session_tickets: '未确认的微信浏览器票据无账号归属，已确认的跨运行时票据随 app_users 级联删',
   auth_identity_pending: '未确认的 OAuth 尝试无账号归属，15 分钟过期并定时清理；成功确认的身份与凭据原子迁入 auth_identities，随既有解绑/注销策略处理',
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
+  friend_chat_conversations: '私人聊天在任一参与账号注销时整段级联删除',
+  friend_chat_messages: '私人聊天消息随会话或发送账号级联删除',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
   user_pets: '私人宠物领养与养成数据通过 user_id 外键随 app_users 级联删',
@@ -308,6 +310,12 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
       SELECT provider, provider_uid, apple_refresh_token_encrypted, apple_token_key_version
       FROM auth_identities WHERE user_id = ${userId} FOR UPDATE`;
     await revokeAppleIdentities(ids as unknown as AppleRevocationIdentity[]);
+    // Keep all mutations after deletion guards and Apple revocation; clear both
+    // inboxes before the account FK cascades remove conversation IDs.
+    await tx`DELETE FROM notifications WHERE kind = 'friend_message'
+      AND dedupe_key IN (SELECT 'friend-chat:' || id::text FROM friend_chat_conversations
+        WHERE user_low_id = ${userId} OR user_high_id = ${userId})`;
+
     const targets = (ids as unknown as { provider: string; provider_uid: string }[])
       .filter((i) => i.provider === 'email' || i.provider === 'phone')
       .map((i) => i.provider_uid);

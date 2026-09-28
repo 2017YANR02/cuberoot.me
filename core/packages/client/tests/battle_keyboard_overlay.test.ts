@@ -27,6 +27,7 @@ vi.mock('@/app/[lang]/timer/_lib/scramble/wca_pool', () => ({
 localStorage.clear();
 const { useBattleStore } = await import('@/app/[lang]/timer/_battle/engine/battle_store');
 const {
+  TimerArea,
   battlePointerReleaseAction,
   isBattleKeyboardExcludedTarget,
   useKeyboardControls,
@@ -60,6 +61,32 @@ beforeEach(() => {
 });
 
 describe('battle overlay keyboard suppression', () => {
+  it('keeps the legacy readout node inside the shared local surface across result updates', () => {
+    useBattleStore.setState({ playerCount: 2, eventPickerOpen: [false, false, false, false] });
+    const host = document.createElement('div');
+    document.body.append(host);
+    const root = createRoot(host);
+    try {
+      act(() => root.render(createElement(TimerArea, { playerId: 0, hideScramble: true })));
+      expect(host.querySelector('.timing-surface--local')).not.toBeNull();
+      const readout = host.querySelector('.time-display');
+      expect(readout?.textContent).toBe('0.000');
+      act(() => {
+        const players = [...useBattleStore.getState().players];
+        players[0] = { ...players[0], time: 1234, hasFinished: true };
+        useBattleStore.setState({ players });
+      });
+      expect(host.querySelector('.time-display')).toBe(readout);
+      expect(readout?.textContent).toContain('1.234');
+      expect(host.querySelector('.timer-battle-player-header')).not.toBeNull();
+      act(() => host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button')[1].click());
+      expect(host.querySelector('.time-display')).toBe(readout);
+      expect(readout?.textContent).toContain('3.234');
+    } finally {
+      act(() => root.unmount());
+      host.remove();
+    }
+  });
   it('maps a real pointer release to start and platform cancellation to cancel', () => {
     expect(battlePointerReleaseAction('pointerup')).toBe('up');
     expect(battlePointerReleaseAction('pointercancel')).toBe('cancel');

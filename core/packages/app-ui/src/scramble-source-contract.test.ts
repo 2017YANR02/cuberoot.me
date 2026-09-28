@@ -212,9 +212,9 @@ describe('mobile scramble-source parity contract', () => {
     expect(mobile333WorkerHost).not.toMatch(/const trainerRpc\s*=/);
   });
 
-  it('releases random-difficulty and optimal work outside the timer view', () => {
-    expect(app).toContain("if (view !== 'timer' || !randomOptimalSource)");
-    expect(app).toContain("if (view !== 'timer') {\n      releaseMobileRandomDifficulty();");
+  it('releases random-difficulty and optimal work when the timer is no longer visible', () => {
+    expect(app).toContain('if (!timerVisible || !randomOptimalSource)');
+    expect(app).toContain('if (!timerVisible) {\n      releaseMobileRandomDifficulty();');
     expect(app).toContain("if (previousView === 'timer' || view !== 'timer') return;");
     expect(app).toContain("if (entry?.availability === 'loading') fillScrambleHistoryEntry(entry);");
     expect(app).toContain('else releaseMobileRandomDifficulty()');
@@ -346,9 +346,11 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).not.toContain('applyStoreSnapshot(latest);\n    nextScramble(');
   });
 
-  it('disables global timer input outside Timer and behind overlays or context writes', () => {
+  it('disables global timer input when hidden, in settings, or behind overlays or context writes', () => {
+    expect(app).toContain("const dockHistory = wideLayout && view === 'history' && timerMode === 1;");
+    expect(app).toContain("const timerVisible = view === 'timer' || view === 'settings' || dockHistory;");
     expect(app).toMatch(
-      /canStart: attemptCanStart,[\s\S]*?enabled: view === 'timer'[\s\S]*?&& !moreOpen[\s\S]*?&& !timerContextMutationBusy/,
+      /canStart: attemptCanStart,[\s\S]*?enabled: view !== 'settings' && timerVisible\s+&& timerMode === 1\s+&& timingEnabled\s+&& !moreOpen\s+&& !manualEntryOpen\s+&& openOverlay === null\s+&& !timerContextMutationBusy/,
     );
     expect(app).toContain('&& !manualEntryOpen');
     expect(app).toContain('&& openOverlay === null');
@@ -404,7 +406,9 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('places the shared textarea before the timer stage without horizontal overflow', () => {
-    expect(app.indexOf('mobile-scramble-source-config')).toBeLessThan(app.indexOf('mobile-timer-stage'));
+    const stage = app.slice(app.indexOf('<TimerStageLayout'), app.indexOf('</TimerStageLayout>'));
+    expect(stage).toMatch(/source=\{[\s\S]*mobile-scramble-source-config/);
+    expect(stage.indexOf('mobile-scramble-source-config')).toBeLessThan(stage.indexOf('<TimingSurface'));
     expect(css).toMatch(/\.mobile-scramble-source-config \{[^}]*min-width: 0;/s);
     expect(css).toMatch(/\.mobile-scramble-source-config \.scramble-src-manual \{[^}]*width: min\(100%, 44rem\);/s);
   });

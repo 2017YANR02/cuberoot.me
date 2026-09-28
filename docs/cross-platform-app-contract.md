@@ -52,6 +52,7 @@
 - 平台差异保持小而明确，例如 BLE、安全存储、认证、文件、分享、打印、保亮和生命周期 adapter。现有单宿主接口留在所属 app；只有第二个真实消费者出现时，才在同一变更中逐项提取运行时中性 capability contract 到共享层；系统调用始终留在宿主。
 - 网站的 Next 路由、SEO、Server Component 和服务端代理仍留在 `core/packages/client`；不得为了五端复用把这些依赖拖进 App UI。
 - Tools 和 Account 始终指向网站 canonical 页面和账号系统。宿主只处理窗口、返回、外链、文件、OAuth、权限与安全区，不复制卡片、子页面或登录表单。
+- 好友聊天复用 canonical `/friends?view=chats` surface；`@cuberoot/shared/chat` 提供运行时中性的契约、传输和账号级状态机，`@cuberoot/app-ui/chat` 提供独立 React 面板，网站只适配鉴权、导航和身份展示。该子入口不得加载 App/计时器根入口，五端不得建立私有聊天副本。实施与验收边界见 [friend-chat-design.md](./friend-chat-design.md)。
 
 ## 3. 五端产品一致性
 

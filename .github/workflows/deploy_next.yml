@@ -12,6 +12,7 @@ on:
       - 'core/packages/client/**'
       - '!core/packages/client/tests/**'
       - 'core/apps/web/**'
+      - 'core/packages/app-ui/**'
       - 'core/packages/event-icon/**'
       - 'core/packages/puzzle-render-core/**'
       - 'core/packages/puzzle-solvers/**'

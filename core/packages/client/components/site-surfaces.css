@@ -366,7 +366,8 @@ body[data-site-scenery] :is(
 
 body[data-site-scenery] :is(
   .timer-history-compare-modal,
-  .timer-solve-detail-modal
+  .timer-solve-detail-modal,
+  .timer-room-dialog
 ) {
   background: var(--glass-dialog-bg);
 }

@@ -12,7 +12,7 @@ export type NotificationKind =
   | 'document_change'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'
-  | 'friend_request' | 'friend_accepted';
+  | 'friend_request' | 'friend_accepted' | 'friend_message';
 
 export interface SiteNotification {
   id: number;

@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "b174d5feaf1370b08dd3044b3f2d0800d1038240711f850713234c207a21f114", "reason": "复核身份绑定与邮箱手机号换绑的错误分类：仅已知的 PostgreSQL 唯一约束竞争返回身份冲突，连接、触发器或其他存储故障向上抛出；账号与验证码事务回滚，正确证明可在有效期内重试。已同步中英文绑定说明，短信发送、合并与旧会话流程未变。"}
+{"fingerprint": "e99a1e0f5ee9c0cadee2c174778e3fe6e1da2b87cbcdbe97ddd477ffba3f9591", "reason": "合并两边账号实现并复核：保留本地身份存储错误分类、验证码与账号操作同事务、合并后旧账号会话失效；保留远端好友聊天注销清理在前置检查和 Apple 撤销成功之后执行、linked_data 合并限制，以及安装端高级设置共用账号入口。正文同时保留双方中英文说明；关闭计时器设置不退出账号，登录回跳与安全存储契约未变。本次为本地整合，未部署。"}
 */
 
 import type { ReactNode } from 'react';
@@ -48,6 +48,7 @@ export default function AuthFlowPage() {
 
     <section id="platforms" className="auth-map-section" aria-labelledby="platform-title">
       <h2 id="platform-title">{t('从哪里进入？账号不按平台分家', 'Where do you start? Platforms do not create separate account systems')}</h2>
+      <p className="auth-map-note">{t('安装端也可从「计时器设置 → 高级」登录、管理或退出账号；此入口与「我的」共用登录和会话流程，关闭设置窗口不会退出账号。', 'Installed apps also offer sign-in, account management and sign-out under Timer settings → Advanced. These actions share the My account authentication and session flow; closing settings does not sign out.')}</p>
       <div className="auth-map-platforms">
         <article><h3>{t('网站 / PWA', 'Website / PWA')}</h3><p>{t('打开「我的」→ 在网站登录。账号管理也在同一页。', 'Open My account → sign in on the website. Account management uses that same page.')}</p><AppLink href="#signin" prefetch={false}>{t('看网站登录流程 ↓', 'Website sign-in flow ↓')}</AppLink></article>
         <article><h3>iOS App</h3><p>{t('我的 → 系统浏览器完成网站登录 → 回到 App。凭据存入 Keychain；不是另建 Apple 账号。', 'My account → website sign-in in the system browser → return to the App. The session uses Keychain, not a separate Apple-only account.')}</p><AppLink href="#app-handoff" prefetch={false}>{t('看 App 回跳流程 ↓', 'App handoff flow ↓')}</AppLink></article>
@@ -273,6 +274,7 @@ export default function AuthFlowPage() {
         ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
+        <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天数据仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat data follows the existing linked_data rule for unsupported account merges.')}</li>
         <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
         <li>{t('私有数据按清单删除，包括私人宠物领养与养成记录；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data, including private pet adoptions and care records, is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
         <li>{t('不能声称远程清空所有手机。App 本地记录、导出备份和其他设备副本需要另外管理；注销的是 CubeRoot 账号，不是 Apple、Google 或微信账号。', 'This does not remotely wipe every phone. Manage local App records, exported backups, and other device copies separately. You delete CubeRoot, not your Apple, Google, or WeChat account.')}</li>

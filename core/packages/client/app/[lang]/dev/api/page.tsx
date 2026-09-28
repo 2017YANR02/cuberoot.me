@@ -66,7 +66,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
 //   account_auth admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
-//   comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
+//   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
@@ -724,6 +724,10 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 
   // ---- friend ----
+  { d: 'friend', m: 'GET', p: '/v1/chat/conversations', g: 'login', c: 'no-store', zh: '分页读取本人聊天会话、最新消息、未读数量与可发送状态；cursor 按最近消息时间和会话 ID 翻页', en: 'Page through own conversations with latest messages, unread counts, and send availability; cursor uses last-message time and conversation ID' },
+  { d: 'friend', m: 'GET', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '读取与指定账号的消息及已读位置；before / after 按序号加载历史或增量，互斥；解除好友后已有历史仍可读', en: 'Read messages and read position for a peer; mutually exclusive before / after sequence cursors load history or new messages; existing history remains readable after friendship ends' },
+  { d: 'friend', m: 'POST', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '向未互相拉黑的已接受好友发送 1–2,000 字文字；clientMessageId 保证重试幂等，新消息返回 201，重放返回 200，同一标识正文不同返回 409', en: 'Send 1–2,000 characters to an accepted friend with no block in either direction; clientMessageId makes retries idempotent: 201 for new messages, 200 for replays, and 409 for reused IDs with different bodies' },
+  { d: 'friend', m: 'PUT', p: '/v1/chat/peers/:peer/read', g: 'login', c: 'no-store', zh: '用 throughSequence 单调推进本人已读位置，返回剩余未读数；读到最新消息时同步标记对应通知已读', en: 'Monotonically advance own read position using throughSequence and return remaining unread count; reaching the latest message also marks its notification read' },
   { d: 'friend', m: 'GET', p: '/v1/friends', g: 'login', c: 'no-store', zh: '好友、WCA 好友条目、收到 / 发出的申请与黑名单总览', en: 'Friends, saved WCA friend entries, incoming/outgoing requests, and blocked-user overview' },
   { d: 'friend', m: 'GET', p: '/v1/friends/search', g: 'login', c: 'no-store', zh: '按用户名、CubeRoot ID 或 WCA ID 搜索可见账号', en: 'Search visible accounts by username, CubeRoot ID, or WCA ID' },
   { d: 'friend', m: 'POST', p: '/v1/friends/requests', g: 'login', c: 'no-store', zh: '发送好友申请；遇到对方已有申请时直接接受', en: 'Send a friend request; accept automatically when the other user already requested' },

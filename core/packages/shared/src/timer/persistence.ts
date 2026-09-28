@@ -1,3 +1,4 @@
+import { DEFAULT_TIMER_TYPOGRAPHY, normalizeTimerTypography, type TimerTypographySettings } from './typography';
 import { EVENTS, type EventId, type Penalty, type Solve } from './types';
 import {
   DEFAULT_SCRAMBLE_222_MODE,
@@ -68,6 +69,7 @@ export interface TimerSessionMeta {
 }
 
 export interface TimerStoreSettings extends
+  TimerTypographySettings,
   TimerWcaSourceSettings,
   TimerRandomDifficultySettings,
   TimerByStepsSettings,
@@ -496,6 +498,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
       : DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS.bldMemo,
     scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
     ...scramblePreview,
+    ...normalizeTimerTypography(value),
     ...normalizeTimerSmartCubeSettings(value),
     ...randomDifficulty,
     ...wcaSource,
@@ -645,6 +648,7 @@ export function createTimerStoreData(
     database,
     settings: {
       event: '333',
+      ...DEFAULT_TIMER_TYPOGRAPHY,
       ...DEFAULT_TIMER_TIMING_SETTINGS,
       ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
       scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,

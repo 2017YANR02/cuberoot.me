@@ -34,39 +34,31 @@
 /* 品牌 logo:占第 1 列贴左(与对战 middle-bar 的 logo 同一份资源 + 主页链接). */
 .shell-topbar-brand img { height: 24px; width: auto; display: block; }
 /* ── Main column ────────────────────────────────────────── */
-.shell-main {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-  position: relative;
-}
 
-/* Scramble slot — sits in the sub stack directly above the cube net. */
-/* /timer 打乱展示尺寸令牌 —— 共享 TimerScrambleStrip 消费 --timer-scramble-fs；单人
-   (.timing-surface 内 .scramble-strip /
-   .shell-corner-net / .scramble-src)与双人 side 共享打乱(battle.css 的
-   .side-scramble-row)引用同一套尺寸的唯一真源。两棵子树不共享 DOM 祖先(TimerShell
-   只渲染其一),故挂在各自根(.timing-surface / .battle-container)上,一处改两边一起变。 */
-.timing-surface,
-.battle-container {
+/* Default surfaces outside the shared solo/net/local layouts. */
+.timing-surface:not(.timing-surface--solo):not(.timing-surface--net):not(.timing-surface--local) {
   --timer-scramble-fs: clamp(26px, 4.4vw, 36px);
   --timer-cube-h: min(30vw, 26dvh, 260px);
   /* 来源行(国旗 + 比赛名 + 项目 + 轮次)是背景信息,不该跟打乱公式抢视线 —— 取原先 24px 的一半。 */
   --timer-scramble-src-fs: 12px;
 }
 
-.timing-surface-scramble {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-}
 /* Cube net — centered directly under the digits (Battle-style). Lives inside
    the absolute .timing-surface-sub, so showing/hiding it never shifts the
    digits. */
-.timing-surface-cube { display: flex; justify-content: center; }
+
 /* --cube-h 同时驱动预览框和它常驻的占位框,所以显示/隐藏魔方时下面的内容不会跳动。 */
+/* Legacy battle RAF writes remain attached to this inner node; geometry and
+   typography now come from the shared local TimingSurface. */
+.battle-container .timer-battle-cell > .player-area { padding: 0; gap: 0; }
+.player-area .timing-surface--local .time-display {
+  font-size: inherit;
+  font-family: inherit;
+  line-height: inherit;
+  min-height: 0;
+  margin-top: 0;
+}
+
 .shell-corner-net { display: flex; flex-direction: column; align-items: center; gap: 6px; --cube-h: var(--timer-cube-h); }
 .shell-corner-net-imgbox { height: var(--cube-h); display: flex; align-items: center; justify-content: center; }
 .shell-corner-net-img {
@@ -675,24 +667,7 @@
 /* Scramble + cube fade (opacity:0) but KEEP their box while running, so the
    centered column's height is constant and the readout never jumps on start. */
 
-/* 例外:连着智能魔方时那颗**实时**魔方,计时中照常显示。
-   淡出这一套是给「静态打乱图 + 打乱文字」设计的 —— 那些讲的是你要拧到哪儿去,
-   拧起来之后确实只剩干扰。实时魔方讲的是你现在拧到哪儿了,它每一手都在变,恰恰
-   只有计时中才有内容(拧完就停在还原态)。把它一起淡掉,等于在唯一有意义的那段
-   时间里关掉它 —— /alg 训练器的实时魔方全程都在,这里对齐。
-   `:has(.timer-live-cube)` 精确挑出「实时」那一种:同一个格子的另一位租客是静态
-   CubePreview(见 SoloView 的 centerCubeSlot),那个照旧淡出。
-   `hide-ui`(用户显式选的「计时中隐藏全部界面」)仍然一票否决。 */
-.timer-shell.is-solving:not(.hide-ui) .timing-surface .timing-surface-cube:has(.timer-live-cube) {
-  opacity: 1;
-  pointer-events: auto;
-}
-/* 留下的是那颗魔方,不是它底下的按钮:校准是拧之前摆正朝向的动作,计时中没人按它,
-   留着只是在专注模式里多一个亮着的控件。 */
-.timer-shell.is-solving .timing-surface-cube .live-cube-calibrate {
-  opacity: 0;
-  pointer-events: none;
-}
+/* Live-cube visibility while solving is owned by timer-ui/live-cube.css. */
 
 /* "Hide all UI while running" (opt-in setting). Goes further than .is-solving:
    that only touches .surface-chrome, which leaves the side panel and the solver
@@ -809,49 +784,6 @@
 .shell-chart-chip.active { background: var(--accent-soft); color: var(--accent); border-color: transparent; }
 .shell-chart-canvas { display: flex; justify-content: center; }
 .shell-panel-statgrid { margin-bottom: 8px; }
-
-/* ── Desktop dock (>=1024px): rail on the right ─────────── */
-@media (min-width: 1024px) {
-  .timer-shell {
-    display: grid;
-    grid-template-columns: 1fr 0;
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-      "topbar  panel"
-      "main    panel";
-    transition: grid-template-columns 160ms ease;
-  }
-  /* 面板打开时把壳限制在视口内，右栏内容才会在 .shell-panel-body 内形成
-     独立滚动条，而不是继续把整页往下撑长。 */
-  .timer-shell.panel-open {
-    height: calc(100dvh - var(--page-notice-h, 0px));
-    grid-template-columns: 1fr 360px;
-  }
-  /* Auto recap mounts a dense report immediately after its frame. Animating the
-     grid track would reflow that report on every frame of the 160ms expansion. */
-  .timer-shell.recap-open {
-    transition: none;
-    grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 480px);
-  }
-  .shell-recap-rail { min-width: 0; min-height: 0; display: flex; }
-  .shell-recap-rail > .shell-recap {
-    flex: 1;
-    min-width: 0;
-    height: 100%;
-    border-top: 0;
-  }
-  /* 报告按侧栏宽度排版，不能沿用宽视口的双列回放。完整表格仍可横向滚动。 */
-  .shell-recap-rail .reconstruct-playback.has-side { grid-template-columns: minmax(0, 1fr); }
-  .shell-recap-rail .reconstruct-stage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .shell-topbar { grid-area: topbar; }
-  .shell-main { grid-area: main; }
-  .shell-panel--rail {
-    grid-area: panel;
-    border-left: 1px solid var(--shell-divider);
-    background: var(--background);
-    overflow: hidden;
-  }
-}
 
 /* 平板与窄桌面:中列按 max-content 参与三列布局时,右侧工具会被项目/来源控件挤出视口。
    这里提前切成两列,左侧允许折行,右侧工具始终保留完整宽度。 */

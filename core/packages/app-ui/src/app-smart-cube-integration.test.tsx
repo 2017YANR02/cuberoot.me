@@ -64,6 +64,8 @@ const host: InstalledAppHost = {
   version: 'test',
 };
 
+let wideViewport = false;
+const mediaListeners = new Set<() => void>();
 let root: Root;
 let container: HTMLDivElement;
 const saved = () => activeTimerSolves(memory.data as TimerStoreData, '333');
@@ -80,7 +82,13 @@ beforeEach(async () => {
   backListener = null;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   vi.stubGlobal('ResizeObserver', class { observe() {} unobserve() {} disconnect() {} });
-  vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+  wideViewport = false;
+  mediaListeners.clear();
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    get matches() { return query === '(min-width: 1024px)' && wideViewport; },
+    addEventListener: (_: string, fn: () => void) => mediaListeners.add(fn),
+    removeEventListener: (_: string, fn: () => void) => mediaListeners.delete(fn),
+  }));
   vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 503 })));
   vi.spyOn(performance, 'now').mockImplementation(() => now);
   localStorage.clear();
@@ -110,6 +118,90 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it('keeps the timer mounted beside wide history and switches to a full page on narrow screens', async () => {
+    await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
+    const timerNode = container.querySelector('.timing-surface');
+    const nav = container.querySelectorAll<HTMLButtonElement>('.primary-nav button');
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+    expect(container.querySelector('.timing-surface')).toBe(timerNode);
+    expect(container.querySelector('.timer-workspace[data-panel-open]')).not.toBeNull();
+    expect(container.querySelector('.history-view .app-titlebar')).not.toBeNull();
+    await act(async () => nav[0].click());
+    expect(container.querySelector('.timing-surface')).toBe(timerNode);
+    await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+    await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
+    expect(container.querySelector('.timing-surface')).toBeNull();
+    expect(container.querySelector('.app-shell > .app-titlebar')).not.toBeNull();
+    await act(async () => nav[0].click());
+    expect(container.querySelector('.timing-surface')).not.toBeNull();
+  });
+
+  it('applies shared typography settings to the installed timing surface', async () => {
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    const timerNode = container.querySelector('.timing-surface');
+    const dialog = document.querySelector<HTMLElement>('.settings-modal')!;
+    expect(dialog).not.toBeNull();
+    await act(async () => move('R', 2_000));
+    expect(phase).toBe('idle');
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', key: ' ', bubbles: true }));
+      window.dispatchEvent(new KeyboardEvent('keyup', { code: 'Space', key: ' ', bubbles: true }));
+    });
+    expect(phase).toBe('idle');
+    const category = dialog.querySelector<HTMLSelectElement>('.settings-category-select')!;
+    await act(async () => { category.value = 'appearance'; category.dispatchEvent(new Event('change', { bubbles: true })); });
+    await act(async () => dialog.querySelector<HTMLButtonElement>('.tfp-trigger')!.click());
+    const inter = [...document.querySelectorAll<HTMLButtonElement>('.tfp-item')].find(node => node.textContent?.includes('Inter'))!;
+    await act(async () => inter.click());
+    await settle();
+    expect((memory.data as TimerStoreData).settings.timerFont).toBe('sans');
+    await act(async () => dialog.querySelector<HTMLButtonElement>('.settings-modal-close')!.click());
+    expect(container.querySelector('.timing-surface')).toBe(timerNode);
+    expect(container.querySelector('.tf-sans')).not.toBeNull();
+    await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
+    await act(async () => backListener?.());
+    expect(document.querySelector('.settings-modal')).toBeNull();
+  });
+
+  it.each(['2', '3', '4'])('shares device operations in %s-player mode without disconnecting on entry', async (mode) => {
+    const disconnect = vi.fn(async () => undefined);
+    const resetState = vi.fn();
+    await act(async () => setRadio({ ...radio, disconnect, resetState }));
+    const selector = container.querySelector<HTMLSelectElement>('.shell-players-select')!;
+    await act(async () => {
+      selector.value = mode;
+      selector.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await settle();
+    await act(async () => container.querySelector<HTMLButtonElement>('.timer-stage-footer .shell-device-center-trigger')!.click());
+    // Both the chooser and the connected shortcut lead to the same operation dialog.
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
+    const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
+    expect(dialog).not.toBeNull();
+    expect(disconnect).not.toHaveBeenCalled();
+    const reset = [...dialog.querySelectorAll<HTMLButtonElement>('button')]
+      .find((button) => button.textContent?.includes('Reset state'))!;
+    await act(async () => reset.click());
+    expect(resetState).toHaveBeenCalledOnce();
+    await act(async () => backListener?.());
+    expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
+    expect(container.querySelectorAll('.battle-player')).toHaveLength(Number(mode));
+  });
+
+  it('opens the disconnected device menu and starts scanning from its action', async () => {
+    const scanDevices = vi.fn(async () => undefined);
+    await act(async () => setRadio({ ...radio, phase: 'idle', deviceName: '', scanDevices }));
+    await settle();
+    const trigger = container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
+    await act(async () => trigger.click());
+    expect(trigger.getAttribute('aria-expanded')).toBe('true');
+    const item = container.querySelector<HTMLButtonElement>('[role="menuitem"]');
+    expect(item).not.toBeNull();
+    await act(async () => item!.click());
+    expect(document.querySelector('.timer-smart-cube-device__modal')).not.toBeNull();
+    expect(scanDevices).toHaveBeenCalledOnce();
+  });
+
   it('opens the shared device modal and routes reset, disconnect, and Android Back', async () => {
     const connect = vi.fn(async () => 'GAN16ui');
     const disconnect = vi.fn(async () => undefined);
@@ -136,7 +228,7 @@ describe('installed App GAN lifecycle integration', () => {
 
     const trigger = container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
     await act(async () => trigger.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     await settle();
     expect(connect).not.toHaveBeenCalled();
 
@@ -159,7 +251,7 @@ describe('installed App GAN lifecycle integration', () => {
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
 
     await act(async () => trigger.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     expect(document.querySelector('.timer-smart-cube-device__modal')).not.toBeNull();
     await act(async () => backListener?.());
     expect(document.querySelector('.timer-smart-cube-device__modal')).toBeNull();
@@ -181,7 +273,7 @@ describe('installed App GAN lifecycle integration', () => {
     await settle();
 
     await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
-    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="menuitem"]')?.click());
     await settle();
     expect(scanDevices).toHaveBeenCalledOnce();
     const dialog = document.querySelector<HTMLElement>('.timer-smart-cube-device__modal')!;
@@ -245,7 +337,8 @@ describe('installed App GAN lifecycle integration', () => {
     expect(clipboard).not.toHaveBeenCalled();
   });
 
-  it('routes the live cube, first/final turns, recorded gyro, saved recap and full history report', async () => {
+  it.each([false, true])('routes the live cube, saved recap and full report (wide=%s)', async (wide) => {
+    await act(async () => { wideViewport = wide; mediaListeners.forEach(fn => fn()); });
     expect(container.querySelector('[aria-label="Live 3D smart-cube state"]')).not.toBeNull();
     await act(async () => move('R', 1_000));
     expect(container.querySelector('[aria-label="Live 3D smart-cube state"]')?.textContent).toBe('R');
@@ -269,6 +362,22 @@ describe('installed App GAN lifecycle integration', () => {
     await settle();
     expect(saved()).toHaveLength(1);
     await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap')).not.toBeNull(); });
+    expect(container.querySelector('.timer-workspace > .shell-recap-rail .shell-recap') !== null).toBe(wide);
+    expect(container.querySelector('.timer-view .shell-recap') !== null).toBe(!wide);
+    expect(container.querySelector('.timer-workspace[data-recap-open]') !== null).toBe(wide);
+    if (wide) {
+      const timerNode = container.querySelector('.timing-surface');
+      await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+      expect(container.querySelector('.shell-recap-rail')).toBeNull();
+      expect(container.querySelector('.timer-workspace[data-recap-open]')).toBeNull();
+      expect(container.querySelector('.timing-surface')).toBe(timerNode);
+      await act(async () => container.querySelector<HTMLButtonElement>('.primary-nav button')!.click());
+      await act(async () => { wideViewport = false; mediaListeners.forEach(fn => fn()); });
+      expect(container.querySelector('.shell-recap-rail')).toBeNull();
+      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.timer-view .shell-recap')).not.toBeNull(); });
+      await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
+      await vi.waitFor(async () => { await settle(); expect(container.querySelector('.shell-recap-rail .shell-recap')).not.toBeNull(); });
+    }
     const full = container.querySelector<HTMLButtonElement>('.shell-recap-btn')!;
     await act(async () => full.click());
     await settle();

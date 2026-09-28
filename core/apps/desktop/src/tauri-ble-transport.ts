@@ -1,3 +1,4 @@
+import { Channel, invoke } from '@tauri-apps/api/core';
 import {
   checkPermissions,
   connect as bleConnect,
@@ -9,7 +10,6 @@ import {
   send,
   startScan,
   stopScan,
-  subscribe,
   unsubscribe,
   type BleDevice,
   type BleService,
@@ -79,6 +79,8 @@ export function nearestNamedDevice(devices: BleDevice[], namePrefix: string): Bl
 }
 
 export class TauriBleTransport implements BleTransport {
+  private onDisconnect: (() => void) | null = null;
+  private disconnectTail: Promise<void> = Promise.resolve();
   private readonly serviceCache = new Map<string, BleServiceRef[]>();
   private readonly writeModes = new Map<string, Map<string, 'withResponse' | 'withoutResponse'>>();
 
@@ -122,7 +124,13 @@ export class TauriBleTransport implements BleTransport {
   }
 
   async connect(deviceId: string, onDisconnect: () => void): Promise<void> {
-    await bleConnect(deviceId, onDisconnect);
+    await this.disconnectTail;
+    this.onDisconnect = onDisconnect;
+    await bleConnect(deviceId, () => {
+      if (this.onDisconnect !== onDisconnect) return;
+      this.onDisconnect = null;
+      onDisconnect();
+    });
     const services = await this.loadServices(deviceId);
     const modes = new Map<string, 'withResponse' | 'withoutResponse'>();
     for (const service of services) {
@@ -137,8 +145,11 @@ export class TauriBleTransport implements BleTransport {
   }
 
   async disconnect(deviceId: string): Promise<void> {
+    this.onDisconnect = null;
+    const cleanup = bleDisconnect();
+    this.disconnectTail = cleanup.catch(() => undefined);
     try {
-      await bleDisconnect();
+      await cleanup;
     } finally {
       this.serviceCache.delete(deviceId);
       this.writeModes.delete(deviceId);
@@ -167,16 +178,34 @@ export class TauriBleTransport implements BleTransport {
   }
 
   async subscribe(
-    _deviceId: string,
+    deviceId: string,
     service: string,
     characteristic: string,
     onValue: (value: DataView) => void,
   ): Promise<() => Promise<void>> {
-    await subscribe(characteristic, service, (value) => {
+    let active = true;
+    const onDisconnect = this.onDisconnect;
+    const onData = new Channel<number[]>();
+    onData.onmessage = (value) => {
+      if (!active) return;
       const bytes = Uint8Array.from(value);
       onValue(new DataView(bytes.buffer));
-    });
-    let active = true;
+    };
+    const onError = new Channel<void>();
+    onError.onmessage = () => {
+      if (!active || !onDisconnect || this.onDisconnect !== onDisconnect) return;
+      active = false;
+      // Establish the cleanup barrier before publishing connection loss, so a
+      // reconnect cannot race this device-wide native disconnect.
+      void this.disconnect(deviceId).catch(() => undefined);
+      onDisconnect();
+    };
+    try {
+      await invoke('ble_subscribe', { characteristic, service, onData, onError });
+    } catch (error) {
+      active = false;
+      throw error;
+    }
     return async () => {
       if (!active) return;
       active = false;
