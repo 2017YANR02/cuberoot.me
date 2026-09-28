@@ -85,6 +85,70 @@ body:has(.meet-live) .mem-reminder {
 .meet-room {
   flex: 1;
   min-height: 0;
+  min-width: 0;
+}
+
+.meet-stage {
+  position: relative;
+  min-height: 0;
+}
+
+.meet-stage .lk-video-conference-inner {
+  min-width: 0;
+  min-height: 0;
+}
+
+.meet-stage .lk-control-bar {
+  height: auto;
+  max-height: none;
+  min-height: var(--lk-control-bar-height, 69px);
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+}
+
+.meet-stage .lk-control-bar > .lk-button-group {
+  height: 44px;
+}
+
+.meet-stage .lk-control-bar > *,
+.meet-stage .lk-control-bar .lk-button-group > * {
+  flex-shrink: 0;
+}
+
+.meet-live button,
+.meet-page button {
+  min-height: 44px;
+}
+
+.meet-stage .lk-control-bar .lk-button,
+.meet-stage .lk-control-bar .lk-disconnect-button {
+  min-width: 44px;
+  padding-inline: 12px;
+}
+
+.meet-stage .lk-button-group-menu .lk-button {
+  min-width: 32px;
+  padding-inline: 10px;
+}
+
+.meet-stage .lk-chat-form {
+  flex-wrap: wrap;
+}
+
+.meet-stage .lk-chat-form-input {
+  min-width: 0;
+  width: 0;
+  flex: 1;
+  font-size: 16px;
+}
+
+.meet-chat-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--destructive);
+  font-size: 13px;
 }
 
 /* 顶栏:会议码 + 复制邀请链接。做得薄,画面才是主角。 */
@@ -197,6 +261,20 @@ body:has(.meet-live) .mem-reminder {
   }
 }
 
+/* Small tablets and landscape phones need an overlay too: a side panel otherwise
+   leaves too little room for the stage. Its bottom follows the actual wrapped controls. */
+@media (max-width: 900px) {
+  .meet-stage > .lk-chat,
+  .meet-stage > .meet-roster {
+    position: absolute;
+    inset: 0 0 var(--meet-controls-height, 69px);
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    z-index: 20;
+  }
+}
+
 /* ── 入会前 ──────────────────────────────────────────────── */
 /* 名字来自账号,不让改 —— PreJoin 自带的用户名输入框在这里没有意义(改了也不算数,
    服务端只认 token 里的身份)。留着它反而像是能改。
@@ -223,6 +301,37 @@ body:has(.meet-live) .mem-reminder {
 
 .meet-page.is-prejoin {
   max-width: 520px;
+}
+
+.meet-prejoin-fields {
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.meet-prejoin-fields .lk-prejoin {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .meet-prejoin-fields .lk-video-container {
+    max-height: 40dvh;
+    min-height: 0;
+  }
+}
+
+.meet-code-field {
+  position: relative;
+  max-width: 100%;
+}
+
+.meet-code-field .meet-code-input {
+  padding-right: 38px;
+  min-height: 44px;
+  font-size: 16px;
 }
 
 .meet-title {

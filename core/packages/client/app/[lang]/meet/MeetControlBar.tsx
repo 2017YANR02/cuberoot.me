@@ -108,6 +108,8 @@ export default function MeetControlBar({
         <div className="lk-button-group">
           <TrackToggle
             source={Track.Source.Microphone}
+            aria-label={micLabel}
+            title={micLabel}
             showIcon
             onChange={onMicChange}
           >
@@ -127,6 +129,8 @@ export default function MeetControlBar({
         <div className="lk-button-group">
           <TrackToggle
             source={Track.Source.Camera}
+            aria-label={camLabel}
+            title={camLabel}
             showIcon
             onChange={onCameraChange}
           >
@@ -156,7 +160,9 @@ export default function MeetControlBar({
       ) : (
         <TrackToggle
           source={Track.Source.ScreenShare}
-          captureOptions={{ audio: true, selfBrowserSurface: 'include' }}
+          // Preserve fine detail at the existing bandwidth cap. Leave resolution to the SDK,
+          // which also handles Safari's screen-capture resolution workaround.
+          captureOptions={{ audio: true, selfBrowserSurface: 'exclude', contentHint: 'detail' }}
           showIcon={false}
           aria-label={shareLabel}
           title={shareLabel}
