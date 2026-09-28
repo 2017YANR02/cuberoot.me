@@ -13,9 +13,10 @@ class Recognition {
   maxAlternatives = 0;
   onstart: (() => void) | null = null;
   onend: (() => void) | null = null;
+  onspeechend: (() => void) | null = null;
   onerror: ((event: { error: string }) => void) | null = null;
   onresult: ((event: { resultIndex: number; results: Array<{ 0: { transcript: string }; isFinal: boolean; length: number }> }) => void) | null = null;
-  start = vi.fn(() => { if (Recognition.startError) throw Recognition.startError; });
+  start = vi.fn((_track?: MediaStreamTrack) => { if (Recognition.startError) throw Recognition.startError; });
   stop = vi.fn();
   abort = vi.fn();
   constructor() { Recognition.instances.push(this); }
@@ -136,5 +137,116 @@ describe('browser speech recognition lifecycle', () => {
     expect(current().abort).toHaveBeenCalledOnce();
     expect(current().onresult).toBeNull();
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  describe('system default microphone', () => {
+    const desktopUA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/153.0.0.0 Safari/537.36';
+    function capture(getUserMedia = vi.fn()) {
+      vi.stubGlobal('navigator', { userAgent: desktopUA, mediaDevices: { getUserMedia } });
+      const track = { label: 'Default - Wireless Mic Rx', readyState: 'live', onended: null as (() => void) | null, stop: vi.fn() };
+      const stream = { getTracks: () => [track], getAudioTracks: () => [track] };
+      return { getUserMedia, track, stream };
+    }
+
+    it('passes the OS default track to recognition and displays its actual name', async () => {
+      const { getUserMedia, track, stream } = capture();
+      getUserMedia.mockResolvedValue(stream);
+      await act(async () => speech.start());
+      expect(getUserMedia).toHaveBeenCalledExactlyOnceWith({ audio: { deviceId: { exact: 'default' } } });
+      expect(current().start).toHaveBeenCalledExactlyOnceWith(track);
+      expect(speech.microphone).toBe('Default - Wireless Mic Rx');
+      await act(async () => current().result([['计时器', true]]));
+      expect(track.stop).toHaveBeenCalledOnce();
+      expect(track.onended).toBeNull();
+    });
+
+    it.each([
+      ['desktop Chrome 135', 'Chrome/135.0.0.0 Safari/537.36', true],
+      ['desktop Edge', 'Chrome/153.0.0.0 Safari/537.36 Edg/153.0.0.0', true],
+      ['older Chrome', 'Chrome/134.0.0.0 Safari/537.36', false],
+      ['Android Chrome', 'Mozilla/5.0 (Linux; Android 16) Chrome/153.0.0.0 Mobile Safari/537.36', false],
+      ['Safari', 'Mozilla/5.0 (Macintosh) Version/26.0 Safari/605.1.15', false],
+      ['iOS Chrome', 'Mozilla/5.0 (iPhone) CriOS/153.0.0.0 Mobile/15E148 Safari/604.1', false],
+    ])('uses the supported capture path on %s', async (_name, userAgent, supported) => {
+      const { getUserMedia, track, stream } = capture();
+      vi.stubGlobal('navigator', { userAgent, mediaDevices: { getUserMedia } });
+      getUserMedia.mockResolvedValue(stream);
+      await act(async () => speech.start());
+      if (supported) expect(current().start).toHaveBeenCalledExactlyOnceWith(track);
+      else {
+        expect(getUserMedia).not.toHaveBeenCalled();
+        expect(current().start).toHaveBeenCalledExactlyOnceWith();
+        expect(speech.microphone).toBeNull();
+      }
+    });
+
+    it.each(['NotAllowedError', 'NotFoundError', 'NotReadableError', 'OverconstrainedError'])('handles capture failure %s without silently opening another input', async (name) => {
+      const { getUserMedia } = capture();
+      getUserMedia.mockRejectedValue(new DOMException('Capture failed', name));
+      await act(async () => speech.start());
+      expect(speech.error).toBe(name === 'NotAllowedError' ? 'not-allowed' : 'audio-capture');
+      expect(speech.status).toBe('idle');
+      expect(current().start).not.toHaveBeenCalled();
+    });
+
+    it.each(['stop', 'unmount', 'timeout'] as const)('releases late permission results after %s', async (action) => {
+      const { getUserMedia, track, stream } = capture();
+      let resolve!: (value: typeof stream) => void;
+      getUserMedia.mockReturnValue(new Promise(r => { resolve = r; }));
+      await act(async () => speech.start());
+      await act(async () => {
+        if (action === 'stop') speech.stop();
+        else if (action === 'unmount') root.unmount();
+        else vi.advanceTimersByTime(30_000);
+      });
+      await act(async () => resolve(stream));
+      expect(track.stop).toHaveBeenCalledOnce();
+      expect(current().start).not.toHaveBeenCalled();
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
+    it('does not let an old permission result take over a newer session', async () => {
+      const { getUserMedia, track, stream } = capture();
+      let resolve!: (value: typeof stream) => void;
+      const otherTrack = { ...track, label: 'Second input', stop: vi.fn() };
+      getUserMedia.mockReturnValueOnce(new Promise(r => { resolve = r; }))
+        .mockResolvedValueOnce({ getTracks: () => [otherTrack], getAudioTracks: () => [otherTrack] });
+      await act(async () => speech.start());
+      await act(async () => speech.start());
+      await act(async () => resolve(stream));
+      expect(track.stop).toHaveBeenCalledOnce();
+      expect(speech.microphone).toBe('Second input');
+      expect(current().start).toHaveBeenCalledExactlyOnceWith(otherTrack);
+    });
+
+    it('reports a disconnected input and releases capture on unmount', async () => {
+      const { getUserMedia, track, stream } = capture();
+      getUserMedia.mockResolvedValue(stream);
+      await act(async () => speech.start());
+      await act(async () => track.onended?.());
+      expect(speech.error).toBe('audio-capture');
+      expect(track.stop).toHaveBeenCalledOnce();
+      await act(async () => speech.start());
+      await act(async () => root.unmount());
+      expect(track.stop).toHaveBeenCalledTimes(2);
+    });
+
+    it('requests a final result when speech ends or interim updates stop', async () => {
+      const { getUserMedia, track, stream } = capture();
+      getUserMedia.mockResolvedValue(stream);
+      await act(async () => speech.start());
+      await act(async () => current().result([['魔方', false]]));
+      await act(async () => vi.advanceTimersByTime(15_000));
+      expect(current().stop).toHaveBeenCalledOnce();
+      expect(speech.status).toBe('stopping');
+      expect(track.stop).not.toHaveBeenCalled();
+      await act(async () => current().result([['魔方', true]]));
+      expect(speech.error).toBeNull();
+      expect(track.stop).toHaveBeenCalledOnce();
+
+      await act(async () => speech.start());
+      await act(async () => current().onspeechend?.());
+      expect(current().stop).toHaveBeenCalledOnce();
+    });
   });
 });
