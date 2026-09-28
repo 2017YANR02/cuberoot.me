@@ -12,6 +12,26 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('requires name resolution before fetching a model-invented person ID', async () => {
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'person',wcaId:'2023GENG01'}]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Please clarify the person.'}));
+    await answerSiteQuestion('耿暄一的成绩','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(fetcher.mock.calls.map(([url])=>url)).toEqual([config.baseUrl+'/chat/completions',config.baseUrl+'/chat/completions']);
+    expect(String(fetcher.mock.calls[1][1]?.body)).toContain('Use find_person');
+  });
+  it('only renders artifacts belonging to the final cited sources', async () => {
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'records',event:'222'},{tool:'records',event:'333'}]}))
+      .mockResolvedValueOnce(Response.json({rows:[
+        {e:'222',t:'s',v:40,p:'2023TEST01',pn:'Test Person',c:'Test2026',cn:'Test',d:'2026-01-01'},
+        {e:'333',t:'s',v:280,p:'2023TEST01',pn:'Test Person',c:'Test2026',cn:'Test',d:'2026-01-01'},
+      ]}))
+      .mockResolvedValueOnce(modelResponse({answer:'3x3 answer',sourceIds:['records:world:333']}));
+    const result=await answerSiteQuestion('3x3','en',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts?.[0]).toMatchObject({kind:'table',rows:[['Single','2.80','Test Person','2023TEST01','Test','2026-01-01']]});
+  });
   it('does not substitute the viewer for a third-person follow-up', async () => {
     for(const [question,expected] of [['他的平均成绩呢？',undefined],['我的平均成绩呢？','2017YANR02']]) {
       const fetcher=vi.fn<typeof fetch>().mockResolvedValue(modelResponse({answer:'answer'}));
