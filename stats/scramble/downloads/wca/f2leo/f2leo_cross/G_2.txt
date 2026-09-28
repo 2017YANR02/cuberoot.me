@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / G / bin 2
-# Population in this bin: 148
-# Samples listed: 148 (all entries in this bin)
+# Population in this bin: 149
+# Samples listed: 149 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 33026001,U2 R' D2 F' L' U R' B' L F2 L D2 F' B2 L2 D2 R2 L2,G,Masterpress Summer 2014 (2014-06-28~29),333oh Final A E2
@@ -153,3 +153,4 @@
 5741453001,L' D L2 F2 D2 U R2 B2 D' U2 R2 L D2 B' L B2 R U' L,G,Gwada Cubing 2026 (2026-07-04~05),333 Final A #2
 5798971001,D F2 L2 D B2 U' B' D' R2 U' L2 R2 B' F2 R D2,G,Aste Nagusia Bilbao Open 2026 (2026-08-24),333 R1 A E2
 5811958001,F2 L U' F' L2 F2 D2 B' R2 U2 F D' L2 R' B U' B R' B,G,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R1 G #5
+5842662001,L F2 U' R D2 R2 B F' R2 U2 B' L B2 L U' R F' R',G,New Cubing Season Athens A 2026 (2026-09-19),333 R1 A #5

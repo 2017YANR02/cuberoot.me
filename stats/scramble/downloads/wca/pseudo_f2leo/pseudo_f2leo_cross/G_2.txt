@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 444
+# Population in this bin: 446
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -73,7 +73,7 @@
 5269968001,B U L2 F2 D2 U2 L2 U' R D' R2 F' U2 F' U L2 R D',G,Armando Sueños Blenkir Huancayo 2025 (2025-12-13~14),333 R1 G #5
 549233001,D' L2 D L2 D2 B2 L2 R2 U' L2 U2 L' F U' R2 U B' L D2 U' B',G,CubingUSA Nationals 2017 (2017-07-07~09),333 R1 N #2
 4166851001,U2 B D R' B2 L2 F2 D U' B' R' D2 F2 D2 B D',G,Vieni a Cubare in Puglia Open 2024 (2024-09-28~29),333 R1 D #5
-3382251001,U' F' D' B' D2 U2 R2 B' F2 D2 R2 U F D' B D B2 R,G,Bohol Speedcubing Open 2023 (2023-12-28),333 R1 C E2
+5844043001,L2 R2 F2 L2 B' L2 F' R2 D2 F2 U2 R B F D' L' D' B R',G,Ribeirão ao Cubo 2026 (2026-09-19~20),333 R2 A #1
 3035380001,D2 L' F' B2 D F' R2 D F2 L' U' L2 F2 U2 D' L2 U2 L2,G,Harrow Autumn 2023 (2023-09-02~03),333oh Final A E2
 553540001,L2 R2 D' U2 R2 D L2 F' D2 B L' U' B' L2 D2 B2 L' U R',G,Southern Championships 2017 (2017-07-15~16),333oh R1 D E1
 1789301008,U B U2 F U' F D F U B2 L2 U2 F2 U' B2 L2 F L2,G,Melbourne Summer 2022 (2022-01-21~23),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / WY / bin 10
-# Population in this bin: 709
+# Population in this bin: 713
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 1341324001,U2 F2 U2 F' U2 F R' D' B L2 R' B' R2 F2 L D B' L2,Y,Cube Party Santa Cruz 2019 (2019-10-05~06),333bf Final A #2
@@ -53,7 +53,7 @@
 5786941001,R' B2 L' D2 B2 D2 L' R' U F U B F2 L' U2 F2 L,W,Norwegian Championship 2026 (2026-08-14~16),333oh Final A #4
 4860903001,U' B' L B D' R2 D2 R2 U B2 D' B' L F2 R2 F2 R2 B',W,Suwon Summer 2025 (2025-07-13),333 R1 C #3
 299198001,F D2 L' F R2 U' D2 L' U L2 F U2 F2 L2 F' D2 R2 B L2 B',W,Dubai Open 2016 (2016-05-13),333 R1 C #2
-300899001,D L B2 R' U R' U' F B U2 F L2 F' R2 U2 D2 B U2,W,Canberra Autumn 2016 (2016-05-21~22),333oh Final A #4
+5843122001,U2 F2 L' F D' R' D2 B' R2 F' L2 D F2 D R2 B2 R2 L2 U2,Y,Michigan Mini 45 2026 (2026-09-24),333 R1 B #1
 2291992001,L B' R2 B U' L2 U L2 F2 U L2 D2 F' L' D2 B2 L2 U B',W,Cubing At Pan American School of Bahia 2022 (2022-11-05~06),333 R2 A E1
 3147918015,B R2 U2 B R2 B D2 L2 R U' R F2 R' D L2 D' L D2 L B',Y,Nacionales Uruguayas 2023 (2023-10-06~08),333mbf Final A #1
 4889130001,R2 F R U2 L F2 L' B2 R D' R2 F U' B R2 B F' L,Y,Saratoga Springs Summer 2025 (2025-07-26~27),333 Final A E2
