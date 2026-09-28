@@ -174,3 +174,11 @@ grep '<request-id>' /www/wwwlogs/timing.api.cuberoot.me.log /root/.pm2/logs/core
 验证先跑解析/限频/阶段计时/日志隐私 fixtures，再通过真实正常求解确认
 request → job → finished 的 ID 一致、至少两个资源样本以及一个进程快照。
 异常路径用合成 fixture 验证，不在生产主动制造 swap/OOM/超时。
+
+上线验收：2026-09-28 09:24 UTC，API 发布 `827ac576e0` 的三个公网求解请求
+分别耗时 3,166 / 1,423 / 2,637 ms，返回解法均经 cubing.js 独立还原验证。
+请求 `307a3bb1-a700-47c1-9d89-bf909f3dd3e6` 在 nginx timing、
+`cubeopt_request_*` 和 `cubeopt_job_*` 中一致；求解子进程 swap=0，
+三个请求新增 major faults=0。连续 10 秒样本和含 cgroup/service 的分钟快照
+均已在生产日志中观察到；现有 PM2 七天轮换配置已核对。
+此次验收没有制造真实慢请求或内存故障，阈值路径由合成测试覆盖。
