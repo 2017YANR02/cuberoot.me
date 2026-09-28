@@ -26,17 +26,17 @@ that its implementation is closed source.
 
 - [x] Durable 100-question quota: reserve before model calls, count failed/cancelled calls, reject when storage is unavailable, reset at Beijing midnight. Local PostgreSQL fixture: 130 concurrent reservations admit exactly 100, reconnect retains limit, midnight starts next day.
 - [x] Bilingual quota-exhausted message; regular search remains available.
-- [ ] Exact original question: 三阶魔方世界纪录. Answer single and average with holders, competition, date and data freshness.
-- [ ] Conversation UI: follow-ups, examples, stop, retry, new conversation, sources, accessible desktop/mobile layout.
-- [ ] Person profiles and PRs; resolve names without guessing WCA IDs.
-- [ ] Current/historical rankings, geographic/event/type filters.
-- [ ] Competitor comparisons and PR progression charts.
-- [ ] Upcoming and historical competition discovery.
-- [ ] Official competition scrambles by event/round.
-- [ ] Published reconstructions and analysis from recorded move sequences.
-- [ ] Site-wide public page search/read plus structured tutorial, glossary, regulation, algorithm and public forum content.
-- [ ] Representative bilingual, follow-up, unavailable-data and adversarial-query acceptance suite.
-- [ ] Deployment and real browser acceptance of the expanded assistant.
+- [x] Exact original question: 三阶魔方世界纪录. Answer single and average with holders, competition, date and data freshness.
+- [x] Conversation UI: follow-ups, examples, stop, retry, new conversation, sources, accessible desktop/mobile layout.
+- [x] Person profiles and PRs; resolve names without guessing WCA IDs.
+- [x] Current/historical rankings, geographic/event/type filters.
+- [x] Competitor comparisons and PR progression charts.
+- [x] Upcoming and historical competition discovery.
+- [x] Official competition scrambles by event/round.
+- [x] Published reconstructions and analysis from recorded move sequences.
+- [x] Public page search/read, including guides, regulation and math prose, plus glossary, algorithm and public forum adapters.
+- [x] Representative bilingual, follow-up, unavailable-data and adversarial-query acceptance suite.
+- [x] Deployment and real browser acceptance of the expanded assistant.
 
 ## Boundaries
 
@@ -48,7 +48,7 @@ existing WCA contracts. Stored public data can lag official publication; show it
 actual update time rather than implying live results.
 
 Deployment evidence is recorded separately from local checks. Quota release:
-`d55520764a`; expanded assistant work is not yet released.
+`d55520764a`; expanded assistant code and final frontend: `bf2c55ac9a`. See the deployment evidence below.
 
 ## Originality requirement
 
@@ -63,4 +63,22 @@ CubeStats was added to the production web directory under Competition & Stats (n
 - Fixed stale upcoming index filtering and model interpretation of long PR arrays; model now receives programmatically computed first/current/recent milestones while charts retain every strict PR point.
 - Data-adapter fixtures cover record ties, invalid results, stale competitions, private reconstruction exclusion, typed tool bounds and raw PR values. Route fixtures cover persistent quota behavior, failures, malformed inputs and bounded tool loops.
 - Desktop dialog/chart rendering inspected with a recorded real-model response. 390×844 layout inspected without horizontal overflow. This is separate from pending production browser acceptance.
-- Source code/type checks and targeted frontend/backend tests pass; production build/index and deployed end-to-end checks remain pending below.
+- Source code/type checks and targeted frontend/backend tests pass. Production build, content index and live browser checks are recorded below.
+
+## Production acceptance (2026-09-28)
+
+- Full Test workflow `36431064630` passed; Next deployment `36431064628` and Vercel deployment for `bf2c55ac9a` succeeded. Final API deployment `36431064705` also succeeded.
+- Published index: 1,450 bilingual public page entries, 3.40 MB. 1,324 contain server-rendered text and/or the page’s public description; 126 are on-demand group-theory chapters (63 per language). This is a page-entry count, not 1,450 distinct topics or a claim that every interactive dataset is embedded in HTML. Restricted routes were absent.
+- Browser on `https://cuberoot.me/zh`: original Geng progress question returned the correct person, PR table and two curves. A follow-up about his latest average returned Geng, 3.67 seconds, Jiajiang Open, 2026-07-25. The public competition record confirms that competition started and ended on that date.
+- Fixed the discovered third-person/viewer confusion: a viewer ID is now supplied to the model only for explicit first-person requests. Model-generated person IDs require prior name resolution; output artifacts are restricted to the final cited sources.
+- PLL training and group-theory questions returned actual page evidence and source links. Fixed overly broad header removal, which had stripped the teaching steps from the PLL guide. On-demand chapters are discovered from the existing sitemap and public link labels.
+- Live English 2x2 records query returned HTTP 200, English prose, a source and a record table. Original Chinese 3x3 records were verified against the published dataset.
+- Desktop, 390×844 layout and all four system/explicit light/dark combinations inspected. Mobile document and dialog widths were both 390 px; the conversation now sits above the floating pet. Viewport/media overrides were restored.
+- New conversation, stop, close/reopen retention and retry after a failed request were exercised. Closing retains the current in-memory conversation; reloading does not persist it.
+- The earlier CI reconstruction-label failures passed on an unchanged focused rerun and in the later full CI. No ground-truth expectations were weakened.
+
+## Remaining boundaries
+
+- Browser speech recognition has not been replaced with cloud ASR. Actual DJI microphone recognition and mobile speech still require hardware acceptance; text-assistant success is not evidence that voice input is fixed.
+- The assistant uses bounded public read adapters and published statistical tables. It does not expose unrestricted SQL, private courses, admin content or arbitrary external-site crawling. Full feature parity or overall superiority over another product has not been established.
+- Model prose can still misinterpret evidence. Tables/charts retain raw-source values; a PR series alone does not establish consistency, and its dates use competition start dates unless the source provides finer timing.
