@@ -2,6 +2,11 @@ import {describe,it,expect} from 'vitest';
 import {indexPublicHtml,discoverPublicPages} from '../scripts/build-assistant-index';
 
 describe('assistant build-time public content index',()=>{
+  it('preserves tutorial instructions inside article headers and public tool descriptions',()=>{
+    const result=indexPublicHtml('/zh/recognize/pll/guide','<html><head><title>PLL</title></head><body><header>Site chrome</header><main><header><h1>PLL 识别指南</h1><p>'+('先找连色条和灯眼，再比较相邻两面。'.repeat(8))+'</p></header></main></body></html>');
+    expect(result?.text).toContain('先找连色条和灯眼');expect(result?.text).not.toContain('Site chrome');
+    expect(indexPublicHtml('/en/recognize/pll','<html><head><title>PLL</title><meta name="description" content="A timed drill for recognising all 21 PLL cases."></head><body>Loading...</body></html>')?.text).toContain('21 PLL');
+  });
   const html='<html><head><title>CFOP</title></head><body><nav>navigation</nav><main>'+('Public cubing tutorial. '.repeat(8))+'<script>secret script</script><span hidden>hidden UI</span></main></body></html>';
   it('indexes actual public text with language-neutral source paths',()=>{
     const result=indexPublicHtml('/zh/tutorial/lbl',html)!;
