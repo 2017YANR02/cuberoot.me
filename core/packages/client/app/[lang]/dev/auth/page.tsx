@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "e99a1e0f5ee9c0cadee2c174778e3fe6e1da2b87cbcdbe97ddd477ffba3f9591", "reason": "合并两边账号实现并复核：保留本地身份存储错误分类、验证码与账号操作同事务、合并后旧账号会话失效；保留远端好友聊天注销清理在前置检查和 Apple 撤销成功之后执行、linked_data 合并限制，以及安装端高级设置共用账号入口。正文同时保留双方中英文说明；关闭计时器设置不退出账号，登录回跳与安全存储契约未变。本次为本地整合，未部署。"}
+{"fingerprint":"bd0259457b50672b8990f8da583569b455c4d6e17f8a4259425f9578adaa1aab","reason":"复核好友表情包的账号生命周期：上传和收藏复用现有登录身份及账号锁，登录、绑定和会话流程不变；新增账号外键仍由 linked_data 阻止不支持的合并。注销在原有续费、机构与 Apple 撤销检查之后删除收藏并清理无引用图片，别人持有的副本保留且清空上传者归属。注销流程节点和中英文保留清单已同步；仅本地实现，未部署。"}
 */
 
 import type { ReactNode } from 'react';
@@ -270,11 +270,12 @@ export default function AuthFlowPage() {
           t('我的 → 齿轮 → 登录方式 → 底部「注销账号」', 'My account → settings gear → sign-in methods → Delete account at the bottom'),
           t('阅读删除与保留清单 → 输入页面要求的账号标识；设过密码还须输入当前密码', 'Read what is deleted and retained → type the requested account identifier; enter the current password if one is set'),
           t('主动确认永久注销 → 服务端检查续约合约、机构归属等条件，并撤销已绑定 Apple 授权', 'Explicitly confirm deletion → server checks renewal contracts, organization ownership, and other constraints, and revokes linked Apple authorization'),
+          t('表情包收藏随账号删除；无其他会话或收藏引用的上传图片同时删除，别人已持有的副本解除上传者归属后保留', 'Sticker favorites are deleted with the account. Uploaded images without other message or favorite references are deleted; copies held by others remain without uploader attribution'),
           t('成功 → 删除站内账号与对应私有数据、推送设备绑定和队列、解除登录方式；失败 → 展示原因，不宣称已注销', 'Success → delete the site account, covered private data, push device bindings and queues, and sign-in methods. Failure → show the reason, never claim deletion succeeded'),
         ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
-        <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天数据仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat data follows the existing linked_data rule for unsupported account merges.')}</li>
+        <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天记录、表情包上传和收藏仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat history, sticker uploads and favorites follow the existing linked_data rule for unsupported account merges.')}</li>
         <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
         <li>{t('私有数据按清单删除，包括私人宠物领养与养成记录；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data, including private pet adoptions and care records, is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
         <li>{t('不能声称远程清空所有手机。App 本地记录、导出备份和其他设备副本需要另外管理；注销的是 CubeRoot 账号，不是 Apple、Google 或微信账号。', 'This does not remotely wipe every phone. Manage local App records, exported backups, and other device copies separately. You delete CubeRoot, not your Apple, Google, or WeChat account.')}</li>

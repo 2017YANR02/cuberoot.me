@@ -7,7 +7,8 @@
     "kind": "library",
     "externalRuntime": {
       "lucide-react": "react-dom",
-      "react": "react-dom"
+      "react": "react-dom",
+      "@emoji-mart/data": "runtime-neutral"
     },
     "runtime": {
       ".": "react-dom",
@@ -30,7 +31,8 @@
   "dependencies": {
     "@cuberoot/puzzle-solvers": "workspace:*",
     "@cuberoot/shared": "workspace:*",
-    "@cuberoot/timer-ui": "workspace:*"
+    "@cuberoot/timer-ui": "workspace:*",
+    "@emoji-mart/data": "1.2.1"
   },
   "peerDependencies": {
     "lucide-react": "1.8.0",
