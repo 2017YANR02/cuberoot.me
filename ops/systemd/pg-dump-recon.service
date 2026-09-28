@@ -1,0 +1,13 @@
+[Unit]
+Description=Daily pg_dump of cuberoot_db
+After=postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=oneshot
+# systemd parses the env file itself; this task does not need the interactive
+# shell's NVM PATH just to retrieve DB_PASS. Never source credentials as shell.
+EnvironmentFile=/root/core-api/.env
+ExecStart=/usr/local/bin/pg-dump-recon.sh
+StandardOutput=journal
+UMask=0077

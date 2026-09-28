@@ -24,6 +24,7 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { streamSSE } from 'hono/streaming';
 import { requireAuth } from '../utils/recon_helpers.js';
+import { currentDiagnosticRequestId, diagnosticLog } from '../observability/request.js';
 import {
   solveOptimal,
   isEnabled,
@@ -31,6 +32,7 @@ import {
   isReady,
   ensureDaemon,
   getLastLoadMs,
+  captureSolverDiagnostics,
 } from '../cubeopt/daemon.js';
 
 export const cubeoptSolveRoutes = new Hono();
@@ -89,7 +91,24 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
   if (scrambles.some((s) => s === null)) throw new Error('Validation: each scramble must be plain HTM face turns (e.g. R U R\' ...)');
 
   c.header('X-Accel-Buffering', 'no'); // nginx: don't buffer the SSE stream
+  const requestId = currentDiagnosticRequestId();
   return streamSSE(c, async (stream) => {
+    const received = performance.now();
+    let loadMs = 0;
+    let ok = 0;
+    let fail = 0;
+    let aborted = false;
+    let phase = 'loading';
+    diagnosticLog('cubeopt_request_started', { requestId, count: scrambles.length, warm: isReady() });
+    const slowTimer = setTimeout(() => {
+      diagnosticLog('cubeopt_request_slow', { requestId, phase, elapsedMs: Math.round(performance.now() - received), ok, fail }, true);
+      void captureSolverDiagnostics('slow_request');
+    }, 10_000);
+    slowTimer.unref();
+    stream.onAbort(() => {
+      aborted = true;
+      diagnosticLog('cubeopt_request_aborted', { requestId, elapsedMs: Math.round(performance.now() - received), ok, fail }, true);
+    });
     // Serialize SSE writes — the onState callback + heartbeat fire asynchronously
     // while we await a solve, and hono's stream isn't parallel-safe.
     let chain: Promise<void> = Promise.resolve();
@@ -115,21 +134,23 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
       try {
         await ensureDaemon();
       } catch (e) {
+        fail = scrambles.length;
         const msg = e instanceof Error ? e.message : String(e);
         await safeWrite({ event: 'error', data: JSON.stringify({ i: -1, phase: 'load', error: msg }) });
         await safeWrite({ event: 'done', data: JSON.stringify({ ok: 0, fail: scrambles.length }) });
         return;
       }
+      loadMs = Math.round(performance.now() - received);
+      phase = 'queued';
       // warm: loadMs absent; cold: the real spawn→READY time of the load just done.
       await safeWrite({ event: 'ready', data: JSON.stringify(wasReady ? { warm: true } : { warm: false, loadMs: getLastLoadMs() }) });
 
-      let ok = 0;
-      let fail = 0;
       // Solve sequentially — the daemon is serial anyway, and sequential keeps the
       // queue shallow + results ordered by completion (client re-sorts by index).
       for (let i = 0; i < scrambles.length; i++) {
         try {
           const { htm, solution } = await solveOptimal(scrambles[i]!, (state) => {
+            phase = state.phase === 'queued' ? 'queued' : 'solving';
             // Tell the client whether it's WAITING in the queue (behind others) or
             // its solve has actually STARTED — so "排队中" vs "求解中" is honest.
             if (state.phase === 'queued') void safeWrite({ event: 'queued', data: JSON.stringify({ i, ahead: state.ahead }) });
@@ -146,6 +167,9 @@ cubeoptSolveRoutes.post('/scramble/optimal-solve', async (c) => {
       await safeWrite({ event: 'done', data: JSON.stringify({ ok, fail }) });
     } finally {
       clearInterval(heartbeat);
+      clearTimeout(slowTimer);
+      diagnosticLog('cubeopt_request_finished', { requestId, count: scrambles.length, ok, fail, aborted,
+        loadMs, totalMs: Math.round(performance.now() - received) }, aborted || fail > 0);
     }
   });
 });

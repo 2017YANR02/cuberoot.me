@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Daily pg_dump of cuberoot_db — 只备「不可重建」的用户数据。
 #
 # 为什么排除派生表:整库 12G 里 ~99% 是 CI 从上游 WCA dump 每晚重算的派生统计
@@ -13,12 +13,20 @@
 # 管道状态 *_dump_state / 迁移账本 _schema_migrations)
 # 全部照备。新增「用户表」无需登记(默认就备,只有派生大表才需加进下面排除列表)。
 #
-# 加密用 PGPASSWORD env;不写 pgpass 文件。
-# 留 7 天滚动覆盖,过期自动删(本机每日拉副本另留 30 天)。同时备份 /root/core-api/.env (含 DB 密码 / JWT / WCA OAuth)。
-set -e
-ARCHIVE=/root/archive
+# 凭据用 PGPASSWORD env;不写 pgpass 文件。备份本身不是加密文件。
+# 只保留最近两份成功的每日备份及对应 .env；失败不轮换已有备份。
+set -euo pipefail
+umask 077
+ARCHIVE="${CUBEROOT_BACKUP_DIR:-/root/archive}"
+DB_ENV_FILE="${CUBEROOT_DB_ENV_FILE:-/root/core-api/.env}"
 DATE=$(date -u +%Y-%m-%d)
 mkdir -p "$ARCHIVE"
+# 定时任务与人工补跑不能同时写入或轮换。
+exec 9>"$ARCHIVE/.pg-dump-recon.lock"
+flock -n 9 || { echo 'backup already running' >&2; exit 1; }
+DUMP_TMP=$(mktemp "$ARCHIVE/.pg-recon-XXXXXXXX.sql.gz")
+ENV_TMP=$(mktemp "$ARCHIVE/.env-XXXXXXXX")
+trap 'rm -f -- "$DUMP_TMP" "$ENV_TMP"' EXIT
 
 load_db_password() {
   if [ -n "${PGPASSWORD:-}" ]; then
@@ -72,27 +80,35 @@ pg_dump -U recon_user -h 127.0.0.1 -d cuberoot_db \
   --exclude-table-data='meta_historical' \
   --exclude-table-data='person_dump_state' \
   --exclude-table-data='comp_dump_state' \
-  | gzip -9 > "$ARCHIVE/pg-recon-$DATE.sql.gz.tmp"
+  | gzip -9 > "$DUMP_TMP"
 
 # 验证 dump 不为空 (gzip 后 < 1KB 则 fail)
-SIZE=$(stat -c %s "$ARCHIVE/pg-recon-$DATE.sql.gz.tmp")
+SIZE=$(wc -c < "$DUMP_TMP")
 if [ "$SIZE" -lt 1024 ]; then
   echo "ERROR: dump too small ($SIZE bytes), aborting"
-  rm "$ARCHIVE/pg-recon-$DATE.sql.gz.tmp"
   exit 1
 fi
+gzip -t "$DUMP_TMP"
+# grep 不用 -q，必须读完整流，避免 pipefail 将 gzip 的 SIGPIPE 误判为失败。
+gzip -dc "$DUMP_TMP" | grep -F -- '-- PostgreSQL database dump complete' > /dev/null
+# .env 与 dump 均准备好后再发布；缺失配置不清理旧备份。
+cp "$DB_ENV_FILE" "$ENV_TMP"
+chmod 600 "$DUMP_TMP" "$ENV_TMP"
+mv "$ENV_TMP" "$ARCHIVE/env-$DATE"
+mv "$DUMP_TMP" "$ARCHIVE/pg-recon-$DATE.sql.gz"
 
-mv "$ARCHIVE/pg-recon-$DATE.sql.gz.tmp" "$ARCHIVE/pg-recon-$DATE.sql.gz"
-
-# 删 7 天前的备份
-find "$ARCHIVE" -name "pg-recon-*.sql.gz" -mtime +7 -delete
-
-echo "OK: $ARCHIVE/pg-recon-$DATE.sql.gz ($SIZE bytes)"
-
-# .env 备份 (含 DB pass / JWT / WCA OAuth 等;丢了 = 全部 secrets 重生成)
-if [ -f /root/core-api/.env ]; then
-  cp /root/core-api/.env "$ARCHIVE/env-$DATE"
-  chmod 600 "$ARCHIVE/env-$DATE"
-  find "$ARCHIVE" -name "env-*" -mtime +7 -delete
-  echo "OK: $ARCHIVE/env-$DATE"
-fi
+shopt -s nullglob
+export LC_ALL=C
+backups=("$ARCHIVE"/pg-recon-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].sql.gz)
+for ((i=0; i<${#backups[@]}-2; i++)); do
+  old_date=${backups[i]##*/pg-recon-}
+  old_date=${old_date%.sql.gz}
+  rm -f -- "${backups[i]}" "$ARCHIVE/env-$old_date"
+done
+# 只清理此备份任务的日期命名配置副本，保留与现有 dump 对应的两份。
+for env_file in "$ARCHIVE"/env-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]; do
+  env_date=${env_file##*/env-}
+  [ -f "$ARCHIVE/pg-recon-$env_date.sql.gz" ] || rm -f -- "$env_file"
+done
+echo "OK: $ARCHIVE/pg-recon-$DATE.sql.gz ($SIZE bytes); retained at most 2 daily backups"
+echo "OK: $ARCHIVE/env-$DATE"
