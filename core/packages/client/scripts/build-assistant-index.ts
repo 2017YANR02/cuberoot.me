@@ -1,6 +1,5 @@
 import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseHTML } from 'linkedom';
 import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
 const restricted=SITE_DIRECTORY_GROUPS.flatMap(g=>g.entries.filter(e=>('adminOnly' in e && e.adminOnly)||('lockedForNonAdmin' in e && e.lockedForNonAdmin)).map(e=>e.href));
@@ -39,4 +38,6 @@ async function main() {
   await writeFile('public/assistant/pages.json',JSON.stringify({updated:new Date().toISOString(),pages}));
   console.log(`Assistant content index: ${pages.length} public pages`);
 }
-if (process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) await main();
+if (path.basename(process.argv[1] ?? '')==='build-assistant-index.ts') {
+  main().catch(error=>{console.error(error);process.exitCode=1;});
+}
