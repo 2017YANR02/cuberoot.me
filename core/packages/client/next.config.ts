@@ -79,6 +79,7 @@ const nextConfig: NextConfig = {
         source: "/sw.js",
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
+      { source: "/assistant/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600" }] },
       // Long-cache bare public/ assets. Next only auto-immutables hashed
       // /_next/static/*; files served straight from public/ default to
       // `max-age=0, must-revalidate`, so every page navigation re-validates

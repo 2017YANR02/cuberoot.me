@@ -74,7 +74,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   mcp mcp_oauth timer_replay_shares site_assistant
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
-  { d: 'content', m: 'POST', p: '/v1/site-assistant', g: 'public', c: 'no-store', zh: '千问读取公开目录页面并返回回答与来源；全站每天 100 次持久额度（北京时间零点恢复），失败调用也计数；超额返回 429 daily_limit，普通搜索仍可使用', en: 'Qwen reads public directory pages with sources; a durable site-wide quota of 100 questions per Beijing calendar day includes failed calls; exhausted quota returns 429 daily_limit while regular search remains available' },
+  { d: 'content', m: 'POST', p: '/v1/site-assistant', g: 'public', c: 'no-store', zh: '千问结合公开全文索引和受限数据查询，支持连续对话、成绩表与 PR 曲线；只读公开内容；全站每天 100 次持久额度（北京时间零点恢复），失败调用也计数；超额返回 429 daily_limit，普通搜索仍可使用', en: 'Qwen combines public full-text search and bounded read tools, with conversation history, result tables, PR charts and sources; a durable site-wide quota of 100 questions per Beijing calendar day includes failed calls; exhausted quota returns 429 daily_limit while regular search remains available' },
   { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-protected-resource/v1/mcp', g: 'public', c: 'no-store', zh: 'MCP 资源与授权服务器发现', en: 'MCP resource and authorization-server discovery' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-authorization-server', g: 'public', c: 'no-store', zh: 'OAuth 发现与 S256 PKCE 能力', en: 'OAuth discovery and S256 PKCE capabilities' },

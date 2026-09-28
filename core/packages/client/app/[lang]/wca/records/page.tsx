@@ -1,5 +1,7 @@
 'use client';
 
+import { selectCurrentRecords } from '@cuberoot/shared/wca-records';
+
 // Ported from packages/client-vite/src/pages/wca_stats/RecordsPage.tsx.
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import HomeLink from '@/components/HomeLink';
@@ -141,21 +143,7 @@ function RecordsPageInner() {
   // 区域选择器决定口径:world → 当前世界纪录,某洲 → 当前大洲纪录,某国 → 当前国家纪录。
   const currentRows = useMemo(() => {
     if (show !== 'current') return [];
-    const best = new Map<string, { v: number; rows: Row[] }>();
-    for (const r of visibleRows) {
-      const k = `${r.e}-${r.t}`;
-      const cur = best.get(k);
-      if (!cur || r.v < cur.v) best.set(k, { v: r.v, rows: [r] });
-      else if (r.v === cur.v) cur.rows.push(r);
-    }
-    const out: Row[] = [];
-    for (const id of ALL_EVENT_IDS) {
-      for (const t of ['s', 'a'] as const) {
-        const g = best.get(`${id}-${t}`);
-        if (g) out.push(...[...g.rows].sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : 0)));
-      }
-    }
-    return out;
+    return selectCurrentRecords(visibleRows);
   }, [visibleRows, show]);
 
   const grouped = useMemo(() => {

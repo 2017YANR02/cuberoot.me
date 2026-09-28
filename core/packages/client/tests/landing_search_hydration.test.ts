@@ -77,10 +77,10 @@ describe('LandingSearch placeholder hydration', () => {
     expect(fetcher).not.toHaveBeenCalled();
     await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(fetcher).toHaveBeenCalledTimes(1);
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh' });
-    expect(host.querySelector('.landing-search-answer-text')?.textContent).toBe('打开数帧页面。');
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', history: [] });
+    expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。');
     expect(host.textContent).not.toContain('未找到匹配项');
-    expect(host.querySelector('.landing-search-answer a')?.getAttribute('href')).toBe('/zh/frame-count');
+    expect(document.querySelector('.site-assistant-sources a')?.getAttribute('href')).toBe('/zh/frame-count');
     await act(async () => root.unmount());
     host.remove();
   });
@@ -102,7 +102,7 @@ describe('LandingSearch placeholder hydration', () => {
     await act(async () => { resolve({ ok: true, json: async () => ({ answer: '过期回答', sources: [] }) }); });
     expect(host.textContent).not.toContain('过期回答');
     await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    expect(host.textContent).toContain('暂时无法回答');
+    expect(document.body.textContent).toContain('暂时无法回答');
     expect(host.querySelector('input')?.value).toBe('新问题');
     await act(async () => root.unmount());
     host.remove();
@@ -115,8 +115,8 @@ describe('LandingSearch placeholder hydration', () => {
     const root = createRoot(host);
     await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
     await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    expect(host.textContent).toContain('全站今日 100 次提问额度已用完');
-    expect(host.textContent).toContain('北京时间零点恢复');
+    expect(document.body.textContent).toContain('全站今日 100 次提问额度已用完');
+    expect(document.body.textContent).toContain('北京时间零点恢复');
     expect(host.querySelector('input')?.value).toBe('世界纪录');
     await act(async () => root.unmount());
     host.remove();
