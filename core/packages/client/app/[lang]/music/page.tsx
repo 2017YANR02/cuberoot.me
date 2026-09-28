@@ -20,7 +20,7 @@ import {
 } from '@/lib/music-api';
 import {
   cycleMusicRepeat, loadMusicLibrary, loadTrackLyrics, nextMusic,
-  playMusic, previousMusic, seekMusic, setMusicVolume, toggleMusic,
+  playMusic, selectMusic, previousMusic, seekMusic, setMusicVolume, toggleMusic,
   toggleMusicShuffle, useMusicPlayer, type LyricLine, type MusicTrack,
   musicAssetUrl,
 } from '@/lib/music-player';
@@ -240,6 +240,8 @@ export default function MusicPage() {
   const player = useMusicPlayer();
   const { isMember, loading: membershipLoading } = useMembership();
   const isAdmin = useIsAdmin();
+  const [sharedTrack] = useQueryState('track', parseAsString.withDefault(''));
+  useEffect(() => { if (sharedTrack) void selectMusic(sharedTrack); }, [sharedTrack]);
   const [query, setQuery] = useQueryState('q', parseAsString.withDefault(''));
   const [genre, setGenre] = useQueryState('genre', parseAsString.withDefault(''));
   const [view, setView] = useQueryState('view', parseAsStringEnum(['library', 'player', 'lyrics']).withDefault('library').withOptions({ history: 'push' }));
@@ -420,6 +422,7 @@ export default function MusicPage() {
         </section>
 
         <section className="music-now" aria-labelledby="music-now-title">
+          {sharedTrack && player.status === 'ready' && !player.tracks.some(track => track.id === sharedTrack) && <p className="music-state" role="status">{tr({ zh: '分享的歌曲已不可用，请从曲库选择其他歌曲。', en: 'The shared track is unavailable. Choose another track from the library.' })}</p>}
           <div className="music-artwork-wrap"
             onTouchStart={(event) => { artworkTouch.current = event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null; }}
             onTouchCancel={() => { artworkTouch.current = null; }}
