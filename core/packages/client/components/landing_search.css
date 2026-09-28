@@ -14,6 +14,13 @@
   margin-bottom: 0;
 }
 
+.landing-search-speech-status {
+  margin: 0.5rem 1rem 0;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
 .landing-search--page .landing-search-panel {
   position: relative;
   top: auto;

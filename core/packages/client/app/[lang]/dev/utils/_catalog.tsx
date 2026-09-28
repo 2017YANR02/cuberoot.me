@@ -273,11 +273,11 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useSpeechToText',
-    sig: 'useSpeechToText({ lang, onResult }): { supported; listening; start; stop }',
+    sig: 'useSpeechToText({ lang, onResult }): { supported; listening; status; error; start; stop }',
     imp: "import { useSpeechToText } from '@/hooks/useSpeechToText';",
     category: 'hook',
-    zh: 'Web Speech API 语音转文字封装(Chrome / Edge / Safari,Firefox 不支持)。',
-    en: 'Web Speech API speech-to-text wrapper (Chrome/Edge/Safari; not Firefox).',
+    zh: 'Web Speech API 语音转文字封装，提供启动、识别、停止状态与错误、超时反馈。接口存在不代表识别服务可用。',
+    en: 'Web Speech API wrapper with starting, listening and stopping states, errors and timeouts. API presence does not guarantee service availability.',
   },
   {
     name: 'useLiveStream',
