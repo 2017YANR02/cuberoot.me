@@ -83,6 +83,9 @@ export async function answerSiteQuestion(
   // A signed-in identity is relevant only to an explicit first-person request.
   // Supplying it on every turn can override the person discussed in history.
   const selfWcaId=/我的|我自己|我本人|\bmy\b/i.test(question) ? viewerWcaId : undefined;
+  const resolvedPeople=new Set([question,...history.filter(m=>m.role==='user').map(m=>m.content)]
+    .flatMap(text=>text.match(/\b\d{4}[A-Z]{4}\d{2}\b/g) ?? []));
+  if(selfWcaId)resolvedPeople.add(selfWcaId);
   const cache = new Map<string, Promise<any>>();
   const read = (url: string) => {
     let pending=cache.get(url);
@@ -98,7 +101,7 @@ export async function answerSiteQuestion(
   };
   const evidence: Array<{id:string;tool:unknown;data:unknown}> = [];
   const sources = new Map<string, AssistantAnswer['sources'][number]>();
-  const artifacts: NonNullable<AssistantAnswer['artifacts']> = [];
+  const artifacts: Array<{sourceIds:string[]; artifact:NonNullable<AssistantAnswer['artifacts']>[number]}> = [];
   const called=new Set<string>();
   let evidenceCharacters=0;
   const complete = async (round: number) => {
@@ -140,7 +143,9 @@ export async function answerSiteQuestion(
     const step=await complete(round);
     if (!step.calls.length || round===4) {
       const selected=step.sourceIds.flatMap(id=>sources.has(id)?[sources.get(id)!]:[]);
-      return {answer:step.answer || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:selected.length?selected:[...sources.values()].slice(0,12),artifacts};
+      const cited=selected.length?selected:[...sources.values()].slice(0,12);
+      const citedIds=new Set(cited.map(source=>source.id));
+      return {answer:step.answer || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:cited,artifacts:artifacts.filter(a=>a.sourceIds.some(id=>citedIds.has(id))).map(a=>a.artifact)};
     }
     const calls=step.calls.slice(0,10-called.size);
     if (!calls.length) continue;
@@ -151,10 +156,17 @@ export async function answerSiteQuestion(
       if (called.has(key)) { evidence.push({id:`duplicate:${evidence.length}`,tool:raw,data:'Already read; reuse the previous evidence.'}); continue; }
       called.add(key);
       if (!parsed.success) { evidence.push({id:`invalid:${evidence.length}`,tool:raw,data:'Invalid tool arguments. Use the exact documented schema.'}); continue; }
+      if ('wcaId' in parsed.data && parsed.data.wcaId && !resolvedPeople.has(parsed.data.wcaId)) {
+        evidence.push({id:`unresolved:${evidence.length}`,tool:parsed.data,data:'This WCA ID has not been resolved. Use find_person with the name from the question/history first; never guess an ID.'});
+        continue;
+      }
       try {
         const result=parsed.data.tool==='pages' ? await pages(parsed.data) : await runDataTool(parsed.data,lang,read);
+        if(parsed.data.tool==='find_person' && Array.isArray(result.evidence)) {
+          for(const row of result.evidence)if(typeof row?.wcaId==='string')resolvedPeople.add(row.wcaId);
+        }
         for (const s of result.sources) sources.set(s.id,s);
-        artifacts.push(...result.artifacts);
+        artifacts.push(...result.artifacts.map(artifact=>({sourceIds:result.sources.map(s=>s.id),artifact})));
         // Bound context even when a large alg set or long reconstruction is read.
         const text=JSON.stringify(result.evidence);
         const available=Math.max(0,40000-evidenceCharacters);
