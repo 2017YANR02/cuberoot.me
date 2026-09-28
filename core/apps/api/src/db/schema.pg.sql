@@ -8824,3 +8824,9 @@ CREATE TABLE friend_chat_messages (
 );
 CREATE INDEX idx_friend_chat_sender_time ON friend_chat_messages (sender_user_id, created_at DESC);
 CREATE INDEX idx_friend_chat_unread ON friend_chat_messages (conversation_id, sender_user_id, sequence);
+
+-- One durable, anonymous counter per Beijing calendar day, shared by all API processes.
+CREATE TABLE site_assistant_daily_usage (
+  day DATE PRIMARY KEY,
+  questions INTEGER NOT NULL CHECK (questions BETWEEN 1 AND 100)
+);
