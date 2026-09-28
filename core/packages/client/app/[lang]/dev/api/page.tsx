@@ -71,9 +71,10 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   mcp mcp_oauth timer_replay_shares
+//   mcp mcp_oauth timer_replay_shares site_assistant
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'content', m: 'POST', p: '/v1/site-assistant', g: 'public', c: 'no-store', zh: '千问理解站内问题，读取公开目录页面并返回回答与来源；匿名限额、超时与普通搜索回退', en: 'Qwen routes site questions, reads public directory pages and returns an answer with sources; anonymous quotas, deadlines and regular-search fallback' },
   { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-protected-resource/v1/mcp', g: 'public', c: 'no-store', zh: 'MCP 资源与授权服务器发现', en: 'MCP resource and authorization-server discovery' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-authorization-server', g: 'public', c: 'no-store', zh: 'OAuth 发现与 S256 PKCE 能力', en: 'OAuth discovery and S256 PKCE capabilities' },

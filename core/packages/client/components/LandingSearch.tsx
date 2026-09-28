@@ -42,6 +42,7 @@ import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { tr } from '@/i18n/tr';
+import { apiUrl } from '@/lib/api-base';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -221,6 +222,51 @@ export default function LandingSearch({
   const [expandedGlossary, setExpandedGlossary] = useState(false);
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const assistantRequest = useRef<AbortController | null>(null);
+  const [assistantBusy, setAssistantBusy] = useState(false);
+  const [assistantError, setAssistantError] = useState(false);
+  const [assistantAnswer, setAssistantAnswer] = useState<{
+    answer: string; sources: Array<{ id: string; title: string; href: string; read: boolean }>;
+  } | null>(null);
+
+  useEffect(() => {
+    assistantRequest.current?.abort();
+    assistantRequest.current = null;
+    setAssistantBusy(false);
+    setAssistantError(false);
+    setAssistantAnswer(null);
+    return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
+  }, [query, lang]);
+
+  const askAssistant = async () => {
+    if (!query.trim() || query.trim().length > 500 || assistantRequest.current) return;
+    micStop();
+    const controller = new AbortController();
+    assistantRequest.current = controller;
+    setOpen(true);
+    setAssistantBusy(true);
+    setAssistantError(false);
+    setAssistantAnswer(null);
+    const timeout = setTimeout(() => controller.abort(), 35000);
+    try {
+      const response = await fetch(apiUrl('/v1/site-assistant'), {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: query.trim(), lang }), signal: controller.signal,
+      });
+      if (!response.ok) throw new Error('unavailable');
+      const data = await response.json();
+      if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
+      if (assistantRequest.current === controller) setAssistantAnswer({
+        answer: data.answer,
+        sources: data.sources.filter((source: { href?: unknown }) => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)),
+      });
+    } catch {
+      if (assistantRequest.current === controller) setAssistantError(true);
+    } finally {
+      clearTimeout(timeout);
+      if (assistantRequest.current === controller) { assistantRequest.current = null; setAssistantBusy(false); }
+    }
+  };
 
   useEffect(() => {
     setPlaceholderDay(dayOfYear(new Date()));
@@ -398,7 +444,7 @@ export default function LandingSearch({
         >
           <Plus size={18} strokeWidth={1.75} />
         </button>
-        {/* allow-manual-search: Results update while typing; Enter opens the first result. */}
+        {/* allow-manual-search: Results update while typing; Enter submits a natural-language question. */}
         <input
           ref={textInputRef}
           type="text"
@@ -415,8 +461,10 @@ export default function LandingSearch({
             if (e.key === 'Escape') {
               setOpen(false);
               (e.target as HTMLInputElement).blur();
-            } else if (e.key === 'Enter') {
-              goFirstResult();
+            } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+              e.preventDefault();
+              if (yearMatch || pasteIntent) goFirstResult();
+              else void askAssistant();
             }
           }}
           placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
@@ -461,6 +509,13 @@ export default function LandingSearch({
         >
           <Mic size={16} strokeWidth={1.75} />
         </button>
+        {query.trim() && (
+          <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
+            onClick={() => void askAssistant()}
+            aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
+            <ArrowRight size={18} strokeWidth={1.75} />
+          </button>
+        )}
       </div>
 
       {(micError || (listening && microphone)) && (
@@ -472,6 +527,22 @@ export default function LandingSearch({
 
       {showDropdown && (
         <div className="landing-search-panel">
+          <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
+            {assistantBusy ? <p>{tr({ zh: '正在查找相关页面…', en: 'Finding relevant pages…' })}</p>
+              : assistantError ? <>
+                <p>{tr({ zh: '暂时无法回答，请重试或使用下方搜索结果。', en: 'An answer is unavailable. Retry or use the search results below.' })}</p>
+                {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
+              </> : assistantAnswer ? <>
+                <p className="landing-search-answer-text">{assistantAnswer.answer}</p>
+                <div className="landing-search-grid">
+                  {assistantAnswer.sources.map(source => <Link key={source.id} href={source.href} prefetch={false} className="landing-search-item" onClick={closeAfter}>
+                    <BookOpen size={14} />{source.title}<span className="landing-search-item-meta">{source.read ? tr({ zh: '页面来源', en: 'Page source' }) : tr({ zh: '相关入口', en: 'Related page' })}</span>
+                  </Link>)}
+                </div>
+              </> : <p>{query.trim().length > 500
+                ? tr({ zh: '请把问题缩短到 500 字以内。', en: 'Please keep your question within 500 characters.' })
+                : tr({ zh: '按回车提问，或直接打开搜索结果。', en: 'Press Enter to ask, or open a search result.' })}</p>}
+          </section>
           {yearMatch && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">
