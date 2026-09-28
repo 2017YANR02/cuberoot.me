@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
+const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, start: vi.fn(), stop: vi.fn() }));
 
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/link', () => ({
@@ -18,7 +19,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock('@/hooks/useSpeechToText', () => ({
-  useSpeechToText: () => ({ supported: false, listening: false, start: vi.fn(), stop: vi.fn() }),
+  useSpeechToText: () => speechState,
 }));
 vi.mock('@/lib/site-search', () => ({
   INITIAL_RENDER_CAP: 10,
@@ -49,6 +50,7 @@ import { changeAppLanguage } from '@/i18n/i18n-client';
 describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
     routeState.lang = 'zh';
+    speechState.error = null;
     changeAppLanguage('zh');
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
@@ -152,5 +154,21 @@ describe('LandingSearch placeholder hydration', () => {
     expect(host.querySelector<HTMLInputElement>('.landing-search-field')?.value).toBe('课程');
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it.each([
+    ['zh', 'network', '无法连接语音识别服务'],
+    ['en', 'network', 'Cannot connect to speech recognition'],
+    ['zh', 'unsupported', '此浏览器不支持网页语音输入'],
+    ['zh', 'timeout', '语音识别长时间没有返回结果'],
+  ] as const)('shows %s speech failure %s without clearing the search', (lang, error, message) => {
+    routeState.lang = lang;
+    changeAppLanguage(lang);
+    speechState.error = error;
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang, query: 'PLL' }));
+    expect(host.querySelector('[role="status"]')?.textContent).toContain(message);
+    expect(host.querySelector<HTMLInputElement>('.landing-search-field')?.value).toBe('PLL');
+    expect(host.querySelector('.landing-search-mic')).not.toBeNull();
   });
 });
