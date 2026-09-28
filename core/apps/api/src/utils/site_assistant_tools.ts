@@ -95,6 +95,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     table(title, [label('项目','Event'),label('单次','Single'),label('世界排名','World rank'),label('平均','Average'),label('世界排名','World rank')], personal.filter(r=>r.event===call.event).map(r=>[({zh:EVENT_DISPLAY_ZH,en:EVENT_DISPLAY_EN})[lang][r.event] ?? r.event,r.single,String(r.singleRank ?? '—'),r.average,String(r.averageRank ?? '—')]));
     if (call.progress) {
       const dates = new Map<string,string>(data.comps.map((c:any)=>[c.id,c.start_date]));
+      const competitions = new Map<string,any>(data.comps.map((c:any)=>[c.id,c]));
       const results = data.results.filter((r:any)=>r.event_id===call.event).sort((a:any,b:any)=>(dates.get(a.competition_id) ?? '').localeCompare(dates.get(b.competition_id) ?? '') || a.competition_id.localeCompare(b.competition_id) || roundChronologicalOrder(a.round_type_id)-roundChronologicalOrder(b.round_type_id));
       const flags = personalRecordFlags(results as Array<{event_id:string;best:number;average:number}>);
       for (const metric of ['single','average'] as const) {
@@ -102,11 +103,14 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
           const value = metric === 'single' ? r.best : r.average;
           const date = dates.get(r.competition_id);
           if (!date || !(metric==='single' ? flags.get(r)?.bestIsPb : flags.get(r)?.averageIsPb)) return [];
-          return [{date,value,label:formatWcaResult(value,call.event,metric),person:title}];
+          const competition=competitions.get(r.competition_id);
+          return [{date,value,label:formatWcaResult(value,call.event,metric),person:title,
+            competition:compName(r.competition_id,competition?.name ?? r.competition_id,date),
+            compId:r.competition_id,round:r.round_type_id}];
         });
         if (points.length) out.artifacts.push({kind:'progress',title:`${title} · ${metric === 'single' ? label('单次','Single') : label('平均','Average')}`,event:call.event,metric,points});
       }
-      out.evidence = {...out.evidence as object, progress:out.artifacts.filter(a=>a.kind==='progress').map(a=>({title:a.title,metric:a.metric,improvements:a.points.length,first:a.points[0],current:a.points.at(-1),recent:a.points.slice(-5)})), progressionBasis:'strict round-best PR by competition start date and round; same-day competition order is not known'};
+      out.evidence = {...out.evidence as object, progress:out.artifacts.filter(a=>a.kind==='progress').map(a=>({title:a.title,metric:a.metric,recordPoints:a.points.length,improvementsAfterFirst:Math.max(0,a.points.length-1),first:a.points[0],current:a.points.at(-1),recent:a.points.slice(-5)})), progressionBasis:'Strict round-best PR. Dates are competition start dates, not necessarily the date the solve occurred. Same-day competition order is unknown. The first point is the first valid round result, not the final PR at the end of the first competition. PR points alone do not establish consistency or stability.'};
     }
   } else if (call.tool === 'rankings') {
     const [data,updated] = await Promise.all([read(url(`${api}/wca/historical-ranks`, {event:call.event,type:call.type,country:call.country,year:call.year ?? new Date().getUTCFullYear(),size:call.limit,page:1})),freshness()]);
