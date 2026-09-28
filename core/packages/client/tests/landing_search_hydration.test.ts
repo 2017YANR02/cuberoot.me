@@ -79,6 +79,7 @@ describe('LandingSearch placeholder hydration', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh' });
     expect(host.querySelector('.landing-search-answer-text')?.textContent).toBe('打开数帧页面。');
+    expect(host.textContent).not.toContain('未找到匹配项');
     expect(host.querySelector('.landing-search-answer a')?.getAttribute('href')).toBe('/zh/frame-count');
     await act(async () => root.unmount());
     host.remove();
