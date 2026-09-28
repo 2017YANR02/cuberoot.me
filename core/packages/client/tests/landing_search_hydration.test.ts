@@ -61,6 +61,50 @@ describe('LandingSearch placeholder hydration', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('only asks on submission, ignores IME Enter and renders a real source link', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ answer: '打开数帧页面。', sources: [{ id: 'frame-count', title: '数帧', href: '/frame-count', read: true }] }) });
+    vi.stubGlobal('fetch', fetcher);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '视频怎么数帧', persistentResults: true })); });
+    const input = host.querySelector('input')!;
+    expect(fetcher).not.toHaveBeenCalled();
+    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true })); });
+    expect(fetcher).not.toHaveBeenCalled();
+    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh' });
+    expect(host.querySelector('.landing-search-answer-text')?.textContent).toBe('打开数帧页面。');
+    expect(host.querySelector('.landing-search-answer a')?.getAttribute('href')).toBe('/zh/frame-count');
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('cancels stale questions when the user edits and keeps regular search on provider failure', async () => {
+    let resolve!: (value: unknown) => void;
+    const fetcher = vi.fn().mockImplementationOnce(() => new Promise(done => { resolve = done; }))
+      .mockResolvedValueOnce({ ok: false });
+    vi.stubGlobal('fetch', fetcher);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    const props = { cards: [], lang: 'zh' as const, persistentResults: true };
+    await act(async () => { root.render(createElement(LandingSearch, { ...props, query: '旧问题' })); });
+    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    const signal = fetcher.mock.calls[0][1].signal;
+    await act(async () => { root.render(createElement(LandingSearch, { ...props, query: '新问题' })); });
+    expect(signal.aborted).toBe(true);
+    await act(async () => { resolve({ ok: true, json: async () => ({ answer: '过期回答', sources: [] }) }); });
+    expect(host.textContent).not.toContain('过期回答');
+    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(host.textContent).toContain('暂时无法回答');
+    expect(host.querySelector('input')?.value).toBe('新问题');
+    await act(async () => root.unmount());
+    host.remove();
   });
 
   it('服务器与客户端跨 UTC 日期时首帧仍一致,挂载后再显示当天文案', async () => {
