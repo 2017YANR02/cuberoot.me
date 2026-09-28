@@ -89,7 +89,9 @@ export async function answerSiteQuestion(
     let content = '';
     try {
       // Fixed origin, catalog-only path, no redirects or user credentials.
-      const response = await fetcher(`https://cuberoot.me${lang === 'zh' ? '/zh' : ''}${page.href}`, {
+      // Fetch the explicit locale route: the server redirects a bare English
+      // request to /en. User-facing source links remain Pattern B bare paths.
+      const response = await fetcher(`https://cuberoot.me/${lang}${page.href}`, {
         signal: AbortSignal.any([signal, AbortSignal.timeout(7000)]), redirect: 'error',
         headers: { Accept: 'text/html' },
       });
