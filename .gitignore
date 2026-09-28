@@ -123,3 +123,6 @@ core/packages/client/public/sim/hands/smplx/
 /design/space/scripts/__pycache__/
 /core/packages/client/public/assets/space/blender-v1/*.glb
 /core/packages/client/public/assets/space/blender-v1/textures/
+
+# Build-generated public assistant content, regenerated with the website.
+core/packages/client/public/assistant/pages.json
