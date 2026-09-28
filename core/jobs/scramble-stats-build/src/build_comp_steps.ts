@@ -21,6 +21,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { taskProgress } from './task_progress.js';
 
 // 333 系列(跳过 333mbf)。
 const FAMILY = new Set(['333', '333oh', '333ft', '333fm', '333bf']);
@@ -129,6 +130,10 @@ async function main() {
   console.log(`  ${idComp.size} 个 333 系列打乱`);
 
   // 2) 每个变体 csv(存在才处理)→ 各自目录。std 永远在;f2leo 系缺则跳过(待 backfill)。
+  const availableTargets = TARGETS.filter(tgt => fs.existsSync(path.join(csvDir, tgt.csv)));
+  const report = taskProgress('比赛阶段表', availableTargets.length);
+  report(0);
+  let completedTargets = 0;
   for (const tgt of TARGETS) {
     const csvPath = path.join(csvDir, tgt.csv);
     if (!fs.existsSync(csvPath)) {
@@ -137,6 +142,7 @@ async function main() {
     }
     const outDir = path.join(repoRoot, 'stats', 'scramble', tgt.outDir);
     await buildTarget(csvPath, tgt.stages, outDir, idComp, idKey);
+    report(++completedTargets);
   }
   console.log('done');
 }

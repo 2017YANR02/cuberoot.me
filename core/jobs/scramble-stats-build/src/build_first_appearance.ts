@@ -16,6 +16,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { taskProgress } from './task_progress.js';
 import { dateDisplay } from './comp_date';
 import {
   COLOR_LETTERS,
@@ -278,6 +279,10 @@ async function main() {
 
     const mergedVariants: Record<string, VariantOut> = {};
     const eventVariants = new Map<string, Record<string, VariantOut>>();
+    const availableVariants = VARIANTS.filter(spec => fs.existsSync(path.join(setSpec.csv_dir, spec.file)));
+    const report = taskProgress(`首次出现 ${setSpec.key}`, availableVariants.length);
+    report(0);
+    let completedVariants = 0;
     for (const spec of VARIANTS) {
       const csvPath = path.join(setSpec.csv_dir, spec.file);
       if (!fs.existsSync(csvPath)) { console.warn(`  [skip] ${spec.key}: missing ${spec.file}`); continue; }
@@ -289,6 +294,7 @@ async function main() {
         if (!bucket) { bucket = {}; eventVariants.set(ev, bucket); }
         bucket[spec.key] = { stages: spec.stages, data };
       }
+      report(++completedVariants);
     }
 
     // 顶层 set(合并池):进主文件

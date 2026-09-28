@@ -3,7 +3,22 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { analyzer } from './common.js';
+import { analyzer, taskProgress } from './common.js';
+
+test('task percentage follows completed units and never repeats a milestone', () => {
+  const lines: string[] = [];
+  const original = console.log;
+  console.log = (line: string) => { lines.push(line); };
+  try {
+    for (let done = 0; done <= 15; done++) taskProgress('fixture-progress', done, 15);
+    assert.equal(lines[0], '[进度] fixture-progress 0% (0/15)');
+    assert.equal(lines.at(-1), '[进度] fixture-progress 100% (15/15)');
+    assert.equal(new Set(lines).size, lines.length);
+    taskProgress('fixture-progress', 0, 2);
+    taskProgress('fixture-progress', 0, 2);
+    assert.equal(lines.at(-1), '[进度] fixture-progress 0% (0/2)');
+  } finally { console.log = original; }
+});
 
 test('analyzer keeps quiet terminal output, preserves log/progress, and reports a failed subprocess', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'stats-progress-test-'));

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildManifest } from '../../core/jobs/scramble-stats-build/scramble_manifest.mjs';
-import { exists, repoRoot, wcaDir } from './common.js';
+import { exists, repoRoot, taskProgress, wcaDir } from './common.js';
 
 export type PublishOptions = {
   root?: string; manifest?: string; host?: string; destination?: string;
@@ -50,7 +50,12 @@ export async function publishScrambleIncremental(options: PublishOptions = {}): 
     const realCache = `${manifest}.cache.json`;
     const cache = options.dryRun ? join(scratch, 'cache.json') : realCache;
     if (options.dryRun && await exists(realCache)) await copyFile(realCache, cache);
-    await buildManifest({ root, cache, output: current, force: options.verifyAll });
+    await buildManifest({ root, cache, output: current, force: options.verifyAll,
+      progress: state => {
+        if (state.phase === 'hashing' || state.phase === 'saving' || state.phase === 'done')
+          taskProgress('static:manifest', state.checked, state.total);
+      },
+    });
     const currentText = await readFile(current, 'utf8');
     const now = parseManifest(currentText);
     const save = async () => {
@@ -69,13 +74,20 @@ export async function publishScrambleIncremental(options: PublishOptions = {}): 
     const deleted = previous ? [...previous.keys()].filter(name => !now.has(name)) : [];
     console.log(`[publish] changed ${changed.length}, deleted ${deleted.length}, baseline ${previous ? 'present' : 'missing'}`);
     if (options.dryRun) return { changed, deleted };
+    const transferTotal = previous ? 1 + (changed.length ? 3 : 0) + (deleted.length ? 1 : 0) : 4;
+    let transferred = 0;
+    const advance = () => taskProgress('static:transfer', ++transferred, transferTotal);
+    taskProgress('static:transfer', 0, transferTotal);
     if (!previous) {
       const archive = join(scratch, 'full.tgz');
       const remote = '/tmp/_scramble_full.tgz';
       const parent = posix.dirname(destination);
       await exec('tar', ['--no-xattrs', '--exclude=scramble/steps/wca_scramble_steps.csv', '-czf', archive, '-C', dirname(root), 'scramble']);
+      advance();
       await exec('scp', [archive, `${host}:${remote}`]);
+      advance();
       await exec('ssh', [host, `set -e; cd ${shellQuote(parent)}; rm -rf scramble.new scramble.prev; mkdir scramble.new; tar -xzf ${shellQuote(remote)} -C scramble.new --strip-components=1; if [ -d scramble ]; then mv scramble scramble.prev; fi; mv scramble.new scramble; rm -rf scramble.prev ${shellQuote(remote)}`]);
+      advance();
     } else {
       if (changed.length) {
         const list = join(scratch, 'changed.txt');
@@ -83,14 +95,19 @@ export async function publishScrambleIncremental(options: PublishOptions = {}): 
         const remote = '/tmp/_scramble_delta.tgz';
         await writeFile(list, `${changed.join('\n')}\n`);
         await exec('tar', ['--no-xattrs', '-czf', archive, '-C', root, '-T', list]);
+        advance();
         await exec('scp', [archive, `${host}:${remote}`]);
+        advance();
         await exec('ssh', [host, `set -e; cd ${shellQuote(destination)}; tar -xzf ${shellQuote(remote)}; rm -f ${shellQuote(remote)}`]);
+        advance();
       }
       if (deleted.length) {
         await exec('ssh', [host, `cd ${shellQuote(destination)} && xargs -d '\\n' -r rm -f --`], `${deleted.join('\n')}\n`);
+        advance();
       }
     }
     await save();
+    advance();
     return { changed, deleted };
   } finally {
     await rm(scratch, { recursive: true, force: true });

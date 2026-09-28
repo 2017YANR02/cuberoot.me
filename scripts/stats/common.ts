@@ -12,6 +12,16 @@ export const solverDir = join(repoRoot, 'solver');
 export const exe = (name: string) => join(solverDir, 'target', 'release', `${name}${process.platform === 'win32' ? '.exe' : ''}`);
 export const tsx = join(coreDir, 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
 
+const progressPercent = new Map<string, number>();
+export function taskProgress(task: string, done: number, total: number): void {
+  const percent = total > 0 ? Math.min(100, Math.floor(100 * done / total)) : 100;
+  if (done === 0 && total > 0 && (progressPercent.get(task) ?? 0) > 0) progressPercent.delete(task);
+  const previous = progressPercent.get(task);
+  if (previous !== undefined && (percent <= previous || (percent < 100 && percent - previous < 10))) return;
+  progressPercent.set(task, percent);
+  console.log(`[进度] ${task} ${percent}%${total > 1 ? ` (${done}/${total})` : ''}`);
+}
+
 export async function exists(file: string): Promise<boolean> {
   try { await access(file); return true; } catch { return false; }
 }
@@ -113,12 +123,14 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
   const child = spawn(binary, args, { cwd, env, stdio: ['pipe', 'pipe', 'pipe'], shell: process.platform === 'win32' && /\.cmd$/i.test(binary) });
   const log = createWriteStream(logFile, { flags: 'w', encoding: 'utf8' });
   let lastStatus = 0;
-  let shown = '';
-  const show = (status: string) => {
+  let lastPercent = -1;
+  const show = (done: number, total: number) => {
+    const percent = total > 0 ? Math.min(100, Math.floor(100 * done / total)) : 0;
+    if (percent <= lastPercent) return;
     const now = Date.now();
-    if (now - lastStatus < 60_000) return;
-    console.log(`[进度] ${status}`);
-    shown = status;
+    if (percent < 100 && now - lastStatus < 60_000) return;
+    console.log(`[进度] ${label} ${percent}% (${done}/${total})`);
+    lastPercent = percent;
     lastStatus = now;
   };
   const capture = async (stream: NodeJS.ReadableStream) => {
@@ -126,11 +138,10 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
     for await (const line of reader) {
       log.write(`${line}\n`);
       const match = line.match(/\[PROG\]\s+(\d+)\s*\/\s*(\d+)/);
-      if (match) show(`${label} ${match[1]}/${match[2]}`);
+      if (match) show(Number(match[1]), Number(match[2]));
     }
   };
   const progressFile = env.ANALYZER_PROGRESS_FILE;
-  const start = Date.now();
   const heartbeat = progressFile ? setInterval(async () => {
     try {
       const size = await fileSize(progressFile);
@@ -144,9 +155,7 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
       const last = matches.at(-1);
       if (!last) return;
       const done = Number(last[1]); const total = Number(last[2]);
-      const elapsed = Math.floor((Date.now() - start) / 1000);
-      const eta = done > 0 && total > done ? ` | ETA 约 ${Math.round(elapsed * (total - done) / done / 60)} 分钟` : '';
-      show(`${label} ${done}/${total} | 已运行 ${Math.floor(elapsed / 60)} 分钟${eta}`);
+      show(done, total);
     } catch { /* progress file may be between writes */ }
   }, 10_000) : undefined;
   const output = Promise.all([capture(child.stdout), capture(child.stderr)]);
@@ -157,7 +166,7 @@ export async function analyzer(binary: string, inputFiles: string[], logFile: st
   await output;
   await new Promise<void>((done, fail) => { log.end(done); log.once('error', fail); });
   if (code !== 0) throw new Error(`${label} exited with ${code}; see ${logFile}`);
-  if (shown) console.log(`[进度] ${label} 完成；详细日志：${logFile}`);
+  if (lastPercent < 100) console.log(`[进度] ${label} 100%`);
 }
 export async function stamp(): Promise<string> {
   const file = join(wcaDir, 'incremental', 'export_date.txt');
