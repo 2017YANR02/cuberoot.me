@@ -65,12 +65,12 @@
 
 /* Compact input bar and bottom trays, matching the supplied WeChat reference. */
 
-.friend-chat-input-row { display: flex; align-items: flex-end; gap: 5px; position: relative; }
+.friend-chat-input-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 5px; position: relative; }
 
 .friend-chat-icon { flex-shrink: 0; width: 36px; height: 42px; padding: 3px; color: var(--foreground); }
 .friend-chat-send { flex-shrink: 0; height: 40px; padding: 6px 10px; margin-bottom: 1px; }
 .friend-chat-voice { display: contents; }
-.friend-chat-voice .friend-chat-error { position: absolute; bottom: 100%; }
+.friend-chat-voice .friend-chat-error { position: static; flex: 0 0 100%; order: 1; margin: 4px 0 0; white-space: normal; overflow-wrap: anywhere; }
 
 .friend-chat-pack-strip { display: flex; align-items: center; overflow-x: auto; gap: 8px; padding: 9px 12px; border-bottom: 1px solid var(--border-default); scrollbar-width: thin; }
 .friend-chat-pack-strip .friend-chat-action { flex: 0 0 44px; width: 44px; height: 42px; padding: 5px; border-radius: 8px; }
