@@ -1,6 +1,6 @@
 // WCA 项目 ID 单一来源——归一化各种短名到 WCA 标准 id（用于 cubing-icons CSS 类）+ 显示名
 
-import { EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
+import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
 import { cstimerEventDisplayName } from './cstimer-scramble';
 import { shapeModDisplayName } from './shape-mod-scramble';
 
@@ -54,17 +54,7 @@ export function wcaToReconEvent(input: string | undefined | null): string {
 }
 
 // NOTE: WCA 标准 id → 显示名
-const DISPLAY_EN: Record<string, string> = {
-  '333': '3×3', '222': '2×2', '444': '4×4', '555': '5×5', '666': '6×6', '777': '7×7',
-  '333bf': '3BLD', '444bf': '4BLD', '555bf': '5BLD', '333mbf': 'MBLD',
-  '333oh': 'OH', '333fm': 'FMC', '333ft': 'Feet',
-  'minx': 'Mega', 'pyram': 'Pyra', 'clock': 'Clock', 'skewb': 'Skewb', 'sq1': 'SQ1',
-  'magic': 'Magic', 'mmagic': 'M.Magic', '333mbo': 'MBO',
-  // 非 WCA(cubing.js twizzleEvents)
-  'fto': 'FTO', 'master_tetraminx': 'Master Tetra', 'kilominx': 'Kilominx', 'redi_cube': 'Redi', 'baby_fto': 'Baby FTO',
-  // 非 WCA cubing.com 自定义项目
-  'funny': 'Funny',
-};
+const DISPLAY_EN = EVENT_DISPLAY_EN;
 
 /** 获取项目显示名（接受短名或 WCA id）。zh/en 双语；未知 id 原样返回。
  *  `nxnN` 合成 id（N≥8 高阶魔方）走 "N阶" / "N×N"。

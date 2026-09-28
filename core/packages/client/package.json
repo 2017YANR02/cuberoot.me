@@ -16,7 +16,7 @@
     "dev:clean": "node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node scripts/dev-safe.mjs",
     "build:deps": "pnpm --filter @cuberoot/shared build && pnpm --filter @cuberoot/visualcube build && pnpm --filter @cuberoot/vendor-sr-puzzlegen build && pnpm --filter @cuberoot/puzzle-render-core build && pnpm --filter @cuberoot/puzzle-solvers build",
-    "build": "pnpm run build:deps && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build",
+    "build": "pnpm run build:deps && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && tsx scripts/build-assistant-index.ts",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
@@ -152,6 +152,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.7.0",
     "jsdom": "^30.0.1",
+    "linkedom": "0.18.12",
     "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vitest": "^4.1.6"

@@ -42,7 +42,10 @@ import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { tr } from '@/i18n/tr';
+import { useAuthUser } from '@/lib/auth-store';
 import { apiUrl } from '@/lib/api-base';
+import SiteAssistantDialog, { type AssistantTurn } from '@/components/SiteAssistantDialog';
+import type { AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -197,6 +200,7 @@ export default function LandingSearch({
   autoFocus = false,
 }: Props) {
   const isZh = lang === 'zh';
+  const assistantUser = useAuthUser();
   const params = useParams<{ lang?: string }>();
   // Pattern B: English is the bare path → empty prefix; only Chinese is /zh.
   const effLang = params?.lang === 'zh' || params?.lang === 'en' ? params.lang : lang;
@@ -222,12 +226,12 @@ export default function LandingSearch({
   const [expandedGlossary, setExpandedGlossary] = useState(false);
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const [assistantDialog, setAssistantDialog] = useState(false);
+  const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
   const [assistantError, setAssistantError] = useState<'daily_limit' | 'unavailable' | null>(null);
-  const [assistantAnswer, setAssistantAnswer] = useState<{
-    answer: string; sources: Array<{ id: string; title: string; href: string; read: boolean }>;
-  } | null>(null);
+  const [assistantAnswer, setAssistantAnswer] = useState<AssistantAnswer | null>(null);
 
   useEffect(() => {
     assistantRequest.current?.abort();
@@ -238,8 +242,15 @@ export default function LandingSearch({
     return () => { assistantRequest.current?.abort(); assistantRequest.current = null; };
   }, [query, lang]);
 
-  const askAssistant = async () => {
-    if (!query.trim() || query.trim().length > 500 || assistantRequest.current) return;
+  const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
+  const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
+  const askAssistant = async (question = query) => {
+    question = question.trim();
+    if (!question || question.length > 500 || assistantRequest.current) return;
+    const previous = assistantTurns.filter(turn => turn.result);
+    const nextTurns = [...previous, { question }];
+    setAssistantTurns(nextTurns);
+    setAssistantDialog(true);
     micStop();
     const controller = new AbortController();
     assistantRequest.current = controller;
@@ -247,11 +258,11 @@ export default function LandingSearch({
     setAssistantBusy(true);
     setAssistantError(null);
     setAssistantAnswer(null);
-    const timeout = setTimeout(() => controller.abort(), 35000);
+    const timeout = setTimeout(() => controller.abort(), 95000);
     try {
       const response = await fetch(apiUrl('/v1/site-assistant'), {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: query.trim(), lang }), signal: controller.signal,
+        body: JSON.stringify({ question, lang, viewerWcaId: assistantUser?.wcaId && /^\d{4}[A-Z]{4}\d{2}$/.test(assistantUser.wcaId) ? assistantUser.wcaId : undefined, history: previous.slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
       });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
@@ -260,10 +271,11 @@ export default function LandingSearch({
       }
       const data = await response.json();
       if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
-      if (assistantRequest.current === controller) setAssistantAnswer({
-        answer: data.answer,
-        sources: data.sources.filter((source: { href?: unknown }) => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)),
-      });
+      if (assistantRequest.current === controller) {
+        const result: AssistantAnswer = { answer: data.answer, artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter((source: { href?: unknown }) => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
+        setAssistantAnswer(result);
+        setAssistantTurns([...previous, { question, result }]);
+      }
     } catch {
       if (assistantRequest.current === controller) setAssistantError('unavailable');
     } finally {
@@ -513,6 +525,7 @@ export default function LandingSearch({
         >
           <Mic size={16} strokeWidth={1.75} />
         </button>
+        {!query.trim() && <button type="button" className="landing-search-mic" onClick={() => setAssistantDialog(true)} title={tr({zh:'打开对话',en:'Open conversation'})}><Sparkles size={17}/></button>}
         {query.trim() && (
           <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
             onClick={() => void askAssistant()}
@@ -529,7 +542,9 @@ export default function LandingSearch({
         </p>
       )}
 
-      {showDropdown && (
+      {assistantDialog && <SiteAssistantDialog lang={lang} turns={assistantTurns} busy={assistantBusy} error={assistantError} onAsk={question => void askAssistant(question)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+
+      {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
             {assistantBusy ? <p>{tr({ zh: '正在查找相关页面…', en: 'Finding relevant pages…' })}</p>
@@ -540,6 +555,7 @@ export default function LandingSearch({
                 {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
               </> : assistantAnswer ? <>
                 <p className="landing-search-answer-text">{assistantAnswer.answer}</p>
+                <button type="button" className="landing-search-item" onClick={() => setAssistantDialog(true)}>{tr({zh:'继续对话',en:'Continue conversation'})}</button>
                 <div className="landing-search-grid">
                   {assistantAnswer.sources.map(source => <Link key={source.id} href={source.href} prefetch={false} className="landing-search-item" onClick={closeAfter}>
                     <BookOpen size={14} />{source.title}<span className="landing-search-item-meta">{source.read ? tr({ zh: '页面来源', en: 'Page source' }) : tr({ zh: '相关入口', en: 'Related page' })}</span>
