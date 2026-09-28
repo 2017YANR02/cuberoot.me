@@ -1,15 +1,15 @@
 # Scramble samples — eo / eo_xcross / Y / bin 5
-# Population in this bin: 722
+# Population in this bin: 723
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5047582001,U R2 F D2 B U2 L' R B' L2 B' L' R' B' F2 R',Y,Ephrata Fall 2025 (2025-09-27),333 R2 B E2
 5190619001,U2 R F2 R2 B2 U2 R2 U' L2 D' L' D R' U2 L U2 R',Y,Campeonato do Cerrado ABRACM 2025 (2025-11-14~16),333 R2 A #2
 1822766001,D' U' B2 D2 U' L2 F' D U' F U F D2 B' U' F2 L',Y,Let's Try Again Spokane 2022 (2022-03-05),333oh Final B E2
 4307594001,R' F2 R B2 L D2 R2 D' U' F2 U R' B F2 U' L B' L',Y,Turkish Nationals 2024 (2024-11-14~17),333 R1 C #4
-4973758001,B L2 R2 B2 R2 F' R2 D R2 U2 R2 B' L2 D2 R' B2 U',Y,Michigan Mini 34 2025 (2025-08-28),333 Final A #3
+5842802001,B2 L2 B2 F' L2 U F D L2 B2 U' B U2 R2 B2 F2,Y,New Cubing Season Athens B 2026 (2026-09-20),333 R1 C #5
 64339001,F' D2 F R2 B' D B D' B' D' R2 D2 B L2 D L',Y,Hamilton Spring 2014 (2014-10-05),333oh Final A #2
 66471001,F2 D2 R2 F2 U F2 L2 D' B2 F' R B F D B U' B' R2 D' B',Y,Virginia Open Fall 2014 (2014-10-18),333bf Final A E1
 2498033001,B2 U D2 F' B2 D F' L B2 L2 F2 U2 R D2 B2 L' F2 R2,Y,Singapore Championship 2023 (2023-02-17~19),333 R3 A #5

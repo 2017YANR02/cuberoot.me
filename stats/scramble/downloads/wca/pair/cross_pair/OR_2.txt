@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / OR / bin 2
-# Population in this bin: 396
+# Population in this bin: 397
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5066807001,B2 R B2 U L F2 U' F U R2 F2 B2 U2 F2 R F2 R' B2 F',O,IISER Pune October Heat 2025 (2025-10-05),333 Final A #1
@@ -180,7 +180,7 @@
 2411857001,U' L D2 R' F2 R D2 L R' F U F2 U L F2 L' U' F2,R,Cebu New Year Open 2023 (2023-01-07),333 R1 D #1
 5201590001,U R' L2 F2 U' B2 D B2 L D F U' R F L F2 L',R,Oberlin Big Cubes 2025 (2025-11-15),333 R2 A #5
 2440980001,F2 L F' R' L2 U' D R' D U2 R D2 L' F2 R' D2 B2 U F D',R,Pioneer Valley Cubing B 2023 (2023-01-22),333bf Final B #1
-2484218001,B' R2 U' B R U2 R' L2 U2 B2 U' R2 D2 F2 B2 D B' L' B,R,Frozen Lake Minnesota 2023 (2023-02-11),333 R1 D #3
+5845221001,D' B' U' B R' U D F R2 B D2 R2 F2 R2 U' B U F,O,Roanoke Gone Rogue 2026 (2026-09-26),333 R1 D E2
 3742208001,U B2 R2 F2 L2 D' L2 R2 D2 F D' R B U L2 B R2 U B',R,Kansas Championship 2024 (2024-05-03~05),333oh Final A #1
 5533055001,D' B2 U' F2 U' R2 F2 D U2 B2 R D L2 B' R2 D B' D2 B2 L',O,Leeds Spring 2026 (2026-04-11~12),333 R2 C E1
 5427093001,R F' R2 B' R' U2 B' L D' L B2 L' B2 L2 U2 B2 L D,R,UJCV Cubing Honduras 2026 (2026-03-06),333 R1 B E1

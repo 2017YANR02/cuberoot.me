@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / OR / bin 12
-# Population in this bin: 113
-# Samples listed: 113 (all entries in this bin)
+# Population in this bin: 114
+# Samples listed: 114 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 49816001,L' F U' D R B D B2 D L B' R2 D F2 L2 D2 L2 F2,O,Summer with Cubers 2014 (2014-08-14~15),333 R2 B #1
@@ -118,3 +118,4 @@
 5739930048,L U2 L' U2 L D2 L' D L2 D2 L' U R' B F' D U2 R2 B R',O,Slovak Championship 2026 (2026-07-02~05),333mbf Final A #3
 5741620001,B' U2 F D2 B2 L2 F' R2 F D F2 R2 U' B' D B2 L2 R B' L',O,Wiltshire Summer 2026 (2026-07-04~05),333 R1 A #1
 5742022001,R L2 U2 B' D2 B' F2 L2 B R2 L U F2 R B D R B F2 U2,O,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 G #1
+5842290001,D2 L2 B2 L B2 D2 R' U L' R2 B' R' B' L' F L' U' L,O,Rio Exxcube Open 2026 (2026-09-19~20),333 R1 B #2
