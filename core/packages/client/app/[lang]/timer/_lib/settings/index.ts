@@ -16,6 +16,7 @@ import {
   DEFAULT_TIMER_TYPOGRAPHY,
   normalizeTimerTypography,
   normalizeTimerTrainingSettings,
+  normalizeTimerKeymap,
   type TimerTypeface,
   DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   normalizeTimerSmartCubeSettings,
@@ -333,6 +334,7 @@ function load(): TimerSettings {
       ...normalizedSmartCube,
       ...normalizeTimerTypography(parsed),
       ...normalizeTimerTrainingSettings(parsed),
+      keymap: normalizeTimerKeymap(parsed.keymap),
       rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
@@ -443,6 +445,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerTimingSettings(candidate),
     ...normalizeTimerTypography(candidate),
     ...normalizeTimerTrainingSettings(candidate),
+    keymap: normalizeTimerKeymap(candidate.keymap),
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
     ...normalizeTimerSmartCubeSettings(candidate),

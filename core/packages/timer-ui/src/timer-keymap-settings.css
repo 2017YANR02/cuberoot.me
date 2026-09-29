@@ -1,0 +1,40 @@
+.keymap-bind-btn {
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  min-width: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: var(--shell-chip);
+  color: var(--foreground);
+  cursor: pointer;
+  white-space: normal;
+}
+.keymap-bind-btn:hover { background: var(--shell-hover); }
+.keymap-bind-btn[data-capturing='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-family: inherit;
+}
+.keymap-reject {
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--signal-warning);
+}
+.keymap-actions { margin-top: 8px; }
+.timer-keymap-settings .hint-btn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--muted-foreground);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.timer-keymap-settings .hint-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+  color: var(--foreground);
+}
+
+.timer-keymap-settings button { min-height: 44px; }

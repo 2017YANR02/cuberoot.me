@@ -4,7 +4,7 @@
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   CloudDownload,
   CloudUpload,
@@ -16,7 +16,7 @@ import {
 
 } from 'lucide-react';
 import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import { TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
+import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
@@ -67,16 +67,7 @@ import SharedBoolToggle from '@/components/BoolToggle';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
 import { tr } from '@/i18n/tr';
 
-import {
-  TIMER_ACTIONS,
-  bindingsForAction,
-  formatBinding,
-  rebindTimerAction,
-  resolveKeymap,
-  timerRebindCaptureDecision,
-  unbindTimerAction,
-  type TimerActionId,
-} from '../_lib/keymap';
+
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
 // WcaSourceConfig 顺带 import 进来,「打乱来源」那节移出后这里得自己 import,否则每个 Row 掉样式。
 import '@/components/wca-source.css';
@@ -1192,9 +1183,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           activeCategory={activeCategory}
           title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
-          <div data-setting-id="settings.advanced.keymap">
-            <KeymapEditor />
-          </div>
+          <TimerKeymapSettings value={s.keymap} onChange={update => updateSettings({ keymap: update(getSettings().keymap) })} localize={tr} />
             <div className="settings-reset-row" data-setting-id="settings.advanced.reset-defaults">
               <ResetDefaultsButton
                 onReset={() => {
@@ -1287,104 +1276,5 @@ function BooleanSettingRow({
         {children}
       </span>
     </div>
-  );
-}
-
-/**
- * Keyboard-binding editor for the rebindable timer actions.
- *
- * Capture-on-press rather than an on-screen keyboard grid: /sim's keymap UI
- * uses a grid because its bindings are one key → one move, but the timer needs
- * `Shift+` combinations, which a flat grid cannot express. `keyLabel` (the part
- * that IS shared) is reused via `formatBinding`.
- *
- * Only Shift is offered as a modifier — Ctrl/Meta belong to the browser and the
- * OS, and shadowing Ctrl+D or Cmd+F would be hostile.
- */
-function KeymapEditor() {
-  const s = useSettings();
-  const keymap = useMemo(() => resolveKeymap(s.keymap), [s.keymap]);
-  const [capturing, setCapturing] = useState<TimerActionId | null>(null);
-  const [rejected, setRejected] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!capturing) return;
-    const onKey = (e: KeyboardEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const capture = timerRebindCaptureDecision(e);
-      if (capture.kind === 'cancel') {
-        setCapturing(null);
-        setRejected(null);
-        return;
-      }
-      if (capture.kind === 'wait-for-key') return;
-      if (capture.kind === 'reject') {
-        setRejected(capture.reason === 'browser-modifier'
-          ? tr({ zh: 'Ctrl / Cmd / Alt 组合键留给浏览器，不能占用', en: 'Ctrl / Cmd / Alt combinations belong to the browser' })
-          : tr({
-              zh: `${formatBinding(capture.binding!)} 是计时器自己的按键（开始 / 停止 / 取消），不能改绑`,
-              en: `${formatBinding(capture.binding!)} is the timer's own key (start / stop / cancel) and can't be rebound`,
-            }));
-        return;
-      }
-      updateSettings({
-        keymap: rebindTimerAction(s.keymap, keymap, capturing, capture.binding),
-      });
-      setCapturing(null);
-      setRejected(null);
-    };
-    // Capture phase: the timer's own window listener must not see these.
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [capturing, keymap, s.keymap]);
-
-  return (
-    <>
-      {TIMER_ACTIONS.map(action => {
-        const bindings = bindingsForAction(keymap, action.id);
-        const active = capturing === action.id;
-        return (
-          <Row key={action.id} label={tr(action)}>
-            <button
-              type="button"
-              className="keymap-bind-btn"
-              data-capturing={active ? 'true' : undefined}
-              onClick={() => { setCapturing(active ? null : action.id); setRejected(null); }}
-            >
-              {active
-                ? tr({ zh: '按下新按键…（Esc 取消）', en: 'Press a key… (Esc to cancel)' })
-                : bindings.length > 0
-                  ? bindings.map(formatBinding).join(' / ')
-                  : tr({ zh: '未绑定', en: 'Unbound' })}
-            </button>
-            {bindings.length > 0 && !active && (
-              <button
-                type="button"
-                className="hint-btn"
-                onClick={() => {
-                  updateSettings({
-                    keymap: unbindTimerAction(s.keymap, keymap, action.id),
-                  });
-                }}
-              >
-                {tr({ zh: '解除', en: 'Unbind' })}
-              </button>
-            )}
-          </Row>
-        );
-      })}
-      {rejected && <div className="keymap-reject">{rejected}</div>}
-      <div className="keymap-actions">
-        <button
-          type="button"
-          data-setting-id="settings.advanced.reset-keymap"
-          className="hint-btn"
-          onClick={() => updateSettings({ keymap: {} })}
-        >
-          {settingLabel('settings.advanced.reset-keymap')}
-        </button>
-      </div>
-    </>
   );
 }

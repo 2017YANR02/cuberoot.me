@@ -1587,6 +1587,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared goal and round settings, daily progress, round projections and target feedback. Hosts supply solve history and persistence.',
   },
   {
+    name: 'TimerKeymapSettings',
+    import: "import { TimerKeymapSettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享快捷键录入、保留键提示、解除和恢复默认；取消录入不关闭设置，宿主在最新设置上应用修改。',
+    en: 'Shared shortcut capture, reserved-key feedback, unbinding and reset. Escape cancels capture; hosts apply changes to their latest preferences.',
+  },
+  {
     name: 'TimerTypographySettings',
     import: "import { TimerTypographySettings } from '@cuberoot/timer-ui';",
     category: 'more',
