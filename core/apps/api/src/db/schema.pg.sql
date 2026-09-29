@@ -8846,7 +8846,7 @@ CREATE INDEX idx_chat_message_sticker ON friend_chat_messages (sticker_id) WHERE
 -- One durable, anonymous counter per Beijing calendar day, shared by all API processes.
 CREATE TABLE site_assistant_daily_usage (
   day DATE PRIMARY KEY,
-  questions INTEGER NOT NULL CHECK (questions BETWEEN 1 AND 100)
+  questions INTEGER NOT NULL CHECK (questions BETWEEN 1 AND 1000)
 );
 
 -- 0252: meeting schedules and code reservations

@@ -2,7 +2,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ArrowUp, BookOpen, MessageSquarePlus, Mic, Square, X } from 'lucide-react';
-import type { AssistantAnswer, AssistantChart } from '@cuberoot/shared/site-assistant';
+import type { AssistantAnswer, AssistantChart, AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import { ASSISTANT_ERROR_TEXT } from '@/lib/site-assistant-errors';
+import { useAuthStore } from '@/lib/auth-store';
 import { formatWcaResult } from '@/lib/wca-format-result';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
@@ -14,7 +16,7 @@ import './site_assistant.css';
 
 export interface AssistantTurn { question:string; result?:AssistantAnswer }
 interface Props {
-  turns:AssistantTurn[]; busy:boolean; error:'daily_limit'|'unavailable'|null; lang:'zh'|'en';
+  turns:AssistantTurn[]; busy:boolean; error:AssistantErrorCode|null; lang:'zh'|'en';
   onAsk:(question:string)=>void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
 }
 function Progress({chart}:{chart:AssistantChart}) {
@@ -64,16 +66,18 @@ export default function SiteAssistantDialog({turns,busy,error,lang,onAsk,onStop,
           <div className="site-assistant-sources">{turn.result.sources.filter(s=>/^\/(?!\/)/.test(s.href)).map(s=><Link href={s.href} key={s.id} prefetch={false}><BookOpen size={14}/>{s.title}</Link>)}</div>
         </div>}</section>)}
         {busy && <p className="site-assistant-status">{tr({zh:'正在查询资料和成绩…',en:'Looking up results and sources…'})}</p>}
-        {error && <div role="alert"><p>{error==='daily_limit'?tr({zh:'全站今日 100 次提问额度已用完，北京时间零点恢复。你仍可使用下方搜索结果。',en:'The site’s daily allowance of 100 questions has been used. It resets at midnight Beijing time (UTC+8). You can still use the search results below.'}):tr({zh:'暂时无法回答，请重试或使用下方搜索结果。',en:'An answer is unavailable. Retry or use the search results below.'})}</p>{error!=='daily_limit' && turns.length>0 && <button className="site-assistant-action" type="button" onClick={()=>onAsk(turns[turns.length-1].question)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
+        {error && <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='login_required'||error==='wca_link_required' ? <button className="site-assistant-action" type="button" onClick={()=>useAuthStore.getState().login()}>{tr({zh:'前往账号页',en:'Go to account'})}</button> : error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" onClick={()=>onAsk(turns[turns.length-1].question)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
         <div ref={tail}/>
       </div>
       <form className="site-assistant-compose" onSubmit={e=>{e.preventDefault();submit();}}><div className="site-assistant-input">
-        <textarea className="site-assistant-draft" ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={tr({zh:'继续问，或换一个话题…',en:'Ask a follow-up or start another topic…'})} maxLength={500} rows={2} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();submit();}}}/>
-        {draft && <ClearButton onClick={()=>setDraft('')}/>}
-        <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
-        {busy?<button className="site-assistant-action" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={18}/></button>:<button className="site-assistant-action" type="submit" disabled={!draft.trim()} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
+        <textarea className="site-assistant-draft" ref={input} aria-label={tr({zh:'继续提问',en:'Ask a follow-up'})} placeholder={tr({zh:'随心输入',en:'Type anything'})} maxLength={500} rows={2} value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();submit();}}}/>
+        <div className="site-assistant-input-actions">
+          {draft && <ClearButton onClick={()=>setDraft('')}/>}
+          <button className="site-assistant-action site-assistant-mic" type="button" disabled={busy} onClick={()=>listening?stop():void start()} title={tr({zh:'语音输入',en:'Voice input'})} aria-pressed={listening}><Mic size={19}/></button>
+          {busy?<button className="site-assistant-action site-assistant-send" type="button" onClick={onStop} title={tr({zh:'停止',en:'Stop'})}><Square size={16}/></button>:<button className="site-assistant-action site-assistant-send" type="submit" disabled={!draft.trim()} title={tr({zh:'发送',en:'Send'})}><ArrowUp size={20}/></button>}
+        </div>
       </div>{micError && <p role="status">{tr({zh:'语音未能识别，请检查麦克风权限，或使用键盘听写。',en:'Voice recognition failed. Check microphone permissions or use keyboard dictation.'})}</p>}
-      <p className="site-assistant-note">{tr({zh:'回答附有来源；WCA 数据以最近一次导入为准。',en:'Answers include sources. WCA data reflects the latest import.'})}</p></form>
+      <p className="site-assistant-note">{tr({zh:'登录并绑定 WCA 账号后可提问。回答附有来源；WCA 数据以最近一次导入为准。',en:'Sign in and link WCA to ask. Answers include sources; WCA data reflects the latest import.'})}</p></form>
     </div>
   </div>,document.body);
 }

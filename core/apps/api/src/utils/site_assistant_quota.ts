@@ -1,4 +1,5 @@
 import { query, type QueryRunner } from '../db/connection.js';
+import { SITE_ASSISTANT_DAILY_LIMIT } from '@cuberoot/shared/site-assistant';
 
 /** Reserve before any model call. Failed/cancelled calls retain their reservation. */
 export async function reserveAssistantQuestion(run: QueryRunner = query): Promise<{ allowed: boolean; retryAfter: number }> {
@@ -10,7 +11,7 @@ export async function reserveAssistantQuestion(run: QueryRunner = query): Promis
       SELECT day, 1 FROM today
       ON CONFLICT (day) DO UPDATE
         SET questions = site_assistant_daily_usage.questions + 1
-        WHERE site_assistant_daily_usage.questions < 100
+        WHERE site_assistant_daily_usage.questions < ?
       RETURNING questions
     )
     SELECT EXISTS (SELECT 1 FROM reserved) AS allowed,
@@ -18,7 +19,7 @@ export async function reserveAssistantQuestion(run: QueryRunner = query): Promis
         ((today.day + 1)::timestamp AT TIME ZONE 'Asia/Shanghai') - statement_timestamp()
       ))))::integer AS retry_after
     FROM today
-  `);
+  `, [SITE_ASSISTANT_DAILY_LIMIT]);
   if (!rows[0]) throw new Error('quota unavailable');
   return { allowed: rows[0].allowed, retryAfter: rows[0].retry_after };
 }

@@ -8,8 +8,10 @@ import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
 import type { AssistantArtifact, AssistantSource } from '@cuberoot/shared/site-assistant';
+import { findAssistantPeople } from './site_assistant_people.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
+const competitionId = id.refine(value=>!/^\d{4}[A-Z]{4}\d{2}$/.test(value),'This is a person WCA ID; use wcaId, not compId.');
 const event = z.enum(WCA_EVENT_ORDER).default('333');
 const query = z.string().trim().min(1).max(100);
 export const toolCallSchema = z.discriminatedUnion('tool', [
@@ -18,17 +20,23 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event, progress: z.boolean().default(false) }).strict(),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), limit: z.number().int().min(1).max(20).default(10) }).strict(),
-  z.object({ tool: z.literal('scrambles'), compId: id, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
-  z.object({ tool: z.literal('recons'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), compId: id.optional(), value: z.number().positive().max(360000).optional() }).strict(),
+  z.object({ tool: z.literal('scrambles'), compId: competitionId, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
+  z.object({ tool: z.literal('recons'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), compId: competitionId.optional(), value: z.number().positive().max(360000).optional(), event: z.string().regex(/^[A-Za-z0-9]+$/).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('recon'), id: z.number().int().positive() }).strict(),
   z.object({ tool: z.literal('glossary'), query }).strict(),
   z.object({ tool: z.literal('forum'), query }).strict(),
   z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
-  z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
+  z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]) }).strict(),
 ]);
 export type AssistantToolCall = z.infer<typeof toolCallSchema>;
-export interface ToolResult { evidence: unknown; sources: AssistantSource[]; artifacts: AssistantArtifact[] }
+export interface ToolResult {
+  evidence: unknown; sources: AssistantSource[]; artifacts: AssistantArtifact[];
+  /** Exact published choices, for visitors explicitly asking to choose conditions first. */
+  scopeChoices?: { total: number; titles: string[] };
+  reconstructionAnnotations?: string[];
+  factualSummary?: string;
+}
 export type JsonReader = (url: string) => Promise<any>;
 const api = 'https://api.cuberoot.me/v1';
 const stat = 'https://static.cuberoot.me/stats';
@@ -40,7 +48,7 @@ const url = (path: string, params: Record<string, string | number | undefined>) 
 const source = (id: string, title: string, href: string): AssistantSource => ({ id, title, href, read: true });
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
-export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'}>, lang: 'zh'|'en', read: JsonReader): Promise<ToolResult> {
+export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople): Promise<ToolResult> {
   const label = (zh: string, en: string) => ({ zh, en })[lang];
   const name = (raw: string) => displayCuberName(raw, lang === 'zh');
   const compNames = lang === 'zh' && ['records','rankings','competitions'].includes(call.tool) ? await read(`${stat}/comp_names_zh.json`).catch(() => ({})) : {};
@@ -62,16 +70,54 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
       const nextLabels=[...labels,node.titleZh && lang==='zh' ? node.titleZh : node.title ?? (lang==='zh'?node.labelZh:node.labelEn) ?? ''].filter(Boolean);
       const columns=node.header?.length ? node.header : header;
       if (Array.isArray(node.rows) && node.rows.length) tables.push({key,title:nextLabels.join(' · '),scope:node.recordScope,header:columns,rows:node.rows});
-      ['metricPanels','panels','sections'].forEach((field,group)=>node[field]?.forEach((child:any,i:number)=>walk(child,key+'.'+group+'.'+i,nextLabels,columns)));
+      ['metricPanels','panels','sections','sourcePanels'].forEach((field,group)=>node[field]?.forEach((child:any,i:number)=>walk(child,key+'.'+group+'.'+i,nextLabels,columns)));
     };
     walk(data,'0',[],data.header ?? []);
+    if(tables.length>1) out.scopeChoices={total:tables.length,titles:tables.slice(0,20).map(t=>t.title)};
     const selected=tables.find(t=>t.key===call.tableKey) ?? (tables.length===1?tables[0]:undefined);
+    const offset=call.offset ?? 0;
+    const choices=selected?[selected]:tables.slice(offset,offset+60);
     out.sources.push(source('stat:'+entry.id,label(entry.titleZh,entry.titleEn),'/wca/'+entry.id));
     out.evidence={id:entry.id,note:lang==='zh'?data.noteZh:data.note,updated:data.updated ?? null,
       instruction:'Published statistical tables may have their own cutoff. Do not claim live coverage, aggregate truncated rows, or filter a global top list as if it were a complete regional ranking.',
-      tables:tables.slice(0,160).map(t=>({key:t.key,title:t.title,recordScope:t.scope,rows:t.rows.length})),tablesTruncated:tables.length>160,
-      selected:selected?{...selected,rows:selected.rows.slice(0,call.limit)}:null};
-    if (selected) table(selected.title,selected.header.map(h=>lang==='zh'?h.labelZh ?? h.label:h.label),selected.rows.slice(0,call.limit).map(row=>row.map(v=>String(v ?? '').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1'))));
+      interpretation: selected ? [
+        selected.header.some(h=>h.key==='competitions_per_year') && selected.header.some(h=>h.key==='years') ? 'These are annualized averages over a span of years, NOT counts for each calendar year. If asked for year-by-year counts, explain that this table does not contain that series.' : null,
+        selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/persons/')) && selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/competitions/')) ? 'Each row describes a PERSON at a COMPETITION, not an aggregate across everyone at that competition. Do not claim a competition-wide record from these rows. Preserve tied leaders.' : null,
+      ].filter(Boolean) : [],
+      selected:selected?{...selected,rows:selected.rows.slice(0,call.limit)}:null,
+      totalTables:tables.length,nextOffset:!selected && offset+60<tables.length?offset+60:null,
+      metrics:data.metricPanels?.map((p:any)=>({id:p.id,label:lang==='zh'?p.labelZh:p.labelEn})),
+      tables:choices.map(t=>({key:t.key,title:t.title,recordScope:t.scope,rows:t.rows.length})),tablesTruncated:!selected && offset+60<tables.length,
+      availability:tables.length?'published_rows':'published_file_has_no_rows',
+      emptyMeaning:tables.length?undefined:'The published file contains no rows. This may reflect unavailable generation/import; it does not prove nobody achieved the statistic.'};
+    if (selected) {
+      const rows=selected.rows.slice(0,call.limit);
+      const note=lang==='zh'?data.noteZh:data.note;
+      const annualized=selected.header.some(h=>h.key==='competitions_per_year') && selected.header.some(h=>h.key==='years');
+      const personCompetition=selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/persons/')) && selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/competitions/'));
+      out.factualSummary=[
+        label(`已列出“${selected.title}”的 ${rows.length} 项查询结果。`,`Showing ${rows.length} results for “${selected.title}”.`),
+        typeof note==='string'?note:'',
+        annualized?label('本表是多年间的年均比赛数，不是每个日历年的比赛数量。','These are annualized averages, not counts for each calendar year.'):'',
+        personCompetition?label('每行对应一名选手在一场比赛的结果，不代表整场比赛的总量。','Each row describes one person at one competition, not a competition-wide total.'):'',
+        selected.scope && selected.header.some(h=>h.key==='days')?label('表中未提供每条纪录当前是否仍有效的状态，不能仅据保持天数判断其已经被打破。','This table does not provide each record’s current status; its duration alone does not establish that it has been broken.'):'',
+      ].filter(Boolean).join(' ');
+      const width=Math.max(selected.header.length,...rows.map(row=>row.length));
+      const columns=Array.from({length:width},(_,i)=>{
+        const header=selected.header[i];
+        if(header) return lang==='zh'?header.labelZh ?? header.label:header.label;
+        // Some legacy published tables omit the competition heading while retaining
+        // its cells. Preserve the data and label it only from explicit WCA links.
+        return rows.every(row=>typeof row[i]==='string' && /\]\(https:\/\/www\.worldcubeassociation\.org\/competitions\//.test(row[i] as string)) ? label('比赛','Competition') : label('补充信息','Additional information');
+      });
+      table(selected.title,columns,rows.map(row=>Array.from({length:width},(_,column)=>{
+      const value=row[column];
+      // Text transport for the same published solves-cell contract used by WcaStatView.
+      const raw=value && typeof value==='object' && '_type' in value && value._type==='solves' && 'csv' in value ? value.csv : value;
+      const text=(Array.isArray(raw)?raw.join(', '):String(raw ?? '')).replace(/\[([^\]]+)\]\([^)]+\)/g,'$1');
+      return selected.header[column]?.key==='person' ? name(text) : text;
+      })));
+    }
   } else if (call.tool === 'records') {
     const data = await read(`${stat}/records/history/${call.region === 'world' ? 'world' : `country/${call.region}`}.json`);
     const rows = selectCurrentRecords((data.rows as WcaRecordRow[]).filter(r => r.e === call.event));
@@ -81,9 +127,9 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     out.sources.push(source(`records:${call.region}:${call.event}`, label('WCA 纪录','WCA records'), href));
     table(label('当前纪录','Current records'), [label('类型','Type'),label('成绩','Result'),label('选手','Person'),'WCA ID',label('比赛','Competition'),label('日期','Date')], formatted);
   } else if (call.tool === 'find_person') {
-    const rows = await read(url('https://www.worldcubeassociation.org/api/v0/persons', { q:call.query, per_page:10 }));
-    out.evidence = rows.slice(0,10).map((r:any) => ({ wcaId:r.person.wca_id, name:r.person.name, country:r.person.country_iso2 }));
-    out.sources = rows.slice(0,10).map((r:any) => source(`person:${r.person.wca_id}`, name(r.person.name), `/wca/persons/${r.person.wca_id}`));
+    const rows = await findPeople(call.query);
+    out.evidence = rows;
+    out.sources = rows.map(r => source(`person:${r.wcaId}`, name(r.name), `/wca/persons/${r.wcaId}`));
   } else if (call.tool === 'person') {
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, { wcaId:call.wcaId })), freshness()]);
     const profile = data.profile;
@@ -124,8 +170,8 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const q=call.query.toLocaleLowerCase().replace(/\s/g,'');
     const rows=all.filter((c:any)=>(!call.upcoming || c.end_date >= new Date().toISOString().slice(0,10)) && (!call.country || c.country===call.country) && (!q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
       .sort((a:any,b:any)=>call.upcoming ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date)).slice(0,call.limit);
-    out.evidence={...call,competitions:rows};
-    out.sources=rows.map((c:any)=>source(`comp:${c.id}`,c.name,`/wca/comp/${c.id}`));
+    out.evidence={...call,competitions:rows.map((c:any)=>({...c,name:compName(c.id,c.name,c.start_date)}))};
+    out.sources=rows.map((c:any)=>source(`comp:${c.id}`,compName(c.id,c.name,c.start_date),`/wca/comp/${c.id}`));
     table(label('比赛','Competitions'),[label('比赛','Competition'),label('城市','City'),label('地区','Country'),label('日期','Dates')],rows.map((c:any)=>[compName(c.id,c.name,c.start_date),c.city,c.country,formatDateRangeIso(c.start_date,c.end_date)]),rows.map((c:any)=>`/wca/comp/${c.id}`));
   } else if (call.tool === 'scrambles') {
     const all=await read(url(`${api}/wca/scrambles`,{compId:call.compId}));
@@ -135,15 +181,19 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     table(label('官方打乱','Official scrambles'),[label('组','Group'),label('序号','Number'),label('备打','Extra'),label('打乱','Scramble')],rows.map((r:any)=>[String(r.group_id),String(r.scramble_num),r.is_extra ? label('是','Yes') : '',r.scramble]));
   } else if (call.tool === 'recons') {
     const data=await read(url(`${api}/recon/list`,{wcaId:call.wcaId,comp:call.compId}));
-    const rows=(Array.isArray(data)?data:data.rows ?? data.recons ?? []).filter((r:any)=>call.value===undefined || Number(r.value)===call.value || Number(r.raw_time)===call.value).slice(0,12);
-    out.evidence=rows.map((r:any)=>({id:r.id,person:r.person,person_id:r.person_id,event:r.event,value:r.value,raw_time:r.raw_time,comp:r.comp,date:r.date,stm:r.stm,tps:r.tps,method:r.method}));
-    out.sources=rows.map((r:any)=>source(`recon:${r.id}`,`${r.person} · ${r.value}`,`/recon/${r.id}`));
+    const rows=(Array.isArray(data)?data:data.rows ?? data.recons ?? []).filter((r:any)=>(!call.event || r.event===call.event || (call.event==='333' && r.event==='3x3')) && (call.value===undefined || Number(r.value)===call.value || Number(r.rawTime)===call.value)).slice(0,call.limit);
+    out.evidence=rows.map((r:any)=>({id:r.id,person:r.person,personId:r.personId,event:r.event,value:r.value,rawTime:r.rawTime,comp:r.comp,compWcaId:r.compWcaId,official:r.official,date:r.date,stm:r.stm,tps:r.tps,method:r.method}));
+    out.sources=rows.map((r:any)=>source(`recon:${r.id}`,`${name(r.person)} · ${r.value}`,`/recon/${r.id}`));
+    table(label('公开复盘','Public reconstructions'),[label('选手','Person'),label('成绩','Result'),label('比赛或场景','Competition or setting'),label('日期','Date')],rows.map((r:any)=>[name(r.person),String(r.value??r.rawTime??''),r.comp??'',r.date??'']),rows.map((r:any)=>`/recon/${r.id}`));
   } else if (call.tool === 'recon') {
     const r=await read(`${api}/recon/${call.id}`);
     if (r.visibility && r.visibility !== 'public') throw new Error('Only published reconstructions are indexed');
     // A deliberate public field projection: never pass author/account fields to the model.
-    out.evidence=Object.fromEntries(['id','person','event','value','raw_time','method','date','comp','stm','tps','scramble','optimal_scramble','solution','reconstruction','note','oll','pll'].filter(k=>r[k]!=null).map(k=>[k,r[k]]));
-    if (typeof r.solution === 'string') table(label('原始复盘步骤','Original reconstruction'),[label('步骤','Step'),label('原始记号与注释','Original notation and annotations')],r.solution.split('\n').filter(Boolean).map((line:string,i:number)=>[String(i+1),line]));
+    out.evidence=Object.fromEntries(['id','person','event','value','rawTime','method','date','comp','official','compWcaId','stm','tps','scramble','optimalScramble','wcaScramble','solution','reconstruction','note','oll','pll'].filter(k=>r[k]!=null).map(k=>[k,r[k]]));
+    if (typeof r.solution === 'string') {
+      out.reconstructionAnnotations=r.solution.split('\n').flatMap((line:string)=>line.includes('//')?[line.slice(line.indexOf('//')+2).trim()]:[]).filter(Boolean);
+      table(label('原始复盘步骤','Original reconstruction'),[label('步骤','Step'),label('原始记号与注释','Original notation and annotations')],r.solution.split('\n').filter(Boolean).map((line:string,i:number)=>[String(i+1),line]));
+    }
     out.sources.push(source(`recon:${call.id}`,label('复盘','Reconstruction'),`/recon/${call.id}`));
   } else if (call.tool === 'glossary') {
     const data=await read(`${api}/wiki/terms`);
