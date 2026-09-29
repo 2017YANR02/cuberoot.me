@@ -31,7 +31,9 @@ CREATE TABLE apple_membership_notifications (
 -- Effective expiry is the maximum independent grant, never their sum.
 CREATE VIEW effective_memberships AS
 SELECT DISTINCT ON (wca_id) * FROM (
-  SELECT m.* FROM memberships m
+  SELECT m.wca_id, m.vip_number, m.name, m.avatar_url, m.plan_slug,
+    m.started_at, m.expires_at, m.source, m.last_order_no, m.contact,
+    m.contact_kind, m.note, m.created_at, m.updated_at FROM memberships m
   UNION ALL
   SELECT COALESCE(u.wca_id, 'u' || u.id::text)::VARCHAR(20), NULL::BIGINT,
     COALESCE(u.display_name, '')::VARCHAR(200), u.avatar_url,
