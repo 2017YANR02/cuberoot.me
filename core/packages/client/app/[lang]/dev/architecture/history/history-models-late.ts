@@ -911,4 +911,220 @@ export const LATE_MODELS: Record<keyof typeof LATE_DESIGNS, Build> = {
     a.line(r,[[1.6,2,-.8],[2.1,2,-.8],[2.3,1.8,-.8],[2.8,1.8,-.8]],.08,p.paper);
     for(const x of [-1.8,-.7,.4]) a.ring(r,.2,.05,[x,2.65,.55],p.gold);
   },
+  '2026-09-15': (a, r) => {
+    // Record subscriptions: suspended chimes carry separate messages to a receiving tray.
+    const p=a.palette;
+    for(const x of [-4,4]) rod(a,r,[x,1,-1],[x,7,-1],.16,p.forest);
+    a.box(r,[9,.28,.7],[0,7,-1],p.jade);
+    for(let i=0;i<5;i++) {
+      const x=-3+i*1.5, y=3.2+Math.abs(i-2)*.6;
+      rod(a,r,[x,6.9,-1],[x,y+1,-1],.035);
+      a.cylinder(r,.3,1.8,[x,y,-1],p.paper,.22);
+      a.ring(r,.33,.045,[x,y-.8,-1],p.gold).rotation.x=Math.PI/2;
+      card(a,r,[x,y-.55,.1],.7,.65,p.paper);
+      rod(a,r,[x,y,-1],[x,y-.55,0],.035);
+    }
+    a.line(r,[[-3,2.6,0],[-1.5,1.8,1],[0,1.5,1.4],[2,2,1],[3,2.5,0]],.09,p.vermilion);
+    slab(a,r,[0,1,1.4],4,2);
+    for(let j=0;j<4;j++) a.box(r,[2.8,.08,1.2],[0,1.2+j*.13,1.4],p.paper);
+  },
+  '2026-09-16': (a, r) => {
+    // Read-only inspection: a cutaway archive with visible drawers behind a magnifying window.
+    const p=a.palette; slab(a,r,[-1,1,-1],5.5,3.4);
+    for(const x of [-3.5,1.5]) a.box(r,[.25,5.5,3],[x,3.9,-1],p.forest);
+    for(let i=0;i<4;i++) {
+      a.box(r,[5,.18,3],[-1,1.3+i*1.55,-1],p.paper);
+      for(let j=0;j<3;j++) {
+        card(a,r,[-2.6+j*1.6,1.85+i*1.4,.58],1.25,.85,p.jade);
+        a.box(r,[.35,.1,.2],[-2.6+j*1.6,1.85+i*1.4,.8],p.gold);
+      }
+    }
+    a.ring(r,1.75,.17,[3.1,4.8,1.3],p.gold);
+    rod(a,r,[3.9,3.3,1.3],[5.2,1.4,1.3],.25,p.forest);
+    for(let i=0;i<5;i++) rod(a,r,[1.6,4+i*.32,1.3],[4.5,4+i*.32,1.3],.025,p.paper);
+    a.box(r,[1.1,.8,.4],[-1,7,-.5],p.vermilion);
+    arc(a,r,.4,0,Math.PI,[-1,7.4,-.5],p.gold);
+  },
+  '2026-09-17': (a, r) => {
+    // A mind map grows from a lectern into asymmetrical branches with folded lesson leaves.
+    const p=a.palette;
+    fin(a,r,[[-1.6,0],[1.6,0],[.6,3],[-.6,3]],[0,1,-.7],p.forest,.8);
+    const desk=a.box(r,[4,.22,2.4],[0,4,-.6],p.paper);desk.rotation.x=.28;
+    for(const side of [-1,1]) {
+      const leaf=a.box(r,[1.7,.09,1.7],[side*.9,4.22,-.4],p.paper);leaf.rotation.z=side*.12;
+      for(let k=0;k<4;k++) a.box(r,[1.1,.035,.03],[side*.9,4.35,-.9+k*.3],p.gold);
+    }
+    a.line(r,[[0,3,-1.8],[0,5.8,-1.8],[-.7,8,-1.8]],.15,p.jade);
+    const tips: P[]=[[-4,5.4,-1],[-3,7.5,-1.6],[2.3,8,-1.8],[4.4,6,-.5]];
+    tips.forEach((v,i)=>{
+      a.line(r,[[0,4.7+i*.6,-1.8],[v[0]*.5,v[1]-.5,-1.8],v],.08,p.gold);
+      const page=card(a,r,v,1.7,1.05,p.paper);void page;
+      fin(a,r,[[0,0],[.5,.55],[.9,0]],[v[0]-.4,v[1]+.5,v[2]],p.jade,.1);
+    });
+  },
+  '2026-09-18': (a, r) => {
+    // A data-only refresh uses a bucket wheel pouring new records into stepped trays.
+    const p=a.palette;
+    a.ring(r,3,.2,[-1,4,-.5],p.forest);a.ring(r,2.6,.08,[-1,4,-.25],p.gold);
+    for(let i=0;i<10;i++) {
+      const t=i*Math.PI/5,x=-1+Math.cos(t)*2.85,y=4+Math.sin(t)*2.85;
+      rod(a,r,[-1,4,-.5],[x,y,-.5],.065);
+      const bucket=a.box(r,[.8,.55,1],[x,y,-.3],p.paper);bucket.rotation.z=t;
+      a.box(r,[.45,.07,.65],[x,y+.3,-.3],p.water);
+    }
+    joint(a,r,[-1,4,.2],.4);
+    for(const z of [-1.4,.6]) {
+      rod(a,r,[-3,1,z],[-1,4,z],.16,p.jade);rod(a,r,[1,1,z],[-1,4,z],.16,p.jade);
+    }
+    for(let i=0;i<3;i++) {
+      slab(a,r,[3+i*.7,2.8-i*.7,.7],1.8,1.8);
+      a.box(r,[1.4,.08,1.3],[3+i*.7,2.92-i*.7,.7],p.water);
+      card(a,r,[3+i*.7,3.4-i*.7,.4],.6,.7,p.paper);
+    }
+  },
+  '2026-09-19': (a, r) => {
+    // Sticker positions become a spatial graph: an open cubical lattice with lifted face panels.
+    const p=a.palette; const points:P[]=[];
+    for(const x of [-2,2]) for(const y of [2,6]) for(const z of [-2,2]) points.push([x,y,z]);
+    points.forEach((v,i)=>{
+      a.mesh(r,new T.OctahedronGeometry(.32),p.vermilion,v);
+      points.forEach((w,j)=>{if(j>i&&v.filter((n,k)=>n!==w[k]).length===1)rod(a,r,v,w,.085,p.gold);});
+    });
+    for(let i=0;i<3;i++) for(let j=0;j<3;j++) {
+      a.box(r,[.82,.82,.13],[-1.05+i*1.05,2.95+j*1.05,2.35],(i+j)%2?p.paper:p.jade);
+      a.box(r,[.13,.82,.82],[2.35,2.95+i*1.05,-1.05+j*1.05],p.paper);
+    }
+    a.line(r,[[-2,6,2],[-3.8,7.4,1],[-5,5.8,0],[-4.2,3.3,1],[-2,2,2]],.12,p.vermilion);
+    for(const v of [[-3.8,7.4,1],[-5,5.8,0],[-4.2,3.3,1]] as P[])joint(a,r,v,.24);
+    slab(a,r,[0,.9,0],6,5.5);
+  },
+  '2026-09-20': (a, r) => {
+    // Ghost geometry is suggested by unequal cut planes around an exposed miniature classroom.
+    const p=a.palette;
+    fin(a,r,[[-3,0],[-3.8,3.4],[-1.2,6.1],[.1,3.7],[-.8,.4]],[-.5,1,-2],p.paper,1.3);
+    fin(a,r,[[.3,.2],[1.1,3.2],[3.6,4.8],[4.3,1],[2.1,-.1]],[0,1,-1.4],p.jade,1.1);
+    fin(a,r,[[-2,0],[-.9,1.7],[2.7,1.3],[3.5,-.4]],[0,6,-1.7],p.paper,1.4);
+    slab(a,r,[0,1,.7],6.5,4.4);
+    a.box(r,[2.1,1.3,.15],[-.8,3.9,-.55],p.forest);
+    for(let i=0;i<3;i++) a.box(r,[1.45,.04,.04],[-.9,4.25-i*.3,-.44],p.gold);
+    for(const x of [-1.6,1.2]) for(const z of [.6,2]) {
+      a.box(r,[1.2,.15,.75],[x,2,z],p.paper);
+      for(const dx of [-.45,.45])rod(a,r,[x+dx,1,z],[x+dx,1.9,z],.06,p.gold);
+      a.box(r,[.7,.1,.55],[x,1.5,z+.6],p.vermilion);
+    }
+  },
+  '2026-09-21': (a, r) => {
+    // Native sharing and account access form a folded speaking horn with two open mouths.
+    const p=a.palette;
+    const horn=new T.Group();horn.position.set(-1,4,-.8);horn.rotation.z=-.25;r.add(horn);
+    for(const side of [-1,1]) {
+      const cone=a.mesh(horn,new T.CylinderGeometry(1.8,.45,2.8,6,1,true),p.paper,[side*1.9,0,0]);cone.rotation.z=-side*Math.PI/2;
+      const rim=a.ring(horn,1.8,.1,[side*3.3,0,0],p.gold);rim.rotation.y=Math.PI/2;
+      for(let i=0;i<6;i++) {
+        const t=i*Math.PI/3;
+        rod(a,horn,[side*.5,Math.cos(t)*.45,Math.sin(t)*.45],[side*3.3,Math.cos(t)*1.8,Math.sin(t)*1.8],.045,p.jade);
+      }
+    }
+    for(const x of [-2,1])rod(a,r,[x,1,-.8],[x,3.5,-.8],.16,p.forest);
+    a.line(r,[[0,3.8,-.8],[0,2.2,1],[3,2.2,1],[3,1.5,1]],.13,p.vermilion);
+    card(a,r,[3.2,1.8,1.4],2,1.35,p.paper);
+    for(let i=0;i<3;i++) arc(a,r,2+i*.35,-.8,1.6,[3,4,-.7],p.gold,.04);
+  },
+  '2026-09-22': (a, r) => {
+    // Replay: a suspended cube above a long, stepped move timeline, held by a cantilever.
+    const p=a.palette;
+    a.box(r,[.45,7,1],[-4.4,4,-1.6],p.forest);
+    a.box(r,[6.2,.4,1],[-1.6,7.5,-1.6],p.jade);
+    rod(a,r,[-4.3,5.5,-1.6],[-1,7.5,-1.6],.1);
+    for(const x of [-1.5,1.5])rod(a,r,[x,7.3,-1.6],[x,5.8,-.5],.05);
+    const cube=new T.Group();cube.position.set(0,4.6,-.5);cube.rotation.set(.16,.35,.12);r.add(cube);
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){
+      a.box(cube,[.7,.7,.2],[-.8+i*.8,-.8+j*.8,1.2],(i+j)%2?p.paper:p.jade);
+      a.box(cube,[.2,.7,.7],[1.2,-.8+i*.8,-.8+j*.8],p.gold);
+    }
+    for(let i=0;i<9;i++) {
+      const x=-3.8+i;
+      a.box(r,[.8,.18,.9],[x,1.1+i*.09,1.2],p.paper);
+      rod(a,r,[x,1.25+i*.09,1.2],[x,1.6+(i%3)*.28,1.2],.065,p.vermilion);
+    }
+    a.line(r,[[-4,1,1.9],[4.4,1.8,1.9],[5,2.5,.8]],.08,p.gold);
+  },
+  '2026-09-23': (a, r) => {
+    // Distinct delivery lines terminate at separate calibrated observation instruments.
+    const p=a.palette;
+    fin(a,r,[[-4,0],[4,0],[3,1.4],[-3,1.4]],[0,1,-1.6],p.paper,3);
+    for(const [x,y,z] of [[-2.5,4,-1.5],[1.2,5.6,-2],[3.5,3,.4]] as P[]) {
+      rod(a,r,[x,2,z],[x,y,z],.12,p.forest);
+      const tube=a.cylinder(r,.48,2,[x,y,z],p.jade,.65);tube.rotation.x=Math.PI/2;tube.rotation.z=.2;
+      a.ring(r,.65,.075,[x,y,z+1],p.gold);
+      for(let j=0;j<4;j++)rod(a,r,[x-.6+j*.4,2,z+.6],[x-.6+j*.4,2.25,z+.6],.035);
+    }
+    a.line(r,[[-2.5,3,-1.5],[-4.8,2.8,1],[-4.8,1.1,2]],.1,p.gold);
+    a.line(r,[[1.2,4,-2],[0,3,1.2],[0,1.1,2.5]],.1,p.vermilion);
+    a.line(r,[[3.5,2.8,.4],[5,2,1],[5,1.1,2]],.1,p.jade);
+    for(const x of [-4.8,0,5])card(a,r,[x,1.7,2.6],1,.7);
+  },
+  '2026-09-24': (a, r) => {
+    // TS orchestration weaves separate jobs through a loom; the finished strip exits one roller.
+    const p=a.palette;
+    for(const x of [-4,4])for(const z of [-2,1])rod(a,r,[x,1,z],[x,6,z],.14,p.forest);
+    for(const y of [1.6,6])a.box(r,[8.5,.3,.4],[0,y,-2],p.jade);
+    for(let i=0;i<9;i++) {
+      const x=-3.4+i*.85;
+      a.line(r,[[x,5.9,-2],[x,4.5,-.4],[x,2.3,1.7]],.04,i%2?p.gold:p.paper);
+    }
+    for(let j=0;j<7;j++)a.box(r,[7,.075,.18],[0,2.5+j*.35,1.5-j*.27],j%2?p.jade:p.paper);
+    const roller=a.cylinder(r,.4,8,[0,2,1.9],p.paper);roller.rotation.z=Math.PI/2;
+    fin(a,r,[[-1.4,0],[0,.55],[1.5,0],[0,-.4]],[.7,4.4,.3],p.vermilion,.45);
+    for(const x of [-3,3])rod(a,r,[x,1,-2],[x,5.9,1],.08,p.gold);
+    a.box(r,[6.8,.13,1.6],[0,1.4,2.7],p.paper);
+  },
+  '2026-09-25': (a, r) => {
+    // Manual verification: an offset letter stencil before a narrow checkpoint with a counterweight.
+    const p=a.palette;
+    for(const x of [-3,2])a.box(r,[1.1,5.8,1.8],[x,3.8,-1.5],p.limestone);
+    a.box(r,[6.4,.6,2],[ -.5,6.8,-1.5],p.paper);
+    for(let i=0;i<4;i++)a.box(r,[.8,.65,1.8],[-3+i*1.7,7.4,-1.5],p.jade);
+    for(let i=0;i<5;i++)rod(a,r,[-2.3+i*.85,1.1,-1.2],[-2.3+i*.85,5.9,-1.2],.07,p.gold);
+    a.box(r,[5.5,2.2,.2],[-.4,4,1],p.paper);
+    const glyphs:P[][]=[ [[-2.5,3.3,1.15],[-2.1,4.7,1.15],[-1.5,3.3,1.15]], [[-.8,4.7,1.15],[.1,4.7,1.15],[-.8,3.3,1.15],[.1,3.3,1.15]], [[.8,3.3,1.15],[.8,4.7,1.15],[1.7,4.1,1.15],[.8,4,1.15]] ];
+    glyphs.forEach(g=>a.line(r,g,.075,p.forest));
+    a.line(r,[[2.5,6,-1],[4.3,6,-1],[4.3,3.5,-1]],.06,p.gold);
+    a.box(r,[1.1,1.4,1.1],[4.3,2.8,-1],p.vermilion);
+    slab(a,r,[0,1,1.5],8,3.3);
+  },
+  '2026-09-26': (a, r) => {
+    // Device center: a horizontal docking ring with unlike cradles and one shared central signal.
+    const p=a.palette;
+    const ring=a.ring(r,3.5,.2,[0,2,-.5],p.jade);ring.rotation.x=Math.PI/2;
+    a.cylinder(r,1.1,2.3,[0,2.2,-.5],p.paper,.75);
+    a.mesh(r,new T.OctahedronGeometry(.7),p.vermilion,[0,4,-.5]);
+    for(let i=0;i<4;i++) {
+      const t=i*Math.PI/2+.3,x=Math.cos(t)*3.5,z=-.5+Math.sin(t)*3.5;
+      slab(a,r,[x,1.5,z],1.9,1.7);
+      rod(a,r,[0,3,-.5],[x,2.5,z],.055,p.gold);
+      if(i===0){card(a,r,[x,2.9,z],1.2,2,p.forest);a.ring(r,.12,.035,[x,2.2,z+.1],p.gold);}
+      if(i===1){a.box(r,[1.7,.22,1],[x,2,z],p.paper);for(const dx of [-.55,.55])a.cylinder(r,.25,.1,[x+dx,2.2,z],p.gold);}
+      if(i===2){a.box(r,[1.35,1.35,1.35],[x,2.3,z],p.jade);for(const dx of [-.4,0,.4])rod(a,r,[x+dx,1.7,z+.7],[x+dx,2.9,z+.7],.025,p.paper);}
+      if(i===3){a.box(r,[2,1.1,.2],[x,2.8,z],p.forest);rod(a,r,[x,1.6,z],[x,2.2,z],.08);}
+    }
+    for(let i=0;i<3;i++)arc(a,r,.8+i*.35,.2,Math.PI*1.6,[0,5.3,-.5],p.gold,.04);
+  },
+  '2026-09-27': (a, r) => {
+    // Atomic account actions: two proof ribbons meet beneath a single seal press.
+    const p=a.palette;slab(a,r,[0,1,0],8,4.6);
+    for(const x of [-2.6,2.6])rod(a,r,[x,1,-1],[x,6.5,-1],.23,p.forest);
+    a.box(r,[6.3,.5,1.2],[0,6.5,-1],p.jade);
+    a.cylinder(r,.22,3.5,[0,5.7,-1],p.gold);
+    for(let i=0;i<9;i++){const thread=a.ring(r,.3,.045,[0,4.2+i*.34,-1],p.paper);thread.rotation.x=Math.PI/2;}
+    a.box(r,[3,.45,2.1],[0,3.5,-.4],p.vermilion);
+    a.box(r,[3.4,.18,2.4],[0,1.6,-.4],p.paper);
+    for(const side of [-1,1]) {
+      a.line(r,[[side*4.7,1.2,2],[side*3,1.3,1.6],[side*1.1,1.8,.4],[0,1.8,-.4]],.22,side<0?p.jade:p.gold);
+      card(a,r,[side*3.6,2.1,1.8],1.3,.8,p.paper);
+    }
+    rod(a,r,[-2,7.3,-1],[2,7.3,-1],.13,p.forest);
+    for(const x of [-2,2])joint(a,r,[x,7.3,-1],.23);
+    a.ring(r,.65,.1,[0,1.75,.1],p.vermilion).rotation.x=Math.PI/2;
+  },
 };
