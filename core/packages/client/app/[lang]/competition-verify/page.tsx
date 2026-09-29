@@ -17,6 +17,7 @@ export default function CompetitionVerifyPage() {
   const [answer, setAnswer] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [needsRefresh, setNeedsRefresh] = useState(false);
   function blockedMessage(response: Response) {
     const seconds = Number(response.headers.get('retry-after'));
     if (Number.isFinite(seconds) && seconds > 0) {
@@ -26,7 +27,7 @@ export default function CompetitionVerifyPage() {
     return t('当前网络 IP 被临时限制，验证码也暂时不可用。请稍后重试或联系站点管理员。', 'This network IP is temporarily blocked, including verification. Try again later or contact the site administrator.');
   }
   async function refresh() {
-    setBusy(true); setError(''); setChallenge(null); setAnswer('');
+    setBusy(true); setError(''); setChallenge(null); setAnswer(''); setNeedsRefresh(false);
     try {
       const response = await fetch(apiUrl('/v1/competition-access/challenge'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (response.status === 403) throw new Error(blockedMessage(response));
@@ -38,7 +39,7 @@ export default function CompetitionVerifyPage() {
   useEffect(() => { void refresh(); }, []); // A fresh image on each visit; no automatic submission.
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!challenge || busy) return;
+    if (!challenge || busy || needsRefresh) return;
     setBusy(true); setError('');
     try {
       const response = await fetch(apiUrl('/v1/competition-access/verify'), {
@@ -48,6 +49,20 @@ export default function CompetitionVerifyPage() {
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
         if (response.status === 429) throw new Error(t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.'));
+        if (failure?.code === 'captcha_incorrect') {
+          const remaining = failure.attemptsRemaining;
+          throw new Error(remaining === 1 || remaining === 2
+            ? t(`验证码输入错误，还可尝试 ${remaining} 次。请核对图片，字母不区分大小写。`, `Incorrect code. ${remaining} attempts remaining. Check the image; letters are case-insensitive.`)
+            : t('验证码输入错误，请核对图片后重试，字母不区分大小写。', 'Incorrect code. Check the image and retry; letters are case-insensitive.'));
+        }
+        if (['captcha_expired', 'captcha_invalid', 'captcha_browser_changed', 'captcha_attempts_exhausted', 'invalid_challenge'].includes(failure?.code)) {
+          setNeedsRefresh(true);
+          if (failure.code === 'captcha_expired') throw new Error(t('验证码已过期（有效期 2 分钟），请点击「换一张」后重新输入。', 'This code has expired (valid for 2 minutes). Select New image and enter the new code.'));
+          if (failure.code === 'captcha_attempts_exhausted') throw new Error(t('这张验证码已输错 3 次，请点击「换一张」后重新输入。', 'This code was entered incorrectly 3 times. Select New image and enter the new code.'));
+          if (failure.code === 'captcha_browser_changed') throw new Error(t('网络或浏览器环境已变化，请点击「换一张」后重新输入。', 'Your network or browser has changed. Select New image and enter the new code.'));
+          throw new Error(t('这张验证码已失效，请点击「换一张」后重新输入。', 'This code is no longer valid. Select New image and enter the new code.'));
+        }
+        // Compatibility while an older API instance is still serving requests.
         if (failure?.code === 'captcha_incorrect_or_expired') throw new Error(t('验证码错误或已过期，请重试或换一张。', 'Incorrect or expired code. Try again or get a new image.'));
         if (failure?.code === 'invalid_origin') throw new Error(t('当前访问地址未获验证服务允许，请检查开发代理配置。', 'The verification service rejected this site address. Check the development proxy configuration.'));
         if (response.status === 403) throw new Error(blockedMessage(response));
@@ -69,7 +84,7 @@ export default function CompetitionVerifyPage() {
         <label htmlFor="competition-code">{t('图片中的字符', 'Characters in the image')}</label>
         <div className="competition-verification-input"><input className="competition-verification-code" id="competition-code" value={answer} onChange={e => setAnswer(e.target.value)} maxLength={6} autoComplete="off" autoCapitalize="characters" spellCheck={false} required aria-describedby="competition-code-status" />{answer && <ClearButton onClick={() => setAnswer('')} />}</div>
         <p id="competition-code-status" role="status">{error}</p>
-        <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
+        <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || needsRefresh || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
       </form>
       <p className="competition-verification-note">{t('验证通过后可访问 7 天。中国大陆 IP 继续豁免。', 'Verification lasts 7 days. Mainland China IP addresses remain exempt.')}</p>
     </section>
