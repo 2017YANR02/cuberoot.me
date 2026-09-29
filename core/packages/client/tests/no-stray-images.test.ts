@@ -8,6 +8,7 @@
 // 已清零,用硬断言 toEqual([]);真要随仓库带的图片资产请放 public/ 下,或加进 ALLOWLIST。
 import { describe, it, expect } from 'vitest';
 import { execSync } from 'node:child_process';
+import archivedWechat from '@/lib/chat-wechat.json';
 
 const RASTER = /\.(png|jpe?g|webp|gif|bmp|avif)$/i;
 const ANDROID_GENERATED_RESOURCE =
@@ -27,6 +28,12 @@ const ALLOWLIST = new Set<string>([
   'core/assets/brand/icon-maskable-512.png',
 ]);
 
+// Preserve the owner's withheld originals outside public; only this versioned
+// manifest is exempt, not arbitrary images elsewhere in withheld/.
+const WITHHELD_WECHAT_ASSETS = new Set(
+  archivedWechat.map((item) => `core/packages/client/withheld${item.src}`),
+);
+
 function trackedFiles(): string[] {
   // git ls-files 读 index(全部已跟踪路径),CI sparse-checkout 下也能拿到 core/ 全量;
   // 只看路径不读内容,故不依赖工作树是否实际 checkout 了该文件。
@@ -44,6 +51,15 @@ describe('No stray raster images under core/ (debug-image guard)', () => {
     expect(files.length).toBeGreaterThan(100);
   });
 
+  it('limits the withheld exception to the archived WeChat pack, outside public', () => {
+    expect(WITHHELD_WECHAT_ASSETS.size).toBe(109);
+    for (const file of WITHHELD_WECHAT_ASSETS) {
+      expect(file).toMatch(/^core\/packages\/client\/withheld\/chat\/wechat-58b70fb\/(?:0\d{2}|10[0-8])\.png$/);
+      expect(files).toContain(file);
+      expect(files).not.toContain(file.replace('/withheld/', '/public/'));
+    }
+  });
+
   it('every tracked raster under core/ lives in a public/ dir', () => {
     const offenders = files.filter(
       (f) =>
@@ -55,6 +71,7 @@ describe('No stray raster images under core/ (debug-image guard)', () => {
         !MINIPROGRAM_RUNTIME_ASSET.test(f) &&
         !DESKTOP_NATIVE_ICON.test(f) &&
         !HARMONY_NATIVE_RESOURCE.test(f) &&
+        !WITHHELD_WECHAT_ASSETS.has(f) &&
         !ALLOWLIST.has(f),
     );
     expect(
