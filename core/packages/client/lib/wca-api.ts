@@ -19,6 +19,7 @@ interface UserUpcomingApi {
 }
 
 const upcomingCache = new Map<string, Promise<string[]>>();
+const upcomingCachedAt = new Map<string, number>();
 
 export function searchPersons(q: string, limit = 8): Promise<WcaPersonLite[]> {
   return searchWcaPersons(q, limit);
@@ -70,20 +71,21 @@ export function fetchPersonCard(wcaId: string): Promise<WcaPersonCard | null> {
   return p;
 }
 
-export function fetchUserUpcoming(wcaId: string): Promise<string[]> {
+export function fetchUserUpcoming(wcaId: string, options: { strict?: boolean } = {}): Promise<string[]> {
   const id = wcaId.trim().toUpperCase();
   if (!WCA_ID_REGEX.test(id)) return Promise.resolve([]);
-  const hit = upcomingCache.get(id);
-  if (hit) return hit;
+  const hit = Date.now() - (upcomingCachedAt.get(id) ?? 0) < 5 * 60_000 ? upcomingCache.get(id) : undefined;
+  if (hit) return options.strict ? hit : hit.catch(() => []);
   const url = `${WCA_API_BASE}/users/${encodeURIComponent(id)}?upcoming_competitions=true`;
   const p = fetch(url)
-    .then(r => r.ok ? r.json() : null)
+    .then(r => { if (!r.ok) throw new Error('WCA upcoming unavailable'); return r.json(); })
     .then((j: unknown) => {
       const arr = (j as UserUpcomingApi)?.upcoming_competitions;
-      if (!Array.isArray(arr)) return [];
+      if (!Array.isArray(arr)) throw new Error('WCA upcoming unavailable');
       return arr.map(c => c.id).filter(Boolean);
     })
-    .catch(() => [] as string[]);
+    .catch((error: unknown) => { upcomingCache.delete(id); upcomingCachedAt.delete(id); throw error; });
   upcomingCache.set(id, p);
-  return p;
+  upcomingCachedAt.set(id, Date.now());
+  return options.strict ? p : p.catch(() => []);
 }
