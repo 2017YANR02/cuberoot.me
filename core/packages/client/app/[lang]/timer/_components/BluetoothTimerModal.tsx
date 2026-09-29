@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Bluetooth, ExternalLink } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
-import { detectBluetoothEnv, envAdvice } from '../_lib/bluetooth';
+import { detectBluetoothEnv, envAdvice, mayUseMiniProgramBridge } from '../_lib/bluetooth';
 import { normalizeMac } from '../_lib/bluetooth/mac';
 import type {
   BluetoothTimerHandle,
@@ -82,7 +82,7 @@ export default function BluetoothTimerModal({
 
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
-  const supported = env === 'available' || env === 'available-bluefy';
+  const supported = mayUseMiniProgramBridge() || env === 'available' || env === 'available-bluefy';
   const connected = timer.status.connected;
 
   useEffect(() => {

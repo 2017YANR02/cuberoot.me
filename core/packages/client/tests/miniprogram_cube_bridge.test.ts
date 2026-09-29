@@ -1,3 +1,4 @@
+import { createMiniProgramStackmatSource } from '@/app/[lang]/timer/_lib/bluetooth/timer/miniprogram';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { connectMiniProgramCubeBridge } from '@/app/[lang]/timer/_lib/bluetooth/miniprogram_bridge';
@@ -71,6 +72,41 @@ function stubMiniProgram(navigateTo: MiniProgramNavigateTo = () => {}): void {
 }
 
 describe('mini-program smart-cube bridge', () => {
+  it('updates native Stackmat readings without starting or recording a solve twice', async () => {
+    stubMiniProgram();
+    const source = createMiniProgramStackmatSource(); const listener = vi.fn(); source.subscribe(listener);
+    const pending = source.connect();
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!; socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'stackmat-mic' });
+    await pending;
+    expect(source.snapshot().listening).toBe(true);
+    for (const [index, state, solveTime] of [[1, 'RUNNING', 100], [2, 'RUNNING', 200], [3, 'STOPPED', 234], [4, 'STOPPED', 234]] as const) {
+      socket.emitMessage({ type: 'timer', event: { state, solveTime }, relaySeq: index });
+    }
+    expect(listener.mock.calls.map(([event]) => event)).toEqual([{ state: 'RUNNING', solveTime: 100 }, { state: 'STOPPED', solveTime: 234 }]);
+    expect(source.snapshot()).toMatchObject({ phase: 'stopped', ms: 234, listening: true });
+    await source.disconnect();
+    expect(source.snapshot().listening).toBe(false);
+  });
+
+  it('routes timers to native setup and does not replay a received result twice', async () => {
+    const navigateTo = vi.fn(); stubMiniProgram(navigateTo);
+    const onTimer = vi.fn();
+    const pending = connectMiniProgramCubeBridge({ onTimer, onBattery: vi.fn(), onGyro: vi.fn(), onMove: vi.fn(), onState: vi.fn(), onStatus: vi.fn() }, 'bluetooth-timer');
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!; socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    expect(navigateTo.mock.calls[0][0].url).toContain('/pages/external-timer/index?mode=bluetooth-timer&token=');
+    socket.emitMessage({ type: 'status', phase: 'connected', brand: 'gan-timer' });
+    const bridge = await pending; bridge.activate();
+    const result = { type: 'timer', event: { state: 'STOPPED', solveTime: 12345 }, relaySeq: 1 };
+    socket.emitMessage(result); socket.emitMessage(result);
+    expect(onTimer).toHaveBeenCalledExactlyOnceWith({ state: 'STOPPED', solveTime: 12345 });
+    bridge.disconnect();
+  });
+
   afterEach(() => {
     FakeWebSocket.instance = null;
     FakeWebSocket.instances = [];

@@ -88,6 +88,16 @@ function canonicalizeRelayPayload(message: SmartCubeRelayPayload): SmartCubeRela
     if (message.relaySeq !== undefined) canonical.relaySeq = message.relaySeq;
     return canonical;
   }
+  if (message.type === 'timer') {
+    return {
+      type: 'timer',
+      event: {
+        state: message.event.state,
+        ...(message.event.solveTime === undefined ? {} : { solveTime: message.event.solveTime }),
+        ...(message.event.inspectTime === undefined ? {} : { inspectTime: message.event.inspectTime }),
+      },
+    };
+  }
   if (message.type === 'state') return { type: 'state', facelets: message.facelets };
   if (message.type === 'battery') return { type: 'battery', level: message.level };
   if (message.type === 'command') return { type: 'command', command: message.command };
@@ -340,16 +350,16 @@ export class SmartCubeRelay {
             reject('source cannot send commands');
             return;
           }
-          if (message.type === 'move' && message.relaySeq !== undefined) {
+          if ((message.type === 'move' || message.type === 'timer') && message.relaySeq !== undefined) {
             reject('source cannot set relay sequence');
             return;
           }
           const canonicalMessage = canonicalizeRelayPayload(message);
-          const outboundMessage = canonicalMessage.type === 'move'
+          const outboundMessage = (canonicalMessage.type === 'move' || canonicalMessage.type === 'timer')
             ? { ...canonicalMessage, relaySeq: ++channel.lastMoveSeq }
             : canonicalMessage;
           const encoded = JSON.stringify(outboundMessage);
-          if (outboundMessage.type === 'move') {
+          if (outboundMessage.type === 'move' || outboundMessage.type === 'timer') {
             const bytes = encodedBytes(encoded);
             channel.moves.push({ bytes, encoded, seq: outboundMessage.relaySeq });
             channel.replayedMoveBytes += bytes;

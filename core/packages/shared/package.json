@@ -151,7 +151,16 @@
       "./data/pll.json": "asset",
       "./data/zbll.json": "asset",
       "./data/zbls.json": "asset",
-      "./deskpet-care": "runtime-neutral"
+      "./deskpet-care": "runtime-neutral",
+      "./timer/external/types": "runtime-neutral",
+      "./timer/external/crc": "runtime-neutral",
+      "./timer/external/qiyi-mac": "runtime-neutral",
+      "./timer/external/stackmat-packet": "runtime-neutral",
+      "./timer/external/stackmat-decoder": "runtime-neutral",
+      "./timer/external/mac": "runtime-neutral",
+      "./timer/external/gan": "runtime-neutral",
+      "./timer/external/qiyi": "runtime-neutral",
+      "./timer/external/stackmat-state": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -509,7 +518,16 @@
     "./deskpet-care": {
       "node": "./dist/deskpet-care.js",
       "default": "./src/deskpet-care.ts"
-    }
+    },
+    "./timer/external/types": "./src/timer/external/types.ts",
+    "./timer/external/crc": "./src/timer/external/crc.ts",
+    "./timer/external/qiyi-mac": "./src/timer/external/qiyi-mac.ts",
+    "./timer/external/stackmat-packet": "./src/timer/external/stackmat-packet.ts",
+    "./timer/external/stackmat-decoder": "./src/timer/external/stackmat-decoder.ts",
+    "./timer/external/mac": "./src/timer/external/mac.ts",
+    "./timer/external/gan": "./src/timer/external/gan.ts",
+    "./timer/external/qiyi": "./src/timer/external/qiyi.ts",
+    "./timer/external/stackmat-state": "./src/timer/external/stackmat-state.ts"
   },
   "scripts": {
     "build": "tsc -b",

@@ -259,7 +259,7 @@ describe('mini program app structure', () => {
   it('does not carry an abandoned native timer implementation', () => {
     expect(sourceFiles['../src/lib/timer-store.ts']).toBeUndefined();
     for (const [path, source] of Object.entries(sourceFiles)) {
-      expect(source, path).not.toMatch(/@cuberoot\/shared\/timer/);
+      expect(source, path).not.toMatch(/@cuberoot\/shared\/timer(?!\/external\/)/);
     }
   });
 
