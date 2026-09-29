@@ -61,4 +61,16 @@ describe('person upcoming competitions', () => {
       'FreshOpen2099',
     ]);
   });
+
+  it('reports unavailable sources while retaining registrations found in other sources', async () => {
+    fetchUserUpcoming.mockRejectedValueOnce(new Error('offline'));
+    const { fetchPersonUpcomingCompetitions } = await import('@/lib/person-upcoming');
+    await expect(fetchPersonUpcomingCompetitions('2023ROOT01')).resolves.toEqual({ ids: ['ChinaOpen2099'], incomplete: true });
+  });
+
+  it('does not call a failed static index an empty registration list', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response('', { status: 503 }));
+    const { fetchPersonUpcomingCompetitions } = await import('@/lib/person-upcoming');
+    await expect(fetchPersonUpcomingCompetitions('2023ROOT01')).resolves.toEqual({ ids: [], incomplete: true });
+  });
 });

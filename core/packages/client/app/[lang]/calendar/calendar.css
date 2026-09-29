@@ -168,7 +168,7 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-search-field::-webkit-search-cancel-button { display: none; }
 
-.cal-menu-btn { display: none; }
+.cal-menu-btn { display: inline-flex; }
 /* 侧栏在宽屏是常驻栏,没有抽屉也就没有遮罩;只有 900px 以下那档才亮出来 */
 .cal-scrim { display: none; }
 
@@ -320,6 +320,8 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-mini-grid .day-cell:hover { background: color-mix(in srgb, var(--foreground) 8%, transparent); }
 .cal-mini-grid .day-cell.out-of-month { color: var(--faint-foreground); }
 .cal-mini-grid .day-cell.is-today { background: var(--accent); color: var(--accent-foreground); }
+.cal-mini-grid .day-cell.is-selected:not(.is-today) { background: var(--accent-soft); color: var(--accent); }
+.cal-mini-grid .day-cell.is-selected { outline: 1px solid var(--accent); outline-offset: -1px; }
 
 .cal-mini-day { position: relative; }
 
@@ -476,6 +478,55 @@ html:root[data-theme=dark]:has(.cal-page) {
 }
 
 .cal-field-label { font-size: 12px; color: var(--muted-foreground); }
+
+/* 设置沿用日历的模态层，分类与正文分栏；手机上分类在顶部横向滚动。 */
+.cal-modal.cal-settings { width: min(880px, 100%); height: min(720px, 88dvh); }
+.cal-settings-head { display: flex; align-items: center; gap: 12px; padding: 18px 24px; border-bottom: 1px solid var(--border-default); }
+.cal-settings-head h2 { flex: 1; margin: 0; font-size: 20px; font-weight: 500; }
+.cal-settings-layout { display: flex; flex: 1; min-height: 0; }
+.cal-settings-nav { flex: 0 0 200px; padding: 16px 10px; border-right: 1px solid var(--border-default); }
+.cal-settings-tab { display: block; width: 100%; border: 0; border-radius: 24px; padding: 12px 16px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.cal-settings-tab:hover { background: var(--muted); }
+.cal-settings-tab.is-active { background: var(--accent-soft); color: var(--accent); }
+.cal-settings-content { flex: 1; min-width: 0; overflow-y: auto; padding: 24px 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
+.cal-settings-content h3 { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
+.cal-settings-field { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 100%; font-size: 14px; }
+.cal-settings-field .list-select { max-width: 100%; }
+.cal-settings-content .cal-hint, .cal-settings-content .cal-pop-hint { margin: 0; max-width: 52ch; line-height: 1.7; }
+.cal-settings-note { margin: auto 0 0; padding-top: 24px; color: var(--muted-foreground); font-size: 12px; }
+.cal-shortcut-list { margin: 0; width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; font-size: 13px; }
+.cal-shortcut-list > div { display: flex; align-items: center; gap: 14px; }
+.cal-shortcut-list dt { flex: 0 0 56px; }
+.cal-shortcut-list dd { margin: 0; }
+.cal-shortcut-list kbd { display: inline-block; padding: 3px 7px; border: 1px solid var(--border-default); border-radius: 5px; background: var(--muted); color: var(--foreground); }
+.cal-wca-calendars { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.cal-wca-calendars .cal-hint { margin: 0; font-size: 11px; line-height: 1.6; }
+.cal-wca-calendars > .comp-picker { width: 100%; min-width: 0; }
+.cal-wca-calendars .comp-picker-input { border: 1px solid var(--input); background: var(--card); color: var(--foreground); border-radius: 6px; padding: 8px 30px 8px 10px; font-size: 12px; }
+/* anchored-panel: safe (侧栏内部展开的静态结果列表，随侧栏滚动，不越过裁切边界) */
+.cal-wca-calendars .comp-picker-popup { position: static; width: 100%; min-width: 0; max-width: 100%; margin-top: 4px; box-shadow: none; }
+.cal-modal.cal-competition-dialog { width: min(620px, 100%); }
+.cal-competition-dialog .cal-settings-head h2 { font-size: 18px; overflow-wrap: anywhere; }
+.cal-competition-location { display: flex; gap: 10px; align-items: flex-start; line-height: 1.6; overflow-wrap: anywhere; }
+.cal-competition-location svg { flex: 0 0 auto; margin-top: 3px; }
+.cal-travel-origin { display: flex; gap: 4px; align-items: center; border: 1px solid var(--input); background: var(--card); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
+.cal-travel-origin-input { min-width: 0; width: 100%; background: transparent; border: 0; color: var(--foreground); font: inherit; outline: none; }
+.cal-travel-origin:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+@media (min-width: 901px) {
+  .cal-page.sidebar-collapsed .cal-sidebar { display: none; }
+  .cal-page.sidebar-collapsed .cal-fab { display: flex; }
+}
+
+@media (max-width: 640px) {
+  .cal-modal.cal-settings { height: 90dvh; max-height: 90dvh; }
+  .cal-settings-head { padding: 14px 16px; }
+  .cal-settings-layout { flex-direction: column; }
+  .cal-settings-nav { display: flex; flex: 0 0 auto; gap: 4px; overflow-x: auto; padding: 8px; border-right: 0; border-bottom: 1px solid var(--border-default); }
+  .cal-settings-tab { flex: 0 0 auto; width: auto; white-space: nowrap; padding: 9px 12px; }
+  .cal-settings-content { padding: 20px 16px; }
+  .cal-shortcut-list { grid-template-columns: 1fr; }
+}
 
 /* ── 弹窗 ─────────────────────────────────────────────────────────────── */
 
@@ -1248,3 +1299,6 @@ html:root[data-theme=dark]:has(.cal-page) {
     background: var(--glass-popover-bg);
   }
 }
+.cal-google-backup { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding-block: 12px; border-bottom: 1px solid var(--border-default); width: 100%; }
+.cal-google-backup h4, .cal-google-backup p { margin: 0; }
+.cal-google-calendars { display: flex; flex-direction: column; gap: 8px; max-width: 100%; overflow-wrap: anywhere; }

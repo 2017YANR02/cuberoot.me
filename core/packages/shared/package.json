@@ -12,6 +12,7 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./meeting": "runtime-neutral",
       "./chat": "runtime-neutral",
       "./friends": "runtime-neutral",
       "./competition-access": "runtime-neutral",
@@ -97,6 +98,10 @@
       "./drive": "runtime-neutral",
       "./platform": "runtime-neutral",
       "./site-directory": "runtime-neutral",
+      "./site-assistant": "runtime-neutral",
+      "./cube-agents": "runtime-neutral",
+      "./wca-format-result": "runtime-neutral",
+      "./wca-records": "runtime-neutral",
       "./page-share": "runtime-neutral",
       "./contact": "runtime-neutral",
       "./cube-unfolded-svg": "runtime-neutral",
@@ -150,6 +155,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./meeting": { "node": "./dist/meeting.js", "default": "./src/meeting.ts" },
     "./chat": { "node": "./dist/chat/index.js", "default": "./src/chat/index.ts" },
     "./friends": { "node": "./dist/friends.js", "default": "./src/friends.ts" },
     "./competition-access": { "node": "./dist/competition-access.js", "default": "./src/competition-access.ts" },
@@ -421,6 +427,10 @@
     "./drive": "./src/drive.ts",
     "./platform": "./src/platform.ts",
     "./site-directory": "./src/site_directory.ts",
+    "./site-assistant": "./src/site_assistant.ts",
+    "./cube-agents": "./src/cube_agents.ts",
+    "./wca-format-result": { "node": "./dist/wca_format_result.js", "default": "./src/wca_format_result.ts" },
+    "./wca-records": { "node": "./dist/wca_records.js", "default": "./src/wca_records.ts" },
     "./page-share": "./src/page_share.ts",
     "./contact": {
       "node": "./dist/contact.js",

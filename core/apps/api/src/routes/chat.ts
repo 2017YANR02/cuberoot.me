@@ -1,31 +1,48 @@
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
-import { ChatError, CHAT_HTTP_BODY_LIMIT } from '@cuberoot/shared/chat';
+import { ChatError, CHAT_HTTP_BODY_LIMIT, CHAT_STICKER_MAX_BYTES } from '@cuberoot/shared/chat';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { checkRateLimit } from '../utils/recon_helpers.js';
 import { chatRepository } from '../utils/chat_repository.js';
+import { stickerRepository } from '../utils/chat_stickers.js';
 
 export const chatRoutes = new Hono<{ Variables: { chatUserId: number } }>();
 chatRoutes.use('/chat/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
   const uid = await requireAppUserId(c);
   c.set('chatUserId', uid);
-  try { checkRateLimit(String(uid), { bucket: c.req.method === 'POST' ? 'chat-send' : 'chat-read', max: 120 }); }
+  const image = c.req.path.endsWith('/image');
+  try { checkRateLimit(String(uid), { bucket: image ? 'chat-image' : c.req.method === 'POST' ? 'chat-send' : 'chat-read', max: image ? 600 : 120 }); }
   catch { throw new ChatError('RATE_LIMITED', 60_000); }
   await next();
 });
-chatRoutes.use('/chat/*', bodyLimit({ maxSize: CHAT_HTTP_BODY_LIMIT,
-  onError: (c) => c.json({ error: { code: 'BODY_TOO_LARGE', message: 'BODY_TOO_LARGE' } }, 413) }));
+chatRoutes.use('/chat/*', (c, next) => bodyLimit({
+  maxSize: c.req.method === 'POST' && c.req.path.endsWith('/chat/stickers') ? CHAT_STICKER_MAX_BYTES : CHAT_HTTP_BODY_LIMIT,
+  onError: (c) => c.json({ error: { code: 'BODY_TOO_LARGE', message: 'BODY_TOO_LARGE' } }, 413) })(c, next));
 chatRoutes.onError((error, c) => {
   c.header('Cache-Control', 'no-store');
   const failure = error instanceof ChatError ? error
     : error.name === 'BodyLimitError' ? new ChatError('BODY_TOO_LARGE')
     : error.message.includes('Authentication required') ? new ChatError('UNAUTHENTICATED') : new ChatError('INTERNAL_ERROR');
   const statuses = { UNAUTHENTICATED: 401, CHAT_NOT_FOUND: 404, CHAT_UNAVAILABLE: 403, INVALID_INPUT: 400,
-    IDEMPOTENCY_CONFLICT: 409, BODY_TOO_LARGE: 413, RATE_LIMITED: 429, INTERNAL_ERROR: 500, NETWORK_ERROR: 500, INVALID_RESPONSE: 500 } as const;
+    IDEMPOTENCY_CONFLICT: 409, BODY_TOO_LARGE: 413, RATE_LIMITED: 429, STICKER_LIMIT: 409, INTERNAL_ERROR: 500, NETWORK_ERROR: 500, INVALID_RESPONSE: 500 } as const;
   if (failure.code === 'RATE_LIMITED') c.header('Retry-After', String(Math.ceil(failure.retryAfterMs / 1000) || 60));
   if (failure.code === 'INTERNAL_ERROR') console.error('[chat] request failed');
   return c.json({ error: { code: failure.code, message: failure.code } }, statuses[failure.code]);
+});
+chatRoutes.get('/chat/stickers', async (c) => c.json(await stickerRepository.list(c.get('chatUserId'))));
+chatRoutes.post('/chat/stickers', async (c) => c.json(await stickerRepository.upload(c.get('chatUserId'), Buffer.from(await c.req.arrayBuffer())), 201));
+chatRoutes.get('/chat/stickers/:id/image', async (c) => {
+  const image = await stickerRepository.image(c.get('chatUserId'), c.req.param('id'));
+  c.header('Content-Type', image.mime);
+  c.header('X-Content-Type-Options', 'nosniff');
+  c.header('Content-Disposition', 'inline');
+  return c.body(new Uint8Array(image.data));
+});
+chatRoutes.put('/chat/stickers/:id', async (c) => {
+  const body = await c.req.json().catch(() => { throw new ChatError('INVALID_INPUT'); });
+  if (typeof body?.saved !== 'boolean') throw new ChatError('INVALID_INPUT');
+  return c.json(await stickerRepository.save(c.get('chatUserId'), c.req.param('id'), body.saved));
 });
 chatRoutes.get('/chat/conversations', async (c) => c.json(await chatRepository.conversations(
   c.get('chatUserId'), c.req.query('cursor'), c.req.query('limit') === undefined ? 30 : Number(c.req.query('limit')))));

@@ -93,7 +93,8 @@ describe('homepage development cards', () => {
     expect(host.querySelectorAll('.landing-card-lock').length > 0).toBe(admin);
     const adminArea = host.querySelector('#landing-admin-content');
     if (admin) {
-      expect(host.querySelector('.landing-page')?.lastElementChild).toBe(adminArea);
+      expect(host.querySelector('.landing-page')?.lastElementChild).toBe(host.querySelector('.footer'));
+      expect(adminArea?.nextElementSibling).toBe(host.querySelector('.footer'));
       for (const config of [...PRIMARY_CARDS, ...WCA_CARDS, ...SECTIONS.flatMap((section) => section.cards)]) {
         const cards = host.querySelectorAll(`#card-${config.id}`);
         expect(cards).toHaveLength(1);

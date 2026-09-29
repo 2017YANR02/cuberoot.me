@@ -14,13 +14,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { zipSync, strToU8 } from 'fflate';
 import { parseIcs, icsCalendarName, ICS_IMPORT_BATCH, type CalendarMeta } from '@cuberoot/shared/calendar';
 import { readIcsSources, importCalendarFile } from '@/app/[lang]/calendar/_lib/import';
-import { createCalendar, importEvents, startImport } from '@/lib/calendar-api';
+import { createCalendar, importEvents, startImport, fetchBootstrap } from '@/lib/calendar-api';
 
 // 编排那一层(建日历 / 切批 / 限流重试 / 挂批次)只能打桩验:真跑要本地 API + PG。
 vi.mock('@/lib/calendar-api', () => ({
   createCalendar: vi.fn(),
   importEvents: vi.fn(),
   startImport: vi.fn(),
+  fetchBootstrap: vi.fn(async () => ({ colorFormatVersion: 2 })),
 }));
 import { expandOccurrences } from '@cuberoot/shared/recur';
 import { wallToUtc } from '@cuberoot/shared/tz';
@@ -142,6 +143,7 @@ describe('Google 日历导出的 .ics', () => {
     const moved = parsed.find((e) => e.title === '周会(改到下午)');
     expect(moved?.rrule).toBe('');
     expect(moved?.start).toBe(at(SH, 2026, 8, 10, 14));
+    expect(moved?.recurrenceId).toBe(at(SH, 2026, 8, 10, 10));
   });
 
   it('展开后 8/10 只在 14:00 出现一次,8/17 整个消失', () => {
@@ -246,9 +248,10 @@ describe('Google 导出的 .zip', () => {
 
     beforeEach(() => {
       vi.clearAllMocks();
+      vi.mocked(fetchBootstrap).mockResolvedValue({ colorFormatVersion: 2 } as Awaited<ReturnType<typeof fetchBootstrap>>);
       let nextId = 100;
       opened.mockResolvedValue(BATCH_ID);
-      created.mockImplementation(async (input) => cal(nextId++, input.name));
+      created.mockImplementation(async (input) => ({ ...cal(nextId++, input.name), color: input.color }));
       sent.mockImplementation(async (_id, events) => ({ added: events.length, failed: 0 }));
     });
 
@@ -262,6 +265,15 @@ describe('Google 导出的 .zip', () => {
       expect(created.mock.calls[0][0].importId).toBe(BATCH_ID);
       expect(sent.mock.calls[0][2]).toBe(BATCH_ID);
       expect(r.importId).toBe(BATCH_ID);
+      expect(created.mock.calls[0][0].color).toBe('graphite');
+    });
+
+    it('文件有精确颜色时分别保留日历颜色与活动覆盖颜色', async () => {
+      const text = oneEvent('工作', '周会')
+        .replace('BEGIN:VEVENT', 'X-APPLE-CALENDAR-COLOR:#123456\r\nBEGIN:VEVENT\r\nX-CUBEROOT-COLOR:#ABCDEF');
+      await importCalendarFile({ file: new File([text], 'colors.ics'), tz: SH, defaultCalendarId: 1, calendars: [cal(1, '我的日历')] });
+      expect(created.mock.calls[0][0].color).toBe('#123456');
+      expect(sent.mock.calls[0][1][0].color).toBe('#ABCDEF');
     });
 
     it('一条都没读出来就不开批次(不留空记录)', async () => {
@@ -337,14 +349,21 @@ describe('Google 导出的 .zip', () => {
       }
     });
 
-    it('建不出日历(到上限了)就退回主日历,不整批失败', async () => {
+    it('建不出日历时中止，不把活动混入主日历', async () => {
       created.mockRejectedValue(new Error('too many calendars'));
       const f = new File([oneEvent('工作', '周会')], 'work.ics', { type: 'text/calendar' });
-      const r = await importCalendarFile({
+      await expect(importCalendarFile({
         file: f, tz: SH, defaultCalendarId: 1, calendars: [cal(1, '我的日历')],
-      });
-      expect(sent.mock.calls[0][0]).toBe(1);
-      expect(r.added).toBe(1);
+      })).rejects.toThrow('too many calendars');
+      expect(sent).not.toHaveBeenCalled();
+    });
+
+    it('旧后端不支持精确色时，写入前中止而不是丢色', async () => {
+      vi.mocked(fetchBootstrap).mockResolvedValue({} as Awaited<ReturnType<typeof fetchBootstrap>>);
+      const text = oneEvent('工作', '周会').replace('BEGIN:VEVENT', 'BEGIN:VEVENT\r\nX-CUBEROOT-COLOR:#1256ab');
+      await expect(importCalendarFile({ file: new File([text], 'colors.ics'), tz: SH, defaultCalendarId: 1, calendars: [] }))
+        .rejects.toThrow('calendar_color_upgrade_required');
+      expect(opened).not.toHaveBeenCalled(); expect(created).not.toHaveBeenCalled(); expect(sent).not.toHaveBeenCalled();
     });
   });
 });

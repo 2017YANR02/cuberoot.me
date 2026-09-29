@@ -349,3 +349,11 @@ Analytics 是浏览器上报的数据集，不能直接等同于 Vercel 页面�
 - [Vercel 暂停项目](https://vercel.com/docs/projects/managing-projects#pausing-a-project)、[费用保护](https://vercel.com/docs/spend-management)
 - [Vercel WAF 限流](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting)、[WAF 拦截流量计费政策](https://vercel.com/changelog/web-application-firewall-mitigated-traffic-is-free-on-vercel)
 - [停用 Web Analytics](https://vercel.com/docs/analytics/using-web-analytics)、[Analytics 价格](https://vercel.com/docs/analytics/limits-and-pricing)
+
+## 2026-09-29 本地验证码图片误封排查（UTC）
+
+05:34 本地验证码 challenge 实测为 nginx 403，带 X-CubeRoot-Scanner-Ban: active 和 Retry-After；验证码服务本身未报图片生成错误。日志显示 05:19–05:20 本地首页对两场比赛反复发起 Node 回源，收到未验证 403；同一时段浏览器 /competition-access/check 返回 204。根因是 /api/comp/[slug] 在开发环境缺少签名密钥时，没有向 API 转发已有浏览器凭证及绑定的 User-Agent，自动请求触发既有 10 次/分钟的一小时 IP 封禁。
+
+修复：无签名密钥时只转发本站验证码 Cookie 和原始 UA，由 API 继续验签；不转发其他会话 Cookie；无凭证在本地拒绝，不反复访问上游。此分支返回 private, no-store。生产已有服务签名流程保留。验证码页面将 403 与普通加载失败区分，读取 Retry-After 显示等待分钟数。
+
+运维仅清理本次已确认误封 IP 的计数、内存封禁与该条日志到期时间；日志固定宽度原位更新，保留其他 IP 与并发追加。原记录备份留在服务器 root-only 目录，临时 loopback 管理配置已移出加载目录并通过 nginx -t 后 reload。没有停用规则、扩大国家豁免或跳过验证码。05:39:31 本机同一路径返回 200，JSON 含 challenge 和图片；用户现有 Chrome 页已显示验证码。此次只验收图片加载，未代替用户完成验证码。

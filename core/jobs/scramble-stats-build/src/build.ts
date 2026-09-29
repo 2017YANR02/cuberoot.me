@@ -3,6 +3,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { taskProgress } from './task_progress.js';
 import { makeRng } from './prng';
 import { dateDisplay } from './comp_date';
 import {
@@ -309,9 +310,6 @@ async function aggregateVariant(spec: VariantSpec, csvPath: string, scrambleMap:
     }
     if (ev !== undefined) evRowCount.set(ev, (evRowCount.get(ev) ?? 0) + 1);
     sampleCount++;
-    if (sampleCount % 200_000 === 0) {
-      process.stdout.write(`  [${spec.key}] ${sampleCount} rows\r`);
-    }
   }
   process.stdout.write(`  [${spec.key}] ${sampleCount} rows\n`);
 
@@ -577,6 +575,10 @@ async function main() {
       res: { samples: Sample[]; seen: number };
     }> = [];
     const downloadIds = new Set<string>();
+    const availableVariants = VARIANTS.filter(spec => fs.existsSync(path.join(setSpec.csv_dir, spec.file)));
+    const report = taskProgress(`分布 ${setSpec.key}`, availableVariants.length);
+    report(0);
+    let completedVariants = 0;
     for (const spec of VARIANTS) {
       const csvPath = path.join(setSpec.csv_dir, spec.file);
       if (!fs.existsSync(csvPath)) {
@@ -612,6 +614,7 @@ async function main() {
           }
         }
       }
+      report(++completedVariants);
     }
 
     setsOut[setSpec.key] = {

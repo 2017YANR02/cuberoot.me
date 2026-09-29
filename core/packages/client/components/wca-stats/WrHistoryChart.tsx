@@ -14,8 +14,9 @@ interface DataPoint {
 }
 
 interface Props {
-  rows: unknown[][];
-  header: { key: string; label: string }[];
+  rows?: unknown[][];
+  header?: { key: string; label: string }[];
+  rawPoints?: Array<{ date: string; y: number; person: string; label: string }>;
   isZh?: boolean;
 }
 
@@ -131,12 +132,12 @@ function extractPoints(rows: unknown[][], header: { key: string; label: string }
   return points;
 }
 
-export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
+export default function WrHistoryChart({ rows, header, rawPoints, isZh: _isZh }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
 
-  const points = useMemo(() => extractPoints(rows, header), [rows, header]);
+  const points = useMemo(() => rawPoints ? rawPoints.map(p => ({ x: parseDate(p.date), y: p.y, person: p.person, label: p.label, imp: '' })) : extractPoints(rows ?? [], header ?? []), [rows, header, rawPoints]);
 
   const render = useCallback(() => {
     const canvas = canvasRef.current;
@@ -308,16 +309,16 @@ export default function WrHistoryChart({ rows, header, isZh: _isZh }: Props) {
     const sameGroup = (scale.points as DataPoint[]).filter(
       (pt: DataPoint) => pt.x === p.x && pt.y === p.y
     );
-    let html = `<b>${p.label}</b> `;
+    let html = `${p.label} `;
     html += sameGroup
       .map((pt: DataPoint) => {
         let line = pt.person || '';
-        if (pt.imp) line += ` <span style="color:var(--accent)">↓${pt.imp}</span>`;
+        if (pt.imp) line += ` ↓${pt.imp}`;
         return line;
       })
       .filter(Boolean)
-      .join('<br>');
-    tipEl.innerHTML = html;
+      .join(' · ');
+    tipEl.textContent = html;
     tipEl.style.display = 'block';
     const tipW = tipEl.offsetWidth || 100;
     let left = mx + 8;

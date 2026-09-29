@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
+import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { test } from 'node:test';
+import { promisify } from 'node:util';
+import { publishStatsCommit } from './publish-git.js';
+
+test('publishes only statistics across diverged branches, retries, and preserves dirty work', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'stats-git-test-'));
+  const local = join(dir, 'local');
+  const remote = join(dir, 'remote.git');
+  const git = async (cwd: string, ...args: string[]) => (await promisify(execFile)('git', args, { cwd })).stdout.trim();
+  try {
+    await mkdir(local);
+    await git(dir, 'init', '--bare', remote);
+    await git(local, 'init', '-b', 'main');
+    await git(local, 'config', 'user.name', 'Test');
+    await git(local, 'config', 'user.email', 'test@example.invalid');
+    await mkdir(join(local, 'stats/scramble'), { recursive: true });
+    await writeFile(join(local, 'stats/scramble/result.json'), 'old\n');
+    await writeFile(join(local, 'code.txt'), 'base\n');
+    await git(local, 'add', '.'); await git(local, 'commit', '-m', 'base');
+    const base = await git(local, 'rev-parse', 'HEAD');
+    await git(local, 'remote', 'add', 'origin', remote);
+    await git(local, 'push', 'origin', 'main');
+    await writeFile(join(local, 'code.txt'), 'private local code\n');
+    await git(local, 'commit', '-am', 'local code');
+    await writeFile(join(local, 'stats/scramble/result.json'), 'new\n');
+    await git(local, 'commit', '-am', 'statistics');
+    const source = await git(local, 'rev-parse', 'HEAD');
+    await git(local, 'checkout', '-b', 'remote-work', base);
+    await writeFile(join(local, 'remote.txt'), 'remote code\n');
+    await git(local, 'add', '.'); await git(local, 'commit', '-m', 'remote code');
+    await git(local, 'push', 'origin', 'HEAD:main');
+    await git(local, 'checkout', 'main');
+    await writeFile(join(local, 'code.txt'), 'staged work\n');
+    await git(local, 'add', 'code.txt');
+    await writeFile(join(local, 'code.txt'), 'unstaged work\n');
+    const status = await git(local, 'status', '--porcelain');
+    const published = await publishStatsCommit(local, source);
+    assert.equal(await git(remote, 'show', 'main:code.txt'), 'base');
+    assert.equal(await git(remote, 'show', 'main:remote.txt'), 'remote code');
+    assert.equal(await git(remote, 'show', 'main:stats/scramble/result.json'), 'new');
+    assert.equal(await git(local, 'rev-parse', 'HEAD'), source);
+    assert.equal(await git(local, 'status', '--porcelain'), status);
+    assert.equal(await git(local, 'show', ':code.txt'), 'staged work');
+    assert.equal(await publishStatsCommit(local, source), published);
+    await writeFile(join(local, 'stats/scramble/result.json'), 'conflicting\n');
+    await git(local, 'commit', '-m', 'conflict', '--', 'stats/scramble/result.json');
+    const conflict = await git(local, 'rev-parse', 'HEAD');
+    await publishStatsCommit(local, conflict);
+    const before = await git(remote, 'rev-parse', 'main');
+    await assert.rejects(() => publishStatsCommit(local, source));
+    assert.equal(await git(remote, 'rev-parse', 'main'), before);
+  } finally { await rm(dir, { recursive: true, force: true }); }
+});

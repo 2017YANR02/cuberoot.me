@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('../src/db/connection.js', () => ({ query: mocks.query, sql: mocks.sql }));
 vi.mock('../src/utils/session.js', () => ({ JWT_SECRET: 'test-secret' }));
 
-import { getUserById, publicUser, updateUploadedAvatar, type AppUser } from '../src/utils/account.js';
+import { findUserForLegacyWcaSession, getUserById, publicUser, updateUploadedAvatar, type AppUser } from '../src/utils/account.js';
 
 describe('account public user fixture', () => {
   beforeEach(() => {
@@ -56,6 +56,25 @@ describe('account public user fixture', () => {
     const user = publicUser(account!);
     expect(user.uid).toBe(66);
     expect(decodeWebSessionUser(user)).toEqual(user);
+  });
+
+  it('does not resolve a retired account ID to its merge target', async () => {
+    mocks.query.mockResolvedValueOnce([]);
+
+    expect(await getUserById(66)).toBeNull();
+    const [statement, params] = mocks.query.mock.calls[0] as [string, unknown[]];
+    expect(statement).toContain('merged_into_user_id IS NULL');
+    expect(statement).not.toContain('COALESCE(requested.merged_into_user_id');
+    expect(params).toEqual([66]);
+  });
+
+  it('rejects UID-less legacy JWT resolution for accounts with a completed merge', async () => {
+    mocks.query.mockResolvedValueOnce([]);
+
+    expect(await findUserForLegacyWcaSession('2020TEST01')).toBeNull();
+    const [statement, params] = mocks.query.mock.calls[0] as [string, unknown[]];
+    expect(statement).toContain('retired.merged_into_user_id = active.id');
+    expect(params).toEqual(['2020TEST01']);
   });
 
   it.each(['0', '-1', '1.5', '9007199254740992', 'not-a-number'])(

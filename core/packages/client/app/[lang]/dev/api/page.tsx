@@ -71,9 +71,12 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   mcp mcp_oauth timer_replay_shares
+//   mcp mcp_oauth timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'content', m: 'GET', p: '/v1/cube-agents', g: 'public', c: 'no-store', zh: '国产模型魔方对比的配置、运行状态与最近一次真实结果；不返回 API 密钥', en: 'Domestic-model cube experiment availability, active state and latest real result; no API credentials' },
+  { d: 'content', m: 'POST', p: '/v1/cube-agents/runs', g: 'admin', c: 'no-store', zh: '管理员启动 Qwen3.8/DeepSeek 两组各四代理，SSE 推送真实转法、验证状态与用量；同一打乱、每代理六轮、总计 120 秒、每日最多 20 轮实验；断连取消，费用为未折扣人民币估算', en: 'Admin starts two teams of four Qwen3.8/DeepSeek agents; SSE streams moves, verified states and usage. Same scramble, six rounds per agent, 120-second deadline, 20 experiments/day, cancellation on disconnect, undiscounted CNY estimates' },
+  { d: 'content', m: 'POST', p: '/v1/site-assistant', g: 'login', c: 'no-store', zh: '仅登录且当前绑定真实 WCA ID 的账号可用；接口不要求浏览器验证码，服务器校验资格，拒绝不扣额度；所配置的模型（支持 DeepSeek 官方与百炼）结合公开全文索引和受限数据查询，支持连续对话、成绩表与 PR 曲线；只读公开内容；全站每天 1000 次持久额度（北京时间零点恢复），失败调用也计数；超额返回 429 daily_limit，普通搜索仍可使用；服务端最多 28 秒，区分验证、限流、超时、模型与数据源失败', en: 'Requires a signed-in account with a current real WCA ID; no browser CAPTCHA on this API; the server checks eligibility before charging quota. The configured model (official DeepSeek or Bailian) combines public full-text search and bounded read tools, with conversation history, result tables, PR charts and sources; a durable site-wide quota of 1000 questions per Beijing calendar day includes failed calls; exhausted quota returns 429 daily_limit while regular search remains available; a 28-second server budget and distinct verification, rate-limit, timeout, model and data-source errors' },
   { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-protected-resource/v1/mcp', g: 'public', c: 'no-store', zh: 'MCP 资源与授权服务器发现', en: 'MCP resource and authorization-server discovery' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-authorization-server', g: 'public', c: 'no-store', zh: 'OAuth 发现与 S256 PKCE 能力', en: 'OAuth discovery and S256 PKCE capabilities' },
@@ -724,9 +727,13 @@ const ENDPOINTS: Ep[] = [
   { d: 'notification', m: 'POST', p: '/v1/notifications/unsubscribe', g: 'public', zh: '一键退订(RFC 8058,邮件客户端调)', en: 'One-click unsubscribe (RFC 8058)' },
 
   // ---- friend ----
+  { d: 'friend', m: 'GET', p: '/v1/chat/stickers', g: 'login', c: 'no-store', zh: '读取本账号收藏的表情包', en: 'Read account sticker favorites' },
+  { d: 'friend', m: 'POST', p: '/v1/chat/stickers', g: 'login', c: 'no-store', zh: '上传不超过 2 MB 的 PNG、JPG、GIF 或 WebP 并收藏；验证文件头与尺寸，每天最多 50 个、总计 100 MB', en: 'Upload and save a PNG, JPG, GIF or WebP up to 2 MB; validate raster headers and dimensions, with limits of 50 daily uploads and 100 MB total' },
+  { d: 'friend', m: 'GET', p: '/v1/chat/stickers/:id/image', g: 'login', c: 'no-store', zh: '仅上传者、收藏者与相关会话参与者可读取图片原文件', en: 'Read original images as owner, favorites holder or conversation participant only' },
+  { d: 'friend', m: 'PUT', p: '/v1/chat/stickers/:id', g: 'login', c: 'no-store', zh: '通过 saved 收藏或取消收藏有权访问的表情包，不删除聊天图片', en: 'Use saved to favorite or unfavorite an accessible sticker without deleting message images' },
   { d: 'friend', m: 'GET', p: '/v1/chat/conversations', g: 'login', c: 'no-store', zh: '分页读取本人聊天会话、最新消息、未读数量与可发送状态；cursor 按最近消息时间和会话 ID 翻页', en: 'Page through own conversations with latest messages, unread counts, and send availability; cursor uses last-message time and conversation ID' },
   { d: 'friend', m: 'GET', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '读取与指定账号的消息及已读位置；before / after 按序号加载历史或增量，互斥；解除好友后已有历史仍可读', en: 'Read messages and read position for a peer; mutually exclusive before / after sequence cursors load history or new messages; existing history remains readable after friendship ends' },
-  { d: 'friend', m: 'POST', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '向未互相拉黑的已接受好友发送 1–2,000 字文字；clientMessageId 保证重试幂等，新消息返回 201，重放返回 200，同一标识正文不同返回 409', en: 'Send 1–2,000 characters to an accepted friend with no block in either direction; clientMessageId makes retries idempotent: 201 for new messages, 200 for replays, and 409 for reused IDs with different bodies' },
+  { d: 'friend', m: 'POST', p: '/v1/chat/peers/:peer/messages', g: 'login', c: 'no-store', zh: '向未互相拉黑的已接受好友发送 1–2,000 字文字或携带 stickerId 的图片表情包；clientMessageId 保证重试幂等，新消息返回 201，重放返回 200，同一标识正文不同返回 409', en: 'Send 1–2,000 characters or a stickerId image to an accepted friend with no block in either direction; clientMessageId makes retries idempotent: 201 for new messages, 200 for replays, and 409 for reused IDs with different bodies' },
   { d: 'friend', m: 'PUT', p: '/v1/chat/peers/:peer/read', g: 'login', c: 'no-store', zh: '用 throughSequence 单调推进本人已读位置，返回剩余未读数；读到最新消息时同步标记对应通知已读', en: 'Monotonically advance own read position using throughSequence and return remaining unread count; reaching the latest message also marks its notification read' },
   { d: 'friend', m: 'GET', p: '/v1/friends', g: 'login', c: 'no-store', zh: '好友、WCA 好友条目、收到 / 发出的申请与黑名单总览', en: 'Friends, saved WCA friend entries, incoming/outgoing requests, and blocked-user overview' },
   { d: 'friend', m: 'GET', p: '/v1/friends/search', g: 'login', c: 'no-store', zh: '按用户名、CubeRoot ID 或 WCA ID 搜索可见账号', en: 'Search visible accounts by username, CubeRoot ID, or WCA ID' },
@@ -959,6 +966,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/video/config', g: 'public', c: 'no-store', zh: '本站是否启用视频通话 + 单房人数/码率上限', en: 'Whether video calling is enabled, plus per-room participant and bitrate caps' },
   { d: 'timer', m: 'POST', p: '/v1/video/token', g: 'public', c: 'no-store', zh: '凭玩家 X-Battle-Token 换取短期 LiveKit 凭证；锁内复验 membership + 带宽预算', en: 'Mint a short-lived LiveKit token with the player’s X-Battle-Token after locked membership recheck and bandwidth admission' },
   { d: 'timer', m: 'POST', p: '/v1/video/meet/code', g: 'login', c: 'no-store', zh: '分配一个未被活跃会议或待创建会议占用的 4 位数字码', en: 'Allocate a four-digit numeric code not held by an active or pending meeting' },
+  { d: 'timer', m: 'GET', p: '/v1/video/meet/plans', g: 'login', c: 'no-store', zh: '读取本人会议预约', en: 'List own scheduled meetings' },
+  { d: 'timer', m: 'POST', p: '/v1/video/meet/plans', g: 'login', c: 'no-store', zh: '创建预约和周期会议，永久保留会议码', en: 'Schedule a meeting or series with a reserved code' },
+  { d: 'timer', m: 'PATCH', p: '/v1/video/meet/plans/:id', g: 'login', c: 'no-store', zh: '编辑或取消本人预约（整个周期）', en: 'Edit or cancel own meeting or entire series' },
   { d: 'timer', m: 'POST', p: '/v1/video/meet/token', g: 'login', c: 'no-store', zh: '换取会议室 LiveKit 凭证(校验 4 位会议码 + 带宽预算)', en: 'Mint a meeting-room LiveKit token (validates the four-digit code and bandwidth budget)' },
 
   // ---- calendar ----

@@ -135,6 +135,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 形变拼图先完整验证公式序列再改状态/队列；拖拽拾取与播放前统一清除半转冻结，别只清 NxN controller 的锁。
 
 ## 验证(必做)
+- 多视口 AI 回放复用 NxN 引擎，按每次真实尝试从原始状态复位，压缩短间隔内的转动并在验证成功且完整播完后展开胜者；保留原模型标签和不完整用量提示。
 - NxN 房间装饰复用 `room-cube.ts`，按 HOME 块索引跟随 `getCubeletRenderMatrix`，切主题时释放自有几何并恢复原渲染器，遍历主题与支持阶数验证边界及转动中间帧。
 - 干净 worktree/新 clone 先 `pnpm -F @cuberoot/shared build && pnpm -F @cuberoot/visualcube build`(否则 typecheck/dev 报缺 `@cuberoot/visualcube`/`@cuberoot/shared/admin`)。
 - `pnpm --filter @cuberoot/client typecheck`(tsgo)。

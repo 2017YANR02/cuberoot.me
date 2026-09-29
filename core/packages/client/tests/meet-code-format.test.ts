@@ -55,8 +55,10 @@ describe('会议码 — 客户端与服务端统一为四位数字', () => {
     const src = readFileSync(SERVER_ROUTE, 'utf8');
     expect(src).toContain("post('/video/meet/code'");
     expect(src).toContain('svc().listRooms()');
-    expect(src).toContain('pendingMeetCodes');
-    expect(src).toContain('pickAvailableRoomCode(occupied)');
+    expect(src).toContain('reserveMeetingCode(tx, occupied, false)');
+    const allocator = readFileSync(workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'video_meetings.ts'), 'utf8');
+    expect(allocator).toContain('pg_advisory_xact_lock');
+    expect(allocator).toContain('pickAvailableRoomCode(occupied)');
   });
 });
 

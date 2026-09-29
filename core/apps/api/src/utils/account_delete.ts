@@ -20,6 +20,7 @@ import { sql } from '../db/connection.js';
 import { deletedOwnerKey } from '@cuberoot/shared/account';
 import { removeDriveAccountFiles } from './drive_storage.js';
 import { revokeAppleIdentities, type AppleRevocationIdentity } from './apple_login.js';
+import { purgeOrphanedStickers } from './chat_stickers.js';
 
 /** 私有数据:[表, 归属列]。整行删除。 */
 export const PURGE_TABLES: readonly (readonly [string, string])[] = [
@@ -51,6 +52,7 @@ export const PURGE_TABLES: readonly (readonly [string, string])[] = [
   ['calendar_events', 'owner_key'],      // 我的日程(删日历也会级联,这里显式兜一遍)
   ['calendars', 'owner_key'],            // 日历本体
   ['calendar_shares', 'owner_key'],      // 对外展示设置 + 分享 token
+  ['video_meetings', 'owner_key'],      // 私人会议安排；无身份信息的预留码保留，避免旧链接指向新会议
   // 导入批次行。事件和日历都已在上面删掉了,但批次行不会跟着走 —— 那两列是
   // ON DELETE SET NULL,删的是被指向的一方,批次自己留了下来,还带着导入文件名。
   ['calendar_imports', 'owner_key'],     // 一次 .ics / .zip 导入一行(source = 原文件名)
@@ -156,6 +158,8 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',
   friend_chat_conversations: '私人聊天在任一参与账号注销时整段级联删除',
   friend_chat_messages: '私人聊天消息随会话或发送账号级联删除',
+  friend_chat_sticker_favorites: '表情包收藏随账号级联删除',
+  friend_chat_stickers: '上传者归属随账号清空；删除无会话和收藏引用的图片，其余仅保留其他用户持有的副本',
   user_blocks: '黑名单关系的双向账号外键都随 app_users 级联删',
   user_wca_friend_contacts: '未注册 WCA 好友条目只属于账号本人,随 app_users 级联删',
   user_pets: '私人宠物领养与养成数据通过 user_id 外键随 app_users 级联删',
@@ -421,6 +425,7 @@ export async function deleteAccount(userId: number, key: string): Promise<void> 
     // 最后删账号本体。auth_identities 有 ON DELETE CASCADE(0064),Platform 由 0168
     // 的 BEFORE DELETE trigger 在同一事务内完整清理并匿名化。
     await tx`DELETE FROM app_users WHERE id = ${userId}`;
+    await purgeOrphanedStickers(tx);
   });
 
   // 数据库提交后再清实体文件:事务失败时仍保留可用文件；成功后已没有账号可继续写这些路径。

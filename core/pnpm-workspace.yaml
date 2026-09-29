@@ -13,3 +13,12 @@ allowBuilds:
   sharp: false # next/image native build,POC 不用图片优化跳过
 patchedDependencies:
   cubing@0.63.3: patches/cubing@0.63.3.patch
+# These packages publish Three.js declarations without a types dependency.
+# Pin their matching types so installs cannot resolve cubing's older hoisted types.
+packageExtensions:
+  'three-bvh-csg@0.0.18':
+    dependencies:
+      '@types/three': '0.183.1'
+  'three-mesh-bvh@0.9.10':
+    dependencies:
+      '@types/three': '0.183.1'

@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import {
   analyzer, appendData, appendUniqueById, coreDir, exe, exists, fileSize, ids, jobDir, lineCount, lines,
   puzzleDir, recordSeconds, repoRoot, run, runNode, runPnpm, runTs, solverDir, stamp,
-  tableDir, wcaDir,
+  tableDir, taskProgress, wcaDir,
 } from './common.js';
 import { runPuzzles } from './puzzles.js';
 
@@ -159,13 +159,15 @@ async function syncVariant(name: string, options: Options): Promise<boolean> {
     await appendData(csvFile, output, await fileSize(csvFile) > 0);
     await unlink(output);
     chunks++;
-    console.log(`[${name}] ${Math.min(i + size, missing.length)}/${missing.length}`);
     if (options.maxChunks && chunks >= options.maxChunks) break;
   }
+  console.log(`[${name}] 已补 ${Math.min(chunks * size, missing.length)}/${missing.length} 条`);
   return true;
 }
 
 async function runStages(options: Options): Promise<{ nNew: number; stdChanged: boolean; variantChanged: boolean }> {
+  const units = 2 + options.variants.length;
+  let completedUnits = 0;
   const recovered = options.dryRun ? false : await syncStageTriplet(false);
   console.log('\n=== stages: 增量取数 ===');
   const incrArgs = ['--data-dir', wcaDir];
@@ -173,6 +175,7 @@ async function runStages(options: Options): Promise<{ nNew: number; stdChanged: 
   if (options.useCached) incrArgs.push('--use-cached');
   if (options.dryRun) incrArgs.push('--dry-run');
   await runTs(join(jobDir, 'src', 'incremental.ts'), incrArgs);
+  if (!options.dryRun) taskProgress('stages', ++completedUnits, units);
   if (options.dryRun) {
     console.log('[dry-run] 只读检查完成');
     return { nNew: 0, stdChanged: false, variantChanged: false };
@@ -192,18 +195,26 @@ async function runStages(options: Options): Promise<{ nNew: number; stdChanged: 
     console.log('\n=== stages: 幂等同步 CSV ===');
     stdChanged = await syncStageTriplet(true) || stdChanged;
   }
+  taskProgress('stages', ++completedUnits, units);
   if (options.variants.length) {
     console.log(`\n=== stages: 补缺 ${options.variants.join(', ')} ===`);
     if (!await exists(master)) throw new Error(`Missing stage corpus: ${master}`);
-    for (const name of options.variants) if (await syncVariant(name, options)) variantChanged = true;
+    for (const name of options.variants) {
+      if (await syncVariant(name, options)) variantChanged = true;
+      taskProgress('stages', ++completedUnits, units);
+    }
   }
   return { nNew, stdChanged, variantChanged };
 }
 
 async function run333(options: Options, inject: boolean): Promise<boolean> {
+  const solve = options.jobs.includes('333opt') && !options.skipSolve333;
+  const units = Number(solve) + (inject ? 3 : 0);
+  let completedUnits = 0;
   if (options.jobs.includes('333opt') && !options.skipSolve333) {
     console.log('\n=== 333opt: H48 h10 续解 ===');
     await runTs(join(solverDir, '333opt', 'solve_h10.mts'), [], coreDir, { ...process.env, CUBE_TABLE_DIR: tableDir, RAYON_NUM_THREADS: String(availableParallelism()) });
+    taskProgress('333opt', ++completedUnits, units);
   }
   if (!inject) return false;
   const outputs = (await readdir(join(solverDir, '333opt'))).filter(name => /^out\..*\.csv$/.test(name));
@@ -211,6 +222,7 @@ async function run333(options: Options, inject: boolean): Promise<boolean> {
   console.log('\n=== 333opt: 注入分布、首次出现与最优打乱 ===');
   for (const script of ['inject.mjs', 'inject_first_appearance.mjs', 'export_optimal.mjs']) {
     await runNode(join(solverDir, '333opt', script), [], repoRoot);
+    taskProgress('333opt', ++completedUnits, units);
   }
   return true;
 }
@@ -244,7 +256,8 @@ async function main(): Promise<void> {
     const started = Date.now();
     summary.active = name;
     await persist();
-    try { await action(); }
+    taskProgress(name, 0, 1);
+    try { await action(); taskProgress(name, 1, 1); }
     finally { summary.steps.push({ name, seconds: (Date.now() - started) / 1000 }); delete summary.active; await persist(); }
   };
   let nNew = 0; let stdChanged = false; let variantChanged = false; let puzzleChanged = false; let optChanged = false;
@@ -261,9 +274,13 @@ async function main(): Promise<void> {
     });
     if (options.jobs.includes('puzzles')) await step('puzzles', async () => {
       partial.push(...await runPuzzles(options.puzzles));
+      taskProgress('puzzles', 1, 4);
       await runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:puzzle-examples']);
+      taskProgress('puzzles', 2, 4);
       await runTs(join(jobDir, 'src', 'build_puzzle_first_appearance.ts'));
+      taskProgress('puzzles', 3, 4);
       await runNode(join(jobDir, 'export_puzzle_optimal.mjs'));
+      taskProgress('puzzles', 4, 4);
       puzzleChanged = true;
     });
     if (options.jobs.includes('stages')) stageBuildPending = stdChanged || variantChanged || await stageBuildIsStale();
@@ -276,8 +293,10 @@ async function main(): Promise<void> {
       return;
     }
     if (stageBuildPending) await step('build-stage-json', async () => {
-      for (const command of ['build', 'build:first-appearance', 'build:wca-cross', 'build:comp-steps']) {
+      const commands = ['build', 'build:first-appearance', 'build:wca-cross', 'build:comp-steps'];
+      for (const [index, command] of commands.entries()) {
         await runPnpm(['--filter', '@cuberoot/scramble-stats-build', command], coreDir, buildEnv);
+        taskProgress('build-stage-json', index + 1, commands.length);
       }
       await writeFile(stageBuildStamp, await stageSourceSnapshot());
     });

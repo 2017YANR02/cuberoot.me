@@ -9,7 +9,7 @@ import { generateTimerScramble } from '@cuberoot/shared/timer';
 import { TwistyPlayer } from 'cubing/twisty';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { SOLVED_3X3 } from '@cuberoot/puzzle-solvers/timer-333-cube';
-import { act, createElement } from 'react';
+import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -21,38 +21,11 @@ import {
 import { COPY } from './copy';
 import type { InstalledAppNetBattle } from './platform';
 
-// Room history uses the real shared preview component. jsdom has no
-// constructable stylesheet/WebGL implementation; isolate only its renderer.
-// cubing is a direct test dependency so this mock resolves to the same module
-// as timer-ui's lazy import rather than an unresolved virtual module.
-vi.mock('cubing/twisty', () => ({
-  TwistyPlayer: vi.fn(function () {
-    const player = document.createElement('div');
-    player.dataset.testTwistyPlayer = '';
-    return player;
-  }),
-}));
-
 vi.mock('@cuberoot/shared/timer', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@cuberoot/shared/timer')>();
   return {
     ...actual,
     generateTimerScramble: vi.fn(),
-  };
-});
-
-vi.mock('@cuberoot/timer-ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@cuberoot/timer-ui')>();
-  return {
-    ...actual,
-    TimerCubePreview: ({ ariaLabel, visualization }: {
-      ariaLabel?: string;
-      visualization?: '2D' | '3D';
-    }) => createElement('div', {
-      'aria-label': ariaLabel,
-      'data-preview-visualization': visualization,
-      role: 'img',
-    }),
   };
 });
 
@@ -191,9 +164,9 @@ describe('installed app multiplayer modes', () => {
     );
     await act(async () => draw(true, false));
     const readout = host.querySelector('.timer-display');
-    expect(host.querySelectorAll('[data-preview-visualization="2D"]')).toHaveLength(2);
+    await vi.waitFor(() => expect(host.querySelectorAll('[data-visualization="2D"]')).toHaveLength(2));
     await act(async () => draw(true, true));
-    expect(host.querySelectorAll('[data-preview-visualization="3D"]')).toHaveLength(2);
+    await vi.waitFor(() => expect(host.querySelectorAll('[data-visualization="3D"]')).toHaveLength(2));
     expect(host.querySelector('.timer-display')).toBe(readout);
     await act(async () => draw(false, true));
     expect(host.querySelector('.timing-surface-cube-frame')).toBeNull();
@@ -296,8 +269,11 @@ describe('installed app multiplayer modes', () => {
     const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame[data-no-timer]');
     expect(preview).not.toBeNull();
     expect(preview?.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(COPY.en.cubeState);
-    expect(preview?.querySelector<HTMLElement>('[role="img"]')
-      ?.dataset.previewVisualization).toBe('3D');
+    await vi.waitFor(() => {
+      const player = preview?.querySelector<HTMLElement>('[data-test-twisty-player]');
+      expect(player?.dataset.visualization).toBe('3D');
+      expect(player?.dataset.scramble).toBe("R U R'");
+    });
     const surface = host.querySelector<HTMLElement>('.timer-room-stage .timing-surface')!;
     expect(surface.classList.contains('timing-surface--net')).toBe(true);
     expect(surface.firstElementChild?.classList.contains('timing-surface-scramble-top')).toBe(true);

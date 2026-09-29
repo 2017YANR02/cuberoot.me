@@ -99,6 +99,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'CubeRoot administration hub for user growth, memberships, sponsorships, and moderation tools.',
     },
   },
+  'admin/interview': {
+    title: { zh: '采访准备', en: 'Interview preparation' },
+    description: { zh: '管理员专属采访准备。', en: 'Private interview preparation for administrators.' },
+  },
   'admin/users': {
     title: { zh: '用户与增长', en: 'Users and Growth' },
     description: {
@@ -387,6 +391,10 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/traffic-incident-2026-09': {
     title: { zh: '2026 年 9 月流量事件记录', en: 'September 2026 traffic incident' },
     description: { zh: 'CubeRoot 9 月 22—25 日流量事件记录：Vercel 截图、日志分析、停站与恢复过程、防护措施和待解决的问题。', en: 'CubeRoot traffic incident, September 22–25: Vercel screenshots, log analysis, pauses, reopening, protection changes and remaining issues.' },
+  },
+  'dev/dns-routing': {
+    title: { zh: '同一个网址，为什么会连到不同的服务器？', en: 'Why can one web address reach different servers?' },
+    description: { zh: '从浏览器打开网页讲起，说明同一网址为何会连到不同服务器、服务器为何会让浏览器改网址，以及 Cloudflare 免费版能否让国内走阿里云、国外走 Cloudflare。', en: 'Follow a browser visit to see why one web address can reach different servers, why the address bar changes, and whether Cloudflare Free can serve overseas visitors while China remains on Alibaba.' },
   },
   'dev/ops': { title: { zh: '运维', en: 'Ops' } },
   'dev/schema': { title: { zh: '数据库 Schema', en: 'Database schema' } },
@@ -720,6 +728,13 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     },
   },
   'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
+  'sim/agents': {
+    title: { zh: 'AI 解魔方对比', en: 'AI Cube Challenge' },
+    description: {
+      zh: '两组国产大模型各派四个代理解二阶魔方，比较真实耗时、探索状态、Token 用量和估算费用，并回放每次尝试。',
+      en: 'Qwen and DeepSeek each send four agents to solve the same 2×2 cube. Compare measured time, explored states, token usage and estimated costs, then replay their attempts.',
+    },
+  },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },
   'solver': { title: { zh: '求解器', en: 'Solver' } },
   'stroop': {

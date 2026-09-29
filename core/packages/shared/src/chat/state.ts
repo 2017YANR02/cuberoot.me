@@ -1,9 +1,9 @@
 import {
-  CHAT_LIST_POLL_MS, CHAT_MESSAGE_LIMIT, CHAT_POLL_MS, ChatError, compareChatSequence, normalizeChatBody,
+  CHAT_LIST_POLL_MS, CHAT_MESSAGE_LIMIT, CHAT_POLL_MS, CHAT_STICKER_BODY, ChatError, compareChatSequence, normalizeChatBody, isChatUuid,
   type ChatClient, type ChatConversation, type ChatErrorCode, type ChatMessage, type ChatMessagesPage,
 } from './contract';
 
-export interface PendingChatMessage { clientMessageId: string; body: string; status: 'sending' | 'failed' }
+export interface PendingChatMessage { clientMessageId: string; body: string; stickerId?: string; status: 'sending' | 'failed' }
 export interface ChatSnapshot {
   peerId: number | null; page: ChatMessagesPage | null; messages: ChatMessage[]; pending: PendingChatMessage[];
   draft: string; loading: boolean; loadingOlder: boolean; hasOlder: boolean; hasNewerGap: boolean; error: ChatErrorCode | null;
@@ -127,7 +127,9 @@ export function createChatController(options: ChatControllerOptions) {
         const merged = mergeChatMessages(state.messages, page.items, older || !atBottom || state.hasNewerGap);
         const newestKnown = maxSequence(state.messages.at(-1)?.sequence ?? '0', page.items.at(-1)?.sequence ?? '0');
         const hasNewerGap = state.hasNewerGap || compareChatSequence(newestKnown, merged.at(-1)?.sequence ?? '0') > 0;
-        publish({ page: { ...page, myReadSequence: maxSequence(page.myReadSequence, state.page?.myReadSequence ?? '0') },
+        publish({ page: { ...page, myReadSequence: maxSequence(page.myReadSequence, state.page?.myReadSequence ?? '0'),
+          peerReadSequence: page.peerReadSequence === undefined ? state.page?.peerReadSequence
+            : maxSequence(page.peerReadSequence, state.page?.peerReadSequence ?? '0') },
           messages: merged, hasNewerGap, pending,
           hasOlder: older || initial ? page.hasMore : state.hasOlder || state.messages.length + page.items.length > CHAT_MESSAGE_LIMIT,
           error: null });
@@ -145,18 +147,21 @@ export function createChatController(options: ChatControllerOptions) {
       }
     }
   }
-  async function send(clientMessageId?: string) {
+  async function send(clientMessageId?: string, stickerId?: string) {
     const peer = state.peerId;
     if (!peer || !state.page?.canSend || disposed || state.listError === 'UNAUTHENTICATED') return;
     const old = clientMessageId ? state.pending.find((p) => p.clientMessageId === clientMessageId) : undefined;
     if (clientMessageId && (!old || old.status === 'sending')) return;
-    const body = old?.body ?? normalizeChatBody(state.draft);
+    if (stickerId !== undefined && !isChatUuid(stickerId)) { publish({ error: 'INVALID_INPUT' }); return; }
+    const body = old?.body ?? (stickerId ? CHAT_STICKER_BODY : normalizeChatBody(state.draft));
     if (!body) { publish({ error: 'INVALID_INPUT' }); return; }
-    const item: PendingChatMessage = { clientMessageId: old?.clientMessageId ?? options.uuid(), body, status: 'sending' };
+    const attachment = old?.stickerId ?? stickerId;
+    const item: PendingChatMessage = { clientMessageId: old?.clientMessageId ?? options.uuid(), body,
+      ...(attachment ? { stickerId: attachment } : {}), status: 'sending' };
     const pending = [...state.pending.filter((p) => p.clientMessageId !== item.clientMessageId), item];
     outbox.set(peer, pending);
-    if (!old) drafts.set(peer, '');
-    publish({ pending, draft: old ? state.draft : '', error: null });
+    if (!old && !attachment) drafts.set(peer, '');
+    publish({ pending, draft: old || attachment ? state.draft : '', error: null });
     const version = generation;
     const request = new AbortController(); writes.add(request);
     try {

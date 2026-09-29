@@ -259,6 +259,8 @@ const TEST_PATHS = [
   repoPath('ops', 'nginx', '**'),
   repoPath('ops', 'vercel-ban-relay', 'competition-rule.json'),
   repoPath('ops', 'systemd', 'cuberoot-drive-compression.service'),
+  repoPath('ops', 'bin', 'pg-dump-recon.sh'),
+  repoPath('ops', 'systemd', 'pg-dump-recon.service'),
   repoPath('.github', 'workflows', 'backup_recon.yml'),
   repoPath('.github', 'workflows', 'best2x2_drift.yml'),
   repoPath('.github', 'workflows', 'deploy_core.yml'),

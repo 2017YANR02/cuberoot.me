@@ -1,14 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { ChatError } from '@cuberoot/shared/chat';
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), limit: vi.fn(), messages: vi.fn(), conversations: vi.fn(), send: vi.fn(), read: vi.fn() }));
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), limit: vi.fn(), messages: vi.fn(), conversations: vi.fn(), send: vi.fn(), read: vi.fn(), upload: vi.fn(), image: vi.fn(), save: vi.fn(), list: vi.fn() }));
 vi.mock('../src/utils/app_user_auth.js', () => ({ requireAppUserId: mocks.auth }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: mocks.limit }));
 vi.mock('../src/utils/chat_repository.js', () => ({ chatRepository: mocks }));
+vi.mock('../src/utils/chat_stickers.js', () => ({ stickerRepository: mocks }));
 import { chatRoutes } from '../src/routes/chat.js';
 const app = new Hono().route('/v1', chatRoutes);
 beforeEach(() => { vi.resetAllMocks(); mocks.auth.mockResolvedValue(42); mocks.messages.mockResolvedValue({ items: [] }); });
 describe('friend chat HTTP boundary', () => {
+  it('keeps uploads binary, authenticated and uncached without widening message limits', async () => {
+    const data = new Uint8Array(40_000).fill(7);
+    mocks.upload.mockResolvedValue({ id: 'sticker' });
+    const r = await app.request('/v1/chat/stickers', { method: 'POST', headers: { 'Content-Type': 'image/gif' }, body: data });
+    expect(r.status).toBe(201);
+    expect(mocks.upload).toHaveBeenCalledWith(42, Buffer.from(data));
+    expect(r.headers.get('Cache-Control')).toBe('no-store');
+    mocks.image.mockResolvedValue({ data: Buffer.from([1, 2, 3]), mime: 'image/gif' });
+    const image = await app.request('/v1/chat/stickers/id/image');
+    expect(image.headers.get('Content-Type')).toBe('image/gif');
+    expect(image.headers.get('Cache-Control')).toBe('no-store');
+    expect(image.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(mocks.image).toHaveBeenCalledWith(42, 'id');
+    expect((await app.request('/v1/chat/stickers/id', { method: 'PUT', body: '{"saved":"true"}' })).status).toBe(400);
+  });
   it('requires authentication and never caches errors', async () => {
     mocks.auth.mockRejectedValue(new Error('Authentication required'));
     const r = await app.request('/v1/chat/conversations');

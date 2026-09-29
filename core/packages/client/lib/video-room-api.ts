@@ -87,6 +87,7 @@ export type VideoDenyReason =
   | 'invalid'
   /** 会议室要求登录。 */
   | 'auth'
+  | 'cancelled'
   | 'video not configured';
 
 export class VideoDeniedError extends Error {
@@ -135,8 +136,8 @@ export async function getVideoToken(code: string, pid: string, playerToken: stri
  * 客户端报不了自己是谁,所以会议里不可能出现顶着别人名字的画面。
  * 拿到 token 意味着「已登录 + 码合法 + 房没满 + 有带宽」。
  */
-export async function getMeetToken(code: string): Promise<VideoToken> {
-  return postToken('/v1/video/meet/token', { code }, true);
+export async function getMeetToken(code: string, signal?: AbortSignal): Promise<VideoToken> {
+  return postToken('/v1/video/meet/token', { code }, true, {}, signal);
 }
 
 export async function getCompetitionVideoToken(registrationId: string): Promise<VideoToken> {
@@ -163,10 +164,15 @@ async function postToken(
   body: Record<string, string>,
   authed = false,
   extraHeaders: Record<string, string> = {},
+  signal?: AbortSignal,
 ): Promise<VideoToken> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extraHeaders };
   if (authed) headers.Authorization = `Bearer ${getSessionToken()}`;
-  const res = await fetch(apiUrl(path), { method: 'POST', headers, body: JSON.stringify(body) });
+  const deadline = AbortSignal.timeout(20_000);
+  const res = await fetch(apiUrl(path), {
+    method: 'POST', headers, body: JSON.stringify(body),
+    signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
+  });
   if (!res.ok) return throwVideoDenied(res);
   return res.json();
 }
@@ -177,7 +183,7 @@ async function throwVideoDenied(res: Response): Promise<never> {
   // 服务端的 400 文案是 'invalid code/id/name' 这种带细节的串,收敛成一个 reason。
   const raw = msg.error ?? '';
   const known: ReadonlySet<string> = new Set([
-    'full', 'bandwidth', 'unavailable', 'not in room', 'changed', 'auth', 'video not configured',
+    'full', 'bandwidth', 'unavailable', 'not in room', 'changed', 'auth', 'cancelled', 'video not configured',
   ]);
   const reason: VideoDenyReason = raw.startsWith('invalid')
     ? 'invalid'

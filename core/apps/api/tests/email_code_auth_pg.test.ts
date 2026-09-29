@@ -214,7 +214,7 @@ describe.skipIf(!enabled)('email code lifecycle on dedicated PostgreSQL', () => 
     const owner = await loginWithIdentity('email', 'replace-old@example.invalid', { name: 'owner' });
     const issued = await sent('replace-new@example.invalid', 'link');
     await sql.unsafe(`CREATE TRIGGER fail_identity BEFORE INSERT OR UPDATE ON auth_identities FOR EACH ROW EXECUTE FUNCTION reject_email_identity();`);
-    await expect(bindEmailWithCode(owner.user.id, 'replace-new@example.invalid', issued.code, true)).rejects.toMatchObject({ code: 'conflict' });
+    await expect(bindEmailWithCode(owner.user.id, 'replace-new@example.invalid', issued.code, true)).rejects.toThrow('synthetic identity failure');
     expect((await row(issued.id)).consumed_at).toBeNull(); expect((await findUserByIdentity('email', 'replace-old@example.invalid'))?.id).toBe(owner.user.id);
     await sql`DROP TRIGGER fail_identity ON auth_identities`;
     expect((await bindEmailWithCode(owner.user.id, 'replace-new@example.invalid', issued.code, true)).verified).toBe(true);

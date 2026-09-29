@@ -52,6 +52,7 @@ jobs:
             core
             ops/nginx
             ops/systemd
+            ops/bin
           filter: blob:none
 
       - uses: pnpm/action-setup@v4

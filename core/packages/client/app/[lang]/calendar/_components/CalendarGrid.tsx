@@ -47,6 +47,7 @@ interface Props {
   hour24: boolean;
   weekStart: 0 | 1;
   weekends: boolean;
+  weekNumbers?: boolean;
   editable: boolean;
   /** 拖出一段空白 → 新建 */
   onSelect?: (start: number, end: number, allDay: boolean) => void;
@@ -106,6 +107,8 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
         nowIndicator
         firstDay={props.weekStart}
         weekends={props.weekends}
+        weekNumbers={props.weekNumbers ?? false}
+        weekNumberCalculation="ISO"
         dayMaxEvents
         editable={props.editable}
         eventStartEditable={props.editable}

@@ -5,7 +5,7 @@
  * Ported from packages/client-vite/src/components/ListSelect/ListSelect.tsx.
  * caller 预格式化 label / hint / country / searchTerms,组件不做本地化。
  */
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, X } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -59,6 +59,35 @@ export function ListSelect({ items, value, onChange, allLabel, className, search
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   usePanelClamp(open, panelRef);
+
+  // The horizontal clamp cannot keep a menu above a phone keyboard or the bottom edge.
+  // Flip toward the larger space and scroll within that space, rather than off the page.
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    const anchor = ref.current;
+    if (!open || !panel || !anchor) return;
+    const place = () => {
+      const rect = anchor.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const top = viewport?.offsetTop ?? 0;
+      const bottom = top + (viewport?.height ?? window.innerHeight);
+      const above = Math.max(0, rect.top - top - 12);
+      const below = Math.max(0, bottom - rect.bottom - 12);
+      const upwards = below < Math.min(panel.scrollHeight, 330) && above > below;
+      panel.style.top = upwards ? 'auto' : 'calc(100% + 4px)';
+      panel.style.bottom = upwards ? 'calc(100% + 4px)' : 'auto';
+      panel.style.maxHeight = `${Math.max(0, upwards ? above : below)}px`;
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    window.visualViewport?.addEventListener('resize', place);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+      window.visualViewport?.removeEventListener('resize', place);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;

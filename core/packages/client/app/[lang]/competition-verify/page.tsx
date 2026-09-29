@@ -17,10 +17,19 @@ export default function CompetitionVerifyPage() {
   const [answer, setAnswer] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  function blockedMessage(response: Response) {
+    const seconds = Number(response.headers.get('retry-after'));
+    if (Number.isFinite(seconds) && seconds > 0) {
+      const minutes = Math.ceil(seconds / 60);
+      return t(`当前网络 IP 被临时限制，验证码也暂时不可用。请约 ${minutes} 分钟后重试。`, `This network IP is temporarily blocked, including verification. Try again in about ${minutes} minutes.`);
+    }
+    return t('当前网络 IP 被临时限制，验证码也暂时不可用。请稍后重试或联系站点管理员。', 'This network IP is temporarily blocked, including verification. Try again later or contact the site administrator.');
+  }
   async function refresh() {
     setBusy(true); setError(''); setChallenge(null); setAnswer('');
     try {
       const response = await fetch(apiUrl('/v1/competition-access/challenge'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
+      if (response.status === 403) throw new Error(blockedMessage(response));
       if (!response.ok) throw new Error(response.status === 429 ? t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.') : t('验证码暂时无法加载，请重试。', 'Could not load the image. Please retry.'));
       setChallenge(await response.json());
     } catch (e) { setError(e instanceof Error ? e.message : t('加载失败，请重试。', 'Loading failed. Please retry.')); }
@@ -36,7 +45,14 @@ export default function CompetitionVerifyPage() {
         method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id: challenge.id, answer }), signal: AbortSignal.timeout(15_000),
       });
-      if (!response.ok) throw new Error(response.status === 429 ? t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.') : t('验证码错误或已过期，请重试或换一张。', 'Incorrect or expired code. Try again or get a new image.'));
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null);
+        if (response.status === 429) throw new Error(t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.'));
+        if (failure?.code === 'captcha_incorrect_or_expired') throw new Error(t('验证码错误或已过期，请重试或换一张。', 'Incorrect or expired code. Try again or get a new image.'));
+        if (failure?.code === 'invalid_origin') throw new Error(t('当前访问地址未获验证服务允许，请检查开发代理配置。', 'The verification service rejected this site address. Check the development proxy configuration.'));
+        if (response.status === 403) throw new Error(blockedMessage(response));
+        throw new Error(t('验证服务暂时不可用，请稍后重试。', 'Verification is temporarily unavailable. Please try again later.'));
+      }
       const check = await fetch(apiUrl('/v1/competition-access/check'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (!check.ok) throw new Error(t('浏览器未保存验证凭证，请允许本站 Cookie 后重试。', 'The browser did not save verification. Allow site cookies and retry.'));
       window.location.replace(safeCompetitionReturn(returnTo));

@@ -1,4 +1,4 @@
-/** Intake status stays on one terminal line; redirected logs get sparse updates. */
+/** Intake status is sparse so long jobs remain visible without flooding Terminal. */
 export function duration(seconds: number): string {
   const s = Math.max(0, Math.ceil(seconds));
   return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(n => String(n).padStart(2, '0')).join(':');
@@ -13,20 +13,28 @@ export function downloadStatus(done: number, total: number, received: number, se
   return `${size}${percent} | ${(rate / 1e6).toFixed(1)} MB/s | 剩余 ${eta}`;
 }
 
-export function intakeProgress(label: string, detail: () => string = () => ''): () => void {
+export function intakeProgress(label: string, detail: () => string = () => ''): (completed?: boolean) => void {
   const started = Date.now();
-  const tty = !!process.stdout.isTTY;
-  const render = () => {
+  let lastDetail = detail();
+  let lastPercent = -1;
+  let printed = false;
+  const render = (final = false, completed = true) => {
     const extra = detail();
-    const line = `[取数] ${label}${extra ? ` | ${extra}` : ''} | 已运行 ${duration((Date.now() - started) / 1000)}`;
-    process.stdout.write(tty ? `\r\x1b[2K${line}` : `${line}\n`);
+    const match = /\((\d+(?:\.\d+)?)%\)/.exec(extra);
+    const percent = match ? Math.floor(Number(match[1])) : null;
+    if (percent !== null) {
+      if (!final && percent === 0 && lastPercent < 0) return;
+      if (percent <= lastPercent || (!final && lastPercent >= 0 && percent - lastPercent < 10)) return;
+    } else if (!final || (printed && extra === lastDetail)) return;
+    console.log(`[取数] ${label}${extra ? ` | ${extra}` : ''}${final && !extra.includes('%') ? ` | ${completed ? '100%' : '中断'}` : ''} | ${final ? '用时' : '已运行'} ${duration((Date.now() - started) / 1000)}`);
+    lastDetail = extra;
+    if (percent !== null) lastPercent = percent;
+    printed = true;
   };
-  render();
-  const timer = setInterval(render, tty ? 1000 : 60_000);
+  const timer = setInterval(render, 30_000);
   timer.unref();
-  return () => {
+  return (completed = true) => {
     clearInterval(timer);
-    render();
-    if (tty) process.stdout.write('\n');
+    render(true, completed);
   };
 }
