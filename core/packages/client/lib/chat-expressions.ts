@@ -2,9 +2,8 @@ import type { ChatExpressionPack } from '@cuberoot/app-ui/chat';
 import { resolveDeskPets, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
 import { PET_GALLERY } from './deskpet-gallery';
 import { THEMES, THEME_IDS } from './deskpet-themes';
-import wechat from './chat-wechat.json';
-
-export const WECHAT_EXPRESSION_PACK: ChatExpressionPack = { id: 'wechat', zh: '微信表情', en: 'WeChat emoji', items: wechat };
+// WeChat artwork is withheld pending distribution rights. Do not import its
+// archived manifest: unknown legacy tokens already fall back to plain text.
 
 /** Same visibility and asset manifests as the pet selector, without the admin bypass.
  * Tokens refer to stable character/file identities, never copied image URLs or versions.
