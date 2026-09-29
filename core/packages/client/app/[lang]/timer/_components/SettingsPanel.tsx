@@ -60,7 +60,7 @@ import {
   type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
-import { TimerPreScrambleSettings } from '@cuberoot/timer-ui';
+import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
 import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 
@@ -626,20 +626,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
 
         <SettingsSection category="scramble" activeCategory={activeCategory}>
           <TimerPreScrambleSettings value={s} onChange={updateSettings} localize={tr} />
-          {settingState('settings.scramble.color-neutral').visible && (
-            <SettingRow id="settings.scramble.color-neutral">
-              <select
-                className="settings-row-control-select"
-                value={s.cnMode}
-                onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
-              >
-                <option value="none">{tr({ zh: '固定白底', en: 'None (white)' })}</option>
-                <option value="single">{tr({ zh: '单面随机', en: 'Single (random)' })}</option>
-                <option value="dual">{tr({ zh: '双面（白黄）', en: 'Dual (white/yellow)' })}</option>
-                <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
-              </select>
-            </SettingRow>
-          )}
+          <TimerColorNeutralSetting event={event} value={s.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
