@@ -14,8 +14,8 @@
  * 与 /timer 对战房里那条视频的**唯一**授权区别:对战房有在册名单(pid 必须在
  * battle_rooms.players 里)且免登录;会议室要登录,进哪一间由 4 位数字会议码决定。
  *
- * 本站不存任何会议记录:房在首个人真正连接时由 LiveKit 自动创建、没人了自动关。
- * 因此既没有「会议列表」可以被人翻,也不需要清理任务。刷新页面会带着 ?room= 回到同一场会。
+ * 预约保存主题、时间和周期，不保存通话或聊天内容。媒体房在首个人连接时创建、没人时关闭。
+ * 刷新页面会带着 ?room= 回到同一场会。
  *
  * 人数上限 6 人 · 1080p:SFU 要把每人的流转发给其余 n-1 人,最坏出向 6*5*3 + 屏幕共享
  * 5*1.5 = 97.5 Mbps,在 140 的预算里还剩得下一间四人对战房。上限由服务端 /video/config
@@ -32,16 +32,15 @@ import { usePathname } from 'next/navigation';
 import { useQueryState } from 'nuqs';
 import { LiveKitRoom, PreJoin, type LocalUserChoices } from '@livekit/components-react';
 import type { DisconnectReason } from 'livekit-client';
-import { Check, Copy, LogIn, QrCode, Video } from 'lucide-react';
+import { Check, Copy, LogIn, QrCode } from 'lucide-react';
 
 import AppLink from '@/components/AppLink';
-import { ClearButton } from '@/components/ClearButton';
+import BoolToggle from '@/components/BoolToggle';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { LIVEKIT_ROOM_OPTIONS, denyMessage, disconnectMessage, type FailReason } from '@/components/video/video-call';
 import { tr } from '@/i18n/tr';
 import { nextQuery, useAuthUser } from '@/lib/auth-store';
 import {
-  MEET_CODE_LEN,
   VideoDeniedError,
   createMeetCode,
   getMeetToken,
@@ -52,6 +51,7 @@ import {
   type VideoToken,
 } from '@/lib/video-room-api';
 import MeetStage from './MeetStage';
+import MeetLobby from './MeetLobby';
 
 import '@livekit/components-styles';
 import '@/components/video/video-call.css';
@@ -66,9 +66,9 @@ export default function MeetPage() {
   const [cfg, setCfg] = useState<VideoConfig | null>(null);
   const [token, setToken] = useState<VideoToken | null>(null);
   const [choices, setChoices] = useState<LocalUserChoices | null>(null);
-  const [codeInput, setCodeInput] = useState('');
+  const [speakerEnabled, setSpeakerEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
-  const joining = useRef(false);
+  const joining = useRef<AbortController | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -76,6 +76,15 @@ export default function MeetPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // 返回、换会议码或卸载时，旧请求不能再把用户拉进已离开的会议。
+  useEffect(() => {
+    setBusy(false);
+    return () => {
+      joining.current?.abort();
+      joining.current = null;
+    };
+  }, [roomParam]);
 
   useEffect(() => {
     let dead = false;
@@ -108,16 +117,28 @@ export default function MeetPage() {
   const join = useCallback((target: string) => {
     // 到这里的码一定过了 isMeetCode,所以服务端再回 invalid 就不是用户抄错(见 stale-api)。
     if (!isMeetCode(target) || joining.current) return;
-    joining.current = true;
+    const attempt = new AbortController();
+    joining.current = attempt;
     setBusy(true);
     setErr(null);
-    getMeetToken(target)
-      .then(setToken)
+    getMeetToken(target, attempt.signal)
+      .then((result) => {
+        if (joining.current === attempt && !attempt.signal.aborted) setToken(result);
+      })
       .catch((e: unknown) => {
+        if (joining.current !== attempt || attempt.signal.aborted) return;
+        if (e instanceof Error && e.name === 'TimeoutError') {
+          setErr(tr({ zh: '接入超时，请重试。', en: 'Joining timed out. Please try again.' }));
+          return;
+        }
         if (!(e instanceof VideoDeniedError)) { fail('connect'); return; }
         fail(e.reason === 'invalid' ? 'stale-api' : e.reason);
       })
-      .finally(() => { joining.current = false; setBusy(false); });
+      .finally(() => {
+        if (joining.current !== attempt) return;
+        joining.current = null;
+        setBusy(false);
+      });
   }, [fail]);
 
   const createMeeting = useCallback(() => {
@@ -241,7 +262,7 @@ export default function MeetPage() {
           onMediaDeviceFailure={mediaFail}
           className="meet-room"
         >
-          <MeetStage />
+          <MeetStage speakerEnabled={speakerEnabled} onToggleSpeaker={() => setSpeakerEnabled(value => !value)} />
         </LiveKitRoom>
         {qrOpen && inviteUrl && (
           <RoomQrModal url={inviteUrl} code={code} onClose={() => setQrOpen(false)} />
@@ -258,10 +279,13 @@ export default function MeetPage() {
         <p className="meet-sub">
           {tr({ zh: `会议 ${code}`, en: `Meeting ${code}` })}
         </p>
+        <p className="meet-sub">{user.name}</p>
+        <BoolToggle label={tr({ zh: '开启扬声器', en: 'Enable speaker' })}
+          value={speakerEnabled} onChange={setSpeakerEnabled} disabled={busy} />
         <fieldset className="meet-prejoin-fields" disabled={busy} aria-busy={busy}>
         <PreJoin
           // 名字来自账号,不给改 —— 输入框由 meet.css 藏掉。
-          defaults={{ username: user.name, videoEnabled: true, audioEnabled: true }}
+          defaults={{ username: user.name, videoEnabled: false, audioEnabled: true }}
           // PreJoin 默认的校验是「用户名非空」,而输入框藏起来了:显示名为空的账号
           // (社交登录没给名字的那些)会永远卡在一个灰掉的「进入会议」上,无从补救。
           // 服务端本来就不认客户端报的名字(取 token 里的),这个校验对我们没有意义。
@@ -273,7 +297,10 @@ export default function MeetPage() {
           camLabel={tr({ zh: '摄像头', en: 'Camera' })}
         />
         </fieldset>
-        <button type="button" className="meet-join" disabled={busy} onClick={() => {
+        <button type="button" className="meet-join" onClick={() => {
+          joining.current?.abort();
+          joining.current = null;
+          setBusy(false);
           setErr(null);
           void setRoomParam(null, { history: 'replace' });
         }}>
@@ -284,63 +311,8 @@ export default function MeetPage() {
     );
   }
 
-  // ── 大厅 ─────────────────────────────────────────────────
   return (
-    <main className="meet-page">
-      <h1 className="meet-title">{tr({ zh: '会议', en: 'Meeting' })}</h1>
-      <p className="meet-sub">
-        {maxParticipants
-          ? tr({ zh: `最多 ${maxParticipants} 人，最高 1080p，画质随设备和网络自动调整。支持屏幕共享和文字聊天。`,
-                 en: `Up to ${maxParticipants} people and up to 1080p, adapting to your device and connection. Includes screen sharing and chat.` })
-          : tr({ zh: '多人视频会议,支持屏幕共享和文字聊天。',
-                 en: 'Group video meetings with screen sharing and chat.' })}
-      </p>
-
-      <div className="meet-row">
-        <button
-          type="button"
-          className="meet-go"
-          disabled={busy}
-          onClick={createMeeting}
-        >
-          <Video size={15} />
-          {tr({ zh: '新建会议', en: 'New meeting' })}
-        </button>
-      </div>
-
-      <div className="meet-row">
-        <div className="meet-code-field">
-        <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          autoComplete="off"
-          className="meet-code-input"
-          value={codeInput}
-          // 粘整条邀请链接也认:normalizeMeetCode 会把 ?room= 挖出来。
-          placeholder={tr({ zh: '4 位会议码或邀请链接', en: '4-digit code or invite link' })}
-          aria-label={tr({ zh: '会议码或邀请链接', en: 'Meeting code or invite link' })}
-          onChange={(e) => setCodeInput(normalizeMeetCode(e.target.value))}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && codeInput.length === MEET_CODE_LEN) {
-              setErr(null);
-              void setRoomParam(codeInput);
-            }
-          }}
-        />
-        {codeInput && <ClearButton onClick={() => setCodeInput('')} />}
-        </div>
-        <button
-          type="button"
-          className="meet-join"
-          disabled={codeInput.length !== MEET_CODE_LEN}
-          onClick={() => { setErr(null); void setRoomParam(codeInput); }}
-        >
-          {tr({ zh: '加入', en: 'Join' })}
-        </button>
-      </div>
-
-      {err && <p className="vc-err">{err}</p>}
-    </main>
+    <MeetLobby key={user.uid ?? user.wcaId} maxParticipants={maxParticipants} busy={busy} error={err}
+      onCreate={createMeeting} onJoin={(code) => { setErr(null); void setRoomParam(code); }} />
   );
 }

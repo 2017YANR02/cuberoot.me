@@ -21,7 +21,7 @@ import {
   useLocalParticipantPermissions,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { MessageSquare, PhoneOff, ScreenShare, Users } from 'lucide-react';
+import { MessageSquare, PhoneOff, ScreenShare, Users, Volume2, VolumeX } from 'lucide-react';
 
 import { tr } from '@/i18n/tr';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -34,6 +34,8 @@ const SOURCE_TO_PROTOCOL: Partial<Record<Track.Source, number>> = {
 };
 
 export interface MeetControlBarProps {
+  speakerEnabled: boolean;
+  onToggleSpeaker: () => void;
   showChat: boolean;
   unread: number;
   onToggleChat: () => void;
@@ -44,6 +46,8 @@ export interface MeetControlBarProps {
 }
 
 export default function MeetControlBar({
+  speakerEnabled,
+  onToggleSpeaker,
   showChat,
   unread,
   onToggleChat,
@@ -172,6 +176,13 @@ export default function MeetControlBar({
           {!compact && shareLabel}
         </TrackToggle>
       ))}
+
+      <button type="button" className="lk-button" aria-pressed={speakerEnabled}
+        aria-label={tr({ zh: '扬声器', en: 'Speaker' })}
+        title={tr({ zh: '扬声器', en: 'Speaker' })} onClick={onToggleSpeaker}>
+        {speakerEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+        {!compact && tr({ zh: '扬声器', en: 'Speaker' })}
+      </button>
 
       <button
         type="button"

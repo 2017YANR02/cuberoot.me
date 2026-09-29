@@ -125,6 +125,7 @@ img.list-select-flag { object-fit: cover; }
 
 .list-select-list {
   max-height: 320px;
+  min-height: 0;
   overflow-y: auto;
 }
 

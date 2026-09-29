@@ -6,7 +6,9 @@ import { getIp } from '../utils/analytics_helpers.js';
 import { query, withTransaction } from '../db/connection.js';
 import { battlePlayerTokenMatchesHash } from '../utils/battle_room_auth.js';
 import { checkRateLimit, requireAuth } from '../utils/recon_helpers.js';
-import { pickAvailableRoomCode, ROOM_CODE_RE } from '../utils/room_code.js';
+import { ROOM_CODE_RE } from '../utils/room_code.js';
+import { validateMeetingDraft } from '@cuberoot/shared/meeting';
+import { createMeetingPlan, listMeetingPlans, meetingJson, reserveMeetingCode, type MeetingRow } from '../utils/video_meetings.js';
 import { requirePlatformActor } from '../platform/auth.js';
 import { platformErrorHandler } from '../platform/errors.js';
 
@@ -108,10 +110,6 @@ const RATE = {
   token: { bucket: 'video-token', max: 60 },
   meetCode: { bucket: 'video-meet-code', max: 20 },
 } as const;
-
-/** 刚分配但尚未连上 LiveKit 的码也短暂占位，封住两个「新建」同时拿到同一码的窗口。 */
-const MEET_CODE_RESERVATION_MS = 10 * 60 * 1000;
-const pendingMeetCodes = new Map<string, number>();
 
 /** 视频功能是否配置齐全。缺任一项就整体关掉(而不是运行到一半才报错)。 */
 function videoEnabled(): boolean {
@@ -428,21 +426,61 @@ videoRoomsRoutes.post('/video/meet/code', async (c) => {
     return c.json({ error: 'unavailable' }, 503);
   }
 
-  const now = Date.now();
-  for (const [code, expiresAt] of pendingMeetCodes) {
-    if (expiresAt <= now) pendingMeetCodes.delete(code);
-  }
-
-  const occupied = new Set<string>(pendingMeetCodes.keys());
+  const occupied = new Set<string>();
   for (const room of rooms) {
     const match = /^meet-(\d{4})$/.exec(room.name);
     if (match) occupied.add(match[1]!);
   }
 
-  const code = pickAvailableRoomCode(occupied);
+  const code = await withTransaction(tx => reserveMeetingCode(tx, occupied, false));
   if (!code) return c.json({ error: 'unavailable' }, 503);
-  pendingMeetCodes.set(code, now + MEET_CODE_RESERVATION_MS);
   return c.json({ code });
+});
+
+videoRoomsRoutes.get('/video/meet/plans', async c => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  return c.json({ meetings: await listMeetingPlans(user.wcaId) });
+});
+
+videoRoomsRoutes.post('/video/meet/plans', async c => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  checkRateLimit(user.wcaId, RATE.meetCode);
+  if (!videoEnabled()) return c.json({ error: 'video not configured' }, 503);
+  const draft = validateMeetingDraft(await c.req.json().catch(() => null));
+  if (!draft || draft.start < Date.now() - 60_000 || draft.start > Date.now() + 366 * 86_400_000) {
+    return c.json({ error: 'invalid schedule' }, 400);
+  }
+  let rooms: Awaited<ReturnType<RoomServiceClient['listRooms']>>;
+  try { rooms = await svc().listRooms(); }
+  catch { return c.json({ error: 'unavailable' }, 503); }
+  const active = new Set(rooms.map(room => /^meet-(\d{4})$/.exec(room.name)?.[1]).filter((code): code is string => !!code));
+  const meeting = await createMeetingPlan(user.wcaId, draft, active);
+  if (!meeting) return c.json({ error: 'schedule limit reached' }, 429);
+  return c.json({ meeting }, 201);
+});
+
+videoRoomsRoutes.patch('/video/meet/plans/:id', async c => {
+  c.header('Cache-Control', 'no-store');
+  const user = await requireAuth(c);
+  checkRateLimit(user.wcaId, RATE.meetCode);
+  const id = c.req.param('id');
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return c.json({ error: 'invalid id' }, 400);
+  const body = await c.req.json().catch(() => null);
+  // Cancellation affects the entire recurring series. Never deletes a live room or reuses its code.
+  if (body?.cancelled === true) {
+    const rows = await query<MeetingRow>('UPDATE video_meetings SET cancelled = TRUE WHERE id = ? AND owner_key = ? RETURNING *', [id, user.wcaId]);
+    if (!rows[0]) return c.json({ error: 'not found' }, 404);
+    return c.json({ meeting: meetingJson(rows[0]) });
+  }
+  const draft = validateMeetingDraft(body);
+  if (!draft) return c.json({ error: 'invalid schedule' }, 400);
+  const rows = await query<MeetingRow>(`UPDATE video_meetings SET title = ?, start_ms = ?, end_ms = ?, tz = ?, rrule = ?
+    WHERE id = ? AND owner_key = ? AND cancelled = FALSE RETURNING *`,
+  [draft.title, draft.start, draft.end, draft.tz, draft.rrule, id, user.wcaId]);
+  if (!rows[0]) return c.json({ error: 'not found' }, 404);
+  return c.json({ meeting: meetingJson(rows[0]) });
 });
 
 // POST /video/meet/token — 会议室凭证。**必须登录**:requireAuth 抛的
@@ -451,7 +489,7 @@ videoRoomsRoutes.post('/video/meet/code', async (c) => {
 // 身份完全取自 token,客户端只报会议码 —— 它报不了自己是谁,所以会议里不可能出现顶着
 // 别人名字的画面(这也是「登录」在这里买到的东西:免登录时显示名只能靠客户端自报)。
 // 房由第一个拿到 token 且真正连接的人自动创建,没人了自动关。只拿 token 不连接不会留空房;
-// 本站仍不存任何会议记录,也就没有「会议列表」可以被人翻。
+// 预约元数据只供发起人查看；不保存通话、录音或聊天内容。
 videoRoomsRoutes.post('/video/meet/token', async (c) => {
   c.header('Cache-Control', 'no-store');
   checkRateLimit(getIp(c), RATE.token);
@@ -466,6 +504,9 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
   const code = typeof body.code === 'string' ? body.code : '';
   if (!MEET_CODE_RE.test(code)) return c.json({ error: 'invalid code' }, 400);
 
+  const [plan] = await query<{ cancelled: boolean }>('SELECT cancelled FROM video_meetings WHERE code = ?', [code]);
+  if (plan?.cancelled) return c.json({ error: 'cancelled' }, 403);
+
   // identity 用归属键(绑了 WCA 是真 wca_id,否则 u<uid>)—— 同一个人刷新页面重连会被认成
   // 同一个参与者而不是新增一人,带宽准入才算得准。
   //
@@ -479,7 +520,11 @@ videoRoomsRoutes.post('/video/meet/token', async (c) => {
     const status = cap.reason === 'unavailable' ? 503 : 429;
     return c.json({ error: cap.reason }, status);
   }
-  return c.json(await mintToken(roomName, user.wcaId, user.name || user.wcaId, MAX_MEET_PARTICIPANTS));
+  return withTransaction(async tx => {
+    const [current] = await tx<{ cancelled: boolean }>('SELECT cancelled FROM video_meetings WHERE code = ? FOR SHARE', [code]);
+    if (current?.cancelled) return c.json({ error: 'cancelled' }, 403);
+    return c.json(await mintToken(roomName, user.wcaId, user.name || user.wcaId, MAX_MEET_PARTICIPANTS));
+  });
 });
 
 videoRoomsRoutes.post('/video/competition/token', async (c) => {
