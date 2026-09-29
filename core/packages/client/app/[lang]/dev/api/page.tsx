@@ -71,9 +71,11 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
-//   mcp mcp_oauth timer_replay_shares site_assistant
+//   mcp mcp_oauth timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'content', m: 'GET', p: '/v1/cube-agents', g: 'public', c: 'no-store', zh: '国产模型魔方对比的配置、运行状态与最近一次真实结果；不返回 API 密钥', en: 'Domestic-model cube experiment availability, active state and latest real result; no API credentials' },
+  { d: 'content', m: 'POST', p: '/v1/cube-agents/runs', g: 'admin', c: 'no-store', zh: '管理员启动 Qwen3.7/3.8 两组各四代理，SSE 推送真实转法、验证状态与用量；同一打乱、每代理六轮、总计 120 秒、每日最多 20 轮实验；断连取消，费用为未折扣人民币估算', en: 'Admin starts two teams of four Qwen3.7/3.8 agents; SSE streams moves, verified states and usage. Same scramble, six rounds per agent, 120-second deadline, 20 experiments/day, cancellation on disconnect, undiscounted CNY estimates' },
   { d: 'content', m: 'POST', p: '/v1/site-assistant', g: 'public', c: 'no-store', zh: '千问结合公开全文索引和受限数据查询，支持连续对话、成绩表与 PR 曲线；只读公开内容；全站每天 100 次持久额度（北京时间零点恢复），失败调用也计数；超额返回 429 daily_limit，普通搜索仍可使用', en: 'Qwen combines public full-text search and bounded read tools, with conversation history, result tables, PR charts and sources; a durable site-wide quota of 100 questions per Beijing calendar day includes failed calls; exhausted quota returns 429 daily_limit while regular search remains available' },
   { d: 'system', m: 'POST', p: '/v1/mcp', g: 'admin', c: 'no-store', zh: 'OAuth 授权的只读 MCP 工具；限流、查询超时与调用审计', en: 'OAuth-authorized read-only MCP tools with rate limits, query deadlines and audit logs' },
   { d: 'auth', m: 'GET', p: '/.well-known/oauth-protected-resource/v1/mcp', g: 'public', c: 'no-store', zh: 'MCP 资源与授权服务器发现', en: 'MCP resource and authorization-server discovery' },

@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, Play, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -389,6 +389,11 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} autoFocus />
+      <Link href="/sim/agents" className="landing-featured-news" prefetch={false}>
+        <Play className="landing-featured-news-icon" size={15} aria-hidden="true" />
+        <span className="landing-featured-news-body">{tr({ zh: '一起，解开魔方。看四个代理并行尝试。', en: 'A puzzle. A team. Watch four agents explore together.' })}</span>
+        <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
+      </Link>
       {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} />}
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
