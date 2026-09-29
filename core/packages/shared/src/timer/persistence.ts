@@ -1,3 +1,10 @@
+import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
+import { normalizeTimerSoundSettings, type TimerSoundSettings } from './sound-settings';
+import { normalizeTimerMetronomeSettings, type TimerMetronomeSettings } from './metronome-settings';
+import { normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
+import { normalizeTimerDisplaySettings, type TimerDisplaySettings } from './display-settings';
+import { normalizeTimerKeymap, type TimerKeymapOverrides } from './input-contract';
+import { normalizeTimerTrainingSettings, type TimerTrainingSettings } from './training-settings';
 import { DEFAULT_TIMER_TYPOGRAPHY, normalizeTimerTypography, type TimerTypographySettings } from './typography';
 import { EVENTS, type EventId, type Penalty, type Solve } from './types';
 import {
@@ -69,6 +76,11 @@ export interface TimerSessionMeta {
 }
 
 export interface TimerStoreSettings extends
+  TimerMetronomeSettings,
+  TimerSoundSettings,
+  TimerPreScrambleSettings,
+  TimerDisplaySettings,
+  TimerTrainingSettings,
   TimerTypographySettings,
   TimerWcaSourceSettings,
   TimerRandomDifficultySettings,
@@ -78,6 +90,8 @@ export interface TimerStoreSettings extends
   TimerSmartCubeSettings,
   TimerScramblePreviewSettings {
   event: EventId;
+  keymap: TimerKeymapOverrides;
+  cnMode: CnMode;
   /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
   scramble222Mode: Scramble222Mode;
   /** Shared 2x2 specialist state family. A real-WCA source treats 3-gen as full state. */
@@ -472,6 +486,8 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   });
   return {
     event: value.event,
+    keymap: normalizeTimerKeymap(value.keymap),
+    cnMode: normalizeTimerColorNeutralMode(value.cnMode),
     // Early Mobile builds offered a wider timing range than Web. Normalize at
     // the shared migration boundary: 300 remains a valid user choice, while
     // legacy 0/out-of-Web-range values gain the canonical Web meaning.
@@ -499,6 +515,11 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     scrambleClickAction: normalizeTimerScrambleClickAction(value.scrambleClickAction),
     ...scramblePreview,
     ...normalizeTimerTypography(value),
+    ...normalizeTimerDisplaySettings(value),
+    ...normalizeTimerPreScrambleSettings(value),
+    ...normalizeTimerSoundSettings(value),
+    ...normalizeTimerMetronomeSettings(value),
+    ...normalizeTimerTrainingSettings(value),
     ...normalizeTimerSmartCubeSettings(value),
     ...randomDifficulty,
     ...wcaSource,
@@ -646,25 +667,47 @@ export function createTimerStoreData(
   return {
     schemaVersion: TIMER_STORE_SCHEMA_VERSION,
     database,
-    settings: {
-      event: '333',
-      ...DEFAULT_TIMER_TYPOGRAPHY,
-      ...DEFAULT_TIMER_TIMING_SETTINGS,
-      ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
-      scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
-      scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
-      ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
-      ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
-      ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
-      manualScrambles: '',
-      statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
-      autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
-      scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
-      ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
-      ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
-      language,
-      theme: 'system',
-    },
+    settings: createTimerStoreSettings(language),
+  };
+}
+
+export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerStoreSettings {
+  return {
+    event: '333',
+    keymap: {},
+    cnMode: 'none',
+    ...DEFAULT_TIMER_TYPOGRAPHY,
+    ...normalizeTimerDisplaySettings(),
+    ...normalizeTimerPreScrambleSettings(),
+    ...normalizeTimerSoundSettings(),
+    ...normalizeTimerMetronomeSettings(),
+    ...normalizeTimerTrainingSettings(),
+    ...DEFAULT_TIMER_TIMING_SETTINGS,
+    ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
+    scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
+    scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
+    ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
+    ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
+    ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
+    manualScrambles: '',
+    statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
+    autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
+    scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+    ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
+    ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+    language,
+    theme: 'system',
+  };
+}
+
+/** Reset timer preferences while preserving host preferences and current event. */
+export function resetTimerStoreSettings(current: TimerStoreSettings): TimerStoreSettings {
+  return {
+    ...createTimerStoreSettings(current.language),
+    event: current.event,
+    theme: current.theme,
+    // Like Web's site-wide metronome, tempo is independent of timer defaults.
+    metronomeBpm: current.metronomeBpm,
   };
 }
 

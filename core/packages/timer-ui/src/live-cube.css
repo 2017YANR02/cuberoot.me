@@ -60,7 +60,7 @@
    visible, unlike a static scramble preview. Keep this exception with the
    shared renderer so installed hosts cannot lose it when layouts migrate.
    Explicit hide-all mode still wins; calibration controls stay out of a solve. */
-.is-solving:not(.hide-ui) .timing-surface .timing-surface-cube:has(.timer-live-cube) {
+.is-solving:not(.hide-ui):not([data-timer-hide-ui]) .timing-surface .timing-surface-cube:has(.timer-live-cube) {
   opacity: 1;
   pointer-events: auto;
 }
