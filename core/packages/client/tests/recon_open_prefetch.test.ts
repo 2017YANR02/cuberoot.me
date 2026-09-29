@@ -40,6 +40,7 @@ const TIMER = join(ROOT, 'app', '[lang]', 'timer');
 const SOLVE_MODAL = join(TIMER, '_components', 'SolveModal.tsx');
 const SOLO_VIEW = join(TIMER, '_shell', 'SoloView.tsx');
 const PLAYBACK = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'PlaybackPanel.tsx');
+const ANALYSIS_WORKER = join(ROOT, '..', 'timer-ui', 'src', 'reconstruct', 'analysis.worker.ts');
 // 三维魔方是 /timer 和公式训练器共用的,住在共享的 sim-embed 里,不在 timer 页里。
 const SIM_CUBE = join(ROOT, '..', 'timer-ui', 'src', 'SimCubeView.tsx');
 
@@ -121,11 +122,12 @@ describe('复盘打开路径:懒加载的都得先预取', () => {
     });
   }
 
-  it('OLL / PLL 查找表不止拉下来,还要建好表', () => {
-    const src = read(SOLVE_MODAL);
-    // 光 import 只是把模块拿到手;表是几千次 cubing.js 解析,得显式 prewarm。
-    expect(src).toMatch(/prewarmOllTable\(\)/);
-    expect(src).toMatch(/prewarmPllTable\(\)/);
+  it('OLL / PLL 识别不在打开成绩时占用主线程', () => {
+    const modal = read(SOLVE_MODAL);
+    const worker = read(ANALYSIS_WORKER);
+    expect(modal).not.toMatch(/prewarm(?:Oll|Pll)Table/);
+    expect(modal).not.toMatch(/recon\/(?:oll|pll)-lookup/);
+    expect(worker).toMatch(/buildReconText\(text\)/);
   });
 
   it('预取推到空闲,且有上界 —— 一直不闲也不能干等', () => {
