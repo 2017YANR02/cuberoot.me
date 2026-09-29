@@ -732,7 +732,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
     title: { zh: 'AI 解魔方对比', en: 'AI Cube Challenge' },
     description: {
       zh: '两组国产大模型各派四个代理解二阶魔方，比较真实耗时、探索状态、Token 用量和估算费用，并回放每次尝试。',
-      en: 'Two teams of four Qwen agents solve the same 2×2 cube. Compare measured time, explored states, token usage and estimated costs, then replay their attempts.',
+      en: 'Qwen and DeepSeek each send four agents to solve the same 2×2 cube. Compare measured time, explored states, token usage and estimated costs, then replay their attempts.',
     },
   },
   'site': { title: { zh: '网站导航', en: 'Sites Directory' } },

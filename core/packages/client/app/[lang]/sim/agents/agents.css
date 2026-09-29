@@ -71,7 +71,7 @@
   .agents-replay-label { font-size: 8px; }
   .agents-board { gap: 8px; }
   .agents-team { padding: 16px 7px 12px; border-radius: 12px; }
-  .agents-team h2 { font-size: clamp(14px, 4.4vw, 23px); white-space: nowrap; }
+  .agents-team h2 { font-size: clamp(14px, 4.4vw, 23px); min-height: 2.3em; display: grid; align-content: center; }
   .agents-stage { height: 204px; margin: 10px -4px 0; }
   .agents-metrics strong { font-size: clamp(20px, 6vw, 25px); white-space: nowrap; }
   .agents-metrics .agents-cost { font-size: clamp(14px, 4.5vw, 20px); }
