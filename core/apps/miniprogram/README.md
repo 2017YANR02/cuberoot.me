@@ -72,3 +72,11 @@ pnpm --filter @cuberoot/miniprogram release:check
 - 只使用[微信官方实时验证组件](https://developers.weixin.qq.com/miniprogram/dev/framework/open-ability/getRealtimePhoneNumber.html)，不回退普通快速验证。平台资质/可用额度需在微信公众平台「接口设置 → 手机号」及「付费管理」核对（以实际后台为准）；不会自动购买额度。
 - 隐私政策已补充主动授权、用途、短期认证资料和删除边界。发布前须在「设置 → 服务内容声明 → 用户隐私保护指引」声明手机号用于登录/账号绑定，并实测 iOS、Android 授权成功、拒绝、匹配旧号确认和冲突恢复。
 - `release:check` 仅为原生账号页放行实时组件，其余页面及普通 `getPhoneNumber` 仍阻断；新增独立 `WECHAT_MINI_PHONE_AUTHORIZATION_REVIEWED` 确认门禁，不能沿用上次无手机号版本的隐私确认。源码实现/构建通过不代表已上传或发布。
+
+## 外接计时器桥接
+
+WebView 的外接蓝牙入口打开原生页，可连接 GAN 或奇艺计时器／适配器；Stackmat 入口使用微信 RecorderManager 的单声道 44.1kHz PCM 分帧。协议、CRC、奇艺加解密与分包、Stackmat 音频解码均来自 shared/timer/external，Web 驱动复用同一实现。中继沿用 /v1/smart-cube/relay，timer 事件和 move 事件共用有序重放与去重序号，因此必须先发布更新后的 API 和 Web，再发布小程序。
+
+音频仅本机解码，不上传。只支持微信的 PCM 采集，抖音入口明确提示未适配；满 10 分钟、录音中断或原生连接断开后需要重连。WebView 恢复连接时按序回放事件；不能恢复的缺口断开，不推测成绩。
+
+源码/模拟测试不等于真机通过。上传前需在平台后台新增麦克风用途声明，并实测 iOS/Android 的外接音频路由、PCM 格式与采样率、授权拒绝、页面返回、后台中断、同时间连续成绩及蓝牙断线。实际通过后才可设置 WECHAT_MINI_EXTERNAL_TIMER_REVIEWED=1；不要沿用旧版验收结果。

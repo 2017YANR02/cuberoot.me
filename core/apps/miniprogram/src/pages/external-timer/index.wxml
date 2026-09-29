@@ -1,0 +1,14 @@
+<view class="page">
+  <text class="page-title">{{copy.title}}</text>
+  <text wx:if="{{error}}">{{error}}</text>
+  <text wx:if="{{busy}}">{{copy.busy}}</text>
+  <block wx:if="{{mode === 'stackmat'}}">
+    <text>{{copy.audioHint}}</text>
+    <button hover-class="press-feedback" bindtap="connect" data-kind="stackmat-mic" disabled="{{busy}}">{{copy.stackmat}}</button>
+  </block>
+  <block wx:else>
+    <button hover-class="press-feedback" bindtap="connect" data-kind="gan-timer" disabled="{{busy}}">{{copy.gan}}</button>
+    <button hover-class="press-feedback" bindtap="connect" data-kind="qiyi-timer" disabled="{{busy}}">{{copy.qiyi}}</button>
+  </block>
+  <button hover-class="press-feedback" wx:if="{{connected}}" bindtap="disconnect">{{copy.disconnect}}</button>
+</view>

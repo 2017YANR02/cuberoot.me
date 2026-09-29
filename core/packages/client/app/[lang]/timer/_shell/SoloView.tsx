@@ -2292,6 +2292,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // Preserve the user gesture: requestDevice starts in this click handler.
   const connectExternalBluetooth = useCallback(() => {
+    if (mayUseMiniProgramBridge()) {
+      setBluetoothTimerOpen(true);
+      const attempt = bluetoothTimer.connect();
+      setBluetoothTimerConnectAttempt(attempt);
+      void attempt.catch(() => undefined);
+      return;
+    }
     if (bluetoothTimer.status.connected) {
       setBluetoothTimerOpen(true);
       return;
@@ -2301,7 +2308,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const attempt = connectFromBluetoothModal();
     setBluetoothConnectAttempt(attempt);
     void attempt.catch(() => undefined); // The status dialog displays failures.
-  }, [bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
+  }, [bluetoothTimer.connect, bluetoothTimer.status.connected, bluetoothCube.status.connected, connectFromBluetoothModal]);
 
   const connectSmartCubeCenter = useCallback(() => {
     setBluetoothOpen(true);

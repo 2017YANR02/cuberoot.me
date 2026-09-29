@@ -1,3 +1,4 @@
+import { EXTERNAL_TIMER_STATE_CODE, type ExternalTimerEvent } from '../timer/external/types';
 export const SMART_CUBE_RELAY_PATH = '/v1/smart-cube/relay';
 export const SMART_CUBE_RELAY_TOKEN_PATTERN = /^[A-Za-z0-9_-]{32,128}$/;
 export const SMART_CUBE_RELAY_MAX_MESSAGE_BYTES = 4 * 1024;
@@ -25,6 +26,7 @@ export type SmartCubeRelayStatusPhase =
   | 'error';
 
 export type SmartCubeRelayEvent =
+  | { type: 'timer'; event: ExternalTimerEvent; relaySeq?: number }
   | {
       type: 'status';
       phase: SmartCubeRelayStatusPhase;
@@ -79,6 +81,15 @@ export function isSmartCubeRelayReady(value: unknown): value is SmartCubeRelayRe
 export function isSmartCubeRelayPayload(value: unknown): value is SmartCubeRelayPayload {
   if (!isRecord(value) || typeof value.type !== 'string') return false;
   if (value.type === 'command') return value.command === 'disconnect';
+  if (value.type === 'timer') {
+    const event = value.event;
+    return isRecord(event) && typeof event.state === 'string'
+      && Object.hasOwn(EXTERNAL_TIMER_STATE_CODE, event.state)
+      && ['solveTime', 'inspectTime'].every(key => event[key] === undefined
+        || (Number.isSafeInteger(event[key]) && Number(event[key]) >= 0))
+      && (event.state !== 'STOPPED' || event.solveTime !== undefined)
+      && (value.relaySeq === undefined || (Number.isSafeInteger(value.relaySeq) && Number(value.relaySeq) > 0));
+  }
   if (value.type === 'move') {
     return typeof value.move === 'string'
       && /^[URFDLB](?:2|')?$/.test(value.move)

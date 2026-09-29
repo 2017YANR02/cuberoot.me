@@ -428,3 +428,14 @@ describe('SmartCubeRelay', () => {
     expect(relay.channelCount()).toBe(0);
   });
 });
+
+ it('replays external timer results once by the shared relay sequence and rejects forged sequences', () => {
+  const relay = new SmartCubeRelay(); const sink = fakeSocket(); const source = fakeSocket();
+  hello(relay, sink, 'sink'); const connection = hello(relay, source, 'source');
+  connection.handleMessage(JSON.stringify({ type: 'timer', event: { state: 'STOPPED', solveTime: 12345 } }));
+  expect(sink.send).toHaveBeenLastCalledWith(JSON.stringify({ type: 'timer', event: { state: 'STOPPED', solveTime: 12345 }, relaySeq: 1 }));
+  const resumed = fakeSocket(); hello(relay, resumed, 'sink', TOKEN, '127.0.0.2', 1);
+  expect(resumed.send.mock.calls.flat().filter(value => String(value).includes('STOPPED'))).toEqual([]);
+  connection.handleMessage(JSON.stringify({ type: 'timer', event: { state: 'STOPPED', solveTime: 12345 }, relaySeq: 5 }));
+  expect(source.close).toHaveBeenCalled();
+});

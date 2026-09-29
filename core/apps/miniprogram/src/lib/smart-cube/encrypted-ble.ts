@@ -60,8 +60,9 @@ export interface EncryptedBleOptions {
   retryInitialFramesAfterMs?: number;
   diagnosticLabel: string;
   matches(device: DiscoveredDevice): boolean;
-  resolveMac(device: DiscoveredDevice): ResolvedBleMac | null;
-  createCipher(mac: Uint8Array): {
+  readOnly?: boolean;
+  resolveMac?(device: DiscoveredDevice): ResolvedBleMac | null;
+  createCipher?(mac: Uint8Array): {
     decrypt(frame: Uint8Array): Uint8Array;
     encrypt(frame: Uint8Array): Uint8Array;
   };
@@ -193,12 +194,12 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
     adapterOpen = true;
     const device = await findDevice(api, lease, timeoutMs, options.signal, options);
     diagnostic.info('device-selected', describeBleDevice(device));
-    const resolvedMac = options.resolveMac(device);
+    const resolvedMac = options.resolveMac?.(device);
     diagnostic.info('mac-resolution', resolvedMac
       ? { source: resolvedMac.source, mac: resolvedMac.value }
       : { source: null, mac: null });
-    if (!resolvedMac) throw new Error(tr({ en: 'The cube address could not be read. Wake it and scan again.', zh: '未读取到魔方地址，请唤醒魔方后重新扫描' }));
-    const mac = resolvedMac.value;
+    if (options.resolveMac && !resolvedMac) throw new Error(tr({ en: 'The cube address could not be read. Wake it and scan again.', zh: '未读取到魔方地址，请唤醒魔方后重新扫描' }));
+    const mac = resolvedMac?.value ?? '';
     connectedDeviceId = device.deviceId;
     const closeConnection = (): Promise<unknown> => invokeBleCleanupForLease(lease, (callbacks) => api.closeBLEConnection({ ...callbacks, deviceId: device.deviceId }));
     await raceBleAbortWithLateCleanup(
@@ -255,12 +256,12 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       ? notifyCharacteristic
       : fallbackWriteCharacteristic;
     subscriptionType = notifyCharacteristic ? getBleSubscriptionType(notifyCharacteristic) ?? null : null;
-    if (!characteristic || !notifyCharacteristic || !subscriptionType) throw new Error(tr({ en: 'Smart cube communication characteristic is unavailable', zh: '智能魔方通信特征不可用' }));
-    characteristicId = characteristic.uuid;
+    if ((!characteristic && !options.readOnly) || !notifyCharacteristic || !subscriptionType) throw new Error(tr({ en: 'Smart cube communication characteristic is unavailable', zh: '智能魔方通信特征不可用' }));
+    characteristicId = characteristic?.uuid ?? null;
     notifyCharacteristicId = notifyCharacteristic.uuid;
-    const writeType = options.preferWriteNoResponse && characteristic.properties?.writeNoResponse
+    const writeType = options.preferWriteNoResponse && characteristic?.properties?.writeNoResponse
       ? 'writeNoResponse'
-      : characteristic.properties?.write
+      : characteristic?.properties?.write
         ? 'write'
         : 'writeNoResponse';
     diagnostic.info('channels-selected', {
@@ -270,7 +271,7 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       subscriptionType,
       writeType,
     });
-    const cipher = options.createCipher(parseMac(mac));
+    const cipher = options.createCipher?.(parseMac(mac)) ?? { encrypt: (frame: Uint8Array) => frame, decrypt: (frame: Uint8Array) => frame };
     const write = (value: Uint8Array): Promise<void> => writeQueue.enqueue(() => {
       if (closing || !active || !connectedDeviceId || !serviceId || !characteristicId) throw new Error(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
       const encrypted = cipher.encrypt(value);
@@ -371,7 +372,7 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
         if (retryTimer !== undefined) clearTimeout(retryTimer);
       }
     }
-    diagnostic.info('connect-ready', { notificationCount, writeCount, macSource: resolvedMac.source });
+    diagnostic.info('connect-ready', { notificationCount, writeCount, macSource: resolvedMac?.source });
     return {
       deviceId: device.deviceId,
       deviceName: device.name ?? device.localName,

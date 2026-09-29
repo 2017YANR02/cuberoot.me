@@ -1,3 +1,5 @@
+import { mayUseMiniProgramBridge } from '../miniprogram_bridge';
+import { createMiniProgramTimerSource } from './miniprogram';
 /**
  * Public API for BLE smart-TIMER support (GAN Smart Timer, QiYi Timer /
  * Adapter). Smart CUBES live one directory up — different devices, different
@@ -156,6 +158,7 @@ export interface BluetoothTimerSource extends ExternalTimerSource {
 export function createBluetoothTimerSource(
   opts: BluetoothTimerSourceOptions = {},
 ): BluetoothTimerSource {
+  if (mayUseMiniProgramBridge()) return createMiniProgramTimerSource('bluetooth-timer');
   const bus = createExternalTimerBus();
 
   let device: BluetoothDevice | null = null;
