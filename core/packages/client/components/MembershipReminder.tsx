@@ -56,7 +56,7 @@ export default function MembershipReminder() {
         {tr({ zh: '续费', en: 'Renew'
       })}
       </AppLink>
-      <button className="mem-reminder-close" onClick={dismiss} aria-label={tr({ zh: '关闭', en: 'Dismiss'
+      <button type="button" className="mem-reminder-close" onClick={dismiss} aria-label={tr({ zh: '关闭', en: 'Dismiss'
       })}>
         <X size={15} />
       </button>

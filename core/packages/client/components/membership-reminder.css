@@ -40,11 +40,16 @@
 .mem-reminder-close {
   flex-shrink: 0;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   padding: 4px;
   background: none;
   border: none;
   color: var(--muted-foreground);
   cursor: pointer;
+  touch-action: manipulation;
   border-radius: 50%;
 }
 .mem-reminder-close:hover { color: var(--foreground); background: color-mix(in srgb, var(--foreground) 8%, transparent); }
@@ -53,7 +58,7 @@
   .mem-reminder {
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     transform: none;
     max-width: none;
     border-radius: 14px;
