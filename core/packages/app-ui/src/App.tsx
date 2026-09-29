@@ -1,5 +1,5 @@
 import type { TimerSettingsUpdate } from './data/timer-repository';
-import { useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
+import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
@@ -1069,6 +1069,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const applyStoreSnapshot = useCallback((data: TimerStoreData) => {
     storeRef.current = data;
+    keymapRef.current = resolveKeymap(data.settings.keymap);
     activeEventRef.current = data.settings.event;
     scramble222ModeRef.current = data.settings.scramble222Mode;
     scramble222TypeRef.current = data.settings.scramble222Type;
@@ -4734,6 +4735,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             </section>
 
             </>}
+            {settingsCategory === 'advanced' && <TimerKeymapSettings value={store!.settings.keymap} onChange={update => updateSettings(current => ({ keymap: update(current.keymap) }))} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.account}</h2>
