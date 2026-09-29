@@ -798,6 +798,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 251, slug: 'site_assistant_daily_usage', desc: { zh: '全站 AI 提问每日 100 次持久额度，跨进程原子扣减，北京时间零点恢复。', en: 'Atomic, durable site-wide quota of 100 AI questions per Beijing calendar day.' } },
   { n: 252, slug: 'video_meetings', desc: { zh: '会议预约、时区与周期规则，持久化会议码分配。', en: 'Meeting schedules, time zones, recurrence and durable meeting code allocation.' } },
   { n: 253, slug: 'site_assistant_quota_1000', desc: { zh: '全站问答每日额度提高至 1000 次，保留当天已用次数与原子扣减。', en: 'Raise the site-wide assistant quota to 1000 per day, preserving existing usage and atomic reservations.' } },
+  { n: 254, slug: 'apple_membership', desc: { zh: 'Apple 自动续费独立账本、账号绑定和有效会员视图；不覆盖网站支付权益。', en: 'Separate Apple subscription ledger, account binding and effective membership view; website grants remain intact.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

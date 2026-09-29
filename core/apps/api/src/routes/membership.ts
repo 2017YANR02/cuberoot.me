@@ -252,8 +252,8 @@ membershipRoutes.get('/membership/members', async (c) => {
             COALESCE(m.name, NULLIF(BTRIM(u.display_name), ''), u.wca_id) AS name,
             COALESCE(m.avatar_url, u.avatar_url) AS avatar_url,
             COALESCE(m.plan_slug, 'admin') AS plan_slug
-       FROM memberships m
-       FULL JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
+       FROM effective_memberships m
+       FULL JOIN app_users u ON UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = UPPER(m.wca_id)
       WHERE COALESCE(u.show_in_member_list, TRUE) = TRUE
         AND (
           (m.wca_id IS NOT NULL AND (m.expires_at IS NULL OR m.expires_at > NOW()))
@@ -285,7 +285,7 @@ membershipRoutes.get('/membership/profile/:wcaId', async (c) => {
   }>(
     `SELECT u.public_intro, u.public_intro_image_ids, u.is_admin,
             EXISTS (
-              SELECT 1 FROM memberships m
+              SELECT 1 FROM effective_memberships m
                WHERE UPPER(m.wca_id) = UPPER(u.wca_id)
                  AND (m.expires_at IS NULL OR m.expires_at > NOW())
             ) AS active_member
@@ -313,8 +313,8 @@ membershipRoutes.get('/membership/me', async (c) => {
   const user = await requireAuth(c);
   const rows = await query<MembershipRow>(
     `SELECT m.*, u.public_intro, u.public_intro_image_ids, u.show_in_member_list
-       FROM memberships m
-       LEFT JOIN app_users u ON UPPER(u.wca_id) = UPPER(m.wca_id)
+       FROM effective_memberships m
+       LEFT JOIN app_users u ON UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = UPPER(m.wca_id)
       WHERE m.wca_id = ?`,
     [user.wcaId],
   );
@@ -381,7 +381,7 @@ membershipRoutes.put('/membership/me/profile', async (c) => {
     `UPDATE app_users u
        SET public_intro = ?, public_intro_image_ids = ?::jsonb,
             show_in_member_list = COALESCE(?::boolean, u.show_in_member_list)
-       WHERE UPPER(u.wca_id) = ?
+       WHERE UPPER(COALESCE(u.wca_id, 'u' || u.id::text)) = ?
       RETURNING public_intro, public_intro_image_ids, show_in_member_list`,
     [intro || null, imageIds, body.showInMemberList ?? null, user.wcaId.toUpperCase()],
   );

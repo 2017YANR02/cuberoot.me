@@ -1,3 +1,5 @@
+import InstalledContentBoundary from "@/components/InstalledContentBoundary";
+import { MOBILE_EMBED_FRAME_NAMES } from '@cuberoot/shared/mobile-embed';
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { THEME_BOOTSTRAP, LANG_BOOTSTRAP } from "@/lib/theme-bootstrap";
@@ -69,6 +71,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Hide prerendered route content in installed surfaces until their content boundary has checked it. */}
+        <script dangerouslySetInnerHTML={{ __html: `if(window.parent!==window&&${JSON.stringify(Object.values(MOBILE_EMBED_FRAME_NAMES))}.includes(window.name))document.documentElement.dataset.installedSurface='true';` }} />
+        <style>{`[data-installed-route]{display:contents}html[data-installed-surface="true"] [data-installed-route]:not([data-installed-reviewed="true"]){display:none}`}</style>
         <link rel="icon" href="/icons/CubeRoot.png" />
         <link rel="icon" href="/icons/CubeRoot-dark.png" media="(prefers-color-scheme: dark)" />
         {/* iOS「添加到主屏幕」的图标。Safari 只认 apple-touch-icon —— 缺这条它就
@@ -113,7 +118,7 @@ export default function RootLayout({
         <AppNuqsAdapter>
           <SiteBackground />
           <SiteGlass />
-          {children}
+          <InstalledContentBoundary>{children}</InstalledContentBoundary>
           <MembershipReminder />
           <DeskPet />
           <AuthRouteBridge />

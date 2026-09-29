@@ -38,13 +38,15 @@ describe('account merge code', () => {
           { id: 655, wca_id: '2020TEST01', password_hash: null, merged_into_user_id: null },
         ];
       }
-      if (text.includes('SELECT user_id, provider') || text.includes('FROM pg_constraint')) return [];
+      if (text.includes('FROM pg_constraint')) return [{ table_name: 'apple_membership_accounts', column_name: 'user_id' }];
+      if (text.includes('SELECT user_id, provider')) return [];
       return [];
     });
 
     await mergeAccounts(655, 330);
 
     const calls = mocks.tx.mock.calls as [string, unknown[]][];
+    expect(calls).toContainEqual(['UPDATE apple_membership_accounts SET user_id = ? WHERE user_id = ?', [330, 655]]);
     const sourceWcaClear = calls.findIndex(([text]) => text.includes('UPDATE app_users SET wca_id = NULL'));
     const targetUpdate = calls.findIndex(([text]) => text.includes('UPDATE app_users AS target'));
     expect(sourceWcaClear).toBeGreaterThanOrEqual(0);

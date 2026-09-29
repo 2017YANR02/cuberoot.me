@@ -1,4 +1,5 @@
 'use client';
+import { installedPetAvailable } from '@/lib/installed-content';
 
 import { useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
@@ -37,7 +38,7 @@ export default function PetsPage({ gallery = false }: { gallery?: boolean }) {
     const timer=window.setInterval(load,60000);
     return ()=>{active=false;clearInterval(timer);window.removeEventListener('focus',load);};
   },[retry,isAdmin]);
-  const choices = catalog ? resolveDeskPets(THEME_IDS,catalog.entries).filter(entry=>!entry.removed && (isAdmin || !entry.locked)).map(entry=>({
+  const choices = catalog ? resolveDeskPets(THEME_IDS,catalog.entries).filter(entry=>installedPetAvailable(entry.id) && !entry.removed && (isAdmin || !entry.locked)).map(entry=>({
     ...entry,id:entry.id as ThemeId,label:entry.label ?? THEMES[entry.id as ThemeId].label,
     thumb:THEMES[entry.id as ThemeId].thumb,thumbScale:THEMES[entry.id as ThemeId].thumbScale,
   })) : [];

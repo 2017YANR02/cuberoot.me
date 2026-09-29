@@ -1396,7 +1396,7 @@ accountAuthRoutes.get('/auth/admin/users', async (c) => {
           ELSE 'personal'
         END AS membership_kind,
         membership.started_at AS joined_at
-      FROM memberships membership
+      FROM effective_memberships membership
       WHERE NOT EXISTS (
         SELECT 1
         FROM paid_firsts paid

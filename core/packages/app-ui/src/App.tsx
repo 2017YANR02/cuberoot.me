@@ -1,3 +1,5 @@
+import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
+import { decodeAppleMembershipRequest } from '@cuberoot/shared/apple-membership';
 import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerSoundSettings, resetTimerStoreSettings } from '@cuberoot/shared/timer';
 import { TimerResetSettings } from '@cuberoot/timer-ui';
@@ -1946,7 +1948,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
     const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true }),
+      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership) }),
       SITE_ORIGIN,
     );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
@@ -2192,6 +2194,19 @@ export function App({ host }: { host: InstalledAppHost }) {
       const accountFrame = webFrameRefs.current.account;
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
 
+      const purchase = decodeAppleMembershipRequest(event.data);
+      if (purchase) {
+        const frame = webFrameRefs.current[purchase.surface];
+        if (!frame || event.source !== frame.contentWindow) return;
+        const session = authSessionRef.current;
+        const reply = (result: object) => frame.contentWindow?.postMessage({ ...result,
+          type: 'cuberoot:mobile:apple-membership-result', requestId: purchase.requestId }, SITE_ORIGIN);
+        if (!session || session.user.uid !== purchase.expectedUid || !host.appleMembership) {
+          reply({ status: 'error' }); return;
+        }
+        void host.appleMembership(purchase, session).then(reply).catch(() => reply({ status: 'error' }));
+        return;
+      }
       const management = decodeMobileEmbedAccountManage(event.data);
       if (accountSource && management) {
         const reply = (ok: boolean) => accountFrame?.contentWindow?.postMessage(
@@ -2242,6 +2257,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       if (external) {
         const frame = webFrameRefs.current[external.surface];
         if (!frame || event.source !== frame.contentWindow) return;
+        if (installedContentUnavailable(external.href)) { announce(copy.actionFailed); return; }
         void host.openExternal(external.href).catch(() => announce(copy.actionFailed));
         return;
       }
