@@ -485,9 +485,9 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-settings-head h2 { flex: 1; margin: 0; font-size: 20px; font-weight: 500; }
 .cal-settings-layout { display: flex; flex: 1; min-height: 0; }
 .cal-settings-nav { flex: 0 0 200px; padding: 16px 10px; border-right: 1px solid var(--border-default); }
-.cal-settings-nav button { display: block; width: 100%; border: 0; border-radius: 24px; padding: 12px 16px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
-.cal-settings-nav button:hover { background: var(--muted); }
-.cal-settings-nav button.is-active { background: var(--accent-soft); color: var(--accent); }
+.cal-settings-tab { display: block; width: 100%; border: 0; border-radius: 24px; padding: 12px 16px; background: transparent; color: var(--muted-foreground); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.cal-settings-tab:hover { background: var(--muted); }
+.cal-settings-tab.is-active { background: var(--accent-soft); color: var(--accent); }
 .cal-settings-content { flex: 1; min-width: 0; overflow-y: auto; padding: 24px 32px; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; }
 .cal-settings-content h3 { font-size: 18px; font-weight: 500; margin: 0 0 4px; }
 .cal-settings-field { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: 100%; font-size: 14px; }
@@ -510,7 +510,7 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-competition-location { display: flex; gap: 10px; align-items: flex-start; line-height: 1.6; overflow-wrap: anywhere; }
 .cal-competition-location svg { flex: 0 0 auto; margin-top: 3px; }
 .cal-travel-origin { display: flex; gap: 4px; align-items: center; border: 1px solid var(--input); background: var(--card); border-radius: 6px; padding: 6px 8px; max-width: 100%; }
-.cal-travel-origin input { min-width: 0; width: 100%; background: transparent; border: 0; color: var(--foreground); font: inherit; outline: none; }
+.cal-travel-origin-input { min-width: 0; width: 100%; background: transparent; border: 0; color: var(--foreground); font: inherit; outline: none; }
 .cal-travel-origin:focus-within { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 @media (min-width: 901px) {
@@ -523,7 +523,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-settings-head { padding: 14px 16px; }
   .cal-settings-layout { flex-direction: column; }
   .cal-settings-nav { display: flex; flex: 0 0 auto; gap: 4px; overflow-x: auto; padding: 8px; border-right: 0; border-bottom: 1px solid var(--border-default); }
-  .cal-settings-nav button { flex: 0 0 auto; width: auto; white-space: nowrap; padding: 9px 12px; }
+  .cal-settings-tab { flex: 0 0 auto; width: auto; white-space: nowrap; padding: 9px 12px; }
   .cal-settings-content { padding: 20px 16px; }
   .cal-shortcut-list { grid-template-columns: 1fr; }
 }

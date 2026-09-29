@@ -5,6 +5,10 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const authState = vi.hoisted(() => ({ user: { uid: 66, wcaId: '2017YANR02' } as { uid: number; wcaId: string } | null, login: vi.fn() }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
+vi.mock('@/lib/admin-api', () => ({ authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
+
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
 const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, microphone: null as string | null, start: vi.fn(), stop: vi.fn() }));
 
@@ -50,6 +54,7 @@ import { changeAppLanguage } from '@/i18n/i18n-client';
 describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
     routeState.lang = 'zh';
+    authState.user = { uid: 66, wcaId: '2017YANR02' };
     speechState.error = null;
     speechState.listening = false;
     speechState.microphone = null;
@@ -77,6 +82,7 @@ describe('LandingSearch placeholder hydration', () => {
     expect(fetcher).not.toHaveBeenCalled();
     await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', history: [] });
     expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。');
     expect(host.textContent).not.toContain('未找到匹配项');
@@ -85,10 +91,24 @@ describe('LandingSearch placeholder hydration', () => {
     host.remove();
   });
 
+  it('keeps anonymous questions out of the paid API', async () => {
+    authState.user = null;
+    const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
+    const host = document.createElement('div'); document.body.appendChild(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
+      await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(document.body.textContent).toContain('请先登录并绑定 WCA 账号');
+      expect(host.querySelector('input')?.value).toBe('世界纪录');
+    } finally { await act(async () => root.unmount()); host.remove(); }
+  });
+
   it('cancels stale questions when the user edits and keeps regular search on provider failure', async () => {
     let resolve!: (value: unknown) => void;
     const fetcher = vi.fn().mockImplementationOnce(() => new Promise(done => { resolve = done; }))
-      .mockResolvedValueOnce({ ok: false });
+      .mockResolvedValueOnce(Response.json({ error: 'model_unavailable' }, { status: 503 }));
     vi.stubGlobal('fetch', fetcher);
     const host = document.createElement('div');
     document.body.appendChild(host);
@@ -109,13 +129,13 @@ describe('LandingSearch placeholder hydration', () => {
   });
 
   it('explains the site-wide daily quota without clearing the search query', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429, json: async () => ({ error: 'daily_limit' }) }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ error: 'daily_limit' }, { status: 429 })));
     const host = document.createElement('div');
     document.body.appendChild(host);
     const root = createRoot(host);
     await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
     await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    expect(document.body.textContent).toContain('全站今日 100 次提问额度已用完');
+    expect(document.body.textContent).toContain('全站今日 1000 次提问额度已用完');
     expect(document.body.textContent).toContain('北京时间零点恢复');
     expect(host.querySelector('input')?.value).toBe('世界纪录');
     await act(async () => root.unmount());
