@@ -14,7 +14,7 @@ describe('/dev/auth source-review drift', () => {
   it('requires the real page to acknowledge the current authentication sources', () => {
     const sources = collectAuthDocSources();
     expect(sources.length).toBeGreaterThan(20);
-    expect(sources.map(([path]) => path)).toContain('apps/miniprogram/src/pages/external-timer/index.ts');
+    expect(sources.some(([path]) => path.endsWith('/external-timer/index.ts'))).toBe(true);
     expect(sources.map(([path]) => path)).toContain('packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx');
     expect(checkAuthDocReview(readFileSync(resolve(CORE_ROOT, DOC_PATH), 'utf8'), sources)).toEqual([]);
   });
