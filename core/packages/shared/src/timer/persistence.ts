@@ -667,32 +667,47 @@ export function createTimerStoreData(
   return {
     schemaVersion: TIMER_STORE_SCHEMA_VERSION,
     database,
-    settings: {
-      event: '333',
-      keymap: {},
-      cnMode: 'none',
-      ...DEFAULT_TIMER_TYPOGRAPHY,
-      ...normalizeTimerDisplaySettings(),
-      ...normalizeTimerPreScrambleSettings(),
-      ...normalizeTimerSoundSettings(),
-      ...normalizeTimerMetronomeSettings(),
-      ...normalizeTimerTrainingSettings(),
-      ...DEFAULT_TIMER_TIMING_SETTINGS,
-      ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
-      scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
-      scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
-      ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
-      ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
-      ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
-      manualScrambles: '',
-      statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
-      autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
-      scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
-      ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
-      ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
-      language,
-      theme: 'system',
-    },
+    settings: createTimerStoreSettings(language),
+  };
+}
+
+export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerStoreSettings {
+  return {
+    event: '333',
+    keymap: {},
+    cnMode: 'none',
+    ...DEFAULT_TIMER_TYPOGRAPHY,
+    ...normalizeTimerDisplaySettings(),
+    ...normalizeTimerPreScrambleSettings(),
+    ...normalizeTimerSoundSettings(),
+    ...normalizeTimerMetronomeSettings(),
+    ...normalizeTimerTrainingSettings(),
+    ...DEFAULT_TIMER_TIMING_SETTINGS,
+    ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,
+    scramble222Mode: DEFAULT_SCRAMBLE_222_MODE,
+    scramble222Type: DEFAULT_SCRAMBLE_222_TYPE,
+    ...DEFAULT_TIMER_BY_STEPS_SETTINGS,
+    ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
+    ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
+    manualScrambles: '',
+    statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
+    autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
+    scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
+    ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
+    ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
+    language,
+    theme: 'system',
+  };
+}
+
+/** Reset timer preferences while preserving host preferences and current event. */
+export function resetTimerStoreSettings(current: TimerStoreSettings): TimerStoreSettings {
+  return {
+    ...createTimerStoreSettings(current.language),
+    event: current.event,
+    theme: current.theme,
+    // Like Web's site-wide metronome, tempo is independent of timer defaults.
+    metronomeBpm: current.metronomeBpm,
   };
 }
 

@@ -335,3 +335,4 @@ export * from './timer-sound';
 export * from './useTimerSoundFeedback';
 export * from './TimerSoundSettings';
 export * from './TimerMetronomeSettings';
+export { ResetDefaultsButton, TimerResetSettings, TIMER_RESET_SETTING_FIELD_IDS } from './ResetDefaultsButton';
