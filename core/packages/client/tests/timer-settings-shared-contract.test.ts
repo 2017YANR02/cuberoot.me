@@ -30,6 +30,7 @@ import {
   TIMER_DISPLAY_SETTING_FIELD_IDS,
   TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
   TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
+  TIMER_SOUND_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -312,6 +313,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_DISPLAY_SETTING_FIELD_IDS,
       ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
       ...TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
+      ...TIMER_SOUND_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
@@ -351,7 +353,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');
     expect(panel).toContain("settingState('settings.training.stage-splits').visible");
-    expect(panel).toContain("settingState('settings.sound.volume').disabled");
+    expect(panel).toContain('<TimerSoundSettings');
+    expect(panel).toContain('voiceAvailable={isVoiceAvailable()}');
     expect(panel).not.toContain('normalizeTimerHoldMs(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerRunningPrecision(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerResultPrecision(Number(e.target.value))');
@@ -374,7 +377,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     const directMutationRoots = [...panel.matchAll(/updateSettings\(\{\s*([A-Za-z][A-Za-z0-9]*)/g)]
       .map((match) => match[1]!);
     // Typography and training mutations now live in the checked shared field group.
-    expect(directMutationRoots.length).toBe(17);
+    expect(directMutationRoots.length).toBe(14);
     expect(directMutationRoots.filter((key) => !registeredRoots.has(key))).toEqual([]);
   });
 });
