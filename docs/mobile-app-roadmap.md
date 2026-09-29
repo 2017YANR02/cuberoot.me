@@ -312,14 +312,17 @@
 - [ ] iOS 权限、后台、系统中断、安全区、动态字体和 VoiceOver 验证通过。
 - [ ] 网站唯一 `LoginForm`/后端提供满足 Apple 4.8 的等价登录（优先 Sign in with Apple），且完成全 provider、会话衔接、TestFlight 和 App Store 审核取证。（当前 P0 `BLOCKED`）
 - [x] Apple 门户已配置 Sign in with Apple primary App ID `me.cuberoot.app` 与 Services ID `me.cuberoot.web`，并取得仅本机保存的有效 SIWA 私钥。（2026-09-11，配置/密钥格式证据；不代表生产配置、令牌交换或登录 E2E）
-- [ ] Release Archive、Validate App 与最终 Xcode Privacy Report 通过。
-- [ ] App Store Connect 应用条目、构建上传与 Apple 处理完成。
+- [x] Release Archive 与 Apple Validate App 通过。（2026-09-28 PDT：Xcode 27.0 / iOS SDK 27.0，`me.cuberoot.app` `1.0 (1)`；App Store IPA 使用 Cloud Managed Apple Distribution，`codesign --verify --deep --strict` 通过，服务端返回 `Validated App`。）
+- [ ] 最终 Xcode Privacy Report 完成复核；本轮 IPA 可见 Capacitor/Cordova 隐私清单，但不能以 Apple 上传校验替代完整隐私声明复核。
+- [x] App Store Connect 应用条目、构建上传与 Apple 处理完成。（2026-09-28 PDT：App `6816632957` 的 `1.0 (1)` 上传返回 `Upload succeeded`，TestFlight Build Uploads 为 `Complete`；构建仍为 `Missing Compliance`，待填写加密出口合规信息，不代表可测试或可提审。）
 - [ ] TestFlight 内部构建在 iPhone 安装、启动并完成首发核心回归。
 - [ ] Apple IAP 复用网站会员、订单和服务端权益，完成购买、恢复、续期/到期、退款/撤销及跨端会话验收；全球发行包含中国大陆，备案和地区材料须完成后才能开放对应地区。
 - [ ] App Store 审核通过，且业务逻辑未复制为 iOS 专属实现。
 
 当前 iOS 证据与阻塞：
 
+- 2026-09-28 PDT 已完成首个 `1.0 (1)` 分发包：共享 App UI typecheck 与 366 项测试、Mobile typecheck 与 28 项测试、Vite build、Capacitor iOS sync 均通过；Release 归档后以 Team `R25HL7AXXK` 导出 Apple Distribution 签名 IPA。Apple Validate App 与正式上传均成功，23:12 PDT 已确认 TestFlight Build Uploads 为 `Complete`；构建 ID `8437a5b6-caa1-4d5d-85e7-9ccc09c23600`，当前 `Missing Compliance` 指向加密算法问卷。加密声明、TestFlight 安装及 App Review 仍是独立步骤。Mac 本地产物与日志位于 `~/Library/Developer/CubeRootReleases/ios-1.0-20260929/`，不纳入 Git；导出 IPA SHA-256 为 `c1bdac48bcac8ff8611cd28cde531bde809a2994af77de31b8098922ebb382c1`。本轮未提交审核、未公开发布。
+- 本轮 App Store Connect 已保存中英文支持网址 `/contact`、`/zh/contact`，免费价格与全部 175 个国家/地区（包含未来新增地区）；可用范围设置不证明各地区材料齐全。所有者确认隐私声明已发布；因第三方内容授权尚未确认，所有者要求内容版权声明暂留空。本轮只核对 iPad device family、四方向及 1024px 宽屏布局源码，未将其记为 iPad 真机验收。
 - `xcodebuild` 使用 Xcode 26.6、iOS Simulator SDK 26.5 完成 Debug 构建；`simctl install` 和 `simctl launch` 对 `me.cuberoot.app` 成功。
 - iOS 原生工程只承载 Capacitor 壳，计时 UI、项目图标和魔方展开图分别复用 `@cuberoot/timer-ui`、`@cuberoot/event-icon` 和 `@cuberoot/visualcube`；架构边界守卫与相关定向测试通过。
 - 小程序的计时页已确认只是指向网站 `/zh/timer` 的 WebView；移动 App 以该真实网站界面为产品事实源，但不跨 app 导入小程序源码。计时器状态正按 `docs/mobile-timer-parity-tracker.md` 与零遗漏审计迁到 shared/timer-ui；迁移未完成，未接真实行为的控件不能用占位、外跳或隐藏冒充完成。当前仍是 `ACTIVE — NOT COMPLETE`。
