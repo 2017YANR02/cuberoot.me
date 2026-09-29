@@ -1,4 +1,4 @@
-import { TimerDisplaySettings, TimerPreScrambleSettings } from '@cuberoot/timer-ui';
+import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
 import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import type { TimerSettingsUpdate } from './data/timer-repository';
@@ -1331,11 +1331,6 @@ export function App({ host }: { host: InstalledAppHost }) {
       byStepsSettingsRef.current,
     );
     const requestedIdentity = entry.sourceIdentity;
-    const request = {
-      event,
-      scramble222Mode: requested222Mode,
-      scramble222Type: requested222Type,
-    } as const;
     const use222BySteps = event === '222'
       && requested222Type === 'full'
       && requestedBySteps.genByStepsOn;
@@ -1346,6 +1341,12 @@ export function App({ host }: { host: InstalledAppHost }) {
       ? stepPuzzle
       : null;
     const eventCapability = timerScrambleCapability(event);
+    const request = {
+      event,
+      scramble222Mode: requested222Mode,
+      scramble222Type: requested222Type,
+      cnMode: use222BySteps || non222ByStepsEvent ? 'none' : storeRef.current?.settings.cnMode,
+    } as const;
     const useCstimerNonWcaWorker = eventCapability?.kind === 'shared'
       && eventCapability.provider === 'cstimer-nonwca';
     const specialistDependencies = (event === '222' && (requested222Type !== 'full' || use222BySteps))
@@ -4718,6 +4719,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             )}
 
             {settingsCategory === 'scramble' && <TimerPreScrambleSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
+            {settingsCategory === 'scramble' && <TimerColorNeutralSetting event={activeEvent} value={store!.settings.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={value => value[language]} />}
             {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 
             {settingsCategory === 'appearance' && <>

@@ -1,4 +1,5 @@
 import { optimalPocketScramble, wcaPocketScramble } from './pocket-scramble';
+import { applyColorNeutral, isCnEligible, normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
 import {
   DEFAULT_SCRAMBLE_222_MODE,
   DEFAULT_SCRAMBLE_222_TYPE,
@@ -161,6 +162,8 @@ export type TimerScrambleResult =
 
 export interface TimerScrambleRequest {
   readonly event: EventId;
+  /** Opt-in for ordinary generated scrambles; hosts omit this for constrained generators. */
+  readonly cnMode?: CnMode;
   readonly scramble222Mode?: Scramble222Mode;
   readonly scramble222Type?: Scramble222Type;
   /** Exact shared case ids. Empty or stale subsets preserve the full corpus. */
@@ -447,7 +450,9 @@ export async function generateTimerScramble(
       event: request.event,
       kind: 'generated',
       provider,
-      scramble,
+      scramble: isCnEligible(request.event)
+        ? applyColorNeutral(scramble, normalizeTimerColorNeutralMode(request.cnMode), dependencies.random)
+        : scramble,
       ...(generated.metadata ? { metadata: generated.metadata } : {}),
     };
   } catch {

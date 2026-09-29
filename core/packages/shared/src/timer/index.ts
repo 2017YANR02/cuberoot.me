@@ -64,3 +64,4 @@ export * from './goals';
 export * from './display-settings';
 export * from './cube-orientation';
 export * from './pre-scramble';
+export * from './color-neutral';
