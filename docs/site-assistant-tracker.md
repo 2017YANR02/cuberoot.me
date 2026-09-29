@@ -3,13 +3,40 @@
 ## Scope and evidence (2026-09-28)
 
 The owner requested full-site natural-language answers and a conversation interface,
-using Qwen 3.8 Flash, with a **site-wide limit of 100 questions per Beijing day**.
+initially using Qwen 3.8 Flash, then requesting the official DeepSeek API on 2026-09-28. On 2026-09-28 the owner raised the target to a **site-wide limit of 1000 questions per Beijing day** (previously 100).
 The reference is [CubeStats WCA Explorer](https://cubestats.in/wca). This is a
 functional comparison, not authorization to copy unlicensed implementation code.
 
 No matching public source repository or open-source license was found in the
 reference site's About page or GitHub repository search. This does not establish
 that its implementation is closed source.
+
+### DeepSeek switch (local, 2026-09-28 America/Los_Angeles)
+
+- API `.env` now selects `SITE_ASSISTANT_PROVIDER=deepseek`, reads the existing
+  `DEEPSEEK_API_KEY`, and uses `DEEPSEEK_MODEL=deepseek-flash`. The key is sent only
+  to the fixed official `https://api.deepseek.com` endpoint. A missing DeepSeek
+  key disables the assistant instead of silently using a different provider.
+- The [official request contract](https://api-docs.deepseek.com/api/create-chat-completion/)
+  requires `thinking: { type: "disabled" }` for non-thinking mode. The assistant
+  sends this field, retains JSON output and the existing bounded public-data tools.
+  Bailian's separate `enable_thinking: false` is not sent to DeepSeek.
+- Existing `SITE_ASSISTANT_API_KEY` / `SITE_ASSISTANT_BASE_URL` remain intact for
+  the independent cube-agent comparison. Explicit `SITE_ASSISTANT_PROVIDER=bailian`
+  selects the previous assistant configuration.
+- Official `/models` returned HTTP 200 with `deepseek-flash` and `deepseek-v4-pro`;
+  `/user/balance` returned HTTP 200 and `is_available: true` (not a claim of free use).
+- Three local real-model/public-data smoke questions returned grounded answers
+  with source tables: current 3x3 records **4.368 s**, reconstruction 2763
+  **4.358 s**, top five record-breakers **3.561 s**. Seven model calls in total,
+  all HTTP 200, all without reasoning content. These direct function tests did
+  not use the production question ledger and are not browser/auth/load acceptance.
+  Evidence: [DeepSeek smoke results](benchmarks/site-assistant-deepseek-2026-09-28-smoke.json).
+- Targeted assistant tests: 33 passed; API typecheck passed. This change is prepared for a local commit only. Production environment and
+  running service remain unchanged.
+  Normal localhost Web requests still proxy to the production API unless the
+  existing per-domain local API preview is explicitly enabled. The previous
+  100-question Qwen benchmark must not be presented as DeepSeek acceptance.
 
 ### Verified references
 
@@ -23,6 +50,16 @@ that its implementation is closed source.
 | [Metabase Metabot](https://www.metabase.com/docs/latest/ai/metabot) | Official product documentation covers an analytics assistant and embedded AI chat. | Keep data selection and visualization based on verified query results. |
 
 ## Acceptance checklist
+
+The checked items below describe the earlier 100-question production release.
+The new 1000-question migration and latency changes remain local and undeployed until explicitly released. See [response-time goals](site-assistant-performance.md).
+
+The later access requirement is also local only: AI requires an authenticated
+CubeRoot account with a currently linked real WCA ID, checked on the server before
+quota reservation. It uses the existing account page and authentication header,
+not a model decision or a client-supplied ID. The question API has no browser
+CAPTCHA; other page/data protections remain. The 1000/day budget, account/IP burst
+limits and concurrency protection remain; regular search stays available to guests.
 
 - [x] Durable 100-question quota: reserve before model calls, count failed/cancelled calls, reject when storage is unavailable, reset at Beijing midnight. Local PostgreSQL fixture: 130 concurrent reservations admit exactly 100, reconnect retains limit, midnight starts next day.
 - [x] Bilingual quota-exhausted message; regular search remains available.
@@ -57,6 +94,8 @@ The owner explicitly requested original example questions, wording, interface an
 CubeStats was added to the production web directory under Competition & Stats (nav site 389), with an original bilingual description and https://cubestats.in/ as its destination. Browser search verification succeeded.
 
 ## Local acceptance evidence
+
+- Later local-only performance work: [100 original questions](site-assistant-questions.md), two complete 100-question real-Qwen runs, five final targeted retests and browser checks. Latest per-question P50 4.31 s, P95 7.86 s, maximum 10.88 s; 73 data answers, 23 grounded scope clarifications and 4 documented data/grain gaps. See the [full report and preserved failures](site-assistant-benchmark-2026-09-28.md). This work remains undeployed; it does not change the earlier production release evidence below.
 
 - Original records query now reads the published records bundle, including ties and its update date. Real Qwen call returned both 3x3 records and a source table.
 - Real model/data calls covered person profiles, rankings, comparisons (four PR charts), competition discovery, WC2023 official final scrambles, public reconstruction 761, glossary questions and a contextual PR follow-up.

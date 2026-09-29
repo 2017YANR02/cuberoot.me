@@ -73,6 +73,8 @@ describe('/dev/auth source-review drift', () => {
   it.each([
     ['@cuberoot/server', 'src/routes/account_auth.ts'], ['@cuberoot/server', 'src/utils/account_merge.ts'],
     ['@cuberoot/server', 'src/routes/mcp.ts'], ['@cuberoot/server', 'src/routes/mcp_oauth.ts'],
+    ['@cuberoot/server', 'src/routes/site_assistant.ts'],
+    ['@cuberoot/client', 'components/LandingSearch.tsx'], ['@cuberoot/client', 'components/SiteAssistantDialog.tsx'],
     ['@cuberoot/client', 'app/[lang]/account/mcp/page.tsx'],
     ['@cuberoot/client', 'app/[lang]/calendar/_components/GoogleBackupPanel.tsx'],
     ['@cuberoot/server', 'src/utils/account_delete.ts'], ['@cuberoot/server', 'src/utils/apple_login.ts'],
@@ -80,6 +82,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/server', 'src/utils/password.ts'], ['@cuberoot/server', 'src/utils/credentials.ts'],
     ['@cuberoot/mobile', 'src/native/secure-token.ts'], ['@cuberoot/client', 'proxy.ts'],
     ['@cuberoot/client', 'lib/page-access-api.ts'], ['@cuberoot/client', 'app/api/page-access/route.ts'],
+    ['@cuberoot/client', 'lib/competition-gate.ts'], ['@cuberoot/shared', 'src/competition-access.ts'],
     ['@cuberoot/client', 'components/AuthPanel.tsx'], ['@cuberoot/client', 'lib/identity-choice.ts'],
     ['@cuberoot/client', 'components/CountryPinButton.tsx'], ['@cuberoot/client', 'hooks/usePinnedCountries.ts'],
     ['@cuberoot/client', 'lib/pinned-countries.ts'],

@@ -21,9 +21,26 @@ describe('assistant public data adapters',()=>{
   it('never puts an unlisted reconstruction into model evidence',async()=>{
     await expect(runDataTool({tool:'recon',id:123},'en',async()=>({visibility:'unlisted',solution:'private text'}))).rejects.toThrow('Only published');
   });
+  it('resolves names from the imported public people, without a WCA HTTP lookup',async()=>{
+    const read=vi.fn();
+    const people=vi.fn().mockResolvedValue([{wcaId:'2017YANR02',name:'Ruimin Yan (颜瑞民)',country:'China'}]);
+    const result=await runDataTool({tool:'find_person',query:'颜瑞民'},'zh',read,people);
+    expect(result.sources[0]).toMatchObject({id:'person:2017YANR02',title:'颜瑞民'});
+    expect(people).toHaveBeenCalledWith('颜瑞民');
+    expect(read).not.toHaveBeenCalled();
+  });
+  it('uses the real camelCase recon fields and applies requested count and event',async()=>{
+    const rows=[{id:1,person:'One',personId:'2017YANR02',event:'3x3',rawTime:6.98,official:'practice',comp:'Home'}, {id:2,event:'2x2'}, {id:3,event:'3x3'}];
+    const result=await runDataTool({tool:'recons',event:'333',limit:1,value:6.98},'en',async()=>rows);
+    expect(result.evidence).toMatchObject([{id:1,personId:'2017YANR02',rawTime:6.98,official:'practice'}]);
+    expect(result.artifacts[0]).toMatchObject({rows:[['One','6.98','Home','']]});
+    const detail=await runDataTool({tool:'recon',id:1},'en',async()=>({...rows[0],optimalScramble:"R U",solution:"R // raw"}));
+    expect(detail.evidence).toMatchObject({rawTime:6.98,optimalScramble:'R U',solution:'R // raw'});
+  });
   it('allows only bounded typed tool arguments',()=>{
     expect(toolCallSchema.safeParse({tool:'rankings',limit:100000}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'scrambles',compId:'../../.env'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'recons',compId:'2012PARK03'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'person',wcaId:'2012PARK03',headers:{Authorization:'x'}}).success).toBe(false);
   });
 });
@@ -45,4 +62,20 @@ it('reads only registered statistics and preserves section scope before taking t
   const result=await runDataTool({tool:'statistics',id:'example',tableKey:'0.2.1',limit:1},'en',read);
   expect(result.evidence).toMatchObject({selected:{scope:{region:'asia'},rows:[[3]]}});
   expect(result.artifacts[0]).toMatchObject({rows:[['3']]});
+});
+
+it('reads nested source panels and distinguishes a published empty file from no achievers',async()=>{
+  const index={categories:[{stats:[{id:'nested',titleEn:'Nested',titleZh:'分层'}]}]};
+  const read=vi.fn(async(url:string)=>url.endsWith('/index.json')?index:{metricPanels:[{labelEn:'Single',sourcePanels:[{labelEn:'Finals',panels:[{labelEn:'Ranking',header:[{label:'Result'}],rows:[[123]]}]}]}]});
+  const result=await runDataTool({tool:'statistics',id:'nested',limit:5},'en',read);
+  expect(result.evidence).toMatchObject({selected:{key:'0.0.0.3.0.1.0',rows:[[123]]}});
+  const empty=await runDataTool({tool:'statistics',id:'nested',limit:5},'en',async(url)=>url.endsWith('/index.json')?index:{rows:[]});
+  expect(empty.evidence).toMatchObject({availability:'published_file_has_no_rows',selected:null});
+  expect(empty.artifacts).toEqual([]);
+});
+
+it('retains legacy competition cells without a heading and serializes solves instead of object Object',async()=>{
+  const read=async(url:string)=>url.endsWith('/index.json')?{categories:[{stats:[{id:'legacy',titleZh:'旧表',titleEn:'Legacy'}]}]}:{header:[{key:'details',label:'Details'}],rows:[[{_type:'solves',csv:'4.11,4.20'},'[Example](https://www.worldcubeassociation.org/competitions/Example2026)']]};
+  const result=await runDataTool({tool:'statistics',id:'legacy',limit:5},'en',read);
+  expect(result.artifacts[0]).toMatchObject({columns:['Details','Competition'],rows:[['4.11,4.20','Example']]});
 });

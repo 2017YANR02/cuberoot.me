@@ -3,9 +3,23 @@ import { readFileSync } from 'node:fs';
 import { NextRequest } from 'next/server';
 import { competitionGate, SITE_VERIFICATION_PATH } from '@/lib/competition-gate';
 import { safeCompetitionReturn } from '@/lib/competition-return';
-import { COMPETITION_ACCESS_COOKIE, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
+import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 const secret = 'test-only-secret-with-more-than-32-characters';
 afterEach(() => vi.unstubAllEnvs());
+it('accepts only an unexpired service signature for the exact path and query', async () => {
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('VERCEL', '1');
+  const path='/zh/math/group?section=1';
+  const proof=await createCompetitionProof(secret,'service',path);
+  const headers={ [COMPETITION_SERVICE_HEADER]:proof };
+  expect(await competitionGate(new NextRequest('https://next.cuberoot.me'+path,{headers}))).toBeNull();
+  for(const other of ['/zh/math/group?section=2','/zh/math/group','/zh/admin']) {
+    expect((await competitionGate(new NextRequest('https://next.cuberoot.me'+other,{headers})))?.status).toBe(307);
+  }
+  const expired=await createCompetitionProof(secret,'service',path,Date.now()-61_000);
+  for(const invalid of [expired,proof+'x',await createCompetitionProof(secret,'browser',path)]) {
+    expect((await competitionGate(new NextRequest('https://next.cuberoot.me'+path,{headers:{[COMPETITION_SERVICE_HEADER]:invalid}})))?.status).toBe(307);
+  }
+});
 it('gates every language and subpage before cached content; API denial is JSON', async () => {
   vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('VERCEL', '1');
   for (const path of ['/', '/zh', '/en', '/timer', '/zh/calc', '/alg', '/dev', '/forum/t/1', '/platform/login', '/wca/persons/2017YANR02', '/wca/persons/person.png', '/wca/comp', '/zh/wca/comp/A/results', '/en/wca/comp/A', '/tools/cstimer/', '/tools/blddb/index.html', '/_cube-demo.html']) {
