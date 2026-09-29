@@ -36,7 +36,13 @@ export default function CompetitionVerifyPage() {
         method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ id: challenge.id, answer }), signal: AbortSignal.timeout(15_000),
       });
-      if (!response.ok) throw new Error(response.status === 429 ? t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.') : t('验证码错误或已过期，请重试或换一张。', 'Incorrect or expired code. Try again or get a new image.'));
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null);
+        if (response.status === 429) throw new Error(t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.'));
+        if (failure?.code === 'captcha_incorrect_or_expired') throw new Error(t('验证码错误或已过期，请重试或换一张。', 'Incorrect or expired code. Try again or get a new image.'));
+        if (failure?.code === 'invalid_origin') throw new Error(t('当前访问地址未获验证服务允许，请检查开发代理配置。', 'The verification service rejected this site address. Check the development proxy configuration.'));
+        throw new Error(t('验证服务暂时不可用，请稍后重试。', 'Verification is temporarily unavailable. Please try again later.'));
+      }
       const check = await fetch(apiUrl('/v1/competition-access/check'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (!check.ok) throw new Error(t('浏览器未保存验证凭证，请允许本站 Cookie 后重试。', 'The browser did not save verification. Allow site cookies and retry.'));
       window.location.replace(safeCompetitionReturn(returnTo));

@@ -1,0 +1,6405 @@
+{
+  "note": "Actual real-model diagnostics; includes failures, partial runs are not acceptance. API process timings exclude browser/network ingress.",
+  "events": [
+    {
+      "benchmarkRun": true,
+      "started": "2026-09-28T17:16:12.980Z",
+      "cases": 80,
+      "budget": "isolated-800-per-Beijing-day",
+      "surface": "in-process real API handler; real account lookup; real Qwen; real public data; no browser/network ingress",
+      "cold": true
+    },
+    {
+      "benchmark": true,
+      "id": "R01",
+      "question": "列出王艺衡最近的五条公开复盘。",
+      "durationMs": 5617,
+      "status": 200,
+      "result": {
+        "answer": "已找到王艺衡最近的五条公开复盘，涵盖三阶、二阶及单手项目。",
+        "sources": [
+          {
+            "id": "person:2019WANY36",
+            "title": "王艺衡",
+            "href": "/wca/persons/2019WANY36",
+            "read": true
+          },
+          {
+            "id": "recon:2629",
+            "title": "王艺衡 · 5.85",
+            "href": "/recon/2629",
+            "read": true
+          },
+          {
+            "id": "recon:2567",
+            "title": "王艺衡 · 4.67",
+            "href": "/recon/2567",
+            "read": true
+          },
+          {
+            "id": "recon:2566",
+            "title": "王艺衡 · 1.05",
+            "href": "/recon/2566",
+            "read": true
+          },
+          {
+            "id": "recon:2565",
+            "title": "王艺衡 · 0.85",
+            "href": "/recon/2565",
+            "read": true
+          },
+          {
+            "id": "recon:2564",
+            "title": "王艺衡 · 2.90",
+            "href": "/recon/2564",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "公开复盘",
+            "columns": [
+              "选手",
+              "成绩",
+              "比赛或场景",
+              "日期"
+            ],
+            "rows": [
+              [
+                "王艺衡",
+                "5.85",
+                "Zhanjiang Open 2026",
+                "2026-08-09"
+              ],
+              [
+                "王艺衡",
+                "4.67",
+                "Fushun Open 2024",
+                "2024-01-28"
+              ],
+              [
+                "王艺衡",
+                "1.05",
+                "Thailand Championship 2023",
+                "2023-10-20"
+              ],
+              [
+                "王艺衡",
+                "0.85",
+                "Thailand Championship 2023",
+                "2023-10-20"
+              ],
+              [
+                "王艺衡",
+                "2.90",
+                "Thailand Championship 2023",
+                "2023-10-20"
+              ]
+            ],
+            "links": [
+              "/recon/2629",
+              "/recon/2567",
+              "/recon/2566",
+              "/recon/2565",
+              "/recon/2564"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1009,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1900,
+            "total_tokens": 1921,
+            "completion_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1900
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "find_person",
+              "query": "王艺衡"
+            }
+          ]
+        },
+        {
+          "ms": 2328,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1995,
+            "total_tokens": 2040,
+            "completion_tokens": 45,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1995
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "recons",
+              "wcaId": "2019WANY36",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1987,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2811,
+            "total_tokens": 2892,
+            "completion_tokens": 81,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2811
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 116
+    },
+    {
+      "benchmark": true,
+      "id": "R02",
+      "question": "找出 2012PARK03 的公开三阶复盘。",
+      "durationMs": 6742,
+      "status": 200,
+      "result": {
+        "answer": "已找到 Max Park (2012PARK03) 的公开三阶复盘记录，涵盖从 2.30 秒到 10.12 秒等多个成绩，包括 WCA 正式比赛及练习数据。",
+        "sources": [
+          {
+            "id": "recon:1983",
+            "title": "Max Park · 10.12",
+            "href": "/recon/1983",
+            "read": true
+          },
+          {
+            "id": "recon:1499",
+            "title": "Max Park · 2.30",
+            "href": "/recon/1499",
+            "read": true
+          },
+          {
+            "id": "recon:761",
+            "title": "Max Park · 3.13",
+            "href": "/recon/761",
+            "read": true
+          },
+          {
+            "id": "recon:610",
+            "title": "Max Park · 4.62",
+            "href": "/recon/610",
+            "read": true
+          },
+          {
+            "id": "recon:609",
+            "title": "Max Park · 4.78",
+            "href": "/recon/609",
+            "read": true
+          },
+          {
+            "id": "recon:608",
+            "title": "Max Park · 5.68",
+            "href": "/recon/608",
+            "read": true
+          },
+          {
+            "id": "recon:607",
+            "title": "Max Park · 5.19",
+            "href": "/recon/607",
+            "read": true
+          },
+          {
+            "id": "recon:606",
+            "title": "Max Park · 4.50",
+            "href": "/recon/606",
+            "read": true
+          },
+          {
+            "id": "recon:580",
+            "title": "Max Park · 3.63",
+            "href": "/recon/580",
+            "read": true
+          },
+          {
+            "id": "recon:398",
+            "title": "Max Park · 8.55+",
+            "href": "/recon/398",
+            "read": true
+          },
+          {
+            "id": "recon:44",
+            "title": "Max Park · 7.36",
+            "href": "/recon/44",
+            "read": true
+          },
+          {
+            "id": "recon:43",
+            "title": "Max Park · 7.69",
+            "href": "/recon/43",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "公开复盘",
+            "columns": [
+              "选手",
+              "成绩",
+              "比赛或场景",
+              "日期"
+            ],
+            "rows": [
+              [
+                "Max Park",
+                "10.12",
+                "Cubing on the Plains Auburn 2025",
+                "2025-02-01"
+              ],
+              [
+                "Max Park",
+                "2.30",
+                "Home",
+                "2024-06-01"
+              ],
+              [
+                "Max Park",
+                "3.13",
+                "Pride in Long Beach 2023",
+                "2023-06-11"
+              ],
+              [
+                "Max Park",
+                "4.62",
+                "Marshall Cubing September 2022",
+                "2022-09-24"
+              ],
+              [
+                "Max Park",
+                "4.78",
+                "Marshall Cubing September 2022",
+                "2022-09-24"
+              ],
+              [
+                "Max Park",
+                "5.68",
+                "Marshall Cubing September 2022",
+                "2022-09-24"
+              ],
+              [
+                "Max Park",
+                "5.19",
+                "Marshall Cubing September 2022",
+                "2022-09-24"
+              ],
+              [
+                "Max Park",
+                "4.50",
+                "Marshall Cubing September 2022",
+                "2022-09-24"
+              ],
+              [
+                "Max Park",
+                "3.63",
+                "Circle City Summer 2022",
+                "2022-08-06"
+              ],
+              [
+                "Max Park",
+                "8.55+",
+                "Uni Heights Cubing Winter 2024",
+                ""
+              ],
+              [
+                "Max Park",
+                "7.36",
+                "Cubing on the Plains Auburn 2025",
+                ""
+              ],
+              [
+                "Max Park",
+                "7.69",
+                "Cubing on the Plains Auburn 2025",
+                ""
+              ],
+              [
+                "Max Park",
+                "9.15",
+                "Cubing on the Plains Auburn 2025",
+                ""
+              ],
+              [
+                "Max Park",
+                "8.54",
+                "Cubing on the Plains Auburn 2025",
+                ""
+              ]
+            ],
+            "links": [
+              "/recon/1983",
+              "/recon/1499",
+              "/recon/761",
+              "/recon/610",
+              "/recon/609",
+              "/recon/608",
+              "/recon/607",
+              "/recon/606",
+              "/recon/580",
+              "/recon/398",
+              "/recon/44",
+              "/recon/43",
+              "/recon/42",
+              "/recon/41"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1313,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1908,
+            "total_tokens": 1939,
+            "completion_tokens": 31,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1908
+            }
+          },
+          "finish": "stop",
+          "unexpectedShape": [
+            {
+              "tool": "recons",
+              "wcaId": "2012PARK03",
+              "event": "333",
+              "limit": 20
+            }
+          ]
+        },
+        {
+          "ms": 1704,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1956,
+            "total_tokens": 2020,
+            "completion_tokens": 64,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1956
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "recons",
+              "wcaId": "2012PARK03",
+              "event": "333",
+              "limit": 20
+            }
+          ]
+        },
+        {
+          "ms": 3658,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3917,
+            "total_tokens": 4134,
+            "completion_tokens": 217,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3917
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 106
+    },
+    {
+      "benchmark": true,
+      "id": "R03",
+      "question": "查看复盘 2763：成绩、步数、TPS 和原始解法是什么？",
+      "durationMs": 4472,
+      "status": 200,
+      "result": {
+        "answer": "复盘 2763 是 Michael Liubarets 于 2026-09-27 在家庭练习中完成的三阶单次成绩，用时 4.72 秒。该解法采用 CFOP 方法，共 50 步，TPS 为 10.59。",
+        "sources": [
+          {
+            "id": "recon:2763",
+            "title": "复盘",
+            "href": "/recon/2763",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "原始复盘步骤",
+            "columns": [
+              "步骤",
+              "原始记号与注释"
+            ],
+            "rows": [
+              [
+                "1",
+                "z2 // insp"
+              ],
+              [
+                "2",
+                "D' F D L D' // W cross"
+              ],
+              [
+                "3",
+                "R U' R' U R U' R' U R' U' R // OB"
+              ],
+              [
+                "4",
+                "U' R U R' L U' L' // RB"
+              ],
+              [
+                "5",
+                "y' U' R' U R U' R' U R // GO"
+              ],
+              [
+                "6",
+                "R U' R' U R U2 R2 F R F' // GR/ZBLS"
+              ],
+              [
+                "7",
+                "U2 R' F' r U R U' r' F // ZBLL-T6 "
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1911,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1913,
+            "total_tokens": 1935,
+            "completion_tokens": 22,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1913
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "recon",
+              "id": 2763
+            }
+          ]
+        },
+        {
+          "ms": 2514,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2234,
+            "total_tokens": 2325,
+            "completion_tokens": 91,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2234
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 108
+    },
+    {
+      "benchmark": true,
+      "id": "R04",
+      "question": "复盘 2763 使用了什么 OLL 和 PLL？",
+      "durationMs": 3824,
+      "status": 200,
+      "result": {
+        "answer": "复盘 2763 未使用传统 OLL，而是通过 ZBLS 完成最后两层后直接执行 ZBLL-T6。该步骤同时完成了顶层定向与排列，因此没有单独的 PLL 阶段。",
+        "sources": [
+          {
+            "id": "recon:2763",
+            "title": "复盘",
+            "href": "/recon/2763",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "原始复盘步骤",
+            "columns": [
+              "步骤",
+              "原始记号与注释"
+            ],
+            "rows": [
+              [
+                "1",
+                "z2 // insp"
+              ],
+              [
+                "2",
+                "D' F D L D' // W cross"
+              ],
+              [
+                "3",
+                "R U' R' U R U' R' U R' U' R // OB"
+              ],
+              [
+                "4",
+                "U' R U R' L U' L' // RB"
+              ],
+              [
+                "5",
+                "y' U' R' U R U' R' U R // GO"
+              ],
+              [
+                "6",
+                "R U' R' U R U2 R2 F R F' // GR/ZBLS"
+              ],
+              [
+                "7",
+                "U2 R' F' r U R U' r' F // ZBLL-T6 "
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1921,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1906,
+            "total_tokens": 1928,
+            "completion_tokens": 22,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1906
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "recon",
+              "id": 2763
+            }
+          ]
+        },
+        {
+          "ms": 1849,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2227,
+            "total_tokens": 2292,
+            "completion_tokens": 65,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2227
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 108
+    },
+    {
+      "benchmark": true,
+      "id": "R05",
+      "question": "列出最近五条公开复盘的选手、成绩和比赛。",
+      "durationMs": 5578,
+      "status": 200,
+      "result": {
+        "answer": "最近五条公开复盘均为 Michael Liubarets 在“Home”（练习）中的三阶成绩，分别为 4.72、5.04、5.53、3.72 和 3.30 秒。",
+        "sources": [
+          {
+            "id": "recon:2763",
+            "title": "Michael Liubarets · 4.72",
+            "href": "/recon/2763",
+            "read": true
+          },
+          {
+            "id": "recon:2762",
+            "title": "Michael Liubarets · 5.04",
+            "href": "/recon/2762",
+            "read": true
+          },
+          {
+            "id": "recon:2761",
+            "title": "Michael Liubarets · 5.53",
+            "href": "/recon/2761",
+            "read": true
+          },
+          {
+            "id": "recon:2760",
+            "title": "Michael Liubarets · 3.72",
+            "href": "/recon/2760",
+            "read": true
+          },
+          {
+            "id": "recon:2759",
+            "title": "Michael Liubarets · 3.30",
+            "href": "/recon/2759",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "公开复盘",
+            "columns": [
+              "选手",
+              "成绩",
+              "比赛或场景",
+              "日期"
+            ],
+            "rows": [
+              [
+                "Michael Liubarets",
+                "4.72",
+                "Home",
+                "2026-09-27"
+              ],
+              [
+                "Michael Liubarets",
+                "5.04",
+                "Home",
+                "2026-09-27"
+              ],
+              [
+                "Michael Liubarets",
+                "5.53",
+                "Home",
+                "2026-09-27"
+              ],
+              [
+                "Michael Liubarets",
+                "3.72",
+                "Home",
+                "2026-09-27"
+              ],
+              [
+                "Michael Liubarets",
+                "3.30",
+                "Home",
+                "2026-09-27"
+              ]
+            ],
+            "links": [
+              "/recon/2763",
+              "/recon/2762",
+              "/recon/2761",
+              "/recon/2760",
+              "/recon/2759"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1294,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1903,
+            "total_tokens": 1917,
+            "completion_tokens": 14,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1903
+            }
+          },
+          "finish": "stop",
+          "unexpectedShape": [
+            {
+              "tool": "recons",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1331,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1951,
+            "total_tokens": 1970,
+            "completion_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1951
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "recons",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2792,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2590,
+            "total_tokens": 2694,
+            "completion_tokens": 104,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2590
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 112
+    },
+    {
+      "benchmark": true,
+      "id": "R06",
+      "question": "2017YANR02 有哪些公开复盘？给出最近五条。",
+      "durationMs": 3180,
+      "status": 200,
+      "result": {
+        "answer": "颜瑞民（2017YANR02）最近五条公开复盘均为三阶练习记录，包含一次DNF、两次CFOP及一次ZB方法。",
+        "sources": [
+          {
+            "id": "recon:2382",
+            "title": "颜瑞民 · DNF",
+            "href": "/recon/2382",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "公开复盘",
+            "columns": [
+              "选手",
+              "成绩",
+              "比赛或场景",
+              "日期"
+            ],
+            "rows": [
+              [
+                "颜瑞民",
+                "DNF",
+                "北京三阶赛",
+                "2025-11-23"
+              ],
+              [
+                "颜瑞民",
+                "10.33",
+                "北京三阶赛",
+                "2025-11-23"
+              ],
+              [
+                "颜瑞民",
+                "8.508",
+                "",
+                ""
+              ],
+              [
+                "颜瑞民",
+                "6.36",
+                "#REF!",
+                "2025-09-25"
+              ],
+              [
+                "颜瑞民",
+                "7.85",
+                "#REF!",
+                "2025-08-17"
+              ]
+            ],
+            "links": [
+              "/recon/2382",
+              "/recon/2381",
+              "/recon/2314",
+              "/recon/2210",
+              "/recon/2207"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1396,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1909,
+            "total_tokens": 1942,
+            "completion_tokens": 33,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1909
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "recons",
+              "wcaId": "2017YANR02",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1718,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2590,
+            "total_tokens": 2646,
+            "completion_tokens": 56,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2590
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 113
+    },
+    {
+      "benchmark": true,
+      "id": "D01",
+      "question": "现在三阶单次和平均世界纪录分别是多少？",
+      "durationMs": 3287,
+      "status": 200,
+      "result": {
+        "answer": "截至2026年9月28日，三阶单次世界纪录为2.76秒（Teodor Zajder），平均世界纪录为3.51秒（王艺衡）。",
+        "sources": [
+          {
+            "id": "records:world:333",
+            "title": "WCA 纪录",
+            "href": "/wca/records?show=current&region=world&event=333",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "当前纪录",
+            "columns": [
+              "类型",
+              "成绩",
+              "选手",
+              "WCA ID",
+              "比赛",
+              "日期"
+            ],
+            "rows": [
+              [
+                "单次",
+                "2.76",
+                "Teodor Zajder",
+                "2021ZAJD03",
+                "GLS Big Cubes Gdańsk",
+                "2026-02-07"
+              ],
+              [
+                "平均",
+                "3.51",
+                "王艺衡",
+                "2019WANY36",
+                "合肥三阶联赛 III",
+                "2026-06-17"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1362,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1902,
+            "total_tokens": 1926,
+            "completion_tokens": 24,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1902
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "records",
+              "event": "333",
+              "region": "world"
+            }
+          ]
+        },
+        {
+          "ms": 1889,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2130,
+            "total_tokens": 2191,
+            "completion_tokens": 61,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2130
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 114
+    },
+    {
+      "benchmark": true,
+      "id": "D02",
+      "question": "王艺衡的三阶个人最好成绩是多少？",
+      "durationMs": 3731,
+      "status": 200,
+      "result": {
+        "answer": "王艺衡的三阶单次最好成绩为2.77秒，平均最好成绩为3.51秒。",
+        "sources": [
+          {
+            "id": "person:2019WANY36",
+            "title": "王艺衡",
+            "href": "/wca/persons/2019WANY36",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "王艺衡",
+            "columns": [
+              "项目",
+              "单次",
+              "世界排名",
+              "平均",
+              "世界排名"
+            ],
+            "rows": [
+              [
+                "三阶",
+                "2.77",
+                "2",
+                "3.51",
+                "1"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 993,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1902,
+            "total_tokens": 1923,
+            "completion_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1902
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "find_person",
+              "query": "王艺衡"
+            }
+          ]
+        },
+        {
+          "ms": 1212,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1997,
+            "total_tokens": 2043,
+            "completion_tokens": 46,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1997
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "person",
+              "wcaId": "2019WANY36",
+              "event": "333"
+            }
+          ]
+        },
+        {
+          "ms": 1313,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2493,
+            "total_tokens": 2540,
+            "completion_tokens": 47,
+            "prompt_tokens_details": {
+              "cached_tokens": 2048,
+              "text_tokens": 2493
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 115
+    },
+    {
+      "benchmark": true,
+      "id": "D03",
+      "question": "列出接下来中国的五场 WCA 比赛。",
+      "durationMs": 3486,
+      "status": 200,
+      "result": {
+        "answer": "已为您列出接下来中国的五场 WCA 比赛，包括北京、泉州、广州和桂林的赛事。",
+        "sources": [
+          {
+            "id": "comp:BeijingAutumnRivalry2026",
+            "title": "Beijing Autumn Rivalry 2026",
+            "href": "/wca/comp/BeijingAutumnRivalry2026",
+            "read": true
+          },
+          {
+            "id": "comp:QuanzhouFMCAutumn2026",
+            "title": "Quanzhou FMC Autumn 2026",
+            "href": "/wca/comp/QuanzhouFMCAutumn2026",
+            "read": true
+          },
+          {
+            "id": "comp:GuangzhouGrandOpen2026",
+            "title": "Guangzhou Grand Open 2026",
+            "href": "/wca/comp/GuangzhouGrandOpen2026",
+            "read": true
+          },
+          {
+            "id": "comp:DualFMCBeijing2026",
+            "title": "Dual FMC Beijing 2026",
+            "href": "/wca/comp/DualFMCBeijing2026",
+            "read": true
+          },
+          {
+            "id": "comp:GuilinOpen2026",
+            "title": "Guilin Open 2026",
+            "href": "/wca/comp/GuilinOpen2026",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "比赛",
+            "columns": [
+              "比赛",
+              "城市",
+              "地区",
+              "日期"
+            ],
+            "rows": [
+              [
+                "北京金秋争霸赛",
+                "Beijing",
+                "CN",
+                "2026-10-01~03"
+              ],
+              [
+                "泉州最少步秋季赛",
+                "Quanzhou, Fujian",
+                "CN",
+                "2026-10-04"
+              ],
+              [
+                "广州公开赛",
+                "Guangzhou, Guangdong",
+                "CN",
+                "2026-10-05~06"
+              ],
+              [
+                "北京最少步双轮赛",
+                "Beijing",
+                "CN",
+                "2026-10-18"
+              ],
+              [
+                "桂林公开赛",
+                "Guilin, Guangxi",
+                "CN",
+                "2026-10-18"
+              ]
+            ],
+            "links": [
+              "/wca/comp/BeijingAutumnRivalry2026",
+              "/wca/comp/QuanzhouFMCAutumn2026",
+              "/wca/comp/GuangzhouGrandOpen2026",
+              "/wca/comp/DualFMCBeijing2026",
+              "/wca/comp/GuilinOpen2026"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1374,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1901,
+            "total_tokens": 1931,
+            "completion_tokens": 30,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1901
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "competitions",
+              "query": "",
+              "country": "CN",
+              "upcoming": true,
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2055,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4331,
+            "total_tokens": 4426,
+            "completion_tokens": 95,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 4331
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 122
+    },
+    {
+      "benchmark": true,
+      "id": "D04",
+      "question": "中国三阶单次排名前五名是谁？",
+      "durationMs": 3812,
+      "status": 200,
+      "result": {
+        "answer": "截至2026年9月28日，中国三阶单次排名前五名选手为：王艺衡（2.77秒）、耿暄一（2.80秒）、许瑞航与曹岂娴并列第三（3.24秒）、陈震（3.32秒）。",
+        "sources": [
+          {
+            "id": "rankings",
+            "title": "WCA 排名",
+            "href": "/wca/results",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "排名",
+            "columns": [
+              "名次",
+              "选手",
+              "WCA ID",
+              "成绩",
+              "地区",
+              "比赛",
+              "日期"
+            ],
+            "rows": [
+              [
+                "1",
+                "王艺衡",
+                "2019WANY36",
+                "2.77",
+                "CN",
+                "茂名公开赛",
+                "2026-08-08"
+              ],
+              [
+                "2",
+                "耿暄一",
+                "2023GENG02",
+                "2.80",
+                "CN",
+                "德清短时赛",
+                "2026-04-26"
+              ],
+              [
+                "3",
+                "许瑞航",
+                "2017XURU04",
+                "3.24",
+                "CN",
+                "Rubik's Asian Championship",
+                "2024-11-01"
+              ],
+              [
+                "3",
+                "曹岂娴",
+                "2023CAOQ01",
+                "3.24",
+                "CN",
+                "杭州冬季赛",
+                "2025-11-29"
+              ],
+              [
+                "5",
+                "陈震",
+                "2023CHEN30",
+                "3.32",
+                "CN",
+                "德清短时赛",
+                "2026-04-26"
+              ]
+            ],
+            "links": [
+              "/wca/persons/2019WANY36",
+              "/wca/persons/2023GENG02",
+              "/wca/persons/2017XURU04",
+              "/wca/persons/2023CAOQ01",
+              "/wca/persons/2023CHEN30"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1753,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1900,
+            "total_tokens": 1933,
+            "completion_tokens": 33,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1900
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "rankings",
+              "event": "333",
+              "type": "single",
+              "country": "CN",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2017,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2261,
+            "total_tokens": 2342,
+            "completion_tokens": 81,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2261
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 123
+    },
+    {
+      "benchmark": true,
+      "id": "D05",
+      "question": "比较 2012PARK03 和 2009ZEMD01 的三阶最好成绩。",
+      "durationMs": 4098,
+      "status": 200,
+      "result": {
+        "answer": "Max Park 的三阶单次最好成绩为 3.13 秒，平均为 4.86 秒；Feliks Zemdegs 的单次为 4.12 秒，平均为 5.53 秒。Park 在两项指标上均优于 Zemdegs。",
+        "sources": [
+          {
+            "id": "person:2012PARK03",
+            "title": "Max Park",
+            "href": "/wca/persons/2012PARK03",
+            "read": true
+          },
+          {
+            "id": "person:2009ZEMD01",
+            "title": "Feliks Zemdegs",
+            "href": "/wca/persons/2009ZEMD01",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "Max Park",
+            "columns": [
+              "项目",
+              "单次",
+              "世界排名",
+              "平均",
+              "世界排名"
+            ],
+            "rows": [
+              [
+                "三阶",
+                "3.13",
+                "4",
+                "4.86",
+                "15"
+              ]
+            ]
+          },
+          {
+            "kind": "table",
+            "title": "Feliks Zemdegs",
+            "columns": [
+              "项目",
+              "单次",
+              "世界排名",
+              "平均",
+              "世界排名"
+            ],
+            "rows": [
+              [
+                "三阶",
+                "4.12",
+                "52",
+                "5.53",
+                "49"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2175,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1920,
+            "total_tokens": 1992,
+            "completion_tokens": 72,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1920
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "person",
+              "wcaId": "2012PARK03",
+              "event": "333"
+            },
+            {
+              "tool": "person",
+              "wcaId": "2009ZEMD01",
+              "event": "333"
+            }
+          ]
+        },
+        {
+          "ms": 1780,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3284,
+            "total_tokens": 3384,
+            "completion_tokens": 100,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3284
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 124
+    },
+    {
+      "benchmark": true,
+      "id": "D06",
+      "question": "展示 2017YANR02 的三阶单次和平均进步曲线。",
+      "durationMs": 5945,
+      "status": 200,
+      "result": {
+        "answer": "颜瑞民（2017YANR02）的三阶单次和平均进步曲线已生成。单次从 2017 年的 15.26 秒提升至 2025 年的 6.98 秒，平均从 18.10 秒提升至 9.62 秒。",
+        "sources": [
+          {
+            "id": "person:2017YANR02",
+            "title": "颜瑞民",
+            "href": "/wca/persons/2017YANR02",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "颜瑞民",
+            "columns": [
+              "项目",
+              "单次",
+              "世界排名",
+              "平均",
+              "世界排名"
+            ],
+            "rows": [
+              [
+                "三阶",
+                "6.98",
+                "3736",
+                "9.62",
+                "6842"
+              ]
+            ]
+          },
+          {
+            "kind": "progress",
+            "title": "颜瑞民 · 单次",
+            "event": "333",
+            "metric": "single",
+            "points": [
+              {
+                "date": "2017-09-17",
+                "value": 1526,
+                "label": "15.26",
+                "person": "颜瑞民",
+                "competition": "Beijing Ten Years Open",
+                "compId": "BeijingTenYearsOpen2017",
+                "round": "1"
+              },
+              {
+                "date": "2017-10-01",
+                "value": 1446,
+                "label": "14.46",
+                "person": "颜瑞民",
+                "competition": "China's 10th Anniversary Championship",
+                "compId": "China10years2017",
+                "round": "d"
+              },
+              {
+                "date": "2018-04-06",
+                "value": 1209,
+                "label": "12.09",
+                "person": "颜瑞民",
+                "competition": "Xi'an Cherry Blossom",
+                "compId": "XianCherryBlossom2018",
+                "round": "1"
+              },
+              {
+                "date": "2018-04-30",
+                "value": 1173,
+                "label": "11.73",
+                "person": "颜瑞民",
+                "competition": "Beijing Open",
+                "compId": "BeijingOpen2018",
+                "round": "1"
+              },
+              {
+                "date": "2018-11-17",
+                "value": 1136,
+                "label": "11.36",
+                "person": "颜瑞民",
+                "competition": "CubingUSA New Jersey Championship",
+                "compId": "NewJersey2018",
+                "round": "1"
+              },
+              {
+                "date": "2019-01-12",
+                "value": 1130,
+                "label": "11.30",
+                "person": "颜瑞民",
+                "competition": "Boston University Winter",
+                "compId": "BUWinter2019",
+                "round": "1"
+              },
+              {
+                "date": "2019-03-16",
+                "value": 1102,
+                "label": "11.02",
+                "person": "颜瑞民",
+                "competition": "Florida",
+                "compId": "Florida2019",
+                "round": "1"
+              },
+              {
+                "date": "2019-04-27",
+                "value": 1024,
+                "label": "10.24",
+                "person": "颜瑞民",
+                "competition": "Virginia Qualifier",
+                "compId": "VirginiaQualifier2019",
+                "round": "2"
+              },
+              {
+                "date": "2019-07-06",
+                "value": 993,
+                "label": "9.93",
+                "person": "颜瑞民",
+                "competition": "Warm Up Sydney",
+                "compId": "WarmUpSydney2019",
+                "round": "2"
+              },
+              {
+                "date": "2019-12-21",
+                "value": 991,
+                "label": "9.91",
+                "person": "颜瑞民",
+                "competition": "Florida Winter Break",
+                "compId": "FloridaWinterBreak2019",
+                "round": "1"
+              },
+              {
+                "date": "2024-03-10",
+                "value": 926,
+                "label": "9.26",
+                "person": "颜瑞民",
+                "competition": "Luoyang Spring",
+                "compId": "LuoyangSpring2024",
+                "round": "2"
+              },
+              {
+                "date": "2024-12-15",
+                "value": 889,
+                "label": "8.89",
+                "person": "颜瑞民",
+                "competition": "Hangzhou Open",
+                "compId": "HangzhouOpen2024",
+                "round": "1"
+              },
+              {
+                "date": "2025-01-12",
+                "value": 849,
+                "label": "8.49",
+                "person": "颜瑞民",
+                "competition": "Chongqing New Year",
+                "compId": "ChongqingNewYear2025",
+                "round": "2"
+              },
+              {
+                "date": "2025-05-17",
+                "value": 698,
+                "label": "6.98",
+                "person": "颜瑞民",
+                "competition": "Beijing Summer",
+                "compId": "BeijingSummer2025",
+                "round": "2"
+              }
+            ]
+          },
+          {
+            "kind": "progress",
+            "title": "颜瑞民 · 平均",
+            "event": "333",
+            "metric": "average",
+            "points": [
+              {
+                "date": "2017-09-17",
+                "value": 1810,
+                "label": "18.10",
+                "person": "颜瑞民",
+                "competition": "Beijing Ten Years Open",
+                "compId": "BeijingTenYearsOpen2017",
+                "round": "1"
+              },
+              {
+                "date": "2017-09-17",
+                "value": 1789,
+                "label": "17.89",
+                "person": "颜瑞民",
+                "competition": "Beijing Ten Years Open",
+                "compId": "BeijingTenYearsOpen2017",
+                "round": "2"
+              },
+              {
+                "date": "2017-10-01",
+                "value": 1675,
+                "label": "16.75",
+                "person": "颜瑞民",
+                "competition": "China's 10th Anniversary Championship",
+                "compId": "China10years2017",
+                "round": "d"
+              },
+              {
+                "date": "2018-04-06",
+                "value": 1462,
+                "label": "14.62",
+                "person": "颜瑞民",
+                "competition": "Xi'an Cherry Blossom",
+                "compId": "XianCherryBlossom2018",
+                "round": "1"
+              },
+              {
+                "date": "2018-06-17",
+                "value": 1444,
+                "label": "14.44",
+                "person": "颜瑞民",
+                "competition": "Tangshan Open",
+                "compId": "TangshanOpen2018",
+                "round": "1"
+              },
+              {
+                "date": "2018-11-17",
+                "value": 1380,
+                "label": "13.80",
+                "person": "颜瑞民",
+                "competition": "CubingUSA New Jersey Championship",
+                "compId": "NewJersey2018",
+                "round": "1"
+              },
+              {
+                "date": "2019-01-05",
+                "value": 1340,
+                "label": "13.40",
+                "person": "颜瑞民",
+                "competition": "Northern Neck Winter",
+                "compId": "NorthernNeckWinter2019",
+                "round": "1"
+              },
+              {
+                "date": "2019-01-12",
+                "value": 1249,
+                "label": "12.49",
+                "person": "颜瑞民",
+                "competition": "Boston University Winter",
+                "compId": "BUWinter2019",
+                "round": "1"
+              },
+              {
+                "date": "2019-05-26",
+                "value": 1229,
+                "label": "12.29",
+                "person": "颜瑞民",
+                "competition": "Kunming Open",
+                "compId": "KunmingOpen2019",
+                "round": "1"
+              },
+              {
+                "date": "2019-05-26",
+                "value": 1205,
+                "label": "12.05",
+                "person": "颜瑞民",
+                "competition": "Kunming Open",
+                "compId": "KunmingOpen2019",
+                "round": "f"
+              },
+              {
+                "date": "2019-07-06",
+                "value": 1183,
+                "label": "11.83",
+                "person": "颜瑞民",
+                "competition": "Warm Up Sydney",
+                "compId": "WarmUpSydney2019",
+                "round": "2"
+              },
+              {
+                "date": "2024-03-10",
+                "value": 1106,
+                "label": "11.06",
+                "person": "颜瑞民",
+                "competition": "Luoyang Spring",
+                "compId": "LuoyangSpring2024",
+                "round": "2"
+              },
+              {
+                "date": "2024-08-25",
+                "value": 1105,
+                "label": "11.05",
+                "person": "颜瑞民",
+                "competition": "Deqing Small Cubes Summer",
+                "compId": "DeqingSmallCubesSummer2024",
+                "round": "2"
+              },
+              {
+                "date": "2024-09-16",
+                "value": 1028,
+                "label": "10.28",
+                "person": "颜瑞民",
+                "competition": "Dalian Open",
+                "compId": "DalianOpen2024",
+                "round": "2"
+              },
+              {
+                "date": "2024-12-15",
+                "value": 995,
+                "label": "9.95",
+                "person": "颜瑞民",
+                "competition": "Hangzhou Open",
+                "compId": "HangzhouOpen2024",
+                "round": "1"
+              },
+              {
+                "date": "2025-05-17",
+                "value": 977,
+                "label": "9.77",
+                "person": "颜瑞民",
+                "competition": "Beijing Summer",
+                "compId": "BeijingSummer2025",
+                "round": "2"
+              },
+              {
+                "date": "2025-05-25",
+                "value": 962,
+                "label": "9.62",
+                "person": "颜瑞民",
+                "competition": "Lishui Open",
+                "compId": "LishuiOpen2025",
+                "round": "1"
+              }
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1498,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1912,
+            "total_tokens": 1948,
+            "completion_tokens": 36,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1912
+            }
+          },
+          "finish": "stop",
+          "unexpectedShape": [
+            {
+              "tool": "person",
+              "wcaId": "2017YANR02",
+              "event": "333",
+              "progress": true
+            }
+          ]
+        },
+        {
+          "ms": 2092,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1960,
+            "total_tokens": 2022,
+            "completion_tokens": 62,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1960
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "person",
+              "wcaId": "2017YANR02",
+              "event": "333",
+              "progress": true
+            }
+          ]
+        },
+        {
+          "ms": 2217,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3663,
+            "total_tokens": 3762,
+            "completion_tokens": 99,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3663
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 124
+    },
+    {
+      "benchmark": true,
+      "id": "D07",
+      "question": "我的三阶最好成绩是多少？",
+      "durationMs": 3393,
+      "status": 200,
+      "result": {
+        "answer": "颜瑞民，你的三阶单次最好成绩是 6.98 秒，平均最好成绩是 9.62 秒。",
+        "sources": [
+          {
+            "id": "person:2017YANR02",
+            "title": "颜瑞民",
+            "href": "/wca/persons/2017YANR02",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "颜瑞民",
+            "columns": [
+              "项目",
+              "单次",
+              "世界排名",
+              "平均",
+              "世界排名"
+            ],
+            "rows": [
+              [
+                "三阶",
+                "6.98",
+                "3736",
+                "9.62",
+                "6842"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1398,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1913,
+            "total_tokens": 1947,
+            "completion_tokens": 34,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1913
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "person",
+              "wcaId": "2017YANR02",
+              "event": "333"
+            }
+          ]
+        },
+        {
+          "ms": 1941,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2752,
+            "total_tokens": 2805,
+            "completion_tokens": 53,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2752
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 124
+    },
+    {
+      "benchmark": true,
+      "id": "D08",
+      "question": "他的平均成绩呢？",
+      "durationMs": 3244,
+      "status": 200,
+      "result": {
+        "answer": "Feliks Zemdegs 的三阶平均成绩为 5.53 秒，当前世界排名第 49。",
+        "sources": [
+          {
+            "id": "person:2009ZEMD01",
+            "title": "Feliks Zemdegs",
+            "href": "/wca/persons/2009ZEMD01",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "Feliks Zemdegs",
+            "columns": [
+              "项目",
+              "单次",
+              "世界排名",
+              "平均",
+              "世界排名"
+            ],
+            "rows": [
+              [
+                "三阶",
+                "4.12",
+                "52",
+                "5.53",
+                "49"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1581,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1945,
+            "total_tokens": 1992,
+            "completion_tokens": 47,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1945
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "person",
+              "wcaId": "2009ZEMD01",
+              "event": "333"
+            }
+          ]
+        },
+        {
+          "ms": 1579,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2839,
+            "total_tokens": 2888,
+            "completion_tokens": 49,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2839
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 125
+    },
+    {
+      "benchmark": true,
+      "id": "D09",
+      "question": "列出 2024 年中国三阶单次排名前五名。",
+      "durationMs": 3348,
+      "status": 200,
+      "result": {
+        "answer": "2024年中国三阶单次排名前五名已列出，许瑞航以3.24秒位居榜首。",
+        "sources": [
+          {
+            "id": "rankings",
+            "title": "WCA 排名",
+            "href": "/wca/results",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "排名",
+            "columns": [
+              "名次",
+              "选手",
+              "WCA ID",
+              "成绩",
+              "地区",
+              "比赛",
+              "日期"
+            ],
+            "rows": [
+              [
+                "1",
+                "许瑞航",
+                "2017XURU04",
+                "3.24",
+                "CN",
+                "Rubik's Asian Championship",
+                "2024-11-01"
+              ],
+              [
+                "2",
+                "王艺衡",
+                "2019WANY36",
+                "3.27",
+                "CN",
+                "桂林公开赛",
+                "2024-10-20"
+              ],
+              [
+                "3",
+                "杜宇生",
+                "2015DUYU01",
+                "3.47",
+                "CN",
+                "芜湖公开赛",
+                "2018-11-24"
+              ],
+              [
+                "4",
+                "耿暄一",
+                "2023GENG02",
+                "3.49",
+                "CN",
+                "郑州公开赛",
+                "2024-12-08"
+              ],
+              [
+                "5",
+                "杜昱方",
+                "2023DUYU01",
+                "3.86",
+                "CN",
+                "德清夏季长时赛",
+                "2024-08-24"
+              ]
+            ],
+            "links": [
+              "/wca/persons/2017XURU04",
+              "/wca/persons/2019WANY36",
+              "/wca/persons/2015DUYU01",
+              "/wca/persons/2023GENG02",
+              "/wca/persons/2023DUYU01"
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1388,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1907,
+            "total_tokens": 1947,
+            "completion_tokens": 40,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1907
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "rankings",
+              "event": "333",
+              "type": "single",
+              "country": "CN",
+              "year": 2024,
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1934,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2283,
+            "total_tokens": 2323,
+            "completion_tokens": 40,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2283
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 125
+    },
+    {
+      "benchmark": true,
+      "id": "D10",
+      "question": "显示 BeijingSummer2025 三阶决赛的官方打乱。",
+      "durationMs": 3239,
+      "status": 200,
+      "result": {
+        "answer": "BeijingSummer2025 三阶决赛（Group A）的官方打乱已列出，包含 5 个正式打乱和 2 个备用打乱。",
+        "sources": [
+          {
+            "id": "scrambles:BeijingSummer2025",
+            "title": "官方比赛打乱",
+            "href": "/wca/comp/BeijingSummer2025",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "官方打乱",
+            "columns": [
+              "组",
+              "序号",
+              "备打",
+              "打乱"
+            ],
+            "rows": [
+              [
+                "A",
+                "1",
+                "",
+                "R' L B R U2 D' B2 D B' L U2 F2 U R2 B2 U2 B2 R2"
+              ],
+              [
+                "A",
+                "2",
+                "",
+                "R U2 L2 B2 L2 R2 D2 L2 F' U' L R U L' D' U2 F2 L' D"
+              ],
+              [
+                "A",
+                "3",
+                "",
+                "R2 L B2 R L D2 F R' U2 B' R2 L2 D2 F2 U F2 R2 D"
+              ],
+              [
+                "A",
+                "4",
+                "",
+                "L B2 U2 B L F L U L2 B R2 B' D2 R2 D2 R2 F B2 U"
+              ],
+              [
+                "A",
+                "5",
+                "",
+                "U' R' L U2 B2 U' F2 L' D B R2 F' U2 B2 D2 L2 B2 R' D"
+              ],
+              [
+                "A",
+                "1",
+                "是",
+                "L' D F2 U2 B2 U R2 U2 B2 L D F L B' R2 U' L2 U' R"
+              ],
+              [
+                "A",
+                "2",
+                "是",
+                "B' L2 U2 B2 R2 D2 F L2 U2 R2 U2 R B D L2 F U2 R2"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1499,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1907,
+            "total_tokens": 1944,
+            "completion_tokens": 37,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1907
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "scrambles",
+              "compId": "BeijingSummer2025",
+              "event": "333",
+              "round": "f"
+            }
+          ]
+        },
+        {
+          "ms": 1716,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2856,
+            "total_tokens": 2917,
+            "completion_tokens": 61,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2856
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 125
+    },
+    {
+      "benchmark": true,
+      "id": "D11",
+      "question": "二阶中国纪录的单次和平均是多少？",
+      "durationMs": 3778,
+      "status": 200,
+      "result": {
+        "answer": "二阶中国纪录单次为0.39秒（叶梓渝），平均为0.87秒（王艺衡）。",
+        "sources": [
+          {
+            "id": "records:CN:222",
+            "title": "WCA 纪录",
+            "href": "/wca/records?show=current&region=CN&event=222",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "当前纪录",
+            "columns": [
+              "类型",
+              "成绩",
+              "选手",
+              "WCA ID",
+              "比赛",
+              "日期"
+            ],
+            "rows": [
+              [
+                "单次",
+                "0.39",
+                "叶梓渝",
+                "2021YEZI01",
+                "合肥公开赛",
+                "2025-10-25"
+              ],
+              [
+                "平均",
+                "0.87",
+                "王艺衡",
+                "2019WANY36",
+                "北京冬季赛",
+                "2026-01-10"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2195,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1901,
+            "total_tokens": 1938,
+            "completion_tokens": 37,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1901
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "records",
+              "event": "222",
+              "region": "CN"
+            }
+          ]
+        },
+        {
+          "ms": 1549,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2119,
+            "total_tokens": 2165,
+            "completion_tokens": 46,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2119
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 122
+    },
+    {
+      "benchmark": true,
+      "id": "S01",
+      "question": "我想查“AoXR”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "wr_aoxr",
+      "durationMs": 2956,
+      "status": 200,
+      "result": {
+        "answer": "AoXR 统计包含 Ao1R、Ao2R、Ao3R、Ao4R 四个指标，每个指标下又按项目（如三阶魔方）和类型（排名/历史）细分。请指定您想查看的具体组合（例如：Ao1R · 排名 · 三阶魔方），以便我为您提取前五项数据。",
+        "sources": [
+          {
+            "id": "stat:wr_aoxr",
+            "title": "AoXR",
+            "href": "/wca/wr_aoxr",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 869,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1920,
+            "total_tokens": 1945,
+            "completion_tokens": 25,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1920
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "wr_aoxr",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2054,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4431,
+            "total_tokens": 4527,
+            "completion_tokens": 96,
+            "prompt_tokens_details": {
+              "cached_tokens": 4096,
+              "text_tokens": 4431
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 122
+    },
+    {
+      "benchmark": true,
+      "id": "S02",
+      "question": "我想查“屠榜”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "wr_dominance",
+      "durationMs": 6260,
+      "status": 200,
+      "result": {
+        "answer": "“屠榜”统计指选手在某项目全历史成绩排行榜上完全霸占前 N 席（并列成绩排除）。该数据区分单次与平均，涵盖三阶、二阶等多个项目，并分为当前排名与历史纪录。由于您未指定具体项目或指标类型，无法直接给出统一的前五项。请明确您想查询的项目（如三阶魔方）及指标（单次或平均），以便提供准确数据。",
+        "sources": [
+          {
+            "id": "stat:wr_dominance",
+            "title": "屠榜",
+            "href": "/wca/wr_dominance",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 1180,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1920,
+            "total_tokens": 1967,
+            "completion_tokens": 47,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1920
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "wr_dominance",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 5061,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4255,
+            "total_tokens": 4396,
+            "completion_tokens": 141,
+            "prompt_tokens_details": {
+              "cached_tokens": 4096,
+              "text_tokens": 4255
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "wr_dominance",
+              "limit": 5
+            }
+          ]
+        }
+      ],
+      "rssMb": 122
+    },
+    {
+      "benchmark": true,
+      "id": "S03",
+      "question": "我想查“轮次前三成绩和”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "round_top3_sum",
+      "durationMs": 5118,
+      "status": 200,
+      "result": {
+        "answer": "“轮次前三成绩和”统计支持以下可选条件：\n1. 指标类型：单次、平均\n2. 视图模式：排名（列出总和最小的轮次）、历史（展示全历史纪录随时间的演进）\n3. 轮次范围：所有轮次、仅领奖台\n4. 项目：三阶魔方、二阶魔方、四阶魔方等共19个项目\n\n请指定您需要的具体组合，我将为您查询前五项结果。",
+        "sources": [
+          {
+            "id": "stat:round_top3_sum",
+            "title": "轮次前三成绩和",
+            "href": "/wca/round_top3_sum",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 2464,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1961,
+            "completion_tokens": 38,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "round_top3_sum",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2553,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 5052,
+            "total_tokens": 5176,
+            "completion_tokens": 124,
+            "prompt_tokens_details": {
+              "cached_tokens": 4096,
+              "text_tokens": 5052
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 126
+    },
+    {
+      "benchmark": true,
+      "id": "S04",
+      "question": "我想查“非 PR”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "wr_non_pr",
+      "durationMs": 5437,
+      "status": 200,
+      "result": {
+        "answer": "“非 PR”统计涵盖单次与平均两种指标，并按项目、排名或历史维度细分。您未指定具体条件，请补充所需的项目（如三阶）、指标类型及维度，以便精准查询。",
+        "sources": [
+          {
+            "id": "stat:wr_non_pr",
+            "title": "非 PR",
+            "href": "/wca/wr_non_pr",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "非 PR · 单次 · 排名 · 三阶魔方",
+            "columns": [
+              "#",
+              "选手",
+              "成绩",
+              "国家",
+              "日期",
+              "比赛"
+            ],
+            "rows": [
+              [
+                "1",
+                "王艺衡",
+                "3.08",
+                "China",
+                "2026-02-06",
+                "Guangdong Revival & Rival 2026"
+              ],
+              [
+                "2",
+                "耿暄一",
+                "3.14",
+                "China",
+                "2026-08-14",
+                "Vietnam Championship 2026"
+              ],
+              [
+                "3",
+                "许瑞航",
+                "3.35",
+                "China",
+                "2026-02-06",
+                "Guangdong Revival & Rival 2026"
+              ],
+              [
+                "4",
+                "陈震",
+                "3.38",
+                "China",
+                "2026-05-23",
+                "Hangzhou Open 2026"
+              ],
+              [
+                "5",
+                "Teodor Zajder",
+                "3.41",
+                "Poland",
+                "2026-05-16",
+                "GLS Gdańsk IV 2026"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1811,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1920,
+            "total_tokens": 1953,
+            "completion_tokens": 33,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1920
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "wr_non_pr"
+            }
+          ]
+        },
+        {
+          "ms": 1588,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4294,
+            "total_tokens": 4340,
+            "completion_tokens": 46,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 4294
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "wr_non_pr",
+              "tableKey": "0.0.0.1.0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2002,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 5086,
+            "total_tokens": 5147,
+            "completion_tokens": 61,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 5086
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 126
+    },
+    {
+      "benchmark": true,
+      "id": "S05",
+      "question": "我想查“新人首个世界纪录”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "wr_newcomer",
+      "durationMs": 3826,
+      "status": 200,
+      "result": {
+        "answer": "“新人首个世界纪录”统计包含多个维度，需先明确以下可选条件：\n1. **指标类型**：单次（single）或平均（average）；\n2. **统计口径**：首次还原、首场比赛等；\n3. **项目范围**：如三阶魔方、二阶魔方等具体项目；\n4. **数据性质**：当前排名或历史纪录。\n\n请指定上述条件后，我将为您查询前五项结果。",
+        "sources": [
+          {
+            "id": "stat:wr_newcomer",
+            "title": "新人首个世界纪录",
+            "href": "/wca/wr_newcomer",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 1325,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 1943,
+            "completion_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "wr_newcomer"
+            }
+          ]
+        },
+        {
+          "ms": 2475,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4717,
+            "total_tokens": 4838,
+            "completion_tokens": 121,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 4717
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 126
+    },
+    {
+      "benchmark": true,
+      "id": "S06",
+      "question": "我想查三阶滚动平均统计，能选择哪些平均窗口？",
+      "statId": "average_of",
+      "durationMs": 3745,
+      "status": 200,
+      "result": {
+        "answer": "三阶滚动平均统计支持以下平均窗口：3 次均值、5 次均值、12 次均值、25 次均值、50 次均值、100 次均值和 1000 次均值。",
+        "sources": [
+          {
+            "id": "stat:average_of",
+            "title": "滚动平均",
+            "href": "/wca/average_of",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 1460,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1905,
+            "total_tokens": 1924,
+            "completion_tokens": 19,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1905
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "average_of"
+            }
+          ]
+        },
+        {
+          "ms": 1903,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4538,
+            "total_tokens": 4611,
+            "completion_tokens": 73,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 4538
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 260
+    },
+    {
+      "benchmark": true,
+      "id": "S07",
+      "question": "三阶连续 sub-5 平均最多的是谁？",
+      "statId": "consecutive_sub_5_average",
+      "durationMs": 4320,
+      "status": 200,
+      "result": {
+        "answer": "三阶连续 sub-5 平均最多的是 Yiheng Wang (王艺衡)，其连续纪录为 50 次。",
+        "sources": [
+          {
+            "id": "stat:consecutive_sub_5_average",
+            "title": "三阶最多连续 sub-5 平均",
+            "href": "/wca/consecutive_sub_5_average",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "3x3x3 最多连续 sub-5 平均 · 排名",
+            "columns": [
+              "连续",
+              "选手",
+              "开始于",
+              "结束于"
+            ],
+            "rows": [
+              [
+                "50",
+                "王艺衡",
+                "Chengdu Welcoming Summer 2026",
+                "Mid-Atlantic Championship 2026"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1380,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1903,
+            "total_tokens": 1926,
+            "completion_tokens": 23,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1903
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "consecutive_sub_5_average"
+            }
+          ]
+        },
+        {
+          "ms": 1744,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2145,
+            "total_tokens": 2193,
+            "completion_tokens": 48,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2145
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "consecutive_sub_5_average",
+              "tableKey": "0.1.0.2.0",
+              "limit": 1
+            }
+          ]
+        },
+        {
+          "ms": 1178,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2578,
+            "total_tokens": 2626,
+            "completion_tokens": 48,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2578
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 260
+    },
+    {
+      "benchmark": true,
+      "id": "S08",
+      "question": "我想查“理论最佳 FMC 平均”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "best_potential_fmc_mean",
+      "durationMs": 4350,
+      "status": 200,
+      "result": {
+        "answer": "该统计仅针对三阶最少步（FMC）项目，按轮次内各次尝试的最佳成绩计算平均值。前五项结果已在下方表格中列出，无需区分地区或纪录级别。",
+        "sources": [
+          {
+            "id": "stat:best_potential_fmc_mean",
+            "title": "理论最佳 FMC 平均",
+            "href": "/wca/best_potential_fmc_mean",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最佳潜在 FMC 平均",
+            "columns": [
+              "平均",
+              "尝试 1",
+              "尝试 2",
+              "尝试 3",
+              "比赛"
+            ],
+            "rows": [
+              [
+                "18.00",
+                "17",
+                "18",
+                "19",
+                "Evanston FMC Spring 2026"
+              ],
+              [
+                "19.00",
+                "19",
+                "18",
+                "20",
+                "Fewest Moves May Singapore 2026"
+              ],
+              [
+                "19.33",
+                "18",
+                "21",
+                "19",
+                "WCA European Championship 2024"
+              ],
+              [
+                "19.33",
+                "18",
+                "19",
+                "21",
+                "FMCanton Nansha 2026"
+              ],
+              [
+                "19.33",
+                "21",
+                "19",
+                "18",
+                "Nordic Swedish Championship 2026"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1338,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1924,
+            "total_tokens": 1947,
+            "completion_tokens": 23,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1924
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "best_potential_fmc_mean"
+            }
+          ]
+        },
+        {
+          "ms": 2994,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2550,
+            "total_tokens": 2625,
+            "completion_tokens": 75,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2550
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 143
+    },
+    {
+      "benchmark": true,
+      "id": "S09",
+      "question": "我想查“最佳轮次”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "best_round",
+      "durationMs": 4298,
+      "status": 200,
+      "result": {
+        "answer": "“最佳轮次”统计按项目划分，共包含20个项目的独立表格（如三阶、二阶、四阶等），每个表格展示该项目中前三成绩之和最低的轮次。该统计目前未按地区或纪录级别进一步细分，因此无法直接筛选特定地区或纪录类型的数据。如需查看具体某项的前五名数据，请指定项目名称。",
+        "sources": [
+          {
+            "id": "stat:best_round",
+            "title": "最佳轮次",
+            "href": "/wca/best_round",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 1764,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 1993,
+            "completion_tokens": 72,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "best_round"
+            }
+          ]
+        },
+        {
+          "ms": 2513,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2544,
+            "total_tokens": 2637,
+            "completion_tokens": 93,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2544
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 144
+    },
+    {
+      "benchmark": true,
+      "id": "S10",
+      "question": "我想查“日掩纪录”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "keatoned_records",
+      "durationMs": 5817,
+      "status": 200,
+      "result": {
+        "answer": "“日掩纪录”统计按项目分为 19 个表（三阶、二阶、四阶等），无地区或纪录级别筛选条件。已展示三阶魔方前五项，其余项目可指定 tableKey 查询。",
+        "sources": [
+          {
+            "id": "stat:keatoned_records",
+            "title": "日掩纪录",
+            "href": "/wca/keatoned_records",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "日掩纪录 · 三阶魔方",
+            "columns": [
+              "选手",
+              "成绩",
+              "类型",
+              "比赛",
+              "当日更快者",
+              "其成绩",
+              "其比赛",
+              "日期"
+            ],
+            "rows": [
+              [
+                "Max Park",
+                "**5.47**",
+                "Average",
+                "Missoula 2021",
+                "Max Park",
+                "5.32",
+                "Missoula 2021",
+                "2021-11-07"
+              ],
+              [
+                "Keaton Ellis",
+                "**5.09**",
+                "Single",
+                "River Hill Fall 2015",
+                "Lucas Etter",
+                "4.90",
+                "River Hill Fall 2015",
+                "2015-11-21"
+              ],
+              [
+                "Rowe Hessler",
+                "**6.94**",
+                "Single",
+                "MIT Fall 2010",
+                "Feliks Zemdegs",
+                "6.77",
+                "Melbourne Cube Day 2010",
+                "2010-11-13"
+              ],
+              [
+                "Dan Dzoan",
+                "**10.08**",
+                "Single",
+                "Caltech Spring 2007",
+                "Thibaut Jacquinot",
+                "9.86",
+                "Spanish Open 2007",
+                "2007-05-05"
+              ],
+              [
+                "牧角章太郎",
+                "**15.28**",
+                "Average",
+                "Caltech Fall 2004",
+                "Shotaro Makisumi (牧角章太郎)",
+                "14.52",
+                "Caltech Fall 2004",
+                "2004-10-16"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1363,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 1942,
+            "completion_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "keatoned_records"
+            }
+          ]
+        },
+        {
+          "ms": 2237,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2581,
+            "total_tokens": 2672,
+            "completion_tokens": 91,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2581
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "keatoned_records",
+              "tableKey": "0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2196,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3702,
+            "total_tokens": 3770,
+            "completion_tokens": 68,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3702
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 144
+    },
+    {
+      "benchmark": true,
+      "id": "S11",
+      "question": "我想查“最常出现的成绩”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_frequent_results",
+      "durationMs": 5113,
+      "status": 200,
+      "result": {
+        "answer": "“最常出现的成绩”统计按项目分表，目前仅三阶魔方有数据。可选条件为具体项目（如二阶、四阶等），暂无地区或纪录级别筛选。",
+        "sources": [
+          {
+            "id": "stat:most_frequent_results",
+            "title": "最常出现的成绩",
+            "href": "/wca/most_frequent_results",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最常出现的成绩 · 三阶魔方",
+            "columns": [
+              "次数",
+              "成绩"
+            ],
+            "rows": [
+              [
+                "7065",
+                "11.68"
+              ],
+              [
+                "6987",
+                "11.88"
+              ],
+              [
+                "6983",
+                "11.56"
+              ],
+              [
+                "6982",
+                "11.80"
+              ],
+              [
+                "6961",
+                "11.72"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1254,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 1946,
+            "completion_tokens": 25,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_frequent_results",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1930,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2530,
+            "total_tokens": 2606,
+            "completion_tokens": 76,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2530
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_frequent_results",
+              "tableKey": "0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1899,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2824,
+            "total_tokens": 2881,
+            "completion_tokens": 57,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2824
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 144
+    },
+    {
+      "benchmark": true,
+      "id": "S12",
+      "question": "我想查“移动平均”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "moving_average",
+      "durationMs": 6058,
+      "status": 200,
+      "result": {
+        "answer": "“移动平均”统计涵盖三阶、二阶等16个项目，目前未提供地区或纪录级别筛选。已为您展示三阶魔方项目的前五项数据（基于指数移动平均算法）。",
+        "sources": [
+          {
+            "id": "stat:moving_average",
+            "title": "移动平均",
+            "href": "/wca/moving_average",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "移动平均 · 三阶魔方",
+            "columns": [
+              "移动平均",
+              "选手"
+            ],
+            "rows": [
+              [
+                "4.34",
+                "耿暄一"
+              ],
+              [
+                "4.40",
+                "王艺衡"
+              ],
+              [
+                "4.84",
+                "杜昱方"
+              ],
+              [
+                "4.98",
+                "连允之"
+              ],
+              [
+                "5.10",
+                "沈懿"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2230,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1920,
+            "total_tokens": 1975,
+            "completion_tokens": 55,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1920
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "moving_average",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1805,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2455,
+            "total_tokens": 2530,
+            "completion_tokens": 75,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2455
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "moving_average",
+              "tableKey": "0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1991,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2916,
+            "total_tokens": 2987,
+            "completion_tokens": 71,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2916
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 145
+    },
+    {
+      "benchmark": true,
+      "id": "S13",
+      "question": "我想查“日期匹配 PR”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "date_match_pr",
+      "durationMs": 6938,
+      "status": 200,
+      "result": {
+        "answer": "“日期匹配 PR”统计涵盖多个项目（如三阶、二阶等）、排名与历史两种视角，且未提供地区或纪录级别筛选。当前展示的是三阶魔方排名表的前五项数据。",
+        "sources": [
+          {
+            "id": "stat:date_match_pr",
+            "title": "日期匹配 PR",
+            "href": "/wca/date_match_pr",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "日期匹配 PR · 排名 · 三阶魔方",
+            "columns": [
+              "#",
+              "选手",
+              "成绩",
+              "日期",
+              "比赛"
+            ],
+            "rows": [
+              [
+                "1",
+                "Kawin Akarawongwattana",
+                "5.10",
+                "2026-05-10",
+                "Bravo BKK Cube Open 2026"
+              ],
+              [
+                "2",
+                "褚连皓",
+                "5.19",
+                "2024-05-19",
+                "Zibo Open 2024"
+              ],
+              [
+                "3",
+                "野上碧",
+                "5.25",
+                "2024-05-25",
+                "Kanazawa 2024"
+              ],
+              [
+                "4",
+                "Konrad Matyszek",
+                "6.15",
+                "2024-06-15",
+                "Energy Cube Ciechanów 2024"
+              ],
+              [
+                "5",
+                "Livia Kleiner",
+                "6.18",
+                "2022-06-18",
+                "Pennsylvania Championship 2022"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2368,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 2000,
+            "completion_tokens": 79,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "date_match_pr",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2423,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3182,
+            "total_tokens": 3288,
+            "completion_tokens": 106,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3182
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "date_match_pr",
+              "tableKey": "0.1.0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2115,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3930,
+            "total_tokens": 3990,
+            "completion_tokens": 60,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3930
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 147
+    },
+    {
+      "benchmark": true,
+      "id": "S14",
+      "question": "我想查“单次与平均差距最小”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "smallest_diff_between_single_and_average",
+      "durationMs": 6666,
+      "status": 200,
+      "result": {
+        "answer": "该统计按项目分表，可选三阶、二阶、四至七阶、三盲、单手、五魔、金字塔、魔表、斜转、SQ1、四/五盲、脚拧及板类共18项；FMC因整数值易相同被排除。当前展示的是三阶魔方前五项，数据为已发布记录，非实时。",
+        "sources": [
+          {
+            "id": "stat:smallest_diff_between_single_and_average",
+            "title": "单次与平均差距最小",
+            "href": "/wca/smallest_diff_between_single_and_average",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最小的单次与平均差距 · 三阶魔方",
+            "columns": [
+              "差值",
+              "选手",
+              "单次",
+              "平均",
+              "比赛"
+            ],
+            "rows": [
+              [
+                "0.01",
+                "耿暄一",
+                "5.28",
+                "5.29",
+                "Kunshan Open 2024"
+              ],
+              [
+                "0.01",
+                "Reinier Schippers",
+                "9.55",
+                "9.56",
+                "Zonhoven Open 2016"
+              ],
+              [
+                "0.01",
+                "尹星凯",
+                "10.99",
+                "11.00",
+                "SJTU Winter Open 2018"
+              ],
+              [
+                "0.01",
+                "Michael",
+                "25.03",
+                "25.04",
+                "Indonesian Open 2011"
+              ],
+              [
+                "0.02",
+                "Micah Heckerling",
+                "7.18",
+                "7.20",
+                "GA Cuber Jackets Spring 2026"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1443,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1951,
+            "completion_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "smallest_diff_between_single_and_average",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2766,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2550,
+            "total_tokens": 2653,
+            "completion_tokens": 103,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2550
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "smallest_diff_between_single_and_average",
+              "tableKey": "0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2419,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3299,
+            "total_tokens": 3400,
+            "completion_tokens": 101,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3299
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 148
+    },
+    {
+      "benchmark": true,
+      "id": "S15",
+      "question": "我想查“年度排名”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "yearly_rankings",
+      "durationMs": 7493,
+      "status": 200,
+      "result": {
+        "answer": "“年度排名”统计共包含 33 个分表，按项目与成绩类型（单次/平均）划分。前五个可选条件依次为：1. Rubik's Cube - Single；2. Rubik's Cube - Average；3. 2x2x2 Cube - Single；4. 2x2x2 Cube - Average；5. 4x4x4 Cube - Single。该排名仅包含当年比赛成绩，未提供地区或纪录级别筛选选项。",
+        "sources": [
+          {
+            "id": "stat:yearly_rankings",
+            "title": "年度排名",
+            "href": "/wca/yearly_rankings",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 1687,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1920,
+            "total_tokens": 1941,
+            "completion_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1920
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "yearly_rankings"
+            }
+          ]
+        },
+        {
+          "ms": 2507,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2992,
+            "total_tokens": 3075,
+            "completion_tokens": 83,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2992
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "yearly_rankings",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 3260,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4039,
+            "total_tokens": 4160,
+            "completion_tokens": 121,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 4039
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 149
+    },
+    {
+      "benchmark": true,
+      "id": "S16",
+      "question": "我想查“无缘领奖台的最佳成绩”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "best_result_off_podium",
+      "durationMs": 5456,
+      "status": 200,
+      "result": {
+        "answer": "“无缘领奖台的最佳成绩”统计按项目分为 17 个独立表格（三阶、二阶、四阶等），仅统计决赛数据，未提供地区或纪录级别筛选。已为您展示三阶魔方项目的前五项结果。",
+        "sources": [
+          {
+            "id": "stat:best_result_off_podium",
+            "title": "无缘领奖台的最佳成绩",
+            "href": "/wca/best_result_off_podium",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最佳非领奖台成绩 · 三阶魔方",
+            "columns": [
+              "选手",
+              "单次",
+              "平均",
+              "比赛",
+              "名次"
+            ],
+            "rows": [
+              [
+                "沈懿",
+                "**3.60**",
+                "4.77",
+                "Deqing Small & Special 2026",
+                "4"
+              ],
+              [
+                "沈懿",
+                "**4.63**",
+                "4.84",
+                "Wuhan Crimson Autumn 2026",
+                "4"
+              ],
+              [
+                "Tymon Kolasiński",
+                "**4.71**",
+                "5.01",
+                "Zhanjiang Open 2026",
+                "4"
+              ],
+              [
+                "曹岂娴",
+                "**3.74**",
+                "5.02",
+                "Deqing Small & Special 2026",
+                "5"
+              ],
+              [
+                "董一泽",
+                "**4.01**",
+                "5.02",
+                "Nanchang Summer 2026",
+                "4"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1419,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1949,
+            "completion_tokens": 26,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "best_result_off_podium",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1480,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2506,
+            "total_tokens": 2548,
+            "completion_tokens": 42,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2506
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "best_result_off_podium",
+              "tableKey": "0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2525,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3220,
+            "total_tokens": 3291,
+            "completion_tokens": 71,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3220
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 149
+    },
+    {
+      "benchmark": true,
+      "id": "S17",
+      "question": "我想查“单场包揽全项冠军”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "complete_competition_winners",
+      "durationMs": 3823,
+      "status": 200,
+      "result": {
+        "answer": "“单场包揽全项冠军”统计目前仅按项目数排序，未提供区分地区或纪录级别的筛选条件。前五项结果已在下方表格中展示。",
+        "sources": [
+          {
+            "id": "stat:complete_competition_winners",
+            "title": "单场包揽全项冠军",
+            "href": "/wca/complete_competition_winners",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "完全比赛冠军",
+            "columns": [
+              "项目数",
+              "选手",
+              "国籍",
+              "比赛"
+            ],
+            "rows": [
+              [
+                "15",
+                "Daniel Wallin",
+                "Sweden",
+                "Gutekuben 2024"
+              ],
+              [
+                "14",
+                "Evan Liu",
+                "United States",
+                "Mahalo iā Maui 2025"
+              ],
+              [
+                "13",
+                "Francisco Moraes Mandalozzo",
+                "Brazil",
+                "Opentrópolis CEFET 2024"
+              ],
+              [
+                "12",
+                "Evan Liu",
+                "United States",
+                "Saratoga Silent Springs 2024"
+              ],
+              [
+                "12",
+                "Francisco Moraes Mandalozzo",
+                "Brazil",
+                "UFBA II 2023"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2210,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1925,
+            "total_tokens": 1964,
+            "completion_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1925
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "complete_competition_winners",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1575,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2546,
+            "total_tokens": 2604,
+            "completion_tokens": 58,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2546
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 150
+    },
+    {
+      "benchmark": true,
+      "id": "S18",
+      "question": "我想查“同轮前三名同分”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "tied_podium_results",
+      "durationMs": 4649,
+      "status": 503,
+      "result": {
+        "error": "source_unavailable"
+      },
+      "modelSteps": [
+        {
+          "ms": 2092,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1962,
+            "completion_tokens": 39,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "tied_podium_results",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 990,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2312,
+            "total_tokens": 2344,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2312
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "tied_podium_results",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1551,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2391,
+            "total_tokens": 2423,
+            "completion_tokens": 32,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2391
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "tied_podium_results",
+              "limit": 5
+            }
+          ]
+        }
+      ],
+      "rssMb": 150
+    },
+    {
+      "benchmark": true,
+      "id": "S19",
+      "question": "获得第四名次数最多的五位选手是谁？",
+      "statId": "most_4th_places",
+      "durationMs": 2817,
+      "status": 200,
+      "result": {
+        "answer": "根据统计，在决赛中累计获得第四名次数最多的五位选手分别是 Daniel Vædele Egdal、Daniel Wallin、Niko Ronkainen、Jan Bentlage 和 Carter Kucala。",
+        "sources": [
+          {
+            "id": "stat:most_4th_places",
+            "title": "最多第四名",
+            "href": "/wca/most_4th_places",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最多第四名",
+            "columns": [
+              "第四名次数",
+              "选手"
+            ],
+            "rows": [
+              [
+                "293",
+                "Daniel Vædele Egdal"
+              ],
+              [
+                "291",
+                "Daniel Wallin"
+              ],
+              [
+                "270",
+                "Niko Ronkainen"
+              ],
+              [
+                "263",
+                "Jan Bentlage"
+              ],
+              [
+                "222",
+                "Carter Kucala"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1592,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1900,
+            "total_tokens": 1922,
+            "completion_tokens": 22,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1900
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_4th_places"
+            }
+          ]
+        },
+        {
+          "ms": 1207,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2311,
+            "total_tokens": 2372,
+            "completion_tokens": 61,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2311
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 151
+    },
+    {
+      "benchmark": true,
+      "id": "S20",
+      "question": "我想查“首冠前参赛最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_competitions_before_winning",
+      "durationMs": 4116,
+      "status": 200,
+      "result": {
+        "answer": "“首冠前参赛最多”统计按项目区分，共包含21个项目的独立表格（如三阶、二阶等），每个项目列出前10名。由于未指定具体项目，无法直接给出跨项目的统一前五项。请说明您想查询的具体魔方项目（例如：三阶魔方）。",
+        "sources": [
+          {
+            "id": "stat:most_competitions_before_winning",
+            "title": "首冠前参赛最多",
+            "href": "/wca/most_competitions_before_winning",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 1419,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1951,
+            "completion_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_competitions_before_winning",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2680,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2648,
+            "total_tokens": 2767,
+            "completion_tokens": 119,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2648
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_competitions_before_winning",
+              "limit": 5
+            }
+          ]
+        }
+      ],
+      "rssMb": 151
+    },
+    {
+      "benchmark": true,
+      "id": "S21",
+      "question": "我想查“决赛次数最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_finals",
+      "durationMs": 3224,
+      "status": 200,
+      "result": {
+        "answer": "“决赛次数最多”统计无需区分项目、地区或纪录级别，直接按总决赛次数排名。前五项选手及次数如下表所示。",
+        "sources": [
+          {
+            "id": "stat:most_finals",
+            "title": "决赛次数最多",
+            "href": "/wca/most_finals",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "进入决赛最多",
+            "columns": [
+              "决赛次数",
+              "选手"
+            ],
+            "rows": [
+              [
+                "3211",
+                "Daniel Wallin"
+              ],
+              [
+                "2524",
+                "Bence Barát"
+              ],
+              [
+                "2489",
+                "Jan Bentlage"
+              ],
+              [
+                "2449",
+                "Evan Liu"
+              ],
+              [
+                "2277",
+                "Niko Ronkainen"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1248,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 1967,
+            "completion_tokens": 46,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_finals",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1959,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2311,
+            "total_tokens": 2358,
+            "completion_tokens": 47,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2311
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 151
+    },
+    {
+      "benchmark": true,
+      "id": "S22",
+      "question": "我想查“单场比赛登台最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_podiums_at_single_competition",
+      "durationMs": 5101,
+      "status": 200,
+      "result": {
+        "answer": "该统计仅按“登上领奖台次数”排序，不区分项目、地区或纪录级别。前五项结果见下表，共1635行。",
+        "sources": [
+          {
+            "id": "stat:most_podiums_at_single_competition",
+            "title": "单场比赛登台最多",
+            "href": "/wca/most_podiums_at_single_competition",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "单场比赛登台最多",
+            "columns": [
+              "登上领奖台",
+              "选手"
+            ],
+            "rows": [
+              [
+                "18",
+                "Simon Westlund",
+                "Norwegian Championship 2012"
+              ],
+              [
+                "17",
+                "Jayden McNeill",
+                "Oregon 2016"
+              ],
+              [
+                "17",
+                "Ainesh Sevellaraja",
+                "Malaysian Cube Open 2015"
+              ],
+              [
+                "17",
+                "Ivan Zabrodin",
+                "OktoberBrest 2014"
+              ],
+              [
+                "17",
+                "Martin Vædele Egdal",
+                "Danish Championship 2020"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2256,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 1986,
+            "completion_tokens": 64,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_podiums_at_single_competition",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2823,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2509,
+            "total_tokens": 2564,
+            "completion_tokens": 55,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2509
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 151
+    },
+    {
+      "benchmark": true,
+      "id": "S23",
+      "question": "我想查“同台登奖次数最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_podiums_together",
+      "durationMs": 8500,
+      "status": 200,
+      "result": {
+        "answer": "“同台登奖次数最多”统计包含两个子表：1. 双人组合（Pairs）；2. 三人组合（Triples）。该统计不区分项目、地区或纪录级别，仅按共同登上领奖台的总次数排序。以下是双人组合前五项数据：",
+        "sources": [
+          {
+            "id": "stat:most_podiums_together",
+            "title": "同台登奖次数最多",
+            "href": "/wca/most_podiums_together",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最多共同登台次数 · Pairs",
+            "columns": [
+              "登上领奖台",
+              "选手"
+            ],
+            "rows": [
+              [
+                "740",
+                "Daniel Vædele Egdal & Martin Vædele Egdal"
+              ],
+              [
+                "389",
+                "Martin Vædele Egdal & Rasmus Stub Detlefsen"
+              ],
+              [
+                "278",
+                "Brian Johnson & Carter Kucala"
+              ],
+              [
+                "271",
+                "Feliks Zemdegs & Jayden McNeill"
+              ],
+              [
+                "271",
+                "Max Siauw & Sameer Aggarwal"
+              ]
+            ]
+          },
+          {
+            "kind": "table",
+            "title": "最多共同登台次数 · Triples",
+            "columns": [
+              "登上领奖台",
+              "选手"
+            ],
+            "rows": [
+              [
+                "200",
+                "Daniel Vædele Egdal & Martin Vædele Egdal & Rasmus Stub Detlefsen"
+              ],
+              [
+                "96",
+                "Adam Marcellus Kelly & Daniel Vædele Egdal & Martin Vædele Egdal"
+              ],
+              [
+                "82",
+                "Bautista Bonazzola & Gael Augusto Lapeyre & Theo Goluboff"
+              ],
+              [
+                "55",
+                "Brian Johnson & Carter Kucala & Simon Kellum"
+              ],
+              [
+                "47",
+                "Bernardo Torres & Louis Rodriguez Guerrero & Rafael Antonio Sanchez"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1615,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1950,
+            "completion_tokens": 27,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_podiums_together",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 4100,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2114,
+            "total_tokens": 2348,
+            "completion_tokens": 234,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2114
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_podiums_together",
+              "limit": 5,
+              "tableKey": "0.2.0"
+            },
+            {
+              "tool": "statistics",
+              "id": "most_podiums_together",
+              "limit": 5,
+              "tableKey": "0.2.1"
+            }
+          ]
+        },
+        {
+          "ms": 2735,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3296,
+            "total_tokens": 3374,
+            "completion_tokens": 78,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3296
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S24",
+      "question": "我想查“登上领奖台的最差成绩”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "worst_result_on_podium",
+      "durationMs": 11038,
+      "status": 200,
+      "result": {
+        "answer": "“登上领奖台的最差成绩”统计按项目分为17个独立表格，目前仅展示了三阶魔方的前五项数据。如需查看其他项目（如二阶、四阶等）或特定地区/纪录级别的筛选结果，请明确指定具体条件。",
+        "sources": [
+          {
+            "id": "stat:worst_result_on_podium",
+            "title": "登上领奖台的最差成绩",
+            "href": "/wca/worst_result_on_podium",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "领奖台最差成绩 · 三阶魔方",
+            "columns": [
+              "选手",
+              "单次",
+              "平均",
+              "比赛",
+              "名次"
+            ],
+            "rows": [
+              [
+                "索朗旺堆",
+                "2:25.02",
+                "**5:36.91**",
+                "Tibet Open 2012",
+                "3"
+              ],
+              [
+                "益西朗加",
+                "3:27.86",
+                "**5:08.60**",
+                "Tibet Open 2012",
+                "2"
+              ],
+              [
+                "魏本源",
+                "1:24.26",
+                "**3:39.87**",
+                "Tibet Open 2012",
+                "1"
+              ],
+              [
+                "Hayden Brimberry",
+                "1:39.58",
+                "**2:08.12**",
+                "Ilulissat 2024",
+                "1"
+              ],
+              [
+                "Məhəmməd Xəlilov",
+                "1:15.15",
+                "**1:43.80**",
+                "Lagom är Bäst 2018",
+                "3"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1936,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1924,
+            "total_tokens": 1947,
+            "completion_tokens": 23,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1924
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "worst_result_on_podium"
+            }
+          ]
+        },
+        {
+          "ms": 3953,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2505,
+            "total_tokens": 2577,
+            "completion_tokens": 72,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2505
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "worst_result_on_podium",
+              "tableKey": "0.2.0",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2998,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3271,
+            "total_tokens": 3387,
+            "completion_tokens": 116,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3271
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "worst_result_on_podium",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2119,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3819,
+            "total_tokens": 3899,
+            "completion_tokens": 80,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3819
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S25",
+      "question": "我想查“选手每年参赛数”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "competitions_per_year_by_person",
+      "durationMs": 3562,
+      "status": 200,
+      "result": {
+        "answer": "“选手每年参赛数”统计仅按年均比赛数排序，不区分项目、地区或纪录级别。前五项结果见下表。",
+        "sources": [
+          {
+            "id": "stat:competitions_per_year_by_person",
+            "title": "选手每年参赛数",
+            "href": "/wca/competitions_per_year_by_person",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "每年每人比赛数",
+            "columns": [
+              "年均比赛数",
+              "比赛",
+              "年数",
+              "选手"
+            ],
+            "rows": [
+              [
+                "75.86",
+                "281",
+                "3.70",
+                "Filip Åström"
+              ],
+              [
+                "64.46",
+                "393",
+                "6.10",
+                "Kacper Paweł Dworak"
+              ],
+              [
+                "56.64",
+                "290",
+                "5.12",
+                "Peter Hugosson-Miller"
+              ],
+              [
+                "45.63",
+                "223",
+                "4.89",
+                "Achim Spies"
+              ],
+              [
+                "42.60",
+                "129",
+                "3.03",
+                "Axel Juan Pablo Moreno Rodriguez"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1362,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 1949,
+            "completion_tokens": 27,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "competitions_per_year_by_person",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2169,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2431,
+            "total_tokens": 2479,
+            "completion_tokens": 48,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2431
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S26",
+      "question": "我想查“最长连续参赛路径”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "longest_competitions_path",
+      "durationMs": 7481,
+      "status": 200,
+      "result": {
+        "answer": "该统计仅按连续参赛直线距离之和排名，未区分项目、地区或纪录级别。前五项结果见下表。",
+        "sources": [
+          {
+            "id": "stat:longest_competitions_path",
+            "title": "最长连续参赛路径",
+            "href": "/wca/longest_competitions_path",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最长比赛路径",
+            "columns": [
+              "选手",
+              "距离"
+            ],
+            "rows": [
+              [
+                "Ron van Bruchem",
+                "691 388 km"
+              ],
+              [
+                "吴洧全",
+                "668 293 km"
+              ],
+              [
+                "Maria Oey",
+                "557 064 km"
+              ],
+              [
+                "Feliks Zemdegs",
+                "514 063 km"
+              ],
+              [
+                "Niko Ronkainen",
+                "491 881 km"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 5651,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 2250,
+            "completion_tokens": 328,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "longest_competitions_path",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1793,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2364,
+            "total_tokens": 2409,
+            "completion_tokens": 45,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2364
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S27",
+      "question": "我想查“在本国最长连续参赛”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "longest_streak_of_competitions_in_own_country",
+      "durationMs": 4806,
+      "status": 200,
+      "result": {
+        "answer": "“在本国最长连续参赛”统计仅按选手维度排名，不区分项目、地区或纪录级别。前五项结果见下表：芬兰选手 Niko Ronkainen 以 117 场居首，其后为 Chia-Leo Lin (78)、Bence Barát (78)、Dániel Varga (77) 和 Daniel Vædele Egdal (77)。",
+        "sources": [
+          {
+            "id": "stat:longest_streak_of_competitions_in_own_country",
+            "title": "在本国最长连续参赛",
+            "href": "/wca/longest_streak_of_competitions_in_own_country",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "在本国最长连续参赛",
+            "columns": [
+              "比赛",
+              "选手",
+              "国家",
+              "开始于",
+              "错过"
+            ],
+            "rows": [
+              [
+                "117",
+                "Niko Ronkainen",
+                "Finland",
+                "Helsinki Open 2010",
+                ""
+              ],
+              [
+                "114",
+                "林珈樂",
+                "Chinese Taipei",
+                "Maru Cube Day 2016",
+                ""
+              ],
+              [
+                "78",
+                "Bence Barát",
+                "Hungary",
+                "Hungarian Open 2008",
+                ""
+              ],
+              [
+                "78",
+                "Dániel Varga",
+                "Hungary",
+                "Hungarian Open 2008",
+                ""
+              ],
+              [
+                "77",
+                "Daniel Vædele Egdal",
+                "Denmark",
+                "Danish Special 2015",
+                ""
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2129,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 2015,
+            "completion_tokens": 92,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "longest_streak_of_competitions_in_own_country",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2662,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2596,
+            "total_tokens": 2708,
+            "completion_tokens": 112,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2596
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S28",
+      "question": "我想查“连续取得个人纪录的最多参赛场数”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "longest_streak_of_personal_records",
+      "durationMs": 2783,
+      "status": 200,
+      "result": {
+        "answer": "该统计目前仅有一个全局榜单，未提供按项目、地区或纪录级别筛选的选项。",
+        "sources": [
+          {
+            "id": "stat:longest_streak_of_personal_records",
+            "title": "连续取得个人纪录的最多参赛场数",
+            "href": "/wca/longest_streak_of_personal_records",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "连续取得个人纪录的最多参赛场数",
+            "columns": [
+              "比赛",
+              "选手",
+              "开始于",
+              "结束于"
+            ],
+            "rows": [
+              [
+                "91",
+                "Antonie Paterakis",
+                "NEMO Amsterdam Open 2012",
+                "Baztan Open 2023"
+              ],
+              [
+                "81",
+                "Evan Liu",
+                "Cumberland Valley Open 2009",
+                "Arcadia Summer 2019"
+              ],
+              [
+                "78",
+                "Aubrey Trace",
+                "Johns Hopkins Winter 2015",
+                "Cubes in the Mountains WV 2025"
+              ],
+              [
+                "77",
+                "Oana-Simona Vrabie",
+                "Bucharest Back to Cube 2022",
+                "Warm Up Lent 2026"
+              ],
+              [
+                "76",
+                "Zeke Mackay",
+                "Wiscube 2015",
+                "Swallow Spring 2023"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1351,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1927,
+            "total_tokens": 1955,
+            "completion_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1927
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "longest_streak_of_personal_records",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1416,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2703,
+            "total_tokens": 2744,
+            "completion_tokens": 41,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2703
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S29",
+      "question": "我想查“最长连续登台”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "longest_streak_of_podiums",
+      "durationMs": 7187,
+      "status": 200,
+      "result": {
+        "answer": "最长连续登台统计仅按项目和选手维度展示，不区分地区或纪录级别。该表共100条记录，前五项如下：",
+        "sources": [
+          {
+            "id": "stat:longest_streak_of_podiums",
+            "title": "最长连续登台",
+            "href": "/wca/longest_streak_of_podiums",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最长连续登台记录",
+            "columns": [
+              "次数",
+              "选手",
+              "项目",
+              "开始于",
+              "结束于"
+            ],
+            "rows": [
+              [
+                "122",
+                "Tymon Kolasiński",
+                "3x3x3 Cube",
+                "Cubing in Cill Chainnigh 2019",
+                "Guangzhou GraDUAL 3x3 I 2026"
+              ],
+              [
+                "117",
+                "王艺衡",
+                "3x3x3 Cube",
+                "Guangdong Open 2021",
+                ""
+              ],
+              [
+                "109",
+                "Max Park",
+                "5x5x5 Cube",
+                "Caltech Fall 2016",
+                ""
+              ],
+              [
+                "101",
+                "Max Park",
+                "4x4x4 Cube",
+                "SacCubing II 2017",
+                "WCA World Championship 2025"
+              ],
+              [
+                "101",
+                "Caio Hideaki Sato",
+                "3x3x3 Cube",
+                "Schoolmark Open 2019",
+                ""
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 5253,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 2246,
+            "completion_tokens": 325,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "longest_streak_of_podiums",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1903,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2683,
+            "total_tokens": 2735,
+            "completion_tokens": 52,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2683
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S30",
+      "question": "我想查“达到三阶 sub-10 用时最长”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "longest_time_to_sub_10",
+      "durationMs": 4706,
+      "status": 200,
+      "result": {
+        "answer": "该统计仅针对三阶平均 sub-10，无地区或纪录级别筛选。前五项选手及用时（年）如下：SeungWoon Lee 19.99、Ko Youngjin 18.61、Joey Gouly 17.67、Lucas Garron 17.53、Oscar Roth Andersen 16.89。",
+        "sources": [
+          {
+            "id": "stat:longest_time_to_sub_10",
+            "title": "达到三阶 sub-10 用时最长",
+            "href": "/wca/longest_time_to_sub_10",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最长达到 sub-10 三阶平均的时间",
+            "columns": [
+              "选手",
+              "年数"
+            ],
+            "rows": [
+              [
+                "SeungWoon Lee",
+                "19.99"
+              ],
+              [
+                "Ko Youngjin",
+                "18.61"
+              ],
+              [
+                "Joey Gouly",
+                "17.67"
+              ],
+              [
+                "Lucas Garron",
+                "17.53"
+              ],
+              [
+                "Oscar Roth Andersen",
+                "16.89"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2207,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1928,
+            "total_tokens": 2022,
+            "completion_tokens": 94,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1928
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "longest_time_to_sub_10",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2483,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2373,
+            "total_tokens": 2479,
+            "completion_tokens": 106,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2373
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 152
+    },
+    {
+      "benchmark": true,
+      "id": "S31",
+      "question": "我想查“单月参赛最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_attended_competitions_in_single_month",
+      "durationMs": 4257,
+      "status": 200,
+      "result": {
+        "answer": "“单月参赛最多”统计不区分项目、地区或纪录级别，直接按选手在单个自然月内参加的WCA比赛场次排名。前五项结果见下表。",
+        "sources": [
+          {
+            "id": "stat:most_attended_competitions_in_single_month",
+            "title": "单月参赛最多",
+            "href": "/wca/most_attended_competitions_in_single_month",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "单月参赛最多",
+            "columns": [
+              "比赛",
+              "选手",
+              "月份",
+              "年份",
+              "列表"
+            ],
+            "rows": [
+              [
+                "21",
+                "Kacper Paweł Dworak",
+                "August",
+                "2024",
+                "Silesian Cubing Pawłowice 2024, Warsaw FMC Tour Thursday 2024, Warsaw FMC Tour Friday 2024, Warsaw FMC Tour Saturday 2024, Silesian Minx Fest 2024, Góraszka FMC Sunday 2024, BrizZon Side Open III 2024, Manchester 4BLD Day 2024, Blind Fun Landvetter Summer 2024, [En Lille Søndag i Ishøj 2024](https://www.worldcubeassoc"
+              ],
+              [
+                "15",
+                "Vincenzo Maria Gammino",
+                "December",
+                "2024",
+                "FMC Pune 2024, KUbing Nepal 2024, Shonan AM 2024, Zhengzhou Open 2024, New Zealand Nationals 2024, Malaysia FMC Championship 2024, cubingHCM Big Cube Winter 2024, Singapore NxNxN 2024, WCA Oceanic Championship 2024, Indonesian Championship 2024, [Cainta Puzzle Fest 2024](https://www.worldcubeassociatio"
+              ],
+              [
+                "14",
+                "Filip Åström",
+                "March",
+                "2025",
+                "NxN Rīgā 2025, Stevenage March 2025, HDC XV - Hvidovre Parity 2025, VERK III 2025, Finnish FMC Series IV 2025, Lierskogen Vinterkubing 2025, Kungkuben 2025, Hvidovre Side Events Marts 2025, Stockholmsligan - Kifaru 2025, Kublördag Västerås VII - 2025, [Lundakuben 2025](https:"
+              ],
+              [
+                "14",
+                "Kacper Paweł Dworak",
+                "December",
+                "2024",
+                "Winter Cubing in Stafsinge 2024, Advent Hvidovre 2024, GLS Final 2024, Santa Claus Mysłowice 2024, Olsztyn Open 2024, Cube4fun Żyrardów 2024, Uppsalaligan 5: X - 2024, HDC Dec - Fyn 2024, Hverdagscubing XII Hvidovre 2024, [Kublördag Jönköping VI - 2024](https://www.worldcubeassociation.org/competitions/Kublord"
+              ],
+              [
+                "13",
+                "Axel Juan Pablo Moreno Rodriguez",
+                "December",
+                "2025",
+                "PS UD II Bogotá 2025, Plaza Madero Chía VI 2025, Fewest Moves Bogotá IX 2025, Feral Ricaurte Cundinamarca 2025, Nova Plaza Facatativá III 2025, Bima al Cubo II Bogotá 2025, Fewest Moves Bogotá X 2025, Tocancipá III 2025, Avenida Chile XXIX 2025, [Pocos Cupos Bogotá XVI 2025](https://www.worldcubeassociation.org/competitions/PocosCupo"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 2229,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 2018,
+            "completion_tokens": 96,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_attended_competitions_in_single_month",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1934,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 4185,
+            "total_tokens": 4263,
+            "completion_tokens": 78,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 4185
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 158
+    },
+    {
+      "benchmark": true,
+      "id": "S32",
+      "question": "我想查“单周参赛最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_attended_competitions_in_single_week",
+      "durationMs": 3182,
+      "status": 200,
+      "result": {
+        "answer": "该统计为全局排名，不区分项目、地区或纪录级别。前五项均为2024年6月24日至30日参加7场比赛的选手，详见下表。",
+        "sources": [
+          {
+            "id": "stat:most_attended_competitions_in_single_week",
+            "title": "单周参赛最多",
+            "href": "/wca/most_attended_competitions_in_single_week",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "单周内最多参加比赛数",
+            "columns": [
+              "比赛",
+              "选手",
+              "开始日期",
+              "结束日期",
+              "列表"
+            ],
+            "rows": [
+              [
+                "7",
+                "黄迪胜",
+                "24&nbsp;Jun&nbsp;2024",
+                "30&nbsp;Jun&nbsp;2024",
+                "Hari-Hari Horas 1 2024, Hari-Hari Horas 2 2024, Hari-Hari Horas 3 2024, Hari-Hari Horas 4 FMC PM 2024, Hari-Hari Horas 4 FMC AM 2024, Hari-Hari Horas 5 SC 2024, Hari-Hari Horas 5 FMC S 2024"
+              ],
+              [
+                "7",
+                "符逢城",
+                "24&nbsp;Jun&nbsp;2024",
+                "30&nbsp;Jun&nbsp;2024",
+                "Hari-Hari Horas 1 2024, Hari-Hari Horas 2 2024, Hari-Hari Horas 3 2024, Hari-Hari Horas 4 FMC PM 2024, Hari-Hari Horas 4 FMC AM 2024, Hari-Hari Horas 5 SC 2024, Hari-Hari Horas 5 FMC S 2024"
+              ],
+              [
+                "7",
+                "林峻毅",
+                "24&nbsp;Jun&nbsp;2024",
+                "30&nbsp;Jun&nbsp;2024",
+                "Hari-Hari Horas 1 2024, Hari-Hari Horas 2 2024, Hari-Hari Horas 3 2024, Hari-Hari Horas 4 FMC PM 2024, Hari-Hari Horas 4 FMC AM 2024, Hari-Hari Horas 5 SC 2024, Hari-Hari Horas 5 FMC S 2024"
+              ],
+              [
+                "7",
+                "黄佳铨",
+                "24&nbsp;Jun&nbsp;2024",
+                "30&nbsp;Jun&nbsp;2024",
+                "Hari-Hari Horas 1 2024, Hari-Hari Horas 2 2024, Hari-Hari Horas 3 2024, Hari-Hari Horas 4 FMC PM 2024, Hari-Hari Horas 4 FMC AM 2024, Hari-Hari Horas 5 SC 2024, Hari-Hari Horas 5 FMC S 2024"
+              ],
+              [
+                "7",
+                "陈智胜",
+                "24&nbsp;Jun&nbsp;2024",
+                "30&nbsp;Jun&nbsp;2024",
+                "Hari-Hari Horas 1 2024, Hari-Hari Horas 2 2024, Hari-Hari Horas 3 2024, Hari-Hari Horas 4 FMC PM 2024, Hari-Hari Horas 4 FMC AM 2024, Hari-Hari Horas 5 SC 2024, Hari-Hari Horas 5 FMC S 2024"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1338,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 1952,
+            "completion_tokens": 30,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_attended_competitions_in_single_week",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1823,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 3861,
+            "total_tokens": 3923,
+            "completion_tokens": 62,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 3861
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S33",
+      "question": "我想查“海外参赛最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_competitions_abroad",
+      "durationMs": 3189,
+      "status": 200,
+      "result": {
+        "answer": "“海外参赛最多”统计无需区分项目、地区或纪录级别，直接按总次数排名。前五项结果见下表。",
+        "sources": [
+          {
+            "id": "stat:most_competitions_abroad",
+            "title": "海外参赛最多",
+            "href": "/wca/most_competitions_abroad",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "海外参赛最多",
+            "columns": [
+              "比赛",
+              "选手"
+            ],
+            "rows": [
+              [
+                "236",
+                "Callum James Goodyear-Jørgensen"
+              ],
+              [
+                "220",
+                "Maria Oey"
+              ],
+              [
+                "198",
+                "吴洧全"
+              ],
+              [
+                "187",
+                "Ioannis Papadopoulos"
+              ],
+              [
+                "162",
+                "Bence Barát"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1747,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 1980,
+            "completion_tokens": 59,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_competitions_abroad",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1424,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2337,
+            "total_tokens": 2383,
+            "completion_tokens": 46,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2337
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 158
+    },
+    {
+      "benchmark": true,
+      "id": "S34",
+      "question": "累计完成还原次数最多的是哪些选手？",
+      "statId": "most_completed_solves",
+      "durationMs": 5766,
+      "status": 200,
+      "result": {
+        "answer": "累计完成还原次数最多的选手是 Niko Ronkainen（23693 次），其次是 Daniel Wallin（22996 次）和 Przemysław Rogalski（21486 次）。",
+        "sources": [
+          {
+            "id": "stat:most_completed_solves",
+            "title": "累计完成还原数最多",
+            "href": "/wca/most_completed_solves",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最多完成还原数 · Person",
+            "columns": [
+              "",
+              "完成数",
+              "尝试次数"
+            ],
+            "rows": [
+              [
+                "Niko Ronkainen",
+                "**23693**",
+                "24127"
+              ],
+              [
+                "Daniel Wallin",
+                "**22996**",
+                "24937"
+              ],
+              [
+                "Przemysław Rogalski",
+                "**21486**",
+                "22389"
+              ],
+              [
+                "Eduard Esteban García Domínguez",
+                "**19663**",
+                "20261"
+              ],
+              [
+                "Bence Barát",
+                "**19632**",
+                "20182"
+              ],
+              [
+                "Evan Liu",
+                "**19604**",
+                "20563"
+              ],
+              [
+                "Jan Bentlage",
+                "**19253**",
+                "20082"
+              ],
+              [
+                "Luke Garrett",
+                "**19206**",
+                "20076"
+              ],
+              [
+                "Dennis Rosero",
+                "**18651**",
+                "19249"
+              ],
+              [
+                "Sébastien Auroux",
+                "**17987**",
+                "18661"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1308,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1900,
+            "total_tokens": 1921,
+            "completion_tokens": 21,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1900
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_completed_solves"
+            }
+          ]
+        },
+        {
+          "ms": 2643,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2165,
+            "total_tokens": 2231,
+            "completion_tokens": 66,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2165
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_completed_solves",
+              "tableKey": "0.2.1",
+              "limit": 10
+            }
+          ]
+        },
+        {
+          "ms": 1799,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2816,
+            "total_tokens": 2884,
+            "completion_tokens": 68,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2816
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 158
+    },
+    {
+      "benchmark": true,
+      "id": "S35",
+      "question": "我想查“累计参赛日数最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_distinct_dates_competed_on",
+      "durationMs": 4149,
+      "status": 200,
+      "result": {
+        "answer": "“累计参赛日数最多”统计不区分项目、地区或纪录级别，直接按选手不同参赛日期总数排名。前五项结果已在下方表格中展示。",
+        "sources": [
+          {
+            "id": "stat:most_distinct_dates_competed_on",
+            "title": "累计参赛日数最多",
+            "href": "/wca/most_distinct_dates_competed_on",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "最多不同参赛日期",
+            "columns": [
+              "日期数",
+              "选手",
+              "列表"
+            ],
+            "rows": [
+              [
+                "336",
+                "Daniel Wallin",
+                "January: (97%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31<br />February: (83%) 1, 2, 3, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29<br />March: (90%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31<br />April: (97%) 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30<br />May: (100%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31<br />June: (93%) 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30<br />July: (3%) 0"
+              ],
+              [
+                "333",
+                "Przemysław Rogalski",
+                "January: (84%) 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31<br />February: (97%) 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29<br />March: (90%) 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30<br />April: (87%) 1, 2, 3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30<br />May: (87%) 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31<br />June: (93%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 29, 30<br />July: (26%) 1, 2, 3, 4, 5, 6, 7, 0"
+              ],
+              [
+                "331",
+                "Kacper Paweł Dworak",
+                "January: (77%) 2, 3, 4, 6, 7, 9, 10, 11, 12, 13, 14, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 29, 31<br />February: (90%) 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28<br />March: (87%) 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29<br />April: (83%) 1, 2, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30<br />May: (94%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31<br />June: (90%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 27, 28, 29, 30<br />July: (42%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 1"
+              ],
+              [
+                "326",
+                "Niko Ronkainen",
+                "January: (77%) 1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14, 15, 17, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 31<br />February: (83%) 1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 22, 23, 25, 26, 27, 28, 29<br />March: (90%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 22, 23, 24, 25, 28, 29, 30, 31<br />April: (93%) 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30<br />May: (84%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15, 16, 17, 18, 19, 21, 23, 24, 25, 26, 28, 30, 31<br />June: (100%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30<br />July: (35%) 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 1"
+              ],
+              [
+                "313",
+                "Matteo Provasi",
+                "January: (71%) 1, 2, 4, 5, 6, 7, 11, 12, 13, 14, 15, 16, 17, 18, 22, 23, 24, 25, 26, 27, 28, 31<br />February: (90%) 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 29<br />March: (87%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30<br />April: (97%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30<br />May: (94%) 1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31<br />June: (93%) 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 27, 28, 29, 30<br />July: (32%) 1, 2, 3, 4, 5, 6, 7, 8, 9, 1"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1458,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1952,
+            "completion_tokens": 29,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_distinct_dates_competed_on",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2633,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 5740,
+            "total_tokens": 5810,
+            "completion_tokens": 70,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 5740
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 158
+    },
+    {
+      "benchmark": true,
+      "id": "S36",
+      "question": "我想查“首次盲拧成功前尝试最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_solves_before_bld_success",
+      "durationMs": 8100,
+      "status": 200,
+      "result": {
+        "answer": "该统计包含四个项目：三盲、四盲、五盲和多盲。请指定您想查看哪个项目的“首次盲拧成功前尝试最多”前五项数据？",
+        "sources": [
+          {
+            "id": "stat:most_solves_before_bld_success",
+            "title": "首次盲拧成功前尝试最多",
+            "href": "/wca/most_solves_before_bld_success",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 2450,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1925,
+            "total_tokens": 1949,
+            "completion_tokens": 24,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1925
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_solves_before_bld_success"
+            }
+          ]
+        },
+        {
+          "ms": 2577,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2183,
+            "total_tokens": 2263,
+            "completion_tokens": 80,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2183
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_solves_before_bld_success",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1341,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2404,
+            "total_tokens": 2432,
+            "completion_tokens": 28,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2404
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_solves_before_bld_success",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1714,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2485,
+            "total_tokens": 2542,
+            "completion_tokens": 57,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2485
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S37",
+      "question": "我想查“参赛大洲最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_visited_continents",
+      "durationMs": 4733,
+      "status": 200,
+      "result": {
+        "answer": "“参赛大洲最多”统计仅按选手维度展示，不区分项目、地区或纪录级别。前五项均为去过6个大洲的选手：Ron van Bruchem、Anders Larsson、Sinpei Araki (荒木慎平)、Mats Valk 和 Evan Liu。",
+        "sources": [
+          {
+            "id": "stat:most_visited_continents",
+            "title": "参赛大洲最多",
+            "href": "/wca/most_visited_continents",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "去过最多大洲参赛",
+            "columns": [
+              "大洲数",
+              "选手"
+            ],
+            "rows": [
+              [
+                "6",
+                "Ron van Bruchem"
+              ],
+              [
+                "6",
+                "Anders Larsson"
+              ],
+              [
+                "6",
+                "荒木慎平"
+              ],
+              [
+                "6",
+                "Mats Valk"
+              ],
+              [
+                "6",
+                "Evan Liu"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1697,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1922,
+            "total_tokens": 1979,
+            "completion_tokens": 57,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1922
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_visited_continents",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 3008,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2315,
+            "total_tokens": 2393,
+            "completion_tokens": 78,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2315
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S38",
+      "question": "我想查“参赛国家最多”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "most_visited_countries",
+      "durationMs": 4370,
+      "status": 200,
+      "result": {
+        "answer": "“参赛国家最多”统计前五项：Ron van Bruchem（81国）、Vincenzo Maria Gammino（65国）、Jordan Crippa（63国）、Niko Ronkainen（58国）、Konstantin Jaehne（50国）。该表无项目/地区/纪录级别区分。",
+        "sources": [
+          {
+            "id": "stat:most_visited_countries",
+            "title": "参赛国家最多",
+            "href": "/wca/most_visited_countries",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "去过最多国家参赛",
+            "columns": [
+              "国家数",
+              "选手"
+            ],
+            "rows": [
+              [
+                "81",
+                "Ron van Bruchem"
+              ],
+              [
+                "65",
+                "Vincenzo Maria Gammino"
+              ],
+              [
+                "63",
+                "Jordan Crippa"
+              ],
+              [
+                "58",
+                "Niko Ronkainen"
+              ],
+              [
+                "50",
+                "Konstantin Jaehne"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1811,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1921,
+            "total_tokens": 1958,
+            "completion_tokens": 37,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1921
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "most_visited_countries",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2543,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2311,
+            "total_tokens": 2398,
+            "completion_tokens": 87,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2311
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S39",
+      "question": "我想查“最快达到参赛数里程碑”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "shortest_time_to_reach_milestone_in_comps_count",
+      "durationMs": 5643,
+      "status": 503,
+      "result": {
+        "error": "source_unavailable"
+      },
+      "modelSteps": [
+        {
+          "ms": 1567,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1956,
+            "completion_tokens": 33,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "shortest_time_to_reach_milestone_in_comps_count",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1501,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2352,
+            "total_tokens": 2385,
+            "completion_tokens": 33,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2352
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "shortest_time_to_reach_milestone_in_comps_count",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2548,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2438,
+            "total_tokens": 2590,
+            "completion_tokens": 152,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2438
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "shortest_time_to_reach_milestone_in_comps_count",
+              "tableKey": "0.2.8",
+              "limit": 5
+            }
+          ]
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S40",
+      "question": "我想查“最快集齐所有项目单次”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "shortest_time_to_get_all_singles",
+      "durationMs": 4283,
+      "status": 200,
+      "result": {
+        "answer": "“最快集齐所有项目单次”统计目前无数据（发布文件为空），无法提供前五项。该统计仅考虑当前官方项目，且未注明地区或纪录级别筛选条件。",
+        "sources": [
+          {
+            "id": "stat:shortest_time_to_get_all_singles",
+            "title": "最快集齐所有项目单次",
+            "href": "/wca/shortest_time_to_get_all_singles",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 2285,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1924,
+            "total_tokens": 2024,
+            "completion_tokens": 100,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1924
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "shortest_time_to_get_all_singles",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 1969,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2118,
+            "total_tokens": 2179,
+            "completion_tokens": 61,
+            "prompt_tokens_details": {
+              "cached_tokens": 1792,
+              "text_tokens": 2118
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S41",
+      "question": "我想查“最快集齐所有项目单次与平均”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "shortest_time_to_get_all_singles_and_averages",
+      "durationMs": 7312,
+      "status": 200,
+      "result": {
+        "answer": "已查询“最快集齐所有项目单次与平均”统计，但当前发布的数据文件中无具体记录行（可能因数据生成或导入暂不可用），因此无法提供前五项结果。该统计仅考虑当前官方项目。",
+        "sources": [
+          {
+            "id": "stat:shortest_time_to_get_all_singles_and_averages",
+            "title": "最快集齐所有项目单次与平均",
+            "href": "/wca/shortest_time_to_get_all_singles_and_averages",
+            "read": true
+          }
+        ],
+        "artifacts": []
+      },
+      "modelSteps": [
+        {
+          "ms": 5179,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1926,
+            "total_tokens": 2194,
+            "completion_tokens": 268,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1926
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "shortest_time_to_get_all_singles_and_averages",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2106,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2142,
+            "total_tokens": 2220,
+            "completion_tokens": 78,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2142
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    },
+    {
+      "benchmark": true,
+      "id": "S42",
+      "question": "我想查“每场比赛平均项目数”的统计结果，请给出前五项；需要区分项目、地区或纪录级别时先说明可选条件。",
+      "statId": "average_event_count_by_competition",
+      "durationMs": 3491,
+      "status": 200,
+      "result": {
+        "answer": "“每场比赛平均项目数”统计结果的前五项已列出，该表仅包含比赛、平均参赛项目数、参赛人数和国家信息，未提供按项目、地区或纪录级别筛选的选项。",
+        "sources": [
+          {
+            "id": "stat:average_event_count_by_competition",
+            "title": "每场比赛平均项目数",
+            "href": "/wca/average_event_count_by_competition",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "每场比赛平均参赛项目数",
+            "columns": [
+              "比赛",
+              "平均参赛项目数",
+              "参赛人数",
+              "国家"
+            ],
+            "rows": [
+              [
+                "Utsjoki 2025",
+                "13.67",
+                "6",
+                "Finland"
+              ],
+              [
+                "24 Hours in Flen 2023",
+                "13.48",
+                "23",
+                "Sweden"
+              ],
+              [
+                "24 Hours in Åker 2024",
+                "12.86",
+                "37",
+                "Sweden"
+              ],
+              [
+                "All Rounders in Stobierna 2023",
+                "12.00",
+                "29",
+                "Poland"
+              ],
+              [
+                "Kārķi Open 2026",
+                "11.61",
+                "28",
+                "Latvia"
+              ]
+            ]
+          }
+        ]
+      },
+      "modelSteps": [
+        {
+          "ms": 1391,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 1923,
+            "total_tokens": 1950,
+            "completion_tokens": 27,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 1923
+            }
+          },
+          "finish": "stop",
+          "calls": [
+            {
+              "tool": "statistics",
+              "id": "average_event_count_by_competition",
+              "limit": 5
+            }
+          ]
+        },
+        {
+          "ms": 2085,
+          "status": 200,
+          "usage": {
+            "prompt_tokens": 2455,
+            "total_tokens": 2521,
+            "completion_tokens": 66,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024,
+              "text_tokens": 2455
+            }
+          },
+          "finish": "stop",
+          "calls": []
+        }
+      ],
+      "rssMb": 159
+    }
+  ]
+}

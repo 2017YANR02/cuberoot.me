@@ -524,7 +524,7 @@ const TABLES: Table[] = [
     { name: 'english_stale', note: { zh: '中文保存后置为 true，英文同步成功后置为 false', en: 'set true after a Chinese save and false after a successful English sync' } },
     { name: 'content_revision', note: { zh: '每次中文保存递增，阻止旧翻译覆盖更新后的中文', en: 'increments on each Chinese save to stop stale translations from overwriting newer content' } },
   ] },
-  { name: 'site_assistant_daily_usage', domain: 'community', origin: '0251', purpose: { zh: '全站 AI 提问每日共用 100 次额度；按北京时间计数，重启不清零，不保存问题或个人信息', en: 'Durable site-wide allowance of 100 AI questions per Beijing calendar day; no questions or personal data stored' }, cols: [{ name: 'day, questions' }] },
+  { name: 'site_assistant_daily_usage', domain: 'community', origin: '0251', purpose: { zh: '全站 AI 提问每日共用 1000 次额度；按北京时间计数，重启不清零，不保存问题或个人信息', en: 'Durable site-wide allowance of 1000 AI questions per Beijing calendar day; no questions or personal data stored' }, cols: [{ name: 'day, questions' }] },
   { name: 'video_meet_codes', domain: 'studio', origin: '0252', purpose: { zh: '跨进程分配快速会议和预约会议码', en: 'Cross-process quick and scheduled meeting code reservations' }, cols: [{ name: 'code, expires_at' }] },
   { name: 'video_meetings', domain: 'studio', origin: '0252', purpose: { zh: '个人会议预约、时区、周期与取消状态', en: 'Personal meeting schedules, time zones, recurrence and cancellation' }, cols: [{ name: 'id, owner_key, code, title' }, { name: 'start_ms, end_ms, tz, rrule, cancelled, created_at' }] },
   { name: 'ops_commands', domain: 'community', origin: '0010', evolved: [11], purpose: { zh: '/dev/ops runbook 命令 + 提示词模板', en: 'Commands + prompts behind the /dev/ops runbook' } },
@@ -797,6 +797,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 249, slug: 'friend_chat', desc: { zh: '新增好友私聊会话与文字消息，包含递增序号、双方已读位置、发送幂等约束和账号注销级联删除。', en: 'Add private friend conversations and text messages with ordered sequences, participant read positions, send idempotency, and cascades on account deletion.' } },
   { n: 251, slug: 'site_assistant_daily_usage', desc: { zh: '全站 AI 提问每日 100 次持久额度，跨进程原子扣减，北京时间零点恢复。', en: 'Atomic, durable site-wide quota of 100 AI questions per Beijing calendar day.' } },
   { n: 252, slug: 'video_meetings', desc: { zh: '会议预约、时区与周期规则，持久化会议码分配。', en: 'Meeting schedules, time zones, recurrence and durable meeting code allocation.' } },
+  { n: 253, slug: 'site_assistant_quota_1000', desc: { zh: '全站问答每日额度提高至 1000 次，保留当天已用次数与原子扣减。', en: 'Raise the site-wide assistant quota to 1000 per day, preserving existing usage and atomic reservations.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

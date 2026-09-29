@@ -42,10 +42,12 @@ import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
 import { tr } from '@/i18n/tr';
-import { useAuthUser } from '@/lib/auth-store';
+import { useAuthUser, useAuthStore } from '@/lib/auth-store';
+import { authHeaders } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { type AssistantTurn } from '@/components/SiteAssistantDialog';
-import type { AssistantAnswer } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_TIMEOUT_MS, type AssistantAnswer, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -230,8 +232,17 @@ export default function LandingSearch({
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
-  const [assistantError, setAssistantError] = useState<'daily_limit' | 'unavailable' | null>(null);
+  const [assistantError, setAssistantError] = useState<AssistantErrorCode | null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState<AssistantAnswer | null>(null);
+
+  useEffect(() => {
+    assistantRequest.current?.abort();
+    assistantRequest.current = null;
+    setAssistantBusy(false);
+    setAssistantTurns([]);
+    setAssistantAnswer(null);
+    setAssistantError(null);
+  }, [assistantUser?.uid, assistantUser?.wcaId]);
 
   useEffect(() => {
     assistantRequest.current?.abort();
@@ -252,21 +263,26 @@ export default function LandingSearch({
     setAssistantTurns(nextTurns);
     setAssistantDialog(true);
     micStop();
+    if (!assistantUser || !/^\d{4}[A-Z]{4}\d{2}$/.test(assistantUser.wcaId)) {
+      setAssistantError(assistantUser ? 'wca_link_required' : 'login_required');
+      setAssistantAnswer(null);
+      return;
+    }
     const controller = new AbortController();
     assistantRequest.current = controller;
     setOpen(true);
     setAssistantBusy(true);
     setAssistantError(null);
     setAssistantAnswer(null);
-    const timeout = setTimeout(() => controller.abort(), 95000);
+    const timeout = setTimeout(() => controller.abort(), SITE_ASSISTANT_TIMEOUT_MS);
     try {
       const response = await fetch(apiUrl('/v1/site-assistant'), {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, lang, viewerWcaId: assistantUser?.wcaId && /^\d{4}[A-Z]{4}\d{2}$/.test(assistantUser.wcaId) ? assistantUser.wcaId : undefined, history: previous.slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ question, lang, history: previous.slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
       });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
-        if (assistantRequest.current === controller) setAssistantError(failure?.error === 'daily_limit' ? 'daily_limit' : 'unavailable');
+        if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
         return;
       }
       const data = await response.json();
@@ -276,8 +292,8 @@ export default function LandingSearch({
         setAssistantAnswer(result);
         setAssistantTurns([...previous, { question, result }]);
       }
-    } catch {
-      if (assistantRequest.current === controller) setAssistantError('unavailable');
+    } catch(error) {
+      if (assistantRequest.current === controller) setAssistantError(controller.signal.aborted ? 'timeout' : error instanceof TypeError ? 'network' : 'unavailable');
     } finally {
       clearTimeout(timeout);
       if (assistantRequest.current === controller) { assistantRequest.current = null; setAssistantBusy(false); }
@@ -549,9 +565,8 @@ export default function LandingSearch({
           <section className="landing-search-section landing-search-answer" aria-live="polite" aria-busy={assistantBusy}>
             {assistantBusy ? <p>{tr({ zh: '正在查找相关页面…', en: 'Finding relevant pages…' })}</p>
               : assistantError ? <>
-                <p>{assistantError === 'daily_limit'
-                  ? tr({ zh: '全站今日 100 次提问额度已用完，北京时间零点恢复。你仍可使用下方搜索结果。', en: 'The site’s daily allowance of 100 questions has been used. It resets at midnight Beijing time (UTC+8). You can still use the search results below.' })
-                  : tr({ zh: '暂时无法回答，请重试或使用下方搜索结果。', en: 'An answer is unavailable. Retry or use the search results below.' })}</p>
+                <p>{tr(ASSISTANT_ERROR_TEXT[assistantError])}</p>
+                {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="landing-search-item" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
                 {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
               </> : assistantAnswer ? <>
                 <p className="landing-search-answer-text">{assistantAnswer.answer}</p>

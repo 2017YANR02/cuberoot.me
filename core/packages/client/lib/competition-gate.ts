@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { competitionCookie, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
+import { competitionCookie, verifyCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 
 // Explicit delivery endpoints and known asset trees stay reachable. A file-like
 // person/competition slug, RSC request, or forged cookie never bypasses the gate.
@@ -15,6 +15,9 @@ export async function competitionGate(req: NextRequest) {
     ? req.headers.get('x-vercel-ip-country') === 'CN'
     : req.headers.get('x-cuberoot-cn-exempt') === '1';
   if (cn) return null;
+  // A server-only proof is valid for one exact path/query and at most 60 seconds.
+  // It clears the traffic challenge only; it grants no account/private-data access.
+  if (await verifyCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', req.headers.get(COMPETITION_SERVICE_HEADER) ?? '', 'service', path + req.nextUrl.search)) return null;
   const proof = competitionCookie(req.headers.get('cookie') ?? '');
   if (await verifyCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', proof, 'browser', req.headers.get('user-agent') ?? '')) return null;
   const headers = { 'cache-control': 'private, no-store', 'x-robots-tag': 'noindex, nofollow', 'x-cuberoot-verification-required': '1' };

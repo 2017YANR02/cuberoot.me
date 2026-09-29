@@ -1,3 +1,6 @@
+export const SITE_ASSISTANT_DAILY_LIMIT = 1000;
+export const SITE_ASSISTANT_TIMEOUT_MS = 30_000;
+export type AssistantErrorCode = 'login_required' | 'wca_link_required' | 'account_forbidden' | 'daily_limit' | 'busy' | 'verification_required' | 'source_verification_required' | 'timeout' | 'network' | 'model_unavailable' | 'source_unavailable' | 'unavailable';
 export interface AssistantSource { id: string; title: string; href: string; read: boolean }
 export interface AssistantTable {
   kind: 'table'; title: string; columns: string[]; rows: string[][];
