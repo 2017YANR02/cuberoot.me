@@ -15,7 +15,7 @@
 // 直连 SSE,不进这里.
 
 import dns from 'node:dns';
-import { COMPETITION_SERVICE_HEADER, createCompetitionProof } from '@cuberoot/shared/competition-access';
+import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, competitionCookie, createCompetitionProof } from '@cuberoot/shared/competition-access';
 
 // Node fetch 默认 IPv6-first,api.cuberoot.me 的 AAAA 查询会挂起到超时 (next.config
 // 在主进程设过,但 route handler 运行时 / Vercel serverless function 不一定继承,
@@ -53,11 +53,23 @@ export async function GET(
   const upstreamPath = `/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`;
   const secret = process.env.COMPETITION_ACCESS_SECRET;
   const proof = secret ? await createCompetitionProof(secret, 'service', upstreamPath) : '';
+  const headers = new Headers({ accept: 'application/json' });
+  if (proof) headers.set(COMPETITION_SERVICE_HEADER, proof);
+  else {
+    // Development has no signing secret. Relay only the visitor's existing
+    // browser proof with its bound UA; the API still checks its signature.
+    const browserProof = competitionCookie(req.headers.get('cookie') ?? '');
+    if (!browserProof) return Response.json({ code: 'competition_verification_required' }, {
+      status: 403, headers: { 'cache-control': 'no-store' },
+    });
+    headers.set('cookie', `${COMPETITION_ACCESS_COOKIE}=${browserProof}`);
+    headers.set('user-agent', req.headers.get('user-agent') ?? '');
+  }
   let upstream: Response;
   try {
     upstream = await fetch(`${UPSTREAM}/v1/cubing-live/${encodeURIComponent(slug)}${onlyQs}`, {
       signal: AbortSignal.timeout(28_000),
-      headers: { accept: 'application/json', ...(proof ? { [COMPETITION_SERVICE_HEADER]: proof } : {}) },
+      headers,
     });
   } catch {
     return Response.json({ error: 'upstream error' }, { status: 502, headers: { 'cache-control': 'no-store' } });
@@ -68,7 +80,7 @@ export async function GET(
     try { body = await upstream.text(); } catch { /* ignore */ }
     return new Response(body || JSON.stringify({ error: `HTTP ${upstream.status}` }), {
       status: upstream.status,
-      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+      headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', ...(upstream.headers.has('retry-after') ? { 'retry-after': upstream.headers.get('retry-after')! } : {}) },
     });
   }
 
@@ -92,6 +104,6 @@ export async function GET(
     : 'public, max-age=0, must-revalidate, s-maxage=30, stale-while-revalidate=600';
 
   return new Response(JSON.stringify(data), {
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': cacheControl },
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': proof ? cacheControl : 'private, no-store' },
   });
 }

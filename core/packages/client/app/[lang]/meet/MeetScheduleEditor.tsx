@@ -61,12 +61,12 @@ export default function MeetScheduleEditor({ plan, onClose, onSaved }: {
         finally { pending.current = false; setSaving(false); }
       }}>
         <fieldset disabled={saving}>
-          <label>{tr({ zh: '会议主题', en: 'Meeting title' })}<input autoFocus required maxLength={120} value={title} onChange={event => setTitle(event.target.value)} /></label>
+          <label>{tr({ zh: '会议主题', en: 'Meeting title' })}<input className="meet-schedule-input" autoFocus required maxLength={120} value={title} onChange={event => setTitle(event.target.value)} /></label>
           <div className="meet-form-row">
             <label>{tr({ zh: '开始日期', en: 'Start date' })}<DateInput value={date} onChange={setDate} required /></label>
-            <label>{tr({ zh: '开始时间', en: 'Start time' })}<input type="time" required value={time} onChange={event => setTime(event.target.value)} /></label>
+            <label>{tr({ zh: '开始时间', en: 'Start time' })}<input className="meet-schedule-input" type="time" required value={time} onChange={event => setTime(event.target.value)} /></label>
           </div>
-          <label>{tr({ zh: '时长（分钟）', en: 'Duration (minutes)' })}<input type="number" min={5} max={1440} step={5} value={minutes} onChange={event => setMinutes(Number(event.target.value))} required /></label>
+          <label>{tr({ zh: '时长（分钟）', en: 'Duration (minutes)' })}<input className="meet-schedule-input" type="number" min={5} max={1440} step={5} value={minutes} onChange={event => setMinutes(Number(event.target.value))} required /></label>
           <p className="meet-sub">{tr({ zh: '时区', en: 'Time zone' })}：{tz}</p>
           {Number.isFinite(start) && <RepeatEditor value={rrule} onChange={setRrule} start={start} tz={tz} />}
           {plan?.rrule && <p className="meet-sub">{tr({ zh: '修改将应用于整个周期会议。', en: 'Changes apply to the entire series.' })}</p>}

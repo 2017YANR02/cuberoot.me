@@ -10,4 +10,4 @@
 .interview-note { padding-left: 16px; border-left: 2px solid var(--border-strong); color: var(--muted-foreground); }
 .interview-note p { margin-top: 0; }
 .interview-example { color: var(--muted-foreground); font-size: .9rem; }
-.interview-page button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--border-default); border-radius: 6px; padding: 4px 12px; cursor: pointer; }
+.interview-retry { font: inherit; color: var(--accent); background: none; border: 1px solid var(--border-default); border-radius: 6px; padding: 4px 12px; cursor: pointer; }

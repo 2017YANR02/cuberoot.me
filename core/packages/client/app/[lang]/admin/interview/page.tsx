@@ -40,7 +40,7 @@ export default function InterviewPage() {
       <p>{t('口述稿与备稿资料', 'Spoken answers and preparation notes')}</p>
     </header>
     {!isAdmin ? <p role="status">{t('请使用管理员账号登录后查看。', 'Sign in with an administrator account to view this material.')} <AppLink href="/account" prefetch={false}>{t('前往账号页', 'Go to account')}</AppLink></p>
-      : failed ? <p role="alert">{t('未能读取采访稿，请确认管理员登录状态后重试。', 'Unable to load the draft. Check your administrator session and try again.')} <button type="button" onClick={() => setAttempt(value => value + 1)}>{t('重试', 'Retry')}</button></p>
+      : failed ? <p role="alert">{t('未能读取采访稿，请确认管理员登录状态后重试。', 'Unable to load the draft. Check your administrator session and try again.')} <button type="button" className="interview-retry" onClick={() => setAttempt(value => value + 1)}>{t('重试', 'Retry')}</button></p>
       : !draft ? <p role="status">{t('正在校验权限并读取采访稿…', 'Verifying access and loading the draft…')}</p>
       : <div lang="zh-Hans">
         <section className="interview-intro">
