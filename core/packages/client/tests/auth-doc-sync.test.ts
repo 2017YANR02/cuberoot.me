@@ -96,6 +96,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/mobile', 'ios/App/App/AppleMembershipPlugin.swift'],
     ['@cuberoot/mobile', 'src/apple-membership.ts'],
     ['@cuberoot/server', 'src/payment/apple-membership.ts'],
+    ['@cuberoot/mobile', 'ios/App/App/RecordPushPlugin.swift'],
     ['@cuberoot/server', 'src/routes/notifications.ts'], ['@cuberoot/server', 'src/utils/push_device.ts'],
     ['@cuberoot/harmony', 'entry/src/main/ets/bridge/SecureAuthStore.ets'],
     ['@cuberoot/miniprogram', 'src/lib/auth.ts'], ['@cuberoot/miniprogram', 'src/pages/account/index.wxml'],

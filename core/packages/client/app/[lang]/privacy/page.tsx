@@ -12,8 +12,8 @@ export default function PrivacyPage() {
       <p className="privacy-updated">{t('生效日期:2026-09-29', 'Effective date: September 29, 2026')}</p>
       <p>
         {t(
-          '本政策适用于 CubeRoot 官方 Android、iOS App、微信小程序与抖音小程序。App 的核心计时功能可离线且无需登录使用;App 与小程序登录均由你主动选择。',
-          'This policy applies to the official CubeRoot Android and iOS apps, WeChat Mini Program, and Douyin Mini Program. Core app timer features work offline without sign-in. Sign-in in the app or a Mini Program is always optional.',
+          '本政策适用于 CubeRoot 网站、官方 App（Android、iOS、HarmonyOS、Windows 和 macOS）以及微信与抖音小程序，包括其中打开的 CubeRoot 在线页面。各端可用功能和系统权限可能不同；下文按功能说明数据处理，不表示每个平台都提供全部功能。App 的核心离线计时无需登录；账号、社区、教学、订单等在线功能会按你的操作处理相应数据。',
+          'This policy covers the CubeRoot website, official apps for Android, iOS, HarmonyOS, Windows and macOS, and WeChat and Douyin Mini Programs, including CubeRoot online pages opened within them. Features and system permissions vary by platform; the descriptions below do not mean every platform offers every feature. Core offline timing works without sign-in. Account, community, teaching, order and other online features process the relevant data when you use them.',
         )}
       </p>
 
@@ -27,7 +27,7 @@ export default function PrivacyPage() {
 
       <h2 id="privacy-policy">{t('隐私政策：App 处理的数据', 'Privacy Policy: Data handled by the app')}</h2>
       <ul>
-        <li>{t('计时记录、打乱、罚时、备注和偏好设置只保存在设备本地。', 'Solve times, scrambles, penalties, comments, and preferences are stored only on your device.')}</li>
+        <li>{t('普通离线计时的记录、打乱、罚时、备注和偏好设置保存在设备本地，不因登录而自动上传或跨设备同步。主动分享、发布或参加联网对战时，相关数据按下文所述发送。', 'Ordinary offline solve records, scrambles, penalties, comments and preferences stay on your device; signing in does not automatically upload or synchronize them. When you choose to share, publish or join an online battle, the relevant data is transmitted as described below.')}</li>
         <li>{t('App 会读取网络连接状态,用于显示在线或离线状态以及安排比赛打乱刷新。', 'The app reads network connection status to show whether the device is online or offline and to schedule competition-scramble refreshes.')}</li>
         <li>
           {t(
@@ -35,7 +35,7 @@ export default function PrivacyPage() {
             'The app automatically downloads public 3×3 competition scrambles from the CubeRoot API and caches at most 50 on the device for up to seven days. Requests do not include your solve times, comments, or settings. The server processes and logs standard request information such as IP address and device or client type to deliver the service, protect it, and diagnose failures.',
           )}
         </li>
-        <li>{t('App 不包含广告 SDK，也不使用摄像头或麦克风。Android 11 及以下版本可能按系统要求把蓝牙扫描兼容授权显示为定位权限，计时器不使用扫描结果推断位置。可选的 Android 纪录推送使用下文说明的第三方 SDK。', 'The app contains no advertising SDK and does not use the camera or microphone. On Android 11 and earlier, the system may present Bluetooth scanning compatibility access as a location permission; the timer does not infer location from scan results. Optional Android record notifications use the third-party SDK described below.')}</li>
+        <li>{t('普通计时不需要摄像头或麦克风。你主动使用音视频通话、拍摄或媒体上传时，相应页面可能请求系统权限或打开文件选择器；拒绝不会影响普通计时。Android 11 及以下版本可能把蓝牙扫描兼容授权显示为定位权限，计时器不使用扫描结果推断位置。地区资料和服务器 IP 地域处理与蓝牙扫描无关，详见下文。', 'Ordinary timing does not require a camera or microphone. When you choose audio/video calls, capture or media uploads, the relevant page may request system permissions or open a file picker; declining does not affect ordinary timing. Android 11 and earlier may present Bluetooth scanning compatibility access as a location permission; the timer does not infer location from scan results. Profile regions and server-side IP region processing are separate from Bluetooth scanning and are described below.')}</li>
         <li>
           {t(
             '只有在你点击连接智能魔方后,App 才会请求附近设备或蓝牙权限,扫描并连接你选择的兼容魔方。蓝牙扫描不用于确定或记录位置;拒绝授权不会影响普通计时。',
@@ -60,8 +60,8 @@ export default function PrivacyPage() {
         'Android uses the Getui push SDK and core component from Daily Interactive Co., Ltd., plus manufacturer push SDKs when those channels are configured, to deliver notifications and report delivery results. The SDK processes push identifiers, device and application information, and network information. Specific fields and optional device identifiers or location-related information depend on Getui’s policy and system permissions. Getui also bundles the ZX ID SDK from Zhonghu Zhian (Beijing) Technology Co., Ltd. for device identification and security checks, which may process device characteristics and application information. CubeRoot disables Getui’s personalized, location-based and emergency push extensions and cross-app link merging. Notification text contains public competition records and may appear on the lock screen.',
       )} <a href="https://docs.getui.com/privacy/" target="_blank" rel="noopener noreferrer">{t('个推隐私政策', 'Getui privacy policy')}</a>{' '}<a href="https://zxid.mobileservice.cn/privacy" target="_blank" rel="noopener noreferrer">{t('卓信 ID 隐私政策', 'ZX ID privacy policy')}</a></p>
       <p>{t(
-        '服务器保存账号与设备推送标识的绑定；定期清理连续 30 天未刷新的绑定和 7 天前的投递队列条目。退出此 App 时关闭本机推送并撤销绑定；断网时在安全存储保留仅能撤销该设备的凭据，联网后重试。删除账号会删除设备绑定。已经交给系统或厂商的通知可能仍在队列中。iOS 与其他宿主的系统推送尚未开放。',
-        'The server stores the account-to-push-device binding and periodically removes bindings not refreshed for 30 days and delivery queue entries older than seven days. Signing out stops local push and revokes the binding. Offline, secure storage retains a credential that can only revoke that device, for retry when online. Account deletion removes device bindings. Notifications already handed to the system or manufacturer may remain queued. System push is not yet available on iOS or other hosts.',
+        '服务器保存账号与设备推送标识的绑定；定期清理连续 30 天未刷新的绑定和 7 天前的投递队列条目。退出此 App 时关闭本机推送并撤销绑定；断网时在安全存储保留仅能撤销该设备的凭据，联网后重试。删除账号会删除设备绑定。已经交给系统或厂商的通知可能仍在队列中。iOS 纪录推送已接入源码但尚未开放；启用时通过 Apple APNs 处理设备推送标识、应用标识和公开纪录通知，开发与生产环境隔离，设备绑定沿用上述退出、注销和清理规则。其他宿主的系统推送尚未开放。',
+        'The server stores the account-to-push-device binding and periodically removes bindings not refreshed for 30 days and delivery queue entries older than seven days. Signing out stops local push and revokes the binding. Offline, secure storage retains a credential that can only revoke that device, for retry when online. Account deletion removes device bindings. Notifications already handed to the system or manufacturer may remain queued. The iOS record channel is implemented but not enabled yet. When enabled, Apple APNs processes device push tokens, the app identifier, and public record notifications. Sandbox and production are isolated, and device bindings follow the sign-out, deletion, and cleanup rules above. System push on other hosts is not enabled yet.',
       )}</p>
 
       <p>{t('微信小程序中，只有点击连接外接计时器后才会使用蓝牙；只有点击启动 Stackmat 音频输入后才会申请麦克风权限。有线输入音频在本机实时解码，不上传音频。设备名称、计时状态与读数通过短时内存中继交给网页计时器；断开连接后停止采集，录音中断或达到 10 分钟上限后需重新连接。拒绝权限不影响普通计时。', 'In the WeChat Mini Program, Bluetooth is used only after you choose to connect an external timer; microphone permission is requested only when you start Stackmat audio input. Wired audio is decoded locally and is not uploaded. The device name, timer state, and reading are passed to the web timer through a short-lived in-memory relay. Disconnecting stops capture; reconnect after an interruption or the 10-minute recording limit. Denying permission does not affect ordinary timing.')}</p>
@@ -82,8 +82,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           {t(
-            '登录后,App 将 CubeRoot 会话凭证和账号资料保存在 iOS Keychain 或 Android Keystore 保护的安全存储中,用于保持登录状态和显示账号信息。App 会向 CubeRoot API 校验账号状态并在需要时刷新凭证;当前不会上传或跨设备同步计时记录、备注和设置。',
-            'After sign-in, the app stores the CubeRoot session token and account profile in secure storage protected by iOS Keychain or Android Keystore. It contacts the CubeRoot API to validate the account and refresh the token when needed. Solve times, comments, and settings are not currently uploaded or synchronized across devices.',
+            '登录后，iOS 和 Android App 将会话凭证和账号资料保存在由 Keychain 或 Keystore 保护的安全存储中，其他宿主使用相应的系统安全存储。App 向 CubeRoot API 校验账号并按需刷新凭证。登录本身不会上传普通离线计时的记录、备注和设置；在线功能的数据另行保存到服务器。',
+            'After sign-in, the iOS and Android apps keep session credentials and account profiles in storage protected by Keychain or Keystore; other hosts use their corresponding secure storage. The app validates the account with the CubeRoot API and refreshes credentials as needed. Signing in itself does not upload ordinary offline solve records, comments or settings; online features separately store their data on the server.',
           )}
         </li>
         <li>
@@ -125,10 +125,32 @@ export default function PrivacyPage() {
       <h2>{t('网页内容与跨端登录', 'Web content and cross-platform sign-in')}</h2>
       <p>
         {t(
-          '小程序使用 web-view 打开 cuberoot.me 上的计时器、公式库、比赛、百科、课程和账号页。已登录时,小程序可申请一个短时、单次使用的换票交给网页,使网页识别同一账号。长期会话凭证不会放入网址。服务器可处理 IP 地址、浏览器或设备类型等标准请求信息,仅用于提供服务、安全防护与故障诊断。',
-          'The Mini Program uses web-view to open the timer, algorithm library, competitions, wiki, courses, and account pages on cuberoot.me. When signed in, it may issue a short-lived, single-use handoff ticket so the webpage can recognize the same account. Long-lived session tokens are never placed in the URL. The server may process standard request information such as IP address and browser or device type only to deliver the service, protect it, and diagnose failures.',
+          'App 的工具和账号页面以及小程序中的部分功能使用 CubeRoot 在线页面。已登录时，可通过短时、单次使用的换票使网页识别同一账号，长期会话凭证不会放入网址。这些页面产生的账号资料、内容、订单和使用记录同样受本政策约束，不属于“全部仅在本地”的离线计时数据。',
+          'App tools and account pages, and some Mini Program features, use CubeRoot online pages. A short-lived, single-use handoff ticket can let these pages recognize the signed-in account; long-lived session tokens are not placed in URLs. Account details, content, orders and usage records from these pages are covered by this policy and are separate from local-only offline timing data.',
         )}
       </p>
+
+      <h2>{t('在线功能收集的信息与用途', 'Information collected by online features and its uses')}</h2>
+      <ul>
+        <li>{t('账号与资料：处理你提供或绑定的姓名、昵称、邮箱、手机号、头像、CubeRoot 用户标识、WCA 标识和第三方账号标识，以及你填写的生日、性别、国家、地区和城市，用于登录验证、展示资料、账号管理和提供相关功能。地区资料属于大致位置，并非 GPS 精确定位。', 'Accounts and profiles: we process names, nicknames, email addresses, phone numbers, avatars, CubeRoot user IDs, WCA IDs and linked third-party account IDs, plus any birth date, gender, country, region and city you provide, for authentication, profile display, account management and related features. Profile regions describe coarse location, not precise GPS location.')}</li>
+        <li>{t('内容与交流：保存你上传或发布的图片、视频、音频、文章、帖子、回复、笔记、答题内容和评价，以及师生消息的发送方、接收方和正文，用于存储、展示、交流和内容管理。公开发布的内容及作者信息可被其他用户查看；师生交流内容向相应参与者提供。请勿在公开内容中包含不希望公开的个人信息。', 'Content and communication: we store uploaded or published images, videos, audio, articles, posts, replies, notes, answers and reviews, as well as senders, recipients and text of teacher–student messages, for storage, display, communication and content management. Public content and author information can be viewed by other users; teacher–student communication is provided to the relevant participants. Do not include personal information you do not want public in public posts.')}</li>
+        <li>{t('音视频交流：主动加入音视频房间并启用摄像头、麦克风或屏幕分享时，媒体通过实时通信服务传输给房间参与者。实时传输不等于自动录制；当前通话流程没有自动录制存档。你另行上传的音视频文件则会保存到服务器，参与者也可能自行保存其接收到的内容。', 'Audio/video communication: when you join a room and enable your camera, microphone or screen sharing, media is transmitted to room participants through the real-time communication service. Live transmission is not automatic recording; the current call flow does not automatically archive recordings. Audio/video files you separately upload are stored on the server, and participants may independently save content they receive.')}</li>
+        <li>{t('联网对战与学习：保存房间参与者、昵称或关联 WCA 标识、回合成绩、罚时和对战历史，以及课程进度、播放位置、完成状态和学习记录，用于对战、回看和教学。普通离线计时记录不会因为这些功能存在而全部上传。', 'Online battles and learning: we store room participants, nicknames or linked WCA IDs, round results, penalties and battle history, plus course progress, playback position, completion status and learning records, to support battles, history and teaching. These features do not cause all ordinary offline solve records to be uploaded.')}</li>
+        <li>{t('订单与履约：保存订单、购买项目、金额、支付状态和交易关联标识，用于会员权益、订单查询、履约和售后。使用收货地址功能时，保存收件人、联系电话和地址；地址在服务器加密保存，但仍属于收集的数据。支付服务商按相应支付流程处理支付凭据。', 'Orders and fulfillment: we store orders, purchased items, amounts, payment status and transaction references to provide membership benefits, order history, fulfillment and after-sales support. Shipping-address features store recipient names, contact phone numbers and addresses. Addresses are encrypted on the server but are still collected data. Payment providers handle payment credentials through the applicable payment flow.')}</li>
+        <li>{t('客服与反馈：保存反馈正文、联系方式、相关账号、客服对话，以及你附加的截图或视频。反馈还可能附带当前页面、语言、主题、窗口尺寸和浏览器信息，帮助重现问题、回复和排查故障。', 'Support and feedback: we store feedback text, contact details, the relevant account, support conversations and any screenshots or videos you attach. Feedback may also include the current page, language, theme, viewport size and browser information to help reproduce problems, respond and troubleshoot.')}</li>
+      </ul>
+
+      <h2>{t('请求日志、诊断与分析', 'Request logs, diagnostics and analytics')}</h2>
+      <p>{t('访问在线服务时，服务器日志会记录 IP 地址、时间、请求路径及查询参数、来源页面、客户端信息、响应状态和请求耗时。查询参数可能包含你在应用内输入的搜索词。IP 地址可用于判断大致地域、安全限流和流量来源分析，不用于获取 GPS 精确位置。启动与错误诊断会处理事件标识、错误代码或消息、页面、网络状态和设备环境；这些信息用于维护服务、排查故障和改善性能。', 'When you access online services, server logs record IP addresses, timestamps, request paths and query parameters, referring pages, client information, response status and request duration. Query parameters may include searches you enter within the app. IP addresses may be used for coarse region checks, security rate limiting and traffic-source analysis, not precise GPS location. Startup and error diagnostics process event IDs, error codes or messages, pages, network status and device environment to maintain the service, investigate failures and improve performance.')}</p>
+      <p>{t('我们使用账号、购买和产品使用记录进行用户、会员、订单及功能使用统计，使用请求日志分析流量和服务状态。部分可选分析受相应隐私设置控制；关闭可选分析不停止提供功能所必需的订单、学习进度、安全日志和诊断处理。网站集成 Vercel Web Analytics，只有该服务启用时才会收集对应访问事件；其开关与服务器日志相互独立。', 'We use account, purchase and product-interaction records for user, membership, order and feature-use statistics, and request logs to analyze traffic and service health. Some optional analytics are controlled by the relevant privacy settings; disabling optional analytics does not stop order processing, learning progress, security logs or diagnostics needed to provide features. The website integrates Vercel Web Analytics, which collects corresponding visit events only when enabled; its control is separate from server logging.')}</p>
+      <p>{t('上述数据可能通过账号、内容作者、订单、请求或设备信息与你关联。加密保存或汇总展示不代表原始数据已匿名化。CubeRoot 不将这些数据与其他公司的数据结合用于定向广告或广告效果衡量，也不向数据经纪商提供这些数据。', 'The data described above may be linked to you through accounts, content authorship, orders, requests or device information. Encryption or aggregate display does not mean the source data is anonymous. CubeRoot does not combine this data with other companies’ data for targeted advertising or advertising measurement, or provide it to data brokers.')}</p>
+
+      <h2>{t('服务提供方与信息共享', 'Service providers and sharing')}</h2>
+      <p>{t('为提供所选功能，数据会由相关的服务器托管、存储、邮件或短信、身份验证、支付、实时通信和通知服务处理。第三方登录只在你选择相应方式时进行；邮件和短信服务处理验证或通知所需的联系方式与内容，支付服务处理交易所需的信息，实时通信服务处理房间连接与媒体。公开内容会按发布范围展示给其他用户；订单与教学资料向履约、教学或管理所需的相关角色提供。Android 推送的服务方与数据范围见上文，不能据此认为 iOS 也集成了这些推送 SDK。', 'Relevant hosting, storage, email or SMS, authentication, payment, real-time communication and notification services process data to deliver the features you choose. Third-party sign-in occurs when you select that method. Email and SMS services process contact details and content needed for verification or notifications; payment services process transaction information; real-time communication services process room connections and media. Public content is shown according to its publication scope, while order and teaching information is available to the relevant fulfillment, teaching or administrative roles. Android push providers and their data scope are described above; this does not mean those push SDKs are integrated into iOS.')}</p>
+
+      <h2>{t('服务器数据保留与管理', 'Server retention and controls')}</h2>
+      <p>{t('账号、已发布内容、消息、学习与对战记录、订单和客服记录按相关功能持续保存，不会因退出登录或卸载 App 而自动全部删除。不同数据采用不同的清理规则，没有适用于所有数据的统一自动删除期限。你可以通过功能内提供的编辑、删除、解绑和隐私设置管理数据，或联系下方邮箱提出查询、更正、导出或删除请求。账号注销按统一账号流程执行；公开内容、交易、客服及其他关联记录的处理范围需结合对应功能核实，不承诺注销会即时清除全部记录或备份。', 'Accounts, published content, messages, learning and battle history, orders and support records are retained for their respective features and are not all automatically deleted by signing out or uninstalling the app. Cleanup rules vary by data type; there is no single automatic deletion period for all data. Use available editing, deletion, unlinking and privacy controls, or contact the email below to request access, correction, export or deletion. Account deletion follows the shared account flow. The treatment of public content, transactions, support and other linked records depends on the relevant feature; account deletion does not promise immediate removal of every record or backup.')}</p>
+      <p>{t('注销会删除账号及相应私有数据，并撤销相关身份绑定。部分公开内容会保留并调整作者关联；部分交易、教学消息和审计记录也会保留，其中可能仍有正文或姓名快照，不能视为完全匿名。注销前可能需要处理续费合约、转移机构所有权或完成第三方授权撤销。已下载、转发或由其他参与者保存的内容无法通过注销撤回；退出登录也不会删除这些服务器记录。', 'Account deletion removes the account and its corresponding private data and revokes relevant identity links. Some public content remains with adjusted authorship links. Some transactions, teaching messages and audit records also remain and may still contain text or name snapshots, so they are not necessarily anonymous. Deletion may require resolving recurring agreements, transferring organization ownership or revoking third-party authorization first. Copies downloaded, forwarded or retained by other participants cannot be recalled through account deletion; signing out does not delete these server records either.')}</p>
 
       <h2>{t('Apple 会员订阅', 'Apple membership subscriptions')}</h2>
       <p>{t(
@@ -143,8 +165,8 @@ export default function PrivacyPage() {
       <h2>{t('备份与删除', 'Backups and deletion')}</h2>
       <p>
         {t(
-          '只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。你可以删除活动记录中的单条成绩;通过系统设置清除 App 数据或卸载 App 会删除 App 保存的全部本地数据。导出文件由你选择的位置或接收方保管,需要由你自行删除。',
-          'The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. You can delete individual solves from the active history; clearing app storage in system settings or uninstalling the app deletes all local data stored by the app. You control and must delete any exported copies from their chosen destination or recipient.',
+          '只有在你主动导出时,App 才会创建 JSON 备份并交给系统分享或下载界面。App 不会自动上传备份。你可以删除活动记录中的单条成绩;可使用应用或系统提供的数据清除操作移除本地计时数据。卸载是否移除全部应用数据取决于平台；导出副本、系统备份和安全存储需分别管理。导出文件由你选择的位置或接收方保管,需要由你自行删除。',
+          'The app creates a JSON backup only when you choose Export and hands it to the system share or download interface. Backups are not uploaded automatically. You can delete individual solves from the active history; use available app or system data-clearing controls to remove local timing data. Whether uninstalling removes all app data depends on the platform; exported copies, system backups and secure storage need separate management. You control and must delete any exported copies from their chosen destination or recipient.',
         )}
       </p>
 
@@ -158,8 +180,8 @@ export default function PrivacyPage() {
       <h2>{t('导入与本地恢复', 'Import and local recovery')}</h2>
       <p>
         {t(
-          '当你主动选择 JSON 文件导入时,App 只在设备上读取并校验该文件,然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点,因此之后从活动记录删除的成绩仍可能存在于该恢复点中。使用一次“撤销导入”会删除恢复点;下一次成功导入会替换它;清除 App 数据或卸载 App 会将它一并删除。导入文件和恢复点都不会由 App 上传。',
-          'When you choose a JSON file to import, the app reads and validates it only on the device, then stores valid data in the app’s local database. Valid data replaced by the import is retained locally as a one-time undo recovery point, so a solve later deleted from the active history may still remain in that recovery point. Using Undo import deletes the recovery point, the next successful import replaces it, and clearing app storage or uninstalling the app deletes it with all other local data. Neither the imported file nor the recovery point is uploaded by the app.',
+          '当你主动选择 JSON 文件导入时,App 只在设备上读取并校验该文件,然后把有效数据保存到 App 的本地数据库。替换前的有效数据会在本地保留为一次撤销恢复点,因此之后从活动记录删除的成绩仍可能存在于该恢复点中。使用一次“撤销导入”会删除恢复点;下一次成功导入会替换它;清除保存计时数据的本地数据库会将它一并删除；卸载是否清除该数据库取决于平台。导入文件和恢复点都不会由 App 上传。',
+          'When you choose a JSON file to import, the app reads and validates it only on the device, then stores valid data in the app’s local database. Valid data replaced by the import is retained locally as a one-time undo recovery point, so a solve later deleted from the active history may still remain in that recovery point. Using Undo import deletes the recovery point, the next successful import replaces it, and clearing the local timing database removes it as well; whether uninstalling clears that database depends on the platform. Neither the imported file nor the recovery point is uploaded by the app.',
         )}
       </p>
 
@@ -174,8 +196,8 @@ export default function PrivacyPage() {
       <h2>{t('网站与第三方链接', 'Website and third-party links')}</h2>
       <p>
         {t(
-          'App 登录、“完整网站”和账号管理会在系统浏览器中打开 cuberoot.me,微信与抖音小程序会在各自的 web-view 中打开同一网站。你主动打开的第三方链接由对应的第三方负责,请同时查看它们的隐私说明。',
-          'App sign-in, Full website, and account management open cuberoot.me in the system browser, while the WeChat and Douyin Mini Programs open the same website in their respective web-view. Third-party links you actively open are operated by their respective providers; review their privacy information as well.',
+          'App 内的 CubeRoot 在线页面适用本政策；需要系统浏览器的登录、绑定或外部链接会打开相应浏览器流程。你主动打开的第三方网站由其运营者负责，请查看其隐私说明。',
+          'CubeRoot online pages within the app are covered by this policy. Sign-in, linking or external links that require a system browser open the corresponding browser flow. Third-party websites you choose to open are operated by their respective providers; review their privacy information.',
         )}
       </p>
 

@@ -1,5 +1,11 @@
 # 网络异常流量防护与费用止损
 
+## 2026-09-29 联系页公开访问（本地待发布）
+
+保留远端对 `/privacy` 和 `/account` 的精确放行，补入 `/contact` 的裸路径、`/en` 与 `/zh` 版本（含尾斜杠）免图片验证码。Next 校验范围与 Vercel 未验证请求计数规则同步排除这三个精确页面；同名前缀和子路径仍受原规则保护。其他页面、受保护 API、扫描封禁与既有流量防护保持原样。
+
+本地源码修改不代表线上放行。发布时除 Next/Vercel 应用部署，还需更新 active WAF 中对应规则，使其路径条件与 `ops/vercel-ban-relay/competition-rule.json` 一致；保留原有 cookie、国家、阈值与封禁时长。两条线路均需用无验证 Cookie 的 GET/HEAD 核对上述页面及中文页面直接可达，并确认普通受保护页仍进入验证码。未推送、未修改线上 WAF 时不得标记上线完成。
+
 面向普通读者和开发者的完整复盘：[2026-09-22—25 事件日志](traffic-incident-2026-09-22-25.md)，页面 `/zh/dev/traffic-incident-2026-09`；含真实 Vercel 截图、可视化与判断纠正。本文件保留操作细节与历史状态。
 
 2026-09-25 增加阿里云本地 `cuberoot-traffic-guard.timer` 自动止损，规则、恢复方法与 Vercel 覆盖缺口见 [traffic-monitor.md](traffic-monitor.md)。守护程序按分钟检查主站、公开预览和独立 API 的日志；异常时三者进入维护/503，并通过 Bark 告警。Vercel 独立线路仍由其平台防护、WAF 与预算暂停保护，本地守护程序无法代替 Vercel 线路的实时流量判断。

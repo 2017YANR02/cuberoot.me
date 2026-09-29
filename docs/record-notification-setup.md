@@ -1,6 +1,6 @@
-# 纪录邮件与 Android 推送配置
+# 纪录邮件与 Android / iOS 推送配置
 
-2026-09-15。本地实现不等于生产已启用；最新验收状态见 [App 路线图](mobile-app-roadmap.md#2026-09-15-纪录订阅与通知未完成)。本轮没有购买套餐、注册开发者身份或向真实用户群发。
+2026-09-27 更新。本地实现不等于生产已启用；最新验收状态见 [App 路线图](mobile-app-roadmap.md#2026-09-15-纪录订阅与通知未完成)。本轮没有购买套餐、注册开发者身份或向真实用户群发。
 
 ## 共用行为
 
@@ -12,7 +12,7 @@
 
 - 个推官网提供免费接入入口，VIP 按日联网设备月峰值计费，公开最低档为 3,000 元/月；**不是接入就必须买 VIP**。免费账号实际 API、厂商额度和限制须在创建应用后核对，不承诺免费无限量。[产品页](https://www.getui.com/notification-push)、[计费说明](https://docs.getui.com/getui/billing/rules/)。
 - 邮件继续使用现有 Resend：当前免费档 3,000 封/月、100 封/天；Pro 为 20 美元/月起。验证码和通知共用额度，比赛集中出成绩时需要留意每日限制。[官方价格](https://resend.com/pricing)。
-- iOS 开发者会员已由所有者确认具备；这不等于 Push Notifications capability、APNs 凭据、签名及真机验收已完成。本轮按所有者安排暂缓 iOS。
+- iOS 开发者会员已由所有者确认具备；这不等于 Push Notifications capability、APNs 凭据、签名及真机验收已完成。iOS 通道已补源码，实际配置与真机送达仍待验收。
 
 ## 1. 邮件
 
@@ -64,6 +64,31 @@ pnpm --filter @cuberoot/mobile cap:sync:android
 
 隐私政策和商店 SDK 清单已同步源码，包括个推附带的卓信 ID SDK。已关闭推送无关扩展与可选硬件标识采集，移除 SDK 默认带入的电话状态、任务列表、全量应用列表和后台定位权限，禁止明文流量；最终配置的长连接及厂商 HTTPS 通道仍须实测。正式发版仍须扫描最终合并 manifest 并验证同意前不采集；厂商 SDK 条件依赖会改变最终权限，基础 debug 构建不能代替这些验证。
 
-## 5. iOS 后续
+## 5. iOS APNs（仅 wca_record）
 
-在 Mac 上复用当前 Capacitor 工程及同一订阅/队列，增加 iOS 推送宿主适配；核对 Bundle ID 的 Push Notifications、APNs key/certificate、entitlements、开发/生产环境、签名与真机通知。Windows 可以维护共享源码和服务端，不能执行 Xcode 签名构建或完成 iPhone 推送验收。不会新建 iOS 专用订阅 UI。
+iOS 复用同一订阅、站内消息、设备控制器和投递队列，通过薄 Swift RecordPush 插件接 APNs，不引入 Android FCM。仅发送 wca_record，不包含 Bark 的新比赛、报名动态或运维告警。Bark 旧通道保持独立。
+
+### Apple 与服务端配置
+
+1. 在 Apple Developer 的 Identifiers 中核对实际 Bundle ID（当前 Xcode Debug/Release 都是 me.cuberoot.app），启用 Push Notifications。更新对应签名 profile；不要仅凭 Xcode 源码 capability 判断线上已开通。
+2. 在 Apple Developer 的 Keys 创建或使用具有 APNs 权限且覆盖该 topic 的 key，记录 Key ID、Team ID。将 .p8 安全放到服务器仅运行用户可读的文件，不能放入 App、Git、聊天或日志。
+3. 服务端设置 APNS_TEAM_ID、APNS_KEY_ID、APNS_PRIVATE_KEY_PATH。APNS_ENABLED=1 与既有 RECORD_PUSH_ENABLED=1 必须同时成立；默认关闭。修改线上环境与发布按仓库发布授权执行，不由文档自动授权。
+4. 迁移 0255 扩展原设备表，旧 Android 行默认为 getui/production；APNs 的 provider、environment、app_id、client_id 联合隔离。上线由既有 Actions 先迁移再重载 API，不手工 ALTER。
+
+### 构建与权限
+
+Xcode 工程已有 App.entitlements、Push capability、设备 token 回调。APNS_ENVIRONMENT 在 Debug 默认 development、Release 默认 production，同一 build setting 写入 entitlement 和 Info.plist；设备上报分别为 sandbox/production。**实际导出/重签名 profile 的 aps-environment 必须匹配 Info.plist**，不能把开发包 token 发到生产 APNs。TestFlight/App Store 使用 Release production；自定义导出流程若改变环境，须同时修改构建设置并核对最终签名 entitlement。
+
+在 core/ 执行 pnpm --filter @cuberoot/mobile ios:build 完成 Web build、sync 与无签名 Simulator 构建；真实设备使用既有 ios:open/ios:run 和所有者的 Apple Team。Windows 无法完成 Xcode 签名或 iPhone 送达验证。
+
+登录且服务端配置完整后才申请系统通知权限。拒绝不影响登录；之后可在 iOS 设置 → 通知 → CubeRoot 修改权限，再回 App 刷新。内容筛选继续在「我的 → 消息」配置，只有一份账号偏好；本轮不新增独立的 iOS 订阅页面或 App 内设备开关。系统通知权限控制本机是否显示，服务端按账号订阅和设备绑定投递。
+
+设备 token 每次注册更新后通过既有控制器绑定当前账号；退出/换号先 unregister、清除已展示通知，再撤销服务端绑定，离线保留设备专用撤销凭据重试。已被 APNs 接收的在途系统消息无法由服务端撤回；只发送公开纪录，不在锁屏携带登录凭据或私有账号数据。
+
+### 送达与点击
+
+APNs 使用 HTTP/2 + ES256 provider JWT，仅在服务端读取 .p8；按签名环境分流 sandbox/production。临时失败沿用指数退避，永久错误停止该条重试，失效 token 清理设备与关联队列。accepted_at 只代表 APNs 接受请求，不代表手机展示。固定 collapse ID 合并同条重试，不承诺严格一次送达。
+
+前台展示横幅、通知中心列表和声音；点击只接受公开比赛链接，沿用 Android 当前行为打开 canonical 网站比赛页（系统浏览器），支持冷启动暂存点击。**本轮不包含 App 内比赛深链。** 不需要用 silent push 或后台轮询取代系统远程 alert。
+
+验收使用所有者单个测试账号/设备，分别核对 sandbox 开发包、production 发布包；允许/拒绝/撤销权限、token 变化、前台/后台/冷启动、点击、离线退出、换号、卸载重装、用户筛选和本人 PR。不能把本地 HTTP/2 测试或无签名 Simulator 编译当作真实 APNs 送达证据。

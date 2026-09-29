@@ -41,7 +41,7 @@ const EXACT = new Set([
   'apps/harmony/entry/src/main/ets/entryability/EntryAbility.ets',
 ]);
 const NATIVE = ['apps/mobile/ios/App/App', 'apps/mobile/android/app/src/main'];
-const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|AppleMembershipPlugin\.swift|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.java)$/;
+const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|AppleMembershipPlugin\.swift|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.(?:java|swift))$/;
 const CONFIG = [
   'packages/client/proxy.ts',
   'apps/desktop/src-tauri/tauri.conf.json', 'apps/desktop/src-tauri/capabilities/default.json',

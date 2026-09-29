@@ -73,3 +73,27 @@ it('uses the same protected paths for the Vercel counter and the application', (
   expect(rule.conditionGroup[0].conditions[0].value).toBe(SITE_VERIFICATION_PATH);
   expect(rule.action.mitigate.actionDuration).toBe('1h');
 });
+it('keeps only exact privacy and contact pages public across delivery lines and locales', async () => {
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+  const rule = JSON.parse(readFileSync(new URL('../../../../ops/vercel-ban-relay/competition-rule.json', import.meta.url), 'utf8'));
+  const wafPath = new RegExp(rule.conditionGroup[0].conditions[0].value);
+  for (const vercel of ['1', '']) {
+    vi.stubEnv('VERCEL', vercel);
+    for (const prefix of ['', '/en', '/zh']) {
+      for (const page of ['privacy', 'contact']) {
+        for (const suffix of ['', '/', '?lang=en', '?_rsc=review']) {
+          const req = new NextRequest(`https://cuberoot.me${prefix}/${page}${suffix}`, {
+            headers: { rsc: '1', 'next-router-prefetch': '1' },
+          });
+          expect(await competitionGate(req), req.url).toBeNull();
+          expect(wafPath.test(req.nextUrl.pathname), req.url).toBe(false);
+        }
+        for (const suffix of ['/private', '-other', '.html']) {
+          const req = new NextRequest(`https://cuberoot.me${prefix}/${page}${suffix}`);
+          expect((await competitionGate(req))?.status, req.url).toBe(307);
+          expect(wafPath.test(req.nextUrl.pathname), req.url).toBe(true);
+        }
+      }
+    }
+  }
+});

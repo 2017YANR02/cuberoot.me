@@ -8761,7 +8761,10 @@ CREATE TABLE notification_push_devices (
     client_id VARCHAR(128) NOT NULL,
     bound_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     refreshed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (app_id, client_id)
+    provider TEXT NOT NULL DEFAULT 'getui' CHECK (provider IN ('getui', 'apns')),
+    environment TEXT NOT NULL DEFAULT 'production' CHECK (environment IN ('sandbox', 'production')),
+    CONSTRAINT notification_push_devices_target_key UNIQUE (provider, environment, app_id, client_id),
+    CONSTRAINT notification_push_devices_getui_environment CHECK (provider <> 'getui' OR environment = 'production')
 );
 CREATE INDEX notification_push_devices_user ON notification_push_devices(user_id);
 
