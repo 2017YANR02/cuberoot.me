@@ -1,3 +1,4 @@
+import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
 import { normalizeTimerDisplaySettings, type TimerDisplaySettings } from './display-settings';
 import { normalizeTimerKeymap, type TimerKeymapOverrides } from './input-contract';
 import { normalizeTimerTrainingSettings, type TimerTrainingSettings } from './training-settings';
@@ -72,6 +73,7 @@ export interface TimerSessionMeta {
 }
 
 export interface TimerStoreSettings extends
+  TimerPreScrambleSettings,
   TimerDisplaySettings,
   TimerTrainingSettings,
   TimerTypographySettings,
@@ -507,6 +509,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     ...scramblePreview,
     ...normalizeTimerTypography(value),
     ...normalizeTimerDisplaySettings(value),
+    ...normalizeTimerPreScrambleSettings(value),
     ...normalizeTimerTrainingSettings(value),
     ...normalizeTimerSmartCubeSettings(value),
     ...randomDifficulty,
@@ -660,6 +663,7 @@ export function createTimerStoreData(
       keymap: {},
       ...DEFAULT_TIMER_TYPOGRAPHY,
       ...normalizeTimerDisplaySettings(),
+      ...normalizeTimerPreScrambleSettings(),
       ...normalizeTimerTrainingSettings(),
       ...DEFAULT_TIMER_TIMING_SETTINGS,
       ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,

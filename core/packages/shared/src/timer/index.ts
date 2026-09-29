@@ -62,3 +62,5 @@ export * from './typography';
 export * from './training-settings';
 export * from './goals';
 export * from './display-settings';
+export * from './cube-orientation';
+export * from './pre-scramble';
