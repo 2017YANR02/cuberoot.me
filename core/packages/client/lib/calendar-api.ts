@@ -11,6 +11,8 @@ import type {
 } from '@cuberoot/shared/calendar';
 
 export interface BootstrapPayload {
+  /** v2 supports precise hex and Google label colors. Older servers omit this. */
+  colorFormatVersion?: number;
   calendars: CalendarMeta[];
   share: ShareSettings;
   me: { key: string; name: string; avatar: string };
@@ -42,7 +44,7 @@ export interface EventDraft {
 }
 
 export async function fetchBootstrap(tz: string): Promise<BootstrapPayload> {
-  const r = await fetch(apiUrl(`/v1/calendar/bootstrap?tz=${encodeURIComponent(tz)}`), {
+  const r = await fetch(apiUrl(`/v1/calendar/bootstrap?v=2&tz=${encodeURIComponent(tz)}`), {
     headers: authHeaders(false), cache: 'no-store',
   });
   return handleApi<BootstrapPayload>(r);

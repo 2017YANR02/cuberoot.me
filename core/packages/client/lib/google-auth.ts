@@ -11,6 +11,7 @@
 interface GoogleTokenResponse {
   access_token?: string;
   error?: string;
+  scope?: string;
 }
 interface GoogleTokenClient {
   requestAccessToken: (opts?: { prompt?: string }) => void;
@@ -20,6 +21,7 @@ interface GoogleAccounts {
     initTokenClient: (config: {
       client_id: string;
       scope: string;
+      include_granted_scopes?: boolean;
       callback: (resp: GoogleTokenResponse) => void;
       error_callback?: (err: { type?: string }) => void;
     }) => GoogleTokenClient;
@@ -32,7 +34,7 @@ declare global {
 }
 
 let gisLoad: Promise<void> | null = null;
-function loadGis(): Promise<void> {
+export function loadGis(): Promise<void> {
   if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
   if (window.google?.accounts) return Promise.resolve();
   if (gisLoad) return gisLoad;
@@ -42,22 +44,28 @@ function loadGis(): Promise<void> {
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('failed to load Google sign-in script'));
+    script.onerror = () => { gisLoad = null; reject(new Error('failed to load Google sign-in script')); };
     document.head.appendChild(script);
   });
   return gisLoad;
 }
 
 /** 弹 Google 授权窗,返回 access_token。用户关闭弹窗 / 拒绝授权时 reject。 */
-async function requestGoogleAccessToken(clientId: string): Promise<string> {
+export async function requestGoogleAccessToken(clientId: string, scope = 'openid email profile'): Promise<string> {
   await loadGis();
   const accounts = window.google?.accounts;
   if (!accounts) throw new Error('Google sign-in unavailable');
   return new Promise<string>((resolve, reject) => {
     const client = accounts.oauth2.initTokenClient({
       client_id: clientId,
-      scope: 'openid email profile',
+      scope,
+      include_granted_scopes: false,
       callback: (resp) => {
+        if (scope === 'https://www.googleapis.com/auth/calendar.readonly'
+          && !resp.scope?.split(/\s+/).includes(scope)) {
+          reject(new Error('calendar_permission_denied'));
+          return;
+        }
         if (resp.access_token) resolve(resp.access_token);
         else reject(new Error(resp.error || 'Google sign-in failed'));
       },

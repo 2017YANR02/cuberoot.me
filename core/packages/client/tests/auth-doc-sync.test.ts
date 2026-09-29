@@ -14,6 +14,7 @@ describe('/dev/auth source-review drift', () => {
   it('requires the real page to acknowledge the current authentication sources', () => {
     const sources = collectAuthDocSources();
     expect(sources.length).toBeGreaterThan(20);
+    expect(sources.map(([path]) => path)).toContain('packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx');
     expect(checkAuthDocReview(readFileSync(resolve(CORE_ROOT, DOC_PATH), 'utf8'), sources)).toEqual([]);
   });
   it('rejects a code-only change even if the page date changes', () => {
@@ -73,6 +74,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/server', 'src/routes/account_auth.ts'], ['@cuberoot/server', 'src/utils/account_merge.ts'],
     ['@cuberoot/server', 'src/routes/mcp.ts'], ['@cuberoot/server', 'src/routes/mcp_oauth.ts'],
     ['@cuberoot/client', 'app/[lang]/account/mcp/page.tsx'],
+    ['@cuberoot/client', 'app/[lang]/calendar/_components/GoogleBackupPanel.tsx'],
     ['@cuberoot/server', 'src/utils/account_delete.ts'], ['@cuberoot/server', 'src/utils/apple_login.ts'],
     ['@cuberoot/server', 'src/utils/future_oauth.ts'], ['@cuberoot/server', 'migrations/0999_auth_new.sql'],
     ['@cuberoot/server', 'src/utils/password.ts'], ['@cuberoot/server', 'src/utils/credentials.ts'],

@@ -16,6 +16,7 @@ const ROOTS = [
   'packages/client/app/api/page-access',
 ];
 const EXACT = new Set([
+  'packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx',
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
   'apps/api/src/routes/mcp.ts',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
@@ -71,7 +72,7 @@ export function collectAuthDocSources(root = CORE_ROOT) {
     }
   }
   for (const path of [...ROOTS, ...NATIVE]) walk(path);
-  for (const path of CONFIG) entries.set(path, readFileSync(resolve(root, path), 'utf8'));
+  for (const path of [...CONFIG, ...EXACT]) entries.set(path, readFileSync(resolve(root, path), 'utf8'));
   return [...entries];
 }
 
