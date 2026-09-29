@@ -16,7 +16,8 @@ export function parseBenchmarkQuestions(markdown:string): BenchmarkCase[] {
 
 export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:number, expectedWcaId:string) {
   if(cases.length<1 || cases.length>100 || new Set(cases.map(c=>c.id)).size!==cases.length) throw new Error('Expected 1–100 unique cases');
-  if(!assistantConfig()) throw new Error('Configure the existing server-side assistant provider before benchmarking');
+  const config = assistantConfig();
+  if(!config) throw new Error('Configure the existing server-side assistant provider before benchmarking');
   const account=await getUserById(accountId);
   if(account?.wca_id!==expectedWcaId) throw new Error('Benchmark account mismatch');
   // Kept only in this process; never printed, saved, or sent to the provider.
@@ -33,7 +34,7 @@ export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:num
     writeFileSync(ledger,JSON.stringify({day,questions:count+1}),{mode:0o600});
     return {allowed:true,retryAfter:86400};
   };
-  console.log(JSON.stringify({benchmarkRun:true,started:new Date().toISOString(),cases:cases.length,budget:'isolated-800-per-Beijing-day',surface:'in-process real API handler; real account lookup; real Qwen; real public data; no browser/network ingress',requestCache:'fresh per question',providerCache:'uncontrolled'}));
+  console.log(JSON.stringify({benchmarkRun:true,started:new Date().toISOString(),cases:cases.length,model:config.model,providerOrigin:new URL(config.baseUrl).origin,budget:'isolated-800-per-Beijing-day',surface:'in-process real API handler; real account lookup; real configured model; real public data; no browser/network ingress',requestCache:'fresh per question',providerCache:'uncontrolled'}));
   for(const item of cases) {
     const modelSteps:unknown[]=[];
     const fetcher:typeof fetch=async(input,init)=>{
@@ -43,7 +44,7 @@ export async function runAssistantBenchmark(cases:BenchmarkCase[], accountId:num
         const payload=await response.clone().json().catch(()=>null);
         const content=payload?.choices?.[0]?.message?.content;
         let parsed;try{parsed=JSON.parse(content);}catch{}
-        modelSteps.push({ms:Math.round(performance.now()-started),status:response.status,usage:payload?.usage,finish:payload?.choices?.[0]?.finish_reason,calls:parsed?.calls,unexpectedShape:parsed && !Array.isArray(parsed.calls)?parsed:undefined,decodeFailure:parsed?undefined:String(content).slice(0,500)});
+        modelSteps.push({ms:Math.round(performance.now()-started),status:response.status,model:payload?.model,hasReasoning:!!payload?.choices?.[0]?.message?.reasoning_content,usage:payload?.usage,finish:payload?.choices?.[0]?.finish_reason,calls:parsed?.calls,unexpectedShape:parsed && !Array.isArray(parsed.calls)?parsed:undefined,decodeFailure:parsed?undefined:String(content).slice(0,500)});
       }
       return response;
     };
