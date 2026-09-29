@@ -1594,11 +1594,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared shortcut capture, reserved-key feedback, unbinding and reset. Escape cancels capture; hosts apply changes to their latest preferences.',
   },
   {
-    name: 'TimerTypographySettings',
-    import: "import { TimerTypographySettings } from '@cuberoot/timer-ui';",
+    name: 'TimerDisplaySettings / TimerTypographySettings',
+    import: "import { TimerDisplaySettings, TimerTypographySettings } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与安装端共用的计时、打乱字体预览和字号设置；字体资产由 timer-ui 打包，宿主只负责保存设置。',
-    en: 'Shared timer and scramble font previews and size controls. Font assets ship with timer-ui; hosts persist the selected settings.',
+    zh: 'Web 与安装端共用计时、打乱字体预览和字号，以及紧凑打乱、运行隐藏 UI 设置；字体资产由 timer-ui 打包，宿主保存偏好并消费共享显示规则。',
+    en: 'Shared timer and scramble typography, compact scramble and hide-while-running controls. Font assets ship with timer-ui; hosts persist preferences and consume shared display rules.',
   },
   {
     name: 'TimerWorkspace / useTimerWideLayout',
