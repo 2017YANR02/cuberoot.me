@@ -96,7 +96,14 @@ export default function MembershipPage() {
   const appleSurface = mounted && (appleAvailable || isIosMembershipSurface());
   const admin = mounted && isAdmin();
   const loggedIn = mounted && !!user;
-  const commerceRestricted = mounted && isMiniProgramCommerceRestricted();
+  const [commerceRestricted, setCommerceRestricted] = useState<boolean | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    void isMiniProgramCommerceRestricted().then((restricted) => {
+      if (!cancel) setCommerceRestricted(restricted);
+    });
+    return () => { cancel = true; };
+  }, []);
 
   const [plans, setPlans] = useState<MembershipPlan[] | null>(null);
   const [payEnabled, setPayEnabled] = useState(false);
@@ -120,21 +127,21 @@ export default function MembershipPage() {
   }, []);
 
   useEffect(() => {
-    if (isMiniProgramCommerceRestricted()) return;
+    if (commerceRestricted !== false) return;
     let cancel = false;
     listPlans()
       .then((r) => { if (!cancel) { setPlans(r.plans); setPayEnabled(r.payEnabled); setChannels(r.channels); } })
       .catch((e) => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
-  }, []);
+  }, [commerceRestricted]);
 
   useEffect(() => {
-    if (mounted && !commerceRestricted) refreshMembership();
+    if (mounted && commerceRestricted === false) refreshMembership();
   }, [mounted, commerceRestricted, user?.wcaId, refreshMembership]);
 
   // 支付返回(return_url 带 ?paid=<单号>):轮询查单几次,确认入账后刷新状态。
   useEffect(() => {
-    if (!paid || !mounted || commerceRestricted) return;
+    if (!paid || !mounted || commerceRestricted !== false) return;
     let tries = 0;
     let timer: number | undefined;
     const poll = () => {
@@ -181,7 +188,7 @@ export default function MembershipPage() {
 
   // 全局到期提醒 banner 深链 ?renew=1 → 自动打开续费弹窗(永久会员忽略)。
   useEffect(() => {
-    if (commerceRestricted || !renew || !mounted || !plans || !membership || membership.lifetime) return;
+    if (commerceRestricted !== false || !renew || !mounted || !plans || !membership || membership.lifetime) return;
     renewMembership();
     setRenew(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -209,6 +216,10 @@ export default function MembershipPage() {
   }, []);
 
   if (appleSurface) return <div className="mem-page"><AppleMembership refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></div>;
+
+  if (commerceRestricted === null) return (
+    <div className="mem-page"><div className="mem-empty" role="status"><Spinner size={16} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div></div>
+  );
 
   if (commerceRestricted) {
     return (

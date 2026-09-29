@@ -69,12 +69,15 @@ export function mayUseMiniProgramBridge(): boolean {
 }
 
 /**
- * Payment UI must fail closed in every possible Mini Program container. Some
- * iOS WeChat web-views omit the explicit Mini Program marker, so candidates
- * are restricted too instead of briefly exposing an external checkout.
+ * A WeChat browser or an installed JS-SDK is only a bridge candidate, not proof
+ * of a Mini Program. Wait for getEnv when iOS omits the explicit marker; callers
+ * keep checkout unavailable while this check is pending.
  */
-export function isMiniProgramCommerceRestricted(): boolean {
-  return mayUseMiniProgramBridge();
+export async function isMiniProgramCommerceRestricted(): Promise<boolean> {
+  if (isMiniProgramWebView()) return true;
+  if (!mayUseMiniProgramBridge()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  return miniProgram ? confirmMiniProgramEnvironment(miniProgram) : false;
 }
 
 export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi | null {
