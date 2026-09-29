@@ -45,7 +45,7 @@
 - [ ] 注册并完成 Google Play Console 组织账号验证。（需要所有者操作账号、付款和身份验证）
 - [x] Google Play 组织核验所需的 D-U-N-S 已由邓白氏门户核验通过。（所有者提供门户结果）
 - [x] 核对 Apple Developer Program 个人会员有效期、已接受协议与 Xcode Team。（2026-09-11 门户显示个人 Team、续费日期 2027-09-11，Program License Agreement 于 9 月 10 日接受、Developer Agreement 于 9 月 3 日接受，所见页面无待处理提示；未出现字面 `Active`，不虚构该标签。Xcode 开发签名已通过；不包含 App Store Connect Paid Apps Agreement/税务/收款验收）
-- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-11 所有者明确要求会员内购；商品、周期和价格待确认，不再按“首版无购买入口”规划）
+- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-29 所有者确认首发个人月卡／年卡、手动续购，不自动扣费；企业、优惠、家庭共享暂不加入。Apple 价格档与商品配置仍待完成，Paid Apps Agreement 当前为 New；不再按“首版无购买入口”规划）
 - [ ] 建立 Android 真机和测试者名单。（组织账号不预设个人账号的 12 人/14 天门槛；质量测试仍建议 15 到 20 人）
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
 - [x] 完成当前构建的数据与 SDK 清单：本地计时数据、可选账号、网络状态、Browser/Network/Haptics/Secure Storage/BLE；无广告、分析或用户画像 SDK。
