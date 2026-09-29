@@ -116,6 +116,7 @@ const MINI_KEYS: Record<string, keyof MiniTheme['files']> = {
 const CSS = `
 .clawd-deskpet{position:fixed;right:max(20px,var(--sar,0px));bottom:max(20px,var(--sab,0px));
   z-index:100000;pointer-events:none;--pet-scale:1; /* above every page modal so it stays draggable */
+  -webkit-user-select:none;user-select:none;
   width:calc(var(--pet-base) * var(--pet-scale));height:calc(var(--pet-base) * var(--pet-scale));}
 .clawd-deskpet.pet-front{z-index:100020;} /* above the search backdrop (100010) so it stays sharp */
 .clawd-deskpet[data-size=s]{--pet-base:192px;}
