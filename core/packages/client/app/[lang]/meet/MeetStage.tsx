@@ -87,7 +87,9 @@ function MeetConnectionToast() {
   );
 }
 
-export default function MeetStage() {
+export default function MeetStage({ speakerEnabled, onToggleSpeaker }: {
+  speakerEnabled: boolean; onToggleSpeaker: () => void;
+}) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [showChat, setShowChat] = useState(false);
   const [showRoster, setShowRoster] = useState(false);
@@ -208,6 +210,8 @@ export default function MeetStage() {
             </div>
           )}
           <MeetControlBar
+            speakerEnabled={speakerEnabled}
+            onToggleSpeaker={onToggleSpeaker}
             showChat={showChat}
             unread={unread}
             onToggleChat={toggleChat}
@@ -219,7 +223,7 @@ export default function MeetStage() {
         <MeetChat open={showChat} onClose={toggleChat} onUnread={setUnread} />
         <MeetRoster open={showRoster} onClose={toggleRoster} />
       </LayoutContextProvider>
-      <RoomAudioRenderer />
+      <RoomAudioRenderer volume={speakerEnabled ? 1 : 0} />
       <MeetConnectionToast />
     </div>
   );

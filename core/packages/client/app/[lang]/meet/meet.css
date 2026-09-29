@@ -117,8 +117,15 @@ body:has(.meet-live) .mem-reminder {
   flex-shrink: 0;
 }
 
-.meet-live button,
-.meet-page button {
+/* 触摸尺寸只应用于操作按钮，不覆盖 PillToggle 等自带尺寸的共享控件。 */
+.meet-live .lk-button,
+.meet-live .lk-disconnect-button,
+.meet-live .lk-start-audio-button,
+.meet-live .meet-copy,
+.meet-page .lk-button,
+.meet-page .meet-go,
+.meet-page .meet-join,
+.meet-page .bool-toggle-label {
   min-height: 44px;
 }
 
@@ -301,6 +308,50 @@ body:has(.meet-live) .mem-reminder {
 
 .meet-page.is-prejoin {
   max-width: 520px;
+}
+
+.meet-lobby { gap: 28px; }
+.meet-lobby-heading { display: grid; gap: 8px; }
+.meet-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; width: 100%; max-width: 540px; }
+.meet-action { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 4px; border: 0; background: none; color: var(--foreground); font: inherit; cursor: pointer; }
+.meet-action > span { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 22px; background: var(--accent); color: var(--accent-foreground); }
+.meet-action svg { width: 30px; height: 30px; }
+.meet-action:hover > span { background: color-mix(in srgb, var(--accent) 88%, black); }
+.meet-action:disabled { opacity: .5; cursor: default; }
+.meet-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.meet-section-heading h2 { margin: 0; font-size: 18px; }
+.meet-agenda { width: 100%; min-width: 0; display: grid; gap: 14px; border-top: 1px solid var(--border-default); padding-top: 22px; }
+.meet-agenda-day h3 { display: flex; align-items: center; gap: 8px; margin: 14px 0 6px; font-size: 14px; font-weight: 500; color: var(--muted-foreground); }
+.meet-agenda-item { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 0; border-bottom: 1px solid var(--border-default); }
+.meet-agenda-summary { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; }
+.meet-agenda-summary h4 { margin: 0 0 8px; font-size: 17px; font-weight: 500; }
+.meet-agenda-summary p { margin: 0; color: var(--muted-foreground); font-size: 14px; }
+.meet-icon-button { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border-default); border-radius: 50%; width: 44px; height: 44px; padding: 8px; background: transparent; color: var(--foreground); cursor: pointer; }
+.meet-icon-button:disabled { opacity: .5; cursor: default; }
+.meet-empty { display: grid; justify-items: center; padding: 32px 12px; color: var(--muted-foreground); }
+.meet-join-panel, .meet-schedule-panel { display: grid; gap: 20px; width: 100%; min-width: 0; padding: 20px; border: 1px solid var(--border-default); border-radius: 16px; background: var(--card); }
+.meet-schedule-panel { max-width: 640px; }
+.meet-schedule-form fieldset { display: grid; gap: 20px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.meet-schedule-form label { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; font-size: 14px; }
+.meet-schedule-form input { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; font-size: 16px; }
+.meet-schedule-form .meet-go { justify-self: start; }
+.meet-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.meet-cancel-confirm { flex-basis: 100%; }
+.meet-cancel-confirm p { color: var(--muted-foreground); }
+.meet-cancel-confirm button { margin: 0 8px 8px 0; }
+.meet-agenda-pagination { margin-top: 12px; }
+/* The calendar's existing rule editor is reused here with local layout only. */
+.meet-schedule-panel .cal-repeat, .meet-schedule-panel .cal-repeat-custom { display: grid; gap: 12px; }
+.meet-schedule-panel .cal-field-row, .meet-schedule-panel .cal-weekdays { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.meet-schedule-panel .cal-num { width: 80px; }
+.meet-schedule-panel .cal-weekday { border: 1px solid var(--border-default); background: var(--card); color: var(--foreground); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.meet-schedule-panel .cal-weekday.is-on { background: var(--accent); color: var(--accent-foreground); }
+@media (max-width: 480px) {
+  .meet-actions { gap: 8px; }
+  .meet-action { font-size: 14px; }
+  .meet-action > span { width: 60px; height: 60px; border-radius: 18px; }
+  .meet-join-panel, .meet-schedule-panel { padding: 16px; }
+  .meet-form-row { grid-template-columns: minmax(0, 1fr); }
 }
 
 .meet-prejoin-fields {
