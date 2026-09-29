@@ -44,7 +44,7 @@ export default function CalendarSettings({ section, onSection, prefs, onPrefs, d
         <div className="cal-settings-layout">
           <nav className="cal-settings-nav" aria-label={tr({ zh: '设置分类', en: 'Settings sections' })}>
             {SETTINGS_SECTIONS.map((key) => (
-              <button key={key} type="button" className={section === key ? 'is-active' : ''} aria-current={section === key ? 'page' : undefined} onClick={() => onSection(key)}>
+              <button key={key} type="button" className={`cal-settings-tab${section === key ? ' is-active' : ''}`} aria-current={section === key ? 'page' : undefined} onClick={() => onSection(key)}>
                 {tr(LABELS[key])}
               </button>
             ))}

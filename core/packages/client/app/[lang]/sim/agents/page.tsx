@@ -122,17 +122,17 @@ export default function AgentReplayPage() {
           })}
           {!error && <ReplayCanvas key={generation} board={board} elapsed={elapsed} run={runRef} onReady={onReady} onError={onError} />}
           {error && <div className="agents-loading" role="alert"><p>{t('3D 画面加载失败，请重试。', 'The 3D scene could not load. Please retry.')}</p>
-            <button type="button" onClick={() => { setError(false); setGeneration(value => value + 1); }}>{t('重试', 'Retry')}</button></div>}
+            <button type="button" className="agents-retry" onClick={() => { setError(false); setGeneration(value => value + 1); }}>{t('重试', 'Retry')}</button></div>}
         </div>
         <div className="agents-controls">
-          <button type="button" className="agents-play" onClick={() => seconds >= duration ? restart() : setPlaying(value => !value)} disabled={!ready} aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')}>
+          <button type="button" className="agents-control-button agents-play" onClick={() => seconds >= duration ? restart() : setPlaying(value => !value)} disabled={!ready} aria-label={playing ? t('暂停', 'Pause') : t('播放', 'Play')}>
             {playing ? <Pause size={17} /> : <Play size={17} />}
           </button>
-          <button type="button" onClick={restart} disabled={!ready} aria-label={t('重新播放', 'Replay')}><RotateCcw size={17} /></button>
-          <input type="range" min={0} max={duration} step={0.01} value={seconds} disabled={!ready}
+          <button type="button" className="agents-control-button" onClick={restart} disabled={!ready} aria-label={t('重新播放', 'Replay')}><RotateCcw size={17} /></button>
+          <input className="agents-progress" type="range" min={0} max={duration} step={0.01} value={seconds} disabled={!ready}
             aria-label={t('回放进度', 'Replay progress')} onChange={event => { setPlaying(false); seek(Number(event.target.value)); }} />
           <span className="agents-time">{seconds.toFixed(1)}s</span>
-          <select aria-label={t('播放速度', 'Playback speed')} value={speed} onChange={event => setSpeed(Number(event.target.value))}>
+          <select className="agents-speed" aria-label={t('播放速度', 'Playback speed')} value={speed} onChange={event => setSpeed(Number(event.target.value))}>
             <option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option>
           </select>
         </div>

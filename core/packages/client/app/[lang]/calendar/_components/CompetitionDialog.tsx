@@ -62,7 +62,7 @@ export default function CompetitionDialog({ competition: c, onClose }: { competi
           <h3>{tr({ zh: '交通查询', en: 'Plan travel' })}</h3>
           <label className="cal-settings-field">
             <span>{tr({ zh: '出发城市', en: 'Departure city' })}</span>
-            <span className="cal-travel-origin"><input value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder={tr({ zh: '例如：上海', en: 'e.g. Shanghai' })} />{origin && <ClearButton variant="standalone" onClick={() => setOrigin('')} />}</span>
+            <span className="cal-travel-origin"><input className="cal-travel-origin-input" value={origin} onChange={(e) => setOrigin(e.target.value)} placeholder={tr({ zh: '例如：上海', en: 'e.g. Shanghai' })} />{origin && <ClearButton variant="standalone" onClick={() => setOrigin('')} />}</span>
           </label>
           <DateRangeInput from={departure} to={returnDate} onChange={(from, to) => { setDeparture(from); setReturnDate(to); }} fromLabel={tr({ zh: '出发日期', en: 'Departure date' })} toLabel={tr({ zh: '返程日期', en: 'Return date' })} clearable={false} />
           <div className="cal-pop-actions">
