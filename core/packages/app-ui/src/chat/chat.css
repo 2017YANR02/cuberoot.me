@@ -105,3 +105,7 @@
   .friend-chat-expression-content { height: clamp(130px, 26dvh, 235px); padding-left: 8px; padding-right: 8px; }
   .friend-chat-picker-image { width: 30px; height: 30px; }
 }
+
+.friend-chat-message.is-pending { position: relative; max-width: calc(100% - 56px); }
+.friend-chat-failed-retry { position: absolute; right: calc(100% + 4px); top: 50%; margin-top: -14px; width: 28px; height: 28px; padding: 3px; color: var(--destructive); }
+.friend-chat-failed-retry:hover { color: var(--destructive); }
