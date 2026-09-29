@@ -966,6 +966,9 @@ const ENDPOINTS: Ep[] = [
   { d: 'timer', m: 'GET', p: '/v1/video/config', g: 'public', c: 'no-store', zh: '本站是否启用视频通话 + 单房人数/码率上限', en: 'Whether video calling is enabled, plus per-room participant and bitrate caps' },
   { d: 'timer', m: 'POST', p: '/v1/video/token', g: 'public', c: 'no-store', zh: '凭玩家 X-Battle-Token 换取短期 LiveKit 凭证；锁内复验 membership + 带宽预算', en: 'Mint a short-lived LiveKit token with the player’s X-Battle-Token after locked membership recheck and bandwidth admission' },
   { d: 'timer', m: 'POST', p: '/v1/video/meet/code', g: 'login', c: 'no-store', zh: '分配一个未被活跃会议或待创建会议占用的 4 位数字码', en: 'Allocate a four-digit numeric code not held by an active or pending meeting' },
+  { d: 'timer', m: 'GET', p: '/v1/video/meet/plans', g: 'login', c: 'no-store', zh: '读取本人会议预约', en: 'List own scheduled meetings' },
+  { d: 'timer', m: 'POST', p: '/v1/video/meet/plans', g: 'login', c: 'no-store', zh: '创建预约和周期会议，永久保留会议码', en: 'Schedule a meeting or series with a reserved code' },
+  { d: 'timer', m: 'PATCH', p: '/v1/video/meet/plans/:id', g: 'login', c: 'no-store', zh: '编辑或取消本人预约（整个周期）', en: 'Edit or cancel own meeting or entire series' },
   { d: 'timer', m: 'POST', p: '/v1/video/meet/token', g: 'login', c: 'no-store', zh: '换取会议室 LiveKit 凭证(校验 4 位会议码 + 带宽预算)', en: 'Mint a meeting-room LiveKit token (validates the four-digit code and bandwidth budget)' },
 
   // ---- calendar ----
