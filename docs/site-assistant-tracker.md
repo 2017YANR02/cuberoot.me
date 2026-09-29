@@ -140,3 +140,24 @@ CubeStats was added to the production web directory under Competition & Stats (n
 - Inline `[[source ID]]` markers resolve only to retrieved internal sources. Partial markers stay hidden; unknown IDs do not become links. Repeated factual summaries are deduplicated, with their citations beside the relevant prose.
 - Stop/disconnect retains received text as incomplete; it cannot become grounding for the next question. Scrolling upward suspends automatic scrolling. Closing/new conversation/account changes abort the active request.
 - Local evidence: provider stream fixture proves text is delivered before provider completion; route fixtures cover authorization, quota/concurrency and typed stream errors; DOM fixtures cover live stages, split citations, stop, late events and interrupted responses. Publication is recorded separately after deployment.
+
+
+## Conversation interaction refinement (2026-09-29 UTC, local)
+
+The requested primary reference is ChatGPT. This is an original CubeRoot implementation using the existing theme, icons, source contract and read-only assistant API. Official documentation establishes behavior, not pixel-level measurements of the current authenticated product UI.
+
+| Reference | Verified interaction | Application here |
+| --- | --- | --- |
+| [ChatGPT release notes](https://help.openai.com/en/articles/6825453-chatgpt-release-notes) and [search](https://help.openai.com/en/articles/9237897-searching-the-web-with-chatgpt) | Message copy/edit, response retry, conversation drafts and inline citations | Copy questions/answers, edit latest question, regenerate, retain draft while closed, citations within Markdown prose |
+| [Gemini](https://support.google.com/gemini/answer/14262426?co=GENIE.Platform%3DDesktop&hl=en) | Regenerate latest answer; version navigation | Regenerate latest turn only; response-version history is not implemented |
+| [Perplexity](https://www.perplexity.ai/help-center/en/articles/10352903-what-is-pro-search) | Source links and contextual follow-ups | Keep verified inline links and conversation context |
+| [Microsoft Copilot](https://support.microsoft.com/en-us/microsoft-365-copilot/control-review-sources-copilot-chat) | Inspect the sources used in a response | Only retrieved sources become clickable citations |
+| [Notion AI](https://www.notion.com/help/research-mode) | Source visibility during research and follow-up questions | Existing real lookup-stage feedback and continued conversation |
+| [Claude](https://support.claude.com/en/articles/17161993-why-claude-switched-models-in-your-conversation-with-sonnet-5-5) | Edit a message and retry; transparently report model fallback | Latest-question editing; no model switching is claimed or added |
+
+- Wider workspace with a centered 720 px reading column, quiet header controls, desktop full-screen toggle, mobile full-height layout and aligned composer.
+- Auto-growing composer capped at 180 px, keyboard newline hint, coarse-pointer Enter retained as newline, and a counter near the existing 500-character limit. Unsent draft survives closing/reopening; new conversation and account change clear it.
+- Safe Markdown uses existing `react-markdown`; HTML/images and arbitrary link destinations are excluded. Search preview and dialog share the same renderer. Copy includes tool tables/chart data and resolves inline source markers to links.
+- Latest-turn regeneration/edit excludes the replaced answer from request history. Stopped partial turns remain visible when asking a follow-up but are not sent as model context.
+- Scroll-follow pauses during upward reading; a floating arrow returns to latest. Response copy/regenerate actions remain available on touch devices.
+- Local DOM tests exercise regeneration/edit context, draft retention/reset, rich-text safety, source links, copying data, full-screen and scroll-to-latest, in addition to the earlier stream tests. Visual acceptance remains with the owner; this entry does not claim deployment.

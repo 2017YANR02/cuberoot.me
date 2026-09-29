@@ -2828,8 +2828,15 @@ export const CATALOG: ComponentEntry[] = [
     name: 'SiteAssistantDialog',
     import: "import SiteAssistantDialog from '@/components/SiteAssistantDialog';",
     category: 'more',
-    zh: '站内连续对话：真实数据表、PR 曲线、来源、语音和停止请求。',
-    en: 'Site conversation with evidence tables, PR charts, sources, voice input and cancellation.',
+    zh: '站内流式对话：正文引用、数据表、PR 曲线、复制、重新生成、编辑上一问、草稿、全屏和停止请求。',
+    en: 'Streaming site conversation with inline citations, tables, PR charts, copy, regenerate, last-question editing, drafts, full screen and cancellation.',
+  },
+  {
+    name: 'SiteAssistantAnswerText',
+    import: "import { SiteAssistantAnswerText } from '@/components/SiteAssistantDialog';",
+    category: 'more',
+    zh: '问答窗口与搜索预览共用的 Markdown 正文，只将实际来源渲染为链接，过滤 HTML、图片与未验证链接。',
+    en: 'Shared Markdown answer rendering for conversations and search previews; only verified sources become links, with HTML, images and unverified links excluded.',
   },
   {
     name: 'SimStage',
