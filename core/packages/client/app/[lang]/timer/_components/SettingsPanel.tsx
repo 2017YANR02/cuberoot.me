@@ -1,5 +1,5 @@
 'use client';
-import { TimerDisplaySettings, TimerSoundSettings } from '@cuberoot/timer-ui';
+import { TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
@@ -61,7 +61,7 @@ import {
 } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
 import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
-import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
+import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 
 import SharedBoolToggle from '@/components/BoolToggle';
@@ -121,47 +121,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const optimalAvailable = s.scrambleSource === 'wca'
     ? hasOptimal
     : canUseRandomOptimal333(event, s.scrambleSource, !!optimalUser, s.syncSeed);
-  const [beepAtInput, setBeepAtInput] = useState<string>(() => (s.inspectionBeepAt ?? []).join(','));
-  useEffect(() => {
-    setBeepAtInput((s.inspectionBeepAt ?? []).join(','));
-  }, [s.inspectionBeepAt]);
-  function commitBeepAtInput(raw: string): void {
-    const out: number[] = [];
-    for (const p of raw.split(/[,，\s]+/).map(x => x.trim()).filter(Boolean)) {
-      const n = Math.floor(Number(p));
-      if (Number.isFinite(n) && n >= 1 && n <= 60 && !out.includes(n)) out.push(n);
-    }
-    out.sort((a, b) => a - b);
-    updateSettings({ inspectionBeepAt: out });
-    setBeepAtInput(out.join(','));
-  }
-
-  // Tap-to-tempo — the rolling-window math lives in lib/metronome so this row
-  // and the floating panel stay one implementation.
-  const tapResetTimerRef = useRef<number | null>(null);
-  const [tapBpmHint, setTapBpmHint] = useState<number | null>(null);
-
-  function tapBpm(): void {
-    const bpm = tapTempo();
-    if (bpm != null) {
-      setMetronome({ bpm });
-      setTapBpmHint(bpm);
-    }
-    if (tapResetTimerRef.current !== null) {
-      window.clearTimeout(tapResetTimerRef.current);
-    }
-    tapResetTimerRef.current = window.setTimeout(() => {
-      tapResetTimerRef.current = null;
-      setTapBpmHint(null);
-    }, 3000);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (tapResetTimerRef.current !== null) window.clearTimeout(tapResetTimerRef.current);
-    };
-  }, []);
-
   // ── External timer import state ──
   const timerFileRef = useRef<HTMLInputElement | null>(null);
   const [timerImportSource, setTimerImportSource] = useState<TimerImportSource | null>(null);
@@ -644,55 +603,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '节拍器', en: 'Metronome'
         })}
         >
-          <BooleanSettingRow
-            id="settings.sound.metronome-enabled"
-            value={s.metronomeOn}
-            onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }}
-          />
-          <SettingRow id="settings.sound.metronome-tempo">
-            <input
-              className="settings-row-control-input"
-              type="range" min={BPM_MIN} max={BPM_MAX} step={1}
-              value={metro.bpm}
-              disabled={settingState('settings.sound.metronome-tempo').disabled}
-              onChange={(e) => setMetronome({ bpm: Number(e.target.value) })}
-            />
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '9ch', display: 'inline-block' }}>
-              {bpmToTps(metro.bpm).toFixed(2)} TPS
-            </span>
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>{metro.bpm} BPM</span>
-            <button
-              className="hint-btn"
-              disabled={settingState('settings.sound.metronome-tempo').disabled}
-              onClick={tapBpm}
-              title={tr({ zh: '连续敲击设定速度', en: 'Tap repeatedly to set tempo'
-            })}
-            >
-              {tr({ zh: '敲击', en: 'Tap'
-            })}
-            </button>
-            {tapBpmHint !== null && (
-              <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
-            )}
-          </SettingRow>
-          <SettingRow id="settings.sound.inspection-beeps">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={beepAtInput}
-              disabled={settingState('settings.sound.inspection-beeps').disabled}
-              placeholder={tr({ zh: '例：5,10,15（逗号分隔）', en: 'e.g. 5,10,15 (comma-separated)'
-            })}
-              onChange={(e) => setBeepAtInput(e.target.value)}
-              onBlur={(e) => commitBeepAtInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitBeepAtInput((e.target as HTMLInputElement).value); }}
-            />
-            <button className="hint-btn" disabled={settingState('settings.sound.inspection-beeps').disabled} onClick={() => { warmupSound(); playInspectionBeep(); }} title={tr({ zh: '试听', en: 'Test'
-            })}>
-              {tr({ zh: '试听', en: 'Test'
-            })}
-            </button>
-          </SettingRow>
+          <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
