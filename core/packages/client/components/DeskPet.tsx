@@ -1,4 +1,5 @@
 'use client';
+import { installedPetAvailable } from '@/lib/installed-content';
 
 // Clawd web desk pet — ported interaction engine from clawd-on-desk renderer.js.
 // Idle = inline SVG with cursor eye-tracking; other states = <img> swap.
@@ -238,10 +239,10 @@ export default function DeskPet() {
   const [catalogSaving, setCatalogSaving] = useState(false);
   const catalogBusy = useRef(false);
   const entries = resolveDeskPets(THEME_IDS, catalog?.entries ?? []);
-  const visibleEntries = entries.filter(entry => isAdmin || (catalog && !entry.locked && !entry.removed));
+  const visibleEntries = entries.filter(entry => installedPetAvailable(entry.id) && (isAdmin || (catalog && !entry.locked && !entry.removed)));
   const visibleIds = visibleEntries.map(entry => entry.id);
   const visibleKey = visibleIds.join(',');
-  const petAvailable = isAdmin || visibleIds.includes(character);
+  const petAvailable = installedPetAvailable(character) && (isAdmin || visibleIds.includes(character));
   const petChoices = visibleEntries.map(entry => ({
     ...entry, label: entry.label ?? THEMES[entry.id as ThemeId].label,
     thumb: THEMES[entry.id as ThemeId].thumb, thumbScale: THEMES[entry.id as ThemeId].thumbScale,

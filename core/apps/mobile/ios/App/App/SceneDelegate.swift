@@ -54,6 +54,7 @@ final class TimerPrintPlugin: CAPPlugin, CAPBridgedPlugin {
 final class CubeRootBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(TimerPrintPlugin())
+        bridge?.registerPluginInstance(AppleMembershipPlugin())
     }
 }
 

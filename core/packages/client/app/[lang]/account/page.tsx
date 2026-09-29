@@ -8,6 +8,7 @@
  * fragment 续接,不能进入 query、服务端日志或 Referer。
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { installedPetAvailable } from '@/lib/installed-content';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
 import { Bell, BookOpen, Building2, ChevronLeft, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
@@ -163,7 +164,7 @@ function AvatarEditor() {
           {saving && <Loader2 size={14} className="auth-spin" aria-label={t('正在保存', 'Saving')} />}
         </div>
       </div>
-      <details className="account-avatar-picker">
+      {installedPetAvailable('clawd') && <details className="account-avatar-picker">
         <summary>{t('选择 Clawd 头像', 'Choose a Clawd avatar')}</summary>
         {user.wcaId && (
           <button
@@ -196,7 +197,7 @@ function AvatarEditor() {
             );
           })}
         </div>
-      </details>
+      </details>}
       {error && <p className="auth-error" role="alert">{error}</p>}
     </div>
   );

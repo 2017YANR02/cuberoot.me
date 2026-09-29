@@ -9,7 +9,7 @@ export default function PrivacyPage() {
   return (
     <main className="privacy-page">
       <h1>{t('CubeRoot 用户协议与隐私政策', 'CubeRoot User Agreement and Privacy Policy')}</h1>
-      <p className="privacy-updated">{t('生效日期:2026-09-15', 'Effective date: September 15, 2026')}</p>
+      <p className="privacy-updated">{t('生效日期:2026-09-29', 'Effective date: September 29, 2026')}</p>
       <p>
         {t(
           '本政策适用于 CubeRoot 官方 Android、iOS App、微信小程序与抖音小程序。App 的核心计时功能可离线且无需登录使用;App 与小程序登录均由你主动选择。',
@@ -127,6 +127,16 @@ export default function PrivacyPage() {
           'The Mini Program uses web-view to open the timer, algorithm library, competitions, wiki, courses, and account pages on cuberoot.me. When signed in, it may issue a short-lived, single-use handoff ticket so the webpage can recognize the same account. Long-lived session tokens are never placed in the URL. The server may process standard request information such as IP address and browser or device type only to deliver the service, protect it, and diagnose failures.',
         )}
       </p>
+
+      <h2>{t('Apple 会员订阅', 'Apple membership subscriptions')}</h2>
+      <p>{t(
+        'iOS 会员月卡与年卡通过 Apple 自动续费订阅购买。购买前请登录要获得权益的 CubeRoot 账号；价格、周期和币种以 Apple 购买界面为准。费用由 Apple 向你的 Apple 账户收取，除非至少在当前周期结束前 24 小时取消，否则订阅自动续费。你可以通过 App 的“管理订阅”进入 Apple 设置取消续费，并通过“恢复购买”恢复同一 CubeRoot 账号的购买。注销 CubeRoot 账号不会自动取消 Apple 订阅，请先在 Apple 中取消。',
+        'Monthly and yearly iOS memberships are Apple auto-renewable subscriptions. Sign in to the CubeRoot account that should receive the benefits before purchasing. The Apple purchase sheet shows the price, period, and currency. Apple charges your Apple Account, and the subscription renews automatically unless canceled at least 24 hours before the current period ends. Use Manage subscriptions in the app to cancel through Apple settings, or Restore purchases to restore purchases for the same CubeRoot account. Deleting your CubeRoot account does not cancel an Apple subscription; cancel it through Apple first.',
+      )}</p>
+      <p>{t(
+        '为校验购买、提供会员权益并处理续期、退款及争议，CubeRoot 向 Apple 提交随机生成的账号关联标识，并保存 Apple 签名的交易记录、商品与交易标识、订阅状态、有效期及该标识与 CubeRoot 账号的关联。我们不接收你的银行卡号或 Apple 账户密码。账号注销后解除与账号的关联，必要的交易凭证仍保留用于财务核对和防止重复领取；不会用于广告追踪。Apple 自行处理付款与退款，适用 Apple 的条款和隐私政策。',
+        'To verify purchases, provide membership benefits, and handle renewals, refunds, and disputes, CubeRoot sends Apple a randomly generated account association token. We retain Apple-signed transactions, product and transaction identifiers, subscription status and expiration, and the token’s link to your CubeRoot account. We do not receive your card number or Apple Account password. Account deletion removes the account link; necessary transaction evidence remains for financial reconciliation and prevention of duplicate claims, not advertising tracking. Apple handles payments and refunds under its own terms and privacy policy.',
+      )}</p>
 
       <h2>{t('备份与删除', 'Backups and deletion')}</h2>
       <p>

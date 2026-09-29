@@ -1,3 +1,4 @@
+import { installedPetAvailable } from '@/lib/installed-content';
 import type { ChatExpressionPack } from '@cuberoot/app-ui/chat';
 import { resolveDeskPets, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
 import { PET_GALLERY } from './deskpet-gallery';
@@ -11,7 +12,7 @@ import { THEMES, THEME_IDS } from './deskpet-themes';
  */
 export function getPetExpressionPacks(catalog: DeskPetCatalog | null): ChatExpressionPack[] {
   if (!catalog) return [];
-  return resolveDeskPets(THEME_IDS, catalog.entries).filter(entry => !entry.locked && !entry.removed).flatMap(entry => {
+  return resolveDeskPets(THEME_IDS, catalog.entries).filter(entry => installedPetAvailable(entry.id) && !entry.locked && !entry.removed).flatMap(entry => {
     const group = PET_GALLERY.find(group => group.id === entry.id);
     const theme = THEMES[entry.id as keyof typeof THEMES];
     if (!group || !theme) return [];

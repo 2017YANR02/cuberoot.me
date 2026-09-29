@@ -28,6 +28,8 @@ import MemberContact from './MemberContact';
 import MemberProfileEditor from '@/components/MemberProfileEditor';
 import AutoRenewModal from './AutoRenewModal';
 import './membership.css';
+import AppleMembership from './AppleMembership';
+import { isIosMembershipSurface, useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';
 
 const PERK_LABEL: Record<string, { zh: string; en: string }> = {
   unlimited_333_cloud_optimal: {
@@ -90,6 +92,8 @@ export default function MembershipPage() {
   const login = useAuthStore((s) => s.login);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  const appleAvailable = useAppleMembershipAvailable();
+  const appleSurface = mounted && (appleAvailable || isIosMembershipSurface());
   const admin = mounted && isAdmin();
   const loggedIn = mounted && !!user;
   const commerceRestricted = mounted && isMiniProgramCommerceRestricted();
@@ -203,6 +207,8 @@ export default function MembershipPage() {
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
   }, []);
+
+  if (appleSurface) return <div className="mem-page"><AppleMembership refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></div>;
 
   if (commerceRestricted) {
     return (

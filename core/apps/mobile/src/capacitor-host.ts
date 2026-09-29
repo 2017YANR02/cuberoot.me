@@ -1,3 +1,4 @@
+import { handleAppleMembership } from './apple-membership';
 import { App as NativeApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Clipboard } from '@capacitor/clipboard';
@@ -16,6 +17,7 @@ import {
 } from './net-battle/mobile-net-battle';
 
 export const capacitorHost: InstalledAppHost = {
+  appleMembership: Capacitor.getPlatform() === 'ios' ? handleAppleMembership : undefined,
   addBackButtonListener: (listener) => NativeApp.addListener('backButton', listener),
   addNetworkListener: (listener) => Network.addListener(
     'networkStatusChange',

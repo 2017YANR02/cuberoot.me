@@ -833,6 +833,20 @@ export const EXTRA_DEMOS: Partial<Record<string, () => ReactNode>> = {
 
 export const CATALOG: ComponentEntry[] = [
   {
+    name: 'InstalledContentBoundary',
+    import: "import InstalledContentBoundary from '@/components/InstalledContentBoundary';",
+    category: 'more',
+    zh: '安装端在线页面的首版内容限制，复用 shared 路由规则并在水合前隐藏未核对页面；普通网站不受影响。',
+    en: 'First-release content boundary for installed website surfaces, sharing route rules and hiding unchecked prerendered content before hydration; normal browsing is unchanged.',
+  },
+  {
+    name: 'useAppleMembershipAvailable',
+    import: "import { useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';",
+    category: 'more',
+    zh: '读取可信安装端初始化的 Apple 内购能力；购买结果使用请求标识配对，不跨窗口传递凭据或购买凭证。',
+    en: 'Observes the Apple purchase capability from trusted host initialization; purchase results correlate by request ID without passing credentials or receipts across frames.',
+  },
+  {
     name: 'ChatPanel',
     import: "import { ChatPanel, useChat } from '@cuberoot/app-ui/chat';",
     category: 'more',
