@@ -58,3 +58,15 @@ export * from './wca-difficulty-data';
 export * from './wca-practice';
 
 export * from './typography';
+
+export * from './training-settings';
+export * from './goals';
+export * from './display-settings';
+export * from './cube-orientation';
+export * from './pre-scramble';
+export * from './color-neutral';
+export * from './sound-settings';
+export * from './metronome-settings';
+export * from './export-csv';
+export * from './export-cstimer';
+export * from './export-speedstacks';

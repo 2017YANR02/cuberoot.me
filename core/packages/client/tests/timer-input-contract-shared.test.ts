@@ -411,9 +411,11 @@ describe('Web migration consumes the shared contract', () => {
     expect(soloSource).toContain('timerKeyDownDecision({');
     expect(soloSource).toContain('timerGestureActionStates({');
     expect(soloSource).not.toContain('e.code.match(DIGIT_OPENS_SOLVE)');
-    expect(settingsSource).toContain('timerRebindCaptureDecision(e)');
-    expect(settingsSource).toContain('rebindTimerAction(s.keymap, keymap, capturing, capture.binding)');
-    expect(settingsSource).toContain('unbindTimerAction(s.keymap, keymap, action.id)');
+    expect(settingsSource).toContain('<TimerKeymapSettings');
+    const keymapUiSource = readFileSync(new URL('./TimerKeymapSettings.tsx', timerUiEntry), 'utf8');
+    expect(keymapUiSource).toContain('timerRebindCaptureDecision(e)');
+    expect(keymapUiSource).toContain('rebindTimerAction(current, resolveKeymap(current), capturing, capture.binding)');
+    expect(keymapUiSource).toContain('unbindTimerAction(current, resolveKeymap(current), action.id)');
     expect(settingsSource).not.toContain('if (a === capturing) next[b] = null');
     expect(hookSource).toContain('timerRadialGestureStarts(');
     expect(hookSource).toContain('timerRadialGestureDirection(');

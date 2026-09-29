@@ -98,7 +98,7 @@ function precisionLabel(value: number): string {
   return value === 0 ? 'x' : `x.${'x'.repeat(value)}`;
 }
 
-function TimerSettingsSection({
+export function TimerSettingsSection({
   children,
   headerControl,
   title,
