@@ -16,6 +16,28 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('reads an explicitly numbered reconstruction even when the planner treats its ID as seconds',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'recons',value:456,limit:1}]}))
+      .mockResolvedValueOnce(Response.json({visibility:'public',solution:"R U // PLL"}));
+    const result=await answerSiteQuestion('复盘 456 的 PLL 是什么？','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(fetcher.mock.calls[1][0]).toBe('https://api.cuberoot.me/v1/recon/456');
+    expect(result.artifacts?.[0]).toMatchObject({rows:[['1','R U // PLL']]});
+  });
+  it.each(['复盘 4.72 秒','复盘 456 秒','reconstruction 456 seconds','复盘 2026 年的比赛','复盘2026年的比赛'])('does not reinterpret an explicit duration as a reconstruction ID: %s',async question=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'请选择选手。'}));
+    await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it('uses the actual reconstruction list summary instead of inventing competition classifications',async()=>{
+    const fetcher=vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'recons',limit:5}]}))
+      .mockResolvedValueOnce(Response.json([{id:1,person:'One',rawTime:5,comp:'Competition'}, {id:2,person:'Two',value:6,comp:'Home'}]))
+      .mockResolvedValueOnce(modelResponse({answer:'两条均为练习复盘',sourceIds:['recon:1','recon:2']}));
+    const result=await answerSiteQuestion('最近五条公开复盘','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.answer).toBe('已列出 2 条公开复盘。比赛或练习场景以表格中的原始记录为准。');
+    expect(result.sources[0].title).toBe('One · 5');
+  });
   it('uses the official DeepSeek key without changing the cube comparison provider', () => {
     vi.stubEnv('SITE_ASSISTANT_PROVIDER', 'bailian');
     vi.stubEnv('DEEPSEEK_API_KEY', 'deepseek-test-key');
