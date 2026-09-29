@@ -1243,8 +1243,8 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '别再给 lucide 的 Loader2 手写 @keyframes 转 —— 那份重复过 22 遍。动作图标(如刷新时转的 RefreshCw)不算加载转圈,不要换成它。', en: 'Don’t hand-roll another @keyframes rotation on lucide’s Loader2 — that was duplicated 22 times. Action icons (a RefreshCw spinning while refreshing) are not loading spinners; leave those alone.' },
   },
   {
-    name: 'ResetDefaultsButton',
-    import: "import ResetDefaultsButton from '@/components/ResetDefaultsButton';",
+    name: 'ResetDefaultsButton / TimerResetSettings',
+    import: "import { ResetDefaultsButton, TimerResetSettings } from '@cuberoot/timer-ui/reset-defaults-button';",
     category: 'input',
     zh: '「恢复默认」按钮:把一页的设置(+视角)一键推回出厂值。/sim 播放器控制行与 /predict 共用,恢复什么由 onReset 决定,title 写清这一页的「默认」含哪些。',
     en: 'The “Reset defaults” button — puts a page’s settings (and view) back to factory values in one click. Shared by /sim’s player control row and /predict; onReset decides what gets restored, title spells out what this page’s defaults cover.',

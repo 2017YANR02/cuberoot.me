@@ -31,7 +31,7 @@
 | GAP-005 | 手动来源还包含编辑后重置、顺序循环、已显示打乱历史的上一条/下一条、空打乱可起表与 attempt snapshot | Mobile 已直接消费 shared editor/queue/`ScrambleHistory`，覆盖上一条/下一条、队尾生成、solve 后前进、左右键、空槽和冻结 attempt；仍缺 OPPO/iOS 真机全状态证据 | P0，源码与自动化已接，待设备矩阵 |
 | GAP-006 | Web 有 session 切换/新建/重命名/清空/删除/项目关联、搜索筛选、成绩对比、成绩详情、移动分组 | session CRUD/项目关联、成绩行/七项菜单/备注/Undo、完整筛选/tag、成绩对比、基础详情和预览已接五端共享产品层。2026-09-11 起完整动作谱、时间线、回放、方法分析和反馈也由同一 `ReconstructReport` / `SolveRecap` 提供；Web/App 仍分别编排整体 History/Stats 工作区。`HistoryPanel` 的批量删除分支当前在网站主路径没有 consumer，不把不可达代码当网站现有功能 | P0，完整复盘已同源，剩余重点是完整统计、整体工作区和五端状态矩阵 |
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
-| GAP-008 | 设置注册表有 8 类、66 个稳定 ID（其中 1 个仅开发环境，1 个旧点击打乱字段只保留数据兼容） | copy/value/visibility/disabled/effect contract 已迁 shared；Web `SettingsPanel` 当前消费 65 项。五端共用计时 8、智能魔方 6、训练分段 2、真题 2、预览 2，字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2、预朝向 2、颜色中立 1、声音 3、节拍器与自定义观察提示 3，共 44 个当前可见且有真实 effect 的字段；相对 Web consumer 仍缺 21 项，其中 20 项为生产功能、1 项为开发态 | P0，44 项接线完成不等于设置 parity |
+| GAP-008 | 设置注册表有 8 类、66 个稳定 ID（其中 1 个仅开发环境，1 个旧点击打乱字段只保留数据兼容） | copy/value/visibility/disabled/effect contract 已迁 shared；Web `SettingsPanel` 当前消费 65 项。五端共用计时 8、智能魔方 6、训练分段 2、真题 2、预览 2，字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2、预朝向 2、颜色中立 1、声音 3、节拍器与自定义观察提示 3、恢复默认 1，共 45 个当前可见且有真实 effect 的字段；相对 Web consumer 仍缺 20 项，其中 19 项为生产功能、1 项为开发态 | P0，45 项接线完成不等于设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 11 项：专项的 78 个 OLL/PLL case、严格生成、搜索/分组、切换/退出和弹层均由 Web/五端消费同一 shared/timer-ui 实现；统计复用共享页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由。仅 replay 仍绑定 Web 私有 decoder/重建状态；没有外跳 Web timer 或占位冒充 | P0，剩余 replay 及深层交互矩阵未完成 |
 | GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | 五端 App 只显示真实智能魔方入口。Android picker 已按已知名称前缀过滤并仅显示名称；2026-09-20 所有者确认当前扫描、连接和使用正常。GAN v2/v3/v4、MoYu32、QiYi 已有代码级 bridge；2026-09-22 起 Web/App 的标准 move/state 会话、Solo 起表/录制/引导/停表顺序和智能魔方状态/恢复弹层分别共用 `SmartCubeSessionController`、`SmartCubeSoloTimerController` 与 `TimerSmartCubeDeviceModal`。共享弹层覆盖设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开和统一关闭行为；Web 仍独有浏览器环境检测、失败详情与 MAC 输入。型号级真机证据仍只登记 GAN v4；Stackmat/智能计时器未实现且不渲染假入口 | P0，智能魔方局部同视图不等于统一设备中心完成；缺失能力保持不可见且仍登记为 gap |
 | GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标已于 2026-09-29 接共享设置和运行展示，实体设备矩阵仍缺，新增分段路径待 OPPO 真机 | P0 |
@@ -251,12 +251,12 @@ shared 映射快照是 19 个 Timer ID：
 | --- | --- | --- |
 | 计时 | 计时开关、WCA 观察、按住阈值、切项目匹配 session、切 session 匹配项目、隐藏运行时间、运行精度、成绩精度 | shared 已统一默认/normalizer，`TimerTimingSettingsSections` 已成为 Web/Mobile 共用真实 UI consumer；Mobile 8 字段 effect 已接且 OPPO 读到 8/8 canonical ID、无横向溢出并可滚动到底。仍缺逐字段效果、iOS、横屏/大字与全视口证据 |
 | 智能魔方 | 陀螺仪；自动预备：打乱正确/关/静止 2s/双拨；实况 3D/q2look/net/2D；记录姿态；每把后展开复盘；自动打开解法 | 六项设置的默认/归一化/持久化与 TimerSmartCubeSettingsFields、useAutoReady 已由 Web/App 共用；模式/弹层/阶段门禁及连续手势自动化已锁，五平台实操待验 |
-| 打乱 | 最优打乱、真题自动打卡、预打乱朝向、训练预朝向、颜色中立、同步种子/计数器 | 缺 |
-| 训练 | CFOP 分段、BLD memo/执行分段、每项目目标时间、每日目标、轮次模拟开关/赛制/cutoff/time limit/累计口径 | 缺 |
-| 外观 | 计时器字体/字号、打乱字体/字号、紧凑打乱、打乱图、3D 魔方、运行隐藏全 UI、排名徽章、排名国家；旧点击动作字段不再可见 | “打乱图”“3D 魔方”已用 shared schema/default/normalizer、共用 UI 与真实 effect；单人/联网复用同一预览 renderer，3D 拖动区与计时按压隔离。其余 8 项仍缺，且 Android/iOS/Harmony/Windows/macOS 的实体环境视觉与交互矩阵未验 |
+| 打乱 | 最优打乱、真题自动打卡、预打乱朝向、训练预朝向、颜色中立、同步种子/计数器 | 最优、自动打卡、两类预朝向和颜色中立已有共享设置及实际 effect；同步种子/计数仍缺，五端操作矩阵待验 |
+| 训练 | CFOP 分段、BLD memo/执行分段、每项目目标时间、每日目标、轮次模拟开关/赛制/cutoff/time limit/累计口径 | 分段与目标/轮次设置、反馈均由 shared/timer-ui 提供，App 持久化及运行接线已完成；五端操作矩阵待验 |
+| 外观 | 计时器字体/字号、打乱字体/字号、紧凑打乱、打乱图、3D 魔方、运行隐藏全 UI、排名徽章、排名国家；旧点击动作字段不再可见 | 字体/字号、紧凑打乱、预览与运行隐藏 UI 均有共享设置和真实 effect；排名徽章/国家仍缺。Android/iOS/Harmony/Windows/macOS 的实体环境视觉与交互矩阵未验 |
 | 声音与节奏 | 提示音、音量/试听、观察语音、节拍器、BPM/tap、自定义 beep 秒数/试听 | 共享 UI、音频调度与 App 持久化已接；五端音频解锁、后台恢复和真机试听待验 |
 | 数据 | 本机自动备份频率/立即备份/列表/恢复；云备份状态/上传/覆盖恢复/登录；CubeRoot/csTimer/dcTimer 导入及 session/event 映射；CubeRoot/csTimer JSON/CSV/Speedstacks 导出；重算分段 | Mobile 只有 CubeRoot JSON 整库导入/导出/一次撤销 |
-| 高级 | 所有可重绑快捷键、解绑/重置；同步种子应用/清空/当前计数/重置计数；恢复所有默认设置 | 快捷键改绑/解绑/重置已共享；同步种子/计数、恢复所有默认设置仍缺 |
+| 高级 | 所有可重绑快捷键、解绑/重置；同步种子应用/清空/当前计数/重置计数；恢复所有默认设置 | 快捷键改绑/解绑/重置和恢复默认设置已共享；同步种子/计数仍缺 |
 
 设置还有通用状态需逐项验收：默认值、老版迁移、值归一化、项目不支持时的隐藏/禁用、提示文案、立即持久化、取消/关闭后恢复、失败不覆盖旧值，以及同一账号/设备升级后的数据意义。
 

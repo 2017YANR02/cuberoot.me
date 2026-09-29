@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   MAX_TIMER_BACKUP_BYTES,
+  resetTimerStoreSettings,
   TIMER_SCRAMBLE_CLICK_ACTIONS,
   activeTimerSolves,
   createTimerManualEntryDraft,
@@ -69,6 +70,33 @@ function repository(driver = new MemoryDriver()) {
 }
 
 describe('mobile timer repository contract', () => {
+  it('resets preferences in queue without changing solves, sessions, recovery, or host preferences', async () => {
+    const { repo, driver } = repository();
+    await repo.addSolve({ timeMs: 1234, penalty: 'ok', scramble: 'R', event: '333' });
+    await repo.updateSettings({ event: '222', language: 'zh', theme: 'dark', metronomeBpm: 600,
+      soundsEnabled: true, inspectionBeepAt: [5], keymap: { startStop: null }, dailySolveGoal: 50 });
+    const before = await repo.load();
+    driver.recovery = { marker: 'existing import recovery' };
+    await Promise.all([
+      repo.updateSettings({ language: 'en' }),
+      repo.updateSettings(resetTimerStoreSettings),
+      repo.addSolve({ timeMs: 2345, penalty: '+2', scramble: 'U', event: '333' }),
+    ]);
+    const after = await repo.load();
+    expect(after.database.sessions).toEqual(before.database.sessions);
+    expect(after.database.activeSessionId).toBe(before.database.activeSessionId);
+    expect(activeTimerSolves(after, '333').map(s => s.timeMs)).toEqual([1234, 2345]);
+    expect(after.settings).toMatchObject({ event: '222', language: 'en', theme: 'dark', metronomeBpm: 600,
+      soundsEnabled: false, inspectionBeepAt: [], keymap: {}, dailySolveGoal: null });
+    expect(driver.recovery).toEqual({ marker: 'existing import recovery' });
+    const restarted = repository(driver).repo;
+    expect((await restarted.load()).settings).toEqual(after.settings);
+    await restarted.updateSettings({ soundsEnabled: true });
+    driver.failWrites = true;
+    await expect(restarted.updateSettings(resetTimerStoreSettings)).rejects.toThrow('disk full');
+    expect((await restarted.load()).settings.soundsEnabled).toBe(true);
+  });
+
   it('persists reconstruction feedback without dropping moves or device provenance', async () => {
     const { repo } = repository();
     const data = await repo.addSolve({

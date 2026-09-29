@@ -1,5 +1,6 @@
 import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
-import { normalizeTimerSoundSettings } from '@cuberoot/shared/timer';
+import { normalizeTimerSoundSettings, resetTimerStoreSettings } from '@cuberoot/shared/timer';
+import { TimerResetSettings } from '@cuberoot/timer-ui';
 import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 import { createMetronome } from '@cuberoot/timer-ui/metronome';
 import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
@@ -3323,7 +3324,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     data: TimerStoreData,
   ): boolean => storeSnapshotGateRef.current.commitIfLatest(revision, data, (latest) => {
     trainingRound.reset();
-    // Import/undo can replace every source-affecting setting. Make the swap one
+    // Import/undo/reset can replace every source-affecting setting. Make the swap one
     // synchronous attempt boundary before any old hold/keyup can reach it.
     const previousIdentity = scrambleIdentityFor(
       scrambleSourceRef.current,
@@ -3336,6 +3337,23 @@ export function App({ host }: { host: InstalledAppHost }) {
     );
     if (previousIdentity !== nextIdentity) invalidateCurrentScramble();
   }), [applyStoreSnapshot, invalidateCurrentScramble, scrambleIdentityFor, trainingRound.reset]);
+
+  const resetSettingsToDefaults = useCallback(() => {
+    if (!sourceControlsEnabled || !beginTimerContextMutation()) return;
+    timer.cancelArm();
+    const revision = storeSnapshotGateRef.current.beginMutation();
+    void repository.updateSettings(resetTimerStoreSettings).then((data) => {
+      if (!commitImportedStore(revision, data)) return;
+      if (scrambleSourceRef.current !== 'wca') {
+        scrambleSourceRef.current = 'wca';
+        setScrambleSource('wca');
+        invalidateCurrentScramble();
+      }
+    }).catch(async () => {
+      await recoverLatestStoreSnapshot(revision).catch(() => undefined);
+      announce(copy.actionFailed);
+    }).finally(endTimerContextMutation);
+  }, [announce, beginTimerContextMutation, commitImportedStore, copy.actionFailed, endTimerContextMutation, invalidateCurrentScramble, recoverLatestStoreSnapshot, sourceControlsEnabled, timer.cancelArm]);
 
   const importData = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -4779,6 +4797,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             {settingsCategory === 'sound' && <TimerSoundSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} voiceAvailable={timerSound.isVoiceAvailable()} onWarmup={timerSound.warmupSound} onPreview={() => timerSound.play('start')} />}
             {settingsCategory === 'sound' && <TimerMetronomeSettings value={store!.settings} bpm={store!.settings.metronomeBpm} onChange={updateSettings} onBpmChange={metronomeBpm => updateSettings({ metronomeBpm })} onTap={metronome.tapTempo} onWarmup={timerSound.warmupSound} onPreviewBeep={timerSound.playInspectionBeep} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <TimerKeymapSettings value={store!.settings.keymap} onChange={update => updateSettings(current => ({ keymap: update(current.keymap) }))} localize={value => value[language]} />}
+            {settingsCategory === 'advanced' && <TimerResetSettings disabled={!sourceControlsEnabled} onReset={resetSettingsToDefaults} confirmReset={message => window.confirm(message)} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.account}</h2>

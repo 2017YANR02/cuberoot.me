@@ -65,7 +65,7 @@ import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 
 import SharedBoolToggle from '@/components/BoolToggle';
-import ResetDefaultsButton from '@/components/ResetDefaultsButton';
+import { TimerResetSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
 
 
@@ -1015,16 +1015,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
           <TimerKeymapSettings value={s.keymap} onChange={update => updateSettings({ keymap: update(getSettings().keymap) })} localize={tr} />
-            <div className="settings-reset-row" data-setting-id="settings.advanced.reset-defaults">
-              <ResetDefaultsButton
-                onReset={() => {
-                  if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?' }))) {
-                    resetSettings();
-                  }
-                }}
-                title={tr({ zh: '恢复全部计时器设置，不会删除成绩', en: 'Reset all timer settings without deleting solves' })}
-              />
-            </div>
+          <TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />
         </SettingsSection>
     </TimerSettingsPanel>
   );

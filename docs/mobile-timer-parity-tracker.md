@@ -4,6 +4,13 @@
 
 最后更新：2026-09-29
 
+### 2026-09-29：恢复默认设置共享（本地实现）
+
+- 原网站 `ResetDefaultsButton` 迁入 timer-ui，旧入口为语言适配；Web/App 共用 `TimerResetSettings` 的确认、取消和样式。App 从 shared 初始设置同源生成默认值，经 repository 最新队列快照保存，保留当前项目、语言/主题以及独立节拍速度，不修改分组、成绩与已有导入恢复数据。
+- App 重置时取消预备/观察，并在异步保存期间阻止新起表；保存成功同步实际快捷键、来源等运行引用，恢复真题来源并重置临时轮次；来源变化使旧打乱失效。写入失败保留已存设置并恢复最新快照。
+- effect ledger 由 44 增至 45，Web 65 项仍缺 20 项（19 个生产项、1 个开发态）。仍缺同步种子/计数、排名与完整数据设置，不代表完整设置或五端 parity 完成。
+- 验证：shared build、timer-ui/app-ui typecheck、App repository/确认/账本 39 项、Web 设置/catalog/架构/复用/i18n 50 项与 Mobile production build 通过。Web 源码类型检查沿用仅排除损坏 Next 生成 validator 的临时配置，标准命令阻断仍未解决。无浏览器、真机或发布。
+
 ### 2026-09-29：节拍器与自定义观察提示共享（本地实现）
 
 - Web 音频时钟节拍器提取为 timer-ui 独立 factory，Web 保留全站实例和原 BPM/accent 存储，App 使用独立实例。两端共用节拍器开关、BPM/TPS、敲击定速和观察提示秒数编辑/试听；纯规则进入 shared，App 旧数据默认关闭、120 BPM、无自定义秒数，重启恢复新增偏好。
@@ -276,7 +283,7 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 | `GAP-005` / `PAR-004/008` 手动队列与打乱历史 | Web 是 opaque 多行队列，编辑即重置，顺序循环，左右只回看已显示历史，空槽可计时 | parser、queue、history occurrence 和 attempt snapshot 已共享 | 编辑器、历史前后导航、打乱状态/预览已共享 | `局部` | Android 已有队列/空态证据；进程重启、手指起停、横屏/大字及其余四端仍缺 | `待真机（P0）`；补齐同 fixture 的五端状态矩阵 |
 | `GAP-006` / `PAR-009/010/011` session、历史、详情、复盘 | Web 有 session CRUD、筛选、成绩动作、对比、详情和完整复盘 | schema、迁移、统计、历史动作、标签、比较、复盘算法和反馈已共享 | session、成绩行、菜单、筛选/标签、对比、详情、预览、`ReconstructReport` / `SolveRecap` 已共享 | `大部分组件同源，整体历史工作区仍非同视图` | App 已可真实使用上述能力；完整统计入口、全状态视觉与五平台交互仍缺 | `进行中`；将 History/Stats 外壳继续收敛为共享工作区 |
 | `GAP-007` / `PAR-009/011` 完整统计 | Web 还有成绩/图表/统计三栏、五图、period/case/跨分组/纪录对比 | 基础 stats、rolling、PB、标签等规则已共享 | 仅紧凑 `TimerStatsPanel` 与 rolling picker 已共享 | `否` | App 缺完整 `StatsModal`、五图、period/case/cross-session/records | `进行中（P0）`；提取完整 `TimerStatsWorkspace` |
-| `GAP-008` / `PAR-012` 设置 | 注册表有 66 个稳定 ID；Web `SettingsPanel` 消费其中 65 个（64 个生产可达 + 1 个开发态），旧点击打乱字段仅保留数据兼容 | 8 类、66 ID、默认值、归一化、可见/禁用/effect contract 已共享 | 计时 8、智能魔方 6、分段 2、真题 2、预览 2、字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2、预朝向 2、颜色中立 1、声音 3、节拍器与自定义观察提示 3，共 44 个当前可见且有真实 effect 的字段已共享 | `局部` | App 相对 Web consumer 仍缺 21 项，其中 20 项是生产功能、1 项是开发态；任何字段尚未完成五端视觉/交互 parity | `进行中（P0）`；按 Training → Appearance → Sound → Data → Advanced 提取完整 `TimerSettingsWorkspace` |
+| `GAP-008` / `PAR-012` 设置 | 注册表有 66 个稳定 ID；Web `SettingsPanel` 消费其中 65 个（64 个生产可达 + 1 个开发态），旧点击打乱字段仅保留数据兼容 | 8 类、66 ID、默认值、归一化、可见/禁用/effect contract 已共享 | 计时 8、智能魔方 6、分段 2、真题 2、预览 2、字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2、预朝向 2、颜色中立 1、声音 3、节拍器与自定义观察提示 3、恢复默认 1，共 45 个当前可见且有真实 effect 的字段已共享 | `局部` | App 相对 Web consumer 仍缺 20 项，其中 19 项是生产功能、1 项是开发态；任何字段尚未完成五端视觉/交互 parity | `进行中（P0）`；按 Training → Appearance → Sound → Data → Advanced 提取完整 `TimerSettingsWorkspace` |
 | `GAP-009` / `PAR-012` 更多菜单 | Web canonical registry 共 12 项 | action ID、可见/禁用/effect contract 已共享 | More 菜单、专项、手动录入、打印等 UI 已共享 | `局部` | App 已接真实 11/12；仅 `more.replay` 粘贴/解码/错误流程仍绑定 Web 私有入口 | `进行中（P0）`；迁移 replay import 后做 exact action equality |
 | `GAP-010` / `PAR-014/015/016` 设备 | Web 有智能魔方、智能计时器、Stackmat 及各自设备流程；智能魔方状态/恢复区已改为共享弹层，Web 仅包环境检测、失败详情与 MAC 输入 | GAN v2/v3/v4、MoYu32、QiYi 协议、MoveClock/状态模型、跨端 `SmartCubeSessionController`、Solo 起表/录制/引导/停表 controller 与复盘 producer 已共享；其他 Web driver 仍需逐项核对 | 智能魔方状态/恢复弹层、扫描设备列表、实况魔方、姿态、自动预备设置已共享；统一设备中心已由 Web/App 消费；智能计时器和 Stackmat 尚未接入 App | `智能魔方局部同视图` | Android 已能过滤已知魔方名称并完成当前真机扫描/连接/使用；Desktop 已接实时扫描列表、选择连接、GATT discovery 和多协议路由，Windows GAN v4 由所有者实测可用。App 现可显示设备名、信号、电量、协议、连接/还原状态，并共用重置、状态回读、陀螺仪校准、断开与关闭行为。其他 Desktop 型号、macOS、Harmony 和完整 BLE 压力矩阵未齐 | `进行中（P0）`；复用现有 `TimerDeviceCenter`，补齐智能计时器、Stackmat 和权限状态，平台只注入 transport/permission |
 | `GAP-011` / `PAR-010/012/013` 特殊成绩、目标、轮次、分段 | Web 有手动成绩、FMC/MBLD、目标、每日目标、轮次模拟、CFOP/BLD 分段 | 手动成绩/FMC/MBLD 与分段 recorder 已共享 | 手动录入弹层、分段设置/状态已共享 | `局部` | App 已接录入、分段、目标/每日目标及 round/cutoff/time-limit；完整真机矩阵仍缺 | `进行中（P0）`；训练 9 字段均有共享实现与 App consumer，继续其他设置类别及设备矩阵 |
