@@ -15,6 +15,7 @@ import {
   TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
   TIMER_TRAINING_SETTING_FIELD_IDS,
   TIMER_KEYMAP_SETTING_FIELD_IDS,
+  TIMER_DISPLAY_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 import {
@@ -35,6 +36,7 @@ describe('Mobile timer settings parity ledger', () => {
       ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
   ...TIMER_TRAINING_SETTING_FIELD_IDS,
       ...TIMER_KEYMAP_SETTING_FIELD_IDS,
+      ...TIMER_DISPLAY_SETTING_FIELD_IDS,
     ]);
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
       'settings.appearance.scramble-click-action',

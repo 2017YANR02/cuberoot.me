@@ -660,23 +660,9 @@
 
 /* Live-cube visibility while solving is owned by timer-ui/live-cube.css. */
 
-/* "Hide all UI while running" (opt-in setting). Goes further than .is-solving:
-   that only touches .surface-chrome, which leaves the side panel and the solver
-   rail on screen. Targets the rail's CHILDREN because .shell-rail is
-   `display: contents` on mobile, where opacity would do nothing. Everything
-   fades rather than unmounting, so the layout can't reflow mid-solve. */
-.timer-shell.hide-ui .shell-panel,
-.timer-shell.hide-ui .shell-rail > * {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .surface-chrome,
   .timer-shell.is-solving .surface-chrome { transition: none; }
-  .timer-shell.hide-ui .shell-panel,
-  .timer-shell.hide-ui .shell-rail > * { transition: none; }
   .timer-display { transition: none; }
 }
 

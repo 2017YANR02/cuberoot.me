@@ -1,3 +1,5 @@
+import { TimerDisplaySettings } from '@cuberoot/timer-ui';
+import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import type { TimerSettingsUpdate } from './data/timer-repository';
 import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
@@ -3692,6 +3694,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   return (
     <main
       className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      data-timer-hide-ui={timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings) ? '' : undefined}
       data-wide={wideLayout ? 'true' : undefined}
       style={shellViewport.style}
     >
@@ -3998,7 +4001,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
                 scrambleSlot={(
-                  <TimerScrambleStrip
+                  <TimerScrambleStrip compact={store!.settings.compactScramble}
                     font={store!.settings.scrambleFont}
                     fontScale={store!.settings.scrambleFontScale}
                     copiedLabel={copy.copied}
@@ -4132,8 +4135,10 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
               </TimingSurface>
-              <TimerGoalProgress solves={allSessionSolves} goal={trainingSettings.dailySolveGoal} localize={value => value[language]} />
-              <TimerRoundPanel solves={trainingRound.solves} config={trainingSettings.round} targetMs={targetMs} event={activeEvent} precision={resultPrecision} onReset={trainingRound.start} localize={value => value[language]} />
+              <div className="surface-chrome">
+                <TimerGoalProgress solves={allSessionSolves} goal={trainingSettings.dailySolveGoal} localize={value => value[language]} />
+                <TimerRoundPanel solves={trainingRound.solves} config={trainingSettings.round} targetMs={targetMs} event={activeEvent} precision={resultPrecision} onReset={trainingRound.start} localize={value => value[language]} />
+              </div>
               {!wideLayout && solveRecap}
 
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
@@ -4719,6 +4724,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                 category.id === 'appearance'
               ))?.label[language]}</h2>
+              <TimerDisplaySettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} renderBooleanControl={({ disabled, label, onChange, value }) => (<TimerPillToggle value={value} onChange={onChange} disabled={disabled} ariaLabel={label} />)}>
               <TimerScramblePreviewSettings
                 localize={(value) => value[language]}
                 onChange={updateSettings}
@@ -4732,6 +4738,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 )}
                 value={store!.settings}
               />
+              </TimerDisplaySettings>
             </section>
 
             </>}
@@ -4857,7 +4864,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         />
       )}
 
-      <nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
+      <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
         <button
           aria-current={view === 'timer' || view === 'history' || view === 'settings' ? 'page' : undefined}
           data-no-timer

@@ -4,6 +4,11 @@
 
 最后更新：2026-09-29
 
+### 2026-09-29：显示设置共享（本地实现）
+
+- Web/App 共用 `TimerDisplaySettings`，紧凑打乱和运行隐藏 UI 两项接入 App 偏好；旧数据补 false，重启保留设置，成绩/session 不变。起停显隐规则由 shared 提供，控件、侧栏、解法区和 App 导航由 timer-ui 同一 CSS 隐藏且保留布局占位；目标/轮次面板同步纳入范围。
+- 显式隐藏不依赖普通淡出动画，修正 Web 减少动态效果时漏隐藏的差异；实时魔方例外不再覆盖隐藏设置，停止后恢复。设置 effect ledger 由 33 增至 35，Web 65 项仍缺 30 项（29 个生产项、1 个开发态），不是五端视觉/交互 parity 完成。
+- 验证：shared build、三包 typecheck、App 显示/账本 7 项、Web 设置/catalog 15 项、实时魔方/布局/架构/i18n/复用守卫 38 项通过；Mobile production build 通过。未运行浏览器、截图、真机或发布。
 ### 2026-09-29：自定义快捷键共享（本地实现）
 
 - Web/App 共用 `TimerKeymapSettings`，改绑、解绑和恢复默认直接更新真实键盘决策；键名格式化迁入 shared，Web timer/sim 保留重导出入口。App 在 repository 最新快照上执行更新，保存成功后刷新运行键位；旧数据默认空 overrides，导入过滤非法动作与保留键，显式 null 解绑可跨重启保留。
@@ -247,11 +252,11 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 | `GAP-005` / `PAR-004/008` 手动队列与打乱历史 | Web 是 opaque 多行队列，编辑即重置，顺序循环，左右只回看已显示历史，空槽可计时 | parser、queue、history occurrence 和 attempt snapshot 已共享 | 编辑器、历史前后导航、打乱状态/预览已共享 | `局部` | Android 已有队列/空态证据；进程重启、手指起停、横屏/大字及其余四端仍缺 | `待真机（P0）`；补齐同 fixture 的五端状态矩阵 |
 | `GAP-006` / `PAR-009/010/011` session、历史、详情、复盘 | Web 有 session CRUD、筛选、成绩动作、对比、详情和完整复盘 | schema、迁移、统计、历史动作、标签、比较、复盘算法和反馈已共享 | session、成绩行、菜单、筛选/标签、对比、详情、预览、`ReconstructReport` / `SolveRecap` 已共享 | `大部分组件同源，整体历史工作区仍非同视图` | App 已可真实使用上述能力；完整统计入口、全状态视觉与五平台交互仍缺 | `进行中`；将 History/Stats 外壳继续收敛为共享工作区 |
 | `GAP-007` / `PAR-009/011` 完整统计 | Web 还有成绩/图表/统计三栏、五图、period/case/跨分组/纪录对比 | 基础 stats、rolling、PB、标签等规则已共享 | 仅紧凑 `TimerStatsPanel` 与 rolling picker 已共享 | `否` | App 缺完整 `StatsModal`、五图、period/case/cross-session/records | `进行中（P0）`；提取完整 `TimerStatsWorkspace` |
-| `GAP-008` / `PAR-012` 设置 | 注册表有 66 个稳定 ID；Web `SettingsPanel` 消费其中 65 个（64 个生产可达 + 1 个开发态），旧点击打乱字段仅保留数据兼容 | 8 类、66 ID、默认值、归一化、可见/禁用/effect contract 已共享 | 计时 8、智能魔方 6、分段 2、真题 2、预览 2、字体/字号 4，训练目标/轮次 7、快捷键 2，共 33 个当前可见且有真实 effect 的字段已共享 | `局部` | App 相对 Web consumer 仍缺 32 项，其中 31 项是生产功能、1 项是开发态；任何字段尚未完成五端视觉/交互 parity | `进行中（P0）`；按 Training → Appearance → Sound → Data → Advanced 提取完整 `TimerSettingsWorkspace` |
+| `GAP-008` / `PAR-012` 设置 | 注册表有 66 个稳定 ID；Web `SettingsPanel` 消费其中 65 个（64 个生产可达 + 1 个开发态），旧点击打乱字段仅保留数据兼容 | 8 类、66 ID、默认值、归一化、可见/禁用/effect contract 已共享 | 计时 8、智能魔方 6、分段 2、真题 2、预览 2、字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2，共 35 个当前可见且有真实 effect 的字段已共享 | `局部` | App 相对 Web consumer 仍缺 30 项，其中 29 项是生产功能、1 项是开发态；任何字段尚未完成五端视觉/交互 parity | `进行中（P0）`；按 Training → Appearance → Sound → Data → Advanced 提取完整 `TimerSettingsWorkspace` |
 | `GAP-009` / `PAR-012` 更多菜单 | Web canonical registry 共 12 项 | action ID、可见/禁用/effect contract 已共享 | More 菜单、专项、手动录入、打印等 UI 已共享 | `局部` | App 已接真实 11/12；仅 `more.replay` 粘贴/解码/错误流程仍绑定 Web 私有入口 | `进行中（P0）`；迁移 replay import 后做 exact action equality |
 | `GAP-010` / `PAR-014/015/016` 设备 | Web 有智能魔方、智能计时器、Stackmat 及各自设备流程；智能魔方状态/恢复区已改为共享弹层，Web 仅包环境检测、失败详情与 MAC 输入 | GAN v2/v3/v4、MoYu32、QiYi 协议、MoveClock/状态模型、跨端 `SmartCubeSessionController`、Solo 起表/录制/引导/停表 controller 与复盘 producer 已共享；其他 Web driver 仍需逐项核对 | 智能魔方状态/恢复弹层、扫描设备列表、实况魔方、姿态、自动预备设置已共享；统一设备中心已由 Web/App 消费；智能计时器和 Stackmat 尚未接入 App | `智能魔方局部同视图` | Android 已能过滤已知魔方名称并完成当前真机扫描/连接/使用；Desktop 已接实时扫描列表、选择连接、GATT discovery 和多协议路由，Windows GAN v4 由所有者实测可用。App 现可显示设备名、信号、电量、协议、连接/还原状态，并共用重置、状态回读、陀螺仪校准、断开与关闭行为。其他 Desktop 型号、macOS、Harmony 和完整 BLE 压力矩阵未齐 | `进行中（P0）`；复用现有 `TimerDeviceCenter`，补齐智能计时器、Stackmat 和权限状态，平台只注入 transport/permission |
 | `GAP-011` / `PAR-010/012/013` 特殊成绩、目标、轮次、分段 | Web 有手动成绩、FMC/MBLD、目标、每日目标、轮次模拟、CFOP/BLD 分段 | 手动成绩/FMC/MBLD 与分段 recorder 已共享 | 手动录入弹层、分段设置/状态已共享 | `局部` | App 已接录入、分段、目标/每日目标及 round/cutoff/time-limit；完整真机矩阵仍缺 | `进行中（P0）`；训练 9 字段均有共享实现与 App consumer，继续其他设置类别及设备矩阵 |
-| `GAP-012` / `PAR-013/018/019/020/021` 输入、显示、可访问性、生命周期 | Web 有默认/自定义键位、八向轮盘、全屏、运行隐藏、完整中断和视觉状态 | timer machine、默认 keymap、pointer policy、轮盘动作、持久化 schema 已共享 | `TimingSurface`、`GestureWheel`、toast、overlay 原语已共享 | `局部` | App 已接默认/自定义键盘、触摸/撤销；运行隐藏全 UI、TalkBack/VoiceOver、后台/来电/权限中断及完整视觉矩阵未齐 | `进行中（P1）`；继续补 lifecycle contract，再跑跨端视觉/读屏矩阵 |
+| `GAP-012` / `PAR-013/018/019/020/021` 输入、显示、可访问性、生命周期 | Web 有默认/自定义键位、八向轮盘、全屏、运行隐藏、完整中断和视觉状态 | timer machine、默认 keymap、pointer policy、轮盘动作、持久化 schema 已共享 | `TimingSurface`、`GestureWheel`、toast、overlay 原语已共享 | `局部` | App 已接默认/自定义键盘、触摸/撤销与运行隐藏全 UI；TalkBack/VoiceOver、后台/来电/权限中断及完整视觉矩阵未齐 | `进行中（P1）`；继续补 lifecycle contract，再跑跨端视觉/读屏矩阵 |
 
 ### 4.2 状态维度总账
 
