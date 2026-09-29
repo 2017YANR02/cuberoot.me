@@ -10,13 +10,17 @@ const MAX_CHALLENGES = 5000;
 const alphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const digest = (value: string) => createHash('sha256').update(value).digest();
 interface Challenge { answer: Buffer; browser: string; expires: number; attempts: number }
+type CaptchaResult = { code: 'ok' | 'captcha_expired' | 'captcha_invalid' | 'captcha_browser_changed' | 'captcha_attempts_exhausted' }
+  | { code: 'captcha_incorrect'; attemptsRemaining: number };
 
 /** Single API process owns one-use challenges. Restart expires outstanding images. */
 export class CompetitionCaptchaStore {
   private challenges = new Map<string, Challenge>();
   private limits = new Map<string, { expires: number; count: number }>();
   private sweep(now: number) {
-    for (const [key, item] of this.challenges) if (item.expires <= now) this.challenges.delete(key);
+    // Keep a bounded, short grace period so submission can identify expiry even
+    // after allow() sweeps. MAX_CHALLENGES still bounds all retained records.
+    for (const [key, item] of this.challenges) if (item.expires + TTL <= now) this.challenges.delete(key);
     for (const [key, item] of this.limits) if (item.expires <= now) this.limits.delete(key);
   }
   allow(key: string, max: number, now = Date.now()) {
@@ -36,14 +40,17 @@ export class CompetitionCaptchaStore {
     this.challenges.set(id, { answer: digest(answer), browser, expires: now + TTL, attempts: 0 });
     return { id, answer }; // Answer goes only to the image renderer, never the response JSON.
   }
-  consume(id: string, answer: string, browser: string, now = Date.now()) {
+  consume(id: string, answer: string, browser: string, now = Date.now()): CaptchaResult {
     const item = this.challenges.get(id);
-    if (!item || item.expires <= now) { this.challenges.delete(id); return false; }
-    if (item.browser !== browser) return false;
+    if (!item) return { code: 'captcha_invalid' };
+    if (item.browser !== browser) return { code: 'captcha_browser_changed' };
+    if (item.expires <= now) return { code: 'captcha_expired' };
+    if (item.attempts >= 3) return { code: 'captcha_attempts_exhausted' };
     item.attempts++;
     const correct = timingSafeEqual(item.answer, digest(answer.trim().toUpperCase()));
-    if (correct || item.attempts >= 3) this.challenges.delete(id);
-    return correct;
+    if (correct) { this.challenges.delete(id); return { code: 'ok' }; }
+    if (item.attempts >= 3) return { code: 'captcha_attempts_exhausted' };
+    return { code: 'captcha_incorrect', attemptsRemaining: 3 - item.attempts };
   }
 }
 const store = new CompetitionCaptchaStore();
@@ -96,8 +103,9 @@ export async function submitCompetitionCaptcha(c: Context) {
     body = JSON.parse(raw);
   } catch { return c.json({ code: 'invalid_challenge' }, 400); }
   if (!body || typeof body.id !== 'string' || !/^[a-f0-9]{48}$/.test(body.id)
-    || typeof body.answer !== 'string' || body.answer.length > 12
-    || !store.consume(body.id, body.answer, browser)) return c.json({ code: 'captcha_incorrect_or_expired' }, 400);
+    || typeof body.answer !== 'string' || body.answer.length > 12) return c.json({ code: 'invalid_challenge' }, 400);
+  const result = store.consume(body.id, body.answer, browser);
+  if (result.code !== 'ok') return c.json(result, 400);
   // During a rolling release, issue the shorter legacy lifetime until all
   // verifiers accept the new maximum. Cookie and signed expiry always agree.
   const configuredTtl = Number(process.env.COMPETITION_ACCESS_ISSUE_TTL_SECONDS ?? COMPETITION_ACCESS_TTL);
