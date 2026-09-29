@@ -353,10 +353,12 @@ IAP 不只是加一个支付按钮：
 - StoreKit 商品/购买/恢复放 iOS 薄宿主，服务端验签交易和 App Store 通知，再更新同一会员权益；展示价格来自当前 StoreKit storefront，不用网站 CNY 数字冒充全球商店价。
 - 按真实商品建立 `productId → membership plan/entitlement` 映射与账号绑定，服务端对 transaction/original transaction、环境、Bundle ID、所有者及重放做校验；恢复购买不得转移到任意登录账号。
 - 当前网站开通使用 `max(now,现有到期)+周期`，不能直接当 Apple 订阅事件处理器，否则续费/恢复/重放可能重复加时。Apple 到期、撤销、退款与其他渠道权益须按来源证据汇总，不能因一笔 Apple 退款抹掉其他渠道仍有效的会员。
-- 当前 `settlePaidOrder` 先将订单设为 paid 再调用 grant，两步不在同一事务；接 IAP 前须在同一权益服务中解决幂等与原子性，不能复制另一套“iOS grant”绕过旧逻辑。
+- 2026-09-29 源码复核：`settlePaidOrder` 已委托 `settleMembershipPayment`，支付证据校验、订单加锁与 `grantMembershipInTransaction` 在同一事务完成；旧版非原子性描述已失效。Apple 接入仍须复用这套权益边界，并补充可撤销的逐笔来源凭证，不能直接把聚合到期日清零而损害其他渠道已购时长。
 - 必须补购买取消/pending、断网、服务端通知乱序/重复、退款/撤销、恢复、到期、换账号/绑 WCA、升级与沙盒/生产隔离验收；App Store Server API key 与 Sign in with Apple key 不是同一用途。
 
 商品创建前由所有者确认：个人/企业哪些档位首发；是否同一会员权益；月/年是自动续费还是一次购买固定期限；是否提供永久；各 storefront 价格与基准币种；免费试用/优惠、家庭共享；网站已有剩余时长与 Apple 订阅并存规则。自动续费订阅适用于持续服务、非续期订阅适用于固定期手动购买、永久权益通常对应非消耗型商品；不得未经确认将一次性年卡改成连续扣费。[Apple 商品类型](https://developer.apple.com/help/app-store-connect/reference/in-app-purchases-and-subscriptions/in-app-purchase-types/)
+
+2026-09-29 所有者确认首发个人月卡／年卡，手动续购，不自动扣费；企业版、优惠与家庭共享暂不加入。商品应按非续期订阅设计，复用现有个人会员权益；网站月卡 CNY 29.99、年卡 CNY 299 是价格参考，实际 Apple 价格档及 storefront 展示仍须在商品配置时核对。尚未创建商品或接通 StoreKit，不能把本决策写成内购完成。恢复购买不得重复延长时长，退款必须按逐笔交易来源撤销，会员归属要覆盖账号合并与注销；服务端验证、原生购买、恢复和沙盒生命周期测试均待实施。免费 App 下载价格保持不变。
 
 ### 9.5 IAP 协议与全球（含中国大陆）材料
 
