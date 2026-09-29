@@ -1,5 +1,6 @@
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
 import { normalizeTimerSoundSettings, type TimerSoundSettings } from './sound-settings';
+import { normalizeTimerMetronomeSettings, type TimerMetronomeSettings } from './metronome-settings';
 import { normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
 import { normalizeTimerDisplaySettings, type TimerDisplaySettings } from './display-settings';
 import { normalizeTimerKeymap, type TimerKeymapOverrides } from './input-contract';
@@ -75,6 +76,7 @@ export interface TimerSessionMeta {
 }
 
 export interface TimerStoreSettings extends
+  TimerMetronomeSettings,
   TimerSoundSettings,
   TimerPreScrambleSettings,
   TimerDisplaySettings,
@@ -516,6 +518,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     ...normalizeTimerDisplaySettings(value),
     ...normalizeTimerPreScrambleSettings(value),
     ...normalizeTimerSoundSettings(value),
+    ...normalizeTimerMetronomeSettings(value),
     ...normalizeTimerTrainingSettings(value),
     ...normalizeTimerSmartCubeSettings(value),
     ...randomDifficulty,
@@ -672,6 +675,7 @@ export function createTimerStoreData(
       ...normalizeTimerDisplaySettings(),
       ...normalizeTimerPreScrambleSettings(),
       ...normalizeTimerSoundSettings(),
+      ...normalizeTimerMetronomeSettings(),
       ...normalizeTimerTrainingSettings(),
       ...DEFAULT_TIMER_TIMING_SETTINGS,
       ...DEFAULT_TIMER_SMART_CUBE_SETTINGS,

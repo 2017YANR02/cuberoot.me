@@ -19,6 +19,7 @@ import {
   TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
   TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
   TIMER_SOUND_SETTING_FIELD_IDS,
+  TIMER_METRONOME_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 import {
@@ -43,6 +44,7 @@ describe('Mobile timer settings parity ledger', () => {
       ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
       ...TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
       ...TIMER_SOUND_SETTING_FIELD_IDS,
+      ...TIMER_METRONOME_SETTING_FIELD_IDS,
     ]);
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
       'settings.appearance.scramble-click-action',

@@ -1,6 +1,7 @@
 import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerSoundSettings } from '@cuberoot/shared/timer';
-import { TimerSoundSettings } from '@cuberoot/timer-ui';
+import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { createMetronome } from '@cuberoot/timer-ui/metronome';
 import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import type { TimerSettingsUpdate } from './data/timer-repository';
@@ -529,10 +530,20 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
-  const timerSound = useMemo(() => createTimerSound(() => normalizeTimerSoundSettings(storeRef.current?.settings)), []);
+  const timerSound = useMemo(() => createTimerSound(() => ({
+    ...normalizeTimerSoundSettings(storeRef.current?.settings),
+    inspectionBeepAt: storeRef.current?.settings.inspectionBeepAt ?? [],
+  })), []);
+  const metronome = useMemo(() => createMetronome(), []);
+  useEffect(() => metronome.attach(), [metronome]);
+  useEffect(() => { metronome.setMetronome({ bpm: store?.settings.metronomeBpm ?? 120 }); }, [metronome, store?.settings.metronomeBpm]);
   const onTimerSoundTransition = useTimerSoundFeedback(timerSound);
   useEffect(() => {
-    const warm = () => { if (storeRef.current?.settings.soundsEnabled) timerSound.warmupSound(); };
+    const warm = () => {
+      const settings = storeRef.current?.settings;
+      if (settings?.soundsEnabled || settings?.inspectionBeepAt.length) timerSound.warmupSound();
+      if (settings?.metronomeOn) metronome.warmup();
+    };
     window.addEventListener('pointerdown', warm, true);
     window.addEventListener('keydown', warm, true);
     return () => {
@@ -540,7 +551,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       window.removeEventListener('keydown', warm, true);
       timerSound.dispose();
     };
-  }, [timerSound]);
+  }, [timerSound, metronome]);
   const [lastResult, setLastResult] = useState<SolveResult | null>(null);
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   const [recapSolveId, setRecapSolveId] = useState<string | null>(null);
@@ -2773,6 +2784,11 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
   }, [connectSmartCube, scanSmartCubes, smartCube]);
 
+  useEffect(() => {
+    metronome.setMetronomeHold('timer', timerMode === 1 && !!store?.settings.metronomeOn
+      && (timer.machine.phase === 'inspecting' || timer.machine.phase === 'running'));
+  }, [metronome, store?.settings.metronomeOn, timer.machine.phase, timerMode]);
+
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
     : timer.machine.lastMs ?? 0;
@@ -4761,6 +4777,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
             </>}
             {settingsCategory === 'sound' && <TimerSoundSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} voiceAvailable={timerSound.isVoiceAvailable()} onWarmup={timerSound.warmupSound} onPreview={() => timerSound.play('start')} />}
+            {settingsCategory === 'sound' && <TimerMetronomeSettings value={store!.settings} bpm={store!.settings.metronomeBpm} onChange={updateSettings} onBpmChange={metronomeBpm => updateSettings({ metronomeBpm })} onTap={metronome.tapTempo} onWarmup={timerSound.warmupSound} onPreviewBeep={timerSound.playInspectionBeep} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <TimerKeymapSettings value={store!.settings.keymap} onChange={update => updateSettings(current => ({ keymap: update(current.keymap) }))} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <>
             <div className="settings-section">

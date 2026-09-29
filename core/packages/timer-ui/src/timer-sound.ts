@@ -23,7 +23,7 @@ export type Cue =
   /** Solve was a +2 or DNF (penalty audible cue) */
   | 'penalty';
 
-export function createTimerSound(getSettings: () => TimerSoundSettings) {
+export function createTimerSound(getSettings: () => TimerSoundSettings & { inspectionBeepAt?: readonly number[] }) {
   const voice = createTimerVoice(getSettings);
   const { isVoiceAvailable, speakInspectionCue } = voice;
   let _ctx: AudioContext | null = null;
@@ -122,6 +122,7 @@ export function createTimerSound(getSettings: () => TimerSoundSettings) {
   }
   return {
     play, playInspectionBeep, warmupSound, ...voice,
+    getInspectionBeepAt: () => getSettings().inspectionBeepAt ?? [],
     dispose() {
       voice.cancelVoice();
       const current = _ctx;
