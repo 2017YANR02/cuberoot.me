@@ -328,3 +328,5 @@ export { useTimerRound } from './useTimerRound';
 export { TimerKeymapSettings, TIMER_KEYMAP_SETTING_FIELD_IDS } from './TimerKeymapSettings';
 
 export * from './TimerDisplaySettings';
+export { default as CubeOrientationSelect } from './CubeOrientationSelect';
+export * from './TimerPreScrambleSettings';

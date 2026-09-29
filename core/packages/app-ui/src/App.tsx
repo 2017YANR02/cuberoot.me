@@ -1,4 +1,5 @@
-import { TimerDisplaySettings } from '@cuberoot/timer-ui';
+import { TimerDisplaySettings, TimerPreScrambleSettings } from '@cuberoot/timer-ui';
+import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import type { TimerSettingsUpdate } from './data/timer-repository';
 import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
@@ -3991,7 +3992,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     ariaLabel={copy.cubeState}
                     event={activeEvent}
                     fill
-                    scramble={scramble}
+                    scramble={applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))}
                     visualization={store!.settings.prefer3D ? '3D' : '2D'}
                   />
                 ) : undefined}
@@ -4584,8 +4585,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
             onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
             categories={[
-              'timer', 'smart-cube', 'training', 'appearance', 'data', 'advanced',
-              ...(activeEvent !== '222' || scrambleSource === 'wca' ? ['scramble' as const] : []),
+              'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'data', 'advanced',
             ]}>
             {settingsCategory === 'appearance' && <>
             <div className="settings-group">
@@ -4717,6 +4717,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
+            {settingsCategory === 'scramble' && <TimerPreScrambleSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
             {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 
             {settingsCategory === 'appearance' && <>

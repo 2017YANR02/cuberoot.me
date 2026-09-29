@@ -1594,6 +1594,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared shortcut capture, reserved-key feedback, unbinding and reset. Escape cancels capture; hosts apply changes to their latest preferences.',
   },
   {
+    name: 'CubeOrientationSelect / TimerPreScrambleSettings',
+    import: "import { CubeOrientationSelect, TimerPreScrambleSettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用 24 档朝向及双色预览；普通与训练预朝向独立保存，仅作用于打乱图。',
+    en: 'Shared 24-orientation picker with color chips. Ordinary and training preferences are independent and affect only the scramble preview.',
+  },
+  {
     name: 'TimerDisplaySettings / TimerTypographySettings',
     import: "import { TimerDisplaySettings, TimerTypographySettings } from '@cuberoot/timer-ui';",
     category: 'more',
