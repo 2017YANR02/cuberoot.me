@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / W / bin 10
-# Population in this bin: 360
+# Population in this bin: 362
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 37618001,U' B2 D' L F' D' R' U R U' F2 U F2 D L2 F2 U B2 L2 D,W,Welcome To Cambridge 2014 (2014-07-12~13),333oh R1 B #3
@@ -152,7 +152,7 @@
 1815775001,D R2 B2 D2 R2 B2 R U' L' D B F2 D B' D' B2 L',W,Ixchel 2022 (2022-02-19),333oh R1 A #2
 5113959001,U R' F2 L2 D2 B' R2 F2 L2 R B' F D' B R B2 F' L',W,PUCP Cubing Festival VII 2025 (2025-10-19),333oh R1 A E2
 1882653001,F' D' R2 B2 U2 F' L B D2 L D2 B2 L' D2 R' B2 R' B',W,San Diego Spring 2022 (2022-04-16),333 R1 B E2
-1883901001,F' U' B2 U2 F B' L' B U F D2 L F2 D2 B2 L2 D2 L2,W,Aficube B 2022 (2022-04-19~20),333 R1 D #5
+5844142001,D F R2 B' U2 B2 F D2 L F U2 L2 D2 U' B' U' R2 D',W,Ribeirão ao Cubo 2026 (2026-09-19~20),333 R2 A #3
 1885178001,L2 U2 F2 R B2 F2 L' B2 U2 F L2 D' F' D2 F' D2 R' B L,W,Aficube A 2022 (2022-04-17~18),333 R1 A #2
 5122610001,U' B' R B R F2 D B' U2 B U R2 U B2 U' D2 B2,W,Glasgow Favourites Evening IV 2025 (2025-10-24),333 Final A #2
 1904945001,R' F2 L2 F' D B' U B R' F2 R2 F2 D' L2 U' R2 D L2 B2,W,Bulldog Spring 2022 (2022-04-30),333 R2 A E2

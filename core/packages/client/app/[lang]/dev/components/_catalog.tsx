@@ -836,8 +836,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'ChatPanel',
     import: "import { ChatPanel, useChat } from '@cuberoot/app-ui/chat';",
     category: 'more',
-    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、纯文本消息、失败重试和可见性已读，宿主注入鉴权传输、语言和身份组件。样式从 @cuberoot/app-ui/chat.css 引入。',
-    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, plain-text messages, retry and visible-message read receipts. Hosts inject transport, language and identity rendering; import @cuberoot/app-ui/chat.css for styles.',
+    zh: '好友聊天共享面板与 useChat 生命周期 hook；共享会话、文字与系统 emoji、图片表情包上传收藏、失败重试和可见性已读，宿主注入鉴权传输、语言、身份组件和内置表情清单（微信及已解锁的捉虫素材）。提供紧凑输入栏、最近使用、表情搜索和宿主功能面板插槽；Web 接视频邀请、音乐分享和语音输入。样式从 @cuberoot/app-ui/chat.css 引入。',
+    en: 'Shared friend chat panel and useChat lifecycle hook: conversations, text and native emoji, uploaded sticker favorites, retry and visible-message read receipts. Hosts inject transport, language, identity rendering and built-in expression catalogs (WeChat and unlocked pets); Compact composer, recent expressions, search and host action slots support Web meeting invites, music sharing and dictation; import @cuberoot/app-ui/chat.css for styles.',
   },
   {
     name: 'RecordSectionsView',
@@ -2858,6 +2858,13 @@ export const CATALOG: ComponentEntry[] = [
       zh: `刻意不放 hooks/:这是可供命令式嵌入调用的普通函数。调用方一律 await import() 本模块,three 才不会进首包。measure(host) 覆盖画布尺寸(PLL 浮层的立方体只占舞台一小块),onRendered(world) 给跟着主视图一起画的第二个渲染器(recon 的 backView 小窗)。交互式 WebGL 嵌入已统一复用本生命周期;EnginePuzzleSVG 不属于嵌入器,只调用 puzzle-render-core 的无头 SVG API。`,
       en: `Deliberately not in hooks/: this is a plain function for imperative embedders. Callers should await import() so three stays out of the initial bundle. measure(host) overrides the canvas size when the cube occupies only part of the stage, while onRendered(world) drives a second renderer such as recon's back-view inset. Interactive WebGL embedders now share this lifecycle; EnginePuzzleSVG is not an embedder and only calls the headless SVG API from puzzle-render-core.`,
     },
+  },
+  {
+    name: 'SiteAssistantDialog',
+    import: "import SiteAssistantDialog from '@/components/SiteAssistantDialog';",
+    category: 'more',
+    zh: '站内连续对话：真实数据表、PR 曲线、来源、语音和停止请求。',
+    en: 'Site conversation with evidence tables, PR charts, sources, voice input and cancellation.',
   },
   {
     name: 'SimStage',

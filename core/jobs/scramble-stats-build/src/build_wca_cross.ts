@@ -13,6 +13,7 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import YAML from 'yaml';
+import { taskProgress } from './task_progress.js';
 import { makeRng } from './prng';
 import { dateDisplay } from './comp_date';
 
@@ -96,9 +97,12 @@ async function main() {
     if (!fs.existsSync(p)) throw new Error(`missing ${label}: ${p}`);
   }
 
+  const report = taskProgress('十字样例', 4);
+  report(0);
   console.log('loading scramble map...');
   const scrambleMap = await loadScrambleMap(scramblesTxt);
   console.log(`  ${scrambleMap.size} scrambles`);
+  report(1);
 
   // reservoir per color per bin
   const res: Record<string, Map<number, Reservoir>> = {};
@@ -129,9 +133,10 @@ async function main() {
       if (!bin) { bin = { samples: [], seen: 0 }; res[c].set(v, bin); }
       resAdd(bin, id);
     }
-    if (++rows % 200000 === 0) process.stdout.write(`  ${rows} rows\r`);
+    rows++;
   }
   console.log(`  ${rows} rows`);
+  report(2);
 
   // collect needed ids
   const needed = new Set<string>();
@@ -140,6 +145,7 @@ async function main() {
   const scrMeta = await loadScrMeta(metaCsv, needed);
   const compMeta = await loadCompMeta(compTsv);
   console.log(`  ${scrMeta.size} scramble meta, ${compMeta.size} competitions`);
+  report(3);
 
   const outDir = path.join(repoRoot, 'stats', 'scramble', 'wca_cross');
   fs.mkdirSync(outDir, { recursive: true });
@@ -167,6 +173,7 @@ async function main() {
     console.log(`  wrote ${c}.json (${(json.length / 1024).toFixed(1)} KB, ${bins.length} bins)`);
   }
   console.log(`done -> ${outDir} (${(totalBytes / 1024).toFixed(1)} KB total)`);
+  report(4);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

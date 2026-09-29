@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, User, type LucideIcon } from 'lucide-react';
+import { ArrowRight, Crown, Heart, Lock, LockOpen, LogIn, Play, User, type LucideIcon } from 'lucide-react';
 import { closestCenter, DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, rectSortingStrategy, SortableContext } from '@dnd-kit/sortable';
 import Link from '@/components/AppLink';
@@ -389,6 +389,11 @@ export default function LandingPage() {
         <span className="brand-name">{t('brand')}</span>
       </div>
       <LandingSearch cards={searchCards} lang={lang} autoFocus />
+      <Link href="/sim/agents" className="landing-featured-news" prefetch={false}>
+        <Play className="landing-featured-news-icon" size={15} aria-hidden="true" />
+        <span className="landing-featured-news-body">{tr({ zh: '一起，解开魔方。看四个代理并行尝试。', en: 'A puzzle. A team. Watch four agents explore together.' })}</span>
+        <ArrowRight className="landing-featured-news-arrow" size={16} aria-hidden="true" />
+      </Link>
       {user?.wcaId && <PersonUpcomingComps wcaId={user.wcaId} isZh={lang === 'zh'} />}
       {featuredNotice && featuredNotice.href && (() => {
         const FeaturedIcon = iconFor(featuredNotice);
@@ -469,6 +474,20 @@ export default function LandingPage() {
         {renderMemberSections()}
       </div>
 
+      {isAdmin && (
+        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
+          <div className="cards-section">
+            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
+            <div className="cards-container">
+              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
+              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
+              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
+            </div>
+          </div>
+          {renderMemberSections(true)}
+        </section>
+      )}
+
       <div className="footer">
         {/* allow-nested-link: footer entries are sibling links with text-only contents. */}
         <Link href={ABOUT_FOOTER_ENTRY.href} className="footer-about" prefetch={false}>
@@ -511,19 +530,6 @@ export default function LandingPage() {
             沪公网安备31010902100930号
           </a>
         </div>
-      )}
-      {isAdmin && (
-        <section id="landing-admin-content" className="cards-sections" aria-labelledby="landing-admin-title">
-          <div className="cards-section">
-            <h2 id="landing-admin-title" className="section-title-serif">{tr({ zh: '仅管理员可见', en: 'Administrators only' })}</h2>
-            <div className="cards-container">
-              {renderCardGrid('main', PRIMARY_CARDS, 'landing-admin-card-group', true)}
-              {renderCardGrid('wca', WCA_CARDS, 'landing-admin-card-group', true)}
-              {SECTIONS.map((sec) => renderCardGrid(sec.id, sec.cards, 'landing-admin-card-group', true))}
-            </div>
-          </div>
-          {renderMemberSections(true)}
-        </section>
       )}
     </div>
   );

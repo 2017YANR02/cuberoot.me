@@ -16,7 +16,7 @@
     "dev:clean": "node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && node scripts/predev-clean.mjs --wipe-next && next dev -H 127.0.0.1 -p 3000",
     "dev:safe": "node scripts/dev-safe.mjs",
     "build:deps": "pnpm --filter @cuberoot/shared build && pnpm --filter @cuberoot/visualcube build && pnpm --filter @cuberoot/vendor-sr-puzzlegen build && pnpm --filter @cuberoot/puzzle-render-core build && pnpm --filter @cuberoot/puzzle-solvers build",
-    "build": "pnpm run build:deps && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build",
+    "build": "pnpm run build:deps && node ../../scripts/build-cubing-worker.mjs packages/client/public/cubing-chunks && next build && tsx scripts/build-assistant-index.ts",
     "start": "next start -H 127.0.0.1 -p 3000",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
@@ -35,12 +35,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@cuberoot/app-ui": "workspace:*",
     "@airwallex/components-sdk": "^1.35.1",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/language": "^6.12.3",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.43.0",
+    "@cuberoot/app-ui": "workspace:*",
     "@cuberoot/event-icon": "workspace:*",
     "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",
@@ -122,6 +122,7 @@
     "remark-directive": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "scramble-display": "^0.59.1",
+    "server-only": "^0.0.1",
     "sql.js": "^1.14.2",
     "sr-visualizer": "^1.0.13",
     "svg2pdf.js": "^2.7.0",
@@ -152,6 +153,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^17.7.0",
     "jsdom": "^30.0.1",
+    "linkedom": "0.18.12",
     "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vitest": "^4.1.6"

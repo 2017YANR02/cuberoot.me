@@ -1,0 +1,281 @@
+{
+  "verifiedAt": "2026-09-29T04:32:39.420Z",
+  "surface": "Local answerSiteQuestion with real DeepSeek and public data; no production quota, authentication or browser path",
+  "provider": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "thinking": "disabled",
+  "questionCount": 3,
+  "modelCalls": 7,
+  "results": [
+    {
+      "smoke": true,
+      "question": "现在三阶单次和平均世界纪录分别是多少？",
+      "ms": 4368,
+      "result": {
+        "answer": "截至2026年9月29日，三阶单次世界纪录为2.76秒（Teodor Zajder），平均世界纪录为3.51秒（王艺衡）。",
+        "sources": [
+          {
+            "id": "records:world:333",
+            "title": "WCA 纪录",
+            "href": "/wca/records?show=current&region=world&event=333",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "当前纪录",
+            "columns": [
+              "类型",
+              "成绩",
+              "选手",
+              "WCA ID",
+              "比赛",
+              "日期"
+            ],
+            "rows": [
+              [
+                "单次",
+                "2.76",
+                "Teodor Zajder",
+                "2021ZAJD03",
+                "GLS Big Cubes Gdańsk",
+                "2026-02-07"
+              ],
+              [
+                "平均",
+                "3.51",
+                "王艺衡",
+                "2019WANY36",
+                "合肥三阶联赛 III",
+                "2026-06-17"
+              ]
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "status": 200,
+          "ms": 1251,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2124,
+            "completion_tokens": 26,
+            "total_tokens": 2150,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "prompt_cache_hit_tokens": 0,
+            "prompt_cache_miss_tokens": 2124
+          },
+          "thinking": false
+        },
+        {
+          "status": 200,
+          "ms": 1040,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2330,
+            "completion_tokens": 60,
+            "total_tokens": 2390,
+            "prompt_tokens_details": {
+              "cached_tokens": 896
+            },
+            "prompt_cache_hit_tokens": 896,
+            "prompt_cache_miss_tokens": 1434
+          },
+          "thinking": false
+        }
+      ]
+    },
+    {
+      "smoke": true,
+      "question": "查看复盘 2763：成绩、步数、TPS 和原始解法是什么？",
+      "ms": 4358,
+      "result": {
+        "answer": "复盘 2763 是 Michael Liubarets 于 2026-09-27 在练习（Home）中完成的 3x3 单次 4.72 秒，采用 CFOP，STM 50 步、TPS 10.59，解法与打乱见下表。",
+        "sources": [
+          {
+            "id": "recon:2763",
+            "title": "复盘",
+            "href": "/recon/2763",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "原始复盘步骤",
+            "columns": [
+              "步骤",
+              "原始记号与注释"
+            ],
+            "rows": [
+              [
+                "1",
+                "z2 // insp"
+              ],
+              [
+                "2",
+                "D' F D L D' // W cross"
+              ],
+              [
+                "3",
+                "R U' R' U R U' R' U R' U' R // OB"
+              ],
+              [
+                "4",
+                "U' R U R' L U' L' // RB"
+              ],
+              [
+                "5",
+                "y' U' R' U R U' R' U R // GO"
+              ],
+              [
+                "6",
+                "R U' R' U R U2 R2 F R F' // GR/ZBLS"
+              ],
+              [
+                "7",
+                "U2 R' F' r U R U' r' F // ZBLL-T6 "
+              ]
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "status": 200,
+          "ms": 804,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2130,
+            "completion_tokens": 24,
+            "total_tokens": 2154,
+            "prompt_tokens_details": {
+              "cached_tokens": 896
+            },
+            "prompt_cache_hit_tokens": 896,
+            "prompt_cache_miss_tokens": 1234
+          },
+          "thinking": false
+        },
+        {
+          "status": 200,
+          "ms": 993,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2187,
+            "completion_tokens": 24,
+            "total_tokens": 2211,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024
+            },
+            "prompt_cache_hit_tokens": 1024,
+            "prompt_cache_miss_tokens": 1163
+          },
+          "thinking": false
+        },
+        {
+          "status": 200,
+          "ms": 1365,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2493,
+            "completion_tokens": 85,
+            "total_tokens": 2578,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024
+            },
+            "prompt_cache_hit_tokens": 1024,
+            "prompt_cache_miss_tokens": 1469
+          },
+          "thinking": false
+        }
+      ]
+    },
+    {
+      "smoke": true,
+      "question": "打破世界纪录次数最多的五位选手是谁？",
+      "ms": 3561,
+      "result": {
+        "answer": "已列出“个人世界纪录数量”的 5 项查询结果。",
+        "sources": [
+          {
+            "id": "stat:world_records_by_person",
+            "title": "选手世界纪录数",
+            "href": "/wca/world_records_by_person",
+            "read": true
+          }
+        ],
+        "artifacts": [
+          {
+            "kind": "table",
+            "title": "个人世界纪录数量",
+            "columns": [
+              "世界纪录数",
+              "选手"
+            ],
+            "rows": [
+              [
+                "121",
+                "Feliks Zemdegs"
+              ],
+              [
+                "92",
+                "Max Park"
+              ],
+              [
+                "33",
+                "Erik Akkersdijk"
+              ],
+              [
+                "31",
+                "Stanley Chapel"
+              ],
+              [
+                "27",
+                "林恺俊"
+              ]
+            ]
+          }
+        ]
+      },
+      "calls": [
+        {
+          "status": 200,
+          "ms": 1048,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2121,
+            "completion_tokens": 28,
+            "total_tokens": 2149,
+            "prompt_tokens_details": {
+              "cached_tokens": 896
+            },
+            "prompt_cache_hit_tokens": 896,
+            "prompt_cache_miss_tokens": 1225
+          },
+          "thinking": false
+        },
+        {
+          "status": 200,
+          "ms": 1282,
+          "model": "deepseek-flash",
+          "usage": {
+            "prompt_tokens": 2525,
+            "completion_tokens": 87,
+            "total_tokens": 2612,
+            "prompt_tokens_details": {
+              "cached_tokens": 1024
+            },
+            "prompt_cache_hit_tokens": 1024,
+            "prompt_cache_miss_tokens": 1501
+          },
+          "thinking": false
+        }
+      ]
+    }
+  ]
+}

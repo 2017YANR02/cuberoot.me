@@ -38,6 +38,9 @@
         "ios/App/App/public/**"
       ]
     },
+    "packages/app-ui": {
+      "entry": ["src/**/*.test.{ts,tsx}", "tests/**/*.test.{ts,tsx}"]
+    },
     "packages/event-icon": {
       "entry": ["*.mjs"]
     },

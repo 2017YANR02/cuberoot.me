@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_cross / BGWY / bin 2
-# Population in this bin: 600
+# Population in this bin: 601
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5392183001,R F' L U F2 U' R2 B2 U B2 U F' L' B2 D' F D2,G,Melbourne Summer 2026 (2026-01-24~26),333 R1 E E1
@@ -13,7 +13,7 @@
 5634398032,L U R2 F2 R2 F2 D F2 D2 L2 F2 B' U' L' B2 D2 L D' R D2 B R,G,Please Don't DNF Beijing 2026 (2026-05-16~17),333mbf Final A #2
 1348334001,L' D F2 U L' D' F2 R2 L B2 R2 D2 B2 U2 B2 D',Y,Dutch Open 2019 (2019-10-12~13),333oh Final B #3
 121646001,D2 R' L D' R U2 R2 U2 R2 F' L2 D' F2 U' B2 U R2 U B2,B,Atlantic Open 2015 (2015-03-28),333 Final B #2
-5750761001,R B U L2 U2 L2 F R2 B D2 U F' L' U B2 D U R2,W,GAN New Zealand Nationals 2026 (2026-07-10~12),333oh R2 A #4
+5842662001,L F2 U' R D2 R2 B F' R2 U2 B' L B2 L U' R F' R',G,New Cubing Season Athens A 2026 (2026-09-19),333 R1 A #5
 137365001,F2 L B2 R2 F2 R D2 R2 U2 R' B D R2 U' F D2 U' B D F2,B,Mega Rubik 2015 (2015-05-02~03),333oh Final A #3
 5780705001,B2 R L2 B D2 B F2 L2 R2 U F L' U' L' R' F R2 F',B,Shin Kong Cube Open - New Taipei 2026 (2026-08-09),333 R2 F #2
 5721512029,B2 D' F2 R D2 L2 D' R F' D2 B' L2 D2 F2 L2 F' U2 F' D2 B',B,Blind League Dobřejovice III: Brightscript 2026 (2026-06-27),333mbf Final A #2

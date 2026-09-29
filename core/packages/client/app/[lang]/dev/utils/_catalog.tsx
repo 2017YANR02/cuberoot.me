@@ -273,11 +273,11 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useSpeechToText',
-    sig: 'useSpeechToText({ lang, onResult }): { supported; listening; start; stop }',
+    sig: 'useSpeechToText({ lang, onResult }): { supported; listening; status; error; microphone; start; stop }',
     imp: "import { useSpeechToText } from '@/hooks/useSpeechToText';",
     category: 'hook',
-    zh: 'Web Speech API 语音转文字封装(Chrome / Edge / Safari,Firefox 不支持)。',
-    en: 'Web Speech API speech-to-text wrapper (Chrome/Edge/Safari; not Firefox).',
+    zh: 'Web Speech API 语音转文字封装。桌面 Chromium 135+ 显式使用系统默认麦克风并返回设备名，其他浏览器保留原生采音；提供状态、错误与超时反馈，停止或卸载时释放音轨。接口存在不代表识别服务可用。',
+    en: 'Web Speech API wrapper. Desktop Chromium 135+ explicitly uses the system default microphone and returns its label; other browsers retain native capture. Includes status, errors, timeouts and track cleanup. API presence does not guarantee service availability.',
   },
   {
     name: 'useLiveStream',

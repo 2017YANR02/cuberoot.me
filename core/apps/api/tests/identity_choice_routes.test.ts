@@ -4,10 +4,13 @@ const mocks = vi.hoisted(() => ({
   begin: vi.fn(), complete: vi.fn(), verifySession: vi.fn(), requireUid: vi.fn(),
   sign: vi.fn(), capture: vi.fn(), login: vi.fn(), verifyCode: vi.fn(), findUser: vi.fn(), addIdentity: vi.fn(), douyinExchange: vi.fn(), douyinAllied: vi.fn(), socialExchange: vi.fn(),
   migrateIdentity: vi.fn(), removeIdentity: vi.fn(), getUserById: vi.fn(), getIdentities: vi.fn(),
-  issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(), transaction: { fixture: true },
+  issueLinkCode: vi.fn(), previewLinkCode: vi.fn(), issueCode: vi.fn(), mergeAccounts: vi.fn(), transaction: { fixture: true },
   wechatPhoneBegin: vi.fn(), wechatExchange: vi.fn(), wechatPhoneExchange: vi.fn(),
 }));
-vi.mock('../src/db/connection.js', () => ({ query: vi.fn(), sql: {} }));
+vi.mock('../src/db/connection.js', () => ({ query: vi.fn(), sql: {}, transactionQuery: () => mocks.transaction }));
+vi.mock('../src/utils/account_merge.js', async (original) => ({
+  ...await original<typeof import('../src/utils/account_merge.js')>(), mergeAccounts: mocks.mergeAccounts,
+}));
 vi.mock('../src/utils/identity_choice.js', async (original) => {
   const actual = await original<typeof import('../src/utils/identity_choice.js')>();
   return { ...actual, beginIdentityLogin: mocks.begin, beginWechatPhoneIdentityLogin: mocks.wechatPhoneBegin, completeIdentityChoice: mocks.complete,
@@ -50,6 +53,7 @@ import { accountAuthRoutes } from '../src/routes/account_auth.js';
 import { authRoutes } from '../src/routes/auth.js';
 import { IdentityChoiceError } from '../src/utils/identity_choice.js';
 import { IdentityNotFoundError } from '../src/utils/account.js';
+import { AccountMergeError } from '../src/utils/account_merge.js';
 import { WechatMiniProgramError } from '../src/utils/wechat_miniprogram.js';
 const app = new Hono().route('/v1', accountAuthRoutes).route('/v1', authRoutes);
 const ticket = 'A'.repeat(43);
@@ -77,6 +81,7 @@ beforeEach(() => {
   mocks.issueLinkCode.mockResolvedValue({ linkCode: '123456', expiresInSeconds: 600 });
   mocks.previewLinkCode.mockResolvedValue({ user: { id: 42, displayName: 'Target' } });
   mocks.issueCode.mockResolvedValue({ code: '123456' });
+  mocks.mergeAccounts.mockResolvedValue(undefined);
   mocks.wechatExchange.mockResolvedValue({ openid: 'verified-openid', unionid: 'verified-unionid' });
   mocks.wechatPhoneExchange.mockResolvedValue('+8613800138000');
   mocks.wechatPhoneBegin.mockResolvedValue({ ...choice, pending: { ...choice.pending, provider: 'wechat', phoneAccount: { id: 42, displayName: 'Target' } } });
@@ -234,7 +239,7 @@ describe('unified provider account-choice routes', () => {
     expect(response.status).toBe(409);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect(await response.json()).toEqual(choice);
-    if (provider === 'email') expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ provider }), { transaction: mocks.transaction });
+    if (provider === 'email' || provider === 'phone') expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ provider }), { transaction: mocks.transaction });
     else expect(mocks.begin).toHaveBeenCalledWith(expect.objectContaining({ provider }));
     expect(mocks.login).not.toHaveBeenCalled();
     expect(mocks.sign).not.toHaveBeenCalled();
@@ -296,7 +301,7 @@ describe('unified provider account-choice routes', () => {
     const response = await post(path as string, { ...body as object, existingOnly: true });
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'account not found' });
-    expect(mocks.login.mock.calls[0][4]).toEqual({ createIfMissing: false, ...(_provider === 'email' ? { transaction: mocks.transaction } : {}) });
+    expect(mocks.login.mock.calls[0][4]).toEqual({ createIfMissing: false, transaction: mocks.transaction });
     expect(mocks.sign).not.toHaveBeenCalled();
   });
   it.each([
@@ -394,6 +399,25 @@ describe('unified provider account-choice routes', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ code: '42-123456', expiresInSeconds: 600 });
     expect(mocks.issueCode).toHaveBeenCalledWith('merge', '42', 'account_merge');
+    expect(mocks.sign).not.toHaveBeenCalled();
+  });
+  it('uses one proof transaction for merge and signs only after it commits', async () => {
+    mocks.requireUid.mockResolvedValue(42);
+    const response = await post('/auth/account/merge', { code: '55-123456', expectedSourceUid: 42 }, 'jwt');
+
+    expect(response.status).toBe(200);
+    expect(mocks.mergeAccounts).toHaveBeenCalledWith(42, 55, mocks.transaction);
+    expect(mocks.sign).toHaveBeenCalledTimes(1);
+
+    mocks.mergeAccounts.mockClear(); mocks.sign.mockClear();
+    mocks.verifyCode.mockResolvedValue(false);
+    expect((await post('/auth/account/merge', { code: '55-123456', expectedSourceUid: 42 }, 'jwt')).status).toBe(400);
+    expect(mocks.mergeAccounts).not.toHaveBeenCalled();
+    expect(mocks.sign).not.toHaveBeenCalled();
+
+    mocks.verifyCode.mockResolvedValue(true);
+    mocks.mergeAccounts.mockRejectedValue(new AccountMergeError('credential_conflict'));
+    expect((await post('/auth/account/merge', { code: '55-123456', expectedSourceUid: 42 }, 'jwt')).status).toBe(409);
     expect(mocks.sign).not.toHaveBeenCalled();
   });
 });

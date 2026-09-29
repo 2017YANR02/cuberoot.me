@@ -21,3 +21,15 @@ export const EVENT_DISPLAY_ZH: Record<string, string> = {
   // 非 WCA cubing.com 自定义项目
   'funny': '趣味',
 };
+
+export const EVENT_DISPLAY_EN: Record<string, string> = {
+  '333': '3×3', '222': '2×2', '444': '4×4', '555': '5×5', '666': '6×6', '777': '7×7',
+  '333bf': '3BLD', '444bf': '4BLD', '555bf': '5BLD', '333mbf': 'MBLD',
+  '333oh': 'OH', '333fm': 'FMC', '333ft': 'Feet',
+  'minx': 'Mega', 'pyram': 'Pyra', 'clock': 'Clock', 'skewb': 'Skewb', 'sq1': 'SQ1',
+  'magic': 'Magic', 'mmagic': 'M.Magic', '333mbo': 'MBO',
+  // 非 WCA(cubing.js twizzleEvents)
+  'fto': 'FTO', 'master_tetraminx': 'Master Tetra', 'kilominx': 'Kilominx', 'redi_cube': 'Redi', 'baby_fto': 'Baby FTO',
+  // 非 WCA cubing.com 自定义项目
+  'funny': 'Funny',
+};

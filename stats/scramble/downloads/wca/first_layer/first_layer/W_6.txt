@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / W / bin 6
-# Population in this bin: 247
+# Population in this bin: 248
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 67382001,F U2 B' R2 D2 L2 F D2 B' L U B D U' L' D B U2 B2,W,DJ Open 2014 (2014-10-18~19),333oh R1 D E2
@@ -22,7 +22,7 @@
 5217967001,F R L2 D' F2 U' B2 D' U' F' U' R U B' R' F D2 U2,W,Belgian Nationals 2025 (2025-11-22~23),333 R2 A #2
 263703001,F2 D2 F2 U2 L2 R' B2 R B' R B2 U R B U2 B2 U2 L2 U2,W,Indian Open Rubik's Cube 2016 (2016-03-04~06),333oh Final B E2
 283319001,D' R2 B2 R2 D R2 B2 D2 U' R2 F L' F' D2 B2 F' L' D,W,GLS Cup II 2016 (2016-04-16),333 R2 D #2
-292088001,U' B2 R2 D2 U R2 U L2 F' D2 F2 D F' D2 L D2 L2 D R,W,CCC Spring Open 2016 (2016-04-29~05-01),333 R3 B #5
+5842724001,L F R2 U' B' L2 D' B L2 F' U2 R2 B R2 B2 D2 B' L' U,W,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #1
 295847001,R2 F2 L2 D2 B2 U R2 D L2 D2 B' F2 R D2 L' B D' R' B2 R',W,Sydney Autumn 2016 (2016-05-08),333 R2 B #3
 5775698001,D' R' D L U2 B2 D R2 D' B2 D R' F' U F U2 R',W,Mombasa Twist & Turn 2026 (2026-08-08),333 R1 A #2
 308453001,U2 F2 D2 R U2 B2 L' D' F L U' F2 R' D2 R' D F' R',W,IGA Rubik 2016 (2016-05-28),333 R1 C #4
