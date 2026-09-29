@@ -41,6 +41,13 @@ export function addDaysToKey(key: string, days: number): string {
   return `${t.getUTCFullYear()}-${String(t.getUTCMonth() + 1).padStart(2, '0')}-${String(t.getUTCDate()).padStart(2, '0')}`;
 }
 
+/** 默认时长仅用于单击新建；全天按所在时区的日历日计算，兼容夏令时。 */
+export function defaultEventEnd(start: number, allDay: boolean, minutes: number, tz: string): number {
+  return allDay
+    ? dayStart(tz, addDaysToKey(dayKeyIn(tz, start), 1))
+    : start + minutes * 60_000;
+}
+
 /** `HH:mm` / `h:mm AM`,按用户的 24 小时制偏好。 */
 export function formatClock(ms: number, tz: string, hour24: boolean, isZh: boolean): string {
   return new Intl.DateTimeFormat(isZh ? 'zh-CN' : 'en-US', {
@@ -99,6 +106,7 @@ export interface FcEvent {
     invited: boolean;
     rsvp: string;
     busy: boolean;
+    competitionId?: string;
   };
 }
 

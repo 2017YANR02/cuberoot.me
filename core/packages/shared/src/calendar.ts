@@ -20,7 +20,7 @@ import { WEEKDAY_CODES, daysInMonth, weekdayOf } from './recur';
 export interface CalendarMeta {
   id: number;
   name: string;
-  /** 调色板 key,见 CALENDAR_COLORS */
+  /** 调色板 key 或精确的六位十六进制颜色。 */
   color: string;
   /** 该日历的缺省时区 */
   tz: string;
@@ -107,15 +107,19 @@ export interface ShareSettings {
   tz: string;
 }
 
-/** 日历配色(Google 那套的近似;真正的色值在 client 的 calendar-colors.ts 里按主题 token 落地)。 */
+/** 内置日历配色；外部来源还可保存精确 hex，不近似映射到调色板。 */
 export const CALENDAR_COLORS = [
   'peacock', 'blueberry', 'lavender', 'grape', 'flamingo',
   'tomato', 'tangerine', 'banana', 'sage', 'basil', 'graphite',
 ] as const;
 export type CalendarColor = (typeof CALENDAR_COLORS)[number];
 
-export function isCalendarColor(v: string): v is CalendarColor {
-  return (CALENDAR_COLORS as readonly string[]).includes(v);
+export function isCalendarHexColor(v: string): v is `#${string}` {
+  return /^#[\da-f]{6}$/i.test(v);
+}
+
+export function isCalendarColor(v: string): v is CalendarColor | `#${string}` | `google:#${string}` {
+  return (CALENDAR_COLORS as readonly string[]).includes(v) || isCalendarHexColor(v) || /^google:#[\da-f]{6}$/i.test(v);
 }
 
 /** 提醒可选项(分钟),与 Google 的下拉一致。 */
@@ -334,6 +338,7 @@ export function eventsToIcs(opts: IcsExportOptions): string {
     out.push(`SUMMARY:${esc(e.title || opts.busyLabel || '')}`);
     if (e.description) out.push(`DESCRIPTION:${esc(e.description)}`);
     if (e.location) out.push(`LOCATION:${esc(e.location)}`);
+    if (isCalendarColor(e.color)) out.push(`X-CUBEROOT-COLOR:${e.color}`);
     if (opts.busyLabel && !e.title) out.push('X-MICROSOFT-CDO-BUSYSTATUS:BUSY', 'CLASS:PRIVATE');
     const cat = opts.calendarName?.(e);
     if (cat) out.push(`CATEGORIES:${esc(cat)}`);
@@ -363,6 +368,10 @@ export function eventsToIcs(opts: IcsExportOptions): string {
 // ── ICS 输入 ────────────────────────────────────────────────────────────────
 
 export interface ParsedIcsEvent {
+  /** 缺省表示继承日历颜色；文件没提供时不能推断原配色。 */
+  color?: string;
+  /** 原文件指定被覆盖的那次发生，用于与来源 API 的重复实例精确关联。 */
+  recurrenceId?: number;
   title: string;
   description: string;
   location: string;
@@ -505,6 +514,8 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
             exdates: cur.exdates,
             reminders: [...new Set(cur.reminders)].sort((a, b) => a - b).slice(0, 5),
             uid: cur.uid || '',
+            ...(cur.color ? { color: cur.color } : {}),
+            ...(cur.recurrenceId != null ? { recurrenceId: cur.recurrenceId } : {}),
           };
           if (cur.recurrenceId != null) overrides.push({ at: cur.recurrenceId, uid: ev.uid, event: ev });
           else out.push(ev);
@@ -526,6 +537,12 @@ export function parseIcs(text: string, fallbackTz: string): ParsedIcsEvent[] {
     if (depth > 0) continue;
 
     switch (prop.name) {
+      case 'X-CUBEROOT-COLOR':
+      case 'COLOR': {
+        const value = prop.value.trim();
+        if (isCalendarColor(value)) cur.color = value;
+        break;
+      }
       case 'UID': cur.uid = prop.value.trim(); break;
       case 'STATUS': cur.cancelled = prop.value.trim().toUpperCase() === 'CANCELLED'; break;
       // RANGE=THISANDFUTURE(「这一次及以后」)按单次覆盖处理:那一次改对了,后面几次保持原样。
@@ -594,6 +611,19 @@ export function icsCalendarName(text: string): string {
     if (prop?.name === 'X-WR-CALNAME') return unescapeIcs(prop.value).trim().slice(0, 60);
     // 名字在头部;真进了 VEVENT 就别再往下翻整份文件了。
     if (prop?.name === 'BEGIN' && prop.value.trim().toUpperCase() === 'VEVENT') break;
+  }
+  return '';
+}
+
+/** 只读日历头的颜色，不能把第一条活动的颜色误当整个日历颜色。 */
+export function icsCalendarColor(text: string): string {
+  for (const line of unfold(text)) {
+    const prop = parseProp(line);
+    if (prop?.name === 'BEGIN' && prop.value.trim().toUpperCase() === 'VEVENT') break;
+    if (prop && ['X-CUBEROOT-COLOR', 'X-APPLE-CALENDAR-COLOR', 'COLOR'].includes(prop.name)) {
+      const value = prop.value.trim();
+      if (isCalendarColor(value)) return value;
+    }
   }
   return '';
 }

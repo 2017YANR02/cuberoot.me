@@ -1,41 +1,60 @@
 // /calendar 的事件配色 —— 用户手选的「数据色」,不是主题色,所以在这里定死 hex,
-// 深浅主题共用同一批色相(和 lib/cube-colors、bar-race-colors 同一路数)。
-// 主题相关的部分(块底色透明度、文字对比、边框)在 calendar.css 里用 color-mix 从这些
-// 色值派生,不在这里算,免得两套主题各留一份。
+// 深浅两组是 Google Calendar 现代配色的实际数据色，不受网站配色主题染色。
+// 2026-09-28 在 Google 活动颜色菜单逐项核对；不能用 API 的旧版 pastel 色值代替 UI 色值。
 //
 // 名字沿用 Google 日历那套(番茄 / 薰衣草 / 罗勒…),用户换过来不用重新认颜色。
 
 import type { CalendarColor } from '@cuberoot/shared/calendar';
+import { isCalendarHexColor } from '@cuberoot/shared/calendar';
 
 export interface ColorDef {
   key: CalendarColor;
   hex: string;
+  darkHex: string;
   zh: string;
   en: string;
 }
 
 export const CALENDAR_COLOR_DEFS: ColorDef[] = [
-  { key: 'peacock', hex: '#039be5', zh: '孔雀蓝', en: 'Peacock' },
-  { key: 'blueberry', hex: '#3f51b5', zh: '蓝莓', en: 'Blueberry' },
-  { key: 'lavender', hex: '#7986cb', zh: '薰衣草', en: 'Lavender' },
-  { key: 'grape', hex: '#8e24aa', zh: '葡萄', en: 'Grape' },
-  { key: 'flamingo', hex: '#e67c73', zh: '火烈鸟', en: 'Flamingo' },
-  { key: 'tomato', hex: '#d50000', zh: '番茄', en: 'Tomato' },
-  { key: 'tangerine', hex: '#f4511e', zh: '橘子', en: 'Tangerine' },
-  { key: 'banana', hex: '#f6bf26', zh: '香蕉', en: 'Banana' },
-  { key: 'sage', hex: '#33b679', zh: '鼠尾草', en: 'Sage' },
-  { key: 'basil', hex: '#0b8043', zh: '罗勒', en: 'Basil' },
-  { key: 'graphite', hex: '#616161', zh: '石墨', en: 'Graphite' },
+  { key: 'peacock', hex: '#039be5', darkHex: '#4b99d2', zh: '孔雀蓝', en: 'Peacock' },
+  { key: 'blueberry', hex: '#3f51b5', darkHex: '#6e72c3', zh: '蓝莓', en: 'Blueberry' },
+  { key: 'lavender', hex: '#7986cb', darkHex: '#828bc2', zh: '薰衣草', en: 'Lavender' },
+  { key: 'grape', hex: '#8e24aa', darkHex: '#a75aba', zh: '葡萄', en: 'Grape' },
+  { key: 'flamingo', hex: '#e67c73', darkHex: '#d6837a', zh: '火烈鸟', en: 'Flamingo' },
+  { key: 'tomato', hex: '#d50000', darkHex: '#da5234', zh: '番茄', en: 'Tomato' },
+  { key: 'tangerine', hex: '#f4511e', darkHex: '#e3683e', zh: '橘子', en: 'Tangerine' },
+  { key: 'banana', hex: '#f6bf26', darkHex: '#e7ba51', zh: '香蕉', en: 'Banana' },
+  { key: 'sage', hex: '#33b679', darkHex: '#55b080', zh: '鼠尾草', en: 'Sage' },
+  { key: 'basil', hex: '#0b8043', darkHex: '#489160', zh: '罗勒', en: 'Basil' },
+  { key: 'graphite', hex: '#616161', darkHex: '#7c7c7c', zh: '石墨', en: 'Graphite' },
 ];
 
 const BY_KEY = new Map(CALENDAR_COLOR_DEFS.map((c) => [c.key as string, c]));
 
-/** 色值;认不出的 key 退回孔雀蓝(库里存的是枚举,只有脏数据会走到这)。 */
-export function colorHex(key: string): string {
-  return BY_KEY.get(key)?.hex ?? CALENDAR_COLOR_DEFS[0].hex;
+/** Google modern 24-color labels, verified in both menus. Prefix distinguishes source colors from custom hex. */
+export const GOOGLE_LABEL_COLORS: Record<string, string> = {
+  '#ad1457': '#c05476', '#d81b60': '#d85675', '#e67c73': '#d6837a', '#d50000': '#da5234',
+  '#f4511e': '#e3683e', '#ef6c00': '#dd7835', '#f09300': '#e0963c', '#f6bf26': '#e7ba51',
+  '#e4c441': '#d8be5e', '#c0ca33': '#bcc256', '#7cb342': '#85ad59', '#0b8043': '#489160',
+  '#33b679': '#55b080', '#009688': '#429a8e', '#039be5': '#4b99d2', '#4285f4': '#668be1',
+  '#7986cb': '#828bc2', '#3f51b5': '#6e72c3', '#b39ddb': '#ae9cce', '#9e69af': '#a479b1',
+  '#8e24aa': '#a75aba', '#795548': '#957367', '#616161': '#7c7c7c', '#a79b8e': '#a5998c',
+};
+
+/** 来源 hex 原样显示，不用最接近的调色板颜色替换。 */
+export function colorHex(key: string, theme: 'light' | 'dark' = 'light'): string {
+  if (/^google:#[\da-f]{6}$/i.test(key)) {
+    const hex = key.slice(7).toLowerCase();
+    return theme === 'dark' ? GOOGLE_LABEL_COLORS[hex] ?? hex : hex;
+  }
+  if (isCalendarHexColor(key)) return key;
+  const def = BY_KEY.get(key) ?? CALENDAR_COLOR_DEFS[0];
+  return theme === 'dark' ? def.darkHex : def.hex;
 }
 
 export function colorName(key: string, isZh: boolean): string {
+  if (/^google:#[\da-f]{6}$/i.test(key)) return key.slice(7);
+  if (isCalendarHexColor(key)) return key;
   const def = BY_KEY.get(key) ?? CALENDAR_COLOR_DEFS[0];
   return isZh ? def.zh : def.en;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint":"0de44d1474b831b8423efc164da9ee8b60de3d0ecfa5b55a73c70dffd601f090","reason":"复核好友表情包的账号生命周期：上传和收藏复用现有登录身份及账号锁，登录、绑定和会话流程不变；新增账号外键仍由 linked_data 阻止不支持的合并。注销在原有续费、机构与 Apple 撤销检查之后删除收藏并清理无引用图片，别人持有的副本保留且清空上传者归属。注销流程节点和中英文保留清单已同步；仅本地实现，未部署。 本次 index.ts 只新增公开站内问答路由的导入和挂载；已对比发布前后的入口，登录路由及 rolePreviewGuard 顺序未变。问答不读取账号凭据、不签发会话，仅用服务端模型密钥读取公开页面；指定用户只读查看仍拦截此 POST。账号生命周期各流程不变，因此保留现有流程图。"}
+{"fingerprint":"e77e288306167c2061a19c5fc96aca7ccf545bd92dabd51df8a02839664852e7","reason":"复核好友表情包的账号生命周期：上传和收藏复用现有登录身份及账号锁，登录、绑定和会话流程不变；新增账号外键仍由 linked_data 阻止不支持的合并。注销在原有续费、机构与 Apple 撤销检查之后删除收藏并清理无引用图片，别人持有的副本保留且清空上传者归属。注销流程节点和中英文保留清单已同步；仅本地实现，未部署。 本次 index.ts 只新增公开站内问答路由的导入和挂载；已对比发布前后的入口，登录路由及 rolePreviewGuard 顺序未变。问答不读取账号凭据、不签发会话，仅用服务端模型密钥读取公开页面；指定用户只读查看仍拦截此 POST。账号生命周期各流程不变，因此保留现有流程图。 2026-09-28 日历备份：复用 GIS 单独请求并校验 calendar.readonly，令牌只在页面内存，取消/关闭/导出成功后清除，普通登录仍只请求 openid email profile，不新增绑定或会话。中英文流程说明浏览器直读 Google、下载备份及确认后调用原有个人日历 API；精确颜色先检查后端能力，避免静默丢色。源码守卫显式读取日历授权入口，补充实际收集测试；本地授权来源已配置，真实授权与导出验收仍待完成，未部署。"}
 */
 
 import type { ReactNode } from 'react';
@@ -89,6 +89,12 @@ export default function AuthFlowPage() {
         t('两类会话都不能签发凭据、绑定身份、更改认证信息、授权 OAuth 或使用管理员密钥绕过；主动结束或任一层到期后令牌立即失效', 'Neither session can mint credentials, link identities, change authentication, authorize OAuth, or bypass checks with an admin key; explicit exit or expiry at either layer immediately invalidates the token'),
       ]} />
     </section>
+
+    <aside className="auth-map-note"><h2>{t('Google 日历备份授权', 'Google Calendar backup authorization')}</h2><Steps items={[
+      t('已登录用户在日历设置点击连接 Google → 使用现有 GIS 组件单独请求 calendar.readonly，不把登录权限扩大为日历权限', 'A signed-in user clicks Connect Google in calendar settings → the existing GIS client separately requests calendar.readonly; ordinary sign-in does not request calendar access'),
+      t('Google 确认只读范围 → 浏览器直接分页读取所选日历及颜色、设置和原始活动 → 下载备份；令牌只在页面内存，关闭或取消后清除，不发送本站服务器', 'After Google confirms read-only scope, the browser paginates selected calendars, colors, settings and raw events into a downloaded backup. Tokens stay in page memory, are cleared on close/cancel, and never reach CubeRoot servers'),
+      t('上传备份 → 显示支持范围与可能损失 → 用户确认后调用已有日历导入接口；不登录或绑定新的 CubeRoot 身份，也不邀请原活动参与人', 'Uploading a backup shows supported fields and limitations before confirmation invokes existing calendar import endpoints. It neither signs in or links a new CubeRoot identity nor invites original attendees'),
+    ]} /><p>{t('本地实现，未发布。本地授权来源已配置，真实授权与导出验收仍待完成；普通登录与账号绑定流程保持不变。', 'Implemented locally, not deployed. The local authorized origin is configured; live authorization and export validation remain pending. Normal sign-in and identity linking are unchanged.')}</p></aside>
 
     <section id="signin" className="auth-map-section" aria-labelledby="signin-title">
       <div className="auth-map-section-heading"><h2 id="signin-title">{t('登录与注册：网站和 App 共用', 'Sign-in and registration: shared by website and App')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现 · 可用入口以服务端配置为准', 'Implemented in source · availability depends on server configuration')}</span></div>
