@@ -1,4 +1,6 @@
-import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
+import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
+import { normalizeTimerSoundSettings } from '@cuberoot/shared/timer';
+import { TimerSoundSettings } from '@cuberoot/timer-ui';
 import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import type { TimerSettingsUpdate } from './data/timer-repository';
@@ -527,6 +529,18 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
+  const timerSound = useMemo(() => createTimerSound(() => normalizeTimerSoundSettings(storeRef.current?.settings)), []);
+  const onTimerSoundTransition = useTimerSoundFeedback(timerSound);
+  useEffect(() => {
+    const warm = () => { if (storeRef.current?.settings.soundsEnabled) timerSound.warmupSound(); };
+    window.addEventListener('pointerdown', warm, true);
+    window.addEventListener('keydown', warm, true);
+    return () => {
+      window.removeEventListener('pointerdown', warm, true);
+      window.removeEventListener('keydown', warm, true);
+      timerSound.dispose();
+    };
+  }, [timerSound]);
   const [lastResult, setLastResult] = useState<SolveResult | null>(null);
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   const [recapSolveId, setRecapSolveId] = useState<string | null>(null);
@@ -2510,6 +2524,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [announce, applyStoreSnapshot, copy.saveRetryFailed, copy.saveSessionMissing, markSavedWcaSolve, pendingSolves, recoverLatestStoreSnapshot]);
 
   const timer = useTimerController({
+    onTransition: onTimerSoundTransition,
     canStart: attemptCanStart,
     enabled: view !== 'settings' && timerVisible
       && timerMode === 1
@@ -4586,7 +4601,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
             onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
             categories={[
-              'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'data', 'advanced',
+              'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
             ]}>
             {settingsCategory === 'appearance' && <>
             <div className="settings-group">
@@ -4745,6 +4760,7 @@ export function App({ host }: { host: InstalledAppHost }) {
             </section>
 
             </>}
+            {settingsCategory === 'sound' && <TimerSoundSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} voiceAvailable={timerSound.isVoiceAvailable()} onWarmup={timerSound.warmupSound} onPreview={() => timerSound.play('start')} />}
             {settingsCategory === 'advanced' && <TimerKeymapSettings value={store!.settings.keymap} onChange={update => updateSettings(current => ({ keymap: update(current.keymap) }))} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <>
             <div className="settings-section">

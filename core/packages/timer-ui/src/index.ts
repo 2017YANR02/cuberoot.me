@@ -331,3 +331,6 @@ export * from './TimerDisplaySettings';
 export { default as CubeOrientationSelect } from './CubeOrientationSelect';
 export * from './TimerPreScrambleSettings';
 export * from './TimerColorNeutralSetting';
+export * from './timer-sound';
+export * from './useTimerSoundFeedback';
+export * from './TimerSoundSettings';

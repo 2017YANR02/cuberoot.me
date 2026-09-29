@@ -1,5 +1,5 @@
 'use client';
-import { TimerDisplaySettings } from '@cuberoot/timer-ui';
+import { TimerDisplaySettings, TimerSoundSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
@@ -635,54 +635,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '声音', en: 'Sound'
         })}
         >
-          <BooleanSettingRow
-            id="settings.sound.enabled"
-            value={s.soundsEnabled}
-            onChange={(v) => { updateSettings({ soundsEnabled: v }); if (v) warmupSound(); }}
-          />
-          <SettingRow id="settings.sound.volume">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0} max={1} step={0.05}
-              value={s.volume}
-              disabled={settingState('settings.sound.volume').disabled}
-              onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
-            />
-            <button
-              className="hint-btn"
-              disabled={settingState('settings.sound.volume').disabled}
-              onClick={() => play('start')}
-              title={tr({ zh: '试听', en: 'Test'
-            })}
-            >
-              ♪
-            </button>
-          </SettingRow>
-          <SettingRow id="settings.sound.voice-inspection">
-            <select
-              className="settings-row-control-select"
-              value={s.voiceInspection}
-              onChange={(e) => {
-                updateSettings({ voiceInspection: e.target.value as 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female' });
-                warmupSound();
-              }}
-              disabled={settingState('settings.sound.voice-inspection').disabled}
-            >
-              <option value="none">{tr({ zh: '关闭（用提示音）', en: 'Off (beeps)'
-            })}</option>
-              <option value="en-male">{tr({ zh: '英文 男声', en: 'English (male)'
-            })}</option>
-              <option value="en-female">{tr({ zh: '英文 女声', en: 'English (female)'
-            })}</option>
-              <option value="zh-male">{tr({ zh: '中文 男声', en: 'Chinese (male)'
-            })}</option>
-              <option value="zh-female">{tr({ zh: '中文 女声', en: 'Chinese (female)'
-            })}</option>
-            </select>
-            {!isVoiceAvailable() && (
-              <span className="hint">{tr({ zh: '浏览器不支持', en: 'Unsupported by browser' })}</span>
-            )}
-          </SettingRow>
+          <TimerSoundSettings value={s} onChange={updateSettings} localize={tr} voiceAvailable={isVoiceAvailable()} onWarmup={warmupSound} onPreview={() => play('start')} />
         </SettingsSection>
 
         <SettingsSection
