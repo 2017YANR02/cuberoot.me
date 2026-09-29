@@ -17,6 +17,7 @@ import {
   normalizeTimerTypography,
   normalizeTimerDisplaySettings,
   normalizeTimerPreScrambleSettings,
+  normalizeTimerColorNeutralMode,
   normalizeTimerTrainingSettings,
   normalizeTimerKeymap,
   type TimerTypeface,
@@ -339,6 +340,7 @@ function load(): TimerSettings {
       ...normalizeTimerPreScrambleSettings(parsed),
       ...normalizeTimerTrainingSettings(parsed),
       keymap: normalizeTimerKeymap(parsed.keymap),
+      cnMode: normalizeTimerColorNeutralMode(parsed.cnMode),
       rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
@@ -452,6 +454,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...normalizeTimerPreScrambleSettings(candidate),
     ...normalizeTimerTrainingSettings(candidate),
     keymap: normalizeTimerKeymap(candidate.keymap),
+    cnMode: normalizeTimerColorNeutralMode(candidate.cnMode),
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
     ...normalizeTimerSmartCubeSettings(candidate),

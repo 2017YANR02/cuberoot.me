@@ -330,3 +330,4 @@ export { TimerKeymapSettings, TIMER_KEYMAP_SETTING_FIELD_IDS } from './TimerKeym
 export * from './TimerDisplaySettings';
 export { default as CubeOrientationSelect } from './CubeOrientationSelect';
 export * from './TimerPreScrambleSettings';
+export * from './TimerColorNeutralSetting';

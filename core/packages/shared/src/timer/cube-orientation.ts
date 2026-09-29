@@ -84,4 +84,3 @@ export function faceShowingColor(shown: Record<CubeFace, CubeFace>, color: CubeF
 export function orientationForBottomFace(face: CubeFace): string {
   return CUBE_ORIENTATIONS.find(({ value }) => orientedFaceColors(value).D === face)?.value ?? '';
 }
-

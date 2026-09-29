@@ -1,4 +1,5 @@
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
+import { normalizeTimerColorNeutralMode, type CnMode } from './color-neutral';
 import { normalizeTimerDisplaySettings, type TimerDisplaySettings } from './display-settings';
 import { normalizeTimerKeymap, type TimerKeymapOverrides } from './input-contract';
 import { normalizeTimerTrainingSettings, type TimerTrainingSettings } from './training-settings';
@@ -86,6 +87,7 @@ export interface TimerStoreSettings extends
   TimerScramblePreviewSettings {
   event: EventId;
   keymap: TimerKeymapOverrides;
+  cnMode: CnMode;
   /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
   scramble222Mode: Scramble222Mode;
   /** Shared 2x2 specialist state family. A real-WCA source treats 3-gen as full state. */
@@ -481,6 +483,7 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   return {
     event: value.event,
     keymap: normalizeTimerKeymap(value.keymap),
+    cnMode: normalizeTimerColorNeutralMode(value.cnMode),
     // Early Mobile builds offered a wider timing range than Web. Normalize at
     // the shared migration boundary: 300 remains a valid user choice, while
     // legacy 0/out-of-Web-range values gain the canonical Web meaning.
@@ -661,6 +664,7 @@ export function createTimerStoreData(
     settings: {
       event: '333',
       keymap: {},
+      cnMode: 'none',
       ...DEFAULT_TIMER_TYPOGRAPHY,
       ...normalizeTimerDisplaySettings(),
       ...normalizeTimerPreScrambleSettings(),
