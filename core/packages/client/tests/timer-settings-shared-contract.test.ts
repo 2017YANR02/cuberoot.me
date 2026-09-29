@@ -25,6 +25,15 @@ import {
   TIMER_TIMING_SETTING_FIELD_IDS,
   TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+  TIMER_TRAINING_SETTING_FIELD_IDS,
+  TIMER_KEYMAP_SETTING_FIELD_IDS,
+  TIMER_DISPLAY_SETTING_FIELD_IDS,
+  TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
+  TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
+  TIMER_SOUND_SETTING_FIELD_IDS,
+  TIMER_METRONOME_SETTING_FIELD_IDS,
+  TIMER_RESET_SETTING_FIELD_IDS,
+  TIMER_EXPORT_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -249,7 +258,7 @@ describe('canonical timer settings surface manifest', () => {
       .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
     const stageEvents = new Set(['222', '333', '444', '555', '666', '777', '333oh', '333fm']);
     const bldEvents = new Set(['333bld', '333mbld', '333ni', '444bld', '555bld', '666bld', '777bld']);
-    const colorNeutralEvents = new Set(['333', '333oh', '333fm', '333bld', '333ni', '333mbld']);
+    const colorNeutralEvents = new Set(['333', '333oh', '333fm', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'cross', 'f2l', 'll']);
     for (const event of EVENTS.map((entry) => entry.id)) {
       const states = timerSettingFieldStates({ ...BASE_CONTEXT, event });
       const visible = (id: TimerSettingFieldId) => states.find((field) => field.id === id)?.visible;
@@ -302,6 +311,15 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
       ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+      ...TIMER_TRAINING_SETTING_FIELD_IDS,
+      ...TIMER_KEYMAP_SETTING_FIELD_IDS,
+      ...TIMER_DISPLAY_SETTING_FIELD_IDS,
+      ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
+      ...TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
+      ...TIMER_SOUND_SETTING_FIELD_IDS,
+      ...TIMER_METRONOME_SETTING_FIELD_IDS,
+      ...TIMER_RESET_SETTING_FIELD_IDS,
+      ...TIMER_EXPORT_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
@@ -325,9 +343,9 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ['登录', 'Sign in'],
       ['操作', 'Actions'],
       ['导入', 'Import'],
-      ['导出', 'Export'],
     ]);
     expect(panel).not.toContain('<BooleanRow');
+    expect(panel).toContain('<TimerExportSettings');
   });
 
   it('derives categories/copy and the priority timing behavior from shared', () => {
@@ -341,7 +359,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     expect(panel).toContain("field={timerSettingFieldContract('settings.scramble.optimal')}");
     expect(panel).toContain('renderBooleanControl={renderTimingBooleanControl}');
     expect(panel).toContain("settingState('settings.training.stage-splits').visible");
-    expect(panel).toContain("settingState('settings.sound.volume').disabled");
+    expect(panel).toContain('<TimerSoundSettings');
+    expect(panel).toContain('voiceAvailable={isVoiceAvailable()}');
     expect(panel).not.toContain('normalizeTimerHoldMs(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerRunningPrecision(Number(e.target.value))');
     expect(panel).not.toContain('normalizeTimerResultPrecision(Number(e.target.value))');
@@ -363,8 +382,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     );
     const directMutationRoots = [...panel.matchAll(/updateSettings\(\{\s*([A-Za-z][A-Za-z0-9]*)/g)]
       .map((match) => match[1]!);
-    // Four typography mutations now live in the checked shared field group.
-    expect(directMutationRoots.length).toBeGreaterThan(26);
+    // Typography and training mutations now live in the checked shared field group.
+    expect(directMutationRoots.length).toBe(12);
     expect(directMutationRoots.filter((key) => !registeredRoots.has(key))).toEqual([]);
   });
 });

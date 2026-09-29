@@ -1,0 +1,35 @@
+.timer-target-indicator {
+  margin-top: 10px;
+  padding: 4px 12px;
+  background: color-mix(in srgb, var(--signal-info) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--signal-info) 35%, transparent);
+  border-radius: 999px;
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.timer-target-indicator svg { flex-shrink: 0; opacity: 0.85; }
+.timer-target-indicator .target-delta { color: var(--foreground); }
+/* Shared running target feedback. */
+.timer-target-indicator.overshot {
+  background: color-mix(in srgb, var(--destructive) 10%, transparent);
+  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
+}
+.timer-target-indicator.overshot .target-delta { color: var(--destructive); }
+
+.timing-surface .timer-target-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+.timing-surface .timer-target-indicator.overshot { color: var(--destructive); }
+
+.timing-surface.target-overshot .timer-display.running { color: var(--destructive); }
+.timing-surface.target-pulse-good .timer-display { color: var(--signal-success); }
+.timing-surface.target-pulse-bad .timer-display  { color: var(--destructive); }
+
+@media (max-width: 480px) {
+  .timing-surface .timer-target-indicator { padding: 3px 8px; font-size: 11px; margin-top: 6px; }
+}

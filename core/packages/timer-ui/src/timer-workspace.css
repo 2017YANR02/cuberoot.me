@@ -1,3 +1,11 @@
+/* Hide controls without unmounting or changing the timer's geometry. Explicit
+ * hiding also removes keyboard focus targets and works with reduced motion. */
+:is(.hide-ui, [data-timer-hide-ui]) :is(.surface-chrome, .timer-workspace-panel, .shell-rail > *, [data-timer-hide-while-running]) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* Web and installed apps share page width, dock size and the viewport budget.
  * Hosts supply navigation offsets; timer canvas geometry stays in TimingSurface. */
 .timer-workspace.timer-workspace {

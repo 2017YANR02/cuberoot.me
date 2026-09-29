@@ -1,3 +1,15 @@
+import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
+import { normalizeTimerSoundSettings, resetTimerStoreSettings } from '@cuberoot/shared/timer';
+import { TimerResetSettings } from '@cuberoot/timer-ui';
+import { TimerExportSettings, type TimerExportFormat } from '@cuberoot/timer-ui';
+import { exportTimerCstimerJson, exportTimerSolvesCsv, exportSpeedstacks } from '@cuberoot/shared/timer';
+import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { createMetronome } from '@cuberoot/timer-ui/metronome';
+import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
+import { timerHidesRunningUi } from '@cuberoot/shared/timer';
+import type { TimerSettingsUpdate } from './data/timer-repository';
+import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
+import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
@@ -397,24 +409,26 @@ function applyPreferences(settings: TimerStoreSettings): void {
   document.documentElement.lang = settings.language === 'zh' ? 'zh-Hans' : 'en';
 }
 
-function downloadBackup(text: string): void {
-  const blobUrl = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+function downloadBackup(text: string, filename: string, mime: string): void {
+  const blobUrl = URL.createObjectURL(new Blob([text], { type: mime }));
   const anchor = document.createElement('a');
   anchor.href = blobUrl;
-  anchor.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`;
+  anchor.download = filename;
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 }
 
-async function shareOrDownloadBackup(text: string): Promise<void> {
-  const filename = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`;
-  const file = new File([text], filename, { type: 'application/json' });
+async function shareOrDownloadBackup(text: string, fileSpec = {
+  filename: `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`, mime: 'application/json',
+}): Promise<void> {
+  const { filename, mime } = fileSpec;
+  const file = new File([text], filename, { type: mime });
   const shareData: ShareData = { files: [file], title: 'CubeRoot timer backup' };
   if (navigator.share && navigator.canShare?.(shareData)) {
     await navigator.share(shareData);
     return;
   }
-  downloadBackup(text);
+  downloadBackup(text, filename, mime);
 }
 
 function MobileHistoryItem({
@@ -521,6 +535,28 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
+  const timerSound = useMemo(() => createTimerSound(() => ({
+    ...normalizeTimerSoundSettings(storeRef.current?.settings),
+    inspectionBeepAt: storeRef.current?.settings.inspectionBeepAt ?? [],
+  })), []);
+  const metronome = useMemo(() => createMetronome(), []);
+  useEffect(() => metronome.attach(), [metronome]);
+  useEffect(() => { metronome.setMetronome({ bpm: store?.settings.metronomeBpm ?? 120 }); }, [metronome, store?.settings.metronomeBpm]);
+  const onTimerSoundTransition = useTimerSoundFeedback(timerSound);
+  useEffect(() => {
+    const warm = () => {
+      const settings = storeRef.current?.settings;
+      if (settings?.soundsEnabled || settings?.inspectionBeepAt.length) timerSound.warmupSound();
+      if (settings?.metronomeOn) metronome.warmup();
+    };
+    window.addEventListener('pointerdown', warm, true);
+    window.addEventListener('keydown', warm, true);
+    return () => {
+      window.removeEventListener('pointerdown', warm, true);
+      window.removeEventListener('keydown', warm, true);
+      timerSound.dispose();
+    };
+  }, [timerSound, metronome]);
   const [lastResult, setLastResult] = useState<SolveResult | null>(null);
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
   const [recapSolveId, setRecapSolveId] = useState<string | null>(null);
@@ -844,6 +880,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   }`;
   const storeLoaded = store !== null;
   const solves = store ? activeTimerSolves(store, activeEvent) : [];
+  const trainingSettings = store?.settings ?? normalizeTimerTrainingSettings();
+  const targetMs = trainingSettings.targetMsByEvent[activeEvent] ?? null;
+  const trainingRound = useTimerRound(solves, trainingSettings.round, `${store?.database.activeSessionId ?? ''}|${activeEvent}`);
+  const allSessionSolves = useMemo(() => store ? Object.values(store.database.dataBySession[store.database.activeSessionId] ?? {}).flatMap(list => list ?? []) : [], [store?.database]);
   const historyContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
   const historyDetailSolve = historyDetail?.context === historyContext
     ? solves.find((solve) => solve.id === historyDetail.solveId) ?? null
@@ -1062,6 +1102,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const applyStoreSnapshot = useCallback((data: TimerStoreData) => {
     storeRef.current = data;
+    keymapRef.current = resolveKeymap(data.settings.keymap);
     activeEventRef.current = data.settings.event;
     scramble222ModeRef.current = data.settings.scramble222Mode;
     scramble222TypeRef.current = data.settings.scramble222Type;
@@ -1320,11 +1361,6 @@ export function App({ host }: { host: InstalledAppHost }) {
       byStepsSettingsRef.current,
     );
     const requestedIdentity = entry.sourceIdentity;
-    const request = {
-      event,
-      scramble222Mode: requested222Mode,
-      scramble222Type: requested222Type,
-    } as const;
     const use222BySteps = event === '222'
       && requested222Type === 'full'
       && requestedBySteps.genByStepsOn;
@@ -1335,6 +1371,12 @@ export function App({ host }: { host: InstalledAppHost }) {
       ? stepPuzzle
       : null;
     const eventCapability = timerScrambleCapability(event);
+    const request = {
+      event,
+      scramble222Mode: requested222Mode,
+      scramble222Type: requested222Type,
+      cnMode: use222BySteps || non222ByStepsEvent ? 'none' : storeRef.current?.settings.cnMode,
+    } as const;
     const useCstimerNonWcaWorker = eventCapability?.kind === 'shared'
       && eventCapability.provider === 'cstimer-nonwca';
     const specialistDependencies = (event === '222' && (requested222Type !== 'full' || use222BySteps))
@@ -2498,6 +2540,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [announce, applyStoreSnapshot, copy.saveRetryFailed, copy.saveSessionMissing, markSavedWcaSolve, pendingSolves, recoverLatestStoreSnapshot]);
 
   const timer = useTimerController({
+    onTransition: onTimerSoundTransition,
     canStart: attemptCanStart,
     enabled: view !== 'settings' && timerVisible
       && timerMode === 1
@@ -2746,10 +2789,16 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
   }, [connectSmartCube, scanSmartCubes, smartCube]);
 
+  useEffect(() => {
+    metronome.setMetronomeHold('timer', timerMode === 1 && !!store?.settings.metronomeOn
+      && (timer.machine.phase === 'inspecting' || timer.machine.phase === 'running'));
+  }, [metronome, store?.settings.metronomeOn, timer.machine.phase, timerMode]);
+
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
     : timer.machine.lastMs ?? 0;
   timerDisplayMsRef.current = displayMs;
+  const targetFeedbackClass = useTimerTargetFeedback(timer.machine.phase, displayMs, targetMs);
   const timerText = formatTimerTimingDisplay({
     displayMs,
     hideTime: hideRunningTime,
@@ -2843,7 +2892,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     applyScrambleHistory({ list: [], idx: -1 });
   }, [applyScrambleHistory, timer.cancelArm]);
 
-  const updateSettings = useCallback((changes: Partial<TimerStoreSettings>) => {
+  const updateSettings = useCallback((changes: TimerSettingsUpdate) => {
     const revision = storeSnapshotGateRef.current.beginMutation();
     void repository.updateSettings(changes).then((data) => {
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
@@ -3274,11 +3323,40 @@ export function App({ host }: { host: InstalledAppHost }) {
       });
   }, [announce, copy.actionFailed, copy.exportSuccess]);
 
+  const exportFormat = useCallback((format: TimerExportFormat) => {
+    if (format === 'cuberoot') { exportData(); return; }
+    void repository.load().then(async (data) => {
+      const byEvent = data.database.dataBySession[data.database.activeSessionId] ?? {};
+      const date = new Date().toISOString().slice(0, 10);
+      let text: string; let count: number; let extension: string; let mime: string;
+      if (format === 'cstimer') {
+        const result = exportTimerCstimerJson(byEvent);
+        text = result.json; count = result.solveCount; extension = 'json'; mime = 'application/json';
+      } else if (format === 'csv') {
+        const result = exportTimerSolvesCsv(byEvent);
+        text = result.csv; count = result.solveCount; extension = 'csv'; mime = 'text/csv;charset=utf-8';
+      } else {
+        const entries = byEvent[data.settings.event] ?? [];
+        text = exportSpeedstacks(entries); count = entries.length; extension = 'txt'; mime = 'text/plain;charset=utf-8';
+      }
+      if (count === 0) {
+        announce({ zh: '当前没有可导出的成绩。', en: 'No solves to export.' }[language]);
+        return;
+      }
+      await shareOrDownloadBackup(text, { filename: `cuberoot-${format}-${date}.${extension}`, mime });
+      announce(copy.exportSuccess);
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      announce(copy.actionFailed);
+    });
+  }, [announce, copy.actionFailed, copy.exportSuccess, exportData, language]);
+
   const commitImportedStore = useCallback((
     revision: SnapshotRevision,
     data: TimerStoreData,
   ): boolean => storeSnapshotGateRef.current.commitIfLatest(revision, data, (latest) => {
-    // Import/undo can replace every source-affecting setting. Make the swap one
+    trainingRound.reset();
+    // Import/undo/reset can replace every source-affecting setting. Make the swap one
     // synchronous attempt boundary before any old hold/keyup can reach it.
     const previousIdentity = scrambleIdentityFor(
       scrambleSourceRef.current,
@@ -3290,7 +3368,24 @@ export function App({ host }: { host: InstalledAppHost }) {
       activeEventRef.current,
     );
     if (previousIdentity !== nextIdentity) invalidateCurrentScramble();
-  }), [applyStoreSnapshot, invalidateCurrentScramble, scrambleIdentityFor]);
+  }), [applyStoreSnapshot, invalidateCurrentScramble, scrambleIdentityFor, trainingRound.reset]);
+
+  const resetSettingsToDefaults = useCallback(() => {
+    if (!sourceControlsEnabled || !beginTimerContextMutation()) return;
+    timer.cancelArm();
+    const revision = storeSnapshotGateRef.current.beginMutation();
+    void repository.updateSettings(resetTimerStoreSettings).then((data) => {
+      if (!commitImportedStore(revision, data)) return;
+      if (scrambleSourceRef.current !== 'wca') {
+        scrambleSourceRef.current = 'wca';
+        setScrambleSource('wca');
+        invalidateCurrentScramble();
+      }
+    }).catch(async () => {
+      await recoverLatestStoreSnapshot(revision).catch(() => undefined);
+      announce(copy.actionFailed);
+    }).finally(endTimerContextMutation);
+  }, [announce, beginTimerContextMutation, commitImportedStore, copy.actionFailed, endTimerContextMutation, invalidateCurrentScramble, recoverLatestStoreSnapshot, sourceControlsEnabled, timer.cancelArm]);
 
   const importData = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -3682,6 +3777,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   return (
     <main
       className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
+      data-timer-hide-ui={timerMode === 1 && store && timerHidesRunningUi(timer.machine.phase, store.settings) ? '' : undefined}
       data-wide={wideLayout ? 'true' : undefined}
       style={shellViewport.style}
     >
@@ -3955,6 +4051,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               devices={smartCubeDeviceCenter}
             >
               <TimingSurface
+                className={targetFeedbackClass}
                 ariaLabel={copy.timer}
                 colorClass={`${timerColorClass} tf-${store!.settings.timerFont}`}
                 fontScale={store!.settings.timerFontScale}
@@ -3977,7 +4074,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     ariaLabel={copy.cubeState}
                     event={activeEvent}
                     fill
-                    scramble={scramble}
+                    scramble={applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))}
                     visualization={store!.settings.prefer3D ? '3D' : '2D'}
                   />
                 ) : undefined}
@@ -3987,7 +4084,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 onContextMenu={(event) => event.preventDefault()}
                 phase={timer.machine.phase}
                 scrambleSlot={(
-                  <TimerScrambleStrip
+                  <TimerScrambleStrip compact={store!.settings.compactScramble}
                     font={store!.settings.scrambleFont}
                     fontScale={store!.settings.scrambleFontScale}
                     copiedLabel={copy.copied}
@@ -4108,6 +4205,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 surfaceRef={surfaceRef}
               >
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>
+                {timer.machine.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={displayMs} localize={value => value[language]} />}
                 {timer.machine.phase === 'running' && (multiStageActive || bldMemoActive) && (
                   <TimerAttemptSplitStatus
                     bldMemoActive={bldMemoActive}
@@ -4120,6 +4218,10 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
               </TimingSurface>
+              <div className="surface-chrome">
+                <TimerGoalProgress solves={allSessionSolves} goal={trainingSettings.dailySolveGoal} localize={value => value[language]} />
+                <TimerRoundPanel solves={trainingRound.solves} config={trainingSettings.round} targetMs={targetMs} event={activeEvent} precision={resultPrecision} onReset={trainingRound.start} localize={value => value[language]} />
+              </div>
               {!wideLayout && solveRecap}
 
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
@@ -4565,9 +4667,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
             onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
             categories={[
-              'timer', 'smart-cube', 'appearance', 'data', 'advanced',
-              ...(activeEvent !== '222' || scrambleSource === 'wca' ? ['scramble' as const] : []),
-              ...(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent) ? ['training' as const] : []),
+              'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'sound', 'data', 'advanced',
             ]}>
             {settingsCategory === 'appearance' && <>
             <div className="settings-group">
@@ -4676,7 +4776,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
-            {settingsCategory === 'training' && (timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
+            {settingsCategory === 'training' && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'training'
@@ -4695,14 +4795,20 @@ export function App({ host }: { host: InstalledAppHost }) {
                   stageVisible={timerSupportsStageSplits(activeEvent)}
                   value={store!.settings}
                 />
+                <TimerGoalSettings value={store!.settings} event={activeEvent} onChange={updateSettings} localize={value => value[language]} />
               </section>
             )}
+
+            {settingsCategory === 'scramble' && <TimerPreScrambleSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
+            {settingsCategory === 'scramble' && <TimerColorNeutralSetting event={activeEvent} value={store!.settings.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={value => value[language]} />}
+            {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 
             {settingsCategory === 'appearance' && <>
             <section className="settings-section">
               <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                 category.id === 'appearance'
               ))?.label[language]}</h2>
+              <TimerDisplaySettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} renderBooleanControl={({ disabled, label, onChange, value }) => (<TimerPillToggle value={value} onChange={onChange} disabled={disabled} ariaLabel={label} />)}>
               <TimerScramblePreviewSettings
                 localize={(value) => value[language]}
                 onChange={updateSettings}
@@ -4716,9 +4822,14 @@ export function App({ host }: { host: InstalledAppHost }) {
                 )}
                 value={store!.settings}
               />
+              </TimerDisplaySettings>
             </section>
 
             </>}
+            {settingsCategory === 'sound' && <TimerSoundSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} voiceAvailable={timerSound.isVoiceAvailable()} onWarmup={timerSound.warmupSound} onPreview={() => timerSound.play('start')} />}
+            {settingsCategory === 'sound' && <TimerMetronomeSettings value={store!.settings} bpm={store!.settings.metronomeBpm} onChange={updateSettings} onBpmChange={metronomeBpm => updateSettings({ metronomeBpm })} onTap={metronome.tapTempo} onWarmup={timerSound.warmupSound} onPreviewBeep={timerSound.playInspectionBeep} localize={value => value[language]} />}
+            {settingsCategory === 'advanced' && <TimerKeymapSettings value={store!.settings.keymap} onChange={update => updateSettings(current => ({ keymap: update(current.keymap) }))} localize={value => value[language]} />}
+            {settingsCategory === 'advanced' && <TimerResetSettings disabled={!sourceControlsEnabled} onReset={resetSettingsToDefaults} confirmReset={message => window.confirm(message)} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <>
             <div className="settings-section">
               <h2>{copy.account}</h2>
@@ -4776,7 +4887,6 @@ export function App({ host }: { host: InstalledAppHost }) {
               <h2>{copy.data}</h2>
               <p>{solves.length} {copy.dataCount}</p>
               <div className="action-row">
-                <button className="secondary-action" onClick={exportData} type="button">{copy.exportData}</button>
                 <label className="secondary-action">
                   {copy.importData}
                   <input accept="application/json,.json" hidden onChange={importData} type="file" />
@@ -4785,6 +4895,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <button className="secondary-action" onClick={undoImport} type="button">{copy.undoImport}</button>
                 )}
               </div>
+              <TimerExportSettings onExport={exportFormat} localize={value => value[language]} />
             </div>
 
             </>}
@@ -4840,7 +4951,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         />
       )}
 
-      <nav className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
+      <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
         <button
           aria-current={view === 'timer' || view === 'history' || view === 'settings' ? 'page' : undefined}
           data-no-timer

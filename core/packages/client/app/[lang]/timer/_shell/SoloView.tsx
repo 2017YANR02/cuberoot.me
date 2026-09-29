@@ -1,4 +1,6 @@
 'use client';
+import { timerHidesRunningUi } from '@cuberoot/shared/timer';
+import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
 import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
 
@@ -23,7 +25,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
   Settings as SettingsIcon,
-  AlertTriangle, Target,
+  AlertTriangle,
   X,
 } from 'lucide-react';
 import CubeRootLogo from '@/components/CubeRootLogo';
@@ -189,7 +191,7 @@ import {
   listSessions, getActiveSessionId, moveSolveToSession,
   getSelectedSessionEvent, selectSessionForEvent,
 } from '../_lib/storage/db';
-import { formatTargetTime, useSettings, getSettings, updateSettings } from '../_lib/settings';
+import { useSettings, getSettings, updateSettings } from '../_lib/settings';
 import { warmupSound } from '../_lib/sound';
 import { setMetronomeHold } from '@/lib/metronome';
 import { mayUseMiniProgramBridge, useBluetoothCube, type ConnectPickOptions, type CubeMoveMetadata } from '../_lib/bluetooth';
@@ -226,7 +228,7 @@ import { fetchServerReplayShare } from '../_lib/share/server';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
 import RoundPanel from '../_components/RoundPanel';
-import { roundAttempts } from '@cuberoot/shared/timer';
+
 import SolverHints from '../_components/SolverHints';
 import SolverHintPanel, { HINTS_PARAM } from '../_components/SolverHintPanel';
 import ScrambleSourceBar from '../_components/ScrambleSourceBar';
@@ -1808,28 +1810,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ]);
 
   // ── Round simulation ────────────────────────────────────────────
-  // The round is a VIEW over the solve history, not a second store: it is the
-  // tail slice of this event's solves. That keeps solves as the single source
-  // of truth (deleting one just shortens the round) and means nothing extra
-  // has to be persisted or migrated.
-  //
-  // `roundStartCount` is how many solves existed when the user asked for a new
-  // round. null = no explicit start, so the round is simply the last N solves,
-  // which is what you want when you turn the feature on mid-session.
-  const [roundStartCount, setRoundStartCount] = useState<number | null>(null);
-  useEffect(() => { setRoundStartCount(null); }, [event]);
-  const startNewRound = useCallback(() => {
-    setRoundStartCount(solvesRef.current.length);
-  }, []);
-  const roundSolves = useMemo(() => {
-    if (!settings.round.on) return [];
-    const n = roundAttempts(settings.round.format);
-    // Clamp: deleting solves can leave the marker past the end of the list.
-    const from = roundStartCount === null
-      ? Math.max(0, solves.length - n)
-      : Math.min(roundStartCount, solves.length);
-    return solves.slice(from, from + n);
-  }, [solves, roundStartCount, settings.round.on, settings.round.format]);
+  const trainingRound = useTimerRound(solves, settings.round, `${getActiveSessionId()}|${event}`);
 
   // ── Live move count + TPS ───────────────────────────────────────
   // Turns per second was previously only available after the fact, in the
@@ -2141,19 +2122,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const v = settings.targetMsByEvent?.[event];
     return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
   }, [settings.targetMsByEvent, event]);
-  const isOvershot = timer.phase === 'running' && targetMs !== null && timer.displayMs > targetMs;
-  const [stopPulse, setStopPulse] = useState<'good' | 'bad' | null>(null);
-  const prevTimerPhaseRef = useRef(timer.phase);
-  useEffect(() => {
-    const prev = prevTimerPhaseRef.current;
-    if (timer.phase === 'stopped' && prev !== 'stopped' && targetMs !== null && Number.isFinite(timer.displayMs)) {
-      setStopPulse(timer.displayMs <= targetMs ? 'good' : 'bad');
-      const handle = window.setTimeout(() => setStopPulse(null), 1000);
-      prevTimerPhaseRef.current = timer.phase;
-      return () => window.clearTimeout(handle);
-    }
-    prevTimerPhaseRef.current = timer.phase;
-  }, [timer.phase, timer.displayMs, targetMs]);
+  const targetFeedbackClass = useTimerTargetFeedback(timer.phase, timer.displayMs, targetMs);
 
   // ── Modals ──────────────────────────────────────────────────────
   const [modalSolve, setModalSolve] = useState<{
@@ -2685,7 +2654,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // .surface-chrome, this also takes the side panel and the solver rail. It is
   // NOT gated on prefers-reduced-motion — the user asked for things to be
   // hidden, not animated; the reduced-motion block below drops the transition.
-  const hideAllUi = timer.phase === 'running' && settings.hideAllUiWhileRunning;
+  const hideAllUi = timerHidesRunningUi(timer.phase, settings);
   const sourceControlsEnabled = timer.phase !== 'running';
 
   // ── Side-panel body ─────────────────────────────────────────────
@@ -3081,7 +3050,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           digits={<SegmentTime text={digitsText} />}
           digitsRef={digitsRef}
           surfaceRef={surfaceRef}
-          className={`${isOvershot ? 'target-overshot' : ''} ${stopPulse ? `target-pulse-${stopPulse}` : ''}`.trim()}
+          className={targetFeedbackClass}
           onMouseDown={onCenterMouseDown}
           onMouseUp={onCenterMouseUp}
           scrambleSlot={
@@ -3186,20 +3155,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           ) : undefined}
         >
           {/* sub-content under the digits */}
-          {timer.phase === 'running' && targetMs !== null && (
-            <div className={`timer-target-indicator${isOvershot ? ' overshot' : ''}`}>
-              <Target size={12} />
-              <span className="target-label">{tr({ zh: '目标', en: 'target'
-            })} {formatTargetTime(targetMs)}</span>
-              <span className="target-delta">
-                {(() => {
-                  const deltaMs = targetMs - timer.displayMs;
-                  const sign = deltaMs >= 0 ? '+' : '-';
-                  return `${sign}${(Math.abs(deltaMs) / 1000).toFixed(2)}s`;
-                })()}
-              </span>
-            </div>
-          )}
+          {timer.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={timer.displayMs} localize={tr} />}
           {timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (
             <div className="inspection-illegal-warn" title={tr({ zh: 'WCA 4d: 观察期间只允许整体旋转 (x/y/z)，转面会判 DNF', en: 'WCA 4d: only rotations (x/y/z) are legal during inspection — face turns are DNF'
             })}>
@@ -3233,12 +3189,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         <div className="shell-undersurface surface-chrome">
           <GoalProgress solves={allSolves} goal={settings.dailySolveGoal ?? null} isZh={isZh} />
           <RoundPanel
-            solves={roundSolves}
+            solves={trainingRound.solves}
             config={settings.round}
             targetMs={settings.targetMsByEvent[event] ?? null}
             event={event}
             precision={settings.precision}
-            onReset={startNewRound}
+            onReset={trainingRound.start}
           />
           {(event === 'oll' || event === 'pll') && (() => {
             const total = event === 'oll' ? OLL_CASES.length : PLL_CASES.length;
@@ -3368,7 +3324,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         />
       )}
 
-      {settingsOpen && <SettingsPanel event={event} onClose={closeSettings} onDataReplaced={() => setByEvent(loadAll())} />}
+      {settingsOpen && <SettingsPanel event={event} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast

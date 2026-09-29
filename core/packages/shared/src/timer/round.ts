@@ -476,11 +476,12 @@ function needForTarget(
   windowSize: number,
 ): number | null {
   let lo = 0;
-  let hi = Math.ceil(targetMs * Math.max(1, windowSize)) + 1000;
+  // Stay in the exact-integer domain, including callers with imported huge values.
+  let hi = Math.min(Number.MAX_SAFE_INTEGER, Math.ceil(targetMs * Math.max(1, windowSize)) + 1000);
   if (resultWith(lo) > targetMs) return null;
   if (resultWith(hi) <= targetMs) return null;
   while (lo + 1 < hi) {
-    const mid = Math.floor((lo + hi) / 2);
+    const mid = lo + Math.floor((hi - lo) / 2);
     if (resultWith(mid) <= targetMs) lo = mid;
     else hi = mid;
   }

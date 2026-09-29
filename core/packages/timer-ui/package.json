@@ -14,6 +14,9 @@
       "uqr": "react-dom"
     },
     "runtime": {
+      "./reset-defaults-button": "react-dom",
+      "./reset-defaults-button.css": "react-dom",
+      "./metronome": "react-dom",
       "./solve-recap": "react-dom",
       "./solve-recap-placeholder": "react-dom",
       "./solve-recap.css": "react-dom",
@@ -64,6 +67,9 @@
     }
   },
   "exports": {
+    "./reset-defaults-button": "./src/ResetDefaultsButton.tsx",
+    "./reset-defaults-button.css": "./src/reset-defaults-button.css",
+    "./metronome": "./src/metronome.ts",
     "./solve-recap": "./src/reconstruct/SolveRecap.tsx",
     "./solve-recap-placeholder": "./src/reconstruct/SolveRecapPlaceholder.tsx",
     "./solve-recap.css": "./src/reconstruct/solve-recap.css",

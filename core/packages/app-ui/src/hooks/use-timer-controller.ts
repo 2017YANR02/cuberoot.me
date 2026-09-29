@@ -22,6 +22,7 @@ interface TimerControllerOptions {
   inspectionSec: number;
   onComplete(result: SolveResult): void;
   onStart?(startedAtMs: number): void;
+  onTransition?(transition: TimerMachineTransition): void;
 }
 
 export interface TimerController {
@@ -45,6 +46,7 @@ export function useTimerController({
   inspectionSec,
   onComplete,
   onStart,
+  onTransition,
 }: TimerControllerOptions): TimerController {
   const [machine, setMachine] = useState(initialTimerMachineState);
   const [nowMs, setNowMs] = useState(() => performance.now());
@@ -52,6 +54,7 @@ export function useTimerController({
   const holdTimeoutRef = useRef<number | undefined>(undefined);
   const onCompleteRef = useRef(onComplete);
   const onStartRef = useRef(onStart);
+  const onTransitionRef = useRef(onTransition);
   const canStartRef = useRef(canStart);
   const enabledRef = useRef(enabled);
   const configRef = useRef<TimerMachineConfig>({
@@ -60,6 +63,7 @@ export function useTimerController({
 
   onCompleteRef.current = onComplete;
   onStartRef.current = onStart;
+  onTransitionRef.current = onTransition;
   canStartRef.current = canStart;
   enabledRef.current = enabled;
   configRef.current = { inspectionSec };
@@ -91,6 +95,7 @@ export function useTimerController({
     if (transition.effects.includes('run-started')) {
       onStartRef.current?.(transition.state.startedAtMs ?? performance.now());
     }
+    onTransitionRef.current?.(transition);
     if (transition.solve) onCompleteRef.current(transition.solve);
     return transition;
   }, [clearHoldTimeout, holdMs]);

@@ -1,22 +1,20 @@
 'use client';
+import { TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
  */
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import {
   CloudDownload,
   CloudUpload,
-  Download,
-  FileSpreadsheet,
-  FileText,
   LogIn,
   RefreshCw,
-  Target,
+
 } from 'lucide-react';
-import { formatTargetTime, parseDailySolveGoal, parseTargetTime, resetSettings, updateSettings, useSettings } from '../_lib/settings';
-import { TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
+import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
+import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
@@ -59,24 +57,15 @@ import {
   type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
-import CubeOrientationSelect from '@/components/CubeOrientationSelect';
-import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
+import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
+import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
-import PillToggle from '@/components/PillToggle/PillToggle';
+
 import SharedBoolToggle from '@/components/BoolToggle';
-import ResetDefaultsButton from '@/components/ResetDefaultsButton';
+import { TimerResetSettings, TimerExportSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
-import type { RoundFormat } from '@cuberoot/shared/timer';
-import {
-  TIMER_ACTIONS,
-  bindingsForAction,
-  formatBinding,
-  rebindTimerAction,
-  resolveKeymap,
-  timerRebindCaptureDecision,
-  unbindTimerAction,
-  type TimerActionId,
-} from '../_lib/keymap';
+
+
 // .settings-row* 原语来自 wca-source.css(现已提取到共享 components/)—— 以前靠
 // WcaSourceConfig 顺带 import 进来,「打乱来源」那节移出后这里得自己 import,否则每个 Row 掉样式。
 import '@/components/wca-source.css';
@@ -129,104 +118,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const optimalAvailable = s.scrambleSource === 'wca'
     ? hasOptimal
     : canUseRandomOptimal333(event, s.scrambleSource, !!optimalUser, s.syncSeed);
-  // Target-time input is a free-form string while editing; commit on blur /
-  // Enter. Empty / invalid / non-positive → clear the per-event target.
-  const currentTargetMs: number | null = (() => {
-    const v = s.targetMsByEvent[event];
-    return typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : null;
-  })();
-  const [targetInput, setTargetInput] = useState<string>(() => formatTargetTime(currentTargetMs));
-  // Keep input in sync when user changes event while modal is open.
-  useEffect(() => {
-    setTargetInput(formatTargetTime(currentTargetMs));
-  }, [event, currentTargetMs]);
-
-  function commitTargetInput(raw: string): void {
-    const parsed = parseTargetTime(raw);
-    const next = { ...s.targetMsByEvent };
-    if (parsed === null) {
-      delete next[event];
-    } else {
-      next[event] = parsed;
-    }
-    updateSettings({ targetMsByEvent: next });
-    setTargetInput(formatTargetTime(parsed));
-  }
-
-  // Daily solve-count goal — free-form string while editing, commit on
-  // blur / Enter. Empty / 0 / non-positive → null (disable the pill).
-  const currentDailyGoal: number | null =
-    typeof s.dailySolveGoal === 'number' && Number.isFinite(s.dailySolveGoal) && s.dailySolveGoal > 0
-      ? Math.floor(s.dailySolveGoal)
-      : null;
-  const [goalInput, setGoalInput] = useState<string>(() =>
-    currentDailyGoal === null ? '' : String(currentDailyGoal),
-  );
-  useEffect(() => {
-    setGoalInput(currentDailyGoal === null ? '' : String(currentDailyGoal));
-  }, [currentDailyGoal]);
-  function commitGoalInput(raw: string): void {
-    const parsed = parseDailySolveGoal(raw);
-    updateSettings({ dailySolveGoal: parsed });
-    setGoalInput(parsed === null ? '' : String(parsed));
-  }
-
-  // Round-simulation cutoff / time limit. Free-form while editing, committed on
-  // blur or Enter, exactly like the target-time field above — and parsed by the
-  // same `parseTargetTime`, so `1:00`, `60`, `10.50` all mean what they look like.
-  const [roundCutoffInput, setRoundCutoffInput] = useState<string>(() => formatTargetTime(s.round.cutoffMs));
-  const [roundLimitInput, setRoundLimitInput] = useState<string>(() => formatTargetTime(s.round.limitMs));
-  useEffect(() => {
-    setRoundCutoffInput(formatTargetTime(s.round.cutoffMs));
-    setRoundLimitInput(formatTargetTime(s.round.limitMs));
-  }, [s.round.cutoffMs, s.round.limitMs]);
-  function commitRoundLimitField(field: 'cutoffMs' | 'limitMs', raw: string): void {
-    const parsed = parseTargetTime(raw);
-    updateSettings({ round: { ...s.round, [field]: parsed } });
-    (field === 'cutoffMs' ? setRoundCutoffInput : setRoundLimitInput)(formatTargetTime(parsed));
-  }
-
-  const [beepAtInput, setBeepAtInput] = useState<string>(() => (s.inspectionBeepAt ?? []).join(','));
-  useEffect(() => {
-    setBeepAtInput((s.inspectionBeepAt ?? []).join(','));
-  }, [s.inspectionBeepAt]);
-  function commitBeepAtInput(raw: string): void {
-    const out: number[] = [];
-    for (const p of raw.split(/[,，\s]+/).map(x => x.trim()).filter(Boolean)) {
-      const n = Math.floor(Number(p));
-      if (Number.isFinite(n) && n >= 1 && n <= 60 && !out.includes(n)) out.push(n);
-    }
-    out.sort((a, b) => a - b);
-    updateSettings({ inspectionBeepAt: out });
-    setBeepAtInput(out.join(','));
-  }
-
-  // Tap-to-tempo — the rolling-window math lives in lib/metronome so this row
-  // and the floating panel stay one implementation.
-  const tapResetTimerRef = useRef<number | null>(null);
-  const [tapBpmHint, setTapBpmHint] = useState<number | null>(null);
-
-  function tapBpm(): void {
-    const bpm = tapTempo();
-    if (bpm != null) {
-      setMetronome({ bpm });
-      setTapBpmHint(bpm);
-    }
-    if (tapResetTimerRef.current !== null) {
-      window.clearTimeout(tapResetTimerRef.current);
-    }
-    tapResetTimerRef.current = window.setTimeout(() => {
-      tapResetTimerRef.current = null;
-      setTapBpmHint(null);
-    }, 3000);
-  }
-
-  useEffect(() => {
-    return () => {
-      if (tapResetTimerRef.current !== null) window.clearTimeout(tapResetTimerRef.current);
-    };
-  }, []);
-
   // ── External timer import state ──
   const timerFileRef = useRef<HTMLInputElement | null>(null);
   const [timerImportSource, setTimerImportSource] = useState<TimerImportSource | null>(null);
@@ -655,43 +546,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             stageVisible={settingState('settings.training.stage-splits').visible}
             value={s}
           />
-          <SettingRow id="settings.training.target-time">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={targetInput}
-              placeholder={tr({ zh: '例：0:10.50（留空关闭）', en: 'e.g. 0:10.50 (blank = off)'
-            })}
-              onChange={(e) => setTargetInput(e.target.value)}
-              onBlur={(e) => commitTargetInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitTargetInput((e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            />
-            <span className="hint">
-              <Target size={12} style={{ verticalAlign: '-1px', marginRight: 4 }} />
-              {currentTargetMs === null
-                ? tr({ zh: `当前 ${eventInfo(event).nameZh}：关闭`, en: `${eventInfo(event).nameEn}: off` })
-                : tr({ zh: `当前 ${eventInfo(event).nameZh}：${formatTargetTime(currentTargetMs)}`, en: `${eventInfo(event).nameEn}: ${formatTargetTime(currentTargetMs)}` })}
-            </span>
-          </SettingRow>
-          <SettingRow id="settings.training.daily-goal">
-            <input
-              className="settings-row-control-input"
-              type="number"
-              min={0}
-              step={1}
-              value={goalInput}
-              placeholder={tr({ zh: '例：50（留空 / 0 关闭）', en: 'e.g. 50 (blank / 0 = off)'
-            })}
-              onChange={(e) => setGoalInput(e.target.value)}
-              onBlur={(e) => commitGoalInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitGoalInput((e.target as HTMLInputElement).value); }}
-            />
-            <span className="hint">{currentDailyGoal === null
-              ? tr({ zh: '关闭', en: 'off'
-                                      })
-              : tr({ zh: `每天 ${currentDailyGoal} 次（全部项目合计）`, en: `${currentDailyGoal} solves/day (all events)` })}</span>
-          </SettingRow>
+          <TimerGoalSettings value={s} event={event} onChange={updateSettings} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -726,34 +581,8 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         </SettingsSection>
 
         <SettingsSection category="scramble" activeCategory={activeCategory}>
-          <SettingRow id="settings.scramble.pre-orientation">
-            <CubeOrientationSelect
-              className="settings-row-control-select"
-              value={s.preScr}
-              onChange={(v) => updateSettings({ preScr: v })}
-            />
-          </SettingRow>
-          <SettingRow id="settings.scramble.training-pre-orientation">
-            <CubeOrientationSelect
-              className="settings-row-control-select"
-              value={s.preScrT}
-              onChange={(v) => updateSettings({ preScrT: v })}
-            />
-          </SettingRow>
-          {settingState('settings.scramble.color-neutral').visible && (
-            <SettingRow id="settings.scramble.color-neutral">
-              <select
-                className="settings-row-control-select"
-                value={s.cnMode}
-                onChange={(e) => updateSettings({ cnMode: e.target.value as 'none' | 'single' | 'dual' | 'six' })}
-              >
-                <option value="none">{tr({ zh: '固定白底', en: 'None (white)' })}</option>
-                <option value="single">{tr({ zh: '单面随机', en: 'Single (random)' })}</option>
-                <option value="dual">{tr({ zh: '双面（白黄）', en: 'Dual (white/yellow)' })}</option>
-                <option value="six">{tr({ zh: '六面', en: 'Six-sided' })}</option>
-              </select>
-            </SettingRow>
-          )}
+          <TimerPreScrambleSettings value={s} onChange={updateSettings} localize={tr} />
+          <TimerColorNeutralSetting event={event} value={s.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -762,54 +591,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '声音', en: 'Sound'
         })}
         >
-          <BooleanSettingRow
-            id="settings.sound.enabled"
-            value={s.soundsEnabled}
-            onChange={(v) => { updateSettings({ soundsEnabled: v }); if (v) warmupSound(); }}
-          />
-          <SettingRow id="settings.sound.volume">
-            <input
-              className="settings-row-control-input"
-              type="range" min={0} max={1} step={0.05}
-              value={s.volume}
-              disabled={settingState('settings.sound.volume').disabled}
-              onChange={(e) => updateSettings({ volume: Number(e.target.value) })}
-            />
-            <button
-              className="hint-btn"
-              disabled={settingState('settings.sound.volume').disabled}
-              onClick={() => play('start')}
-              title={tr({ zh: '试听', en: 'Test'
-            })}
-            >
-              ♪
-            </button>
-          </SettingRow>
-          <SettingRow id="settings.sound.voice-inspection">
-            <select
-              className="settings-row-control-select"
-              value={s.voiceInspection}
-              onChange={(e) => {
-                updateSettings({ voiceInspection: e.target.value as 'none' | 'en-male' | 'en-female' | 'zh-male' | 'zh-female' });
-                warmupSound();
-              }}
-              disabled={settingState('settings.sound.voice-inspection').disabled}
-            >
-              <option value="none">{tr({ zh: '关闭（用提示音）', en: 'Off (beeps)'
-            })}</option>
-              <option value="en-male">{tr({ zh: '英文 男声', en: 'English (male)'
-            })}</option>
-              <option value="en-female">{tr({ zh: '英文 女声', en: 'English (female)'
-            })}</option>
-              <option value="zh-male">{tr({ zh: '中文 男声', en: 'Chinese (male)'
-            })}</option>
-              <option value="zh-female">{tr({ zh: '中文 女声', en: 'Chinese (female)'
-            })}</option>
-            </select>
-            {!isVoiceAvailable() && (
-              <span className="hint">{tr({ zh: '浏览器不支持', en: 'Unsupported by browser' })}</span>
-            )}
-          </SettingRow>
+          <TimerSoundSettings value={s} onChange={updateSettings} localize={tr} voiceAvailable={isVoiceAvailable()} onWarmup={warmupSound} onPreview={() => play('start')} />
         </SettingsSection>
 
         <SettingsSection
@@ -818,55 +600,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '节拍器', en: 'Metronome'
         })}
         >
-          <BooleanSettingRow
-            id="settings.sound.metronome-enabled"
-            value={s.metronomeOn}
-            onChange={(v) => { updateSettings({ metronomeOn: v }); if (v) warmupSound(); }}
-          />
-          <SettingRow id="settings.sound.metronome-tempo">
-            <input
-              className="settings-row-control-input"
-              type="range" min={BPM_MIN} max={BPM_MAX} step={1}
-              value={metro.bpm}
-              disabled={settingState('settings.sound.metronome-tempo').disabled}
-              onChange={(e) => setMetronome({ bpm: Number(e.target.value) })}
-            />
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums', minWidth: '9ch', display: 'inline-block' }}>
-              {bpmToTps(metro.bpm).toFixed(2)} TPS
-            </span>
-            <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>{metro.bpm} BPM</span>
-            <button
-              className="hint-btn"
-              disabled={settingState('settings.sound.metronome-tempo').disabled}
-              onClick={tapBpm}
-              title={tr({ zh: '连续敲击设定速度', en: 'Tap repeatedly to set tempo'
-            })}
-            >
-              {tr({ zh: '敲击', en: 'Tap'
-            })}
-            </button>
-            {tapBpmHint !== null && (
-              <span className="hint" style={{ fontVariantNumeric: 'tabular-nums' }}>→ {tapBpmHint}</span>
-            )}
-          </SettingRow>
-          <SettingRow id="settings.sound.inspection-beeps">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={beepAtInput}
-              disabled={settingState('settings.sound.inspection-beeps').disabled}
-              placeholder={tr({ zh: '例：5,10,15（逗号分隔）', en: 'e.g. 5,10,15 (comma-separated)'
-            })}
-              onChange={(e) => setBeepAtInput(e.target.value)}
-              onBlur={(e) => commitBeepAtInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitBeepAtInput((e.target as HTMLInputElement).value); }}
-            />
-            <button className="hint-btn" disabled={settingState('settings.sound.inspection-beeps').disabled} onClick={() => { warmupSound(); playInspectionBeep(); }} title={tr({ zh: '试听', en: 'Test'
-            })}>
-              {tr({ zh: '试听', en: 'Test'
-            })}
-            </button>
-          </SettingRow>
+          <TimerMetronomeSettings value={s} bpm={metro.bpm} onChange={updateSettings} onBpmChange={bpm => setMetronome({ bpm })} onTap={tapTempo} onWarmup={warmupSound} onPreviewBeep={playInspectionBeep} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -1080,47 +814,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               en: 'Selecting a csTimer or dcTimer file automatically creates sessions from its groups without replacing existing data; CubeRoot backups ask before replacing data',
             })}</span>
           </Row>
-          <Row label={tr({ zh: '导出', en: 'Export'
-        })}>
-            <button
-              data-setting-id="settings.data.export-cuberoot"
-              className="hint-btn"
-              onClick={onCubeRootExport}
-              title={tr({ zh: '完整备份全部成绩，可重新导入 CubeRoot', en: 'Back up all solves for later re-import into CubeRoot' })}
-            >
-              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-cuberoot')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-cstimer"
-              className="hint-btn"
-              onClick={() => { void onCstimerExport(); }}
-              title={tr({ zh: '下载所有成绩为 csTimer 兼容的 JSON', en: 'Download all solves as a csTimer-compatible JSON'
-            })}
-            >
-              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-cstimer')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-csv"
-              className="hint-btn"
-              onClick={onCsvExport}
-              title={tr({ zh: '每条成绩一行的 CSV，便于 Excel / Python 分析', en: 'One row per solve, for spreadsheets / Python'
-            })}
-            >
-              <FileSpreadsheet size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-csv')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-speedstacks"
-              className="hint-btn"
-              onClick={onSpeedstacksExport}
-              title={tr({ zh: '导出当前项目为 Speedstacks 文本', en: 'Export the current event as Speedstacks text' })}
-            >
-              <FileText size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-speedstacks')}
-            </button>
-          </Row>
+          <TimerExportSettings localize={tr} onExport={format => {
+            if (format === 'cuberoot') onCubeRootExport();
+            else if (format === 'cstimer') void onCstimerExport();
+            else if (format === 'csv') onCsvExport();
+            else onSpeedstacksExport();
+          }} />
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
@@ -1217,11 +916,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         })}
         >
           <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
-          <BooleanSettingRow
-            id="settings.appearance.compact-scramble"
-            value={s.compactScramble}
-            onChange={(v) => updateSettings({ compactScramble: v })}
-          />
+          <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
           <TimerScramblePreviewSettings
             localize={tr}
             onChange={updateSettings}
@@ -1235,11 +930,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             )}
             value={s}
           />
-          <BooleanSettingRow
-            id="settings.appearance.hide-all-while-running"
-            value={s.hideAllUiWhileRunning}
-            onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })}
-          />
+          </TimerDisplaySettings>
           <SettingRow id="settings.appearance.rank-scopes">
             <span className="rank-scope-options">
               {TIMER_RANK_SCOPES.map((scope) => (
@@ -1278,91 +969,15 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           )}
         </SettingsSection>
 
-        <SettingsSection
-          category="training"
-          activeCategory={activeCategory}
-          title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
-          headerControl={
-            <span data-setting-id="settings.training.round-enabled">
-              <PillToggle
-                value={s.round.on}
-                onChange={(v) => updateSettings({ round: { ...s.round, on: v } })}
-                onLabel={tr({ zh: '开启', en: 'On' })}
-                offLabel={tr({ zh: '关闭', en: 'Off' })}
-                ariaLabel={settingLabel('settings.training.round-enabled')}
-              />
-            </span>
-          }
-        >
-          {settingState('settings.training.round-format').visible && (
-            <>
-          <SettingRow id="settings.training.round-format">
-            <select
-              className="settings-row-control-select"
-              value={s.round.format}
-              onChange={(e) => updateSettings({ round: { ...s.round, format: e.target.value as RoundFormat } })}
-            >
-              <option value="ao5">{tr({ zh: '五次去头尾平均 (ao5)', en: 'Average of 5' })}</option>
-              <option value="mo3">{tr({ zh: '三次均值 (mo3)', en: 'Mean of 3' })}</option>
-              <option value="bo3">{tr({ zh: '三次取最好 (bo3)', en: 'Best of 3' })}</option>
-              <option value="bo1">{tr({ zh: '一次 (bo1)', en: 'Best of 1' })}</option>
-            </select>
-          </SettingRow>
-          <SettingRow id="settings.training.round-cutoff">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={roundCutoffInput}
-              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
-              onChange={(e) => setRoundCutoffInput(e.target.value)}
-              onBlur={(e) => commitRoundLimitField('cutoffMs', e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('cutoffMs', (e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            />
-          </SettingRow>
-          <SettingRow id="settings.training.round-time-limit">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={roundLimitInput}
-              placeholder={tr({ zh: '留空 = 无', en: 'blank = none' })}
-              onChange={(e) => setRoundLimitInput(e.target.value)}
-              onBlur={(e) => commitRoundLimitField('limitMs', e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') commitRoundLimitField('limitMs', (e.target as HTMLInputElement).value); }}
-              style={{ fontFamily: 'ui-monospace, monospace' }}
-            />
-            <span data-setting-id="settings.training.round-cumulative">
-              <PillToggle
-                value={s.round.cumulative}
-                onChange={(v) => updateSettings({ round: { ...s.round, cumulative: v } })}
-                onLabel={tr({ zh: '累计', en: 'cumulative' })}
-                offLabel={tr({ zh: '每把', en: 'per attempt' })}
-                ariaLabel={settingLabel('settings.training.round-cumulative')}
-              />
-            </span>
-          </SettingRow>
-            </>
-          )}
-        </SettingsSection>
+        {activeCategory === 'training' && <TimerRoundSettings value={s} onChange={patch => updateSettings({ round: { ...getSettings().round, ...patch } })} localize={tr} />}
 
         <SettingsSection
           category="advanced"
           activeCategory={activeCategory}
           title={tr({ zh: '快捷键与手势', en: 'Shortcuts and gestures' })}
         >
-          <div data-setting-id="settings.advanced.keymap">
-            <KeymapEditor />
-          </div>
-            <div className="settings-reset-row" data-setting-id="settings.advanced.reset-defaults">
-              <ResetDefaultsButton
-                onReset={() => {
-                  if (confirm(tr({ zh: '把所有设置恢复为默认值？', en: 'Reset all settings to defaults?' }))) {
-                    resetSettings();
-                  }
-                }}
-                title={tr({ zh: '恢复全部计时器设置，不会删除成绩', en: 'Reset all timer settings without deleting solves' })}
-              />
-            </div>
+          <TimerKeymapSettings value={s.keymap} onChange={update => updateSettings({ keymap: update(getSettings().keymap) })} localize={tr} />
+          <TimerResetSettings onReset={resetSettings} confirmReset={message => confirm(message)} localize={tr} />
         </SettingsSection>
     </TimerSettingsPanel>
   );
@@ -1445,104 +1060,5 @@ function BooleanSettingRow({
         {children}
       </span>
     </div>
-  );
-}
-
-/**
- * Keyboard-binding editor for the rebindable timer actions.
- *
- * Capture-on-press rather than an on-screen keyboard grid: /sim's keymap UI
- * uses a grid because its bindings are one key → one move, but the timer needs
- * `Shift+` combinations, which a flat grid cannot express. `keyLabel` (the part
- * that IS shared) is reused via `formatBinding`.
- *
- * Only Shift is offered as a modifier — Ctrl/Meta belong to the browser and the
- * OS, and shadowing Ctrl+D or Cmd+F would be hostile.
- */
-function KeymapEditor() {
-  const s = useSettings();
-  const keymap = useMemo(() => resolveKeymap(s.keymap), [s.keymap]);
-  const [capturing, setCapturing] = useState<TimerActionId | null>(null);
-  const [rejected, setRejected] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!capturing) return;
-    const onKey = (e: KeyboardEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const capture = timerRebindCaptureDecision(e);
-      if (capture.kind === 'cancel') {
-        setCapturing(null);
-        setRejected(null);
-        return;
-      }
-      if (capture.kind === 'wait-for-key') return;
-      if (capture.kind === 'reject') {
-        setRejected(capture.reason === 'browser-modifier'
-          ? tr({ zh: 'Ctrl / Cmd / Alt 组合键留给浏览器，不能占用', en: 'Ctrl / Cmd / Alt combinations belong to the browser' })
-          : tr({
-              zh: `${formatBinding(capture.binding!)} 是计时器自己的按键（开始 / 停止 / 取消），不能改绑`,
-              en: `${formatBinding(capture.binding!)} is the timer's own key (start / stop / cancel) and can't be rebound`,
-            }));
-        return;
-      }
-      updateSettings({
-        keymap: rebindTimerAction(s.keymap, keymap, capturing, capture.binding),
-      });
-      setCapturing(null);
-      setRejected(null);
-    };
-    // Capture phase: the timer's own window listener must not see these.
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [capturing, keymap, s.keymap]);
-
-  return (
-    <>
-      {TIMER_ACTIONS.map(action => {
-        const bindings = bindingsForAction(keymap, action.id);
-        const active = capturing === action.id;
-        return (
-          <Row key={action.id} label={tr(action)}>
-            <button
-              type="button"
-              className="keymap-bind-btn"
-              data-capturing={active ? 'true' : undefined}
-              onClick={() => { setCapturing(active ? null : action.id); setRejected(null); }}
-            >
-              {active
-                ? tr({ zh: '按下新按键…（Esc 取消）', en: 'Press a key… (Esc to cancel)' })
-                : bindings.length > 0
-                  ? bindings.map(formatBinding).join(' / ')
-                  : tr({ zh: '未绑定', en: 'Unbound' })}
-            </button>
-            {bindings.length > 0 && !active && (
-              <button
-                type="button"
-                className="hint-btn"
-                onClick={() => {
-                  updateSettings({
-                    keymap: unbindTimerAction(s.keymap, keymap, action.id),
-                  });
-                }}
-              >
-                {tr({ zh: '解除', en: 'Unbind' })}
-              </button>
-            )}
-          </Row>
-        );
-      })}
-      {rejected && <div className="keymap-reject">{rejected}</div>}
-      <div className="keymap-actions">
-        <button
-          type="button"
-          data-setting-id="settings.advanced.reset-keymap"
-          className="hint-btn"
-          onClick={() => updateSettings({ keymap: {} })}
-        >
-          {settingLabel('settings.advanced.reset-keymap')}
-        </button>
-      </div>
-    </>
   );
 }

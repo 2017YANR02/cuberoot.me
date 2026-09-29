@@ -1,4 +1,5 @@
 import { isBldEvent, type EventId, type TimerScrambleSourceKind } from './types';
+import { isCnEligible } from './color-neutral';
 
 /**
  * Runtime-neutral contract for the settings surfaces currently reachable from
@@ -394,10 +395,6 @@ export function timerSupportsStageSplits(event: EventId): boolean {
   return STAGE_SPLIT_EVENTS.has(event);
 }
 
-const COLOR_NEUTRAL_EVENTS: ReadonlySet<EventId> = new Set([
-  '333', '333oh', '333fm', '333bld', '333ni', '333mbld',
-]);
-
 function settingVisible(
   visibility: TimerSettingVisibility,
   context: TimerSettingFieldContext,
@@ -409,7 +406,7 @@ function settingVisible(
     case 'wca-source': return context.source === 'wca';
     case 'stage-split-event': return timerSupportsStageSplits(context.event);
     case 'bld-event': return isBldEvent(context.event);
-    case 'color-neutral-event': return COLOR_NEUTRAL_EVENTS.has(context.event);
+    case 'color-neutral-event': return isCnEligible(context.event);
     case 'rank-enabled-without-account-country': return context.rankEnabled && !/^[a-z]{2}$/i.test(context.rankAccountCountry?.trim() ?? '');
     case 'signed-out': return !context.signedIn;
     case 'signed-in': return context.signedIn;

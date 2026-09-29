@@ -125,7 +125,7 @@ export function f2lDisplayColors(colors: string, crossColor: ColorLetter | null)
 }
 
 export interface CubeColorChipProps {
-  localize?: <T>(text: { en: T; zh: T }) => T;
+  localize?: (text: { en: string; zh: string }) => string;
   /** 色字母,1~2 片(`'GR'` 这样的整串也收)。认不出的字母整个不渲染。 */
   colors: string | readonly ColorLetter[];
   /** 悬浮 / 无障碍标题。不给就用颜色名(「绿 红」)。 */
