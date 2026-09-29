@@ -1,4 +1,5 @@
 import UIKit
+import UserNotifications
 import Capacitor
 
 @objc(TimerPrintPlugin)
@@ -55,6 +56,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(TimerPrintPlugin())
         bridge?.registerPluginInstance(AppleMembershipPlugin())
+        bridge?.registerPluginInstance(RecordPushPlugin())
     }
 }
 
@@ -68,7 +70,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window?.rootViewController = CubeRootBridgeViewController()
         window?.makeKeyAndVisible()
 
+        if let response = connectionOptions.notificationResponse,
+           response.actionIdentifier == UNNotificationDefaultActionIdentifier {
+            RecordPushState.shared.recordTap(response.notification.request.content.userInfo)
+        }
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
+    }
+
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        RecordPushPlugin.openPendingRecord()
     }
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {

@@ -47,7 +47,7 @@ const TABLES: Table[] = [
   { name: 'apple_membership_notifications', domain: 'commerce', origin: '0254', purpose: { zh: '已验签并完成处理的 Apple 通知去重记录', en: 'Deduplication records for verified and processed Apple notifications' } },
   { name: 'effective_memberships', domain: 'commerce', origin: '0254', purpose: { zh: '有效会员视图，显式列名合并网站与 Apple 权益，保留最长有效期', en: 'Effective membership view joining website and Apple grants by explicit columns and retaining the longest validity' } },
   { name: 'mcp_oauth_grants', domain: 'account', origin: '0240', purpose: { zh: '管理员 MCP 授权、PKCE 绑定及凭据摘要；注销级联删除，合并或降权后失效', en: 'Administrator MCP grants, PKCE bindings and credential hashes; deletion cascades, merging or demotion invalidates access' } },
-  { name: 'notification_push_devices', domain: 'account', origin: '0239', purpose: { zh: '已授权的 Android 推送设备和账号绑定', en: 'Consented Android push devices and account bindings' } },
+  { name: 'notification_push_devices', domain: 'account', origin: '0239', purpose: { zh: '已授权的 Android / iOS 推送设备和账号绑定', en: 'Consented Android / iOS push devices and account bindings' } },
   { name: 'notification_push_deliveries', domain: 'account', origin: '0239', purpose: { zh: '纪录手机推送队列及服务商接收状态', en: 'Record push queue and provider acceptance status' } },
   { name: 'record_notification_preferences', domain: 'account', origin: '0238', purpose: { zh: '账号共享的纪录订阅筛选；本人纪录自动纳入', en: 'Account-wide record subscriptions; own records are always included' } },
   { name: 'record_notification_snapshots', domain: 'comp', origin: '0238', purpose: { zh: '首次成绩同步静默基线', en: 'Quiet baseline for first competition synchronization' } },
@@ -803,6 +803,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 252, slug: 'video_meetings', desc: { zh: '会议预约、时区与周期规则，持久化会议码分配。', en: 'Meeting schedules, time zones, recurrence and durable meeting code allocation.' } },
   { n: 253, slug: 'site_assistant_quota_1000', desc: { zh: '全站问答每日额度提高至 1000 次，保留当天已用次数与原子扣减。', en: 'Raise the site-wide assistant quota to 1000 per day, preserving existing usage and atomic reservations.' } },
   { n: 254, slug: 'apple_membership', desc: { zh: 'Apple 自动续费独立账本、账号绑定和有效会员视图；不覆盖网站支付权益。', en: 'Separate Apple subscription ledger, account binding and effective membership view; website grants remain intact.' } },
+  { n: 255, slug: 'ios_record_push', desc: { zh: '推送设备增加 APNs 通道与开发／生产环境隔离，兼容 Android。', en: 'Add APNs device targets and sandbox/production isolation while retaining Android compatibility.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

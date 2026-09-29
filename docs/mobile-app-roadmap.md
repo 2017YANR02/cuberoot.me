@@ -18,13 +18,32 @@
 
 本节是移动端工作的进度账本。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-09-29 远端主线整合（本地，未发布）
+
+以 `61023b48a8` 为基线，保留远端 Apple 个人月卡／年卡自动续费实现与语音输入；迁入原本地 iOS APNs 纪录通道、隐私说明及联系页精确放行。推送使用新增 `0255_ios_record_push.sql`，不改远端已经使用的 `0249_friend_chat.sql`。旧非续期购买方案不再迁入；Apple 的购买、恢复、账号合并及注销实现保持远端版本。
+
+本轮验证：shared build；API、client、app-ui、Mobile 类型检查；API 定向 39 项、client 定向 135 项、Mobile 全部 36 项、app-ui 全部 404 项测试通过。API 迁移、设备归属与队列测试使用本机新建 PostgreSQL 16 隔离实例，非生产 PG13；APNs 使用本地 HTTP/2 与临时测试密钥，未访问 Apple 或发送真实通知。独立源码审查未发现迁入代码阻断问题。
+
+完整 Mobile Web / iOS 构建受现有 `cubing` worker 顶层 await 与 IIFE 输出冲突阻断；在仅含 `61023b48a8` 的独立工作区、独立离线安装依赖并构建 shared 后复现相同错误，确认不由本轮 APNs 迁入引入。日志：`/tmp/cuberoot-pull-ios-build.log`、`/tmp/cuberoot-remote-mobile-build.log`。此阻断尚未修复，不以测试通过代替完整 App 构建、签名或真机验收。 单独执行原生 `mobile-ios-toolchain.mjs build` 已通过 Xcode 无签名 Simulator 构建（arm64/x86_64），验证 Swift 插件与工程可共同编译；未重新生成成功的 Web bundle，不作为完整新包验收。原生日志：`/tmp/cuberoot-pull-ios-native.log`。
+
+### 2026-09-27 iOS 纪录推送通道（源码接入，真机未验收）
+
+- [x] 仅覆盖 wca_record；复用既有订阅匹配、站内消息、队列、账号设备绑定和退出撤销。Bark 与 Android 个推继续独立工作。
+- [x] 迁移 0255 为设备补 provider/environment，并隔离 APNs sandbox/production；旧 Android 请求与数据仍按 getui/production 处理。
+- [x] API APNs HTTP/2 + ES256 provider JWT、公开比赛链接校验、固定通知 collapse ID、重试分类和失效设备清理；密钥只从服务端文件读取，默认关闭。
+- [x] iOS 薄 Swift 插件、Push capability/entitlement、系统授权、token 更新、前台展示、冷启动点击暂存、退出停用及清理；点击沿用现有 Android 行为打开系统浏览器中的比赛页，本轮未做 App 内比赛深链。
+- [x] 配置继续复用「我的 → 消息」订阅页面和 iOS 系统通知权限，不新增第二套订阅 UI；/dev/auth 中英文流程与守卫已同步覆盖 Swift 适配器。
+- [ ] APNs key/topic、实际签名环境、线上迁移/配置和开发/生产真机送达；本轮没有 push、上线或向真实用户发送消息。
+
+2026-09-27 原分支验证记录（不替代本次远端主线整合验证）：隔离 PostgreSQL 16 schema 执行 0239→0249 迁移、真实设备登记路由、账号隔离和队列重试/失效清理；APNs 请求用本地 HTTP/2 接收端与临时测试 EC key 验证 JWT、topic、环境、payload 和错误分类，未访问真实 Apple 推送端点。API 类型检查、通知偏好回归、APNs/个推/PG 11 tests、Mobile 类型检查与全部 30 tests、schema ledger 6 tests、auth documentation 65 tests 已通过；Mobile Web build 与 iOS sync 完成。Xcode 无签名 iOS Simulator 构建成功（arm64/x86_64），产物 Info.plist 的推送环境为 development；这不代表真实签名、安装或 APNs 送达。配置见 [record-notification-setup.md](record-notification-setup.md)。
+
 ### 2026-09-15 纪录订阅与通知（未完成）
 
 - [x] 本地实现 shared 订阅规则、服务端订阅 API 和 canonical `/notifications` 设置：项目、单次/平均、纪录级别、选手所属地区共用一份偏好；绑定 WCA 的本人纪录（含 PR）自动纳入，邮件仍尊重已验证邮箱和总开关。
 - [x] 比赛预热任务复用既有成绩判定与快讯格式，首次快照静默建立基线，后续新成绩按比赛/轮次/选手/成绩去重，复用站内消息及邮件发送入口。首次快照中已有成绩不补发；邮件沿用现有 best-effort 机制，发送失败没有独立重试队列。
 - [x] Android 个推薄宿主与 API 持久化队列本地实现：隐私同意后初始化、通知权限、设备绑定、退出/换号撤销与断网重试；复用原站内纪录通知，队列退避重试，不发送绑定前历史。正式/调试包隔离，配置缺失时禁用发送；过期数据仍清理。
 - [ ] Android 服务商应用、国内厂商通道、生产开关和真实收取：OPPO/vivo/小米/魅族/荣耀已有条件构建入口，真实凭据和各分支验收未完成；华为 Android 仍待 HMS 配置。通知当前打开网站比赛链接，前台/后台/杀进程/点击/权限及账号切换须真机验证。
-- [ ] iOS 按所有者 2026-09-15 指示留待 Mac 上继续；已有开发者会员不等于 APNs 已配置。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
+- [ ] iOS APNs 凭据、签名及真机送达未验收；2026-09-27 已按所有者要求补 wca_record 通道源码，见上方增量记录。HarmonyOS NEXT、Windows/macOS 原生通知适配尚未实现，站内消息与邮件不能替代系统推送证据。
 - [ ] 生产迁移、部署和真实收信验收；本轮没有向真实用户发送测试消息。
 
 本地证据：迁移 0238 在 PostgreSQL 13 事务中验证建表、JSONB 与级联删除后回滚；API 通知相关回归、shared build、client/server typecheck 通过；Playwright 使用隔离 API fixture 验证 390px/1280px 设置页、地区选择和保存请求，无页面横向溢出。迁移 0239 在本机 PG13 隔离 schema 中执行真实绑定/撤销路由及队列重试/去重测试；Getui HTTP 使用 mock，未向服务商发送。Mobile 25 tests、app-ui 299 tests、Mobile/API/app-ui/client 类型检查与 Mobile Web build/Android sync 已通过。Android `:app:assembleDebug --max-workers=14` 构建成功；基础 debug 合并 manifest 已确认无电话状态、任务列表、全量应用列表或后台定位权限，明文流量关闭。SDK 编译有上游 D8 stack-map 和原生库 strip 警告；2026-09-16 的 CI（ab783cbeab，run 35061047653）已完成 release APK/AAB 构建和临时证书签名验证，权限白名单需同步四项推送权限；尚未证明 R8、16KB 页兼容、真实厂商配置或真机运行，不代表发布或真机到达；具体配置见 [record-notification-setup.md](record-notification-setup.md)。
@@ -1209,7 +1228,7 @@ CubeRoot 应以这些证据证明不是简单套壳：
 | 业务逻辑 | 共享 TypeScript 核心 | 不复制三套 |
 | 内容更新 | API/数据驱动 | 保持 |
 | 代码更新 | 商店构建和审核 | 保持 |
-| 首发付费 | App 内会员购买已纳入目标；复用网站权益，Apple IAP 未接通 | 商品类型、周期、SKU、价格与商店配置由所有者确认 |
+| 首发付费 | 个人月卡、年卡采用 Apple 自动续费，复用网站权益；2026-09-29 所有者再次确认 | 保留远端 StoreKit 与 API 实现；Sandbox 与真机购买验收仍待完成，详商店准备文档 §9.4 |
 | 首发语言 | 英文 + 简体中文 | 有用户和支持能力后增加 |
 | 中国大陆 | 全球发行目标明确包含 Apple 中国大陆；Android 多商店独立记账 | 按实际 App 备案、类别与渠道材料开放，不以网站备案替代 |
 | 发布节奏 | staged rollout + 月度版本 | 严重故障走紧急版 |
