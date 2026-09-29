@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { MessageSquare, RotateCcw, Star, CheckCheck, Circle } from 'lucide-react';
+import { MessageSquare, CircleAlert, Star, CheckCheck, Circle } from 'lucide-react';
 import { CHAT_BODY_LIMIT, compareChatSequence, normalizeChatBody, type ChatClient, type ChatErrorCode, type ChatSticker } from '@cuberoot/shared/chat';
 import type { FriendUser } from '@cuberoot/shared/friends';
 import { useChat } from './use-chat';
@@ -207,15 +207,15 @@ export function ChatPanel({ expressionPacks = [], onReloadExpressions, renderMor
               <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} />
               <button type="button" className="friend-chat-action friend-chat-save-sticker" disabled={savingFavorites.includes(m.stickerId) || stickerItems.some((item) => item.id === m.stickerId)} onClick={() => void saveSticker(m.stickerId!)}><Star size={13} />{stickerItems.some((item) => item.id === m.stickerId) ? t('已收藏', 'Saved') : t('收藏', 'Save sticker')}</button>
             </> : <div className="friend-chat-message-body">{messageBody(m.body)}</div>}<div className="friend-chat-message-meta"><time dateTime={m.createdAt}>{formatTime(m.createdAt)}</time>
-              {m.senderUserId === userId && <span className="friend-chat-receipt" aria-label={state?.page?.peerReadSequence === undefined ? t('已发送', 'Sent') : compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? t('对方已读', 'Read by recipient') : t('对方未读', 'Not yet read by recipient')}>
-                {state?.page?.peerReadSequence === undefined ? t('已发送', 'Sent') : compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? <><CheckCheck size={12} />{t('已读', 'Read')}</> : <><Circle size={11} />{t('未读', 'Unread')}</>}
+              {m.senderUserId === userId && state?.page?.peerReadSequence !== undefined && <span className="friend-chat-receipt" aria-label={compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? t('对方已读', 'Read by recipient') : t('对方未读', 'Not yet read by recipient')}>
+                {compareChatSequence(m.sequence, state.page.peerReadSequence) <= 0 ? <><CheckCheck size={12} />{t('已读', 'Read')}</> : <><Circle size={11} />{t('未读', 'Unread')}</>}
               </span>}
             </div>
           </div>)}
           <div ref={tail} className="friend-chat-tail" aria-hidden="true" />
           {state?.pending.map((m) => <div key={m.clientMessageId} className="friend-chat-message is-mine is-pending">
-            {m.stickerId && client.stickers ? <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} /> : <div className="friend-chat-message-body">{messageBody(m.body)}</div>}<span role="status">{m.status === 'sending' ? t('发送中', 'Sending') : t('未确认发送', 'Delivery unconfirmed')}</span>
-            {m.status === 'failed' && <button type="button" className="friend-chat-action" onClick={() => void controller?.send(m.clientMessageId)}><RotateCcw size={13} />{t('重试', 'Retry')}</button>}
+            {m.stickerId && client.stickers ? <ChatStickerImage client={client.stickers} id={m.stickerId} label={t('表情包', 'Sticker')} retryLabel={t('重试', 'Retry')} /> : <div className="friend-chat-message-body">{messageBody(m.body)}</div>}{m.status === 'sending' && <span role="status">{t('发送中', 'Sending')}</span>}
+            {m.status === 'failed' && <button type="button" className="friend-chat-action friend-chat-failed-retry" aria-label={t('未确认发送，点击重试', 'Delivery unconfirmed. Retry sending')} title={t('未确认发送，点击重试', 'Delivery unconfirmed. Retry sending')} onClick={() => void controller?.send(m.clientMessageId)}><CircleAlert size={22} aria-hidden="true" /></button>}
           </div>)}
         </div>
         {hasNew && <button type="button" className="friend-chat-action friend-chat-new" onClick={() => { bottom.current = true; controller?.latest(); setHasNew(false); }}>{t('查看新消息', 'Show new messages')}</button>}
