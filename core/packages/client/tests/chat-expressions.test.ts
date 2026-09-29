@@ -1,18 +1,19 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { getPetExpressionPacks, WECHAT_EXPRESSION_PACK } from '@/lib/chat-expressions';
+import { getPetExpressionPacks } from '@/lib/chat-expressions';
+import archivedWechat from '@/lib/chat-wechat.json';
 import { THEME_IDS } from '@/lib/deskpet-themes';
 import { PET_GALLERY } from '@/lib/deskpet-gallery';
 
 describe('chat expression catalog', () => {
-  it('ships every WeChat image with unique safe tokens', () => {
-    const items = WECHAT_EXPRESSION_PACK.items;
+  it('preserves the withheld WeChat archive with unique safe tokens', () => {
+    const items = archivedWechat;
     expect(items).toHaveLength(109);
     expect(new Set(items.map(item => item.token)).size).toBe(109);
     for (const item of items) {
       expect(item.token).toMatch(/^\[[^\[\]]+\]$/);
-      expect(readFileSync(resolve('public', item.src.slice(1))).subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+      expect(readFileSync(resolve('withheld', item.src.slice(1))).subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
       expect(item.en.length).toBeGreaterThan(0);
     }
   });
