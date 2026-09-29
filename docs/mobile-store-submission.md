@@ -336,7 +336,9 @@ Apple `form_post` 回调通过 303 返回网站既有 `/auth/social/callback`。
 
 **2026-09-29 当前增量（覆盖本节下方的历史盘点）**：首发商品已在 App Store Connect 创建：`me.cuberoot.app.membership.monthly` / `me.cuberoot.app.membership.yearly`，同一组同一等级，CNY 29.90 / 299，自动续费，148 个非欧盟地区；家庭共享、促销与优惠码不启用。当前源码已接 StoreKit 2 商品、购买、恢复、交易更新和管理订阅，经既有安全会话发送交易到 API；API 使用 Apple 官方库验签并查询当前订阅状态，0254 migration 将有效 Apple 权益与原网站会员取较长有效期（不叠加时长）。账号合并保留原 token，注销解除关联；失败交易不提前 finish。iOS 内网站付款弹窗改为 Apple 内购入口。
 
-本地实现和验证不等于上线或 Sandbox 验收。已完成 shared build、App UI 404 项测试、Mobile 新增 6 项交易边界测试、服务端状态/PG 权益测试、客户端类型及文档守卫；真实购买、恢复、续期、退款、跨账号拒绝与通知回调仍未验收。Paid Apps Agreement 已经所有者确认签署，当前 Pending User Info，银行与税务未齐。内购密钥已经所有者批准创建并安全配置，购买开关在验收前保持关闭。审核截图、首批订阅与版本关联、App Privacy 购买历史字段仍需最终核对。
+本地实现和验证不等于上线或 Sandbox 验收。已完成 shared build、App UI 404 项测试、Mobile 新增 6 项交易边界测试、服务端状态/PG 权益测试、客户端类型及文档守卫；真实购买、恢复、续期、退款、跨账号拒绝与通知回调仍未验收。Paid Apps Agreement 已经所有者确认签署，当前 Pending User Info，银行与税务未齐。内购密钥已经所有者批准创建并安全配置，购买开关在验收前保持关闭。App Privacy 已核对包含关联身份的购买历史；线上隐私页已核对显示 Apple 自动续费、账号关联、交易记录和注销保留说明。订阅审核截图与首批订阅随版本提交仍待完成。
+
+发布证据：`d942a0c348` 的 Test 与 Next 部署通过；API 首次部署因线上会员表列顺序不同而在 0254 迁移中止并回滚，`6537329a62` 已改用显式列名，生产列顺序回归测试 5 项通过，修复后 Test 通过，Core 重部署跟踪 run `36545773459`。原生 `1.0 (2)` 已通过 Apple 分发校验、上传与处理，出口问卷已完成，并关联到版本 1.0 草稿；未提交审核。IPA 和日志位于维护者 Mac 的 `~/Library/Developer/CubeRootReleases/ios-1.0-build2-20260929/`。内购密钥已配置服务器，生产/Sandbox 通知网址已保存；无效交易 ID 的 Sandbox 凭据探测仅证明认证通过，不代表真实交易或通知验收。
 
 首版不配置 promoted IAP、offer codes、win-back 或 contingent pricing。当前无 PurchaseIntent/无 token 交易认领实现；不得开放这些外部购买渠道。Streamlined Purchasing 的默认开启状态不代表上述优惠已配置，后续开放前须补齐对应 StoreKit 流程并完成 Apple 要求的 approved binary 条件。
 

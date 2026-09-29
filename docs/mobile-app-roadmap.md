@@ -45,7 +45,7 @@
 - [ ] 注册并完成 Google Play Console 组织账号验证。（需要所有者操作账号、付款和身份验证）
 - [x] Google Play 组织核验所需的 D-U-N-S 已由邓白氏门户核验通过。（所有者提供门户结果）
 - [x] 核对 Apple Developer Program 个人会员有效期、已接受协议与 Xcode Team。（2026-09-11 门户显示个人 Team、续费日期 2027-09-11，Program License Agreement 于 9 月 10 日接受、Developer Agreement 于 9 月 3 日接受，所见页面无待处理提示；未出现字面 `Active`，不虚构该标签。Xcode 开发签名已通过；不包含 App Store Connect Paid Apps Agreement/税务/收款验收）
-- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-29 所有者确认首发个人月／年自动续费订阅（覆盖此前手动续购决定）；企业、优惠、家庭共享暂不加入。Apple 价格档与商品配置仍待完成，Paid Apps Agreement 当前为 New；不再按“首版无购买入口”规划）
+- [ ] 为 App 内会员购买完成 Paid Apps Agreement、税务、收款与商品配置。（2026-09-29 所有者确认首发个人月／年自动续费订阅（覆盖此前手动续购决定）；企业、优惠、家庭共享暂不加入。商品已创建，价格 CNY 29.90/299；Paid Apps Agreement 已签署，当前 Pending User Info，银行与税务未齐，Sandbox 验收及订阅审核材料待完成）
 - [ ] 建立 Android 真机和测试者名单。（组织账号不预设个人账号的 12 人/14 天门槛；质量测试仍建议 15 到 20 人）
 - [ ] 建立发布账号 2FA、恢复方式、密码管理和签名密钥备份规则。（需要账号所有者参与）
 - [x] 完成当前构建的数据与 SDK 清单：本地计时数据、可选账号、网络状态、Browser/Network/Haptics/Secure Storage/BLE；无广告、分析或用户画像 SDK。
@@ -321,7 +321,7 @@
 
 当前 iOS 证据与阻塞：
 
-- **2026-09-29 最新状态（后面的 09-28 条目为历史）**：首发月/年自动续费商品已创建，价格 CNY 29.90/299，同组同级、非欧盟 148 地区；Paid Apps Agreement 已签但银行/税务未齐。StoreKit 原生桥、登录账号绑定、服务端 Apple 验签/当前状态核对、权益视图、恢复/通知及账号合并/注销处理已在本地实现；shared build、App UI 404 项测试和 Mobile 交易边界测试通过。新 `1.0 (2)` 已完成分发归档，Apple 校验/上传结果另记，不以此关闭 Sandbox 与真机门槛。密钥已获所有者批准创建并配置；购买开关在部署验收前关闭。内容排除已覆盖 SQ1 PBL 衍生记号表，剩余 two-tool/SpeedCubeDB 等授权依据未齐，Content Rights 尚不能作肯定声明。详情见商店准备文档 9.4。
+- **2026-09-29 最新状态（后面的 09-28 条目为历史）**：首发月/年自动续费商品已创建，价格 CNY 29.90/299，同组同级、非欧盟 148 地区；Paid Apps Agreement 已签但银行/税务未齐。StoreKit 原生桥、登录账号绑定、服务端 Apple 验签/当前状态核对、权益视图、恢复/通知及账号合并/注销处理已在本地实现；shared build、App UI 404 项测试和 Mobile 交易边界测试通过。新 `1.0 (2)` 已通过分发归档、Apple 校验、上传与处理，出口问卷完成，已关联版本 1.0 草稿；未提交审核，不以此关闭 Sandbox 与真机门槛。密钥已获所有者批准创建并配置；购买开关在部署验收前关闭。内容排除已覆盖 SQ1 PBL 衍生记号表，剩余 two-tool/SpeedCubeDB 等授权依据未齐，Content Rights 尚不能作肯定声明。详情见商店准备文档 9.4。
 
 - 2026-09-28 PDT 已完成首个 `1.0 (1)` 分发包：共享 App UI typecheck 与 366 项测试、Mobile typecheck 与 28 项测试、Vite build、Capacitor iOS sync 均通过；Release 归档后以 Team `R25HL7AXXK` 导出 Apple Distribution 签名 IPA。Apple Validate App 与正式上传均成功，23:12 PDT 已确认 TestFlight Build Uploads 为 `Complete`；构建 ID `8437a5b6-caa1-4d5d-85e7-9ccc09c23600`，当前 `Missing Compliance` 指向加密算法问卷。加密声明、TestFlight 安装及 App Review 仍是独立步骤。Mac 本地产物与日志位于 `~/Library/Developer/CubeRootReleases/ios-1.0-20260929/`，不纳入 Git；导出 IPA SHA-256 为 `c1bdac48bcac8ff8611cd28cde531bde809a2994af77de31b8098922ebb382c1`。本轮未提交审核、未公开发布。
 - 同轮提审准备补充：已保存普通计时、数据本机保存、在线账号/工具和可选 BLE 的审核 Notes，并将 `1.0 (1)` 关联到版本。Business 页面确认 Free Apps Agreement 为 Active，DSA trader 声明待填，Paid Apps Agreement 为 New；App Information 的大陆 ICP 备案号为空。独立审计确认实际 IPA 包含 `shared/smart_cube/gan_crypto.ts` 的 JS AES-128 与 GAN/MoYu 重叠帧编解码，不可声明为仅使用 Apple OS 加密；全球发行包含法国，分类与适用材料仍需确认。技术草稿保存在上述本机产物目录 `export-compliance-technical-draft.md`，不是已签声明或获批文档。账号页仍有数字会员购买入口，公开 membership API 启用微信/支付宝，尚无 iOS StoreKit 验收证据；首发购买方案待所有者决定。Simulator Release build、iPad Pro 13-inch (M5) 安装与进程启动通过，但 Device Hub UI 工具读取连续超时，尚未获得真实商店截图或 iPad 运行交互证据。原有第三方内容授权保留未确认；未代填 DSA 身份、备案号或法律文件。
