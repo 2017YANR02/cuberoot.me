@@ -334,3 +334,4 @@ export * from './TimerColorNeutralSetting';
 export * from './timer-sound';
 export * from './useTimerSoundFeedback';
 export * from './TimerSoundSettings';
+export * from './TimerMetronomeSettings';

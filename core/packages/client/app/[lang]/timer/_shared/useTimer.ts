@@ -18,7 +18,7 @@ import {
 } from '@cuberoot/shared/timer';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getSettings } from '../_lib/settings';
-import { timerSound, playInspectionBeep } from '../_lib/sound';
+import { timerSound } from '../_lib/sound';
 import { useTimerSoundFeedback } from '@cuberoot/timer-ui';
 
 export type { SolveResult, TimerPhase } from '@cuberoot/shared/timer';
@@ -74,7 +74,6 @@ export function useTimer(
   const tickRef = useRef<number | null>(null);
   const inspTickRef = useRef<number | null>(null);
   const holdTimerRef = useRef<number | null>(null);
-  const firedBeepsRef = useRef<Set<number>>(new Set());
   const onSolveRef = useRef(onSolve);
   const onStartRef = useRef(onStart);
   onSolveRef.current = onSolve;
@@ -109,20 +108,12 @@ export function useTimer(
 
   const beginInspectionEffects = useCallback((startedAtMs: number) => {
     setInspectionDisplayMs(0);
-    firedBeepsRef.current = new Set();
     stopInspectionTick();
     inspTickRef.current = window.setInterval(() => {
       const elapsed = Math.max(0, performance.now() - startedAtMs);
       setInspectionDisplayMs((previous) => (
         Math.floor(previous / 1000) === Math.floor(elapsed / 1000) ? previous : elapsed
       ));
-      const beepAt = getSettings().inspectionBeepAt;
-      for (const sec of beepAt) {
-        if (sec > 0 && elapsed >= sec * 1000 && !firedBeepsRef.current.has(sec)) {
-          firedBeepsRef.current.add(sec);
-          playInspectionBeep();
-        }
-      }
     }, 100);
   }, [stopInspectionTick]);
 

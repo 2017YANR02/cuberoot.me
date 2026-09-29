@@ -1587,11 +1587,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared goal and round settings, daily progress, round projections and target feedback. Hosts supply solve history and persistence.',
   },
   {
-    name: 'TimerSoundSettings / useTimerSoundFeedback',
-    import: "import { TimerSoundSettings, useTimerSoundFeedback, createTimerSound } from '@cuberoot/timer-ui';",
+    name: 'TimerSoundSettings / TimerMetronomeSettings / useTimerSoundFeedback',
+    import: "import { TimerSoundSettings, TimerMetronomeSettings, useTimerSoundFeedback, createTimerSound } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与安装端共享提示音、音量、语音观察设置与 8/12 秒、起停声音调度；音频不可用时不阻断计时。',
-    en: 'Shared sound, volume and inspection voice controls, with 8/12-second warnings and start/stop cues. Unavailable audio does not block timing.',
+    zh: 'Web 与安装端共享声音、语音、节拍器、敲击定速和自定义观察提示设置；音频时钟调度、起停警告和失败回退同源。',
+    en: 'Shared sound, voice, metronome, tap-tempo and custom inspection cues, backed by one audio-clock scheduler and warning/fallback implementation.',
   },
   {
     name: 'TimerKeymapSettings',

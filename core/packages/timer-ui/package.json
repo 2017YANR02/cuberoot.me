@@ -14,6 +14,7 @@
       "uqr": "react-dom"
     },
     "runtime": {
+      "./metronome": "react-dom",
       "./solve-recap": "react-dom",
       "./solve-recap-placeholder": "react-dom",
       "./solve-recap.css": "react-dom",
@@ -64,6 +65,7 @@
     }
   },
   "exports": {
+    "./metronome": "./src/metronome.ts",
     "./solve-recap": "./src/reconstruct/SolveRecap.tsx",
     "./solve-recap-placeholder": "./src/reconstruct/SolveRecapPlaceholder.tsx",
     "./solve-recap.css": "./src/reconstruct/solve-recap.css",

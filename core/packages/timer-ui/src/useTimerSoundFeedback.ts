@@ -3,7 +3,10 @@ import type { TimerMachineTransition } from '@cuberoot/shared/timer';
 import type { Cue } from './timer-sound';
 
 /** One warning clock per timer instance; audio rendering may be shared by a host. */
-export function createTimerSoundFeedback(sound: { play(cue: Cue): void; cancelVoice(): void }) {
+export function createTimerSoundFeedback(sound: {
+  play(cue: Cue): void; cancelVoice(): void;
+  getInspectionBeepAt?(): readonly number[]; playInspectionBeep?(): void;
+}) {
   let inspectionTimer: ReturnType<typeof setInterval> | undefined;
   const clear = () => { clearInterval(inspectionTimer); inspectionTimer = undefined; };
   return {
@@ -15,12 +18,19 @@ export function createTimerSoundFeedback(sound: { play(cue: Cue): void; cancelVo
           sound.play('inspection-start');
           const start = state.inspectionStartedAtMs ?? performance.now();
           const fired = new Set<number>();
+          const firedBeeps = new Set<number>();
           inspectionTimer = setInterval(() => {
             const elapsed = performance.now() - start;
             for (const seconds of [8, 12] as const) {
               if (elapsed >= seconds * 1000 && !fired.has(seconds)) {
                 fired.add(seconds);
                 if (document.visibilityState !== 'hidden') sound.play(seconds === 8 ? 'warn-8' : 'warn-12');
+              }
+            }
+            for (const seconds of sound.getInspectionBeepAt?.() ?? []) {
+              if (elapsed >= seconds * 1000 && !firedBeeps.has(seconds)) {
+                firedBeeps.add(seconds);
+                if (document.visibilityState !== 'hidden') sound.playInspectionBeep?.();
               }
             }
           }, 100);
