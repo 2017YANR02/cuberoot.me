@@ -5,14 +5,15 @@ const output = process.argv.find(arg => arg.startsWith('--output='))?.slice(9);
 const scramble = process.argv.find(arg => arg.startsWith('--scramble='))?.slice(11) ?? 'R U';
 if (!process.argv.includes('--run') || !output) throw new Error('Use --run --output=/absolute/path.json [--scramble="R U"]');
 const config = cubeAgentConfig();
-if (!config) throw new Error('Existing Beijing Model Studio configuration is required');
+if (!config) throw new Error('Beijing Model Studio and DEEPSEEK_API_KEY configuration are required');
 let state = '';
 const fetcher: typeof fetch = async (input, init) => {
   const result = await fetch(input, init);
   if (process.argv.includes('--diagnostic')) {
     const body = await result.clone().json().catch(() => ({}));
-    console.log(JSON.stringify({ status: result.status, model: JSON.parse(String(init?.body)).model,
-      response: String(body.error?.message ?? body.choices?.[0]?.message?.content ?? '').replaceAll(config.key, '[redacted]').slice(0, 1500) }));
+    let response = String(body.error?.message ?? body.choices?.[0]?.message?.content ?? '');
+    for (const provider of Object.values(config)) response = response.replaceAll(provider.key, '[redacted]');
+    console.log(JSON.stringify({ status: result.status, model: JSON.parse(String(init?.body)).model, response: response.slice(0, 1500) }));
   }
   return result;
 };
