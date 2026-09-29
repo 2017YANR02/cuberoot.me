@@ -1452,7 +1452,13 @@ function PlatformOrderPayment({ entity, orderId, busy, runAction }: {
   const [embedded, setEmbedded] = useState<boolean | null>(null);
   const [nativeBusy, setNativeBusy] = useState(false);
   const [nativeError, setNativeError] = useState('');
-  useEffect(() => { setEmbedded(isMiniProgramCommerceRestricted()); }, []);
+  useEffect(() => {
+    let cancel = false;
+    void isMiniProgramCommerceRestricted().then((restricted) => {
+      if (!cancel) setEmbedded(restricted);
+    });
+    return () => { cancel = true; };
+  }, []);
   const status = typeof entity?.data?.status === 'string' ? entity.data.status : entity?.status;
   const totalAmountMinor = Number(entity?.data?.totalAmountMinor ?? 0);
   const canPay = status === 'pending_payment' && totalAmountMinor > 0;
@@ -1462,7 +1468,7 @@ function PlatformOrderPayment({ entity, orderId, busy, runAction }: {
   const paymentDisabled = !canPay || embedded === null || nativeBusy || busy === `start-payment:${orderId}`;
   const start = async (provider: 'wechat' | 'alipay') => {
     if (!canPay || paymentDisabled) return;
-    if (isMiniProgramCommerceRestricted()) {
+    if (embedded) {
       if (!ticketOnly || provider !== 'wechat') return;
       setNativeBusy(true);
       setNativeError('');
