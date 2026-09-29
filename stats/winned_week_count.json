@@ -201,7 +201,7 @@
         ],
         [
           "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-          99
+          100
         ],
         [
           "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
@@ -866,15 +866,15 @@
           13
         ],
         [
+          "[Aidan Grainger](https://www.worldcubeassociation.org/persons/2018GRAI01)",
+          13
+        ],
+        [
           "[Mariano D'Imperio](https://www.worldcubeassociation.org/persons/2009DIMP01)",
           12
         ],
         [
           "[Ethan Davis](https://www.worldcubeassociation.org/persons/2016DAVI02)",
-          12
-        ],
-        [
-          "[Aidan Grainger](https://www.worldcubeassociation.org/persons/2018GRAI01)",
           12
         ]
       ]
@@ -1147,7 +1147,7 @@
         ],
         [
           "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)",
-          36
+          37
         ],
         [
           "[Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02)",
@@ -2715,7 +2715,7 @@
     [
       "2012PARK03",
       "444",
-      99
+      100
     ],
     [
       "2012PARK03",
@@ -3000,7 +3000,7 @@
     [
       "2014DETL01",
       "sq1",
-      36
+      37
     ],
     [
       "2014GARC27",
@@ -3425,7 +3425,7 @@
     [
       "2018GRAI01",
       "minx",
-      12
+      13
     ],
     [
       "2019HIRS01",
