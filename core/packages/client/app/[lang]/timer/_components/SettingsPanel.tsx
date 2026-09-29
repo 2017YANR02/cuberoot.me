@@ -9,9 +9,6 @@ import { useEffect, useId, useRef, useState } from 'react';
 import {
   CloudDownload,
   CloudUpload,
-  Download,
-  FileSpreadsheet,
-  FileText,
   LogIn,
   RefreshCw,
 
@@ -65,7 +62,7 @@ import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 
 import SharedBoolToggle from '@/components/BoolToggle';
-import { TimerResetSettings } from '@cuberoot/timer-ui';
+import { TimerResetSettings, TimerExportSettings } from '@cuberoot/timer-ui';
 import { tr } from '@/i18n/tr';
 
 
@@ -817,47 +814,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               en: 'Selecting a csTimer or dcTimer file automatically creates sessions from its groups without replacing existing data; CubeRoot backups ask before replacing data',
             })}</span>
           </Row>
-          <Row label={tr({ zh: '导出', en: 'Export'
-        })}>
-            <button
-              data-setting-id="settings.data.export-cuberoot"
-              className="hint-btn"
-              onClick={onCubeRootExport}
-              title={tr({ zh: '完整备份全部成绩，可重新导入 CubeRoot', en: 'Back up all solves for later re-import into CubeRoot' })}
-            >
-              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-cuberoot')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-cstimer"
-              className="hint-btn"
-              onClick={() => { void onCstimerExport(); }}
-              title={tr({ zh: '下载所有成绩为 csTimer 兼容的 JSON', en: 'Download all solves as a csTimer-compatible JSON'
-            })}
-            >
-              <Download size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-cstimer')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-csv"
-              className="hint-btn"
-              onClick={onCsvExport}
-              title={tr({ zh: '每条成绩一行的 CSV，便于 Excel / Python 分析', en: 'One row per solve, for spreadsheets / Python'
-            })}
-            >
-              <FileSpreadsheet size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-csv')}
-            </button>
-            <button
-              data-setting-id="settings.data.export-speedstacks"
-              className="hint-btn"
-              onClick={onSpeedstacksExport}
-              title={tr({ zh: '导出当前项目为 Speedstacks 文本', en: 'Export the current event as Speedstacks text' })}
-            >
-              <FileText size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {settingLabel('settings.data.export-speedstacks')}
-            </button>
-          </Row>
+          <TimerExportSettings localize={tr} onExport={format => {
+            if (format === 'cuberoot') onCubeRootExport();
+            else if (format === 'cstimer') void onCstimerExport();
+            else if (format === 'csv') onCsvExport();
+            else onSpeedstacksExport();
+          }} />
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}

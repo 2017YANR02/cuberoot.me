@@ -1,6 +1,8 @@
 import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerSoundSettings, resetTimerStoreSettings } from '@cuberoot/shared/timer';
 import { TimerResetSettings } from '@cuberoot/timer-ui';
+import { TimerExportSettings, type TimerExportFormat } from '@cuberoot/timer-ui';
+import { exportTimerCstimerJson, exportTimerSolvesCsv, exportSpeedstacks } from '@cuberoot/shared/timer';
 import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 import { createMetronome } from '@cuberoot/timer-ui/metronome';
 import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
@@ -407,24 +409,26 @@ function applyPreferences(settings: TimerStoreSettings): void {
   document.documentElement.lang = settings.language === 'zh' ? 'zh-Hans' : 'en';
 }
 
-function downloadBackup(text: string): void {
-  const blobUrl = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+function downloadBackup(text: string, filename: string, mime: string): void {
+  const blobUrl = URL.createObjectURL(new Blob([text], { type: mime }));
   const anchor = document.createElement('a');
   anchor.href = blobUrl;
-  anchor.download = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`;
+  anchor.download = filename;
   anchor.click();
   window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
 }
 
-async function shareOrDownloadBackup(text: string): Promise<void> {
-  const filename = `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`;
-  const file = new File([text], filename, { type: 'application/json' });
+async function shareOrDownloadBackup(text: string, fileSpec = {
+  filename: `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`, mime: 'application/json',
+}): Promise<void> {
+  const { filename, mime } = fileSpec;
+  const file = new File([text], filename, { type: mime });
   const shareData: ShareData = { files: [file], title: 'CubeRoot timer backup' };
   if (navigator.share && navigator.canShare?.(shareData)) {
     await navigator.share(shareData);
     return;
   }
-  downloadBackup(text);
+  downloadBackup(text, filename, mime);
 }
 
 function MobileHistoryItem({
@@ -3319,6 +3323,34 @@ export function App({ host }: { host: InstalledAppHost }) {
       });
   }, [announce, copy.actionFailed, copy.exportSuccess]);
 
+  const exportFormat = useCallback((format: TimerExportFormat) => {
+    if (format === 'cuberoot') { exportData(); return; }
+    void repository.load().then(async (data) => {
+      const byEvent = data.database.dataBySession[data.database.activeSessionId] ?? {};
+      const date = new Date().toISOString().slice(0, 10);
+      let text: string; let count: number; let extension: string; let mime: string;
+      if (format === 'cstimer') {
+        const result = exportTimerCstimerJson(byEvent);
+        text = result.json; count = result.solveCount; extension = 'json'; mime = 'application/json';
+      } else if (format === 'csv') {
+        const result = exportTimerSolvesCsv(byEvent);
+        text = result.csv; count = result.solveCount; extension = 'csv'; mime = 'text/csv;charset=utf-8';
+      } else {
+        const entries = byEvent[data.settings.event] ?? [];
+        text = exportSpeedstacks(entries); count = entries.length; extension = 'txt'; mime = 'text/plain;charset=utf-8';
+      }
+      if (count === 0) {
+        announce({ zh: '当前没有可导出的成绩。', en: 'No solves to export.' }[language]);
+        return;
+      }
+      await shareOrDownloadBackup(text, { filename: `cuberoot-${format}-${date}.${extension}`, mime });
+      announce(copy.exportSuccess);
+    }).catch((error: unknown) => {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      announce(copy.actionFailed);
+    });
+  }, [announce, copy.actionFailed, copy.exportSuccess, exportData, language]);
+
   const commitImportedStore = useCallback((
     revision: SnapshotRevision,
     data: TimerStoreData,
@@ -4855,7 +4887,6 @@ export function App({ host }: { host: InstalledAppHost }) {
               <h2>{copy.data}</h2>
               <p>{solves.length} {copy.dataCount}</p>
               <div className="action-row">
-                <button className="secondary-action" onClick={exportData} type="button">{copy.exportData}</button>
                 <label className="secondary-action">
                   {copy.importData}
                   <input accept="application/json,.json" hidden onChange={importData} type="file" />
@@ -4864,6 +4895,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <button className="secondary-action" onClick={undoImport} type="button">{copy.undoImport}</button>
                 )}
               </div>
+              <TimerExportSettings onExport={exportFormat} localize={value => value[language]} />
             </div>
 
             </>}
