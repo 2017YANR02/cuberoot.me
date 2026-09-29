@@ -52,6 +52,23 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); observers.clear(); vi.unstubAllGlobals(); });
 
 describe('shared friend chat DOM', () => {
+  it('omits the sent fallback and retries failed messages from the exclamation button with the same identity', async () => {
+    vi.mocked(client.messages).mockResolvedValue({ ...page, items: [{ ...page.items[0], senderUserId: 1 }] });
+    await render(); await activate();
+    expect(host.querySelector('.friend-chat-receipt')).toBeNull();
+    expect(host.textContent).not.toContain('Sent');
+    const input = await draft('retry me');
+    await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    const original = client.send.mock.calls[0][1];
+    const retry = host.querySelector<HTMLButtonElement>('.friend-chat-failed-retry')!;
+    expect(retry.textContent).toBe('');
+    expect(retry.querySelector('svg')).not.toBeNull();
+    client.send.mockResolvedValue({ ...page.items[0], ...original, sequence: '2', senderUserId: 1 });
+    await act(async () => retry.click());
+    expect(client.send.mock.calls[1][1].clientMessageId).toBe(original.clientMessageId);
+    expect(client.send.mock.calls[1][1].body).toBe('retry me');
+    expect(host.querySelector('.friend-chat-failed-retry')).toBeNull();
+  });
   it('keeps the expression tray open while inserting, records recents and deletes whole expression tokens', async () => {
     vi.stubGlobal('requestAnimationFrame', (run: () => void) => { run(); return 0; });
     await render({ expressionPacks: [{ id: 'wechat', zh: '微信表情', en: 'WeChat emoji', items: [{ token: '[捂脸]', zh: '捂脸', en: 'Facepalm', src: '/face.png' }] }] }); await activate();
@@ -94,7 +111,7 @@ describe('shared friend chat DOM', () => {
     await act(async () => button('Send sticker').click());
     expect(client.send.mock.calls[0][1].stickerId).toBe(id);
     expect(host.querySelector('textarea')?.value).toBe('text stays');
-    expect(host.textContent).toContain('Delivery unconfirmed');
+    expect(host.querySelector('button[aria-label="Delivery unconfirmed. Retry sending"]')).not.toBeNull();
   });
   it('ignores upload completion after switching to another peer', async () => {
     let complete!: (value: { id: string }) => void;
@@ -130,7 +147,7 @@ describe('shared friend chat DOM', () => {
     await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
     expect(client.send).toHaveBeenCalledTimes(1);
     expect(client.send.mock.calls[0][1].body).toBe('你好');
-    expect(host.textContent).toContain('Delivery unconfirmed');
+    expect(host.querySelector('button[aria-label="Delivery unconfirmed. Retry sending"]')).not.toBeNull();
   });
   it('offers explicit sign-in after session expiry without opening login in the background', async () => {
     client.messages = vi.fn().mockRejectedValue(new ChatError('UNAUTHENTICATED'));
