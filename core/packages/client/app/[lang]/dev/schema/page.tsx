@@ -42,6 +42,10 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'apple_membership_accounts', domain: 'commerce', origin: '0254', purpose: { zh: 'Apple 随机账号 token 与 CubeRoot 用户绑定；合并保留 token，注销解除关联', en: 'Apple account tokens linked to CubeRoot users; merging preserves tokens and deletion clears ownership' } },
+  { name: 'apple_membership_subscriptions', domain: 'commerce', origin: '0254', purpose: { zh: '按环境与原始交易保存签名证据和当前订阅权益', en: 'Signed evidence and current subscription grants keyed by environment and original transaction' } },
+  { name: 'apple_membership_notifications', domain: 'commerce', origin: '0254', purpose: { zh: '已验签并完成处理的 Apple 通知去重记录', en: 'Deduplication records for verified and processed Apple notifications' } },
+  { name: 'effective_memberships', domain: 'commerce', origin: '0254', purpose: { zh: '有效会员视图，显式列名合并网站与 Apple 权益，保留最长有效期', en: 'Effective membership view joining website and Apple grants by explicit columns and retaining the longest validity' } },
   { name: 'mcp_oauth_grants', domain: 'account', origin: '0240', purpose: { zh: '管理员 MCP 授权、PKCE 绑定及凭据摘要；注销级联删除，合并或降权后失效', en: 'Administrator MCP grants, PKCE bindings and credential hashes; deletion cascades, merging or demotion invalidates access' } },
   { name: 'notification_push_devices', domain: 'account', origin: '0239', purpose: { zh: '已授权的 Android 推送设备和账号绑定', en: 'Consented Android push devices and account bindings' } },
   { name: 'notification_push_deliveries', domain: 'account', origin: '0239', purpose: { zh: '纪录手机推送队列及服务商接收状态', en: 'Record push queue and provider acceptance status' } },
