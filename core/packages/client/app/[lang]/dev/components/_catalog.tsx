@@ -1580,6 +1580,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared timer settings dialog for Web and installed apps: a category rail on wide screens and a dropdown at 720px or below. Dialog geometry, scrolling, focus restoration and dismissal have one implementation; hosts supply supported categories and fields.',
   },
   {
+    name: 'TimerGoalSettings / TimerRoundSettings / TimerGoalProgress / TimerRoundPanel / TimerTargetTime / useTimerTargetFeedback / useTimerRound',
+    import: "import { TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback, useTimerRound } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共享目标、每日练习进度、轮次设置和展示；目标输入、过关线、累计时限与起停反馈使用同一实现，宿主只提供成绩和持久化。',
+    en: 'Shared goal and round settings, daily progress, round projections and target feedback. Hosts supply solve history and persistence.',
+  },
+  {
     name: 'TimerTypographySettings',
     import: "import { TimerTypographySettings } from '@cuberoot/timer-ui';",
     category: 'more',

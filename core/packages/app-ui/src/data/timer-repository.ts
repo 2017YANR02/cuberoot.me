@@ -33,6 +33,9 @@ export interface TimerStoreDriver {
   writeWithRecovery(data: TimerStoreData, recovery: unknown): Promise<void>;
 }
 
+/** Functional updates merge nested preferences against the latest queued snapshot. */
+export type TimerSettingsUpdate = Partial<TimerStoreSettings> | ((current: TimerStoreSettings) => Partial<TimerStoreSettings>);
+
 export interface TimerImportPreview {
   current: ReturnType<typeof summarizeTimerDatabase>;
   incoming: ReturnType<typeof summarizeTimerDatabase>;
@@ -252,10 +255,11 @@ export class TimerRepository {
     });
   }
 
-  updateSettings(changes: Partial<TimerStoreSettings>): Promise<TimerStoreData> {
+  updateSettings(changes: TimerSettingsUpdate): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
-      const candidate = { ...data, settings: { ...data.settings, ...changes } };
+      const patch = typeof changes === 'function' ? changes(data.settings) : changes;
+      const candidate = { ...data, settings: { ...data.settings, ...patch } };
       const decoded = decodeTimerStoreData(candidate);
       if (!decoded) throw new CorruptTimerStoreError();
       await this.driver.write(decoded);
