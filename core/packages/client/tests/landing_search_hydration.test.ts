@@ -84,11 +84,55 @@ describe('LandingSearch placeholder hydration', () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', history: [] });
-    expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。');
+    expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
     expect(host.textContent).not.toContain('未找到匹配项');
-    expect(document.querySelector('.site-assistant-sources a')?.getAttribute('href')).toBe('/zh/frame-count');
+    expect(document.querySelector('.site-assistant-prose a.site-assistant-citation')?.getAttribute('href')).toBe('/zh/frame-count');
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it('shows live stages and inline citations before completion, then retains stopped text', async () => {
+    let stream!: ReadableStreamDefaultController<Uint8Array>;
+    const fetcher=vi.fn().mockResolvedValue(new Response(new ReadableStream<Uint8Array>({start(c){stream=c;}}), {headers:{'Content-Type':'text/event-stream'}}));
+    vi.stubGlobal('fetch',fetcher);
+    const host=document.createElement('div'); document.body.appendChild(host);
+    const root=createRoot(host);
+    const emit=async (event:unknown)=>{await act(async()=>{stream.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(event)}\n\n`));});};
+    try {
+      await act(async()=>{root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'怎么数帧',persistentResults:true}));});
+      await act(async()=>{host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
+      expect(fetcher.mock.calls[0][1].headers.Accept).toBe('text/event-stream');
+      await emit({type:'status',status:{phase:'querying',tool:'pages'}});
+      expect(document.querySelector('.site-assistant-status')?.textContent).toContain('正在查询站内页面');
+      const sources=[{id:'page:/frame-count',href:'/frame-count',title:'数帧',read:true},{id:'unsafe',href:'//evil.test',title:'unsafe',read:true}];
+      await emit({type:'answer',answer:'第一句。 [[page:/frame-',sources});
+      expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('第一句。 ');
+      await emit({type:'answer',answer:'第一句。 [[page:/frame-count]] 第二句。 [[unsafe]] [[unknown]]',sources});
+      const prose=document.querySelector('.site-assistant-prose')!;
+      expect(prose.textContent).toBe('第一句。 数帧 第二句。  ');
+      expect(prose.querySelectorAll('a')).toHaveLength(1);
+      expect(prose.querySelector('a')?.getAttribute('href')).toBe('/zh/frame-count');
+      expect(document.querySelector('.site-assistant-sources')).toBeNull();
+      await act(async()=>{(document.querySelector('button[title="停止"]') as HTMLButtonElement).click();});
+      expect(fetcher.mock.calls[0][1].signal.aborted).toBe(true);
+      expect(document.querySelector('.site-assistant-incomplete')?.textContent).toBe('回答未完成');
+      expect(document.querySelector('.site-assistant-status')).toBeNull();
+      await emit({type:'done',result:{answer:'late replacement',sources:[]}});
+      expect(prose.textContent).not.toContain('late replacement');
+    } finally { await act(async()=>root.unmount()); host.remove(); }
+  });
+
+  it('reports a dropped stream and keeps the partial answer visibly incomplete', async () => {
+    const payload='data: '+JSON.stringify({type:'answer',answer:'已收到的内容',sources:[]})+'\n\n';
+    vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response(payload,{headers:{'Content-Type':'text/event-stream'}})));
+    const host=document.createElement('div'); document.body.appendChild(host); const root=createRoot(host);
+    try {
+      await act(async()=>{root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'怎么数帧',persistentResults:true}));});
+      await act(async()=>{host.querySelector('input')!.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));});
+      expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('已收到的内容');
+      expect(document.querySelector('[role="alert"]')?.textContent).toContain('连接中断');
+      expect(document.querySelector('.site-assistant-incomplete')?.textContent).toBe('回答未完成');
+    } finally {await act(async()=>root.unmount());host.remove();}
   });
 
   it('keeps anonymous questions out of the paid API', async () => {
