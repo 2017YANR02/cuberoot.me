@@ -57,20 +57,22 @@
 
 .device-option {
   align-items: center;
-  background: var(--cr-surface);
-  border: 1rpx solid var(--cr-line);
-  border-radius: 16rpx;
+  border: 0;
   box-sizing: border-box;
   color: var(--cr-text);
   display: flex;
   gap: 24rpx;
   justify-content: space-between;
   line-height: 1.4;
-  margin-top: 12rpx;
+  margin: 0;
   min-height: 112rpx;
-  padding: 24rpx;
+  padding: 24rpx 0;
   text-align: left;
   width: 100%;
+}
+
+.device-option + .device-option {
+  border-top: 1rpx solid var(--cr-line);
 }
 
 .device-option-main {
