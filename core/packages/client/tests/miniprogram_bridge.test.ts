@@ -20,6 +20,7 @@ describe('Mini Program web-view bridge', () => {
     expect(navigateTo).not.toHaveBeenCalled();
   });
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     vi.resetModules();
   });
@@ -67,15 +68,14 @@ describe('Mini Program web-view bridge', () => {
 
   it.each([
     'MicroMessenger miniProgram',
-    'MicroMessenger',
     'toutiaomicroapp',
-  ])('blocks external commerce in embedded candidate: %s', async (userAgent) => {
+  ])('blocks external commerce in a confirmed Mini Program: %s', async (userAgent) => {
     vi.stubGlobal('window', {
       navigator: { userAgent },
     });
     const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
 
-    expect(isMiniProgramCommerceRestricted()).toBe(true);
+    await expect(isMiniProgramCommerceRestricted()).resolves.toBe(true);
   });
 
   it('keeps external commerce available in an ordinary browser', async () => {
@@ -84,6 +84,56 @@ describe('Mini Program web-view bridge', () => {
     });
     const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
 
-    expect(isMiniProgramCommerceRestricted()).toBe(false);
+    await expect(isMiniProgramCommerceRestricted()).resolves.toBe(false);
+  });
+
+  it('restricts a runtime-marked Mini Program even without a user-agent marker', async () => {
+    vi.stubGlobal('window', {
+      __wxjs_environment: 'miniprogram',
+      navigator: { userAgent: 'MicroMessenger' },
+    });
+    const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
+    await expect(isMiniProgramCommerceRestricted()).resolves.toBe(true);
+  });
+
+  it.each([false, true])('uses getEnv instead of mistaking the iOS WeChat browser for a Mini Program (%s)', async (miniprogram) => {
+    let reply!: (env: { miniprogram: boolean }) => void;
+    const getEnv = vi.fn((callback: typeof reply) => { reply = callback; });
+    vi.stubGlobal('window', {
+      clearTimeout, setTimeout,
+      navigator: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) MicroMessenger/8.0' },
+      wx: { miniProgram: { navigateTo: vi.fn(), getEnv } },
+    });
+    const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
+    const resolved = vi.fn();
+    const result = isMiniProgramCommerceRestricted().then(resolved);
+    await vi.waitFor(() => expect(getEnv).toHaveBeenCalledTimes(1));
+    expect(resolved).not.toHaveBeenCalled();
+    reply({ miniprogram });
+    await result;
+    expect(resolved).toHaveBeenCalledWith(miniprogram);
+  });
+
+  it('does not classify an ordinary browser as a Mini Program just because the SDK is installed', async () => {
+    vi.stubGlobal('window', {
+      clearTimeout, setTimeout,
+      navigator: { userAgent: 'Mozilla/5.0' },
+      wx: { miniProgram: { navigateTo: vi.fn(), getEnv: (cb: (env: object) => void) => cb({ miniprogram: false }) } },
+    });
+    const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
+    await expect(isMiniProgramCommerceRestricted()).resolves.toBe(false);
+  });
+
+  it('does not leave checkout stuck when an unmarked SDK never responds', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('window', {
+      clearTimeout, setTimeout,
+      navigator: { userAgent: 'MicroMessenger' },
+      wx: { miniProgram: { navigateTo: vi.fn(), getEnv: vi.fn() } },
+    });
+    const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
+    const result = isMiniProgramCommerceRestricted();
+    await vi.advanceTimersByTimeAsync(2000);
+    await expect(result).resolves.toBe(false);
   });
 });

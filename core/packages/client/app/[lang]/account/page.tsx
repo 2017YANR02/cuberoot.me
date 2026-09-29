@@ -681,6 +681,14 @@ export default function AccountPage() {
   const [mode, setMode] = useState<'wait' | 'login' | 'onboard' | 'me'>('wait');
   const [mobileAuth, setMobileAuth] = useState(false);
   const [mobileAuthProvider, setMobileAuthProvider] = useState<MobileAuthProvider | null>(null);
+  const [commerceRestricted, setCommerceRestricted] = useState(true);
+  useEffect(() => {
+    let cancel = false;
+    void isMiniProgramCommerceRestricted().then((restricted) => {
+      if (!cancel) setCommerceRestricted(restricted);
+    });
+    return () => { cancel = true; };
+  }, []);
   const next = useRef<string | null>(null);
 
   // The native Apps reuse this page instead of maintaining a second account UI.
@@ -761,7 +769,6 @@ export default function AccountPage() {
   // 没绑的人在原位看到「绑定 WCA 账号」:注册那步跳过了、或后来才拿到 WCA ID,都从这里回来。
   const wcaId = user?.wcaId;
   const isAdmin = hasAdminAccess(user);
-  const commerceRestricted = isMiniProgramCommerceRestricted();
   const cards = [
 
     ...(wcaId ? [
