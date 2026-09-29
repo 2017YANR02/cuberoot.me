@@ -1046,7 +1046,72 @@
   },
   {
     "date": "2026-09-14",
+    "zh": "搜索结果随输入更新 + 国家菜单共享置顶项 + 账号卡片支持个人排序 + WCA 统计导入改为流式处理",
+    "en": "Search results update while typing + country menus share pinned selections + account cards support personal ordering + WCA history imports stream compressed data"
+  },
+  {
+    "date": "2026-09-15",
+    "zh": "纪录订阅接入邮件与 Android 推送 + 女子与新人纪录补充 + 管理员磁盘浏览页加入 + 智能魔方姿态和复盘修正",
+    "en": "Record subscriptions add email and Android delivery + female and newcomer records expand + an administrator disk explorer arrives + smart cube orientation and reconstruction improve"
+  },
+  {
+    "date": "2026-09-16",
+    "zh": "国家纪录历史加入性别与国家筛选 + 管理员只读 AI 连接页加入 + 公式朝向与重复校验修正 + 训练与打乱统计更新",
+    "en": "National record history gains gender and country filters + an administrator read-only AI connection page arrives + algorithm orientation and duplicate checks improve + training and scramble statistics refresh"
+  },
+  {
+    "date": "2026-09-17",
+    "zh": "教师直播指南加入讲稿与交互思维导图 + 二阶公式支持有界精确步数计算 + 外观按配色记忆背景 + 五魔方深层转动方向修正",
+    "en": "Teacher livestream guidance adds a script and interactive mind map + 2×2 algorithms gain bounded exact move counts + appearance remembers backgrounds by color scheme + Megaminx deep-turn directions are corrected"
+  },
+  {
+    "date": "2026-09-18",
     "zh": "刷新 WCA 统计数据",
     "en": "Refresh WCA statistics"
+  },
+  {
+    "date": "2026-09-19",
+    "zh": "魔方贴纸图与凯莱图交互说明加入 + 公式详情支持原位编辑与组合类型说明 + 模拟器加入微缩房间主题 + 小程序扩展智能魔方协议与 WCA 绑定 + 会员订单与权益原子结算",
+    "en": "Interactive sticker and Cayley graph explanations arrive + algorithm details add inline editing and combination-type guidance + simulators gain miniature room themes + mini programs expand smart cube protocols and WCA linking + membership orders and entitlements settle atomically"
+  },
+  {
+    "date": "2026-09-20",
+    "zh": "魔方成长指南加入能力图谱 + Ghost 魔方模拟器加入 + 课程兑换与课时封面完善 + 在线房间同步智能魔方 + Android 扩展蓝牙品牌 + 管理员只读用户视角加入",
+    "en": "The cubing growth guide adds an ability atlas + a Ghost Cube simulator arrives + course redemption and lesson covers improve + online rooms synchronize smart cubes + Android expands Bluetooth brands + administrators gain read-only user viewing"
+  },
+  {
+    "date": "2026-09-21",
+    "zh": "抖音原生小程序适配与账号访问完善 + Ghost 魔方支持中层拖动和面色自定义 + 公式设置统一 + 网站增量部署传输优化",
+    "en": "Native Douyin mini program support and account access improve + Ghost Cube gains middle-slice dragging and face customization + algorithm settings unify + incremental website deployment transfers improve"
+  },
+  {
+    "date": "2026-09-22",
+    "zh": "桌面端加入智能魔方发现 + 复盘播放器与全屏操作完善 + 智能魔方会话与设备面板共享 + 抖音网站与小程序身份匹配修正",
+    "en": "Desktop adds smart cube discovery + reconstruction playback and fullscreen controls improve + smart cube sessions and device panels are shared + Douyin website and mini program identity matching is corrected"
+  },
+  {
+    "date": "2026-09-23",
+    "zh": "多线路流量监控补充来源证据 + 开发预览按设备独立接入 + 短信传输改用共享组件 + pnpm 升级",
+    "en": "Traffic monitoring adds delivery-line source evidence + development previews use separate device connections + SMS transport adopts a shared component + pnpm is upgraded"
+  },
+  {
+    "date": "2026-09-24",
+    "zh": "统计与自动化入口迁为 TypeScript + 打乱统计恢复自动发布 + 开发预览设备接入自动化 + 异常流量期间调整维护与恢复策略",
+    "en": "Statistics and automation entry points move to TypeScript + scramble statistics restore automatic publishing + development preview onboarding is automated + traffic incidents prompt maintenance and recovery changes"
+  },
+  {
+    "date": "2026-09-25",
+    "zh": "流量事件图文记录与域名解析指南加入 + 比赛访问加入手动验证码 + 流量预算与扫描封禁补齐 + 阶段求解结果按转动路径去重",
+    "en": "An illustrated traffic incident journal and DNS routing guide arrive + competition access adds a manual CAPTCHA + traffic budgets and scanner bans expand + stage solutions deduplicate move paths"
+  },
+  {
+    "date": "2026-09-26",
+    "zh": "计时器统一设备中心与状态契约 + 在线房间完善玩家与智能魔方交互 + 复盘加入服务端分享链接 + 网站页面扩展手动验证 + Redi 打乱来源修正",
+    "en": "Timers unify the device center and status contracts + online rooms refine player and smart cube interactions + reconstructions gain server-backed share links + manual verification expands across site pages + Redi scramble sourcing is corrected"
+  },
+  {
+    "date": "2026-09-27",
+    "zh": "账号合并后旧会话失效 + 手机验证凭证与账号操作原子提交 + 身份存储错误明确反馈 + 打乱统计快捷入口精简进度输出",
+    "en": "Account merges invalidate retired sessions + phone proofs commit atomically with account actions + identity storage errors surface explicitly + scramble statistics shortcuts show concise progress"
   }
 ]
