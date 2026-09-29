@@ -15,6 +15,7 @@ import {
   DEFAULT_TIMER_TIMING_SETTINGS,
   DEFAULT_TIMER_TYPOGRAPHY,
   normalizeTimerTypography,
+  normalizeTimerTrainingSettings,
   type TimerTypeface,
   DEFAULT_TIMER_SMART_CUBE_SETTINGS,
   normalizeTimerSmartCubeSettings,
@@ -231,7 +232,7 @@ export interface TimerSettings extends
    * Positive integer count of solves the user wants to complete each local
    * calendar day. Per-event variants are intentionally deferred.
    */
-  dailySolveGoal?: number | null;
+  dailySolveGoal: number | null;
 
   /** 显示的排名范围；空数组表示全部关闭。 */
   rankScopes: TimerRankScope[];
@@ -299,62 +300,8 @@ export const DEFAULTS: TimerSettings = {
   rankCountry: '',
 };
 
-/**
- * Parse a daily-solve-goal string. Empty / 0 / negative / non-finite → null
- * (treated as "disabled" by the progress pill).
- */
-export function parseDailySolveGoal(raw: string): number | null {
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (trimmed === '') return null;
-  const n = Number(trimmed);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.floor(n);
-}
 
-/**
- * Parse a time-attack target time string (`m:ss.ms` style, e.g. `0:10.50`,
- * `1:23.4`, or plain seconds like `10.5`) into milliseconds.
- *
- * Returns null for empty / invalid / non-positive / non-finite input — callers
- * should treat null as "disable the target".
- */
-export function parseTargetTime(raw: string): number | null {
-  if (typeof raw !== 'string') return null;
-  const trimmed = raw.trim();
-  if (trimmed === '') return null;
-  // Accept: "m:ss.ms", "m:ss", "s.ms", or plain integer seconds.
-  // Use a permissive parse — a single colon splits minutes:seconds.
-  let mins = 0;
-  let secStr = trimmed;
-  const colonIdx = trimmed.indexOf(':');
-  if (colonIdx >= 0) {
-    const mPart = trimmed.slice(0, colonIdx);
-    secStr = trimmed.slice(colonIdx + 1);
-    const m = Number(mPart);
-    if (!Number.isFinite(m) || m < 0) return null;
-    mins = Math.floor(m);
-  }
-  const sec = Number(secStr);
-  if (!Number.isFinite(sec) || sec < 0) return null;
-  const totalMs = Math.round(mins * 60_000 + sec * 1000);
-  if (!Number.isFinite(totalMs) || totalMs <= 0) return null;
-  return totalMs;
-}
-
-/**
- * Format a target-time ms value back into `m:ss.ms` for display in the
- * settings input. 0 / null / non-finite → empty string.
- */
-export function formatTargetTime(ms: number | null | undefined): string {
-  if (ms == null || !Number.isFinite(ms) || ms <= 0) return '';
-  const totalCs = Math.round(ms / 10);
-  const cs = totalCs % 100;
-  const totalSec = Math.floor(totalCs / 100);
-  const sec = totalSec % 60;
-  const min = Math.floor(totalSec / 60);
-  return `${min}:${String(sec).padStart(2, '0')}.${String(cs).padStart(2, '0')}`;
-}
+export { parseDailySolveGoal, parseTargetTime, formatTargetTime } from '@cuberoot/shared/timer';
 
 let _cache: TimerSettings = load();
 const _listeners = new Set<() => void>();
@@ -385,6 +332,7 @@ function load(): TimerSettings {
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
       ...normalizeTimerTypography(parsed),
+      ...normalizeTimerTrainingSettings(parsed),
       rankScopes: showRankBadge === false ? [] : normalizeTimerRankScopes(parsed.rankScopes),
     } as TimerSettings & {
       statsAoWindows?: unknown;
@@ -494,6 +442,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
     ...candidate,
     ...normalizeTimerTimingSettings(candidate),
     ...normalizeTimerTypography(candidate),
+    ...normalizeTimerTrainingSettings(candidate),
     ...normalizeTimerAttemptSplitSettings(candidate),
     ...normalizeTimerScramblePreviewSettings(candidate),
     ...normalizeTimerSmartCubeSettings(candidate),

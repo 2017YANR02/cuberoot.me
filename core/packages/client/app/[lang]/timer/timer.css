@@ -182,25 +182,6 @@
 /* Live indicator under the running timer: small monospace pill with a target
    icon, the target time, and the live delta (target - current). */
 /* 排布 + 文字色由 shell.css 的 .timing-surface .timer-target-indicator 定;这里补药丸外观。 */
-.timer-target-indicator {
-  margin-top: 10px;
-  padding: 4px 12px;
-  background: color-mix(in srgb, var(--signal-info) 8%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal-info) 35%, transparent);
-  border-radius: 999px;
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-}
-.timer-target-indicator svg { flex-shrink: 0; opacity: 0.85; }
-.timer-target-indicator .target-delta { color: var(--foreground); }
-/* 超时态:文字色由 shell.css 的 .timing-surface .timer-target-indicator.overshot 定。 */
-.timer-target-indicator.overshot {
-  background: color-mix(in srgb, var(--destructive) 10%, transparent);
-  border-color: color-mix(in srgb, var(--destructive) 45%, transparent);
-}
-.timer-target-indicator.overshot .target-delta { color: var(--destructive); }
-
 /* 停表脉冲(target-pulse-good/bad)不在这里 —— SoloView 把这两个类挂在 .timing-surface 上,
    shell.css 用一次性换色实现,没有 @keyframes。 */
 
@@ -711,11 +692,7 @@
   /* Target indicator: shrink padding/font so it doesn't push into the
      timer display. Stay visible — it's the whole point of the running phase
      when a target is set. */
-  .timer-target-indicator {
-    padding: 3px 8px;
-    font-size: 11px;
-    margin-top: 6px;
-  }
+
   /* Inspection illegal warning: keep visible (safety) but compact. */
   .inspection-illegal-warn {
     padding: 3px 8px;

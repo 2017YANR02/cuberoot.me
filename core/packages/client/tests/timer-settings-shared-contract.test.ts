@@ -25,6 +25,7 @@ import {
   TIMER_TIMING_SETTING_FIELD_IDS,
   TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+  TIMER_TRAINING_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -302,6 +303,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
       ...TIMER_SMART_CUBE_SETTING_FIELD_IDS,
       ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+      ...TIMER_TRAINING_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
@@ -363,8 +365,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     );
     const directMutationRoots = [...panel.matchAll(/updateSettings\(\{\s*([A-Za-z][A-Za-z0-9]*)/g)]
       .map((match) => match[1]!);
-    // Four typography mutations now live in the checked shared field group.
-    expect(directMutationRoots.length).toBeGreaterThan(26);
+    // Typography and training mutations now live in the checked shared field group.
+    expect(directMutationRoots.length).toBe(23);
     expect(directMutationRoots.filter((key) => !registeredRoots.has(key))).toEqual([]);
   });
 });

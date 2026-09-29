@@ -3,6 +3,7 @@ import {
   TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   TIMER_SMART_CUBE_SETTING_FIELD_IDS,
   TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+  TIMER_TRAINING_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 /**
@@ -26,6 +27,7 @@ export const MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS = [
   'settings.scramble.auto-mark-wca',
   ...TIMER_SCRAMBLE_PREVIEW_SETTING_FIELD_IDS,
   ...TIMER_TYPOGRAPHY_SETTING_FIELD_IDS,
+  ...TIMER_TRAINING_SETTING_FIELD_IDS,
 ] as const satisfies readonly TimerSettingFieldId[];
 
 /**

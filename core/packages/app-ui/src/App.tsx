@@ -1,3 +1,6 @@
+import type { TimerSettingsUpdate } from './data/timer-repository';
+import { useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
+import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
@@ -844,6 +847,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   }`;
   const storeLoaded = store !== null;
   const solves = store ? activeTimerSolves(store, activeEvent) : [];
+  const trainingSettings = store?.settings ?? normalizeTimerTrainingSettings();
+  const targetMs = trainingSettings.targetMsByEvent[activeEvent] ?? null;
+  const trainingRound = useTimerRound(solves, trainingSettings.round, `${store?.database.activeSessionId ?? ''}|${activeEvent}`);
+  const allSessionSolves = useMemo(() => store ? Object.values(store.database.dataBySession[store.database.activeSessionId] ?? {}).flatMap(list => list ?? []) : [], [store?.database]);
   const historyContext = `${store?.database.activeSessionId ?? ''}|${activeEvent}`;
   const historyDetailSolve = historyDetail?.context === historyContext
     ? solves.find((solve) => solve.id === historyDetail.solveId) ?? null
@@ -2750,6 +2757,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
     : timer.machine.lastMs ?? 0;
   timerDisplayMsRef.current = displayMs;
+  const targetFeedbackClass = useTimerTargetFeedback(timer.machine.phase, displayMs, targetMs);
   const timerText = formatTimerTimingDisplay({
     displayMs,
     hideTime: hideRunningTime,
@@ -2843,7 +2851,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     applyScrambleHistory({ list: [], idx: -1 });
   }, [applyScrambleHistory, timer.cancelArm]);
 
-  const updateSettings = useCallback((changes: Partial<TimerStoreSettings>) => {
+  const updateSettings = useCallback((changes: TimerSettingsUpdate) => {
     const revision = storeSnapshotGateRef.current.beginMutation();
     void repository.updateSettings(changes).then((data) => {
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
@@ -3278,6 +3286,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     revision: SnapshotRevision,
     data: TimerStoreData,
   ): boolean => storeSnapshotGateRef.current.commitIfLatest(revision, data, (latest) => {
+    trainingRound.reset();
     // Import/undo can replace every source-affecting setting. Make the swap one
     // synchronous attempt boundary before any old hold/keyup can reach it.
     const previousIdentity = scrambleIdentityFor(
@@ -3290,7 +3299,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       activeEventRef.current,
     );
     if (previousIdentity !== nextIdentity) invalidateCurrentScramble();
-  }), [applyStoreSnapshot, invalidateCurrentScramble, scrambleIdentityFor]);
+  }), [applyStoreSnapshot, invalidateCurrentScramble, scrambleIdentityFor, trainingRound.reset]);
 
   const importData = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -3955,6 +3964,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               devices={smartCubeDeviceCenter}
             >
               <TimingSurface
+                className={targetFeedbackClass}
                 ariaLabel={copy.timer}
                 colorClass={`${timerColorClass} tf-${store!.settings.timerFont}`}
                 fontScale={store!.settings.timerFontScale}
@@ -4108,6 +4118,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 surfaceRef={surfaceRef}
               >
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>
+                {timer.machine.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={displayMs} localize={value => value[language]} />}
                 {timer.machine.phase === 'running' && (multiStageActive || bldMemoActive) && (
                   <TimerAttemptSplitStatus
                     bldMemoActive={bldMemoActive}
@@ -4120,6 +4131,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                   />
                 )}
               </TimingSurface>
+              <TimerGoalProgress solves={allSessionSolves} goal={trainingSettings.dailySolveGoal} localize={value => value[language]} />
+              <TimerRoundPanel solves={trainingRound.solves} config={trainingSettings.round} targetMs={targetMs} event={activeEvent} precision={resultPrecision} onReset={trainingRound.start} localize={value => value[language]} />
               {!wideLayout && solveRecap}
 
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
@@ -4565,9 +4578,8 @@ export function App({ host }: { host: InstalledAppHost }) {
           <TimerSettingsPanel language={language} activeCategory={settingsCategory}
             onCategoryChange={setSettingsCategory} onClose={() => setView('timer')}
             categories={[
-              'timer', 'smart-cube', 'appearance', 'data', 'advanced',
+              'timer', 'smart-cube', 'training', 'appearance', 'data', 'advanced',
               ...(activeEvent !== '222' || scrambleSource === 'wca' ? ['scramble' as const] : []),
-              ...(timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent) ? ['training' as const] : []),
             ]}>
             {settingsCategory === 'appearance' && <>
             <div className="settings-group">
@@ -4676,7 +4688,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
-            {settingsCategory === 'training' && (timerSupportsStageSplits(activeEvent) || isBldEvent(activeEvent)) && (
+            {settingsCategory === 'training' && (
               <section className="settings-section">
                 <h2>{TIMER_SETTING_CATEGORY_CONTRACTS.find((category) => (
                   category.id === 'training'
@@ -4695,8 +4707,11 @@ export function App({ host }: { host: InstalledAppHost }) {
                   stageVisible={timerSupportsStageSplits(activeEvent)}
                   value={store!.settings}
                 />
+                <TimerGoalSettings value={store!.settings} event={activeEvent} onChange={updateSettings} localize={value => value[language]} />
               </section>
             )}
+
+            {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 
             {settingsCategory === 'appearance' && <>
             <section className="settings-section">

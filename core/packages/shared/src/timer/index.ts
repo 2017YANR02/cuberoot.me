@@ -58,3 +58,6 @@ export * from './wca-difficulty-data';
 export * from './wca-practice';
 
 export * from './typography';
+
+export * from './training-settings';
+export * from './goals';
