@@ -111,15 +111,6 @@
 }
 
 /* Target indicator */
-.timing-surface .timer-target-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--muted-foreground);
-}
-.timing-surface .timer-target-indicator.overshot { color: var(--destructive); }
-
 /* Rank badge — WR / CR / NR pills (shared by Solo digits corner + Battle player).
    Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
 .rank-badge-row {
@@ -198,9 +189,9 @@
 @media (prefers-reduced-motion: reduce) { .tmr-pb-card { animation: none; } }
 
 /* Target overshot / pulse on the digits */
-.timing-surface.target-overshot .timer-display.running { color: var(--destructive); }
-.timing-surface.target-pulse-good .timer-display { color: var(--signal-success); }
-.timing-surface.target-pulse-bad .timer-display  { color: var(--destructive); }
+
+
+
 
 /* ── Under-surface chrome (goal / subset / hints) ───────── */
 .shell-undersurface {

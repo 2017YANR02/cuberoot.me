@@ -22,6 +22,11 @@ import {
 import { bpa as statsBpa, wpa as statsWpa } from '@/app/[lang]/timer/_lib/stats';
 
 let seq = 0;
+it('terminates target projection for imported values beyond safe integer precision', () => {
+  expect(roundProjection([], DEFAULT_ROUND_CONFIG, 1e19).target?.needMs).toBe(null);
+  expect(roundProjection([], DEFAULT_ROUND_CONFIG, 10_000).target?.needMs).toBe(10_004);
+});
+
 function mk(timeMs: number, penalty: Penalty = 'ok'): Solve {
   seq++;
   return {
