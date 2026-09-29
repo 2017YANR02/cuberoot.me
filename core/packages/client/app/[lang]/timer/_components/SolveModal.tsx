@@ -64,8 +64,6 @@ export default function SolveModal({
     return onIdle(() => {
       void import('@cuberoot/timer-ui/SimCubeView');
       void import('@cuberoot/puzzle-render-core/sim/mountSimWorld');
-      void import('@cuberoot/shared/recon/oll-lookup').then((module) => module.prewarmOllTable());
-      void import('@cuberoot/shared/recon/pll-lookup').then((module) => module.prewarmPllTable());
     }, { timeout: 500 });
   }, [hasMoves]);
 

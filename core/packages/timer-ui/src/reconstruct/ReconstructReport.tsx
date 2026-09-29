@@ -23,9 +23,8 @@
  * 分区块而不是分标签页(研究文档原本画的是 tab):tab 把内容藏在一次点击**加**一次
  * 选择后面,而这几块常常要对着看。
  *
- * The reference lines need an IDA* search (~80-110ms cold on a desktop, more
- * on a phone), so they are computed AFTER the modal paints — opening the
- * report stays instant.
+ * Reference searches and text recognition run in a reusable Web Worker.
+ * The main thread renders the basic report while those results arrive.
  *
  * BLD solves keep their own shape: memo/execution split, letter pairs, and no
  * CFOP staging (the walker models a 3x3 speedsolve).
@@ -44,8 +43,7 @@ import { computeStageAverages, computeStageSegments } from '@cuberoot/shared/tim
 import { computeStepMetrics } from '@cuberoot/shared/timer/reconstruct/step-metrics';
 import type { StepMetricsResult } from '@cuberoot/shared/timer/reconstruct/step-metrics';
 import { detectWastedWork } from '@cuberoot/shared/timer/reconstruct/error-detect';
-import { computeF2lSlotReferences, computeStageReferences } from '@cuberoot/shared/timer/reconstruct/reference';
-import type { ReferenceResult, SlotReference, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
+import type { ReferenceResult, StageReference } from '@cuberoot/shared/timer/reconstruct/reference';
 import { computeF2lSlots } from '@cuberoot/shared/timer/reconstruct/f2l-slots';
 import { walkMethod } from '@cuberoot/shared/timer/reconstruct/method-walk';
 import type { MethodId } from '@cuberoot/shared/timer/reconstruct/methods';
@@ -53,9 +51,11 @@ import type { SolveMove } from '@cuberoot/shared/timer/reconstruct/stage-segment
 
 import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
-import { applyReconTextOverride, buildReconText } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { applyReconTextOverride } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
+import { reconstructionAnalyzer } from './analysis-client';
+import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
 import ReconstructActions from './ReconstructActions';
@@ -234,51 +234,7 @@ function ReconstructReportBody({
     [stageSegs, solve.scramble, moves, solve.timeMs],
   );
 
-  // Per-stage reference lines. Deferred to after the first
-  // paint: the cross/F2L references are IDA* searches, and a report that takes
-  // 100ms to appear feels broken in a way a number that lands 100ms late does
-  // not. Recomputed whenever the solve changes; nothing is persisted.
-  const [analysis, setAnalysis] = useState<{
-    reference: ReferenceResult | null;
-    slotReference: SlotReference[] | null;
-  } | null>(null);
-  // Scoreable = the 3x3 model actually reached solved (putDownMs is null
-  // otherwise), and the solve counts. That one test covers all the ways there
-  // is nothing to score: a non-3x3 event whose stream the walker can't follow,
-  // a mid-solve abort, a DNF.
   const scoreable = stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
-  useEffect(() => {
-    setAnalysis(null);
-    if (!scoreable || !stepMx) return;
-    let alive = true;
-    const timer = setTimeout(() => {
-      if (!alive) return;
-      let reference: ReferenceResult | null = null;
-      try {
-        reference = computeStageReferences(solve.scramble, moves, stepMx);
-      } catch (err) {
-        console.warn('[reconstruct] stage reference failed:', err);
-      }
-      // Same deferred pass, separate search: pricing one pair at a time asks a
-      // different (and more constrained) question than pricing the block — see
-      // computeF2lSlotReferences. A failure here must not cost us the block.
-      let slotReference: SlotReference[] | null = null;
-      try {
-        if (slots) slotReference = computeF2lSlotReferences(solve.scramble, moves, slots);
-      } catch (err) {
-        console.warn('[reconstruct] slot reference failed:', err);
-      }
-      setAnalysis({
-        reference,
-        slotReference,
-      });
-    }, 0);
-    return () => { alive = false; clearTimeout(timer); };
-  }, [scoreable, stepMx, solve.scramble, moves, slots]);
-
-  // 文字复盘。识别那一层是 cubing.js 的活(每一行两次 detectStage + 末层查表),
-  // 所以和参考解法一样推到首帧之后 —— 报告该立刻出现,标注可以晚一拍。
-  const [reconText, setReconText] = useState<ReconTextResult | null>(null);
   /**
    * 中心核的轨迹。转体和中层都只能从它推 —— 所以只有**录了姿态**的那些把有;
    * 没录的把 `solve.gyro` 不存在,这里是 null,中层退回时间判据、一个转体也不写。
@@ -291,21 +247,30 @@ function ReconstructReportBody({
       : null),
     [gyroSamples, solve.device?.model],
   );
-  useEffect(() => {
-    setReconText(null);
-    if (!stageSegs || moves.length === 0) return;
-    let alive = true;
-    const timer = setTimeout(() => {
-      buildReconText({
+  const analysisInput = useMemo<AnalysisInput | null>(() => (
+    stageSegs && moves.length > 0 ? {
+      scoreable,
+      text: {
         scramble: view.scramble, moves: view.moves, totalMs: solve.timeMs,
         segs: stageSegs, metrics: stepMx, slots, core,
         physical: { scramble: solve.scramble, moves }, viewRotation: view.rotation,
-      })
-        .then(r => { if (alive) setReconText(applyReconTextOverride(r, solve.reconstruction)); })
-        .catch(err => console.warn('[reconstruct] recon text failed:', err));
-    }, 0);
-    return () => { alive = false; clearTimeout(timer); };
-  }, [stageSegs, stepMx, slots, view, solve.timeMs, solve.reconstruction, core]);
+      },
+    } : null
+  ), [stageSegs, moves, scoreable, view, solve.timeMs, solve.scramble, stepMx, slots, core]);
+  const [analysisState, setAnalysisState] = useState<{
+    input: AnalysisInput; snapshot: AnalysisSnapshot;
+  } | null>(null);
+  useEffect(() => {
+    if (!analysisInput) return;
+    return reconstructionAnalyzer.subscribe(analysisInput, snapshot => {
+      setAnalysisState({ input: analysisInput, snapshot });
+    });
+  }, [analysisInput]);
+  // Never display the previous solve's result while the new effect subscribes.
+  const analysis = analysisState?.input === analysisInput ? analysisState?.snapshot : null;
+  const reconText = useMemo(() => analysis?.text
+    ? applyReconTextOverride(analysis.text, solve.reconstruction)
+    : null, [analysis?.text, solve.reconstruction]);
 
   // Personal stage averages computed from the caller-provided history.
   // We exclude the current solve so a fresh solve isn't compared against
@@ -586,6 +551,12 @@ function ReconstructReportBody({
             />
           ) : undefined}
         />
+      )}
+
+      {analysisInput && analysis?.status !== 'complete' && (
+        <p role="status">{analysis?.status === 'error'
+          ? tr({ zh: '部分复盘分析未能加载，请重新打开重试。', en: 'Some analysis could not load. Reopen this report to retry.' })
+          : tr({ zh: '正在分析复盘…', en: 'Analyzing solve…' })}</p>
       )}
 
       {analysisBlock}
