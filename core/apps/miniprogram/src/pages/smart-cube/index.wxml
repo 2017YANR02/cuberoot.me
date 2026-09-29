@@ -1,5 +1,4 @@
 <view class="page smart-cube-page">
-  <text class="eyebrow">{{copy.eyebrow}}</text>
   <text class="page-title">{{copy.title}}</text>
 
   <view class="connection-status">
@@ -25,6 +24,7 @@
           <text class="device-name">{{item.deviceName}}</text>
           <text class="device-driver">{{item.driverLabel}}</text>
         </view>
+        <view class="device-option-chevron" aria-hidden="true"></view>
       </button>
     </view>
     <view wx:if="{{phase === 'connected'}}" class="connection-metrics">
