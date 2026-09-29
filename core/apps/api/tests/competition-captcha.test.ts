@@ -4,20 +4,26 @@ import { CompetitionCaptchaStore, renderCompetitionCaptcha, issueCompetitionCapt
 import { verifyCompetitionProof, COMPETITION_ACCESS_COOKIE } from '@cuberoot/shared/competition-access';
 const secret = 'test-only-secret-with-more-than-32-characters';
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
-it('consumes a correct answer once; rejects wrong browser, expired code and three failures', () => {
+it('distinguishes incorrect, expired, exhausted, changed-browser and invalid challenges', () => {
   const store = new CompetitionCaptchaStore();
   const a = store.issue('a', 1000)!;
-  expect(store.consume(a.id, a.answer, 'b', 1001)).toBe(false);
-  expect(store.consume(a.id, a.answer.toLowerCase(), 'a', 1002)).toBe(true);
-  expect(store.consume(a.id, a.answer, 'a', 1003)).toBe(false);
+  expect(store.consume(a.id, a.answer, 'b', 1001)).toEqual({ code: 'captcha_browser_changed' });
+  expect(store.consume(a.id, 'WRONG', 'a', 1002)).toEqual({ code: 'captcha_incorrect', attemptsRemaining: 2 });
+  expect(store.consume(a.id, 'WRONG', 'a', 1003)).toEqual({ code: 'captcha_incorrect', attemptsRemaining: 1 });
+  expect(store.consume(a.id, 'WRONG', 'a', 1004)).toEqual({ code: 'captcha_attempts_exhausted' });
+  expect(store.consume(a.id, a.answer, 'a', 1005)).toEqual({ code: 'captcha_attempts_exhausted' });
   const b = store.issue('a', 1000)!;
-  for (let i = 0; i < 3; i++) expect(store.consume(b.id, 'WRONG', 'a', 1001)).toBe(false);
-  expect(store.consume(b.id, b.answer, 'a', 1002)).toBe(false);
+  expect(store.consume(b.id, ' ' + b.answer.toLowerCase() + ' ', 'a', 120999)).toEqual({ code: 'ok' });
+  expect(store.consume(b.id, b.answer, 'a', 121000)).toEqual({ code: 'captcha_invalid' });
   const c = store.issue('a', 1000)!;
-  expect(store.consume(c.id, c.answer, 'a', 121000)).toBe(false);
-  for (let i = 0; i < 6; i++) expect(store.allow('ip', 6, 1000)).toBe(true);
-  expect(store.allow('ip', 6, 1001)).toBe(false);
-  expect(store.allow('ip', 6, 61000)).toBe(true);
+  store.allow('verify:a', 10, 121000); // The HTTP endpoint sweeps before consume.
+  expect(store.consume(c.id, c.answer, 'a', 121000)).toEqual({ code: 'captcha_expired' });
+  store.allow('verify:a', 10, 241000);
+  expect(store.consume(c.id, c.answer, 'a', 241000)).toEqual({ code: 'captcha_invalid' });
+  expect(new CompetitionCaptchaStore().consume(c.id, c.answer, 'a', 1001)).toEqual({ code: 'captcha_invalid' });
+  for (let i = 0; i < 6; i++) expect(store.allow('ip', 6, 300000)).toBe(true);
+  expect(store.allow('ip', 6, 300001)).toBe(false);
+  expect(store.allow('ip', 6, 360000)).toBe(true);
 });
 it('renders glyph outlines without exposing answer text', () => {
   const image = renderCompetitionCaptcha('ABC234');
@@ -40,7 +46,10 @@ it('HTTP endpoints never expose an answer, reject bad origin, and mint only afte
   const submit = (value: string, origin = headers.origin) => app.request('/verify', { method: 'POST', headers: { ...headers, origin }, body: JSON.stringify({ id: body.id, answer: value }) });
   expect((await submit(answer, 'https://evil.example')).status).toBe(403);
   expect(consumed).not.toHaveBeenCalled();
-  expect((await submit('WRONG')).status).toBe(400);
+  const wrong = await submit('WRONG');
+  expect(wrong.status).toBe(400);
+  expect(await wrong.json()).toEqual({ code: 'captcha_incorrect', attemptsRemaining: 2 });
+  expect(wrong.headers.get('set-cookie')).toBeNull();
   const good = await submit(answer);
   expect(good.status).toBe(200);
   const cookie = good.headers.get('set-cookie')!;
@@ -63,4 +72,15 @@ it('uses the same temporary rollout lifetime for the cookie and signed proof', a
   const cookie = response.headers.get('set-cookie'); expect(cookie).toContain('Max-Age=1800');
   const proof = cookie.split(';')[0].slice(COMPETITION_ACCESS_COOKIE.length + 1);
   expect(await verifyCompetitionProof(secret, proof, 'browser', headers['user-agent'], Date.now() + 1800_000)).toBe(false);
+});
+
+it.each(['captcha_expired', 'captcha_invalid', 'captcha_browser_changed', 'captcha_attempts_exhausted'] as const)('HTTP preserves %s without issuing access', async code => {
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+  vi.spyOn(CompetitionCaptchaStore.prototype, 'allow').mockReturnValue(true);
+  vi.spyOn(CompetitionCaptchaStore.prototype, 'consume').mockReturnValue({ code });
+  const app = new Hono(); app.post('/verify', submitCompetitionCaptcha);
+  const response = await app.request('/verify', { method: 'POST', headers: { origin: 'https://cuberoot.me', 'content-type': 'application/json' }, body: JSON.stringify({ id: 'a'.repeat(48), answer: 'ABC234' }) });
+  expect(response.status).toBe(400);
+  expect(await response.json()).toEqual({ code });
+  expect(response.headers.get('set-cookie')).toBeNull();
 });
