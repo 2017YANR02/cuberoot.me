@@ -325,3 +325,4 @@ export { TimerGoalProgress } from './TimerGoalProgress';
 export { TimerRoundPanel, type RoundPanelProps } from './TimerRoundPanel';
 export { TimerTargetTime, useTimerTargetFeedback } from './TimerTargetTime';
 export { useTimerRound } from './useTimerRound';
+export { TimerKeymapSettings, TIMER_KEYMAP_SETTING_FIELD_IDS } from './TimerKeymapSettings';

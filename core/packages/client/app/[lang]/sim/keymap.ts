@@ -57,20 +57,7 @@ export function resetKeymap(): Record<string, KeyMove> {
   return { ...DEFAULT_KEYMAP };
 }
 
-const KEY_LABEL: Record<string, string> = {
-  Comma: ',', Period: '.', Slash: '/', Semicolon: ';',
-  Backquote: '`', Minus: '-', Equal: '=',
-  BracketLeft: '[', BracketRight: ']', Backslash: '\\', Quote: "'",
-  Space: 'Space', Tab: 'Tab', Enter: 'Enter', Backspace: '⌫',
-  ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→',
-};
-
-export function keyLabel(code: string): string {
-  if (KEY_LABEL[code]) return KEY_LABEL[code];
-  if (code.startsWith('Key')) return code.slice(3);
-  if (code.startsWith('Digit')) return code.slice(5);
-  return code;
-}
+export { keyLabel } from '@cuberoot/shared/timer';
 
 export function moveLabel(m: KeyMove): string {
   return m.sign + (m.reverse ? "'" : '');
