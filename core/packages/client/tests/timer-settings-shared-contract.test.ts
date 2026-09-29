@@ -32,6 +32,7 @@ import {
   TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
   TIMER_SOUND_SETTING_FIELD_IDS,
   TIMER_METRONOME_SETTING_FIELD_IDS,
+  TIMER_RESET_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -316,6 +317,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS,
       ...TIMER_SOUND_SETTING_FIELD_IDS,
       ...TIMER_METRONOME_SETTING_FIELD_IDS,
+      ...TIMER_RESET_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
