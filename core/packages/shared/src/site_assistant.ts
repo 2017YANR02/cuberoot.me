@@ -16,3 +16,34 @@ export interface AssistantAnswer {
   answer: string; sources: AssistantSource[]; artifacts?: AssistantArtifact[];
 }
 export interface AssistantMessage { role: 'user' | 'assistant'; content: string }
+
+export type AssistantStatus = { phase: 'planning' | 'querying' | 'writing'; tool?: string };
+export type AssistantStreamEvent =
+  | { type: 'status'; status: AssistantStatus }
+  | { type: 'answer'; answer: string; sources: AssistantSource[] }
+  | { type: 'done'; result: AssistantAnswer }
+  | { type: 'error'; error: AssistantErrorCode };
+
+/** Bounded SSE reader shared by the provider adapter and the browser client. */
+export async function* readAssistantEvents(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '', size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      size += value?.byteLength ?? 0;
+      if (size > 8_000_000) throw new Error('assistant stream too large');
+      buffer += done ? decoder.decode() : decoder.decode(value, { stream: true });
+      // Normalize CRLF only once a complete line has arrived (CR can split chunks).
+      let boundary: RegExpExecArray | null;
+      while ((boundary = /\r?\n\r?\n/.exec(buffer))) {
+        const frame = buffer.slice(0, boundary.index);
+        buffer = buffer.slice(boundary.index + boundary[0].length);
+        const data = frame.split(/\r?\n/).filter(line => line.startsWith('data:')).map(line => line.slice(5).replace(/^ /, '')).join('\n');
+        if (data) yield data;
+      }
+      if (done) break;
+    }
+  } finally { await reader.cancel(); reader.releaseLock(); }
+}

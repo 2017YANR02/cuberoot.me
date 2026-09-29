@@ -1,10 +1,11 @@
 import { Hono, type Context } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
+import { streamSSE } from 'hono/streaming';
 import { z } from 'zod';
 import { getIp } from '../utils/analytics_helpers.js';
 import { answerSiteQuestion, assistantConfig } from '../utils/site_assistant.js';
 import { reserveAssistantQuestion } from '../utils/site_assistant_quota.js';
-import { SITE_ASSISTANT_TIMEOUT_MS } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_TIMEOUT_MS, type AssistantStreamEvent } from '@cuberoot/shared/site-assistant';
 import { AssistantFailure, assistantDeadline, assistantFailureCode, assistantStage } from '../utils/site_assistant_diagnostics.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { getUserById } from '../utils/account.js';
@@ -43,7 +44,7 @@ export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, c
   let minute = 0;
   let minuteCount = 0;
   const clients = new Map<string, number>();
-  routes.use('/site-assistant', async (c, next) => { c.header('Cache-Control', 'no-store'); await next(); });
+  routes.use('/site-assistant', async (c, next) => { await next(); c.header('Cache-Control', 'no-store'); });
   routes.use('/site-assistant', bodyLimit({ maxSize: 70000, onError: c => c.json({ error: 'invalid_question' }, 413) }));
   routes.post('/site-assistant', async c => {
     const parsed = inputSchema.safeParse(await c.req.json().catch(error => {
@@ -54,7 +55,8 @@ export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, c
     const config = deps.config();
     if (!config) return c.json({ error: 'unavailable' }, 503);
     // Authentication is part of the same total deadline and precedes quota/model work.
-    const signal = AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(SITE_ASSISTANT_TIMEOUT_MS - 2000)]);
+    const disconnect = new AbortController();
+    const signal = AbortSignal.any([disconnect.signal, c.req.raw.signal, AbortSignal.timeout(SITE_ASSISTANT_TIMEOUT_MS - 2000)]);
     let admitted = false;
     try { return await assistantStage('total',()=>assistantDeadline(async()=>{
       const user = await assistantStage('auth',()=>deps.authenticate(c));
@@ -76,6 +78,26 @@ export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, c
       if (!quota.allowed) {
         c.header('Retry-After', String(quota.retryAfter));
         return c.json({ error: 'daily_limit' }, 429);
+      }
+      // Keep JSON for existing clients/benchmarks. Auth and quota failures still
+      // use HTTP status codes; failures after SSE starts are typed terminal events.
+      if (c.req.header('Accept')?.includes('text/event-stream')) {
+        c.header('X-Accel-Buffering', 'no');
+        admitted = false; // The stream owns the concurrency slot until it closes.
+        return streamSSE(c, async stream => {
+          stream.onAbort(() => disconnect.abort());
+          const emit = async (event: AssistantStreamEvent) => {
+            signal.throwIfAborted();
+            await stream.writeSSE({ data: JSON.stringify(event) });
+          };
+          try {
+            await emit({ type: 'status', status: { phase: 'planning' } });
+            const result = await assistantStage('total', () => assistantDeadline(() => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId, emit), signal));
+            await emit({ type: 'done', result });
+          } catch (error) {
+            if (!disconnect.signal.aborted) await stream.writeSSE({ data: JSON.stringify({ type: 'error', error: assistantFailureCode(error) }) });
+          } finally { disconnect.abort(); active--; }
+        });
       }
       return c.json(await deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId));
     },signal)); } catch(error) {

@@ -131,3 +131,12 @@ CubeStats was added to the production web directory under Competition & Stats (n
 - Browser speech recognition has not been replaced with cloud ASR. Actual DJI microphone recognition and mobile speech still require hardware acceptance; text-assistant success is not evidence that voice input is fixed.
 - The assistant uses bounded public read adapters and published statistical tables. It does not expose unrestricted SQL, private courses, admin content or arbitrary external-site crawling. Full feature parity or overall superiority over another product has not been established.
 - Model prose can still misinterpret evidence. Tables/charts retain raw-source values; a PR series alone does not establish consistency, and its dates use competition start dates unless the source provides finer timing.
+
+
+## Streaming UI update (2026-09-29 UTC)
+
+- Browser requests SSE on the existing authenticated POST. Authentication and daily quota still precede streaming; JSON callers remain compatible. `X-Accel-Buffering: no` and `Cache-Control: no-store` prevent buffering/caching by the reverse proxy.
+- Real tool stages drive the thinking/querying/writing indicator. Provider answer content arrives incrementally before completion; tool-planning JSON is never rendered. Adapter-authored factual summaries remain canonical and arrive together when complete.
+- Inline `[[source ID]]` markers resolve only to retrieved internal sources. Partial markers stay hidden; unknown IDs do not become links. Repeated factual summaries are deduplicated, with their citations beside the relevant prose.
+- Stop/disconnect retains received text as incomplete; it cannot become grounding for the next question. Scrolling upward suspends automatic scrolling. Closing/new conversation/account changes abort the active request.
+- Local evidence: provider stream fixture proves text is delivered before provider completion; route fixtures cover authorization, quota/concurrency and typed stream errors; DOM fixtures cover live stages, split citations, stop, late events and interrupted responses. Publication is recorded separately after deployment.

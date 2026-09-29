@@ -35,7 +35,7 @@ describe('site assistant grounding', () => {
       .mockResolvedValueOnce(Response.json([{id:1,person:'One',rawTime:5,comp:'Competition'}, {id:2,person:'Two',value:6,comp:'Home'}]))
       .mockResolvedValueOnce(modelResponse({answer:'两条均为练习复盘',sourceIds:['recon:1','recon:2']}));
     const result=await answerSiteQuestion('最近五条公开复盘','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
-    expect(result.answer).toBe('已列出 2 条公开复盘。比赛或练习场景以表格中的原始记录为准。');
+    expect(result.answer).toBe('已列出 2 条公开复盘。比赛或练习场景以表格中的原始记录为准。 [[recon:1]] [[recon:2]]');
     expect(result.sources[0].title).toBe('One · 5');
   });
   it('uses the official DeepSeek key without changing the cube comparison provider', () => {
@@ -70,7 +70,7 @@ describe('site assistant grounding', () => {
     const model=vi.fn().mockResolvedValueOnce(modelResponse({calls:[{tool:'statistics',id:'example',limit:5}]})).mockResolvedValueOnce(modelResponse({answer:'占据前三席',sourceIds:['stat:example']}));
     const fetcher:typeof fetch=async url=>String(url).endsWith('/index.json')?Response.json({categories:[{stats:[{id:'example',titleZh:'屠榜',titleEn:'Dominance'}]}]}):String(url).endsWith('/example.json')?Response.json({titleZh:'屠榜',header:[{key:'count',label:'Count',labelZh:'次数'}],rows:[[1]]}):model();
     const result=await answerSiteQuestion('查询屠榜前五项','zh',config,AbortSignal.timeout(5000),fetcher);
-    expect(result.answer).toBe('已列出“屠榜”的 1 项查询结果。');
+    expect(result.answer).toBe('已列出“屠榜”的 1 项查询结果。 [[stat:example]]');
     expect(result.artifacts?.[0]).toMatchObject({rows:[['1']]});
   });
   it('does not relabel ZBLS/ZBLL annotations as OLL/PLL from model memory',async()=>{
