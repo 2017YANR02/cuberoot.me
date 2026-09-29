@@ -1725,10 +1725,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // Anchor generation, late-turn queue and resync invalidation are shared with
   // installed clients. A changing facelet render never cancels the only request.
 
-  // 复盘那一屏的整条懒加载链,魔方一连上就预取。连了智能魔方的人下一步几乎必然是
-  // 拧一把,而拧完那一下 SolveRecap 就要渲染 —— 到那时才开始下载 200 KB 的报告
-  // (它自己还要再串三维魔方和 OLL/PLL 表),就是眼睁睁等一秒。这里把三级串行摊平成
-  // 一次空闲期的并行下载,和成绩详情那条路走的是同一份清单(见 SolveModal)。
+  // 连上魔方后并行预取复盘和三维回放组件,减少停表后的下载等待。
+  // 公式识别表由复盘 Worker 加载,不在主线程重复预热。
   useEffect(() => {
     if (!cubeConnected) return;
     return onIdle(() => {
@@ -1736,8 +1734,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       void import('../_components/ReconstructReport');
       void import('@/components/sim-embed/SimCubeView');
       void import('@/components/sim-embed/mountSimWorld');
-      void import('@/lib/oll_lookup').then((m) => { m.prewarmOllTable(); });
-      void import('@/lib/pll_lookup').then((m) => { m.prewarmPllTable(); });
     }, { timeout: 1000 });
   }, [cubeConnected]);
 

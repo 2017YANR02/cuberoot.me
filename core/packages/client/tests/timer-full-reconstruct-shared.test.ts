@@ -10,6 +10,7 @@ import { buildReconText as webBuild } from '@/app/[lang]/timer/_lib/reconstruct/
 import { decodeReplayParam } from '@/app/[lang]/timer/_lib/share/decode';
 import ReconstructReport, { type ReconstructHost } from '@cuberoot/timer-ui/reconstruct-report';
 import SolveRecap from '@cuberoot/timer-ui/solve-recap';
+import { reconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
 
 vi.mock('@cuberoot/timer-ui/SimCubeView', () => ({
   default: ({ moves }: { moves: string[] }) => createElement('div', { 'data-replay-moves': moves.join(' ') }),
@@ -37,6 +38,16 @@ beforeEach(() => {
   // Component behavior is deterministic offline; reference recognition has its
   // own fixture suite. Never depend on the live algorithm API in a UI test.
   vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline UI fixture'); }));
+  // jsdom has no Worker. Mock the transport boundary; browser verification
+  // exercises the real worker while this test checks progressive UI updates.
+  vi.spyOn(reconstructionAnalyzer, 'subscribe').mockImplementation((input, notify) => {
+    let alive = true;
+    notify({ text: null, reference: null, slotReference: null, status: 'pending' });
+    void sharedBuild(input.text).then(text => {
+      if (alive) notify({ text, reference: null, slotReference: null, status: 'complete' });
+    });
+    return () => { alive = false; };
+  });
   container = document.createElement('div');
   document.body.append(container);
   root = createRoot(container);
@@ -46,6 +57,7 @@ afterEach(async () => {
   await act(async () => root.unmount());
   container.remove();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function button(label: string): HTMLButtonElement {
