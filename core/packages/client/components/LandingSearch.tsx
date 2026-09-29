@@ -45,7 +45,7 @@ import { tr } from '@/i18n/tr';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
-import SiteAssistantDialog, { type AssistantTurn } from '@/components/SiteAssistantDialog';
+import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
 import { SITE_ASSISTANT_TIMEOUT_MS, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
@@ -229,6 +229,7 @@ export default function LandingSearch({
   const router = useRouter();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [assistantDialog, setAssistantDialog] = useState(false);
+  const [assistantDraft, setAssistantDraft] = useState('');
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
@@ -241,6 +242,7 @@ export default function LandingSearch({
     assistantRequest.current = null;
     setAssistantBusy(false);
     setAssistantTurns([]);
+    setAssistantDraft('');
     setAssistantAnswer(null);
     setAssistantError(null);
   }, [assistantUser?.uid, assistantUser?.wcaId]);
@@ -256,10 +258,10 @@ export default function LandingSearch({
 
   const stopAssistant = () => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); };
   const closeAssistant = useCallback(() => { assistantRequest.current?.abort(); assistantRequest.current = null; setAssistantBusy(false); setAssistantDialog(false); }, []);
-  const askAssistant = async (question = query) => {
+  const askAssistant = async (question = query, replaceLast = false) => {
     question = question.trim();
     if (!question || question.length > 500 || assistantRequest.current) return;
-    const previous = assistantTurns.filter(turn => turn.result && !turn.partial);
+    const previous = (replaceLast ? assistantTurns.slice(0, -1) : assistantTurns).filter(turn => turn.result);
     const nextTurns = [...previous, { question }];
     setAssistantTurns(nextTurns);
     setAssistantDialog(true);
@@ -280,7 +282,7 @@ export default function LandingSearch({
     try {
       const response = await fetch(apiUrl('/v1/site-assistant'), {
         method: 'POST', headers: { ...authHeaders(), Accept: 'text/event-stream' },
-        body: JSON.stringify({ question, lang, history: previous.slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
+        body: JSON.stringify({ question, lang, history: previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
       });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
@@ -559,7 +561,7 @@ export default function LandingSearch({
         >
           <Mic size={16} strokeWidth={1.75} />
         </button>
-        {!query.trim() && <button type="button" className="landing-search-mic" onClick={() => setAssistantDialog(true)} title={tr({zh:'打开对话',en:'Open conversation'})}><Sparkles size={17}/></button>}
+        {(!query.trim() || assistantTurns.length > 0) && <button type="button" className="landing-search-mic" onClick={() => setAssistantDialog(true)} title={tr({zh:'打开对话',en:'Open conversation'})}><Sparkles size={17}/></button>}
         {query.trim() && (
           <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
             onClick={() => void askAssistant()}
@@ -576,7 +578,7 @@ export default function LandingSearch({
         </p>
       )}
 
-      {assistantDialog && <SiteAssistantDialog lang={lang} turns={assistantTurns} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={question => void askAssistant(question)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+      {assistantDialog && <SiteAssistantDialog lang={lang} draft={assistantDraft} onDraftChange={setAssistantDraft} turns={assistantTurns} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={(question, replaceLast) => void askAssistant(question, replaceLast)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantDraft(''); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">
@@ -587,13 +589,9 @@ export default function LandingSearch({
                 {(assistantError === 'login_required' || assistantError === 'wca_link_required') && <button type="button" className="landing-search-item" onClick={() => useAuthStore.getState().login()}>{tr({ zh: '前往账号页', en: 'Go to account' })}</button>}
                 {totalCount > 0 && <button type="button" className="landing-search-item" onClick={goFirstResult}>{tr({ zh: '打开首个搜索结果', en: 'Open the first search result' })}</button>}
               </> : assistantAnswer ? <>
-                <p className="landing-search-answer-text">{assistantAnswer.answer}</p>
+                <div className="landing-search-answer-text"><SiteAssistantAnswerText result={assistantAnswer}/></div>
                 <button type="button" className="landing-search-item" onClick={() => setAssistantDialog(true)}>{tr({zh:'继续对话',en:'Continue conversation'})}</button>
-                <div className="landing-search-grid">
-                  {assistantAnswer.sources.map(source => <Link key={source.id} href={source.href} prefetch={false} className="landing-search-item" onClick={closeAfter}>
-                    <BookOpen size={14} />{source.title}<span className="landing-search-item-meta">{source.read ? tr({ zh: '页面来源', en: 'Page source' }) : tr({ zh: '相关入口', en: 'Related page' })}</span>
-                  </Link>)}
-                </div>
+
               </> : <p>{query.trim().length > 500
                 ? tr({ zh: '请把问题缩短到 500 字以内。', en: 'Please keep your question within 500 characters.' })
                 : tr({ zh: '按回车提问，或直接打开搜索结果。', en: 'Press Enter to ask, or open a search result.' })}</p>}
