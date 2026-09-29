@@ -13,6 +13,16 @@ that its implementation is closed source.
 
 ### DeepSeek switch (local, 2026-09-28 America/Los_Angeles)
 
+- Same-question acceptance: one complete 100-question official DeepSeek run plus
+  34 targeted retests after evidence-grounding fixes. Latest per-question P50
+  1.414 s, P95 2.839 s, maximum 3.591 s; 73 data answers, 23 scope clarifications,
+  and 4 existing data/grain gaps. Initial failures are preserved in the
+  [DeepSeek report](site-assistant-benchmark-deepseek-2026-09-28.md).
+  These are serial API-host measurements, not browser or production-load proof.
+  The 134 questions used the separate test ledger; production quota did not change.
+  Earlier assistant work was locally committed as `8dc393b983`; these new fixes
+  and test reports remain uncommitted and undeployed.
+
 - API `.env` now selects `SITE_ASSISTANT_PROVIDER=deepseek`, reads the existing
   `DEEPSEEK_API_KEY`, and uses `DEEPSEEK_MODEL=deepseek-flash`. The key is sent only
   to the fixed official `https://api.deepseek.com` endpoint. A missing DeepSeek

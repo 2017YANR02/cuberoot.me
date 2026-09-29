@@ -38,11 +38,22 @@ describe('assistant public data adapters',()=>{
     expect(detail.evidence).toMatchObject({rawTime:6.98,optimalScramble:'R U',solution:'R // raw'});
   });
   it('allows only bounded typed tool arguments',()=>{
+    expect(toolCallSchema.safeParse({tool:'statistics',tableKey:'0.2.0'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'statistics',id:'most_frequent_results',tableKey:'0.2.0'}).success).toBe(true);
     expect(toolCallSchema.safeParse({tool:'rankings',limit:100000}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'scrambles',compId:'../../.env'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'recons',compId:'2012PARK03'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'person',wcaId:'2012PARK03',headers:{Authorization:'x'}}).success).toBe(false);
   });
+});
+
+it('does not infer a person-level statistic from person and competition links',async()=>{
+  for(const id of ['round_top3_sum','best_round','tied_podium_results','most_records_at_single_competition']) {
+    const read=async(url:string)=>url.endsWith('/index.json')?{categories:[{stats:[{id,titleEn:id,titleZh:id}]}]}:{title:id,header:[{key:'person',label:'Person'},{key:'competition',label:'Competition'}],rows:[['[One](https://www.worldcubeassociation.org/persons/2017YANR02)','[Comp](https://www.worldcubeassociation.org/competitions/Comp2026)']]};
+    const result=await runDataTool({tool:'statistics',id,limit:5},'en',read);
+    expect(result.factualSummary?.includes('one person at one competition')).toBe(id==='most_records_at_single_competition');
+    expect((result.evidence as {interpretation:string[]}).interpretation.some(text=>text.includes('PERSON at a COMPETITION'))).toBe(id==='most_records_at_single_competition');
+  }
 });
 
 it('PR charts use positive strict improvements and retain the actual final average',async()=>{

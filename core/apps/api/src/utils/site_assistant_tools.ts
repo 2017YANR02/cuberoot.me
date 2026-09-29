@@ -26,7 +26,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('glossary'), query }).strict(),
   z.object({ tool: z.literal('forum'), query }).strict(),
   z.object({ tool: z.literal('algorithms'), puzzle: id.default('3x3'), set: id.optional() }).strict(),
-  z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
+  z.object({ tool: z.literal('statistics'), id: id.optional(), tableKey: z.string().regex(/^[0-9.]{1,40}$/).optional(), offset: z.number().int().min(0).max(50000).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.tableKey || !!value.id, {path:['id'],message:'A tableKey requires its statistic id. Repeat the id from the previous result; table keys are not global.'}),
   z.object({ tool: z.literal('pages'), query, pageIds: z.array(z.string().max(120)).max(3).default([]) }).strict(),
 ]);
 export type AssistantToolCall = z.infer<typeof toolCallSchema>;
@@ -82,7 +82,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
       instruction:'Published statistical tables may have their own cutoff. Do not claim live coverage, aggregate truncated rows, or filter a global top list as if it were a complete regional ranking.',
       interpretation: selected ? [
         selected.header.some(h=>h.key==='competitions_per_year') && selected.header.some(h=>h.key==='years') ? 'These are annualized averages over a span of years, NOT counts for each calendar year. If asked for year-by-year counts, explain that this table does not contain that series.' : null,
-        selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/persons/')) && selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/competitions/')) ? 'Each row describes a PERSON at a COMPETITION, not an aggregate across everyone at that competition. Do not claim a competition-wide record from these rows. Preserve tied leaders.' : null,
+        call.id==='most_records_at_single_competition' ? 'Each row describes a PERSON at a COMPETITION, not an aggregate across everyone at that competition. Do not claim a competition-wide record from these rows. Preserve tied leaders.' : null,
       ].filter(Boolean) : [],
       selected:selected?{...selected,rows:selected.rows.slice(0,call.limit)}:null,
       totalTables:tables.length,nextOffset:!selected && offset+60<tables.length?offset+60:null,
@@ -94,7 +94,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
       const rows=selected.rows.slice(0,call.limit);
       const note=lang==='zh'?data.noteZh:data.note;
       const annualized=selected.header.some(h=>h.key==='competitions_per_year') && selected.header.some(h=>h.key==='years');
-      const personCompetition=selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/persons/')) && selected.rows[0]?.some(v=>typeof v==='string' && v.includes('worldcubeassociation.org/competitions/'));
+      const personCompetition=call.id==='most_records_at_single_competition';
       out.factualSummary=[
         label(`已列出“${selected.title}”的 ${rows.length} 项查询结果。`,`Showing ${rows.length} results for “${selected.title}”.`),
         typeof note==='string'?note:'',
@@ -183,7 +183,8 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const data=await read(url(`${api}/recon/list`,{wcaId:call.wcaId,comp:call.compId}));
     const rows=(Array.isArray(data)?data:data.rows ?? data.recons ?? []).filter((r:any)=>(!call.event || r.event===call.event || (call.event==='333' && r.event==='3x3')) && (call.value===undefined || Number(r.value)===call.value || Number(r.rawTime)===call.value)).slice(0,call.limit);
     out.evidence=rows.map((r:any)=>({id:r.id,person:r.person,personId:r.personId,event:r.event,value:r.value,rawTime:r.rawTime,comp:r.comp,compWcaId:r.compWcaId,official:r.official,date:r.date,stm:r.stm,tps:r.tps,method:r.method}));
-    out.sources=rows.map((r:any)=>source(`recon:${r.id}`,`${name(r.person)} · ${r.value}`,`/recon/${r.id}`));
+    out.sources=rows.map((r:any)=>source(`recon:${r.id}`,`${name(r.person)} · ${r.value ?? r.rawTime ?? '—'}`,`/recon/${r.id}`));
+    out.factualSummary=label(`已列出 ${rows.length} 条公开复盘。比赛或练习场景以表格中的原始记录为准。`,`Showing ${rows.length} public reconstructions. Competition or practice settings follow the original records in the table.`);
     table(label('公开复盘','Public reconstructions'),[label('选手','Person'),label('成绩','Result'),label('比赛或场景','Competition or setting'),label('日期','Date')],rows.map((r:any)=>[name(r.person),String(r.value??r.rawTime??''),r.comp??'',r.date??'']),rows.map((r:any)=>`/recon/${r.id}`));
   } else if (call.tool === 'recon') {
     const r=await read(`${api}/recon/${call.id}`);

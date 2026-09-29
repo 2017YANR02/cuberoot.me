@@ -88,11 +88,12 @@ person {wcaId,event:"333",progress:false}: profile, all PRs, medals, historical 
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,limit:1..20}: find competitions and IDs; query matches name/city/id. Use English place/name keywords for this index.
 scrambles {compId,event:"333",round:"f"}: official scramble groups. First resolve unknown competition IDs.
-recons {wcaId?:person ID,compId?:competition ID,value?,event?,limit:1..20}: published reconstructions. Person IDs like 2017YANR02 MUST go in wcaId, never compId; a competition ID looks like BeijingSummer2025. Value is seconds; event uses 333 for 3x3. Then recon {id:number} to read moves and analysis. Quote recorded step labels exactly. Do not explain what a method or step solves unless its definition is in retrieved evidence; use glossary if that explanation is requested. Never invent a solution or label a reconstruction as verified beyond evidence. A personal practice location is not a WCA competition.
+recons {wcaId?:person ID,compId?:competition ID,value?,event?,limit:1..20}: search published reconstructions. Person IDs like 2017YANR02 MUST go in wcaId, never compId; a competition ID looks like BeijingSummer2025. Value is a solve duration in seconds, NEVER a reconstruction ID; event uses 333 for 3x3. This list does not contain full solutions.
+recon {id:number}: read ONE reconstruction by its numeric ID, including original moves and analysis. A question naming a reconstruction number refers to this id, not a duration. Quote recorded step labels exactly. Do not explain what a method or step solves unless its definition is in retrieved evidence; use glossary if that explanation is requested. Never invent a solution or label a reconstruction as verified beyond evidence. A personal practice location is not a WCA competition.
 glossary {query}: cubing terms; use a short term such as CFOP.
 forum {query}: public forum posts only.
 algorithms {puzzle:"3x3",set?:slug}: list sets, then read one known set. Keep original alg notation and comments exactly; never translate pscross/psxcross/xxcross or fingertrick symbols into invented terminology. Interpret specialized annotations only after looking them up.
-statistics {id?:catalog id,tableKey?:exact provided table key,offset?:nextOffset,limit:1..20}: the site's full published statistics. statisticsCatalog contains [id,title] pairs; id is the FIRST element. Use that id directly. Never use a page ID such as wca-stats. If there are multiple sections, use an exact returned tableKey matching the question. nextOffset retrieves more available sections. If the question leaves scope unspecified or asks for available conditions, STOP and answer with calls:[], explaining actual available choices. Do not read arbitrarily chosen sections. Never repeat a call already in evidence. Do not combine different regions, metrics or scopes.
+statistics {id?:catalog id,tableKey?:exact provided table key,offset?:nextOffset,limit:1..20}: the site's full published statistics. statisticsCatalog contains [id,title] pairs; id is the FIRST element. Use that id directly. Never use a page ID such as wca-stats. If there are multiple sections, use an exact returned tableKey matching the question. Always repeat the statistic id together with tableKey; table keys are scoped to that id. nextOffset retrieves more available sections. If the question leaves scope unspecified or asks for available conditions, STOP and answer with calls:[], explaining actual available choices. Do not read arbitrarily chosen sections. Never repeat a call already in evidence. Do not combine different regions, metrics or scopes.
 pages {query:short keywords,pageIds:catalog IDs max3}: search public full-text index and read relevant public pages.
 All tool objects include tool:"name". Only these exact fields are accepted. If the user specifies a result count, set limit to that count. Max 4 calls per round, 10 across 4 rounds. You can issue independent calls together. No SQL, arbitrary URL, code or writes.
 Use pages for tools, tutorials, rules, math and other site content, not WCA numeric questions. Never answer factual questions from training memory. Each answer must be grounded in actual retrieved evidence. Cite evidence IDs in sourceIds. Report actual update dates where supplied; imported WCA data is not live.
@@ -108,6 +109,8 @@ export async function answerSiteQuestion(
   // Supplying it on every turn can override the person discussed in history.
   const selfWcaId=/我的|我自己|我本人|\bmy\b/i.test(question) ? viewerWcaId : undefined;
   const requestedLimit=requestedAssistantLimit(question);
+  const reconReference=question.match(/(?:复盘|reconstruction)\s*(?:(?:编号|ID)\s*)?[#：:]?\s*(\d+)(?![\d.年月日场次])(?:\s*(秒|毫秒|年|月|日|场|次|seconds?\b|s\b))?/i);
+  const requestedReconId=reconReference && !reconReference[2] && Number.isSafeInteger(Number(reconReference[1])) && Number(reconReference[1])>0 ? Number(reconReference[1]) : undefined;
   const asksForConditions=/先.*(?:可选条件|筛选条件)|(?:列出|说明|查看|哪些|有什么).*(?:可选条件|筛选条件)|(?:list|show|which|available).*(?:filter options|available scopes|available conditions)/i.test(question);
   const resolvedPeople=new Set([question,...history.filter(m=>m.role==='user').map(m=>m.content)]
     .flatMap(text=>text.match(/\b\d{4}[A-Z]{4}\d{2}\b/g) ?? []));
@@ -141,7 +144,7 @@ export async function answerSiteQuestion(
   } catch { signal.throwIfAborted(); }
   const explicitStatistics=statisticsCatalog.filter(([id,title])=>question.toLowerCase().includes(id.toLowerCase()) || (title.length>=3 && question.toLowerCase().includes(title.toLowerCase())));
   const sources = new Map<string, AssistantAnswer['sources'][number]>();
-  const statisticSummaries = new Map<string,Set<string>>();
+  const factualSummaries = new Map<string,Set<string>>();
   const artifacts: Array<{sourceIds:string[]; artifact:NonNullable<AssistantAnswer['artifacts']>[number]}> = [];
   const called=new Set<string>();
   let evidenceCharacters=0;
@@ -221,11 +224,14 @@ export async function answerSiteQuestion(
       const selected=step.sourceIds.flatMap(id=>sources.has(id)?[sources.get(id)!]:[]);
       const cited=selected.length?selected:[...sources.values()].slice(0,12);
       const citedIds=new Set(cited.map(source=>source.id));
-      const factual=cited.length>0 && cited.every(s=>statisticSummaries.has(s.id)) && !/为什么|原因|解释|分析|建议|如何|\bwhy\b|\bhow to\b|\bexplain\b|\banaly[sz]e\b/i.test(question) ? cited.flatMap(s=>[...statisticSummaries.get(s.id)!]).join('\n\n') : undefined;
+      const factual=cited.length>0 && cited.every(s=>factualSummaries.has(s.id)) && !/为什么|原因|解释|分析|建议|如何|\bwhy\b|\bhow to\b|\bexplain\b|\banaly[sz]e\b/i.test(question) ? [...new Set(cited.flatMap(s=>[...factualSummaries.get(s.id)!]))].join('\n\n') : undefined;
       return {answer:factual || step.answer || {zh:'本次没有取得足够的数据，请缩小问题范围后重试。',en:'There was not enough evidence. Please narrow the question and retry.'}[lang],sources:cited,artifacts:artifacts.filter(a=>a.sourceIds.some(id=>citedIds.has(id))).map(a=>a.artifact)};
   };
   for (let round=0;round<=4;round++) {
     const step=await complete(round,round===4);
+    // An explicit resource number must be read before a model can reinterpret
+    // it as a solve duration or claim the original solution is unavailable.
+    if(round===0 && requestedReconId) step.calls=[{tool:'recon',id:requestedReconId}];
     // A named published statistic has a known evidence source. A model's early
     // clarification is not permission to invent filters without reading it.
     if(!step.calls.length && !evidence.length && explicitStatistics.length===1 && round<4) {
@@ -266,9 +272,9 @@ export async function answerSiteQuestion(
           for(const row of result.evidence)if(typeof row?.wcaId==='string')resolvedPeople.add(row.wcaId);
         }
         for (const s of result.sources) sources.set(s.id,s);
-        if(parsed.data.tool==='statistics' && result.factualSummary) for(const s of result.sources) {
-          const summaries=statisticSummaries.get(s.id) ?? new Set<string>();
-          summaries.add(result.factualSummary);statisticSummaries.set(s.id,summaries);
+        if(result.factualSummary) for(const s of result.sources) {
+          const summaries=factualSummaries.get(s.id) ?? new Set<string>();
+          summaries.add(result.factualSummary);factualSummaries.set(s.id,summaries);
         }
         artifacts.push(...result.artifacts.map(artifact=>({sourceIds:result.sources.map(s=>s.id),artifact})));
         // Bound context even when a large alg set or long reconstruction is read.
