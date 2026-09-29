@@ -60,7 +60,7 @@ import {
   type TimerBooleanControlProps,
 } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
-import CubeOrientationSelect from '@/components/CubeOrientationSelect';
+import { TimerPreScrambleSettings } from '@cuberoot/timer-ui';
 import { useMetronome, setMetronome, tapTempo, bpmToTps, BPM_MIN, BPM_MAX } from '@/lib/metronome';
 import { CountryInput } from '@/components/CountryInput';
 
@@ -625,20 +625,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         </SettingsSection>
 
         <SettingsSection category="scramble" activeCategory={activeCategory}>
-          <SettingRow id="settings.scramble.pre-orientation">
-            <CubeOrientationSelect
-              className="settings-row-control-select"
-              value={s.preScr}
-              onChange={(v) => updateSettings({ preScr: v })}
-            />
-          </SettingRow>
-          <SettingRow id="settings.scramble.training-pre-orientation">
-            <CubeOrientationSelect
-              className="settings-row-control-select"
-              value={s.preScrT}
-              onChange={(v) => updateSettings({ preScrT: v })}
-            />
-          </SettingRow>
+          <TimerPreScrambleSettings value={s} onChange={updateSettings} localize={tr} />
           {settingState('settings.scramble.color-neutral').visible && (
             <SettingRow id="settings.scramble.color-neutral">
               <select

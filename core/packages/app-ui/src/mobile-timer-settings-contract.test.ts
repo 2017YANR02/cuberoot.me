@@ -16,6 +16,7 @@ import {
   TIMER_TRAINING_SETTING_FIELD_IDS,
   TIMER_KEYMAP_SETTING_FIELD_IDS,
   TIMER_DISPLAY_SETTING_FIELD_IDS,
+  TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 import {
@@ -37,6 +38,7 @@ describe('Mobile timer settings parity ledger', () => {
   ...TIMER_TRAINING_SETTING_FIELD_IDS,
       ...TIMER_KEYMAP_SETTING_FIELD_IDS,
       ...TIMER_DISPLAY_SETTING_FIELD_IDS,
+      ...TIMER_PRE_SCRAMBLE_SETTING_FIELD_IDS,
     ]);
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
       'settings.appearance.scramble-click-action',
@@ -68,6 +70,9 @@ describe('Mobile timer settings parity ledger', () => {
     expect(app).toContain('<TimerAttemptSplitStatus');
     expect(app).not.toContain('<TimerScrambleClickActionSetting');
     expect(app).toContain('<TimerScramblePreviewSettings');
+    expect(app).toContain('<TimerPreScrambleSettings');
+    expect(app).toContain("'timer', 'smart-cube', 'scramble', 'training', 'appearance', 'data', 'advanced'");
+    expect(app).toContain('applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))');
     expect(app).toContain('<TimerBooleanSettingRow');
     expect(app).toContain('store!.settings.showCubePreview && scrambleReady');
     expect(app).toContain("visualization={store!.settings.prefer3D ? '3D' : '2D'}");
