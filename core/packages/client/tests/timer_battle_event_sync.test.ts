@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { exportTimerCstimerJson } from '@cuberoot/shared/timer';
 import {
   EVENTS,
   BATTLE_EVENT_IDS,
@@ -141,26 +142,27 @@ describe('non-WCA puzzles', () => {
 
 describe('storage round-trip covers every event', () => {
   it('exports a csTimer scrType for each EventId, and imports it back', async () => {
-    // EVENT_TO_CSTIMER_SCRTYPE is a total Record<EventId, string>, so its keys
-    // are the runtime enumeration of the EventId union — comparing against
-    // EVENTS catches an id added to the type but forgotten in the picker list.
-    const exportSrc = await import('node:fs').then((fs) =>
-      fs.readFileSync(
-        new URL('../app/[lang]/timer/_lib/storage/export_cstimer.ts', import.meta.url),
-        'utf8',
-      ),
-    );
-    const block = exportSrc.slice(
-      exportSrc.indexOf('EVENT_TO_CSTIMER_SCRTYPE'),
-      exportSrc.indexOf('};', exportSrc.indexOf('EVENT_TO_CSTIMER_SCRTYPE')),
-    );
-    const exported = new Set(
-      [...block.matchAll(/^\s*'?([A-Za-z0-9]+)'?:\s*'/gm)].map((m) => m[1]),
-    );
+    const { parseCstimerExport } = await import('@/app/[lang]/timer/_lib/storage/import_cstimer');
     for (const e of EVENTS) {
-      expect(exported.has(e.id), `${e.id} has no csTimer export scrType`).toBe(true);
+      const solve = {
+        id: `round-trip-${e.id}`, event: e.id, timeMs: 12340,
+        scramble: 'R U', penalty: 'ok' as const, ts: 1700000000000,
+      };
+      const exported = exportTimerCstimerJson({ [e.id]: [solve] });
+      expect(exported.sessionCount, e.id).toBe(1);
+      expect(exported.solveCount, e.id).toBe(1);
+      const metadata = JSON.parse(JSON.parse(exported.json).properties.sessionData);
+      expect(metadata['1'].opt.scrType, `${e.id} has no csTimer export scrType`).toEqual(expect.any(String));
+      expect(metadata['1'].opt.scrType.length, e.id).toBeGreaterThan(0);
+      const parsed = parseCstimerExport(exported.json);
+      expect(parsed, e.id).toHaveLength(1);
+      // csTimer has no custom type; its documented fallback is 333.
+      expect(parsed[0].event, e.id).toBe(e.id === 'custom' ? '333' : e.id);
+      expect(parsed[0].solves, e.id).toHaveLength(1);
+      expect(parsed[0].solves[0], e.id).toMatchObject({
+        timeMs: solve.timeMs, scramble: solve.scramble, penalty: solve.penalty, ts: solve.ts,
+      });
     }
-    expect([...exported].filter((id) => !EVENT_IDS.has(id))).toEqual([]);
   });
 
   it('imports the csTimer scrType of every non-WCA puzzle back to its EventId', async () => {
