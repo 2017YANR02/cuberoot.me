@@ -36,6 +36,7 @@ const MERGE_OWNED_DIRECT_TABLES = new Set([
   'account_last_devices',
   'auth_web_session_tickets',
   'user_pets',
+  'apple_membership_accounts',
   'app_users',
 ]);
 
@@ -149,6 +150,9 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number, 
       await tx('DELETE FROM account_last_devices WHERE user_id = ?', [sourceUserId]);
       await tx('DELETE FROM auth_web_session_tickets WHERE user_id = ?', [sourceUserId]);
       await tx('UPDATE auth_identities SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId]);
+      // Preserve every original Apple token so renewals and restored transactions
+      // continue to resolve to the explicitly merged account.
+      await tx('UPDATE apple_membership_accounts SET user_id = ? WHERE user_id = ?', [targetUserId, sourceUserId]);
 
       // 先释放 source 持有的唯一 WCA ID，再写入 target；仍在同一事务内，不会出现中间态。
       await tx('UPDATE app_users SET wca_id = NULL WHERE id = ?', [sourceUserId]);

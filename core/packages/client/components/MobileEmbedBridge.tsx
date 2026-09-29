@@ -21,6 +21,8 @@ import { applySession, getSessionToken, useAuthStore } from '@/lib/auth-store';
 import { isMobileEmbedAppleLink, mobileEmbedAccountAuthRequest, mobileEmbedSupportsApple } from '@/lib/mobile-embed-auth';
 import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
+import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
+import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/apple-membership-bridge';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -130,6 +132,11 @@ export default function MobileEmbedBridge() {
       const anchor = target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
       if (!anchor || anchor.hasAttribute('download')) return;
       const next = new URL(anchor.href, window.location.href);
+      if (installedContentUnavailable(next.href)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        window.alert(tr({ zh: '此内容暂不在 App 中提供。', en: 'This content is not available in the app.' }));
+        return;
+      }
       if (next.origin !== window.location.origin || anchor.target === '_blank') {
         if (!isMobileEmbedExternalHref(next.href)) return;
         event.preventDefault();
@@ -151,10 +158,12 @@ export default function MobileEmbedBridge() {
       if (init?.surface === surface) {
         parentOrigin = event.origin;
         capabilities = init;
+        setAppleMembershipBridge(init.appleMembership === true, postToParent);
         postNavigation();
         return;
       }
       if (event.origin !== parentOrigin) return;
+      receiveAppleMembershipResult(event.data);
       const managementResult = decodeMobileEmbedAccountManageResult(event.data);
       if (surface === 'account' && managementResult) {
         if (pendingManagement?.requestId !== managementResult.requestId) return;
@@ -214,6 +223,7 @@ export default function MobileEmbedBridge() {
     window.addEventListener('message', onMessage);
     return () => {
       active = false;
+      setAppleMembershipBridge(false);
       invalidateWebSession();
       recordRouteRef.current = null;
       if (pendingManagement) window.clearTimeout(pendingManagement.timeout);

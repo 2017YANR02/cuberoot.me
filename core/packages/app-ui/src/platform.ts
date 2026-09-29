@@ -1,3 +1,4 @@
+import type { AppleMembershipRequest, AppleMembershipResult } from '@cuberoot/shared/apple-membership';
 import type {
   MobileAuthProvider,
   WebSession,
@@ -85,6 +86,7 @@ export interface InstalledAppNetBattle {
 }
 
 export interface InstalledAppHost {
+  appleMembership?(request: AppleMembershipRequest, session: WebSession): Promise<Omit<AppleMembershipResult, 'type' | 'requestId'>>;
   addBackButtonListener?(listener: () => void): Promise<InstalledAppListener>;
   addNetworkListener(listener: (connected: boolean) => void): Promise<InstalledAppListener>;
   exitApp?(): Promise<void>;

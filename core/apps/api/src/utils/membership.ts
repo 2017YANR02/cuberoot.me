@@ -5,7 +5,7 @@ import { query } from '../db/connection.js';
 export async function hasActiveMembership(wcaId: string): Promise<boolean> {
   if (isAdminWcaId(wcaId)) return true;
   const rows = await query<{ ok: number }>(
-    `SELECT 1 AS ok FROM memberships
+    `SELECT 1 AS ok FROM effective_memberships
       WHERE wca_id = ? AND (expires_at IS NULL OR expires_at > NOW())
       LIMIT 1`,
     [wcaId],

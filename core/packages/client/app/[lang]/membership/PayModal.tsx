@@ -22,6 +22,8 @@ import {
   type PaymentChannel,
 } from '@/lib/membership-api';
 import { fmtPrice } from '@/lib/membership-format';
+import { isIosMembershipSurface } from '@/lib/apple-membership-bridge';
+import AppLink from '@/components/AppLink';
 
 interface Props {
   plan: MembershipPlan;
@@ -45,11 +47,12 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   const [err, setErr] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
 
-  useModalDismiss(onClose);
+  const backdropProps = useModalDismiss(onClose);
   // Stop the pending查单 poll when the modal unmounts (its own concern, not part of dismiss).
   useEffect(() => () => { if (pollRef.current !== null) window.clearTimeout(pollRef.current); }, []);
 
   async function start(ch: PaymentChannel) {
+    if (isIosMembershipSurface()) return;
     setChannel(ch);
     setErr(null);
     setCreating(true);
@@ -110,9 +113,17 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
       });
   }
 
+  if (isIosMembershipSurface()) return (
+    <div className="mem-pay-backdrop" {...backdropProps}>
+      <section className="mem-pay">
+        <AppLink href="/membership" onClick={onClose}>{tr({ zh: '前往 Apple 会员订阅', en: 'Open Apple membership subscriptions' })}</AppLink>
+        <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
+      </section>
+    </div>
+  );
   return (
-    <div className="mem-pay-backdrop" onClick={onClose}>
-      <div className="mem-pay" onClick={(e) => e.stopPropagation()}>
+    <div className="mem-pay-backdrop" {...backdropProps}>
+      <div className="mem-pay">
         <button className="mem-pay-close" onClick={onClose} aria-label={tr({ zh: '关闭', en: 'Close'
         })}><X size={18} /></button>
         <h2 className="mem-pay-title">{isZh ? plan.nameZh : plan.nameEn}</h2>
