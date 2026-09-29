@@ -7,12 +7,13 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 let sql: ReturnType<typeof postgres>;
 const schema = `record_push_test_${randomUUID().replaceAll('-', '')}`;
 const placeholders = (statement: string) => { let index = 0; return statement.replace(/\?/g, () => `$${++index}`); };
-const mocks = vi.hoisted(() => ({ send: vi.fn(), owner: 'u1', authenticated: true }));
+const mocks = vi.hoisted(() => ({ send: vi.fn(), apns: vi.fn(), owner: 'u1', authenticated: true }));
 vi.mock('../src/db/connection.js', () => ({
   query: (statement: string, values: never[] = []) => sql.unsafe(placeholders(statement), values),
   withTransaction: (work: (query: (statement: string, values?: never[]) => unknown) => Promise<unknown>) =>
     sql.begin(tx => work((statement, values = []) => tx.unsafe(placeholders(statement), values))),
 }));
+vi.mock('../src/utils/apns.js', async importOriginal => ({ ...await importOriginal<typeof import('../src/utils/apns.js')>(), apnsConfig: () => ({}), sendApnsRecord: mocks.apns }));
 vi.mock('../src/utils/getui.js', () => ({ getuiConfig: (app: string) => app === 'me.cuberoot.app' ? {} : null, sendRecordPush: mocks.send }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ requireAuth: async () => {
   if (!mocks.authenticated) throw new HTTPException(401);
@@ -35,6 +36,7 @@ describe.skipIf(process.env.RECORD_PUSH_TEST_PG !== '1')('record push migration,
       CREATE TABLE notifications (id BIGSERIAL PRIMARY KEY, user_key TEXT, kind TEXT, title TEXT, excerpt TEXT, link TEXT, created_at TIMESTAMPTZ DEFAULT NOW());
       INSERT INTO app_users VALUES (1, '2017TEST01'), (2, NULL);`);
     await sql.unsafe(await readFile(new URL('../migrations/0239_record_push.sql', import.meta.url), 'utf8'));
+    await sql.unsafe(await readFile(new URL('../migrations/0255_ios_record_push.sql', import.meta.url), 'utf8'));
   });
   afterAll(async () => {
     if (sql) { await sql.unsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`); await sql.end(); }
@@ -79,4 +81,26 @@ describe.skipIf(process.env.RECORD_PUSH_TEST_PG !== '1')('record push migration,
     expect(await sql`SELECT * FROM notification_push_devices`).toHaveLength(0);
     expect(await sql`SELECT * FROM notification_push_deliveries`).toHaveLength(0);
   });
+  it('isolates APNs environments, dispatches only records and removes invalid devices', async () => {
+    mocks.authenticated = true;
+    mocks.owner = 'u1';
+    const apple = { ...device, installationId: randomUUID(), clientId: 'ab'.repeat(32), provider: 'apns', environment: 'sandbox' };
+    expect((await request('PUT', apple)).status).toBe(200);
+    expect((await request('PUT', { ...apple, installationId: randomUUID(), environment: 'production' })).status).toBe(200);
+    await sql`INSERT INTO notifications (user_key, kind, title, excerpt, link) VALUES
+      ('u1', 'wca_record', 'iOS', 'PR', '/wca/comp/Test2026'),
+      ('u1', 'comp_reg', 'Not a record', '', '/wca/comp/Test2026')`;
+    mocks.apns.mockResolvedValue(undefined);
+    await sweepRecordPush();
+    expect(mocks.apns).toHaveBeenCalledTimes(2);
+    expect(mocks.apns.mock.calls.map(call => call[1]).sort()).toEqual(['production', 'sandbox']);
+    expect(mocks.send).toHaveBeenCalledTimes(2);
+    await sql`INSERT INTO notifications (user_key, kind, title, excerpt, link) VALUES ('u1', 'wca_record', 'Next', 'PR', '/wca/comp/Test2026')`;
+    const { ApnsError } = await import('../src/utils/apns');
+    mocks.apns.mockRejectedValue(new ApnsError(410, 'Unregistered'));
+    await sweepRecordPush();
+    expect(await sql`SELECT * FROM notification_push_devices`).toHaveLength(0);
+    expect(await sql`SELECT * FROM notification_push_deliveries`).toHaveLength(0);
+  });
+
 });
