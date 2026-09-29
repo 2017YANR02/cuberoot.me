@@ -32,7 +32,12 @@ const mocks = vi.hoisted(() => ({
   wechatMiniProgramConfigured: vi.fn(),
 }));
 
-vi.mock('../src/db/connection.js', () => ({ query: vi.fn() }));
+vi.mock('../src/db/connection.js', () => ({
+  query: vi.fn(),
+  // Account deletion imports the sticker repository while registering routes.
+  // These wire-contract cases must never perform a real database operation.
+  sql: vi.fn(() => { throw new Error('Unexpected direct database access in session contract test'); }),
+}));
 vi.mock('../src/utils/analytics_helpers.js', () => ({ getIp: () => '127.0.0.1' }));
 vi.mock('../src/utils/account_device.js', () => ({ captureAccountDevice: mocks.captureAccountDevice }));
 vi.mock('../src/utils/recon_helpers.js', () => ({ checkRateLimit: mocks.checkRateLimit }));
