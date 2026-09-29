@@ -1594,6 +1594,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared sound, voice, metronome, tap-tempo and custom inspection cues, backed by one audio-clock scheduler and warning/fallback implementation.',
   },
   {
+    name: 'TimerExportSettings',
+    import: "import { TimerExportSettings } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用四种导出入口：CubeRoot 整库备份、当前分组的 csTimer/CSV、当前项目的 Speedstacks；编码规则由 shared 提供，宿主负责保存文件。',
+    en: 'Shared export controls for whole-store CubeRoot backups, current-session csTimer/CSV and current-event Speedstacks. Shared encoders produce files; hosts save them.',
+  },
+  {
     name: 'TimerKeymapSettings',
     import: "import { TimerKeymapSettings } from '@cuberoot/timer-ui';",
     category: 'more',

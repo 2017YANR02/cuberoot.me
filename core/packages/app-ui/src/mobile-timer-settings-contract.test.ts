@@ -21,6 +21,7 @@ import {
   TIMER_SOUND_SETTING_FIELD_IDS,
   TIMER_METRONOME_SETTING_FIELD_IDS,
   TIMER_RESET_SETTING_FIELD_IDS,
+  TIMER_EXPORT_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 import {
@@ -47,6 +48,7 @@ describe('Mobile timer settings parity ledger', () => {
       ...TIMER_SOUND_SETTING_FIELD_IDS,
       ...TIMER_METRONOME_SETTING_FIELD_IDS,
       ...TIMER_RESET_SETTING_FIELD_IDS,
+      ...TIMER_EXPORT_SETTING_FIELD_IDS,
     ]);
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
       'settings.appearance.scramble-click-action',

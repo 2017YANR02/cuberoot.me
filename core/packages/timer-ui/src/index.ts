@@ -336,3 +336,4 @@ export * from './useTimerSoundFeedback';
 export * from './TimerSoundSettings';
 export * from './TimerMetronomeSettings';
 export { ResetDefaultsButton, TimerResetSettings, TIMER_RESET_SETTING_FIELD_IDS } from './ResetDefaultsButton';
+export { TimerExportSettings, TIMER_EXPORT_SETTING_FIELD_IDS, type TimerExportFormat } from './TimerExportSettings';

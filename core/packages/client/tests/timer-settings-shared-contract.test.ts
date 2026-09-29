@@ -33,6 +33,7 @@ import {
   TIMER_SOUND_SETTING_FIELD_IDS,
   TIMER_METRONOME_SETTING_FIELD_IDS,
   TIMER_RESET_SETTING_FIELD_IDS,
+  TIMER_EXPORT_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -318,6 +319,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_SOUND_SETTING_FIELD_IDS,
       ...TIMER_METRONOME_SETTING_FIELD_IDS,
       ...TIMER_RESET_SETTING_FIELD_IDS,
+      ...TIMER_EXPORT_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
@@ -341,9 +343,9 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ['登录', 'Sign in'],
       ['操作', 'Actions'],
       ['导入', 'Import'],
-      ['导出', 'Export'],
     ]);
     expect(panel).not.toContain('<BooleanRow');
+    expect(panel).toContain('<TimerExportSettings');
   });
 
   it('derives categories/copy and the priority timing behavior from shared', () => {

@@ -85,11 +85,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
 /** Matches "DNS", "DNS " and "DNS <rest>" — the shapes `encodeDnsComment` emits. */
 export const CSTIMER_DNS_RE = /^DNS(?:\s+|$)/;
 
-/** Attach the DNS marker to a comment for csTimer export. */
-export function encodeDnsComment(comment: string | undefined): string {
-  const rest = (comment ?? '').trim();
-  return rest ? `DNS ${rest}` : 'DNS';
-}
+export { encodeDnsComment } from '@cuberoot/shared/timer';
 
 /** Strip the DNS marker. Returns null when the comment isn't DNS-marked. */
 export function decodeDnsComment(comment: string): string | null {
