@@ -46,7 +46,7 @@ import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { type AssistantTurn } from '@/components/SiteAssistantDialog';
-import { SITE_ASSISTANT_TIMEOUT_MS, type AssistantAnswer, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
+import { SITE_ASSISTANT_TIMEOUT_MS, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
@@ -232,6 +232,7 @@ export default function LandingSearch({
   const [assistantTurns, setAssistantTurns] = useState<AssistantTurn[]>([]);
   const assistantRequest = useRef<AbortController | null>(null);
   const [assistantBusy, setAssistantBusy] = useState(false);
+  const [assistantStatus, setAssistantStatus] = useState<AssistantStatus>({ phase: 'planning' });
   const [assistantError, setAssistantError] = useState<AssistantErrorCode | null>(null);
   const [assistantAnswer, setAssistantAnswer] = useState<AssistantAnswer | null>(null);
 
@@ -258,7 +259,7 @@ export default function LandingSearch({
   const askAssistant = async (question = query) => {
     question = question.trim();
     if (!question || question.length > 500 || assistantRequest.current) return;
-    const previous = assistantTurns.filter(turn => turn.result);
+    const previous = assistantTurns.filter(turn => turn.result && !turn.partial);
     const nextTurns = [...previous, { question }];
     setAssistantTurns(nextTurns);
     setAssistantDialog(true);
@@ -272,12 +273,13 @@ export default function LandingSearch({
     assistantRequest.current = controller;
     setOpen(true);
     setAssistantBusy(true);
+    setAssistantStatus({ phase: 'planning' });
     setAssistantError(null);
     setAssistantAnswer(null);
     const timeout = setTimeout(() => controller.abort(), SITE_ASSISTANT_TIMEOUT_MS);
     try {
       const response = await fetch(apiUrl('/v1/site-assistant'), {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: { ...authHeaders(), Accept: 'text/event-stream' },
         body: JSON.stringify({ question, lang, history: previous.slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
       });
       if (!response.ok) {
@@ -285,13 +287,29 @@ export default function LandingSearch({
         if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
         return;
       }
-      const data = await response.json();
-      if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
-      if (assistantRequest.current === controller) {
-        const result: AssistantAnswer = { answer: data.answer, artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter((source: { href?: unknown }) => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
-        setAssistantAnswer(result);
-        setAssistantTurns([...previous, { question, result }]);
-      }
+      const applyAnswer = (data: AssistantAnswer, partial = false) => {
+        if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
+        if (assistantRequest.current !== controller) return;
+        const result: AssistantAnswer = { answer: data.answer, artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
+        if (!partial) setAssistantAnswer(result);
+        setAssistantTurns([...previous, { question, result, partial }]);
+      };
+      if (response.headers?.get('content-type')?.includes('text/event-stream')) {
+        if (!response.body) throw new Error('missing stream');
+        let ended = false;
+        for await (const raw of readAssistantEvents(response.body)) {
+          if (assistantRequest.current !== controller) return;
+          const event = JSON.parse(raw) as AssistantStreamEvent;
+          if (event.type === 'status') setAssistantStatus(event.status);
+          else if (event.type === 'answer') applyAnswer(event, true);
+          else if (event.type === 'done') { applyAnswer(event.result); ended = true; break; }
+          else if (event.type === 'error') {
+            setAssistantError(assistantResponseError(response, { error: event.error })); ended = true; break;
+          }
+        }
+        if (!ended) throw new TypeError('incomplete assistant stream');
+      } else applyAnswer(await response.json());
+
     } catch(error) {
       if (assistantRequest.current === controller) setAssistantError(controller.signal.aborted ? 'timeout' : error instanceof TypeError ? 'network' : 'unavailable');
     } finally {
@@ -558,7 +576,7 @@ export default function LandingSearch({
         </p>
       )}
 
-      {assistantDialog && <SiteAssistantDialog lang={lang} turns={assistantTurns} busy={assistantBusy} error={assistantError} onAsk={question => void askAssistant(question)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
+      {assistantDialog && <SiteAssistantDialog lang={lang} turns={assistantTurns} status={assistantStatus} busy={assistantBusy} error={assistantError} onAsk={question => void askAssistant(question)} onStop={stopAssistant} onClose={closeAssistant} onNew={() => { stopAssistant(); setAssistantTurns([]); setAssistantAnswer(null); setAssistantError(null); }} />}
 
       {showDropdown && !assistantDialog && (
         <div className="landing-search-panel">
