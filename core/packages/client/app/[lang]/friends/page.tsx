@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { parseAsString, parseAsStringEnum, useQueryState } from 'nuqs';
-import { getPetExpressionPacks, WECHAT_EXPRESSION_PACK } from '@/lib/chat-expressions';
+import { getPetExpressionPacks } from '@/lib/chat-expressions';
 import { getDeskPetCatalog } from '@/lib/deskpet-api';
 import type { DeskPetCatalog } from '@cuberoot/shared/deskpet';
 import { ChatMoreTools, ChatShareBody, ChatVoiceInput } from './_ChatTools';
@@ -236,7 +236,7 @@ function FriendChat({ user, peerId, onSelectPeer }: { user: WcaUser; peerId: num
     window.addEventListener('focus', refresh);
     return () => { active = false; clearInterval(timer); window.removeEventListener('focus', refresh); };
   }, []);
-  const expressionPacks = [WECHAT_EXPRESSION_PACK, ...getPetExpressionPacks(petCatalog)];
+  const expressionPacks = getPetExpressionPacks(petCatalog);
   const [binding, setBinding] = useState<{ user: WcaUser; client: ChatClient } | null>(null);
   useEffect(() => {
     if (!user.uid) { void refreshSessionUser(); return; }
