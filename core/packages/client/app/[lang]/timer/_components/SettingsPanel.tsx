@@ -1,4 +1,5 @@
 'use client';
+import { TimerDisplaySettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
@@ -1115,11 +1116,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
         })}
         >
           <TimerTypographySettings value={s} onChange={updateSettings} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />
-          <BooleanSettingRow
-            id="settings.appearance.compact-scramble"
-            value={s.compactScramble}
-            onChange={(v) => updateSettings({ compactScramble: v })}
-          />
+          <TimerDisplaySettings value={s} onChange={updateSettings} localize={tr} renderBooleanControl={props => <SharedBoolToggle {...props} />}>
           <TimerScramblePreviewSettings
             localize={tr}
             onChange={updateSettings}
@@ -1133,11 +1130,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             )}
             value={s}
           />
-          <BooleanSettingRow
-            id="settings.appearance.hide-all-while-running"
-            value={s.hideAllUiWhileRunning}
-            onChange={(v) => updateSettings({ hideAllUiWhileRunning: v })}
-          />
+          </TimerDisplaySettings>
           <SettingRow id="settings.appearance.rank-scopes">
             <span className="rank-scope-options">
               {TIMER_RANK_SCOPES.map((scope) => (
