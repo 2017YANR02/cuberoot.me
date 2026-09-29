@@ -46,10 +46,13 @@ it('rejects external and recursive return URLs', () => {
   expect(safeCompetitionReturn('/zh/wca/comp/A?view=x#round')).toBe('/zh/wca/comp/A?view=x#round');
 });
 
-it('keeps verification, login callbacks, API clients and actual asset delivery reachable', async () => {
+it('keeps verification, store compliance pages, login callbacks, API clients and actual asset delivery reachable', async () => {
   vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('VERCEL', '1');
-  for (const path of ['/competition-verify', '/zh/competition-verify/', '/en/competition-verify', '/auth/callback', '/auth/social/callback', '/callback.html', '/api/health', '/v1/competition-access/challenge', '/_next/static/chunk.js', '/_next/image', '/deskpet/rootbeast/01-idle.svg', '/assets/icon.webp', '/fonts/font.woff2', '/tools/cstimer/js/main.js', '/tools/blddb/data/a.json', '/tools/solver/table.bin', '/sw.js', '/manifest.json', '/robots.txt', '/sitemap.xml']) {
+  for (const path of ['/competition-verify', '/zh/competition-verify/', '/en/competition-verify', '/privacy', '/zh/privacy', '/en/privacy/', '/account?view=delete', '/zh/account?view=delete', '/en/account/?view=delete', '/auth/callback', '/auth/social/callback', '/callback.html', '/api/health', '/v1/competition-access/challenge', '/_next/static/chunk.js', '/_next/image', '/deskpet/rootbeast/01-idle.svg', '/assets/icon.webp', '/fonts/font.woff2', '/tools/cstimer/js/main.js', '/tools/blddb/data/a.json', '/tools/solver/table.bin', '/sw.js', '/manifest.json', '/robots.txt', '/sitemap.xml']) {
     expect(await competitionGate(new NextRequest('https://cuberoot.me' + path)), path).toBeNull();
+  }
+  for (const path of ['/privacy/archive', '/account/settings']) {
+    expect((await competitionGate(new NextRequest('https://cuberoot.me' + path)))?.status, path).toBe(307);
   }
 });
 it('does not trust forged cookies or RSC/prefetch headers and preserves the destination', async () => {
