@@ -273,7 +273,7 @@ describe('移动端复盘不再挤压计时区', () => {
 
   it('普通态和桌面侧栏态都扣除页面通知栏高度', () => {
     const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
-    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\s*\{[^}]*min-height:\s*${visibleHeight}`));
+    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\.timer-workspace\s*\{[^}]*min-height:\s*${visibleHeight}`));
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toContain('var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)))');
   });

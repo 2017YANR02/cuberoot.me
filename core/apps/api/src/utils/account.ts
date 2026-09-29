@@ -7,6 +7,7 @@
  * 合成键以小写 `u` 打头,WCA id 全大写(^\d{4}[A-Z]{4}\d{2}$),两者天然不可能相撞。
  */
 import crypto from 'node:crypto';
+import { decideCredentialClaim, decideCredentialRemoval } from '@app-foundation/account-policy';
 import { generateNumericCode, constantTimeEqualHex, remainingCooldownMs } from '@app-foundation/verification';
 import type { TransactionSql } from 'postgres';
 import type { AccountBasicProfile, AccountGender } from '@cuberoot/shared/account';
@@ -322,11 +323,8 @@ export async function loginWithPassword(email: string, pw: string): Promise<AppU
 // ── 账号 / 身份 ──
 export async function getUserById(id: number, run: QueryRunner = query): Promise<AppUser | null> {
   const rows = await run<AppUserRow>(
-    `SELECT canonical.id, canonical.display_name, canonical.avatar_url, canonical.avatar_source,
-            canonical.avatar_preset, canonical.wca_id, canonical.is_admin
-     FROM app_users requested
-     JOIN app_users canonical ON canonical.id = COALESCE(requested.merged_into_user_id, requested.id)
-     WHERE requested.id = ?`,
+    `SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin
+     FROM app_users WHERE id = ? AND merged_into_user_id IS NULL`,
     [id],
   );
   return firstAppUser(rows);
@@ -481,6 +479,17 @@ export async function findUserByWcaId(wcaId: string): Promise<AppUser | null> {
   return firstAppUser(rows);
 }
 
+/** A UID-less legacy JWT cannot identify which side of a completed merge issued it. */
+export async function findUserForLegacyWcaSession(wcaId: string): Promise<AppUser | null> {
+  const rows = await query<AppUserRow>(
+    `SELECT id, display_name, avatar_url, avatar_source, avatar_preset, wca_id, is_admin
+     FROM app_users active WHERE wca_id = ? AND merged_into_user_id IS NULL
+       AND NOT EXISTS (SELECT 1 FROM app_users retired WHERE retired.merged_into_user_id = active.id)`,
+    [wcaId],
+  );
+  return firstAppUser(rows);
+}
+
 export async function findUserByIdentity(provider: Provider, providerUid: string, run: QueryRunner = query): Promise<AppUser | null> {
   const rows = await run<AppUserRow>(
     `SELECT u.id, u.display_name, u.avatar_url, u.avatar_source, u.avatar_preset, u.wca_id, u.is_admin
@@ -582,6 +591,12 @@ export async function loginWithIdentity(
 export const SINGLE_PER_ACCOUNT = ['email', 'phone'] as const;
 export type SingleProvider = (typeof SINGLE_PER_ACCOUNT)[number];
 
+function uniqueConstraintName(error: unknown): string | null {
+  if (!error || typeof error !== 'object') return null;
+  const pg = error as { code?: unknown; constraint_name?: unknown };
+  return pg.code === '23505' && typeof pg.constraint_name === 'string' ? pg.constraint_name : null;
+}
+
 /**
  * 给「当前已登录用户」绑定一个新身份。返回:
  *   'ok'        绑定成功(或该身份本就属于本人 → 幂等)
@@ -606,8 +621,13 @@ export async function addIdentity(
   const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
     (transaction ? transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
   const owner = await findUserByIdentity(provider, providerUid, run);
-  if (owner) {
-    if (owner.id !== userId) return 'conflict';
+  const ownerDecision = decideCredentialClaim({
+    intent: 'add',
+    candidateOwner: !owner ? 'unclaimed' : owner.id === userId ? 'same-account' : 'other-account',
+    currentSlot: owner?.id === userId ? 'same-candidate' : 'empty',
+  });
+  if (ownerDecision === 'owner-conflict') return 'conflict';
+  if (ownerDecision === 'already-bound') {
     if (appleCredential) {
       await begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
     }
@@ -671,7 +691,10 @@ export async function addIdentity(
         const dup = await tx`
           SELECT 1 FROM auth_identities
           WHERE user_id = ${userId} AND provider = ${provider} LIMIT 1`;
-        if (dup.count > 0) return `has-${provider}`;
+        const decision = decideCredentialClaim({
+          intent: 'add', candidateOwner: 'unclaimed', currentSlot: dup.count > 0 ? 'different' : 'empty',
+        });
+        if (decision === 'slot-occupied') return `has-${provider}`;
       }
       await tx`
         INSERT INTO auth_identities (user_id, provider, provider_uid, verified_at, apple_refresh_token_encrypted, apple_token_key_version)
@@ -680,20 +703,20 @@ export async function addIdentity(
     });
     return status as 'ok' | 'conflict' | `has-${SingleProvider}`;
   } catch (e) {
+    const constraint = uniqueConstraintName(e);
     if (appleCredential) {
       // A concurrent login/link may have won; retry only its exact owner, never swallow storage errors.
-      if ((e as { code?: string }).code !== '23505') throw e;
+      if (constraint !== 'uq_auth_identity') throw e;
       const raced = await findUserByIdentity(provider, providerUid, run);
       if (raced?.id !== userId) return 'conflict';
       await begin((tx) => updateAppleIdentityCredential(tx, userId, providerUid, appleCredential));
       return 'ok';
     }
-    // 并发绑第二个邮箱 / 手机时晚到的那条落这里 —— 认约束名还原成准确状态,别混进「已被他人占用」。
-    const detail = `${(e as { constraint_name?: string }).constraint_name ?? ''} ${(e as Error).message ?? ''}`;
-    if (detail.includes('uq_auth_identity_one_email')) return 'has-email';
-    if (detail.includes('uq_auth_identity_one_phone')) return 'has-phone';
-    // 其余唯一约束(provider,uid 或 wca 镜像)冲突 → 视为已被他人占用。
-    return 'conflict';
+    // Only known uniqueness races become account conflicts. Storage/trigger failures must surface.
+    if (provider === 'email' && constraint === 'uq_auth_identity_one_email') return 'has-email';
+    if (provider === 'phone' && constraint === 'uq_auth_identity_one_phone') return 'has-phone';
+    if (constraint === 'uq_auth_identity' || (provider === 'wca' && constraint === 'uq_app_users_wca')) return 'conflict';
+    throw e;
   }
 }
 
@@ -718,23 +741,32 @@ export async function replaceCredentialIdentity(
   const begin = <T>(work: (tx: TransactionSql) => Promise<T>): Promise<T> =>
     (transaction ? transaction.savepoint(work) : sql.begin(work)) as Promise<T>;
   const owner = await findUserByIdentity(provider, newUid, run);
-  if (owner && owner.id !== userId) return 'conflict';
+  const candidateOwner = !owner ? 'unclaimed' : owner.id === userId ? 'same-account' : 'other-account';
+  if (decideCredentialClaim({ intent: 'replace', candidateOwner, currentSlot: 'different' }) === 'owner-conflict') {
+    return 'conflict';
+  }
   try {
     return await begin(async (tx) => {
       // 锁住本账号那一行:并发两次换绑各读到旧值再各改一次,后写的赢且前一次静默丢失。
       const rows = await tx`
-        SELECT id FROM auth_identities
+        SELECT id, provider_uid FROM auth_identities
         WHERE user_id = ${userId} AND provider = ${provider} FOR UPDATE`;
-      if (rows.count === 0) return 'none';
+      const currentSlot = rows.count === 0 ? 'empty' : rows[0].provider_uid === newUid ? 'same-candidate' : 'different';
+      const decision = decideCredentialClaim({
+        intent: 'replace', candidateOwner: currentSlot === 'same-candidate' ? 'same-account' : candidateOwner,
+        currentSlot,
+      });
+      if (decision === 'missing-current') return 'none';
       await tx`
         UPDATE auth_identities
         SET provider_uid = ${newUid}, verified_at = NOW()
         WHERE id = ${rows[0].id}`;
       return 'ok';
     });
-  } catch {
-    // 唯一约束 (provider, provider_uid):新地址在我们检查之后被别人抢注。
-    return 'conflict';
+  } catch (error) {
+    // A concurrent owner can win the exact provider/UID unique key after our lookup.
+    if (uniqueConstraintName(error) === 'uq_auth_identity') return 'conflict';
+    throw error;
   }
 }
 
@@ -802,8 +834,9 @@ export async function removeIdentity(
     const toRemove = all.filter(
       (r) => r.provider === provider && (providerUid == null || r.provider_uid === providerUid),
     );
-    if (!toRemove.length) return 'not_found';
-    if (all.length - toRemove.length < 1) return 'last';
+    const decision = decideCredentialRemoval({ activeMethodCount: all.length, selectedMethodCount: toRemove.length });
+    if (decision === 'method-absent') return 'not_found';
+    if (decision === 'last-method') return 'last';
     await revokeAppleIdentities(toRemove);
     if (providerUid == null) {
       await tx`DELETE FROM auth_identities WHERE user_id = ${userId} AND provider = ${provider}`;

@@ -1,0 +1,376 @@
+{
+  "version": 1,
+  "id": "ccb2d8e7-0fdb-4259-82de-0bf3254d68c0",
+  "startedAt": "2026-09-29T04:36:20.731Z",
+  "scramble": "R U",
+  "elapsedMs": 14313,
+  "status": "done",
+  "teams": [
+    {
+      "model": "qwen3.8-flash",
+      "name": "Qwen3.8 Flash",
+      "status": "exhausted",
+      "winner": null,
+      "solvedMs": null,
+      "finishedMs": 14312,
+      "agents": [
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 5701,
+              "moves": "U' R U R'",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 6854,
+              "moves": "U' R U2 R'",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 8324,
+              "moves": "U' R U2 R' F",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 9547,
+              "moves": "U' R U2 R' F2",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 11098,
+              "moves": "U' R U2 R' F2 U",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 12494,
+              "moves": "U' R U2 R' F2 U' R U2 R'",
+              "solved": false,
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 6328,
+              "moves": "R' U2 R F2 U2 R' F2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 7599,
+              "moves": "R2 U R' U2 R F2 U'",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 8850,
+              "moves": "R' U2 R F2 U2 R' F2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 10300,
+              "moves": "R2 U R' U2 R F2 U'",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 11696,
+              "moves": "R' U2 R F2 U2 R' F2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 13018,
+              "moves": "R' U2 R F2 U2 R' F2",
+              "solved": false,
+              "correct": 1
+            }
+          ]
+        },
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 6857,
+              "moves": "R' U2 R U2 F2 U2 F2 U2 R' U2 R U2",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 8146,
+              "moves": "F' U2 F U2 R' U2 R U2",
+              "solved": false,
+              "correct": 3
+            },
+            {
+              "atMs": 10031,
+              "moves": "F' U2 F U2 R' U2 R U2",
+              "solved": false,
+              "correct": 3
+            },
+            {
+              "atMs": 11448,
+              "moves": "R U2 R' U2 F' U2 F U2 R U2 R'",
+              "solved": false,
+              "correct": 3
+            },
+            {
+              "atMs": 12621,
+              "moves": "F2 U2 R2 U2 F2 U2 R2",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 13941,
+              "moves": "R U2 R' U2 F' U2 F U2 R U2 R'",
+              "solved": false,
+              "correct": 3
+            }
+          ]
+        },
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 6944,
+              "moves": "R'",
+              "solved": false,
+              "correct": 4
+            },
+            {
+              "atMs": 8112,
+              "moves": "R' F'",
+              "solved": false,
+              "correct": 4
+            },
+            {
+              "atMs": 10066,
+              "moves": "R' F' R",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 11153,
+              "moves": "R' F' R'",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 12825,
+              "moves": "R' F' R2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 14312,
+              "moves": "R' F' R2 U",
+              "solved": false,
+              "correct": 1
+            }
+          ]
+        }
+      ],
+      "positions": 66,
+      "toolCalls": 24,
+      "modelCalls": 25,
+      "inputTokens": 15956,
+      "outputTokens": 543,
+      "cachedTokens": 0,
+      "estimatedCny": 0.014230900000000001,
+      "usageComplete": true,
+      "pricing": {
+        "inputPerMillion": 0.8,
+        "outputPerMillion": 2.7,
+        "source": "https://help.aliyun.com/zh/model-studio/qwen3-8-flash",
+        "basis": "list-before-discounts"
+      },
+      "returnedModel": "qwen3.8-flash"
+    },
+    {
+      "model": "deepseek-flash",
+      "name": "DeepSeek V4.1 Flash",
+      "status": "exhausted",
+      "winner": null,
+      "solvedMs": null,
+      "finishedMs": 8185,
+      "agents": [
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 3086,
+              "moves": "R U' R' U",
+              "solved": false,
+              "correct": 3
+            },
+            {
+              "atMs": 3742,
+              "moves": "R U R' U'",
+              "solved": false,
+              "correct": 3
+            },
+            {
+              "atMs": 4670,
+              "moves": "R U' R' U R U' R' U",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 5593,
+              "moves": "R U' R' U R U' R' U R U' R' U",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 7650,
+              "moves": "U R U' R' U' F' U F",
+              "solved": false,
+              "correct": 2
+            }
+          ]
+        },
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 3331,
+              "moves": "R' F R F'",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 4080,
+              "moves": "R F' R' F",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 4837,
+              "moves": "R' F R F' R' F R F'",
+              "solved": false,
+              "correct": 3
+            },
+            {
+              "atMs": 5724,
+              "moves": "R' F R F' R' F R F' R' F R F'",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 7539,
+              "moves": "R' F R F' R' F R F' R' F R F'",
+              "solved": false,
+              "correct": 2
+            }
+          ]
+        },
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 3308,
+              "moves": "U R U' R' F' U' F",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 4294,
+              "moves": "U R U' R' F' U' F",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 5286,
+              "moves": "U R U' R' F' U' F",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 6368,
+              "moves": "R U R' U' F' U F",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 7380,
+              "moves": "U R U' R' F' U' F",
+              "solved": false,
+              "correct": 2
+            },
+            {
+              "atMs": 8185,
+              "moves": "U R U' R' F' U' F",
+              "solved": false,
+              "correct": 2
+            }
+          ]
+        },
+        {
+          "status": "exhausted",
+          "trials": [
+            {
+              "atMs": 3187,
+              "moves": "U2 R2 F2 U2 R2 F2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 4231,
+              "moves": "R2 U2 F2 R2 U2 F2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 5280,
+              "moves": "U R2 F2 U' R2 F2 U2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 5966,
+              "moves": "U2 R2 U2 F2 R2 U2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 6773,
+              "moves": "U2 R2 F2 U2 R2 F2",
+              "solved": false,
+              "correct": 1
+            },
+            {
+              "atMs": 7608,
+              "moves": "R2 F2 U2 R2 F2 U2",
+              "solved": false,
+              "correct": 1
+            }
+          ]
+        }
+      ],
+      "positions": 69,
+      "toolCalls": 22,
+      "modelCalls": 25,
+      "inputTokens": 16124,
+      "outputTokens": 519,
+      "cachedTokens": 10752,
+      "estimatedCny": 0.0364,
+      "usageComplete": true,
+      "pricing": {
+        "inputPerMillion": 2,
+        "outputPerMillion": 8,
+        "source": "https://api-docs.deepseek.com/zh-cn/quick_start/pricing/",
+        "basis": "list-before-discounts"
+      },
+      "returnedModel": "deepseek-flash"
+    }
+  ]
+}

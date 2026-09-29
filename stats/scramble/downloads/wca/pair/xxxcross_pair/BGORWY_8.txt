@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGORWY / bin 8
-# Population in this bin: 708
+# Population in this bin: 710
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 2661804001,F2 D2 L F2 R' D2 L F2 D' U' L' U' L' B2 D L2 F' R2,G,Country Roads Huntington 2023 (2023-04-22),333 Final A #1
@@ -193,7 +193,7 @@
 2051938001,B U2 L2 F U2 F R2 B2 R2 F' U L R2 F' L F L2 B,R,Inland Empire Summer 2022 (2022-07-30),333 R1 B E2
 3254190001,R2 F D' U2 L2 U2 R' D2 F2 U2 F' R' B' F' L F L2,B,Cusco Speedcubing 2023 (2023-11-10~11),333 R1 I #5
 4440920001,D2 L D2 U2 B2 L B2 F2 U2 B D' L2 D R B' D2 B U' F L B',Y,Return of the Ville KY 2025 (2025-01-25),333bf Final A #2
-4889075001,F2 U L' F B U2 D' B2 D R F2 U2 R2 D R2 B2 L2 F2 D B R',O,Virginia Quiet Championship 2025 (2025-07-26),333bf R1 B E1
+5844986001,D2 F' U2 B L2 U2 B' F' U2 F2 D' F D2 F D' L' B L' R',R,Learn How To Cube in Laguna 2026 (2026-09-26),333 R2 B #5
 1007749001,L2 D L2 D L2 B D' R D' R' D2 B' U2 L2 U2 F U2 F,W,Valenzuela Cube Classic 2019 (2019-02-02),333 Final A #4
 1015089001,B2 R' F2 R2 B2 D2 L B2 F' L' D2 B' U' B2 D2 F L2 B' L' B',W,Medan Lunar New Year 2019 (2019-02-09~10),333bf Final B E1
 2649971001,B R' B' U2 L2 B2 D L2 D B2 L2 F' D L B2 L2 B2 U2,G,The Legacy Begins 2023 (2023-04-15),333 R2 A #4

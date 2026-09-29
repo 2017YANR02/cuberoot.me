@@ -16,7 +16,8 @@ import BoolToggle from '@/components/BoolToggle';
 import { tr, useLang } from '@/i18n/tr';
 import { wallPartsIn, wallToUtc, localZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
-import { CALENDAR_COLOR_DEFS, colorName } from '@/lib/calendar-colors';
+import { CALENDAR_COLOR_DEFS, colorHex, colorName } from '@/lib/calendar-colors';
+import { useEffectiveTheme } from '@/lib/theme';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import RepeatEditor from './RepeatEditor';
 import GuestPicker from './GuestPicker';
@@ -83,6 +84,7 @@ function reminderLabel(min: number): string {
 export default function EventDialog(props: Props) {
   const { calendars, meKey } = props;
   const isZh = useLang() === 'zh';
+  const theme = useEffectiveTheme();
   const [d, setD] = useState<DialogDraft>(props.draft);
   const titleRef = useRef<HTMLInputElement>(null);
   const [showTz, setShowTz] = useState(false);
@@ -280,7 +282,7 @@ export default function EventDialog(props: Props) {
                     key={c.key}
                     type="button"
                     className={`cal-swatch${d.color === c.key ? ' is-on' : ''}`}
-                    style={{ background: c.hex }}
+                    style={{ background: colorHex(c.key, theme) }}
                     title={colorName(c.key, isZh)}
                     aria-label={colorName(c.key, isZh)}
                     aria-pressed={d.color === c.key}

@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGWY / bin 1
-# Population in this bin: 333
+# Population in this bin: 334
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5606061001,D R2 B' R2 D2 F' D F' R2 L2 U' D R2 D' F2 B2 R2,W,Speedcubing Huánuco 2026 (2026-05-03),333 R1 E #5
@@ -96,7 +96,7 @@
 845757001,F' D' F' U' B D2 F' B U' F2 D2 R' L' B2 U2 B2 D2 R',Y,Ningxia Open 2018 (2018-08-05),333 R2 B #3
 4667431001,L' U' R B2 D' F2 R2 D R' U F2 R2 D F2 L2 U L' F',Y,Deqing Spring 2025 (2025-04-19),333oh R1 D #4
 5791617001,B' R2 U2 L2 U L2 B2 D2 B2 U B U B R2 D' U2 R2,Y,Capelle Chaos A 2026 (2026-08-22),333 Final A E2
-4284674001,L2 F' U2 B' F' L2 D2 L2 B U2 L F2 L' B U2 R B,G,Miami Skewbed 2024 (2024-11-16),333 R1 C #2
+5842758001,B2 R' U2 R' B' R L2 B' R F' U2 D2 F2 R2 U2 F2 B,W,New Cubing Season Athens B 2026 (2026-09-20),333oh Final A #3
 882255014,L2 U2 L2 B' F2 U2 R2 U' B2 D' F' D F' L2 U F' L2 U L2 U',W,Anaheim Fall 2018 (2018-09-15~16),333mbf Final A #2
 897025001,B2 F2 R2 D U2 R2 F2 U F U B2 D F2 D U' B2 U' B',B,Australian Nationals 2018 (2018-10-06~07),333 R1 F #1
 920151001,L' B L F' L' B R2 B L' B L2 F D2 B D2 R2 D2,G,Polish Championship 2018 (2018-10-26~28),333 R1 D #4

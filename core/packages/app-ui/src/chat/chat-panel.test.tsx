@@ -52,9 +52,85 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); host.remove(); observers.clear(); vi.unstubAllGlobals(); });
 
 describe('shared friend chat DOM', () => {
+  it('omits the sent fallback and retries failed messages from the exclamation button with the same identity', async () => {
+    vi.mocked(client.messages).mockResolvedValue({ ...page, items: [{ ...page.items[0], senderUserId: 1 }] });
+    await render(); await activate();
+    expect(host.querySelector('.friend-chat-receipt')).toBeNull();
+    expect(host.textContent).not.toContain('Sent');
+    const input = await draft('retry me');
+    await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
+    const original = client.send.mock.calls[0][1];
+    const retry = host.querySelector<HTMLButtonElement>('.friend-chat-failed-retry')!;
+    expect(retry.textContent).toBe('');
+    expect(retry.querySelector('svg')).not.toBeNull();
+    client.send.mockResolvedValue({ ...page.items[0], ...original, sequence: '2', senderUserId: 1 });
+    await act(async () => retry.click());
+    expect(client.send.mock.calls[1][1].clientMessageId).toBe(original.clientMessageId);
+    expect(client.send.mock.calls[1][1].body).toBe('retry me');
+    expect(host.querySelector('.friend-chat-failed-retry')).toBeNull();
+  });
+  it('keeps the expression tray open while inserting, records recents and deletes whole expression tokens', async () => {
+    vi.stubGlobal('requestAnimationFrame', (run: () => void) => { run(); return 0; });
+    await render({ expressionPacks: [{ id: 'wechat', zh: '微信表情', en: 'WeChat emoji', items: [{ token: '[捂脸]', zh: '捂脸', en: 'Facepalm', src: '/face.png' }] }] }); await activate();
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Expressions"]')!.click());
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Facepalm"]')!.click());
+    expect(host.querySelector('textarea')?.value).toBe('[捂脸]');
+    expect(host.querySelector('[aria-label="Expression picker"]')).not.toBeNull();
+    expect(host.textContent).toContain('Recently used');
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Delete previous expression or character"]')!.click());
+    expect(host.querySelector('textarea')?.value).toBe('');
+    expect(JSON.parse(localStorage.getItem('cuberoot.chat.recent-expressions.1')!)[0]).toBe('[捂脸]');
+  });
+  it('shows per-message unread/read receipts only for sent messages and keeps the input visually empty', async () => {
+    vi.mocked(client.messages).mockResolvedValue({ ...page, peerReadSequence: '1', lastSequence: '3', items: [
+      { ...page.items[0], senderUserId: 1 }, { ...page.items[0], sequence: '2', senderUserId: 1 },
+      { ...page.items[0], sequence: '3', senderUserId: 2 },
+    ] });
+    await render(); await activate();
+    expect(host.querySelector('[aria-label="Read by recipient"]')?.textContent).toBe('Read');
+    expect(host.querySelector('[aria-label="Not yet read by recipient"]')?.textContent).toBe('Unread');
+    expect(host.querySelectorAll('.friend-chat-receipt')).toHaveLength(2);
+    expect(host.querySelector('textarea')?.hasAttribute('placeholder')).toBe(false);
+    expect(host.querySelector('label[for="friend-chat-message"]')).toBeNull();
+    expect(host.querySelector('textarea')?.getAttribute('aria-label')).toBe('Message');
+  });
+  it('uploads to favorites and previews before sending, without clearing a text draft', async () => {
+    const id = '33333333-3333-4333-8333-333333333333';
+    const upload = vi.fn().mockResolvedValue({ id });
+    client.stickers = { upload, list: vi.fn().mockResolvedValue([{ id }]), image: vi.fn(), save: vi.fn() };
+    await render(); await activate(); await draft('text stays');
+    const button = (label: string) => [...host.querySelectorAll('button')].find((b) => (b.textContent === label || b.getAttribute('aria-label') === label))!;
+    await act(async () => button('More actions').click());
+    await act(async () => button('Saved stickers').click());
+    const input = host.querySelector('input[type=file]')!;
+    Object.defineProperty(input, 'files', { configurable: true, value: [new File(['gif'], 'hello.gif', { type: 'image/gif' })] });
+    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+    expect(upload).toHaveBeenCalledOnce();
+    expect(client.send).not.toHaveBeenCalled();
+    expect(button('Send sticker')).toBeDefined();
+    await act(async () => button('Send sticker').click());
+    expect(client.send.mock.calls[0][1].stickerId).toBe(id);
+    expect(host.querySelector('textarea')?.value).toBe('text stays');
+    expect(host.querySelector('button[aria-label="Delivery unconfirmed. Retry sending"]')).not.toBeNull();
+  });
+  it('ignores upload completion after switching to another peer', async () => {
+    let complete!: (value: { id: string }) => void;
+    client.stickers = { upload: vi.fn().mockImplementation(() => new Promise((resolve) => { complete = resolve; })),
+      list: vi.fn().mockResolvedValue([]), image: vi.fn(), save: vi.fn() };
+    await render(); await activate();
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="More actions"]')!.click());
+    await act(async () => [...host.querySelectorAll('button')].find((b) => b.textContent === 'Saved stickers')!.click());
+    const input = host.querySelector('input[type=file]')!;
+    Object.defineProperty(input, 'files', { value: [new File(['gif'], 'hello.gif', { type: 'image/gif' })] });
+    await act(async () => input.dispatchEvent(new Event('change', { bubbles: true })));
+    await render({ peerId: 3 });
+    await act(async () => complete({ id: '33333333-3333-4333-8333-333333333333' }));
+    expect(client.send).not.toHaveBeenCalled();
+    expect(host.textContent).not.toContain('Send sticker');
+  });
   it('renders message bodies as text and waits for the message tail, not just the panel, before reading', async () => {
     await render(); await activate();
-    expect(host.querySelector('.friend-chat-message p')?.textContent).toBe(body);
+    expect(host.querySelector('.friend-chat-message-body')?.textContent).toBe(body);
     expect(host.querySelector('img')).toBeNull();
     expect(client.read).not.toHaveBeenCalled();
     await intersect('.friend-chat-tail', true);
@@ -71,7 +147,7 @@ describe('shared friend chat DOM', () => {
     await act(async () => input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })));
     expect(client.send).toHaveBeenCalledTimes(1);
     expect(client.send.mock.calls[0][1].body).toBe('你好');
-    expect(host.textContent).toContain('Delivery unconfirmed');
+    expect(host.querySelector('button[aria-label="Delivery unconfirmed. Retry sending"]')).not.toBeNull();
   });
   it('offers explicit sign-in after session expiry without opening login in the background', async () => {
     client.messages = vi.fn().mockRejectedValue(new ChatError('UNAUTHENTICATED'));

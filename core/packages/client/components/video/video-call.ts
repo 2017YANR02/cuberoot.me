@@ -17,6 +17,8 @@ export type FailReason = VideoDenyReason | 'media' | 'connect' | 'camera' | 'sta
  */
 export function denyMessage(reason: FailReason, maxParticipants: number): string {
   switch (reason) {
+    case 'cancelled':
+      return tr({ zh: '这场预约会议已取消，请联系发起人', en: 'This scheduled meeting was cancelled. Contact the organizer.' });
     case 'full':
       if (maxParticipants <= 0) {
         return tr({ zh: '视频位已满,可以先让别人退出', en: 'Video is full — someone needs to leave first' });

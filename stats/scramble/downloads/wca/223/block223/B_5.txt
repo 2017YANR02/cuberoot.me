@@ -2,7 +2,7 @@
 # Population in this bin: 876
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 2992291001,L2 D' L2 D2 U' L2 R' F D2 B2 F' L D' R D L' R B' L2,B,Podolian Open 2023 (2023-08-19~20),333bf Final A E2

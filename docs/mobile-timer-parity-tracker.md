@@ -4,6 +4,11 @@
 
 最后更新：2026-09-29
 
+### 2026-09-29：同步远端并验证合并
+
+- 合并远端 `d6e208d523`，保留本地 10 个 timer 任务提交；无文本冲突。交叉修改的组件 catalog 和 timer shell 已核对，远端全屏高度修复与本地共享样式迁移同时保留。
+- 合并后 shared build、timer-ui/app-ui/client 标准 typecheck、Web 设置/catalog/布局/架构 40 项、App 设置/声音/节拍器/重置/导出 16 项及 Mobile production build 通过。前端依赖按锁文件同步；本次 Web 标准 typecheck 不再受旧生成文件阻断，无需临时排除配置。未增加真机 parity 证据。
+
 ### 2026-09-29：四种数据导出共享（本地实现）
 
 - Web csTimer/CSV/Speedstacks 编码规则提纯进入 shared，原入口仅提供存储快照；DNS 注释编码与 Web 导入器同源，保留原始毫秒、罚时、动作/分段及 CSV 引号/BOM 规则。Web/App 共用 `TimerExportSettings`，App 文件分享/下载使用匹配的 MIME 和扩展名。

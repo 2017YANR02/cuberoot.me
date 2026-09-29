@@ -7,6 +7,31 @@
   },
   "artifacts": [
     {
+      "id": "client.assistant-public-content",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Public indexable SSG HTML from the current Next build",
+        "paths": [
+          "core/packages/client/app/**"
+        ]
+      },
+      "license": {
+        "spdx": "LicenseRef-CubeRoot",
+        "evidence": "Same public content and attribution as the source pages"
+      },
+      "owner": "core/packages/client/scripts/build-assistant-index.ts",
+      "workingDirectory": "core/packages/client",
+      "command": "pnpm build",
+      "outputs": [
+        "core/packages/client/public/assistant/pages.json"
+      ],
+      "verification": [
+        "tests/assistant_content_index.test.ts",
+        "Production GET /assistant/pages.json contains non-empty pages and build timestamp"
+      ],
+      "driftPolicy": "Generated after next build on both deployment paths. Excludes noindex, account/admin and dynamic placeholders; structured live content is queried through public API adapters."
+    },
+    {
       "id": "space.blender-scenes",
       "kind": "local-heavy-artifact",
       "source": {

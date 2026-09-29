@@ -16,8 +16,11 @@ const ROOTS = [
   'packages/client/app/api/page-access',
 ];
 const EXACT = new Set([
+  'packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx',
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
   'apps/api/src/routes/mcp.ts',
+  'apps/api/src/routes/site_assistant.ts',
+  'packages/client/components/LandingSearch.tsx', 'packages/client/components/SiteAssistantDialog.tsx',
   'apps/miniprogram/src/lib/navigation.ts', 'apps/miniprogram/src/lib/web-routes.ts',
   'apps/miniprogram/src/pages/web/index.ts',
   'apps/miniprogram/src/lib/web-view-page.ts',
@@ -26,6 +29,7 @@ const EXACT = new Set([
   'packages/client/components/CountryPinButton.tsx', 'packages/client/hooks/usePinnedCountries.ts',
   'packages/client/lib/pinned-countries.ts', 'packages/client/lib/ip-country.ts',
   'packages/client/lib/page-access-api.ts',
+  'packages/client/lib/competition-gate.ts', 'packages/shared/src/competition-access.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
   'apps/mobile/src/native/record-push.ts', 'apps/mobile/src/native/record-push-controller.ts',
@@ -71,7 +75,7 @@ export function collectAuthDocSources(root = CORE_ROOT) {
     }
   }
   for (const path of [...ROOTS, ...NATIVE]) walk(path);
-  for (const path of CONFIG) entries.set(path, readFileSync(resolve(root, path), 'utf8'));
+  for (const path of [...CONFIG, ...EXACT]) entries.set(path, readFileSync(resolve(root, path), 'utf8'));
   return [...entries];
 }
 

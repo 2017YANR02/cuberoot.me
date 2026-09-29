@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_cross / Y / bin 3
-# Population in this bin: 233
+# Population in this bin: 234
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5277716001,R2 D2 L2 D' R2 F2 B U F2 U' L2 U L2 B2 U R2 D L,Y,Relámpago Medellín Explora 2025 (2025-12-13~14),333oh R1 B E2
@@ -60,7 +60,7 @@
 848934019,F2 D2 B2 U B2 L2 B2 D R2 D F' L2 U' B2 R F2 U B2 D2 U L,Y,Project Radom 2018 (2018-08-04~05),333mbf Final A #1
 852043001,R2 D2 B2 R F2 L B2 L F L2 U2 B' R' B D2 B2 U2,Y,Pakistan Open 2018 (2018-08-11),333 R1 C #5
 863994001,B' D2 F' U F2 B R U' F2 R L2 U2 B L2 F2 B' R2 F2,Y,Ark 2018 (2018-08-24~26),333 R2 C E1
-5811952001,U' B2 D' B2 U' B2 L2 R2 U2 F2 R D U2 R' B2 R' U,Y,Shin Kong Cube Open - Taichung 2026 (2026-08-30),333 R1 D #5
+5842802001,B2 L2 B2 F' L2 U F D L2 B2 U' B U2 R2 B2 F2,Y,New Cubing Season Athens B 2026 (2026-09-20),333 R1 C #5
 879626001,U F2 U' L2 D' R2 U2 L2 B2 D2 R' D' U L R2 D R' D,Y,Danish Open 2018 (2018-09-15~16),333 R2 A #3
 5784696001,D2 B' U' F' U2 B' D2 B R2 D' L' D2 B' D' L2 B2 F L B',Y,Silent Brasília 2026 (2026-08-15~16),333bf R1 B #2
 896843001,R2 B2 D' F2 B2 U' F R2 U2 F' U B2 U R2 F2 D L2 D2,Y,Australian Nationals 2018 (2018-10-06~07),333oh Final A #5

@@ -9,7 +9,7 @@
  * 也不需要清理 —— 与本站不存会议记录是同一个决定。
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChatEntry, useChat } from '@livekit/components-react';
 
 import { tr } from '@/i18n/tr';
@@ -25,6 +25,9 @@ export default function MeetChat({ open, onClose, onUnread }: MeetChatProps) {
   const { chatMessages, send, isSending } = useChat();
   const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [sendError, setSendError] = useState(false);
+  const sending = useRef(false);
+  const composing = useRef(false);
   /** 面板打开时读到了第几条。关着的时候进来的才算未读。 */
   const readCount = useRef(0);
 
@@ -73,13 +76,15 @@ export default function MeetChat({ open, onClose, onUnread }: MeetChatProps) {
         onSubmit={(e) => {
           e.preventDefault();
           const value = inputRef.current?.value.trim();
-          if (!value) return;
+          if (!value || sending.current || composing.current) return;
+          sending.current = true;
+          setSendError(false);
           void send(value).then(() => {
             if (inputRef.current) {
               inputRef.current.value = '';
               inputRef.current.focus();
             }
-          });
+          }).catch(() => setSendError(true)).finally(() => { sending.current = false; });
         }}
       >
         <input
@@ -88,14 +93,21 @@ export default function MeetChat({ open, onClose, onUnread }: MeetChatProps) {
           className="lk-form-control lk-chat-form-input"
           disabled={isSending}
           placeholder={tr({ zh: '说点什么…', en: 'Enter a message…' })}
+          aria-label={tr({ zh: '聊天消息', en: 'Chat message' })}
+          onCompositionStart={() => { composing.current = true; }}
+          onCompositionEnd={() => { composing.current = false; }}
           // 会议里到处是快捷键(空格切静音之类),别让聊天框里的每一次敲击往外冒。
           onInput={(e) => e.stopPropagation()}
-          onKeyDown={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === 'Enter' && (composing.current || e.nativeEvent.isComposing || e.keyCode === 229)) e.preventDefault();
+          }}
           onKeyUp={(e) => e.stopPropagation()}
         />
         <button type="submit" className="lk-button lk-chat-form-button" disabled={isSending}>
           {tr({ zh: '发送', en: 'Send' })}
         </button>
+        {sendError && <p className="meet-chat-error" role="alert">{tr({ zh: '发送失败，消息已保留，请重试。', en: 'Could not send. Your message is saved here; please retry.' })}</p>}
       </form>
     </div>
   );

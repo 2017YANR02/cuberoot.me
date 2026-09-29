@@ -1,5 +1,9 @@
 # 邮件与验证码接入及账号事务跟踪
 
+## 2026-09-27：共用账号决策包接入（本地候选）
+
+`@app-foundation/account-policy` 0.1.0 已从不可变 [v0.4.0](https://github.com/2017YANR02/app-foundation/releases/tag/v0.4.0) 固定到 API 依赖与锁文件。`account.ts` 在原 PostgreSQL 事务和行锁内使用包的纯决策处理身份归属冲突、添加与换绑、解绑后保留至少一种可用身份；唯一索引、旧账号数据、会话、验证码核销、Apple 撤销及业务合并仍由 CubeRoot 自己负责。包不携带本站数据库、身份或凭据。定向 API 测试 13 项与类型检查已用发布包通过；未推送、部署或进行真实账号验收。
+
 ## 2026-09-23：短信传输包接入
 
 `@app-foundation/sms` 0.1.1 已通过固定的 v0.3.1 GitHub Release URL 和 lockfile 完整性接入 API。`utils/sms.ts` 保留原环境变量、`smsConfigured()` 和 `sendSmsCode()` 契约；标准阿里云 Dysmsapi 请求由共享包生成，本站仍负责验证码、冷却、账号状态与核销。共享包不读本站环境或数据库，不自动重发；供应商受理不代表手机送达，也不等同 PNVS 验证。

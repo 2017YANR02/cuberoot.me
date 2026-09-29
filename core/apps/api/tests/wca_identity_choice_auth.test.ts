@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ findUserByWcaId: vi.fn(), getUserById: vi.fn() }));
+import jwt from 'jsonwebtoken';
+const mocks = vi.hoisted(() => ({ findUserByWcaId: vi.fn(), findUserForLegacyWcaSession: vi.fn(), getUserById: vi.fn() }));
 vi.mock('../src/utils/account.js', () => ({ ...mocks, ownerKey: (uid: number, wcaId?: string) => wcaId || 'u' + uid }));
 vi.mock('../src/utils/session.js', () => ({ JWT_SECRET: 'fixture-only', isRolePreviewActive: vi.fn() }));
 import { authenticateUser } from '../src/utils/recon_helpers.js';
@@ -17,5 +18,23 @@ describe('legacy raw WCA credential cannot bypass first-account choice', () => {
   it('preserves raw-token compatibility for an already linked account with its canonical uid', async () => {
     mocks.findUserByWcaId.mockResolvedValue({ id: 42, wca_id: '2017TEST01' });
     expect(await authenticateUser('Bearer existing-provider-token')).toMatchObject({ uid: 42, realWcaId: '2017TEST01' });
+  });
+});
+
+describe('merged source sessions', () => {
+  it('cannot authenticate as the retained account', async () => {
+    mocks.getUserById.mockResolvedValue({ id: 748, wca_id: '2020TEST01', is_admin: true });
+    const token = jwt.sign({ uid: 749, wcaId: '2020TEST01' }, 'fixture-only');
+
+    expect(await authenticateUser(`Bearer ${token}`)).toBeNull();
+    expect(mocks.findUserByWcaId).not.toHaveBeenCalled();
+  });
+  it('rejects a UID-less WCA JWT after its account was merged', async () => {
+    mocks.findUserForLegacyWcaSession.mockResolvedValue(null);
+    const token = jwt.sign({ wcaId: '2020TEST01' }, 'fixture-only');
+
+    expect(await authenticateUser(`Bearer ${token}`)).toBeNull();
+    expect(mocks.findUserForLegacyWcaSession).toHaveBeenCalledWith('2020TEST01');
+    expect(mocks.findUserByWcaId).not.toHaveBeenCalled();
   });
 });

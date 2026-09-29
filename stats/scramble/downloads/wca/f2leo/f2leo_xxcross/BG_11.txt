@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / BG / bin 11
-# Population in this bin: 723
+# Population in this bin: 724
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 5748135001,U' R L' U R' D R' F2 U2 F2 B R2 D2 L2 U2 R B' L2 F2,B,Persevere in De Pere 2026 (2026-07-11),333oh R1 C E1
@@ -184,7 +184,7 @@
 1272345001,B2 D2 R' B2 R' B2 U2 L' D2 U2 L D' B U' B2 L R2 U2 R D' L,B,Mishawaka Summer 2019 (2019-08-24),333 R2 B #5
 859541001,L' D2 F2 L B2 R' F2 R' F2 D F' L' U2 R' F' U B D L' R2,B,Shenyang Summer 2018 (2018-08-05),333 R2 A #3
 2696443001,B' R' F2 L2 D2 B' D2 R2 B' L D' F U F2 D2 L2 R' F',B,AlphaCubing B 2023 (2023-05-07),333oh R1 A #5
-863248001,L2 U2 B2 L2 U' R2 B2 R' B' F L' U' L R' D' U2 B U R2,B,August Bank Holiday Competition 2018 (2018-08-25~26),333 Final A #5
+5844886001,F U2 L2 R2 F D2 F2 U2 F2 L B' R' F D L' D2 F U' B' U',B,Learn How To Cube in Laguna 2026 (2026-09-26),333 R1 A #2
 2047764001,L F' R' D2 B' U2 B L2 B2 L2 F U2 L2 D F2 L U L B D,B,U.R.A. Summer Cubes 2022 (2022-07-23~24),333 R1 B #3
 866792001,F2 L' U2 B2 L U2 B2 R' B2 U2 F' D2 U R D L2 D2 U2 L' F U',B,Canada's Best in the West 2018 (2018-08-24~26),333 R3 D #2
 876041001,B2 D2 R2 D2 R2 F2 U' B2 R2 D' R B' F2 L F2 U F L2 F2 L2 U2 L',B,Poznań Fanatic Cube 2018 (2018-09-09),333bf Final A E2

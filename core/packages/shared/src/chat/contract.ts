@@ -2,6 +2,17 @@ import type { FriendUser } from '../friends';
 
 export const CHAT_BODY_LIMIT = 2_000;
 export const CHAT_HTTP_BODY_LIMIT = 32 * 1024;
+export const CHAT_STICKER_MAX_BYTES = 2 * 1024 * 1024;
+export const CHAT_STICKER_LIMIT = 100;
+export const CHAT_STICKER_MIMES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'] as const;
+export const CHAT_STICKER_BODY = '[表情包 / Sticker]';
+export interface ChatSticker { id: string }
+export interface ChatStickerClient {
+  list(signal?: AbortSignal): Promise<ChatSticker[]>;
+  upload(file: Blob, signal?: AbortSignal): Promise<ChatSticker>;
+  image(id: string, signal?: AbortSignal): Promise<Blob>;
+  save(id: string, saved: boolean, signal?: AbortSignal): Promise<ChatSticker[]>;
+}
 export const CHAT_PAGE_SIZE = 50;
 export const CHAT_MESSAGE_LIMIT = 500;
 export const CHAT_POLL_MS = 3_000;
@@ -9,7 +20,7 @@ export const CHAT_LIST_POLL_MS = 15_000;
 export const CHAT_REQUEST_TIMEOUT_MS = 12_000;
 export type ChatErrorCode = 'UNAUTHENTICATED' | 'CHAT_NOT_FOUND' | 'CHAT_UNAVAILABLE'
   | 'INVALID_INPUT' | 'IDEMPOTENCY_CONFLICT' | 'BODY_TOO_LARGE' | 'RATE_LIMITED'
-  | 'INTERNAL_ERROR' | 'NETWORK_ERROR' | 'INVALID_RESPONSE';
+  | 'INTERNAL_ERROR' | 'NETWORK_ERROR' | 'INVALID_RESPONSE' | 'STICKER_LIMIT';
 export class ChatError extends Error {
   constructor(public readonly code: ChatErrorCode, public readonly retryAfterMs = 0) { super(code); }
 }
@@ -19,6 +30,7 @@ export interface ChatMessage {
   senderUserId: number;
   clientMessageId: string;
   body: string;
+  stickerId?: string;
   createdAt: string;
 }
 export interface ChatConversation {
@@ -32,6 +44,8 @@ export interface ChatConversation {
 }
 export interface ChatConversationsPage { items: ChatConversation[]; nextCursor: string | null }
 export interface ChatMessagesPage {
+  /** Omitted by older servers; do not infer unread from missing receipts. */
+  peerReadSequence?: string;
   conversationId: string | null;
   peer: FriendUser;
   items: ChatMessage[];
@@ -43,9 +57,10 @@ export interface ChatMessagesPage {
   hasMore: boolean;
 }
 export interface ChatReadResult { myReadSequence: string; unreadCount: number }
-export interface ChatSendInput { clientMessageId: string; body: string }
+export interface ChatSendInput { clientMessageId: string; body: string; stickerId?: string }
 export interface ChatPageInput { before?: string; after?: string; limit?: number }
 export interface ChatClient {
+  stickers?: ChatStickerClient;
   conversations(cursor?: string, signal?: AbortSignal): Promise<ChatConversationsPage>;
   messages(peerId: number, page?: ChatPageInput, signal?: AbortSignal): Promise<ChatMessagesPage>;
   send(peerId: number, input: ChatSendInput, signal?: AbortSignal): Promise<ChatMessage>;
@@ -74,7 +89,8 @@ export function isChatMessage(value: unknown): value is ChatMessage {
   const m = value as ChatMessage;
   return isChatUuid(m.conversationId) && isChatSequence(m.sequence) && m.sequence !== '0'
     && Number.isSafeInteger(m.senderUserId) && m.senderUserId > 0 && isChatUuid(m.clientMessageId)
-    && normalizeChatBody(m.body) === m.body && typeof m.createdAt === 'string' && Number.isFinite(Date.parse(m.createdAt));
+    && normalizeChatBody(m.body) === m.body && (m.stickerId === undefined || (isChatUuid(m.stickerId) && m.body === CHAT_STICKER_BODY))
+    && typeof m.createdAt === 'string' && Number.isFinite(Date.parse(m.createdAt));
 }
 export function isChatPeer(value: unknown): value is FriendUser {
   if (!value || typeof value !== 'object') return false;

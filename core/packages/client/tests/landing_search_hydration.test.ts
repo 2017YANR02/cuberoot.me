@@ -5,7 +5,12 @@ import { createRoot, hydrateRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const authState = vi.hoisted(() => ({ user: { uid: 66, wcaId: '2017YANR02' } as { uid: number; wcaId: string } | null, login: vi.fn() }));
+vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => authState.user, useAuthStore: { getState: () => authState } }));
+vi.mock('@/lib/admin-api', () => ({ authHeaders: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer session-test' }) }));
+
 const routeState = vi.hoisted(() => ({ lang: 'zh' as 'zh' | 'en' }));
+const speechState = vi.hoisted(() => ({ supported: false, listening: false, status: 'idle', error: null as string | null, microphone: null as string | null, start: vi.fn(), stop: vi.fn() }));
 
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 vi.mock('next/link', () => ({
@@ -18,7 +23,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 vi.mock('@/hooks/useSpeechToText', () => ({
-  useSpeechToText: () => ({ supported: false, listening: false, start: vi.fn(), stop: vi.fn() }),
+  useSpeechToText: () => speechState,
 }));
 vi.mock('@/lib/site-search', () => ({
   INITIAL_RENDER_CAP: 10,
@@ -49,6 +54,10 @@ import { changeAppLanguage } from '@/i18n/i18n-client';
 describe('LandingSearch placeholder hydration', () => {
   beforeEach(() => {
     routeState.lang = 'zh';
+    authState.user = { uid: 66, wcaId: '2017YANR02' };
+    speechState.error = null;
+    speechState.listening = false;
+    speechState.microphone = null;
     changeAppLanguage('zh');
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.useFakeTimers();
@@ -57,6 +66,80 @@ describe('LandingSearch placeholder hydration', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('only asks on submission, ignores IME Enter and renders a real source link', async () => {
+    const fetcher = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ answer: '打开数帧页面。', sources: [{ id: 'frame-count', title: '数帧', href: '/frame-count', read: true }] }) });
+    vi.stubGlobal('fetch', fetcher);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '视频怎么数帧', persistentResults: true })); });
+    const input = host.querySelector('input')!;
+    expect(fetcher).not.toHaveBeenCalled();
+    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true })); });
+    expect(fetcher).not.toHaveBeenCalled();
+    await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', history: [] });
+    expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。');
+    expect(host.textContent).not.toContain('未找到匹配项');
+    expect(document.querySelector('.site-assistant-sources a')?.getAttribute('href')).toBe('/zh/frame-count');
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('keeps anonymous questions out of the paid API', async () => {
+    authState.user = null;
+    const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher);
+    const host = document.createElement('div'); document.body.appendChild(host);
+    const root = createRoot(host);
+    try {
+      await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
+      await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+      expect(fetcher).not.toHaveBeenCalled();
+      expect(document.body.textContent).toContain('请先登录并绑定 WCA 账号');
+      expect(host.querySelector('input')?.value).toBe('世界纪录');
+    } finally { await act(async () => root.unmount()); host.remove(); }
+  });
+
+  it('cancels stale questions when the user edits and keeps regular search on provider failure', async () => {
+    let resolve!: (value: unknown) => void;
+    const fetcher = vi.fn().mockImplementationOnce(() => new Promise(done => { resolve = done; }))
+      .mockResolvedValueOnce(Response.json({ error: 'model_unavailable' }, { status: 503 }));
+    vi.stubGlobal('fetch', fetcher);
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    const props = { cards: [], lang: 'zh' as const, persistentResults: true };
+    await act(async () => { root.render(createElement(LandingSearch, { ...props, query: '旧问题' })); });
+    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    const signal = fetcher.mock.calls[0][1].signal;
+    await act(async () => { root.render(createElement(LandingSearch, { ...props, query: '新问题' })); });
+    expect(signal.aborted).toBe(true);
+    await act(async () => { resolve({ ok: true, json: async () => ({ answer: '过期回答', sources: [] }) }); });
+    expect(host.textContent).not.toContain('过期回答');
+    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(document.body.textContent).toContain('暂时无法回答');
+    expect(host.querySelector('input')?.value).toBe('新问题');
+    await act(async () => root.unmount());
+    host.remove();
+  });
+
+  it('explains the site-wide daily quota without clearing the search query', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(Response.json({ error: 'daily_limit' }, { status: 429 })));
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    const root = createRoot(host);
+    await act(async () => { root.render(createElement(LandingSearch, { cards: [], lang: 'zh', query: '世界纪录', persistentResults: true })); });
+    await act(async () => { host.querySelector('button[aria-label="提问"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(document.body.textContent).toContain('全站今日 1000 次提问额度已用完');
+    expect(document.body.textContent).toContain('北京时间零点恢复');
+    expect(host.querySelector('input')?.value).toBe('世界纪录');
+    await act(async () => root.unmount());
+    host.remove();
   });
 
   it('服务器与客户端跨 UTC 日期时首帧仍一致,挂载后再显示当天文案', async () => {
@@ -152,5 +235,34 @@ describe('LandingSearch placeholder hydration', () => {
     expect(host.querySelector<HTMLInputElement>('.landing-search-field')?.value).toBe('课程');
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it.each([
+    ['zh', 'network', '无法连接语音识别服务'],
+    ['en', 'network', 'Cannot connect to speech recognition'],
+    ['zh', 'unsupported', '此浏览器不支持网页语音输入'],
+    ['zh', 'timeout', '语音识别长时间没有返回结果'],
+  ] as const)('shows %s speech failure %s without clearing the search', (lang, error, message) => {
+    routeState.lang = lang;
+    changeAppLanguage(lang);
+    speechState.error = error;
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang, query: 'PLL' }));
+    expect(host.querySelector('[role="status"]')?.textContent).toContain(message);
+    expect(host.querySelector<HTMLInputElement>('.landing-search-field')?.value).toBe('PLL');
+    expect(host.querySelector('.landing-search-mic')).not.toBeNull();
+  });
+
+  it('shows the selected microphone during capture and on failure', () => {
+    speechState.listening = true;
+    speechState.microphone = 'Default - Wireless Mic Rx';
+    const host = document.createElement('div');
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));
+    expect(host.querySelector('[role="status"]')?.textContent).toBe('麦克风：Default - Wireless Mic Rx');
+    speechState.listening = false;
+    speechState.error = 'no-speech';
+    host.innerHTML = renderToStaticMarkup(createElement(LandingSearch, { cards: [], lang: 'zh' }));
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('Default - Wireless Mic Rx');
+    expect(host.querySelector('[role="status"]')?.textContent).toContain('检查麦克风是否静音');
   });
 });

@@ -327,6 +327,14 @@ function selectTrack(id: string): { audio: HTMLAudioElement; track: MusicTrack }
   return { audio, track };
 }
 
+/** Select a shared track without autoplaying on navigation. */
+export async function selectMusic(id: string): Promise<void> {
+  if (state.status !== 'ready') await loadMusicLibrary();
+  if (!state.tracks.some(track => track.id === id)) return;
+  if (state.currentId !== id) pauseMusic();
+  selectTrack(id);
+}
+
 export async function playMusic(id: string | null = state.currentId): Promise<void> {
   if (state.status !== 'ready') await loadMusicLibrary();
   const targetId = id ?? state.tracks[0]?.id;

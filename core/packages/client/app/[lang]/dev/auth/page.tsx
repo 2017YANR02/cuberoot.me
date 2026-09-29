@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "46e5831d35e404b98b1a1f7efd951d4607ad98dd845f2f75b1e640760ae3ec62", "reason": "新增共享好友聊天：复用平台账号鉴权，退出和切账号清理内存聊天状态；注销删除该账号参与的整段聊天及双方提醒，已同步注销说明；聊天归属数据沿用 linked_data 合并限制。计时器设置改用共享分类弹窗，安装端账号操作归入高级分类；仍调用原 auth.login、logoutEverywhere 与账号管理链接，登录、身份绑定、验证码、安装版会话及管理员权限流程不变。同时核对已提交的桌面 BLE 命令注册变更，安全存储与登录回跳逻辑未变。本次 App.tsx 仅将 SolveRecap 从计时区底部移入共享宽屏侧栏；复核差异未涉及账号入口、登录回调、会话票据或注销流程，现有流程图继续适用。发布前复核将聊天通知清理移动至注销前置检查和 Apple 凭据撤销成功之后，仍在同一数据库事务内；撤销失败时不执行清理，账号注销权限与级联范围未变。"}
+{"fingerprint":"34ecab5eaea27b41af63d7ef01ae1ec6807edc3df2362356203701ca977c98c6","reason":"复核好友表情包的账号生命周期：上传和收藏复用现有登录身份及账号锁，登录、绑定和会话流程不变；新增账号外键仍由 linked_data 阻止不支持的合并。注销在原有续费、机构与 Apple 撤销检查之后删除收藏并清理无引用图片，别人持有的副本保留且清空上传者归属。注销流程节点和中英文保留清单已同步；仅本地实现，未部署。 本次 index.ts 只新增公开站内问答路由的导入和挂载；已对比发布前后的入口，登录路由及 rolePreviewGuard 顺序未变。当时问答不读取账号凭据、不签发会话，仅用服务端模型密钥读取公开页面；指定用户只读查看仍拦截此 POST。账号生命周期各流程不变，因此保留现有流程图。 2026-09-28 本地问答回源复核：Next 页面访问门禁新增验证既有 service 目的凭证，绑定完整路径及查询串且最多 60 秒；不签发浏览器 Cookie 或账号会话，不替代私有内容授权。新增中英文访问流程说明，浏览器验证码、Origin/Cookie、国家豁免和第三方登录回调保持原策略；将 competition-gate 与 competition-access 纳入本守卫。未部署。 2026-09-28 后续需求改为 AI 仅登录且绑定 WCA 可用：先用 verifySession 要求有效 CubeRoot 会话，再复用 requireAuth 并实时重读 app_users；缺失、伪造或过期会话不进入旧 WCA token 回退，禁止用旧 JWT、缓存 WCA token 或请求 viewerWcaId 恢复已解绑资格；保留封禁、合并、注销与只读会话限制。前端带现有认证头、展示登录/绑定入口，账号变化清空对话；资格校验在额度和模型前，纳入 28 秒总预算。同步中英文流程节点及 API 文档，将路由和两个入口组件纳入守卫。普通搜索及其他页面验证码不变；仅本地未部署。 2026-09-28 日历备份：复用 GIS 加入显式只读日历授权，校验授予范围，令牌仅页面内存并在取消/关闭后清除；普通登录仍只请求 openid email profile，不新增绑定或会话。导入经预览确认后复用现有个人日历 API。新增中英文备份授权流程，并把入口组件纳入源码守卫；仅本地实现，真实授权来源尚待配置验收。补充复核备份解析的时区与颜色预检：读取既有 bootstrap 能力标记，旧服务器拒绝精确颜色时在任何导入写入前停止；不增加授权范围、绑定或账号操作。旧版默认配色新增原值保留提示，授权和令牌边界不变。 2026-09-28 日历备份：复用 GIS 单独请求并校验 calendar.readonly，令牌只在页面内存，取消/关闭/导出成功后清除，普通登录仍只请求 openid email profile，不新增绑定或会话。中英文流程说明浏览器直读 Google、下载备份及确认后调用原有个人日历 API；精确颜色先检查后端能力，避免静默丢色。源码守卫显式读取日历授权入口，补充实际收集测试；本地授权来源已配置，真实授权与导出验收仍待完成，未部署。 2026-09-29 CI 复核：私人会议预约在既有注销前置检查及 Apple 撤销成功后随事务删除，无账号信息的会议码保留以防旧邀请复用；注销节点同步。日历组件仅缩小 CSS 选择器，GIS 授权边界不变。AI 登录与绑定 WCA 门禁已在生产验证，匿名请求不扣额度；同步该部署状态。验证码页面增加真实封禁说明，比赛代理在缺少服务签名密钥时只转发已有浏览器凭证和绑定 UA，由 API 继续验签；无凭证先本地拒绝，避免自动请求误封出口，不签发新身份或绕过验证。"}
 */
 
 import type { ReactNode } from 'react';
@@ -33,8 +33,9 @@ export default function AuthFlowPage() {
       <p>{t('一个 CubeRoot 账号，多种登录方式。先看从哪个平台进入，再看登录、绑定、合并和注销各自会做什么。', 'One CubeRoot account, multiple sign-in methods. Start with your platform, then follow sign-in, linking, merging, or deletion.')}</p>
       <p className="auth-map-note">{t('账号页卡片顺序由管理员拖动设置，所有用户共用；每个账号仍只显示其有权使用的入口。排序不改变登录、绑定或会话。', 'Administrators set the account card order for everyone. Each account still sees only its permitted entries; ordering does not change sign-in, linking, or sessions.')}</p>
       <p className="auth-map-note">{t('源码核对：2026-09-21。「源码已实现」不等于所有平台真人测试或商店发布完成；「目标方案」尚未接入。此页不执行账号操作。', 'Source reviewed: 2026-09-21. Implemented in source does not mean real-account testing or store release is complete on every platform. Proposals are not implemented. This page performs no account actions.')}</p>
-      <p className="auth-map-note">{t('本次邮箱发送状态与账号事务加固已完成本地隔离验证，尚未部署；短信发送生命周期与账号合并仍使用各自原有流程，不能由邮箱测试推断已完成同样改造。', 'Email delivery state and account transactions have passed isolated local checks and are not deployed. SMS delivery and account merging retain their existing flows; email tests do not prove those flows have received the same changes.')}</p>
+      <p className="auth-map-note">{t('邮箱发送状态与账号事务已通过隔离数据库验证；短信发送受理状态、手机号账号操作及合并码核销完成聚焦本地检查。短信与合并仍待隔离数据库验证，短信另待真实服务商和设备验收；本轮均未部署。', 'Email delivery state and account transactions passed isolated database checks. SMS provider acceptance, phone account actions, and merge-code consumption passed focused local checks. SMS and merging still need isolated database checks; SMS also needs real-provider and device acceptance. None of these changes are deployed.')}</p>
       <p className="auth-map-note">{t('全站图片验证码通过后可访问页面及受保护数据 7 天，不代表登录，不授予账号或管理员权限；第三方登录回调保留通路，账号退出与账号会话仍按下图处理。', 'Site image verification grants page and protected data access for 7 days. It does not sign in a user or grant account or administrator permissions; OAuth callbacks remain reachable, and account sessions and sign-out follow the flows below.')}</p>
+      <p className="auth-map-note">{t('站内问答读取公开索引或页面 → 服务端为固定自有内容域名签发 60 秒、绑定完整路径与查询串的服务凭证 → 网关校验后读取。服务凭证不发给浏览器或模型，不签发账号会话；私人内容仍须各自授权。此接入仅本地实现，未部署。', 'Assistant reads public index/pages → the server signs a 60-second proof for the fixed self-hosted content origin and exact path/query → the gateway verifies it before reading. Proofs never reach the browser or model and create no account session; private content still requires its own authorization. This integration is local only, not deployed.')}</p>
       <nav className="auth-map-nav" aria-label={t('账号流程目录', 'Account flow contents')}>
         <AppLink href="#platforms" prefetch={false}>{t('平台入口', 'Platforms')}</AppLink>
         <AppLink href="#signin" prefetch={false}>{t('登录 / 注册', 'Sign in / register')}</AppLink>
@@ -70,9 +71,11 @@ export default function AuthFlowPage() {
     <aside className="auth-map-boundaries">
       <h2>{t('公开页面与账号操作', 'Public pages and account actions')}</h2>
       <Steps items={[
-        t('打开页面 → 直接显示内容，不查询首页卡片锁状态或管理员角色', 'Open a page → show its content without checking homepage card locks or administrator roles'),
+        t('通过适用的访问验证 → 打开公开页面，不查询首页卡片锁状态或管理员角色', 'Pass any required access verification → open public content without checking homepage card locks or administrator roles'),
         t('赛前训练 → 游客也可使用，训练记录保存在当前浏览器', 'Competition Practice → guests can train, with practice records saved in this browser'),
         t('需要账号或管理权限的操作 → 由对应功能与服务端接口校验', 'Actions requiring an account or administrator access → checked by the feature and its server API'),
+        t('AI 问答（已部署，2026-09-29 UTC）→ 未登录先到账号页；已登录但未绑定 WCA 也到账号页完成绑定 → 服务端校验有效 CubeRoot 会话并读取账号当前真实 WCA 绑定 → 预留全站每日 1000 问额度 → 调用模型。问答接口不要求浏览器验证码；普通搜索不受账号门槛影响', 'AI questions (deployed, 2026-09-29 UTC) → guests sign in on the account page; signed-in users without WCA link it there → server verifies a valid CubeRoot session and current WCA binding → reserves from the site-wide 1000-question daily allowance → calls the model. The question API needs no browser CAPTCHA; regular search has no account requirement'),
+        t('AI 资格不由模型判断，也不接受浏览器自报的 WCA ID；解绑、注销或账号合并后重新校验，拒绝请求不占提问额度；账号/IP 短时限流和并发保护仍有效', 'AI eligibility is not decided by the model or a browser-supplied WCA ID. Unlinking, deletion and merges are checked again; rejected access consumes no question allowance. Account/IP burst and concurrency protection remain active'),
         t('国家菜单图钉 → 游客进入登录页，登录后回到原网址和筛选；任何登录账号都可置顶，无需会员或 WCA ID', 'Country menu pin → guests sign in and return to the original URL and filters; any signed-in account can pin, without membership or a WCA ID'),
         t('锁定的课程课时 → 「请先登录」进入账号页；登录后回到课程兑换页，兑换成功再直接进入对应视频页', 'Locked course lesson → Please sign in opens the account page; after sign-in, return to course redemption, then open the matching video page immediately after redemption'),
         t('登录后默认依次置顶 WCA 国家、IP 国家，相同国家只显示一次；未绑定 WCA 或未登录时使用 IP 国家。手动设置按账号保存在当前浏览器，取消后不自动恢复；退出登录只保留 IP 国家，定位失败不影响菜单', 'Signed-in defaults are WCA country first, then IP country, without duplicates; without a WCA link or login, use the IP country. Manual choices are saved per account in this browser and unpinning is retained; signing out shows only the IP country, and lookup failure leaves menus usable'),
@@ -90,15 +93,21 @@ export default function AuthFlowPage() {
       ]} />
     </section>
 
+    <aside className="auth-map-note"><h2>{t('Google 日历备份授权', 'Google Calendar backup authorization')}</h2><Steps items={[
+      t('已登录用户在日历设置点击连接 Google → 使用现有 GIS 组件单独请求 calendar.readonly，不把登录权限扩大为日历权限', 'A signed-in user clicks Connect Google in calendar settings → the existing GIS client separately requests calendar.readonly; ordinary sign-in does not request calendar access'),
+      t('Google 确认只读范围 → 浏览器直接分页读取所选日历及颜色、设置和原始活动 → 下载备份；令牌只在页面内存，关闭或取消后清除，不发送本站服务器', 'After Google confirms read-only scope, the browser paginates selected calendars, colors, settings and raw events into a downloaded backup. Tokens stay in page memory, are cleared on close/cancel, and never reach CubeRoot servers'),
+      t('上传备份 → 显示支持范围与可能损失 → 用户确认后调用已有日历导入接口；不登录或绑定新的 CubeRoot 身份，也不邀请原活动参与人', 'Uploading a backup shows supported fields and limitations before confirmation invokes existing calendar import endpoints. It neither signs in or links a new CubeRoot identity nor invites original attendees'),
+    ]} /><p>{t('本地实现，未发布。本地授权来源已配置，真实授权与导出验收仍待完成；普通登录与账号绑定流程保持不变。', 'Implemented locally, not deployed. The local authorized origin is configured; live authorization and export validation remain pending. Normal sign-in and identity linking are unchanged.')}</p></aside>
+
     <section id="signin" className="auth-map-section" aria-labelledby="signin-title">
       <div className="auth-map-section-heading"><h2 id="signin-title">{t('登录与注册：网站和 App 共用', 'Sign-in and registration: shared by website and App')}</h2><span className="auth-map-status auth-map-implemented">{t('源码已实现 · 可用入口以服务端配置为准', 'Implemented in source · availability depends on server configuration')}</span></div>
       <figure className="auth-map-figure" aria-labelledby="signin-title">
         <div className="auth-map-current-paths">
           <section><h3>{t('邮箱 / 手机号 / 密码', 'Email / phone / password')}</h3><Steps items={[
             t('选择邮箱或手机号，使用验证码；已设密码也可用密码登录', 'Choose email or phone and verify a code; an existing password is another sign-in option'),
-            t('邮箱验证码：发送服务确认接受后才可验证；发送失败或结果未知时不能登录，不自动重发', 'Email codes become usable only after the delivery service confirms acceptance; failed or unknown sends cannot sign in and are not automatically retried'),
+            t('邮箱或短信验证码：发送服务确认接受后才可验证；发送失败或结果未知时不能登录，不自动重发', 'Email or SMS codes become usable only after the provider confirms acceptance; failed or unknown sends cannot sign in and are not automatically retried'),
             t('验证通过 → 已有凭据直接进入原账号；陌生凭据先问是否已有账号，不自动注册', 'Verification succeeds → existing credentials sign in directly; unknown credentials ask whether you have an account, without automatic registration'),
-            t('邮箱验证与登录或账号选择票据一起保存；保存失败不消耗成功验证码，错误猜测仍计次', 'Email verification commits with sign-in or the account-choice ticket; a failed save preserves a correct code, while wrong guesses still count'),
+            t('邮箱与短信验证和登录或账号选择票据一起保存；保存失败不消耗正确验证码，错误猜测仍计次', 'Email and SMS verification commit with sign-in or the account-choice ticket; a failed save preserves a correct code, while wrong guesses still count'),
             t('有旧号：验证原账号并确认绑定；没有：明确选择创建新账号', 'Existing account: authenticate and confirm linking. No account: explicitly choose to create one'),
           ]} /><p className="auth-map-note">{t('忘记密码时才走：验证原账号已绑定的邮箱或手机 → 设置新密码。不是每次登录都要重设。', 'Only if you forgot your password: verify the linked email or phone → set a new password. This is not required on every sign-in.')}</p><p className="auth-map-note">{t('密码登录不创建账号。「绑定已有账号」中的验证只认旧号，不会用陌生邮箱、手机号悄悄注册。', 'Password sign-in does not create accounts. Verification inside existing-account linking accepts existing accounts only; an unknown email or phone does not silently register.')}</p></section>
           <section><h3>{t('第三方登录', 'Provider sign-in')}</h3><Steps items={[
@@ -218,9 +227,9 @@ export default function AuthFlowPage() {
         <section><h3>{t('新增登录方式', 'Add a sign-in method')}</h3><Steps items={[
           t('先登录要保留的 CubeRoot 账号', 'Sign in to the CubeRoot account you want to keep'),
           t('选择绑定方式 → 验证新邮箱 / 手机号，或完成第三方授权', 'Choose a method → verify the new email / phone, or authorize the provider'),
-          t('邮箱绑定或换绑与验证码核销一起完成；冲突或保存失败时都不生效', 'Email linking or replacement commits together with code consumption; conflicts or save failures apply neither change'),
+          t('邮箱或手机号绑定与换绑和验证码核销一起完成；冲突或保存失败时都不生效', 'Email or phone linking and replacement commit together with code consumption; conflicts or save failures apply neither change'),
           t('归属检查通过 → 新登录方式挂到当前账号，会员不另开一份', 'Ownership checks pass → attach the method to this account, without creating a second membership'),
-        ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link.')}</p></section>
+        ]} /><p className="auth-map-note">{t('该身份已经属于另一个账号？停止绑定；需要合并时走下一节，不能直接抢绑。保存服务故障会提示重试，不会误报身份冲突。', 'Identity already belongs to another account? Stop linking. Use the merge flow if appropriate; never take over the link. A storage failure asks you to retry instead of reporting an identity conflict.')}</p></section>
         <section><h3>{t('解绑或换绑', 'Unlink or replace')}</h3><Steps items={[
           t('查看已绑定方式 → 选择解绑，或邮箱 / 手机号的换绑入口', 'Review linked methods → choose unlink, or replace the email / phone'),
           t('唯一登录方式不能解绑；换绑必须验证新凭据', 'The only sign-in method cannot be removed; replacing it requires verifying the new credential'),
@@ -241,10 +250,10 @@ export default function AuthFlowPage() {
           t('④ 服务端检查两个账号、合并码、凭据冲突和数据迁移条件', '④ Server checks both accounts, the code, credential conflicts, and data migration constraints'),
         ]} />
         <div className="auth-map-current-paths auth-map-results">
-          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据、已领养宠物和登录方式转入 A，当前会话切到 A；B 不再作为独立账号使用。不能撤销。', 'Supported data, adopted pets, and sign-in methods move to A; the current session switches to A. B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
-          <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；处理后可能需要在 A 重新生成合并码，不要反复点确认。', 'Explain the conflict and stop. After resolving it, a new code from A may be required; do not repeatedly submit.')}</small></FlowNode>
+          <FlowNode outcome><strong>{t('检查通过 → 一次事务完成', 'Checks pass → one transaction')}</strong><small>{t('受支持的数据、已领养宠物和登录方式转入 A，当前会话切到 A；B 的其他旧会话失效，B 不再作为独立账号使用。不能撤销。', 'Supported data, adopted pets, and sign-in methods move to A; the current session switches to A. Other old B sessions become invalid, and B is retired as a separate account. This cannot be undone.')}</small></FlowNode>
+          <FlowNode><strong>{t('检查失败 → 不迁移账号数据', 'Checks fail → no account data is moved')}</strong><small>{t('提示冲突并停止；正确且未过期的合并码保留，可在解决冲突后重试；过期则在 A 重新生成。', 'Explain the conflict and stop. A correct, unexpired merge code remains available for retry after resolving the conflict; generate a new one in A if it expires.')}</small></FlowNode>
         </div>
-        <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts.')}</figcaption>
+        <figcaption>{t('合并码只能在你自己的两个账号之间使用，不要交给他人。绑定一个新方式 ≠ 合并两个账号。合并后旧版 WCA 会话需要重新登录。', 'Use the merge code only between your own accounts; do not share it. Linking a new method is not the same as merging two accounts. Older WCA sessions require sign-in again after a merge.')}</figcaption>
       </figure>
       <details className="auth-map-current"><summary>{t('哪些情况会被拦住？会员怎么处理？', 'What blocks a merge? What happens to membership?')}</summary>
         <ul className="auth-map-list">
@@ -270,11 +279,13 @@ export default function AuthFlowPage() {
           t('我的 → 齿轮 → 登录方式 → 底部「注销账号」', 'My account → settings gear → sign-in methods → Delete account at the bottom'),
           t('阅读删除与保留清单 → 输入页面要求的账号标识；设过密码还须输入当前密码', 'Read what is deleted and retained → type the requested account identifier; enter the current password if one is set'),
           t('主动确认永久注销 → 服务端检查续约合约、机构归属等条件，并撤销已绑定 Apple 授权', 'Explicitly confirm deletion → server checks renewal contracts, organization ownership, and other constraints, and revokes linked Apple authorization'),
+          t('私人会议安排随账号删除；不含账号信息的预留会议码保持占用，避免旧邀请链接被分配给另一场会议', 'Private meeting plans are deleted with the account; identity-free reserved codes remain occupied so old invitations cannot point to a different meeting'),
+          t('表情包收藏随账号删除；无其他会话或收藏引用的上传图片同时删除，别人已持有的副本解除上传者归属后保留', 'Sticker favorites are deleted with the account. Uploaded images without other message or favorite references are deleted; copies held by others remain without uploader attribution'),
           t('成功 → 删除站内账号与对应私有数据、推送设备绑定和队列、解除登录方式；失败 → 展示原因，不宣称已注销', 'Success → delete the site account, covered private data, push device bindings and queues, and sign-in methods. Failure → show the reason, never claim deletion succeeded'),
         ]} /><figcaption>{t('源码已实现立即注销、无恢复期。App 与小程序复用网站入口，不另造删除表单；各端真实注销与会话清理仍须分别验收。', 'Source implements immediate deletion with no grace period. App and Mini Program reuse the website entry, not separate deletion forms; real deletion and session cleanup require per-platform testing.')}</figcaption></figure></section>
       </div>
       <aside className="auth-map-boundaries"><h3>{t('注销前一定要知道', 'Before deleting')}</h3><ul>
-        <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天数据仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat data follows the existing linked_data rule for unsupported account merges.')}</li>
+        <li>{t('好友聊天：任一参与账号注销时，整段会话和双方相关提醒一起删除。解除好友或拉黑只停止新消息，保留已有历史；聊天记录、表情包上传和收藏仍按现有 linked_data 规则阻止不受支持的账号合并。', 'Friend chat: deleting either participant removes the entire conversation and both inbox reminders. Unfriending or blocking stops new messages but retains history. Chat history, sticker uploads and favorites follow the existing linked_data rule for unsupported account merges.')}</li>
         <li>{t('有待生效或生效中的自动续费合约：先取消并确认终止。是机构最后一位负责人：先转移归属。不是点注销就自动解约或退钱。', 'Pending or active renewal contract: cancel and confirm termination first. Last organization owner: transfer ownership first. Deletion is not automatic contract cancellation or a refund.')}</li>
         <li>{t('私有数据按清单删除，包括私人宠物领养与养成记录；公开讨论和公开复盘匿名保留，交易及必要业务审计记录保留。WCA 官方公开成绩不因 CubeRoot 注销消失。', 'Covered private data, including private pet adoptions and care records, is deleted; public discussions and public reconstructions are anonymized. Transactions and required business audit records remain. Official public WCA results do not disappear when a CubeRoot account is deleted.')}</li>
         <li>{t('不能声称远程清空所有手机。App 本地记录、导出备份和其他设备副本需要另外管理；注销的是 CubeRoot 账号，不是 Apple、Google 或微信账号。', 'This does not remotely wipe every phone. Manage local App records, exported backups, and other device copies separately. You delete CubeRoot, not your Apple, Google, or WeChat account.')}</li>

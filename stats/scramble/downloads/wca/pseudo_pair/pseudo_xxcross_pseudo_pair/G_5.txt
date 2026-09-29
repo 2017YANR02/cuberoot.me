@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / G / bin 5
-# Population in this bin: 698
+# Population in this bin: 699
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-24
+# Generated: 2026-09-27
 # Columns: id,scramble,bottom_color,competition,round
 
 8961001,L2 F R2 B2 L2 B2 R2 D' F' R' D R2 B' D2 L' F' L F',G,BP Cube Day 2014 (2014-04-05),333oh Final C #1
@@ -59,7 +59,7 @@
 2442059001,B2 L2 F' U B R2 L' F' D2 F' R2 F2 U2 R2 F2 U2 L2 R,G,UFBA 2023 (2023-01-20~21),333 R1 A #3
 380810001,F D' L2 U' F2 L2 U2 L' F2 L' B2 L2 U' F2 L2 U D,G,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 C #5
 4943684001,R2 L2 F' R U2 L U' R B2 R U2 L' U2 D2 L2 F R' U' L2,G,Speedcubing Bucaramanga 2025 (2025-08-16),333 R1 C #1
-2893993001,B2 L' B' D' R2 U F2 U' F2 R2 U L B2 U' L R2 F2 L,G,Delacuesta Open 2023 (2023-07-15),333oh R1 B E2
+5844008001,B2 U B2 L B U R L B2 R2 U D R2 U R2 F2 D2 F2,G,ArquiCube Xalapa 2026 (2026-09-19~20),333oh R1 B E2
 3664645001,F2 B R2 D L F' U' R' D2 L' U2 R U2 B2 L2 D2 R' D L' F2 D',G,Nittedal Mental Breakdown 2024 (2024-04-13~14),333bf Final A E1
 1341531001,F2 L2 F2 L' B2 L' U2 L' R2 D R B L U2 B F D L',G,Yunnan Open 2019 (2019-10-06),333bf Final A #1
 414373001,L2 U R2 U' B2 U2 F2 D' B' D' R B' F' D2 B' U2 R' D U',G,South Berwick Open 2016 (2016-12-10),333oh Final B #3

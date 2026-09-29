@@ -1,7 +1,7 @@
 import { availableParallelism } from 'node:os';
 import { mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { analyzer, appendData, exe, exists, fileSize, ids, jobDir, lineCount, lines, puzzleDir, runNode, runPnpm, runTs, tableDir, tsx, wcaDir } from './common.js';
+import { analyzer, appendData, exe, exists, fileSize, ids, jobDir, lineCount, lines, puzzleDir, runNode, runPnpm, runTs, tableDir, taskProgress, tsx, wcaDir } from './common.js';
 import { grindSq1Monsters } from './sq1-grind.js';
 import { runSq1Wca } from './sq1-wca.js';
 import { runSq1Slash } from './sq1-slash.js';
@@ -133,7 +133,12 @@ export async function runPuzzles(selected: string[], maxNew = 0, options: Puzzle
   }
   if (!options.buildOnly) {
   await extractCorpus(keys, maxNew);
-  for (const key of keys) if (key !== 'sq1') await solvePuzzle(key, options.chunkSize);
+  taskProgress('puzzles:solve', 0, keys.length);
+  let solvedPuzzles = 0;
+  for (const key of keys) if (key !== 'sq1') {
+    await solvePuzzle(key, options.chunkSize);
+    taskProgress('puzzles:solve', ++solvedPuzzles, keys.length);
+  }
   if (keys.includes('sq1')) {
     const sq1Full = join(tableDir, 'sq1_wca_jsqfull.bin');
     const exact = join(puzzleDir, 'sq1', 'sq1_wca_exact.csv');
@@ -160,6 +165,7 @@ export async function runPuzzles(selected: string[], maxNew = 0, options: Puzzle
         if (meta.fallback) partial.push(`SQ1 slash still has ${meta.fallback} provisional states`);
       }
     }
+    taskProgress('puzzles:solve', ++solvedPuzzles, keys.length);
   }
   }
   if (keys.includes('222') || keys.includes('pyraminx')) {

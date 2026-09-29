@@ -13,13 +13,17 @@
 
 import { unzipSync, strFromU8 } from 'fflate';
 import {
-  parseIcs, icsCalendarName, ICS_IMPORT_BATCH, CALENDAR_COLORS,
+  parseIcs, icsCalendarName, icsCalendarColor, ICS_IMPORT_BATCH, CALENDAR_COLORS,
   type CalendarMeta, type ParsedIcsEvent,
 } from '@cuberoot/shared/calendar';
-import { createCalendar, importEvents, startImport } from '@/lib/calendar-api';
+import { createCalendar, importEvents, startImport, fetchBootstrap } from '@/lib/calendar-api';
+import { readGoogleBackup, reviewGoogleBackup } from '@/lib/google-calendar-backup';
 
 /** 一份待导入的日历:一个 .ics 文件的内容。 */
 export interface IcsSource {
+  /** 文件未提供时留空，不声称恢复了来源颜色。 */
+  color?: string;
+  tz?: string;
   /** 目标日历名 */
   name: string;
   events: ParsedIcsEvent[];
@@ -50,12 +54,15 @@ const isRateLimit = (e: unknown): boolean => /rate limit/i.test((e as Error)?.me
 
 /** zip 里挑出 .ics;不是 zip 就当成单份 .ics 文本。 */
 export async function readIcsSources(file: File, fallbackTz: string): Promise<IcsSource[]> {
+  const backup = await readGoogleBackup(file);
+  if (backup) return reviewGoogleBackup(backup).sources;
   const zip = /\.zip$/i.test(file.name) || file.type === 'application/zip'
     || file.type === 'application/x-zip-compressed';
   if (!zip) {
     const text = await file.text();
     return [{
       name: icsCalendarName(text) || file.name.replace(/\.ics$/i, ''),
+      ...(icsCalendarColor(text) ? { color: icsCalendarColor(text) } : {}),
       events: parseIcs(text, fallbackTz),
     }];
   }
@@ -69,6 +76,7 @@ export async function readIcsSources(file: File, fallbackTz: string): Promise<Ic
     const base = path.split('/').pop() ?? path;
     out.push({
       name: icsCalendarName(text) || base.replace(/\.ics$/i, ''),
+      ...(icsCalendarColor(text) ? { color: icsCalendarColor(text) } : {}),
       events: parseIcs(text, fallbackTz),
     });
   }
@@ -78,24 +86,21 @@ export async function readIcsSources(file: File, fallbackTz: string): Promise<Ic
 /**
  * 找 / 建这份 .ics 该落进的日历。
  * 名字对上就并进已有的那个 —— 同一份导出重导一次不该多出一列同名日历。
- * 建不出来(比如到了日历数量上限)就退回主日历,总比整批导入失败强。
+ * 建不出来就中止，不能悄悄把其他日历混入主日历并丢掉来源色。
  */
 async function resolveCalendar(
-  name: string, existing: CalendarMeta[], fallbackId: number, tz: string, importId: number,
+  name: string, existing: CalendarMeta[], fallbackId: number, tz: string, importId: number, sourceColor?: string,
 ): Promise<{ id: number; name: string; created: CalendarMeta | null }> {
   const clean = name.trim().slice(0, 60);
   if (!clean) return { id: fallbackId, name: '', created: null };
   const hit = existing.find((c) => c.name.trim().toLowerCase() === clean.toLowerCase());
   if (hit) return { id: hit.id, name: hit.name, created: null };
-  try {
-    // 颜色按已有日历数量轮着给,免得新建的几个全撞成同一种。
-    const color = CALENDAR_COLORS[existing.length % CALENDAR_COLORS.length];
+    // 无来源颜色用中性默认值，不能把任意轮换配色当作原始颜色。
+    const color = sourceColor || 'graphite';
     // importId 让撤销时知道这列是这次导入建的 —— 撤销时它若已空就一并删掉。
     const made = await createCalendar({ name: clean, color, tz, importId });
+    if (sourceColor && made.color.toLowerCase() !== sourceColor.toLowerCase()) throw new Error('calendar_color_not_supported');
     return { id: made.id, name: made.name, created: made };
-  } catch {
-    return { id: fallbackId, name: '', created: null };
-  }
 }
 
 /** 送一批,撞限流就退避重试(导入是一次性动作,等几秒也比丢一半强)。 */
@@ -106,6 +111,7 @@ async function sendBatch(
     title: p.title, description: p.description, location: p.location,
     allDay: p.allDay, start: p.start, end: p.end, tz: p.tz,
     rrule: p.rrule, exdates: p.exdates, reminders: p.reminders,
+    ...(p.color ? { color: p.color } : {}),
   }));
   for (let attempt = 0; ; attempt++) {
     try {
@@ -132,6 +138,10 @@ export async function importCalendarFile(opts: {
   const sources = (await readIcsSources(opts.file, opts.tz)).filter((s) => s.events.length > 0);
   const total = sources.reduce((n, s) => n + s.events.length, 0);
   if (total === 0) return { added: 0, failed: 0, calendars: [], importId: null };
+  const extendedColor = (color: string | undefined) => color && !(CALENDAR_COLORS as readonly string[]).includes(color);
+  if (sources.some(s => extendedColor(s.color) || s.events.some(e => extendedColor(e.color)))) {
+    if ((await fetchBootstrap(opts.tz)).colorFormatVersion !== 2) throw new Error('calendar_color_upgrade_required');
+  }
 
   // 批次先开:后面建的日历、塞的事件都挂在它下面,一次「撤销」就能全收回。
   const importId = await startImport(opts.file.name);
@@ -146,7 +156,7 @@ export async function importCalendarFile(opts: {
   for (const src of sources) {
     // 单份 .ics 且名字撞不上已有日历时也照建 —— 用户导进来的是「另一个日历」,
     // 混进主日历就分不开了。
-    const target = await resolveCalendar(src.name, known, opts.defaultCalendarId, opts.tz, importId);
+    const target = await resolveCalendar(src.name, known, opts.defaultCalendarId, src.tz || opts.tz, importId, src.color);
     if (target.created) known.push(target.created);
     if (target.name) landed.add(target.name);
 
