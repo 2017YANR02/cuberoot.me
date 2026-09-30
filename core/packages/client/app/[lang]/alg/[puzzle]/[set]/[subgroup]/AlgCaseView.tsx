@@ -597,7 +597,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
                       {orientationSetup && (
                         <SetupLine
                           puzzle={puzzle}
-                          setup={displayCaseScramble(puzzle, set, orientationSetup)}
+                          setup={displayCaseScramble(puzzle, set, orientationSetup, primaryAlg)}
                           sq1NotationMode={sq1NotationMode}
                         />
                       )}

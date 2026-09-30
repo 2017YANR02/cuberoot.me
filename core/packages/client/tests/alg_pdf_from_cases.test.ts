@@ -19,6 +19,20 @@ function mkCase(over: Partial<AlgCase> & { name: string }): AlgCase {
 const base = { puzzle: '3x3' as const, set: 'pll', title: 'T', filename: 'f' };
 
 describe('algSheetFromCases', () => {
+  it('F2L printed scrambles follow each orientation and the reordered first row', () => {
+    const c = mkCase({ name: 'W+', setup: "R U R' U2' R U' R' U y", algs: [
+      [{ alg: "U R' F r U' r' F' R y'" }, { alg: "F' L F L' y'" }],
+      [{ alg: "U L U' L' y2" }],
+    ] });
+    const options = { ...base, set: 'f2l', cases: [c], allOris: true };
+    expect(algSheetFromCases(options).cases.map(row => row.setup))
+      .toEqual(["R' F r U r' F' R U'", "L U L' U'"]);
+    c.algs[0].reverse();
+    expect(algSheetFromCases(options).cases[0].setup).toBe("L F' L' F");
+    expect(algSheetFromCases({ ...options, viewAngle: 'u' }).cases[0].setup).toBe("L F' L' F U");
+    expect(c.setup).toBe("R U R' U2' R U' R' U y");
+  });
+
   it('跳过不匹配公式后再截断，保留 case、图和后续有效公式，不修改源数据', async () => {
     const c = mkCase({ name: 'test', setup: "R'", algs: [[]] });
     const invalid = await alignCaseEntry('3x3', 'pll', c, { alg: 'U' });
