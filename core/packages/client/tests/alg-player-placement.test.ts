@@ -66,7 +66,7 @@ describe('algorithm player placement', () => {
     expect(detail).toMatch(/const playerAlg = useF2lOrientationGrid[\s\S]*?f2lPlayerSequence\(selectedAlg\)\.alg[\s\S]*?: selectedAlg;/);
     expect(detail).toMatch(/const orientationSetup = useF2lOrientationGrid[\s\S]*?primarySequence\.setup[\s\S]*?: caseViewSetup\(orientedSetup, effectiveViewAngle\);/);
     expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{playerAlg\}[\s\S]*?setup=\{orientationSetup\}[\s\S]*?orientation=\{effectiveOrientation\}/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup\)/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup, primaryAlg\)/);
     expect(detail).toContain('renderOrientationSetup={(setup) => (');
     expect(detail).not.toContain('{editor && <div hidden={effectiveViewAngle !== \'default\'}>{editor.setup}</div>}');
     expect(detail).not.toContain('inlinePlayer');

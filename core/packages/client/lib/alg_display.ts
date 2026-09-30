@@ -83,7 +83,12 @@ export function simplifyAdjacentU(puzzle: string, alg: string): string {
  * 下两层保持原拿法；这不是完整魔方的等价变换，不能用于解法或播放器 setup。
  * 只处理末尾连续的 U/y（包括观察角度追加的 U），不碰内部转体或 F2L 换槽。
  */
-export function displayCaseScramble(puzzle: string, set: string, scramble: string): string {
+export function displayCaseScramble(puzzle: string, set: string, scramble: string, firstAlg?: string): string {
+  // F2L text follows the first visible solution, including after reordering or
+  // choosing a preferred alternative. Keep full setup/alg values for playback.
+  if (puzzle === '3x3' && set === 'f2l' && firstAlg?.trim()) {
+    return f2lPlayerSequence(displayCaseAlg(puzzle, set, firstAlg)).setup;
+  }
   scramble = canonicalizeAlgY2(simplifyAdjacentU(puzzle, scramble));
   if (!scramble || !is3x3TopLayerSet(puzzle, set)) return scramble;
   try {

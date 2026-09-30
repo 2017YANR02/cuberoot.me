@@ -1661,10 +1661,12 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
                               </button>
                             )}
                           </div>
-                          {effectiveView === 'full' && c.setup && (
+                          {effectiveView === 'full' && (c.setup || (puzzleParam === '3x3' && set === 'f2l' && algsForOri[0]?.alg)) && (
                             <SetupLine
                               puzzle={puzzleParam}
-                              setup={displayCaseScramble(puzzleParam, set, caseViewSetup(oriAdjustSetup(c.setup, oriIdx), effectiveViewAngle))}
+                              setup={displayCaseScramble(puzzleParam, set,
+                                caseViewSetup(orientedSetup, effectiveViewAngle),
+                                caseViewAlg(algsForOri[0]?.alg ?? '', effectiveViewAngle))}
                               notationStyle={displayedNotationStyle}
                               sq1NotationMode={sq1NotationMode}
                             />
