@@ -5,6 +5,7 @@ export default defineConfig(({ command, isPreview }) => ({
   base: command === 'serve' && !isPreview ? '/' : '/app/',
   clearScreen: false,
   plugins: [react()],
+  worker: { format: 'es' },
   server: {
     port: 1430,
     strictPort: true,
