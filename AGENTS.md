@@ -127,11 +127,12 @@ pnpm --filter @cuberoot/client lint
 
 ## 测试
 
+- 非必要不新增、不运行测试。简单、可逆的改动优先直接实现并审阅差异，不写只复述实现的测试，不为凑验证数量扩展测试范围。只有涉及明确的回归风险、关键计算或安全边界，且已有证据不足时，才做能验证具体风险的最小检查；用户本次要求不测试时优先遵从。必要构建与发布后的部署状态确认不属于额外测试。
 - 提交前完成适用验证;push 后不重复已通过的检查,只观察对应提交的 CI;新增改动、失败或遗漏的必要验收仅跑对应最小检查;本地 commit 不视为触发 CI;用户本次“不用检查”限制仍优先。
 - `pnpm --filter @cuberoot/client test` 全集;单文件 `pnpm --filter @cuberoot/client exec vitest run <path>`(**禁** `test -- <path>`,pnpm 透传会被 vitest 吞、跑全集)。
 - `tests/analyzer_worker.test.ts` ~225s(占全集 99%),只改别处就单跑其它文件。
 - 测试统一 `packages/client/tests/*.test.ts`(不与源码并排),源文件 `@/` alias import。
-- 改 worker/kociemba/scramble 生成器/utils 必配 fixture 测试,先看同类怎么写;worker 回归走 `_*_runner.cjs` 模式(见 `tests/analyzer_worker.test.ts`)。
+- 改 worker/kociemba/scramble 生成器或相关 utils 的算法、计算或输出行为时，按具体回归风险补必要 fixture；纯重构、样式、文案及无行为变化的 utils 改动不自动要求新增测试。先看同类怎么写;worker 回归走 `_*_runner.cjs` 模式(见 `tests/analyzer_worker.test.ts`)。
 - 回归 baseline 用 `toBe()` 锁数值,改算法主动改 baseline 当 review 信号,禁放宽成 `toBeGreaterThan`。
 - CI `.github/workflows/test.yml`(PR + push main:typecheck + test)。
 
