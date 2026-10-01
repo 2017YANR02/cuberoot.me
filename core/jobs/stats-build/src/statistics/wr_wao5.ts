@@ -19,8 +19,9 @@ export class WrWao5 extends RoundMetric {
 
   // NOTE: WAo5 = 5 次中取最差 3 次均值，需要全部 5 次有效
   computeMetric(values: number[]): number | null {
+    if (values.length !== 5 || values.includes(0)) return null;
     if (!values.every(v => v > 0)) return null;
-    const worst3 = values.sort((a, b) => b - a).slice(0, 3);
+    const worst3 = [...values].sort((a, b) => b - a).slice(0, 3);
     return worst3.reduce((s, v) => s + v, 0) / 3;
   }
 }

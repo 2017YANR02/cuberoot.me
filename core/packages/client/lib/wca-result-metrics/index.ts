@@ -66,6 +66,7 @@ function orderRounds(rounds: readonly WcaMetricRound[]): WcaMetricRound[] {
 export function computeWcaMetricByRound(
   rounds: readonly WcaMetricRound[],
   mode: WcaResultMetricMode,
+  eventId = '333',
 ): Map<string, number | null> {
   const ordered = orderRounds(rounds);
   const values = new Map<string, number | null>();
@@ -103,7 +104,7 @@ export function computeWcaMetricByRound(
   }
 
   if (ROLLING_KEYS.has(mode)) {
-    const metric = computeRolling(entries.map(entry => entry.cs))[mode] as (number | null)[];
+    const metric = computeRolling(entries.map(entry => entry.cs), eventId)[mode] as (number | null)[];
     for (const round of ordered) {
       const span = spans.get(round.key);
       if (span) values.set(round.key, metric[span.last] ?? null);
@@ -124,9 +125,10 @@ export function computeWcaMetricByRound(
 export function computeWcaMetricStatsByRound(
   rounds: readonly WcaMetricRound[],
   mode: WcaResultMetricMode,
+  eventId = '333',
 ): WcaMetricRoundStats {
   const ordered = orderRounds(rounds);
-  const values = computeWcaMetricByRound(ordered, mode);
+  const values = computeWcaMetricByRound(ordered, mode, eventId);
   const validValues = [...values.values()].filter((value): value is number => value !== null && value > 0);
   const tracker = new CompetitionRankTracker(validValues);
   const ranks = new Map<string, number | null>();

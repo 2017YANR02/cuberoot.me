@@ -2,10 +2,11 @@
 // 从 viz/rolling_stats.js 1:1 翻译为 TypeScript
 // 输入 singles 数组（厘秒），输出 mo3/ao12/ao25/ao50/ao100 + PB 标记
 // 供个人成绩表、viz 和 csv_export 共用
+import { roundTimedAverageMs } from '@cuberoot/shared/timer';
 
 // NOTE: WCA 标准 trimming 规则
 // mo3: 无 trim（纯均值），任一 DNF → 结果 DNF
-// aoN(N≥5): trim = max(1, floor(N * 0.05)) from each end
+// aoN(N≥5): trim = ceil(N * 0.05) from each end
 // DNF 数 > trim → 结果 DNF
 export interface RollingConfig {
   key: string;
@@ -18,8 +19,8 @@ const CONFIGS: RollingConfig[] = [
   { key: 'mo3',   size: 3,   trim: 0,  label: 'Mo3'   },
   { key: 'ao5',   size: 5,   trim: 1,  label: 'Ao5'   },
   { key: 'ao12',  size: 12,  trim: 1,  label: 'Ao12'  },
-  { key: 'ao25',  size: 25,  trim: 1,  label: 'Ao25'  },
-  { key: 'ao50',  size: 50,  trim: 2,  label: 'Ao50'  },
+  { key: 'ao25',  size: 25,  trim: 2,  label: 'Ao25'  },
+  { key: 'ao50',  size: 50,  trim: 3,  label: 'Ao50'  },
   { key: 'ao100', size: 100, trim: 5,  label: 'Ao100' },
 ];
 
@@ -39,7 +40,7 @@ export interface RollingResult {
  * @param singles - 按时间正序排列的厘秒数组
  *   >0 = 有效成绩, -1 = DNF, -2 = DNS, 0 = 空(跳过)
  */
-export function compute(singles: number[]): RollingResult {
+export function compute(singles: number[], eventId = '333'): RollingResult {
   const result: RollingResult = { singles, pbFlags: { singles: [] } };
 
   // NOTE: 单次 PB 标记
@@ -69,7 +70,7 @@ export function compute(singles: number[]): RollingResult {
         continue;
       }
 
-      const val = computeWindow(singles, j - cfg.size + 1, j, cfg.trim, cfg.key === 'mo3');
+      const val = computeWindow(singles, j - cfg.size + 1, j, cfg.trim, cfg.key === 'mo3', eventId);
       arr[j] = val;
 
       if (val !== null && val < bestVal) {
@@ -101,6 +102,7 @@ function computeWindow(
   end: number,
   trim: number,
   isMean: boolean,
+  eventId: string,
 ): number | null {
   const win: number[] = [];
   let dnfCount = 0;
@@ -121,7 +123,7 @@ function computeWindow(
     if (dnfCount > 0) return null;
     let sum = 0;
     for (let k = 0; k < win.length; k++) sum += win[k];
-    return Math.round(sum / win.length);
+    return roundAverage(sum / win.length, eventId);
   }
 
   // AoN: DNF 数超过 trim → 结果 DNF
@@ -132,7 +134,11 @@ function computeWindow(
   const trimmed = win.slice(trim, win.length - trim);
   let total = 0;
   for (let m = 0; m < trimmed.length; m++) total += trimmed[m];
-  return Math.round(total / trimmed.length);
+  return roundAverage(total / trimmed.length, eventId);
+}
+
+function roundAverage(raw: number, eventId: string): number {
+  return eventId === '333fm' ? Math.round(raw * 100) : roundTimedAverageMs(raw * 10) / 10;
 }
 
 /**

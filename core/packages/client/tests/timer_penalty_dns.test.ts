@@ -78,8 +78,8 @@ describe('averages treat DNS exactly like DNF', () => {
       mk(13_000, 'ok'), mk(14_000, 'ok'),
     ];
     // sorted = [10000, 11000, 13000, 14000, Inf]; trim 1 each side →
-    // mean(11000, 13000, 14000) = 12666.67 → truncated to cs = 12660.
-    expect(averageOfN(solves, 5)).toBe(12_660);
+    // mean(11000, 13000, 14000) = 12666.67 → rounds to cs = 12670 (9f1).
+    expect(averageOfN(solves, 5)).toBe(12_670);
   });
 
   it('one DNS AND one DNF exceeds the single-DNF cap → the ao5 is DNF', () => {

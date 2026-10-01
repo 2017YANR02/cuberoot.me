@@ -46,11 +46,7 @@
  *   (b) BPA / WPA and the target plan assume the competitor stays eligible —
  *       they do not model "you get cut and end with no average at all".
  *
- * NOTE (divergence from `_lib/stats.ts`): 9f1 says averages ROUND to the
- * nearest hundredth. `stats.ts` truncates (`truncToCs`), so `roundResult` can
- * read 10 ms above `averageOfN` on the same window. This file follows the
- * Regulation; reconciling the two is a `stats.ts` change, which this file
- * deliberately does not make.
+ * Round simulation and the statistics engine share timed-average rounding.
  */
 
 import type { Solve } from './types';
@@ -124,7 +120,7 @@ export function cutoffPhase(config: RoundConfig, attempts: number): number {
  * "over" 10 minutes and never name the exact boundary; 10:00.000 is treated as
  * the second-rounding side, which is what every scoretaking tool does.)
  */
-function roundAvg(ms: number): number {
+export function roundTimedAverageMs(ms: number): number {
   if (!Number.isFinite(ms)) return ms;
   if (ms <= 0) return 0;
   if (ms >= 600_000) return Math.round(ms / 1000) * 1000;
@@ -142,7 +138,7 @@ function wcaBest(times: number[]): number {
 function wcaMean(times: number[]): number {
   if (times.length === 0) return Infinity;
   if (times.some(t => !Number.isFinite(t))) return Infinity;
-  return roundAvg(times.reduce((a, b) => a + b, 0) / times.length);
+  return roundTimedAverageMs(times.reduce((a, b) => a + b, 0) / times.length);
 }
 
 /**
@@ -160,11 +156,11 @@ function wcaAverage(times: number[]): number {
   if (n >= 3) {
     const sorted = [...times].sort((a, b) => a - b);
     const middle = sorted.slice(1, n - 1);
-    return roundAvg(middle.reduce((a, b) => a + b, 0) / middle.length);
+    return roundTimedAverageMs(middle.reduce((a, b) => a + b, 0) / middle.length);
   }
   const finite = times.filter(t => Number.isFinite(t));
   if (finite.length === 0) return Infinity;
-  return roundAvg(finite.reduce((a, b) => a + b, 0) / finite.length);
+  return roundTimedAverageMs(finite.reduce((a, b) => a + b, 0) / finite.length);
 }
 
 /** Apply the round's format to a list of effective times. */

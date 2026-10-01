@@ -97,6 +97,14 @@ export function extractPersonCompetitionResults(
     })));
 }
 
+function attemptsForRecon(attempts: number[], eventId: string): (number | null)[] {
+  return attempts.map(value => {
+    if (value === 0) return null;
+    if (value < 0 || eventId === '333fm') return value;
+    return value / 100;
+  });
+}
+
 export async function fetchAttempts(
   compId: string,
   reconEvent: string,
@@ -110,11 +118,7 @@ export async function fetchAttempts(
   if (!targetRound || targetRound.results.length === 0) return null;
   const row = targetRound.results.find(r => r.wca_id === personId);
   if (!row) return null;
-  return row.attempts.map(v => {
-    if (v === 0) return null;
-    if (v < 0) return v;
-    return v / 100;
-  });
+  return attemptsForRecon(row.attempts, wcaEventId);
 }
 
 export async function fetchResultRow(
@@ -135,11 +139,7 @@ export async function fetchResultRow(
   if (!targetRound || targetRound.results.length === 0) return null;
   const row = targetRound.results.find(r => r.wca_id === personId);
   if (!row) return null;
-  const attempts = row.attempts.map(v => {
-    if (v === 0) return null;
-    if (v < 0) return v;
-    return v / 100;
-  });
+  const attempts = attemptsForRecon(row.attempts, wcaEventId);
   let bestIndex = -1;
   let bestVal = Infinity;
   for (let i = 0; i < row.attempts.length; i++) {
