@@ -7,4 +7,5 @@ export default defineConfig({
     target: 'chrome103',
   },
   plugins: [react()],
+  worker: { format: 'es' },
 });
