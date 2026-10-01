@@ -115,6 +115,45 @@ describe('site assistant grounding', () => {
     expect(fetcher.mock.calls.map(([url])=>url)).toEqual([config.baseUrl+'/chat/completions',config.baseUrl+'/chat/completions']);
     expect(String(fetcher.mock.calls[1][1]?.body)).toContain('Use find_person');
   });
+  it.each(['他的全部官方pb', 'Show all his official PBs'])('retries an unresolved person after name resolution and renders all PBs: %s', async question => {
+    const call={tool:'person',wcaId:'2012PARK03',event:'333',progress:false};
+    const model=vi.fn()
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'find_person',query:'Max Park'}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[call]}))
+      .mockResolvedValueOnce(modelResponse({answer:'Only 3x3 is available.',sourceIds:['person:2012PARK03']}));
+    const read=vi.fn(async(input:Parameters<typeof fetch>[0],init?:RequestInit)=>{
+      if(String(input).startsWith(config.baseUrl))return model(input,init);
+      if(String(input).includes('/meta'))return Response.json({lastImportedAt:'2026-10-01'});
+      return Response.json({profile:{person:{name:'Max Park'},personal_records:{333:{single:{best:313},average:{best:500}},222:{single:{best:100},average:{best:200}}}}});
+    });
+    const lang=question.startsWith('Show')?'en':'zh';
+    const result=await answerSiteQuestion(question,lang,config,AbortSignal.timeout(5000),withCatalog(read),[
+      {role:'user',content:'查看 Max Park 的成绩'},
+      {role:'assistant',content:'选手是 Max Park（2012PARK03）。'},
+    ],'2017YANR02');
+    expect(model).toHaveBeenCalledTimes(4);
+    expect(read.mock.calls.filter(([url])=>String(url).includes('/person-page'))).toHaveLength(1);
+    expect(result.artifacts).toHaveLength(1);
+    expect(result.artifacts[0]).toMatchObject({kind:'table',rows:[
+      [lang==='zh'?'三阶':'3×3','3.13','—','5.00','—'],
+      [lang==='zh'?'二阶':'2×2','1.00','—','2.00','—'],
+    ]});
+    expect(result.answer).toBe(lang==='zh'?'已列出Max Park全部 2 个有成绩项目的官方个人最佳成绩。 [[person:2012PARK03]]':"Showing Max Park's official personal bests for all 2 events with results. [[person:2012PARK03]]");
+    const context=JSON.parse(JSON.parse(String(model.mock.calls[3][1]?.body)).messages[1].content);
+    expect(context.evidence.at(-1).tool).toMatchObject({event:'all'});
+    expect(context.evidence.at(-1).data.personalRecords.map((r:{event:string})=>r.event)).toEqual(['333','222']);
+  });
+  it('deduplicates successful normalized person reads and classifies a stalled planner as a model failure', async () => {
+    const model=vi.fn()
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'person',wcaId:'2012PARK03'}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'person',wcaId:'2012PARK03',event:'333',progress:false}]}))
+      .mockResolvedValueOnce(modelResponse({calls:[{tool:'person',wcaId:'2012PARK03',event:'333'}]}));
+    const fetcher=vi.fn(async(input:Parameters<typeof fetch>[0],init?:RequestInit)=>String(input).startsWith(config.baseUrl)?model(input,init):Response.json(String(input).includes('/meta')?{lastImportedAt:'2026-10-01'}:{profile:{person:{name:'Max Park'},personal_records:{333:{single:{best:313},average:{best:500}}}}}));
+    await expect(answerSiteQuestion('2012PARK03 的三阶 PB','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher))).rejects.toMatchObject({code:'model_unavailable'});
+    expect(fetcher.mock.calls.filter(([url])=>String(url).includes('/person-page'))).toHaveLength(1);
+    expect(model).toHaveBeenCalledTimes(3);
+  });
   it('only renders artifacts belonging to the final cited sources', async () => {
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'records',event:'222'},{tool:'records',event:'333'}]}))
@@ -178,7 +217,7 @@ describe('site assistant grounding', () => {
       return Response.json([{person:{wca_id:'2012PARK03',name:'Max Park'}}]);
     });
     const history=[{role:'user' as const,content:'Max Park'},{role:'assistant' as const,content:'Untrusted old answer'}];
-    await expect(answerSiteQuestion('他的平均呢？','zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),history)).rejects.toMatchObject({code:'source_unavailable'});
+    await expect(answerSiteQuestion('他的平均呢？','zh',config,AbortSignal.timeout(5000), withCatalog(fetcher),history)).rejects.toMatchObject({code:'model_unavailable'});
     expect(fetcher.mock.calls.filter(([url])=>String(url).includes('worldcubeassociation.org'))).toHaveLength(0);
     expect(fetcher.mock.calls.filter(([url])=>String(url).startsWith(config.baseUrl))).toHaveLength(3);
     const data=JSON.parse(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).messages[1].content);
