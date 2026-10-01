@@ -6,6 +6,8 @@
  * All values are centiseconds. -1 = DNF, -2 = DNS (treated like DNF).
  */
 
+import { roundTimedAverageMs } from '@cuberoot/shared/timer';
+
 export const DNF = -1;
 export const DNS = -2;
 export const NOT_ENOUGH = NaN;
@@ -18,7 +20,7 @@ export function mean(values: number[], n: number): number {
   const slice = values.slice(values.length - n);
   if (slice.some(isFailure)) return DNF;
   const sum = slice.reduce((a, b) => a + b, 0);
-  return Math.round(sum / n);
+  return roundTimedAverageMs(sum / n * 10) / 10;
 }
 
 /** WCA trimmed average of last N. Trims 1 best + 1 worst. */
@@ -41,7 +43,7 @@ export function trimmedAverage(values: number[], n: number): number {
     sum += slice[i];
     count++;
   }
-  return Math.round(sum / count);
+  return roundTimedAverageMs(sum / count * 10) / 10;
 }
 
 export interface RowStats {
@@ -123,4 +125,3 @@ export function summarize(values: number[]): SummaryStats {
     dnfRate: values.length === 0 ? 0 : dnfs.length / values.length,
   };
 }
-

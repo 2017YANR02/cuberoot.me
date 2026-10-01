@@ -12,6 +12,7 @@ import { ATTEMPTS_SUBQUERY, query as dbQuery } from './database.js';
 import { formatDate } from './format_date.js';
 import type { StatJson, StatPanel } from './statistic.js';
 import type { RowDataPacket } from 'mysql2';
+import { roundTimedAverageMs } from '@cuberoot/shared/timer';
 
 // NOTE: 各项目的候选选手筛选范围
 const TOP_N_BY_EVENT: Record<string, number> = {
@@ -142,7 +143,8 @@ export abstract class AverageOfX extends GroupedStatistic {
     let meanValue = untrimmed.reduce((s, v) => s + v, 0) / untrimmed.length;
     // NOTE: FMC 成绩单位是 moves，乘 100 统一为厘秒
     if (eventId === '333fm') meanValue *= 100;
-    return new SolveTime(eventId, 'average', Math.round(meanValue));
+    const rounded = eventId === '333fm' ? Math.round(meanValue) : roundTimedAverageMs(meanValue * 10) / 10;
+    return new SolveTime(eventId, 'average', rounded);
   }
 
   // NOTE: 滑动窗口核心——为指定 event 的每个人计算最佳 AoX

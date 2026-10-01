@@ -67,6 +67,11 @@ describe('rolling official averages', () => {
     expect(rows(await new AverageOf3().toJson(), 'ranking')[0][2]).toBe('3.00');
   });
 
+  it('rounds long timed means to seconds in the generated ranking', async () => {
+    queryMock.mockResolvedValue([round('first', '60000,60100,60100', '666')]);
+    expect(rows(await new AverageOf3().toJson(), 'ranking')[0][2]).toBe('10:01.00');
+  });
+
   it('keeps Ao5 trimming and its one-DNF allowance', async () => {
     queryMock.mockResolvedValue([
       round('first', '17,18,19,20,-1'),

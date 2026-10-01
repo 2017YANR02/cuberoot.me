@@ -298,20 +298,20 @@ function EventRoundsList({
         singleLiveRanks: new Map<string, number | null>(),
       };
     }
-    const single = computeWcaMetricStatsByRound(metricRounds, singleMetricMode);
+    const single = computeWcaMetricStatsByRound(metricRounds, singleMetricMode, eventId);
     const hasLiveRounds = metricRounds.some(round => round.live);
     const singleOfficialRanks = hasLiveRounds
-      ? computeWcaMetricStatsByRound(metricRounds.filter(round => !round.live), singleMetricMode).ranks
+      ? computeWcaMetricStatsByRound(metricRounds.filter(round => !round.live), singleMetricMode, eventId).ranks
       : single.ranks;
     return {
       values: {
         single: single.values,
-        average: computeWcaMetricByRound(metricRounds, averageMetricMode),
+        average: computeWcaMetricByRound(metricRounds, averageMetricMode, eventId),
       },
       singleOfficialRanks,
       singleLiveRanks: single.ranks,
     };
-  }, [mbld, metricRounds, singleMetricMode, averageMetricMode]);
+  }, [mbld, metricRounds, singleMetricMode, averageMetricMode, eventId]);
   const metricValues = metricData.values;
   // 直播行另算一份「官方 + 直播」的时间序名次,使直播行的单次/平均/逐把 PR 与官方行同一口径
   // 口径且彼此自洽(最好那把 == 单次列)。只取直播行用,不读官方行 → 不污染官方 PR 标记。
@@ -833,7 +833,7 @@ function EventRoundsList({
 
 function formatMetricValue(value: number | null | undefined, eventId: string, mode: WcaResultMetricMode): string {
   if (value === null || value === undefined || value <= 0) return '—';
-  return formatWcaResult(value, eventId, mode === 'avg' ? 'average' : 'single');
+  return formatWcaResult(value, eventId, WCA_AVERAGE_METRIC_KEYS.includes(mode) ? 'average' : 'single');
 }
 
 function formatResultStdDev(sd: number, eventId: string, kind: 'single' | 'average'): string {

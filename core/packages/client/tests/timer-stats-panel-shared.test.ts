@@ -103,8 +103,8 @@ describe('shared compact TimerStatsPanel', () => {
     expect(Array.from(container.querySelectorAll('.stats-grid .row')).map(row => row.textContent)).toEqual([
       'mean10.00',
       'worst12.00',
-      'mo39.66',
-      'best mo39.66',
+      'mo39.67',
+      'best mo39.67',
       'bo38.00',
       'best bo38.00',
     ]);

@@ -19,6 +19,7 @@ export class WrBao5 extends RoundMetric {
 
   // NOTE: BAo5 = 5 次中取最好的 3 次求均值，至少 3 次有效
   computeMetric(values: number[]): number | null {
+    if (values.length !== 5 || values.includes(0)) return null;
     const valid = values.filter(v => v > 0);
     if (valid.length < 3) return null;
     const best3 = valid.sort((a, b) => a - b).slice(0, 3);
