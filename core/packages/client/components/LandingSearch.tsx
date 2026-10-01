@@ -22,7 +22,6 @@ import {
   CalendarDays, LayoutGrid, Wrench, ArrowRight, Search, Clipboard,
   ScanSearch, BookA, BookOpen, Library, Code as CodeIcon, Mic, Sparkles, type LucideIcon,
 } from 'lucide-react';
-import { ClearButton } from '@/components/ClearButton';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { displayCuberName } from '@/lib/cuber-name-display';
@@ -524,15 +523,6 @@ export default function LandingSearch({
               : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
           aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
         />
-        {query !== '' && (
-          <ClearButton
-            onClick={() => setQuery('')}
-            isZh={isZh}
-            variant="standalone"
-            className="landing-search-clear"
-            preserveFocus
-          />
-        )}
         {plusMenuOpen && (
           <div className="landing-search-plus-menu" role="menu">
             <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={onSmartPaste}>
