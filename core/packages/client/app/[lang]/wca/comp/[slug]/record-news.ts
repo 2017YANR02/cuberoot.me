@@ -158,7 +158,7 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
     news.push({
       event: record.ev.i, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
       person: user.name, country,
-      message: { zh: `纪录快讯! ${text.zh} ${record.tag} ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en} ${record.tag} ${displayCuberName(user.name, false)}${flag}` },
+      message: { zh: `纪录快讯! ${text.zh}${record.tag} ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en}${record.tag} ${displayCuberName(user.name, false)}${flag}` },
       results: [{ text, tag: record.tag }],
     });
   }
@@ -182,7 +182,7 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
     news.push({
       event: record.eventId, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
       person: user.name, country, newcomerSource: record.source, newcomerType: record.type,
-      message: { zh: `纪录快讯! ${text.zh} NWR ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en} NWR ${displayCuberName(user.name, false)}${flag}` },
+      message: { zh: `纪录快讯! ${text.zh}NWR ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en}NWR ${displayCuberName(user.name, false)}${flag}` },
       results: [{ text, tag: 'NWR' }],
     });
   }
