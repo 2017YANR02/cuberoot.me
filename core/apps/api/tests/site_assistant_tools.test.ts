@@ -44,6 +44,26 @@ describe('assistant public data adapters',()=>{
     expect(toolCallSchema.safeParse({tool:'scrambles',compId:'../../.env'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'recons',compId:'2012PARK03'}).success).toBe(false);
     expect(toolCallSchema.safeParse({tool:'person',wcaId:'2012PARK03',headers:{Authorization:'x'}}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'person',wcaId:'2012PARK03',event:'all'}).success).toBe(true);
+    expect(toolCallSchema.safeParse({tool:'person',wcaId:'2012PARK03',event:'all',progress:true}).success).toBe(false);
+  });
+  it('keeps single-event and all-event PB evidence aligned with tables, including untimed and retired events',async()=>{
+    const data={profile:{person:{name:'Test'},personal_records:{
+      '333fm':{single:{best:20,world_rank:5},average:{best:2500,world_rank:6}},
+      '333ft':{single:{best:3000,world_rank:9}},
+      '333':{single:{best:313,world_rank:1},average:{best:500,world_rank:2}},
+      '222':{single:{best:100,world_rank:3},average:{best:200,world_rank:4}},
+    }}};
+    const read=vi.fn(async(url:string)=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:data);
+    const all=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'all',progress:false},'en',read);
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(all.evidence).toMatchObject({event:'all',personalRecords:[{event:'333'},{event:'222'},{event:'333fm'},{event:'333ft'}]});
+    expect(all.artifacts[0]).toMatchObject({rows:[
+      ['3×3','3.13','1','5.00','2'],['2×2','1.00','3','2.00','4'],['FMC','20','5','25.00','6'],['Feet','30.00','9','—','—'],
+    ]});
+    const one=await runDataTool({tool:'person',wcaId:'2012PARK03',event:'333',progress:false},'en',read);
+    expect(one.evidence).toMatchObject({event:'333',personalRecords:[{event:'333'}]});
+    expect(one.artifacts[0]).toMatchObject({rows:[['3×3','3.13','1','5.00','2']]});
   });
 });
 
