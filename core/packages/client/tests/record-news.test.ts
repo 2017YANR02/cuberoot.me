@@ -34,6 +34,8 @@ describe('record news presentation', () => {
       expect(news[0].results[0].text.zh).toContain('4.27 三阶平均女子世界纪录');
       expect(news[0].round).toBe(3);
       expect(news[0].results[0].tag).toBe('FWR');
+      expect(news[0].message.zh).toContain('连允之🇨🇳');
+      expect(news[0].message.en).toContain('Yunzhi Lian🇨🇳');
     }
     expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, value: -1 }])).toEqual([]);
     expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, tag: '1' }])).toEqual([]);
@@ -46,6 +48,7 @@ describe('record news presentation', () => {
     expect(news.filter(row => row.event === '444')).toHaveLength(4);
     expect(news.filter(row => row.newcomerSource === '1st-solve')).toHaveLength(2);
     expect(news.filter(row => row.newcomerSource === '1st-comp')).toHaveLength(2);
+    expect(news.filter(row => row.newcomerSource === '1st-solve').every(row => row.message.zh.endsWith('耿暄一🇨🇳') && row.message.en.endsWith('Xuanyi Geng🇨🇳'))).toBe(true);
     expect(news.find(row => row.newcomerSource === '1st-comp' && row.newcomerType === 'average')?.message.zh).toContain('25.81');
   });
   it('colors newcomer world records as world records without changing national records', () => {

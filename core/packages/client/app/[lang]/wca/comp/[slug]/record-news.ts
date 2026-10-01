@@ -3,6 +3,13 @@ import { formatWcaResult } from '@/lib/wca-format-result';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2 } from '@/lib/country-flags';
 
+/** Plain-text clipboard flags; on-page flags continue to use the Flag component. */
+function clipboardFlag(country: string): string {
+  const iso2 = countryToIso2(country).toUpperCase();
+  if (!/^[A-Z]{2}$/.test(iso2)) return '';
+  return String.fromCodePoint(...Array.from(iso2, letter => 0x1F1E6 + letter.charCodeAt(0) - 65));
+}
+
 export interface NewcomerRecord {
   eventId: string;
   roundId: string;
@@ -146,10 +153,12 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
       zh: `${value} ${eventDisplayName(record.ev.i, true)}${type.zh}${labels[record.tag]}`,
       en: `${value} ${eventDisplayName(record.ev.i, false)} ${type.en}`,
     };
+    const country = countryToIso2(user.countryId || user.region);
+    const flag = clipboardFlag(country);
     news.push({
       event: record.ev.i, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
-      person: user.name, country: countryToIso2(user.countryId || user.region),
-      message: { zh: `纪录快讯! ${text.zh} ${record.tag} ${displayCuberName(user.name, true)}`, en: `Breaking News! ${text.en} ${record.tag} ${displayCuberName(user.name, false)}` },
+      person: user.name, country,
+      message: { zh: `纪录快讯! ${text.zh} ${record.tag} ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en} ${record.tag} ${displayCuberName(user.name, false)}${flag}` },
       results: [{ text, tag: record.tag }],
     });
   }
@@ -168,10 +177,12 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
       en: `${value} ${eventDisplayName(record.eventId, false)} Newcomer WR ${type.en} (${source.en})`,
     };
     const roundIndex = events.find(event => event.i === record.eventId)?.rs.findIndex(round => round.i === record.roundId) ?? -1;
+    const country = countryToIso2(user.countryId || user.region);
+    const flag = clipboardFlag(country);
     news.push({
       event: record.eventId, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
-      person: user.name, country: user.countryId || user.region, newcomerSource: record.source, newcomerType: record.type,
-      message: { zh: `纪录快讯! ${text.zh} NWR ${displayCuberName(user.name, true)}`, en: `Breaking News! ${text.en} NWR ${displayCuberName(user.name, false)}` },
+      person: user.name, country, newcomerSource: record.source, newcomerType: record.type,
+      message: { zh: `纪录快讯! ${text.zh} NWR ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en} NWR ${displayCuberName(user.name, false)}${flag}` },
       results: [{ text, tag: 'NWR' }],
     });
   }
