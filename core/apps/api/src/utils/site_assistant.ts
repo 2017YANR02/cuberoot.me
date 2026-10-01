@@ -85,7 +85,7 @@ const stepSchema = z.object({
 const TOOL_GUIDE = `Read tools (JSON objects in calls):
 records {event:"333",region:"world" or ISO2}: current single/average record VALUES, all tied holders. This cannot answer record counts, streaks or how long records stood; use statistics for those questions and do not substitute current holders.
 find_person {query:name}: resolve name to WCA IDs. Never guess an ID. Ask which person if ambiguous.
-person {wcaId,event:"333",progress:false}: profile, all PRs, medals, historical record-breaking counts (NOT currently held records); progress:true generates single AND average PR charts. For comparison call person for each identified person.
+person {wcaId,event:"333" or "all",progress:false}: profile, selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,limit:1..20}: find competitions and IDs; query matches name/city/id. Use English place/name keywords for this index.
 scrambles {compId,event:"333",round:"f"}: official scramble groups. First resolve unknown competition IDs.
@@ -112,6 +112,7 @@ export async function answerSiteQuestion(
   await emit?.({type:'status',status:{phase:'planning'}});
   const selfWcaId=/我的|我自己|我本人|\bmy\b/i.test(question) ? viewerWcaId : undefined;
   const requestedLimit=requestedAssistantLimit(question);
+  const asksForAllPersonalRecords=/(?:全部|所有|各项|全项目).{0,30}(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)|官方成绩)|(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)).{0,30}(?:全部|所有|各项|全项目)|\ball\b.{0,40}\b(?:pbs?|prs?|personal bests?|personal records?)\b|\b(?:pbs?|prs?|personal bests?|personal records?)\b.{0,40}\ball\b/i.test(question);
   const reconReference=question.match(/(?:复盘|reconstruction)\s*(?:(?:编号|ID)\s*)?[#：:]?\s*(\d+)(?![\d.年月日场次])(?:\s*(秒|毫秒|年|月|日|场|次|seconds?\b|s\b))?/i);
   const requestedReconId=reconReference && !reconReference[2] && Number.isSafeInteger(Number(reconReference[1])) && Number(reconReference[1])>0 ? Number(reconReference[1]) : undefined;
   const asksForConditions=/先.*(?:可选条件|筛选条件)|(?:列出|说明|查看|哪些|有什么).*(?:可选条件|筛选条件)|(?:list|show|which|available).*(?:filter options|available scopes|available conditions)/i.test(question);
@@ -271,23 +272,26 @@ export async function answerSiteQuestion(
     }
     if (!step.calls.length || round===4) return finish(step);
     const calls=step.calls.slice(0,Math.min(4,10-called.size));
-    if (!calls.length) throw new AssistantFailure('source_unavailable');
+    if (!calls.length) throw new AssistantFailure('model_unavailable');
     let duplicates=0;
     // Sequential reads keep the upstream load bounded; independent provider requests remain limited by the route.
     for (const raw of calls) {
       const parsed=toolCallSchema.safeParse(raw);
-      const key=JSON.stringify(raw);
-      if (called.has(key)) { duplicates++; evidence.push({id:`duplicate:${evidence.length}`,tool:raw,data:'Already read; reuse the previous evidence.'}); continue; }
-      called.add(key);
       if (!parsed.success) { evidence.push({id:`invalid:${evidence.length}`,tool:raw,data:{error:'Invalid tool arguments. Correct the call before drawing any factual conclusion.',issues:parsed.error.issues.map(issue=>({path:issue.path,message:issue.message}))}}); continue; }
       if(requestedLimit && 'limit' in parsed.data) parsed.data.limit=requestedLimit;
+      if(asksForAllPersonalRecords && parsed.data.tool==='person' && !parsed.data.progress) parsed.data.event='all';
       if ('wcaId' in parsed.data && parsed.data.wcaId && !resolvedPeople.has(parsed.data.wcaId)) {
         evidence.push({id:`unresolved:${evidence.length}`,tool:parsed.data,data:'This WCA ID has not been resolved. Use find_person with the name from the question/history first; never guess an ID.'});
         continue;
       }
+      const key=JSON.stringify(parsed.data);
+      if (called.has(key)) { duplicates++; evidence.push({id:`duplicate:${evidence.length}`,tool:parsed.data,data:'Already read; reuse the previous evidence.'}); continue; }
       try {
         await emit?.({type:'status',status:{phase:'querying',tool:parsed.data.tool}});
         const result=await assistantStage('tool',()=>parsed.data.tool==='pages' ? pages(parsed.data) : runDataTool(parsed.data,lang,read),round);
+        // Rejected or unresolved calls have not read any evidence. They must
+        // remain eligible after the planner repairs arguments or resolves a name.
+        called.add(key);
         if(parsed.data.tool==='recon' && calls.length===1 && /\b(?:OLL|PLL)\b/i.test(question) && result.reconstructionAnnotations) {
           const relevant=result.reconstructionAnnotations.filter(label=>/\b(?:OLL|PLL)\b/i.test(label));
           const recorded=(relevant.length?relevant:result.reconstructionAnnotations).join(' / ');
@@ -327,7 +331,7 @@ export async function answerSiteQuestion(
     if(duplicates===calls.length) {
       if(step.answer.trim() && sources.size) return finish(step);
       const final=await complete(round+1,true);
-      if(final.calls.length || !final.answer.trim()) throw new AssistantFailure('source_unavailable');
+      if(final.calls.length || !final.answer.trim()) throw new AssistantFailure('model_unavailable');
       return finish(final);
     }
   }
