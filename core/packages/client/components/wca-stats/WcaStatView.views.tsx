@@ -669,13 +669,9 @@ export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, 
   }, [availableMetricIds, activeMetric, metricPanels, onSetActiveMetric]);
 
   const metric = metricPanels[activeMetric];
-  const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
-  const _labelEn = metric?.labelEn ?? '';
-  const currentLabel = METRIC_LABEL_OVERRIDE[_labelEn] ?? (isZh ? metric?.labelZh : _labelEn) ?? _labelEn;
-
   const allMetricItems: Array<{ idx: number; label: string }> = useMemo(() => {
     const LABEL_OVERRIDE: Record<string, string> = {
-      'Ao3': 'Mo3', 'Ao5': 'Ao5', 'Ao12': 'Ao12',
+      'Mo3': 'Mo3', 'Ao3': 'Ao3', 'Ao5': 'Ao5', 'Ao12': 'Ao12',
       'Ao25': 'Ao25', 'Ao50': 'Ao50', 'Ao100': 'Ao100', 'Ao1000': 'Ao1000',
     };
     const resolveLabel = (mp: MetricPanel) =>
@@ -694,6 +690,7 @@ export function MetricPanelsView({ leadingControls, metricPanels, metricGroups, 
       .map((mp, i) => availableMetricIds.has(mp.id) ? { idx: i, label: resolveLabel(mp) } : null)
       .filter(Boolean) as Array<{ idx: number; label: string }>;
   }, [metricGroups, metricPanels, availableMetricIds, isZh]);
+  const currentLabel = allMetricItems.find(item => item.idx === activeMetric)?.label ?? '';
 
   return (
     <div className="wca-stats-metric-panels">

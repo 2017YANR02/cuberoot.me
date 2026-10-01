@@ -4,7 +4,7 @@ import type { StatJson, MetricPanel } from '../core/statistic.js';
 
 // NOTE: 7 个 AverageOfX 子类定义
 const AOX_DEFS = [
-  { module: () => import('./average_of_3.js'),    label: 'Ao3',    id: 'ao3' },
+  { module: () => import('./average_of_3.js'),    label: 'Mo3',    id: 'ao3' },
   { module: () => import('./average_of_5.js'),    label: 'Ao5',    id: 'ao5' },
   { module: () => import('./average_of_12.js'),   label: 'Ao12',   id: 'ao12' },
   { module: () => import('./average_of_25.js'),   label: 'Ao25',   id: 'ao25' },
@@ -18,8 +18,8 @@ export class AverageOf extends Statistic {
     super();
     this.title = 'Rolling Average';
     this.titleZh = '滚动平均';
-    this.note = 'Trimmed mean averages computed over X consecutive official attempts.';
-    this.noteZh = '从连续 X 次官方还原中计算的裁剪均值。';
+    this.note = 'Averages over X consecutive official attempts: Mo3 uses all three attempts; larger windows trim the best and worst 5% (rounded up).';
+    this.noteZh = '从连续 X 次官方还原中计算均值：Mo3 保留全部三次成绩；更长窗口去掉最好和最差各 5%（向上取整）。';
   }
 
   query(): string { return ''; }

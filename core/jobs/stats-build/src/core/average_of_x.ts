@@ -130,12 +130,11 @@ export abstract class AverageOfX extends GroupedStatistic {
     sharedQueryRows = null;
   }
 
-  // NOTE: Trimmed Mean（WCA 标准裁剪均值）
-  // 两端各去掉 ceil(n*5%) 个成绩
+  // NOTE: 三次使用 Mo3（不裁剪）；更长窗口两端各去掉 ceil(n*5%) 个成绩。
   private trimmedAverage(solves: number[], eventId: string): SolveTime {
-    const trimPerSide = Math.ceil(solves.length * 0.05);
+    const trimPerSide = solves.length === 3 ? 0 : Math.ceil(solves.length * 0.05);
     const sorted = [...solves].sort((a, b) => a - b);
-    const untrimmed = sorted.slice(trimPerSide, -trimPerSide);
+    const untrimmed = sorted.slice(trimPerSide, sorted.length - trimPerSide);
     // NOTE: 如果裁剪后仍有 Infinity（DNF），整个均值 DNF
     if (untrimmed[untrimmed.length - 1] === Infinity) {
       return SolveTime.DNF_INSTANCE;
