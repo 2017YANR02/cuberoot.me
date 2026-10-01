@@ -11179,6 +11179,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2022HEER01": {
+      "name": "Dylan Heerikhuisen",
+      "country": "New Zealand",
+      "iso2": "NZ"
+    },
     "2008DANG01": {
       "name": "Bobby D'Angelo",
       "country": "USA",
@@ -11253,11 +11258,6 @@
       "name": "Paul Mirza",
       "country": "Germany",
       "iso2": "DE"
-    },
-    "2022HEER01": {
-      "name": "Dylan Heerikhuisen",
-      "country": "New Zealand",
-      "iso2": "NZ"
     },
     "2008BORR01": {
       "name": "Daniel Borrajo Gutiérrez",
@@ -15284,6 +15284,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2023ZYTK01": {
+      "name": "Jakub Zytka",
+      "country": "USA",
+      "iso2": "US"
+    },
     "2010GOLD01": {
       "name": "Zach Goldman",
       "country": "USA",
@@ -16903,6 +16908,11 @@
       "name": "Adam Śmigaj",
       "country": "Poland",
       "iso2": "PL"
+    },
+    "2016MAIT02": {
+      "name": "Joey Mait",
+      "country": "USA",
+      "iso2": "US"
     },
     "2005ARNO01": {
       "name": "Will Arnold",
@@ -30986,6 +30996,9 @@
     "UzbekistanNationals2026": {
       "name": "Uzbekistan Nationals 2026"
     },
+    "WCAAfricanChampionship2026": {
+      "name": "WCA African Championship 2026"
+    },
     "Spain2008": {
       "name": "Spanish Championship 2008"
     },
@@ -36638,6 +36651,9 @@
     "DFWCubingSummer2026": {
       "name": "DFW Cubing Summer 2026"
     },
+    "DarwinOpen2026": {
+      "name": "Darwin Open 2026"
+    },
     "ShanghaiDonghua2012": {
       "name": "Shanghai Donghua 2012"
     },
@@ -38684,6 +38700,9 @@
     "SingaporePolySS2026": {
       "name": "Singapore Poly SS 2026"
     },
+    "DuallinginMilford2026": {
+      "name": "Dualling in Milford 2026"
+    },
     "ColombiaMetodoGenius2011": {
       "name": "Colombia MetodoGenius 2011"
     },
@@ -40379,8 +40398,14 @@
     "SingaporeBigCube2024": {
       "name": "Singapore Big Cube 2024"
     },
+    "NZCubingDecathlon2024": {
+      "name": "NZ Cubing Decathlon 2024"
+    },
     "SwissNationals2024": {
       "name": "Swiss Nationals 2024"
+    },
+    "SpringingintoAuckland2024": {
+      "name": "Springing into Auckland 2024"
     },
     "ColoradoChampionship2024": {
       "name": "Colorado Championship 2024"
@@ -40829,9 +40854,6 @@
     "WashtenawSummer2024": {
       "name": "Washtenaw Summer 2024"
     },
-    "NZCubingDecathlon2024": {
-      "name": "NZ Cubing Decathlon 2024"
-    },
     "ChampionnatQuebecois2024": {
       "name": "Championnat Québécois 2024"
     },
@@ -40948,6 +40970,9 @@
     },
     "BigNBlindBengaluruSep2026": {
       "name": "Big N Blind Bengaluru Sep 2026"
+    },
+    "CentralWashingtonFall2026": {
+      "name": "Central Washington Fall 2026"
     },
     "Morelia2016": {
       "name": "Argetlam 2016"
@@ -42826,6 +42851,9 @@
     },
     "SingaporeAuguSkewbDay2026": {
       "name": "Singapore Augu-Skewb Day 2026"
+    },
+    "SzokolyaOpen2026": {
+      "name": "Szokolya Open 2026"
     },
     "BeijingFebruary2011": {
       "name": "Beijing February 2011"
@@ -45713,6 +45741,9 @@
     "FMCNedvezi2026": {
       "name": "FMC Nedvězí 2026"
     },
+    "NewYorkMultimatum2026": {
+      "name": "New York Multimatum 2026"
+    },
     "ChinaFMZhengzhou2011": {
       "name": "China FM Zhengzhou 2011"
     },
@@ -46765,6 +46796,9 @@
     },
     "UCCanterburyOpen2026": {
       "name": "UC Canterbury Open 2026"
+    },
+    "CzechChampionship2026": {
+      "name": "Czech Championship 2026"
     },
     "GuangzhouHaizhu2011": {
       "name": "Guangzhou Haizhu 2011"
@@ -48713,9 +48747,6 @@
     "MinxItUpinPasig2024": {
       "name": "Minx It Up in Pasig 2024"
     },
-    "SpringingintoAuckland2024": {
-      "name": "Springing into Auckland 2024"
-    },
     "24HoursWarmUpinAstana2024": {
       "name": "24 Hours Warm Up in Astana 2024"
     },
@@ -48902,6 +48933,9 @@
     "BelmontSpring2026": {
       "name": "Belmont Spring 2026"
     },
+    "WelcomeBackHamilton2026": {
+      "name": "Welcome Back Hamilton 2026"
+    },
     "ClaretOpenMontevideoII2026": {
       "name": "Claret Open Montevideo II 2026"
     },
@@ -49069,9 +49103,6 @@
     },
     "WestFriesOpen2026": {
       "name": "West-Fries Open 2026"
-    },
-    "WelcomeBackHamilton2026": {
-      "name": "Welcome Back Hamilton 2026"
     },
     "SwisscubingCupIII2026": {
       "name": "Swisscubing Cup III 2026"
@@ -53081,8 +53112,14 @@
     "SpeedcubeBajaOpen2023": {
       "name": "Speedcube Baja Open 2023"
     },
+    "NCSUWolfpack2024": {
+      "name": "NCSU Wolfpack 2024"
+    },
     "EretumI2025": {
       "name": "Eretum I 2025"
+    },
+    "GobblerCubeDaySpringAtVT2025": {
+      "name": "Gobbler Cube Day Spring 2025"
     },
     "EastBerlinPA2025": {
       "name": "East Berlin PA 2025"
@@ -53092,6 +53129,9 @@
     },
     "KostelecSkewbing2026": {
       "name": "Kostelec Skewbing 2026"
+    },
+    "SodaCityCubingSC2026": {
+      "name": "Soda City Cubing SC 2026"
     },
     "MadiunHappyCubing2014": {
       "name": "Madiun Happy Cubing 2014"
@@ -54325,6 +54365,9 @@
     },
     "TroisMaisonsZeroVision2026": {
       "name": "TroisMaisons Zéro Vision 2026"
+    },
+    "GouverneurQuiet2026": {
+      "name": "Gouverneur Quiet 2026"
     },
     "PBQBerkeleySpring2019": {
       "name": "PBQ Berkeley Spring 2019"
