@@ -1018,11 +1018,11 @@
           15
         ],
         [
-          "[Nathaniel Berg](https://www.worldcubeassociation.org/persons/2012BERG04)",
-          14
+          "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
+          15
         ],
         [
-          "[Lachlan Gibson](https://www.worldcubeassociation.org/persons/2022GIBS04)",
+          "[Nathaniel Berg](https://www.worldcubeassociation.org/persons/2012BERG04)",
           14
         ],
         [
@@ -1120,6 +1120,10 @@
           7
         ],
         [
+          "[Alex Rosado Saez de Langarica](https://www.worldcubeassociation.org/persons/2023LANG03)",
+          7
+        ],
+        [
           "[Chetan Roger Dhanjal](https://www.worldcubeassociation.org/persons/2014DHAN01)",
           6
         ],
@@ -1129,10 +1133,6 @@
         ],
         [
           "[Julio Perugorria Lorente](https://www.worldcubeassociation.org/persons/2014LORE02)",
-          6
-        ],
-        [
-          "[Mattheo de Wit](https://www.worldcubeassociation.org/persons/2015WITM01)",
           6
         ]
       ]
@@ -1147,7 +1147,7 @@
         ],
         [
           "[Rasmus Stub Detlefsen](https://www.worldcubeassociation.org/persons/2014DETL01)",
-          37
+          36
         ],
         [
           "[Michał Krasowski](https://www.worldcubeassociation.org/persons/2013KRAS02)",
@@ -1155,7 +1155,7 @@
         ],
         [
           "[Sameer Aggarwal](https://www.worldcubeassociation.org/persons/2017AGGA01)",
-          34
+          35
         ],
         [
           "[Takao Hashimoto (橋本貴夫)](https://www.worldcubeassociation.org/persons/2007HASH01)",
@@ -1433,7 +1433,7 @@
         ],
         [
           "[Rowe Hessler](https://www.worldcubeassociation.org/persons/2007HESS01)",
-          20
+          21
         ],
         [
           "[Stanley Chapel](https://www.worldcubeassociation.org/persons/2016CHAP04)",
@@ -2090,7 +2090,7 @@
     [
       "2007HESS01",
       "333mbf",
-      20
+      21
     ],
     [
       "2007HESS01",
@@ -3000,7 +3000,7 @@
     [
       "2014DETL01",
       "sq1",
-      37
+      36
     ],
     [
       "2014GARC27",
@@ -3315,7 +3315,7 @@
     [
       "2017AGGA01",
       "sq1",
-      34
+      35
     ],
     [
       "2017NIEL03",
@@ -3565,7 +3565,7 @@
     [
       "2022GIBS04",
       "clock",
-      14
+      15
     ],
     [
       "2023CHEN30",
