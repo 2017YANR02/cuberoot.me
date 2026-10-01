@@ -3,6 +3,8 @@
 
 import { wcaApi } from './client';
 import type { WcaPerson, WcaUserTimes } from '../types';
+export { wcaApi } from './client';
+export type { WcaPerson, WcaUserTimes } from '../types';
 
 // NOTE: sessionStorage 缓存 key 前缀 — 同一会话不重复请求
 const CACHE_PREFIX = 'wca_shared_';
@@ -276,7 +278,7 @@ export async function fetchUserTimes(
   for (let r = 0; r < eventResults.length && validSolves.length < maxSolves; r++) {
     const attempts = eventResults[r].attempts as number[] | undefined;
     if (!attempts) continue;
-    for (let a = 0; a < attempts.length && validSolves.length < maxSolves; a++) {
+    for (let a = attempts.length - 1; a >= 0 && validSolves.length < maxSolves; a--) {
       if (attempts[a] > 0) validSolves.push(attempts[a]);
     }
   }
@@ -288,7 +290,8 @@ export async function fetchUserTimes(
   const n = sorted.length;
   const trim = Math.ceil(n * 0.05);
   const mid = sorted.slice(trim, n - trim);
-  const ao100 = Math.round(mid.reduce((s, v) => s + v, 0) / mid.length);
+  const precision = eventId === '333fm' ? 100 : 1;
+  const ao100 = Math.round(mid.reduce((s, v) => s + v, 0) / mid.length * precision) / precision;
 
   // NOTE: 官方最好 average
   let avgPR: number | null = null;

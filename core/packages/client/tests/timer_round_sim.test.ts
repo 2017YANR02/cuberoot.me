@@ -4,9 +4,8 @@
  * Every expectation cites the clause it pins, from the Regulations snapshot in
  * `app/[lang]/regulation/_data/reg-source.snapshot.md`.
  *
- * Times are written in ms. The engine's averages ROUND to the nearest
- * hundredth (9f1) — `_lib/stats.ts` truncates instead, so the parity block at
- * the bottom deliberately uses windows where the two agree.
+ * Times are written in ms. Round and statistics engines share average
+ * rounding to the nearest hundredth (9f1), or second at ten minutes (9f2).
  */
 
 import { describe, it, expect } from 'vitest';

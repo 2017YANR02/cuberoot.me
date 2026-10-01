@@ -81,7 +81,7 @@ const ALG_SET_PATH_OVERRIDE: Record<string, string> = {
   '3x3/comm-edge': '/alg/3bld/comm',
 };
 
-export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Ao3': 'Mo3' };
+export const METRIC_LABEL_OVERRIDE: Record<string, string> = { 'Mo3': 'Mo3' };
 
 export const TOOL_ITEMS: ToolItem[] = [
   { path: '/wca/comp',       zh: '比赛',   en: 'Comp'
