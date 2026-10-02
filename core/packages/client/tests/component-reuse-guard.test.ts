@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 import {
   COMPONENT_REUSE_RULES,
   scanAlgCaseDetailLayout,
@@ -52,6 +53,56 @@ function walk(dir: string): string[] {
   }
   return out;
 }
+
+// CI-only DOM placement rule: picking a person replaces the input with a clear
+// button. WebKit can forward the original click through an enclosing label to
+// that new button. Keep the entire picker outside native label elements.
+function personPickersInsideLabels(source: string): number[] {
+  const file = ts.createSourceFile('fixture.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const pickerNames = new Set(['WcaPersonPicker']);
+  for (const statement of file.statements) {
+    if (!ts.isImportDeclaration(statement)) continue;
+    const bindings = statement.importClause?.namedBindings;
+    if (!bindings || !ts.isNamedImports(bindings)) continue;
+    for (const binding of bindings.elements) {
+      if ((binding.propertyName ?? binding.name).text === 'WcaPersonPicker') pickerNames.add(binding.name.text);
+    }
+  }
+  const lines: number[] = [];
+  function visit(node: ts.Node, labelDepth: number) {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(file) === 'label') labelDepth++;
+    if (labelDepth && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
+      const name = node.tagName.getText(file);
+      if (pickerNames.has(name) || name.endsWith('.WcaPersonPicker')) {
+        lines.push(file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1);
+      }
+    }
+    ts.forEachChild(node, child => visit(child, labelDepth));
+  }
+  visit(file, 0);
+  return lines;
+}
+
+describe('person picker label placement', () => {
+  it('detects nested and aliased pickers without banning ordinary input labels', () => {
+    expect(personPickersInsideLabels('<label><div>{ok && <WcaPersonPicker value={person} />}</div></label>')).toEqual([1]);
+    expect(personPickersInsideLabels("import { WcaPersonPicker as PersonPicker } from '@/components/WcaPersonPicker';\n<label><PersonPicker /></label>")).toEqual([2]);
+    expect(personPickersInsideLabels('<label><Pickers.WcaPersonPicker /></label>')).toEqual([1]);
+    expect(personPickersInsideLabels('<label><input /></label><div><WcaPersonPicker /></div>')).toEqual([]);
+  });
+
+  it('keeps Web, installed-app UI and shared pickers outside native labels', () => {
+    const dirs = [
+      ...SCAN_DIRS.map(dir => join(ROOT, dir)),
+      join(ROOT, '..', 'app-ui', 'src'),
+      join(ROOT, '..', 'timer-ui', 'src'),
+    ];
+    const violations = dirs.flatMap(dir => walk(dir)).flatMap(file =>
+      personPickersInsideLabels(readFileSync(file, 'utf8')).map(line => `${relative(REPO_ROOT, file)}:${line}`),
+    );
+    expect(violations, 'Use a div around the picker; native labels must target a stable input, not a changing composite control.').toEqual([]);
+  });
+});
 
 describe('component reuse rule registry', () => {
   it('requires the shared PasswordInput for every password field', () => {
