@@ -44,7 +44,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/wc-2027': { title: WC_2027_ANNOUNCEMENT.title, description: WC_2027_ANNOUNCEMENT.summary },
   'partnership': {
     title: { zh: '商业计划书', en: 'Business plan' },
-    description: { zh: 'CubeRoot 商业计划书：高频魔方训练需求、个人与企业订阅、竞争优势、团队、增长路径、财务模型、发展规划与合作安排。', en: 'CubeRoot business plan: recurring cubing practice, personal and enterprise subscriptions, competition, team, growth, financial model, roadmap and partnerships.' },
+    description: { zh: '魔方根商业计划书：高频魔方训练需求、个人与企业订阅、竞争优势、团队、增长路径、财务模型、发展规划与合作安排。', en: 'CubeRoot business plan: recurring cubing practice, personal and enterprise subscriptions, competition, team, growth, financial model, roadmap and partnerships.' },
   },
   'partnership/talking-points': {
     title: { zh: '会谈提纲', en: '会谈提纲' },
