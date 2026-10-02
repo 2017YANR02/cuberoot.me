@@ -291,7 +291,7 @@ export default function LandingSearch({
       const applyAnswer = (data: AssistantAnswer, partial = false) => {
         if (typeof data.answer !== 'string' || !Array.isArray(data.sources)) throw new Error('invalid response');
         if (assistantRequest.current !== controller) return;
-        const result: AssistantAnswer = { answer: data.answer, artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
+        const result: AssistantAnswer = { answer: data.answer, actions: data.actions?.filter(action => typeof action.href === 'string' && /^\/(?!\/)/.test(action.href)), artifacts: Array.isArray(data.artifacts) ? data.artifacts : [], sources: data.sources.filter(source => typeof source.href === 'string' && /^\/(?!\/)/.test(source.href)) };
         if (!partial) setAssistantAnswer(result);
         setAssistantTurns([...previous, { question, result, partial }]);
       };

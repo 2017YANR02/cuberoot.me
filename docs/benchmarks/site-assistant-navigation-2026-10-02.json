@@ -1,0 +1,75 @@
+{
+  "date": "2026-10-02",
+  "scope": "Local answerSiteQuestion with official DeepSeek and navigation index assembled from existing solver routing and localhost public HTML. No production quota, browser interaction or deployment acceptance.",
+  "results": [
+    {
+      "question": "我要学习三阶魔方的OL和PL公式",
+      "answer": "三阶的 OLL 和 PLL 公式库已为你找到：完整版有「3x3 OLL」和「3x3 PLL」，想先入门可以先看「3x3 2 步 OLL」和「3x3 2 步 PLL」。点击下方链接即可打开学习。",
+      "actions": [
+        {
+          "id": "alg:3x3:oll",
+          "title": "3x3 OLL",
+          "href": "/alg/3x3/oll"
+        },
+        {
+          "id": "alg:3x3:pll",
+          "title": "3x3 PLL",
+          "href": "/alg/3x3/pll"
+        },
+        {
+          "id": "alg:3x3:2-look-oll",
+          "title": "3x3 2 步 OLL",
+          "href": "/alg/3x3/2-look-oll"
+        },
+        {
+          "id": "alg:3x3:2-look-pll",
+          "title": "3x3 2 步 PLL",
+          "href": "/alg/3x3/2-look-pll"
+        }
+      ]
+    },
+    {
+      "question": "给我一个 PLL 训练器",
+      "answer": "已找到 3x3 的 PLL 公式训练器，可直接点击进入练习；若想先练两步法，也有 2 步 PLL 训练。",
+      "actions": [
+        {
+          "id": "train:3x3:pll",
+          "title": "3x3 PLL — 公式训练",
+          "href": "/alg/3x3/pll/select"
+        },
+        {
+          "id": "train:3x3:2-look-pll",
+          "title": "3x3 2 步 PLL — 公式训练",
+          "href": "/alg/3x3/2-look-pll/select"
+        }
+      ]
+    },
+    {
+      "question": "我需要一个二阶魔方求解器",
+      "answer": "已为你找到二阶魔方求解器：二阶 — 求解器，点击即可打开使用。 [[page:/scramble/solver?event=222]]",
+      "actions": [
+        {
+          "id": "page:/scramble/solver?event=222",
+          "title": "二阶 — 求解器",
+          "href": "/scramble/solver?event=222"
+        }
+      ]
+    },
+    {
+      "question": "生成一个训练器",
+      "answer": "请告诉我你想训练哪个项目或公式集，例如 3x3 的 OLL、PLL、F2L，或 2x2 的 CLL、EG1 等，我再为你选出对应的训练器。",
+      "actions": []
+    },
+    {
+      "question": "I need a Pyraminx solver",
+      "answer": "Here is the Pyraminx solver tool you can open and use. [[page:/scramble/solver?event=pyram]]",
+      "actions": [
+        {
+          "id": "page:/scramble/solver?event=pyram",
+          "title": "Pyraminx — Solver",
+          "href": "/scramble/solver?event=pyram"
+        }
+      ]
+    }
+  ]
+}
