@@ -276,7 +276,6 @@ const TEST_PATHS = [
 
 const DESKTOP_PATHS = [
   repoPath('.node-version'),
-  repoPath('.github', 'workflows', 'test.yml'),
   corePath('package.json'),
   corePath('pnpm-lock.yaml'),
   corePath('pnpm-workspace.yaml'),
@@ -587,7 +586,7 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
-  it('runs the desktop matrix only when its dependency closure changes', () => {
+  it('runs desktop UI checks only when its dependency closure changes', () => {
     const workflow = readWorkflow('test.yml');
     const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
     expect(desktopPaths).toEqual(DESKTOP_PATHS);
@@ -606,7 +605,7 @@ describe('deployment workflow path contracts', () => {
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
       [packagePath('stack-kernel', 'src', 'lib.rs'), true],
       [corePath('pnpm-lock.yaml'), true],
-      [repoPath('.github', 'workflows', 'test.yml'), true],
+      [repoPath('.github', 'workflows', 'test.yml'), false],
       [packagePath('client', 'app', '[lang]', 'page.tsx'), false],
       [appPath('api', 'src', 'index.ts'), false],
       [appPath('mobile', 'src', 'App.tsx'), false],
@@ -627,6 +626,44 @@ describe('deployment workflow path contracts', () => {
     expect(workflow).toContain(
       "if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.analyzer == 'true' }}",
     );
+  });
+
+  it('skips unrelated domains and native compilers for Web-only changes', () => {
+    for (const domain of ['server', 'stats', 'solvers', 'scramble_stats', 'miniprogram', 'desktop_native', 'mobile_native']) {
+      const paths = readStepFilterPaths('test.yml', 'Detect affected inputs', domain);
+      expect(workflowTriggers(paths, [packagePath('client', 'app', '[lang]', 'page.tsx')]), domain).toBe(false);
+      expect(workflowTriggers(paths, [repoPath('.github', 'workflows', 'test.yml')]), domain).toBe(false);
+    }
+    for (const domain of ['desktop_native', 'mobile_native']) {
+      const paths = readStepFilterPaths('test.yml', 'Detect affected inputs', domain);
+      expect(workflowTriggers(paths, [packagePath('app-ui', 'src', 'App.tsx')]), domain).toBe(false);
+      expect(workflowTriggers(paths, [packagePath('shared', 'src', 'forum.ts')]), domain).toBe(false);
+    }
+    expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop_native'), [
+      appPath('desktop', 'src-tauri', 'src', 'lib.rs'),
+    ])).toBe(true);
+    expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', 'mobile_native'), [
+      appPath('mobile', 'capacitor.config.ts'),
+    ])).toBe(true);
+    for (const domain of ['server', 'stats', 'scramble_stats', 'miniprogram']) {
+      expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', domain), [
+        packagePath('shared', 'src', 'forum.ts'),
+      ]), domain).toBe(true);
+    }
+    const gatedSteps = {
+      'Test server': 'server',
+      'PostgreSQL 13 final schema snapshot': 'server',
+      'Verify stats-build producer contracts': 'stats',
+      'Verify puzzle solvers package': 'solvers',
+      'Verify Clock analyzer runtime': 'scramble_stats',
+      'Verify SQ2 sampled builder runtime': 'scramble_stats',
+      'Verify Mini Program': 'miniprogram',
+      'Compile Android APK and signed release AAB': 'mobile_native',
+    };
+    for (const [step, domain] of Object.entries(gatedSteps)) {
+      expect(readStepLines('test.yml', step).lines.join('\n'), step)
+        .toContain(`needs.changes.outputs.${domain} == 'true'`);
+    }
   });
 
   it('shards the complete client suite without duplicating the isolated cross trainer test', () => {
@@ -689,7 +726,7 @@ describe('deployment workflow path contracts', () => {
     }
     expect(tauri.build.beforeBuildCommand).toBe('pnpm build');
     expect(tauri.build.beforeDevCommand).toBe('pnpm dev');
-    expect(readStepRun('test.yml', 'Test desktop adapter and build native host'))
+    expect(readStepRun('test.yml', 'Build native desktop host'))
       .toContain('pnpm --filter @cuberoot/desktop exec tauri build --no-bundle');
   });
 
