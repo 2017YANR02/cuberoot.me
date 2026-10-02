@@ -16,6 +16,41 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it.each(['WC 2027','2027年世锦赛的相关信息'])('reads the official announcement summary before treating %s as a missing competition',async question=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'暂无比赛信息。'})).mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
+    expect(request.messages[1].content).toContain('瑞典乌普萨拉');
+    expect(request.messages[1].content).toContain('未公布具体比赛日期');
+    expect(result.actions?.map(a=>a.href)).toEqual(['/wca/wc-2027']);
+    expect(result.sources[0].read).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it('retains the actual topic when the model searches with a broad paraphrase',async()=>{
+    const destinations=[...Array.from({length:15},(_,i)=>({lang:'en',href:`/map-${i}`,title:`Site map ${i}`})),{lang:'en',href:'/dev/architecture',title:'Architecture Atlas'}];
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[],destinations});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',query:'site map'}]} : {answer:'Open the architecture page.',sourceIds:['page:/dev/architecture']});
+    });
+    const result=await answerSiteQuestion('Show me the website architecture','en',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions?.map(a=>a.href)).toEqual(['/dev/architecture']);
+  });
+  it('finds general site pages by their descriptions and returns only metadata for restricted entries',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[],destinations:[{lang:'zh',href:'/dev/infrastructure',title:'基础设施',description:'查看网站服务器和设备运行成本。'},{lang:'zh',href:'/admin',title:'管理后台',access:'admin',description:'管理员入口。'}]});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',query:'运行成本 管理后台'}]} : {answer:'入口如下，管理后台需要管理员权限。',sourceIds:['page:/dev/infrastructure','page:/admin']});
+    });
+    const result=await answerSiteQuestion('查看运行成本和管理后台','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions?.map(a=>a.href)).toEqual(['/dev/infrastructure','/admin']);
+    expect(fetcher.mock.calls.filter(([url])=>String(url).includes('/admin'))).toEqual([]);
+  });
+  it('makes resolved dynamic detail pages available as navigation actions',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({calls:[{tool:'find_person',query:'Max Park'}]})).mockResolvedValueOnce(modelResponse({answer:'打开选手页面。',sourceIds:['person:2012PARK03']}));
+    const result=await answerSiteQuestion('打开 Max Park 的选手页面','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions?.map(a=>a.href)).toEqual(['/wca/persons/2012PARK03']);
+  });
   it('keeps library searches separate from training pages',async()=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async (input,init)=>{
       if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[]});

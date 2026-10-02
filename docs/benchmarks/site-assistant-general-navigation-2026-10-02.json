@@ -1,0 +1,110 @@
+{
+  "scope": "Local direct model calls with navigation metadata assembled from real static page files and existing platform/solver registries; no production deployment or browser acceptance.",
+  "staticPageCount": 284,
+  "metadataPageCount": 265,
+  "results": [
+    {
+      "question": "我想给魔方计时",
+      "expected": "/timer",
+      "answer": "站内速拧计时器支持 WCA 标准打乱、智能魔方连接、分步分析与云端备份，点开即可开始计时。 [[timer]]",
+      "actions": [
+        {
+          "id": "timer",
+          "title": "计时",
+          "href": "/timer"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question": "我要看网站的登录流程图",
+      "expected": "/dev/auth",
+      "answer": "已找到「账号全流程」页面，它直观展示网站、iOS、安卓与小程序的登录、绑定、账号合并、退出和注销流程，并区分当前实现与目标方案。 [[page:/dev/auth]]",
+      "actions": [
+        {
+          "id": "page:/dev/auth",
+          "title": "账号全流程",
+          "href": "/dev/auth"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question": "去论坛发帖",
+      "expected": "/forum",
+      "answer": "发帖入口在这里，点击即可进入论坛发帖页面。",
+      "actions": [
+        {
+          "id": "page:/forum/new",
+          "title": "发帖",
+          "href": "/forum/new"
+        },
+        {
+          "id": "forum",
+          "title": "论坛",
+          "href": "/forum"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question": "我要修改账号资料",
+      "expected": "/account",
+      "answer": "账号资料的修改入口在「账号」页面，登录后即可进入。 [[page:/account]]",
+      "actions": [
+        {
+          "id": "page:/account",
+          "title": "账号",
+          "href": "/account"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question": "打开管理后台",
+      "expected": "/admin",
+      "answer": "已找到管理后台入口：CubeRoot 管理员可在此集中查看用户增长、会员、赞助与内容审核工具[[page:/admin]]。该页面需要管理员权限，链接仅打开现有入口，不会授予访问权限。",
+      "actions": [
+        {
+          "id": "page:/admin",
+          "title": "管理后台",
+          "href": "/admin"
+        }
+      ],
+      "passed": true
+    },
+    {
+      "question": "Show me the website architecture",
+      "expected": "/dev/architecture",
+      "answer": "The site's architecture is documented under Dev, with an Architecture Atlas plus pages on Request Flow, Technical Decisions and History.",
+      "actions": [
+        {
+          "id": "dev",
+          "title": "Dev",
+          "href": "/dev"
+        },
+        {
+          "id": "page:/dev/architecture",
+          "title": "Architecture Atlas",
+          "href": "/dev/architecture"
+        },
+        {
+          "id": "page:/dev/architecture/flow",
+          "title": "Request Flow",
+          "href": "/dev/architecture/flow"
+        },
+        {
+          "id": "page:/dev/architecture/decisions",
+          "title": "Technical Decisions",
+          "href": "/dev/architecture/decisions"
+        },
+        {
+          "id": "page:/dev/architecture/history",
+          "title": "History",
+          "href": "/dev/architecture/history"
+        }
+      ],
+      "passed": true
+    }
+  ]
+}
