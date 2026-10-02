@@ -27,6 +27,14 @@
   min-height: calc(100dvh - var(--page-notice-h, 0px));
 }
 
+/* Let fully expanded scrambles grow the page beyond the viewport budget. */
+@media (min-width: 1024px) {
+  .timer-shell.timer-workspace {
+    height: auto;
+    grid-template-rows: auto minmax(min-content, 1fr);
+  }
+}
+
 /* ── Topbar ─────────────────────────────────────────────── */
 /* 「难度」开关的挂点。内容由打乱来源条里的 WcaSourceConfig / GenDiffConfig portal 过来
    —— 它们才知道当前项目 / 当前比赛能不能筛难度,开关却属于这排常驻控件(摆在「解法」左边)。
