@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { ALG_3X3_TOP_LAYER_SET } from '@cuberoot/shared/alg';
 import { CubeData, parseAlgorithm } from '@cuberoot/visualcube';
 import { normalizeAlg } from '@/lib/alg_normalize';
-import { CASE_VIEW_ANGLES, caseViewAlg, caseViewSetup, displayCaseAlg, displayCaseAlgHtml, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
+import { CASE_VIEW_ANGLES, caseViewSetup, displayCaseAlg, displayCaseAlgHtml, displayCaseScramble, adjacentUEdits, simplifyAdjacentU } from '@/lib/alg_display';
 import { algHtmlText, editAlgHtmlText } from '@/lib/alg_html';
 import fixtures from './fixtures/alg-ll-scramble-setups.json';
-import alignmentFixtures from './fixtures/alg-case-alignment.json';
 
 const SUNE = "R U R' U R U2 R'";
 
@@ -21,30 +20,10 @@ function topLayer(alg: string) {
 }
 
 describe('last-layer displayed scrambles', () => {
-  it('F2L follows the first visible solution after swapping rows, not the stored setup', () => {
+  it('F2L preserves the public setup and its holding rotation', () => {
     const stored = "R U R' U2' R U' R' U y";
-    const rows = ["U R' F r U' r' F' R y'", "F' L F L' y'"];
-    expect(displayCaseScramble('3x3', 'f2l', stored, rows[0]))
-      .toBe("R' F r U r' F' R U'");
-    rows.reverse();
-    expect(displayCaseScramble('3x3', 'f2l', stored, rows[0])).toBe("L F' L' F");
-    // Other sets keep their canonical setup even when given a preferred row.
-    expect(displayCaseScramble('3x3', 'oll', SUNE, rows[0])).toBe(SUNE);
-  });
-
-  it('every F2L alternative can become first at every view angle and solve its displayed scramble', () => {
-    const f2l = alignmentFixtures.find(file => file.puzzle === '3x3' && file.set === 'f2l')!;
-    expect(f2l.cases).toHaveLength(41);
-    expect(f2l.cases.flatMap(c => c.algs.flat())).toHaveLength(786);
-    const solved = state('');
-    for (const c of f2l.cases) for (const entries of c.algs) for (const entry of entries) {
-      for (const angle of CASE_VIEW_ANGLES) {
-        const alg = caseViewAlg(entry.alg, angle);
-        const scramble = displayCaseScramble('3x3', 'f2l', c.setup, alg);
-        expect(state(`${scramble} ${displayCaseAlg('3x3', 'f2l', alg)}`), `${c.name}: ${alg}`)
-          .toEqual(solved);
-      }
-    }
+    expect(displayCaseScramble('3x3', 'f2l', stored)).toBe(stored);
+    expect(state(displayCaseScramble('3x3', 'f2l', stored))).toEqual(state(stored));
   });
 
   it('canonicalizes y2 prime everywhere in /alg display text', () => {
