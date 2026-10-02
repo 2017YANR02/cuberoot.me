@@ -281,7 +281,7 @@ export default function LandingSearch({
     try {
       const response = await fetch(apiUrl('/v1/site-assistant'), {
         method: 'POST', headers: { ...authHeaders(), Accept: 'text/event-stream' },
-        body: JSON.stringify({ question, lang, history: previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
+        body: JSON.stringify({ question, lang, timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
       });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);

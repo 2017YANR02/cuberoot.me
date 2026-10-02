@@ -35,7 +35,7 @@ export async function requireAssistantUser(c: Context): Promise<{ uid: number; w
   return { uid: account.id, wcaId: account.wca_id };
 }
 
-const inputSchema = z.object({ question: z.string().trim().min(1).max(500), lang: z.enum(['zh', 'en']), viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(6000) }).strict()).max(10).default([]) }).strict();
+const inputSchema = z.object({ question: z.string().trim().min(1).max(500), lang: z.enum(['zh', 'en']), timeZone:z.string().max(100).refine(zone=>{try{new Intl.DateTimeFormat('en',{timeZone:zone});return true;}catch{return false;}},'Invalid time zone').optional(), viewerWcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), history: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(6000) }).strict()).max(10).default([]) }).strict();
 
 // Burst limits are per process; the daily shared limit is atomic and durable.
 export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, config: assistantConfig, now: Date.now, reserve: reserveAssistantQuestion, authenticate: requireAssistantUser }) {
@@ -92,14 +92,14 @@ export function createSiteAssistantRoutes(deps = { answer: answerSiteQuestion, c
           };
           try {
             await emit({ type: 'status', status: { phase: 'planning' } });
-            const result = await assistantStage('total', () => assistantDeadline(() => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId, emit), signal));
+            const result = await assistantStage('total', () => assistantDeadline(() => deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId, emit, parsed.data.timeZone), signal));
             await emit({ type: 'done', result });
           } catch (error) {
             if (!disconnect.signal.aborted) await stream.writeSSE({ data: JSON.stringify({ type: 'error', error: assistantFailureCode(error) }) });
           } finally { disconnect.abort(); active--; }
         });
       }
-      return c.json(await deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId));
+      return c.json(await deps.answer(parsed.data.question, parsed.data.lang, config, signal, undefined, parsed.data.history, user.wcaId,undefined,parsed.data.timeZone));
     },signal)); } catch(error) {
       // Provider bodies can contain request details. Never expose them to clients/logs.
       const code=assistantFailureCode(error);
