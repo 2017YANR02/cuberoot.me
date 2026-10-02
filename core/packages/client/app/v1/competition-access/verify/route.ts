@@ -17,7 +17,10 @@ export async function POST(request: Request) {
   if (loopback) {
     // Validate before translating: cross-origin callers must never inherit the
     // trusted preview origin. The API still validates the one-use image answer.
-    if (headers.get('origin') !== url.origin) {
+    // Next's internal URL can use localhost when the visitor used 127.0.0.1.
+    // Compare with the actual Host rather than that normalized internal name.
+    const publicOrigin = `${url.protocol}//${publicHost}`;
+    if (headers.get('origin') !== publicOrigin) {
       return Response.json({ code: 'invalid_origin' }, { status: 403 });
     }
     headers.set('origin', 'https://dev.cuberoot.me');
