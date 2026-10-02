@@ -1,5 +1,13 @@
 # Formula case alignment audit — 2026-09-16
 
+## F2L setup consistency follow-up — 2026-10-02
+
+A read-only scan of the current public `3x3/f2l` API reproduced a display mismatch in all 123 FL/BL/BR slots (41 cases, 164 slots total). Thumbnails used the public setup plus the slot's holding rotation, but displayed scrambles were derived from the first visible solution after its finishing `y` was hidden. Taking that shortened solution's inverse lost the holding rotation. The detail player also independently derived its initial state from the first solution.
+
+The list, detail player and PDF now keep the public oriented setup as their reference. Changing the selected solution, filtering or reordering rows does not change that state. Playback keeps the complete solution, including its finishing rotations. No database records were changed. The live 164-slot comparison and PDF consistency check passed locally; the committed regression uses the existing full F2L fixture and checks the red-green pair in all four slots. These frontend changes have not been pushed or deployed.
+
+## Original alignment audit — 2026-09-16
+
 The public case setup is now the reference for its thumbnail, scramble, every alternative solution, playback, copying and PDF export. A solution's private inverse setup no longer proves that it belongs to the pictured case. Starting adjustments and necessary finishing adjustments remain visible in both plain and formatted notation. Validation also checks COEP solutions and displayed optimal/COEP scrambles.
 
 The original failure was reproducible in S-: its first solution needed an initial `U`, while the old validator checked the solution against its own inverse and reported success. At the original public angle the fixed sequence is `U R U2' R' U' R U' R'`, against setup `R U R' U R U2' R' U'`.
