@@ -179,7 +179,7 @@ export default function SupportPage() {
 
   useEffect(() => {
     let cancel = false;
-    listSponsors()
+    listSponsors(false, admin)
       .then(rows => { if (!cancel) setSponsors(rows); })
       .catch(e => { if (!cancel) setLoadErr(e instanceof Error ? e.message : String(e)); });
     // 贡献者拉不到不拖累赞助区:公开视图静默隐藏,admin 视图显示错误。
@@ -187,7 +187,7 @@ export default function SupportPage() {
       .then(rows => { if (!cancel) setContributors(rows); })
       .catch(e => { if (!cancel) setContribErr(e instanceof Error ? e.message : String(e)); });
     return () => { cancel = true; };
-  }, []);
+  }, [admin]);
 
   const total = sponsors?.length ?? 0;
   const visible = useMemo(
