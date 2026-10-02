@@ -452,7 +452,7 @@ export default function SimPage() {
   const twistyPlayerRef = useRef<any>(null);
 
   const [order, setOrder] = useState<number>(3);
-  const [puzzleKind, setPuzzleKind] = useState<SimPuzzle>(3);
+  const puzzleKind = puzzleParam;
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try { return localStorage.getItem('sim.fullscreen') === '1'; } catch { return false; }
@@ -1344,7 +1344,6 @@ export default function SimPage() {
   }, [imageMode, twisty]);
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
-    setPuzzleKind(kind);
     if (typeof kind === 'number') setOrder(kind);
     // A Mirror Cube is an NxN under the hood — pin `order` to its logical order so the
     // NxN scramble/play path (which reads `order`) drives a standard 3x3 / 2x2.
@@ -1377,16 +1376,11 @@ export default function SimPage() {
     handlePuzzle(n);
   }, [handlePuzzle]);
 
-  // URL puzzle param → cube. On the cubing.js path there's no world to sync —
-  // mirror to local puzzleKind state so PlayerControls renders correctly. Engine
-  // puzzles (incl. engine-skewb, where `twisty` is false) route into World.
+  // Controls read the URL puzzle directly. Always sync engine puzzles, even when
+  // a newly created World already has the requested default cube: applyPuzzle
+  // also restores the logical order after returning from a world-less renderer.
   useEffect(() => {
-    if (twisty) {
-      setPuzzleKind(puzzleParam);
-      return;
-    }
-    if (!worldRef.current) return;
-    if (worldRef.current.puzzleKind === (puzzleParam as PuzzleKind)) return;
+    if (twisty) return;
     applyPuzzle(puzzleParam);
   }, [twisty, puzzleParam, applyPuzzle, worldTick]);
 
