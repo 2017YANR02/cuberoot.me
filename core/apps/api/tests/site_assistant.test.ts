@@ -16,6 +16,51 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('keeps library searches separate from training pages',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async (input,init)=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[]});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      if(count===2) {
+        const context=JSON.parse(JSON.parse(String(init?.body)).messages[1].content);
+        const destinations=context.evidence[0].data.destinations;
+        expect(destinations.every((p:any)=>!p.href.endsWith('/select'))).toBe(true);
+        expect(destinations.some((p:any)=>p.href==='/alg/3x3/oll')).toBe(true);
+      }
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',kind:'algorithms',query:'OLL PLL'}]} : {answer:'打开公式库学习。',sourceIds:['alg:3x3:oll','alg:3x3:pll']});
+    });
+    const result=await answerSiteQuestion('学习 OLL 和 PLL','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions?.map(a=>a.href)).toEqual(['/alg/3x3/oll','/alg/3x3/pll']);
+  });
+  it('opens existing OLL/PLL libraries and trainers without trusting model URLs',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[]});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',query:'OLL PLL'}]} : {answer:'打开公式库学习，或进入 PLL 训练。',sourceIds:['alg:3x3:oll','alg:3x3:pll','train:3x3:pll','https://evil.example']});
+    });
+    const result=await answerSiteQuestion('我要学习三阶 OL 和 PL 公式','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions?.map(a=>a.href)).toEqual(['/alg/3x3/oll','/alg/3x3/pll','/alg/3x3/pll/select']);
+    expect(result.sources.every(s=>s.read===false)).toBe(true);
+  });
+  it('selects a solver deep link from the published menu and retains context for follow-ups',async()=>{
+    const history=[{role:'user' as const,content:'我要二阶求解器'}];
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async (input,init)=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[],destinations:[{lang:'zh',href:'/scramble/solver?event=222',title:'二阶求解器'}]});
+      expect(JSON.parse(String(init?.body)).messages[1].content).toContain('我要二阶求解器');
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',query:'二阶求解器'}]} : {answer:'点击打开。',sourceIds:['page:/scramble/solver?event=222']});
+    });
+    const result=await answerSiteQuestion('打开这个','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),history);
+    expect(result.actions).toEqual([{id:'page:/scramble/solver?event=222',title:'二阶求解器',href:'/scramble/solver?event=222'}]);
+  });
+  it('does not show navigation actions for an unresolved request',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).includes('/assistant/pages.json')) return Response.json({pages:[]});
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1 ? {calls:[{tool:'navigation',query:'训练'}]} : {answer:'你要练习哪一种魔方、哪个阶段？',sourceIds:[]});
+    });
+    const result=await answerSiteQuestion('生成一个训练器','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.actions).toEqual([]);
+  });
   it.each(['我去过哪些国家比赛','我参加过哪些国家的比赛','Which countries have I competed in?'])('answers personal countries from the verified viewer instead of the planner or history: %s',async question=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
       const url=String(input);

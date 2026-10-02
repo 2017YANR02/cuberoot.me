@@ -14,6 +14,8 @@ export interface AssistantChart {
 export type AssistantArtifact = AssistantTable | AssistantChart;
 export interface AssistantAnswer {
   answer: string; sources: AssistantSource[]; artifacts?: AssistantArtifact[];
+  /** Existing site destinations selected from navigation tool evidence. */
+  actions?: Array<{ id: string; title: string; href: string }>;
 }
 export interface AssistantMessage { role: 'user' | 'assistant'; content: string }
 

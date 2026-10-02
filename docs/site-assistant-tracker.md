@@ -1,5 +1,29 @@
 # CubeRoot site assistant
 
+## Existing-page navigation (local, 2026-10-02)
+
+- Homepage chat can return explicit Open links for existing tools, algorithm
+  libraries and trainers. The navigation tool accepts a topic and a destination
+  kind; learning formulas and practising formulas use separate catalog choices.
+  Ambiguous requests ask for the puzzle or training goal. Model-provided URLs
+  are never accepted as destinations.
+- Algorithm routes reuse `ALG_CATALOG`. Solver routes reuse the same event map
+  as `SolveTabs`, extracted into `client/lib/solver-routes.ts`; the build-time
+  public index includes those menu destinations and other rendered public tool
+  links. This also indexes closed project-picker entries that are absent in SSR.
+- Links retain the current language through AppLink. Solver links load a new
+  document so their COOP/COEP headers take effect. Existing chat access and quota
+  rules still apply.
+- Five real-model local checks verified OLL/PLL learning (including OL/PL input),
+  PLL training, 2x2 solving, clarification for an unspecified trainer, and an
+  English Pyraminx solver request. See the [results](benchmarks/site-assistant-navigation-2026-10-02.json).
+  API targeted tests: 54 passed; content-index tests: 6 passed; shared build and
+  API typecheck passed. Client typecheck passed earlier in the task; the final
+  run is blocked by a concurrent unrelated unused `lang` in
+  `app/[lang]/overview/CostsFunding.tsx`. No production deployment or browser
+  acceptance is claimed. Normal localhost chat continues to use the production
+  API until the backend and new content index are released.
+
 ## Scope and evidence (2026-09-28)
 
 The owner requested full-site natural-language answers and a conversation interface,

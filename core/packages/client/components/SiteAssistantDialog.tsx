@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
 import Markdown from 'react-markdown';
 import { useCopy } from '@/hooks/useCopy';
 import { createPortal } from 'react-dom';
@@ -23,6 +24,7 @@ interface Props {
   onAsk:(question:string,replaceLast?:boolean)=>void; onStop:()=>void; onClose:()=>void; onNew:()=>void;
 }
 const QUERY_LABELS: Record<string, {zh:string;en:string}> = {
+  navigation:{zh:'正在查找功能入口',en:'Finding site tools'},
   pages:{zh:'正在查询站内页面',en:'Searching site pages'},
   records:{zh:'正在查询纪录',en:'Looking up records'},
   find_person:{zh:'正在查找选手',en:'Finding a competitor'},
@@ -41,6 +43,13 @@ function statusLabel(status:AssistantStatus) {
   if(status.phase==='querying') return tr(QUERY_LABELS[status.tool ?? ''] ?? {zh:'正在查询资料',en:'Looking up sources'});
   return tr(status.phase==='writing' ? {zh:'正在生成回答',en:'Writing answer'} : {zh:'正在思考',en:'Thinking'});
 }
+// Solver documents require their own COOP/COEP headers; soft navigation cannot apply them.
+function openSolverDocument(event:MouseEvent<HTMLAnchorElement>) {
+  if (/^\/(?:zh\/)?scramble\/solver(?:\?|$)/.test(new URL(event.currentTarget.href).pathname) && event.button===0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
+    event.preventDefault();
+    window.location.assign(event.currentTarget.href);
+  }
+}
 export function SiteAssistantAnswerText({result,partial}:{result:AssistantAnswer;partial?:boolean}) {
   const sources=result.sources.filter(source=>/^\/(?!\/)/.test(source.href));
   // Do not flash incomplete citation syntax as provider chunks arrive.
@@ -55,7 +64,7 @@ export function SiteAssistantAnswerText({result,partial}:{result:AssistantAnswer
     components={{a:({href,children})=>{
       const match=/^#assistant-source-(\d+)$/.exec(href ?? '');
       const source=match ? sources[Number(match[1])] : undefined;
-      return source ? <Link className="site-assistant-citation" href={source.href} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : <>{children}</>;
+      return source ? <Link className="site-assistant-citation" href={source.href} onClick={openSolverDocument} prefetch={false} title={source.title} aria-label={tr({zh:`来源：${source.title}`,en:`Source: ${source.title}`})}>{source.title}</Link> : <>{children}</>;
     }}}>{markdown}</Markdown></div>;
 
 }
@@ -112,7 +121,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
       if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
       else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
     }}>
-      <header className="site-assistant-header"><div><h2 id="site-assistant-title">{tr({zh:'问 CubeRoot',en:'Ask CubeRoot'})}</h2><p>{tr({zh:'查成绩、找比赛、学魔方',en:'Results, competitions and cubing knowledge'})}</p></div>
+      <header className="site-assistant-header"><div><h2 id="site-assistant-title">{tr({zh:'问 CubeRoot',en:'Ask CubeRoot'})}</h2><p>{tr({zh:'查成绩、找工具、学公式',en:'Results, tools and algorithms'})}</p></div>
         <button className="site-assistant-action" type="button" onClick={()=>{stop();onNew();setEditing(null);setDraft('');input.current?.focus();}} title={tr({zh:'新对话',en:'New conversation'})}><MessageSquarePlus size={20}/></button>
         <button className="site-assistant-action site-assistant-expand" type="button" onClick={()=>setExpanded(value=>!value)} title={tr(expanded?{zh:'退出全屏',en:'Exit full screen'}:{zh:'全屏',en:'Full screen'})}>{expanded?<Minimize2 size={19}/>:<Maximize2 size={19}/>}</button>
         <button className="site-assistant-action" type="button" onClick={onClose} title={tr({zh:'关闭',en:'Close'})}><X size={22}/></button>
@@ -123,6 +132,8 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
           {zh:'看看耿暄一的三阶成绩是怎么进步的',en:'Explore Xuanyi Geng’s progress in 3x3'},
           {zh:'找找接下来在中国举行的比赛',en:'Find upcoming competitions in China'},
           {zh:'怎样在 CubeRoot 练习 PLL 识别？',en:'How can I practise PLL recognition on CubeRoot?'},
+          {zh:'我要学习三阶 OLL 和 PLL 公式',en:'I want to learn 3x3 OLL and PLL algorithms'},
+          {zh:'我需要一个二阶魔方求解器',en:'I need a 2x2 cube solver'},
           {zh:'群论能怎么解释魔方的转动？',en:'How does group theory explain cube moves?'},
         ].map(example=><button className="site-assistant-action" type="button" key={example.en} onClick={()=>onAsk(tr(example))}>{tr(example)}</button>)}</div>}
         {turns.map((turn,i)=><section className="site-assistant-turn" key={i}>{editing!==null && i===turns.length-1 ? <form className="site-assistant-edit" onSubmit={event=>{event.preventDefault();if(editing.trim()&&!busy){onAsk(editing.trim(),true);setEditing(null);}}}>
@@ -131,6 +142,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
         </form> : <div className="site-assistant-question"><h3>{turn.question}</h3><div className="site-assistant-question-actions"><button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
           {busy && i===turns.length-1 && <div className="site-assistant-status" role="status"><span className="site-assistant-status-icon" aria-hidden="true">{status.phase==='querying'?<Search size={16}/>:<LoaderCircle size={16}/>}</span><span>{statusLabel(status)}</span><span className="site-assistant-status-dots" aria-hidden="true">···</span></div>}
           {turn.result && <div className="site-assistant-response"><SiteAssistantAnswerText result={turn.result} partial={turn.partial}/>
+          {!turn.partial && !!turn.result.actions?.length && <div className="site-assistant-response-actions site-assistant-navigation">{turn.result.actions.filter(action=>/^\/(?!\/)/.test(action.href)).map(action=><Link key={action.id} className="site-assistant-action" href={action.href} onClick={openSolverDocument} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
           {turn.result.artifacts?.map((a,j)=>a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=><td key={c}>{c===0 && a.links?.[k]?.startsWith('/') && !a.links[k].startsWith('//') ? <Link prefetch={false} href={a.links[k]}>{cell}</Link>:cell}</td>)}</tr>)}</tbody></table></div></section>)}
         </div>}
           {turn.result && !(busy && i===turns.length-1) && <div className="site-assistant-response-actions"><button className="site-assistant-action" type="button" onClick={()=>copyAnswer(turn.result!,`answer-${i}`)} title={tr(copiedKey===`answer-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制回答',en:'Copy answer'})}>{copiedKey===`answer-${i}`?<Check size={16}/>:<Copy size={16}/>}</button>{i===turns.length-1 && !error && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turn.question,true)} title={tr({zh:'重新生成',en:'Regenerate'})}><RotateCcw size={16}/></button>}<span role="status">{copiedKey===`answer-${i}` && tr({zh:'已复制',en:'Copied'})}</span></div>}

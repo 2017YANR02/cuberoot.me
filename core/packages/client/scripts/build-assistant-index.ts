@@ -2,6 +2,10 @@ import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { parseHTML } from 'linkedom';
 import { SITE_DIRECTORY_GROUPS } from '@cuberoot/shared/site-directory';
+import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
+import { EVENT_ID } from '../lib/solver-routes';
+import { CSTIMER_EVENTS } from '../lib/cstimer-scramble';
+import { EVENT_NAME_TO_ID } from '../lib/event-constants';
 const restricted=SITE_DIRECTORY_GROUPS.flatMap(g=>g.entries.filter(e=>('adminOnly' in e && e.adminOnly)||('lockedForNonAdmin' in e && e.lockedForNonAdmin)).map(e=>e.href));
 
 
@@ -47,11 +51,41 @@ export function discoverPublicPages(xml: string, labels: Map<string,string>, ren
   return pages;
 }
 
+/** Reuse links rendered by the real tool menus, including solver event selection. */
+export function discoverNavigationLinks(route: string, html: string) {
+  if (!isPublicRoute(route)) return [];
+  const {document}=parseHTML(html);
+  const lang=route.startsWith('/zh/')?'zh':'en';
+  const destinations: Array<{lang:string;href:string;title:string}>=[];
+  for (const link of document.querySelectorAll('a[href]')) {
+    try {
+      const url=new URL(link.getAttribute('href')!,`https://cuberoot.me${route}`);
+      const href=url.pathname.replace(/^\/(en|zh)(?=\/|$)/,'');
+      if(url.origin!=='https://cuberoot.me' || !isPublicRoute(`/${lang}${href}`) || !/^\/(scramble|recognize|alg|predict|memo)(?:\/|$)/.test(href)) continue;
+      if([...url.searchParams.keys()].some(key=>!['event','tool','method','stage','variant'].includes(key))) continue;
+      const title=link.textContent?.replace(/\s+/g,' ').trim();
+      if(title) destinations.push({lang,href:href+url.search,title:title.slice(0,250)});
+    } catch { /* Invalid or non-HTTP link. */ }
+  }
+  return destinations;
+}
+
+/** The project picker is closed during SSR, so index its canonical routing data too. */
+export function solverDestinations() {
+  return Object.values(EVENT_ID).flatMap(event=>{
+    const puzzle=CSTIMER_EVENTS.find(p=>p.id===event);
+    const english=Object.entries(EVENT_NAME_TO_ID).find(([,id])=>id===event)?.[0] ?? EVENT_DISPLAY_EN[event];
+    return (['en','zh'] as const).map(lang=>({lang,href:`/scramble/solver?event=${event}`,title:`${puzzle?.[lang] ?? {en:english,zh:EVENT_DISPLAY_ZH[event]}[lang] ?? event} — ${{en:'Solver',zh:'求解器'}[lang]}`}));
+  });
+}
+
 async function main() {
   const root=path.resolve('.next/server/app');
   const pages: NonNullable<ReturnType<typeof indexPublicHtml>>[]=[];
   const rendered=new Set<string>();
   const labels=new Map<string,string>();
+  const destinations=new Map<string, ReturnType<typeof discoverNavigationLinks>[number]>();
+  for(const destination of solverDestinations()) destinations.set(destination.lang+destination.href,destination);
   async function walk(dir:string): Promise<void> {
     for (const entry of await readdir(dir,{withFileTypes:true})) {
       const file=path.join(dir,entry.name);
@@ -63,6 +97,10 @@ async function main() {
         const page=indexPublicHtml(route,html);
         if (page) {
           pages.push(page);
+          for(const destination of discoverNavigationLinks(route,html)) {
+            const key=destination.lang+destination.href;
+            if(!destinations.has(key)) destinations.set(key,destination);
+          }
           const {document}=parseHTML(html);
           for (const link of document.querySelectorAll('a[href]')) {
             try {
@@ -83,7 +121,7 @@ async function main() {
   const discovered=discoverPublicPages(xml,labels,rendered);
   pages.push(...discovered);
   await mkdir('public/assistant',{recursive:true});
-  await writeFile('public/assistant/pages.json',JSON.stringify({updated:new Date().toISOString(),pages}));
+  await writeFile('public/assistant/pages.json',JSON.stringify({updated:new Date().toISOString(),pages,destinations:[...destinations.values()]}));
   console.log(`Assistant content index: ${pages.length} public pages (${discovered.length} read on demand)`);
 }
 if (path.basename(process.argv[1] ?? '')==='build-assistant-index.ts') {
