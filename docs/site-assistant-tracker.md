@@ -226,3 +226,11 @@ The requested primary reference is ChatGPT. This is an original CubeRoot impleme
 - Latest-turn regeneration/edit excludes the replaced answer from request history. Stopped partial turns remain visible when asking a follow-up but are not sent as model context.
 - Scroll-follow pauses during upward reading; a floating arrow returns to latest. Response copy/regenerate actions remain available on touch devices.
 - Local DOM tests exercise regeneration/edit context, draft retention/reset, rich-text safety, source links, copying data, full-screen and scroll-to-latest, in addition to the earlier stream tests. Visual acceptance remains with the owner; this entry does not claim deployment.
+
+## Historical World Championship dates (2026-10-02, local)
+
+- Explicit date questions for WC / World Championship / 世锦赛 read the full historical and upcoming competition indices directly. They return recorded start/end dates, per-edition citations, a table and verified competition links without a model planning round.
+- Competition lookup recognizes WC2025, WC 2025 and championship aliases. A specified edition searches historical data even when the model retains the upcoming default. Canonical WCA WC IDs avoid matching unrelated local championships; no year/date list is hard-coded.
+- Missing requested editions are reported as absent from the site records, without inferring cancellation or current announcement status. WC 2027 remains on the existing dated announcement path.
+- Live public-index checks returned WC2025 = 2025-07-03~06 and WC2023 = 2023-08-12~15, matching the official WCA competition pages. The all-editions query returned all 12 recorded editions, including WC1982 = 1982-06-05.
+- Targeted assistant/tool regression fixtures cover Chinese/English questions, both WC spellings, historical discovery despite the upcoming default, the earliest edition, unrelated competition exclusion and missing editions. Publication is not claimed by this local verification.

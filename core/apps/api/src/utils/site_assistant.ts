@@ -6,6 +6,7 @@ import { readAssistantEvents, type AssistantStreamEvent, type AssistantAnswer, t
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
+import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
 import { SITE_ANNOUNCEMENTS, findSiteAnnouncements } from '@cuberoot/shared/site-announcements';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { AssistantFailure, assistantFailureCode, assistantStage, checkAssistantResponse } from './site_assistant_diagnostics.js';
@@ -91,6 +92,7 @@ person {wcaId,event:"333" or "all",progress:false}: profile, selected-event PRs,
 person_countries {wcaId}: complete countries/regions where ONE person has officially competed, grouped by competition host location. Use for personal travel/participation questions, never substitute a global most_visited_countries leaderboard or personal bests.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,limit:1..20}: find competitions and IDs; query matches name/city/id. Use English place/name keywords for this index.
+For historical World Championship dates use competitions with query:"WC" (all editions) or "WC 2025 2023" (selected years), upcoming:false, limit:20. Dates are start_date/end_date of actual competitions, not solve dates or registration dates. Do not invent missing editions.
 scrambles {compId,event:"333",round:"f"}: official scramble groups. First resolve unknown competition IDs.
 recons {wcaId?:person ID,compId?:competition ID,value?,event?,limit:1..20}: search published reconstructions. Person IDs like 2017YANR02 MUST go in wcaId, never compId; a competition ID looks like BeijingSummer2025. Value is a solve duration in seconds, NEVER a reconstruction ID; event uses 333 for 3x3. This list does not contain full solutions.
 recon {id:number}: read ONE reconstruction by its numeric ID, including original moves and analysis. A question naming a reconstruction number refers to this id, not a duration. Quote recorded step labels exactly. Do not explain what a method or step solves unless its definition is in retrieved evidence; use glossary if that explanation is requested. Never invent a solution or label a reconstruction as verified beyond evidence. A personal practice location is not a WCA competition.
@@ -148,6 +150,22 @@ export async function answerSiteQuestion(
     return pending;
   };
   const evidence: Array<{id:string;tool:unknown;data:unknown}> = [];
+  // Date lookup has a known source and does not need a model to substitute a
+  // leaderboard or to accidentally search only upcoming competitions.
+  const worldDateQuestion=/(?:\bWC\s*(?=\d|\b)|世锦赛|世界(?:魔方)?锦标赛|world\s+(?:cube\s+|rubik'?s?\s+cube\s+)?championships?)/i.test(question)
+    && /日期|时间|什么时候|哪天|几月|哪年|\b(?:dates?|when|held|years?)\b/i.test(question)
+    && !/报名|注册|registration|qualification|\b(?:final|round|schedule)\b|决赛|轮次|赛程/i.test(question);
+  if(worldDateQuestion && requestedAnnouncements.length===0) {
+    const years=[...new Set(question.match(/(?:19|20)\d{2}/g) ?? [])];
+    await emit?.({type:'status',status:{phase:'querying',tool:'competitions'}});
+    const result=await assistantStage('tool',()=>runDataTool({tool:'competitions',query:['WC',...years].join(' '),country:'',upcoming:false,limit:20},lang,read),0);
+    const rows=(result.evidence as {competitions:Array<{id:string;start_date:string;end_date:string}>}).competitions;
+    const found=new Set(rows.map(c=>c.id.slice(2)));
+    const missing=years.filter(year=>!found.has(year));
+    const lines=rows.map(c=>`${c.id}: ${formatDateRangeIso(c.start_date,c.end_date)} [[comp:${c.id}]]`);
+    if(missing.length)lines.push({zh:`网站比赛记录中未找到 ${missing.join('、')} 年世锦赛的日期；不能据此推断是否举办或是否已公布。`,en:`No World Championship dates for ${missing.join(', ')} were found in the site's competition records. This does not establish whether an edition took place or has been announced.`}[lang]);
+    return {answer:lines.join('\n') || {zh:'网站比赛记录中未找到世锦赛日期，请查看 WCA 官方比赛目录。',en:'No World Championship dates were found in the site records. Please check the official WCA competition directory.'}[lang],sources:result.sources,artifacts:result.artifacts,actions:result.sources.map(s=>({id:s.id,title:s.title,href:s.href}))};
+  }
   // This explicit personal question has a fixed public data source. Resolve
   // "I" from the verified identity before any planner can select a leaderboard.
   if (asksForPersonalCountries) {

@@ -2,6 +2,13 @@ import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
 describe('assistant public data adapters',()=>{
+  it.each(['WC2025','WC 2025','世锦赛2025','World Championship 2025'])('resolves explicit historical editions despite the upcoming default: %s',async query=>{
+    const result=await runDataTool({tool:'competitions',query,country:'',upcoming:true,limit:20},'en',async url=>url.endsWith('/all_past_comps.json') ? [
+      {id:'WC2025',name:"Rubik's WCA World Championship 2025",city:'Seattle',country:'US',start_date:'2025-07-03',end_date:'2025-07-06'},
+    ] : []);
+    expect(result.sources.map(s=>s.id)).toEqual(['comp:WC2025']);
+    expect(result.artifacts[0]).toMatchObject({rows:[["Rubik's World Championship",'Seattle','US','2025-07-03~06']]});
+  });
   it('groups all attended competitions by host country, deduplicates rounds and preserves missing-location limits',async()=>{
     const result=await runDataTool({tool:'person_countries',wcaId:'2017YANR02'},'en',async url=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:{
       profile:{person:{name:'Ruimin Yan (颜瑞民)',country_iso2:'CN'}},

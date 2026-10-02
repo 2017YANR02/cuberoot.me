@@ -16,6 +16,33 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it.each(['WC2025、WC 2023 的日期是什么？','2025年和2023年世锦赛是什么时间？','When were WC2025 and WC 2023 held?'])('answers championship dates from competition records: %s',async question=>{
+    const fetcher=vi.fn(async(input:RequestInfo|URL)=>{
+      const url=String(input);
+      if(url.endsWith('/comp_names_zh.json'))return Response.json({});
+      if(url.endsWith('/all_upcoming_comps.json'))return Response.json([]);
+      if(url.endsWith('/all_past_comps.json'))return Response.json([
+        {id:'WC2025',name:'World Championship 2025',city:'Seattle',country:'US',start_date:'2025-07-03',end_date:'2025-07-06'},
+        {id:'WC2023',name:'World Championship 2023',city:'Incheon',country:'KR',start_date:'2023-08-12',end_date:'2023-08-15'},
+        {id:'Seattle2025',name:'Seattle 2025',city:'Seattle',country:'US',start_date:'2025-01-01',end_date:'2025-01-01'},
+      ]);
+      throw new Error(`Unexpected request: ${url}`);
+    });
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.answer).toBe('WC2025: 2025-07-03~06 [[comp:WC2025]]\nWC2023: 2023-08-12~15 [[comp:WC2023]]');
+    expect(result.sources.map(s=>s.id)).toEqual(['comp:WC2025','comp:WC2023']);
+    expect(result.actions?.map(s=>s.href)).toEqual(['/wca/comp/WC2025','/wca/comp/WC2023']);
+  });
+  it('includes the earliest championship and does not manufacture missing editions',async()=>{
+    const fetcher=vi.fn(async(input:RequestInfo|URL)=>Response.json(String(input).endsWith('/all_past_comps.json') ? [
+      {id:'WC1982',name:"Rubik's Cube World Championship 1982",city:'Budapest',country:'HU',start_date:'1982-06-05',end_date:'1982-06-05'},
+    ] : String(input).endsWith('/comp_names_zh.json') ? {} : []));
+    const all=await answerSiteQuestion('历年世锦赛的日期是什么？','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(all.answer).toBe('WC1982: 1982-06-05 [[comp:WC1982]]');
+    const missing=await answerSiteQuestion('WC2021 的日期是什么？','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(missing.answer).toContain('未找到 2021 年世锦赛的日期');
+    expect(missing.sources).toEqual([]);
+  });
   it.each(['WC 2027','2027年世锦赛的相关信息'])('reads the official announcement summary before treating %s as a missing competition',async question=>{
     const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'暂无比赛信息。'})).mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
