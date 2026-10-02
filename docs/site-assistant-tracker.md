@@ -234,3 +234,10 @@ The requested primary reference is ChatGPT. This is an original CubeRoot impleme
 - Missing requested editions are reported as absent from the site records, without inferring cancellation or current announcement status. WC 2027 remains on the existing dated announcement path.
 - Live public-index checks returned WC2025 = 2025-07-03~06 and WC2023 = 2023-08-12~15, matching the official WCA competition pages. The all-editions query returned all 12 recorded editions, including WC1982 = 1982-06-05.
 - Targeted assistant/tool regression fixtures cover Chinese/English questions, both WC spellings, historical discovery despite the upcoming default, the earliest edition, unrelated competition exclusion and missing editions. Publication is not claimed by this local verification.
+
+## Relative-year championship announcement lookup (2026-10-02, local)
+
+- The reported `明年世锦赛在哪里办` failed to select the existing announcement because it contained no explicit 2027 alias. Shared discovery now accepts an optional reference year and resolves this/next/last year and the year after next in Chinese and English for championship questions. Explicit years take precedence; reversed wording such as `世锦赛 2027` also matches.
+- The API supplies its UTC year to shared announcement discovery. Shared rendering/search never reads the current clock during SSR, and `next year` is not a permanent 2027 keyword. Forced announcement reading also prevents an early unrelated streamed answer.
+- A real configured-provider call for the exact reported question returned Uppsala, Sweden, the dated official announcement citation and `/wca/wc-2027` action. Targeted API fixtures (53) and announcement/search fixtures (12) passed; shared build and API typecheck passed.
+- The local announcement page returned HTTP 200. The development frontend's `/v1/*` rewrite still calls the production API; local commits do not update that API. Deployment remains separate from this local validation.

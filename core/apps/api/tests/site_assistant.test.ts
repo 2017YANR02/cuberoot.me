@@ -8,7 +8,7 @@ const createSiteAssistantRoutes = (deps: Omit<Parameters<typeof createRoutes>[0]
 
 const config = { key: 'test-secret', baseUrl: 'https://model.example/v1', model: 'qwen3.8-flash' };
 beforeEach(()=>{vi.spyOn(console,'log').mockImplementation(()=>{});vi.spyOn(console,'warn').mockImplementation(()=>{});});
-afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
+afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();vi.useRealTimers();});
 const modelResponse = (value: unknown) => Response.json({ choices: [{ message: { content: JSON.stringify(value) } }] });
 const ask = () => new Request('https://api.example/site-assistant', {
   method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Real-IP': '127.0.0.1' },
@@ -43,7 +43,8 @@ describe('site assistant grounding', () => {
     expect(missing.answer).toContain('未找到 2021 年世锦赛的日期');
     expect(missing.sources).toEqual([]);
   });
-  it.each(['WC 2027','2027年世锦赛的相关信息'])('reads the official announcement summary before treating %s as a missing competition',async question=>{
+  it.each(['WC 2027','2027年世锦赛的相关信息','世锦赛 2027 在哪办','明年世锦赛在哪里办','Where will next year\'s World Championship be held?'])('reads the official announcement summary before treating %s as a missing competition',async question=>{
+    vi.useFakeTimers();vi.setSystemTime(new Date('2026-10-02T12:00:00Z'));
     const fetcher=vi.fn<typeof fetch>().mockResolvedValueOnce(modelResponse({answer:'暂无比赛信息。'})).mockResolvedValueOnce(modelResponse({answer:'2027 年世锦赛将在瑞典乌普萨拉举办；2025 年 7 月公告未公布日期和报名安排。',sourceIds:['announcement:wc-2027']}));
     const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     const request=JSON.parse(String(fetcher.mock.calls[1][1]?.body));
