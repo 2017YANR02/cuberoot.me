@@ -1,12 +1,10 @@
 // i18next initialization for the Next.js App Router.
 // Singleton — guarded so HMR / strict-mode double-mount doesn't double-init.
 //
-// IMPORTANT: i18n is initialized synchronously with lng='en' on BOTH server and
-// client first render. Locale detection (URL ?lang= > localStorage > navigator)
-// runs only inside I18nProvider's useEffect AFTER hydration, then calls
-// i18n.changeLanguage to switch. This makes SSR HTML and the client's first
-// paint identical, avoiding hydration mismatches; Chinese-preference users see
-// a single en→zh flash on first page load (acceptable).
+// Initialize the browser singleton with the locale in its routed URL so it
+// matches the server's I18nProvider from the first render. Subsequent locale
+// navigation is applied by the provider after commit. Legacy preference
+// detection remains in the provider's effect.
 //
 // TWO locales: 'en' and 'zh' (Simplified). Both catalogs are static JSON; there
 // is no runtime conversion, so SSR and client render identical text — no
@@ -29,7 +27,7 @@ if (!i18n.isInitialized) {
       zh: { translation: zh },
       en: { translation: en },
     },
-    lng: 'en',
+    lng: typeof window !== 'undefined' && /^\/zh(?:\/|$)/.test(window.location.pathname) ? 'zh' : 'en',
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
     // Resources are bundled inline, so init synchronously: with the default
@@ -78,13 +76,18 @@ export function ensureLangInUrl(lang: string): void {
   history.replaceState(null, '', newUrl);
 }
 
-export function syncLangToUrl(lang: string): void {
+export function persistAppLanguage(lang: string): void {
   if (typeof window === 'undefined') return;
   persistItem('trainer-lang', lang);
   document.documentElement.lang = lang;
   // Mirror to cookie so proxy.ts can read it on the next SSR request and
   // render in the right language from the first paint (no en→zh flash).
   document.cookie = `lang=${lang}; max-age=${60 * 60 * 24 * 365}; path=/; samesite=lax`;
+}
+
+export function syncLangToUrl(lang: string): void {
+  if (typeof window === 'undefined') return;
+  persistAppLanguage(lang);
   const url = new URL(window.location.href);
   url.searchParams.set('lang', lang);
   // global i18n infra (non-React, no hooks) — exempt from the nuqs rule.
