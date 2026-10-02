@@ -137,6 +137,11 @@ const nextConfig: NextConfig = {
         source: "/assets/space/blender-v1/:asset.json",
         headers: [{ key: "Cache-Control", value: "no-store" }],
       },
+      // Project-brief illustrations use versioned filenames.
+      {
+        source: "/images/overview/:path*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }],
+      },
       // High-resolution certificate photographs are content-stable. Filenames
       // change if a scan is replaced, so they can be cached immutably.
       {

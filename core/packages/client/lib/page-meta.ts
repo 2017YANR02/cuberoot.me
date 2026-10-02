@@ -40,6 +40,10 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'overview': {
+    title: { zh: '项目介绍与合作', en: 'Project brief & partnerships' },
+    description: { zh: '认识 CubeRoot 与创始人颜瑞民：魔方工具、行业机会、阶段规划与赞助合作方向。', en: 'Meet CubeRoot and founder Ruimin Yan: cubing tools, the opportunity, roadmap and sponsorship partnerships.' },
+  },
   'partnership': {
     title: { zh: '合作提案', en: '合作提案' },
     description: { zh: 'CubeRoot 项目愿景、产品与赞助合作提案。', en: 'CubeRoot 项目愿景、产品与赞助合作提案。' },

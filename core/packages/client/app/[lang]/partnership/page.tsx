@@ -20,7 +20,7 @@ export default function PartnershipPage() {
         <p className="partner-eyebrow">{"从一枚魔方，到一个世界。"}</p>
         <h1 id="partner-title">{"让热爱，"}<br /><span>{"转动更大的世界。"}</span></h1>
         <p className="partner-lead">{"为每一次练习、每一个突破、每一份热爱，创造更好的工具。"}<br />{"一起，建设面向全球的魔方平台。"}</p>
-        <div className="partner-hero-actions"><AppLink href="/partnership/talking-points" className="partner-button" prefetch={false}>会谈提纲<ArrowUpRight size={16} aria-hidden /></AppLink><a className="partner-outline-button" href="#vision">{"看见我们的愿景"}<ArrowDown size={16} aria-hidden /></a></div>
+        <div className="partner-hero-actions"><AppLink href="/overview" className="partner-button" prefetch={false}>对外项目介绍<ArrowUpRight size={16} aria-hidden /></AppLink><AppLink href="/partnership/talking-points" className="partner-outline-button" prefetch={false}>会谈提纲<ArrowUpRight size={16} aria-hidden /></AppLink><a className="partner-outline-button" href="#vision">{"看见我们的愿景"}<ArrowDown size={16} aria-hidden /></a></div>
         <div className="partner-stage" role="img" aria-label={"魔方与计时、公式、全球社区的产品概念图"}>
           <div className="partner-orbit partner-orbit-one" /><div className="partner-orbit partner-orbit-two" />
           <span className="partner-stage-word" aria-hidden>CUBE ROOT</span>
