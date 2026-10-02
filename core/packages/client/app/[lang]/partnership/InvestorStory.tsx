@@ -1,8 +1,8 @@
-import { ArrowUpRight, BookOpen, ChartNoAxesColumnIncreasing, Code2, Users } from 'lucide-react';
+import { ArrowUpRight, BookOpen, ChartNoAxesColumnIncreasing, ChevronDown, Code2, RotateCcw, ScanSearch, Timer, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
+import { VisualCube } from '@/components/VisualCube';
 import { CREATOR_AUDIENCE } from '@/lib/creator-profile';
 import { tr } from '@/i18n/tr';
-import '@/components/sticky-table.css';
 
 const XC_URL = 'https://apps.apple.com/cn/app/id6758835520';
 
@@ -47,57 +47,50 @@ const COMPETITORS = [
   },
 ];
 
+const ADVANTAGES = [
+  { Icon: Users, title: { zh: '内容触达', en: 'Distribution' }, tagline: { zh: '约 50 万关注的推广基础', en: 'An audience of ~500K aggregate follows' }, body: { zh: '通过自己的专题内容接触训练用户，直接获得使用反馈。实际获客优势按到访、练习和留存核算。', en: 'Reach practitioners through focused content and gather feedback directly. Measure acquisition advantages through visits, practice and retention.' } },
+  { Icon: BookOpen, title: { zh: '专业教学', en: 'Teaching' }, tagline: { zh: '把分析变成下一步怎么练', en: 'Turn analysis into the next practice step' }, body: { zh: '参赛、课程、公式库与著作积累，帮助把专业问题转换成用户能够理解、完成的训练方法。', en: 'Competition, courses, algorithms and authorship help turn specialist issues into understandable, achievable practice.' } },
+  { Icon: Code2, title: { zh: '原创技术', en: 'Original work' }, tagline: { zh: '可体验的求解与训练工具', en: 'Inspectable solvers and training tools' }, body: { zh: '求解、状态可视化、复盘与数据工具承接具体练习。持续维护算法正确性与稳定交付，AI 辅助研发。', en: 'Solving, visualisation, reconstruction and data tools support practice, with maintained correctness and reliable delivery. AI assists development.' } },
+  { Icon: ChartNoAxesColumnIncreasing, title: { zh: '长期服务', en: 'Lasting service' }, tagline: { zh: '练习习惯与机构流程的积累', en: 'Practice habits and educator workflows' }, body: { zh: '未来壁垒来自有效内容、持续使用、授权范围内的反馈与机构服务经验。公开 WCA 数据和通用 AI 不称为独占资产。', en: 'Potential defensibility comes from effective content, continued use, authorised feedback and educator experience; public data and general AI are not exclusive assets.' } },
+];
+
 export default function InvestorStory() {
   return <>
     <section id="bp-market" className="overview-section overview-wrap" aria-labelledby="overview-market-title">
-      <p className="overview-kicker">{tr({ zh: '01 / 先理解这个需求', en: '01 / Understand the need' })}</p>
-      <h2 id="overview-market-title">{tr({ zh: '每天练习，反复记录，\n持续寻找进步。', en: 'Practise, record, improve.\nRepeat over time.' })}</h2>
-      <p className="overview-intro">{tr({ zh: '对持续训练的选手，魔方是一项长期练习的竞技技能。选手反复完成还原、记录时间、研究解法和练习公式，争取更快、更稳定的成绩。计时器与训练器因此具有高频、反复使用的场景；教学、复盘和专业服务为练习提供方向。CubeRoot 将这些任务连接起来，服务从学会还原到长期训练的用户。', en: 'For active competitors, cubing is a skill practised over time. Repeated solves, timing, solution study and algorithm practice target speed and consistency. Timers and trainers therefore have recurring use cases, while lessons, reconstruction and specialist services guide practice. CubeRoot connects these tasks from early learning to sustained training.' })}</p>
-      <ol className="overview-learning-path">{[
-        { title: { zh: '第一次还原', en: 'First solve' }, body: { zh: '需要讲得明白的教程', en: 'Clear explanations' } },
-        { title: { zh: '练得更稳定', en: 'Consistent practice' }, body: { zh: '需要记录与练习方法', en: 'Records and practice methods' } },
-        { title: { zh: '找到薄弱环节', en: 'Find weak points' }, body: { zh: '需要分析与具体反馈', en: 'Analysis and useful feedback' } },
-        { title: { zh: '长期学习与参赛', en: 'Keep learning' }, body: { zh: '需要老师、资料与赛事信息', en: 'Teachers, resources and events' } },
-      ].map((item, index) => <li key={item.title.en}><span>0{index + 1}</span><h3>{tr(item.title)}</h3><p>{tr(item.body)}</p></li>)}</ol>
-      <div className="overview-industry-note"><strong>1,864</strong><p>{tr({ zh: '2025 年 WCA 世界锦标赛的参赛人数。魔方已经有跨地区的赛事与公开成绩体系，相关产品也覆盖教程、计时、训练和分析。这个数字说明赛事规模，不代表本站用户或付费市场。', en: 'Competitors at the 2025 WCA World Championship. Cubing has international events, public results and products spanning lessons, timing and analysis. This describes one event, not CubeRoot users or the paying market.' })} <a href="https://www.worldcubeassociation.org/competitions/WC2025" target="_blank" rel="noopener noreferrer">{tr({ zh: 'WCA 官方来源 ↗', en: 'Official WCA source ↗' })}</a></p></div>
+      <p className="overview-kicker">{tr({ zh: '01 / 行业与高频需求', en: '01 / The recurring need' })}</p>
+      <h2 id="overview-market-title">{tr({ zh: '每一次还原，\n都是下一次进步的起点。', en: 'Every solve is a starting point\nfor the next improvement.' })}</h2>
+      <div className="bp-practice-stage" data-site-surface="panel">
+        <div className="bp-practice-center"><VisualCube view="iso" algorithm="R U R' U'" size={210} local alt={tr({ zh: '魔方练习闭环的中心状态', en: 'A cube at the centre of a practice loop' })} /><strong>{tr({ zh: '持续练习', en: 'CONTINUED PRACTICE' })}</strong><span>{tr({ zh: '计时器 + 训练器', en: 'Timer + trainer' })}</span></div>
+        <ol className="bp-practice-steps">{[
+          { Icon: Timer, title: { zh: '练习与计时', en: 'Practise & time' }, body: { zh: '完成还原，记录表现', en: 'Solve and record performance' } },
+          { Icon: ChartNoAxesColumnIncreasing, title: { zh: '记录与比较', en: 'Record & compare' }, body: { zh: '积累数据，看见变化', en: 'Build history and see changes' } },
+          { Icon: ScanSearch, title: { zh: '复盘与反馈', en: 'Reflect & learn' }, body: { zh: '研究解法，发现薄弱环节', en: 'Study solutions and weak points' } },
+          { Icon: RotateCcw, title: { zh: '再次练习', en: 'Practise again' }, body: { zh: '针对问题，持续训练', en: 'Address weaknesses over time' } },
+        ].map(({ Icon, title, body }, index) => <li key={title.en}><span className="bp-icon"><Icon size={23} aria-hidden /></span><div><span className="bp-step-label">0{index + 1}</span><h3>{tr(title)}</h3><p>{tr(body)}</p></div></li>)}</ol>
+      </div>
+      <details className="bp-detail"><summary>{tr({ zh: '为什么这是长期需求？', en: 'Why is this a recurring need?' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><p>{tr({ zh: '对持续训练的选手，魔方是一项长期练习的竞技技能。选手反复还原、记录时间、研究解法和练习公式，争取更快、更稳定的成绩。计时器与训练器承接高频使用，教学、复盘和专业服务为练习提供方向。魔方根连接从学习到长期训练的任务。', en: 'Active competitors repeatedly solve, time, study solutions and practise algorithms for speed and consistency. Timers and trainers support frequent use, while lessons, reconstruction and specialist services guide the next steps. CubeRoot connects learning and lasting practice.' })}</p></div></details>
+      <div className="overview-industry-note"><strong>1,864</strong><div><span className="bp-step-label">WCA 2025</span><p>{tr({ zh: '世界锦标赛参赛人数，体现跨地区赛事基础；不代表本站用户或付费市场。', en: 'World Championship competitors, illustrating international activity rather than site users or the paying market.' })} <a href="https://www.worldcubeassociation.org/competitions/WC2025" target="_blank" rel="noopener noreferrer">{tr({ zh: '官方来源 ↗', en: 'Official source ↗' })}</a></p></div></div>
     </section>
 
     <section id="bp-competition" className="overview-section overview-wrap" aria-labelledby="overview-competition-title">
-      <p className="overview-kicker">{tr({ zh: '02 / 正面回答竞争', en: '02 / Address competition' })}</p>
-      <h2 id="overview-competition-title">{tr({ zh: '有竞品。\n所以必须有清楚的切入点。', en: 'There are competitors.\nWe need a clear starting point.' })}</h2>
-      <p className="overview-intro">{tr({ zh: 'XC大师与 AI_CFOP 已经提供训练与分析能力，市场也有成熟的免费计时器和教程。CubeRoot 的切入点是内容触达、专业教学和日常工具共同构成的服务体系：约 50 万关注提供推广渠道，计时器与训练器承接持续练习，个人与企业会员承接专业帮助和教学服务。竞争重点是用户长期选择与服务质量，而不是单纯增加功能数量。', en: 'XC Master and AI_CFOP offer training and analysis alongside established free timers and lessons. CubeRoot combines content distribution, specialist teaching and daily tools: an audience supports promotion, timing and trainers support practice, and memberships support specialist and educator services. Compete on lasting user choice and delivery quality.' })}</p>
-      {/* StickyScrollGuard can add its measured overflow class before hydration.
-          This wrapper's class is intentionally managed outside React. */}
-      <div className="sticky-scroll sticky-scroll-mobile overview-budget-scroll" suppressHydrationWarning><table className="sticky-thead overview-budget overview-competitors"><thead><tr><th scope="col">{tr({ zh: '产品', en: 'Product' })}</th><th scope="col">{tr({ zh: '公开介绍的重点', en: 'Publicly described focus' })}</th><th scope="col">{tr({ zh: '对 CubeRoot 的启示', en: 'What this means for CubeRoot' })}</th></tr></thead><tbody>
-        {COMPETITORS.map(({ name, url, focus, implication }) => (
-          <tr key={name}>
-            <th scope="row">
-              {url ? (
-                <a href={url} target="_blank" rel="noopener noreferrer">
-                  {name} {'↗'}
-                </a>
-              ) : name}
-            </th>
-            <td>{tr(focus)}</td>
-            <td>{tr(implication)}</td>
-          </tr>
-        ))}
-      </tbody></table></div>
-      <p className="overview-small">{tr({ zh: '竞品内容按 2026-10-02 官方网站或商店介绍整理，未做性能优劣测试；不以粉丝数推断其用户规模或收入。', en: 'Competitor descriptions use official sites or listings checked on 2026-10-02, not comparative performance tests. Social following does not establish their user base or revenue.' })}</p>
-      <p className="overview-small">{tr({ zh: '市场也已有：', en: 'The wider ecosystem includes: ' })}<a href="https://www.cubeskills.com/" target="_blank" rel="noopener noreferrer">CubeSkills</a> / <a href="https://jperm.net/" target="_blank" rel="noopener noreferrer">J Perm</a>{tr({ zh: '（教程），', en: ' (lessons), ' })}<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer">csTimer</a>{tr({ zh: '（计时），', en: ' (timing), ' })}<a href="https://cubingapp.com/" target="_blank" rel="noopener noreferrer">CubingApp</a>{tr({ zh: '（数据），', en: ' (data), ' })}<a href="https://cubestation.com/zh/" target="_blank" rel="noopener noreferrer">GAN CubeStation</a>{tr({ zh: '（智能训练）。这些产品说明供给已经存在，付费需求仍需单独验证。', en: ' (smart training). Existing supply does not by itself establish paying demand.' })}</p>
+      <p className="overview-kicker">{tr({ zh: '02 / 竞争与定位', en: '02 / Competition & positioning' })}</p>
+      <h2 id="overview-competition-title">{tr({ zh: '内容、工具与服务，\n共同构成切入点。', en: 'Content, tools and service.\nA combined starting point.' })}</h2>
+      <div className="bp-rival-grid">{COMPETITORS.map(({ name, url, focus, implication }, index) => <article data-site-surface="panel" className={url ? 'bp-rival' : 'bp-rival bp-rival-own'} key={name}>
+        <span className="bp-rival-mark" aria-hidden>{['XC', 'AI', '根'][index]}</span>
+        <h3>{name === 'CubeRoot' ? tr({ zh: '魔方根', en: 'CubeRoot' }) : name}</h3>
+        <p>{tr(focus)}</p>
+        {url && <a href={url} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看官方介绍', en: 'Official introduction' })}<ArrowUpRight size={15} aria-hidden /></a>}
+        <details className="bp-rival-detail"><summary>{tr({ zh: '竞争判断', en: 'Competitive implications' })}<ChevronDown size={15} aria-hidden /></summary><p>{tr(implication)}</p></details>
+      </article>)}</div>
+      <p className="bp-conclusion">{tr({ zh: '已有内容触达 → 高频训练工具 → 专业会员服务。竞争重点是长期选择与交付质量。', en: 'Existing distribution → frequent training tools → specialist membership. Compete on lasting choice and delivery quality.' })}</p>
+      <details className="bp-detail"><summary>{tr({ zh: '竞争逻辑与资料来源', en: 'Competition rationale & sources' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><p>{tr({ zh: 'XC大师与 AI_CFOP 已经提供训练与分析能力，市场也有成熟的免费计时器和教程。魔方根把内容触达、专业教学和日常工具结合起来：约 50 万关注提供推广渠道，计时器与训练器承接持续练习，个人与企业会员承接专业帮助和教学服务。', en: 'Existing competitors provide training and analysis alongside mature free timers and lessons. CubeRoot combines distribution, teaching and daily tools: an audience supports promotion, tools support practice, and memberships support specialist and educator services.' })}</p><p>{tr({ zh: '竞品按 2026-10-02 官方网站或商店介绍整理，未做性能优劣测试，不以关注数推断其用户或收入。生态还包括 CubeSkills、J Perm、csTimer、CubingApp 和 GAN CubeStation，分别覆盖教程、计时、数据与智能训练。', en: 'Descriptions use official sites or listings checked on 2026-10-02, not performance comparisons or follower-based revenue estimates. The ecosystem also includes CubeSkills, J Perm, csTimer, CubingApp and GAN CubeStation.' })}</p><div className="bp-source-links">{[['https://www.cubeskills.com/','CubeSkills'],['https://jperm.net/','J Perm'],['https://cstimer.net/','csTimer'],['https://cubingapp.com/','CubingApp'],['https://cubestation.com/zh/','GAN CubeStation']].map(([href,label])=><a href={href} key={href} target="_blank" rel="noopener noreferrer">{label}<ArrowUpRight size={14} aria-hidden /></a>)}</div></div></details>
     </section>
 
     <section id="bp-advantages" className="overview-section overview-wrap" aria-labelledby="overview-advantage-title">
       <p className="overview-kicker">{tr({ zh: '03 / 优势与壁垒', en: '03 / Advantages & defensibility' })}</p>
-      <h2 id="overview-advantage-title">{tr({ zh: '从内容走到产品，\n把触达变成长期关系。', en: 'From content to product.\nFrom discovery to lasting use.' })}</h2>
-      <div className="overview-audience-proof"><strong>{tr({ zh: '约 50 万', en: '~500K' })}</strong><div><p>{tr(CREATOR_AUDIENCE.summary)}</p><span>{tr({ zh: '本人 2026 年 10 月确认；平台间未去重，不等于活跃用户、触达量或付费客户。', en: 'Owner-confirmed in October 2026; not deduplicated, and not active users, reach or paying customers.' })}</span></div></div>
-      <div className="overview-advantage-grid">{[
-        { Icon: Users, title: { zh: '已有内容触达基础', en: 'An existing audience' }, body: { zh: '可以通过自己的专题内容邀请试用者，直接获得训练问题和使用反馈；能否降低获客成本，要按真实到访、激活与留存核算。', en: 'Use focused content to recruit testers and collect feedback. Any acquisition-cost advantage must be measured through real visits, activation and retention.' }, proof: { zh: '验证：内容带来多少实际练习者', en: 'Check: actual practitioners recruited' } },
-        { Icon: BookOpen, title: { zh: '教学与行业理解', en: 'Teaching & domain knowledge' }, body: { zh: '参赛、课程设计、公式库与著作积累，帮助把“哪里做得慢”解释成“下一步怎么练”，而不只给用户一个分数。', en: 'Competition, course design, algorithm work and authorship help turn analysis into understandable next practice steps.' }, proof: { zh: '验证：用户是否理解并完成练习', en: 'Check: understood and completed practice' } },
-        { Icon: Code2, title: { zh: '可体验的技术积累', en: 'Usable technical work' }, body: { zh: '已有求解、状态可视化、复盘和数据工具，可承接内容中的具体练习。AI 提高开发效率，算法正确性与稳定交付仍需持续维护。', en: 'Solvers, visualisation, reconstruction and data tools can support exercises introduced in content. AI helps development; correctness and reliability still require work.' }, proof: { zh: '验证：能否稳定完成真实任务', en: 'Check: reliable completion of real tasks' } },
-        { Icon: ChartNoAxesColumnIncreasing, title: { zh: '逐步累积的服务经验', en: 'Service experience built over time' }, body: { zh: '未来壁垒来自持续有效的教学内容、用户复练习惯、授权范围内的训练反馈与机构工作流程。公开 WCA 数据和通用 AI 不称为独占资产。', en: 'Potential defensibility comes from effective content, practice habits, appropriately authorised feedback and educator workflows—not exclusive ownership of public WCA data or general AI.' }, proof: { zh: '验证：重复使用、反馈质量与机构续用', en: 'Check: repeat use, feedback and educator retention' } },
-      ].map(({ Icon, title, body, proof }) => <article data-site-surface="panel" key={title.en}><Icon size={26} aria-hidden /><h3>{tr(title)}</h3><p>{tr(body)}</p><span>{tr(proof)}</span></article>)}</div>
-      <p className="overview-intro">{tr({ zh: '目前具备的是这几项能力的组合优势。接下来要用真实留存与服务效果，把优势逐步变成壁垒；不能仅凭功能数量或粉丝数量断言竞争已经结束。', en: 'Today’s advantage is the combination of these capabilities. Real retention and service outcomes must turn that starting point into defensibility.' })}</p>
+      <h2 id="overview-advantage-title">{tr({ zh: '从内容触达，\n走到长期关系。', en: 'From content discovery\nto lasting relationships.' })}</h2>
+      <div className="bp-moat-grid">{ADVANTAGES.map(({ Icon, title, tagline, body }, index) => <article data-site-surface="panel" key={title.en}><span className="bp-moat-index">0{index+1}</span><span className="bp-icon"><Icon size={30} strokeWidth={1.4} aria-hidden /></span><h3>{tr(title)}</h3><p>{tr(tagline)}</p><details><summary>{tr({ zh: '优势依据', en: 'Supporting work' })}<ChevronDown size={15} aria-hidden /></summary><p>{tr(body)}</p></details></article>)}</div>
+      <p className="overview-small">{tr(CREATOR_AUDIENCE.summary)}{tr({ zh: '，本人 2026 年 10 月确认，平台间未去重。组合优势通过真实使用与服务效果逐步积累为壁垒。', en: ', owner-confirmed in October 2026 and not deduplicated. Retention and useful delivery must turn the combined starting point into defensibility.' })}</p>
       <AppLink href="/achievements" prefetch={false} className="overview-text-link">{tr({ zh: '查看已做出的原创工作', en: 'Inspect the original work' })}<ArrowUpRight size={16} aria-hidden /></AppLink>
     </section>
   </>;
