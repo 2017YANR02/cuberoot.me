@@ -177,6 +177,32 @@
   scrollbar-gutter: stable;
 }
 
+/* Solo/online scrambles use their full natural height. Equal spare space
+   above and below keeps short scrambles from shifting the readout; long ones
+   grow the canvas instead of scrolling or overlapping the time/cube. */
+.timing-surface--solo,
+.timing-surface--net {
+  display: grid;
+  grid-template-rows: minmax(min-content, 1fr) auto minmax(calc(var(--timer-cube-h) + 24px), 1fr);
+  align-items: stretch;
+  flex-basis: auto;
+}
+
+:is(.timing-surface--solo, .timing-surface--net) .timing-surface-scramble-top {
+  position: static;
+  grid-row: 1;
+  align-self: start;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  scrollbar-gutter: auto;
+  padding-bottom: 12px;
+}
+
+:is(.timing-surface--solo, .timing-surface--net) .timing-surface-core {
+  grid-row: 2;
+}
+
 .timing-surface .timer-display.holding {
   color: var(--timer-holding, var(--accent));
 }
