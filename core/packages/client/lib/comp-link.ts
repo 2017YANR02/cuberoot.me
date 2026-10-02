@@ -1,6 +1,7 @@
 // Ported from packages/client-vite/src/utils/comp_link.ts.
 // 比赛页内部链接 + WCA URL anchor 解析. compLinkProps tweaked for Next: returns
 // `href` (next/link) instead of `to` (react-router).
+import type { CompResultLocation } from '@cuberoot/shared/wca-comp-link';
 import { apiUrl } from './api-base';
 import { statsUrl } from './stats-base';
 
@@ -10,11 +11,7 @@ export interface CompLinkOpts {
   view?: string;
 }
 
-export interface CompResultLocation { eventId: string; roundId: string; number: number }
-
-export function compResultHref(compId: string, result: CompResultLocation): string {
-  return `/wca/comp/${encodeURIComponent(compId)}/result/${encodeURIComponent(result.eventId)}/${encodeURIComponent(result.roundId)}/${result.number}`;
-}
+export { compResultHref, type CompResultLocation } from '@cuberoot/shared/wca-comp-link';
 
 export function parseCompResultPath(path: string): CompResultLocation | null {
   const match = /\/comp\/[^/]+\/result\/([a-z0-9]+)\/([a-z0-9]+)\/([1-9]\d*)\/?$/.exec(path);

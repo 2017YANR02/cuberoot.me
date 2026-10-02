@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fetchCubingCompetitions, fetchCubingCompetitors, type CubingCompetition } from '@cuberoot/shared/cubing-live';
 import { fetchCubingAttempts } from '../src/utils/cubing_proxy';
 import { scanComp, isChinaInWindow, suppressAdjudicatedRecordPrs } from '../src/monitors/cubing_record';
+import { siteCompUrlFromCubingAlias } from '../src/monitors/config';
 import { formatCompMessage } from '../src/monitors/cubing_comp';
 import fixture from './fixtures/cubing-live-xian.json';
 
@@ -75,6 +76,18 @@ describe('cubing.com migration consumers', () => {
     expect(events.find(event => event.uid === `cubing-${id}-sr`)).toMatchObject({ tag: 'NR', roundNumber: 3, personRegion: 'CN', attemptResult: 281 });
     expect(events.find(event => event.uid === `cubing-${id}-na`)).toMatchObject({ tag: 'PR', attemptResult: 369 });
     expect((await scanComp(comp, new Set())).some(event => event.tag === 'PR')).toBe(false);
+  });
+  it('links record notices to the result modal using the competitor number and final round ID', async () => {
+    mockResults(true);
+    const events = await scanComp(comp, new Set(['樊轶恒']));
+    const record = events.find(event => event.tag === 'NR')!;
+    expect(record.personNumber).toBe(3);
+    expect(record.roundId).toBe('f');
+    expect(siteCompUrlFromCubingAlias('Beijing-Autumn-Rivalry-2026', 'WCA', '777', 2, true,
+      'BeijingAutumnRivalry2026', { eventId: '777', roundId: 'f', number: 112 }))
+      .toBe('https://cuberoot.me/zh/wca/comp/BeijingAutumnRivalry2026/result/777/f/112');
+    expect(siteCompUrlFromCubingAlias(comp.alias, 'other', '777', 2, true, undefined,
+      { eventId: '777', roundId: 'f', number: 112 })).toBeNull();
   });
   it('does not downgrade an adjudicated FWR to an upstream personal record', () => {
     const prs = [{

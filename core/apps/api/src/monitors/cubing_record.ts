@@ -41,6 +41,7 @@ interface InternalEvent {
   attemptResult: number;
   eventId: string;
   roundId: string;
+  personNumber?: number;
   roundNumber?: number; // 本站 1-based 轮次序号(深链 ?round=N);缺失时链接只带 event
   personName: string;
   personRegion: string;
@@ -134,6 +135,7 @@ function iterRecordEvents(rows: LiveRow[], users: Record<number, WsUser>, comp: 
         attemptResult: value,
         eventId: row.e,
         roundId: row.r,
+        personNumber: row.n,
         roundNumber: roundNumByKey.get(`${row.e}|${row.r}`),
         personName: user.name || '',
         personRegion: user.region || '',
@@ -189,6 +191,7 @@ function iterPrEvents(prRows: PrRow[], comp: CubingComp, roundNumByKey: Map<stri
       attemptResult: value,
       eventId,
       roundId: row.r || '',
+      personNumber: row.n,
       roundNumber: roundNumByKey.get(`${eventId}|${row.r || ''}`),
       personName: row._name || '',
       personRegion: row._region || 'China',
@@ -276,11 +279,12 @@ function toRecordEvent(ev: InternalEvent): RecordEvent {
     comp_name: ev.compName,
     comp_name_en: ev.compNameEn,
     comp_iso2: ev.compIso2,
-    // WCA 认证赛链接指向自有站(alias 去横杠=WCA id),带 event + 本站轮次序号深链。
-    // roundNumber 由 data-events 里 rs 的位置推出(cubing 的 roundId 非序号);
+    // WCA 认证赛用本站轮次 ID + 选手编号直接打开成绩弹窗。
+    // 选手编号缺失时保留项目/轮次页链接;
     // 中国比赛落 /zh;alias 缺失 / 民间赛(type≠'WCA',自有站无该比赛页)回退 cubing.com live 页。
     url:
-      siteCompUrlFromCubingAlias(ev.slug, ev.compType, ev.eventId, ev.roundNumber ?? null, isChineseRegion(ev.compIso2), ev.wcaCompetitionId)
+      siteCompUrlFromCubingAlias(ev.slug, ev.compType, ev.eventId, ev.roundNumber ?? null, isChineseRegion(ev.compIso2), ev.wcaCompetitionId,
+        ev.personNumber ? { eventId: ev.eventId, roundId: ev.roundId, number: ev.personNumber } : undefined)
       ?? `https://cubing.com/competition/${ev.slug}/live?eventId=${encodeURIComponent(ev.eventId)}&roundNumber=${ev.roundNumber ?? 1}`,
   };
 }
