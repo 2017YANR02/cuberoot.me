@@ -6,7 +6,7 @@
 // shape (see ../cube555/daemon.ts), but for 3x3 god's-number optimal solving.
 //
 // Why a child process (not in-proc in the Hono server):
-//   • isolates ~1GB of table RAM from the 700MB API process,
+//   • isolates variant-dependent table RAM (opt8 is ~7.25 GiB) from the API,
 //   • the emscripten build leaks pthread/proxying resources and throws "unwind"
 //     after a few thousand solves — the parent just respawns this child.
 //
@@ -26,10 +26,11 @@
 //   CUBEOPT_ARTIFACT_DIR  required API-owned store containing current.json and
 //                         one immutable, variant-consistent module / wasm / table bundle
 //   CUBEOPT_THREADS       solve thread-pool size (default 2)
-import { openSync, readSync, closeSync, fstatSync } from 'node:fs';
+import { openSync, readSync, closeSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { createInterface } from 'node:readline';
 import { loadCubeoptArtifact } from './artifact.mjs';
+import { checkCubeoptLoadMemory, requiredCubeoptLoadBytes, CUBEOPT_LOAD_FLOOR_BYTES } from './memory-budget.ts';
 
 const artifact = await loadCubeoptArtifact(process.env.CUBEOPT_ARTIFACT_DIR);
 const MJS = artifact.modulePath;
@@ -48,6 +49,9 @@ function cleanScramble(raw) {
 }
 
 async function makeSolver() {
+  // Reject before allocating the large WASM heap, including during deploy smoke.
+  const sz = statSync(DAT).size;
+  checkCubeoptLoadMemory(requiredCubeoptLoadBytes(sz));
   const state = { last: '', sol: '' };
   const createModule = (await import(pathToFileURL(MJS).href)).default;
   const m = await createModule({
@@ -60,15 +64,17 @@ async function makeSolver() {
   });
   const base = Number(m._get_mem_ptr());
   const fd = openSync(DAT, 'r');
-  const sz = fstatSync(fd).size;
   const CH = 64 * 1024 * 1024;
   const tmp = Buffer.allocUnsafe(CH);
-  for (let off = 0; off < sz;) {
-    const g = readSync(fd, tmp, 0, Math.min(CH, sz - off), off);
-    m.HEAPU8.set(tmp.subarray(0, g), base + off);
-    off += g;
-  }
-  closeSync(fd);
+  try {
+    for (let off = 0; off < sz;) {
+      checkCubeoptLoadMemory(CUBEOPT_LOAD_FLOOR_BYTES);
+      const g = readSync(fd, tmp, 0, Math.min(CH, sz - off), off);
+      if (!g) throw new Error('CubeOpt table ended before its declared size');
+      m.HEAPU8.set(tmp.subarray(0, g), base + off);
+      off += g;
+    }
+  } finally { closeSync(fd); }
   m.init(0, THREADS); // 0 = table already in heap
   return (scr) => {
     state.last = '';
