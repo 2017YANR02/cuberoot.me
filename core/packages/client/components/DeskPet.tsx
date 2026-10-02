@@ -349,9 +349,18 @@ export default function DeskPet() {
   // Close the search overlay on language switch — its content stays untranslated
   // otherwise, which is confusing.
   useEffect(() => {
-    const close = () => setSearchOpen(false);
+    // The destination I18nProvider can emit during render. Close after that
+    // render, just like the deferred language label update above.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const close = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => setSearchOpen(false), 0);
+    };
     i18n.on('languageChanged', close);
-    return () => { i18n.off('languageChanged', close); };
+    return () => {
+      i18n.off('languageChanged', close);
+      clearTimeout(timer);
+    };
   }, []);
 
   // Keep the pet and its attached tools above the mobile search controls.
