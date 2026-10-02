@@ -27,7 +27,7 @@ if (!i18n.isInitialized) {
       zh: { translation: zh },
       en: { translation: en },
     },
-    lng: typeof window !== 'undefined' && /^\/zh(?:\/|$)/.test(window.location.pathname) ? 'zh' : 'en',
+    lng: typeof window !== 'undefined' && /^\/(?:zh(?:\/|$)|auth\/miniprogram(?:\/|$))/.test(window.location.pathname) ? 'zh' : 'en',
     fallbackLng: 'en',
     interpolation: { escapeValue: false },
     // Resources are bundled inline, so init synchronously: with the default
