@@ -16,6 +16,11 @@ const isProd = process.env.NODE_ENV === "production";
 const isVercel = process.env.VERCEL === "1";
 
 const nextConfig: NextConfig = {
+  // Vercel's JS TypeScript worker has repeatedly exhausted the build container
+  // at "Running TypeScript" (OOM / 45-minute timeout). The build command runs
+  // our native tsgo typecheck AFTER Next generates .next/types, and any error
+  // fails the command before Vercel can publish. Standalone keeps Next's check.
+  typescript: { ignoreBuildErrors: isVercel },
   ...(!isProd && process.env.NEXT_DEV_DIST_DIR && { distDir: process.env.NEXT_DEV_DIST_DIR }),
   // Self-contained server bundle for systemd `next start` on next.cuberoot.me
   // (prod only). In dev, `output: standalone` + `outputFileTracingRoot`
