@@ -12,6 +12,42 @@
 .overview-primary { display: inline-flex; align-items: center; gap: 20px; background: var(--primary); color: var(--primary-foreground); border-radius: 999px; padding: 14px 22px; text-decoration: none; font-size: 13px; font-weight: 600; margin-top: 14px; }
 .overview-page a:focus-visible, .overview-page button:focus-visible { outline: 3px solid var(--ring); outline-offset: 4px; }
 .overview-reading { color: var(--muted-foreground); font-size: 11px; margin-top: 24px; }
+.overview-funding-request { display: flex; align-items: center; gap: 10px; color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; margin-top: 20px; line-height: 1.7; }
+.overview-cost-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-block: 30px; }
+.overview-cost-totals > div { border-left: 3px solid var(--accent); padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+.overview-cost-totals span { font-size: 12px; color: var(--muted-foreground); }
+.overview-cost-totals strong { font-size: clamp(29px, 4vw, 44px); font-weight: 500; letter-spacing: -.045em; }
+.overview-cost-totals small { font-size: 11px; font-weight: 400; color: var(--muted-foreground); margin-left: 12px; letter-spacing: 0; }
+.overview-cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-block: 36px 24px; }
+.overview-cost-list { margin: 0; }
+.overview-cost-list > div { display: flex; justify-content: space-between; gap: 18px; padding-block: 15px; border-top: 1px solid var(--border-default); }
+.overview-cost-list dt, .overview-cost-list dd { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+.overview-cost-list dt { flex: 1; min-width: 0; }
+.overview-cost-list dd { text-align: right; flex-shrink: 0; }
+.overview-cost-list strong { font-size: 12px; font-weight: 550; }
+.overview-cost-list span { font-size: 10px; color: var(--muted-foreground); line-height: 1.7; overflow-wrap: anywhere; }
+.overview-equipment-pictures { display: flex; gap: 15px; align-items: center; margin-bottom: 20px; }
+.overview-equipment-pictures img { display: block; width: calc((100% - 30px) / 3); height: 110px; object-fit: contain; }
+.overview-funding-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-block: 30px; }
+.overview-funding-cards article { border: 1px solid var(--border-default); border-radius: 16px; background: var(--card); padding: 24px; }
+.overview-funding-cards span { color: var(--accent); font-size: 12px; font-weight: 600; }
+.overview-funding-cards strong { display: block; font-size: 35px; font-weight: 500; letter-spacing: -.04em; margin-block: 12px; }
+.overview-funding-cards p, .overview-funding-reason p { font-size: 13px; color: var(--muted-foreground); line-height: 1.9; margin: 0; }
+.overview-budget-scroll { max-width: 100%; }
+.overview-budget { width: 100%; border-collapse: collapse; font-size: 12px; }
+.overview-budget th, .overview-budget td { padding: 15px 14px; text-align: right; border-bottom: 1px solid var(--border-default); }
+.overview-budget th:first-child { text-align: left; }
+.overview-budget thead th { background: var(--card); font-weight: 600; }
+.overview-budget tbody th { font-weight: 550; }
+.overview-budget tbody th span { display: block; color: var(--muted-foreground); font-size: 10px; font-weight: 400; line-height: 1.8; margin-top: 6px; }
+.overview-budget td { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.overview-budget tfoot { font-weight: 650; }
+.overview-funding-reason { display: flex; align-items: flex-start; gap: 18px; margin-top: 26px; border-top: 1px solid var(--border-default); padding-top: 26px; }
+.overview-funding-reason > svg, .overview-review > svg { color: var(--accent); flex-shrink: 0; }
+.overview-review { display: flex; gap: 22px; background: var(--card); border: 1px solid var(--border-default); padding: 28px; border-radius: 16px; }
+.overview-review ul { list-style: none; padding: 0; margin: 20px 0; }
+.overview-review li { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.9; margin-block: 12px; }
+.overview-review li > svg { flex-shrink: 0; color: var(--accent); margin-top: 4px; }
 .overview-cover { margin: 0; }
 .overview-cover img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 8px 64px 8px 8px; }
 .overview-cover figcaption { color: var(--muted-foreground); font-size: 10px; margin-top: 10px; text-align: right; }
@@ -73,6 +109,11 @@
   .overview-business-grid { gap: 20px; }
 }
 @media (max-width: 600px) {
+  .overview-cost-grid, .overview-funding-cards { grid-template-columns: 1fr; gap: 24px; }
+  .overview-cost-totals { grid-template-columns: 1fr; gap: 24px; }
+  .overview-budget { min-width: 510px; }
+  .overview-review { padding: 20px; gap: 12px; }
+  .overview-review > svg { display: none; }
   .overview-wrap { width: calc(100% - 36px); }
   .overview-nav { gap: 12px; min-height: 78px; }
   .overview-actions { gap: 10px; }
@@ -105,6 +146,14 @@
   .overview-founder, .overview-market-grid, .overview-partner { gap: 28px; }
   .overview-product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .overview-product, .overview-roadmap li, .overview-market-fact, .overview-use-of-funds, .overview-business-grid article, .overview-cover { break-inside: avoid; }
+  .overview-cost-totals, .overview-funding-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .overview-cost-totals { grid-template-columns: 1fr 1fr; }
+  .overview-funding-cards article, .overview-cost-list > div, .overview-review, .overview-budget tr { break-inside: avoid; }
+  .overview-cost-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+  .overview-funding-cards article { padding: 16px; }
+  .overview-funding-cards strong { font-size: 28px; }
+  .overview-budget { min-width: 0; }
+  .overview-budget thead th { position: static; }
   .overview-page h2, .overview-page h3 { break-after: avoid; }
   .overview-page a { text-decoration: none; }
   .overview-footer { padding-block: 15px; }
