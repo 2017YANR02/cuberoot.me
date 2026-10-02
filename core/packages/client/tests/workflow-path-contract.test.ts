@@ -666,6 +666,21 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('limits Vercel rebuilds to the canonical frontend build inputs', () => {
+    const config = JSON.parse(readFileSync(join(REPO_ROOT, packagePath('client', 'vercel.json')), 'utf8')) as { ignoreCommand: string };
+    const expectedPaths = nextPaths
+      .filter((path) => !path.startsWith('ops/') && !path.startsWith('.github/'))
+      .map((path) => path.startsWith('!')
+        ? `:(exclude)${path.slice(1).replace(/\/\*\*$/, '')}`
+        : path.replace(/\/\*\*$/, ''));
+    const actualPaths = config.ignoreCommand.split(' HEAD -- ')[1]?.split(' || exit 1')[0]
+      .match(/'[^']*'|\S+/g)?.map((path) => path.replace(/^'|'$/g, ''));
+    expect(actualPaths).toEqual(expectedPaths);
+    expect(config.ignoreCommand).toContain('git -C ../../.. diff --quiet "$VERCEL_GIT_PREVIOUS_SHA"');
+    expect(actualPaths).toContain(':(exclude)core/packages/client/tests');
+    expect(actualPaths).not.toContain('.');
+  });
+
   it('shards the complete client suite without duplicating the isolated cross trainer test', () => {
     const workflow = readWorkflow('test.yml');
     expect(workflow).toContain('shard: [1, 2]');
