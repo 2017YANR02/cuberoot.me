@@ -15,7 +15,6 @@
  */
 
 import { is3x3TopLayerSet } from '@cuberoot/shared/alg';
-import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { mergeAdjacentMoves, renderMove, toMoveString, tokenizeMoves } from '@cuberoot/shared/alg-notation';
 import { algHtmlText, editAlgHtmlText, type AlgTextEdit } from '@/lib/alg_html';
 
@@ -83,12 +82,7 @@ export function simplifyAdjacentU(puzzle: string, alg: string): string {
  * 下两层保持原拿法；这不是完整魔方的等价变换，不能用于解法或播放器 setup。
  * 只处理末尾连续的 U/y（包括观察角度追加的 U），不碰内部转体或 F2L 换槽。
  */
-export function displayCaseScramble(puzzle: string, set: string, scramble: string, firstAlg?: string): string {
-  // F2L text follows the first visible solution, including after reordering or
-  // choosing a preferred alternative. Keep full setup/alg values for playback.
-  if (puzzle === '3x3' && set === 'f2l' && firstAlg?.trim()) {
-    return f2lPlayerSequence(displayCaseAlg(puzzle, set, firstAlg)).setup;
-  }
+export function displayCaseScramble(puzzle: string, set: string, scramble: string): string {
   scramble = canonicalizeAlgY2(simplifyAdjacentU(puzzle, scramble));
   if (!scramble || !is3x3TopLayerSet(puzzle, set)) return scramble;
   try {
@@ -219,17 +213,6 @@ export function caseViewAlg(alg: string, angle: CaseViewAngle): string {
   if (!alg || !prefix) return alg;
 
   return simplifyAdjacentU('3x3', `${prefix} ${alg.trimStart()}`);
-}
-
-/**
- * F2L 四朝向的公式会在末尾用 y 转体恢复拿法。完整取逆后，这个转体自然落到打乱
- * 开头：中心朝向随槽位变化，但正在练的仍是同一组红绿棱角块，且原公式可以精确还原。
- * 不能把首尾转体共轭掉；那会固定中心色，却把 FL 等槽位换成另一组实际棱角块。
- */
-export function f2lPlayerSequence(alg: string): { setup: string; alg: string } {
-  const trimmed = canonicalizeAlgY2(alg.trim());
-  if (!trimmed) return { setup: '', alg: '' };
-  return { setup: canonicalizeAlgY2(invertAlg(trimmed)), alg: trimmed };
 }
 
 /**

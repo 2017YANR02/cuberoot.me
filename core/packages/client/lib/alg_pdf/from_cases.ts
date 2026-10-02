@@ -122,9 +122,8 @@ export function algSheetFromCases(o: FromCasesOptions): AlgSheetInput {
           : subLabel,
         section: o.sectionOf?.(c),
         group: showGroups ? (groupLabel?.(sub) ?? sub ?? undefined) : undefined,
-        setup: setups && (setup || (puzzle === '3x3' && set === 'f2l' && picked[0]?.alg))
-          ? formatScrambleForEvent(puzzle, displayCaseScramble(puzzle, set, setup,
-            caseViewAlg(picked[0]?.alg ?? '', o.viewAngle ?? 'default'))) : undefined,
+        setup: setups && setup
+          ? formatScrambleForEvent(puzzle, displayCaseScramble(puzzle, set, setup)) : undefined,
         algs: picked.map(e => {
           const angled = caseViewAlg(e.alg, o.viewAngle ?? 'default');
           return formatScrambleForEvent(puzzle, displayCaseAlg(puzzle, set, angled));

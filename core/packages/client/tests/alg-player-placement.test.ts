@@ -61,12 +61,10 @@ describe('algorithm player placement', () => {
 
     expect(detail).toMatch(/displayedOrientations\.map\(\(\{ oriAlgs, oi \}\) => \{[\s\S]*?const orientedSetup = oriAdjustSetup\(caseObj\.setup, oi\);/);
     expect(detail).toContain("const selectedAlg = caseViewAlg(selectedEntry?.alg ?? '', effectiveViewAngle);");
-    expect(detail).toContain("const primaryAlg = caseViewAlg(oriAlgs[0]?.alg ?? '', effectiveViewAngle);");
-    expect(detail).toContain('const primarySequence = f2lPlayerSequence(primaryAlg);');
-    expect(detail).toMatch(/const playerAlg = useF2lOrientationGrid[\s\S]*?f2lPlayerSequence\(selectedAlg\)\.alg[\s\S]*?: selectedAlg;/);
-    expect(detail).toMatch(/const orientationSetup = useF2lOrientationGrid[\s\S]*?primarySequence\.setup[\s\S]*?: caseViewSetup\(orientedSetup, effectiveViewAngle\);/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{playerAlg\}[\s\S]*?setup=\{orientationSetup\}[\s\S]*?orientation=\{effectiveOrientation\}/);
-    expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup, primaryAlg\)/);
+    expect(detail).not.toContain('f2lPlayerSequence');
+    expect(detail).toContain('const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);');
+    expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\}[\s\S]*?setup=\{orientationSetup\}[\s\S]*?orientation=\{effectiveOrientation\}/);
+    expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup\)/);
     expect(detail).toContain('renderOrientationSetup={(setup) => (');
     expect(detail).not.toContain('{editor && <div hidden={effectiveViewAngle !== \'default\'}>{editor.setup}</div>}');
     expect(detail).not.toContain('inlinePlayer');
