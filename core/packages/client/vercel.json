@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "git -C ../../.. diff --quiet \"$VERCEL_GIT_PREVIOUS_SHA\" HEAD -- .node-version core/packages/client ':(exclude)core/packages/client/tests' core/apps/web core/packages/app-ui core/packages/event-icon core/packages/puzzle-render-core core/packages/puzzle-solvers core/packages/shared core/packages/stack-kernel/package.json core/packages/stack-kernel/pkg core/packages/timer-ui core/packages/vendor-sr-puzzlegen core/packages/visualcube core/package.json core/pnpm-lock.yaml core/pnpm-workspace.yaml core/tsconfig.base.json core/patches core/scripts/resolve-workspace-path.mjs core/scripts/build-cubing-worker.mjs || exit 1",
+  "ignoreCommand": "node ../../scripts/vercel-ignore-build.ts",
   "functions": {
     "app/api/page-access/route.ts": {
       "regions": [
