@@ -86,6 +86,7 @@ const TOOL_GUIDE = `Read tools (JSON objects in calls):
 records {event:"333",region:"world" or ISO2}: current single/average record VALUES, all tied holders. This cannot answer record counts, streaks or how long records stood; use statistics for those questions and do not substitute current holders.
 find_person {query:name}: resolve name to WCA IDs. Never guess an ID. Ask which person if ambiguous.
 person {wcaId,event:"333" or "all",progress:false}: profile, selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
+person_countries {wcaId}: complete countries/regions where ONE person has officially competed, grouped by competition host location. Use for personal travel/participation questions, never substitute a global most_visited_countries leaderboard or personal bests.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,limit:1..20}: find competitions and IDs; query matches name/city/id. Use English place/name keywords for this index.
 scrambles {compId,event:"333",round:"f"}: official scramble groups. First resolve unknown competition IDs.
@@ -110,7 +111,9 @@ export async function answerSiteQuestion(
   // A signed-in identity is relevant only to an explicit first-person request.
   // Supplying it on every turn can override the person discussed in history.
   await emit?.({type:'status',status:{phase:'planning'}});
-  const selfWcaId=/我的|我自己|我本人|\bmy\b/i.test(question) ? viewerWcaId : undefined;
+  const asksAboutSelf=/我的|我自己|我本人|我(?:去过|去|参加过|参加|参赛|比过)|\bmy\b|\b(?:have|did) I\b|\bI (?:have|competed|visited)\b/i.test(question);
+  const selfWcaId=asksAboutSelf ? viewerWcaId : undefined;
+  const asksForPersonalCountries=asksAboutSelf && /国家|地区|\bcountr(?:y|ies)\b|\bregions?\b/i.test(question) && /去过|参加|参赛|比赛|\bcompet(?:e|ed|ing|itions?)\b|\bvisited\b/i.test(question) && !/最多|排名|排行榜|\bmost\b|\brank(?:ing)?\b/i.test(question);
   const requestedLimit=requestedAssistantLimit(question);
   const asksForAllPersonalRecords=/(?:全部|所有|各项|全项目).{0,30}(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)|官方成绩)|(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)).{0,30}(?:全部|所有|各项|全项目)|\ball\b.{0,40}\b(?:pbs?|prs?|personal bests?|personal records?)\b|\b(?:pbs?|prs?|personal bests?|personal records?)\b.{0,40}\ball\b/i.test(question);
   const reconReference=question.match(/(?:复盘|reconstruction)\s*(?:(?:编号|ID)\s*)?[#：:]?\s*(\d+)(?![\d.年月日场次])(?:\s*(秒|毫秒|年|月|日|场|次|seconds?\b|s\b))?/i);
@@ -139,6 +142,14 @@ export async function answerSiteQuestion(
     return pending;
   };
   const evidence: Array<{id:string;tool:unknown;data:unknown}> = [];
+  // This explicit personal question has a fixed public data source. Resolve
+  // "I" from the verified identity before any planner can select a leaderboard.
+  if (asksForPersonalCountries) {
+    if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你在哪些国家或地区参加过比赛。',en:'Please provide your WCA ID or competitor name so I can look up the countries or regions where you competed.'}[lang],sources:[],artifacts:[]};
+    await emit?.({type:'status',status:{phase:'querying',tool:'person_countries'}});
+    const result=await assistantStage('tool',()=>runDataTool({tool:'person_countries',wcaId:selfWcaId},lang,read),0);
+    return {answer:result.factualSummary+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts};
+  }
   // Directory discovery should not cost a separate model round. The same
   // published catalog still validates every selected statistics ID in the tool.
   let statisticsCatalog: Array<[string,string]> = [];

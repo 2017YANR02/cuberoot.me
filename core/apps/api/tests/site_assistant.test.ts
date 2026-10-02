@@ -16,6 +16,25 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it.each(['我去过哪些国家比赛','我参加过哪些国家的比赛','Which countries have I competed in?'])('answers personal countries from the verified viewer instead of the planner or history: %s',async question=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      const url=String(input);
+      if(url.includes('/meta')) return Response.json({lastImportedAt:'2026-10-01'});
+      expect(url).toBe('https://api.cuberoot.me/v1/wca/person-page?wcaId=2017YANR02');
+      return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'}},results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'}],comps:[{id:'A',country_iso2:'CN'},{id:'B',country_iso2:'JP'}]});
+    });
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'Max Park 的全部 PB'}],'2017YANR02');
+    expect(result.answer).toContain('颜瑞民在 2 个国家或地区参赛');
+    expect(result.artifacts).toEqual([{kind:'table',title:'参赛国家和地区',columns:['国家或地区','比赛数'],rows:[['中国','1'],['日本','1']],links:undefined}]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it('asks for identity when personal countries are requested without a linked WCA ID',async()=>{
+    const fetcher=vi.fn<typeof fetch>();
+    const result=await answerSiteQuestion('我去过哪些国家比赛','zh',config,AbortSignal.timeout(5000),fetcher);
+    expect(result.answer).toContain('请提供你的 WCA ID');
+    expect(result.artifacts).toEqual([]);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it('reads an explicitly numbered reconstruction even when the planner treats its ID as seconds',async()=>{
     const fetcher=vi.fn<typeof fetch>()
       .mockResolvedValueOnce(modelResponse({calls:[{tool:'recons',value:456,limit:1}]}))

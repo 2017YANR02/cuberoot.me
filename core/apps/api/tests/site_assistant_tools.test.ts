@@ -2,6 +2,16 @@ import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
 describe('assistant public data adapters',()=>{
+  it('groups all attended competitions by host country, deduplicates rounds and preserves missing-location limits',async()=>{
+    const result=await runDataTool({tool:'person_countries',wcaId:'2017YANR02'},'en',async url=>url.includes('/meta')?{lastImportedAt:'2026-10-01'}:{
+      profile:{person:{name:'Ruimin Yan (颜瑞民)',country_iso2:'CN'}},
+      results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'},{competition_id:'C'},{competition_id:'Missing'}],
+      comps:[{id:'A',country_iso2:'JP'},{id:'B',country_iso2:'JP'},{id:'C',country_iso2:'US'},{id:'Unattended',country_iso2:'CN'}],
+    });
+    expect(result.artifacts[0]).toMatchObject({rows:[['Japan','2'],['United States','1']]});
+    expect(result.evidence).toMatchObject({updated:'2026-10-01',unknownCompetitions:1,countries:[{iso2:'JP',competitions:2},{iso2:'US',competitions:1}]});
+    expect(result.factualSummary).toContain('1 competitions lack a valid host location');
+  });
   it('shows all tied record holders, filters invalid values and uses actual freshness',async()=>{
     const row={e:'333',t:'s',v:276,l:'WR',p:'2021ZAJD03',pn:'One',c:'C2026',cn:'Comp 2026',d:'2026-01-01',a:null};
     const read=vi.fn(async()=>({updated:'2026-09-28',rows:[row,{...row,p:'2019WANY36',pn:'Two'},{...row,v:280},{...row,v:-1},{...row,t:'a',v:351}]}));
