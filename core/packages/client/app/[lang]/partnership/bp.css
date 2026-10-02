@@ -188,3 +188,35 @@
   .overview-page a { text-decoration: none; }
   .overview-footer { padding-block: 15px; }
 }
+
+/* Business plan: a short summary followed by complete, navigable chapters. */
+.bp-page [id] { scroll-margin-top: 24px; }
+.bp-page .overview-competitors td { white-space: normal; }
+.bp-toc { display: flex; flex-wrap: wrap; gap: 10px 20px; padding-block: 25px; border-bottom: 1px solid var(--border-default); }
+.bp-toc a { color: var(--muted-foreground); font-size: 12px; line-height: 1.8; text-decoration: none; }
+.bp-toc a:hover { color: var(--accent); }
+.bp-detail-grid { margin-block: 28px; }
+.bp-detail-grid article h3 { margin-top: 0; }
+.bp-detail-grid article p { margin-bottom: 0; font-size: 14px; line-height: 2; }
+.bp-conclusion { border-left: 3px solid var(--accent); padding: 8px 0 8px 22px; font-size: 14px; line-height: 2; color: var(--muted-foreground); }
+.bp-subscriptions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-block: 32px; }
+.bp-subscriptions article { background: var(--card); border: 1px solid var(--accent); border-radius: 16px; padding: 28px; }
+.bp-subscriptions h3 { margin-top: 0; }
+.bp-subscriptions ul { padding-left: 20px; font-size: 14px; line-height: 2; }
+.bp-subscriptions p { font-size: 13px; line-height: 1.9; color: var(--muted-foreground); margin-bottom: 0; }
+.bp-source-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-block: 25px; }
+.bp-source-links a { display: flex; gap: 12px; align-items: center; color: var(--accent); font-size: 13px; line-height: 1.8; text-decoration: none; }
+.bp-source-links svg { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .bp-subscriptions, .bp-source-links { grid-template-columns: 1fr; }
+  .bp-subscriptions article { padding: 22px; }
+}
+@media print {
+  .bp-toc { gap: 7px 14px; }
+  .bp-toc a { font-size: 10px; }
+  .bp-detail-grid article, .bp-subscriptions article { break-inside: auto; }
+  .bp-detail-grid article h3, .bp-subscriptions h3 { break-after: avoid; }
+  .bp-detail-grid article p { font-size: 11px; line-height: 1.8; }
+  .bp-subscriptions { grid-template-columns: 1fr 1fr; }
+  .bp-subscriptions article { padding: 20px; }
+}

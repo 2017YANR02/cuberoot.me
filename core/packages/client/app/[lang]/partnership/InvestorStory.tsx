@@ -49,10 +49,10 @@ const COMPETITORS = [
 
 export default function InvestorStory() {
   return <>
-    <section className="overview-section overview-wrap" aria-labelledby="overview-market-title">
+    <section id="bp-market" className="overview-section overview-wrap" aria-labelledby="overview-market-title">
       <p className="overview-kicker">{tr({ zh: '01 / 先理解这个需求', en: '01 / Understand the need' })}</p>
-      <h2 id="overview-market-title">{tr({ zh: '学会还原之后，\n还有一条持续进步的路。', en: 'The first solve is a beginning.\nProgress takes practice.' })}</h2>
-      <p className="overview-intro">{tr({ zh: '可以把它理解为一种需要练习和反馈的技能：教程告诉人怎么做，训练记录让人看到变化，复盘帮助人找到下一步该练什么。CubeRoot 希望把这几件事连接起来，让学习之后的练习更有方向。', en: 'Think of cubing as a skill that needs practice and feedback. Lessons explain what to do, records reveal change, and solve analysis helps people choose what to practise next. CubeRoot aims to connect these steps.' })}</p>
+      <h2 id="overview-market-title">{tr({ zh: '每天练习，反复记录，\n持续寻找进步。', en: 'Practise, record, improve.\nRepeat over time.' })}</h2>
+      <p className="overview-intro">{tr({ zh: '对持续训练的选手，魔方是一项长期练习的竞技技能。选手反复完成还原、记录时间、研究解法和练习公式，争取更快、更稳定的成绩。计时器与训练器因此具有高频、反复使用的场景；教学、复盘和专业服务为练习提供方向。CubeRoot 将这些任务连接起来，服务从学会还原到长期训练的用户。', en: 'For active competitors, cubing is a skill practised over time. Repeated solves, timing, solution study and algorithm practice target speed and consistency. Timers and trainers therefore have recurring use cases, while lessons, reconstruction and specialist services guide practice. CubeRoot connects these tasks from early learning to sustained training.' })}</p>
       <ol className="overview-learning-path">{[
         { title: { zh: '第一次还原', en: 'First solve' }, body: { zh: '需要讲得明白的教程', en: 'Clear explanations' } },
         { title: { zh: '练得更稳定', en: 'Consistent practice' }, body: { zh: '需要记录与练习方法', en: 'Records and practice methods' } },
@@ -62,11 +62,13 @@ export default function InvestorStory() {
       <div className="overview-industry-note"><strong>1,864</strong><p>{tr({ zh: '2025 年 WCA 世界锦标赛的参赛人数。魔方已经有跨地区的赛事与公开成绩体系，相关产品也覆盖教程、计时、训练和分析。这个数字说明赛事规模，不代表本站用户或付费市场。', en: 'Competitors at the 2025 WCA World Championship. Cubing has international events, public results and products spanning lessons, timing and analysis. This describes one event, not CubeRoot users or the paying market.' })} <a href="https://www.worldcubeassociation.org/competitions/WC2025" target="_blank" rel="noopener noreferrer">{tr({ zh: 'WCA 官方来源 ↗', en: 'Official WCA source ↗' })}</a></p></div>
     </section>
 
-    <section className="overview-section overview-wrap" aria-labelledby="overview-competition-title">
+    <section id="bp-competition" className="overview-section overview-wrap" aria-labelledby="overview-competition-title">
       <p className="overview-kicker">{tr({ zh: '02 / 正面回答竞争', en: '02 / Address competition' })}</p>
       <h2 id="overview-competition-title">{tr({ zh: '有竞品。\n所以必须有清楚的切入点。', en: 'There are competitors.\nWe need a clear starting point.' })}</h2>
-      <p className="overview-intro">{tr({ zh: 'XC大师与 AI_CFOP 已经提供训练与分析能力。AI、计时和公式也不是任何一家独占的功能。CubeRoot 要验证的竞争路径，是把已有内容受众、教学经验与可使用的工具结合起来，服务从学会还原到持续训练的人。', en: 'XC Master and AI_CFOP already offer training and analysis. AI, timing and algorithms are not exclusive to one provider. CubeRoot’s competitive thesis is to combine an existing audience, teaching experience and usable tools for people progressing from their first solves to sustained practice.' })}</p>
-      <div className="sticky-scroll sticky-scroll-mobile overview-budget-scroll"><table className="sticky-thead overview-budget overview-competitors"><thead><tr><th scope="col">{tr({ zh: '产品', en: 'Product' })}</th><th scope="col">{tr({ zh: '公开介绍的重点', en: 'Publicly described focus' })}</th><th scope="col">{tr({ zh: '对 CubeRoot 的启示', en: 'What this means for CubeRoot' })}</th></tr></thead><tbody>
+      <p className="overview-intro">{tr({ zh: 'XC大师与 AI_CFOP 已经提供训练与分析能力，市场也有成熟的免费计时器和教程。CubeRoot 的切入点是内容触达、专业教学和日常工具共同构成的服务体系：约 50 万关注提供推广渠道，计时器与训练器承接持续练习，个人与企业会员承接专业帮助和教学服务。竞争重点是用户长期选择与服务质量，而不是单纯增加功能数量。', en: 'XC Master and AI_CFOP offer training and analysis alongside established free timers and lessons. CubeRoot combines content distribution, specialist teaching and daily tools: an audience supports promotion, timing and trainers support practice, and memberships support specialist and educator services. Compete on lasting user choice and delivery quality.' })}</p>
+      {/* StickyScrollGuard can add its measured overflow class before hydration.
+          This wrapper's class is intentionally managed outside React. */}
+      <div className="sticky-scroll sticky-scroll-mobile overview-budget-scroll" suppressHydrationWarning><table className="sticky-thead overview-budget overview-competitors"><thead><tr><th scope="col">{tr({ zh: '产品', en: 'Product' })}</th><th scope="col">{tr({ zh: '公开介绍的重点', en: 'Publicly described focus' })}</th><th scope="col">{tr({ zh: '对 CubeRoot 的启示', en: 'What this means for CubeRoot' })}</th></tr></thead><tbody>
         {COMPETITORS.map(({ name, url, focus, implication }) => (
           <tr key={name}>
             <th scope="row">
@@ -85,7 +87,7 @@ export default function InvestorStory() {
       <p className="overview-small">{tr({ zh: '市场也已有：', en: 'The wider ecosystem includes: ' })}<a href="https://www.cubeskills.com/" target="_blank" rel="noopener noreferrer">CubeSkills</a> / <a href="https://jperm.net/" target="_blank" rel="noopener noreferrer">J Perm</a>{tr({ zh: '（教程），', en: ' (lessons), ' })}<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer">csTimer</a>{tr({ zh: '（计时），', en: ' (timing), ' })}<a href="https://cubingapp.com/" target="_blank" rel="noopener noreferrer">CubingApp</a>{tr({ zh: '（数据），', en: ' (data), ' })}<a href="https://cubestation.com/zh/" target="_blank" rel="noopener noreferrer">GAN CubeStation</a>{tr({ zh: '（智能训练）。这些产品说明供给已经存在，付费需求仍需单独验证。', en: ' (smart training). Existing supply does not by itself establish paying demand.' })}</p>
     </section>
 
-    <section className="overview-section overview-wrap" aria-labelledby="overview-advantage-title">
+    <section id="bp-advantages" className="overview-section overview-wrap" aria-labelledby="overview-advantage-title">
       <p className="overview-kicker">{tr({ zh: '03 / 优势与壁垒', en: '03 / Advantages & defensibility' })}</p>
       <h2 id="overview-advantage-title">{tr({ zh: '从内容走到产品，\n把触达变成长期关系。', en: 'From content to product.\nFrom discovery to lasting use.' })}</h2>
       <div className="overview-audience-proof"><strong>{tr({ zh: '约 50 万', en: '~500K' })}</strong><div><p>{tr(CREATOR_AUDIENCE.summary)}</p><span>{tr({ zh: '本人 2026 年 10 月确认；平台间未去重，不等于活跃用户、触达量或付费客户。', en: 'Owner-confirmed in October 2026; not deduplicated, and not active users, reach or paying customers.' })}</span></div></div>
