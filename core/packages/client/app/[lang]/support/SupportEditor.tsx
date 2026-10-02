@@ -38,6 +38,7 @@ interface Props {
 
 function toDraft(t: EditorTarget) {
   const base = {
+    userId: t.kind === 'sponsor' && t.initial?.userId ? String(t.initial.userId) : '',
     name: t.initial?.name ?? '',
     wcaId: t.initial?.wcaId ?? '',
     avatarUrl: t.initial?.avatarUrl ?? '',
@@ -66,7 +67,11 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
   const [picked, setPicked] = useState<WcaPersonLite | null>(
     initial?.wcaId ? { id: initial.wcaId, name: initial.name, country_iso2: '' } : null,
   );
-  const [pickedUser, setPickedUser] = useState<AdminUserRecord | null>(null);
+  const [pickedUser, setPickedUser] = useState<Pick<AdminUserRecord, 'id' | 'displayName' | 'wcaId'> | null>(
+    target.kind === 'sponsor' && target.initial?.userId
+      ? { id: target.initial.userId, displayName: target.initial.name, wcaId: target.initial.wcaId ?? null }
+      : null,
+  );
   const [userQuery, setUserQuery] = useState('');
   const [userResults, setUserResults] = useState<AdminUserRecord[] | null>(null);
   const [userSearchFailed, setUserSearchFailed] = useState(false);
@@ -78,7 +83,9 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     setDraft(toDraft(target));
     setContribs(target.kind === 'contributor' ? target.initial?.contributions ?? [] : []);
     setPicked(target.initial?.wcaId ? { id: target.initial.wcaId, name: target.initial.name, country_iso2: '' } : null);
-    setPickedUser(null);
+    setPickedUser(target.kind === 'sponsor' && target.initial?.userId
+      ? { id: target.initial.userId, displayName: target.initial.name, wcaId: target.initial.wcaId ?? null }
+      : null);
     setUserQuery('');
     setUserResults(null);
     setUserSearchFailed(false);
@@ -149,10 +156,10 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     setUserResults(null);
     if (!c) {
       // 清除选手:名字/WCA ID/头像一起清,让 admin 重新输入。
-      setDraft(d => ({ ...d, name: '', wcaId: '', avatarUrl: '' }));
+      setDraft(d => ({ ...d, userId: '', name: '', wcaId: '', avatarUrl: '' }));
       return;
     }
-    setDraft(d => ({ ...d, wcaId: c.id, name: c.name }));
+    setDraft(d => ({ ...d, userId: '', wcaId: c.id, name: c.name }));
     const card = await fetchPersonCard(c.id);
     if (card?.avatar) setDraft(d => ({ ...d, avatarUrl: card.avatar }));
   }
@@ -164,7 +171,8 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     setUserResults(null);
     setDraft(d => ({
       ...d,
-      name: user.displayName,
+      userId: String(user.id),
+      name: target.kind === 'sponsor' && target.initial ? target.initial.name : user.displayName,
       wcaId: user.wcaId ?? '',
       avatarUrl: user.avatarUrl ?? '',
     }));
@@ -205,6 +213,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
         if (!Number.isFinite(amount) || amount < 0) { setErr(tr({ zh: '金额无效', en: 'Invalid amount'
         })); setSaving(false); return; }
         const body: SponsorInput = {
+          userId: draft.userId ? Number(draft.userId) : null,
           name: draft.name.trim(),
           wcaId: draft.wcaId.trim().toUpperCase() || null,
           avatarUrl: draft.avatarUrl.trim() || null,
@@ -247,7 +256,8 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                   <ClearButton
                     onClick={() => {
                       setPickedUser(null);
-                      setDraft(d => ({ ...d, name: '', wcaId: '', avatarUrl: '' }));
+                      setPicked(null);
+                      setDraft(d => ({ ...d, userId: '', name: '', wcaId: '', avatarUrl: '' }));
                     }}
                     isZh={isZh}
                   />
@@ -288,8 +298,8 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
               />
             )}
             <span className="sponsor-editor-hint">{tr({
-              zh: '可搜索 WCA 选手或本站注册用户;选中后直接使用名字和头像,搜不到也可按输入名字记录',
-              en: 'Search WCA competitors or registered users to use their name and avatar; unmatched names can still be saved',
+              zh: '选择本站注册用户可直接关联账号,不需要 WCA ID;仅选择 WCA 选手则只记录选手资料',
+              en: 'Select a registered user to link their account without a WCA ID; selecting only a WCA competitor saves their public details',
             })}</span>
           </div>
 
