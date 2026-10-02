@@ -1,15 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
-const mocks = vi.hoisted(() => ({ files: new Map<string, string>(), services: vi.fn(async () => ({ stdout: 'backup.service loaded active running Hidden description\n', stderr: '' })) }));
+const mocks = vi.hoisted(() => ({ ids: ['42', 'self'], files: new Map<string, string>(), services: vi.fn(async () => ({ stdout: 'backup.service loaded active running Hidden description\n', stderr: '' })) }));
 vi.mock('node:fs/promises', () => ({
   readFile: vi.fn(async (path: string) => { if (!mocks.files.has(path)) throw new Error('private-path'); return mocks.files.get(path)!; }),
-  readdir: vi.fn(async () => ['42', 'self']),
+  readdir: vi.fn(async () => mocks.ids),
 }));
 vi.mock('node:child_process', () => ({ execFile: Object.assign(vi.fn(), { [Symbol.for('nodejs.util.promisify.custom')]: mocks.services }) }));
 import { createSolverDiagnostics, parseHost, parseProcess, sampleRates, traceSolverJob } from '../src/cubeopt/diagnostics.js';
 import { requestDiagnostics } from '../src/observability/request.js';
 const platform = Object.getOwnPropertyDescriptor(process, 'platform')!;
-afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); mocks.files.clear(); Object.defineProperty(process, 'platform', platform); });
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); mocks.files.clear(); mocks.ids = ['42', 'self']; Object.defineProperty(process, 'platform', platform); });
 function stat(major = 10, ticks = 100, start = 1000) {
   const f = Array(30).fill('0'); f[0] = 'S'; f[9] = String(major); f[11] = String(ticks); f[19] = String(start);
   return `42 (solver (worker)) ${f.join(' ')}`;
@@ -24,6 +24,20 @@ function fixture() {
     '/proc/sys/vm/swappiness': '0\n', '/sys/fs/cgroup/memory/system.slice/pm2-root.service/memory.swappiness': '60\n' })) mocks.files.set(p, text);
 }
 describe('CubeOpt forensic diagnostics', () => {
+  it('retains the solver and counts SSH processes beyond the previous 4096-process limit', async () => {
+    fixture();
+    mocks.ids = [...Array.from({ length: 5000 }, (_, i) => String(1000 + i)), '42'];
+    for (const id of mocks.ids.slice(0, 5000)) mocks.files.set(`/proc/${id}/status`, 'Name:\tsshd\nVmRSS:\t1000 kB\n');
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const observer = createSolverDiagnostics(() => ({ solverPid: 42, ready: true, queueDepth: 0, activeJobId: null }));
+    await observer.snapshot('periodic');
+    expect(log.mock.calls.map(call => JSON.parse(call[0]))).toContainEqual(expect.objectContaining({
+      event: 'cubeopt_snapshot', processCount: 5001, scannedProcessCount: 5001, truncated: false,
+      processCounts: [{ name: 'sshd', count: 5000 }, { name: 'MainThread', count: 1 }],
+      topMemory: expect.arrayContaining([expect.objectContaining({ pid: 42 })]),
+    }));
+    observer.stop();
+  });
   it('handles parentheses and PID reuse and calculates real counter deltas', () => {
     expect(parseProcess(stat(), status)).toEqual({ state: 'S', startTicks: 1000, cpuTicks: 100, majorFaults: 10, rssKiB: 7000000, swapKiB: 128000 });
     const before = { at: 1000, solverPid: 42, process: parseProcess(stat(), status), host: parseHost(host(), mem, 'pswpin 10\npswpout 20') };
