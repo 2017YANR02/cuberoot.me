@@ -1,3 +1,5 @@
+import { compResultHref, type CompResultLocation } from '@cuberoot/shared/wca-comp-link';
+
 /**
  * 监控套件配置 —— 移植自 Python config.json,改走 env。
  * 原 config.json 字段:tags / nr_countries / 各 poll_interval。
@@ -73,9 +75,14 @@ export function siteCompUrlFromCubingAlias(
   roundNumber?: number | null,
   zh = false,
   wcaCompetitionId?: string,
+  result?: CompResultLocation,
 ): string | null {
   if (!alias || !isWcaCubingComp(compType)) return null;
-  return siteCompUrl(wcaCompetitionId || alias.replace(/-/g, ''), eventId, roundNumber, zh);
+  const compId = wcaCompetitionId || alias.replace(/-/g, '');
+  if (result && result.roundId && Number.isSafeInteger(result.number) && result.number > 0) {
+    return `${SITE_BASE}${zh ? '/zh' : ''}${compResultHref(compId, result)}`;
+  }
+  return siteCompUrl(compId, eventId, roundNumber, zh);
 }
 
 /** 纪录类型过滤(两个纪录监控共用),默认 WR/CR/NR。 */

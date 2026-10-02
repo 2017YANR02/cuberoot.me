@@ -91,6 +91,7 @@
       "./persons-index": "mixed",
       "./wca-search": "mixed",
       "./wca-round": "runtime-neutral",
+      "./wca-comp-link": "runtime-neutral",
       "./kinch": "runtime-neutral",
       "./pr-streak": "runtime-neutral",
       "./pb": "runtime-neutral",
@@ -410,6 +411,10 @@
     "./record-places": "./src/record_places.ts",
     "./persons-index": "./src/api/persons_index.ts",
     "./wca-search": { "node": "./dist/api/wca_search.js", "default": "./src/api/wca_search.ts" },
+    "./wca-comp-link": {
+      "node": "./dist/wca_comp_link.js",
+      "default": "./src/wca_comp_link.ts"
+    },
     "./wca-round": {
       "node": "./dist/wca_round.js",
       "default": "./src/wca_round.ts"
