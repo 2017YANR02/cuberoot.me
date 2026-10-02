@@ -16,6 +16,7 @@ import { DateInput } from '@/components/DateInput';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { ClearButton } from '@/components/ClearButton';
 import { UserIdLabel } from '@/components/UserIdLabel';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { toLocalIsoDate } from '@/lib/iso-date';
 import { fetchAdminUsers, type AdminUserRecord } from '@/lib/account-api';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
@@ -71,6 +72,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
   const [userSearchFailed, setUserSearchFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const backdropProps = useModalDismiss(onClose, saving);
 
   useEffect(() => {
     setDraft(toDraft(target));
@@ -225,15 +227,16 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
     : (initial ? tr({ zh: '编辑赞助者', en: 'Edit supporter' }) : tr({ zh: '新增赞助者', en: 'Add supporter' }));
 
   return (
-    <div className="sponsor-editor-backdrop" onClick={onClose}>
-      <div className="sponsor-editor" onClick={e => e.stopPropagation()}>
+    <div className="sponsor-editor-backdrop" {...backdropProps}>
+      <div className="sponsor-editor">
         <div className="sponsor-editor-head">
           <h2>{title}</h2>
           <button className="sponsor-editor-close" onClick={onClose} aria-label="close"><X size={18} /></button>
         </div>
 
         <div className="sponsor-editor-body">
-          <label className="sponsor-editor-row">
+          {/* A label can forward the result click to the newly rendered clear button in Safari. */}
+          <div className="sponsor-editor-row">
             <span>{target.kind === 'contributor'
               ? tr({ zh: '搜索', en: 'Search' })
               : tr({ zh: '搜索选手', en: 'Search cuber' })}</span>
@@ -296,7 +299,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                 ? 'Search WCA competitors or registered users; unmatched names can still be saved'
                 : 'Not in WCA? No problem — the typed name is used as-is',
             })}</span>
-          </label>
+          </div>
 
           {draft.avatarUrl && (
             <div className="sponsor-editor-preview">
