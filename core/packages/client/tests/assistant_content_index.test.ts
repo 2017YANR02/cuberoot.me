@@ -1,7 +1,27 @@
 import {describe,it,expect} from 'vitest';
-import {indexPublicHtml,discoverPublicPages,discoverNavigationLinks,solverDestinations} from '../scripts/build-assistant-index';
+import {indexPublicHtml,discoverPublicPages,discoverNavigationLinks,solverDestinations,metadataDestinations,platformDestinations} from '../scripts/build-assistant-index';
 
 describe('assistant build-time public content index',()=>{
+  it('includes concrete platform entries while excluding parameterized entity routes',()=>{
+    const destinations=platformDestinations();
+    expect(destinations.some(p=>p.href==='/platform')).toBe(true);
+    expect(destinations.some(p=>p.access==='account')).toBe(true);
+    expect(destinations.some(p=>p.href.includes(':'))).toBe(false);
+  });
+  it('makes static page metadata navigable without indexing private page contents',()=>{
+    const destinations=metadataDestinations(['timer','account','admin','missing-page','alg/[puzzle]']);
+    expect(destinations.some(p=>p.href==='/timer' && p.lang==='zh')).toBe(true);
+    expect(destinations.find(p=>p.href==='/account' && p.lang==='en')).toMatchObject({title:'Account',access:'account',description:''});
+    expect(destinations.find(p=>p.href==='/admin')).toMatchObject({access:'admin'});
+    expect(destinations.some(p=>p.href.includes('missing') || p.href.includes('['))).toBe(false);
+  });
+  it('discovers navigation outside the cubing tool sections',()=>{
+    expect(discoverNavigationLinks('/zh/wiki','<a href="/zh/math/group">群论</a><a href="/zh/forum">论坛</a><a href="/zh/dev/auth">登录流程</a>')).toEqual([
+      {lang:'zh',href:'/math/group',title:'群论'},
+      {lang:'zh',href:'/forum',title:'论坛'},
+      {lang:'zh',href:'/dev/auth',title:'登录流程'},
+    ]);
+  });
   it('indexes full puzzle names and the actual solver event routes',()=>{
     expect(solverDestinations()).toContainEqual({lang:'en',href:'/scramble/solver?event=pyram',title:'Pyraminx — Solver'});
     expect(solverDestinations()).toContainEqual({lang:'zh',href:'/scramble/solver?event=222',title:'二阶 — 求解器'});

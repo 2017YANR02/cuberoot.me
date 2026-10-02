@@ -1,5 +1,46 @@
 # CubeRoot site assistant
 
+## WC 2027 announcement (local, 2026-10-02)
+
+- Added bilingual `/wca/wc-2027` summarizing the WCA July 2025 host-city
+  announcement, with official source and application links. It distinguishes
+  details absent from that historical announcement from current publication
+  status. It does not appear in homepage sections.
+- The page, search aliases and AI evidence share `site-announcements` data.
+  `WC 2027`, `WC2027` and `2027年世锦赛` find the page. Explicit WC 2027 questions
+  read the announcement before a planner can treat a missing competition listing
+  as missing information. No private data or arbitrary external fetch is added.
+- Shared build, API/client typechecks, 46 assistant tests and 12 search/metadata
+  checks passed. Local HTTP returned 200 with the source and summary. Three
+  direct real-model requests covered general information, registration and an
+  English location question; these do not prove browser or production release.
+
+## Site-wide destinations (local, 2026-10-02)
+
+- Navigation now covers all real static page files (284 in the local snapshot),
+  concrete Platform registry entries, published public content/sitemap pages,
+  and existing algorithm/solver catalogs. New static pages enter the index at
+  the next Web build. Titles and descriptions reuse `PAGE_META`; pages with no
+  entry retain a route label. Navigation does not change SEO or sitemap policy.
+- Noindex and account/admin entry pages can be offered as destinations using
+  static labels only. Private HTML/data remains excluded from content evidence;
+  clicking retains the page's existing access checks. Parameterized entity
+  routes are not invented or filled with placeholders. Public data tools resolve
+  actual people, competitions, reconstructions, forum threads and statistics;
+  their selected source links also appear as Open buttons.
+- General navigation ranks title, path and description matches, retaining the
+  original question's topic when the planner paraphrases it broadly. A request
+  to open a page stops after matching its destination, without an unnecessary
+  content fetch. Public `/dev/auth` documentation is no longer mistaken for a
+  root authentication route by the content-index exclusion.
+- Six local real-model requests verified timer, sign-in flow documentation,
+  forum posting, account details, administration and English architecture links.
+  See [results](benchmarks/site-assistant-general-navigation-2026-10-02.json).
+  Targeted API tests: 57 passed; content/navigation index tests: 9 passed;
+  shared build and API/client typechecks passed. This is a local implementation,
+  not a production deployment or browser acceptance claim; normal localhost
+  chat still uses the production API until the changes are released.
+
 ## Existing-page navigation (local, 2026-10-02)
 
 - Homepage chat can return explicit Open links for existing tools, algorithm
