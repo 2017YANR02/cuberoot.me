@@ -6,6 +6,47 @@ import '@/components/sticky-table.css';
 
 const XC_URL = 'https://apps.apple.com/cn/app/id6758835520';
 
+// Keep bilingual copy outside the table's JSX source frames. Next's development
+// error highlighter can panic when truncating long lines containing UTF-8 text.
+const COMPETITORS = [
+  {
+    name: 'XC大师',
+    url: XC_URL,
+    focus: {
+      zh: '智能魔方练习、阶段分析、公式训练与联网对战；商店介绍为免费。',
+      en: 'Smart-cube practice, stage analysis, algorithm training and online battles; listed as free.',
+    },
+    implication: {
+      zh: '不能靠重复免费功能收费，需要交付更完整的学习与服务价值。',
+      en: 'Paid value must extend beyond duplicating free features.',
+    },
+  },
+  {
+    name: 'AI_CFOP',
+    url: 'https://aicfop.com/',
+    focus: {
+      zh: '智能魔方训练、复盘、统计与 AI 分析，官网列出多端。',
+      en: 'Smart-cube training, reconstruction, statistics and AI analysis across multiple platforms.',
+    },
+    implication: {
+      zh: 'AI 和多端本身不能构成独占优势，获客与长期使用同样重要。',
+      en: 'AI and platform coverage alone are not exclusive advantages; acquisition and retention matter.',
+    },
+  },
+  {
+    name: 'CubeRoot',
+    url: null,
+    focus: {
+      zh: '已有教程、公式、计时、复盘与数据工具；创始人自媒体合计约 50 万关注。',
+      en: 'Existing lessons, algorithms, timing, reconstruction and data tools; founder reports about 500,000 aggregate follows.',
+    },
+    implication: {
+      zh: '优先验证“内容引导 → 实际训练 → 反复使用 → 进阶服务”。',
+      en: 'First validate content-led discovery, practice, repeat use and advanced services.',
+    },
+  },
+];
+
 export default function InvestorStory() {
   return <>
     <section className="overview-section overview-wrap" aria-labelledby="overview-market-title">
@@ -26,9 +67,19 @@ export default function InvestorStory() {
       <h2 id="overview-competition-title">{tr({ zh: '有竞品。\n所以必须有清楚的切入点。', en: 'There are competitors.\nWe need a clear starting point.' })}</h2>
       <p className="overview-intro">{tr({ zh: 'XC大师与 AI_CFOP 已经提供训练与分析能力。AI、计时和公式也不是任何一家独占的功能。CubeRoot 要验证的竞争路径，是把已有内容受众、教学经验与可使用的工具结合起来，服务从学会还原到持续训练的人。', en: 'XC Master and AI_CFOP already offer training and analysis. AI, timing and algorithms are not exclusive to one provider. CubeRoot’s competitive thesis is to combine an existing audience, teaching experience and usable tools for people progressing from their first solves to sustained practice.' })}</p>
       <div className="sticky-scroll sticky-scroll-mobile overview-budget-scroll"><table className="sticky-thead overview-budget overview-competitors"><thead><tr><th scope="col">{tr({ zh: '产品', en: 'Product' })}</th><th scope="col">{tr({ zh: '公开介绍的重点', en: 'Publicly described focus' })}</th><th scope="col">{tr({ zh: '对 CubeRoot 的启示', en: 'What this means for CubeRoot' })}</th></tr></thead><tbody>
-        <tr><th scope="row"><a href={XC_URL} target="_blank" rel="noopener noreferrer">XC大师 ↗</a></th><td>{tr({ zh: '智能魔方练习、阶段分析、公式训练与联网对战；商店介绍为免费。', en: 'Smart-cube practice, stage analysis, algorithm training and online battles; listed as free.' })}</td><td>{tr({ zh: '不能靠重复免费功能收费，需要交付更完整的学习与服务价值。', en: 'Paid value must extend beyond duplicating free features.' })}</td></tr>
-        <tr><th scope="row"><a href="https://aicfop.com/" target="_blank" rel="noopener noreferrer">AI_CFOP ↗</a></th><td>{tr({ zh: '智能魔方训练、复盘、统计与 AI 分析，官网列出多端。', en: 'Smart-cube training, reconstruction, statistics and AI analysis across multiple platforms.' })}</td><td>{tr({ zh: 'AI 和多端本身不能构成独占优势，获客与长期使用同样重要。', en: 'AI and platform coverage alone are not exclusive advantages; acquisition and retention matter.' })}</td></tr>
-        <tr><th scope="row">CubeRoot</th><td>{tr({ zh: '已有教程、公式、计时、复盘与数据工具；创始人自媒体合计约 50 万关注。', en: 'Existing lessons, algorithms, timing, reconstruction and data tools; founder reports about 500,000 aggregate follows.' })}</td><td>{tr({ zh: '优先验证“内容引导 → 实际训练 → 反复使用 → 进阶服务”。', en: 'First validate content-led discovery, practice, repeat use and advanced services.' })}</td></tr>
+        {COMPETITORS.map(({ name, url, focus, implication }) => (
+          <tr key={name}>
+            <th scope="row">
+              {url ? (
+                <a href={url} target="_blank" rel="noopener noreferrer">
+                  {name} {'↗'}
+                </a>
+              ) : name}
+            </th>
+            <td>{tr(focus)}</td>
+            <td>{tr(implication)}</td>
+          </tr>
+        ))}
       </tbody></table></div>
       <p className="overview-small">{tr({ zh: '竞品内容按 2026-10-02 官方网站或商店介绍整理，未做性能优劣测试；不以粉丝数推断其用户规模或收入。', en: 'Competitor descriptions use official sites or listings checked on 2026-10-02, not comparative performance tests. Social following does not establish their user base or revenue.' })}</p>
       <p className="overview-small">{tr({ zh: '市场也已有：', en: 'The wider ecosystem includes: ' })}<a href="https://www.cubeskills.com/" target="_blank" rel="noopener noreferrer">CubeSkills</a> / <a href="https://jperm.net/" target="_blank" rel="noopener noreferrer">J Perm</a>{tr({ zh: '（教程），', en: ' (lessons), ' })}<a href="https://cstimer.net/" target="_blank" rel="noopener noreferrer">csTimer</a>{tr({ zh: '（计时），', en: ' (timing), ' })}<a href="https://cubingapp.com/" target="_blank" rel="noopener noreferrer">CubingApp</a>{tr({ zh: '（数据），', en: ' (data), ' })}<a href="https://cubestation.com/zh/" target="_blank" rel="noopener noreferrer">GAN CubeStation</a>{tr({ zh: '（智能训练）。这些产品说明供给已经存在，付费需求仍需单独验证。', en: ' (smart training). Existing supply does not by itself establish paying demand.' })}</p>
