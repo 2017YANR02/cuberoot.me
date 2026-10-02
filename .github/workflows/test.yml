@@ -109,6 +109,7 @@ jobs:
             workflow_contract:
               - '.github/workflows/test.yml'
               - 'core/packages/client/tests/workflow-path-contract.test.ts'
+              - 'core/packages/client/vercel.json'
             client:
               - '.node-version'
               - '.github/workflows/test.yml'
@@ -293,7 +294,7 @@ jobs:
           import { execFileSync } from 'node:child_process';
           import { appendFileSync } from 'node:fs';
           // Scheduling-only edits need the workflow contract check, not the client runtime suite.
-          const contractFiles = new Set(['.github/workflows/test.yml', 'core/packages/client/tests/workflow-path-contract.test.ts']);
+          const contractFiles = new Set(['.github/workflows/test.yml', 'core/packages/client/tests/workflow-path-contract.test.ts', 'core/packages/client/vercel.json']);
           const clientFiles = JSON.parse(process.env.CLIENT_FILES || '[]');
           const client = process.env.CLIENT_CHANGED === 'true' && (clientFiles.length === 0 || clientFiles.some(path => !contractFiles.has(path)));
           let affected = process.env.SOURCE_CHANGED === 'true';
