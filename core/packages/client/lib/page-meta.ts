@@ -42,7 +42,7 @@ const SHARE_IMAGE = '/icons/CubeRoot.png';
 export const PAGE_META: Record<string, PageMetaEntry> = {
   'overview': {
     title: { zh: '项目介绍与合作', en: 'Project brief & partnerships' },
-    description: { zh: '认识 CubeRoot 与创始人颜瑞民：魔方工具、行业机会、阶段规划与赞助合作方向。', en: 'Meet CubeRoot and founder Ruimin Yan: cubing tools, the opportunity, roadmap and sponsorship partnerships.' },
+    description: { zh: 'CubeRoot 项目资助提案：学习需求、竞品与优势、已有产品、成本明细，以及 20 万至 50 万元的阶段计划。', en: 'CubeRoot project-support proposal: learning needs, competition, founder advantages, usable tools, costs and a CNY 200,000–500,000 plan.' },
   },
   'partnership': {
     title: { zh: '合作提案', en: '合作提案' },
