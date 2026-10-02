@@ -38,6 +38,17 @@ describe('website frontend is Next-only', () => {
     expect(pkg.scripts?.start).toContain('next start');
   });
 
+  it('requires native typechecking after Next emits route types and before build completion', () => {
+    const stages = pkg.scripts?.build?.split('&&').map(stage => stage.trim()) ?? [];
+    const nextBuild = stages.indexOf('next build');
+    const nativeCheck = stages.indexOf('pnpm run typecheck');
+    expect(nextBuild).toBeGreaterThan(-1);
+    expect(nativeCheck).toBe(nextBuild + 1);
+    expect(pkg.scripts?.typecheck).toBe('tsgo --noEmit');
+    const config = readFileSync(join(CLIENT, 'next.config.ts'), 'utf8');
+    expect(config).toContain('typescript: { ignoreBuildErrors: isVercel }');
+  });
+
   it('has no retired website package or Vite configuration', () => {
     expect(existsSync(join(PACKAGES, 'client-vite'))).toBe(false);
     for (const name of ['vite.config.ts', 'vite.config.js', 'vite.config.mts', 'vite.config.mjs']) {
