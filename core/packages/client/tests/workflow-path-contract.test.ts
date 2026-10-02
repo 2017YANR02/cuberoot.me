@@ -673,12 +673,13 @@ describe('deployment workflow path contracts', () => {
       .map((path) => path.startsWith('!')
         ? `:(exclude)${path.slice(1).replace(/\/\*\*$/, '')}`
         : path.replace(/\/\*\*$/, ''));
-    const actualPaths = config.ignoreCommand.split(' HEAD -- ')[1]?.split(' || exit 1')[0]
-      .match(/'[^']*'|\S+/g)?.map((path) => path.replace(/^'|'$/g, ''));
-    expect(actualPaths).toEqual(expectedPaths);
-    expect(config.ignoreCommand).toContain('git -C ../../.. diff --quiet "$VERCEL_GIT_PREVIOUS_SHA"');
-    expect(actualPaths).toContain(':(exclude)core/packages/client/tests');
-    expect(actualPaths).not.toContain('.');
+    expect(config.ignoreCommand).toBe('node ../../scripts/vercel-ignore-build.ts');
+    expect(config.ignoreCommand.length).toBeLessThanOrEqual(256);
+    const script = readFileSync(join(REPO_ROOT, corePath('scripts', 'vercel-ignore-build.ts')), 'utf8');
+    expect(script).toContain("new URL('../../.github/workflows/deploy_next.yml', import.meta.url)");
+    expect(script).toContain("['-C', root, 'diff', '--quiet', base, 'HEAD', '--', ...paths]");
+    expect(expectedPaths).toContain(':(exclude)core/packages/client/tests');
+    expect(expectedPaths).not.toContain('.');
   });
 
   it('shards the complete client suite without duplicating the isolated cross trainer test', () => {
