@@ -76,10 +76,20 @@ jobs:
       contents: read
       pull-requests: read
     outputs:
-      client: ${{ steps.filter.outputs.client }}
+      client: ${{ steps.analyzer.outputs.client }}
+      workflow_contract: ${{ steps.filter.outputs.workflow_contract }}
       mobile: ${{ steps.filter.outputs.mobile }}
       desktop: ${{ steps.filter.outputs.desktop }}
-      analyzer: ${{ steps.filter.outputs.analyzer }}
+      analyzer: ${{ steps.analyzer.outputs.run }}
+      server: ${{ steps.filter.outputs.server }}
+      stats: ${{ steps.filter.outputs.stats }}
+      solvers: ${{ steps.filter.outputs.solvers }}
+      scramble_stats: ${{ steps.filter.outputs.scramble_stats }}
+      miniprogram: ${{ steps.filter.outputs.miniprogram }}
+      upstream: ${{ steps.filter.outputs.upstream }}
+      desktop_native: ${{ steps.filter.outputs.desktop_native }}
+      mobile_native: ${{ steps.filter.outputs.mobile_native }}
+      analyzer_manifest: ${{ steps.filter.outputs.analyzer_manifest }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -94,7 +104,11 @@ jobs:
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
+          list-files: json
           filters: |
+            workflow_contract:
+              - '.github/workflows/test.yml'
+              - 'core/packages/client/tests/workflow-path-contract.test.ts'
             client:
               - '.node-version'
               - '.github/workflows/test.yml'
@@ -137,7 +151,6 @@ jobs:
               - '.github/workflows/update_upcoming.yml'
             mobile:
               - '.node-version'
-              - '.github/workflows/test.yml'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
               - 'core/pnpm-workspace.yaml'
@@ -145,6 +158,10 @@ jobs:
               - 'core/patches/**'
               - 'core/scripts/resolve-workspace-path.mjs'
               - 'core/apps/mobile/**'
+              - 'core/apps/harmony/**'
+              - 'core/assets/brand/**'
+              - 'core/scripts/gen-brand-assets.mjs'
+              - 'core/scripts/build-cubing-worker.mjs'
               - 'core/packages/app-ui/**'
               - 'core/packages/event-icon/**'
               - 'core/packages/puzzle-render-core/**'
@@ -156,7 +173,6 @@ jobs:
               - 'docs/platform-capability-manifest.json'
             desktop:
               - '.node-version'
-              - '.github/workflows/test.yml'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
               - 'core/pnpm-workspace.yaml'
@@ -172,18 +188,133 @@ jobs:
               - 'core/packages/stack-kernel/**'
               - 'core/packages/timer-ui/**'
               - 'core/packages/visualcube/**'
-            analyzer:
+            server:
               - '.node-version'
-              - '.github/workflows/test.yml'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
               - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/apps/api/**'
+              - 'core/packages/puzzle-render-core/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+              - 'core/packages/stack-kernel/**'
+              - 'core/packages/vendor-sr-puzzlegen/**'
+              - 'core/packages/visualcube/**'
+              - 'core/scripts/resolve-workspace-path.mjs'
+              - '.github/workflows/deploy_core.yml'
+              - 'ops/systemd/cuberoot-drive-compression.service'
+            stats:
+              - '.node-version'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/jobs/stats-build/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+              - '.github/workflows/stats.yml'
+              - 'core/scripts/list-record-stat-fixtures.mjs'
+            solvers:
+              - '.node-version'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/client/tests/clock_solver.test.ts'
+            scramble_stats:
+              - '.node-version'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/jobs/scramble-stats-build/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+            miniprogram:
+              - '.node-version'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
+              - 'core/tsconfig.base.json'
+              - 'core/patches/**'
+              - 'core/apps/miniprogram/**'
+              - 'core/packages/puzzle-solvers/**'
+              - 'core/packages/shared/**'
+            upstream:
+              - '.node-version'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'sync_upstream.ts'
+              - '.sync/**'
+              - 'scripts/upstream/**'
+            desktop_native:
+              - 'core/apps/desktop/src-tauri/**'
+              - 'core/apps/desktop/package.json'
+              - 'core/pnpm-lock.yaml'
+            mobile_native:
+              - 'core/apps/mobile/android/**'
+              - 'core/apps/mobile/ios/**'
+              - 'core/apps/mobile/capacitor.config.ts'
+              - 'core/apps/mobile/scripts/gen-android-assets.mjs'
+              - 'core/apps/mobile/scripts/gen-ios-assets.mjs'
+              - 'core/assets/brand/**'
+              - 'core/scripts/gen-brand-assets.mjs'
+              - 'core/apps/mobile/package.json'
+              - 'core/pnpm-lock.yaml'
+            analyzer_manifest:
               - 'core/packages/client/package.json'
+            analyzer:
+              - '.node-version'
+              - 'core/package.json'
+              - 'core/pnpm-lock.yaml'
+              - 'core/pnpm-workspace.yaml'
               - 'core/packages/client/vitest.config.ts'
               - 'core/packages/client/scripts/test-slow.mjs'
               - 'core/packages/client/public/analyze-worker/**'
               - 'core/packages/client/tests/analyzer_worker.test.ts'
               - 'core/packages/client/tests/_analyzer_worker_runner.cjs'
+
+      - name: Detect analyzer manifest changes
+        id: analyzer
+        env:
+          SOURCE_CHANGED: ${{ steps.filter.outputs.analyzer }}
+          MANIFEST_CHANGED: ${{ steps.filter.outputs.analyzer_manifest }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CLIENT_CHANGED: ${{ steps.filter.outputs.client }}
+          CLIENT_FILES: ${{ steps.filter.outputs.client_files }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+          import { appendFileSync } from 'node:fs';
+          // Scheduling-only edits need the workflow contract check, not the client runtime suite.
+          const contractFiles = new Set(['.github/workflows/test.yml', 'core/packages/client/tests/workflow-path-contract.test.ts']);
+          const clientFiles = JSON.parse(process.env.CLIENT_FILES || '[]');
+          const client = process.env.CLIENT_CHANGED === 'true' && (clientFiles.length === 0 || clientFiles.some(path => !contractFiles.has(path)));
+          let affected = process.env.SOURCE_CHANGED === 'true';
+          if (!affected && process.env.MANIFEST_CHANGED === 'true') {
+            const base = process.env.BASE_SHA;
+            const path = 'core/packages/client/package.json';
+            try {
+              if (!base || /^0+$/.test(base)) throw new Error('No comparison base');
+              try { execFileSync('git', ['cat-file', '-e', base], { stdio: 'ignore' }); }
+              catch { execFileSync('git', ['fetch', '--no-tags', '--depth=1', 'origin', base], { stdio: 'ignore' }); }
+              const before = JSON.parse(execFileSync('git', ['show', `${base}:${path}`], { encoding: 'utf8' }));
+              const after = JSON.parse(execFileSync('git', ['show', `HEAD:${path}`], { encoding: 'utf8' }));
+              const inputs = pkg => JSON.stringify([pkg.scripts?.['test:slow'], pkg.dependencies, pkg.devDependencies]);
+              affected = inputs(before) !== inputs(after);
+            } catch {
+              affected = true; // An unavailable base must never hide a runner/dependency change.
+            }
+          }
+          appendFileSync(process.env.GITHUB_OUTPUT, `run=${affected}\n`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `client=${client}\n`);
+          NODE
 
   test:
     needs: changes
@@ -191,7 +322,7 @@ jobs:
     timeout-minutes: 20
     services:
       postgres:
-        image: postgres:13
+        image: ${{ (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' || needs.changes.outputs.stats == 'true') && 'postgres:13' || '' }}
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -296,6 +427,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verify upstream sync TypeScript contract
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.upstream == 'true' }}
         working-directory: core
         run: pnpm exec tsx --test ../scripts/upstream/tests/upstream-sync-contract.test.ts
 
@@ -313,18 +445,21 @@ jobs:
         run: pnpm audit:boundaries
 
       - name: PostgreSQL 13 final schema snapshot
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
         working-directory: core/${{ steps.workspace.outputs.api }}
         env:
           PGPASSWORD: postgres
         run: psql -X -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d cuberoot_test -f src/db/schema.pg.sql
 
       - name: Platform account deletion PostgreSQL 13 upgrade regression
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
         working-directory: core/${{ steps.workspace.outputs.api }}
         env:
           PGPASSWORD: postgres
         run: psql -h 127.0.0.1 -U postgres -d cuberoot_test -f tests/fixtures/platform_account_deletion_pg.sql
 
       - name: Apple identity token PostgreSQL 13 upgrade regression
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
         working-directory: core/${{ steps.workspace.outputs.api }}
         env:
           PGPASSWORD: postgres
@@ -341,7 +476,13 @@ jobs:
         run: |
           pnpm --filter @cuberoot/client build:deps
 
+      - name: Verify CI scheduling contract
+        if: ${{ needs.changes.outputs.workflow_contract == 'true' && needs.changes.outputs.client != 'true' && github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}
+        working-directory: core
+        run: pnpm --filter @cuberoot/client exec vitest run tests/workflow-path-contract.test.ts
+
       - name: First-time identity choice PostgreSQL 13 regression
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
         working-directory: core
         env:
           IDENTITY_CHOICE_PG_TEST: '1'
@@ -356,6 +497,7 @@ jobs:
           pnpm --filter @cuberoot/server exec vitest run tests/identity_choice_pg.test.ts
 
       - name: Verify stats-build producer contracts
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.stats == 'true' }}
         working-directory: core
         env:
           STATS_IMPORT_TEST_PG: '1'
@@ -367,6 +509,7 @@ jobs:
         run: pnpm --filter @cuberoot/stats-build test
 
       - name: Verify puzzle solvers package
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.solvers == 'true' }}
         working-directory: core
         run: |
           pnpm --filter @cuberoot/puzzle-solvers typecheck
@@ -374,11 +517,13 @@ jobs:
           pnpm --filter @cuberoot/client test:solvers clock_solver
 
       - name: Verify Clock analyzer runtime
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
         working-directory: core
         run: |
           pnpm --filter @cuberoot/scramble-stats-build test:clock
 
       - name: Verify SQ2 sampled builder runtime
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
         working-directory: core
         env:
           SCRAMBLE_STATS_OUT_DIR: ${{ runner.temp }}/cuberoot-sq2-sampled
@@ -411,10 +556,12 @@ jobs:
       # esbuild bundle 只剥类型不检查,server 类型坏了 deploy_core build 仍能过
       # → 必须 CI 真跑 tsc --noEmit 兜底。
       - name: Typecheck server
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
         working-directory: core
         run: pnpm --filter @cuberoot/server typecheck
 
       - name: Test server
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.server == 'true' }}
         working-directory: core
         env:
           DRIVE_TEST_PG: '1'
@@ -426,6 +573,7 @@ jobs:
         run: pnpm --filter @cuberoot/server test
 
       - name: Verify Mini Program
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.miniprogram == 'true' }}
         working-directory: core
         run: pnpm --filter @cuberoot/miniprogram check:all
 
@@ -553,6 +701,7 @@ jobs:
           cache-dependency-path: core/pnpm-lock.yaml
 
       - name: Setup Java 21
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile_native == 'true' }}
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -580,6 +729,7 @@ jobs:
           pnpm --filter @cuberoot/visualcube build
 
       - name: Verify native brand assets
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile_native == 'true' }}
         working-directory: core
         run: |
           pnpm --filter @cuberoot/mobile assets:android
@@ -608,17 +758,25 @@ jobs:
         working-directory: core
         run: pnpm --filter @cuberoot/harmony build
 
+      - name: Build mobile Web bundle
+        if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' && needs.changes.outputs.mobile_native != 'true' }}
+        working-directory: core
+        run: pnpm --filter @cuberoot/mobile build
+
       - name: Build and sync Android and iOS Capacitor assets
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile_native == 'true' }}
         working-directory: core
         run: |
           pnpm --filter @cuberoot/mobile cap:sync:android
           pnpm --filter @cuberoot/mobile cap:sync:ios
 
       - name: Create ephemeral CI upload key
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile_native == 'true' }}
         run: |
           keytool -genkeypair -v -keystore "$RUNNER_TEMP/mobile-ci.jks" -storepass ci-mobile-store -keypass ci-mobile-store -alias ci-upload -keyalg RSA -keysize 2048 -validity 1 -dname "CN=CI, OU=Mobile, O=CubeRoot, L=CI, ST=CI, C=US"
 
       - name: Compile Android APK and signed release AAB
+        if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.mobile_native == 'true' }}
         working-directory: core/${{ steps.workspace.outputs.mobile }}/android
         env:
           MOBILE_REQUIRE_RELEASE_SIGNING: 'true'
@@ -681,12 +839,42 @@ jobs:
           grep -A1 -F 'android:name="android.permission.ACCESS_FINE_LOCATION"' "$manifest_xml" | grep -Fq 'android:maxSdkVersion="30"'
           grep -A1 -F 'android:name="android.permission.BLUETOOTH_SCAN"' "$manifest_xml" | grep -Fq 'android:usesPermissionFlags="neverForLocation"'
 
+  desktop-ui:
+    name: Desktop UI
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: |
+            .node-version
+            core
+          filter: blob:none
+      - uses: pnpm/action-setup@v6
+        with:
+          package_json_file: core/package.json
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.node-version'
+          cache: 'pnpm'
+          cache-dependency-path: core/pnpm-lock.yaml
+      - name: Install dependencies
+        working-directory: core
+        run: pnpm install --frozen-lockfile
+      - name: Test desktop UI and build Web bundle
+        working-directory: core
+        run: |
+          pnpm --filter @cuberoot/desktop test
+          pnpm --filter @cuberoot/desktop build
+
   # Windows/macOS share one React product and one Tauri host, but compile against
   # different native WebView, keyring and BLE backends. Both runners are required.
   desktop:
     name: Desktop (${{ matrix.os }})
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.desktop_native == 'true' }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -730,10 +918,9 @@ jobs:
         working-directory: core
         run: pnpm install --frozen-lockfile
 
-      - name: Test desktop adapter and build native host
+      - name: Build native desktop host
         working-directory: core
         run: |
-          pnpm --filter @cuberoot/desktop test
           pnpm --filter @cuberoot/desktop exec tauri build --no-bundle
           cd apps/desktop/src-tauri
           cargo test --release --lib ble_notifications::tests --locked
