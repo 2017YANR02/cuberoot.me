@@ -895,7 +895,8 @@ export default function CompDetailPage() {
   const [pbVer, setPbVer] = useState(0);
   type ModalState =
     | { kind: 'round'; number: number; eventId: string; roundId: string }
-    | { kind: 'all'; number: number };
+    | { kind: 'all'; number: number }
+    | { kind: 'mine' };
   const [localModal, setLocalModal] = useState<ModalState | null>(null);
   const openedResult = useRef(false);
   const modal = localModal ?? (resultPath ? { kind: 'round' as const, ...resultPath } : null);
@@ -1893,6 +1894,16 @@ export default function CompDetailPage() {
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
         <div className="comp-view-tabs">
+          {meWcaId && (
+            <button
+              type="button"
+              className={`comp-view-tab${modal?.kind === 'mine' ? ' is-active' : ''}`}
+              onClick={() => setModal({ kind: 'mine' })}
+              aria-haspopup="dialog"
+            >
+              {tr({ zh: '我的成绩', en: 'My results' })}
+            </button>
+          )}
           {hasPodiumTab && (
             <button
               type="button"
@@ -2196,6 +2207,22 @@ export default function CompDetailPage() {
           changeMap={changeMap}
           onSelectRound={(eventId, roundId) => {
             setModal({ kind: 'round', number: modal.number, eventId, roundId });
+          }}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {modal?.kind === 'mine' && meWcaId && (
+        <CuberModal
+          number={Object.values(data.users).find(person => person.wcaid === meWcaId)?.number ?? -1}
+          data={data}
+          isZh={isZh}
+          pbMap={pbMap}
+          changeMap={changeMap}
+          personal
+          loading={!fullLoaded}
+          onSelectRound={(eventId, roundId) => {
+            const person = Object.values(data.users).find(candidate => candidate.wcaid === meWcaId);
+            if (person) setModal({ kind: 'round', number: person.number, eventId, roundId });
           }}
           onClose={() => setModal(null)}
         />
@@ -3345,11 +3372,13 @@ interface CuberModalProps {
   isZh: boolean;
   pbMap: Record<string, PbByEvent | null>;
   changeMap?: Map<string, ResultChange[]>;
+  personal?: boolean;
+  loading?: boolean;
   onSelectRound: (eventId: string, roundId: string) => void;
   onClose: () => void;
 }
 
-function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClose }: CuberModalProps) {
+function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, loading = false, onSelectRound, onClose }: CuberModalProps) {
   const [search, setSearch] = useState('');
   const backdropProps = useModalBackdrop(onClose);
   const [downloadState, setDownloadState] = useState<'idle' | 'busy' | 'error'>('idle');
@@ -3395,8 +3424,8 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  if (!u) return null;
-  const pb = pbMap[u.wcaid];
+  if (!u && !personal) return null;
+  const pb = u ? pbMap[u.wcaid] ?? null : null;
 
   const groups: { ev: EventMeta; entries: typeof rows }[] = [];
   let cur: { ev: EventMeta; entries: typeof rows } | null = null;
@@ -3410,7 +3439,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
 
   async function handleDownload() {
     const node = cardRef.current;
-    if (!node) return;
+    if (!node || !u) return;
     setDownloadState('busy');
     // Same treatment as the round modal: expand off internal scroll for the capture,
     // and hide chrome (close button + the download/lang controls themselves).
@@ -3456,8 +3485,9 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header comp-cuber-modal-header">
           <div className="comp-modal-title">
-            <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-            {u.wcaid ? (
+            {personal && <span>{tr({ zh: '我的成绩', en: 'My results' })}</span>}
+            {u && <Flag iso2={regionToIso2(u.region)} className="comp-flag" />}
+            {u?.wcaid ? (
               <Link
                 prefetch={false}
                 href={`/wca/persons/${u.wcaid}`}
@@ -3466,7 +3496,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                 {displayCuberName(u.name, isZh)}
               </Link>
             ) : (
-              <span className="cuber-link-static">{displayCuberName(u.name, isZh)}</span>
+              <span className="cuber-link-static">{u ? displayCuberName(u.name, isZh) : ''}</span>
             )}
           </div>
           <div className="comp-modal-search">
@@ -3484,7 +3514,7 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
               type="button"
               className="comp-modal-copy-btn"
               onClick={handleDownload}
-              disabled={downloadState === 'busy'}
+              disabled={downloadState === 'busy' || loading || !u}
               title={tr({ zh: '下载为图片', en: 'Download as image' })}
             >
               <Download size={14} />
@@ -3495,9 +3525,12 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
           </button>
         </header>
         <div className="comp-modal-body">
-          {groups.length === 0 ? (
-            <div className="comp-empty">{tr({ zh: '暂无成绩', en: 'No results'
-            })}</div>
+          {loading ? (
+            <div className="comp-empty" role="status">{tr({ zh: '加载中…', en: 'Loading…' })}</div>
+          ) : groups.length === 0 ? (
+            <div className="comp-empty">{personal
+              ? tr({ zh: '本场比赛暂无你的成绩', en: 'No results for you at this competition yet' })
+              : tr({ zh: '暂无成绩', en: 'No results' })}</div>
           ) : (
             groups.map(g => {
               // mo3/bo3 项目只出实际把数列,不渲染空的 4/5(与主成绩表同口径)
@@ -3546,11 +3579,11 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, onSelectRound, onClo
                           <td>{highlight(place)}</td>
                           <td>
                             {highlight(formatLive(result.b, result.e, false))}
-                            <ResultRecordBadge tag={result.sr} keatoned={result.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={result.e} isAvg={false} />
+                            <ResultRecordBadge tag={result.sr} keatoned={result.sk} iso2={regionToIso2(u?.region ?? '')} fallback={singleBadge} eventId={result.e} isAvg={false} />
                           </td>
                           <td>
                             {showAvg ? highlight(formatLive(effectiveAvg(result), result.e, true)) : ''}
-                            {showAvg && <ResultRecordBadge tag={String(result.ar || '')} keatoned={result.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={result.e} isAvg />}
+                            {showAvg && <ResultRecordBadge tag={String(result.ar || '')} keatoned={result.ak} iso2={regionToIso2(u?.region ?? '')} fallback={averageBadge} eventId={result.e} isAvg />}
                           </td>
                           {Array.from({ length: attemptCount }).map((_, i) => (
                             <td key={i} className={`td-attempt ${isAo5Bracketed(atts, i) ? 'td-attempt-trimmed' : ''}`}>
