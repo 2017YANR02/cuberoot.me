@@ -6,11 +6,14 @@ import { EVENT_DISPLAY_EN, EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events'
 import { EVENT_ID } from '../lib/solver-routes';
 import { CSTIMER_EVENTS } from '../lib/cstimer-scramble';
 import { EVENT_NAME_TO_ID } from '../lib/event-constants';
+import { PAGE_META } from '../lib/page-meta';
+import { PLATFORM_ROUTES } from '../lib/platform-routes';
 const restricted=SITE_DIRECTORY_GROUPS.flatMap(g=>g.entries.filter(e=>('adminOnly' in e && e.adminOnly)||('lockedForNonAdmin' in e && e.lockedForNonAdmin)).map(e=>e.href));
 
 
 function isPublicRoute(route: string) {
-  if (!/^\/(en|zh)\//.test(route) || /\/(?:_|admin|platform|org|learn|courses|tutorial-legacy|account|auth|login|register|settings)(?:\/|$)/.test(route)) return false;
+  if (!/^\/(en|zh)\//.test(route) || /\/(?:_|admin|platform|org|learn|courses|tutorial-legacy|account|settings)(?:\/|$)/.test(route)
+    || /^\/(en|zh)\/(auth|login|register)(?:\/|$)/.test(route)) return false;
   const href=route.replace(/^\/(en|zh)/,'');
   return !restricted.some(p=>href===p || href.startsWith(p+'/'));
 }
@@ -61,13 +64,29 @@ export function discoverNavigationLinks(route: string, html: string) {
     try {
       const url=new URL(link.getAttribute('href')!,`https://cuberoot.me${route}`);
       const href=url.pathname.replace(/^\/(en|zh)(?=\/|$)/,'');
-      if(url.origin!=='https://cuberoot.me' || !isPublicRoute(`/${lang}${href}`) || !/^\/(scramble|recognize|alg|predict|memo)(?:\/|$)/.test(href)) continue;
+      if(url.origin!=='https://cuberoot.me' || !isPublicRoute(`/${lang}${href}`)) continue;
       if([...url.searchParams.keys()].some(key=>!['event','tool','method','stage','variant'].includes(key))) continue;
       const title=link.textContent?.replace(/\s+/g,' ').trim();
       if(title) destinations.push({lang,href:href+url.search,title:title.slice(0,250)});
     } catch { /* Invalid or non-HTTP link. */ }
   }
   return destinations;
+}
+
+/** Labels only, never private HTML. SEO noindex does not hide a tool from site navigation. */
+export function metadataDestinations(routes: readonly string[]) {
+  return routes.flatMap(route=>{
+    const meta=PAGE_META[route];
+    if(!meta || /(?:^|\/)(?:_|\[)[^/]*|[?#\\]/.test(route) || route.startsWith('tutorial-legacy')) return [];
+    const access=/(?:^|\/)admin(?:\/|$)/.test(route)?'admin':/^(account|settings|org|learn)(?:\/|$)/.test(route)?'account':'public';
+    return (['en','zh'] as const).map(lang=>({lang,href:`/${route}`,title:meta.title[lang],description:meta.description?.[lang] ?? '',access}));
+  });
+}
+
+/** Platform uses a catch-all page; concrete entry routes come from its own registry. */
+export function platformDestinations() {
+  return PLATFORM_ROUTES.filter(route=>!route.pattern.includes(':') && !route.canonicalHref).flatMap(route=>
+    (['en','zh'] as const).map(lang=>({lang,href:`/platform${route.pattern?'/'+route.pattern:''}`,title:route.title[lang],description:route.description?.[lang] ?? '',access:route.access})));
 }
 
 /** The project picker is closed during SSR, so index its canonical routing data too. */
@@ -84,8 +103,18 @@ async function main() {
   const pages: NonNullable<ReturnType<typeof indexPublicHtml>>[]=[];
   const rendered=new Set<string>();
   const labels=new Map<string,string>();
-  const destinations=new Map<string, ReturnType<typeof discoverNavigationLinks>[number]>();
+  const destinations=new Map<string, {lang:string;href:string;title:string;description?:string;access?:string}>();
   for(const destination of solverDestinations()) destinations.set(destination.lang+destination.href,destination);
+  // Only register real static page files, not layout-only or parameter placeholders.
+  const routeFiles=await readdir('app/[lang]',{recursive:true});
+  const staticRoutes=routeFiles.filter(file=>/(?:^|\/)page\.tsx$/.test(file) && !file.split('/').slice(0,-1).some(segment=>segment.startsWith('_') || segment.includes('[') || segment.startsWith('(')))
+    .map(file=>file.replace(/(?:^|\/)page\.tsx$/,''));
+  for(const destination of metadataDestinations(staticRoutes)) destinations.set(destination.lang+destination.href,destination);
+  for(const route of staticRoutes) for(const lang of ['en','zh']) {
+    const href=`/${route}`;
+    if(!destinations.has(lang+href)) destinations.set(lang+href,{lang,href,title:route.split('/').join(' · ') || 'CubeRoot'});
+  }
+  for(const destination of platformDestinations()) destinations.set(destination.lang+destination.href,destination);
   async function walk(dir:string): Promise<void> {
     for (const entry of await readdir(dir,{withFileTypes:true})) {
       const file=path.join(dir,entry.name);
@@ -95,12 +124,12 @@ async function main() {
         const html=await readFile(file,'utf8');
         rendered.add(route);
         const page=indexPublicHtml(route,html);
+        for(const destination of discoverNavigationLinks(route,html)) {
+          const key=destination.lang+destination.href;
+          if(!destinations.has(key)) destinations.set(key,destination);
+        }
         if (page) {
           pages.push(page);
-          for(const destination of discoverNavigationLinks(route,html)) {
-            const key=destination.lang+destination.href;
-            if(!destinations.has(key)) destinations.set(key,destination);
-          }
           const {document}=parseHTML(html);
           for (const link of document.querySelectorAll('a[href]')) {
             try {

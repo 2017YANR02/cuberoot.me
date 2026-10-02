@@ -139,6 +139,12 @@ function allTokensIn(haystack: string, tokens: readonly string[]): boolean {
   return true;
 }
 
+export function searchSiteCards(cards: readonly SiteSearchCard[], query: string): SiteSearchCard[] {
+  const tokens=tokenize(query.trim().toLowerCase());
+  if(!tokens.length) return [];
+  return cards.filter(c=>allTokensIn(`${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}\n${c.href}\n${c.keywords ?? ''}`.toLowerCase(),tokens));
+}
+
 interface GlossaryEntry { head: string; body: string }
 interface GlossarySection { entries?: GlossaryEntry[] }
 interface GlossaryRoot { sections?: GlossarySection[] }
@@ -476,11 +482,7 @@ export function useSiteSearch(
   }, [qRaw, tokens, xSearchEnabled, xLoaded]);
 
   const cardMatches = useMemo(() => {
-    if (q === '' || tokens.length === 0) return [];
-    return cards.filter(c => {
-      const hay = `${c.nameEn}\n${c.nameZh}\n${c.sectionTitleEn}\n${c.sectionTitleZh}\n${c.href}\n${c.keywords ?? ''}`.toLowerCase();
-      return allTokensIn(hay, tokens);
-    });
+    return searchSiteCards(cards,q);
   }, [cards, q, tokens]);
 
   const toolMatches = useMemo(() => {

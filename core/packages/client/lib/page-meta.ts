@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { WC_2027_ANNOUNCEMENT } from '@cuberoot/shared/site-announcements';
 
 // Per-route <title> and <meta name="description"> for the whole site.
 //
@@ -40,6 +41,7 @@ const SEP = ' — ';
 const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
+  'wca/wc-2027': { title: WC_2027_ANNOUNCEMENT.title, description: WC_2027_ANNOUNCEMENT.summary },
   'overview': {
     title: { zh: '项目介绍与合作', en: 'Project brief & partnerships' },
     description: { zh: 'CubeRoot 项目资助提案：学习需求、竞品与优势、已有产品、成本明细，以及 20 万至 50 万元的阶段计划。', en: 'CubeRoot project-support proposal: learning needs, competition, founder advantages, usable tools, costs and a CNY 200,000–500,000 plan.' },
