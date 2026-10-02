@@ -122,7 +122,8 @@ export async function answerSiteQuestion(
   const selfWcaId=asksAboutSelf ? viewerWcaId : undefined;
   const asksForPersonalCountries=asksAboutSelf && /国家|地区|\bcountr(?:y|ies)\b|\bregions?\b/i.test(question) && /去过|参加|参赛|比赛|\bcompet(?:e|ed|ing|itions?)\b|\bvisited\b/i.test(question) && !/最多|排名|排行榜|\bmost\b|\brank(?:ing)?\b/i.test(question);
   const requestedLimit=requestedAssistantLimit(question);
-  const requestedAnnouncements=findSiteAnnouncements(question);
+  const referenceYear=new Date().getUTCFullYear();
+  const requestedAnnouncements=findSiteAnnouncements(question,referenceYear);
   const asksForAllPersonalRecords=/(?:全部|所有|各项|全项目).{0,30}(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)|官方成绩)|(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)).{0,30}(?:全部|所有|各项|全项目)|\ball\b.{0,40}\b(?:pbs?|prs?|personal bests?|personal records?)\b|\b(?:pbs?|prs?|personal bests?|personal records?)\b.{0,40}\ball\b/i.test(question);
   const reconReference=question.match(/(?:复盘|reconstruction)\s*(?:(?:编号|ID)\s*)?[#：:]?\s*(\d+)(?![\d.年月日场次])(?:\s*(秒|毫秒|年|月|日|场|次|seconds?\b|s\b))?/i);
   const requestedReconId=reconReference && !reconReference[2] && Number.isSafeInteger(Number(reconReference[1])) && Number(reconReference[1])>0 ? Number(reconReference[1]) : undefined;
@@ -250,7 +251,7 @@ export async function answerSiteQuestion(
     throw new AssistantFailure('model_unavailable');
   },round);
   const pages = async (call: {query:string;pageIds:string[]}): Promise<ToolResult> => {
-    const announcements=SITE_ANNOUNCEMENTS.filter(a=>call.pageIds.includes(a.id) || findSiteAnnouncements(call.query).includes(a));
+    const announcements=SITE_ANNOUNCEMENTS.filter(a=>call.pageIds.includes(a.id) || findSiteAnnouncements(call.query,referenceYear).includes(a));
     if(announcements.length) return {
       evidence:{pages:announcements.map(a=>({id:a.id,title:a.title[lang],href:a.href,sourceUrl:a.sourceUrl,sourceMonth:a.sourceMonth,content:a.paragraphs.map(p=>p[lang]).join('\n')})),instruction:'Historical announcement, not live registration status. Missing dates/venue/registration here must be described as absent from this dated source, never as currently unpublished.'},
       sources:announcements.map(a=>({id:a.id,title:a.title[lang],href:a.href,read:true})),artifacts:[],
