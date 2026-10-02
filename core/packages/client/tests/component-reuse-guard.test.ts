@@ -7,9 +7,9 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import ts from 'typescript';
 import {
   COMPONENT_REUSE_RULES,
+  personPickersInsideLabels,
   scanAlgCaseDetailLayout,
   scanNewBackHomePlacements,
   scanComponentReimplementations,
@@ -54,36 +54,33 @@ function walk(dir: string): string[] {
   return out;
 }
 
-// CI-only DOM placement rule: picking a person replaces the input with a clear
-// button. WebKit can forward the original click through an enclosing label to
-// that new button. Keep the entire picker outside native label elements.
-function personPickersInsideLabels(source: string): number[] {
-  const file = ts.createSourceFile('fixture.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  const pickerNames = new Set(['WcaPersonPicker']);
-  for (const statement of file.statements) {
-    if (!ts.isImportDeclaration(statement)) continue;
-    const bindings = statement.importClause?.namedBindings;
-    if (!bindings || !ts.isNamedImports(bindings)) continue;
-    for (const binding of bindings.elements) {
-      if ((binding.propertyName ?? binding.name).text === 'WcaPersonPicker') pickerNames.add(binding.name.text);
-    }
-  }
-  const lines: number[] = [];
-  function visit(node: ts.Node, labelDepth: number) {
-    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(file) === 'label') labelDepth++;
-    if (labelDepth && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
-      const name = node.tagName.getText(file);
-      if (pickerNames.has(name) || name.endsWith('.WcaPersonPicker')) {
-        lines.push(file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1);
-      }
-    }
-    ts.forEachChild(node, child => visit(child, labelDepth));
-  }
-  visit(file, 0);
-  return lines;
-}
-
 describe('person picker label placement', () => {
+  it('blocks added picker labels across supported runtimes and skips test fixtures', () => {
+    for (const [runtime, directory] of [['client', 'components'], ['app-ui', 'src'], ['timer-ui', 'src']]) {
+      const path = ['core', 'packages', runtime, directory, 'Picker.tsx'].join('/');
+      expect(violationsFromHookPayload({ tool_input: { file_path: path, content: '<label><WcaPersonPicker /></label>' } })
+        .map(hit => hit.ruleId)).toContain('person-picker-label');
+      expect(violationsFromHookPayload({ tool_input: { file_path: path, content: '<div><WcaPersonPicker /></div>' } })).toEqual([]);
+    }
+    const fixturePath = ['core', 'packages', 'client', 'tests', 'fixture.tsx'].join('/');
+    expect(violationsFromHookPayload({ tool_input: { file_path: fixturePath, content: '<label><WcaPersonPicker /></label>' } })).toEqual([]);
+  });
+
+  it('checks unchanged label ancestors when only a picker is added to an existing file', () => {
+    const path = ['core', 'packages', 'client', 'components', 'Picker.tsx'].join('/');
+    const before = 'export const Field = () => (\n<label>\n  <span>Search</span>\n</label>\n);\n';
+    const patch = `*** Begin Patch\n*** Update File: ${path}\n@@\n   <span>Search</span>\n+  <WcaPersonPicker />\n*** End Patch`;
+    const payload = {
+      original_tool_input: { command: patch },
+      tool_input: { file_path: path, content: '<WcaPersonPicker />' },
+    };
+    expect(violationsFromHookPayload(payload, new Set(), () => before).map(hit => hit.ruleId)).toContain('person-picker-label');
+    expect(violationsFromHookPayload({
+      ...payload,
+      original_tool_input: { command: patch.replace('WcaPersonPicker', 'input') },
+    }, new Set(), () => before)).toEqual([]);
+  });
+
   it('detects nested and aliased pickers without banning ordinary input labels', () => {
     expect(personPickersInsideLabels('<label><div>{ok && <WcaPersonPicker value={person} />}</div></label>')).toEqual([1]);
     expect(personPickersInsideLabels("import { WcaPersonPicker as PersonPicker } from '@/components/WcaPersonPicker';\n<label><PersonPicker /></label>")).toEqual([2]);

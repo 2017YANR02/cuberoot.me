@@ -8,6 +8,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
+import { prospectiveWritesFromHookPayload } from './hook-detect-nested-links.mjs';
 
 export const EXEMPTION = 'allow-component-reimplementation';
 
@@ -31,6 +33,13 @@ const ALG_CASE_META_PATH = /\/components\/AlgCaseMetaContent\.tsx$/i;
 const ALG_CSS_PATH = /\/app\/\[lang\]\/alg\/alg\.css$/i;
 
 export const COMPONENT_REUSE_RULES = [
+  {
+    id: 'person-picker-label',
+    component: 'WcaPersonPicker',
+    importStatement: "import { WcaPersonPicker } from '@/components/WcaPersonPicker';",
+    replacement: '<div><span>Search</span><WcaPersonPicker value={person} onChange={setPerson} /></div>',
+    reason: '禁止把 WcaPersonPicker 放进原生 label。Safari 会把选中点击转发到新出现的清除按钮，立即清空姓名；外层改用 div，输入框保留 aria-label。',
+  },
   {
     id: 'clear-button',
     component: 'ClearButton',
@@ -74,6 +83,35 @@ export const COMPONENT_REUSE_RULES = [
       'PG 公式库 case 详情统一复用 AlgCaseView：静态主图走 CaseThumb，动画固定在公式左侧；禁止恢复行内播放器或只给部分公式集启用布局，meta 顶部与训练弹窗结构保持不动。',
   },
 ];
+
+// Shared DOM placement rule: picking a person replaces the input with a clear
+// button. WebKit can forward the original click through an enclosing label to
+// that new button. Keep the entire picker outside native label elements.
+export function personPickersInsideLabels(source) {
+  const file = ts.createSourceFile('fixture.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const pickerNames = new Set(['WcaPersonPicker']);
+  for (const statement of file.statements) {
+    if (!ts.isImportDeclaration(statement)) continue;
+    const bindings = statement.importClause?.namedBindings;
+    if (!bindings || !ts.isNamedImports(bindings)) continue;
+    for (const binding of bindings.elements) {
+      if ((binding.propertyName ?? binding.name).text === 'WcaPersonPicker') pickerNames.add(binding.name.text);
+    }
+  }
+  const lines = [];
+  function visit(node, labelDepth) {
+    if (ts.isJsxElement(node) && node.openingElement.tagName.getText(file) === 'label') labelDepth++;
+    if (labelDepth && (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node))) {
+      const name = node.tagName.getText(file);
+      if (pickerNames.has(name) || name.endsWith('.WcaPersonPicker')) {
+        lines.push(file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1);
+      }
+    }
+    ts.forEachChild(node, child => visit(child, labelDepth));
+  }
+  visit(file, 0);
+  return lines;
+}
 
 function normalizePath(value) {
   return String(value || '').replace(/\\/g, '/');
@@ -323,8 +361,25 @@ function inScope(filePath) {
   return (CLIENT_TSX.test(normalized) && !SKIP_PATH.test(normalized)) || ALG_CSS_PATH.test(normalized);
 }
 
-export function violationsFromHookPayload(payload, pathAllowlist = loadPathAllowlist()) {
+export function violationsFromHookPayload(payload, pathAllowlist = loadPathAllowlist(), readSource) {
   const violations = [];
+  // The adapter keeps the original patch so AST placement sees unchanged label
+  // ancestors as well as newly added JSX, rather than only added fragments.
+  const originalInput = payload?.original_tool_input ?? payload?.tool_input;
+  const rawPatch = typeof originalInput === 'string' ? originalInput
+    : originalInput?.command ?? originalInput?.patch ?? originalInput?.input;
+  const prospectivePayload = typeof rawPatch === 'string' && rawPatch.includes('*** Begin Patch')
+    ? { ...payload, tool_input: { patch: rawPatch } }
+    : { ...payload, tool_input: originalInput };
+  for (const write of prospectiveWritesFromHookPayload(prospectivePayload, readSource)) {
+    const scoped = /(?:^|\/)core\/packages\/(?:client\/(?:app|components)|(?:app-ui|timer-ui)\/src)\/.*\.tsx$/i.test(normalizePath(write.filePath));
+    if (!scoped || /(?:^|\/)(?:tests?|node_modules|\.next|dist|build|out|coverage)(?:\/|$)/i.test(write.filePath)) continue;
+    const beforeCount = personPickersInsideLabels(write.before).length;
+    const afterLines = personPickersInsideLabels(write.after);
+    if (afterLines.length > beforeCount) {
+      violations.push({ ruleId: 'person-picker-label', index: 0, filePath: write.filePath, snippet: `line ${afterLines[0]}` });
+    }
+  }
   for (const write of writesFromHookPayload(payload)) {
     if (!inScope(write.filePath)) continue;
     const repoRelative = write.filePath.replace(/^.*?(core\/packages\/client\/)/i, '$1');
@@ -368,6 +423,10 @@ if (isMain) {
     const violations = violationsFromHookPayload(payload);
     if (violations.length) {
       const rule = COMPONENT_REUSE_RULES.find((item) => item.id === violations[0].ruleId);
+      if (rule.id === 'person-picker-label') {
+        deny(`${rule.reason}\n替换为: ${rule.replacement}`);
+        process.exit(0);
+      }
       const exceptionKind = rule.id === 'back-home-layout' || rule.id === 'alg-case-detail-layout' ? '不同布局' : '不同交互';
       deny(
         `${rule.reason}\n${rule.importStatement}\n替换为: ${rule.replacement}\n` +

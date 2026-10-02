@@ -91,9 +91,9 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     scope: 'project',
     hook: 'hook-detect-component-reimplementation.mjs',
     test: 'component-reuse-guard.test.ts',
-    baseline: '关闭按钮 79 ↓;项目选择器 0;BackHome 根节点 14 ↓',
-    zh: { title: '组件复用与放置契约', desc: '规则表拦高置信度的重复造轮子和错误放置。手写关闭/清除叉号统一复用 ClearButton;页面内项目选择统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector);BackHome 必须位于与正文同宽的 header/topbar/wrap。Codex apply_patch 写入即拦,CI 对零存量规则保持为零、对旧存量只降不升;确有例外时行内写 allow-component-reimplementation 和理由。' },
-    en: { title: 'Component reuse and placement contracts', desc: 'A rule registry blocks high-confidence reinventions and unsafe placement. Close/clear crosses use ClearButton; page-local puzzle selection uses PuzzlePicker (expanded /wca event rows use WcaEventSelector); BackHome stays in the same-width header/topbar/wrap as the body. Codex apply_patch is blocked at write time; CI keeps zero-debt rules at zero and ratchets legacy debt down. Real exceptions need an inline allow-component-reimplementation reason.' },
+    baseline: '关闭按钮 79 ↓;项目选择器 0;选手选择器嵌套 label 0;BackHome 根节点 14 ↓',
+    zh: { title: '组件复用与放置契约', desc: '规则表拦高置信度的重复造轮子和错误放置。WcaPersonPicker 禁嵌入原生 label，避免 Safari 将选中点击转发给清除按钮；hook 重建完整补丁结构，CI 共用 AST 扫描 Web、app-ui 和 timer-ui。手写关闭/清除叉号统一复用 ClearButton;页面内项目选择统一复用 PuzzlePicker(/wca 展开式项目行用 WcaEventSelector);BackHome 必须位于与正文同宽的 header/topbar/wrap。Codex apply_patch 写入即拦,CI 对零存量规则保持为零、对旧存量只降不升;确有例外时行内写 allow-component-reimplementation 和理由。' },
+    en: { title: 'Component reuse and placement contracts', desc: 'A rule registry blocks high-confidence reinventions and unsafe placement. WcaPersonPicker cannot be nested inside native labels: Safari can forward selection clicks to the new clear button. The hook reconstructs complete patches; CI shares the AST scanner across Web, app-ui and timer-ui. Close/clear crosses use ClearButton; page-local puzzle selection uses PuzzlePicker (expanded /wca event rows use WcaEventSelector); BackHome stays in the same-width header/topbar/wrap as the body. Codex apply_patch is blocked at write time; CI keeps zero-debt rules at zero and ratchets legacy debt down. Real exceptions need an inline allow-component-reimplementation reason.' },
   },
   {
     id: 'puzzle-image-state-parity',
