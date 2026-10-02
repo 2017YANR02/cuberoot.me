@@ -174,6 +174,7 @@ function run() {
     for (const { filePath, content } of preparedWrites) {
       const adapted = {
         ...payload,
+        original_tool_input: payload.tool_input,
         tool_input: { file_path: filePath, content },
       };
       for (const target of generalTargets) {
