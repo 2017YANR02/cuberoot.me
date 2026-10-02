@@ -19,7 +19,7 @@ function makeLocalStorage() {
   };
 }
 const g = globalThis as unknown as { window?: unknown; localStorage?: ReturnType<typeof makeLocalStorage> };
-g.window = { addEventListener() {} };
+g.window = { location: { pathname: '/' }, addEventListener() {} };
 g.localStorage = makeLocalStorage();
 
 const { caseKey, splitCaseKey, groupKeysBySet } = await import('@/lib/trainer-case-key');

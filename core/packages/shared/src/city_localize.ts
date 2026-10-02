@@ -70,6 +70,11 @@ const CITY_ZH: Record<string, string> = {
   'Tauragė': '陶拉盖',
   'Valdivia': '瓦尔迪维亚',
   'Valladolid': '巴利亚多利德',
+  'Strzelce Opolskie': '斯切尔采奥波莱斯基',
+  'Brzeg': '布热格',
+  'Wałbrzych': '瓦乌布日赫',
+  'Jelenia Góra': '耶莱尼亚古拉',
+  'Bolesławiec': '博莱斯瓦维茨',
 };
 
 const GREATER_CN = new Set(['CN', 'HK', 'MO', 'TW']);
