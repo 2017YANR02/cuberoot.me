@@ -2,7 +2,6 @@ import { ArrowUpRight, LockKeyhole, MessageCircle, Check } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import AppearanceToggle from '@/components/AppearanceToggle';
 import { CREATOR_AUDIENCE } from '@/lib/creator-profile';
-import { FUNDING_SCENARIOS } from '../../overview/funding-plan';
 import '../partnership.css';
 import './talking-points.css';
 
@@ -60,7 +59,7 @@ const questions = [
   ['为什么不给股权？', '我现在希望保持独立经营，所以这次提出的是项目资助或赞助合作。如果您只考虑股权投资，我理解，这与我本次希望的合作方式不同，我们可以先坦诚地把这个区别说清楚。'],
   ['网站以后赚钱了呢？', '网站有商业化计划，包括个人和机构订阅。如果这次约定的是不带股权和分红的资助，网站以后盈利也不会自动产生分红权利。这一点我希望您在决定前就清楚。'],
   ['你能保证做成全球最大吗？', '这是我的长期愿景，现在不能保证排名或结果。我能做的是把下一阶段的工作和资源需求说明白，认真执行，并用实际产品、使用反馈和经营数据汇报。'],
-  ['需要几十万，有什么依据？', '全年希望争取 20 万到 50 万，页面给出三档建议分配。基础档 20 万中，12 万用于开发劳动与维护，2.5 万用于 AI、服务器与发布，其余用于内容、试点和储备。既有设备不重复计入。也可先讨论基础档首季度 5 万元，90 天后复核；最终金额还要核对可用自有资金与落实回款。'],
+  ['资金规模有什么依据？', '先明确下一阶段的产品、会员交付和推广工作，再核算开发、计算、内容与服务成本，扣除可用自有资金与落实回款。现阶段不在 BP 预设金额；既有设备不重复计入，合作方式与阶段安排先谈清楚。'],
   ['项目没做下去，这笔钱怎么办？', '这要在合作前约定清楚。项目资助不承诺还本或投资收益，但约定用途、阶段条件和交付仍然需要履行。未使用的资金、已发生的支出和终止后的处理，我们会写明。'],
   ['我现在不想出钱，但可以介绍人。', '也很感谢。如果方便，我希望认识有真实需求的老师、机构或潜在赞助方。您可以先看项目资料，觉得合适再介绍，不需要替我承诺效果。'],
   ['我考虑一下。', '当然，您不用现在决定。我把产品介绍和核实后的预算发给您。您看过之后，如果还有兴趣，我们再约一次专门聊具体安排。'],
@@ -78,13 +77,13 @@ export default function TalkingPointsPage() {
         <p className="partner-eyebrow">把想做的事，认真说清楚。</p>
         <h1>一场交流。<br /><span>一个共同向前的可能。</span></h1>
         <p className="partner-body">从介绍产品，到提出支持请求。这里整理了完整的交流顺序、六个切入点，以及可以直接参考的话术。按现场情况选择，用自己的语气表达。</p>
-        <AppLink className="partner-button" href="/overview" prefetch={false}>展示对外项目页<ArrowUpRight size={16} aria-hidden /></AppLink>
+        <AppLink className="partner-button" href="/partnership" prefetch={false}>展示商业计划书<ArrowUpRight size={16} aria-hidden /></AppLink>
         <p className="talking-note">本次诉求：项目资助或赞助合作，不出让股权，不承诺还本、分红或投资收益。对方有权独立决定，没有话术能保证获得资助。</p>
       </section>
 
       <section className="talking-section" id="short-meeting">
         <p className="partner-eyebrow">短会版本 / 两分钟说清楚</p><h2>明天只围绕三个问题。</h2>
-        <blockquote className="talking-quote">孩子学会还原后，还需要知道怎么练、哪里有进步。我希望把自己已有的内容和教学积累，做成能长期使用的训练工具。XC大师和 AI_CFOP 已经有训练与分析能力，所以我不靠“多一个 AI 功能”竞争。我的起点是自媒体平台合计约 {CREATOR_AUDIENCE.followersApprox / 10000} 万关注，加上课程、公式与现有产品。但关注不等于客户：我想先做 3 个专题、30 人试用，看看内容能否带来实际练习、用户四周后是否还回来。全年希望争取 20 万到 50 万元项目资助，也可以先讨论基础方案首季度 {FUNDING_SCENARIOS[0].amount / 4 / 10000} 万元，90 天给您看产品、使用和资金报告。这次不是借款，不附带股权；以后双方有意愿，再单独谈股权合作。您愿意支持这种阶段性的验证吗？</blockquote>
+        <blockquote className="talking-quote">魔方选手要反复计时和训练，这些工具能进入长期练习。CubeRoot 已有计时器、训练器、复盘和数据工具，也已有真实付费会员。我有约 {CREATOR_AUDIENCE.followersApprox / 10000} 万平台合计关注，现在有约三人的固定团队，全职推进。个人订阅提供专业求解、复盘和反馈；企业订阅提供展示、资料和课程服务。我们计划在两个月内推进更大规模订阅，先完成支付和资质审核，再扩大推广。我希望争取直接项目支持，按具体阶段计划讨论资源、交付和汇报。这次不是借款，也不自动附带股权；未来股权合作另谈。</blockquote>
         <ol className="talking-steps"><li><strong>30 秒解释需求。</strong>教程之外，持续练习需要记录与反馈。不要讲 CFOP、TPS 等术语。</li><li><strong>45 秒回答竞争。</strong>承认竞品，讲内容、教学、工具如何配合；不比较未经核实的粉丝和收入。</li><li><strong>45 秒提出请求。</strong>全年目标与首期可选方案分开说，明确资助性质、90 天报告与下一步。</li></ol>
         <p className="talking-note">今晚发对外页面，并附一句：“这页把竞品、我的切入点和资金用途写清楚了，您有空可以先看核心说明。明天我重点听听您对这条验证路径的看法。”不要把管理员会谈页发给对方。</p>
       </section>
@@ -112,12 +111,12 @@ export default function TalkingPointsPage() {
 
       <section id="request" className="talking-section">
         <p className="partner-eyebrow">03 / 从认同，走向具体请求</p><h2>把金额与责任说清楚。</h2>
-        <p className="talking-intro">全年目标 20 万到 50 万元；建议预算与可选首期方案在对外页面。先判断对方愿不愿意按资助支持，再讨论具体金额，不用模糊的未来股权交换今天的支持。</p>
-        <blockquote className="talking-quote">我希望争取的是一段明确工作的项目资助，不是借款。全年有 20 万、35 万和 50 万三个建议方案。若您愿意先观察，可以讨论基础档的首季度 5 万元：用来完成内容招募、试用路径和复练验证，每月汇报，90 天复核。后面的支持不默认已经承诺。未来股权如果双方有兴趣，再另谈；如果您本次期待财务收益，我会按融资方案重新与您讨论。</blockquote>
+        <p className="talking-intro">BP 先不设定资金金额。先交流产品、订阅经营与下一阶段工作，再根据实际预算讨论支持规模和周期。</p>
+        <blockquote className="talking-quote">我希望争取直接项目资助，支持团队持续投入、会员服务交付与推广。具体规模按阶段工作和预算确定，每月汇报，按阶段复核。未来股权如果双方有兴趣，再另谈；如果您本次期待财务收益，我们应另谈清楚的投资方案。</blockquote>
         <div className="talking-budget">{[
           ['金额', '需要多少支持，已有多少可用资金'], ['期限', '覆盖多久，分几个阶段'], ['用途', '开发报酬、服务器、内容与运营等真实支出'], ['目标', '每一阶段具体交付什么、验证什么'], ['汇报', '何时沟通，用哪些实际资料说明进展'], ['终止', '停止条件、未使用资金与未完成交付如何处理'],
         ].map(([title,body]) => <div key={title}><Check size={16} aria-hidden /><p><strong>{title}</strong><span>{body}</span></p></div>)}</div>
-        <p className="talking-note">如果希望争取几十万元，先用真实预算支撑金额。对方愿意分阶段支持，也需要明确总额、每阶段条件，以及后续资金是否已经承诺。</p>
+        <p className="talking-note">资金规模按真实预算确定。对方愿意分阶段支持，也需要明确各阶段条件，以及后续资金是否已经承诺。</p>
       </section>
 
       <section id="questions" className="talking-section">
@@ -131,7 +130,7 @@ export default function TalkingPointsPage() {
         <ol className="talking-steps"><li><strong>当晚确认兴趣。</strong>了解他倾向于项目资助、品牌赞助，还是介绍机构和资源。</li><li><strong>会后提供资料。</strong>产品入口、真实经营情况、核实后的预算和阶段目标。</li><li><strong>有意向再谈安排。</strong>明确给谁、给多少、是否归还、是否有商业交付，以及终止条件。</li><li><strong>书面说清再收款。</strong>对重要金额与条款请专业人士核对，不能只凭一句“支持你”。</li></ol>
         <p className="talking-note">共同朋友可以帮助建立信任，但不要用朋友关系施压。也不要为了促成合作，承诺给对方孩子特殊待遇、保证收益或保证做成全球最大。</p>
       </section>
-      <footer className="talking-footer"><LockKeyhole size={14} aria-hidden /><span>管理员会谈资料 · 与合作提案共用访问限制</span></footer>
+      <footer className="talking-footer"><LockKeyhole size={14} aria-hidden /><span>会谈准备资料 · 对外展示使用商业计划书</span></footer>
     </div>
   </main>;
 }
