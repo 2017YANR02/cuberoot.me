@@ -17,6 +17,7 @@ const query = z.string().trim().min(1).max(100);
 export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
+  z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/) }).strict(),
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), progress: z.boolean().default(false) }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), limit: z.number().int().min(1).max(20).default(10) }).strict(),
@@ -130,6 +131,27 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const rows = await findPeople(call.query);
     out.evidence = rows;
     out.sources = rows.map(r => source(`person:${r.wcaId}`, name(r.name), `/wca/persons/${r.wcaId}`));
+  } else if (call.tool === 'person_countries') {
+    const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, {wcaId:call.wcaId})), freshness()]);
+    const title = name(data.profile.person.name);
+    // Count competition locations from actual result-bearing competitions,
+    // never the person's nationality or a truncated global traveler ranking.
+    const attended = new Set<string>(data.results.map((r:any)=>r.competition_id));
+    const locations = new Map<string,string>(data.comps.map((c:any)=>[c.id,c.country_iso2]));
+    const counts = new Map<string,number>();
+    let unknownCompetitions = 0;
+    for (const compId of attended) {
+      const country = locations.get(compId);
+      if (!country || !/^[A-Z]{2}$/.test(country)) { unknownCompetitions++; continue; }
+      counts.set(country,(counts.get(country) ?? 0)+1);
+    }
+    const regions = new Intl.DisplayNames([lang === 'zh' ? 'zh-Hans' : 'en'],{type:'region'});
+    const countries = [...counts].sort(([a],[b])=>a.localeCompare(b)).map(([iso2,competitions])=>({iso2,name:regions.of(iso2) ?? iso2,competitions}));
+    out.evidence = {updated,wcaId:call.wcaId,name:title,countries,unknownCompetitions,basis:'Competition host country/region, distinct competitions with official results; not nationality or travel without competing.'};
+    out.sources.push(source(`person:${call.wcaId}`,title,`/wca/persons/${call.wcaId}`));
+    table(label('参赛国家和地区','Countries and regions competed in'),[label('国家或地区','Country or region'),label('比赛数','Competitions')],countries.map(c=>[c.name,String(c.competitions)]));
+    out.factualSummary = label(`按已导入的官方成绩，${title}在 ${countries.length} 个国家或地区参赛，明细见下表。以比赛举办地计算，不按选手国籍计算。`,`Imported official results show ${title} competed in ${countries.length} countries or regions, listed below. Locations refer to competition hosts, not nationality.`)
+      + (unknownCompetitions ? label(`另有 ${unknownCompetitions} 场比赛缺少有效举办地，未计入。`,` ${unknownCompetitions} competitions lack a valid host location and are excluded.`) : '');
   } else if (call.tool === 'person') {
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, { wcaId:call.wcaId })), freshness()]);
     const profile = data.profile;
