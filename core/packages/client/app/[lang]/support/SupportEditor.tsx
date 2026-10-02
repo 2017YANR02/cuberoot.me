@@ -2,7 +2,7 @@
 
 /**
  * 弹窗新增/编辑一位赞助者或贡献者(target.kind 区分,两者共用选手搜索/头像逻辑)。
- * 贡献者还会合并后台注册用户搜索(名字 / WCA ID / CubeRoot ID)。
+ * 合并后台注册用户搜索(名字 / WCA ID / CubeRoot ID),直接对应公开名字、WCA ID 与头像。
  * 选中自动带出名字 + WCA ID + 头像。
  * 无独立名字输入框:名字来自选手搜索框 —— 选中选手用其 name,搜不到(没参赛的人)
  * 则把输入的文字当名字(onQueryChange),WCA ID 留空。
@@ -86,7 +86,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
 
   useEffect(() => {
     const q = userQuery.trim();
-    if (target.kind !== 'contributor' || !q) {
+    if (!q) {
       setUserResults(null);
       setUserSearchFailed(false);
       return;
@@ -237,9 +237,7 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
         <div className="sponsor-editor-body">
           {/* A label can forward the result click to the newly rendered clear button in Safari. */}
           <div className="sponsor-editor-row">
-            <span>{target.kind === 'contributor'
-              ? tr({ zh: '搜索', en: 'Search' })
-              : tr({ zh: '搜索选手', en: 'Search cuber' })}</span>
+            <span>{tr({ zh: '搜索', en: 'Search' })}</span>
             {pickedUser ? (
               <div className="cuber-search sponsor-editor-picker">
                 <div className="cuber-search-chip">
@@ -261,15 +259,13 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
                 onChange={c => void handlePick(c)}
                 onQueryChange={q => {
                   if (!picked) setDraft(d => ({ ...d, name: q }));
-                  if (target.kind === 'contributor') setUserQuery(q);
+                  setUserQuery(q);
                 }}
                 isZh={isZh}
                 className="sponsor-editor-picker"
-                placeholder={target.kind === 'contributor'
-                  ? tr({ zh: '输入名字、WCA ID 或 CubeRoot ID', en: 'Name, WCA ID, or CubeRoot ID' })
-                  : tr({ zh: '输入名字或 WCA ID', en: 'Name or WCA ID' })}
+                placeholder={tr({ zh: '输入名字、WCA ID 或 CubeRoot ID', en: 'Name, WCA ID, or CubeRoot ID' })}
                 excludeIds={userResults?.flatMap(user => user.wcaId ? [user.wcaId] : [])}
-                additionalResults={target.kind === 'contributor' && userQuery.trim() ? (
+                additionalResults={userQuery.trim() ? (
                   <div className="cuber-search-section">
                     <div className="cuber-search-section-label">{tr({ zh: '注册用户', en: 'Registered users' })}</div>
                     {userResults === null ? (
@@ -292,12 +288,8 @@ export default function SupportEditor({ target, onClose, onSaved }: Props) {
               />
             )}
             <span className="sponsor-editor-hint">{tr({
-              zh: target.kind === 'contributor'
-                ? '可搜索 WCA 选手或本站注册用户;搜不到也可按输入名字记录'
-                : '搜不到(没参加过比赛的人)也没关系,按输入的名字记录',
-              en: target.kind === 'contributor'
-                ? 'Search WCA competitors or registered users; unmatched names can still be saved'
-                : 'Not in WCA? No problem — the typed name is used as-is',
+              zh: '可搜索 WCA 选手或本站注册用户;选中后直接使用名字和头像,搜不到也可按输入名字记录',
+              en: 'Search WCA competitors or registered users to use their name and avatar; unmatched names can still be saved',
             })}</span>
           </div>
 
