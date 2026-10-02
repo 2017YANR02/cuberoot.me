@@ -1,6 +1,7 @@
 /** Public summaries shared by page rendering, search and AI evidence. */
 export const WC_2027_ANNOUNCEMENT = {
   id: 'announcement:wc-2027',
+  year: 2027,
   href: '/wca/wc-2027',
   title: { zh: '2027 年 WCA 世锦赛：举办城市公告', en: 'WCA World Championship 2027: Host City Announcement' },
   summary: { zh: 'WC 2027 将在瑞典乌普萨拉举办。本页转述 WCA 2025 年 7 月官方公告。', en: 'WC 2027 will be held in Uppsala, Sweden. A summary of the WCA host-city announcement from July 2025.' },
@@ -17,8 +18,18 @@ export const WC_2027_ANNOUNCEMENT = {
 } as const;
 
 export const SITE_ANNOUNCEMENTS = [WC_2027_ANNOUNCEMENT];
-export function findSiteAnnouncements(query: string) {
+export function findSiteAnnouncements(query: string, referenceYear?: number) {
   const normalize = (text:string) => text.toLowerCase().replace(/[\s-]+/g,'');
   const text=normalize(query);
-  return SITE_ANNOUNCEMENTS.filter(announcement=>announcement.aliases.some(alias=>text.includes(normalize(alias))));
+  const championship=/(?:世锦赛|世界(?:魔方)?锦标赛|\bWC\s*(?=\d|\b)|world\s+(?:cube\s+|rubik'?s?\s+cube\s+)?championships?)/i.test(query);
+  const years=new Set((query.match(/(?:19|20)\d{2}/g) ?? []).map(Number));
+  // The caller supplies the year: shared search/page rendering never reads a
+  // clock during SSR, and relative phrases do not become permanent aliases.
+  if(championship && years.size===0 && referenceYear!==undefined) {
+    if(/后年|\byear after next\b/i.test(query))years.add(referenceYear+2);
+    else if(/明年|\bnext year(?:'s)?\b/i.test(query))years.add(referenceYear+1);
+    else if(/今年|\bthis year(?:'s)?\b/i.test(query))years.add(referenceYear);
+    else if(/去年|\blast year(?:'s)?\b/i.test(query))years.add(referenceYear-1);
+  }
+  return SITE_ANNOUNCEMENTS.filter(announcement=>announcement.aliases.some(alias=>text.includes(normalize(alias))) || championship && years.has(announcement.year));
 }
