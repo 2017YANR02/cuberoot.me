@@ -68,18 +68,25 @@ export function createSolverDiagnostics(getState: () => SolverState) {
     lastCapture = performance.now();
     const capturedState = getState();
     try {
-      const ids = (await readdir('/proc')).filter(id => /^\d+$/.test(id)).slice(0, 4096);
+      const allIds = (await readdir('/proc')).filter(id => /^\d+$/.test(id));
+      // Prefer the observed solver even if a connection leak exceeds the bound.
+      const observedId = String(capturedState.solverPid || process.pid);
+      const ids = (allIds.includes(observedId)
+        ? [observedId, ...allIds.filter(id => id !== observedId)] : allIds).slice(0, 16384);
+      const processCounts = new Map<string, number>();
       const processes: { pid: number; name: string; rssKiB: number; swapKiB: number; cgroup: string }[] = [];
       let index = 0;
       await Promise.all(Array.from({ length: 8 }, async () => {
         while (index < ids.length) {
           const id = ids[index++];
           const status = await optionalRead(`/proc/${id}/status`);
+          const name = status.match(/^Name:\s+(.+)$/m)?.[1].slice(0, 32) || '';
+          if (name) processCounts.set(name, (processCounts.get(name) || 0) + 1);
           const rssKiB = number(status, 'VmRSS');
           if (rssKiB === null) continue; // exited/kernel thread
           const cgroup = await optionalRead(`/proc/${id}/cgroup`);
           const group = cgroup.split('\n').find(line => /^\d+:(?:memory|):/.test(line))?.split(':').slice(2).join(':') || '';
-          processes.push({ pid: Number(id), name: status.match(/^Name:\s+(.+)$/m)?.[1].slice(0, 32) || '',
+          processes.push({ pid: Number(id), name,
             rssKiB, swapKiB: number(status, 'VmSwap') || 0, cgroup: group.slice(0, 200) });
         }
       }));
@@ -89,7 +96,8 @@ export function createSolverDiagnostics(getState: () => SolverState) {
         runningServices = stdout.split('\n').map(line => line.trim().split(/\s+/)[0]).filter(unit => /^[\w@.\\:-]+\.service$/.test(unit)).slice(0, 100);
       } catch { /* systemd is optional */ }
       if (!stopped) diagnosticLog('cubeopt_snapshot', { reason, ...capturedState,
-        processCount: ids.length, truncated: ids.length === 4096,
+        processCount: allIds.length, scannedProcessCount: ids.length, truncated: allIds.length > ids.length,
+        processCounts: [...processCounts].sort((a, b) => b[1] - a[1]).slice(0, 12).map(([name, count]) => ({ name, count })),
         topMemory: processes.sort((a, b) => b.rssKiB + b.swapKiB - a.rssKiB - a.swapKiB).slice(0, 12), runningServices }, reason !== 'periodic');
     } catch { if (!stopped) diagnosticLog('cubeopt_snapshot_unavailable', { reason }, true); }
     finally { capturing = false; }
