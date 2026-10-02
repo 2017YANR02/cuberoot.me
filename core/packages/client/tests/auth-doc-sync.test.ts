@@ -84,6 +84,8 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/mobile', 'src/native/secure-token.ts'], ['@cuberoot/client', 'proxy.ts'],
     ['@cuberoot/client', 'lib/page-access-api.ts'], ['@cuberoot/client', 'app/api/page-access/route.ts'],
     ['@cuberoot/client', 'lib/competition-gate.ts'], ['@cuberoot/shared', 'src/competition-access.ts'],
+    ['@cuberoot/client', 'app/v1/competition-access/check/route.ts'],
+    ['@cuberoot/client', 'app/v1/competition-access/verify/route.ts'],
     ['@cuberoot/client', 'components/AuthPanel.tsx'], ['@cuberoot/client', 'lib/identity-choice.ts'],
     ['@cuberoot/client', 'components/CountryPinButton.tsx'], ['@cuberoot/client', 'hooks/usePinnedCountries.ts'],
     ['@cuberoot/client', 'lib/pinned-countries.ts'],

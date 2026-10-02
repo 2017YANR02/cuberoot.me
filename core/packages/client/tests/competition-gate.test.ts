@@ -6,6 +6,26 @@ import { safeCompetitionReturn } from '@/lib/competition-return';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 const secret = 'test-only-secret-with-more-than-32-characters';
 afterEach(() => vi.unstubAllEnvs());
+it('exempts actual loopback development pages and API requests even with a signing secret', async () => {
+  vi.stubEnv('NODE_ENV', 'development');
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+  vi.stubEnv('VERCEL', '');
+  for (const host of ['localhost:3000', '127.0.0.1:3000', '[::1]:3000']) {
+    for (const path of ['/zh/wca/comp/BeijingAutumnRivalry2026?view=podium', '/api/comp/BeijingAutumnRivalry2026']) {
+      expect(await competitionGate(new NextRequest('http://localhost:3000' + path, { headers: { host } }))).toBeNull();
+    }
+  }
+  const publicRequests: Record<string, string>[] = [
+    { host: 'dev.cuberoot.me' },
+    { host: 'localhost:3000', 'x-forwarded-host': 'dev.cuberoot.me' },
+    { host: 'localhost.evil.example:3000' },
+  ];
+  for (const headers of publicRequests) {
+    expect((await competitionGate(new NextRequest('http://localhost:3000/zh/timer', { headers })))?.status).toBe(307);
+  }
+  vi.stubEnv('NODE_ENV', 'production');
+  expect((await competitionGate(new NextRequest('http://localhost:3000/zh/timer')))?.status).toBe(307);
+});
 it('accepts only an unexpired service signature for the exact path and query', async () => {
   vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('VERCEL', '1');
   const path='/zh/math/group?section=1';

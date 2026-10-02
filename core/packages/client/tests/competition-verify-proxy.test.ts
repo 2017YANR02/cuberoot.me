@@ -32,6 +32,19 @@ it('rejects foreign and missing origins before contacting the API', async () => 
   }
   expect(fetcher).not.toHaveBeenCalled();
 });
+it('accepts the actual loopback origin when Next normalizes its internal URL to localhost', async () => {
+  vi.stubEnv('NODE_ENV', 'development');
+  const fetcher = vi.fn().mockResolvedValue(Response.json({}, { headers: { 'set-cookie': cookie } }));
+  vi.stubGlobal('fetch', fetcher);
+  const local = request('http://127.0.0.1:3000');
+  local.headers.set('host', '127.0.0.1:3000');
+  expect((await POST(local)).status).toBe(200);
+  expect(fetcher.mock.calls[0][1].headers.get('origin')).toBe('https://dev.cuberoot.me');
+  fetcher.mockClear();
+  local.headers.set('origin', 'http://localhost:3000');
+  expect((await POST(local)).status).toBe(403);
+  expect(fetcher).not.toHaveBeenCalled();
+});
 it('preserves the public preview origin and cookie domain behind the localhost tunnel', async () => {
   vi.stubEnv('NODE_ENV', 'development');
   const fetcher = vi.fn().mockResolvedValue(Response.json({}, { headers: { 'set-cookie': cookie } }));
