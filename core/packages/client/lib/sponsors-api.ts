@@ -10,6 +10,8 @@ const BASE = API_ORIGIN + '/v1/sponsors';
 const LIST_BASE = `${BASE}?v=2`;
 
 export interface Sponsor {
+  /** Returned only by the authenticated administrator view. */
+  userId?: number | null;
   id: number;
   name: string;
   amount: number;
@@ -21,6 +23,8 @@ export interface Sponsor {
 }
 
 export interface SponsorInput {
+  /** Omitted preserves the current association; null removes it. */
+  userId?: number | null;
   name: string;
   amount: number;
   currency?: string;
@@ -29,9 +33,12 @@ export interface SponsorInput {
   message?: string | null;
 }
 
-export async function listSponsors(fresh = false): Promise<Sponsor[]> {
-  const url = fresh ? `${LIST_BASE}&fresh=${Date.now()}` : LIST_BASE;
-  return handleApi<Sponsor[]>(await fetch(url, fresh ? { cache: 'no-store' } : undefined));
+export async function listSponsors(fresh = false, admin = false): Promise<Sponsor[]> {
+  const base = admin ? `${BASE}?v=3&admin=1` : LIST_BASE;
+  const url = fresh ? `${base}&fresh=${Date.now()}` : base;
+  return handleApi<Sponsor[]>(await fetch(url, admin
+    ? { cache: 'no-store', headers: authHeaders() }
+    : fresh ? { cache: 'no-store' } : undefined));
 }
 export async function createSponsor(body: SponsorInput): Promise<Sponsor> {
   return handleApi<Sponsor>(await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));

@@ -15,7 +15,7 @@
  */
 import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
-import { query, sql } from '../db/connection.js';
+import { query, sql, withTransaction } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { requireAppUserId } from '../utils/app_user_auth.js';
 import { adminRecipients, notify } from '../utils/notify.js';
@@ -56,6 +56,7 @@ function rowToJson(r: SponsorRow): Record<string, unknown> {
 }
 
 interface SponsorInput {
+  userId?: number | null;
   name?: string;
   wcaId?: string | null;
   avatarUrl?: string | null;
@@ -65,6 +66,7 @@ interface SponsorInput {
 }
 
 interface NormalizedSponsor {
+  userId?: number | null;
   name: string;
   wca_id: string | null;
   avatar_url: string | null;
@@ -92,6 +94,9 @@ function parseAvatarUrl(v: unknown): { error: string } | { value: string | null 
 }
 
 function validateAndNormalize(b: SponsorInput): { error: string } | { value: NormalizedSponsor } {
+  if (b.userId !== undefined && b.userId !== null && (!Number.isSafeInteger(b.userId) || b.userId <= 0)) {
+    return { error: 'invalid userId' };
+  }
   if (typeof b.name !== 'string' || !b.name.trim()) return { error: 'name required' };
   if (b.name.length > NAME_MAX) return { error: 'name too long' };
 
@@ -121,16 +126,71 @@ function validateAndNormalize(b: SponsorInput): { error: string } | { value: Nor
     if (message.length > MSG_MAX) return { error: 'message too long' };
   }
 
-  return { value: { name: b.name.trim(), wca_id, avatar_url, amount, currency, message } };
+  return { value: { name: b.name.trim(), wca_id, avatar_url, amount, currency, message, userId: b.userId } };
+}
+
+// The account ID is available only to administrators; the public wall keeps its privacy contract.
+function adminSponsorJson(row: SponsorRow) {
+  return { ...rowToJson(row), userId: row.claimed_by_user_id == null ? null : Number(row.claimed_by_user_id) };
+}
+
+async function saveSponsor(f: NormalizedSponsor, id?: number) {
+  return withTransaction(async (run) => {
+    if (id !== undefined) {
+      const existing = await run<SponsorRow>('SELECT * FROM sponsors WHERE id = ? FOR UPDATE', [id]);
+      if (!existing.length) return { error: 'Not found', status: 404 as const };
+    }
+    if (f.userId != null) {
+      const users = await run<{ id: number | string }>('SELECT id FROM app_users WHERE id = ?', [f.userId]);
+      if (!users.length) return { error: 'account not found', status: 400 as const };
+    }
+    const fields = [f.name, f.wca_id, f.avatar_url, f.amount, f.currency, f.message];
+    const rows = id === undefined
+      ? await run<SponsorRow>(
+        `INSERT INTO sponsors (name, wca_id, avatar_url, amount, currency, message, claimed_by_user_id, claimed_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, CASE WHEN ?::bigint IS NULL THEN NULL ELSE NOW() END) RETURNING *`,
+        [...fields, f.userId ?? null, f.userId ?? null],
+      )
+      : await run<SponsorRow>(
+        `UPDATE sponsors SET name = ?, wca_id = ?, avatar_url = ?, amount = ?, currency = ?, message = ?,
+           claimed_by_user_id = CASE WHEN ? THEN ?::bigint ELSE claimed_by_user_id END,
+           claimed_at = CASE WHEN ? THEN CASE WHEN ?::bigint IS NULL THEN NULL ELSE COALESCE(claimed_at, NOW()) END ELSE claimed_at END
+         WHERE id = ? RETURNING *`,
+        [...fields, f.userId !== undefined, f.userId ?? null, f.userId !== undefined, f.userId ?? null, id],
+      );
+    if (id !== undefined && f.userId !== undefined) {
+      // Close obsolete active applications atomically with the direct assignment, preserving history.
+      await run(
+        `UPDATE sponsor_claims SET status = 'revoked', revoked_at = NOW(), revocation_note = '管理员直接调整赞助账号关联'
+         WHERE sponsor_id = ? AND status = 'approved' AND user_id IS DISTINCT FROM ?::bigint`,
+        [id, f.userId],
+      );
+      await run(
+        `UPDATE sponsor_claims SET status = 'cancelled', cancelled_at = NOW()
+         WHERE sponsor_id = ? AND status = 'pending' AND user_id IS DISTINCT FROM ?::bigint`,
+        [id, f.userId],
+      );
+      await run(
+        `UPDATE sponsor_claims SET status = 'approved', reviewed_at = NOW(), review_note = '管理员直接关联赞助账号'
+         WHERE sponsor_id = ? AND status = 'pending' AND user_id = ?`,
+        [id, f.userId],
+      );
+    }
+    return { row: rows[0] };
+  });
 }
 
 // GET /v1/sponsors — 全表,金额降序
 sponsorsRoutes.get('/sponsors', async (c) => {
-  c.header('Cache-Control', 'public, max-age=3600');
+  const adminView = c.req.query('admin') === '1';
+  if (adminView) {
+    c.header('Cache-Control', 'no-store');
+    await requireAdminOrApiKey(c);
+  } else c.header('Cache-Control', 'public, max-age=3600');
   const rows = await query<SponsorRow>(
     'SELECT * FROM sponsors ORDER BY amount DESC, created_at',
   );
-  return c.json(rows.map(rowToJson));
+  return c.json(rows.map(adminView ? adminSponsorJson : rowToJson));
 });
 
 // POST /v1/sponsors — 新增
@@ -143,13 +203,9 @@ sponsorsRoutes.post('/sponsors', async (c) => {
   if ('error' in res) return c.json({ error: res.error }, 400);
   const f = res.value;
 
-  const inserted = await query<SponsorRow>(
-    `INSERT INTO sponsors (name, wca_id, avatar_url, amount, currency, message)
-     VALUES (?, ?, ?, ?, ?, ?)
-     RETURNING *`,
-    [f.name, f.wca_id, f.avatar_url, f.amount, f.currency, f.message],
-  );
-  return c.json(rowToJson(inserted[0]));
+  const result = await saveSponsor(f);
+  if ('error' in result) return c.json({ error: result.error }, result.status);
+  return c.json(adminSponsorJson(result.row));
 });
 
 // PUT /v1/sponsors/:id — 编辑
@@ -165,15 +221,9 @@ sponsorsRoutes.put('/sponsors/:id', async (c) => {
   if ('error' in res) return c.json({ error: res.error }, 400);
   const f = res.value;
 
-  const updated = await query<SponsorRow>(
-    `UPDATE sponsors SET
-       name = ?, wca_id = ?, avatar_url = ?, amount = ?, currency = ?, message = ?
-     WHERE id = ?
-     RETURNING *`,
-    [f.name, f.wca_id, f.avatar_url, f.amount, f.currency, f.message, id],
-  );
-  if (updated.length === 0) return c.json({ error: 'Not found' }, 404);
-  return c.json(rowToJson(updated[0]));
+  const result = await saveSponsor(f, id);
+  if ('error' in result) return c.json({ error: result.error }, result.status);
+  return c.json(adminSponsorJson(result.row));
 });
 
 // DELETE /v1/sponsors/:id
