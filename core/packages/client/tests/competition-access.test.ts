@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { COMPETITION_ACCESS_COOKIE, createCompetitionProof, verifyCompetitionProof, competitionCookie } from '@cuberoot/shared/competition-access';
 import { GET } from '@/app/api/comp/access/route';
+import { GET as checkDevelopmentAccess } from '@/app/v1/competition-access/check/route';
 
 const secret = 'test-only-secret-with-more-than-32-characters';
 const now = 1_790_000_000_000;
@@ -41,6 +42,36 @@ describe('competition access proof', () => {
     const response = await GET();
     expect(response.status).toBe(403);
     expect(response.headers.get('set-cookie')).toBeNull();
+  });
+  it('issues a valid host-only traffic proof only for actual loopback development', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+    const response = await checkDevelopmentAccess(new Request('http://localhost:3000/v1/competition-access/check', {
+      headers: { host: '127.0.0.1:3000', 'user-agent': 'local-browser' },
+    }));
+    expect(response.status).toBe(204);
+    const cookie = response.headers.get('set-cookie')!;
+    expect(await verifyCompetitionProof(secret, competitionCookie(cookie), 'browser', 'local-browser')).toBe(true);
+    expect(cookie).toContain('HttpOnly; Secure; SameSite=Lax');
+    expect(cookie).not.toContain('Domain=');
+    expect(response.headers.get('cache-control')).toBe('private, no-store');
+  });
+  it('does not issue a traffic proof for production, a public tunnel or missing signing configuration', async () => {
+    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('COMPETITION_ACCESS_SECRET', '');
+    expect((await checkDevelopmentAccess(new Request('http://localhost:3000/v1/competition-access/check'))).status).toBe(503);
+    vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
+    const fetcher=vi.fn().mockResolvedValue(new Response(null,{status:403}));
+    vi.stubGlobal('fetch',fetcher);
+    for (const headers of [{host:'dev.cuberoot.me'}, {host:'localhost:3000','x-forwarded-host':'dev.cuberoot.me'}] as Record<string,string>[]) {
+      const response=await checkDevelopmentAccess(new Request('http://localhost:3000/v1/competition-access/check',{headers}));
+      expect(response.status).toBe(403);
+      expect(response.headers.has('set-cookie')).toBe(false);
+    }
+    vi.stubEnv('NODE_ENV','production');
+    const response=await checkDevelopmentAccess(new Request('http://localhost:3000/v1/competition-access/check'));
+    expect(response.status).toBe(403);
+    expect(response.headers.has('set-cookie')).toBe(false);
   });
   it('requires manual verification instead of retrying after an automatic grant', async () => {
     const request = vi.fn()
