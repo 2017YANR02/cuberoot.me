@@ -2,7 +2,7 @@ import { partialAssistantAnswer } from './site_assistant_stream.js';
 import { parseHTML } from 'linkedom';
 import { z } from 'zod';
 import { toolCallSchema, runDataTool, type ToolResult } from './site_assistant_tools.js';
-import { readAssistantEvents, type AssistantStreamEvent, type AssistantAnswer, type AssistantMessage } from '@cuberoot/shared/site-assistant';
+import { readAssistantEvents, resolveAssistantTime, type AssistantStreamEvent, type AssistantAnswer, type AssistantMessage } from '@cuberoot/shared/site-assistant';
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
@@ -91,7 +91,8 @@ find_person {query:name}: resolve name to WCA IDs. Never guess an ID. Ask which 
 person {wcaId,event:"333" or "all",progress:false}: profile, selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
 person_countries {wcaId}: complete countries/regions where ONE person has officially competed, grouped by competition host location. Use for personal travel/participation questions, never substitute a global most_visited_countries leaderboard or personal bests.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
-competitions {query:"",country:"" or ISO2,upcoming:true,limit:1..20}: find competitions and IDs; query matches name/city/id. Use English place/name keywords for this index.
+competitions {query:"",country:"" or ISO2,upcoming:true,from?:ISO date,to?:ISO date,limit:1..20}: find competitions and IDs; query matches name/city/id. from/to filter competitions overlapping an inclusive date range. Use English place/name keywords for this index.
+timeContext is computed from the server clock in the visitor's time zone. Use its concrete periods for relative years/days/weeks/months across ALL topics, never your training cutoff or a date in old conversation history. Weeks start Monday. Use from/to for dated competition queries and upcoming:false for historical periods. Time resolution is not factual evidence: still read the appropriate tools. Multiple periods, weekday-qualified weeks, rolling durations or dates relative to another event require careful interpretation; do not silently substitute one period or the current clock for an explicit event anchor. Ask a brief clarification if ambiguous.
 For historical World Championship dates use competitions with query:"WC" (all editions) or "WC 2025 2023" (selected years), upcoming:false, limit:20. Dates are start_date/end_date of actual competitions, not solve dates or registration dates. Do not invent missing editions.
 scrambles {compId,event:"333",round:"f"}: official scramble groups. First resolve unknown competition IDs.
 recons {wcaId?:person ID,compId?:competition ID,value?,event?,limit:1..20}: search published reconstructions. Person IDs like 2017YANR02 MUST go in wcaId, never compId; a competition ID looks like BeijingSummer2025. Value is a solve duration in seconds, NEVER a reconstruction ID; event uses 333 for 3x3. This list does not contain full solutions.
@@ -114,6 +115,7 @@ export async function answerSiteQuestion(
   question: string, lang: 'zh' | 'en', config: AssistantConfig,
   signal: AbortSignal, fetcher: typeof fetch = fetch, history: AssistantMessage[] = [], viewerWcaId?: string,
   emit?: (event: AssistantStreamEvent) => Promise<void>,
+  timeZone='UTC',
 ): Promise<AssistantAnswer> {
   // A signed-in identity is relevant only to an explicit first-person request.
   // Supplying it on every turn can override the person discussed in history.
@@ -122,8 +124,9 @@ export async function answerSiteQuestion(
   const selfWcaId=asksAboutSelf ? viewerWcaId : undefined;
   const asksForPersonalCountries=asksAboutSelf && /国家|地区|\bcountr(?:y|ies)\b|\bregions?\b/i.test(question) && /去过|参加|参赛|比赛|\bcompet(?:e|ed|ing|itions?)\b|\bvisited\b/i.test(question) && !/最多|排名|排行榜|\bmost\b|\brank(?:ing)?\b/i.test(question);
   const requestedLimit=requestedAssistantLimit(question);
-  const referenceYear=new Date().getUTCFullYear();
-  const requestedAnnouncements=findSiteAnnouncements(question,referenceYear);
+  const timeContext=resolveAssistantTime(question,new Date(),timeZone);
+  const referenceYear=Number(timeContext.today.slice(0,4));
+  const requestedAnnouncements=findSiteAnnouncements(timeContext.normalizedQuestion,referenceYear);
   const asksForAllPersonalRecords=/(?:全部|所有|各项|全项目).{0,30}(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)|官方成绩)|(?:\b(?:pb|pr)\b|个人(?:最佳|最好|纪录)).{0,30}(?:全部|所有|各项|全项目)|\ball\b.{0,40}\b(?:pbs?|prs?|personal bests?|personal records?)\b|\b(?:pbs?|prs?|personal bests?|personal records?)\b.{0,40}\ball\b/i.test(question);
   const reconReference=question.match(/(?:复盘|reconstruction)\s*(?:(?:编号|ID)\s*)?[#：:]?\s*(\d+)(?![\d.年月日场次])(?:\s*(秒|毫秒|年|月|日|场|次|seconds?\b|s\b))?/i);
   const requestedReconId=reconReference && !reconReference[2] && Number.isSafeInteger(Number(reconReference[1])) && Number(reconReference[1])>0 ? Number(reconReference[1]) : undefined;
@@ -157,7 +160,7 @@ export async function answerSiteQuestion(
     && /日期|时间|什么时候|哪天|几月|哪年|\b(?:dates?|when|held|years?)\b/i.test(question)
     && !/报名|注册|registration|qualification|\b(?:final|round|schedule)\b|决赛|轮次|赛程/i.test(question);
   if(worldDateQuestion && requestedAnnouncements.length===0) {
-    const years=[...new Set(question.match(/(?:19|20)\d{2}/g) ?? [])];
+    const years=[...new Set(timeContext.normalizedQuestion.match(/(?:19|20)\d{2}/g) ?? [])];
     await emit?.({type:'status',status:{phase:'querying',tool:'competitions'}});
     const result=await assistantStage('tool',()=>runDataTool({tool:'competitions',query:['WC',...years].join(' '),country:'',upcoming:false,limit:20},lang,read),0);
     const rows=(result.evidence as {competitions:Array<{id:string;start_date:string;end_date:string}>}).competitions;
@@ -199,7 +202,7 @@ export async function answerSiteQuestion(
         ...(new URL(config.baseUrl).origin === 'https://api.deepseek.com' ? {thinking:{type:'disabled'}} : {enable_thinking:false}),
         temperature:0,max_tokens:1200,response_format:{type:'json_object'},messages:[
         {role:'system',content:`You are CubeRoot's public cubing assistant. Answer in ${lang === 'zh' ? 'Simplified Chinese' : 'English'}. ${TOOL_GUIDE}${artifacts.some(a=>a.artifact.kind==='table') ? '\nThe UI already renders the retrieved rows as tables below your answer. Your answer must now be only 1-2 short sentences summarizing the result. Do not list individual table rows.' : ''}${finalOnly ? '\nNo further reads are available. Return calls:[] and answer from existing evidence. If a scope choice is required, ask the user; if published data is unavailable, say so. Do not invent missing results.' : ''}${formatRepair}`},
-        {role:'user',content:JSON.stringify({question,viewerWcaId:selfWcaId,history:history.slice(-6).map(m=>({...m,content:m.content.slice(0,2000)})),now:new Date().toISOString().slice(0,10),round,remainingCalls:10-called.size,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence,sources:[...sources.values()],finalRound:round===4})},
+        {role:'user',content:JSON.stringify({question,timeContext,viewerWcaId:selfWcaId,history:history.slice(-6).map(m=>({...m,content:m.content.slice(0,2000)})),now:timeContext.today,round,remainingCalls:10-called.size,statisticsCatalog,announcementCatalog:SITE_ANNOUNCEMENTS.map(a=>({id:a.id,title:a.title[lang],aliases:a.aliases})),evidence,sources:[...sources.values()],finalRound:round===4})},
       ]}),
     });
     checkAssistantResponse(response,'model');
@@ -358,6 +361,10 @@ export async function answerSiteQuestion(
       const parsed=toolCallSchema.safeParse(raw);
       if (!parsed.success) { evidence.push({id:`invalid:${evidence.length}`,tool:raw,data:{error:'Invalid tool arguments. Correct the call before drawing any factual conclusion.',issues:parsed.error.issues.map(issue=>({path:issue.path,message:issue.message}))}}); continue; }
       if(requestedLimit && 'limit' in parsed.data) parsed.data.limit=requestedLimit;
+      if(parsed.data.tool==='competitions' && timeContext.periods.length===1) {
+        const period=timeContext.periods[0];
+        parsed.data.from ??=period.start;parsed.data.to ??=period.end;
+      }
       if(asksForAllPersonalRecords && parsed.data.tool==='person' && !parsed.data.progress) parsed.data.event='all';
       if ('wcaId' in parsed.data && parsed.data.wcaId && !resolvedPeople.has(parsed.data.wcaId)) {
         evidence.push({id:`unresolved:${evidence.length}`,tool:parsed.data,data:'This WCA ID has not been resolved. Use find_person with the name from the question/history first; never guess an ID.'});
@@ -367,7 +374,7 @@ export async function answerSiteQuestion(
       if (called.has(key)) { duplicates++; evidence.push({id:`duplicate:${evidence.length}`,tool:parsed.data,data:'Already read; reuse the previous evidence.'}); continue; }
       try {
         await emit?.({type:'status',status:{phase:'querying',tool:parsed.data.tool}});
-        const result=await assistantStage('tool',()=>parsed.data.tool==='navigation' ? navigation(parsed.data) : parsed.data.tool==='pages' ? pages(parsed.data) : runDataTool(parsed.data,lang,read),round);
+        const result=await assistantStage('tool',()=>parsed.data.tool==='navigation' ? navigation(parsed.data) : parsed.data.tool==='pages' ? pages(parsed.data) : runDataTool(parsed.data,lang,read,undefined,timeContext.today),round);
         // Rejected or unresolved calls have not read any evidence. They must
         // remain eligible after the planner repairs arguments or resolves a name.
         called.add(key);
