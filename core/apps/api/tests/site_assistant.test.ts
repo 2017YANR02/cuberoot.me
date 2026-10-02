@@ -16,6 +16,32 @@ const ask = () => new Request('https://api.example/site-assistant', {
 });
 
 describe('site assistant grounding', () => {
+  it('passes visitor-local time to every model round and applies the resolved competition interval',async()=>{
+    vi.useFakeTimers();vi.setSystemTime(new Date('2027-01-01T01:00:00Z'));
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).endsWith('/comp_names_zh.json'))return Response.json({});
+      if(String(input).endsWith('/all_upcoming_comps.json'))return Response.json([
+        {id:'InWeek',name:'In Week 2027',city:'City',country:'US',start_date:'2027-01-04',end_date:'2027-01-04'},
+        {id:'Later',name:'Later 2027',city:'City',country:'US',start_date:'2027-01-15',end_date:'2027-01-15'},
+      ]);
+      const count=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(count===1?{calls:[{tool:'competitions',query:'',upcoming:true}]}:{answer:'找到这场比赛。',sourceIds:['comp:InWeek']});
+    });
+    const result=await answerSiteQuestion('下周有哪些比赛？','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher),[],undefined,undefined,'America/Los_Angeles');
+    const requests=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).map(([,options])=>JSON.parse(String(options?.body)));
+    for(const request of requests)expect(JSON.parse(request.messages[1].content)).toMatchObject({now:'2026-12-31',timeContext:{today:'2026-12-31',timeZone:'America/Los_Angeles',periods:[{start:'2027-01-04',end:'2027-01-10'}]}});
+    expect(result.sources.map(s=>s.id)).toEqual(['comp:InWeek']);
+    expect(result.artifacts?.[0]).toMatchObject({rows:[['In Week','City','US','2027-01-04']]});
+  });
+  it('passes the validated browser time zone through the authenticated route',async()=>{
+    const answer=vi.fn<typeof answerSiteQuestion>().mockResolvedValue({answer:'OK',sources:[]});
+    const routes=createSiteAssistantRoutes({answer,config:()=>config,now:()=>0});
+    const response=await routes.request('/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:'明天有哪些比赛？',lang:'zh',timeZone:'America/Los_Angeles'})});
+    expect(response.status).toBe(200);
+    expect(answer.mock.calls[0][8]).toBe('America/Los_Angeles');
+    const invalid=await routes.request('/site-assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:'明天',lang:'zh',timeZone:'invalid'})});
+    expect(invalid.status).toBe(400);
+  });
   it.each(['WC2025、WC 2023 的日期是什么？','2025年和2023年世锦赛是什么时间？','When were WC2025 and WC 2023 held?'])('answers championship dates from competition records: %s',async question=>{
     const fetcher=vi.fn(async(input:RequestInfo|URL)=>{
       const url=String(input);

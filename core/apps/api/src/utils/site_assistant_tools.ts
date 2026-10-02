@@ -4,7 +4,7 @@ import { selectCurrentRecords, personalRecordFlags, type WcaRecordRow } from '@c
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
 import { WCA_EVENT_ORDER, EVENT_DISPLAY_ZH, EVENT_DISPLAY_EN } from '@cuberoot/shared/wca-events';
 import { localizeCompName } from '@cuberoot/shared/comp-localize';
-import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
+import { formatDateRangeIso, isValidIsoDate } from '@cuberoot/shared/iso-date';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
 import type { AssistantArtifact, AssistantSource } from '@cuberoot/shared/site-assistant';
@@ -14,13 +14,14 @@ const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
 const competitionId = id.refine(value=>!/^\d{4}[A-Z]{4}\d{2}$/.test(value),'This is a person WCA ID; use wcaId, not compId.');
 const event = z.enum(WCA_EVENT_ORDER).default('333');
 const query = z.string().trim().min(1).max(100);
+const date=z.string().refine(isValidIsoDate,'Expected an ISO calendar date');
 export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
   z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/) }).strict(),
   z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), progress: z.boolean().default(false) }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
-  z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), limit: z.number().int().min(1).max(20).default(10) }).strict(),
+  z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('scrambles'), compId: competitionId, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
   z.object({ tool: z.literal('recons'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/).optional(), compId: competitionId.optional(), value: z.number().positive().max(360000).optional(), event: z.string().regex(/^[A-Za-z0-9]+$/).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('recon'), id: z.number().int().positive() }).strict(),
@@ -50,7 +51,7 @@ const url = (path: string, params: Record<string, string | number | undefined>) 
 const source = (id: string, title: string, href: string): AssistantSource => ({ id, title, href, read: true });
 
 /** Only fixed public origins/endpoints. Never forwards cookies or credentials. */
-export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople): Promise<ToolResult> {
+export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'|'navigation'}>, lang: 'zh'|'en', read: JsonReader, findPeople = findAssistantPeople,today=new Date().toISOString().slice(0,10)): Promise<ToolResult> {
   const label = (zh: string, en: string) => ({ zh, en })[lang];
   const name = (raw: string) => displayCuberName(raw, lang === 'zh');
   const compNames = lang === 'zh' && ['records','rankings','competitions'].includes(call.tool) ? await read(`${stat}/comp_names_zh.json`).catch(() => ({})) : {};
@@ -196,10 +197,10 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     // explicit edition is historical discovery, not an upcoming-only query.
     const worldQuery=/^(?:wc|世锦赛|世界(?:魔方)?锦标赛|(?:rubik'?s?\s+)?(?:wca\s+)?world\s+(?:cube\s+|rubik'?s?\s+cube\s+)?championships?)(?:\s*(?:19|20)\d{2})*$/i.test(call.query.trim());
     const years:string[]=worldQuery ? call.query.match(/(?:19|20)\d{2}/g) ?? [] : [];
-    const upcomingOnly=call.upcoming && years.length===0;
+    const upcomingOnly=call.upcoming && years.length===0 && !(call.from && call.from<today) && !(call.to && call.to<today);
     const all = upcomingOnly ? upcoming : mergeCompetitionIndexes(await read(`${stat}/all_past_comps.json`),upcoming);
     const q=call.query.toLocaleLowerCase().replace(/\s/g,'');
-    const rows=all.filter((c:any)=>(!upcomingOnly || c.end_date >= new Date().toISOString().slice(0,10)) && (!call.country || c.country===call.country) && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
+    const rows=all.filter((c:any)=>(!upcomingOnly || c.end_date >= today) && (!call.from || c.end_date>=call.from) && (!call.to || c.start_date<=call.to) && (!call.country || c.country===call.country) && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
       .sort((a:any,b:any)=>upcomingOnly ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date)).slice(0,call.limit);
     out.evidence={...call,competitions:rows.map((c:any)=>({...c,name:compName(c.id,c.name,c.start_date)}))};
     out.sources=rows.map((c:any)=>source(`comp:${c.id}`,compName(c.id,c.name,c.start_date),`/wca/comp/${c.id}`));

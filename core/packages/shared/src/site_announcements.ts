@@ -1,3 +1,4 @@
+import { resolveAssistantYears } from './site_assistant_time';
 /** Public summaries shared by page rendering, search and AI evidence. */
 export const WC_2027_ANNOUNCEMENT = {
   id: 'announcement:wc-2027',
@@ -22,14 +23,6 @@ export function findSiteAnnouncements(query: string, referenceYear?: number) {
   const normalize = (text:string) => text.toLowerCase().replace(/[\s-]+/g,'');
   const text=normalize(query);
   const championship=/(?:世锦赛|世界(?:魔方)?锦标赛|\bWC\s*(?=\d|\b)|world\s+(?:cube\s+|rubik'?s?\s+cube\s+)?championships?)/i.test(query);
-  const years=new Set((query.match(/(?:19|20)\d{2}/g) ?? []).map(Number));
-  // The caller supplies the year: shared search/page rendering never reads a
-  // clock during SSR, and relative phrases do not become permanent aliases.
-  if(championship && years.size===0 && referenceYear!==undefined) {
-    if(/后年|\byear after next\b/i.test(query))years.add(referenceYear+2);
-    else if(/明年|\bnext year(?:'s)?\b/i.test(query))years.add(referenceYear+1);
-    else if(/今年|\bthis year(?:'s)?\b/i.test(query))years.add(referenceYear);
-    else if(/去年|\blast year(?:'s)?\b/i.test(query))years.add(referenceYear-1);
-  }
+  const years=new Set(resolveAssistantYears(query,referenceYear));
   return SITE_ANNOUNCEMENTS.filter(announcement=>announcement.aliases.some(alias=>text.includes(normalize(alias))) || championship && years.has(announcement.year));
 }

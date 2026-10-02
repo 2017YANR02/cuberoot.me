@@ -2,6 +2,18 @@ import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
 describe('assistant public data adapters',()=>{
+  it('filters an inclusive date interval before limiting, including overlapping multi-day competitions',async()=>{
+    const rows=[
+      {id:'Before',name:'Before',city:'City',country:'US',start_date:'2026-09-20',end_date:'2026-09-24'},
+      {id:'Overlap',name:'Overlap',city:'City',country:'US',start_date:'2026-09-27',end_date:'2026-09-29'},
+      {id:'Inside',name:'Inside',city:'City',country:'US',start_date:'2026-10-02',end_date:'2026-10-03'},
+      {id:'After',name:'After',city:'City',country:'US',start_date:'2026-10-05',end_date:'2026-10-05'},
+    ];
+    const result=await runDataTool({tool:'competitions',query:'',country:'',upcoming:true,from:'2026-09-28',to:'2026-10-04',limit:20},'en',async url=>url.endsWith('/all_past_comps.json')?rows:[],undefined,'2026-10-02');
+    expect(result.sources.map(s=>s.id)).toEqual(['comp:Inside','comp:Overlap']);
+    expect(toolCallSchema.safeParse({tool:'competitions',from:'2026-02-30'}).success).toBe(false);
+    expect(toolCallSchema.safeParse({tool:'competitions',from:'2026-10-03',to:'2026-10-01'}).success).toBe(false);
+  });
   it.each(['WC2025','WC 2025','世锦赛2025','World Championship 2025'])('resolves explicit historical editions despite the upcoming default: %s',async query=>{
     const result=await runDataTool({tool:'competitions',query,country:'',upcoming:true,limit:20},'en',async url=>url.endsWith('/all_past_comps.json') ? [
       {id:'WC2025',name:"Rubik's WCA World Championship 2025",city:'Seattle',country:'US',start_date:'2025-07-03',end_date:'2025-07-06'},
