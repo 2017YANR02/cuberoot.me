@@ -192,10 +192,15 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     table(label('排名','Rankings'),[label('名次','Rank'),label('选手','Person'),'WCA ID',label('成绩','Result'),label('地区','Country'),label('比赛','Competition'),label('日期','Date')],rows,data.rows.map((r:any)=>`/wca/persons/${r.wcaId}`));
   } else if (call.tool === 'competitions') {
     const upcoming = await read(`${stat}/all_upcoming_comps.json`);
-    const all = call.upcoming ? upcoming : mergeCompetitionIndexes(await read(`${stat}/all_past_comps.json`),upcoming);
+    // WC editions use canonical WCA IDs even when their names change. An
+    // explicit edition is historical discovery, not an upcoming-only query.
+    const worldQuery=/^(?:wc|世锦赛|世界(?:魔方)?锦标赛|(?:rubik'?s?\s+)?(?:wca\s+)?world\s+(?:cube\s+|rubik'?s?\s+cube\s+)?championships?)(?:\s*(?:19|20)\d{2})*$/i.test(call.query.trim());
+    const years:string[]=worldQuery ? call.query.match(/(?:19|20)\d{2}/g) ?? [] : [];
+    const upcomingOnly=call.upcoming && years.length===0;
+    const all = upcomingOnly ? upcoming : mergeCompetitionIndexes(await read(`${stat}/all_past_comps.json`),upcoming);
     const q=call.query.toLocaleLowerCase().replace(/\s/g,'');
-    const rows=all.filter((c:any)=>(!call.upcoming || c.end_date >= new Date().toISOString().slice(0,10)) && (!call.country || c.country===call.country) && (!q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
-      .sort((a:any,b:any)=>call.upcoming ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date)).slice(0,call.limit);
+    const rows=all.filter((c:any)=>(!upcomingOnly || c.end_date >= new Date().toISOString().slice(0,10)) && (!call.country || c.country===call.country) && (worldQuery ? /^WC(?:19|20)\d{2}$/.test(c.id) && (!years.length || years.includes(c.id.slice(2))) : !q || `${c.id} ${c.name} ${c.city}`.toLocaleLowerCase().replace(/\s/g,'').includes(q)))
+      .sort((a:any,b:any)=>upcomingOnly ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date)).slice(0,call.limit);
     out.evidence={...call,competitions:rows.map((c:any)=>({...c,name:compName(c.id,c.name,c.start_date)}))};
     out.sources=rows.map((c:any)=>source(`comp:${c.id}`,compName(c.id,c.name,c.start_date),`/wca/comp/${c.id}`));
     table(label('比赛','Competitions'),[label('比赛','Competition'),label('城市','City'),label('地区','Country'),label('日期','Dates')],rows.map((c:any)=>[compName(c.id,c.name,c.start_date),c.city,c.country,formatDateRangeIso(c.start_date,c.end_date)]),rows.map((c:any)=>`/wca/comp/${c.id}`));
