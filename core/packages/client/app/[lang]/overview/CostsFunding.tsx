@@ -37,7 +37,7 @@ export default function CostsFunding() {
         { zh: '第 1–3 个月：建议完成 3 个专题、30 人试用与 3 位教学从业者访谈，提交练习路径与 4 周复练报告。', en: 'Months 1–3: target three focused topics, 30 pilot users and three educator interviews; report the practice path and week-four repeat use.' },
         { zh: '第 4–6 个月：根据首期反馈，改进训练内容与工具，开展小规模进阶服务或机构付费验证。', en: 'Months 4–6: improve content and tools using initial feedback, then test paid advanced services or educator use on a small scale.' },
         { zh: '第 7–12 个月：报告重复使用、付费转化、续订与合作交付；依据真实结果决定续投、调整或收缩。', en: 'Months 7–12: report repeat use, paid conversion, renewals and partner delivery; decide whether to extend, adapt or narrow the work.' },
-      ].map(item => <li key={item.en}><Check size={16} aria-hidden /><span>{tr(item)}</span></li>)}</ul><p className="overview-small">{tr({ zh: '人数、机构数与阶段节奏为建议目标，不代表现有用户或已签约伙伴。月度沟通、季度复核；各阶段金额、交付条件和后续资金承诺以双方约定为准。', en: 'Pilot counts and timing are proposed targets, not existing users or signed partners. Use monthly updates and quarterly reviews, with stage amounts, conditions and future funding commitments agreed by both parties.' })}</p></div></div>
+      ].map(item => <li key={item.en}><Check size={16} aria-hidden /><span>{tr(item)}</span></li>)}</ul><p className="overview-small">{tr({ zh: '30 人为建议深度跟踪样本，不是总获客上限；试点与阶段节奏不代表现有用户或已签约伙伴。月度沟通、季度复核；各阶段金额、交付条件和后续资金承诺以双方约定为准。', en: 'The 30-person cohort is a proposed close-follow-up sample, not a cap on acquisition. Pilots and timing are not existing users or signed partners. Use monthly updates and quarterly reviews, with stage amounts, conditions and future funding commitments agreed by both parties.' })}</p></div></div>
     </section>
   </>;
 }
