@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useState, type ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import i18n, { detectLanguage, ensureLangInUrl, changeAppLanguage } from './i18n-client';
 import { persistItem } from '@/lib/safe-storage';
@@ -22,11 +22,17 @@ export default function I18nProvider({
 }) {
   const [instance] = useState(() => i18n);
 
-  // Synchronous lang switch when [lang]/layout passed an explicit locale.
-  // i18n is a singleton — last-write-wins, fine for single-request SSR.
-  if (initialLang && instance.language !== initialLang) {
+  // SSR must render the route's language synchronously. In the browser the
+  // singleton starts with the URL locale; later route changes emit only after
+  // commit so language subscribers never update during this component's render.
+  if (typeof window === 'undefined' && initialLang && instance.language !== initialLang) {
     void instance.changeLanguage(initialLang);
   }
+  useLayoutEffect(() => {
+    if (initialLang && instance.language !== initialLang) {
+      void instance.changeLanguage(initialLang);
+    }
+  }, [instance, initialLang]);
 
   useEffect(() => {
     if (initialLang) {
