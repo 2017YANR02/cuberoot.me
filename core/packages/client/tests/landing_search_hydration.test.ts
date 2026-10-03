@@ -175,7 +175,7 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'尚未发送');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
       await click('button[title="关闭"]');
       expect(document.querySelector('.landing-search-answer-text')?.textContent).not.toContain('[[page]]');
-      await click('button[title="打开对话"]');
+      await click('button[aria-label="提问"]');
       expect((document.querySelector('textarea[aria-label="继续提问"]') as HTMLTextAreaElement).value).toBe('尚未发送');
       await click('button[title="全屏"]');
       expect(document.querySelector('.site-assistant-dialog')?.classList.contains('is-expanded')).toBe(true);
