@@ -20,6 +20,7 @@ import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
 import { useCopy } from '@/hooks/useCopy';
 import { stripRecordNewsPrefix } from '@/lib/record-news';
+import { countryFlag } from '@cuberoot/shared/record-news';
 import { eventDisplayName, isWcaEvent } from '@/lib/wca-events';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2, loadFlagData, compFlagIso2 } from '@/lib/country-flags';
@@ -2044,7 +2045,7 @@ export default function CompDetailPage() {
                     className="comp-modal-copy-btn"
                     onClick={() => newsCopy.copy(recordNews.map((news, index) => {
                       const message = tr(news.message);
-                      return index === 0 ? `${message} | ${compNameTitle}` : stripRecordNewsPrefix(message);
+                      return index === 0 ? `${message} | ${compNameTitle}${countryFlag(compFlagIso2(slug))}` : stripRecordNewsPrefix(message);
                     }).join('\n'), slug)}
                     title={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
                     aria-label={tr({ zh: '复制全部纪录快讯', en: 'Copy all record news' })}
