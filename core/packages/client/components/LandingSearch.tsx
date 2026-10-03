@@ -552,7 +552,6 @@ export default function LandingSearch({
         >
           <Mic size={16} strokeWidth={1.75} />
         </button>
-        {(!query.trim() || assistantTurns.length > 0) && <button type="button" className="landing-search-mic" onClick={() => setAssistantDialog(true)} title={tr({zh:'打开对话',en:'Open conversation'})}><Sparkles size={17}/></button>}
         {query.trim() && (
           <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
             onClick={() => void askAssistant()}
