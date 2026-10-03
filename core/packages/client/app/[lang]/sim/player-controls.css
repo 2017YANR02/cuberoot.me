@@ -742,7 +742,7 @@
   line-height: 1.2;
   backdrop-filter: blur(5px);
 }
-.sim-picture-face-remove {
+.clear-btn.sim-picture-face-remove {
   position: absolute;
   top: 5px;
   right: 5px;
@@ -944,7 +944,7 @@
     left: 3px;
     padding: 2px 4px;
   }
-  .sim-picture-face-remove { top: 3px; right: 3px; }
+  .clear-btn.sim-picture-face-remove { top: 3px; right: 3px; }
   .sim-picture-crop-workspace { margin-top: 14px; }
   .sim-picture-crop-body {
     grid-template-columns: 1fr;

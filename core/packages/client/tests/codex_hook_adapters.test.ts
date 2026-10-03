@@ -63,6 +63,29 @@ describe('Codex hook payload adapters', () => {
     expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
   });
 
+  it('denies shared-control positioning regressions through the registered write hook', () => {
+    const target = join(HOOKS, 'block-css-position-cascade.mts');
+    const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8'));
+    const command = config.hooks.PreToolUse.find((entry: { matcher: string }) => entry.matcher === 'apply_patch').hooks[0].command;
+    expect(command).toContain('block-css-position-cascade.mts');
+    const file = join(CORE_ROOT, 'packages/client/components/position-hook-probe.css');
+    for (const selector of ['.trainer-opts--top', '.mem-pay-close']) {
+      const patch = `*** Begin Patch\n*** Add File: ${file}\n+${selector} { position: absolute; }\n*** End Patch`;
+      const result = runAdapter(WRITE_ADAPTER, target, { tool_input: { command: patch } });
+      expect(result.status).toBe(0);
+      expect(JSON.parse(result.stdout).hookSpecificOutput.permissionDecision).toBe('deny');
+    }
+    const legalPatch = `*** Begin Patch\n*** Add File: ${file}\n+.settings-popover.trainer-opts--top { position: absolute; }\n*** End Patch`;
+    const legal = runAdapter(WRITE_ADAPTER, target, { tool_input: { command: legalPatch } });
+    expect(legal.status).toBe(0);
+    expect(legal.stdout).toBe('');
+    for (const input of ['bad JSON', '{}', '{"tool_input":null}']) {
+      const result = runProcess(process.execPath, [target], CORE_ROOT, input);
+      expect(result.status).toBe(0);
+      expect(result.stdout).toBe('');
+    }
+  });
+
   it('registers only cross-platform Node hooks', () => {
     const config = JSON.parse(readFileSync(HOOK_CONFIG, 'utf8')) as {
       hooks: Record<string, Array<{ hooks: Array<{ command: string; commandWindows: string }> }>>;

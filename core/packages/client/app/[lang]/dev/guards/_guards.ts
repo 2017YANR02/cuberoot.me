@@ -15,6 +15,15 @@ export interface PairedGuard {
 
 export const PAIRED_GUARDS: PairedGuard[] = [
   {
+    id: 'css-position-cascade',
+    scope: 'project',
+    hook: 'block-css-position-cascade.mts',
+    test: 'css-position-cascade-guard.test.ts + codex_hook_adapters.test.ts',
+    baseline: '0',
+    zh: { title: '共享控件定位与偏移复位', desc: '拦截已纳管共享控件的单 class 定位覆盖，避免 CSS 加载顺序改变按钮位置；absolute/fixed 改 relative 时显式重置偏移，改 static 时重置 transform/translate。Hook 重建完整多文件补丁，CI 共用扫描器检查 Web、app-ui、timer-ui 和 shared。规则内 allow-css-position 必须写具体理由；复杂选择器、CSS Modules、动态 class 与真实视口仍需浏览器验收。' },
+    en: { title: 'Shared control positioning and offset resets', desc: 'Blocks single-class positioning overrides for registered shared controls so CSS load order cannot change control placement. Reset offsets when moving from absolute/fixed to relative, and transform/translate when moving to static. The hook reconstructs complete multi-file patches; CI uses the same scanner for Web, app-ui, timer-ui and shared. A rule-local allow-css-position exception needs a reason. Complex selectors, CSS Modules, dynamic classes and actual viewport behavior still require browser verification.' },
+  },
+  {
     id: 'manual-search',
     scope: 'project',
     hook: 'hook-detect-manual-search.mjs',
