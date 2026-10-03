@@ -41,6 +41,19 @@ describe('record news presentation', () => {
     expect(competitionRecordNews('Invalid', [], users, [], [{ ...record, tag: '1' }])).toEqual([]);
     expect(competitionRecordNews('WuhanCrimsonAutumn2026', [], users, [], [{ ...record, value: 452 }])).toHaveLength(COMP_RECORD_NEWS.WuhanCrimsonAutumn2026!.length);
   });
+  it('uses Bark ordering and mean labels for the Beijing six-by-six clipboard news', () => {
+    const news = competitionRecordNews('BeijingAutumnRivalry2026', [], {
+      '1': { name: 'Timofei Tarasenko', region: 'RU' },
+      '2': { name: 'Seung Hyuk Nahm', region: 'KR' },
+    }, [], [
+      { ev: { i: '666' }, res: { n: 1 }, roundId: 'f', type: 'average', tag: 'WR', value: 6176 },
+      { ev: { i: '666' }, res: { n: 2 }, roundId: 'f', type: 'single', tag: 'AsR', value: 6008 },
+    ]);
+    expect(news[0].message.en).toBe('BREAKING NEWS! 1:01.76 6x6 WR Mean Timofei Tarasenko🇷🇺');
+    expect(news[1].message.en).toBe('Breaking News! 1:00.08 6x6 AsR Single Seung Hyuk Nahm🇰🇷');
+    expect(news[0].message.zh).toBe('纪录快讯! 1:01.76六阶平均世界纪录WR Timofei Tarasenko🇷🇺');
+    expect(news[1].message.zh).toBe('纪录快讯! 1:00.08六阶单次亚洲纪录AsR Seung Hyuk Nahm🇰🇷');
+  });
   it('retains both newcomer sources and both metrics, while deduplicating curated news', () => {
     const records = (['1st-solve', '1st-comp'] as const).flatMap(source => (['single', 'average'] as const).map(type => ({ eventId: '444', roundId: 'f', personNumber: 1, source, type, value: 2763 })));
     const users = { '1': { name: 'Xuanyi Geng (耿暄一)', region: 'CN' } };

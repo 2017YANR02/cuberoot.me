@@ -1,13 +1,12 @@
 import { eventDisplayName } from '@/lib/wca-events';
 import { formatWcaResult } from '@/lib/wca-format-result';
-import { displayCuberName } from '@/lib/cuber-name-display';
 import { countryToIso2 } from '@/lib/country-flags';
+import { CR_ABBR_CN, enrich, formatCombinedRecords, type RecordEvent } from '@cuberoot/shared/record-news';
 
-/** Plain-text clipboard flags; on-page flags continue to use the Flag component. */
-function clipboardFlag(country: string): string {
-  const iso2 = countryToIso2(country).toUpperCase();
-  if (!/^[A-Z]{2}$/.test(iso2)) return '';
-  return String.fromCodePoint(...Array.from(iso2, letter => 0x1F1E6 + letter.charCodeAt(0) - 65));
+/** Bark's template without the competition suffix, which the copy button adds once. */
+function recordMessage(event: RecordEvent): { zh: string; en: string } {
+  const formatted = formatCombinedRecords([enrich(event)], () => null);
+  return { zh: formatted.cn.replace(/\s*\|\s*$/, ''), en: formatted.en.replace(/\s*\|\s*$/, '') };
 }
 
 export interface NewcomerRecord {
@@ -140,7 +139,7 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
   users: Record<string, { name: string; region: string; countryId?: string }>,
   events: { i: string; rs: { i: string }[] }[], competitionRecords: CompetitionRecord[] = []): RecordNews[] {
   const news = [...(COMP_RECORD_NEWS[slug] ?? [])];
-  const labels: Record<string, string> = { WR: '世界纪录', FWR: '女子世界纪录', NR: '国家纪录', AsR: '亚洲纪录', ER: '欧洲纪录', NAR: '北美洲纪录', SAR: '南美洲纪录', AfR: '非洲纪录', OcR: '大洋洲纪录', CR: '洲际纪录' };
+  const labels: Record<string, string> = { WR: '世界纪录', FWR: '女子世界纪录', NR: '国家纪录', ...CR_ABBR_CN, CR: '洲际纪录' };
   for (const record of competitionRecords) {
     const user = users[String(record.res.n)];
     if (!user || !labels[record.tag] || !Number.isSafeInteger(record.value) || record.value <= 0) continue;
@@ -154,11 +153,13 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
       en: `${value} ${eventDisplayName(record.ev.i, false)} ${type.en}`,
     };
     const country = countryToIso2(user.countryId || user.region);
-    const flag = clipboardFlag(country);
     news.push({
       event: record.ev.i, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
       person: user.name, country,
-      message: { zh: `纪录快讯! ${text.zh}${record.tag} ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en} ${record.tag} ${displayCuberName(user.name, false)}${flag}` },
+      message: recordMessage({
+        tag: record.tag, rec_type: record.type, attempt_result: record.value, event_id: record.ev.i,
+        person_name: user.name, person_iso2: country, comp_name: '', comp_iso2: '', url: '',
+      }),
       results: [{ text, tag: record.tag }],
     });
   }
@@ -178,11 +179,14 @@ export function competitionRecordNews(slug: string, records: NewcomerRecord[],
     };
     const roundIndex = events.find(event => event.i === record.eventId)?.rs.findIndex(round => round.i === record.roundId) ?? -1;
     const country = countryToIso2(user.countryId || user.region);
-    const flag = clipboardFlag(country);
     news.push({
       event: record.eventId, round: roundIndex >= 0 ? roundIndex + 1 : undefined,
       person: user.name, country, newcomerSource: record.source, newcomerType: record.type,
-      message: { zh: `纪录快讯! ${text.zh}NWR ${displayCuberName(user.name, true)}${flag}`, en: `Breaking News! ${text.en} NWR ${displayCuberName(user.name, false)}${flag}` },
+      message: recordMessage({
+        tag: 'NWR', rec_type: record.type, attempt_result: record.value, event_id: record.eventId,
+        newcomer_source: record.source, person_name: user.name, person_iso2: country,
+        comp_name: '', comp_iso2: '', url: '',
+      }),
       results: [{ text, tag: 'NWR' }],
     });
   }
