@@ -109,6 +109,11 @@ export class GyroRecorder {
   /** 因为超闸被丢掉的个数。>0 说明这条录像不完整。 */
   get droppedCount(): number { return this.dropped; }
 
+  /** Read the current recording without consuming or exposing mutable samples. */
+  snapshot(): GyroSample[] {
+    return this.samples.map(({ tMs, q }) => ({ tMs, q: { ...q } }));
+  }
+
   /** 拿走并清空。 */
   take(): GyroSample[] {
     const out = this.samples;

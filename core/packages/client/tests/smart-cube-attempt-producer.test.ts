@@ -3,6 +3,24 @@ import { decodeGyroTrack } from '@cuberoot/shared/smart-cube/gyro-track';
 import { describe, expect, it } from 'vitest';
 
 describe('SmartCubeAttemptProducer', () => {
+  it('reads live moves, device and gyro without draining or mutating the final recording', () => {
+    const producer = new SmartCubeAttemptProducer();
+    producer.begin(1_000, { model: 'gan-v4', name: 'GAN16ui' });
+    producer.recordMove('R', 1_100);
+    producer.recordGyro({ w: 1, x: 0, y: 0, z: 0 }, 20);
+    const snapshot = producer.snapshot();
+    const expected = structuredClone(snapshot);
+    snapshot.moves[0].m = 'F';
+    snapshot.device!.name = 'Changed';
+    expect(producer.snapshot()).toEqual(expected);
+    producer.recordMove('U', 1_200);
+    expect(producer.finish()).toEqual({
+      ...expected, moves: [{ m: 'R', ts: 100 }, { m: 'U', ts: 200 }],
+    });
+    producer.begin(2_000);
+    expect(producer.snapshot()).toEqual({ moves: [], gyro: null, device: undefined });
+  });
+
   it('snapshots the starting device and drains moves at finish', () => {
     const producer = new SmartCubeAttemptProducer();
     const device = { model: 'gan-v4', name: 'GAN16ui' };

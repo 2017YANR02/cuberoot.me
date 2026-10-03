@@ -307,6 +307,7 @@ const SolveRecap = dynamic(() => import('../_components/SolveRecap'), {
   ssr: false,
   loading: SolveRecapPlaceholder,
 });
+const LiveReconstructReport = dynamic(() => import('../_components/ReconstructReport'), { ssr: false });
 /** 假魔方调试面板只在 dev 存在;判断提到模块级,好让打包器把整个分支和它的
  *  chunk 一起消掉(见 DevFakeCubePanel.tsx)。 */
 const DEV_PANEL = process.env.NODE_ENV !== 'production';
@@ -1320,7 +1321,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
-  const [liveSolution, setLiveSolution] = useState('');
+  const [liveSolve, setLiveSolve] = useState<Solve | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
   /** The smart cube connected when the attempt STARTED. Snapshotted with the
@@ -1427,7 +1428,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
       : undefined);
-    setLiveSolution('');
+    setLiveSolve(null);
   });
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
   useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
@@ -1544,8 +1545,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     recordMove: ({ move, timestamp }) => {
       if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
       // Use only this attempt's accepted moves, never the 3D anchor's scramble log.
-      const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
-      setLiveSolution(moves.map(({ m }) => m).join(' '));
+      const { moves, device, gyro } = smartCubeAttemptProducerRef.current.snapshot();
+      setLiveSolve({
+        id: `live-${attemptStartedAtRef.current}`,
+        event: eventAtStartRef.current,
+        scramble: scrambleAtStartRef.current,
+        timeMs: moves.at(-1)?.ts ?? 0,
+        penalty: 'ok', ts: 0, moves, device,
+        ...(gyro ? { gyro } : {}),
+      });
       attemptSplitRecorder.observeMoves({
         event: eventAtStartRef.current,
         moves,
@@ -3193,13 +3201,13 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           )}
         </TimingSurface>
 
-        {timer.phase === 'running' && liveSolution && (
+        {timer.phase === 'running' && liveSolve && (
           <section className="timer-live-solution" data-no-timer
             aria-label={tr({ zh: '实时解法', en: 'Live solution' })}>
             <div className="timer-live-solution-label">
-              {tr({ zh: '实时解法 · 已拧步骤', en: 'Live solution · moves so far' })}
+              {tr({ zh: '实时解法', en: 'Live solution' })}
             </div>
-            <div className="timer-live-solution-moves">{liveSolution}</div>
+            <LiveReconstructReport key={liveSolve.id} solve={liveSolve} isZh={isZh} live />
           </section>
         )}
 

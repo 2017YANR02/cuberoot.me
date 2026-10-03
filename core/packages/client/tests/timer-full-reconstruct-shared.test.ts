@@ -69,6 +69,31 @@ function button(label: string): HTMLButtonElement {
 }
 
 describe('the complete shared reconstruction report', () => {
+  it('renders identical move lines in live and final modes and clears them for a new attempt', async () => {
+    const render = async (value: Solve, live: boolean) => {
+      await act(async () => {
+        root.render(createElement(ReconstructReport, { solve: value, isZh: false, host, live }));
+      });
+      await vi.waitFor(async () => {
+        await act(async () => undefined);
+        expect(container.querySelector('.sml-scramble')?.textContent).toContain(value.scramble);
+      });
+    };
+    const lines = () => [...container.querySelectorAll('.sml-line')].map(line => ({
+      moves: line.querySelector('.sml-moves')?.textContent,
+      label: line.querySelector('.sml-label')?.textContent,
+      pair: line.querySelector('.sml-sub-name')?.textContent,
+    }));
+    await render(solve, true);
+    const liveLines = lines();
+    expect(container.querySelector('.reconstruct-playback')).toBeNull();
+    expect(vi.mocked(reconstructionAnalyzer.subscribe).mock.calls.at(-1)?.[0].scoreable).toBe(false);
+    await render(solve, false);
+    expect(lines()).toEqual(liveLines);
+    await render({ ...solve, id: 'next-attempt', scramble: 'F', moves: [{ m: "F'", ts: 100 }] }, true);
+    expect(container.querySelector('.sml-scramble')?.textContent).not.toContain('R U');
+  });
+
   it('keeps the website analysis export identical and replay payload compatible', () => {
     expect(webBuild).toBe(sharedBuild);
     expect(decodeReplayParam(encodeReplayPayload(solve))).toMatchObject({
