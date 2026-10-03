@@ -28,6 +28,8 @@
 .site-assistant-table th,.site-assistant-table td { padding:10px 12px; text-align:left; border-bottom:1px solid var(--border-default); vertical-align:top; }
 .site-assistant-table th { background:var(--muted); white-space:nowrap; }
 .site-assistant-table td { min-width:75px; max-width:450px; overflow-wrap:anywhere; }
+.site-assistant-table td.site-assistant-date { white-space:nowrap; overflow-wrap:normal; }
+.site-assistant-table td.site-assistant-country { min-width:0; width:1%; white-space:nowrap; }
 .site-assistant-citation { display:inline; margin:0 3px; padding:2px 7px; border-radius:7px; background:var(--muted); color:var(--muted-foreground); font-size:11px; font-weight:500; text-decoration:none; vertical-align:baseline; box-decoration-break:clone; -webkit-box-decoration-break:clone; }
 .site-assistant-citation:hover { background:var(--accent-soft); color:var(--accent); }
 .site-assistant-status { display:flex; align-items:center; gap:8px; min-height:28px; margin:12px 0; }

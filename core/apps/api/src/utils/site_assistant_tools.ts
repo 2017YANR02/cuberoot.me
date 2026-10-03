@@ -7,7 +7,7 @@ import { localizeCompName } from '@cuberoot/shared/comp-localize';
 import { formatDateRangeIso, isValidIsoDate } from '@cuberoot/shared/iso-date';
 import { roundChronologicalOrder } from '@cuberoot/shared/wca-round';
 import { mergeCompetitionIndexes } from '@cuberoot/shared/competition-index';
-import type { AssistantArtifact, AssistantSource } from '@cuberoot/shared/site-assistant';
+import type { AssistantArtifact, AssistantSource, AssistantTable } from '@cuberoot/shared/site-assistant';
 import { findAssistantPeople } from './site_assistant_people.js';
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,100}$/);
@@ -57,7 +57,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   const compNames = lang === 'zh' && ['records','rankings','competitions'].includes(call.tool) ? await read(`${stat}/comp_names_zh.json`).catch(() => ({})) : {};
   const compName = (id:string, raw:string, date?:string) => localizeCompName(id,raw,lang === 'zh',{date,resolveNameZh:n=>compNames[n] ?? n});
   const out: ToolResult = { evidence: null, sources: [], artifacts: [] };
-  const table = (title: string, columns: string[], rows: string[][], links?: string[]) => out.artifacts.push({ kind:'table', title, columns, rows, links });
+  const table = (title: string, columns: string[], rows: string[][], links?: string[], columnKinds?: AssistantTable['columnKinds']) => out.artifacts.push({ kind:'table', title, columns, rows, links, ...(columnKinds ? {columnKinds} : {}) });
   const freshness = async () => (await read(`${api}/wca/historical-ranks/meta`)).lastImportedAt;
   if (call.tool === 'statistics') {
     const index=await read(stat+'/index.json');
@@ -151,7 +151,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const countries = [...counts].sort(([a],[b])=>a.localeCompare(b)).map(([iso2,competitions])=>({iso2,name:regions.of(iso2) ?? iso2,competitions}));
     out.evidence = {updated,wcaId:call.wcaId,name:title,countries,unknownCompetitions,basis:'Competition host country/region, distinct competitions with official results; not nationality or travel without competing.'};
     out.sources.push(source(`person:${call.wcaId}`,title,`/wca/persons/${call.wcaId}`));
-    table(label('参赛国家和地区','Countries and regions competed in'),[label('国家或地区','Country or region'),label('比赛数','Competitions')],countries.map(c=>[c.name,String(c.competitions)]));
+    table(label('参赛国家和地区','Countries and regions competed in'),[label('国家或地区','Country or region'),label('比赛数','Competitions')],countries.map(c=>[c.iso2,String(c.competitions)]),undefined,['country','text']);
     out.factualSummary = label(`按已导入的官方成绩，${title}在 ${countries.length} 个国家或地区参赛，明细见下表。以比赛举办地计算，不按选手国籍计算。`,`Imported official results show ${title} competed in ${countries.length} countries or regions, listed below. Locations refer to competition hosts, not nationality.`)
       + (unknownCompetitions ? label(`另有 ${unknownCompetitions} 场比赛缺少有效举办地，未计入。`,` ${unknownCompetitions} competitions lack a valid host location and are excluded.`) : '');
   } else if (call.tool === 'person') {
@@ -190,7 +190,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const rows = data.rows.map((r:any)=>[String(r.rank),name(r.name),r.wcaId,formatWcaResult(r.value,call.event,call.type),r.iso2,compName(r.compId,r.compName,r.compDate),r.compDate]);
     out.evidence={updated,...call,total:data.total,columns:['rank','person','wcaId','result','country','competition','date'],rows};
     out.sources.push(source('rankings',label('WCA 排名','WCA rankings'),'/wca/results'));
-    table(label('排名','Rankings'),[label('名次','Rank'),label('选手','Person'),'WCA ID',label('成绩','Result'),label('地区','Country'),label('比赛','Competition'),label('日期','Date')],rows,data.rows.map((r:any)=>`/wca/persons/${r.wcaId}`));
+    table(label('排名','Rankings'),[label('名次','Rank'),label('选手','Person'),'WCA ID',label('成绩','Result'),label('地区','Country'),label('比赛','Competition'),label('日期','Date')],rows,data.rows.map((r:any)=>`/wca/persons/${r.wcaId}`),['text','text','text','text','country','text','date']);
   } else if (call.tool === 'competitions') {
     const upcoming = await read(`${stat}/all_upcoming_comps.json`);
     // WC editions use canonical WCA IDs even when their names change. An
@@ -204,7 +204,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
       .sort((a:any,b:any)=>upcomingOnly ? a.start_date.localeCompare(b.start_date) : b.start_date.localeCompare(a.start_date)).slice(0,call.limit);
     out.evidence={...call,competitions:rows.map((c:any)=>({...c,name:compName(c.id,c.name,c.start_date)}))};
     out.sources=rows.map((c:any)=>source(`comp:${c.id}`,compName(c.id,c.name,c.start_date),`/wca/comp/${c.id}`));
-    table(label('比赛','Competitions'),[label('比赛','Competition'),label('城市','City'),label('地区','Country'),label('日期','Dates')],rows.map((c:any)=>[compName(c.id,c.name,c.start_date),c.city,c.country,formatDateRangeIso(c.start_date,c.end_date)]),rows.map((c:any)=>`/wca/comp/${c.id}`));
+    table(label('比赛','Competitions'),[label('比赛','Competition'),label('城市','City'),label('地区','Country'),label('日期','Dates')],rows.map((c:any)=>[compName(c.id,c.name,c.start_date),c.city,c.country,formatDateRangeIso(c.start_date,c.end_date)]),rows.map((c:any)=>`/wca/comp/${c.id}`),['text','text','country','date']);
   } else if (call.tool === 'scrambles') {
     const all=await read(url(`${api}/wca/scrambles`,{compId:call.compId}));
     const rows=all.filter((r:any)=>r.event_id===call.event && r.round_type_id===call.round).slice(0,40);
