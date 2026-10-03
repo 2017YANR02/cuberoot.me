@@ -6,7 +6,6 @@ import { readAssistantEvents, resolveAssistantTime, type AssistantStreamEvent, t
 export type { AssistantSource, AssistantAnswer } from '@cuberoot/shared/site-assistant';
 import { SITE_DIRECTORY_GROUPS, SITE_DIRECTORY_TEXTS } from '@cuberoot/shared/site-directory';
 import { ALG_CATALOG } from '@cuberoot/shared/alg';
-import { formatDateRangeIso } from '@cuberoot/shared/iso-date';
 import { SITE_ANNOUNCEMENTS, findSiteAnnouncements } from '@cuberoot/shared/site-announcements';
 import { createCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { AssistantFailure, assistantFailureCode, assistantStage, checkAssistantResponse } from './site_assistant_diagnostics.js';
@@ -166,9 +165,9 @@ export async function answerSiteQuestion(
     const rows=(result.evidence as {competitions:Array<{id:string;start_date:string;end_date:string}>}).competitions;
     const found=new Set(rows.map(c=>c.id.slice(2)));
     const missing=years.filter(year=>!found.has(year));
-    const lines=rows.map(c=>`${c.id}: ${formatDateRangeIso(c.start_date,c.end_date)} [[comp:${c.id}]]`);
+    const lines=rows.length ? [{zh:`查到 ${rows.length} 届世锦赛，日期见下表；点击比赛名可查看详情。`,en:`Found ${rows.length} World Championships. Dates are listed below; select a competition for details.`}[lang]] : [];
     if(missing.length)lines.push({zh:`网站比赛记录中未找到 ${missing.join('、')} 年世锦赛的日期；不能据此推断是否举办或是否已公布。`,en:`No World Championship dates for ${missing.join(', ')} were found in the site's competition records. This does not establish whether an edition took place or has been announced.`}[lang]);
-    return {answer:lines.join('\n') || {zh:'网站比赛记录中未找到世锦赛日期，请查看 WCA 官方比赛目录。',en:'No World Championship dates were found in the site records. Please check the official WCA competition directory.'}[lang],sources:result.sources,artifacts:result.artifacts,actions:result.sources.map(s=>({id:s.id,title:s.title,href:s.href}))};
+    return {answer:lines.join('\n\n') || {zh:'网站比赛记录中未找到世锦赛日期，请查看 WCA 官方比赛目录。',en:'No World Championship dates were found in the site records. Please check the official WCA competition directory.'}[lang],sources:result.sources,artifacts:result.artifacts};
   }
   // This explicit personal question has a fixed public data source. Resolve
   // "I" from the verified identity before any planner can select a leaderboard.
