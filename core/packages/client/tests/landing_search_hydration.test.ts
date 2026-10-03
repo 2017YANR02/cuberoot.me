@@ -83,7 +83,7 @@ describe('LandingSearch placeholder hydration', () => {
     await act(async () => { input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); });
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer session-test');
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', history: [] });
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ question: '视频怎么数帧', lang: 'zh', timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: [] });
     expect(document.querySelector('.site-assistant-prose')?.textContent).toBe('打开数帧页面。数帧');
     expect(host.textContent).not.toContain('未找到匹配项');
     expect(document.querySelector('.site-assistant-prose a.site-assistant-citation')?.getAttribute('href')).toBe('/zh/frame-count');
@@ -143,13 +143,13 @@ describe('LandingSearch placeholder hydration', () => {
       await act(async()=>root.render(createElement(LandingSearch,{cards:[],lang:'zh',query:'第一问',persistentResults:true})));
       await click('button[aria-label="提问"]');
       await click('button[title="重新生成"]');
-      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({question:'第一问',lang:'zh',history:[]});
+      expect(JSON.parse(fetcher.mock.calls[1][1].body)).toEqual({question:'第一问',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
       await click('button[title="编辑问题"]');
       const textarea=document.querySelector('textarea[aria-label="编辑问题"]') as HTMLTextAreaElement;
       await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'改过的问题');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
       await act(async()=>{document.querySelector('.site-assistant-edit')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));});
-      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({question:'改过的问题',lang:'zh',history:[]});
+      expect(JSON.parse(fetcher.mock.calls[2][1].body)).toEqual({question:'改过的问题',lang:'zh',timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,history:[]});
       expect(document.querySelector('.site-assistant-question h3')?.textContent).toBe('改过的问题');
       expect(document.querySelectorAll('.site-assistant-turn')).toHaveLength(1);
     } finally {await act(async()=>root.unmount());host.remove();}
