@@ -106,6 +106,7 @@
       "./site-announcements": "runtime-neutral",
       "./cube-agents": "runtime-neutral",
       "./wca-format-result": "runtime-neutral",
+      "./record-news": "runtime-neutral",
       "./wca-records": "runtime-neutral",
       "./page-share": "runtime-neutral",
       "./contact": "runtime-neutral",
@@ -452,6 +453,7 @@
     "./site-announcements": "./src/site_announcements.ts",
     "./cube-agents": "./src/cube_agents.ts",
     "./wca-format-result": { "node": "./dist/wca_format_result.js", "default": "./src/wca_format_result.ts" },
+    "./record-news": { "node": "./dist/record_news.js", "default": "./src/record_news.ts" },
     "./wca-records": { "node": "./dist/wca_records.js", "default": "./src/wca_records.ts" },
     "./page-share": "./src/page_share.ts",
     "./contact": {
