@@ -121,6 +121,28 @@
   white-space: nowrap;
 }
 
+.timer-live-solution {
+  width: 100%;
+  max-width: 720px;
+  min-width: 0;
+  align-self: center;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+.timer-live-solution-label {
+  margin-bottom: 6px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+.timer-live-solution-moves {
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
 /* Target indicator */
 /* Rank badge — WR / CR / NR pills (shared by Solo digits corner + Battle player).
    Token-only: accent-soft pill, accent text; top-tier names go signal-success. */
