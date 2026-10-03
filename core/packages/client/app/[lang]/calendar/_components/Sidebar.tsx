@@ -7,7 +7,8 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Pencil, Check } from 'lucide-react';
 import MonthGrid from '@/components/MonthGrid';
 import { tr } from '@/i18n/tr';
-import { CALENDAR_COLOR_DEFS, colorHex, colorName } from '@/lib/calendar-colors';
+import { colorHex } from '@/lib/calendar-colors';
+import CalendarColorSelect from '@/components/CalendarColorSelect';
 import { useLang } from '@/i18n/tr';
 import { useEffectiveTheme } from '@/lib/theme';
 import type { CalendarMeta, CalEvent } from '@cuberoot/shared/calendar';
@@ -194,18 +195,8 @@ export default function Sidebar(props: Props) {
                   </>
                 )}
                 {pickingColor === c.id && (
-                  <div className="cal-swatches cal-row-swatches">
-                    {CALENDAR_COLOR_DEFS.map((col) => (
-                      <button
-                        key={col.key}
-                        type="button"
-                        className={`cal-swatch${c.color === col.key ? ' is-on' : ''}`}
-                        style={{ background: colorHex(col.key, theme) }}
-                        title={colorName(col.key, isZh)}
-                        aria-label={colorName(col.key, isZh)}
-                        onClick={() => { props.onRecolor(c.id, col.key); setPickingColor(null); }}
-                      />
-                    ))}
+                  <div className="cal-row-colors">
+                    <CalendarColorSelect value={c.color} onChange={(color) => { props.onRecolor(c.id, color); setPickingColor(null); }} />
                   </div>
                 )}
               </li>

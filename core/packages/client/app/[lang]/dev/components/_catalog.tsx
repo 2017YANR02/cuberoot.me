@@ -1163,6 +1163,13 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<DailyActivityChart data={points} series={series} ariaLabel="Daily registrations" emptyLabel="No data" />',
   },
   {
+    name: 'CalendarColorSelect',
+    import: "import CalendarColorSelect from '@/components/CalendarColorSelect';",
+    category: 'more',
+    zh: '日历与日程共用的 24 色菜单，展示双语名称、主题色块与日程默认颜色。',
+    en: 'Shared 24-color calendar and event menu with bilingual labels, theme swatches, and an event default.',
+  },
+  {
     name: 'ListSelect',
     import: "import { ListSelect } from '@/components/ListSelect';",
     category: 'input',

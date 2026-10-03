@@ -54,6 +54,8 @@ export interface DateInputProps extends Omit<
 > {
   labels: DateInputLabels;
   value?: string;
+  /** Display label only; the control and calendar keep the original ISO value. */
+  displayValue?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
   className?: string;
@@ -66,6 +68,7 @@ export interface DateInputProps extends Omit<
 export function DateInput({
   labels,
   value,
+  displayValue,
   defaultValue = '',
   onChange,
   className,
@@ -201,7 +204,7 @@ export function DateInput({
       <span className="date-input__display" aria-hidden="true">
         <Calendar className="date-input__icon" size={15} strokeWidth={1.8} />
         <span className={currentValue ? 'date-input__value' : 'date-input__placeholder'}>
-          {currentValue || placeholder}
+          {currentValue ? (displayValue ?? currentValue) : placeholder}
         </span>
       </span>
       <input
