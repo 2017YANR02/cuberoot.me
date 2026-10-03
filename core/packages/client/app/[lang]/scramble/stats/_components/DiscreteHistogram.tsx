@@ -90,6 +90,7 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
 
   const { xMin, xMax, yMax, totals, values, canLog } = useMemo(() => {
     let mn = Infinity, mx = -Infinity;
+    let solidMin = Infinity, solidMax = -Infinity;
     // 对数轴值不值得给:看原始计数里最大档与最小非零档差几个数量级。用计数而非当前
     // yMode/chartMode 下的值,开关的出现与否才不会随 %/计数、PDF/CDF 来回跳。
     let cMin = Infinity, cMax = 0;
@@ -100,14 +101,20 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         const v = Number(k);
         const c = s.counts[k];
         tot += c;
-        if (v < mn) mn = v;
-        if (v > mx) mx = v;
-        if (c > 0) { if (c < cMin) cMin = c; if (c > cMax) cMax = c; }
+        if (c > 0 && Number.isFinite(v)) {
+          if (v < mn) mn = v;
+          if (v > mx) mx = v;
+          if (!s.outline) {
+            if (v < solidMin) solidMin = v;
+            if (v > solidMax) solidMax = v;
+          }
+          if (c < cMin) cMin = c;
+          if (c > cMax) cMax = c;
+        }
       }
       totals.push(tot);
     }
     const canLog = cMin > 0 && Number.isFinite(cMin) && cMax / cMin >= 10;
-    if (!Number.isFinite(mn)) { mn = 0; mx = 0; }
     const values = series.map((s, i) => {
       const tot = totals[i] || 1;
       const out: Record<number, number> = {};
@@ -132,8 +139,16 @@ export default function DiscreteHistogram({ series, yMode = 'percent', chartMode
         for (const n of values) if ((n[v] ?? 0) > ymx) ymx = n[v] ?? 0;
       }
     }
-    return { xMin: mn, xMax: mx, yMax: ymx || 1, totals, values, canLog };
-  }, [series, yMode, chartMode]);
+    // 默认聚焦实心主数据的非零范围,对照轮廓不把横轴撑到没有样本的尾部。
+    // 对数轴展开全部非零档,便于查看理论长尾。CDF 仍从完整范围累加,
+    // 不裁剪原始计数、分母或累计概率;中间空档也保留真实整数间距。
+    const focusSolid = !logOn && Number.isFinite(solidMin);
+    return {
+      xMin: focusSolid ? solidMin : mn,
+      xMax: focusSolid ? solidMax : mx,
+      yMax: ymx || 1, totals, values, canLog,
+    };
+  }, [series, yMode, chartMode, logOn]);
 
   if (series.length === 0 || !Number.isFinite(xMin)) {
     return <div className="scramble-hist-empty">No data</div>;
