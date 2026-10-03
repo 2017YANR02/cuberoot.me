@@ -60,6 +60,7 @@ import LangToggle from '@/components/LangToggle';
 import { useCompFollows, FollowStar } from '@/components/CompFollow';
 import { personRoundChangeKey, changeChainOldValues, effectiveFieldValue, effectiveAttempts, attemptOldValues, effectiveAttemptPenalties, effectiveAttemptPenaltyNote, effectiveAttemptVideos, pendingAttemptVideos, recordAttemptEdit, recordAttemptOriginal, recordAttemptPenalty, recordAttemptVideos, splitChainByStatus } from '@/lib/result-watch-api';
 import { AttemptPopover } from '@/components/persons/sections/results/AttemptPopover';
+import { SolveValue } from '@/components/persons/sections/results/SolveValue';
 import { listReconsByComp } from '@/lib/recon-api';
 import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
@@ -3753,7 +3754,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
   const rIdx = rankedArr.findIndex(rr => rr.n === number);
   const place = rIdx >= 0 && result.b !== 0 ? rankedPlaces[rIdx] : null;
   const iso2 = regionToIso2(u.region);
-  const attempts = result.v.filter(v => v !== 0);
+  const { approved: chain } = splitChainByStatus(u.wcaid ? changeMap?.get(personRoundChangeKey(u.wcaid, result.e, result.r)) : undefined);
+  const attempts = trimEmptyAttempts(effectiveAttempts(chain, result.v));
+  const penalties = effectiveAttemptPenalties(chain);
+  const penaltyNote = effectiveAttemptPenaltyNote(chain);
 
   const singleTagForCopy = result.sr ? String(result.sr) : (singleRank ? 'PR' : '');
   const avgTagForCopy = result.ar ? String(result.ar) : (averageRank ? 'PR' : '');
@@ -3942,23 +3946,22 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
             <div className="comp-round-modal-value">
               {attempts.length === 0
                 ? '—'
-                : (() => {
-                    const isAo5 = (rd.f === 'a' || rd.f === '5') && attempts.length === 5;
-                    if (!isAo5) return attempts.map(v => formatLive(v, result.e, false)).join(', ');
-                    let bestIdx = -1, worstIdx = -1;
-                    let bestVal = Infinity, worstVal = -Infinity;
-                    let dnfIdx = -1;
-                    attempts.forEach((v, i) => {
-                      if (v === -1 || v === -2) { if (dnfIdx < 0) dnfIdx = i; return; }
-                      if (v > 0 && v < bestVal) { bestVal = v; bestIdx = i; }
-                      if (v > 0 && v > worstVal) { worstVal = v; worstIdx = i; }
-                    });
-                    if (dnfIdx >= 0) worstIdx = dnfIdx;
-                    return attempts.map((v, i) => {
-                      const s = formatLive(v, result.e, false);
-                      return (i === bestIdx || i === worstIdx) ? `(${s})` : s;
-                    }).join(', ');
-                  })()}
+                : attempts.map((value, i) => {
+                    const bracketed = (rd.f === 'a' || rd.f === '5') && isAo5Bracketed(attempts, i);
+                    return (
+                      <span key={i}>
+                        {i > 0 && ', '}
+                        {bracketed && '('}
+                        <SolveValue
+                          value={value}
+                          penalty={penalties[i]}
+                          note={penaltyNote}
+                          format={v => formatLive(v, result.e, false)}
+                        />
+                        {bracketed && ')'}
+                      </span>
+                    );
+                  })}
             </div>
           </section>
           <section className="comp-round-modal-section">
