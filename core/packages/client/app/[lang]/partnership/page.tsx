@@ -80,7 +80,7 @@ export default function PartnershipPage() {
           <div>{tr({ zh: '魔方根', en: 'CubeRoot' })}<span>{tr({ zh: '商业计划书', en: 'Business plan' })}</span></div>
         </div>
         <div className="overview-actions">
-          <button type="button" onClick={printBusinessPlan}>
+          <button className="overview-action" type="button" onClick={printBusinessPlan}>
             <Printer size={16} aria-hidden />{tr({ zh: '打印 / PDF', en: 'Print / PDF' })}
           </button>
           <HeaderToggles />

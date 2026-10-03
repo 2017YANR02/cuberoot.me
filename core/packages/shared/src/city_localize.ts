@@ -8,6 +8,7 @@ import { PLACE_CITY_ZH, PLACE_ADMIN_ZH } from './data/place_zh';
 
 // 手维护补充表(覆盖层 / 无 iso2 调用时的兜底 / 台湾等 CN_PLACE_ZH 未覆盖处)。
 const CITY_ZH: Record<string, string> = {
+  'Asker': '阿斯克尔',
   'Beijing': '北京', 'Shanghai': '上海', 'Tianjin': '天津', 'Chongqing': '重庆',
   'Hong Kong': '香港', 'Macau': '澳门', 'Macao': '澳门',
   'Hong Kong SAR': '香港', 'Macau SAR': '澳门', 'Macao SAR': '澳门',

@@ -7,8 +7,8 @@
 .overview-brand div { display: flex; flex-direction: column; gap: 4px; }
 .overview-brand span { font-size: 10px; font-weight: 500; letter-spacing: .12em; color: var(--muted-foreground); }
 .overview-actions { display: flex; align-items: center; gap: 24px; }
-.overview-actions button { display: inline-flex; align-items: center; gap: 8px; border: 0; padding: 10px 0; background: none; color: var(--muted-foreground); font: inherit; font-size: 12px; cursor: pointer; }
-.overview-page a:focus-visible, .overview-page button:focus-visible, .overview-page summary:focus-visible { outline: 3px solid var(--ring); outline-offset: 5px; }
+.overview-action { display: inline-flex; align-items: center; gap: 8px; border: 0; padding: 10px 0; background: none; color: var(--muted-foreground); font: inherit; font-size: 12px; cursor: pointer; }
+.overview-page a:focus-visible, .overview-action:focus-visible, .overview-page summary:focus-visible { outline: 3px solid var(--ring); outline-offset: 5px; }
 .overview-hero { display: grid; grid-template-columns: 1.1fr 1fr; gap: 64px; align-items: center; padding-block: 84px 76px; }
 .overview-kicker { display: flex; align-items: center; gap: 9px; color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: .1em; margin: 0 0 24px; }
 .bp-live-dot { width: 7px; height: 7px; flex-shrink: 0; background: var(--accent); border-radius: 50%; box-shadow: 0 0 0 5px var(--accent-soft); }
@@ -204,7 +204,7 @@
   .overview-brand { gap: 9px; font-size: 20px; }
   .overview-brand span { font-size: 8px; }
   .overview-actions { gap: 13px; }
-  .overview-actions button { font-size: 10px; }
+  .overview-action { font-size: 10px; }
   .overview-hero { grid-template-columns: 1fr; gap: 24px; padding-block: 42px 30px; }
   .overview-page h1 { font-size: 58px; }
   .bp-hero-subtitle { font-size: 18px; }
