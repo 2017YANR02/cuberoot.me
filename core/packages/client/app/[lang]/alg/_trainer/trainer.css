@@ -743,7 +743,7 @@
 
 /* ─── 齿轮设置弹出面板(训练选项全收纳:打乱类型/模式/计时/pre-AUF/概率/字体) ─── */
 /* 齿轮吸在页面正上方(topbar 水平居中) */
-.trainer-opts--top {
+.settings-popover.trainer-opts--top {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -753,12 +753,16 @@
 /* 窄屏标题(3×3 · ZBLL · U1)会伸过行中点,居中的齿轮直接压在字上(issue #30)
    —— 改为行内元素靠右,面板也改右对齐(免得越出右缘)。 */
 @media (max-width: 768px) {
-  .trainer-opts--top {
-    position: static;
+  .settings-popover.trainer-opts--top {
+    /* Keep the panel anchor, but clear desktop offsets. The page-specific
+       selector must outrank SettingsPopover's shared positioning styles. */
+    position: relative;
+    left: auto;
+    top: auto;
     transform: none;
     margin-left: auto;
   }
-  .trainer-opts--top .trainer-opts-panel {
+  .trainer-opts--top .settings-popover-panel.trainer-opts-panel {
     left: auto;
     right: 0;
     transform: none;
