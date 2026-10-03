@@ -2,6 +2,17 @@ import {describe,it,expect,vi} from 'vitest';
 import {runDataTool,toolCallSchema} from '../src/utils/site_assistant_tools.js';
 
 describe('assistant public data adapters',()=>{
+  it('retains ranking competition IDs separately from the competitor country',async()=>{
+    const rows=[
+      {rank:1,name:'One',wcaId:'2017WANY29',value:1271,iso2:'CN',compId:'Hefei2026',compName:'Hefei 2026',compDate:'2026-05-10'},
+      {rank:2,name:'Two',wcaId:'2024LUUZ11',value:1505,iso2:'CN',compId:'VietnamChampionship2026',compName:'Vietnam Championship 2026',compDate:'2026-08-14'},
+    ];
+    const result=await runDataTool({tool:'rankings',event:'333bf',type:'single',country:'CN',limit:10},'en',async url=>url.includes('/meta') ? {lastImportedAt:'2026-10-01'} : {rows,total:2});
+    expect(result.artifacts[0]).toMatchObject({
+      links:['/wca/persons/2017WANY29','/wca/persons/2024LUUZ11'],
+      cellLinks:[[null,null,null,null,null,'/wca/comp/Hefei2026',null],[null,null,null,null,null,'/wca/comp/VietnamChampionship2026',null]],
+    });
+  });
   it('filters an inclusive date interval before limiting, including overlapping multi-day competitions',async()=>{
     const rows=[
       {id:'Before',name:'Before',city:'City',country:'US',start_date:'2026-09-20',end_date:'2026-09-24'},
@@ -37,6 +48,7 @@ describe('assistant public data adapters',()=>{
     const result=await runDataTool({tool:'records',event:'333',region:'world'},'en',read);
     const table=result.artifacts[0];
     expect(table.kind==='table' && table.rows.map(r=>r[1])).toEqual(['2.76','2.76','3.51']);
+    expect(table).toMatchObject({cellLinks:Array.from({length:3},()=>[null,null,null,null,'/wca/comp/C2026',null])});
     expect(result.evidence).toMatchObject({updated:'2026-09-28'});
   });
   it('excludes past competitions from a stale upcoming index',async()=>{

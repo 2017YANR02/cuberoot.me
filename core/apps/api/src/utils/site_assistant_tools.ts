@@ -57,7 +57,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
   const compNames = lang === 'zh' && ['records','rankings','competitions'].includes(call.tool) ? await read(`${stat}/comp_names_zh.json`).catch(() => ({})) : {};
   const compName = (id:string, raw:string, date?:string) => localizeCompName(id,raw,lang === 'zh',{date,resolveNameZh:n=>compNames[n] ?? n});
   const out: ToolResult = { evidence: null, sources: [], artifacts: [] };
-  const table = (title: string, columns: string[], rows: string[][], links?: string[], columnKinds?: AssistantTable['columnKinds']) => out.artifacts.push({ kind:'table', title, columns, rows, links, ...(columnKinds ? {columnKinds} : {}) });
+  const table = (title: string, columns: string[], rows: string[][], links?: string[], columnKinds?: AssistantTable['columnKinds'], cellLinks?: AssistantTable['cellLinks']) => out.artifacts.push({ kind:'table', title, columns, rows, links, ...(columnKinds ? {columnKinds} : {}), ...(cellLinks ? {cellLinks} : {}) });
   const freshness = async () => (await read(`${api}/wca/historical-ranks/meta`)).lastImportedAt;
   if (call.tool === 'statistics') {
     const index=await read(stat+'/index.json');
@@ -128,7 +128,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const formatted = rows.map(r => [r.t === 's' ? label('单次','Single') : label('平均','Average'), formatWcaResult(r.v, r.e, r.t === 's' ? 'single' : 'average'), name(r.pn), r.p, compName(r.c,r.cn,r.d), r.d]);
     out.evidence = { updated: data.updated, event:call.event, region:call.region, columns:['type','result','person','wcaId','competition','date'], rows:formatted };
     out.sources.push(source(`records:${call.region}:${call.event}`, label('WCA 纪录','WCA records'), href));
-    table(label('当前纪录','Current records'), [label('类型','Type'),label('成绩','Result'),label('选手','Person'),'WCA ID',label('比赛','Competition'),label('日期','Date')], formatted);
+    table(label('当前纪录','Current records'), [label('类型','Type'),label('成绩','Result'),label('选手','Person'),'WCA ID',label('比赛','Competition'),label('日期','Date')], formatted,undefined,['text','text','text','text','text','date'],rows.map(r=>[null,null,null,null,`/wca/comp/${r.c}`,null]));
   } else if (call.tool === 'find_person') {
     const rows = await findPeople(call.query);
     out.evidence = rows;
@@ -190,7 +190,7 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const rows = data.rows.map((r:any)=>[String(r.rank),name(r.name),r.wcaId,formatWcaResult(r.value,call.event,call.type),r.iso2,compName(r.compId,r.compName,r.compDate),r.compDate]);
     out.evidence={updated,...call,total:data.total,columns:['rank','person','wcaId','result','country','competition','date'],rows};
     out.sources.push(source('rankings',label('WCA 排名','WCA rankings'),'/wca/results'));
-    table(label('排名','Rankings'),[label('名次','Rank'),label('选手','Person'),'WCA ID',label('成绩','Result'),label('地区','Country'),label('比赛','Competition'),label('日期','Date')],rows,data.rows.map((r:any)=>`/wca/persons/${r.wcaId}`),['text','text','text','text','country','text','date']);
+    table(label('排名','Rankings'),[label('名次','Rank'),label('选手','Person'),'WCA ID',label('成绩','Result'),label('地区','Country'),label('比赛','Competition'),label('日期','Date')],rows,data.rows.map((r:any)=>`/wca/persons/${r.wcaId}`),['text','text','text','text','country','text','date'],data.rows.map((r:any)=>[null,null,null,null,null,r.compId ? `/wca/comp/${r.compId}` : null,null]));
   } else if (call.tool === 'competitions') {
     const upcoming = await read(`${stat}/all_upcoming_comps.json`);
     // WC editions use canonical WCA IDs even when their names change. An

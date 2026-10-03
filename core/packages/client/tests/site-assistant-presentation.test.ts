@@ -38,6 +38,24 @@ async function render(answer:AssistantAnswer) {
 }
 
 describe('assistant linked table presentation',()=>{
+  it('puts the host flag before competition names outside the first column',async()=>{
+    await render({answer:'排名见下表。',sources:[],actions:[sources[0]],artifacts:[{
+      kind:'table',title:'排名',columns:['名次','选手','WCA ID','成绩','地区','比赛','日期'],
+      columnKinds:['text','text','text','text','country','text','date'],
+      rows:[['1','One','2017WANY29','12.71','CN','World Championship 2025','2025-07-03'],['2','Two','2024LUUZ11','15.05','CN','Taipei 2026','2026-01-01']],
+      links:['/wca/persons/2017WANY29','/wca/persons/2024LUUZ11'],
+      cellLinks:[[null,null,null,null,null,sources[0].href,null],[null,null,null,null,null,sources[1].href,null]],
+    }]});
+    const rows=document.querySelectorAll('.site-assistant-table tbody tr');
+    expect(rows[0].children[4].querySelector('.fi-cn')).not.toBeNull();
+    const competition=rows[0].children[5];
+    expect(competition.querySelector('a')?.getAttribute('href')).toBe('/zh/wca/comp/WC2025');
+    expect(competition.querySelector('.comp-cell')?.firstElementChild?.classList.contains('fi-us')).toBe(true);
+    expect(competition.textContent).toBe(' World Championship');
+    expect(rows[1].children[5].querySelector('img.cr-flag-img')?.getAttribute('alt')).toBe('Chinese Taipei');
+    expect(document.querySelector('a[href="/zh/wca/persons/2017WANY29"]')).not.toBeNull();
+    expect(document.querySelector('.site-assistant-navigation')).toBeNull();
+  });
   it('shows each competition once in the table and omits duplicate open actions',async()=>{
     await render(result);
     expect(document.querySelectorAll('.site-assistant-table tbody tr')).toHaveLength(2);

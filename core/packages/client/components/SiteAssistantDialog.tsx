@@ -58,7 +58,7 @@ export function SiteAssistantAnswerText({result,partial}:{result:AssistantAnswer
   const sources=result.sources.filter(source=>/^\/(?!\/)/.test(source.href));
   // Do not flash incomplete citation syntax as provider chunks arrive.
   const text=result.answer.replace(/\[\[[^\]\n]*\]?$/, '').replace(/\[$/, '');
-  const linkedInTable=result.artifacts?.some(a=>a.kind==='table' && a.links?.includes(sources[0]?.href));
+  const linkedInTable=result.artifacts?.some(a=>a.kind==='table' && (a.links?.includes(sources[0]?.href) || a.cellLinks?.some(row=>row.includes(sources[0]?.href))));
   const withFallback=!partial && !text.includes('[[') && sources.length===1 && !linkedInTable ? text+`[[${sources[0].id}]]` : text;
   const markdown=withFallback.replace(/\[\[([^\]\n]+)\]\]/g,(_marker,id:string)=>{
     const index=sources.findIndex(source=>source.id===id);
@@ -86,7 +86,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
   const [showLatest,setShowLatest]=useState(false);
   const [editing,setEditing]=useState<string|null>(null);
   const [,setFlagVersion]=useState(0);
-  const hasCompetitionTables=turns.some(turn=>turn.result?.artifacts?.some(a=>a.kind==='table' && a.links?.some(href=>href.startsWith('/wca/comp/'))));
+  const hasCompetitionTables=turns.some(turn=>turn.result?.artifacts?.some(a=>a.kind==='table' && (a.links?.some(href=>href.startsWith('/wca/comp/')) || a.cellLinks?.some(row=>row.some(href=>href?.startsWith('/wca/comp/'))))));
   useEffect(()=>{
     if(!hasCompetitionTables)return;
     let active=true;
@@ -150,7 +150,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
           {zh:'群论能怎么解释魔方的转动？',en:'How does group theory explain cube moves?'},
         ].map(example=><button className="site-assistant-action" type="button" key={example.en} onClick={()=>onAsk(tr(example))}>{tr(example)}</button>)}</div>}
         {turns.map((turn,i)=>{
-          const tableLinks=new Set(turn.result?.artifacts?.flatMap(a=>a.kind==='table' ? a.links ?? [] : []) ?? []);
+          const tableLinks=new Set(turn.result?.artifacts?.flatMap(a=>a.kind==='table' ? [...a.links ?? [],...a.cellLinks?.flat() ?? []] : []) ?? []);
           const seenActions=new Set<string>();
           const actions=turn.result?.actions?.filter(action=>{
             if(!/^\/(?!\/)/.test(action.href) || tableLinks.has(action.href) || seenActions.has(action.href))return false;
@@ -165,7 +165,7 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
           {!turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} onClick={openSolverDocument} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
           {turn.result.artifacts?.map((a,j)=>a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
             const kind=a.columnKinds?.[c];
-            const href=c===0 ? a.links?.[k] : undefined;
+            const href=a.cellLinks?.[k]?.[c] ?? (c===0 ? a.links?.[k] : undefined);
             const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];
             const dateColumn=a.columnKinds?.indexOf('date') ?? -1;
             const content=kind==='country' && cell ? <span title={countryName(cell,lang==='zh')}><Flag iso2={cell} spanClassName="country-flag" imgClassName="country-flag-ct"/></span> : compId ? <CompCell compId={compId} compName={cell} isZh={lang==='zh'} date={dateColumn>=0 ? row[dateColumn] : null}/> : cell;
