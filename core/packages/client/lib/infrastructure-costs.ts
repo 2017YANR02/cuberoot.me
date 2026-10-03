@@ -219,18 +219,6 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
       },
     ],
   },
-  {
-    category: { zh: '播放软件', en: 'Playback software' },
-    items: [
-      {
-        name: { zh: 'K-Lite Codec Pack', en: 'K-Lite Codec Pack' },
-        detail: { zh: '媒体播放解码包', en: 'Media playback codec bundle' },
-        amount: { label: { zh: '免费', en: 'Free' } },
-        imageSrc: '/images/dev/infrastructure/k-lite-codec-pack.webp',
-        href: 'https://codecguide.com/download_kl.htm',
-      },
-    ],
-  },
 ] as const;
 
 export const ONE_TIME_TOTAL = EQUIPMENT_GROUPS.reduce((total, group) => total + equipmentGroupTotal(group), 0);
