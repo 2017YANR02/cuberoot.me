@@ -63,6 +63,75 @@ interface Props {
 
 const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, ref) {
   const api = useRef<FullCalendar | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const swipeRef = useRef<{ id: number; x: number; y: number; startedAt: number; horizontal: boolean } | null>(null);
+  const ignoreTapUntil = useRef(0);
+
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    const start = (event: TouchEvent) => {
+      swipeRef.current = null;
+      ignoreTapUntil.current = 0;
+      if (event.touches.length !== 1) return;
+      // 日程本身允许横滑;表单、更多日程弹层与缩放手柄保留各自的操作。
+      if ((event.target as Element).closest('input, textarea, select, button, [contenteditable], .fc-popover, .fc-event-resizer')) return;
+      const touch = event.touches[0];
+      swipeRef.current = { id: touch.identifier, x: touch.clientX, y: touch.clientY, startedAt: performance.now(), horizontal: false };
+    };
+    const move = (event: TouchEvent) => {
+      const swipe = swipeRef.current;
+      if (!swipe) return;
+      // 多指交给缩放,长按交给 FullCalendar 的选择 / 拖动。
+      if (event.touches.length !== 1 || performance.now() - swipe.startedAt >= 500) {
+        swipeRef.current = null;
+        return;
+      }
+      const touch = event.touches[0];
+      const dx = Math.abs(touch.clientX - swipe.x);
+      const dy = Math.abs(touch.clientY - swipe.y);
+      if (!swipe.horizontal) {
+        if (Math.max(dx, dy) < 10) return;
+        // 起手是上下或斜向滚动,这一整次操作都不再当作横滑。
+        if (dx < dy * 1.5) { swipeRef.current = null; return; }
+        swipe.horizontal = true;
+      }
+      if (!event.cancelable) { swipeRef.current = null; return; }
+      event.preventDefault();
+      ignoreTapUntil.current = performance.now() + 700;
+    };
+    const end = (event: TouchEvent) => {
+      const swipe = swipeRef.current;
+      swipeRef.current = null;
+      if (!swipe?.horizontal || event.touches.length || performance.now() - swipe.startedAt >= 500) return;
+      const touch = Array.from(event.changedTouches).find((item) => item.identifier === swipe.id);
+      if (!touch) return;
+      const dx = touch.clientX - swipe.x;
+      const dy = touch.clientY - swipe.y;
+      if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      ignoreTapUntil.current = performance.now() + 700;
+      // 先让 FullCalendar 收尾当前 touch,再按当前视图翻页;datesSet 同步上层 URL。
+      queueMicrotask(() => {
+        const calendar = api.current?.getApi();
+        if (dx < 0) calendar?.next();
+        else calendar?.prev();
+      });
+    };
+    const cancel = () => { swipeRef.current = null; };
+    grid.addEventListener('touchstart', start, { capture: true, passive: true });
+    // React 的 touchmove 默认 passive,不能阻止横滑后的滚动与合成点击。
+    grid.addEventListener('touchmove', move, { capture: true, passive: false });
+    grid.addEventListener('touchend', end, { capture: true });
+    grid.addEventListener('touchcancel', cancel, { capture: true });
+    return () => {
+      grid.removeEventListener('touchstart', start, true);
+      grid.removeEventListener('touchmove', move, true);
+      grid.removeEventListener('touchend', end, true);
+      grid.removeEventListener('touchcancel', cancel, true);
+      swipeRef.current = null;
+    };
+  }, []);
 
   useImperativeHandle(ref, () => ({
     today: () => api.current?.getApi().today(),
@@ -92,7 +161,16 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
   }), []);
 
   return (
-    <div className="cal-grid">
+    <div
+      ref={gridRef}
+      className="cal-grid"
+      onClickCapture={(event) => {
+        if (performance.now() < ignoreTapUntil.current && event.detail !== 0) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }}
+    >
       <FullCalendar
         ref={api}
         plugins={[timeGridPlugin, dayGridPlugin, listPlugin, multiMonthPlugin, interactionPlugin, luxonPlugin]}
@@ -154,18 +232,20 @@ const CalendarGrid = forwardRef<GridHandle, Props>(function CalendarGrid(props, 
         dayCellContent={(arg) => arg.dayNumberText.replace(/\D+/g, '')}
         events={props.events}
         select={(arg: DateSelectArg) => {
-          props.onSelect?.(arg.start.getTime(), arg.end.getTime(), arg.allDay);
+          if (performance.now() >= ignoreTapUntil.current) props.onSelect?.(arg.start.getTime(), arg.end.getTime(), arg.allDay);
           api.current?.getApi().unselect();
         }}
         // 单击空白也要有反应(Google 的行为)。select 只在指针真的拖开之后才触发
         // (上面的 selectMinDistance),纯点击落不到那里,得单独接 dateClick。
         dateClick={(arg: DateClickArg) => {
-          props.onDateClick?.(arg.date.getTime(), arg.allDay);
+          if (performance.now() >= ignoreTapUntil.current) props.onDateClick?.(arg.date.getTime(), arg.allDay);
         }}
         eventClick={(arg: EventClickArg) => {
           arg.jsEvent.preventDefault();
-          props.onEventClick(arg.event.id, arg.el);
+          if (performance.now() >= ignoreTapUntil.current) props.onEventClick(arg.event.id, arg.el);
         }}
+        eventDragStart={() => { swipeRef.current = null; }}
+        eventResizeStart={() => { swipeRef.current = null; }}
         eventDrop={(arg: EventDropArg) => {
           const start = arg.event.start?.getTime() ?? 0;
           const end = arg.event.end?.getTime() ?? start;

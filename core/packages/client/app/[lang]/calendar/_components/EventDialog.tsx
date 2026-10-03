@@ -3,8 +3,8 @@
 // 新建 / 编辑日程的弹窗。字段顺序照 Google:标题 → 时间 → 重复 → 日历+颜色 →
 // 地点 → 提醒 → 参与者 → 说明。
 //
-// 时间输入用原生 date/time 控件:手机上直接出系统滚轮,桌面端也能键盘输入,自己搓一个
-// 只会更差。墙上时间 ↔ 绝对时刻的换算全走事件自己的时区(@cuberoot/shared/tz),
+// 日期复用 DateInput,时间保留原生 time 控件。墙上时间 ↔ 绝对时刻的换算
+// 全走事件自己的时区(@cuberoot/shared/tz),
 // 所以「北京时间 21:00 的会」在洛杉矶的人改起来也不会漂。
 
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -12,12 +12,11 @@ import { Bell, Clock, MapPin, Palette, Repeat, Text, Trash2, Users, X, Globe } f
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { DateInput } from '@/components/DateInput';
 import { ListSelect } from '@/components/ListSelect';
+import CalendarColorSelect from '@/components/CalendarColorSelect';
 import BoolToggle from '@/components/BoolToggle';
 import { tr, useLang } from '@/i18n/tr';
 import { wallPartsIn, wallToUtc, localZone, formatOffset, zoneOffsetMinutes } from '@cuberoot/shared/tz';
 import { REMINDER_CHOICES, type CalendarMeta, type EventGuest } from '@cuberoot/shared/calendar';
-import { CALENDAR_COLOR_DEFS, colorHex, colorName } from '@/lib/calendar-colors';
-import { useEffectiveTheme } from '@/lib/theme';
 import { zoneLabel, zoneOptions, zoneSearchTerms } from '@/lib/tz-zones';
 import RepeatEditor from './RepeatEditor';
 import GuestPicker from './GuestPicker';
@@ -50,6 +49,7 @@ interface Props {
   calendars: CalendarMeta[];
   meKey: string;
   saving: boolean;
+  hour24: boolean;
   onSave: (draft: DialogDraft) => void;
   onDelete?: (draft: DialogDraft) => void;
   onRespond?: (status: 'accepted' | 'declined') => void;
@@ -84,18 +84,34 @@ function reminderLabel(min: number): string {
 export default function EventDialog(props: Props) {
   const { calendars, meKey } = props;
   const isZh = useLang() === 'zh';
-  const theme = useEffectiveTheme();
   const [d, setD] = useState<DialogDraft>(props.draft);
   const titleRef = useRef<HTMLInputElement>(null);
   const [showTz, setShowTz] = useState(false);
-  useModalDismiss(props.onClose, props.saving);
+  const backdropProps = useModalDismiss(props.onClose, props.saving);
 
   useEffect(() => { setD(props.draft); }, [props.draft]);
-  useEffect(() => { titleRef.current?.focus(); }, []);
+  useEffect(() => {
+    // 已有日程先展示详情,避免手机打开弹窗时自动弹出键盘。
+    if (props.draft.id === 0) titleRef.current?.focus();
+  }, [props.draft.id]);
 
   const readOnly = !!d.readOnly;
   const startIn = toInputs(d.start, d.tz);
   const endIn = toInputs(d.allDay ? d.end - 1 : d.end, d.tz);   // 全天的 end 是次日 0 点,显示要减一天
+  const locale = tr({ zh: 'zh-CN', en: 'en-US' });
+  const formatDate = (date: string): string => {
+    const day = new Date(`${date}T00:00:00Z`);
+    const label = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', month: 'short', day: 'numeric' }).format(day);
+    const weekday = new Intl.DateTimeFormat(locale, { timeZone: 'UTC', weekday: 'long' }).format(day);
+    return `${label} ${weekday}`;
+  };
+  const formatTime = (ms: number, time: string): string => new Intl.DateTimeFormat(locale, {
+    timeZone: d.tz,
+    hour: props.hour24 ? '2-digit' : 'numeric',
+    minute: props.hour24 || !time.endsWith(':00') ? '2-digit' : undefined,
+    hourCycle: props.hour24 ? 'h23' : 'h12',
+    dayPeriod: props.hour24 ? undefined : 'short',
+  }).format(new Date(ms));
 
   const patch = (p: Partial<DialogDraft>): void => setD((cur) => ({ ...cur, ...p }));
 
@@ -125,7 +141,7 @@ export default function EventDialog(props: Props) {
   return (
     <div
       className="cal-modal-backdrop"
-      onMouseDown={(e) => { if (e.target === e.currentTarget && !props.saving) props.onClose(); }}
+      {...backdropProps}
     >
       <div
         className="cal-modal"
@@ -159,41 +175,56 @@ export default function EventDialog(props: Props) {
           <div className="cal-field">
             <Clock size={16} className="cal-field-icon" aria-hidden />
             <div className="cal-field-main">
-              <div className="cal-time-row">
+              <div className="cal-event-time-row">
                 <DateInput
-                  className="cal-date-field"
+                  className="cal-event-date"
                   value={startIn.date}
+                  displayValue={formatDate(startIn.date)}
+                  clearable={false}
+                  aria-label={tr({ zh: '开始日期', en: 'Start date' })}
                   readOnly={readOnly}
                   onChange={(value) => setStart(fromInputs(value, d.allDay ? '00:00' : startIn.time, d.tz, d.start))}
                 />
                 {!d.allDay && (
-                  <input
-                    type="time"
-                    className="cal-time"
-                    value={startIn.time}
-                    readOnly={readOnly}
-                    onChange={(e) => setStart(fromInputs(startIn.date, e.target.value, d.tz, d.start))}
-                  />
+                  <label className="cal-event-time">
+                    <span aria-hidden="true">{formatTime(d.start, startIn.time)}</span>
+                    <input
+                      type="time"
+                      className="cal-time"
+                      aria-label={tr({ zh: '开始时间', en: 'Start time' })}
+                      value={startIn.time}
+                      readOnly={readOnly}
+                      onChange={(e) => setStart(fromInputs(startIn.date, e.target.value, d.tz, d.start))}
+                    />
+                  </label>
                 )}
-                <span className="cal-time-dash">–</span>
-                {!d.allDay && (
-                  <input
-                    type="time"
-                    className="cal-time"
-                    value={endIn.time}
-                    readOnly={readOnly}
-                    onChange={(e) => setEnd(fromInputs(endIn.date, e.target.value, d.tz, d.end))}
-                  />
-                )}
+              </div>
+              <div className="cal-event-time-row">
                 <DateInput
-                  className="cal-date-field"
+                  className="cal-event-date"
                   value={endIn.date}
+                  displayValue={formatDate(endIn.date)}
+                  clearable={false}
+                  aria-label={tr({ zh: '结束日期', en: 'End date' })}
                   readOnly={readOnly}
                   onChange={(value) => {
                     const base = fromInputs(value, d.allDay ? '00:00' : endIn.time, d.tz, d.end);
                     setEnd(d.allDay ? base + 86_400_000 : base);
                   }}
                 />
+                {!d.allDay && (
+                  <label className="cal-event-time">
+                    <span aria-hidden="true">{formatTime(d.end, endIn.time)}</span>
+                    <input
+                      type="time"
+                      className="cal-time"
+                      aria-label={tr({ zh: '结束时间', en: 'End time' })}
+                      value={endIn.time}
+                      readOnly={readOnly}
+                      onChange={(e) => setEnd(fromInputs(endIn.date, e.target.value, d.tz, d.end))}
+                    />
+                  </label>
+                )}
               </div>
               <div className="cal-time-opts">
                 <BoolToggle
@@ -268,28 +299,11 @@ export default function EventDialog(props: Props) {
                 clearable={false}
                 onChange={(v) => patch({ calendarId: Number(v) })}
               />
-              <div className="cal-swatches">
-                <button
-                  type="button"
-                  className={`cal-swatch is-auto${d.color ? '' : ' is-on'}`}
-                  title={tr({ zh: '跟随日历', en: 'Calendar default' })}
-                  aria-label={tr({ zh: '跟随日历颜色', en: 'Use calendar colour' })}
-                  aria-pressed={!d.color}
-                  onClick={() => patch({ color: '' })}
-                />
-                {CALENDAR_COLOR_DEFS.map((c) => (
-                  <button
-                    key={c.key}
-                    type="button"
-                    className={`cal-swatch${d.color === c.key ? ' is-on' : ''}`}
-                    style={{ background: colorHex(c.key, theme) }}
-                    title={colorName(c.key, isZh)}
-                    aria-label={colorName(c.key, isZh)}
-                    aria-pressed={d.color === c.key}
-                    onClick={() => patch({ color: c.key })}
-                  />
-                ))}
-              </div>
+              <CalendarColorSelect
+                value={d.color}
+                defaultColor={calendars.find((c) => c.id === d.calendarId)?.color ?? 'peacock'}
+                onChange={(color) => patch({ color })}
+              />
             </div>
           </div>
 

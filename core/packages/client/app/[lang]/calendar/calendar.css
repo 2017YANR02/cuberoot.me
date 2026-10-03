@@ -257,7 +257,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   padding: 6px 10px 10px;
 }
 
-.cal-grid { height: 100%; }
+.cal-grid { height: 100%; touch-action: pan-y pinch-zoom; }
 
 .cal-empty {
   flex: 1 1 auto;
@@ -685,31 +685,41 @@ html:root[data-theme=dark]:has(.cal-page) {
 
 .cal-num { width: 68px; }
 
-.cal-time-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .cal-date-field { flex: 0 1 148px; width: 148px; max-width: 100%; }
-.cal-time-dash { color: var(--muted-foreground); }
+.cal-event-time-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; }
+.cal-event-date { flex: 1 1 auto; width: auto; }
+.cal-event-date .date-input__display {
+  padding: 9px 0;
+  border: 1px solid transparent;
+  background: transparent;
+}
+.cal-event-date .date-input__icon { display: none; }
+.cal-event-date .date-input__value { white-space: normal; }
+.cal-event-date[data-readonly] .date-input__display { background: transparent; }
+.cal-event-time {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 9px 0;
+  text-align: right;
+  white-space: nowrap;
+}
+.cal-event-time .cal-time {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 0;
+  font: inherit;
+  text-align: right;
+  opacity: 0;
+  cursor: pointer;
+}
+.cal-event-time:focus-within { min-width: 7.5em; }
+.cal-event-time:focus-within > span { visibility: hidden; }
+.cal-event-time:focus-within .cal-time { opacity: 1; }
 .cal-time-opts { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
-/* 颜色格子 */
-.cal-swatches { display: flex; gap: 5px; flex-wrap: wrap; }
-
-.cal-swatch {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  cursor: pointer;
-  padding: 0;
-}
-
-.cal-swatch.is-on { border-color: var(--foreground); }
-
-.cal-swatch.is-auto {
-  background: var(--muted);
-  border: 2px dashed var(--border-strong);
-}
-
-.cal-row-swatches { flex-basis: 100%; padding: 4px 0 6px 22px; }
+.cal-row-colors { flex-basis: 100%; padding: 4px 0 6px 22px; }
 
 /* 重复规则 */
 .cal-repeat { display: flex; flex-direction: column; gap: 8px; }
@@ -1276,8 +1286,7 @@ html:root[data-theme=dark]:has(.cal-page) {
   .cal-search-field { width: 72px; }
   .cal-modal { max-height: 92dvh; }
   .cal-modal-body { padding: 4px 12px 12px; }
-  .cal-time-row { gap: 4px; }
-  /* 时间那行在窄屏上必须能换行,不然日期 + 时间 + 破折号 + 日期一定溢出 */
+  .cal-event-time-row { gap: 8px; }
   .cal-date-field, .cal-time { flex: 0 1 auto; }
 }
 

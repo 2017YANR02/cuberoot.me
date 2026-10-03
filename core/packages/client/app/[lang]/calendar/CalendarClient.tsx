@@ -894,6 +894,7 @@ export default function CalendarClient() {
       {dialog && (
         <EventDialog
           draft={dialog}
+          hour24={prefs.hour24}
           calendars={calendars}
           meKey={me?.key ?? ''}
           saving={saving}

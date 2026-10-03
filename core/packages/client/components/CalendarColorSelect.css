@@ -1,0 +1,3 @@
+.calendar-color-select { align-self: flex-start; }
+.calendar-color-label { display: inline-flex; align-items: center; gap: 10px; }
+.calendar-color-chip { width: 14px; height: 14px; border-radius: 3px; }
