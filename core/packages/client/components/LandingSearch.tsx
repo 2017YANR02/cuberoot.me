@@ -47,6 +47,7 @@ import { apiUrl } from '@/lib/api-base';
 import SiteAssistantDialog, { SiteAssistantAnswerText, type AssistantTurn } from '@/components/SiteAssistantDialog';
 import { SITE_ASSISTANT_TIMEOUT_MS, readAssistantEvents, type AssistantStreamEvent, type AssistantStatus, type AssistantAnswer, type AssistantErrorCode } from '@cuberoot/shared/site-assistant';
 import { ASSISTANT_ERROR_TEXT, assistantResponseError } from '@/lib/site-assistant-errors';
+import { requestSiteAssistant } from '@/lib/site-assistant-request';
 import { ALG_PUZZLES, type AlgCase } from '@cuberoot/shared/alg';
 
 // EventIcon inlines all WCA event SVGs (~68KB gzip);only used in recon hits.
@@ -279,10 +280,10 @@ export default function LandingSearch({
     setAssistantAnswer(null);
     const timeout = setTimeout(() => controller.abort(), SITE_ASSISTANT_TIMEOUT_MS);
     try {
-      const response = await fetch(apiUrl('/v1/site-assistant'), {
-        method: 'POST', headers: { ...authHeaders(), Accept: 'text/event-stream' },
-        body: JSON.stringify({ question, lang, timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone, history: previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]) }), signal: controller.signal,
-      });
+      const response = await requestSiteAssistant(apiUrl('/v1/site-assistant'), {
+        question, lang, timeZone:Intl.DateTimeFormat().resolvedOptions().timeZone,
+        history: previous.filter(turn => !turn.partial).slice(-5).flatMap(turn => [{ role: 'user', content: turn.question }, { role: 'assistant', content: turn.result!.answer }]),
+      }, {headers: { ...authHeaders(), Accept: 'text/event-stream' },signal: controller.signal});
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
         if (assistantRequest.current === controller) setAssistantError(assistantResponseError(response, failure));
