@@ -236,7 +236,7 @@
   background: var(--popover);
   text-align: center;
 }
-.mem-pay-close {
+.clear-btn.mem-pay-close {
   position: absolute;
   top: 12px;
   right: 12px;

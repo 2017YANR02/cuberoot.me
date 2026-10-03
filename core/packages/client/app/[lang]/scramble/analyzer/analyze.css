@@ -98,7 +98,7 @@
 .analyze-scramble-wrap .analyze-scramble {
     padding-right: 2rem;
 }
-.analyze-scramble-clear {
+.clear-btn.analyze-scramble-clear {
     right: 8px;
     top: 1.15rem;
     transform: translateY(-50%);

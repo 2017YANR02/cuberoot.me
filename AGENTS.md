@@ -155,6 +155,7 @@ pnpm --filter @cuberoot/client lint
 - 表头排序一律 `components/SortArrow`(文字右侧,仅当前列显示)。CI 守卫。
 - 下拉/菜单宽度 fit-content,column flex 加 `align-self:flex-start`;禁钉 `min-width`。
 - 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。
+- 共享控件的页面定位覆盖不能依赖 CSS 加载顺序：用 `.共享class.角色class` 等明确作用域，禁止同优先级单 class 覆盖。absolute/fixed 改 relative 时显式重置原有 inset/top/left 等偏移，改 static 时重置 transform/translate；静态定位下未生效的 inset 不视为 bug。Hook `block-css-position-cascade.mts` 与 CI `css-position-cascade-guard.test.ts` 共用扫描器；规则内 `allow-css-position: 具体理由` 才能豁免，动态 class/复杂选择器仍须浏览器复核。
 - 吸顶表头走 `components/sticky-table.css`(`.sticky-scroll` + `.sticky-thead`),禁手写 sticky thead;契约见文件头注。
 - 新可复用组件/hook 登记 `/dev` catalog(`_catalog.tsx`)。CI 守卫:`dev-catalog-sync` + `dev-tokens-drift`。
 - 答题/训练的对错提示统一复用 `components/TrainingFeedbackOverlay` 的绿色 ✅ / 红色 ❌,禁页面自画。
