@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createReconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
+import { createLiveReconstructionStream, createReconstructionAnalyzer } from '@cuberoot/timer-ui/reconstruct-analysis';
 import { computeStageSegments } from '@cuberoot/shared/timer/reconstruct/stage-segments';
 import type { AnalysisInput, AnalysisRequest, AnalysisResponse, AnalysisSnapshot } from '@cuberoot/timer-ui/reconstruct-analysis';
 
@@ -37,6 +37,28 @@ afterEach(() => {
 });
 
 describe('reconstruction worker lifecycle', () => {
+  it('coalesces live turns without cancelling active recognition and cancels on attempt exit', () => {
+    const { analyzer, workers } = setup();
+    const listener = vi.fn();
+    const stream = createLiveReconstructionStream(listener, analyzer);
+    const first = input('R'), skipped = input('U'), latest = input('F');
+    stream.update(first);
+    vi.advanceTimersByTime(1);
+    stream.update(skipped);
+    stream.update(latest);
+    expect(workers[0].terminate).not.toHaveBeenCalled();
+    expect(workers[0].requests).toHaveLength(1);
+    workers[0].reply({ done: true });
+    expect(listener).toHaveBeenLastCalledWith(first, expect.objectContaining({ status: 'complete' }));
+    vi.advanceTimersByTime(5);
+    expect(workers[0].requests.map(request => request.input)).toEqual([first, latest]);
+    stream.dispose();
+    expect(workers[0].terminate).toHaveBeenCalledOnce();
+    const count = listener.mock.calls.length;
+    workers[0].reply({ done: true });
+    expect(listener).toHaveBeenCalledTimes(count);
+  });
+
   it('shares work, publishes partial results, and caches by content', () => {
     const { analyzer, workers } = setup();
     const a: AnalysisSnapshot[] = [], b: AnalysisSnapshot[] = [];

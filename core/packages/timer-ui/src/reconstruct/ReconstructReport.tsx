@@ -32,7 +32,7 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ChevronDown, ChevronRight, ThumbsUp, ThumbsDown, Info } from 'lucide-react';
 import type { Solve, EventId } from '@cuberoot/shared/timer';
@@ -54,7 +54,7 @@ import { buildCoreTrack } from '@cuberoot/shared/timer/reconstruct/core-track';
 import { applyReconTextOverride } from '@cuberoot/shared/timer/reconstruct/recon-text';
 import { initialPoseRotation, normalizeSolve } from '@cuberoot/shared/timer/reconstruct/gyro-orient';
 import type { ReconTextResult } from '@cuberoot/shared/timer/reconstruct/recon-text';
-import { reconstructionAnalyzer } from './analysis-client';
+import { createLiveReconstructionStream, reconstructionAnalyzer } from './analysis-client';
 import type { AnalysisInput, AnalysisSnapshot } from './analysis-protocol';
 import StepAnalysis from './StepAnalysis';
 import StepMoveList from './StepMoveList';
@@ -123,6 +123,8 @@ export interface ReconstructReportProps {
   hideDate?: boolean;
   /** The inline recap renders these actions beside its full-screen control. */
   hideActions?: boolean;
+  /** In-progress move score, using the same segmentation and notation as the report. */
+  live?: boolean;
 }
 
 const BLD_AUTO_DETECT_EVENTS = new Set<EventId>(['333bld', '444bld', '555bld', '333mbld']);
@@ -178,7 +180,7 @@ function AccordionSection({
 }
 
 function ReconstructReportBody({
-  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions,
+  solve, isZh, history, onMemoApply, onUseScramble, onReconFeedback, hideDate, hideActions, live = false,
 }: ReconstructReportProps) {
   const host = useReconstructHost();
   const { localize: tr } = host;
@@ -234,7 +236,7 @@ function ReconstructReportBody({
     [stageSegs, solve.scramble, moves, solve.timeMs],
   );
 
-  const scoreable = stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
+  const scoreable = !live && stepMx !== null && stepMx.putDownMs !== null && solve.penalty !== 'DNF';
   /**
    * 中心核的轨迹。转体和中层都只能从它推 —— 所以只有**录了姿态**的那些把有;
    * 没录的把 `solve.gyro` 不存在,这里是 null,中层退回时间判据、一个转体也不写。
@@ -258,16 +260,34 @@ function ReconstructReportBody({
     } : null
   ), [stageSegs, moves, scoreable, view, solve.timeMs, solve.scramble, stepMx, slots, core]);
   const [analysisState, setAnalysisState] = useState<{
-    input: AnalysisInput; snapshot: AnalysisSnapshot;
+    solveId: string; input: AnalysisInput; snapshot: AnalysisSnapshot;
   } | null>(null);
+  const liveStreamRef = useRef<ReturnType<typeof createLiveReconstructionStream> | null>(null);
+  useEffect(() => {
+    if (!live) return;
+    const stream = createLiveReconstructionStream((input, snapshot) => {
+      if (snapshot.text || snapshot.status === 'error') {
+        setAnalysisState({ solveId: solve.id, input, snapshot });
+      }
+    });
+    liveStreamRef.current = stream;
+    return () => { stream.dispose(); liveStreamRef.current = null; };
+  }, [live, solve.id]);
   useEffect(() => {
     if (!analysisInput) return;
+    if (live) {
+      liveStreamRef.current?.update(analysisInput);
+      return;
+    }
     return reconstructionAnalyzer.subscribe(analysisInput, snapshot => {
-      setAnalysisState({ input: analysisInput, snapshot });
+      setAnalysisState({ solveId: solve.id, input: analysisInput, snapshot });
     });
-  }, [analysisInput]);
+  }, [analysisInput, live, solve.id]);
   // Never display the previous solve's result while the new effect subscribes.
-  const analysis = analysisState?.input === analysisInput ? analysisState?.snapshot : null;
+  // Live updates retain the latest completed snapshot of this attempt while
+  // the worker catches up, rather than flashing an empty list at every turn.
+  const analysis = analysisState?.solveId === solve.id && (live || analysisState.input === analysisInput)
+    ? analysisState.snapshot : null;
   const reconText = useMemo(() => analysis?.text
     ? applyReconTextOverride(analysis.text, solve.reconstruction)
     : null, [analysis?.text, solve.reconstruction]);
@@ -358,6 +378,16 @@ function ReconstructReportBody({
       return null;
     }
   }, [solve.event, solve.scramble]);
+
+  if (live) {
+    return reconText ? (
+      <StepMoveList recon={reconText} reference={null} slotReference={null} />
+    ) : (
+      <div className="sml-moves" aria-busy={analysis?.status !== 'error'}>
+        {moves.map(move => move.m).join(' ')}
+      </div>
+    );
+  }
 
   /**
    * 数据那一半:分步分析表和阶段补充信息。
