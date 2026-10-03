@@ -345,7 +345,7 @@
 .wc-atlas-dialog[data-tone='success'] { --wc-atlas-tone: var(--signal-success); }
 .wc-atlas-dialog[data-tone='warning'] { --wc-atlas-tone: var(--signal-warning); }
 
-.wc-atlas-dialog-close {
+.clear-btn.wc-atlas-dialog-close {
   position: absolute;
   top: 16px;
   right: 16px;
