@@ -27,7 +27,7 @@ describe('assistant public data adapters',()=>{
       results:[{competition_id:'A'},{competition_id:'A'},{competition_id:'B'},{competition_id:'C'},{competition_id:'Missing'}],
       comps:[{id:'A',country_iso2:'JP'},{id:'B',country_iso2:'JP'},{id:'C',country_iso2:'US'},{id:'Unattended',country_iso2:'CN'}],
     });
-    expect(result.artifacts[0]).toMatchObject({rows:[['Japan','2'],['United States','1']]});
+    expect(result.artifacts[0]).toMatchObject({rows:[['JP','2'],['US','1']],columnKinds:['country','text']});
     expect(result.evidence).toMatchObject({updated:'2026-10-01',unknownCompetitions:1,countries:[{iso2:'JP',competitions:2},{iso2:'US',competitions:1}]});
     expect(result.factualSummary).toContain('1 competitions lack a valid host location');
   });

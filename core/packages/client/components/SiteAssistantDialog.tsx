@@ -13,6 +13,10 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import { ClearButton } from '@/components/ClearButton';
 import Link from '@/components/AppLink';
+import { Flag } from '@/components/Flag';
+import { CompCell } from '@/components/CompCell/CompCell';
+import { loadFlagData } from '@/lib/country-flags';
+import { countryName } from '@/lib/country-name';
 import WrHistoryChart from '@/components/wca-stats/WrHistoryChart';
 import { tr } from '@/i18n/tr';
 import './site_assistant.css';
@@ -54,7 +58,8 @@ export function SiteAssistantAnswerText({result,partial}:{result:AssistantAnswer
   const sources=result.sources.filter(source=>/^\/(?!\/)/.test(source.href));
   // Do not flash incomplete citation syntax as provider chunks arrive.
   const text=result.answer.replace(/\[\[[^\]\n]*\]?$/, '').replace(/\[$/, '');
-  const withFallback=!partial && !text.includes('[[') && sources.length===1 ? text+`[[${sources[0].id}]]` : text;
+  const linkedInTable=result.artifacts?.some(a=>a.kind==='table' && a.links?.includes(sources[0]?.href));
+  const withFallback=!partial && !text.includes('[[') && sources.length===1 && !linkedInTable ? text+`[[${sources[0].id}]]` : text;
   const markdown=withFallback.replace(/\[\[([^\]\n]+)\]\]/g,(_marker,id:string)=>{
     const index=sources.findIndex(source=>source.id===id);
     return index<0 ? '' : `[${index+1}](#assistant-source-${index})`;
@@ -80,6 +85,14 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
   const [expanded,setExpanded]=useState(false);
   const [showLatest,setShowLatest]=useState(false);
   const [editing,setEditing]=useState<string|null>(null);
+  const [,setFlagVersion]=useState(0);
+  const hasCompetitionTables=turns.some(turn=>turn.result?.artifacts?.some(a=>a.kind==='table' && a.links?.some(href=>href.startsWith('/wca/comp/'))));
+  useEffect(()=>{
+    if(!hasCompetitionTables)return;
+    let active=true;
+    loadFlagData({persons:false}).then(version=>{if(active)setFlagVersion(version);});
+    return ()=>{active=false;};
+  },[hasCompetitionTables]);
   const {copy,copiedKey}=useCopy();
   const backdrop=useModalDismiss(onClose);
   const dialog=useRef<HTMLDivElement>(null);
@@ -136,18 +149,32 @@ export default function SiteAssistantDialog({turns,draft,onDraftChange:setDraft,
           {zh:'我需要一个二阶魔方求解器',en:'I need a 2x2 cube solver'},
           {zh:'群论能怎么解释魔方的转动？',en:'How does group theory explain cube moves?'},
         ].map(example=><button className="site-assistant-action" type="button" key={example.en} onClick={()=>onAsk(tr(example))}>{tr(example)}</button>)}</div>}
-        {turns.map((turn,i)=><section className="site-assistant-turn" key={i}>{editing!==null && i===turns.length-1 ? <form className="site-assistant-edit" onSubmit={event=>{event.preventDefault();if(editing.trim()&&!busy){onAsk(editing.trim(),true);setEditing(null);}}}>
+        {turns.map((turn,i)=>{
+          const tableLinks=new Set(turn.result?.artifacts?.flatMap(a=>a.kind==='table' ? a.links ?? [] : []) ?? []);
+          const seenActions=new Set<string>();
+          const actions=turn.result?.actions?.filter(action=>{
+            if(!/^\/(?!\/)/.test(action.href) || tableLinks.has(action.href) || seenActions.has(action.href))return false;
+            seenActions.add(action.href);return true;
+          }) ?? [];
+          return <section className="site-assistant-turn" key={i}>{editing!==null && i===turns.length-1 ? <form className="site-assistant-edit" onSubmit={event=>{event.preventDefault();if(editing.trim()&&!busy){onAsk(editing.trim(),true);setEditing(null);}}}>
           <textarea ref={editInput} className="site-assistant-draft" aria-label={tr({zh:'编辑问题',en:'Edit question'})} value={editing} maxLength={500} rows={3} onChange={event=>setEditing(event.target.value)}/>
           <div className="site-assistant-edit-actions">{editing && <ClearButton onClick={()=>setEditing('')}/>}<button type="button" className="site-assistant-action" onClick={()=>setEditing(null)}>{tr({zh:'取消',en:'Cancel'})}</button><button type="submit" className="site-assistant-action site-assistant-send" disabled={busy||!editing.trim()}>{tr({zh:'发送',en:'Send'})}</button></div>
         </form> : <div className="site-assistant-question"><h3>{turn.question}</h3><div className="site-assistant-question-actions"><button className="site-assistant-action" type="button" onClick={()=>{if(navigator.clipboard)copy(turn.question,`question-${i}`);}} title={tr(copiedKey===`question-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制问题',en:'Copy question'})}>{copiedKey===`question-${i}`?<Check size={15}/>:<Copy size={15}/>}</button>{i===turns.length-1 && <button className="site-assistant-action" type="button" disabled={busy} onClick={()=>{stop();setEditing(turn.question);}} title={tr({zh:'编辑问题',en:'Edit question'})}><Pencil size={15}/></button>}</div></div>}
           {busy && i===turns.length-1 && <div className="site-assistant-status" role="status"><span className="site-assistant-status-icon" aria-hidden="true">{status.phase==='querying'?<Search size={16}/>:<LoaderCircle size={16}/>}</span><span>{statusLabel(status)}</span><span className="site-assistant-status-dots" aria-hidden="true">···</span></div>}
           {turn.result && <div className="site-assistant-response"><SiteAssistantAnswerText result={turn.result} partial={turn.partial}/>
-          {!turn.partial && !!turn.result.actions?.length && <div className="site-assistant-response-actions site-assistant-navigation">{turn.result.actions.filter(action=>/^\/(?!\/)/.test(action.href)).map(action=><Link key={action.id} className="site-assistant-action" href={action.href} onClick={openSolverDocument} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
-          {turn.result.artifacts?.map((a,j)=>a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=><td key={c}>{c===0 && a.links?.[k]?.startsWith('/') && !a.links[k].startsWith('//') ? <Link prefetch={false} href={a.links[k]}>{cell}</Link>:cell}</td>)}</tr>)}</tbody></table></div></section>)}
+          {!turn.partial && !!actions.length && <div className="site-assistant-response-actions site-assistant-navigation">{actions.map(action=><Link key={action.id} className="site-assistant-action" href={action.href} onClick={openSolverDocument} prefetch={false}>{tr({zh:`打开 ${action.title}`,en:`Open ${action.title}`})}</Link>)}</div>}
+          {turn.result.artifacts?.map((a,j)=>a.kind==='progress'?<Progress key={j} chart={a}/>:<section key={j}><h4>{a.title}</h4><div className="site-assistant-table"><table><thead><tr>{a.columns.map((c,k)=><th key={k}>{c}</th>)}</tr></thead><tbody>{a.rows.map((row,k)=><tr key={k}>{row.map((cell,c)=>{
+            const kind=a.columnKinds?.[c];
+            const href=c===0 ? a.links?.[k] : undefined;
+            const compId=href && /^\/wca\/comp\/([A-Za-z0-9_-]+)$/.exec(href)?.[1];
+            const dateColumn=a.columnKinds?.indexOf('date') ?? -1;
+            const content=kind==='country' && cell ? <span title={countryName(cell,lang==='zh')}><Flag iso2={cell} spanClassName="country-flag" imgClassName="country-flag-ct"/></span> : compId ? <CompCell compId={compId} compName={cell} isZh={lang==='zh'} date={dateColumn>=0 ? row[dateColumn] : null}/> : cell;
+            return <td key={c} className={kind==='date' ? 'site-assistant-date' : kind==='country' ? 'site-assistant-country' : undefined}>{href?.startsWith('/') && !href.startsWith('//') ? <Link prefetch={false} href={href}>{content}</Link> : content}</td>;
+          })}</tr>)}</tbody></table></div></section>)}
         </div>}
           {turn.result && !(busy && i===turns.length-1) && <div className="site-assistant-response-actions"><button className="site-assistant-action" type="button" onClick={()=>copyAnswer(turn.result!,`answer-${i}`)} title={tr(copiedKey===`answer-${i}`?{zh:'已复制',en:'Copied'}:{zh:'复制回答',en:'Copy answer'})}>{copiedKey===`answer-${i}`?<Check size={16}/>:<Copy size={16}/>}</button>{i===turns.length-1 && !error && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turn.question,true)} title={tr({zh:'重新生成',en:'Regenerate'})}><RotateCcw size={16}/></button>}<span role="status">{copiedKey===`answer-${i}` && tr({zh:'已复制',en:'Copied'})}</span></div>}
           {turn.partial && !(busy && i===turns.length-1) && <p className="site-assistant-incomplete">{tr({zh:'回答未完成',en:'Answer incomplete'})}</p>}
-        </section>)}
+        </section>;})}
         {error && <div role="alert"><p>{tr(ASSISTANT_ERROR_TEXT[error])}</p>{error==='login_required'||error==='wca_link_required' ? <button className="site-assistant-action" type="button" onClick={()=>useAuthStore.getState().login()}>{tr({zh:'前往账号页',en:'Go to account'})}</button> : error==='verification_required' ? <Link href={`/competition-verify?returnTo=${encodeURIComponent(lang==='zh'?'/zh':'/')}`} prefetch={false}>{tr({zh:'完成访问验证',en:'Verify access'})}</Link> : error!=='daily_limit' && error!=='account_forbidden' && turns.length>0 && <button className="site-assistant-action" type="button" disabled={busy||editing!==null} onClick={()=>onAsk(turns[turns.length-1].question,true)}>{tr({zh:'重试',en:'Retry'})}</button>}</div>}
       </div>
       {showLatest && <button className="site-assistant-action site-assistant-latest" type="button" onClick={scrollLatest} title={tr({zh:'回到最新消息',en:'Jump to latest'})}><ArrowDown size={18}/></button>}</div>

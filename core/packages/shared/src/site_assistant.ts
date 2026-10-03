@@ -7,6 +7,8 @@ export interface AssistantTable {
   kind: 'table'; title: string; columns: string[]; rows: string[][];
   /** One canonical source link for each row, supplied by the data adapter. */
   links?: string[];
+  /** Semantic presentation supplied by the adapter, independent of translated headers. */
+  columnKinds?: Array<'text' | 'country' | 'date'>;
 }
 export interface AssistantChart {
   kind: 'progress'; title: string; event: string; metric: 'single' | 'average';
