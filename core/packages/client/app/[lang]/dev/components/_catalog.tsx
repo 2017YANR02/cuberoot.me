@@ -1674,8 +1674,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
     import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report';",
     category: 'display',
-    zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
-    en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
+    zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。live 模式以同一阶段识别、记号和 StepMoveList 展示进行中的 Cross、F2L 分组、OLL、PLL，Worker 合并连续更新且不做参考解搜索。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
+    en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Live mode uses the same recognition, notation and StepMoveList for Cross, F2L pairs, OLL and PLL; the worker coalesces updates without reference searches. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
   },
   {
     name: 'TimerPrintController / TimerPrintDocument',

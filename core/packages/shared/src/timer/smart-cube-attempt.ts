@@ -47,6 +47,16 @@ export class SmartCubeAttemptProducer {
     return this.moves.snapshot();
   }
 
+  /** Live reconstruction reads exactly the fields finish will persist. */
+  snapshot(): SmartCubeAttemptResult {
+    const moves = this.snapshotMoves();
+    return {
+      moves,
+      device: moves.length > 0 && this.device ? { ...this.device } : undefined,
+      gyro: moves.length > 0 ? encodeGyroTrack(this.gyro.snapshot()) : null,
+    };
+  }
+
   finish(): SmartCubeAttemptResult {
     const moves = this.moves.take();
     const samples = this.gyro.take();

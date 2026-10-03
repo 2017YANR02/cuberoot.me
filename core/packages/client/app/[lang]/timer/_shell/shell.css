@@ -134,14 +134,6 @@
   color: var(--muted-foreground);
   font-size: 12px;
 }
-.timer-live-solution-moves {
-  color: var(--foreground);
-  font-family: var(--font-mono);
-  font-size: 16px;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-  user-select: text;
-}
 
 /* Target indicator */
 /* Rank badge — WR / CR / NR pills (shared by Solo digits corner + Battle player).
