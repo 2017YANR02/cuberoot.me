@@ -1320,6 +1320,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const eventAtStartRef = useRef<EventId>(event);
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
+  const [liveSolution, setLiveSolution] = useState('');
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
   /** The smart cube connected when the attempt STARTED. Snapshotted with the
@@ -1426,6 +1427,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     smartCubeAttemptProducerRef.current.begin(startedAtMs, bt?.connected
       ? { model: bt.brand, name: bt.deviceName }
       : undefined);
+    setLiveSolution('');
   });
   cancelArmForScrambleChangeRef.current = competition.enabled ? () => {} : timer.cancelArm;
   useLayoutEffect(() => { timer.reset(); smartCubeAttemptProducerRef.current.reset(); }, [competition.enabled, competition.attemptKey, timer.reset]);
@@ -1541,9 +1543,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
     recordMove: ({ move, timestamp }) => {
       if (!smartCubeAttemptProducerRef.current.recordMove(move, timestamp)) return;
+      // Use only this attempt's accepted moves, never the 3D anchor's scramble log.
+      const moves = smartCubeAttemptProducerRef.current.snapshotMoves();
+      setLiveSolution(moves.map(({ m }) => m).join(' '));
       attemptSplitRecorder.observeMoves({
         event: eventAtStartRef.current,
-        moves: smartCubeAttemptProducerRef.current.snapshotMoves(),
+        moves,
         scramble: scrambleAtStartRef.current,
         timeMs: Math.max(0, timestamp - attemptStartedAtRef.current),
       });
@@ -3187,6 +3192,16 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             />
           )}
         </TimingSurface>
+
+        {timer.phase === 'running' && liveSolution && (
+          <section className="timer-live-solution" data-no-timer
+            aria-label={tr({ zh: '实时解法', en: 'Live solution' })}>
+            <div className="timer-live-solution-label">
+              {tr({ zh: '实时解法 · 已拧步骤', en: 'Live solution · moves so far' })}
+            </div>
+            <div className="timer-live-solution-moves">{liveSolution}</div>
+          </section>
+        )}
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
