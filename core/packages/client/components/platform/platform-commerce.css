@@ -1,0 +1,25 @@
+.platform-commerce-content { display: grid; gap: 1.25rem; min-width: 0; }
+.platform-commerce-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,220px),1fr)); gap: 1rem; }
+.platform-commerce-grid > article { padding: 1.25rem; border: 1px solid var(--border-default); border-radius: 16px; background: var(--card); }
+.platform-commerce-grid h3 { margin: 0 0 .75rem; }
+.platform-commerce-price { font-size: 1.6rem; display: block; }
+.platform-commerce-related { display: flex; flex-wrap: wrap; gap: 1rem; }
+.platform-commerce-facts { display: grid; gap: .75rem; }
+.platform-commerce-facts dt { color: var(--muted-foreground); }
+.platform-commerce-facts dd { margin: .25rem 0 0; }
+.platform-product-image { max-width: 100%; width: min(100%,480px); max-height: 480px; object-fit: contain; border-radius: 16px; }
+.platform-commerce-content table { width: 100%; border-collapse: collapse; }
+.platform-commerce-content th,.platform-commerce-content td { text-align: start; padding: .75rem; border-bottom: 1px solid var(--border-default); }
+.platform-structured-editor { display: grid; gap: 1rem; grid-column: 1 / -1; border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem; min-width: 0; }
+.platform-structured-editor legend { padding: 0 .5rem; }
+.platform-structured-row { display: grid; gap: .75rem; border-bottom: 1px solid var(--border-default); padding-bottom: 1rem; }
+.platform-structured-fields { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); }
+.platform-structured-fields label { display: grid; gap: .35rem; min-width: 0; }
+.platform-quote { border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem; display: grid; gap: .5rem; }
+
+.platform-business-trend { margin: 0; }
+.platform-business-trend svg { width: 100%; height: auto; max-height: 220px; }
+.platform-business-trend line { stroke: var(--border-default); }
+.platform-business-trend polyline { fill: none; stroke: var(--accent); stroke-width: 3; }
+.platform-business-trend circle { fill: var(--accent); }
+.platform-business-trend > div { display: flex; justify-content: space-between; color: var(--muted-foreground); }

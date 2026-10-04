@@ -20,6 +20,10 @@ export interface PlatformLoadOptions {
   query?: string;
   sort?: 'title' | 'updated';
   owned?: boolean;
+  page?: number;
+  pageSize?: number;
+  category?: string;
+  days?: number;
   signal?: AbortSignal;
 }
 
@@ -78,6 +82,10 @@ function queryString(options: PlatformLoadOptions): string {
   if (options.query?.trim()) query.set('q', options.query.trim());
   if (options.sort) query.set('sort', options.sort);
   if (options.owned) query.set('owned', '1');
+  if (options.page) query.set('page', String(options.page));
+  if (options.pageSize) query.set('pageSize', String(options.pageSize));
+  if (options.days) query.set('days', String(options.days));
+  if (options.category) query.set('category', options.category);
   const value = query.toString();
   return value ? `?${value}` : '';
 }
@@ -85,7 +93,9 @@ function queryString(options: PlatformLoadOptions): string {
 /** Explicit resource URLs. Keep permissions and state machines visible at the API boundary. */
 function readPath(resource: PlatformResource, options: PlatformLoadOptions): string {
   const id = encodedId(options);
-  const query = queryString(options);
+  const rawQuery = queryString(options);
+  const query = ['courses', 'paths', 'events', 'news', 'products', 'search'].includes(resource)
+    ? rawQuery + (rawQuery ? '&' : '?') + 'v=3' : rawQuery;
   switch (resource) {
     case 'search': return `/v1/platform/search${query}`;
     case 'leaderboard': return `/v1/platform/leaderboard${query}`;
@@ -97,7 +107,7 @@ function readPath(resource: PlatformResource, options: PlatformLoadOptions): str
     case 'membership-plans': return '/v1/platform/membership-plans';
     case 'account-memberships': return '/v1/platform/me/memberships';
     case 'entitlements': return `/v1/platform/entitlements${query}`;
-    case 'courses': return `/v1/platform/courses${id ? `/${id}` : ''}${query}${id ? `${query ? '&' : '?'}v=2` : ''}`;
+    case 'courses': return `/v1/platform/courses${id ? `/${id}` : ''}${query}`;
     case 'course-lesson': return `/v1/platform/courses/${encodeURIComponent(options.params.id ?? '')}/lessons/${encodeURIComponent(options.params.lessonId ?? '')}`;
     case 'paths': return `/v1/platform/paths${id ? `/${id}` : ''}${query}`;
     case 'events': return `/v1/platform/events${id ? `/${id}` : ''}${query}`;
@@ -191,7 +201,7 @@ function normalizeResource(value: unknown): PlatformResourceResult {
   const direct = entity(
     envelope.item ?? envelope.data ?? envelope.result ?? envelope.lesson ?? envelope.course ?? envelope.path
       ?? envelope.event ?? envelope.article ?? envelope.product ?? envelope.order
-      ?? envelope.certificate ?? envelope.qr ?? envelope.thread,
+      ?? envelope.certificate ?? envelope.qr ?? envelope.thread ?? envelope.instructor ?? envelope.application,
     0,
   );
   if (direct) return { items: [direct], total: 1 };
@@ -199,15 +209,36 @@ function normalizeResource(value: unknown): PlatformResourceResult {
   if (envelopeEntity && ['id', 'code', 'slug', 'title', 'titleZh', 'titleEn'].some((key) => envelope[key] != null)) {
     return { items: [envelopeEntity], total: 1 };
   }
-  const array = Object.values(envelope).find(Array.isArray);
+  const collectionKeys = ['items', 'results', 'courses', 'paths', 'products', 'events', 'articles', 'orders', 'instructors', 'applications', 'coupons', 'payouts', 'records', 'notifications', 'threads'];
+  const array = collectionKeys.map(key => envelope[key]).find(Array.isArray)
+    ?? Object.entries(envelope).find(([key, value]) => key !== 'categories' && Array.isArray(value))?.[1];
   const items = Array.isArray(array)
     ? array.map(entity).filter((item): item is PlatformEntity => item !== null)
     : [];
   return {
     items,
-    total: typeof envelope.total === 'number' ? envelope.total : items.length,
+    total: typeof envelope.total === 'number' ? envelope.total : undefined,
     nextCursor: stringValue(envelope.nextCursor) ?? stringValue(envelope.next_cursor),
+    page: typeof envelope.page === 'number' ? envelope.page : undefined,
+    pageSize: typeof envelope.pageSize === 'number' ? envelope.pageSize : undefined,
+    categories: Array.isArray(envelope.categories) ? envelope.categories.filter((item): item is string => typeof item === 'string') : undefined,
   };
+}
+
+/** Keep the API payload lossless while choosing display text for the current locale. */
+export function localizePlatformEntity(item: PlatformEntity, lang: string): PlatformEntity {
+  const data = item.data ?? {};
+  const pick = (bases: string[]): string | undefined => {
+    for (const suffix of lang === 'en' ? ['En', 'Zh'] : ['Zh', 'En']) {
+      for (const base of bases) {
+        const value = data[`${base}${suffix}`];
+        if (typeof value === 'string' && value.trim()) return value;
+      }
+    }
+    return undefined;
+  };
+  return { ...item, title: pick(['title', 'name', 'planName']) ?? item.title,
+    summary: pick(['summary', 'excerpt', 'description']) ?? item.summary };
 }
 
 export async function loadPlatformResource(
@@ -454,7 +485,7 @@ export async function executePlatformAction(
   const id = input.resourceId;
   switch (input.action) {
     case 'favorite': {
-      if (!['course', 'product', 'event'].includes(String(payload.targetType))) throw new Error('A favorite target type is required.');
+      if (!['course', 'product', 'event', 'news'].includes(String(payload.targetType))) throw new Error('A favorite target type is required.');
       return write(`/v1/platform/me/favorites/${requiredId(input)}`, 'PUT', payload);
     }
     case 'wishlist': return write(`/v1/platform/me/wishlist/${requiredId(input)}`, 'PUT', payload);

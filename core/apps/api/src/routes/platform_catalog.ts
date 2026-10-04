@@ -126,7 +126,7 @@ async function driveVideoMediaId(db: PlatformDb, actor: PlatformActor, nodeId: s
     INSERT INTO platform_media_assets (
       owner_user_id, storage_key, mime_type, size_bytes, sha256, access_scope, status, metadata
     ) VALUES ($1, $2, $3, $4, decode($5, 'hex'), 'entitled', 'ready',
-      jsonb_build_object('source', 'drive', 'driveNodeId', $6))
+      jsonb_build_object('source', 'drive', 'driveNodeId', $6::text))
     ON CONFLICT (storage_key) DO UPDATE SET
       mime_type = EXCLUDED.mime_type, size_bytes = EXCLUDED.size_bytes, sha256 = EXCLUDED.sha256,
       access_scope = 'entitled', status = 'ready', metadata = platform_media_assets.metadata || EXCLUDED.metadata
@@ -162,8 +162,30 @@ async function authorizeCourseWrite(db: PlatformDb, actor: PlatformActor, key: s
   return id;
 }
 
+function coursePresentation(value: unknown): Record<string, unknown> | undefined {
+  if (value === undefined) return undefined;
+  if (!isObject(value)) badRequest('presentation must be an object');
+  const result: Record<string, unknown> = {};
+  for (const key of ['level','format','coverUrl','previewUrl','nextLiveAt']) {
+    const text = stringField(value,key,{max:2048});
+    if (text && ['coverUrl','previewUrl'].includes(key) && !text.startsWith('/') && !/^https?:\/\//.test(text)) badRequest(`${key} must be a site path or HTTP URL`);
+    if (text) result[key]=text;
+  }
+  for (const key of ['tags','highlights']) {
+    if (value[key] == null) continue;
+    if (!Array.isArray(value[key]) || value[key].length>100 || value[key].some(item=>typeof item!=='string'||item.length>2000)) badRequest(`${key} must be a text array`);
+    result[key]=value[key];
+  }
+  if (value.outline != null) {
+    if(!Array.isArray(value.outline)||value.outline.length>200||value.outline.some(item=>!isObject(item)||typeof item.label!=='string'||typeof item.topic!=='string'||item.label.length>200||item.topic.length>2000)) badRequest('outline must contain label and topic');
+    result.outline=value.outline;
+  }
+  return result;
+}
+
 function courseFields(body: JsonObject, required: boolean) {
   return {
+    presentation: coursePresentation(body.presentation),
     slug: stringField(body, 'slug', { required, max: 120, pattern: SLUG }),
     titleZh: stringField(body, 'titleZh', { required: false, max: 240 }),
     titleEn: stringField(body, 'titleEn', { required: false, max: 240 }),
@@ -191,7 +213,7 @@ const COURSE_PROJECTION = `
   c.enrollment_mode AS "enrollmentMode", c.current_revision AS "currentRevision",
   r.title_zh AS "titleZh", r.title_en AS "titleEn", r.summary_zh AS "summaryZh",
   r.summary_en AS "summaryEn", r.description_zh AS "descriptionZh",
-  r.description_en AS "descriptionEn", c.published_at AS "publishedAt",
+  r.description_en AS "descriptionEn", r.presentation, c.published_at AS "publishedAt",
   c.created_at AS "createdAt", c.updated_at AS "updatedAt"`;
 
 platformCatalogRoutes.get('/platform/courses', async (c) => {
@@ -204,9 +226,9 @@ platformCatalogRoutes.get('/platform/courses', async (c) => {
     WHERE c.status = 'published'
       AND ($1 = '' OR r.title_zh ILIKE '%' || $1 || '%' OR r.title_en ILIKE '%' || $1 || '%'
         OR r.summary_zh ILIKE '%' || $1 || '%' OR r.summary_en ILIKE '%' || $1 || '%')
-    ORDER BY c.published_at DESC, c.id
+    ORDER BY CASE WHEN $4='title' THEN COALESCE(NULLIF(r.title_zh,''),r.title_en) END ASC, c.updated_at DESC, c.id
     LIMIT $2 OFFSET $3
-  `, [q, pageSize, offset]);
+  `, [q, pageSize, offset,c.req.query('sort')??'updated']);
   const totals = await platformQuery<{ total: number }>(platformDb(), `
     SELECT COUNT(*)::int AS total
     FROM platform_courses c
@@ -304,17 +326,18 @@ platformCatalogRoutes.get('/platform/courses/:courseId/lessons/:lessonId', async
 
 platformCatalogRoutes.get('/platform/paths', async (c) => {
   const { page, pageSize, offset } = pagination(c, 60);
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
   const rows = await platformQuery(platformDb(), `
-    SELECT p.id::text AS id, p.slug, p.title_zh AS "titleZh", p.title_en AS "titleEn",
+    SELECT COUNT(*) OVER()::int AS "resultTotal", p.id::text AS id, p.slug, p.title_zh AS "titleZh", p.title_en AS "titleEn",
       p.description_zh AS "descriptionZh", p.description_en AS "descriptionEn",
       p.status, p.published_at AS "publishedAt", COUNT(i.ordinal)::int AS "itemCount"
     FROM platform_learning_paths p
     LEFT JOIN platform_learning_path_items i ON i.path_id = p.id
-    WHERE p.status = 'published'
-    GROUP BY p.id ORDER BY p.published_at DESC, p.id LIMIT $1 OFFSET $2
-  `, [pageSize, offset]);
+    WHERE p.status = 'published' AND ($3='' OR p.title_zh ILIKE '%'||$3||'%' OR p.title_en ILIKE '%'||$3||'%')
+    GROUP BY p.id ORDER BY CASE WHEN $4='title' THEN COALESCE(NULLIF(p.title_zh,''),p.title_en) END ASC, p.updated_at DESC, p.id LIMIT $1 OFFSET $2
+  `, [pageSize, offset,q,c.req.query('sort')??'updated']);
   publicCache(c, rows.length > 0);
-  return c.json({ paths: rows, page, pageSize });
+  return c.json({ paths: rows, page, pageSize, total:Number(rows[0]?.resultTotal??0) });
 });
 
 platformCatalogRoutes.get('/platform/paths/:id', async (c) => {
@@ -324,7 +347,8 @@ platformCatalogRoutes.get('/platform/paths/:id', async (c) => {
       p.description_zh AS "descriptionZh", p.description_en AS "descriptionEn", p.status,
       COALESCE(jsonb_agg(jsonb_build_object(
         'ordinal', i.ordinal, 'courseId', i.course_id::text, 'lessonId', i.lesson_id::text,
-        'courseSlug', c.slug, 'lessonSlug', l.slug,
+        'courseSlug', c.slug, 'lessonSlug', l.slug, 'lessonCourseId', l.course_id::text,
+        'totalLessons', CASE WHEN i.lesson_id IS NOT NULL THEN 1 ELSE (SELECT COUNT(*) FROM platform_lessons pl WHERE pl.course_id=i.course_id AND pl.status='published') END,
         'titleZh', COALESCE(cr.title_zh, lr.title_zh), 'titleEn', COALESCE(cr.title_en, lr.title_en)
       ) ORDER BY i.ordinal) FILTER (WHERE i.ordinal IS NOT NULL), '[]'::jsonb) AS items
     FROM platform_learning_paths p
@@ -385,11 +409,12 @@ async function listManagedCourses(c: Context, admin: boolean): Promise<Response>
   const actor = admin ? await requirePlatformAdmin(c) : await requirePlatformActor(c);
   const { page, pageSize, offset } = pagination(c, 100);
   const db = platformDb();
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
   let instructorId: string | null = null;
   if (!admin) instructorId = await requireInstructor(db, actor);
   const id = c.req.param('id') ? requiredParam(c, 'id') : null;
   const rows = await platformQuery(db, `
-    SELECT ${COURSE_PROJECTION},
+    SELECT ${COURSE_PROJECTION}, COUNT(*) OVER()::int AS "resultTotal",
       COALESCE((SELECT jsonb_agg(jsonb_build_object('id', l.id::text, 'slug', l.slug,
         'ordinal', l.ordinal, 'status', l.status, 'accessScope', l.access_scope,
         'titleZh', lr.title_zh, 'titleEn', lr.title_en,
@@ -402,11 +427,12 @@ async function listManagedCourses(c: Context, admin: boolean): Promise<Response>
     WHERE ($1::uuid IS NULL OR EXISTS (
       SELECT 1 FROM platform_course_owners co WHERE co.course_id = c.id AND co.instructor_id = $1::uuid AND co.status = 'active'
     )) AND ($2::text IS NULL OR c.id::text = $2 OR c.slug = $2)
-    ORDER BY c.updated_at DESC, c.id LIMIT $3 OFFSET $4
-  `, [instructorId, id, pageSize, offset]);
+    AND ($5='' OR r.title_zh ILIKE '%'||$5||'%' OR r.title_en ILIKE '%'||$5||'%')
+    ORDER BY CASE WHEN $6='title' THEN COALESCE(NULLIF(r.title_zh,''),r.title_en) END ASC, c.updated_at DESC, c.id LIMIT $3 OFFSET $4
+  `, [instructorId, id, pageSize, offset,q,c.req.query('sort')??'updated']);
   if (id && !rows[0]) notFound('Course');
   privateNoStore(c);
-  return c.json(id ? { course: rows[0] } : { courses: rows, page, pageSize });
+  return c.json(id ? { course: rows[0] } : { courses: rows, page, pageSize, total:Number(rows[0]?.resultTotal??0) });
 }
 
 platformCatalogRoutes.get('/platform/instructor/courses', (c) => listManagedCourses(c, false));
@@ -432,26 +458,26 @@ async function createCourse(c: Context, admin: boolean): Promise<Response> {
           slug, status, current_revision, base_amount_minor, member_amount_minor, currency,
           enrollment_mode, created_by_user_id, published_at, archived_at
         ) VALUES ($1, $2, 1, $3, $4, $5, $6, $7,
-          CASE WHEN $2 IN ('published', 'unlisted') THEN NOW() ELSE NULL END,
-          CASE WHEN $2 = 'archived' THEN NOW() ELSE NULL END)
+          CASE WHEN $2::varchar IN ('published', 'unlisted') THEN NOW() ELSE NULL END,
+          CASE WHEN $2::varchar = 'archived' THEN NOW() ELSE NULL END)
         RETURNING id::text AS id, slug
       `, [input.slug, status, input.baseAmountMinor ?? 0, input.memberAmountMinor ?? null,
         input.currency ?? 'CNY', input.enrollmentMode ?? 'purchase', actor.userId]);
       const row = rows[0];
       const revision = {
         titleZh: input.titleZh ?? '', titleEn: input.titleEn ?? '', summaryZh: input.summaryZh ?? '',
-        summaryEn: input.summaryEn ?? '', descriptionZh: input.descriptionZh ?? '', descriptionEn: input.descriptionEn ?? '',
+        summaryEn: input.summaryEn ?? '', descriptionZh: input.descriptionZh ?? '', descriptionEn: input.descriptionEn ?? '', presentation: input.presentation ?? {},
       };
       await platformQuery(db, `
         INSERT INTO platform_course_revisions (
           course_id, revision, title_zh, title_en, summary_zh, summary_en,
           description_zh, description_en, status, content_hash,
-          created_by_user_id, published_by_user_id, published_at
+          created_by_user_id, published_by_user_id, published_at, presentation
         ) VALUES ($1::uuid, 1, $2, $3, $4, $5, $6, $7, $8, decode($9, 'hex'), $10,
           CASE WHEN $8::varchar = 'published' THEN $10::bigint ELSE NULL END,
-          CASE WHEN $8::varchar = 'published' THEN NOW() ELSE NULL END)
+          CASE WHEN $8::varchar = 'published' THEN NOW() ELSE NULL END, $11::jsonb)
       `, [row.id, revision.titleZh, revision.titleEn, revision.summaryZh, revision.summaryEn,
-        revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId]);
+        revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId, revision.presentation]);
       if (instructorId) {
         await platformQuery(db, `
           INSERT INTO platform_course_owners (course_id, instructor_id, role, revenue_share_bps, created_by_user_id)
@@ -480,7 +506,7 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
       SELECT c.slug, c.status, c.base_amount_minor AS "baseAmountMinor", c.member_amount_minor AS "memberAmountMinor",
         c.currency, c.enrollment_mode AS "enrollmentMode", c.current_revision AS "currentRevision",
         r.title_zh AS "titleZh", r.title_en AS "titleEn", r.summary_zh AS "summaryZh", r.summary_en AS "summaryEn",
-        r.description_zh AS "descriptionZh", r.description_en AS "descriptionEn"
+        r.description_zh AS "descriptionZh", r.description_en AS "descriptionEn", r.presentation
       FROM platform_courses c JOIN platform_course_revisions r ON r.course_id = c.id AND r.revision = c.current_revision
       WHERE c.id = $1::uuid FOR UPDATE
     `, [id]);
@@ -489,7 +515,7 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
     const revision = {
       titleZh: input.titleZh ?? String(old.titleZh), titleEn: input.titleEn ?? String(old.titleEn),
       summaryZh: input.summaryZh ?? String(old.summaryZh), summaryEn: input.summaryEn ?? String(old.summaryEn),
-      descriptionZh: input.descriptionZh ?? String(old.descriptionZh), descriptionEn: input.descriptionEn ?? String(old.descriptionEn),
+      descriptionZh: input.descriptionZh ?? String(old.descriptionZh), descriptionEn: input.descriptionEn ?? String(old.descriptionEn), presentation: input.presentation ?? old.presentation ?? {},
     };
     requireBilingualTitle(revision.titleZh, revision.titleEn);
     const status = input.status ?? String(old.status);
@@ -501,16 +527,16 @@ async function updateCourse(c: Context, admin: boolean): Promise<Response> {
     await platformQuery(db, `
       INSERT INTO platform_course_revisions (
         course_id, revision, title_zh, title_en, summary_zh, summary_en, description_zh, description_en,
-        status, content_hash, created_by_user_id, published_by_user_id, published_at
+        status, content_hash, created_by_user_id, published_by_user_id, published_at, presentation
       ) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, decode($10, 'hex'), $11,
-        CASE WHEN $9::varchar = 'published' THEN $11::bigint ELSE NULL END, CASE WHEN $9::varchar = 'published' THEN NOW() ELSE NULL END)
+        CASE WHEN $9::varchar = 'published' THEN $11::bigint ELSE NULL END, CASE WHEN $9::varchar = 'published' THEN NOW() ELSE NULL END, $12::jsonb)
     `, [id, nextRevision, revision.titleZh, revision.titleEn, revision.summaryZh, revision.summaryEn,
-      revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId]);
+      revision.descriptionZh, revision.descriptionEn, revisionStatus, hashJson(revision), actor.userId, revision.presentation]);
     await platformQuery(db, `
       UPDATE platform_courses SET slug = $2, status = $3, current_revision = $4,
         base_amount_minor = $5, member_amount_minor = $6, currency = $7, enrollment_mode = $8,
-        published_at = CASE WHEN $3 IN ('published', 'unlisted') THEN COALESCE(published_at, NOW()) ELSE published_at END,
-        archived_at = CASE WHEN $3 = 'archived' THEN COALESCE(archived_at, NOW()) ELSE NULL END
+        published_at = CASE WHEN $3::varchar IN ('published', 'unlisted') THEN COALESCE(published_at, NOW()) ELSE published_at END,
+        archived_at = CASE WHEN $3::varchar = 'archived' THEN COALESCE(archived_at, NOW()) ELSE NULL END
       WHERE id = $1::uuid
     `, [id, input.slug ?? old.slug, status, nextRevision, baseAmountMinor, memberAmountMinor,
       input.currency ?? old.currency, input.enrollmentMode ?? old.enrollmentMode]);
@@ -791,6 +817,7 @@ platformCatalogRoutes.delete('/platform/instructor/courses/:courseId/lessons/:le
 platformCatalogRoutes.delete('/platform/admin/courses/:courseId/lessons/:lessonId', (c) => archiveLesson(c, true));
 
 interface QuizQuestionInput {
+  explanation?: string;
   type: PlatformQuizQuestionType;
   promptZh: string;
   promptEn: string;
@@ -828,6 +855,7 @@ function quizFields(body: JsonObject, required: boolean) {
       promptEn,
       choices,
       answerKey,
+      explanation: stringField(value,'explanation',{max:20000})??'',
       points: integerField(value, 'points', { min: 1, max: 1_000_000 }) ?? 1,
     };
   });
@@ -875,6 +903,7 @@ async function quizQuestions(db: PlatformDb, quizId: string, revision: number): 
         source: 'stored',
         label: 'stored answer key',
       }),
+      explanation: String(decryptPlatformPrivateData(Buffer.from(row.encryptedAnswer), row.answerVersion).explanation??''),
       points: row.points,
     };
   });
@@ -972,11 +1001,11 @@ async function saveQuiz(c: Context, admin: boolean, creating: boolean): Promise<
     const normalized = { titleZh, titleEn, passingScoreBps, maxAttempts, questions };
     await platformQuery(db, `
       INSERT INTO platform_quiz_revisions(quiz_id,revision,title_zh,title_en,passing_score_bps,max_attempts,status,content_hash,created_by_user_id,published_at)
-      VALUES($1::uuid,$2,$3,$4,$5,$6,$7,decode($8,'hex'),$9,CASE WHEN $7='published' THEN NOW() ELSE NULL END)
+      VALUES($1::uuid,$2,$3,$4,$5,$6,$7,decode($8,'hex'),$9,CASE WHEN $7::varchar='published' THEN NOW() ELSE NULL END)
     `, [id, revision, titleZh, titleEn, passingScoreBps, maxAttempts, revisionStatus, hashJson(normalized), actor.userId]);
     for (let index = 0; index < questions.length; index += 1) {
       const question = questions[index];
-      const encrypted = encryptPlatformPrivateData({ answer: question.answerKey });
+      const encrypted = encryptPlatformPrivateData({ answer: question.answerKey, explanation: question.explanation??'' });
       await platformQuery(db, `
         INSERT INTO platform_quiz_questions(quiz_id,quiz_revision,ordinal,question_type,prompt_zh,prompt_en,choices,answer_key_encrypted,answer_key_version,points)
         VALUES($1::uuid,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10)
@@ -1184,17 +1213,17 @@ async function listAdminPaths(c: Context): Promise<Response> {
   const { page, pageSize, offset } = pagination(c, 100);
   const id = c.req.param('id') ? requiredParam(c, 'id') : null;
   const rows = await platformQuery(platformDb(), `
-    SELECT p.id::text AS id, p.slug, p.title_zh AS "titleZh", p.title_en AS "titleEn",
+    SELECT COUNT(*) OVER()::int AS "resultTotal",p.id::text AS id, p.slug, p.title_zh AS "titleZh", p.title_en AS "titleEn",
       p.description_zh AS "descriptionZh", p.description_en AS "descriptionEn", p.status,
       COALESCE(jsonb_agg(jsonb_build_object('ordinal', i.ordinal, 'courseId', i.course_id::text, 'lessonId', i.lesson_id::text)
         ORDER BY i.ordinal) FILTER (WHERE i.ordinal IS NOT NULL), '[]'::jsonb) AS items
     FROM platform_learning_paths p LEFT JOIN platform_learning_path_items i ON i.path_id=p.id
-    WHERE ($1::text IS NULL OR p.id::text=$1 OR p.slug=$1) GROUP BY p.id
-    ORDER BY p.updated_at DESC LIMIT $2 OFFSET $3
-  `, [id, pageSize, offset]);
+    WHERE ($1::text IS NULL OR p.id::text=$1 OR p.slug=$1) AND ($4='' OR p.title_zh ILIKE '%'||$4||'%' OR p.title_en ILIKE '%'||$4||'%') GROUP BY p.id
+    ORDER BY CASE WHEN $5='title' THEN COALESCE(NULLIF(p.title_zh,''),p.title_en) END ASC,p.updated_at DESC,p.id LIMIT $2 OFFSET $3
+  `, [id, pageSize, offset,c.req.query('q')?.trim().slice(0,200)??'',c.req.query('sort')??'updated']);
   if (id && !rows[0]) notFound('Learning path');
   privateNoStore(c);
-  return c.json(id ? { path: rows[0] } : { paths: rows, page, pageSize });
+  return c.json(id ? { path: rows[0] } : { paths: rows, page, pageSize,total:Number(rows[0]?.resultTotal??0) });
 }
 
 platformCatalogRoutes.get('/platform/admin/paths', listAdminPaths);
@@ -1212,7 +1241,7 @@ async function savePath(c: Context, creating: boolean): Promise<Response> {
       const status = input.status ?? 'draft';
       const rows = await platformQuery<{ id: string }>(db, `
         INSERT INTO platform_learning_paths (slug,title_zh,title_en,description_zh,description_en,status,created_by_user_id,published_at)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,CASE WHEN $6='published' THEN NOW() ELSE NULL END)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,CASE WHEN $6::varchar='published' THEN NOW() ELSE NULL END)
         RETURNING id::text AS id
       `, [input.slug, input.titleZh ?? '', input.titleEn ?? '', input.descriptionZh ?? '', input.descriptionEn ?? '', status, actor.userId]);
       id = rows[0].id;
@@ -1257,4 +1286,13 @@ platformCatalogRoutes.delete('/platform/admin/paths/:id', async (c) => {
     return { status: 200, body: { path: rows[0] }, resourceType: 'learning_path', resourceId: rows[0].id };
   });
   return sendMutation(c, result);
+});
+
+platformCatalogRoutes.get('/platform/teachers/:id/courses', async c => {
+  const id = integerField({id:c.req.param('id')},'id',{required:true,min:1})!;
+  const rows=await platformQuery(platformDb(),`SELECT ${COURSE_PROJECTION}
+    FROM platform_courses c JOIN platform_course_revisions r ON r.course_id=c.id AND r.revision=c.current_revision
+    WHERE c.status='published' AND EXISTS(SELECT 1 FROM platform_course_owners o JOIN platform_instructors i ON i.id=o.instructor_id WHERE o.course_id=c.id AND o.status='active' AND i.status='active' AND i.teacher_entry_id=$1)
+    ORDER BY c.published_at DESC`,[id]);
+  publicCache(c,rows.length>0);return c.json({items:rows});
 });

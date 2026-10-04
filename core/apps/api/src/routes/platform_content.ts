@@ -13,6 +13,7 @@ import {
   arrayField,
   enumField,
   integerField,
+  objectField,
   isObject,
   isoTimestampField,
   nullableStringField,
@@ -39,13 +40,13 @@ function requireTitle(titleZh: string | undefined, titleEn: string | undefined):
 }
 
 platformContentRoutes.get('/platform/search', async (c) => {
+  const {page,pageSize,offset}=pagination(c,100);
   const query = c.req.query('q')?.trim().slice(0, 200) ?? '';
   if (query.length < 2) {
     publicCache(c, false);
-    return c.json({ results: [], total: 0 });
+    return c.json({ results: [], total: 0,page,pageSize });
   }
-  const rows = await platformQuery(platformDb(), `
-    SELECT * FROM (
+  const matches = `
       SELECT 'course' AS type, c.id::text AS id, c.slug, r.title_zh AS "titleZh", r.title_en AS "titleEn",
         r.summary_zh AS "summaryZh", r.summary_en AS "summaryEn", '/platform/courses/' || c.slug AS href,
         c.published_at AS "publishedAt"
@@ -65,44 +66,58 @@ platformContentRoutes.get('/platform/search', async (c) => {
         AND (e.title_zh ILIKE '%'||$1||'%' OR e.title_en ILIKE '%'||$1||'%'
           OR e.description_zh ILIKE '%'||$1||'%' OR e.description_en ILIKE '%'||$1||'%')
       UNION ALL
-      SELECT 'news', n.id::text, n.slug, n.title_zh, n.title_en, '', '',
+      SELECT 'news', n.id::text, n.slug, n.title_zh, n.title_en, n.excerpt_zh, n.excerpt_en,
         '/platform/news/' || n.slug, n.published_at
       FROM platform_news_articles n WHERE n.status='published'
-        AND (n.title_zh ILIKE '%'||$1||'%' OR n.title_en ILIKE '%'||$1||'%')
+        AND (n.title_zh ILIKE '%'||$1||'%' OR n.title_en ILIKE '%'||$1||'%' OR n.body_zh::text ILIKE '%'||$1||'%' OR n.body_en::text ILIKE '%'||$1||'%')
       UNION ALL
       SELECT 'product', p.id::text, p.slug, p.title_zh, p.title_en, p.description_zh, p.description_en,
         '/platform/shop/' || p.slug, p.created_at
       FROM platform_products p WHERE p.status='active'
         AND (p.title_zh ILIKE '%'||$1||'%' OR p.title_en ILIKE '%'||$1||'%'
           OR p.description_zh ILIKE '%'||$1||'%' OR p.description_en ILIKE '%'||$1||'%')
-    ) result ORDER BY "publishedAt" DESC NULLS LAST, type, id LIMIT 80
-  `, [query]);
+  `;
+  const [rows,counts]=await Promise.all([
+    platformQuery(platformDb(),`SELECT * FROM (${matches}) result ORDER BY "publishedAt" DESC NULLS LAST,type,id LIMIT $2 OFFSET $3`,[query,pageSize,offset]),
+    platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM (${matches}) result`,[query]),
+  ]);
   publicCache(c, rows.length > 0);
-  return c.json({ results: rows, total: rows.length });
+  return c.json({ results: rows, total: counts[0]?.total??0,page,pageSize });
 });
 
-platformContentRoutes.get('/platform/events', async (c) => {
+type ContentKind = 'events' | 'news' | 'products';
+const CONTENT_TABLES = { events: 'platform_events', news: 'platform_news_articles', products: 'platform_products' } as const;
+async function publicContentList(c: Context, kind: ContentKind): Promise<Response> {
   const { page, pageSize, offset } = pagination(c, 60);
-  const rows = await platformQuery(platformDb(), `
-    SELECT e.id::text AS id, e.slug, e.title_zh AS "titleZh", e.title_en AS "titleEn",
-      e.description_zh AS "descriptionZh", e.description_en AS "descriptionEn", e.status,
-      e.starts_at AS "startsAt", e.ends_at AS "endsAt", e.timezone,
-      e.venue_snapshot AS venue, e.published_at AS "publishedAt",
-      COALESCE((SELECT MIN(t.amount_minor) FROM platform_event_ticket_types t
-        WHERE t.event_id=e.id AND t.status='active'), 0) AS "fromAmountMinor"
-    FROM platform_events e WHERE e.status='published'
-    ORDER BY CASE WHEN e.ends_at >= NOW() THEN 0 ELSE 1 END, e.starts_at, e.id LIMIT $1 OFFSET $2
-  `, [pageSize, offset]);
-  publicCache(c, rows.length > 0);
-  return c.json({ events: rows, page, pageSize });
-});
+  const q = c.req.query('q')?.trim().slice(0, 200) ?? '';
+  const category = c.req.query('category')?.trim().slice(0, 120) ?? '';
+  const table = CONTENT_TABLES[kind];
+  const status = kind === 'products' ? 'active' : 'published';
+  const searchable = kind === 'news' ? "x.title_zh || ' ' || x.title_en || ' ' || x.excerpt_zh || ' ' || x.excerpt_en || ' ' || x.body_zh::text || ' ' || x.body_en::text" : "x.title_zh || ' ' || x.title_en || ' ' || x.description_zh || ' ' || x.description_en";
+  const where = `x.status=$1 AND ($2='' OR ${searchable} ILIKE '%'||$2||'%') AND ($3='' OR x.category=$3)`;
+  const order = c.req.query('sort') === 'title' ? 'x.title_zh,x.title_en,x.id' : 'x.updated_at DESC,x.id';
+  const extra = kind === 'products' ? `x.product_type AS "productType", x.description_zh AS "descriptionZh", x.description_en AS "descriptionEn", x.member_only AS "memberOnly", x.presentation,
+    (SELECT MIN(v.amount_minor) FROM platform_product_variants v WHERE v.product_id=x.id AND v.status='active') AS "fromAmountMinor",
+    (SELECT MIN(v.member_amount_minor) FROM platform_product_variants v WHERE v.product_id=x.id AND v.status='active') AS "fromMemberAmountMinor",
+    (SELECT v.currency FROM platform_product_variants v WHERE v.product_id=x.id AND v.status='active' ORDER BY v.amount_minor,v.id LIMIT 1) AS currency` : kind === 'events' ? `x.description_zh AS "descriptionZh",x.description_en AS "descriptionEn",x.starts_at AS "startsAt",x.ends_at AS "endsAt",x.timezone,x.venue_snapshot AS venue,x.program,
+    (SELECT MIN(t.amount_minor) FROM platform_event_ticket_types t WHERE t.event_id=x.id AND t.status='active') AS "fromAmountMinor",
+    (SELECT t.currency FROM platform_event_ticket_types t WHERE t.event_id=x.id AND t.status='active' ORDER BY t.amount_minor,t.id LIMIT 1) AS currency` : `x.excerpt_zh AS "summaryZh",x.excerpt_en AS "summaryEn",x.published_at AS "publishedAt"`;
+  const [rows, count, categories] = await Promise.all([
+    platformQuery(platformDb(),`SELECT x.id::text AS id,x.slug,x.title_zh AS "titleZh",x.title_en AS "titleEn",x.category,x.status,x.updated_at AS "updatedAt",${extra} FROM ${table} x WHERE ${where} ORDER BY ${order} LIMIT $4 OFFSET $5`,[status,q,category,pageSize,offset]),
+    platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM ${table} x WHERE ${where}`,[status,q,category]),
+    platformQuery<{category:string}>(platformDb(),`SELECT DISTINCT category FROM ${table} WHERE status=$1 AND category<>'' ORDER BY category`,[status]),
+  ]);
+  publicCache(c,rows.length>0);
+  return c.json({[kind === 'news' ? 'articles' : kind]:rows,total:count[0]?.total??0,page,pageSize,categories:categories.map(row=>row.category)});
+}
+platformContentRoutes.get('/platform/events',c=>publicContentList(c,'events'));
 
 platformContentRoutes.get('/platform/events/:id', async (c) => {
   const key = requiredParam(c, 'id');
   const rows = await platformQuery(platformDb(), `
     SELECT e.id::text AS id, e.slug, e.title_zh AS "titleZh", e.title_en AS "titleEn",
       e.description_zh AS "descriptionZh", e.description_en AS "descriptionEn", e.status,
-      e.starts_at AS "startsAt", e.ends_at AS "endsAt", e.timezone, e.venue_snapshot AS venue,
+      e.starts_at AS "startsAt", e.ends_at AS "endsAt", e.timezone, e.venue_snapshot AS venue, e.category, e.program,
       COALESCE((SELECT jsonb_agg(jsonb_build_object(
         'id',t.id::text,'code',t.code,'titleZh',t.title_zh,'titleEn',t.title_en,
         'status',t.status,'amountMinor',t.amount_minor,'currency',t.currency,
@@ -116,50 +131,33 @@ platformContentRoutes.get('/platform/events/:id', async (c) => {
   return c.json({ event: rows[0] });
 });
 
-platformContentRoutes.get('/platform/news', async (c) => {
-  const { page, pageSize, offset } = pagination(c, 60);
-  const rows = await platformQuery(platformDb(), `
-    SELECT id::text AS id, slug, title_zh AS "titleZh", title_en AS "titleEn",
-      body_zh AS "bodyZh", body_en AS "bodyEn", published_at AS "publishedAt"
-    FROM platform_news_articles WHERE status='published'
-    ORDER BY published_at DESC,id LIMIT $1 OFFSET $2
-  `, [pageSize, offset]);
-  publicCache(c, rows.length > 0);
-  return c.json({ articles: rows, page, pageSize });
-});
+platformContentRoutes.get('/platform/news',c=>publicContentList(c,'news'));
 
 platformContentRoutes.get('/platform/news/:id', async (c) => {
   const key = requiredParam(c, 'id');
   const rows = await platformQuery(platformDb(), `
     SELECT id::text AS id, slug, title_zh AS "titleZh", title_en AS "titleEn",
-      body_zh AS "bodyZh", body_en AS "bodyEn", published_at AS "publishedAt"
+      body_zh AS "bodyZh", body_en AS "bodyEn", category, excerpt_zh AS "excerptZh", excerpt_en AS "excerptEn", published_at AS "publishedAt"
     FROM platform_news_articles WHERE (id::text=$1 OR slug=$1) AND status='published'
   `, [key]);
   if (!rows[0]) notFound('News article');
   publicCache(c);
-  return c.json({ article: rows[0] });
+  const [before,after] = await Promise.all([
+    platformQuery(platformDb(),`SELECT id::text AS id,slug,title_zh AS "titleZh",title_en AS "titleEn" FROM platform_news_articles WHERE status='published' AND (published_at,id)>($2::timestamptz,$1::uuid) ORDER BY published_at,id LIMIT 1`,[rows[0].id,rows[0].publishedAt]),
+    platformQuery(platformDb(),`SELECT id::text AS id,slug,title_zh AS "titleZh",title_en AS "titleEn" FROM platform_news_articles WHERE status='published' AND (published_at,id)<($2::timestamptz,$1::uuid) ORDER BY published_at DESC,id DESC LIMIT 1`,[rows[0].id,rows[0].publishedAt]),
+  ]);
+  const previous=before[0]??null;const next=after[0]??null;
+  const related = await platformQuery(platformDb(),`SELECT id::text AS id,slug,title_zh AS "titleZh",title_en AS "titleEn" FROM platform_news_articles WHERE status='published' AND category=$1 AND id<>$2::uuid ORDER BY published_at DESC,id LIMIT 4`,[rows[0].category,rows[0].id]);
+  return c.json({ article: {...rows[0],previous,next,related} });
 });
 
-platformContentRoutes.get('/platform/products', async (c) => {
-  const { page, pageSize, offset } = pagination(c, 60);
-  const rows = await platformQuery(platformDb(), `
-    SELECT p.id::text AS id,p.slug,p.product_type AS "productType",p.title_zh AS "titleZh",p.title_en AS "titleEn",
-      p.description_zh AS "descriptionZh",p.description_en AS "descriptionEn",p.status,
-      COALESCE((SELECT MIN(v.amount_minor) FROM platform_product_variants v
-        WHERE v.product_id=p.id AND v.status='active'),0) AS "fromAmountMinor",
-      COALESCE((SELECT MIN(v.member_amount_minor) FROM platform_product_variants v
-        WHERE v.product_id=p.id AND v.status='active' AND v.member_amount_minor IS NOT NULL),NULL) AS "fromMemberAmountMinor"
-    FROM platform_products p WHERE p.status='active' ORDER BY p.updated_at DESC,p.id LIMIT $1 OFFSET $2
-  `, [pageSize, offset]);
-  publicCache(c, rows.length > 0);
-  return c.json({ products: rows, page, pageSize });
-});
+platformContentRoutes.get('/platform/products',c=>publicContentList(c,'products'));
 
 platformContentRoutes.get('/platform/products/:id', async (c) => {
   const key = requiredParam(c, 'id');
   const rows = await platformQuery(platformDb(), `
     SELECT p.id::text AS id,p.slug,p.product_type AS "productType",p.title_zh AS "titleZh",p.title_en AS "titleEn",
-      p.description_zh AS "descriptionZh",p.description_en AS "descriptionEn",p.status,
+      p.description_zh AS "descriptionZh",p.description_en AS "descriptionEn",p.status,p.category,p.member_only AS "memberOnly",p.presentation,
       COALESCE(jsonb_agg(jsonb_build_object(
         'id',v.id::text,'sku',v.sku,'titleZh',v.title_zh,'titleEn',v.title_en,'status',v.status,
         'amountMinor',v.amount_minor,'memberAmountMinor',v.member_amount_minor,'currency',v.currency,
@@ -170,14 +168,18 @@ platformContentRoutes.get('/platform/products/:id', async (c) => {
   `, [key]);
   if (!rows[0]) notFound('Product');
   publicCache(c);
-  return c.json({ product: rows[0] });
+  const related=await platformQuery(platformDb(),`SELECT id::text AS id,slug,title_zh AS "titleZh",title_en AS "titleEn" FROM platform_products WHERE status='active' AND category=$1 AND id<>$2::uuid ORDER BY updated_at DESC,id LIMIT 4`,[rows[0].category,rows[0].id]);
+  return c.json({ product: {...rows[0],related} });
 });
 
 function eventFields(body: JsonObject, required: boolean) {
   const venue = body.venue;
   if (venue !== undefined && !isObject(venue)) badRequest('venue must be an object');
   const tickets = arrayField(body, 'tickets', { maxItems: 100 });
+  const program = arrayField(body, 'program', { maxItems: 100 });
+  if (program?.some(item=>typeof item!=='string'||item.length>240)) badRequest('program must contain short strings');
   return {
+    category:stringField(body,'category',{max:120}), program,
     slug: stringField(body,'slug',{required,max:120,pattern:SLUG}),
     titleZh:stringField(body,'titleZh',{max:240}), titleEn:stringField(body,'titleEn',{max:240}),
     descriptionZh:stringField(body,'descriptionZh',{max:100_000,trim:false}),
@@ -206,20 +208,20 @@ function eventFields(body: JsonObject, required: boolean) {
 
 async function listAdminEvents(c: Context): Promise<Response> {
   await requirePlatformAdmin(c); const {page,pageSize,offset}=pagination(c,100);
-  const id=c.req.param('id')?requiredParam(c,'id'):null;
+  const id=c.req.param('id')?requiredParam(c,'id'):null;const q=c.req.query('q')?.trim().slice(0,200)??'';
   const rows=await platformQuery(platformDb(),`
     SELECT e.id::text AS id,e.slug,e.title_zh AS "titleZh",e.title_en AS "titleEn",
       e.description_zh AS "descriptionZh",e.description_en AS "descriptionEn",e.status,
-      e.starts_at AS "startsAt",e.ends_at AS "endsAt",e.timezone,e.venue_snapshot AS venue,
+      e.starts_at AS "startsAt",e.ends_at AS "endsAt",e.timezone,e.venue_snapshot AS venue,e.category,e.program,
       COALESCE(jsonb_agg(jsonb_build_object('id',t.id::text,'code',t.code,'titleZh',t.title_zh,'titleEn',t.title_en,
         'status',t.status,'amountMinor',t.amount_minor,'currency',t.currency,'capacity',t.capacity,
         'reservedQuantity',t.reserved_quantity,'soldQuantity',t.sold_quantity,'salesStartAt',t.sales_start_at,'salesEndAt',t.sales_end_at)
         ORDER BY t.created_at,t.id) FILTER(WHERE t.id IS NOT NULL),'[]'::jsonb) AS tickets
     FROM platform_events e LEFT JOIN platform_event_ticket_types t ON t.event_id=e.id
-    WHERE ($1::text IS NULL OR e.id::text=$1 OR e.slug=$1) GROUP BY e.id ORDER BY e.updated_at DESC LIMIT $2 OFFSET $3
-  `,[id,pageSize,offset]);
+    WHERE ($1::text IS NULL OR e.id::text=$1 OR e.slug=$1) AND ($4='' OR e.title_zh ILIKE '%'||$4||'%' OR e.title_en ILIKE '%'||$4||'%') GROUP BY e.id ORDER BY e.updated_at DESC LIMIT $2 OFFSET $3
+  `,[id,pageSize,offset,q]);
   if(id&&!rows[0])notFound('Event'); privateNoStore(c);
-  return c.json(id?{event:rows[0]}:{events:rows,page,pageSize});
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_events WHERE ($1='' OR title_zh ILIKE '%'||$1||'%' OR title_en ILIKE '%'||$1||'%')`,[q]);return c.json(id?{event:rows[0]}:{events:rows,page,pageSize,total:counts[0]?.total??0});
 }
 platformContentRoutes.get('/platform/admin/events',listAdminEvents);
 platformContentRoutes.get('/platform/admin/events/:id',listAdminEvents);
@@ -238,8 +240,8 @@ async function saveEvent(c: Context,creating:boolean):Promise<Response>{
     try{
       if(creating){const status=input.status??'draft';const rows=await platformQuery<{id:string}>(db,`
         INSERT INTO platform_events(slug,title_zh,title_en,description_zh,description_en,status,starts_at,ends_at,timezone,venue_snapshot,created_by_user_id,published_at)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,CASE WHEN $6='published' THEN NOW() ELSE NULL END) RETURNING id::text AS id
-      `,[input.slug,input.titleZh??'',input.titleEn??'',input.descriptionZh??'',input.descriptionEn??'',status,input.startsAt,input.endsAt,input.timezone,JSON.stringify(input.venue??{}),actor.userId]);eventId=rows[0].id;}
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,CASE WHEN $6::varchar='published' THEN NOW() ELSE NULL END) RETURNING id::text AS id
+      `,[input.slug,input.titleZh??'',input.titleEn??'',input.descriptionZh??'',input.descriptionEn??'',status,input.startsAt,input.endsAt,input.timezone,input.venue??{},actor.userId]);eventId=rows[0].id;}
       else{const rows=await platformQuery<{id:string}>(db,`
         UPDATE platform_events SET slug=COALESCE($2,slug),title_zh=COALESCE($3,title_zh),title_en=COALESCE($4,title_en),
           description_zh=COALESCE($5,description_zh),description_en=COALESCE($6,description_en),status=COALESCE($7,status),
@@ -247,7 +249,8 @@ async function saveEvent(c: Context,creating:boolean):Promise<Response>{
           venue_snapshot=COALESCE($11::jsonb,venue_snapshot),published_at=CASE WHEN COALESCE($7,status)='published' THEN COALESCE(published_at,NOW()) ELSE published_at END
         WHERE id::text=$1 OR slug=$1 RETURNING id::text AS id
       `,[id,input.slug??null,input.titleZh??null,input.titleEn??null,input.descriptionZh??null,input.descriptionEn??null,input.status??null,
-        input.startsAt??null,input.endsAt??null,input.timezone??null,input.venue?JSON.stringify(input.venue):null]);if(!rows[0])notFound('Event');eventId=rows[0].id;}
+        input.startsAt??null,input.endsAt??null,input.timezone??null,input.venue??null]);if(!rows[0])notFound('Event');eventId=rows[0].id;}
+      await platformQuery(db,`UPDATE platform_events SET category=COALESCE($2,category),program=COALESCE($3::jsonb,program) WHERE id=$1::uuid`,[eventId,input.category??null,input.program??null]);
       if(input.tickets){
         const existingTickets=await platformQuery<{code:string;reservedQuantity:number;soldQuantity:number}>(db,`
           SELECT code,reserved_quantity AS "reservedQuantity",sold_quantity AS "soldQuantity"
@@ -281,34 +284,38 @@ function newsFields(body:JsonObject,required:boolean){
   const bodyZh=body.bodyZh;const bodyEn=body.bodyEn;
   if(bodyZh!==undefined&&!isObject(bodyZh))badRequest('bodyZh must be an object');
   if(bodyEn!==undefined&&!isObject(bodyEn))badRequest('bodyEn must be an object');
-  return{slug:stringField(body,'slug',{required,max:160,pattern:SLUG}),titleZh:stringField(body,'titleZh',{max:240}),
+  return{category:stringField(body,'category',{max:120}),excerptZh:stringField(body,'excerptZh',{max:4000}),excerptEn:stringField(body,'excerptEn',{max:4000}),slug:stringField(body,'slug',{required,max:160,pattern:SLUG}),titleZh:stringField(body,'titleZh',{max:240}),
     titleEn:stringField(body,'titleEn',{max:240}),bodyZh,bodyEn,
     status:enumField(body,'status',['draft','published','archived'] as const)};
 }
 async function listAdminNews(c:Context):Promise<Response>{await requirePlatformAdmin(c);const{page,pageSize,offset}=pagination(c,100);
-  const id=c.req.param('id')?requiredParam(c,'id'):null;const rows=await platformQuery(platformDb(),`
+  const id=c.req.param('id')?requiredParam(c,'id'):null;const q=c.req.query('q')?.trim().slice(0,200)??'';const rows=await platformQuery(platformDb(),`
     SELECT id::text AS id,slug,title_zh AS "titleZh",title_en AS "titleEn",body_zh AS "bodyZh",body_en AS "bodyEn",status,
-      published_at AS "publishedAt",updated_at AS "updatedAt" FROM platform_news_articles
-    WHERE($1::text IS NULL OR id::text=$1 OR slug=$1) ORDER BY updated_at DESC LIMIT $2 OFFSET $3`,[id,pageSize,offset]);
-  if(id&&!rows[0])notFound('News article');privateNoStore(c);return c.json(id?{article:rows[0]}:{articles:rows,page,pageSize});}
+      category,excerpt_zh AS "excerptZh",excerpt_en AS "excerptEn",published_at AS "publishedAt",updated_at AS "updatedAt" FROM platform_news_articles
+    WHERE($1::text IS NULL OR id::text=$1 OR slug=$1) AND ($4='' OR title_zh ILIKE '%'||$4||'%' OR title_en ILIKE '%'||$4||'%') ORDER BY updated_at DESC LIMIT $2 OFFSET $3`,[id,pageSize,offset,q]);
+  if(id&&!rows[0])notFound('News article');privateNoStore(c);const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_news_articles WHERE ($1='' OR title_zh ILIKE '%'||$1||'%' OR title_en ILIKE '%'||$1||'%')`,[q]);return c.json(id?{article:rows[0]}:{articles:rows,page,pageSize,total:counts[0]?.total??0});}
 platformContentRoutes.get('/platform/admin/news',listAdminNews);platformContentRoutes.get('/platform/admin/news/:id',listAdminNews);
 async function saveNews(c:Context,creating:boolean):Promise<Response>{const actor=await requirePlatformAdmin(c);const id=creating?null:requiredParam(c,'id');
   const body=await readJsonObject(c);const input=newsFields(body,creating);if(creating)requireTitle(input.titleZh,input.titleEn);
   const result=await withIdempotency(c,actor,`platform.admin.news.${creating?'create':'update'}:${id??'new'}`,body,async(db)=>{
     let rows:{id:string}[];if(creating){const status=input.status??'draft';rows=await platformQuery<{id:string}>(db,`
       INSERT INTO platform_news_articles(slug,title_zh,title_en,body_zh,body_en,status,author_user_id,published_at)
-      VALUES($1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,CASE WHEN $6='published' THEN NOW() ELSE NULL END)RETURNING id::text AS id`,
-      [input.slug,input.titleZh??'',input.titleEn??'',JSON.stringify(input.bodyZh??{}),JSON.stringify(input.bodyEn??{}),status,actor.userId]);}
+      VALUES($1,$2,$3,$4::jsonb,$5::jsonb,$6,$7,CASE WHEN $6::varchar='published' THEN NOW() ELSE NULL END)RETURNING id::text AS id`,
+      [input.slug,input.titleZh??'',input.titleEn??'',input.bodyZh??{},input.bodyEn??{},status,actor.userId]);}
     else rows=await platformQuery<{id:string}>(db,`UPDATE platform_news_articles SET slug=COALESCE($2,slug),title_zh=COALESCE($3,title_zh),
       title_en=COALESCE($4,title_en),body_zh=COALESCE($5::jsonb,body_zh),body_en=COALESCE($6::jsonb,body_en),status=COALESCE($7,status),
       published_at=CASE WHEN COALESCE($7,status)='published' THEN COALESCE(published_at,NOW()) ELSE published_at END
       WHERE id::text=$1 OR slug=$1 RETURNING id::text AS id`,[id,input.slug??null,input.titleZh??null,input.titleEn??null,
-        input.bodyZh?JSON.stringify(input.bodyZh):null,input.bodyEn?JSON.stringify(input.bodyEn):null,input.status??null]);
-    if(!rows[0])notFound('News article');return{status:creating?201:200,body:{article:rows[0]},resourceType:'news_article',resourceId:rows[0].id};});
+        input.bodyZh??null,input.bodyEn??null,input.status??null]);
+    if(!rows[0])notFound('News article');await platformQuery(db,`UPDATE platform_news_articles SET category=COALESCE($2,category),excerpt_zh=COALESCE($3,excerpt_zh),excerpt_en=COALESCE($4,excerpt_en) WHERE id=$1::uuid`,[rows[0].id,input.category??null,input.excerptZh??null,input.excerptEn??null]);return{status:creating?201:200,body:{article:rows[0]},resourceType:'news_article',resourceId:rows[0].id};});
   return sendMutation(c,result);}
 platformContentRoutes.post('/platform/admin/news',(c)=>saveNews(c,true));platformContentRoutes.patch('/platform/admin/news/:id',(c)=>saveNews(c,false));
 
-function productFields(body:JsonObject,required:boolean){const variants=arrayField(body,'variants',{maxItems:200});return{
+function productFields(body:JsonObject,required:boolean){const variants=arrayField(body,'variants',{maxItems:200});
+  if(body.memberOnly!==undefined&&typeof body.memberOnly!=='boolean')badRequest('memberOnly must be a boolean');
+  const presentation=objectField(body,'presentation');
+  if(presentation&&JSON.stringify(presentation).length>20000)badRequest('Product presentation is too large');
+  return{category:stringField(body,'category',{max:120}),memberOnly:body.memberOnly as boolean|undefined,presentation,
   slug:stringField(body,'slug',{required,max:120,pattern:SLUG}),productType:enumField(body,'productType',['physical','digital'] as const),
   titleZh:stringField(body,'titleZh',{max:240}),titleEn:stringField(body,'titleEn',{max:240}),
   descriptionZh:stringField(body,'descriptionZh',{max:100_000,trim:false}),descriptionEn:stringField(body,'descriptionEn',{max:100_000,trim:false}),
@@ -322,15 +329,15 @@ function productFields(body:JsonObject,required:boolean){const variants=arrayFie
       currency:stringField(value,'currency',{required:true,max:3,pattern:CURRENCY}),inventoryOnHand:integerField(value,'inventoryOnHand',{required:true,min:0,max:2_147_483_647}),
       weightGrams:value.weightGrams===null?null:integerField(value,'weightGrams',{min:0,max:100_000_000}),metadata:metadata??{}};})};}
 async function listAdminProducts(c:Context):Promise<Response>{await requirePlatformAdmin(c);const{page,pageSize,offset}=pagination(c,100);
-  const id=c.req.param('id')?requiredParam(c,'id'):null;const rows=await platformQuery(platformDb(),`
+  const id=c.req.param('id')?requiredParam(c,'id'):null;const q=c.req.query('q')?.trim().slice(0,200)??'';const rows=await platformQuery(platformDb(),`
     SELECT p.id::text AS id,p.slug,p.product_type AS "productType",p.title_zh AS "titleZh",p.title_en AS "titleEn",
-      p.description_zh AS "descriptionZh",p.description_en AS "descriptionEn",p.status,
+      p.description_zh AS "descriptionZh",p.description_en AS "descriptionEn",p.status,p.category,p.member_only AS "memberOnly",p.presentation,
       COALESCE(jsonb_agg(jsonb_build_object('id',v.id::text,'sku',v.sku,'titleZh',v.title_zh,'titleEn',v.title_en,'status',v.status,
         'amountMinor',v.amount_minor,'memberAmountMinor',v.member_amount_minor,'currency',v.currency,'inventoryOnHand',v.inventory_on_hand,
         'inventoryReserved',v.inventory_reserved,'weightGrams',v.weight_grams,'metadata',v.metadata)ORDER BY v.created_at,v.id)FILTER(WHERE v.id IS NOT NULL),'[]'::jsonb)AS variants
-    FROM platform_products p LEFT JOIN platform_product_variants v ON v.product_id=p.id WHERE($1::text IS NULL OR p.id::text=$1 OR p.slug=$1)
-    GROUP BY p.id ORDER BY p.updated_at DESC LIMIT $2 OFFSET $3`,[id,pageSize,offset]);if(id&&!rows[0])notFound('Product');privateNoStore(c);
-  return c.json(id?{product:rows[0]}:{products:rows,page,pageSize});}
+    FROM platform_products p LEFT JOIN platform_product_variants v ON v.product_id=p.id WHERE($1::text IS NULL OR p.id::text=$1 OR p.slug=$1) AND ($4='' OR p.title_zh ILIKE '%'||$4||'%' OR p.title_en ILIKE '%'||$4||'%')
+    GROUP BY p.id ORDER BY p.updated_at DESC LIMIT $2 OFFSET $3`,[id,pageSize,offset,q]);if(id&&!rows[0])notFound('Product');privateNoStore(c);
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_products WHERE ($1='' OR title_zh ILIKE '%'||$1||'%' OR title_en ILIKE '%'||$1||'%')`,[q]);return c.json(id?{product:rows[0]}:{products:rows,page,pageSize,total:counts[0]?.total??0});}
 platformContentRoutes.get('/platform/admin/products',listAdminProducts);platformContentRoutes.get('/platform/admin/products/:id',listAdminProducts);
 async function saveProduct(c:Context,creating:boolean):Promise<Response>{const actor=await requirePlatformAdmin(c);const id=creating?null:requiredParam(c,'id');
   const body=await readJsonObject(c);const input=productFields(body,creating);if(creating){requireTitle(input.titleZh,input.titleEn);if(!input.productType)badRequest('productType is required');}
@@ -340,6 +347,7 @@ async function saveProduct(c:Context,creating:boolean):Promise<Response>{const a
     else{const rows=await platformQuery<{id:string}>(db,`UPDATE platform_products SET slug=COALESCE($2,slug),product_type=COALESCE($3,product_type),status=COALESCE($4,status),
       title_zh=COALESCE($5,title_zh),title_en=COALESCE($6,title_en),description_zh=COALESCE($7,description_zh),description_en=COALESCE($8,description_en)
       WHERE id::text=$1 OR slug=$1 RETURNING id::text AS id`,[id,input.slug??null,input.productType??null,input.status??null,input.titleZh??null,input.titleEn??null,input.descriptionZh??null,input.descriptionEn??null]);if(!rows[0])notFound('Product');productId=rows[0].id;}
+    await platformQuery(db,`UPDATE platform_products SET category=COALESCE($2,category),member_only=COALESCE($3,member_only),presentation=COALESCE($4::jsonb,presentation) WHERE id=$1::uuid`,[productId,input.category??null,input.memberOnly??null,input.presentation??null]);
     if(input.variants){
       await platformQuery(db,"UPDATE platform_product_variants SET status='archived' WHERE product_id=$1::uuid",[productId]);
       for(const variant of input.variants){
@@ -350,7 +358,7 @@ async function saveProduct(c:Context,creating:boolean):Promise<Response>{const a
             status=EXCLUDED.status,amount_minor=EXCLUDED.amount_minor,member_amount_minor=EXCLUDED.member_amount_minor,currency=EXCLUDED.currency,
             weight_grams=EXCLUDED.weight_grams,metadata=EXCLUDED.metadata
           RETURNING id::text AS id,inventory_on_hand AS "inventoryOnHand",inventory_reserved AS "inventoryReserved"`,
-          [productId,variant.sku,variant.titleZh,variant.titleEn,variant.status,variant.amountMinor,variant.memberAmountMinor,variant.currency,variant.weightGrams??null,JSON.stringify(variant.metadata)]);
+          [productId,variant.sku,variant.titleZh,variant.titleEn,variant.status,variant.amountMinor,variant.memberAmountMinor,variant.currency,variant.weightGrams??null,variant.metadata]);
         const saved=rows[0];
         const desiredInventory=variant.inventoryOnHand!;
         if(desiredInventory<saved.inventoryReserved)conflict(`Inventory for ${variant.sku} cannot be lower than its reserved quantity`);
@@ -373,18 +381,35 @@ platformContentRoutes.delete('/platform/admin/events/:id',(c)=>archive(c,'platfo
 platformContentRoutes.delete('/platform/admin/news/:id',(c)=>archive(c,'platform_news_articles','archived','news_article'));
 platformContentRoutes.delete('/platform/admin/products/:id',(c)=>archive(c,'platform_products','archived','product'));
 
-platformContentRoutes.get('/platform/admin/analytics',async(c)=>{await requirePlatformAdmin(c);const{pageSize}=pagination(c,366);
-  const rows=await platformQuery(platformDb(),`SELECT local_date AS date,event_name AS "eventName",surface,dimensions,event_count AS "eventCount",
-    unique_subject_count AS "uniqueSubjectCount" FROM platform_analytics_daily_aggregates ORDER BY local_date DESC,event_name,surface LIMIT $1`,[pageSize]);
-  const summary=await platformQuery(platformDb(),`SELECT
-    (SELECT COUNT(*)::int FROM platform_courses WHERE status='published')AS "publishedCourses",
-    (SELECT COUNT(*)::int FROM platform_course_entitlements WHERE status='active')AS "activeEntitlements",
-    (SELECT COUNT(*)::int FROM platform_orders WHERE status NOT IN('draft','cancelled','expired'))AS orders,
-    (SELECT COALESCE(SUM(total_amount_minor),0)::text FROM platform_orders WHERE status IN('paid','fulfilled','partially_refunded'))AS "grossAmountMinor"`);
-  privateNoStore(c);return c.json({summary:summary[0]??{},daily:rows});});
+platformContentRoutes.get('/platform/admin/analytics', async (c) => {
+  await requirePlatformAdmin(c);
+  const requested = Number(c.req.query('days') ?? '30');
+  const days = [7,30,90].includes(requested) ? requested : 30;
+  // Aggregate durable business records. No new tracking or visitor identity store is needed.
+  const [summary, daily, money, recent, statuses] = await Promise.all([
+    platformQuery(platformDb(),`SELECT
+      (SELECT COUNT(*)::int FROM platform_courses WHERE status='published') AS "publishedCourses",
+      (SELECT COUNT(*)::int FROM platform_course_entitlements WHERE status='active') AS "activeEntitlements",
+      (SELECT COUNT(*)::int FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1)) AS orders,
+      (SELECT COUNT(*)::int FROM platform_orders WHERE paid_at>=NOW()-make_interval(days=>$1)) AS "paidOrders"`,[days]),
+    platformQuery(platformDb(),`SELECT to_char(created_at AT TIME ZONE 'UTC','YYYY-MM-DD') AS date,currency,
+      COUNT(*)::int AS orders,COUNT(*) FILTER(WHERE paid_at IS NOT NULL)::int AS "paidOrders",
+      COALESCE(SUM(total_amount_minor) FILTER(WHERE paid_at IS NOT NULL),0)::text AS "paidAmountMinor"
+      FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1)
+      GROUP BY date,currency ORDER BY date,currency`,[days]),
+    platformQuery(platformDb(),`SELECT currency,SUM(paid)::text AS "paidAmountMinor",SUM(refunded)::text AS "refundedAmountMinor" FROM (
+      SELECT currency,total_amount_minor AS paid,0::bigint AS refunded FROM platform_orders WHERE paid_at>=NOW()-make_interval(days=>$1)
+      UNION ALL SELECT currency,0::bigint,amount_minor FROM platform_refunds WHERE status='succeeded' AND succeeded_at>=NOW()-make_interval(days=>$1)
+    ) flow GROUP BY currency ORDER BY currency`,[days]),
+    platformQuery(platformDb(),`SELECT id::text AS id,order_number AS "orderNumber",status,currency,total_amount_minor AS "totalAmountMinor",created_at AS "createdAt" FROM platform_orders ORDER BY created_at DESC LIMIT 10`),
+    platformQuery(platformDb(),`SELECT status,COUNT(*)::int AS count FROM platform_orders WHERE created_at>=NOW()-make_interval(days=>$1) GROUP BY status ORDER BY status`,[days]),
+  ]);
+  privateNoStore(c);
+  return c.json({item:{id:'overview',titleZh:'经营概览',titleEn:'Business overview',summary:summary[0]??{},daily,money,recent,statuses,days,timezone:'UTC'}});
+});
 
 platformContentRoutes.get('/platform/admin/logs',async(c)=>{await requirePlatformAdmin(c);const{page,pageSize,offset}=pagination(c,200);
-  const action=c.req.query('action')?.trim().slice(0,120)??'';const rows=await platformQuery(platformDb(),`
+  const action=(c.req.query('action')??c.req.query('q'))?.trim().slice(0,120)??'';const rows=await platformQuery(platformDb(),`
     SELECT id::text AS id,actor_key AS "actorKey",action,resource_type AS "resourceType",resource_id AS "resourceId",outcome,reason_code AS "reasonCode",
       request_id AS "requestId",metadata,occurred_at AS "occurredAt" FROM platform_audit_events
-    WHERE($1='' OR action=$1)ORDER BY occurred_at DESC,id LIMIT $2 OFFSET $3`,[action,pageSize,offset]);privateNoStore(c);return c.json({logs:rows,page,pageSize});});
+    WHERE($1='' OR action ILIKE '%'||$1||'%' OR resource_type ILIKE '%'||$1||'%')ORDER BY occurred_at DESC,id LIMIT $2 OFFSET $3`,[action,pageSize,offset]);const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_audit_events WHERE($1='' OR action ILIKE '%'||$1||'%' OR resource_type ILIKE '%'||$1||'%')`,[action]);privateNoStore(c);return c.json({logs:rows,page,pageSize,total:counts[0]?.total??0});});

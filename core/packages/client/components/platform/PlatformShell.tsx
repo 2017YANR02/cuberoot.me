@@ -4,8 +4,8 @@ import { usePathname } from 'next/navigation';
 import { BookOpen, Building2, Compass, GraduationCap, UsersRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { useAuthUser } from '@/lib/auth-store';
-import { matchPlatformRoute, PLATFORM_PUBLIC_NAV } from '@/lib/platform-routes';
+import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
+import { matchPlatformRoute, PLATFORM_PUBLIC_NAV, PLATFORM_ROUTES } from '@/lib/platform-routes';
 import type { PlatformRouteDefinition } from '@/lib/platform-types';
 import './platform.css';
 
@@ -37,11 +37,17 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const t = useT();
   const user = useAuthUser();
+  const isAdmin = useIsAdmin();
   const definition = matchPlatformRoute(platformSegments(pathname))?.definition;
   const activeId = publicNavId(definition);
   const competitionPage = definition?.id === 'online-competitions' || definition?.id === 'online-competition';
   const orderPage = definition?.id === 'orders' || definition?.id === 'order-detail';
   const compactPage = competitionPage || orderPage;
+  const personalPage = definition?.area === 'account' || definition?.id === 'progress' || orderPage;
+  const workspaceRoutes = PLATFORM_ROUTES.filter(item => !item.pattern.includes(':') && item.kind !== 'form'
+    && (definition?.area === 'admin' ? isAdmin && item.area === 'admin'
+      : definition?.area === 'instructor' ? user && item.access === 'instructor'
+        : personalPage ? user && (item.area === 'account' && item.id !== 'login' || item.id === 'progress' || item.id === 'orders') : false));
 
   return (
     <div className={`platform-shell${compactPage ? ' platform-shell--competitions' : ''}`}>
@@ -79,6 +85,22 @@ export function PlatformShell({ children }: { children: React.ReactNode }) {
         })}
       </nav>}
 
+      {!compactPage && <nav className="platform-context-nav" aria-label={t('更多学习与服务', 'More learning and services')}>
+        <AppLink href="/search" prefetch={false}>{t('搜索', 'Search')}</AppLink>
+        <AppLink href="/platform/paths" prefetch={false}>{t('学习路径', 'Learning paths')}</AppLink>
+        <AppLink href="/platform/events" prefetch={false}>{t('活动', 'Events')}</AppLink>
+        <AppLink href="/platform/news" prefetch={false}>{t('资讯', 'News')}</AppLink>
+        <AppLink href="/platform/leaderboard" prefetch={false}>{t('学习榜', 'Learning leaderboard')}</AppLink>
+        <AppLink href="/platform/shop" prefetch={false}>{t('商店', 'Shop')}</AppLink>
+        <AppLink href="/platform/membership" prefetch={false}>{t('课程会员', 'Course membership')}</AppLink>
+        <AppLink href="/platform/teachers/apply" prefetch={false}>{t('讲师入驻', 'Teach with us')}</AppLink>
+        {user && <AppLink href="/platform/account/courses" prefetch={false}>{t('学习工作台', 'My learning')}</AppLink>}
+        {isAdmin && <AppLink href="/platform/admin" prefetch={false}>{t('管理', 'Administration')}</AppLink>}
+      </nav>}
+      {workspaceRoutes.length > 0 && <nav className="platform-workspace-nav" aria-label={t('工作台功能', 'Workspace sections')} data-site-surface="panel">
+        {workspaceRoutes.map(item => <AppLink key={item.id} href={`/platform/${item.pattern}`} prefetch={false}
+          aria-current={definition?.id === item.id ? 'page' : undefined}>{t(item.title.zh, item.title.en)}</AppLink>)}
+      </nav>}
       <main className="platform-main">{children}</main>
     </div>
   );

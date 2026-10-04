@@ -1,0 +1,18 @@
+.platform-learning-workspace,.platform-learning-stage { display:grid; gap:20px; min-width:0; }
+.platform-learning-classroom { display:grid; grid-template-columns:minmax(180px,260px) minmax(0,1fr); gap:24px; align-items:start; }
+.platform-learning-directory { padding:16px; border:1px solid var(--border-default); border-radius:16px; display:grid; gap:8px; }
+.platform-learning-directory :is(button,a) { display:flex; justify-content:space-between; gap:8px; text-align:start; background:none; color:var(--foreground); border:0; padding:10px; font:inherit; text-decoration:none; border-radius:8px; cursor:pointer; }
+.platform-learning-directory [aria-current=step] { background:var(--accent-soft); color:var(--accent); }
+.platform-learning-directory small { color:var(--muted-foreground); }
+.platform-learning-panel { padding:20px; border:1px solid var(--border-default); border-radius:16px; min-width:0; overflow-wrap:anywhere; }
+.platform-learning-panel article + article { border-top:1px solid var(--border-default); margin-top:16px; padding-top:16px; }
+.platform-learning-panel :is(input,textarea,select) { max-width:100%; }
+.platform-learning-panel fieldset { border:1px solid var(--border-default); margin:16px 0; padding:16px; border-radius:12px; }
+.platform-learning-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr)); gap:16px; }
+.platform-learning-cover { display:block; width:100%; max-height:480px; object-fit:contain; border-radius:12px; }
+.platform-learning-price { font-size:1.6rem; font-weight:650; color:var(--accent); }
+.platform-learning-course-intro { display:grid; gap:12px; }
+.platform-learning-path { display:grid; gap:16px; padding-inline-start:24px; }
+.platform-learning-certificate { width:100%; max-width:960px; }
+.platform-learning-workspace progress,.platform-learning-panel progress { width:100%; accent-color:var(--accent); }
+@media(max-width:760px){.platform-learning-classroom{grid-template-columns:1fr}.platform-learning-directory{max-height:240px;overflow:auto}}

@@ -360,7 +360,7 @@ describe('Platform route and security contract', () => {
 
   it('persists strict versioned QR card designs and serves deterministic physical SVG downloads', () => {
     const publicCard = routeBlock(qrSource, 'platformQrRoutes', 'get', '/qr/:code/card');
-    expect(publicCard).toContain("findQr(resourceId(c.req.param('code'), 'code'), true)");
+    expect(publicCard).toContain("findQr(resourceId(c.req.param('code'), 'code'), 'public')");
     expect(publicCard).toContain('parseQrCardRenderOptions(');
     expect(publicCard).toContain('renderQrCardSvg(');
     expect(publicCard).toContain("c.header('Content-Disposition'");
@@ -380,6 +380,6 @@ describe('Platform route and security contract', () => {
     expect(updateCard).toContain('INSERT INTO platform_qr_card_designs');
     expect(updateCard).toContain('withIdempotency(c, actor');
     const qrSvg = routeBlock(qrSource, 'platformQrRoutes', 'get', '/qr/:code/svg');
-    expect(qrSvg).toContain("margin: 4, errorCorrectionLevel: 'H'");
+    expect(qrSvg).toContain('renderQrCodeSvg(qrPrintedUrl(qr.code))');
   });
 });

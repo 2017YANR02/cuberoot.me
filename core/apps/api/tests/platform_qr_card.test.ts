@@ -8,12 +8,25 @@ import {
   resolveQrCardArtwork,
   resolveQrCardContent,
   renderQrCardSvg,
+  renderQrCodeSvg,
 } from '../src/platform/qr-card.js';
 import { workspaceFixturePath } from './workspace-fixture-path';
 
 const PNG_DATA_URI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=';
 
 describe('QR card design contract', () => {
+  it('uses the same branded QR drawing for standalone previews and printed cards', () => {
+    const url = 'https://q.example.test/card-one';
+    const standalone = renderQrCodeSvg(url);
+    const drawing = standalone.slice(standalone.indexOf('<g fill='), standalone.lastIndexOf('</svg>'));
+    const card = renderQrCardSvg({ code: 'card-one', title: 'Example', targetKind: 'internal_path', targetValue: '/', card: {} }, url, parseQrCardRenderOptions(new URLSearchParams()));
+    expect(drawing).toContain('<rect');
+    expect(card).toContain(drawing);
+    const withBackArt = renderQrCardSvg({ code: 'card-one', title: 'Example', targetKind: 'internal_path', targetValue: '/', card: { backArt: PNG_DATA_URI } }, url, parseQrCardRenderOptions(new URLSearchParams()));
+    expect(withBackArt).toContain(PNG_DATA_URI);
+    expect(withBackArt).not.toContain('fill-opacity="0.62"');
+  });
+
   it('normalizes the complete supported design shape', () => {
     expect(parseQrCardDesign({
       intro: '  first\r\nsecond  ',

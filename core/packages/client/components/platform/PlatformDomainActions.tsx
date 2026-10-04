@@ -36,8 +36,14 @@ import { PLATFORM_COURSE_SECTIONS, platformCourseSectionsIncludedBy } from '@/li
 import { PlatformLessonCoverEditor } from './PlatformLessonCoverEditor';
 import { PlatformState } from './PlatformState';
 import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
+import { PlatformPurchaseForm } from './PlatformPurchaseForm';
+import { PlatformFavoriteButton } from './PlatformFavoriteButton';
+import { PlatformReferenceField } from './PlatformReferenceField';
+import { PlatformStructuredField } from './PlatformStructuredField';
+import { renderArticleMarkdown } from '@/lib/article-markdown';
+import { platformLocalDateTime, platformMajorToMinor, platformMinorToMajor } from '@/lib/platform-commerce-fields';
 
-type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json';
+type FieldKind = 'text' | 'textarea' | 'number' | 'rating' | 'date' | 'datetime-local' | 'tel' | 'url' | 'select' | 'boolean' | 'lines' | 'json' | 'structured' | 'markdown' | 'money';
 
 interface FieldSpec<Key extends string = string> {
   key: Key;
@@ -113,9 +119,16 @@ interface PlatformShippingAddressPayload {
 
 const text = (zh: string, en: string): PlatformLocaleText => ({ zh, en });
 const option = (value: string, zh: string, en: string) => ({ value, label: text(zh, en) });
-const field = <const Key extends string>(key: Key, zh: string, en: string, input: Omit<FieldSpec<Key>, 'key' | 'label'> = {}): FieldSpec<Key> => ({ key, label: text(zh, en), ...input });
+const field = <const Key extends string>(key: Key, zh: string, en: string, input: Omit<FieldSpec<Key>, 'key' | 'label'> = {}): FieldSpec<Key> => {
+  const fractional = /(?:AmountMinor|amountMinor|Bps)$/.test(key);
+  const structured = ['variants','tickets','venue','items','questions','presentation','eligibility','records'].includes(key);
+  const markdown = key === 'bodyZh' || key === 'bodyEn';
+  const label = text(zh.replace('（分）','（元）').replace('（万分制）','（%）').replace(' JSON 数组','').replace(' JSON',''),en.replace('(minor units)','(major units)').replace('(basis points)','(%)').replace(' JSON array','').replace(' JSON',''));
+  return {key,label,...input,...(structured?{kind:'structured' as const}:markdown?{kind:'markdown' as const}:{}),...(fractional?{kind:'money' as const,min:input.min==null?undefined:input.min/100,max:input.max==null?undefined:input.max/100,step:0.01,defaultValue:input.defaultValue==null?undefined:Number(input.defaultValue)/100}:{})};
+};
 
 const COURSE_FIELDS = [
+  field('presentation', '课程介绍与大纲', 'Course presentation and outline', { kind: 'structured' }),
   field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120 }),
   field('titleZh', '中文标题', 'Chinese title', { required: true, maxLength: 240 }),
   field('titleEn', '英文标题', 'English title', { required: true, maxLength: 240 }),
@@ -141,12 +154,17 @@ const EVENT_FIELDS = [
   field('status', '状态', 'Status', { kind: 'select', options: [option('draft', '草稿', 'Draft'), option('published', '已发布', 'Published'), option('cancelled', '已取消', 'Cancelled'), option('completed', '已结束', 'Completed'), option('archived', '已归档', 'Archived')] }),
   field('startsAt', '开始时间', 'Starts at', { kind: 'datetime-local', required: true }),
   field('endsAt', '结束时间', 'Ends at', { kind: 'datetime-local', required: true }),
+  field('category', '活动分类', 'Event category'),
+  field('program', '活动项目（每行一项）', 'Program (one per line)', { kind: 'lines' }),
   field('timezone', '时区', 'Timezone', { required: true, defaultValue: 'Asia/Shanghai' }),
   field('venue', '场地 JSON', 'Venue JSON', { kind: 'json', rows: 5, required: true }),
   field('tickets', '票种 JSON 数组', 'Ticket JSON array', { kind: 'json', rows: 8, required: true }),
 ] satisfies ContractFields<PlatformEventWrite>;
 
 const NEWS_FIELDS = [
+  field('category', '资讯分类', 'Category'),
+  field('excerptZh', '中文摘要', 'Chinese summary', { kind: 'textarea', rows: 3 }),
+  field('excerptEn', '英文摘要', 'English summary', { kind: 'textarea', rows: 3 }),
   field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,159}', maxLength: 160 }),
   field('titleZh', '中文标题', 'Chinese title', { required: true, maxLength: 240 }),
   field('titleEn', '英文标题', 'English title', { required: true, maxLength: 240 }),
@@ -156,6 +174,9 @@ const NEWS_FIELDS = [
 ] satisfies ContractFields<PlatformNewsWrite>;
 
 const PRODUCT_FIELDS = [
+  field('category', '商品分类', 'Category'),
+  field('memberOnly', '仅限会员购买', 'Members only', { kind: 'boolean' }),
+  field('presentation', '商品介绍', 'Product presentation', { kind: 'structured' }),
   field('slug', 'Slug', 'Slug', { required: true, pattern: '[a-z0-9][a-z0-9_-]{0,119}', maxLength: 120 }),
   field('productType', '商品类型', 'Product type', { kind: 'select', options: [option('physical', '实物', 'Physical'), option('digital', '数字内容', 'Digital')] }),
   field('titleZh', '中文标题', 'Chinese title', { required: true, maxLength: 240 }),
@@ -297,19 +318,27 @@ for (const [editId, newId] of [
 }
 
 function initialValue(spec: FieldSpec, entity?: PlatformEntity): string | boolean {
-  const value = entity?.data?.[spec.key] ?? spec.defaultValue ?? (spec.kind === 'boolean' ? false : '');
+  const value = entity?.data?.[spec.key] ?? spec.defaultValue ?? (spec.kind === 'boolean' ? false : spec.kind === 'select' ? spec.options?.[0]?.value ?? '' : '');
   if (spec.kind === 'boolean') return Boolean(value);
+  if (spec.kind === 'money') return entity?.data?.[spec.key] == null ? String(spec.defaultValue ?? '') : platformMinorToMajor(value);
+  if (spec.kind === 'datetime-local') return platformLocalDateTime(value);
+  if (spec.kind === 'markdown') { if (typeof value === 'string') return value; const body=value && typeof value === 'object' ? value as Record<string, unknown> : {}; return String(body.markdown ?? body.text ?? body.content ?? ''); }
   if (spec.kind === 'lines' && Array.isArray(value)) return value.map(String).join('\n');
-  if (spec.kind === 'json' && typeof value !== 'string' && value != null) return JSON.stringify(value, null, 2);
+  if ((spec.kind === 'json' || spec.kind === 'structured') && typeof value !== 'string' && value != null) return JSON.stringify(value, null, 2);
   return String(value ?? '');
 }
 
 function payloadValue(spec: FieldSpec, value: string | boolean): unknown {
   if (spec.kind === 'boolean') return Boolean(value);
   const string = String(value).trim();
+  if (spec.kind === 'money') return platformMajorToMinor(string);
+  if (spec.kind === 'markdown') return { markdown: String(value) };
+  if (spec.kind === 'datetime-local') return string ? new Date(string).toISOString() : null;
   if (spec.kind === 'number' || spec.kind === 'rating') return string === '' ? null : Number(string);
   if (spec.kind === 'lines') return string ? string.split(/\r?\n/).map((item) => item.trim()).filter(Boolean) : [];
-  if (spec.kind === 'json') return string ? JSON.parse(string) : null;
+  if (spec.kind === 'json' || spec.kind === 'structured') return string ? JSON.parse(string) : null;
+  // Empty editable copy must clear the saved value; null means leave unchanged in PATCH.
+  if (/^(?:title|name|description|summary|excerpt|bio|category)/.test(spec.key)) return string;
   return string || null;
 }
 
@@ -409,6 +438,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
     let payload: Record<string, unknown>;
     try {
       payload = { ...spec.payloadBase, ...Object.fromEntries(spec.fields.map((item) => [item.key, payloadValue(item, values[item.key] ?? '')])) };
+      for (const item of spec.fields.filter(item => item.kind === 'markdown')) { const original=entity?.data?.[item.key]; if (original && typeof original === 'object' && !Array.isArray(original)) payload[item.key]={...original,...payload[item.key] as Record<string,unknown>}; }
       if (spec.fields.some((item) => item.kind === 'rating' && (!Number.isInteger(payload[item.key]) || Number(payload[item.key]) < 1 || Number(payload[item.key]) > 5))) {
         setValidation(t('请先选择星级评分。', 'Choose a star rating first.'));
         return;
@@ -418,7 +448,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
       if (problem) { setValidation(problem); return; }
       setValidation(null);
     } catch {
-      setValidation(t('JSON 字段格式不正确。', 'A JSON field is not valid.'));
+      setValidation(t('请检查金额、日期和内容格式。', 'Check the amount, date, and content formats.'));
       return;
     }
     const result = await runAction(spec.action, submittedResourceId || undefined, payload);
@@ -442,6 +472,9 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
             );
           }
           const label = t(item.label.zh, item.label.en);
+          if (item.key === 'instructorId') return <PlatformReferenceField key={item.key} source="instructorId" label={t('讲师','Instructor')} multiple={false} selected={value?[String(value)]:[]} onChange={ids=>setValues(current=>({...current,[item.key]:ids[0]??''}))}/>;
+          if (item.kind === 'structured') return <PlatformStructuredField key={item.key} fieldKey={item.key} label={label} routeId={definition.id} value={String(value)} onChange={next => setValues(current=>({...current,[item.key]:next}))} />;
+          if (item.kind === 'markdown') return <label key={item.key} className="platform-form-wide"><span>{label}</span><textarea className="platform-field-control platform-field-textarea" rows={item.rows??8} required={item.required} value={String(value)} onChange={event=>setValues(current=>({...current,[item.key]:event.target.value}))}/><details><summary>{t('预览正文','Preview content')}</summary><div className="platform-prose">{renderArticleMarkdown(String(value))}</div></details></label>;
           if (item.kind === 'datetime-local' && definition.id === 'admin-invites') {
             return <InviteExpiryField key={item.key} label={label} value={String(value)}
               onChange={next => setValues(current => ({ ...current, [item.key]: next }))} />;
@@ -483,7 +516,7 @@ function DomainForm({ spec, definition, entity, resourceId, busy, runAction, onR
                 <input
                   className="platform-field-control"
                   value={String(value)}
-                  type={item.kind ?? 'text'}
+                  type={item.kind === 'money' ? 'number' : item.kind ?? 'text'}
                   required={item.required}
                   min={item.min}
                   max={item.max}
@@ -690,76 +723,6 @@ function PlatformCourseContentManager(props: CommonProps) {
         spec={{ title: text('新建课时', 'Create lesson'), action: 'save-course-lesson', fields: LESSON_FIELDS }}
       />
     </section>
-  );
-}
-
-function PlatformQuizAttemptForm({ entity, lessonId, busy, runAction }: {
-  entity?: PlatformEntity;
-  lessonId: string;
-  busy: string | null;
-  runAction: RunAction;
-}) {
-  const t = useT();
-  const questions = Array.isArray(entity?.data?.questions)
-    ? entity.data.questions.filter((value): value is Record<string, unknown> => Boolean(value && typeof value === 'object' && !Array.isArray(value)))
-    : [];
-  const quizId = typeof entity?.data?.quizId === 'string' ? entity.data.quizId : '';
-  const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  if (!quizId || questions.length === 0) return <p className="platform-domain-note">{t('这个课时当前没有已发布测验。', 'This lesson has no published quiz.')}</p>;
-  const english = t('zh', 'en') === 'en';
-  const setAnswer = (id: string, value: unknown) => setAnswers((current) => ({ ...current, [id]: value }));
-  return (
-    <form className="platform-domain-form" onSubmit={(event) => {
-      event.preventDefault();
-      void runAction('submit-quiz', lessonId, { quizId, answers });
-    }}>
-      <h2>{t('课后测验', 'Lesson quiz')}</h2>
-      <div className="platform-quiz-questions">
-        {questions.map((question, index) => {
-          const id = typeof question.id === 'string' ? question.id : String(index);
-          const type = typeof question.type === 'string' ? question.type : 'text';
-          const prompt = String(question[english ? 'promptEn' : 'promptZh'] ?? question[english ? 'promptZh' : 'promptEn'] ?? id);
-          const choices = Array.isArray(question.choices) ? question.choices : [];
-          return (
-            <fieldset key={id}>
-              <legend>{index + 1}. {prompt}</legend>
-              {type === 'text' ? (
-                <input className="platform-field-control" required value={String(answers[id] ?? '')} onChange={(event) => setAnswer(id, event.target.value)} />
-              ) : type === 'boolean' ? (
-                <select className="platform-field-control" required value={answers[id] === undefined ? '' : String(answers[id])} onChange={(event) => setAnswer(id, event.target.value === 'true')}>
-                  <option value="">{t('请选择', 'Choose')}</option>
-                  <option value="true">{t('正确', 'True')}</option>
-                  <option value="false">{t('错误', 'False')}</option>
-                </select>
-              ) : type === 'single_choice' ? (
-                <select className="platform-field-control" required value={String(answers[id] ?? '')} onChange={(event) => setAnswer(id, event.target.value)}>
-                  <option value="">{t('请选择', 'Choose')}</option>
-                  {choices.map((choice, choiceIndex) => {
-                    const record = choice && typeof choice === 'object' && !Array.isArray(choice) ? choice as Record<string, unknown> : null;
-                    const value = String(record?.value ?? record?.id ?? choiceIndex);
-                    const label = String(record?.[english ? 'labelEn' : 'labelZh'] ?? record?.label ?? choice);
-                    return <option key={value} value={value}>{label}</option>;
-                  })}
-                </select>
-              ) : (
-                <div className="platform-answer-options">
-                  {choices.map((choice, choiceIndex) => {
-                    const record = choice && typeof choice === 'object' && !Array.isArray(choice) ? choice as Record<string, unknown> : null;
-                    const value = String(record?.value ?? record?.id ?? choiceIndex);
-                    const label = String(record?.[english ? 'labelEn' : 'labelZh'] ?? record?.label ?? choice);
-                    const selected = Array.isArray(answers[id]) && answers[id].includes(value);
-                    return <button className="platform-answer-option" key={value} type="button" aria-pressed={selected} onClick={() => setAnswer(id, selected ? (answers[id] as unknown[]).filter((item) => item !== value) : [...(Array.isArray(answers[id]) ? answers[id] as unknown[] : []), value])}>{label}</button>;
-                  })}
-                </div>
-              )}
-            </fieldset>
-          );
-        })}
-      </div>
-      <button type="submit" className="platform-button platform-button-primary" disabled={busy === `submit-quiz:${lessonId}`}>
-        {busy === `submit-quiz:${lessonId}` ? t('处理中…', 'Working…') : t('提交测验', 'Submit quiz')}
-      </button>
-    </form>
   );
 }
 
@@ -1202,18 +1165,13 @@ export function PlatformLearningActions(props: CommonProps) {
           <h2>{t('课程操作', 'Course actions')}</h2>
           <div className="platform-write-actions">
             {mode === 'free' ? <ActionButton action="enroll" resourceId={params.id} busy={busy} runAction={runAction} /> : null}
-            <ActionButton action="favorite" resourceId={params.id} payload={{ targetType: 'course', active: true }} busy={busy} runAction={runAction} />
+            <PlatformFavoriteButton definition={definition} targetType="course" entityId={entity?.id} />
             {mode === 'invite' ? <AppLink className="platform-button platform-button-primary" href="/platform/account/invites">{t('兑换课程邀请', 'Redeem course invitation')}</AppLink> : null}
           </div>
           {mode === 'admin_grant' ? <p>{t('这门课程由管理员或机构授予，请联系课程运营方。', 'This course is granted by an administrator or organization; contact the course operator.')}</p> : null}
         </section>
         {mode === 'purchase' ? (
-          <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{
-            title: text('购买课程', 'Purchase course'),
-            action: 'create-order',
-            payloadBase: { sellableType: 'course', sellableId: entity?.id ?? params.id },
-            fields: [field('quantity', '数量', 'Quantity', { kind: 'number', min: 1, max: 1, step: 1, required: true, defaultValue: 1 }), field('couponCode', '优惠券', 'Coupon code')],
-          }} />
+          <PlatformPurchaseForm entity={entity} kind="course" busy={busy} runAction={runAction} />
         ) : null}
         <section className="platform-course-reviews" aria-label={t('评分及评论', 'Ratings & Reviews')}>
           <CourseReviewSummary entity={entity} />
@@ -1225,18 +1183,7 @@ export function PlatformLearningActions(props: CommonProps) {
   if (definition.id === 'account-invites') {
     return <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('兑换课程码', 'Redeem course code'), action: 'redeem-invite', submit: text('兑换', 'Redeem'), fields: [field('code', '兑换码', 'Redemption code', { required: true, minLength: 3, maxLength: 128 })] }} />;
   }
-  if (definition.id === 'progress') {
-    return <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{ title: text('每日签到', 'Daily check-in'), action: 'check-in', fields: [field('localDate', '本地日期（留空使用今天）', 'Local date (leave blank for today)', { kind: 'date' })] }} />;
-  }
-  if (definition.id !== 'course-lesson') return null;
-  const lessonId = params.lessonId;
-  return (
-    <div className="platform-domain-stack">
-      <DomainForm definition={definition} entity={entity} resourceId={lessonId} busy={busy} runAction={runAction} spec={{ title: text('学习记录', 'Learning record'), action: 'update-progress', fields: [field('progressPercent', '完成进度', 'Completion', { kind: 'number', min: 0, max: 100, step: 1, required: true }), field('status', '学习状态', 'Learning status', { kind: 'select', options: [option('in_progress', '学习中', 'In progress'), option('completed', '已完成', 'Completed')] }), field('lastPositionSeconds', '视频位置（秒）', 'Video position (seconds)', { kind: 'number', min: 0, step: 1 })] }} />
-      <DomainForm definition={definition} entity={entity} resourceId={lessonId} busy={busy} runAction={runAction} spec={{ title: text('课程笔记', 'Lesson note'), action: 'save-note', fields: [field('noteId', '笔记 ID（修改时填写）', 'Note ID (when editing)'), field('contentMarkdown', '笔记', 'Note', { kind: 'textarea', rows: 6, required: true }), field('positionSeconds', '对应视频位置（秒）', 'Video position (seconds)', { kind: 'number', min: 0, step: 1 })] }} />
-      <PlatformQuizAttemptForm entity={entity} lessonId={lessonId} busy={busy} runAction={runAction} />
-    </div>
-  );
+  return null;
 }
 
 function PlatformShippingAddressManager({ definition, busy, runAction, onAddresses }: CommonProps & {
@@ -1585,32 +1532,16 @@ export function PlatformCommerceActions(props: CommonProps) {
   const [addresses, setAddresses] = useState<PlatformEntity[]>([]);
   if (definition.id === 'membership' || definition.id === 'me-membership') return <PlatformMembershipCatalog {...props} />;
   if (definition.id === 'product-detail') {
-    const variants = Array.isArray(entity?.data?.variants) ? entity.data.variants : [];
-    const choices = variants.flatMap((raw) => {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
-      const variant = raw as Record<string, unknown>;
-      if (typeof variant.id !== 'string') return [];
-      const zh = typeof variant.titleZh === 'string' ? variant.titleZh : typeof variant.sku === 'string' ? variant.sku : variant.id;
-      const en = typeof variant.titleEn === 'string' ? variant.titleEn : typeof variant.sku === 'string' ? variant.sku : variant.id;
-      return [option(variant.id, zh, en)];
-    });
-    const variantField = choices.length
-      ? field('sellableId', '商品规格', 'Product variant', { kind: 'select', required: true, options: choices, defaultValue: choices[0].value })
-      : field('sellableId', '商品规格 ID', 'Product variant ID', { required: true });
     const physical = entity?.data?.productType === 'physical';
-    const orderFields: FieldSpec[] = [variantField, field('quantity', '数量', 'Quantity', { kind: 'number', min: 1, max: 99, step: 1, required: true, defaultValue: 1 }), field('couponCode', '优惠券', 'Coupon code')];
-    if (physical) orderFields.push(field('shippingAddressId', '收货地址', 'Shipping address', {
-      kind: 'select', required: true, options: addresses.map((address) => option(address.id, address.title, address.title)),
-    }));
     return (
       <div className="platform-domain-stack">
         {physical ? <PlatformShippingAddressManager {...props} onAddresses={setAddresses} /> : null}
         {physical && addresses.length === 0 ? <p className="platform-domain-note">{t('请先保存收货地址，再创建实物商品订单。', 'Save a shipping address before creating a physical-product order.')}</p> : (
-          <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{ title: text('购买商品', 'Purchase product'), action: 'create-order', payloadBase: { sellableType: 'product_variant' }, fields: orderFields }} />
+          <PlatformPurchaseForm entity={entity} kind="product_variant" addresses={addresses} busy={busy} runAction={runAction} />
         )}
         <section className="platform-domain-actions">
           <h2>{t('稍后购买', 'Save for later')}</h2>
-          <ActionButton action="wishlist" resourceId={entity?.id ?? params.id} payload={{ active: true }} busy={busy} runAction={runAction} />
+          <PlatformFavoriteButton definition={definition} targetType="product" entityId={entity?.id} />
         </section>
       </div>
     );
@@ -1620,32 +1551,16 @@ export function PlatformCommerceActions(props: CommonProps) {
 }
 
 export function PlatformEventActions(props: CommonProps) {
-  const { definition, params, entity, busy, runAction } = props;
+  const { definition, entity, busy, runAction } = props;
   const t = useT();
   if (definition.id !== 'event-detail') return null;
-  const tickets = Array.isArray(entity?.data?.tickets) ? entity.data.tickets : [];
-  const choices = tickets.flatMap((raw) => {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
-    const ticket = raw as Record<string, unknown>;
-    if (typeof ticket.id !== 'string' || ticket.status !== 'active' || Number(ticket.available) < 1) return [];
-    const zh = typeof ticket.titleZh === 'string' ? ticket.titleZh : typeof ticket.code === 'string' ? ticket.code : ticket.id;
-    const en = typeof ticket.titleEn === 'string' ? ticket.titleEn : typeof ticket.code === 'string' ? ticket.code : ticket.id;
-    return [option(ticket.id, zh, en)];
-  });
   return (
     <div className="platform-domain-stack">
       <section className="platform-domain-actions">
         <h2>{t('活动收藏', 'Event favorite')}</h2>
-        <ActionButton action="favorite" resourceId={entity?.id ?? params.id} payload={{ targetType: 'event', active: true }} busy={busy} runAction={runAction} />
+        <PlatformFavoriteButton definition={definition} targetType="event" entityId={entity?.id} />
       </section>
-      {choices.length ? (
-        <DomainForm definition={definition} entity={entity} busy={busy} runAction={runAction} spec={{
-          title: text('购买活动票', 'Purchase event ticket'),
-          action: 'create-order',
-          payloadBase: { sellableType: 'event_ticket' },
-          fields: [field('sellableId', '票种', 'Ticket type', { kind: 'select', required: true, options: choices, defaultValue: choices[0].value }), field('quantity', '数量', 'Quantity', { kind: 'number', min: 1, max: 99, step: 1, required: true, defaultValue: 1 }), field('couponCode', '优惠券', 'Coupon code')],
-        }} />
-      ) : <p className="platform-domain-note">{t('当前没有可购买的票种。', 'There are no ticket types currently available for purchase.')}</p>}
+      <PlatformPurchaseForm entity={entity} kind="event_ticket" busy={busy} runAction={runAction} />
     </div>
   );
 }
@@ -1665,9 +1580,6 @@ export function PlatformInstructorActions(props: CommonProps) {
   }
   if (definition.id === 'instructor-courses') {
     return <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{ title: text('创建讲师课程', 'Create instructor course'), action: 'save-instructor-course', fields: INSTRUCTOR_COURSE_FIELDS }} />;
-  }
-  if (definition.id === 'instructor-students') {
-    return <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{ title: text('签发课程证书', 'Issue course certificate'), action: 'issue-certificate', fields: [field('entitlementId', '学员课程权益 ID', 'Learner entitlement ID', { required: true })] }} />;
   }
   return null;
 }
@@ -1818,17 +1730,11 @@ export function PlatformAdminActions(props: CommonProps) {
           action: 'admin-reconcile-run',
           fields: [
             field('provider', '支付渠道', 'Payment provider', { kind: 'select', options: [option('wechat', '微信支付', 'WeChat Pay'), option('alipay', '支付宝', 'Alipay')] }),
-            field('merchantAccount', '商户账号', 'Merchant account', { required: true, maxLength: 160 }),
             field('statementDate', '账单日期', 'Statement date', { kind: 'date', required: true }),
             field('records', '交易记录 JSON 数组', 'Transaction record JSON array', { kind: 'json', rows: 10, required: true, placeholder: text('[{"providerTransactionId":"…","amountMinor":100,"currency":"CNY"}]', '[{"providerTransactionId":"…","amountMinor":100,"currency":"CNY"}]') }),
           ],
         }} />
-        <DomainForm definition={definition} busy={busy} runAction={runAction} spec={{
-          title: text('解决对账差异', 'Resolve reconciliation item'),
-          action: 'admin-reconcile',
-          resourceIdField: 'recordId',
-          fields: [field('recordId', '对账记录 ID', 'Reconciliation record ID', { required: true }), field('resolutionNote', '处理说明', 'Resolution note', { kind: 'textarea', rows: 5, required: true, maxLength: 4000 })],
-        }} />
+        {(entities??[]).filter(item=>!['matched','resolved'].includes(item.status??'')).map(item=><DomainForm key={item.id} definition={definition} entity={item} resourceId={item.id} busy={busy} runAction={runAction} spec={{ title:text(`处理差异：${item.data?.providerTransactionId??item.title}`,`Resolve: ${item.data?.providerTransactionId??item.title}`),action:'admin-reconcile',fields:[field('resolutionNote','处理说明','Resolution note',{kind:'textarea',rows:3,required:true,maxLength:4000})] }}/>) }
       </div>
     );
   }
@@ -1863,6 +1769,7 @@ interface CommonProps {
 }
 
 export function PlatformDomainActions(props: CommonProps) {
+  if (props.definition.id === 'news-detail') return <PlatformFavoriteButton definition={props.definition} targetType="news" entityId={props.entity?.id} />;
   if (props.definition.id === 'account-shipping') return <PlatformShippingAddressManager {...props} />;
   if (props.definition.id === 'account-invites') return <PlatformLearningActions {...props} />;
   if (props.definition.id === 'event-detail') return <PlatformEventActions {...props} />;
