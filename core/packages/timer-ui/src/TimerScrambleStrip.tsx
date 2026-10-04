@@ -129,7 +129,16 @@ export function TimerScrambleStrip({
   const copiedCheck = copied && !correctionActive
     ? <Check className="scramble-copied-check" aria-label={copiedLabel} />
     : null;
-  const style = { '--scramble-scale': fontScale } as CSSProperties;
+  // Preserve the user's preferred size for short scrambles; reduce long ones
+  // smoothly instead of making the move list an independently scrolling view.
+  const displayedScramble = liveHint
+    ? [...liveHint.done, ...(liveHint.current === null ? [] : [liveHint.current]), ...liveHint.pending].join(' ')
+    : scramble;
+  const lengthScale = Math.min(1, Math.sqrt(80 / Math.max(1, displayedScramble.length)));
+  const style = {
+    '--scramble-scale': fontScale,
+    '--scramble-length-scale': lengthScale,
+  } as CSSProperties;
 
   const stripActivate = status?.onRetry || status?.delayedAction ? undefined : onActivate;
   const activateFromKeyboard = (event: KeyboardEvent<HTMLSpanElement>) => {
