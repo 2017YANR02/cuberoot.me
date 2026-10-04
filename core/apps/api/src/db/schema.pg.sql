@@ -8953,3 +8953,12 @@ SELECT DISTINCT ON (wca_id) * FROM (
   WHERE s.grants_membership AND NOT s.superseded
     AND s.state IN ('SUBSCRIPTION_STATE_ACTIVE', 'SUBSCRIPTION_STATE_IN_GRACE_PERIOD', 'SUBSCRIPTION_STATE_CANCELED')
 ) grants ORDER BY wca_id, expires_at DESC NULLS FIRST, created_at;
+
+-- 0257_membership_benefits
+-- Editable benefit copy, independent of payment plans and access enforcement.
+CREATE TABLE IF NOT EXISTS membership_benefits (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  revision INTEGER NOT NULL DEFAULT 1 CHECK (revision > 0),
+  items JSONB NOT NULL CHECK (jsonb_typeof(items) = 'array'),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
