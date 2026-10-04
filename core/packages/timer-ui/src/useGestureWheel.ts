@@ -81,6 +81,18 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
     let pointerProfile: TimerRadialPointerProfile = timerRadialPointerProfile('mouse');
     let downTime = 0;
     let activePointerId: number | null = null;
+    let consumeClick = false;
+
+    // A stop press can restore interactive chrome before a WebView sends its
+    // compatibility click. preventDefault on pointerdown alone does not cancel
+    // click; consume it in capture before a restored link/button can act.
+    const resetClick = () => { consumeClick = false; };
+    const handleClick = (event: MouseEvent) => {
+      if (!consumeClick || event.detail === 0) return;
+      consumeClick = false;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    };
 
     const releasePointerCapture = (pointerId: number) => {
       try {
@@ -89,6 +101,7 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
     };
 
     const cancelActivePointer = () => {
+      consumeClick = false;
       const pointerId = activePointerId;
       activePointerId = null;
       if (gestureStart) wheelRef.current?.hide();
@@ -108,6 +121,7 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
       if (event.pointerType === 'mouse' && event.button !== 0) return;
       if (activePointerId !== null) return;
       event.preventDefault();
+      consumeClick = true;
       activePointerId = event.pointerId;
       try { surface.setPointerCapture(event.pointerId); } catch { /* unsupported WebView */ }
       pressActive = true;
@@ -186,6 +200,8 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
       cancelActivePointer();
     };
 
+    document.addEventListener('pointerdown', resetClick, true);
+    document.addEventListener('click', handleClick, true);
     surface.addEventListener('pointerdown', handlePointerDown, { passive: false });
     surface.addEventListener('pointermove', handlePointerMove, { passive: false });
     surface.addEventListener('pointerup', handlePointerUp, { passive: false });
@@ -194,6 +210,8 @@ export function useGestureWheel(options: UseGestureWheelOptions): {
     window.addEventListener('blur', cancelActivePointer);
     return () => {
       cancelActivePointer();
+      document.removeEventListener('pointerdown', resetClick, true);
+      document.removeEventListener('click', handleClick, true);
       surface.removeEventListener('pointerdown', handlePointerDown);
       surface.removeEventListener('pointermove', handlePointerMove);
       surface.removeEventListener('pointerup', handlePointerUp);
