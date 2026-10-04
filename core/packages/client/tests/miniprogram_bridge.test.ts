@@ -1,6 +1,34 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('Mini Program web-view bridge', () => {
+  it.each(['MicroMessenger miniProgram', 'MicroMessenger'])('returns to the native Tools tab from %s', async (userAgent) => {
+    const switchTab = vi.fn();
+    vi.stubGlobal('window', {
+      clearTimeout, setTimeout, navigator: { userAgent },
+      wx: { miniProgram: {
+        navigateTo: vi.fn(), switchTab,
+        getEnv: (callback: (env: object) => void) => callback({ miniprogram: true }),
+      } },
+    });
+    const { openMiniProgramHome } = await import('@/lib/miniprogram-bridge');
+    await expect(openMiniProgramHome()).resolves.toBe(true);
+    expect(switchTab).toHaveBeenCalledWith({ url: '/pages/tools/index' });
+  });
+
+  it('keeps ordinary WeChat browser home navigation on the website', async () => {
+    const switchTab = vi.fn();
+    vi.stubGlobal('window', {
+      clearTimeout, setTimeout, navigator: { userAgent: 'MicroMessenger' },
+      wx: { miniProgram: {
+        navigateTo: vi.fn(), switchTab,
+        getEnv: (callback: (env: object) => void) => callback({ miniprogram: false }),
+      } },
+    });
+    const { openMiniProgramHome } = await import('@/lib/miniprogram-bridge');
+    await expect(openMiniProgramHome()).resolves.toBe(false);
+    expect(switchTab).not.toHaveBeenCalled();
+  });
+
   it('opens native WeChat order checkout without forwarding credentials or an arbitrary URL', async () => {
     const navigateTo = vi.fn((options: { success(): void }) => options.success());
     vi.stubGlobal('window', { clearTimeout, setTimeout, navigator: { userAgent: 'MicroMessenger miniProgram' }, wx: { miniProgram: { navigateTo } } });
