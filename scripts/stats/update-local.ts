@@ -285,9 +285,12 @@ async function main(): Promise<void> {
     });
     if (options.jobs.includes('stages')) stageBuildPending = stdChanged || variantChanged || await stageBuildIsStale();
     const buildEnv = { ...process.env, SCRAMBLE_STATS_STAMP: await stamp(), CUBE_TABLE_DIR: tableDir };
-    if (options.jobs.includes('stages') || options.jobs.includes('puzzles')) await step('recent-events', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:recent-scrambles-events'], coreDir, buildEnv));
+    const refreshRecentEvents = async () => {
+      if (options.jobs.includes('stages') || options.jobs.includes('puzzles')) await step('recent-events', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:recent-scrambles-events'], coreDir, buildEnv));
+    };
     const willInject = options.jobs.includes('333opt') || (options.jobs.includes('stages') && (stdChanged || variantChanged));
     if (!stageBuildPending && !willInject && !puzzleChanged) {
+      await refreshRecentEvents();
       console.log('没有数据变化，结束。');
       summary.status = 'complete';
       return;
@@ -301,6 +304,8 @@ async function main(): Promise<void> {
       await writeFile(stageBuildStamp, await stageSourceSnapshot());
     });
     if (willInject) await step('333opt', async () => { optChanged = await run333(options, true); });
+    // OH/FMC/BLD recent rows join out.0.csv, so refresh after its optimal solves finish.
+    await refreshRecentEvents();
     if (nNew > 0 || variantChanged || optChanged) await step('recent-333', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:recent-scrambles'], coreDir, buildEnv));
     if (options.jobs.includes('stages') || options.jobs.includes('puzzles')) await step('length-opt', () => runNode(join(jobDir, 'build_length_opt.mjs')));
     if (options.jobs.includes('stages')) {
