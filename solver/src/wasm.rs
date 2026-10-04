@@ -1,20 +1,32 @@
 //! WASM 入口(wasm-bindgen):浏览器内三阶 cross 系列求解
 //! (cross / xc / xxc / xxxc / xxxxc),小表可采纳启发式,返回最优步数。
 //!
-//! 表的两条来路(2026-07-27 起):
-//!   · **pt_*(剪枝表)**:BFS 深搜产物,生成要几十秒 ⇒ 只能由 JS fetch 后传入构造器,
+//! 浏览器表来源:
+//!   · **pt_*(剪枝表)**:由 JS 传入；pt_cross_C4E0 支持缓存和下载/现场生成竞速，
 //!     `PackedPruneTable::from_bin` 装进线性内存。
 //!   · **mt_*(移动表)**:多数小求解器在 `mt_gen::get()` 现场生成，不再经 JS 传入。
 //!     First Layer 是例外：其 4490 万态 BFS 冷启动过重，最终移动表与 packed PDB 一起离线装载。
 //!
 //! 另:`CrossSolverWasm` 分两段 —— 构造只吃 pt_cross(gz 50KB)即可算纯十字;
 //! xcross 及以上要的 pt_cross_C4E0(gz 20MB)由 `attach_xcross` 惰性补,用户不切到
-//! 那些阶段就永远不下载。
+//! 那些阶段就不下载或生成这张大表。
 
 use std::cell::RefCell;
 use std::sync::Arc;
 
 use wasm_bindgen::prelude::*;
+
+/// Generate the canonical packed XCross table in a dedicated browser worker.
+#[wasm_bindgen]
+pub fn generate_xcross_table(on_layer: &js_sys::Function) -> Vec<u8> {
+    crate::xcross_table_gen::generate(|depth, count| {
+        let _ = on_layer.call2(
+            &JsValue::NULL,
+            &JsValue::from_f64(depth as f64),
+            &JsValue::from_f64(count as f64),
+        );
+    })
+}
 
 use crate::block222_solver::{block_label, Block222Solver, Y_NAMES};
 use crate::block223_solver::{block223_label, Block223Solver};

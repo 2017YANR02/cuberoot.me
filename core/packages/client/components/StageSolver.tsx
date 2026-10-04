@@ -30,7 +30,7 @@ import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import { createRustCrossPool, FR_NOT_HTR, HTR_NOT_DR, HTR2_NOT_HTR, type MovesTimed, type RustCrossPool, type SolItem, TABLE_BYTES, TABLE_SETS, XCROSS_TABLES } from '@/lib/rust-cross-client';
-import { onXCrossProgress, prefetchXCrossTableWhenIdle, type XCrossProgress } from '@/lib/rust-cross-tables';
+import { onXCrossProgress, type XCrossProgress } from '@/lib/rust-cross-tables';
 import { getRustCrossPool, dropRustCrossPool, isRustCrossPoolReady, poolSizeForDevice, type PoolNeed } from '@/lib/rust-cross-pool';
 import { normalizeScramble } from '@/lib/cross-solver';
 import { rotateSolutionY, Y_ROT_LABEL } from '@/lib/rotate-solution';
@@ -605,26 +605,34 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     () => tableRows([...TABLE_SETS[need], ...(need === 'cross' && xReady ? XCROSS_TABLES : [])]),
     [need, xReady, tableRows],
   );
-  // 大表下载进度(21MB / 几秒)。null = 还没有字节数可报(刚发出请求 / 已下完)。
+  // 缓存、下载与生成共用一份准备进度；字节进度只表示下载路径。
   const [xProg, setXProg] = useState<XCrossProgress | null>(null);
+  const xLoadReq = useRef(0);
   /** std 且 stage≥1(XCross 及以上)时确保大表就位;其余情形零成本。 */
   const ensureXCrossTables = useCallback(async (pool: RustCrossPool, kind: Kind, st: number) => {
     if (kind !== 'std' || st < 1) return;
     if (pool.hasXCross()) { setXReady(true); return; }
+    const req = ++xLoadReq.current;
     setXLoading(true);
-    const off = onXCrossProgress(setXProg);
-    try { await pool.ensureXCross(); setXReady(true); } finally { off(); setXProg(null); setXLoading(false); }
+    try {
+      await pool.ensureXCross();
+      if (req === xLoadReq.current && poolRef.current === pool) setXReady(true);
+    } finally {
+      if (req === xLoadReq.current) setXLoading(false);
+    }
   }, []);
 
   // 共享池:need(cross/variant/f2leo)变化时取/建对应池,等首个 worker 就绪。
   // poolSize 挂载后才可知(null=未挂载),到位前不建池(只 null→值 一次,不会重建)。
   // 加载不设硬超时(慢网下 60s 假报错比慢更糟):真实失败由 pool.ready reject 进 error,
-  // 拖太久由 elapsed 计时驱动「网络较慢 + 重试」提示,重试 = 弃池重建。
+  // 拖太久由 elapsed 计时驱动准备中与重试提示，重试 = 弃池重建。
   const [retryTick, setRetryTick] = useState(0);
   useEffect(() => {
     if (poolSize == null) return;
     let cancelled = false;
     setErrMsg('');
+    ++xLoadReq.current;
+    setXLoading(false);
     const pool = getRustCrossPool(need, poolSize);
     poolRef.current = pool;
     // 换池(或重建)后大表状态跟着这个池走:std 池可能是先前用过、已带大表的那一个。
@@ -646,14 +654,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
     setRetryTick((n) => n + 1);
   }, []);
 
-  // 空闲预取大表:std 池默认只带 pt_cross(50KB),切到 XCross 那一刻才去拉 21MB,
-  // 于是那几秒完整落在交互路径上。求解器一就绪就在浏览器空闲时先把它拿到手。
-  // (/timer 更早一步 —— SolverHintPanel 一挂载就预取,不等面板展开;这里管 analyzer
-  // 等直接挂 StageSolver 的入口。两边同一个幂等单例,重复调用无害。)
+  // Acquire only when requested; pure cross no longer prefetches a 20 MB table.
   useEffect(() => {
-    if (status !== 'ready' || need !== 'cross' || xReady) return;
-    return prefetchXCrossTableWhenIdle();
-  }, [status, need, xReady]);
+    if (!xLoading && !(status === 'loading' && need === 'variant')) {
+      setXProg(null);
+      return;
+    }
+    return onXCrossProgress(setXProg);
+  }, [status, need, xLoading]);
   // 求解经过秒数。深阶段(eo xxxxcross 实测几十秒到几分钟)光给转圈看不出还活着不活着,
   // 用户只能猜是不是卡死了(issue #60)。计时 + 下面的「已定视角数」就是进度。
   const [solveSec, setSolveSec] = useState(0);
@@ -667,7 +675,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 已定下的视角数(引擎逐格回报,见 computeAll 的 onFace)。批算 6 视角时才有意义。
   const doneFaces = useMemo(() => counts.filter((v) => v != null).length, [counts]);
 
-  // loading 经过秒数(给用户进度感;≥15s 提示网络较慢并出重试按钮)。
+  // loading 经过秒数(给用户进度感;≥15s 提示仍在准备并出重试按钮)。
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
     if (status !== 'loading' && !xLoading) return;
@@ -907,6 +915,8 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   const stopMoves = useCallback(() => {
     ++movesReq.current;
     ++computeReq.current;
+    ++xLoadReq.current;
+    setXLoading(false);
     try { poolRef.current?.abort(); } catch { /* */ }
     setMovesLoading(false);
     computingRef.current = false;
@@ -1349,13 +1359,24 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           <div className="stsv-status">
             <Spinner size={14} />
             {xLoading
-              ? t('加载 XCross 数据表(仅首次)…', 'Loading XCross table (first time only)…')
+              ? t('准备 XCross 数据表…', 'Preparing XCross table…')
               : t('加载求解器与数据表(仅首次)…', 'Loading solver + tables (first time only)…')}
             {elapsed >= 3 && <span className="stsv-elapsed">{elapsed}s</span>}
           </div>
           {/* 大表那一段有真进度可报(21MB 走好几秒,只给转圈太难熬)。Content-Length 被代理
               剥掉时 total=0 → 只报已下多少,不画那条会骗人的进度条。 */}
-          {xProg && (
+          {xProg && <div className="stsv-status">
+            {xProg.phase === 'cache'
+              ? t('正在读取缓存…', 'Reading cached table…')
+              : xProg.phase === 'ready'
+                ? t('数据表已就绪，正在装载…', 'Table ready, loading…')
+                : xProg.generation === 'failed'
+                  ? t('现场生成不可用，继续下载…', 'Generation unavailable, downloading…')
+                  : xProg.download === 'failed'
+                    ? t('下载不可用，继续现场生成…', 'Download unavailable, generating…')
+                    : t('下载与现场生成同时进行，完成后自动选用…', 'Downloading and generating; using the first ready table…')}
+          </div>}
+          {xProg && xProg.phase === 'racing' && xProg.download !== 'failed' && (
             <div className="stsv-prog">
               {xProg.total > 0 && (
                 <div
@@ -1369,6 +1390,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
                 </div>
               )}
               <span className="stsv-prog-text">
+                {t('下载', 'Download')} {xProg.download === 'verifying' && t('校验中 · ', 'verifying · ')}
                 {xProg.total > 0
                   ? `${(xProg.loaded / 1048576).toFixed(1)} / ${fmtBytes(xProg.total)} (${Math.min(100, Math.round((xProg.loaded / xProg.total) * 100))}%)`
                   : fmtBytes(xProg.loaded)}
@@ -1396,7 +1418,7 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
           </div>
           {elapsed >= 15 && (
             <div className="stsv-slow">
-              {t('网络较慢,仍在下载…', 'Slow network — still downloading…')}
+              {t('仍在准备数据表…', 'Still preparing tables…')}
               <button type="button" className="stsv-retry" onClick={retryLoad}>{t('重试', 'Retry')}</button>
             </div>
           )}

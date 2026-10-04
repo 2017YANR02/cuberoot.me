@@ -784,7 +784,7 @@ verify 断言逐档正好 2 倍。
 新增 `xcross_table_gen::generate`，只生成标准单槽 `pt_cross_C4E0` 的完整
 `CUBEPT01` 字节。保留现有坐标顺序、全部 109,486,080 项、低位偶数 nibble、
 不可达项 F 和每个状态的严格最优距离；不改原 native 生成器、表资产和调用方。
-当前未接入 `/timer`，也未发布 WASM；`/dev/solvers` 的运行时表清单因此不变。
+该优化的首轮基准独立于 `/timer`；后续网页接入见本节末尾。
 
 实现复用 canonical `create_mt_edge`、`create_mt_corn` 和
 `create_multi_move_table`。移动表只在本次生成内采用无填充的 18 列布局，
@@ -812,3 +812,19 @@ SHA-256 `10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e`。
 可复跑入口是 `scripts/benchmark_xcross_table.mts`（从 `core/` 用 `pnpm exec tsx`
 运行），只在隔离内存里建表；磁盘日常建表仍只走 `table_generator`。
 原始交付记录及实验摘要见 `testdata/benchmarks/xcross-table-2026-10-04.json`。
+
+网页接入：`generate_xcross_table` 随正式 WASM 导出，标准 XCross 与 variant
+池共用 `rust-cross-tables.ts`。先读取按内容哈希命名的 Cache Storage，未命中
+时由两个独立 worker 下载/解压与现场生成；只有长度与完整 SHA-256 均通过
+的表可以获胜。主线程立即终止败方，再分发一份 raw 表给各求解 worker，
+避免重复下载和解压。赢家在后台尝试持久化；拒绝存储或写入超时不影响求解。
+缓存读取超过 200 ms 时允许生成先启动，防止存储异常阻塞；只有明确需要
+XCross 时才获取大表，纯十字不再预取 20 MB。取消按调用方计数，最后一个
+等待者离开时停止两条路径；池终止和补表失败不会再派发过期求解任务。
+
+本机 Chrome 154 的集成验证：慢速下载场景生成约 708 ms（含模块加载、
+校验和交付），缓存约 34 ms；本地高速资源下载约 119 ms，不代表线上网络。
+下载失败、生成失败、全尺寸坏表、损坏缓存、禁止缓存与取消均走预期分支；六视角样例
+`R U F2 L D2` 得到 `[4,3,3,5,4,4]`。完整结果见
+`testdata/benchmarks/xcross-acquisition-2026-10-04.json`。这是本地验证，
+手机/Safari 页面与生产部署未验收。

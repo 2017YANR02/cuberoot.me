@@ -34,7 +34,6 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import StepSolve from './StepSolve';
 import { persistItem } from '@/lib/safe-storage';
-import { prefetchXCrossTableWhenIdle } from '@/lib/rust-cross-tables';
 import { tr } from '@/i18n/tr';
 
 const StageSolver = dynamic(() => import('@/components/StageSolver'), {
@@ -195,11 +194,6 @@ export default function SolverHintPanel({
   // 浮层要 portal 到 document.body(见文件头注),预渲染时没有 body → 挂载后才画。
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
-
-  // 进 /timer 就在后台把 XCross 那张 21MB 剪枝表拉起来 —— 不等面板展开,更不等用户切阶段
-  // (手机上浮层默认关着,等它挂载等于永远不预取)。表是全站单例,只下不 attach,也不需要
-  // 求解器池存在;页面 load 完 + 浏览器空闲才动手,省流量 / 慢网自动跳过。细则见 rust-cross-tables。
-  useEffect(() => prefetchXCrossTableWhenIdle(), []);
 
   // 桌面形态偏好(左栏 / 全屏),用户选了就记住:下次进来直接是上次那个形态。
   // 同 railOpen:SSR 初值恒 false,挂载后再读 localStorage。
