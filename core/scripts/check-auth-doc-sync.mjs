@@ -16,6 +16,7 @@ const ROOTS = [
   'packages/client/app/api/page-access',
 ];
 const EXACT = new Set([
+  'packages/client/lib/store-membership-bridge.ts',
   'packages/client/i18n/i18n-client.ts',
   'packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx',
   'apps/api/src/db/schema.pg.sql', 'apps/api/src/index.ts',
@@ -44,7 +45,7 @@ const EXACT = new Set([
   'apps/harmony/entry/src/main/ets/entryability/EntryAbility.ets',
 ]);
 const NATIVE = ['apps/mobile/ios/App/App', 'apps/mobile/android/app/src/main'];
-const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|AppleMembershipPlugin\.swift|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.(?:java|swift))$/;
+const NATIVE_NAME = /^(?:AppDelegate\.swift|SceneDelegate\.swift|AppleMembershipPlugin\.swift|GoogleMembershipPlugin\.java|Info\.plist|AndroidManifest\.xml|MainActivity\.(?:java|kt)|RecordPushPlugin\.(?:java|swift))$/;
 const CONFIG = [
   'packages/client/proxy.ts',
   'apps/desktop/src-tauri/tauri.conf.json', 'apps/desktop/src-tauri/capabilities/default.json',

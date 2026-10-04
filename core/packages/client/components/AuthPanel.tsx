@@ -1612,7 +1612,7 @@ export function DeleteAccountPanel({ backHref }: { backHref: string }) {
             'These keep an author slot reading “Deleted user”, with no WCA ID or email attached — so other people’s discussions stay intact and public reconstruction links keep working. Any purchase records are kept for accounting.')}
         </p>
 
-        <p className="auth-hint">{t('如果你通过 Apple 订阅会员，请先在 Apple 的订阅管理中取消自动续费。注销 CubeRoot 账号不会取消 Apple 订阅，注销后的购买记录也不能恢复到新账号。', 'If you subscribe through Apple, cancel auto-renewal in Apple subscription management first. Deleting your CubeRoot account does not cancel an Apple subscription, and its purchases cannot be restored to a new account.')}</p>
+        <p className="auth-hint">{t('如果你通过 Apple 或 Google Play 订阅会员，请先在对应商店的订阅管理中取消自动续费。注销 CubeRoot 账号不会取消商店订阅，注销后的购买记录也不能恢复到新账号。', 'If you subscribe through Apple or Google Play, cancel auto-renewal in that store first. Deleting your CubeRoot account does not cancel store subscriptions, and purchases cannot be restored to a new account after deletion.')}</p>
         {handle === null ? (
           <div className="auth-loading"><Loader2 size={ICON} className="auth-spin" /></div>
         ) : handle === '' ? (

@@ -133,7 +133,8 @@ export default function SubscriptionPage() {
   return (
     <main className="mem-page mem-service-document">
       <h1>{t('管理自动续费', 'Manage auto-renewal')}</h1>
-      <p>{t('新签约尚未开放。当前单次购买的月度、年度会员不会自动续费，无需解约。', 'New subscriptions are not available yet. One-time monthly and annual purchases do not auto-renew and require no cancellation.')}</p>
+      <p>{t('本页列表管理网站的自动续费合约。通过 Apple 或 Google Play 购买的订阅，请到对应商店管理；App 内会员页也提供管理和恢复购买入口。网站单次购买不自动续费。', 'This list manages website renewal contracts. Manage Apple or Google Play subscriptions in their respective stores; the in-app membership page also offers management and restore actions. One-time website purchases do not auto-renew.')}</p>
+      <p><a href="https://play.google.com/store/account/subscriptions?package=me.cuberoot.app" target="_blank" rel="noreferrer">Google Play</a>{' · '}<a href="https://apps.apple.com/account/subscriptions" target="_blank" rel="noreferrer">Apple</a></p>
       {owner ? <SubscriptionManager key={owner} /> : <p><AppLink href={`/account${nextQuery(pathname)}`} prefetch={false}>{t('登录后管理自动续费', 'Sign in to manage auto-renewal')}</AppLink></p>}
       <p>{t('取消自动续费与退款分开处理；已购买权益可使用至已付服务期结束。若发现取消后扣款，请保留订单号并联系客服核对。', 'Cancellation and refunds are handled separately. Purchased benefits remain available until the paid service period ends. If a charge appears after cancellation, keep the order number and contact support.')}</p>
       <nav className="mem-service-links" aria-label={t('会员服务', 'Membership services')}>

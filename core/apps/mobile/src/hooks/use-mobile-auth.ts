@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { handleAppleMembership, listenForAppleMembership } from '../apple-membership';
+import { handleGoogleMembership, listenForGoogleMembership } from '../google-membership';
 import { App as CapacitorApp } from '@capacitor/app';
 import { useCallback, useEffect } from 'react';
 import {
@@ -41,6 +42,23 @@ export function useMobileAuth(language: SupportedLanguage) {
     const timer = window.setInterval(sync, 60_000);
     const active = CapacitorApp.addListener('appStateChange', ({ isActive }) => { if (isActive) sync(); });
     const updates = listenForAppleMembership(sync);
+    return () => { window.clearInterval(timer); void active.then(h => h.remove()); void updates.then(h => h.remove()); };
+  }, [auth.loading, auth.session]);
+  useEffect(() => {
+    const session = auth.session;
+    if (Capacitor.getPlatform() !== 'android' || !session?.user.uid || auth.loading) return;
+    let running = false;
+    const sync = () => {
+      if (running) return;
+      running = true;
+      void handleGoogleMembership({ type: 'cuberoot:mobile:google-membership', action: 'sync',
+        surface: 'account', expectedUid: session.user.uid!, requestId: crypto.randomUUID(),
+      }, session).catch(() => undefined).finally(() => { running = false; });
+    };
+    sync();
+    const timer = window.setInterval(sync, 60_000);
+    const active = CapacitorApp.addListener('appStateChange', ({ isActive }) => { if (isActive) sync(); });
+    const updates = listenForGoogleMembership(sync);
     return () => { window.clearInterval(timer); void active.then(h => h.remove()); void updates.then(h => h.remove()); };
   }, [auth.loading, auth.session]);
   const logout = useCallback(async () => {

@@ -18,6 +18,14 @@
 
 本节是移动端工作的进度账本。只有完成实现并取得对应验证证据后才打勾；只完成代码但缺少真机、账号或商店证据的项目保持未勾选，并注明依赖条件。
 
+### 2026-10-04 Google Play 首发内购（开发中，未开通）
+
+- Android 原生 Billing、服务端 subscriptionsv2 验单/确认、OIDC RTDN、独立权益账本和账号合并/注销归属接入；两端复用同一网页会员组件。商家、商品、服务账号、RTDN 与内部测试真实购买尚未配置/验收，不能标为支付可用。
+- 2026-10-04 已通过 shared build、Mobile Web build/Android sync、API/client/app-ui/Mobile 类型检查和 Android Release Java 编译。旧的 cubing worker 构建阻断在本次当前代码构建未复现；历史记录保留，不继续当作当前阻断。
+- 独立 PostgreSQL 16 验证 0256 迁移、购买归属、测试隔离、退款、pending→active 替换链、注销墓碑；不是生产 PG13 部署或真实 Google 验单证据。
+- 长期 RSA 4096 上传密钥已在仓库外生成，密码存本机 Keychain；JDK 21 正式签名 `assembleRelease bundleRelease` 成功。`me.cuberoot.app` 0.1.0 (1000)，targetSdk 36；APK 签名、ZIP 16 KB 对齐及 arm64/x86_64 ELF LOAD 16 KB 对齐通过。AAB 已上传 Play 内部测试并保存草稿，尚不代表已向测试人员分发。
+- 配置及真实验收清单见 [google-play-billing-setup.md](google-play-billing-setup.md)。商家账号及 Google Cloud 验单服务账号尚未配置；上传密钥的异地安全备份仍需所有者完成。
+
 ### 2026-09-29 远端主线整合（本地，未发布）
 
 以 `61023b48a8` 为基线，保留远端 Apple 个人月卡／年卡自动续费实现与语音输入；迁入原本地 iOS APNs 纪录通道、隐私说明及联系页精确放行。推送使用新增 `0255_ios_record_push.sql`，不改远端已经使用的 `0249_friend_chat.sql`。旧非续期购买方案不再迁入；Apple 的购买、恢复、账号合并及注销实现保持远端版本。

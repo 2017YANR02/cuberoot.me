@@ -1,5 +1,6 @@
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { decodeAppleMembershipRequest } from '@cuberoot/shared/apple-membership';
+import { decodeGoogleMembershipRequest } from '@cuberoot/shared/google-membership';
 import { TimerDisplaySettings, TimerPreScrambleSettings, TimerColorNeutralSetting, createTimerSound, useTimerSoundFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerSoundSettings, resetTimerStoreSettings } from '@cuberoot/shared/timer';
 import { TimerResetSettings } from '@cuberoot/timer-ui';
@@ -1948,7 +1949,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
     const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership) }),
+      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership) }),
       SITE_ORIGIN,
     );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
@@ -2194,17 +2195,20 @@ export function App({ host }: { host: InstalledAppHost }) {
       const accountFrame = webFrameRefs.current.account;
       const accountSource = Boolean(accountFrame && event.source === accountFrame.contentWindow);
 
-      const purchase = decodeAppleMembershipRequest(event.data);
+      const purchase = decodeAppleMembershipRequest(event.data) ?? decodeGoogleMembershipRequest(event.data);
       if (purchase) {
         const frame = webFrameRefs.current[purchase.surface];
         if (!frame || event.source !== frame.contentWindow) return;
         const session = authSessionRef.current;
         const reply = (result: object) => frame.contentWindow?.postMessage({ ...result,
-          type: 'cuberoot:mobile:apple-membership-result', requestId: purchase.requestId }, SITE_ORIGIN);
-        if (!session || session.user.uid !== purchase.expectedUid || !host.appleMembership) {
+          type: `${purchase.type}-result`, requestId: purchase.requestId }, SITE_ORIGIN);
+        if (!session || session.user.uid !== purchase.expectedUid) {
           reply({ status: 'error' }); return;
         }
-        void host.appleMembership(purchase, session).then(reply).catch(() => reply({ status: 'error' }));
+        const operation = purchase.type === 'cuberoot:mobile:apple-membership'
+          ? host.appleMembership?.(purchase, session) : host.googleMembership?.(purchase, session);
+        if (!operation) { reply({ status: 'error' }); return; }
+        void operation.then(reply).catch(() => reply({ status: 'error' }));
         return;
       }
       const management = decodeMobileEmbedAccountManage(event.data);

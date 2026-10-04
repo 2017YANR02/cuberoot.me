@@ -31,6 +31,7 @@ import AutoRenewModal from './AutoRenewModal';
 import './membership.css';
 import AppleMembership from './AppleMembership';
 import { isIosMembershipSurface, useAppleMembershipAvailable } from '@/lib/apple-membership-bridge';
+import { installedMembershipStore, useStoreMembershipAvailable } from '@/lib/store-membership-bridge';
 
 
 function intersectPerks(plans: MembershipPlan[]): string[] {
@@ -61,6 +62,8 @@ export default function MembershipPage() {
   useEffect(() => setMounted(true), []);
   const appleAvailable = useAppleMembershipAvailable();
   const appleSurface = mounted && (appleAvailable || isIosMembershipSurface());
+  const googleAvailable = useStoreMembershipAvailable('google');
+  const googleSurface = mounted && (googleAvailable || installedMembershipStore() === 'google');
   const admin = mounted && isAdmin();
   const loggedIn = mounted && !!user;
   const [commerceRestricted, setCommerceRestricted] = useState<boolean | null>(null);
@@ -182,7 +185,7 @@ export default function MembershipPage() {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
   }, []);
 
-  if (appleSurface) return <div className="mem-page"><AppleMembership refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></div>;
+  if (appleSurface || googleSurface) return <div className="mem-page"><AppleMembership store={googleSurface ? 'google' : 'apple'} refresh={refreshMembership} benefits={renderPerks([...new Set([...universalPerks, ...intersectPerks(personalPlans)])].filter(perk => perk !== 'lifetime'))} /></div>;
 
   if (commerceRestricted === null) return (
     <div className="mem-page"><div className="mem-empty" role="status"><Spinner size={16} /> {tr({ zh: '加载中…', en: 'Loading…' })}</div></div>

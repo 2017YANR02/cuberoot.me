@@ -23,6 +23,7 @@ import { exchangeWebSessionTicket } from '@/lib/web-session-handoff';
 import { tr } from '@/i18n/tr';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/apple-membership-bridge';
+import { setStoreMembershipBridge } from '@/lib/store-membership-bridge';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -159,6 +160,7 @@ export default function MobileEmbedBridge() {
         parentOrigin = event.origin;
         capabilities = init;
         setAppleMembershipBridge(init.appleMembership === true, postToParent);
+        setStoreMembershipBridge('google', init.googleMembership === true, postToParent);
         postNavigation();
         return;
       }
@@ -224,6 +226,7 @@ export default function MobileEmbedBridge() {
     return () => {
       active = false;
       setAppleMembershipBridge(false);
+      setStoreMembershipBridge('google', false);
       invalidateWebSession();
       recordRouteRef.current = null;
       if (pendingManagement) window.clearTimeout(pendingManagement.timeout);

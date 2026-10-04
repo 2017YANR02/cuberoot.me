@@ -20,6 +20,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(TimerPrintPlugin.class);
         registerPlugin(RecordPushPlugin.class);
         registerPlugin(SmartCubePickerPlugin.class);
+        registerPlugin(GoogleMembershipPlugin.class);
         super.onCreate(savedInstanceState);
     }
 

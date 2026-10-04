@@ -52,7 +52,7 @@ describe('membership subscription cancellation', () => {
     await render();
     expect(mocks.list).not.toHaveBeenCalled();
     expect(host.textContent).toContain('登录后管理自动续费');
-    expect(host.querySelector('a')?.getAttribute('href')).toBe('/account?next=%2Fzh%2Fmembership%2Fsubscription');
+    expect(host.querySelector('a[href^="/account?"]')?.getAttribute('href')).toBe('/account?next=%2Fzh%2Fmembership%2Fsubscription');
   });
   it('does not confuse empty site records with absence of WeChat authorization', async () => {
     mocks.list.mockResolvedValue(result([]));

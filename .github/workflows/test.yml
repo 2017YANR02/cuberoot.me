@@ -823,6 +823,7 @@ jobs:
             'android.permission.BLUETOOTH_SCAN' \
             'android.permission.INTERNET' \
             'android.permission.POST_NOTIFICATIONS' \
+            'com.android.vending.BILLING' \
             'android.permission.VIBRATE' \
             'com.vivo.notification.permission.BADGE_ICON' \
             'getui.permission.GetuiService.me.cuberoot.app' \

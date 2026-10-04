@@ -19,6 +19,8 @@
 
 ## 1. 当前可直接复用的应用事实
 
+2026-10-04 Google Play 增量：Android 已接入 Billing Library 9.1.0 源码与独立交易归属/权益账本，新增 `com.android.vending.BILLING` 普通权限；购买记录、随机混淆账号标识、Google 订阅状态与退款处理须纳入最终 Data safety。商家、商品、服务账号、RTDN、签名包和真实内测以 [配置清单](google-play-billing-setup.md) 及路线图的分层证据为准，当前仍不代表内购已开通。商店图标/头图/两张截图与初始表单已在 Console 保存；截图来自 iPhone，最终 Android 包仍需实机核对。
+
 | 字段 | 当前值 | 状态 |
 |---|---|---|
 | 应用名 | CubeRoot | 已核对 |

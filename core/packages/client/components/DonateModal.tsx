@@ -3,7 +3,7 @@
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { Info } from 'lucide-react';
 import AppLink from '@/components/AppLink';
-import { isIosMembershipSurface } from '@/lib/apple-membership-bridge';
+import { installedMembershipStore } from '@/lib/store-membership-bridge';
 import './donate-modal.css';
 
 interface Props {
@@ -17,10 +17,10 @@ export default function DonateModal({ lang, onClose }: Props) {
   const backdropProps = useModalDismiss(onClose);
 
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
-  if (isIosMembershipSurface()) return (
+  if (installedMembershipStore()) return (
     <div className="donate-overlay" {...backdropProps}>
       <section className="donate-modal">
-        <AppLink href="/membership" onClick={onClose}>{t('前往 Apple 会员订阅', 'Open Apple membership subscriptions')}</AppLink>
+        <AppLink href="/membership" onClick={onClose}>{t('前往 App 内会员订阅', 'Open in-app membership subscriptions')}</AppLink>
         <button onClick={onClose}>{t('关闭', 'Close')}</button>
       </section>
     </div>

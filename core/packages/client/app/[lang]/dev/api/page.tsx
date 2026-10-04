@@ -67,13 +67,17 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
-//   membership membership_apple membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
 //   mcp mcp_oauth timer_replay_shares site_assistant cube_agents
 // ─ covers-routes-end ─
 const ENDPOINTS: Ep[] = [
+  { d: 'membership', m: 'GET', p: '/v1/membership/google/me', g: 'login', c: 'no-store', zh: 'Google Play 混淆账号标识', en: 'Google Play obfuscated account identifier' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/google/verify', g: 'login', c: 'no-store', zh: '查询 Google 当前订阅并按归属发放权益、确认购买', en: 'Verify current Google subscription ownership, persist grants and acknowledge purchases' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/google/sync', g: 'login', c: 'no-store', zh: '核对已保存订阅的续期与退款状态', en: 'Reconcile persisted subscriptions after renewals or refunds' },
+  { d: 'membership', m: 'POST', p: '/v1/membership/google/notifications', g: 'webhook', c: 'no-store', zh: '验证 Pub/Sub OIDC 后重新查询 Google 订阅', en: 'Verify Pub/Sub OIDC and reconcile current Google subscription state' },
   { d: 'membership', m: 'GET', p: '/v1/membership/apple/me', g: 'login', c: 'no-store', zh: 'Apple 订阅账号标识及状态', en: 'Apple subscription account token and status' },
   { d: 'membership', m: 'POST', p: '/v1/membership/apple/verify', g: 'login', c: 'no-store', zh: '验签并查询 Apple 当前权益后入账', en: 'Verify and reconcile current Apple entitlement' },
   { d: 'membership', m: 'POST', p: '/v1/membership/apple/notifications/production', g: 'webhook', c: 'no-store', zh: 'Apple 生产 V2 通知', en: 'Apple production V2 notifications' },
