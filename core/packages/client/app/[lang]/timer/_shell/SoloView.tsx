@@ -21,6 +21,7 @@ import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import dynamic from 'next/dynamic';
+import { isMiniProgramWebView } from '@/lib/miniprogram-bridge';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 'nuqs';
 import {
@@ -2345,9 +2346,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
   // ── Fullscreen ──────────────────────────────────────────────────
   const [fullscreen, setFullscreen] = useState(false);
+  const [miniProgramFullscreen, setMiniProgramFullscreen] = useState(false);
   const toggleFullscreen = useCallback(async () => {
     try {
       if (!document.fullscreenElement) {
+        setMiniProgramFullscreen(isMiniProgramWebView());
         await document.documentElement.requestFullscreen?.();
         setFullscreen(true);
       } else {
@@ -2936,6 +2939,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     <TimerWorkspace panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
       className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve || liveSolutionPanel) ? ' panel-open' : ''}${isDesktop && (liveSolutionPanel || (recapSolve && !panelTab)) ? ' recap-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
+      data-mini-program-fullscreen={fullscreen && miniProgramFullscreen ? '' : undefined}
       data-live-reconstruction={liveSolutionPanel ? '' : undefined}
     >
       <TimerPrintController
