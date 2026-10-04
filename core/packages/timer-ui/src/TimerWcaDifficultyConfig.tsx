@@ -18,6 +18,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { TimerDifficultyHelp } from './TimerDifficultyHelp';
 import { TimerPillToggle } from './TimerPillToggle';
 import { SubsetColorPicker, type TimerUiLanguage } from './TimerColorSubsetPicker';
 import { TimerRangeSlider } from './TimerRangeSlider';
@@ -204,7 +205,7 @@ export function TimerWcaDifficultyConfig({
     <span className="timer-wca-difficulty-control settings-row-tight-group">
       <span className="timer-wca-difficulty-label settings-row-label">
         {labels.merge}
-        <span aria-label={labels.mergeHelp} className="timer-wca-difficulty-help" role="img" title={labels.mergeHelp}>?</span>
+        <TimerDifficultyHelp content={labels.mergeHelp} hover label={labels.merge} question />
       </span>
       <TimerPillToggle
         ariaLabel={labels.mergeAriaLabel}
