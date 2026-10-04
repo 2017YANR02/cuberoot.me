@@ -72,6 +72,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'useMembershipBenefits',
+    sig: 'useMembershipBenefits(): { content, setContent }',
+    imp: "import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';",
+    category: 'hook',
+    zh: '会员页与商业计划书共用数据库权益文案；固定首屏、可空英文和保存后更新。',
+    en: 'Shared membership and BP benefit copy with stable SSR, optional English and post-save updates.',
+  },
+  {
     name: 'pickedSids / customMaskFn',
     sig: 'pickedSids(cube: Cube, positionIndex: number, worldFace: number, grain: PickGrain): StickerId[]; customMaskFn(order: number, mask: string, pick?: CustomTreatment, rest?: CustomTreatment): StickeringMaskFn | null',
     imp: "import { pickedSids, customMaskFn } from '@/components/sim-embed/customStickering';",

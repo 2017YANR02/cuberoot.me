@@ -7,7 +7,8 @@ import CubeRootLogo from '@/components/CubeRootLogo';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';
 import { CREATOR_AUDIENCE } from '@/lib/creator-profile';
-import { MEMBERSHIP_PERK_LABEL } from '@/lib/membership-perks';
+import { benefitCopy } from '@cuberoot/shared/membership-benefits';
+import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
 import { EXPENSES, EQUIPMENT_GROUPS } from '@/lib/infrastructure-costs';
 import InvestorStory from './InvestorStory';
 import { BUSINESS_SECTIONS, BP_NAV, type BpSection } from './bp-content';
@@ -23,8 +24,6 @@ const PRODUCTS = [
   { Icon: ChartNoAxesColumnIncreasing, href: '/wca', title: { zh: '赛事、成绩与数据', en: 'Competitions, results & data' }, body: { zh: '提供赛事、公开成绩、统计与可视化，帮助用户理解比赛和进步方向，连接训练与魔方圈的长期活动。', en: 'Competition information, public results, statistics and visualisations connect training with ongoing activity in the sport.' } },
 ] as const;
 
-const PERSONAL_PERKS = ['unlimited_333_cloud_optimal', 'expert_recon_10_monthly', 'personal_video_review_2_monthly'] as const;
-const ENTERPRISE_PERKS = ['teacher_student_profile_ranking', 'enterprise_profile', 'enterprise_content_storage_custom_course'] as const;
 const SUPPORT_USES = [
   { title: { zh: '产品开发与维护', en: 'Development & maintenance' }, body: { zh: '团队持续开发时间、核心计时和训练体验、会员服务交付、必要的开发协作。', en: 'Sustained team work, core timing and training, membership delivery and targeted development help.' } },
   { title: { zh: 'AI、计算与运行服务', en: 'AI, compute & operations' }, body: { zh: 'Codex、服务器、求解与统计计算、数据存储、部署与多端发布维护。', en: 'Codex, hosting, solving and statistics, storage, deployment and platform maintenance.' } },
@@ -74,6 +73,7 @@ function printBusinessPlan() {
 }
 
 export default function PartnershipPage() {
+  const { content: benefits } = useMembershipBenefits();
   return (
     <main className="overview-page bp-page bp-editorial">
       <header className="overview-nav overview-wrap">
@@ -194,11 +194,11 @@ export default function PartnershipPage() {
         <p className="overview-intro">{tr({ zh: '会员页面与公开套餐已列出个人、企业的月度与年度服务。用户付费的理由，是持续获得专业求解、复盘、反馈或机构服务，而日常工具提供高频入口。基础计时和训练保持开放，收费范围以实际发布的会员权益为准。', en: 'The membership page and public plans describe monthly and annual personal and enterprise services. Payment buys ongoing specialist solving, reconstruction, feedback or educator services; daily tools provide frequent access. Basic timing and training remain open, with paid scope defined by published entitlements.' })}</p>
         <ServiceMap />
         <div className="bp-subscriptions">
-          {[{ title: { zh: '个人会员', en: 'Individual membership' }, perks: PERSONAL_PERKS, explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { title: { zh: '企业会员', en: 'Enterprise membership' }, perks: ENTERPRISE_PERKS, explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
+          {[{ title: { zh: '个人会员', en: 'Individual membership' }, perks: benefits.items.filter(item => item.group === 'common' && item.enabled), explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { title: { zh: '企业会员', en: 'Enterprise membership' }, perks: benefits.items.filter(item => item.group === 'enterprise' && item.enabled), explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
             <article data-site-surface="panel" key={plan.title.en}>
               <div className="bp-subscription-heading"><span className="bp-icon">{plan.title.en === 'Individual membership' ? <Users size={32} aria-hidden /> : <Building2 size={32} aria-hidden />}</span><span className="bp-subscription-tag">{tr({ zh: '持续服务', en: 'ONGOING SERVICE' })}</span></div>
               <h3>{tr(plan.title)}</h3>
-              <ul>{plan.perks.map(perk => <li key={perk}><Check size={16} aria-hidden /><span>{tr(MEMBERSHIP_PERK_LABEL[perk])}</span></li>)}</ul>
+              <ul>{plan.perks.map(perk => <li key={perk.id}><Check size={16} aria-hidden /><span>{tr(benefitCopy(perk))}</span></li>)}</ul>
               <p>{tr(plan.explanation)}</p>
             </article>
           ))}

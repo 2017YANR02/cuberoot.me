@@ -13,7 +13,9 @@ import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
 import { fmtPrice, fmtDate } from '@/lib/membership-format';
-import { MEMBERSHIP_PERK_LABEL as PERK_LABEL } from '@/lib/membership-perks';
+import { benefitCopy } from '@cuberoot/shared/membership-benefits';
+import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
+import BenefitsEditor from './BenefitsEditor';
 import AppLink from '@/components/AppLink';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import DonateModal from '@/components/DonateModal';
@@ -53,6 +55,8 @@ function planUnit(plan: MembershipPlan, isZh: boolean): string {
 }
 
 export default function MembershipPage() {
+  const { content: benefits, setContent: setBenefits } = useMembershipBenefits();
+  const benefitMap = new Map(benefits.items.map(item => [item.id, item]));
   const lang = useLang();
   const isZh = lang !== 'en';
 
@@ -170,16 +174,10 @@ export default function MembershipPage() {
   const enterprisePlans = oneTimePlans.filter((plan) => plan.slug.startsWith('enterprise_'));
   const personalPlans = oneTimePlans.filter((plan) => !plan.slug.startsWith('enterprise_'));
   const showAutoRenew = autoRenewPlans.length > 0;
-  const universalPerks = intersectPerks(sortedPlans);
-  if (!universalPerks.includes('platform_follow')) universalPerks.push('platform_follow');
-  if (!universalPerks.includes('vip_group')) universalPerks.push('vip_group');
-  if (!universalPerks.includes('group_qr_sharing')) universalPerks.push('group_qr_sharing');
-  if (!universalPerks.includes('custom_sim_logo')) universalPerks.push('custom_sim_logo');
-  if (!universalPerks.includes('personal_video_review_2_monthly')) universalPerks.push('personal_video_review_2_monthly');
-  const universalPerkSet = new Set(universalPerks);
-  const enterpriseSharedPerks = intersectPerks(enterprisePlans)
-    .filter((perk) => !universalPerkSet.has(perk));
-  const enterpriseSharedPerkSet = new Set(enterpriseSharedPerks);
+  const universalPerks = benefits.items.filter(item => item.group === 'common' && item.enabled).map(item => item.id);
+  const universalPerkSet = new Set(benefits.items.filter(item => item.group === 'common').map(item => item.id));
+  const enterpriseSharedPerks = benefits.items.filter(item => item.group === 'enterprise' && item.enabled).map(item => item.id);
+  const enterpriseSharedPerkSet = new Set(benefits.items.filter(item => item.group === 'enterprise').map(item => item.id));
 
   const handlePlanUpdated = useCallback((updatedPlan: MembershipPlan) => {
     setPlans((current) => current ? reconcileVisiblePlan(current, updatedPlan) : current);
@@ -214,8 +212,8 @@ export default function MembershipPage() {
     if (perks.length === 0) return null;
     return (
       <ul className="mem-plan-perks">
-        {perks.map((perk) => (
-          <li key={perk}><Check size={13} /> {tr(PERK_LABEL[perk] ?? { zh: perk, en: perk })}</li>
+        {perks.filter(perk => benefitMap.get(perk)?.enabled !== false).map((perk) => (
+          <li key={perk}><Check size={13} /> {tr(benefitMap.has(perk) ? benefitCopy(benefitMap.get(perk)!) : { zh: perk, en: perk })}</li>
         ))}
       </ul>
     );
@@ -309,6 +307,8 @@ export default function MembershipPage() {
       )}
 
       {/* 套餐 */}
+      {admin && <BenefitsEditor onSaved={setBenefits} />}
+
       {loadErr ? (
         <div className="mem-empty">{tr({ zh: '加载失败', en: 'Failed to load'
         })}: {loadErr}</div>
@@ -358,8 +358,8 @@ export default function MembershipPage() {
                       <li><CalendarClock size={13} /> {tr(copy.cadence)}</li>
                       <li><Check size={13} /> {tr({ zh: '扣费前发送通知', en: 'Notice before every charge' })}</li>
                       <li><Check size={13} /> {tr({ zh: '可随时关闭自动续费', en: 'Cancel anytime' })}</li>
-                      {plan.perks.filter((perk) => !universalPerkSet.has(perk)).map((p) => (
-                        <li key={p}><Check size={13} /> {tr(PERK_LABEL[p] ?? { zh: p, en: p })}</li>
+                      {plan.perks.filter((perk) => !universalPerkSet.has(perk) && benefitMap.get(perk)?.enabled !== false).map((p) => (
+                        <li key={p}><Check size={13} /> {tr(benefitMap.has(p) ? benefitCopy(benefitMap.get(p)!) : { zh: p, en: p })}</li>
                       ))}
                     </ul>
                     <button className="mem-plan-cta" onClick={() => setSelectedAutoRenewPlan(plan)}>
