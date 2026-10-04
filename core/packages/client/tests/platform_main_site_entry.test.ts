@@ -106,7 +106,7 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     const teachingEntry = learnEntries.find((entry) => entry.id === 'teaching');
 
     expect(landing).not.toMatch(/<Link\s+href="\/search"/);
-    expect(landing).toContain('<LandingSearch cards={searchCards} lang={lang} autoFocus />');
+    expect(landing).toContain('<LandingSearch cards={searchCards} lang={lang} />');
     expect(platformEntry).toMatchObject({ href: '/platform', internal: true });
     expect(platformEntry).not.toHaveProperty('adminOnly');
     expect(teachingEntry).toMatchObject({ href: '/courses', internal: true });
