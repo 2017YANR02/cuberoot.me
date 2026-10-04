@@ -3,14 +3,16 @@ import { act, createElement, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, expect, it, vi } from 'vitest';
 import type { PlatformEntity, PlatformRouteDefinition } from '@/lib/platform-types';
-const { access, load, loadManaged, uploadCover } = vi.hoisted(() => ({
-  access: { admin: false },
+const { access, load, loadManaged, uploadCover, learningRequest } = vi.hoisted(() => ({
+  access: { admin: false, user: null as null | {id:number} },
+  learningRequest: vi.fn(),
   load: vi.fn(),
   loadManaged: vi.fn(),
   uploadCover: vi.fn(),
 }));
 vi.mock('@/lib/platform-gateway', () => ({
   loadPlatformLessonMedia: load,
+  loadPlatformResource: async (resource: string, options: {params: Record<string,string>}) => ({items:[{id:options.params.lessonId,title:'Lesson',data:resource==='courses'?{lessons:[{id:'first',titleZh:'公开课时一'},{id:'second',titleZh:'公开课时二'}]}:{mediaId:'media',bodyZh:{text:'课时正文'},bodyEn:{markdown:''}}}]}),
   loadPlatformManagedLessonMedia: loadManaged,
   uploadPlatformLessonCover: uploadCover,
   platformMediaBrowserUrl: (value: string) => {
@@ -27,7 +29,10 @@ vi.mock('@/lib/platform-gateway', () => ({
 vi.mock('@/lib/auth-store', () => ({
   nextQuery: (next: string) => `?next=${encodeURIComponent(next)}`,
   useIsAdmin: () => access.admin,
+  useAuthUser: () => access.user,
+  getOwnerKey: () => access.user ? `u${access.user.id}` : '',
 }));
+vi.mock('@/lib/platform-learning', async importOriginal => ({...await importOriginal<typeof import('@/lib/platform-learning')>(), platformLearningRequest: learningRequest}));
 const locale = vi.hoisted(() => ({ english: false }));
 vi.mock('@/hooks/useT', () => ({ useT: () => (zh: string, en: string) => locale.english ? en : zh }));
 vi.mock('@/components/AppLink', () => ({ default: ({ href, children, className }: { href: string; children: ReactNode; className?: string }) => createElement('a', { href, className }, children) }));
@@ -38,7 +43,8 @@ import { PlatformPermissionError } from '@/lib/platform-gateway';
 
 beforeEach(() => {
   (globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
-  access.admin = false;
+  access.admin = false;access.user=null;
+  learningRequest.mockReset().mockResolvedValue({progress:{positionSeconds:45,progressBps:5000,status:'in_progress'},notes:[],attempts:[],lessons:[]});
   load.mockReset().mockResolvedValue({ mimeType: 'video/mp4', accessUrl: '/signed-video', expiresAt: '2099-01-01T00:00:00Z' });
   loadManaged.mockReset().mockResolvedValue({
     mediaId: 'media', mimeType: 'video/mp4', sizeBytes: 100, accessUrl: 'https://api.cuberoot.me/v1/platform/lessons/first/media?token=signed', expiresAt: '2099-01-01T00:00:00Z',
@@ -536,4 +542,46 @@ it('autoplays the next lesson only when enabled and stops at the last lesson', a
     await act(async () => host.querySelector<HTMLButtonElement>('nav button')!.click());
     expect(host.querySelector('video')!.autoplay).toBe(false);
   } finally { await act(async () => root.unmount()); }
+});
+
+
+it('refreshes saved notes through GET and renders structured lesson text with language fallback', async () => {
+  access.user={id:1};locale.english=true;
+  const host=document.createElement('div'),root=createRoot(host);
+  try {
+    await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'},lessonStartTime:0})));
+    expect(host.textContent).toContain('课时正文');
+    const add=[...host.querySelectorAll('button')].find(button=>button.textContent==='Take a note at this moment')!;
+    await act(async()=>add.click());
+    const textarea=host.querySelector('textarea')!;
+    await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value')!.set!.call(textarea,'My note');textarea.dispatchEvent(new Event('input',{bubbles:true}));});
+    await act(async()=>host.querySelector('form')!.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+    const reads=learningRequest.mock.calls.filter(([path])=>path==='/learning/lessons/first/state');
+    expect(reads).toHaveLength(2);expect(reads.every(call=>call[2]==='GET')).toBe(true);
+    const video=host.querySelector('video')!;Object.defineProperty(video,'duration',{value:120,configurable:true});
+    await act(async()=>video.dispatchEvent(new Event('loadedmetadata')));expect(video.currentTime).toBe(0);
+  } finally {locale.english=false;await act(async()=>root.unmount());}
+});
+
+
+it('loads the public course directory for an anonymous direct lesson without private requests',async()=>{
+ const host=document.createElement('div'),root=createRoot(host);
+ try{
+  await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'}})));
+  const directory=host.querySelector('nav')!;expect(directory.textContent).toContain('公开课时一');expect(directory.textContent).toContain('公开课时二');expect(directory.querySelector('a[href="/platform/courses/course/learn/second"]')).not.toBeNull();expect(learningRequest).not.toHaveBeenCalled();
+ }finally{await act(async()=>root.unmount());}
+});
+
+it('drops queued progress writes when the authenticated owner changes',async()=>{
+ access.user={id:1};const host=document.createElement('div'),root=createRoot(host);let release:()=>void=()=>{};
+ const pending=new Promise<void>(resolve=>{release=resolve;});
+ learningRequest.mockImplementation((_path:string,_body:unknown,method:string)=>method==='PUT'?pending:Promise.resolve({progress:{positionSeconds:0,progressBps:0,status:'not_started'},notes:[],attempts:[],lessons:[]}));
+ try{
+  await act(async()=>root.render(createElement(PlatformDomainContent,{definition:{id:'course-lesson'} as PlatformRouteDefinition,entity:{id:'first',title:'Lesson',data:{}} as PlatformEntity,params:{id:'course'}})));
+  const video=host.querySelector('video')!;Object.defineProperty(video,'duration',{value:120,configurable:true});
+  await act(async()=>video.dispatchEvent(new Event('pause')));
+  await act(async()=>video.dispatchEvent(new Event('pause')));
+  access.user={id:2};await act(async()=>{release();await pending;});
+  expect(learningRequest.mock.calls.filter(call=>call[2]==='PUT')).toHaveLength(1);
+ }finally{release();await act(async()=>root.unmount());}
 });

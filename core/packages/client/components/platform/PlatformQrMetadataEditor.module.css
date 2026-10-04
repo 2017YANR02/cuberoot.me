@@ -140,3 +140,7 @@
     justify-content: flex-start;
   }
 }
+
+.linkList li { padding: 14px; margin-block: 5px; border: 1px solid var(--border-default); border-radius: 10px; }
+.linkList .primaryLink { border-color: var(--accent); background: var(--accent-soft); }
+.linkDrag { appearance: none; display: grid; place-items: center; width: 38px; border: 0; border-radius: 8px; color: var(--muted-foreground); background: transparent; cursor: grab; touch-action: none; }

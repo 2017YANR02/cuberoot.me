@@ -56,50 +56,8 @@ export function composeQrArtPrompt(
   return bodies.length ? assembleQrArtPrompt(bodies.join('，')) : '';
 }
 
-const blockSeed: Array<[QrPromptDimension, string, string, string]> = [
-  ['风格', '科技发光', 'Tech glow', '科技未来风，边缘发光、细微光粒子与极淡科技网格，冷调高级质感'],
-  ['风格', '3D 渲染', '3D render', 'C4D / OC 立体渲染，亚克力玻璃光泽、柔和影棚布光，产品级精致'],
-  ['风格', '写实摄影', 'Photography', '写实原生摄影质感，真实材质、细腻高光与景深，电影级超清'],
-  ['风格', '水彩手绘', 'Watercolor', '水彩晕染手绘，透明水痕与自然笔触，清新文艺通透'],
-  ['风格', '赛博霓虹', 'Cyber neon', '赛博朋克霓虹，蓝紫青基调、霓虹辉光与全息光带，炫酷未来'],
-  ['风格', '极简留白', 'Minimal', '极简主义，大面积留白与柔和渐变，克制高级、杂志编排感'],
-  ['主体', '单颗悬浮魔方', 'Floating cube', '一颗 WCA 三阶魔方悬浮于画面中上方，边缘高光、主体清晰锐利'],
-  ['主体', '魔方城市', 'Cube city', '由魔方搭建的微缩城市与建筑群，海量趣味细节、欢乐繁忙'],
-  ['主体', '魔方爆裂', 'Cube burst', '一颗魔方爆裂分解，小方块与彩色碎屑向四周飞散并拖出动态轨迹'],
-  ['主体', '速拧手部', 'Speedcubing hands', '速拧选手手部正飞快转动魔方的特写，手指利落、动感十足'],
-  ['主题', '春节', 'Lunar New Year', '春节氛围，红灯笼、烟花、祥云与中国红配金点缀，喜庆热闹'],
-  ['主题', '圣诞', 'Christmas', '圣诞氛围，雪花、松枝、礼盒与暖色灯串，温馨梦幻'],
-  ['主题', '电竞赛事', 'Esports', '电竞赛事舞台，聚光灯、看台与夺冠氛围，热血竞技'],
-  ['主题', '未来太空', 'Future space', '未来太空场景，星空、星云与失重悬浮，宏大科幻'],
-  ['构图', '居中特写', 'Centered close-up', '主体居中偏上特写，中下大量负空间留白用于叠文字'],
-  ['构图', '等距俯视', 'Isometric', '等距 2.5D 俯视视角，模型般整齐排布、纵深规整'],
-  ['构图', '微距浅景深', 'Macro', '微距特写浅景深，主体锐利、背景奶油般柔化虚化'],
-  ['构图', '大场景鸟瞰', 'Aerial wide shot', '大场景鸟瞰全景，丰富细节与空间纵深'],
-  ['光影', '影棚暗调', 'Studio low-key', '影棚单束硬光配深色背景，强高光与深阴影对比，戏剧暗调'],
-  ['光影', '柔和晨光', 'Soft morning', '柔和自然晨光，通透明亮、淡淡光晕，清新干净'],
-  ['光影', '霓虹辉光', 'Neon glow', '霓虹辉光打光，冷蓝紫与品牌蓝交映，赛博炫彩'],
-  ['光影', '六色撞色', 'Six-color pop', '高饱和魔方六色撞色，明快活泼、对比强烈'],
-];
-
-const presetSeed: Array<[string, string, string, string]> = [
-  ['科技发光感', 'Tech glow', '通用', '深蓝到品牌蓝渐变背景，一个悬浮、边缘发光的等距三阶魔方，四周细微光粒子与光束，冷调高级质感'],
-  ['3D 渲染质感', '3D product render', '通用', 'C4D / OC 渲染的立体魔方，亚克力玻璃光泽，柔和影棚布光，品牌蓝渐变背景，轻微景深'],
-  ['孟菲斯撞色波普', 'Memphis pop', '通用', '孟菲斯设计风，大胆几何形和魔方撞色块，平涂矢量，波普趣味'],
-  ['国潮中国风', 'Chinese guochao', '通用', '国潮风，魔方融合祥云与传统几何纹样，红蓝配金箔点缀，大气东方感'],
-  ['极简高级', 'Minimal editorial', '通用', '大面积品牌蓝单色或柔和渐变，一个精致小魔方，大量负空间，克制高级的杂志编排感'],
-  ['碎裂粒子魔方', 'Particle burst', '大片', '一颗 WCA 魔方正在爆裂分解，小方块与彩色碎屑向四周飞散，暗色戏剧化背景，强逆光与边缘高光'],
-  ['流彩泼墨魔方', 'Color ink cube', '大片', '一颗干净利落的 WCA 魔方为主角，周围红橙黄绿蓝六色颜料和水墨在空中泼溅流动、丝缕环绕'],
-  ['魔方微缩世界', 'Miniature cube world', '场景', '等距俯视的微缩城市，整座城市由魔方搭建，卡通小人在拧魔方和比赛，高饱和撞色、海量趣味细节'],
-  ['赛博霓虹都市', 'Cyber neon city', '场景', '未来赛博都市雨夜，高楼由发光魔方堆叠，霓虹光带和湿润地面彩色倒影，电影级光影'],
-  ['水彩手绘', 'Watercolor', '插画', '水彩晕染手绘风，透明水痕与自然笔触，一颗魔方为主体，六色淡彩点染，清新文艺'],
-  ['伦勃朗暗调速度', 'Rembrandt speed', '大片', '伦勃朗式单束硬光打在魔方一面与边缘，其余隐入深阴影，魔方身后拉出横向动态模糊拖影'],
-  ['扁平吉祥物', 'Flat mascot', '插画', '扁平矢量卡通，一颗拟人魔方吉祥物有手脚和俏皮表情，活泼友好、品牌 IP 感'],
-];
-
-export const FALLBACK_QR_PROMPT_LIBRARY: QrPromptLibrary = {
-  blocks: blockSeed.map(([dimension, nameZh, nameEn, body], index) => ({ id: `block-${index}`, dimension, nameZh, nameEn, body })),
-  presets: presetSeed.map(([nameZh, nameEn, category, body], index) => ({ id: `preset-${index}`, nameZh, nameEn, category, body })),
-};
+// The editable database library is authoritative, including an intentionally empty library.
+export const FALLBACK_QR_PROMPT_LIBRARY: QrPromptLibrary = { blocks: [], presets: [] };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -132,7 +90,7 @@ export async function getQrPromptLibrary(signal?: AbortSignal): Promise<QrPrompt
     else presets.push({ id, nameZh, nameEn, category: typeof template.category === 'string' ? template.category : '', body });
   }
   return {
-    blocks: blocks.length ? blocks : FALLBACK_QR_PROMPT_LIBRARY.blocks,
-    presets: presets.length ? presets : FALLBACK_QR_PROMPT_LIBRARY.presets,
+    blocks,
+    presets,
   };
 }

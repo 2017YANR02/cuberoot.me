@@ -1,16 +1,21 @@
 import { createHmac, randomBytes } from 'node:crypto';
-import QRCode from 'qrcode';
 import { requirePlatformAdmin, type PlatformActor } from '../platform/auth.js';
-import { platformDb, platformQuery, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
+import { platformDb, platformQuery, platformTransaction, sendMutation, withIdempotency, type PlatformDb } from '../platform/db.js';
 import { badRequest, conflict, notFound, PlatformApiError } from '../platform/errors.js';
 import { platformRouter, privateNoStore, publicCache } from '../platform/http.js';
-import { parseQrCardDesign, parseQrCardRenderOptions, renderQrCardSvg, type QrCardDesign } from '../platform/qr-card.js';
+import { parseQrCardDesign, parseQrCardRenderOptions, renderQrCardSvg, renderQrCodeSvg, type QrCardDesign } from '../platform/qr-card.js';
 import { parseQrLinks, type QrLandingLink } from '../platform/qr-landing.js';
 import { approvedQrTarget, booleanField, enumField, integerField, isObject, objectField, pagination, readJsonObject, resourceId, stringField } from '../platform/validation.js';
 import { getIp } from '../utils/analytics_helpers.js';
 
 const SITE_ORIGIN = (process.env.PUBLIC_SITE_ORIGIN || 'https://cuberoot.me').replace(/\/+$/, '');
 export const platformQrRoutes = platformRouter();
+
+export function qrPrintedUrl(code: string): string {
+  const base = (process.env.PLATFORM_QR_BASE_URL || SITE_ORIGIN).replace(/\/+$/, '');
+  const path = process.env.PLATFORM_QR_PATH ?? '/platform/qr';
+  return `${base}${path && path !== '/' ? '/' + path.replace(/^\/+|\/+$/g, '') : ''}/${encodeURIComponent(code)}`;
+}
 
 type QrType = 'redirect' | 'landing';
 type QrTargetKind = 'internal_path' | 'external_url' | 'content';
@@ -121,13 +126,19 @@ function scanSecret(): string {
 async function recordScan(c: Parameters<typeof requirePlatformAdmin>[0], qr: QrRow): Promise<void> {
   const source = `${getIp(c)}\n${c.req.header('User-Agent') || 'unknown'}`;
   const visitorHash = createHmac('sha256', scanSecret()).update(source, 'utf8').digest('hex');
-  await platformQuery(platformDb(), `
+  await platformTransaction(async (db) => {
+    await platformQuery(db, `
     INSERT INTO platform_qr_scans (qr_code_id, qr_revision, visitor_hash, user_id, coarse_context)
     VALUES ($1::uuid, $2, decode($3, 'hex'), NULL, '{"source":"qr"}'::jsonb)
     ON CONFLICT (qr_code_id, visitor_hash) DO UPDATE SET last_scanned_at = NOW(),
       scan_count = platform_qr_scans.scan_count + 1,
       user_id = COALESCE(platform_qr_scans.user_id, EXCLUDED.user_id)
   `, [qr.id, qr.currentRevision, visitorHash]);
+    await platformQuery(db, `INSERT INTO platform_qr_scan_daily (qr_code_id, scan_day, visitor_hash)
+    VALUES ($1::uuid, (NOW() AT TIME ZONE 'UTC')::date, decode($2, 'hex'))
+    ON CONFLICT (qr_code_id, scan_day, visitor_hash) DO UPDATE
+      SET scan_count = platform_qr_scan_daily.scan_count + 1`, [qr.id, visitorHash]);
+  });
 }
 
 platformQrRoutes.get('/qr/:code', async (c) => {
@@ -147,16 +158,14 @@ platformQrRoutes.get('/qr/:code/redirect', async (c) => {
 });
 
 platformQrRoutes.get('/qr/:code/svg', async (c) => {
-  const qr = await findQr(resourceId(c.req.param('code'), 'code'), true);
-  const svg = await QRCode.toString(`${SITE_ORIGIN}/platform/qr/${encodeURIComponent(qr.code)}`, {
-    type: 'svg', margin: 4, errorCorrectionLevel: 'H', width: 512,
-  });
+  const qr = await findQr(resourceId(c.req.param('code'), 'code'), 'public');
+  const svg = renderQrCodeSvg(qrPrintedUrl(qr.code));
   c.header('Content-Type', 'image/svg+xml; charset=utf-8'); publicCache(c);
   return c.body(svg);
 });
 
 platformQrRoutes.get('/qr/:code/card', async (c) => {
-  const qr = await findQr(resourceId(c.req.param('code'), 'code'), true);
+  const qr = await findQr(resourceId(c.req.param('code'), 'code'), 'public');
   const stored = await findLatestQrCard(platformDb(), qr.id);
   const options = parseQrCardRenderOptions(new URL(c.req.url).searchParams);
   const card = parseQrCardDesign(stored?.card ?? {});
@@ -166,18 +175,23 @@ platformQrRoutes.get('/qr/:code/card', async (c) => {
     targetKind: qr.targetKind,
     targetValue: qr.targetValue,
     card,
-  }, `${SITE_ORIGIN}/platform/qr/${encodeURIComponent(qr.code)}`, options);
+  }, qrPrintedUrl(qr.code), options);
   const filename = `qr-card-${qr.code}${options.cropMarks ? '' : '-nocrop'}.svg`;
   c.header('Content-Type', 'image/svg+xml; charset=utf-8');
   c.header('X-Content-Type-Options', 'nosniff');
   c.header('Content-Disposition', `${options.download ? 'attachment' : 'inline'}; filename="${filename}"`);
-  publicCache(c);
+  c.header('Cache-Control', 'no-store');
   return c.body(svg);
 });
 
 platformQrRoutes.get('/admin/qr', async (c) => {
-  await requirePlatformAdmin(c);
+  const actor = await requirePlatformAdmin(c);
   const { page, pageSize, offset } = pagination(c);
+  const search = (c.req.query('q') || '').trim().slice(0, 240);
+  const status = c.req.query('status') || '';
+  if (status && !['active', 'disabled', 'archived'].includes(status)) badRequest('Invalid QR status');
+  const own = c.req.query('owned') === '1' ? actor.userId : null;
+  const filter = `($3 = '' OR qr.code ILIKE '%' || $3 || '%' OR qr.label ILIKE '%' || $3 || '%' OR revision.title_zh ILIKE '%' || $3 || '%' OR revision.title_en ILIKE '%' || $3 || '%') AND ($4 = '' OR qr.status = $4) AND ($5::bigint IS NULL OR qr.owner_user_id = $5::bigint)`;
   const rows = await platformQuery(platformDb(), `
     SELECT qr.id::text, qr.code, qr.label, qr.status, qr.current_revision AS "currentRevision",
       qr.is_printed AS "isPrinted", revision.target_kind AS "targetKind",
@@ -186,7 +200,7 @@ platformQrRoutes.get('/admin/qr', async (c) => {
       revision.title_zh AS "titleZh", revision.title_en AS "titleEn",
       COALESCE(NULLIF(revision.title_zh, ''), NULLIF(revision.title_en, ''), NULLIF(qr.label, ''), qr.code) AS title,
       COALESCE(design.card->>'intro', '') AS intro, COALESCE(design.card->>'term', '') AS term,
-      COALESCE(scans.scan_count, 0)::text AS "scanCount", qr.updated_at AS "updatedAt"
+      COALESCE(scans.scan_count, 0)::text AS "scanCount", qr.created_at AS "createdAt", qr.updated_at AS "updatedAt"
     FROM platform_qr_codes qr JOIN platform_qr_revisions revision
       ON revision.qr_code_id = qr.id AND revision.revision = qr.current_revision
     LEFT JOIN LATERAL (
@@ -194,21 +208,30 @@ platformQrRoutes.get('/admin/qr', async (c) => {
       WHERE qr_code_id = qr.id ORDER BY version DESC LIMIT 1
     ) design ON TRUE
     LEFT JOIN (SELECT qr_code_id, SUM(scan_count) AS scan_count FROM platform_qr_scans GROUP BY qr_code_id) scans
-      ON scans.qr_code_id = qr.id ORDER BY qr.created_at DESC, qr.id LIMIT $1 OFFSET $2`, [pageSize, offset]);
-  privateNoStore(c); return c.json({ items: rows, page, pageSize });
+      ON scans.qr_code_id = qr.id WHERE ${filter}
+      ORDER BY qr.created_at DESC, qr.id LIMIT $1 OFFSET $2`, [pageSize, offset, search, status, own]);
+  const totals = await platformQuery<{ total: number }>(platformDb(), `SELECT COUNT(*)::integer AS total FROM platform_qr_codes qr JOIN platform_qr_revisions revision ON revision.qr_code_id = qr.id AND revision.revision = qr.current_revision WHERE ${filter.replaceAll('$3', '$1').replaceAll('$4', '$2').replaceAll('$5', '$3')}`, [search, status, own]);
+  privateNoStore(c); return c.json({ items: rows, page, pageSize, total: totals[0]?.total ?? 0 });
 });
 
 platformQrRoutes.get('/admin/qr/stats', async (c) => {
   await requirePlatformAdmin(c);
   const days = Math.min(365, Math.max(1, Number(c.req.query('days') || 30)));
   if (!Number.isSafeInteger(days)) badRequest('days must be an integer between 1 and 365');
-  const rows = await platformQuery(platformDb(), `
-    SELECT DATE_TRUNC('day', scan.last_scanned_at) AS day,
-           SUM(scan.scan_count)::text AS "scanCount", COUNT(*)::text AS "uniqueVisitors"
-    FROM platform_qr_scans scan WHERE scan.last_scanned_at >= NOW() - ($1::integer * INTERVAL '1 day')
-    GROUP BY DATE_TRUNC('day', scan.last_scanned_at) ORDER BY day
-  `, [days]);
-  privateNoStore(c); return c.json({ items: rows, days });
+  const [trend, summary, byCode, byBatch, coverage] = await Promise.all([
+    platformQuery(platformDb(), `SELECT scan_day::text AS day, SUM(scan_count)::text AS "scanCount", COUNT(DISTINCT visitor_hash)::text AS "uniqueVisitors"
+      FROM platform_qr_scan_daily WHERE scan_day >= (NOW() AT TIME ZONE 'UTC')::date - ($1::integer - 1)
+      GROUP BY scan_day ORDER BY scan_day`, [days]),
+    platformQuery(platformDb(), `SELECT (SELECT COUNT(*) FROM platform_qr_codes)::text AS "totalCodes",
+      COALESCE(SUM(scan_count), 0)::text AS "totalScans", COUNT(DISTINCT visitor_hash)::text AS "uniqueVisitors" FROM platform_qr_scans`),
+    platformQuery(platformDb(), `SELECT q.id::text, q.code, q.label, q.status, COALESCE(SUM(s.scan_count), 0)::text AS "scanCount",
+      COUNT(DISTINCT s.visitor_hash)::text AS "uniqueVisitors", MAX(s.last_scanned_at) AS "lastScanAt"
+      FROM platform_qr_codes q LEFT JOIN platform_qr_scans s ON s.qr_code_id = q.id GROUP BY q.id ORDER BY SUM(s.scan_count) DESC NULLS LAST, q.code`),
+    platformQuery(platformDb(), `SELECT q.label, COUNT(DISTINCT q.id)::text AS codes, COALESCE(SUM(s.scan_count), 0)::text AS "scanCount",
+      COUNT(DISTINCT s.visitor_hash)::text AS "uniqueVisitors" FROM platform_qr_codes q LEFT JOIN platform_qr_scans s ON s.qr_code_id = q.id GROUP BY q.label ORDER BY SUM(s.scan_count) DESC NULLS LAST, q.label`),
+    platformQuery(platformDb(), `SELECT MIN(scan_day)::text AS "dailySince" FROM platform_qr_scan_daily`),
+  ]);
+  privateNoStore(c); return c.json({ items: trend, days, summary: summary[0], byCode, byBatch, coverage: { ...coverage[0], timeZone: 'UTC', historicalDailyUnavailable: true } });
 });
 
 type QrTemplateKind = 'prompt' | 'card';
@@ -519,7 +542,7 @@ platformQrRoutes.post('/admin/qr', async (c) => {
   const revision = parseRevision(body);
   const label = parseQrLabel(body) ?? '';
   const requestedCode = stringField(body, 'code', { min: 6, max: 80, pattern: /^[a-z0-9][a-z0-9_-]{5,79}$/ });
-  const count = integerField(body, 'count', { min: 1, max: 200 }) ?? 1;
+  const count = integerField(body, 'count', { min: 1, max: 500 }) ?? 1;
   const prefix = (stringField(body, 'prefix', { min: 1, max: 48, pattern: /^[a-z0-9][a-z0-9_-]{0,47}$/ }) ?? 'qr').toLowerCase();
   if (requestedCode && count !== 1) badRequest('code cannot be combined with batch count');
   const isPrinted = booleanField(body, 'isPrinted') ?? false;
@@ -628,13 +651,14 @@ platformQrRoutes.delete('/admin/qr/:id', async (c) => {
 
 platformQrRoutes.patch('/admin/qr/:id', async (c) => {
   const actor = await requirePlatformAdmin(c); const id = resourceId(c.req.param('id')); const body = await readJsonObject(c);
-  assertOnlyQrFields(body, [...QR_REVISION_FIELDS, 'label', 'status', 'code', 'isPrinted']);
+  assertOnlyQrFields(body, [...QR_REVISION_FIELDS, 'label', 'status', 'code', 'isPrinted', 'card']);
   const status = enumField(body, 'status', ['active', 'disabled', 'archived'] as const);
   const code = stringField(body, 'code', { min: 6, max: 80, pattern: /^[a-z0-9][a-z0-9_-]{5,79}$/ });
   const label = parseQrLabel(body);
   const isPrinted = booleanField(body, 'isPrinted');
+  const cardUpdate = hasOwn(body, 'card') ? parseQrCardDesign(objectField(body, 'card', { required: true })) : null;
   const revisionRequested = QR_REVISION_FIELDS.some((key) => hasOwn(body, key));
-  if (status == null && code == null && label == null && isPrinted == null && !revisionRequested) {
+  if (status == null && code == null && label == null && isPrinted == null && !revisionRequested && cardUpdate === null) {
     badRequest('No QR fields were provided');
   }
   const result = await withIdempotency(c, actor, `admin.qr.update:${id}`, body, async (db) => {
@@ -669,6 +693,9 @@ platformQrRoutes.patch('/admin/qr/:id', async (c) => {
     const effective = revision ?? current;
     const nextRevision = locked[0].currentRevision + (revision ? 1 : 0);
     if (revision) await insertRevision(db, qr.id, nextRevision, revision, actor);
+    if (cardUpdate !== null) await platformQuery(db, `INSERT INTO platform_qr_card_designs (qr_code_id, version, card, created_by_user_id, created_by_actor_key)
+      SELECT $1::uuid, COALESCE(MAX(version), 0) + 1, $2::jsonb, $3, $4 FROM platform_qr_card_designs WHERE qr_code_id = $1::uuid`,
+      [qr.id, JSON.stringify(cardUpdate), actor.userId, actor.ownerKey]);
     const rows = await platformQuery(db, `UPDATE platform_qr_codes SET current_revision = $2,
       status = COALESCE($3, status), code = COALESCE($4, code), is_printed = COALESCE($5, is_printed),
       label = COALESCE($6, label),
@@ -679,7 +706,7 @@ platformQrRoutes.patch('/admin/qr/:id', async (c) => {
         created_at AS "createdAt", updated_at AS "updatedAt"`,
     [qr.id, nextRevision, status ?? null, code?.toLowerCase() ?? null, isPrinted ?? null, label ?? null]);
     const row = rows[0]!;
-    const card = parseQrCardDesign(locked[0].card ?? {});
+    const card = parseQrCardDesign(cardUpdate ?? locked[0].card ?? {});
     return {
       status: 200,
       body: {

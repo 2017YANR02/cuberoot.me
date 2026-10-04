@@ -14,6 +14,7 @@ export type PlatformNewsStatus = typeof PLATFORM_NEWS_STATUSES[number];
 export type PlatformPathStatus = typeof PLATFORM_PATH_STATUSES[number];
 
 export interface PlatformCourseWrite {
+  presentation?: Record<string, unknown>;
   slug: string;
   titleZh: string;
   titleEn: string;
@@ -41,6 +42,9 @@ export interface PlatformEventTicketWrite {
 }
 
 export interface PlatformEventWrite {
+  category?: string;
+  program?: string[];
+
   slug: string;
   titleZh: string;
   titleEn: string;
@@ -68,6 +72,10 @@ export interface PlatformProductVariantWrite {
 }
 
 export interface PlatformProductWrite {
+  category?: string;
+  memberOnly?: boolean;
+  presentation?: Record<string, unknown>;
+
   slug: string;
   productType: 'physical' | 'digital';
   titleZh: string;
@@ -79,6 +87,10 @@ export interface PlatformProductWrite {
 }
 
 export interface PlatformNewsWrite {
+  category?: string;
+  excerptZh?: string;
+  excerptEn?: string;
+
   slug: string;
   titleZh: string;
   titleEn: string;

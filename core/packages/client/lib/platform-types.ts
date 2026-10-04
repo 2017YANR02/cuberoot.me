@@ -100,6 +100,9 @@ export interface PlatformResourceResult {
   items: PlatformEntity[];
   total?: number;
   nextCursor?: string | null;
+  page?: number;
+  pageSize?: number;
+  categories?: string[];
 }
 
 export type PlatformActionId =
