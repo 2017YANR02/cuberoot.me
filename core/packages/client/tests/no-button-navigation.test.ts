@@ -28,6 +28,8 @@ const ALLOWLIST = new Set([
   'app/[lang]/recon/[id]/alt/AltSubmitForm.tsx',
   // 已是真 <a href> + 修饰键判断的渐进增强(中键/Ctrl/Cmd/Shift 保留浏览器默认) —— 正确范式
   'app/[lang]/scramble/gen/SheetView.tsx',
+  // 真实 Link href + 中键/修饰键/target 判断；仅小程序桥接未接管时程序化回首页
+  'components/HomeLink.tsx',
   // deskpet 工具栏 Home 图标:与 theme/lang/donate 等动作图标同排,靠 .deskpet-toolbar button
   // 元素选择器取样式 + 带 onClose() 副作用,作动作图标保留
   'components/DeskPetSearch.tsx',
