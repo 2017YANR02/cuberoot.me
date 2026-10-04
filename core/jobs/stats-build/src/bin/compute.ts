@@ -12,6 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // 后续可改为自动扫描 statistics/ 目录
 // NOTE: 导出供 compute_all.ts 复用
 export const REGISTRY: Record<string, () => Promise<Record<string, unknown>>> = {
+  'annual_participation': () => import('../statistics/annual_participation.js'),
   'best_medal_collection_from_abroad_by_country': () => import('../statistics/best_medal_collection_from_abroad_by_country.js'),
   'best_medal_collection_from_abroad_by_person': () => import('../statistics/best_medal_collection_from_abroad_by_person.js'),
   'complete_competition_winners': () => import('../statistics/complete_competition_winners.js'),

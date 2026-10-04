@@ -618,7 +618,7 @@ export default function AlgCaseView({ puzzle, set, caseObj: caseProp, data }: { 
       setSlug={set}
       state={{ mode: 'edit', existing: caseObj }}
       algorithmsAfter={renderCommunityAlgs(false)}
-      renderOrientationSetup={(setup) => (
+      renderOrientationSetup={m ? undefined : (setup) => (
         <SetupLine
           puzzle={puzzle}
           setup={displayCaseScramble(puzzle, set, caseViewSetup(setup, effectiveViewAngle))}
