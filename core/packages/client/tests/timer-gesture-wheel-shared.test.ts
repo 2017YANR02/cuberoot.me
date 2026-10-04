@@ -219,6 +219,49 @@ describe('shared useGestureWheel pointer lifecycle', () => {
     return accepted;
   }
 
+  it.each(['touch', 'mouse'] as const)('consumes the %s stop press click even when it lands on a restored source link', (pointerType) => {
+    render({ canGesture: false, ignoreButtons: true });
+    const surface = host.querySelector('.fixture-surface')!;
+    const link = document.createElement('a');
+    link.href = '#competition';
+    const navigate = vi.fn((event: Event) => event.preventDefault());
+    link.addEventListener('click', navigate);
+    surface.appendChild(link);
+    const fixture = { pointerType, time: 100, x: 50, y: 60 };
+
+    // While running, chrome has pointer-events:none. Stopping restores it
+    // before the WebView dispatches the compatibility click at this position.
+    dispatch(surface, 'pointerdown', fixture);
+    dispatch(surface, 'pointerup', { ...fixture, time: 140 });
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(effects.down).toHaveBeenCalledTimes(1);
+    expect(navigate).not.toHaveBeenCalled();
+
+    // A new deliberate press must still open the competition normally.
+    dispatch(link, 'pointerdown', { ...fixture, time: 200 });
+    dispatch(link, 'pointerup', { ...fixture, time: 240 });
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(navigate).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves keyboard activation and clears click suppression when a press is cancelled', () => {
+    render({ canGesture: false, ignoreButtons: true });
+    const surface = host.querySelector('.fixture-surface')!;
+    const button = host.querySelector('button')!;
+    const activate = vi.fn();
+    button.addEventListener('click', activate);
+    const fixture = { pointerType: 'touch' as const, time: 100, x: 50, y: 60 };
+    dispatch(surface, 'pointerdown', fixture);
+    dispatch(surface, 'pointerup', { ...fixture, time: 140 });
+    button.click();
+    expect(activate).toHaveBeenCalledTimes(1);
+
+    dispatch(surface, 'pointerdown', { ...fixture, time: 200 });
+    dispatch(surface, 'pointercancel', { ...fixture, time: 240 });
+    button.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+    expect(activate).toHaveBeenCalledTimes(2);
+  });
+
   it('keeps a sub-slop mouse press on the normal timing path', () => {
     render();
     const surface = host.querySelector('.fixture-surface')!;
