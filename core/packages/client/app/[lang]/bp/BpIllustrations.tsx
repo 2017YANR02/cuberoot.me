@@ -42,14 +42,3 @@ export function FounderEvidence() {
     <div className="bp-team-visual"><div><span className="bp-margin-label">{tr({ zh: '创始人全职投入', en: 'FULL-TIME FOUNDER' })}</span><strong>{tr({ zh: '教学 × 产品', en: 'Teaching × product' })}</strong><p>{tr({ zh: '连接课程内容、训练工具与教师社群中的实际需求。', en: 'Connecting courses, training tools and real needs from the teacher community.' })}</p></div><div className="bp-team-people" aria-hidden><span><UserRound /></span><i>+</i><span><BookOpen /></span></div></div>
   </div>;
 }
-
-export function ReadingGuide() {
-  return <div className="bp-reading-guide overview-wrap">
-    <div><span className="bp-margin-label">{tr({ zh: '本计划的三个重点', en: 'THREE REASONS TO READ' })}</span><strong>{tr({ zh: '先看价值，再看如何实现。', en: 'The value, then the path to delivery.' })}</strong></div>
-    {([
-      ['#bp-market-size', { zh: '市场有多大', en: 'How large is the market' }, { zh: '爱好者、机构与培训消费', en: 'Enthusiasts, institutions and training spending' }],
-      ['#bp-advantages', { zh: '为什么由我们做', en: 'Why this team' }, { zh: '专业、内容与产品的组合', en: 'Expertise, content and product' }],
-      ['#bp-business', { zh: '如何形成收入', en: 'How revenue develops' }, { zh: '订阅、课程与线上赛事', en: 'Subscriptions, courses and online events' }],
-    ] as const).map(([href, title, subtitle], i) => <a href={href} key={href}><span className="bp-guide-number">0{i + 1}</span><strong>{tr(title)}</strong><span>{tr(subtitle)}</span><ArrowUpRight size={17} /></a>)}
-  </div>;
-}
