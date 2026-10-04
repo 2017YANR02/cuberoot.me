@@ -145,7 +145,7 @@ export default function BusinessPlanPage() {
         <p className="overview-intro">{tr({ zh: '正在持续训练的选手，需要反复计时、练习识别与动作、比较记录并研究解法。计时器与训练器中的多项功能已经被使用；本计划不展开具体选手案例，把重点放在产品如何承接日常练习与专业服务。', en: 'Practising competitors repeatedly time solves, train recognition and execution, compare records and study solutions. Multiple timer and trainer functions are already in use. This plan focuses on the product’s practice and service role without identifying individual athletes.' })}</p>
         <figure className="bp-product-preview">
           <div className="bp-preview-toolbar"><span className="bp-window-dots" aria-hidden><i /><i /><i /></span><span>cuberoot.me / timer</span><span>{tr({ zh: '真实产品界面', en: 'ACTUAL PRODUCT' })}</span></div>
-          <img src="/images/overview/timer-preview-v2.webp" width={1440} height={900} loading="lazy" alt={tr({ zh: '魔方根计时器的真实界面，包含打乱、计时和阶段求解入口', en: 'The actual CubeRoot timer with scramble, timing and stage-solving controls' })} />
+          <img src="/images/overview/timer-preview-v3.png" width={2880} height={1344} loading="lazy" alt={tr({ zh: '魔方根计时器的真实界面，包含打乱、计时和阶段求解入口', en: 'The actual CubeRoot timer with scramble, timing and stage-solving controls' })} />
           <figcaption><div><Timer size={18} aria-hidden /><strong>{tr({ zh: '计时器 · 高频训练入口', en: 'Timer · the everyday practice entry' })}</strong></div><AppLink href="/timer" prefetch={false}>{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></AppLink></figcaption>
         </figure>
         <ProductAtlas />
