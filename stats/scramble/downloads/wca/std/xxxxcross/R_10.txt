@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / R / bin 10
-# Population in this bin: 302
+# Population in this bin: 304
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 7768001,R2 B2 R2 U' R2 U' R2 B' R' F D' R2 F2 R' U F' U B' D2,R,German Open 2014 (2014-04-05~06),333bf Final A E2
@@ -23,7 +23,7 @@
 254246001,U' L2 F2 U2 B2 U L2 F2 L' F' U B U' L F' U2 L F2 L,R,Cowboys FMC Party 2016 (2016-02-13),333fm R1 A #2
 4626879012,R B2 R F2 R2 D2 R2 D B' L2 D B2 D2 U B L D' L' F,R,New York Multimate PBQ 2025 (2025-04-04~06),333mbf R1 A #2
 324792001,L F' D2 R' U2 R2 B L' F2 R B2 R' B2 R B2 R2 U2 L,R,Bolivia Nationals 2016 (2016-07-01~03),333 R1 A #3
-4420270037,D' L' U' D' B2 R D' F' L2 U R2 L U2 F2 R2 L' B2 R U2 L',R,North Star Cubing Challenge MN 2025 (2025-01-11~12),333mbf Final A #1
+5852414001,U2 R2 U' D R' F' D B' U D2 B L2 D2 B' D2 B L2 R U2,R,Center Shopping Jacarepaguá Open 2026 (2026-09-26~27),333oh R1 A #4
 359730001,B U' L B2 U R2 L2 F L2 U R' B2 D2 L U2 B2 L' B2 R U2,R,SPB Championship 2016 (2016-09-03~04),333 R1 B #2
 364739001,U2 L2 B' D2 L2 B' U2 F' U B U' F U2 L' R2 D' U F R',R,Praxis Open 2016 (2016-09-24),333oh Final E #2
 4208816001,B' D' B F2 D2 F' L2 B R2 U L' B2 F2 R' B' R' U,R,M Moves in Middlebury 2024 (2024-10-19),333 R1 D #3

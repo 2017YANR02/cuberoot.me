@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / BGOR / bin 2
-# Population in this bin: 204
+# Population in this bin: 205
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 17474001,D2 B2 L2 B D2 L2 R2 F2 D' L D R U' L2 F U2 F' U',R,Apollo Open 2014 (2014-05-04),333 R2 B E1
@@ -181,7 +181,7 @@
 5028032001,R2 B2 L2 B2 U' F2 B U B D' R' F' U F L2 R B2 R',R,Athens Never Ending Summer A 2025 (2025-09-13),333 R2 B E2
 5034811002,B2 U L2 U2 B2 D' R2 B2 L B2 D' U R' D F' D2 R' F' D B' L,B,Cube Factory League Brzeziny 2025 (2025-09-20~21),333mbf Final D #1
 5101282001,L2 B D2 R2 D2 L' F L D B2 D R D2 R B' F',O,Cubing in Westerly RI 2025 (2025-10-11~12),333 R2 B E2
-5179558001,D2 F2 D B2 L2 U' F2 B L2 D L B' F2 U' B R2 F' D2,B,Berkeley November Weekday 2025 (2025-11-14),333 R1 A E2
+5847787001,U2 L2 F2 R2 D' R2 B' R B2 U2 R F' L D2 L B D',R,Maltese Championship 2026 (2026-09-26),333 R1 A #5
 5212288001,B R2 B' D B' U2 D2 L F2 U D2 F B U2 D2 L2 F' D2 B',B,Sudestão ABRACM 2025 (2025-11-21~23),333oh R2 B #4
 5226328001,D L2 B' U' D' R U R D2 L B2 D2 B2 R2 F2 R F U',O,Tuparendi Open Quati 2025 (2025-11-29~30),333 R2 B E1
 5274683001,F B2 R2 D2 B' L B' D2 B2 U' L2 D2 F2 R2 L2 U' B2 D L2,B,Merry Twistmas Lynnwood 2025 (2025-12-13),333 Final A E1

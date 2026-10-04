@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / OR / bin 10
-# Population in this bin: 659
+# Population in this bin: 664
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1734001,B' L2 F' R2 B' D2 F L2 R2 D' B F2 D' F U' B2 R F2 L' B',O,Kansai Open 2014 (2014-03-21~22),333 R2 B E1
@@ -139,7 +139,7 @@
 1827227001,L B2 F2 R F2 L' R2 F2 U2 F' L B' D2 R U R2 D L F U2,O,Welcome Back Portland 2022 (2022-03-12),333 Final A E1
 806325001,L' B2 D2 B2 L' F2 D2 R2 F2 R2 F R2 U' L D2 B2 F2 U' F U,O,New Hope Open Spring 2018 (2018-06-16),333 R2 C #4
 808467001,D R2 F2 U' L2 B2 D B2 L B' D R' B' L D B' F' D' L,O,El Escorial Open 2018 (2018-06-16~17),333 R2 B #5
-811513001,R2 F U2 B2 L2 R2 U2 F' U2 R2 F2 R U' B2 L R D L F' L' U,O,Delhi Cubing Heat Wave 2018 (2018-06-24),333oh R1 A #5
+5855575001,U2 L2 F' R2 U2 F' D2 U B D' R2 B L' B L' B R' U2,O,Dublin Autumn Solving 2026 (2026-09-26~27),333 R2 B #4
 3466886001,F2 D B2 R U' F R2 F' L2 F2 B2 U2 L D2 R F L' D,O,Fushun Open 2024 (2024-01-28),333 R1 B #5
 818356001,B2 D' L2 U L2 D2 B2 U' L' F D' U L B2 F L R' F' U2,O,Peru Nationals 2018 (2018-06-29~07-01),333 R1 I #4
 1287504001,F' D2 U2 L2 F D2 L2 D2 B' R' D' B' U F U L' B2 L' D R,O,Matsu Open 2019 (2019-09-07),333 R1 A E1

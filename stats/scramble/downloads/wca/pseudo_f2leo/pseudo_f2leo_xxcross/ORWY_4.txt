@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / ORWY / bin 4
-# Population in this bin: 323
+# Population in this bin: 324
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -126,7 +126,7 @@
 5697437027,R2 L U L B' L' U L2 U2 L2 B2 R2 L' U2 B2 L F' L2 D2 B R,R,Side N Blind Narre Warren 2026 (2026-06-13~14),333mbf Final A #2
 5791066001,U R2 D B2 D R2 F2 L' B L2 D' U2 L' B D' R' B2 D,R,Luzern Sunset Solves 2026 (2026-08-19),333oh Final B #1
 3698617023,R' D' L2 D2 L2 U2 B L2 B D2 F' L' B2 U2 L2 R2 B2 U L' B',O,Hilliard Hippocampus XIV - Earth Day 2024 (2024-04-22),333mbf Final A #1
-1520523001,F' B' L' D' B U B' R2 U B L2 U F2 U' R2 D2 B2 U F2 U R2,R,Regreso a Clases Bogotá 2020 (2020-01-18~19),333oh Final A #1
+5845317001,R F' R' B2 U2 L' D2 U2 R B2 U2 F2 U' F D F' L2 U L',W,Hancock County NxNs 2026 (2026-09-26),333 R2 B #4
 5785108003,D' L' F L R U2 L F2 U2 F2 R2 F2 R U2 B' U L B L' R U2 L2 U',W,Kansas Championship 2026 (2026-08-14~16),333mbf Final A #1
 1545002057,D' F2 D R2 D' U' F2 L2 B D' F' U2 R U R' B2 U' L2 R2 B',O,IIT Roorkee Open 2020 (2020-02-15~16),333mbf Final A #1
 1599261010,L' U2 L' U2 B2 U2 B2 F2 L2 F' D' R' U2 B' F' D L' B' L B' L2,Y,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3

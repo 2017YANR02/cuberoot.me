@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / Y / bin 2
-# Population in this bin: 201
+# Population in this bin: 203
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 68774001,D2 R2 D' R U2 L' D R' L' B' D' R2 F2 U F2 U F2 B2 U' D2,Y,Hungarian Open 2014 (2014-10-17~19),333oh R2 B E1
@@ -35,7 +35,7 @@
 692241070,L2 D' R2 D' L2 R2 D' F2 U L2 U2 F' R D B D2 B D' L2 U B R',Y,Please Be Quiet WPI Winter 2018 (2018-01-20),333mbf Final A #3
 725639028,D' R2 D' F2 U B2 D R2 B2 U2 F2 L' D U2 B D R' D' L2 D F' L2 U',Y,Rockville Qualifier 2018 (2018-03-17),333mbf Final A #1
 728799001,R2 F' L F' D2 R' L2 D2 R2 L' U R2 B2 R2 F2 L2 U R2,Y,Marikina City Open 2018 (2018-03-18),333 R1 B #1
-739745022,F L2 B' U2 L2 R2 B' D2 R2 F2 U' R' B' D2 B R2 F L' B2 U2 B' L2,Y,Belgian Easter 2018 (2018-03-31~04-01),333mbf Final A #1
+5853869001,R2 U2 B D2 B R2 B' R2 L F D2 U' F R2 D B2 D' U2,Y,Viva SaNxNta Cruz 2026 (2026-09-26~27),333 R1 C #2
 769392006,B2 R2 F' U2 F2 U2 B2 L2 D R' B U2 R D2 U B2 L B L2 U',Y,Beijing Open 2018 (2018-04-30~05-01),333mbf Final A #1
 797008001,L U2 L D2 F2 R' F2 L R' B' R2 B L' D2 L U' B2 U2 L D2,Y,Ukrainian Open 2018 (2018-06-01~03),333mbf Final A #1
 807119001,F' L' B2 U D' B' R2 L2 D L U2 R2 F2 L2 U2 B' U2 F2 D2 B,Y,Lier Open 2018 (2018-06-16~17),333 R2 B #5
@@ -48,7 +48,7 @@
 889994001,R2 U' L2 D' B2 D' L2 B' F' U L' R2 B R D2 L F R,Y,Speedcubes Fest in SPB 2018 (2018-09-29~30),333oh Final A #5
 899202001,L2 D' B2 D2 B2 U' F2 D' F U' R U' B L2 D2 F D' L2 B',Y,Paris Open 2018 (2018-10-06~07),333 R1 E E2
 913220001,B L2 U' B L' D2 R' F L2 F L2 U2 R2 D R2 D' F2 R2 D L2,Y,Iloilo Speedcubing Open II 2018 (2018-10-28),333 R2 A E1
-918621001,D2 U2 L2 D2 B' D2 F R2 F2 D F R2 U' B' D2 L2 D' L B2 L,Y,Cubing ATMOSphere 2018 (2018-10-27~28),333 R1 B E1
+5855275001,R2 L2 U R' B2 L B U L2 D F R2 F2 D' R2 L2 F2 L2 B',Y,Cubing Skills in Almaty 2026 (2026-09-26~27),333bf Final A #4
 932365001,F2 D' B' U' F2 B' U' D2 R' B L2 B2 D' L2 F2 D' R2 F2 U2 L2,Y,Lower Moreland Fall 2018 (2018-11-10),333 R1 F #3
 946991001,F D2 R2 U' R2 U' F' L2 F L2 B U2 R F2 U2 R L U2 F2,Y,Vancouver Select Winter 2018 (2018-12-02),333 R2 F #4
 952553001,L2 F2 L' U2 B2 F2 R2 B2 R D2 B' R2 B D' R2 B R D B2,Y,Pittsburgh Open 2018 (2018-12-08~09),333oh R1 B #5

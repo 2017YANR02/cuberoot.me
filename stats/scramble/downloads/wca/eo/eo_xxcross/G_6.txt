@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / G / bin 6
-# Population in this bin: 122
-# Samples listed: 122 (all entries in this bin)
+# Population in this bin: 123
+# Samples listed: 123 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 11138001,L' F2 R B2 L' U2 L2 B2 U2 R2 D F2 L' U2 R D2 F R2 F D L' F2,G,Slovenian Open 2014 (2014-04-12~13),333bf Final A E1
@@ -127,3 +127,4 @@
 5687965001,D' B D B' U2 L U' D' R2 B2 R2 B D2 L2 F' R',G,RVA Spring 2026 (2026-05-31),333 Final A E2
 5700997050,D' F' B2 U' D' R2 U' B' R2 D2 B' D2 L2 B2 R2 B L2 U',G,Redhawk Slow Summer OH 2026 (2026-06-13~14),333mbf Final B #1
 5759591001,F' U' R' B R' U R B2 R L' F2 U B2 U' R2 D F',G,Jiajiang Open 2026 (2026-07-25),333 R3 A #5
+5847851023,D B' D' U' B2 U R2 D R2 B' D B2 D2 B' U2 L D2 U L',G,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final A #1

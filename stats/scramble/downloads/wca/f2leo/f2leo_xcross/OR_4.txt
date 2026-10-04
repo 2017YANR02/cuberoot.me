@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / OR / bin 4
-# Population in this bin: 908
+# Population in this bin: 912
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2658293001,L2 B' D' L2 D' F2 R2 B2 U B L' R' U2 B' F2 L2 U' L2,R,Cube Ta Liwat Iloilo 2023 (2023-04-23),333 R2 B E2
@@ -173,7 +173,7 @@
 2775069063,U R2 B L' F' B' D' U2 B D2 B U2 F L2 F R2 D F D' L,R,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final B #2
 2650798034,D2 B D2 U2 R2 B D2 F L2 D2 R2 D' B2 L D R2 B' U' F' L2 U,R,Manaus Plaza Open 2023 (2023-04-15~16),333mbf Final A #1
 1914482001,R D' B2 R F2 U R' D' R2 F2 U' B2 U D L2 U' R' F L,O,R&Cubers La Paz 2022 (2022-05-07~08),333oh R1 C #3
-3682113001,D' L U' R2 F' R2 F L F2 D' R2 D' R2 L2 D F2 L2 R' D,O,Lahen Cubefest 2024 (2024-04-20~21),333 R1 C #3
+5851443001,B2 L2 U2 B2 D' B2 D R2 U' B U' F L' F' L' F2 U L2 D,O,Szokolya Open 2026 (2026-09-26~27),333oh R1 A E2
 5418691001,R' F2 U F2 D' U' L2 U' F2 U R2 F' R F2 L2 B2 R D R2 B,O,Iowa Winter Cooldown 2026 (2026-02-28),333 R2 B #5
 885102014,B2 D' B2 D2 R' U D2 R2 F2 D R2 F U2 F R2 B2 D2 B',O,Swiss Nationals 2018 (2018-09-21~23),333mbf Final B #1
 661473002,R' F2 R' B2 L2 F2 R2 D2 R' U2 R F' U B2 U' F2 L2 R' D B2 U' L B2,O,Campeonato Nacional Perubik 2017 (2017-08-26~27),333mbf Final A #1

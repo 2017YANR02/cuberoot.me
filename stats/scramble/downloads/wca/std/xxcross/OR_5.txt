@@ -1,8 +1,8 @@
 # Scramble samples — std / xxcross / OR / bin 5
-# Population in this bin: 267
+# Population in this bin: 268
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -74,7 +74,7 @@
 846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,R,Batam Open 2018 (2018-08-04~05),333mbf Final A #1
 867266001,D2 R F2 R2 U2 F2 U2 B2 R2 B' U B' F R D' B' D2 L2 R' B D',O,Canada's Best in the West 2018 (2018-08-24~26),333bf R1 D #1
 878819001,L B2 F2 L' U2 R2 D2 L F2 R F2 U' B2 D' B2 D L2 R B U2,R,Thailand Championship 2018 (2018-09-15~16),333 R1 B #2
-880129001,L' F' L D L D' L2 F' R' F2 U D L2 D' R2 D L2 D',R,No 3x3x3 Mississauga 2018 (2018-09-15),333ft Final A #3
+5846258001,L2 F' R2 L' F' B L D2 F2 U2 D' L2 U2 D B2 L' B' R2,O,Tafalla Open 2026 (2026-09-26~27),333 R1 B #3
 4606347001,L2 U2 L2 U R2 D F2 L' F2 L' F' D F2 L B2 R' B' R2,R,South Dakota Playhouse 2025 (2025-03-29),333oh Final A #2
 5428457001,F D2 F' U' F2 D2 F2 R2 U' B2 D' R U B2 L2 U' R D R,O,Megaminx Madness AZ 2026 (2026-03-07),333 Final D E2
 5694936001,R F L' R2 D2 U2 R' B2 R D2 R B2 F R' U B2 L' B' F' D2,O,Huanggang Open 2026 (2026-06-07),333 R1 A #3

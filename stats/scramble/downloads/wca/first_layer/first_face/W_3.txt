@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / W / bin 3
-# Population in this bin: 55
-# Samples listed: 55 (all entries in this bin)
+# Population in this bin: 56
+# Samples listed: 56 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 234584001,F D' F' B R2 D2 R' B U L2 U' D R2 U L2 F2 R2 U,W,Cubing Mérida 2015 (2015-12-27~28),333oh R1 A #1
@@ -60,3 +60,4 @@
 5663922001,U2 R' U' R' U F2 L2 F2 D' R2 U' F2 L R' B' D B' D F2,W,Le Cube Normand Open 2026 (2026-05-23~25),333oh R1 A E2
 5827406001,F2 L2 F U2 L2 B' D2 U2 B' D B' L2 F' U' F2 D' L D' U,W,Liberty Science Center Fall B 2026 (2026-09-13),333 R1 C #3
 5836998001,D F R L2 D' L D' F B' L' F D2 R2 L2 D' R2 U2 L' F,W,Visé Sunday Open 2026 (2026-09-13),333bf R1 B #3
+5855841007,R' B2 R' D R' D B U2 D F' U2 R' U2 D2 F2 U2 R' D' B R2,W,Finnish Quiet Championship 2026 (2026-10-03),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / BGWY / bin 4
-# Population in this bin: 695
+# Population in this bin: 698
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1882840001,U2 B2 R2 D U' L2 F2 U F R2 D' R2 B' D' L' U2 F U L,B,Paris Open 2022 (2022-04-16~18),333 R2 C #1
@@ -188,7 +188,7 @@
 5365904001,B' U' D' L2 B2 R' U' R' D' R2 U2 R2 F2 R2 B D2 B' L2,B,Cubestuff Centurion Q1 2026 (2026-01-31~02-01),333oh R1 A #4
 3480770001,L' B' L F B' R2 U' B' L2 B' D2 B' D2 B2 R2 U' F L2,G,Pllouvara Open 2024 (2024-02-03~04),333 R1 C #4
 905190024,F2 U2 B2 L2 B2 R' F2 U2 L D2 F D2 R' F2 L U R2 U B2 F L' F',W,Ukrainian Nationals 2018 (2018-10-12~14),333mbf Final A #1
-912856001,L2 U2 L D2 B2 L' R2 D2 L F R2 B2 L R2 U L' F2 D B,Y,Shantou Open 2018 (2018-10-28),333 R1 E #5
+5845276001,B U2 R' U2 R U2 R' U2 R' F' D' F2 R' D B' F' L R',G,Hancock County NxNs 2026 (2026-09-26),333 R1 D #2
 4037415001,U R' F L2 F2 L2 U B' U2 D' B2 D2 F2 L2 F2 D' B2 U' B2 F',G,Micentro Funza 2024 (2024-08-24),333 Final B E1
 2882186001,B2 D' U2 R2 U2 L' U2 L B2 L' D2 U2 F D' F2 D L2 U2 R2,W,NTU Speedcubing 2023 (2023-07-16),333 R1 A #1
 1200670001,R B2 L F2 L B2 F2 D2 F' L' U' L F2 R' D2 F R' D R,B,Jacksonville 2019 (2019-06-29),333 R1 A #5

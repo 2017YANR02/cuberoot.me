@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / B / bin 5
-# Population in this bin: 876
+# Population in this bin: 880
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2992291001,L2 D' L2 D2 U' L2 R' F D2 B2 F' L D' R D L' R B' L2,B,Podolian Open 2023 (2023-08-19~20),333bf Final A E2
@@ -188,7 +188,7 @@
 2013419001,L' F' D2 R D R2 F2 D R2 U2 R' D' R' U B2 D U' L2,B,Rubik's WCA North American Championship 2022 (2022-07-07~10),333bf R2 A E2
 717300001,U D' F2 U' F2 L' U' F' U B U F2 U' R2 D R2 L2 F2 L2,B,CCS 2018 (2018-03-02~03),333oh R1 A #3
 718896001,D' B2 F2 R2 D' U2 R D' L2 R' U' L2 F U' F2 D2 B,B,Swisscubing Cup I 2018 (2018-03-03~04),333 R2 A #1
-5018470001,D2 F' L2 U2 L2 D F2 D F2 R2 D' R2 F2 R' U' F2 L' B L2 B2,B,Sandnes Open 2025 (2025-09-13~14),333oh Final A #2
+5854270001,U F' D F' D L D2 L' U B2 U' F2 L2 D F2 U B',B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 R1 A E1
 5229917001,F R' D2 L2 F2 D R2 D' B2 F2 L2 U B L U L D L' U L,B,Minnesota Championship 2025 (2025-11-29~30),333 R1 A #4
 737396001,R' F2 U2 L B2 F2 U2 B2 F D L B U F' L' F' D U R,B,Tlaxcala Sunshine 2018 (2018-03-30~04-01),333oh Final A E1
 4235865001,D' R U' F2 L2 D U L2 D' L2 B2 U' R D' L2 B2 L' B U',B,Weekend Madness in Yerevan 2024 (2024-10-26~27),333 R1 C #2

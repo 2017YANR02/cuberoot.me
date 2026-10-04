@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGOR / bin 8
-# Population in this bin: 464
+# Population in this bin: 466
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 26001,U2 R2 U' F2 D' L2 F2 D L B2 F2 D' L' U2 L R F U2 B' D2 B R2,R,Galeries Dorian Open 2014 (2014-03-15),333bf Final A E2
@@ -26,7 +26,7 @@
 146858001,U' L2 F2 U' R2 F2 D B2 R B' D' B2 L' R' B F L' U' F' L2 U,G,Indian Nationals 2015 (2015-05-29~31),333bf R1 H #1
 4631618001,U F2 U F' U2 L2 B' R U2 B D R2 F U2 L2 D2 L2,B,Davis Spring 2025 (2025-04-06),333 R2 B #4
 5292388001,U2 F' U' D L2 B' D R B' R' D' R2 U B2 D R2 U' F2 U2,O,MYHM Bolivia Nationals 2025 (2025-12-20~22),333oh R1 A #5
-166720001,R' D' R D2 L' U R' D2 F2 D' R' L U2 F2 R2,B,World Rubik's Cube Championship 2015 (2015-07-17~19),333oh R2 A #3
+5852597017,U' F2 D2 B' U R F' R2 B' R F L2 F2 U2 B2 D' F2 B2 U L',B,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 A #3
 4250810001,R F L' F R' L2 D2 B' R2 B2 R2 B2 D R2 U F2 U F',O,Rubik's UK Championship 2024 (2024-11-01~03),333 R1 G #1
 3770005001,D R2 U B2 D' R' L2 B D2 R2 B2 L' B2 U2 R' D' F2 L' F2,B,Quiet Seattle Spring 2024 (2024-05-18),333bf R1 A #3
 195618001,F2 L F2 L2 D R F U2 R F2 U' F2 U2 R F2 L F2 R2,R,Australian Nationals 2015 (2015-10-03~04),333 R1 F #4

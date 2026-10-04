@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxcross / G / bin 5
-# Population in this bin: 7
-# Samples listed: 7 (all entries in this bin)
+# Population in this bin: 8
+# Samples listed: 8 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 816854001,F2 R2 U R2 U F2 D' L F L' U' F' L' D2 B D',G,Vantaa Open 2018 (2018-06-30~07-01),333oh R2 C #4
@@ -12,3 +12,4 @@
 4202540001,D2 F L2 B' L2 F D2 B2 L' F2 U2 R' U2 B U B2 U2 F',G,Dolné Orešany Cube Day 2024 (2024-10-19~20),333 R1 C #5
 4279660001,U' F R2 B' D2 F D2 F2 L F' R2 F2 R2 U' F U R' B',G,Slow N Steady UMD Fall 2024 (2024-11-09~10),333 R1 D #1
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,G,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1
