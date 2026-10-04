@@ -274,10 +274,12 @@ describe('移动端复盘不再挤压计时区', () => {
     expect(read(RECAP_CSS)).toMatch(/\.shell-recap-body\s*\{[^}]*overflow-y:\s*auto/);
   });
 
-  it('普通态和桌面侧栏态都扣除页面通知栏高度', () => {
+  it('长内容可撑高页面，最小一屏和桌面侧栏高度仍扣除通知栏', () => {
     const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
-    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\.timer-workspace\s*\{[^}]*height:\s*${visibleHeight}`));
-    expect(shell).not.toMatch(/\.timer-shell\.timer-workspace\s*\{[^}]*height:\s*auto/);
+    const shellLayout = shell.match(/\.timer-shell(?:\.timer-workspace)+\s*\{([^}]*)\}/)?.[1];
+    expect(shellLayout).toBeDefined();
+    expect(shellLayout).toMatch(/(?:^|;)\s*height:\s*auto\s*;/);
+    expect(shellLayout).toMatch(new RegExp(String.raw`(?:^|;)\s*min-height:\s*${visibleHeight}\s*;`));
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toContain('var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)))');
   });
