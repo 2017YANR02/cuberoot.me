@@ -16,6 +16,7 @@
       "./crz3a": "runtime-neutral",
       "./ctico": "runtime-neutral",
       "./cstimer-nonwca": "runtime-neutral",
+      "./cstimer-nonwca-events": "runtime-neutral",
       "./cstimer-gsolver": "runtime-neutral",
       "./cube-moves": "runtime-neutral",
       "./cube222": "runtime-neutral",
@@ -105,6 +106,11 @@
       "types": "./src/cstimer-nonwca.ts",
       "node": "./dist/cstimer-nonwca.js",
       "default": "./src/cstimer-nonwca.ts"
+    },
+    "./cstimer-nonwca-events": {
+      "types": "./src/cstimer-nonwca-events.ts",
+      "node": "./dist/cstimer-nonwca-events.js",
+      "default": "./src/cstimer-nonwca-events.ts"
     },
     "./cstimer-gsolver": {
       "types": "./src/cstimer-gsolver.ts",

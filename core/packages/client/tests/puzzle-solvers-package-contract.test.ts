@@ -19,6 +19,7 @@ const PUBLIC_SUBPATHS = [
   'crz3a',
   'ctico',
   'cstimer-nonwca',
+  'cstimer-nonwca-events',
   'cstimer-gsolver',
   'cube-moves',
   'cube222',
