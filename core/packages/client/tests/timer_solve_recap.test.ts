@@ -107,7 +107,7 @@ describe('复原后自动复盘', () => {
 
   it('桌面继续在计时页右栏渲染复盘', () => {
     expect(src).toMatch(/<SolveRecap\b/);
-    expect(src).toContain('panelOpen={Boolean(panelTab)} recap={solveRecap}');
+    expect(src).toContain('recap={liveSolutionPanel ?? solveRecap}');
   });
 
   it('移动端停表后直接打开带来源标记的整屏详情', () => {
@@ -264,16 +264,20 @@ describe('移动端复盘不再挤压计时区', () => {
     expect(shell).not.toMatch(/--recap-h|:has\(> \.shell-recap\)|timer-shell:has\(\.shell-recap\)/);
   });
 
-  it('桌面右栏形态保持不变', () => {
-    expect(src).toContain('panelOpen={Boolean(panelTab)} recap={solveRecap}');
+  it('桌面实时解法与最终复盘共用右栏，窄屏实时区独立滚动', () => {
+    expect(src).toContain('recap={liveSolutionPanel ?? solveRecap}');
+    expect(src).toContain('panelOpen={Boolean(panelTab) && !liveSolutionPanel}');
+    expect(src).toContain('{!isDesktop && liveSolutionPanel}');
+    expect(src).toMatch(/className="shell-recap-body">\s*<LiveReconstructReport/);
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toMatch(/\.shell-recap-rail > \.shell-recap\s*\{[^}]*height:\s*100%/);
-    expect(shell).not.toMatch(/\.shell-recap-rail/);
+    expect(read(RECAP_CSS)).toMatch(/\.shell-recap-body\s*\{[^}]*overflow-y:\s*auto/);
   });
 
   it('普通态和桌面侧栏态都扣除页面通知栏高度', () => {
     const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
-    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\.timer-workspace\s*\{[^}]*min-height:\s*${visibleHeight}`));
+    expect(shell).toMatch(new RegExp(String.raw`\.timer-shell\.timer-workspace\s*\{[^}]*height:\s*${visibleHeight}`));
+    expect(shell).not.toMatch(/\.timer-shell\.timer-workspace\s*\{[^}]*height:\s*auto/);
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toContain('var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)))');
   });

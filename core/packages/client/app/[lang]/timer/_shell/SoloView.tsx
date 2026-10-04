@@ -263,6 +263,7 @@ import {
   type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
 import SolveRecapPlaceholder from '@cuberoot/timer-ui/solve-recap-placeholder';
+import '@cuberoot/timer-ui/solve-recap.css';
 import { histBack, histForward, histPush } from '@cuberoot/shared/timer';
 import {
   createTimerDeviceRegistry,
@@ -2774,6 +2775,20 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )
     : null;
 
+  // Live and completed reconstruction share the bounded desktop dock. On
+  // narrow screens the live score gets its own scroll area below the timer.
+  const liveSolutionPanel = timer.phase === 'running' && liveSolve ? (
+    <section className="shell-recap timer-live-solution" data-no-timer
+      aria-label={tr({ zh: '实时解法', en: 'Live solution' })}>
+      <div className="shell-recap-head timer-live-solution-label">
+        {tr({ zh: '实时解法', en: 'Live solution' })}
+      </div>
+      <div className="shell-recap-body">
+        <LiveReconstructReport key={liveSolve.id} solve={liveSolve} isZh={isZh} live />
+      </div>
+    </section>
+  ) : null;
+
   // 桌面复盘占右栏；窄屏在 recordSolve 中直接进入整屏成绩详情。
   const solveRecap = recapSolve ? (
     <SolveRecap
@@ -2918,9 +2933,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   );
 
   return (
-    <TimerWorkspace panelOpen={Boolean(panelTab)} recap={solveRecap}
-      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve) ? ' panel-open' : ''}${isDesktop && recapSolve && !panelTab ? ' recap-open' : ''}`}
+    <TimerWorkspace panelOpen={Boolean(panelTab) && !liveSolutionPanel} recap={liveSolutionPanel ?? solveRecap}
+      className={`timer-shell${fullscreen ? ' fullscreen' : ''}${distractionFree ? ' is-solving' : ''}${hideAllUi ? ' hide-ui' : ''}${isDesktop && (panelTab || recapSolve || liveSolutionPanel) ? ' panel-open' : ''}${isDesktop && (liveSolutionPanel || (recapSolve && !panelTab)) ? ' recap-open' : ''}`}
       data-solving={timer.phase === 'running' ? 'true' : undefined}
+      data-live-reconstruction={liveSolutionPanel ? '' : undefined}
     >
       <TimerPrintController
         currentResult={digitsText}
@@ -3201,15 +3217,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           )}
         </TimingSurface>
 
-        {timer.phase === 'running' && liveSolve && (
-          <section className="timer-live-solution" data-no-timer
-            aria-label={tr({ zh: '实时解法', en: 'Live solution' })}>
-            <div className="timer-live-solution-label">
-              {tr({ zh: '实时解法', en: 'Live solution' })}
-            </div>
-            <LiveReconstructReport key={liveSolve.id} solve={liveSolve} isZh={isZh} live />
-          </section>
-        )}
+        {!isDesktop && liveSolutionPanel}
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
@@ -3250,7 +3258,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
           入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
           非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
-      {panelTab && (
+      {panelTab && !liveSolutionPanel && (
         <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">
             <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'

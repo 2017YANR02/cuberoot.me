@@ -48,7 +48,7 @@ export default function TimingSurface({
   colorClass,
   layout = 'default',
   fontScale = 1,
-  fontSize = `calc(${layout === 'local' ? 'clamp(40px, 8vw, 80px)' : 'clamp(48px, 10vw, 132px)'} * ${fontScale})`,
+  fontSize = `min(calc(${layout === 'local' ? 'clamp(40px, 8vw, 80px)' : 'clamp(48px, 10vw, 132px)'} * ${fontScale}), var(--timer-readout-max-size, 1000px))`,
   digits,
   digitsRef,
   surfaceRef,
