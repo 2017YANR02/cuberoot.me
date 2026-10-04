@@ -58,6 +58,7 @@ import { announcedCompsRoutes, startAnnouncedCompsPoller } from './routes/announ
 import { sponsorsRoutes } from './routes/sponsors.js';
 import { membershipAppleRoutes } from './routes/membership_apple.js';
 import { membershipGoogleRoutes } from './routes/membership_google.js';
+import { membershipBenefitsRoutes } from './routes/membership_benefits.js';
 import { membershipRoutes } from './routes/membership.js';
 import { membershipSubscriptionRoutes } from './routes/membership_subscriptions.js';
 import { compFollowsRoutes } from './routes/comp_follows.js';
@@ -205,6 +206,7 @@ app.route('/v1', scrambleMarksRoutes);
 app.route('/v1', announcedCompsRoutes);
 app.route('/v1', sponsorsRoutes);
 app.route('/v1', membershipRoutes);
+app.route('/v1', membershipBenefitsRoutes);
 app.route('/v1', membershipAppleRoutes);
 app.route('/v1', membershipGoogleRoutes);
 app.route('/v1', membershipSubscriptionRoutes);

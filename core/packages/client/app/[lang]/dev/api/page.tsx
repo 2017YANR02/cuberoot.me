@@ -67,7 +67,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   then add the file stem to this list.
 //   account_auth admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
-//   membership membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
+//   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
 //   video_rooms wca_recent_records wca_result_watch wca_schedule wca_scrambles wca_stats_extra wca_teachers wechat_jssdk wechat_pc_opensdk wiki
 //   platform_competitions platform_competition_attempts platform_competition_evidence platform_competition_settlements platform_competition_device_reports platform_organizer_applications platform_refunds
@@ -663,6 +663,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'platform', m: 'PATCH', p: '/v1/platform/admin/qr/:id/card', g: 'admin', c: 'no-store', zh: '保存二维码卡片设计版本', en: 'Save a QR card design version' },
 
   // ---- membership ----
+  { d: 'membership', m: 'GET', p: '/v1/membership/benefits', g: 'public', c: 'no-store', zh: '会员权益展示内容与版本；英文可空', en: 'Versioned benefit copy; English may be empty' },
+  { d: 'membership', m: 'PUT', p: '/v1/membership/admin/benefits', g: 'admin', c: 'no-store', zh: '管理员或 API key 更新权益；revision 防覆盖，中文改变后旧英文失效', en: 'Admin or API key updates with revision conflict protection and translation invalidation' },
   { d: 'membership', m: 'GET', p: '/v1/membership/subscriptions', g: 'login', c: 'no-store', zh: '查询本人自动续费合约并向微信核验状态', en: 'List owned renewal contracts and verify their state with WeChat' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/:id/cancel', g: 'login', c: 'no-store', zh: '本人确认退订；微信确认后返回成功，待确认返回 202', en: 'Cancel an owned contract after confirmation; return 202 until verified' },
   { d: 'membership', m: 'POST', p: '/v1/membership/subscriptions/wechat/notify', g: 'public', c: 'no-store', zh: '微信合约通知：APIv2 验签、绑定已有记录并查证状态', en: 'WeChat contract notification: verify APIv2 signature, saved binding and current state' },

@@ -441,6 +441,7 @@ const TABLES: Table[] = [
   { name: 'calendar_reminder_log', domain: 'studio', origin: '0099', purpose: { zh: '提醒去重:(事件, 第几次, 提前几分钟, 收件人) 抢占式插入,进程重启与补发窗口重叠都不会轰炸两遍', en: 'Reminder dedupe: an insert race on (event, occurrence, minutes, recipient), so restarts and overlapping catch-up windows cannot double-fire' } },
 
   // ── commerce & feedback ─────────────────────────────────
+  { name: 'membership_benefits', domain: 'commerce', origin: '0257', purpose: { zh: '可在线编辑的会员权益展示，中文为主、英文可空；版本号防止并发覆盖。', en: 'Editable membership benefit copy with optional English and optimistic versioning.' }, cols: [{ name: 'id (PK), revision, items JSONB, updated_at' }] },
   { name: 'membership_plans', domain: 'commerce', origin: '0046', purpose: { zh: '会员套餐:月 / 年 / 永久 + perks', en: 'Membership plans: monthly / yearly / lifetime + perks' }, cols: [
     { name: 'slug (PK)', note: { zh: 'monthly | yearly | lifetime', en: 'monthly | yearly | lifetime' } }, { name: 'period, currency' }, { name: 'perks JSONB' },
   ] },
@@ -807,6 +808,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 254, slug: 'apple_membership', desc: { zh: 'Apple 自动续费独立账本、账号绑定和有效会员视图；不覆盖网站支付权益。', en: 'Separate Apple subscription ledger, account binding and effective membership view; website grants remain intact.' } },
   { n: 255, slug: 'ios_record_push', desc: { zh: '推送设备增加 APNs 通道与开发／生产环境隔离，兼容 Android。', en: 'Add APNs device targets and sandbox/production isolation while retaining Android compatibility.' } },
   { n: 256, slug: 'google_membership', desc: { zh: 'Google Play 订阅独立账本、账号归属与统一有效会员视图。', en: 'Google Play subscription ledger, account ownership and unified effective membership view.' } },
+  { n: 257, slug: 'membership_benefits', desc: { zh: '会员权益在线编辑、可空英文、翻译失效与并发版本保护。', en: 'Editable membership benefits with optional English, translation invalidation and revision protection.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
