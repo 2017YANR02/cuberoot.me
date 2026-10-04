@@ -54,21 +54,30 @@ if (process.argv.includes('--smoke')) {
 }
 if (!existsSync(corpus)) throw new Error(`WCA corpus missing: ${corpus}`);
 const done = new Set<string>();
+const writeCounts = !process.argv.includes('--no-counts');
+const counts: Record<string, number> = {};
 if (existsSync(output)) {
   for await (const row of lines(output)) {
     if (!row) continue;
     const parts = row.split(',');
     if (parts.length < 3 || !/^\d+$/.test(parts[1]) || !parts[2].trim()) throw new Error(`Malformed existing output row: ${row.slice(0, 100)}`);
     done.add(parts[0]);
+    if (writeCounts) counts[parts[1]] = (counts[parts[1]] || 0) + 1;
   }
 }
 let total = 0;
-for await (const row of lines(corpus)) if (row.indexOf(',') > 0) total++;
+let solved = 0;
+for await (const row of lines(corpus)) {
+  const comma = row.indexOf(',');
+  if (comma <= 0) continue;
+  total++;
+  if (done.has(row.slice(0, comma))) solved++;
+}
 if (total === 0) throw new Error(`WCA corpus is empty: ${corpus}`);
 if (!existsSync(table) || statSync(table).size !== expectedBytes) throw new Error(`H48 h10 table missing/incomplete: ${table}`);
-if (done.size >= total) { console.log(`[H48 h10] corpus complete: ${done.size}/${total}`); process.exit(0); }
+if (solved === total) { console.log(`[H48 h10] corpus complete: ${solved}/${total}`); process.exit(0); }
 ensureWorker();
-console.log(`[H48 h10] table=${table}, corpus=${corpus}, solved=${done.size}/${total}, threads=${threads}`);
+console.log(`[H48 h10] table=${table}, corpus=${corpus}, solved=${solved}/${total}, threads=${threads}`);
 const child = spawn(binary, [table, String(threads)], { cwd: solverDir, stdio: ['pipe', 'pipe', 'inherit'] });
 const append = createWriteStream(output, { flags: 'a', encoding: 'utf8' });
 let produced = 0;
@@ -87,10 +96,11 @@ const collect = (async () => {
     const parts = row.split(',');
     if (parts.length < 3 || !/^\d+$/.test(parts[1]) || !parts[2].trim()) throw new Error(`Invalid native result: ${row.slice(0, 100)}`);
     if (!append.write(`${row}\n`)) await once(append, 'drain');
+    if (writeCounts) counts[parts[1]] = (counts[parts[1]] || 0) + 1;
     produced++;
     if (produced % 100 === 0) {
       const rate = produced / ((performance.now() - started) / 1000);
-      console.log(`[${done.size + produced}/${total}] ${parts[0]} -> ${parts[1]} · ${rate.toFixed(2)}/s · ETA ${((total - done.size - produced) / rate / 3600).toFixed(1)}h`);
+      console.log(`[${solved + produced}/${total}] ${parts[0]} -> ${parts[1]} · ${rate.toFixed(2)}/s · ETA ${((total - solved - produced) / rate / 3600).toFixed(1)}h`);
     }
   }
 })();
@@ -106,13 +116,8 @@ try {
   append.end();
   await once(append, 'finish');
 }
-if (done.size + produced !== total) throw new Error(`H48 output incomplete: ${done.size + produced}/${total}`);
-const counts: Record<string, number> = {};
-for await (const row of lines(output)) {
-  const htm = row.split(',')[1];
-  if (htm) counts[htm] = (counts[htm] || 0) + 1;
-}
-if (!process.argv.includes('--no-counts')) {
+if (solved + produced !== total) throw new Error(`H48 output incomplete: ${solved + produced}/${total}`);
+if (writeCounts) {
   writeFileSync(resolve(here, 'counts.json'), `${JSON.stringify({ samples: done.size + produced, counts }, null, 2)}\n`);
 }
-console.log(`[H48 h10] complete: ${done.size + produced}/${total} in ${((performance.now() - started) / 1000).toFixed(1)}s`);
+console.log(`[H48 h10] complete: ${solved + produced}/${total} in ${((performance.now() - started) / 1000).toFixed(1)}s`);

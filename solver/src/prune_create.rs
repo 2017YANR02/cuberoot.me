@@ -8,6 +8,8 @@
 //!     最后 pack 成 4-bit nibble (Vec<u8>)。
 //!   - C++ 用 OpenMP + CAS;Rust 用 rayon par_iter 并行扫描,用 AtomicU8 CAS(只允许
 //!     255 -> nd 的转换)。`tmp` 用 Vec<AtomicU8> 直接共享。
+//!   - 完整独立坐标在稠密层反向扫描未知状态，只接受上一层前驱；允许块碰撞的
+//!     坐标保留正向扫描，避免反复访问物理不可达项。
 //!   - 单线程也能跑(rayon 自动调度);为了控制 RAM,BFS 完成后用 `pack_atomics_inplace`
 //!     把 nibble 原位写回同一 buffer 前半段,不再额外开一份 total 字节拷贝
 //!     (huge 表峰值从 ~53 GB 降到 ~21 GB,32 GB 机可跑)。
@@ -35,7 +37,11 @@ use crate::prune_tables::PruneTableManager;
 /// CAS:仅当当前值是 255 时写入 nd。
 #[inline]
 fn cas_unvisited(slot: &AtomicU8, nd: u8) {
-    let _ = slot.compare_exchange(255, nd, Ordering::Relaxed, Ordering::Relaxed);
+    // Already-visited neighbours dominate dense layers. A read avoids taking
+    // exclusive ownership of their cache lines for a CAS that cannot succeed.
+    if slot.load(Ordering::Relaxed) == 255 {
+        let _ = slot.compare_exchange(255, nd, Ordering::Relaxed, Ordering::Relaxed);
+    }
 }
 
 /// 消费 BFS 后的 AtomicU8 buffer,**原位**打包成 4-bit nibble:
@@ -68,11 +74,63 @@ fn pack_atomics_inplace(mut atomics: Vec<AtomicU8>) -> Vec<u8> {
     out
 }
 
-/// 在 BFS 主循环里,扫描所有 `tmp[i] == d` 的 i,对每个 j ∈ 0..18,
-/// 用 next_index(i, j) 算出新 idx,做 CAS。
-///
-/// `next_index` 接受 (cur_idx, mv_index_0_17),返回 next_idx(u64)。
+/// Scan one state in a complete breadth-first layer. Every move has an inverse,
+/// so an unknown state adjacent to depth d has exact distance d + 1. Reverse
+/// scanning writes only its own slot and never follows newly written d + 1
+/// values; disconnected coordinates consequently remain 255.
+#[inline]
+fn bfs_visit<const REVERSE: bool, F: Fn(u64, usize) -> u64>(
+    tmp: &[AtomicU8],
+    i: u64,
+    d: u8,
+    total: u64,
+    next_index: &F,
+) -> u64 {
+    let value = tmp[i as usize].load(Ordering::Relaxed);
+    if REVERSE {
+        if value == 255 {
+            for j in 0..18 {
+                let ni = next_index(i, j);
+                if ni < total && tmp[ni as usize].load(Ordering::Relaxed) == d {
+                    tmp[i as usize].store(d + 1, Ordering::Relaxed);
+                    break;
+                }
+            }
+        }
+    } else if value == d {
+        for j in 0..18 {
+            let ni = next_index(i, j);
+            if ni < total {
+                cas_unvisited(&tmp[ni as usize], d + 1);
+            }
+        }
+    }
+    u64::from(value == d)
+}
+
 fn bfs_step<F: Fn(u64, usize) -> u64 + Sync>(
+    tmp: &[AtomicU8],
+    d: u8,
+    total: u64,
+    reverse: bool,
+    next_index: &F,
+) -> u64 {
+    if reverse {
+        (0..total)
+            .into_par_iter()
+            .map(|i| bfs_visit::<true, _>(tmp, i, d, total, next_index))
+            .sum()
+    } else {
+        (0..total)
+            .into_par_iter()
+            .map(|i| bfs_visit::<false, _>(tmp, i, d, total, next_index))
+            .sum()
+    }
+}
+
+// Keep the forward expansion separate: combining both directions inside its
+// hot loop regressed collision-heavy coordinates in the full-table benchmark.
+fn bfs_step_forward<F: Fn(u64, usize) -> u64 + Sync>(
     tmp: &[AtomicU8],
     d: u8,
     total: u64,
@@ -95,6 +153,53 @@ fn bfs_step<F: Fn(u64, usize) -> u64 + Sync>(
             }
         })
         .sum()
+}
+
+fn bfs_step_chunked_forward<const READ_BEFORE_CAS: bool, F: Fn(u64, usize) -> u64 + Sync>(
+    tmp: &[AtomicU8],
+    d: u8,
+    total: u64,
+    next_index: &F,
+) -> u64 {
+    let nd = d + 1;
+    let n_chunks: u64 = 200;
+    let chunk = ((total + n_chunks - 1) / n_chunks).max(1);
+    let mut cnt = 0u64;
+    let mut lo = 0u64;
+    while lo < total {
+        let hi = (lo + chunk).min(total);
+        cnt += (lo..hi)
+            .into_par_iter()
+            .map(|i| {
+                if tmp[i as usize].load(Ordering::Relaxed) == d {
+                    for j in 0..18 {
+                        let ni = next_index(i, j);
+                        if ni < total {
+                            if READ_BEFORE_CAS {
+                                cas_unvisited(&tmp[ni as usize], nd);
+                            } else {
+                                let _ = tmp[ni as usize].compare_exchange(
+                                    255,
+                                    nd,
+                                    Ordering::Relaxed,
+                                    Ordering::Relaxed,
+                                );
+                            }
+                        }
+                    }
+                    1u64
+                } else {
+                    0
+                }
+            })
+            .sum::<u64>();
+        lo = hi;
+        eprint!("\r    Scanning depth {:>2}: {:>3}%", d, lo * 100 / total);
+        let _ = std::io::stderr().flush();
+    }
+    eprint!("\r{:55}\r", "");
+    let _ = std::io::stderr().flush();
+    cnt
 }
 
 /// 千分位格式化(对齐 C++ DistributionPrinter::formatWithCommas)。
@@ -177,31 +282,26 @@ fn bfs_step_chunked<F: Fn(u64, usize) -> u64 + Sync>(
     tmp: &[AtomicU8],
     d: u8,
     total: u64,
+    reverse: bool,
     next_index: &F,
 ) -> u64 {
-    let nd = d + 1;
     let n_chunks: u64 = 200;
     let chunk = ((total + n_chunks - 1) / n_chunks).max(1);
     let mut cnt = 0u64;
     let mut lo = 0u64;
     while lo < total {
         let hi = (lo + chunk).min(total);
-        cnt += (lo..hi)
-            .into_par_iter()
-            .map(|i| {
-                if tmp[i as usize].load(Ordering::Relaxed) == d {
-                    for j in 0..18 {
-                        let ni = next_index(i, j);
-                        if ni < total {
-                            cas_unvisited(&tmp[ni as usize], nd);
-                        }
-                    }
-                    1u64
-                } else {
-                    0
-                }
-            })
-            .sum::<u64>();
+        cnt += if reverse {
+            (lo..hi)
+                .into_par_iter()
+                .map(|i| bfs_visit::<true, _>(tmp, i, d, total, next_index))
+                .sum::<u64>()
+        } else {
+            (lo..hi)
+                .into_par_iter()
+                .map(|i| bfs_visit::<false, _>(tmp, i, d, total, next_index))
+                .sum::<u64>()
+        };
         lo = hi;
         eprint!("\r    Scanning depth {:>2}: {:>3}%", d, lo * 100 / total);
         let _ = std::io::stderr().flush();
@@ -216,6 +316,7 @@ fn run_bfs_and_pack<F: Fn(u64, usize) -> u64 + Sync>(
     total: u64,
     depth: u32,
     seeds: &[u64],
+    dense_coordinates: bool,
     next_index: F,
 ) -> Vec<u8> {
     // 大表(≥1G 状态)走 C++ 式分布进度;小表静默(table_generator 自带 [GEN] 行)。
@@ -232,12 +333,33 @@ fn run_bfs_and_pack<F: Fn(u64, usize) -> u64 + Sync>(
             tmp[s as usize].store(0, Ordering::Relaxed);
         }
     }
+    let mut visited = 0u64;
+    let mut previous_frontier = 0u64;
     for d in 0..depth {
-        let cnt = if verbose {
-            bfs_step_chunked(&tmp, d as u8, total, &next_index)
+        // Use the preceding frontier as a conservative, allocation-free cost
+        // estimate. An unknown state often finds a predecessor before move 18.
+        // Products that let two tracked pieces collide have permanently
+        // unreachable entries; scanning those backwards costs more than it saves.
+        let reverse = dense_coordinates && previous_frontier > (total - visited) / 18;
+        let cnt = if reverse {
+            if verbose {
+                bfs_step_chunked(&tmp, d as u8, total, true, &next_index)
+            } else {
+                bfs_step(&tmp, d as u8, total, true, &next_index)
+            }
+        } else if verbose {
+            // On billion-state collision coordinates the extra random read
+            // before CAS regresses generation; preserve their original loop.
+            if dense_coordinates {
+                bfs_step_chunked_forward::<true, _>(&tmp, d as u8, total, &next_index)
+            } else {
+                bfs_step_chunked_forward::<false, _>(&tmp, d as u8, total, &next_index)
+            }
         } else {
-            bfs_step(&tmp, d as u8, total, &next_index)
+            bfs_step_forward(&tmp, d as u8, total, &next_index)
         };
+        visited += cnt;
+        previous_frontier = cnt;
         if let Some(dp) = dp.as_mut() {
             dp.print_row(d, cnt);
         }
@@ -284,7 +406,7 @@ fn create_pt_cross_or_pscross(
         }
     }
 
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, false, |i, j| {
         let idx1 = (i / sz) as usize * 18;
         let idx2 = (i % sz) as usize * 18;
         let n1 = mt_edge2[idx1 + j] as u64;
@@ -502,7 +624,7 @@ fn create_pt_edge6_corn2(
     let idx_e6 = array_to_index(target_e_ids, 6, 2, 12) as u64;
     let idx_c2 = array_to_index(target_c_ids, 2, 3, 8) as u64;
     let seeds = [idx_e6 * sz_c2 + idx_c2];
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, true, |i, j| {
         let cur_e6 = (i / sz_c2) as usize * 18;
         let cur_c2 = (i % sz_c2) as usize * 18;
         let n_e6 = mt_e6[cur_e6 + j] as u64;
@@ -521,6 +643,7 @@ fn create_pt_pscross_aux2(
     depth: u32,
     t_cr: &[u32],  // mt_edge4 stride24
     t_aux: &[u32], // mt_edge2 / mt_corn2  stride18
+    independent_coordinates: bool,
 ) -> (u64, Vec<u8>) {
     let total = sz_cr * sz_aux;
     let d_moves = [-1i32, 3, 4, 5];
@@ -537,7 +660,7 @@ fn create_pt_pscross_aux2(
         }
         seeds.push(cur_cr * sz_aux + cur_aux);
     }
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, independent_coordinates, |i, j| {
         let cur_cr = (i / sz_aux) as usize * 24;
         let cur_aux = (i % sz_aux) as usize * 18;
         let n_cr = (t_cr[cur_cr + j] / 24) as u64;
@@ -562,7 +685,7 @@ fn create_pt_dim2(
 ) -> (u64, Vec<u8>) {
     let total = sz1 * sz2;
     let seeds = [idx1 * sz2 + idx2];
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, true, |i, j| {
         let i1 = (i / sz2) as usize * 18;
         let i2 = (i % sz2) as usize * 18;
         let n1 = t1[i1 + j] as u64;
@@ -589,7 +712,7 @@ fn create_pt_dim3(
 ) -> (u64, Vec<u8>) {
     let total = sz1 * sz2 * sz3;
     let seeds = [(idx1 * sz2 + idx2) * sz3 + idx3];
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, true, |i, j| {
         let mut rem = i;
         let i3 = (rem % sz3) as usize * 18;
         rem /= sz3;
@@ -624,7 +747,7 @@ fn create_pt_cross_cex(
     let cur_cn = idx_cn * 18;
     let start_idx = ((cur_cr + cur_cn / 18) * 24 + idx_ed) * 24 + idx_extra;
     let seeds = [start_idx];
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, false, |i, j| {
         let mut rem = i;
         let c_ex = (rem % sz_ex) as usize;
         rem /= sz_ex;
@@ -667,7 +790,7 @@ fn create_pt_cross_ccc(
     let cur_cn1 = idx_cn1 * 18;
     let start_idx = ((cur_cr + cur_cn1 / 18) * sz_cn2 + idx_cn2) * sz_cn3 + idx_cn3;
     let seeds = [start_idx];
-    let bytes = run_bfs_and_pack(total, depth, &seeds, |i, j| {
+    let bytes = run_bfs_and_pack(total, depth, &seeds, false, |i, j| {
         let mut rem = i;
         let c_cn3 = (rem % sz_cn3) as usize;
         rem /= sz_cn3;
@@ -1096,6 +1219,7 @@ fn gen_pt_pscross_edge2(a: i32, b: i32) -> (u64, Vec<u8>) {
         11,
         e4.as_u32(),
         e2.as_u32(),
+        false,
     )
 }
 
@@ -1122,6 +1246,7 @@ fn gen_pt_pscross_edge3(a: i32, b: i32, c: i32) -> (u64, Vec<u8>) {
         12,
         e4.as_u32(),
         e3.as_u32(),
+        false,
     )
 }
 
@@ -1145,6 +1270,7 @@ fn gen_pt_pscross_corner2(a: i32, b: i32) -> (u64, Vec<u8>) {
         11,
         e4.as_u32(),
         c2.as_u32(),
+        true,
     )
 }
 
@@ -1171,6 +1297,7 @@ fn gen_pt_pscross_corner3(a: i32, b: i32, c: i32) -> (u64, Vec<u8>) {
         13,
         e4.as_u32(),
         c3.as_u32(),
+        true,
     )
 }
 
@@ -1455,3 +1582,67 @@ pub fn gen_pt_cross_c4c5c6(_p: &PruneTableManager) -> (u64, Vec<u8>) {
 // 防止 Move 引入未使用 lint
 #[allow(dead_code)]
 fn _link_move(_: Move) {}
+
+#[cfg(test)]
+mod direction_tests {
+    use super::*;
+    use std::collections::VecDeque;
+
+    // Two disconnected reversible components; an odd total also checks the
+    // trailing unvisited nibble. This graph reaches a dense frontier quickly.
+    fn next(i: u64, mv: usize) -> u64 {
+        let (base, size) = if i < 61 { (0, 61) } else { (61, 66) };
+        let offset = (mv / 2 + 1) as u64;
+        let offset = if mv % 2 == 0 { offset } else { size - offset };
+        base + (i - base + offset) % size
+    }
+
+    #[test]
+    fn forward_reverse_and_adaptive_preserve_every_distance() {
+        for seeds in [&[0u64][..], &[3, 9][..], &[0, 70, 127][..]] {
+            for depth in [0, 1, 2, 3, 8] {
+                let mut reference = vec![255u8; 127];
+                let mut queue = VecDeque::new();
+                for &seed in seeds.iter().filter(|&&i| i < 127) {
+                    reference[seed as usize] = 0;
+                    queue.push_back(seed);
+                }
+                while let Some(i) = queue.pop_front() {
+                    let d = reference[i as usize];
+                    if u32::from(d) == depth {
+                        continue;
+                    }
+                    for mv in 0..18 {
+                        let ni = next(i, mv) as usize;
+                        if reference[ni] == 255 {
+                            reference[ni] = d + 1;
+                            queue.push_back(ni as u64);
+                        }
+                    }
+                }
+                let expected =
+                    pack_atomics_inplace(reference.iter().copied().map(AtomicU8::new).collect());
+                for dense in [false, true] {
+                    assert_eq!(run_bfs_and_pack(127, depth, seeds, dense, next), expected);
+                }
+                for mode in 0..3 {
+                    let states: Vec<_> = (0..127)
+                        .map(|i| AtomicU8::new(if seeds.contains(&i) { 0 } else { 255 }))
+                        .collect();
+                    for d in 0..depth {
+                        let count = match mode {
+                            0 => bfs_step_chunked_forward::<false, _>(&states, d as u8, 127, &next),
+                            1 => bfs_step_chunked_forward::<true, _>(&states, d as u8, 127, &next),
+                            _ => bfs_step_chunked(&states, d as u8, 127, true, &next),
+                        };
+                        assert_eq!(
+                            count,
+                            reference.iter().filter(|&&v| u32::from(v) == d).count() as u64
+                        );
+                    }
+                    assert_eq!(pack_atomics_inplace(states), expected);
+                }
+            }
+        }
+    }
+}

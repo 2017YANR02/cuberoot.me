@@ -1,0 +1,466 @@
+{
+  "date": "2026-10-04",
+  "machine": {
+    "cpu": "Apple M5 Pro",
+    "logicalCpus": 18,
+    "memoryBytes": 68719476736,
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "table": {
+    "solver": "nissy-core h48h10",
+    "vendorCommit": "1f7e8e937d0e71e7eb3b5deab38b34d0a0159d88",
+    "bytes": 30336314216,
+    "mapping": "Read-only MAP_PRIVATE, no private table copy; concurrent processes share OS file pages"
+  },
+  "correctness": {
+    "fixtures": 60,
+    "optimalLengths": "Compared every result to existing production out.0.csv",
+    "solutions": "Original native worker verifies every returned solution by applying it and comparing to NISSY_SOLVED_CUBE",
+    "solutionTextIdentityRequired": false,
+    "productionOutputModified": false,
+    "tableModified": false
+  },
+  "resourceObservations": {
+    "minimumAvailableMemoryPercent": 73,
+    "sampledMaximumSingleProcessRssBytes": 30342266880,
+    "rssSampling": "Manual ps samples; not a measured high-water mark. Concurrent RSS sums double-count shared table pages.",
+    "measuredMaximumSingleProcessRssBytes": 30342987776,
+    "measuredPeakMethod": "/usr/bin/time -l, maximum resident set size, compiler-options comparison"
+  },
+  "sample": {
+    "selection": "60 rows at floor(index * corpusRows / 60), index 0..59",
+    "corpusRows": 1352931,
+    "sha256": "e833b4499e45ec408db561d4d4a451ecceb534b4c541c2486c57f8988552b8bd",
+    "rows": [
+      {
+        "id": "22001",
+        "scramble": "B2 U' L2 U F2 L2 D2 L2 U F2 L F2 L D U L' D2 F' U2 B",
+        "htm": 18
+      },
+      {
+        "id": "73549001",
+        "scramble": "R2 F2 L2 U' R2 B2 D L2 U2 L2 F2 L R B' R2 D B D U2 L B",
+        "htm": 18
+      },
+      {
+        "id": "144783001",
+        "scramble": "R2 D L2 B2 U L2 D2 F2 U' L D B L R2 U B' L B2 F' L",
+        "htm": 19
+      },
+      {
+        "id": "214581001",
+        "scramble": "L' B2 D L2 B U B2 R2 D' L U' L B2 R2 B2 L B2 L2",
+        "htm": 18
+      },
+      {
+        "id": "279445001",
+        "scramble": "L' B2 R' F2 D2 U2 L' B2 R2 B2 R' B F' D' B L2 F L2 F R' B' L'",
+        "htm": 18
+      },
+      {
+        "id": "348442001",
+        "scramble": "R2 B R2 F L2 B' R2 B D' U B' L' R D' L U R' U2 L",
+        "htm": 17
+      },
+      {
+        "id": "417996001",
+        "scramble": "U L2 U' B2 R2 U' B2 U' B2 F' R' F' U B L' U2 R2 U2 F' U L B'",
+        "htm": 18
+      },
+      {
+        "id": "487770001",
+        "scramble": "L' D2 U2 R B2 D2 F2 R2 B F' D' F' U L2 F2 D R' F R'",
+        "htm": 18
+      },
+      {
+        "id": "559293001",
+        "scramble": "D2 L2 D L2 U F2 U' F2 U' R2 B D2 R2 U' F U' L D F' R B' L2",
+        "htm": 17
+      },
+      {
+        "id": "625418001",
+        "scramble": "R' D2 R B2 F2 R2 F2 L F' L' D' U L R' F D2 F2 D F2",
+        "htm": 18
+      },
+      {
+        "id": "660805011",
+        "scramble": "U' B2 U L2 U L2 B2 L2 R2 D U' L F D L' U F' R' U F D2 B'",
+        "htm": 17
+      },
+      {
+        "id": "662055001",
+        "scramble": "F' R' D' L2 F2 R' F' U' F2 B' U2 L' B2 U2 L' F2 U2 L U2 L' F2",
+        "htm": 17
+      },
+      {
+        "id": "715563001",
+        "scramble": "F U2 R2 D2 F2 R2 U2 F R U B' L F' D2 B2 F L' B2",
+        "htm": 18
+      },
+      {
+        "id": "774200001",
+        "scramble": "F2 R F2 L2 U F R L' F' D2 R U F2 R2 U2 D L2 F2 U F2",
+        "htm": 18
+      },
+      {
+        "id": "830930001",
+        "scramble": "L2 F U2 L2 F' U2 R2 D2 F L2 U' B2 U' L R2 D' F U2 B L",
+        "htm": 18
+      },
+      {
+        "id": "888627012",
+        "scramble": "F D2 L2 F2 L2 U2 F2 U F L2 R' D2 R B' F R F' D2 F L' F",
+        "htm": 18
+      },
+      {
+        "id": "947920001",
+        "scramble": "R' B2 F2 R B2 U2 R2 D2 R' U2 F' D' L' R F R' D' U2",
+        "htm": 17
+      },
+      {
+        "id": "1019525028",
+        "scramble": "D B2 D2 B2 U L2 D' F2 L2 U2 R U' B2 L D F R F2 D2 B2 L B2",
+        "htm": 18
+      },
+      {
+        "id": "1105332001",
+        "scramble": "B D' F R L' U' R2 F B2 D B U2 R L U2 L' B2 U2 F2 R2",
+        "htm": 18
+      },
+      {
+        "id": "1188217001",
+        "scramble": "F2 D2 R2 D2 L2 F R2 U2 B' L' B' R2 U' F' U L2 R B F2 U' L B'",
+        "htm": 17
+      },
+      {
+        "id": "1278086001",
+        "scramble": "D' B R D L B2 D' F L' F2 U2 B' R2 U2 F U2 F' D2 F R2",
+        "htm": 18
+      },
+      {
+        "id": "1374672056",
+        "scramble": "L B2 R F2 D2 B2 F2 L2 B2 U2 R D B' F' D2 U' B' R' D F2 U2 L' F2",
+        "htm": 17
+      },
+      {
+        "id": "1483335001",
+        "scramble": "R B2 L' U L D2 F' R' U2 F2 U2 F2 R2 U2 F D2 B R2 F'",
+        "htm": 17
+      },
+      {
+        "id": "1624949001",
+        "scramble": "B2 L' U2 L2 B2 U' R2 D L' D2 B2 L' R F' L' F2 D2 L B",
+        "htm": 18
+      },
+      {
+        "id": "1789035001",
+        "scramble": "U2 B2 D2 U L2 B2 F2 D R2 L F D2 F2 D R' D2 F2 U' R D2",
+        "htm": 18
+      },
+      {
+        "id": "1927982001",
+        "scramble": "R' B' D' L D' B U F B2 R B2 R2 L2 D2 B2 R2 U R2 L2 F2",
+        "htm": 17
+      },
+      {
+        "id": "2077042047",
+        "scramble": "L' U2 L B2 R' B2 D2 R U2 D' R B' F R2 D2 F U2 B' R' B' L",
+        "htm": 18
+      },
+      {
+        "id": "2236380018",
+        "scramble": "R B2 U2 L2 B D2 R2 U2 R2 B' L U L2 F' R' D U R U L' F2",
+        "htm": 18
+      },
+      {
+        "id": "2367449008",
+        "scramble": "B2 U2 F' U2 L2 F' U2 D L2 R D' U' R B2 R B' D' U' L2 U2",
+        "htm": 19
+      },
+      {
+        "id": "2510618001",
+        "scramble": "D2 B2 F2 U' R2 F2 R2 D' R2 U B R' B L' R2 D2 U' B' D' F'",
+        "htm": 19
+      },
+      {
+        "id": "2645972015",
+        "scramble": "R' D' L2 F R D F' B' R F2 B2 R2 B2 U2 L' F2 B2 U L2 U",
+        "htm": 16
+      },
+      {
+        "id": "2775743001",
+        "scramble": "D2 L' B2 U R' B D2 B2 R2 U' B L2 F2 B2 U2 B R2 U'",
+        "htm": 18
+      },
+      {
+        "id": "2914550001",
+        "scramble": "U2 B' D2 B' R2 B2 R2 U2 R2 F2 U L F2 U B F' D' L2 F",
+        "htm": 18
+      },
+      {
+        "id": "3048292001",
+        "scramble": "B D' B2 U' B2 D' R2 D' F' U L2 U' L' U F R2 F2",
+        "htm": 17
+      },
+      {
+        "id": "3178290001",
+        "scramble": "R F2 D2 U2 L B2 R D2 R U' B' R D' B' U B2 R B L' B",
+        "htm": 19
+      },
+      {
+        "id": "3298249039",
+        "scramble": "U F' D' B' D B2 D F2 D R2 B2 R2 F' L U R F' R' D B",
+        "htm": 18
+      },
+      {
+        "id": "3429562001",
+        "scramble": "R' D' L' F' R' F2 R U2 F2 R2 U' D2 R2 U L2 B2 U2 L2 B' U2",
+        "htm": 17
+      },
+      {
+        "id": "3545221013",
+        "scramble": "U D2 R' B2 D' R' F B2 R U2 L F2 R' L2 B' D2 R' U' B",
+        "htm": 18
+      },
+      {
+        "id": "3649581001",
+        "scramble": "U2 R' D' L F U2 R2 B L' D2 L' U' R2 D2 L'",
+        "htm": 15
+      },
+      {
+        "id": "3769012001",
+        "scramble": "U' R' D2 R2 B2 L D2 R F L B2 D' U2 L2 B R D' F'",
+        "htm": 18
+      },
+      {
+        "id": "3889335001",
+        "scramble": "L2 R2 B2 L2 D L2 R2 U F D L' B' D F2 D L D' R B2",
+        "htm": 18
+      },
+      {
+        "id": "4003490023",
+        "scramble": "U2 L' B U D F L U2 B' U' R' D2 R' L2 F2 R' F2 B2 D2 B R'",
+        "htm": 19
+      },
+      {
+        "id": "4122632051",
+        "scramble": "D F' L2 D U2 L2 D F2 R2 B2 R2 U2 L2 F' D L D' B2 D' F L' F'",
+        "htm": 18
+      },
+      {
+        "id": "4231814070",
+        "scramble": "F2 U2 B2 U2 L B2 R' D B' U' F' U' B' D' L' B D' R2 B R2",
+        "htm": 18
+      },
+      {
+        "id": "4336022014",
+        "scramble": "D2 B' L B2 L2 B2 D F2 L2 U' B' R D' B U F2 R U' L' F'",
+        "htm": 18
+      },
+      {
+        "id": "4437144001",
+        "scramble": "F' D' L2 U' B2 R2 D' F2 L' U' B' L' B' D L' R' F2 D'",
+        "htm": 18
+      },
+      {
+        "id": "4539686001",
+        "scramble": "B' U2 F D R2 B2 U F2 L2 F2 R' U2 L B2 U2 D2 B' U2 L2",
+        "htm": 18
+      },
+      {
+        "id": "4638828001",
+        "scramble": "R2 F2 D2 F2 U2 B' U2 R' D F R' U' R2 U' L B2 D2 L2",
+        "htm": 18
+      },
+      {
+        "id": "4736035001",
+        "scramble": "R' U2 R2 B' L2 F2 U2 B U2 B' L2 F2 U R' B' F2 L2 R U' F'",
+        "htm": 18
+      },
+      {
+        "id": "4830946001",
+        "scramble": "B' D R2 D L F' U F R2 B2 U2 R B2 U2 B2 R D2",
+        "htm": 17
+      },
+      {
+        "id": "4934933001",
+        "scramble": "U B2 L2 F2 D2 B2 D' U2 R2 D' L D R B2 D2 R' F' L2 B",
+        "htm": 18
+      },
+      {
+        "id": "5039628001",
+        "scramble": "U D L U2 B U' L U R2 F2 D2 R2 D R2 U' F L2 F'",
+        "htm": 18
+      },
+      {
+        "id": "5149336001",
+        "scramble": "U R F' U' D B2 U' R2 U2 L B' L2 F2 R' F2 D2 R B2",
+        "htm": 18
+      },
+      {
+        "id": "5255204001",
+        "scramble": "U F' R' U D2 R L U L F D2 R2 U' L2 B2 D B2 U B2 D2",
+        "htm": 17
+      },
+      {
+        "id": "5349768001",
+        "scramble": "R2 D' F2 R L' B U2 R F2 D' B2 L B2 L' B2 L2 F2 B2 D2 R",
+        "htm": 18
+      },
+      {
+        "id": "5446812001",
+        "scramble": "L U2 F' L2 D2 L2 R2 D' L2 R2 F2 U F R D2 U' R' B2 L'",
+        "htm": 18
+      },
+      {
+        "id": "5552937001",
+        "scramble": "L2 U2 D' R' D R U B' R2 D2 L' B2 D2 B2 U2 B U2 R'",
+        "htm": 18
+      },
+      {
+        "id": "5645213001",
+        "scramble": "F' U D2 B' L2 B2 F' D2 U2 L U2 B2 F2 U L D' F' L",
+        "htm": 17
+      },
+      {
+        "id": "5732044001",
+        "scramble": "B U R2 B D' R U L2 D' B D' R2 F2 D R2 U' F2 U R'",
+        "htm": 18
+      },
+      {
+        "id": "5789324001",
+        "scramble": "L F' R' U2 L2 F2 U L2 F2 R2 B2 F L' D2 U L2 B L2 B'",
+        "htm": 18
+      }
+    ]
+  },
+  "coldAndWarm20": {
+    "note": "First run had a cold mapping; subsequent results use warmed file cache. Do not attribute cold/warm improvement to parallelism.",
+    "runs": [
+      {
+        "workers": 1,
+        "threads": 18,
+        "seconds": 18.869238833,
+        "cache": "cold"
+      },
+      {
+        "workers": 2,
+        "threads": 9,
+        "seconds": 2.510805541999998,
+        "cache": "warm"
+      },
+      {
+        "workers": 3,
+        "threads": 6,
+        "seconds": 2.7306778339999984,
+        "cache": "warm"
+      },
+      {
+        "workers": 1,
+        "threads": 18,
+        "seconds": 2.0883641659999994,
+        "cache": "warm"
+      }
+    ]
+  },
+  "warm60": [
+    {
+      "workers": 1,
+      "threads": 18,
+      "count": 60,
+      "seconds": 5.324364584,
+      "rate": 11.268950323256076
+    },
+    {
+      "workers": 2,
+      "threads": 9,
+      "count": 60,
+      "seconds": 5.8905611669999995,
+      "rate": 10.1857867695409
+    },
+    {
+      "workers": 3,
+      "threads": 6,
+      "count": 60,
+      "seconds": 6.332731667,
+      "rate": 9.47458429553573
+    },
+    {
+      "workers": 6,
+      "threads": 3,
+      "count": 60,
+      "seconds": 7.882457708000001,
+      "rate": 7.611839127167822
+    },
+    {
+      "workers": 1,
+      "threads": 18,
+      "count": 60,
+      "seconds": 5.412412792,
+      "rate": 11.085628961760833
+    }
+  ],
+  "decision": "Keep original one-process, all-available-thread H48 search: distributing cores across independent rows was slower in every warm comparison.",
+  "compilerOptions": {
+    "compiler": "Apple clang version 21.0.0 (clang-2100.3.34.2)",
+    "baseFlags": "-std=c11 -D_POSIX_C_SOURCE=200809L -DTHREADS=18 -DNEON -O3 -pthread",
+    "nativeFlags": "-mcpu=native",
+    "nativeLtoFlags": "-mcpu=native -flto",
+    "nativeCpuDetected": "apple-m4 (clang target for this M5 Pro)",
+    "cache": "warmup excluded; subsequent runs warm",
+    "runs": [
+      {
+        "mode": "warmup",
+        "seconds": 21.934678708000003,
+        "maximumResidentBytes": 30342987776,
+        "rows": 60
+      },
+      {
+        "mode": "baseline",
+        "seconds": 5.301877958999998,
+        "maximumResidentBytes": 30342987776,
+        "rows": 60
+      },
+      {
+        "mode": "native",
+        "seconds": 5.951740541000003,
+        "maximumResidentBytes": 30342971392,
+        "rows": 60
+      },
+      {
+        "mode": "native-lto",
+        "seconds": 5.829193583,
+        "maximumResidentBytes": 30342971392,
+        "rows": 60
+      },
+      {
+        "mode": "native-lto",
+        "seconds": 5.594604415999995,
+        "maximumResidentBytes": 30342955008,
+        "rows": 60
+      },
+      {
+        "mode": "native",
+        "seconds": 5.414101208,
+        "maximumResidentBytes": 30342955008,
+        "rows": 60
+      },
+      {
+        "mode": "baseline",
+        "seconds": 5.569036,
+        "maximumResidentBytes": 30342971392,
+        "rows": 60
+      }
+    ],
+    "decision": "No repeatable gain: keep original compiler flags; native and native+LTO candidates not adopted."
+  },
+  "coordinatorOptimization": {
+    "removedPass": "Second complete output scan after solving; counts now accumulated during the already-required resume read and result collection",
+    "outputBytesAtMeasurement": 82432266,
+    "outputRowsAtMeasurement": 1352931,
+    "preserves": "Full-output counts, existing historical rows, native algorithm and solution verification",
+    "resumeCorrection": "Completion checks current corpus ID coverage; historical extra IDs no longer mask missing current rows",
+    "regressionCommand": "cd core && pnpm exec tsx --test ../solver/333opt/solve_h10.test.mts"
+  }
+}
