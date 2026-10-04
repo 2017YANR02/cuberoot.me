@@ -5,6 +5,8 @@ import type { WebViewPageData } from '../src/lib/web-view-page';
 interface ToolsPage {
   data: WebViewPageData;
   onLoad(options: Record<string, unknown>): void;
+  onHide(): void;
+  onShow(): void;
   onShareAppMessage(): WechatMiniprogram.Page.ICustomShareContent;
   setData(data: Partial<WebViewPageData>): void;
 }
@@ -70,5 +72,18 @@ describe('mini program tools page', () => {
       title: '魔方根CubeRoot：魔方工具',
       path: '/pages/tools/index',
     });
+  });
+
+  it('destroys the hidden tools WebView to deliver queued settings and reopens it on return', async () => {
+    const page = await loadPage({ getStorageSync: () => null,
+      setNavigationBarTitle: vi.fn(), showShareMenu: vi.fn() });
+    page.onLoad({});
+    await Promise.resolve();
+    expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
+    page.onHide();
+    expect(page.data.src).toBe('');
+    page.onShow();
+    await Promise.resolve();
+    expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
   });
 });
