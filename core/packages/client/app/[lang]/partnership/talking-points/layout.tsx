@@ -1,7 +1,4 @@
 import { pageMetadata } from '@/lib/page-meta';
-
-export const generateMetadata = pageMetadata('partnership/talking-points');
-
-export default function Layout({ children }: { children: React.ReactNode }) {
-  return children;
-}
+const metadata = pageMetadata('partnership/talking-points');
+export async function generateMetadata(props: Parameters<typeof metadata>[0]) { return { ...await metadata(props), robots: { index: false, follow: true } }; }
+export default function Layout({ children }: { children: React.ReactNode }) { return children; }

@@ -42,13 +42,21 @@ const SHARE_IMAGE = '/icons/CubeRoot.png';
 
 export const PAGE_META: Record<string, PageMetaEntry> = {
   'wca/wc-2027': { title: WC_2027_ANNOUNCEMENT.title, description: WC_2027_ANNOUNCEMENT.summary },
+  'bp': {
+    title: { zh: '商业计划书', en: 'Business plan' },
+    description: { zh: '魔方根商业计划书：国内魔方市场规模、个人与机构订阅、课程、线上赛事、专业优势与经营规划。', en: 'CubeRoot business plan: China’s cubing market, individual and institutional subscriptions, courses, online competitions and operating plans.' },
+  },
+  'bp/talking-points': {
+    title: { zh: '业务交流提纲', en: 'Business discussion notes' },
+    description: { zh: '市场、订阅、课程、线上赛事与机构服务的交流提纲。', en: 'Discussion notes on the market, subscriptions, courses, online competitions and educator services.' },
+  },
   'partnership': {
     title: { zh: '商业计划书', en: 'Business plan' },
-    description: { zh: '魔方根商业计划书：高频魔方训练需求、个人与企业订阅、竞争优势、团队、增长路径、财务模型、发展规划与合作安排。', en: 'CubeRoot business plan: recurring cubing practice, personal and enterprise subscriptions, competition, team, growth, financial model, roadmap and partnerships.' },
+    description: { zh: '商业计划书已迁至 /bp。', en: 'The business plan has moved to /bp.' },
   },
   'partnership/talking-points': {
-    title: { zh: '会谈提纲', en: '会谈提纲' },
-    description: { zh: '项目介绍、六个交流切入点、资金请求与常见问题话术。', en: '项目介绍、六个交流切入点、资金请求与常见问题话术。' },
+    title: { zh: '业务交流提纲', en: 'Business discussion notes' },
+    description: { zh: '业务交流提纲已迁至 /bp/talking-points。', en: 'Discussion notes have moved to /bp/talking-points.' },
   },
   // The landing page is the only browser tab that keeps the site name.
   '': {
