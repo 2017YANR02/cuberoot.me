@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / W / bin 5
-# Population in this bin: 737
+# Population in this bin: 741
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1663999001,R2 U2 B D2 B' R2 F2 D2 R2 F' U' R2 F' D' F2 R2 B2 L',W,GA Cubers Return A 2021 (2021-07-10),333oh Final B E2
@@ -22,7 +22,7 @@
 4989721001,F' L2 D F' R2 F D2 L2 D2 L2 F' D' L2 R2 F L2 B',W,Slovenian Nationals 2025 (2025-08-29~31),333oh Final A E1
 3333145001,R' U' F U2 L D F' R2 D' L U F2 L2 D' B2 U F2 U2 F2 U L2 F D R' U' F,W,Rhein-Neckar Mental Breakdown 2023 (2023-12-09~10),333fm R1 A #3
 92199001,U2 L' F2 R2 B2 D2 R' U2 L2 U' R U L R2 U' B' L F2 D2 L2,W,Huddinge Cube Day 2014 (2014-12-27),333oh Final A #4
-97451001,F' D R L' F' U R' D F D R2 D2 F D2 L2 B R2 B2,W,Shaastra Cube Open 2015 (2015-01-03~04),333 R1 K #3
+5856084001,D2 F2 R2 B2 R2 D F2 D2 L' B2 L' R2 F U2 B' F' U' R,W,Grand Forks 2026 (2026-10-03),333 R1 A #5
 3426216001,L D B' L2 U' L2 R2 B2 L2 D' R' D' U R' D' F2 L2 U2,W,Swisscubing Cup I 2024 (2024-01-13~14),333 R1 A #3
 5594077001,B' L B D2 F L D2 L' U2 D2 B' D R2 U F2 D R2 D2,W,Belmont Spring 2026 (2026-05-02),333 R2 A E1
 5791294001,F' L F' L2 F' L D B D B' U F2 R2 L2 F U2 F L2,W,Dragon Cubing XII 2026 (2026-08-22~23),333oh Final A #4
@@ -135,7 +135,7 @@
 952568001,F' D' R2 U2 B2 U' B' R2 L' U B U2 B2 R2 D2 F' U2 F R2 B',W,Pittsburgh Open 2018 (2018-12-08~09),333 R1 A E1
 660465007,D2 F' U2 L2 F2 D2 B2 U2 R' D F' D B2 U' B2 R2 D' F D2 L B',W,Caltech Spring Open 2014 (2014-05-17~18),333mbf Final A #1
 3924129001,U2 F2 L2 D' R2 D L2 R D U' B2 R D' B2 F D2 L D,W,Philippine Championship 2024 (2024-07-05~07),333oh R1 B E1
-4262356001,B2 R2 U B' U' F2 L2 B2 F2 U B2 D' R' F2 R D' B D' L,W,Rubik's WCA Asian Championship 2024 (2024-11-01~04),333 R1 V #4
+5852583008,D' B L2 F2 R2 F' U2 B F' R F' L U F2 D2 R2 F U' F L,W,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 A #2
 5063067001,L' U' B2 R2 B2 R D2 R F2 L' F2 D2 F' D2 L D R D F',W,Beveren Sunday Open 2025 (2025-09-28),333 Final B #2
 2449917041,U' R L F R2 U' B D R' U2 B L' U2 L' U2 L' F2 R' B2 L2 U2,W,BrizZon Side Open 2023 (2023-01-21~22),333mbf Final A #2
 660935002,L2 F2 R2 D2 F' L2 F2 L2 R' F' U' F L2 F R2 F2 D' B2 D' L' F2,W,Guangzhou Rubik's Cube Days 2016 (2016-03-05~06),333mbf Final A #1

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / OR / bin 3
-# Population in this bin: 751
+# Population in this bin: 753
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5787001,R L2 F' L' F2 L U F L2 U' D2 B2 L2 B D2 B' U2 F' D2,R,GuateRubik 2014 (2014-03-30),333oh R1 A #3
@@ -104,7 +104,7 @@
 4444206025,F L F U2 F' L B' D' L' D U2 L2 D2 F U2 B L2 B' U2 B2 D2,O,Noordhoek Aeroplane Mode 2025 (2025-01-26),333mbf Final A #1
 2107422001,L U' B' R' B2 D' B2 R2 U F2 B R2 F2 R2 D2 B' U2 F L2,O,German Nationals 2022 (2022-08-19~21),333 R1 G #2
 4486917001,D F2 D' L' U2 L' R2 B2 F2 U2 B2 F2 R B U' L F' U R2 D',O,Cube4fun Biała Podlaska Sunday 2025 (2025-02-16),333 R2 B #2
-5580392001,F' R F B' U L2 F' L2 B D' R2 L2 D' R2 U' R' F,O,Midwest Cubing Classic 2026 (2026-04-26),333 R1 C #2
+5851761053,R U2 R2 D' L2 F2 U B2 U' F' L' B' U L' R2 D2 L2 D2 B,R,Croatian Quiet Championship 2026 (2026-09-27),333mbf Final A #1
 570365001,U' F' L2 B R U' F2 U' L' B U2 R U2 R U2 F2 L2 F2,R,Ningxia Open 2017 (2017-08-13),333 Final A #2
 3604578001,R L' B' R2 L' B' L2 U' F R2 F L2 U2 R2 B R2 F2 B' U',R,Sofia Spring 2024 (2024-03-16~17),333 R2 B E2
 4250459065,U2 B2 R' U2 B2 L' R' D2 L F2 B' D2 B2 R D2 F' L' U2 L B,O,Hungarian Open 2024 (2024-11-01~03),333mbf Final A #1

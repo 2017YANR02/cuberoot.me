@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / W / bin 9
-# Population in this bin: 376
+# Population in this bin: 381
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4659675010,F L2 F L2 R2 B2 F' R' B2 L2 B R' B2 U' F' U2 L' D B2 L,W,Rhein-Neckar Please Be Squiet 2025 (2025-04-19~20),333mbf Final A #1
@@ -43,7 +43,7 @@
 3158546001,U2 R B' U' R' F' R2 F2 D' F2 R2 F2 R2 D' F2 D R B D2,W,Meath Autumn 2023 (2023-10-14~15),333 R1 A #3
 343118001,F D2 B2 U2 B L2 U2 R2 U L2 B' L2 D2 R F U B' F2 R',W,SSN Cube Open 2016 (2016-08-05~06),333oh R1 F #3
 3142156001,D L2 D' R2 U2 B2 D R2 B U' B2 R' F L B D' R2 U R2,W,T-Town Showdown 2023 (2023-10-07),333 R1 C #1
-4133169001,R' L D B D2 F' U' L U2 F' D2 L2 D2 F2 L2 F2 B D2 F2 U',W,Xuzhou Autumn 2024 (2024-09-21),333 R1 G E2
+5854432001,U F2 U2 R2 B2 L F' D' R U L2 B' U' B2 U' F' L',W,Zottegem Open 2026 (2026-09-26),333 R1 C #4
 4828901007,R2 B2 D2 L2 F2 D' B2 F2 R2 U2 R' U' F L U' L' B D L B',W,Worlds Prep in Palisades 2025 (2025-06-20~22),333mbf Final A #1
 355188001,F2 D' B2 U' B2 D' B2 L2 B D' L F' R B U2 L' U2 B2 D2 U,W,Wirewood 2 2016 (2016-08-28),333 R1 B E1
 356761001,R2 B U F U' F2 U R D' L' B2 U2 F2 R2 D' R2 U' F2 D2 B2,W,II Masovian Open Płock 2016 (2016-08-27~28),333oh R1 B #1
@@ -130,7 +130,7 @@
 5175119001,F2 R' F' L2 B D2 R2 F2 D2 F' U2 B' L' R U' B' L F D' B',W,Sphinx Cube Open Jaipur 2025 (2025-11-08),333 R1 B #2
 1355612036,R' F2 D2 B2 L2 R' F2 L' B2 U2 L' U' B R B F L2 D R' F2 U L',W,Polish Championship 2019 (2019-10-11~13),333mbf Final A #2
 3451694001,L F2 D L' F2 R2 U B2 D2 L2 D F' D' B U' F2 R B',W,Longjum'Open 2024 (2024-01-27~28),333 R3 B #3
-4119613043,R2 F' L' B U R' U' D' F' D2 F' U2 B U2 F2 L2 R' B R' B,W,Manchester 5BLD Day 2024 (2024-09-21),333mbf Final B #1
+5852605010,F' U L' B' L2 R2 D2 R2 B2 U' B2 R2 D' F D B2 U' B L D B' L',W,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #3
 5161885001,B' U2 B2 D2 R2 B' R2 B2 U' F' R' D2 U2 R2 F' R' D L U,W,Temple Cubing Fall 2025 (2025-11-02),333 R2 B E2
 4646863001,U2 F2 L' B' D' L2 F2 R' D' F' B2 U D2 B2 U2 L2 F2 R2 F2 U',W,NYU Spring 2025 (2025-04-13),333 R1 E E2
 1473072001,B2 U2 L2 R2 F2 L2 D L2 D' B L R' B' U2 L2 B2 F' D' L',W,Polish Speedcubing Tour Łuków 2019 (2019-12-14~15),333 R2 B E1
@@ -158,7 +158,7 @@
 1983564001,F L2 U2 F' L2 F' U2 L2 D2 L2 B' D' B' L F2 R B R D U2,W,Fast In Mass 2022 (2022-06-18),333 Final A E1
 2037507001,U2 B2 D2 L' R2 U2 L2 B' L2 B F' U2 L' U' R U' F' U F2,W,Edukent Weekend 2022 (2022-07-15~17),333 Final A #4
 2049353001,D2 F B' D' L F' U F D2 R' U2 L U2 L2 F2 U2 L B' R2,W,Chiayi Open 2022 (2022-07-23),333 R2 C #3
-4214351020,R2 D' R B R' F' R D L F B2 R2 U2 B U2 D2 B D2 B L2,W,Valsugana Speedcubing 2024 (2024-10-19~20),333mbf Final A #1
+5847934001,U2 L B2 F2 D2 U F2 L2 D L2 F' L2 U2 L' R2 U B U L2 B R2,W,BLD Fall Fürth 2026 (2026-09-26~27),333bf Final A E2
 3444423001,R B2 U2 L B2 U2 L2 U2 L' F2 D U L F U' B U R2 F2 L',W,Dåstrup Diverse 2024 (2024-01-21),333oh Final A #5
 2089770044,D2 R2 D L2 B' D F L' D L2 B2 L2 U R2 D2 L F2 U' L2 U2,W,Oregon Championship 2022 (2022-08-12~14),333mbf Final A #1
 5136615016,L2 F2 L2 R2 U' R2 D2 L2 D L B D R' F' L U' L2 D B' L' D,W,New Zealand Cubing Decathlon 2025 (2025-10-25~26),333mbf Final A #1
@@ -195,7 +195,7 @@
 5809987001,B U2 R2 D2 L U D R' B2 D' B2 D' R2 B2 L2 F2 R2 D2 B' L D2,W,Virginia Quiet Championship 2026 (2026-08-29),333bf R1 B E2
 2762522001,R' B2 D2 F2 R D F L' U2 R' U2 F2 L2 D F2 U L2 D F,W,General Trias Speedcubing Open 2023 (2023-05-28),333 R2 B #2
 2774741001,R2 U2 B2 L2 D B2 F2 L2 B R' F D2 F D' L U2 B' F D,W,Singapore AMK CC Cubing B 2023 (2023-06-04),333 R1 E #2
-4892454001,F' B R' D F2 U2 F' B2 R U2 D2 B2 L' B2 R2 F2 L D B R2,W,Cuenca Open 2025 (2025-07-26~27),333 R1 A #3
+5853422014,D U2 F' R2 D2 B2 L2 D2 B2 F' U' L' R' D L R F2 R' D B L2 U2,W,Mega-Mente Puebla 2026 (2026-09-26~27),333mbf Final A #1
 2781421001,F R B' L2 R2 F2 D L2 U' L2 F' L2 F' D' U2 B' L' U2 R,W,Selangor Ace Cube 2023 (2023-06-03~04),333 Final A E2
 3548904001,F' D' R2 D L2 D B2 D' B2 D F2 D F' D' L' B' R D B2 R U2 L B2,W,Mental Breakdown Hoorn 2024 (2024-03-02~03),333bf R2 A E1
 2797611001,R B U2 R L2 B' R U' D R2 U2 R2 L2 F' B2 U' B2 R,W,San Juan Cubing 2023 (2023-06-17),333 R1 E #4

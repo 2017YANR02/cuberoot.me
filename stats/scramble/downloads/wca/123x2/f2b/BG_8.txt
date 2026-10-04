@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / BG / bin 8
-# Population in this bin: 887
+# Population in this bin: 894
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1626433016,R2 F2 U' F2 U B2 L2 D' F2 R' D R B L F' R2 D' U F' L B,G,Turn Around Tassie 2020 (2020-12-12~13),333mbf Final A #1
@@ -198,7 +198,7 @@
 773866001,R2 D B2 U2 R2 F2 D F2 D L2 B2 L' U' B' U F' R' F' D2 L2,G,UIUC Spring 2018 (2018-05-06),333 R1 A #1
 3923830001,U' L2 F2 L2 U2 B2 D L2 B2 U' F D' R2 D L D' B' L U',G,Philippine Championship 2024 (2024-07-05~07),333 R1 C E2
 786672001,U2 R' U2 L2 B2 R2 B2 R F' D L R' F L' R U' R U R,B,YJ Fest 2018 (2018-05-18~20),333oh Final A E2
-5424210001,R2 U B' D' F2 R L B' F2 L2 U' B2 D R2 D2 R2 F' B2 L' B' L2,B,XMUM Cube Open 2026 (2026-02-28~03-01),333bf Final B #5
+5855841009,D' U L2 D2 U B L' D' L D2 B L' U' B U2 R2 F2 L2 U,G,Finnish Quiet Championship 2026 (2026-10-03),333mbf Final A #1
 3929315001,U2 L B2 R2 D2 R' B2 U2 R U R' U' B U2 B' U' R D2,B,Big n Blind Bangalore July 2024 (2024-07-14),333bf R1 A #1
 793557001,B R2 F2 D2 L F' B2 L2 D F2 D2 L F2 B2 D2 R' B2 R',G,Schwandorf Open 2018 (2018-06-02~03),333oh R1 A E1
 1082653001,U2 F D2 B' U2 B F D2 U' F2 U' R' D' L2 F2 L' F L F',B,Dutch Masters 2019 (2019-04-06~07),333 R1 E #3

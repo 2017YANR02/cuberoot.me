@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xcross / BG / bin 3
-# Population in this bin: 713
+# Population in this bin: 715
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 242001,L' U2 F2 L D2 U2 R D2 U' B' R2 D R' B D F' D' B2 D',B,Montréal Open 2014 (2014-03-15),333 R1 A #3
@@ -162,7 +162,7 @@
 775525005,U L2 F2 D2 L2 D2 R2 F2 U' B' F2 D F2 L U2 R2 B' L R2 B' L',B,SESC Gravataí 2018 (2018-05-05~06),333mbf Final A #1
 775526010,U2 F2 L2 F2 D' L2 D R2 D' F U' B2 D' U F' U' R B2 R' F2 L2 U,G,SESC Gravataí 2018 (2018-05-05~06),333mbf Final B #1
 4060734001,F' U2 R U' R D' F2 U' F' D R2 F2 U2 R2 B U2 F' D' L B2,B,Big n Blind n Clock Xianju 2024 (2024-08-31),333bf R1 B #3
-783175001,L' U' L F R' B2 D' R U R2 F2 D2 L2 U2 L2 B' L2 F' R2 B2,G,Pyra Pandemonium 2018 (2018-05-19),333 R1 A E2
+5847860012,B' D' R' B2 F2 L' R2 D2 F2 D' L R D2 U' F' U' B U2 B R',B,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final B #1
 4643875010,U2 L U2 B L R2 U2 F2 R B2 R2 B' D F L2 B' L D L B2,B,NZ South Island Championship 2025 (2025-04-12~14),333mbf Final A #2
 3805830001,D U2 B L2 B2 D2 F D2 U2 F D R B2 U' B' R D2 B2 U',G,Pretzel Mania Denver 2024 (2024-05-25~26),333 R2 D #4
 788375001,U L2 B D2 B2 U B' D B R' U2 F' L2 F' L2 U2 B D2,B,Tea Time Spring 2018 (2018-05-26~27),333 R2 B #3

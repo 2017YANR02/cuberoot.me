@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / BG / bin 0
-# Population in this bin: 310
+# Population in this bin: 312
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4628242006,D' L' F L2 B2 F2 D' F2 D F2 D2 L2 B R2 F2 L' F' L F2 L' F,B,Langenstein City Blind Open 2025 (2025-04-05~06),333mbf Final B #2
@@ -166,7 +166,7 @@
 5452582001,B2 U' B U' R D2 F U' R2 B' L' B2 R' F2 L' U2 L2 F2 B2,B,TJHSST Winter 2026 (2026-03-15),333 R1 B E2
 3082792009,B2 L2 F R2 F' R' D L2 F' B' U2 F' B2 U2 L2 F' U2 L2 U' B',B,Un Petit Gesté Open 2023 (2023-09-16~17),333mbf Final A #1
 3113449001,F2 U2 R B2 F2 L D2 L2 R U2 D' B' L2 D' U F D L2 F' L',G,Washtenaw Fast 'n Late Fall 2023 (2023-09-23),333 R1 C #4
-3152376001,U2 B' U' D2 B' R2 U2 B F D F' U R' D' L2 R U',G,CubingUSA New England Championship 2023 (2023-10-07~09),333 R3 A E1
+5854846001,R' U' F L' B2 D' F2 D R2 U L2 R2 U2 F L U' L R2 F2 D2 F L' D R' U' F,G,Cube Days at SEK 2026 (2026-09-26~27),333fm Final A #1
 3169270001,F2 R2 D R2 D L2 F2 B D' U B2 U2 F U R' U2 L B' R2,B,Jönköpingsligan 3: Capricciosa 2023 (2023-10-17),333 Final A #3
 4618194001,F' R2 D F2 B U' R' U' L2 D' F2 L2 D' F2 B D F' R2,B,Cavarzere al Cubo 2025 (2025-03-29~30),333oh Final A E2
 5623823001,L2 F D2 U2 L' F2 R D2 B2 U2 F' R2 D R2 U2 R D R,B,MoT Cube Open 2026 (2026-05-09~10),333 R1 D #5

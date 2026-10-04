@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / BG / bin 2
-# Population in this bin: 868
+# Population in this bin: 871
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4898413001,D F' B2 U F2 D L2 U' L2 F2 D2 B' F L' R' F U F U' R2,B,Boise One-Handed Blitz 2025 (2025-08-02),333 R1 A #3
@@ -181,7 +181,7 @@
 5049225001,R D R' D2 R2 U L2 B' R' D2 R2 B2 U D2 L2 D' R2 F' U2,G,Energy Cube Białołęka 2025 (2025-09-27~28),333 R2 B #5
 5498829001,R2 D2 F' R2 B U2 B' R2 F L2 U2 D F' D2 L D2 B F' R' D R' B' L,G,Williamsburg Open Spring 2026 (2026-03-28),333bf R1 A E1
 660498027,B2 U' F2 L2 D U' B2 D L' B' L' U2 B2 F' U' F2 L' F' D L2 U2,B,Belgian Summer 2014 (2014-07-12~13),333mbf Final A #1
-3857187001,D B2 D' U2 F2 R2 U2 B L B' R' D2 R B D2 F' D F2,G,Energy Cube Ciechanów 2024 (2024-06-15~16),333oh R2 A #2
+5846424001,D F2 U2 R' U2 B' D' B D2 R D2 R F2 D2 R2 B R U2,B,Puzzling Pakenham Saturday 2026 (2026-09-26),333 R1 A #2
 5218538001,U' L' U B' U' B' D L B2 R2 U2 R2 U R2 L2 U B2 L2,G,Beijing Only 3x3 2025 (2025-11-23),333 R1 F #1
 998995001,R2 B F2 U2 F' D2 B2 F2 D R B2 F R' F L' B2 R F' D',B,Taipei Peace Open 2019 (2019-01-26~27),333oh R1 A E2
 1180477001,B' U2 B2 U2 R2 B F2 D2 U2 L2 U' F' L' U R B' L U2 L R U2 B R,B,GLS Cup II 2019 (2019-06-08~09),333bf Final A #1

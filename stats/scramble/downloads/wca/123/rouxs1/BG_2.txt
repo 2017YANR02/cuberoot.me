@@ -1,8 +1,8 @@
 # Scramble samples — 123 / rouxs1 / BG / bin 2
-# Population in this bin: 264
+# Population in this bin: 266
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5542001,D' R2 L' F' R2 B2 U B L' U2 F2 L2 U2 F2 B2 U' R2 D' R2 U',B,Swiss Open 2014 (2014-03-29~30),333oh R1 A #2
@@ -147,7 +147,7 @@
 2937476001,F2 L' B2 L' B2 L2 U R' U2 F2 U R2 F' U2 B U' B2,B,Geelong Winter 2023 (2023-07-29~30),333 R1 A E1
 5149961031,F2 R' U' R2 F2 U2 B D R' D' B2 U L2 U' B2 U2 L' B2 D2,B,Furesø 3x3 Frenzy 2025 (2025-11-01~02),333mbf Final B #3
 2969806006,L' U2 L2 U L2 D B2 F2 U' L U2 L2 U2 B' R2 U F R2 B' L,G,Turkish Nationals 2023 (2023-08-10~13),333mbf Final A #1
-2980266001,R' F U2 R' D2 L2 R' U2 F2 L2 R U R2 B U R2 B U R,G,Hyderabad Cube Open 2023 (2023-08-11~13),333 R1 J E2
+5845317001,R F' R' B2 U2 L' D2 U2 R B2 U2 F2 U' F D F' L2 U L',B,Hancock County NxNs 2026 (2026-09-26),333 R2 B #4
 3049224001,L2 R2 D' U2 L2 D R2 B R B F2 D B' L D2 F2 D' R2,G,Singapore Mini 2023 (2023-09-09),333 R1 F #3
 3073283001,D' R' D R2 D L F U2 B U F D2 F D2 F B2 L2 B2,G,Cranbourne Spring Sunday 2023 (2023-09-10),333 R1 D E1
 3088420001,R L2 B2 L B' R2 F2 R2 D L2 B2 U2 L B2 R' D2 B2 D2 F,G,Vadodara Winter Open 2023 (2023-09-17),333 R2 C E2
@@ -160,7 +160,7 @@
 3185199001,F' L U L2 U2 F U B' U2 F U2 F2 U2 F U2 R U',B,Hong Kong Championship 2023 (2023-10-21~22),333 R2 A #1
 3205913154,R2 F D L2 D2 B2 L2 F2 L2 F2 U' R D2 U R' F2 R2 D F2 L2,G,Please Be Quiet in Astana 2023 (2023-10-28~29),333mbf Final B #1
 3219973001,D2 R2 B2 D2 U2 B' L2 U2 L' F' R U2 R' F2 D2 F' D' L',B,IUT Esonance 2023 (2023-11-03),333 R1 C #1
-5560802001,U2 R U2 R' B2 R' F2 D2 R2 F' D F' U B' U' B2 D2 L F2,G,Racing Kane 2026 (2026-04-18),333 R1 A #1
+5854270001,U F' D F' D L D2 L' U B2 U' F2 L2 D F2 U B',B,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 R1 A E1
 3250339031,L2 F L' F2 R' U R' U' F U2 R2 B2 D2 F2 U' L2 F' L2,G,Melbourne Cube Days 2023 (2023-11-11~12),333mbf Final A #1
 3297672001,U D2 R2 D2 L' F2 L2 U B' U F2 U2 B' U2 F' L2 U2 R2,B,Hefei Winter Open 2023 (2023-11-25),333 Final A #3
 3323584001,R F2 L D2 L B2 L2 B2 R D L' R' B' U2 R D' B' F' R2,G,UIUC Fall 2023 (2023-12-09),333 R2 C #4

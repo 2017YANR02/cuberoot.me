@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / Y / bin 7
-# Population in this bin: 782
+# Population in this bin: 786
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1993001,F' D' F2 R2 U F R F2 D R' D' F2 D2 F R2 F2 R2 L2,Y,Zonhoven Open 2014 (2014-03-22~23),333 R1 A #1
@@ -116,7 +116,7 @@
 540360001,U2 F U2 B' L2 B2 R2 D2 F' U2 R D2 F2 L2 F' U L D2,Y,Latin America Cubing Tour - Chía 2017 (2017-06-28~29),333 R2 E E2
 4758761001,B' R2 D' R2 B2 D U' R2 U' L' U L' F U L2 F2 D R,Y,Noida Cube Open 2025 (2025-05-24~25),333 R1 G #3
 553725001,B2 D' R F2 U' R D' F B2 D' R L2 F2 D2 R2 U2 B2 R' U2 R',Y,South Cube Open 2017 (2017-07-15),333 R1 A #1
-5008156001,L2 D B' U F2 L' U2 L' F' L2 F' R2 D2 B2 D2 L2 D2 L',Y,SilencESFM 2025 (2025-09-06~07),333 Final D #1
+5845974001,F2 U' R2 F2 D' L2 U' B2 D' L' D2 F2 L' R' F D2 U L' D,Y,UC Canterbury Open 2026 (2026-09-26),333 R1 A E1
 1066477001,D L B R2 D2 B' R D' F D' B D2 F2 B' R2 B' D2 L2 U2,Y,Utah Spring Open 2019 (2019-03-23),333 R1 C #3
 5676405001,U' B2 U L2 U2 L2 D' B2 U R B' U2 B' U2 F' U' F2 R,Y,Mina de Água NxN 2026 (2026-05-30),333 R2 B E2
 2796585001,U R2 B2 R2 D F2 R2 B L2 F' U' R U' L2 R' U' B' R2,Y,Tassie Winter 2023 (2023-06-17~18),333 R1 D #5

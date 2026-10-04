@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / WY / bin 2
-# Population in this bin: 414
+# Population in this bin: 416
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 47921001,F U2 F D2 F' R2 F L2 F R2 D' L2 R B2 R F2 D' F' U2,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333 R1 O #5
@@ -51,7 +51,7 @@
 2900549001,D2 F2 D' F' U2 R2 U2 B U2 F L2 B R' U' L R D2 B2 L2,W,Cronos Querétaro 2023 (2023-07-15~16),333oh Final A #4
 449196001,R2 D2 B2 U2 B2 D R2 U2 B R U' L2 B2 D2 U L R U2 R,W,Speedsolving Pucallpa 2017 (2017-02-18~19),333 R1 D #5
 479483001,B' L2 D2 L2 F' L2 F' R2 D' L' F' D' L2 U2 R2 F2 U' B,W,Weston Spring 2017 (2017-04-01),333 R1 B E2
-483446001,B2 L2 R2 F D2 B D2 U' L2 U2 L2 B' U2 F' L R2 D' B',W,Ban Parity Open 2017 (2017-04-08~09),333 R1 G E1
+5855275001,R2 L2 U R' B2 L B U L2 D F R2 F2 D' R2 L2 F2 L2 B',Y,Cubing Skills in Almaty 2026 (2026-09-26~27),333bf Final A #4
 505712001,R D2 B D F B' D2 B2 U2 L' F' L2 D2 F2 R2 B2 R2 D2,W,Shenyang Spring 2017 (2017-05-13~14),333oh Final A #2
 5814712001,U' F2 D L2 U' L U2 L U F2 D2 B F' U' B' L2 U,W,Compostela Cubing 2026 (2026-09-05),333 R1 A #4
 560595001,U2 R2 D2 B2 D2 L2 U' B L' U R2 L2 U L2 D R2 U' R2 F2 R2,W,SSN Cube Open 2017 (2017-07-28~29),333 Final C #5

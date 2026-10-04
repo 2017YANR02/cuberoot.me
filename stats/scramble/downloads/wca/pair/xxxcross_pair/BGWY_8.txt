@@ -1,8 +1,8 @@
 # Scramble samples — pair / xxxcross_pair / BGWY / bin 8
-# Population in this bin: 479
+# Population in this bin: 484
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5835166005,L2 U L' B2 D2 R B2 R' U2 L2 D' L2 D U' R' D B D B' L B,W,LA Quiet Championship 2026 (2026-09-19),333mbf Final A #1
@@ -200,7 +200,7 @@
 4151708001,B' R2 U2 F' L2 U L' B D' F' U' F2 U L2 B' D2,B,Rubik's WCA African Championship 2024 (2024-09-21~24),333oh R1 C E1
 1921497001,U' B U2 B' U2 R2 B' R' D B' D R2 F' D2 L2 U2,Y,MSU Quiet Qualifier 2022 (2022-05-14),333bf Final B E1
 5439229001,U2 L2 F2 U' F2 L2 U2 L2 D B2 F D F D R' U' B L D,B,PUCP Cubing Festival IX 2026 (2026-03-07~08),333 R2 B #4
-4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2
+5856383001,L' B' U2 L U2 R F2 L F2 D B U2 L' B L' B2 U2 B,Y,Adelaide Spring 2026 (2026-10-03),333 R1 B #3
 2003358001,R2 B F2 D' F2 L2 B2 U F2 U B L2 B' L' F' L2 D' R,B,We are Back Sofia 2022 (2022-07-09),333 R1 A #2
 2068497001,R B2 L2 U2 F2 R B2 L2 D2 R2 U' L B F2 L2 D2 U' R' U' B2,Y,AZCubing Summer 2022 (2022-07-30),333 R2 A #1
 5736478001,R2 D' L' U2 D2 L2 F' D' R2 F' L2 U2 B2 L2 U' L2 U D,B,BBQ Ropaži 2026 (2026-07-04),333oh Final B #5

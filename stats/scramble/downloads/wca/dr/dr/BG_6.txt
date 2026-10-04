@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / BG / bin 6
-# Population in this bin: 625
+# Population in this bin: 628
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
@@ -74,7 +74,7 @@
 1998347001,F L2 D2 R2 D L F2 R2 B' U' F B R2 B2 L2 B' R2 F',B,Metz Open 2022 (2022-07-02~03),333oh R2 A E1
 3830796001,B L2 F2 D2 F2 R2 B2 R' B2 D2 B L' D2 B2 R2 F' D' B D2,B,Gniezno Side Open 2024 (2024-06-08),333bf R1 A #2
 3595035001,F' B2 U2 B2 F2 R F2 U B2 R' U2 R B2 F' U' L' F2,B,Geel Beginners Sunday 2024 (2024-03-17),333 R1 B E2
-4601920001,U2 F D2 F2 R2 D2 F' D2 B R2 F' D2 R U' F' R' U' F',B,Ruta Cubera: Córdoba Open 2025 (2025-03-29~30),333 R2 A #1
+5851872020,B2 F D' B2 D2 U' F2 U B2 U' R' D' B R D U' L' B L,B,GAN WCA African Championship 2026 (2026-09-24~27),333mbf Final A #2
 1321219001,B' L2 U2 B' D2 F2 D2 L B D2 B2 D' R2 U2 L2 R U2 R2,B,Hungarian Open 2019 (2019-09-20~22),333oh R2 A E2
 5547507001,D2 B L2 F L2 D2 L2 F' R2 B R U B F' L U2 L2,B,Cube Against Cancer Tulsa 2026 (2026-04-18),333 R1 C #4
 3672758001,B2 U F2 U2 B2 D R2 D F2 B U2 F D2 R2 F' D2,B,Circle City Cubing 2024 (2024-04-13),333 R2 B #1

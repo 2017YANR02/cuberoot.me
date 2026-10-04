@@ -1,8 +1,8 @@
 # Scramble samples — 222 / block222 / BGORWY / bin 1
-# Population in this bin: 363
+# Population in this bin: 364
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5003001,F D2 F' B2 D F B2 D L' D' L' F2 R' F2 L2 D2 B2,G,Tula Open 2014 (2014-03-28~30),333 R1 B #4
@@ -105,7 +105,7 @@
 1004836001,D' L' F' R' U L F2 R' U2 L' F2 L2 D' L2 U' B2 L2 U,G,Return to Toronto 2019 (2019-02-02),333 R1 B #3
 1007657001,F2 U' R2 D' U2 F2 D' R2 D2 L' F2 L2 F2 U2 B L' R U' B2 D,B,Valenzuela Cube Classic 2019 (2019-02-02),333bf Final B #2
 4430733001,L2 D2 F B' U' D2 L2 F U' D R2 U F2 D' R2 L B R,G,Partage Summer SG 2025 (2025-01-18~19),333 R1 B #1
-1024271001,F2 D2 U2 R' B2 R U2 B U2 F' D F U2 B' F D' U' F,B,Albany Winter 2019 (2019-02-16),333 R2 B E1
+5852734001,B D2 R2 U' F2 D' F2 U R' U2 B' R B' U2 F D B2 D,B,Proyección Social UD IV 2026 (2026-09-26),333 Final A #2
 5457295001,D R F2 R' F2 D2 L F2 D2 L' F U L D' L U B R' B',B,Guam Open 2026 (2026-03-21),333oh Final B E1
 1108365055,R2 F2 L2 D B2 D' U2 B2 F' R B D2 R2 U B2 F' D B' R B2 L B2,B,Shanghai Memory Nightmare 2019 (2019-04-20~21),333mbf Final A #2
 3643887001,R' F' D2 B' F' U2 R2 F2 U2 F' R2 F2 D R' B D' B2 R D2 B2,B,Wide Bay Cubing 2024 (2024-04-06~07),333 R2 A #5

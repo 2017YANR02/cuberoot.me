@@ -1,8 +1,8 @@
 # Scramble samples — std / xcross / WY / bin 3
-# Population in this bin: 275
+# Population in this bin: 276
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4933863001,L2 F2 R B2 U2 R B2 L U' L' D2 F' D' F R2 D F2 L2,Y,Visayas Championship 2025 (2025-08-09~10),333 R2 A E1
@@ -65,7 +65,7 @@
 4701564001,B2 R2 D B R D2 R U2 R2 F L D F' U' R' B2,W,Hessen Mini Open 2025 (2025-05-02),333 Final B #4
 830549001,F B' L B L B' R2 D F' U2 L2 U L2 U' L2 U L2 D2 F2 U2,Y,Ho Chi Minh Open 2018 (2018-07-14~15),333oh Final A #1
 846356008,L' D2 L B2 U2 R U2 L2 U L2 B L D2 L2 B2 R2 U' B' D2 L,W,Batam Open 2018 (2018-08-04~05),333mbf Final A #1
-5792252001,D2 F U' F' D' R2 D2 R2 F' L' D2 R F2 L D2 F2 U2 D2,W,Singapore Augu-Skewb Day 2026 (2026-08-23),333oh R1 C #3
+5851761053,R U2 R2 D' L2 F2 U B2 U' F' L' B' U L' R2 D2 L2 D2 B,W,Croatian Quiet Championship 2026 (2026-09-27),333mbf Final A #1
 4605341001,U F U L D2 L' B2 L D2 R U' F2 R2 U' F' R' U' F',Y,Plaza Madero Chía 4 2025 (2025-03-30),333 R2 D #4
 880772021,F' R2 F L2 B L2 B' L2 F2 L2 U' F U L U R' U R U L' F',W,Berkeley Summer 2018 (2018-09-15~16),333mbf Final C #1
 882257012,D2 U2 R' F2 R D2 U2 R' D2 F R2 D' L B' D' B' D2 R2 D' L,Y,Anaheim Fall 2018 (2018-09-15~16),333mbf Final B #2

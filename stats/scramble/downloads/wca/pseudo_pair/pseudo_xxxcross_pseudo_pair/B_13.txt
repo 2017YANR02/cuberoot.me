@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxxcross_pseudo_pair / B / bin 13
-# Population in this bin: 226
+# Population in this bin: 227
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5755551001,L' U F U2 R2 B2 U2 L F2 D2 R' D L2 B' F' L2 D B2 D,B,Rubik's WCA European Championship 2026 (2026-07-16~19),333 R2 D #4
@@ -53,7 +53,7 @@
 653682001,R B U L' F L B D' L2 B' R U' D B2 L2 B2 U R2 F2 U,B,Jeju Open 2017 (2017-11-25~26),333oh Final C #3
 660526039,R' B2 D2 L R F2 U2 R B2 U' L' F2 L2 F' D' B F R' D F2 L2,B,Rubik's Cube European Championships 2014 (2014-08-08~10),333mbf Final A #2
 660686008,L2 F' L2 B' F L2 F R2 F' U R B L D R D2 B' D2 B' F' L' F2,B,Welcome Back to Guildford 2015 (2015-04-11~12),333mbf Final A #1
-5555033001,R D' R' U' F2 U L2 D R2 D F U' L2 B R' F U' L' F,B,Mindcube Open Tegucigalpa 2026 (2026-04-19),333bf Final B #5
+5852127001,B U' L2 D L2 D F2 U2 R2 U' L2 R D' U' B2 F' L B' F2,B,GAN WCA African Championship 2026 (2026-09-24~27),333 R2 B #5
 661159003,D' B2 L2 F2 L2 F2 D U L U2 B D L2 U R B' D' L D2 F L B',B,Torneo de Speedcubers 2016 (2016-10-29~30),333mbf Final A #2
 661270002,U2 D' R' L2 F' D' B L' U' D F' R2 F R2 U2 F' R2 L2 U2 F2,B,Nacionales Uruguayas UCHI 2017 (2017-03-04~05),333mbf Final A #1
 661437002,R2 B2 D U F2 U' F2 L2 B' F' L' D2 R' B' U' F' D' B R' U' L2,B,SSN Cube Open 2017 (2017-07-28~29),333mbf Final A #1

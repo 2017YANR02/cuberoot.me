@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xcross_pseudo_pair / W / bin 3
-# Population in this bin: 725
+# Population in this bin: 728
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3350547001,R2 F2 L2 D' B2 R2 D2 R2 D2 L' D U2 B L2 D' U' B2 F' D,W,Italian Championship 2023 (2023-12-08~10),333 R2 A E1
@@ -10,7 +10,7 @@
 5778856001,B2 R2 D' L2 U2 R2 D' L2 B2 L' F' D F L' D' L D' F D',W,Ocaña BotijOpen 2026 (2026-08-08~09),333 R1 A E1
 16936001,U2 L2 D' B2 U2 B2 U B2 L2 R B2 F' D F2 L R' B F' D2 F',W,SLS Chorzow 2014 (2014-05-03~04),333 R2 A #3
 1126937001,R B2 L D' B' R2 D' B' U2 R U2 B2 R2 F2 D R2 D F2 L2,W,Xiamen Open 2019 (2019-05-04),333oh R1 A #5
-3387667001,B U2 F U2 R2 B2 R B2 R U2 D' L2 U2 B U2 L R2,W,Chääswürfel 2023 (2023-12-31),333 R1 C #1
+5849377003,R2 F' B2 L' D R' D' F L' U F U2 F U2 F2 L2 F D' B R',W,Goiânia Xiu 2026 (2026-09-26~27),333mbf Final A #1
 31507001,R' B2 R' B2 F2 U2 L' D' U' R2 D' L U' F2 L' F' U2 F,W,Excellite Cube Open 2014 (2014-06-22),333 R1 H #3
 1930718001,U2 B2 U2 R U2 F2 L R2 B' D' R' U B2 R B' R F' L' B,W,Utah's California Gull Extravaganza 2022 (2022-05-20~21),333oh Final A #2
 1740860001,B2 U2 B' R2 B' U2 F' L B2 U2 L2 F D U2 R B R2 U',W,Guayaquil Resist 2021 (2021-11-27),333 R1 E #1

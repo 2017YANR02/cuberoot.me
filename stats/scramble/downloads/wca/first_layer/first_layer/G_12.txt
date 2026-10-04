@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_layer / G / bin 12
-# Population in this bin: 963
+# Population in this bin: 969
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 874682001,B2 L' B2 L B2 U2 L' B2 F2 L F D' B' U R B2 U R2 U' L' D2 L2,G,Happy Cubing Honduras 2018 (2018-09-08),333bf Final A #2
@@ -155,7 +155,7 @@
 660797027,B2 L' U2 F2 L' B2 D2 R' F2 R F R2 F U' L2 R' B D' U' F L B',G,Semarang Reuni Yuk 2015 (2015-08-23),333mbf Final A #1
 4272079001,L' D' F R2 U2 L' U2 L D2 F2 L R2 B' R U' B D' U' R,G,MS ao Cubo 2024 (2024-11-09~10),333 R1 E #2
 660944007,B2 D2 L2 R2 B2 D L2 F2 U B' F D' R2 F R B' L2 D R2 U L2 U,G,Kharkiv Special 2016 (2016-03-13),333mbf Final A #2
-660986028,U2 L2 D L2 U R2 D' R2 B2 D L' D2 B' L2 F' R' U2 F U F' D' B R,G,Shanghai Songjiang Open 2016 (2016-05-14),333mbf Final A #1
+5855312001,D2 B U2 F D2 B2 L2 B' U R D2 L' F L2 F' R2 D' U L,G,Cubing Skills in Almaty 2026 (2026-09-26~27),333 R1 A #5
 3637519001,F' U2 F2 R F' L2 D R2 F2 D' L' D2 F2 U2 L' B2 U2 L' D',G,French Championship 2024 (2024-03-30~04-01),333oh R1 G E2
 3520205001,L' F U2 D2 L' D' R2 F B2 U2 B2 D2 L' U2 R' F2 R2 F2 U,G,Chelles Open 2024 (2024-02-17~18),333oh R1 A E1
 5792195001,B' R2 F2 L F2 L B2 L' R' B2 F2 R' B D U B' R2 B R B,G,Singapore Augu-Skewb Day 2026 (2026-08-23),333 R1 A #2

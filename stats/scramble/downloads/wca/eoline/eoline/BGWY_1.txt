@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGWY / bin 1
-# Population in this bin: 334
+# Population in this bin: 335
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5606061001,D R2 B' R2 D2 F' D F' R2 L2 U' D R2 D' F2 B2 R2,W,Speedcubing Huánuco 2026 (2026-05-03),333 R1 E #5
@@ -139,7 +139,7 @@
 1421356001,D' R2 U' F2 D R2 U' L2 B2 L' B F2 R B L2 R B U' F' L' F2,Y,I Hope It's Solved Edmonton 2 2019 (2019-11-23~24),333bf R1 C #1
 1434606001,L' U2 F2 L2 D2 U2 L D2 L2 U' B' D F R2 F' D B,B,Lion's Cup 2019 (2019-11-30),333 R1 B #4
 4576603001,R2 B' L2 D R B' U2 B' F2 R2 U B2 R2 U' B2 L2 U2 F2 R2 D' L',G,Chernivtsi Open 2025 (2025-03-15~16),333bf R1 B #1
-1447386001,F2 D B2 U2 R2 D R2 F R2 U B' D L2 D2 B' D' R2 U2,Y,Beijing Winter 2019 (2019-12-07~08),333 R1 A #1
+5855105001,R U2 R2 D' L D' F2 R' F R2 L2 U2 B2 R B2 D L,G,Desafio Hungria em SP 2026 (2026-09-26),333 R1 A #2
 1488835001,U2 R' L D2 F2 B R F' R2 F' R2 D2 B2 L2 F' D2 B2,B,Perth Puzzle Party 2020 (2020-01-04~05),333oh R1 A #4
 1592183001,F2 D' L2 U2 B2 L2 U2 B2 U L2 B R2 D B2 U B' R2 D' R',Y,Santo Domingo Winter 2020 (2020-02-29~03-01),333 R1 A E1
 1627903001,U' R2 F2 U2 R' D2 L2 R F2 R' B2 F2 U' R' D2 L' B2 R' B,Y,New Zealand Nationals 2020 (2020-12-11~13),333 R1 B #4
