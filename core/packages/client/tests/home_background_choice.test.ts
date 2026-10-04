@@ -40,9 +40,9 @@ describe('shared homepage background choice', () => {
     }
   });
 
-  it('keeps a stable automatic server snapshot despite a saved browser choice', () => {
+  it('keeps a stable no-background server snapshot despite a saved browser choice', () => {
     localStorage.setItem(HOME_BACKGROUND_KEY, '08');
-    expect(renderToString(createElement(Picker))).toBe('<button>auto</button>');
+    expect(renderToString(createElement(Picker))).toBe('<button>none</button>');
   });
 
   it('hydrates automatic backgrounds before reading a saved dark theme', async () => {
@@ -76,7 +76,7 @@ describe('shared homepage background choice', () => {
     const values = () => [...host.querySelectorAll('button')].map(button => button.textContent);
     try {
       await act(async () => root.render(createElement('div', null, createElement(Picker), createElement(Picker))));
-      expect(values()).toEqual(['auto', 'auto']);
+      expect(values()).toEqual(['none', 'none']);
       await act(async () => host.querySelector('button')!.click());
       expect(values()).toEqual(['07', '07']);
       expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.dark`)).toBe('07');
@@ -91,7 +91,7 @@ describe('shared homepage background choice', () => {
         localStorage.removeItem(`${HOME_BACKGROUND_KEY}.dark`);
         window.dispatchEvent(new StorageEvent('storage', { key: null }));
       });
-      expect(values()).toEqual(['auto', 'auto']);
+      expect(values()).toEqual(['none', 'none']);
 
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new DOMException('blocked', 'SecurityError'); });
       await act(async () => host.querySelector('button')!.click());
@@ -115,7 +115,7 @@ describe('shared homepage background choice', () => {
       await show('light');
       await choose();
       await show('dark', '08');
-      expect(host.textContent).toBe('auto');
+      expect(host.textContent).toBe('none');
       await choose();
       await show('light', 'none');
       expect(host.textContent).toBe('07');
@@ -142,7 +142,7 @@ describe('shared homepage background choice', () => {
       await act(async () => root.render(createElement(Picker, { theme: 'dark' })));
       expect(host.textContent).toBe('08');
       await act(async () => root.render(createElement(Picker, { theme: 'light' })));
-      expect(host.textContent).toBe('auto');
+      expect(host.textContent).toBe('none');
       expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.dark`)).toBe('08');
       expect(localStorage.getItem(`${HOME_BACKGROUND_KEY}.light`)).toBeNull();
     } finally {

@@ -13,6 +13,7 @@ import { ListSelect } from '@/components/ListSelect';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { CONTINENT_NAMES } from '@/lib/continent';
 import { CompactSelect } from '@/components/CompactSelect';
+import { DailyActivityChart } from '@/components/DailyActivityChart';
 import { countryToIso2 } from '@/lib/country-flags';
 import { Flag } from '@/components/Flag';
 import { EVENT_NAME_TO_ID } from '@/lib/event-constants';
@@ -25,6 +26,39 @@ import {
   extractTextFromMdLink, dedupRows,
   selectRecordSection,
 } from './WcaStatView.cells';
+
+export function AnnualParticipationView({ header, sections, event, metric, onChange, isZh }: {
+  header: StatHeader[]; sections: StatSection[]; event: string; metric: string;
+  onChange: (event: string, metric: string) => void; isZh: boolean;
+}) {
+  const availableEvents = new Set(sections.flatMap(section => EVENT_NAME_TO_ID[section.title] ? [EVENT_NAME_TO_ID[section.title]] : []));
+  const selectedEvent = availableEvents.has(event) ? event : '';
+  const section = sections.find(section => selectedEvent
+    ? EVENT_NAME_TO_ID[section.title] === selectedEvent : section.title === 'All events');
+  const options = header.slice(1).map(column => ({ value: column.key, label: tr({ en: column.label, zh: column.labelZh }) }));
+  const selectedMetric = options.some(option => option.value === metric) ? metric : header[1].key;
+  const column = header.findIndex(column => column.key === selectedMetric);
+  const label = options.find(option => option.value === selectedMetric)!.label;
+  const points = useMemo(() => (section?.rows ?? []).map(row => ({
+    date: String(row[0]), values: { count: Number(row[column]) },
+  })), [section, column]);
+  return <>
+    <div className="wca-stats-tab-bar">
+      <WcaEventSelector availableEvents={availableEvents} selectedEvent={selectedEvent}
+        onSelect={value => onChange(value, selectedMetric)} isZh={isZh} allowAll />
+      <ListSelect items={options} value={selectedMetric} onChange={value => onChange(selectedEvent, value)}
+        allLabel={label} clearable={false} />
+    </div>
+    <DailyActivityChart data={points} series={[{ key: 'count', label, tone: 'info' }]}
+      ariaLabel={label} emptyLabel={tr({ zh: '暂无数据', en: 'No data yet' })}
+      dateLabel="year" showTotals={false} />
+    <p className="wca-stats-note">{tr({
+      zh: `历年合计：成功还原 ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[2]), 0).toLocaleString()} 盘；尝试 ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[3]), 0).toLocaleString()} 盘。`,
+      en: `All years: ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[2]), 0).toLocaleString()} successful solves; ${(section?.rows ?? []).reduce((sum, row) => sum + Number(row[3]), 0).toLocaleString()} attempts.`,
+    })}</p>
+    <StatsTable header={header} rows={section?.rows ?? []} searchTerm="" isZh={isZh} />
+  </>;
+}
 
 export function RecordSectionsView({ header, sections, query, onChange, isZh }: {
   header: StatHeader[];

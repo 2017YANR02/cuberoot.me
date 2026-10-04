@@ -14,7 +14,7 @@ function readChoice(theme: EffectiveTheme): HomeBackgroundChoice {
     const saved = localStorage.getItem(`${HOME_BACKGROUND_KEY}.${theme}`);
     if (isHomeBackgroundChoice(saved)) return saved;
   } catch { /* Keep working when browser storage is unavailable. */ }
-  return 'auto';
+  return 'none';
 }
 
 function subscribe(notify: () => void) {
@@ -42,7 +42,7 @@ function setChoice(theme: EffectiveTheme, value: HomeBackgroundChoice) {
 
 /** Shared across pages and tabs, with an independent choice for each color scheme. */
 export function useHomeBackgroundChoice(theme: EffectiveTheme) {
-  const choice = useSyncExternalStore(subscribe, () => readChoice(theme), () => 'auto' as const);
+  const choice = useSyncExternalStore(subscribe, () => readChoice(theme), () => 'none' as const);
   useEffect(() => {
     // Keep the old selection in the saved theme; the other theme starts at its default.
     try {

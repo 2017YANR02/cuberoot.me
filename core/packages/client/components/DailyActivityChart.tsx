@@ -24,6 +24,10 @@ export interface DailyActivityChartProps {
   emptyLabel: string;
   from?: string;
   to?: string;
+  /** Annual series reuse the chart without treating years as month/day labels. */
+  dateLabel?: 'day' | 'year';
+  /** Unique people across periods must never be summed as a lifetime total. */
+  showTotals?: boolean;
 }
 
 const HEIGHT = 252;
@@ -50,7 +54,7 @@ function dataAcrossRange(data: DailyActivityPoint[], from?: string, to?: string)
   return result;
 }
 
-export function DailyActivityChart({ data, series, ariaLabel, emptyLabel, from, to }: DailyActivityChartProps) {
+export function DailyActivityChart({ data, series, ariaLabel, emptyLabel, from, to, dateLabel = 'day', showTotals = true }: DailyActivityChartProps) {
   const chartData = useMemo(() => dataAcrossRange(data, from, to), [data, from, to]);
   const [selectedIndex, setSelectedIndex] = useState(Math.max(0, chartData.length - 1));
   const dayRefs = useRef<Array<SVGGElement | null>>([]);
@@ -184,7 +188,7 @@ export function DailyActivityChart({ data, series, ariaLabel, emptyLabel, from, 
                   height={plotHeight}
                 />
                 {(index === 0 || index === chartData.length - 1 || index % labelEvery === 0) && (
-                  <text className="daily-activity-chart__date" x={center} y={HEIGHT - 9}>{point.date.slice(5)}</text>
+                  <text className="daily-activity-chart__date" x={center} y={HEIGHT - 9}>{dateLabel === 'year' ? point.date : point.date.slice(5)}</text>
                 )}
               </g>
             );
@@ -192,14 +196,14 @@ export function DailyActivityChart({ data, series, ariaLabel, emptyLabel, from, 
         </svg>
       </div>
 
-      <div className="daily-activity-chart__totals">
+      {showTotals && <div className="daily-activity-chart__totals">
         {series.map((item) => (
           <span key={item.key}>
             {item.label}
             <strong>{hasUnavailableDays ? '—' : (totalBySeries.get(item.key) ?? 0)}</strong>
           </span>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }
