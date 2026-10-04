@@ -65,7 +65,7 @@ describe('algorithm player placement', () => {
     expect(detail).toContain('const orientationSetup = caseViewSetup(orientedSetup, effectiveViewAngle);');
     expect(detail).toMatch(/className="alg-case-detail-ori-player alg-player-list-player"[\s\S]*?<AlgPlayer[\s\S]*?alg=\{selectedAlg\}[\s\S]*?setup=\{orientationSetup\}[\s\S]*?orientation=\{effectiveOrientation\}/);
     expect(detail).toMatch(/className="alg-case-detail-ori-algs alg-player-list-options">[\s\S]*?<SetupLine[\s\S]*?displayCaseScramble\(puzzle, set, orientationSetup\)/);
-    expect(detail).toContain('renderOrientationSetup={(setup) => (');
+    expect(detail).toContain('renderOrientationSetup={m ? undefined : (setup) => (');
     expect(detail).not.toContain('{editor && <div hidden={effectiveViewAngle !== \'default\'}>{editor.setup}</div>}');
     expect(detail).not.toContain('inlinePlayer');
     expect(detail).toContain('autoPlay={playRequest > 0}');

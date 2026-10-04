@@ -22,7 +22,7 @@ import type { Metric as Top10Metric } from '@/lib/top10-axis';
 import type { StatData, StatSection, StatPanel, MetricPanel } from './WcaStatView.types';
 import { getAllPanelsFromMetric, metricIdsWithDataForEvent } from './WcaStatView.cells';
 import {
-  WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView, RecordSectionsView,
+  WrByCountryYearView, StatsTable, SectionsView, PanelsView, MetricPanelsView, RecordSectionsView, AnnualParticipationView,
 } from './WcaStatView.views';
 import '../../app/[lang]/wca/_wca_stats.css';
 import { tr } from '@/i18n/tr';
@@ -152,6 +152,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
 
   const renderMode = useMemo(() => {
     if (!data) return 'empty';
+    if (data.id === 'annual_participation') return 'annual';
     if (data.sections?.some(section => section.recordScope)) return 'records';
     if (data.metricPanels && data.metricPanels.length > 0) return 'metricPanels';
     if (data.panels && data.panels.length > 0) return 'panels';
@@ -190,7 +191,7 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
   );
 
   useEffect(() => {
-    if (availableEvents.size > 0 && !selectedEvent) {
+    if (renderMode !== 'annual' && availableEvents.size > 0 && !selectedEvent) {
       const urlEvent = new URLSearchParams(window.location.search).get(k('event'));
       const initial = (urlEvent && availableEvents.has(urlEvent))
         ? urlEvent
@@ -200,9 +201,9 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
         setUrlState({ [k('event')]: initial });
       }
     }
-  }, [availableEvents, selectedEvent, setUrlState, k]);
+  }, [availableEvents, selectedEvent, setUrlState, k, renderMode]);
 
-  const showEventSelector = renderMode !== 'records' && renderMode !== 'rows' && renderMode !== 'empty' && availableEvents.size >= 2;
+  const showEventSelector = !['annual', 'records', 'rows', 'empty'].includes(renderMode) && availableEvents.size >= 2;
 
   // headerMode='full' = 路由页:.wca-stats-page 自带暗锁 + 页面内边距 + h1。
   // 嵌入页(note/none)宿主已是暗锁的 .wse-page,用轻量壳,免重复暗锁/双层内边距。
@@ -275,6 +276,12 @@ export function WcaStatView({ statId, headerMode = 'full', urlScope = '', metric
       {renderMode === 'rows' && data.rows && !(data.years && data.cumulative) && (
         <StatsTable header={data.header} rows={data.rows} searchTerm={searchTerm} isZh={isZh} />
       )}
+
+      {renderMode === 'annual' && data.sections && <AnnualParticipationView
+        header={data.header} sections={data.sections} isZh={isZh}
+        event={urlState[k('event')] ?? ''} metric={urlState[k('type')] ?? 'people'}
+        onChange={(event, metric) => { void setUrlState({ [k('event')]: event || null, [k('type')]: metric }); }}
+      />}
 
       {renderMode === 'records' && data.sections && <RecordSectionsView
         header={data.header}

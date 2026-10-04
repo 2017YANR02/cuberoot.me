@@ -1158,8 +1158,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'DailyActivityChart',
     import: "import { DailyActivityChart } from '@/components/DailyActivityChart';",
     category: 'display',
-    zh: '后台时序活动柱形图。支持多数据序列、键盘逐日移动、鼠标与触摸选日、窄屏横向滚动和区间合计。',
-    en: 'Administrative time-series bar chart with multiple series, keyboard day navigation, pointer and touch selection, mobile horizontal scrolling, and range totals.',
+    zh: '时序活动柱形图。支持多数据序列、键盘、鼠标与触摸选点、窄屏横向滚动和区间合计；dateLabel="year" 展示年度标签，showTotals={false} 隐藏不可相加的人数合计。',
+    en: 'Time-series bar chart with multiple series, keyboard, pointer and touch selection, mobile scrolling, and totals. dateLabel="year" displays years; showTotals={false} hides totals for non-additive people counts.',
     usage: '<DailyActivityChart data={points} series={series} ariaLabel="Daily registrations" emptyLabel="No data" />',
   },
   {

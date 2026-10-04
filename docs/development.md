@@ -14,6 +14,19 @@ pnpm --filter @cuberoot/stats-build exec tsx src/bin/update_database.ts
 
 此入口会重建配置指定的数据库；运行前核对目标是专用的本地开发实例。MySQL 服务启停按本机安装方式操作，不把旧 Windows 的 `MySQL80` 服务名当作跨平台命令。
 
+### 维护者 Mac 的按需服务
+
+本机使用 Homebrew `mysql@8.4`，仅监听 `127.0.0.1:3306`：
+
+```sh
+brew services run mysql@8.4
+brew services stop mysql@8.4
+```
+
+`run` 不注册登录自启动。客户端目录 `/opt/homebrew/opt/mysql@8.4/bin` 已加入本机登录 shell PATH；连接配置在上述 gitignored `database.yml`，CLI 配置在本机 `~/.my.cnf`，两者权限均为 `0600`。换电脑须重新核对这些本机配置。
+
+导入完成后，在 `core/` 运行 `pnpm --filter @cuberoot/stats-build run validate-queries` 检查 SQL。只生成某项用 `pnpm --filter @cuberoot/stats-build compute <stat_id>`，不必重算全部统计。
+
 ## 登录配置
 
 WCA OAuth 与其他登录流程以 `core/packages/client/app/[lang]/dev/auth/page.tsx`、现役 API 路由和环境配置为准；退役 Vite 开发端口 `5173` 与旧 Implicit Grant 说明不再作为配置依据。
