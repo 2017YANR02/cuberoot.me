@@ -1,0 +1,147 @@
+{
+  "date": "2026-10-04",
+  "machine": {
+    "platform": "macOS Apple M5 Pro",
+    "physicalMemoryGiB": 64,
+    "logicalCpus": 18
+  },
+  "command": "cd core && pnpm stats:scramble",
+  "calculationCodeRevision": "53cc3c27cb",
+  "publishedCodeRevision": "d9c8323b36",
+  "scope": "Default complete incremental pipeline: stages, 333opt, puzzles, PostgreSQL, static files, Git push. Only 3x3 algorithms were optimized.",
+  "localRun": {
+    "startedAt": "2026-10-04T18:34:50.936Z",
+    "status": "complete",
+    "steps": [
+      {
+        "name": "build-analyzers",
+        "seconds": 0.034
+      },
+      {
+        "name": "prepare-config",
+        "seconds": 0.029
+      },
+      {
+        "name": "stages",
+        "seconds": 563.703
+      },
+      {
+        "name": "puzzles",
+        "seconds": 324.305
+      },
+      {
+        "name": "recent-events",
+        "seconds": 1.814
+      },
+      {
+        "name": "build-stage-json",
+        "seconds": 266.803
+      },
+      {
+        "name": "333opt",
+        "seconds": 360.625
+      },
+      {
+        "name": "recent-333",
+        "seconds": 3.481
+      },
+      {
+        "name": "length-opt",
+        "seconds": 1.202
+      },
+      {
+        "name": "bundle",
+        "seconds": 42.609
+      },
+      {
+        "name": "scramble-steps",
+        "seconds": 22.223
+      }
+    ],
+    "finishedAt": "2026-10-04T19:01:17.767Z"
+  },
+  "guardedRun": {
+    "startedAt": "2026-10-04T18:34:50.633Z",
+    "code": 0,
+    "signal": null,
+    "resourceStop": false,
+    "peakRssBytes": 41057337344,
+    "finished": "2026-10-04T19:13:49.595Z",
+    "rssLimitGiB": 48,
+    "stopAtSystemFreePercent": 15
+  },
+  "inputs": {
+    "newExpanded3x3Scrambles": 4967,
+    "corpus3x3": 1357898,
+    "h48NewSolveSeconds": 352.7
+  },
+  "publication": {
+    "statsCommitPrefix": "879ab473f9",
+    "mirror": {
+      "competitions": 65,
+      "scrambleRows": 11390,
+      "competitionMetadataRows": 18819
+    },
+    "steps": {
+      "upserts": 3821,
+      "deletions": 0,
+      "remotelyVerifiedRows": 1129541,
+      "generatedAt": "2026-10-04"
+    },
+    "optimal": {
+      "threeByThreeUpserts": 3450,
+      "puzzleUpserts": 3563,
+      "remotelyVerifiedTotalRows": 2041701
+    },
+    "static": {
+      "changedFiles": 3540,
+      "deletedFiles": 0
+    },
+    "integrity": {
+      "checkedAt": "2026-10-04T19:13:37.701Z",
+      "results": [
+        {
+          "file": "distribution.json",
+          "local": "223e8c05d5878b33f01f020527f3d92f29005bb1808c6f4e43523e0a1558c6c4",
+          "remote": "223e8c05d5878b33f01f020527f3d92f29005bb1808c6f4e43523e0a1558c6c4",
+          "httpStatus": 200,
+          "http": "223e8c05d5878b33f01f020527f3d92f29005bb1808c6f4e43523e0a1558c6c4",
+          "match": true
+        },
+        {
+          "file": "recent_scrambles.json",
+          "local": "210e6dee262d0fe6f152c73e831a22ea4a23c1a9c29f7e5218ef58b9abf93129",
+          "remote": "210e6dee262d0fe6f152c73e831a22ea4a23c1a9c29f7e5218ef58b9abf93129",
+          "httpStatus": 200,
+          "http": "210e6dee262d0fe6f152c73e831a22ea4a23c1a9c29f7e5218ef58b9abf93129",
+          "match": true
+        },
+        {
+          "file": "recent_scrambles_events.json",
+          "local": "0abdd7a1fefab4c66d09b7b8ddb74be63d3414333676f17052721986be14c2d8",
+          "remote": "0abdd7a1fefab4c66d09b7b8ddb74be63d3414333676f17052721986be14c2d8",
+          "httpStatus": 200,
+          "http": "0abdd7a1fefab4c66d09b7b8ddb74be63d3414333676f17052721986be14c2d8",
+          "match": true
+        },
+        {
+          "file": "steps/steps_layout.json",
+          "local": "266dbb00a197d45dfd2ecb90bdff87cf0ca6dd0d2f338fe07d45bcf2f83deaca",
+          "remote": "266dbb00a197d45dfd2ecb90bdff87cf0ca6dd0d2f338fe07d45bcf2f83deaca",
+          "httpStatus": 200,
+          "http": "266dbb00a197d45dfd2ecb90bdff87cf0ca6dd0d2f338fe07d45bcf2f83deaca",
+          "match": true
+        }
+      ],
+      "allMatch": true
+    }
+  },
+  "repairsVerified": {
+    "wcaTsvEscaping": "Initial attempt stopped on raw ID 5852577. Decode MySQL batch escapes before splitting MBLD blobs. Retry succeeded; online target contains 61 actual tabs, zero literal backslash-t sequences.",
+    "recentEventOrdering": "Coordinator fix moves recent-events after H48. The already-running process used the prior order, so its official builder was rerun after H48 and before publication. All 1210/1210 recent 3x3-family rows joined with optimal scrambles."
+  },
+  "limitations": [
+    "This is one complete incremental run, not an old/new full-pipeline speed comparison.",
+    "Existing Knip failure from two retired unreferenced BP CSS files remains pending deletion approval; client test shards and Deploy Next passed."
+  ]
+}
