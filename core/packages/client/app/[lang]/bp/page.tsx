@@ -12,6 +12,7 @@ import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
 import { EXPENSES, EQUIPMENT_GROUPS } from '@/lib/infrastructure-costs';
 import InvestorStory from './InvestorStory';
 import MarketOpening from './MarketOpening';
+import CooperationOpportunity from './CooperationOpportunity';
 import BusinessExpansion, { BusinessStreams } from './BusinessExpansion';
 import { MARKET_SOURCE } from './bp-data';
 import './bp-market.css';
@@ -209,8 +210,10 @@ export default function BusinessPlanPage() {
 
       {BUSINESS_SECTIONS.filter(section => section.number === '14').map(section => <NarrativeSection key={section.id} section={section} />)}
 
+      <CooperationOpportunity />
+
       <section id="bp-sources" className="overview-section overview-wrap bp-sources" aria-labelledby="bp-sources-title">
-        <p className="overview-kicker">{tr({ zh: '15 / 资料来源与说明', en: '15 / Sources & definitions' })}</p>
+        <p className="overview-kicker">{tr({ zh: '16 / 资料来源与说明', en: '16 / Sources & definitions' })}</p>
         <h2 id="bp-sources-title">{tr({ zh: '市场、产品与经历，都有据可查。', en: 'Inspect the market, product and founder’s record.' })}</h2>
         <p className="overview-small"><a href={MARKET_SOURCE.url} target="_blank" rel="noopener noreferrer">{tr({ zh: '市场来源：《人民日报》2026-06-01《小小魔方，为何让人如此着迷》', en: 'Market source: People’s Daily, June 1, 2026, “Why is the little cube so captivating?”' })}</a></p>
         <div className="bp-source-links">{[
