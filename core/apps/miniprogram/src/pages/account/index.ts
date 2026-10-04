@@ -8,6 +8,7 @@ import {
   type ContactDirectDetailId,
   type ContactPlatformId,
 } from '@cuberoot/shared/contact';
+import { applyNativeAppearance, nativeAppearanceStyle } from '../../lib/appearance';
 import type { PendingIdentity } from '@cuberoot/shared/auth/web-session';
 import {
   ApiError,
@@ -231,6 +232,7 @@ interface ContactCopyEvent {
 }
 
 interface AccountPageData {
+  appearanceStyle: string;
   accountError: string;
   accountLinkPending: boolean;
   accountLinkRequired: boolean;
@@ -544,6 +546,7 @@ async function completeMiniProgramLogin(
 
 Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   data: {
+    appearanceStyle: '',
     accountError: '',
     accountLinkPending: false,
     accountLinkRequired: false,
@@ -619,6 +622,9 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
   },
 
   onShow() {
+    if (this.data.isTimelineEntry) return;
+    this.setData({ appearanceStyle: nativeAppearanceStyle() });
+    applyNativeAppearance();
     if (this.data.isTimelineEntry || (this.data.browserLoginPending && !this.data.accountLinkPending)) return;
     const shouldRetryAccountLink = this.data.accountLinkPending;
     if (shouldRetryAccountLink) clearPendingIdentity(this as unknown as AccountPageInstance);

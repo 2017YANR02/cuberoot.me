@@ -1,3 +1,4 @@
+<page-meta page-style="{{appearanceStyle}}" />
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>

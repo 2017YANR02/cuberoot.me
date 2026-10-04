@@ -165,7 +165,8 @@
       "./timer/external/mac": "runtime-neutral",
       "./timer/external/gan": "runtime-neutral",
       "./timer/external/qiyi": "runtime-neutral",
-      "./timer/external/stackmat-state": "runtime-neutral"
+      "./timer/external/stackmat-state": "runtime-neutral",
+      "./appearance": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -540,7 +541,8 @@
     "./timer/external/mac": "./src/timer/external/mac.ts",
     "./timer/external/gan": "./src/timer/external/gan.ts",
     "./timer/external/qiyi": "./src/timer/external/qiyi.ts",
-    "./timer/external/stackmat-state": "./src/timer/external/stackmat-state.ts"
+    "./timer/external/stackmat-state": "./src/timer/external/stackmat-state.ts",
+    "./appearance": "./src/appearance.ts"
   },
   "scripts": {
     "build": "tsc -b",
