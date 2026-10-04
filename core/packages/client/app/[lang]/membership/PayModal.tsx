@@ -22,7 +22,7 @@ import {
   type PaymentChannel,
 } from '@/lib/membership-api';
 import { fmtPrice } from '@/lib/membership-format';
-import { isIosMembershipSurface } from '@/lib/apple-membership-bridge';
+import { installedMembershipStore } from '@/lib/store-membership-bridge';
 import { isInWeChat } from '@/lib/wechat-share';
 import { copyPageLink } from '@/lib/page-share';
 import AppLink from '@/components/AppLink';
@@ -58,7 +58,7 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
   useEffect(() => () => { if (pollRef.current !== null) window.clearTimeout(pollRef.current); }, []);
 
   async function start(ch: PaymentChannel) {
-    if (isIosMembershipSurface()) return;
+    if (installedMembershipStore()) return;
     // H5 checkout is supported only outside WeChat. Check again at click time
     // so a tap before the effect runs cannot create an unusable payment order.
     if (ch === 'wechat' && isMobile && isInWeChat()) {
@@ -133,10 +133,10 @@ export default function PayModal({ plan, channels, isZh, onClose, onPaid }: Prop
       });
   }
 
-  if (isIosMembershipSurface()) return (
+  if (installedMembershipStore()) return (
     <div className="mem-pay-backdrop" {...backdropProps}>
       <section className="mem-pay">
-        <AppLink href="/membership" onClick={onClose}>{tr({ zh: '前往 Apple 会员订阅', en: 'Open Apple membership subscriptions' })}</AppLink>
+        <AppLink href="/membership" onClick={onClose}>{tr({ zh: '前往 App 内会员订阅', en: 'Open in-app membership subscriptions' })}</AppLink>
         <button onClick={onClose}>{tr({ zh: '关闭', en: 'Close' })}</button>
       </section>
     </div>
