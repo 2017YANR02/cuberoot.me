@@ -8,6 +8,7 @@ import { pipeline } from 'node:stream/promises';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { wcaDir } from './local_data_paths.js';
 import { downloadStatus, intakeProgress } from './intake_progress.js';
+import { decodeWcaTsvField } from './wca_tsv.mjs';
 
 const EXPORT_META_URL = 'https://www.worldcubeassociation.org/api/v0/export/public';
 const EVENTS = new Set(['333', '333oh', '333ft', '333bf', '333mbf', '333fm']);
@@ -253,7 +254,7 @@ async function* csvRecords(file: string): AsyncGenerator<string[]> {
   if (quoted) throw new Error(`CSV 引号未闭合: ${file}`);
   if (field || fields.length) { fields.push(field); yield fields; }
 }
-async function* sourceRows(o: Options, tsvDir?: string): AsyncGenerator<Row> {
+export async function* sourceRows(o: Options, tsvDir?: string): AsyncGenerator<Row> {
   if (o.sourceCsv) {
     let cm: Record<string, number> | undefined;
     for await (const row of csvRecords(path.resolve(o.sourceCsv))) {
@@ -273,7 +274,7 @@ async function* sourceRows(o: Options, tsvDir?: string): AsyncGenerator<Row> {
     }
     scanned++;
     if (!EVENTS.has(cell(row, cm, 'event_id'))) continue;
-    yield Object.fromEntries(INFO.map(key => [key, key === 'scramble' ? cell(row, cm!, key).replaceAll('|', '\n') : cell(row, cm!, key)])) as Row;
+    yield Object.fromEntries(INFO.map(key => [key, key === 'scramble' ? decodeWcaTsvField(cell(row, cm!, key)).replaceAll('|', '\n') : cell(row, cm!, key)])) as Row;
   }
   if (!cm) throw new Error(`Scrambles.tsv 为空: ${file}`);
 }
