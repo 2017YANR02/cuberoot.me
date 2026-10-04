@@ -31,7 +31,8 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   cursor: default;
   font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
   --scramble-fs: calc(var(--timer-scramble-fs, clamp(26px, 4.4vw, 36px)) * var(--scramble-scale, 1));
-  font-size: var(--scramble-fs);
+  --scramble-adaptive-fs: min(var(--scramble-fs), max(14px, calc(var(--scramble-fs) * var(--scramble-length-scale, 1))));
+  font-size: var(--scramble-adaptive-fs);
   line-height: 1.5;
   text-align: center;
   white-space: pre-wrap;
@@ -60,7 +61,7 @@ html[data-theme=dark] { --scramble-fg: #fff; }
   min-width: 0;
   max-width: 100%;
   color: var(--scramble-fg);
-  font-size: var(--scramble-fs);
+  font-size: var(--scramble-adaptive-fs);
 }
 .scramble-strip .scramble-moves,
 .timing-surface-scramble .scramble-strip .scramble-moves {
