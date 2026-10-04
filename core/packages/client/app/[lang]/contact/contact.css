@@ -50,6 +50,7 @@
 
 .contact-profile-copy {
   width: min(100%, 860px);
+  min-width: 0;
 }
 
 .contact-profile-copy h2 {
@@ -82,7 +83,8 @@
 
 .contact-details-columns {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr) minmax(0, 0.75fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  align-items: start;
   gap: 2rem;
   margin-top: 1.35rem;
 }
@@ -95,6 +97,7 @@
   margin: 0;
   font-size: 0.84rem;
   text-align: left;
+  min-width: 0;
 }
 
 .contact-details-row {
@@ -126,7 +129,14 @@
 }
 
 .contact-social-details {
-  grid-template-columns: max-content max-content max-content;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.85fr);
+}
+
+.contact-social-details .contact-details-row dt,
+.contact-social-details .contact-details-link-row a {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .contact-social-details .contact-details-row > dt {
@@ -147,7 +157,7 @@
 
 .contact-details-row .contact-app-platform-list {
   display: grid;
-  grid-template-columns: max-content max-content;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.35rem 0.8rem;
   align-items: baseline;
 }
@@ -158,7 +168,13 @@
 
 .contact-app-platform-row > span:first-child,
 .contact-app-platform-value {
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.contact-details.contact-app-details {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
 }
 
 .contact-app-platform-value {
@@ -248,7 +264,8 @@
 .contact-platform-account,
 .contact-platform-count {
   flex: 0 0 auto;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .contact-platform-count {
