@@ -1,6 +1,5 @@
-import { ArrowUpRight, BookOpen, ChartNoAxesColumnIncreasing, ChevronDown, Code2, RotateCcw, ScanSearch, Timer, Users } from 'lucide-react';
+import { ArrowUpRight, BookOpen, ChartNoAxesColumnIncreasing, ChevronDown, Code2, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
-import { VisualCube } from '@/components/VisualCube';
 import { CREATOR_AUDIENCE } from '@/lib/creator-profile';
 import { tr } from '@/i18n/tr';
 
@@ -56,25 +55,8 @@ const ADVANTAGES = [
 
 export default function InvestorStory() {
   return <>
-    <section id="bp-market" className="overview-section overview-wrap" aria-labelledby="overview-market-title">
-      <p className="overview-kicker">{tr({ zh: '01 / 行业与高频需求', en: '01 / The recurring need' })}</p>
-      <h2 id="overview-market-title">{tr({ zh: '每一次还原，\n都是下一次进步的起点。', en: 'Every solve is a starting point\nfor the next improvement.' })}</h2>
-      <div className="bp-practice-stage" data-site-surface="panel">
-        <div className="bp-practice-center"><VisualCube view="iso" algorithm="R U R' U'" size={210} local alt={tr({ zh: '魔方练习闭环的中心状态', en: 'A cube at the centre of a practice loop' })} /><strong>{tr({ zh: '持续练习', en: 'CONTINUED PRACTICE' })}</strong><span>{tr({ zh: '计时器 + 训练器', en: 'Timer + trainer' })}</span></div>
-        <ol className="bp-practice-steps">{[
-          { Icon: Timer, title: { zh: '练习与计时', en: 'Practise & time' }, body: { zh: '完成还原，记录表现', en: 'Solve and record performance' } },
-          { Icon: ChartNoAxesColumnIncreasing, title: { zh: '记录与比较', en: 'Record & compare' }, body: { zh: '积累数据，看见变化', en: 'Build history and see changes' } },
-          { Icon: ScanSearch, title: { zh: '复盘与反馈', en: 'Reflect & learn' }, body: { zh: '研究解法，发现薄弱环节', en: 'Study solutions and weak points' } },
-          { Icon: RotateCcw, title: { zh: '再次练习', en: 'Practise again' }, body: { zh: '针对问题，持续训练', en: 'Address weaknesses over time' } },
-        ].map(({ Icon, title, body }, index) => <li key={title.en}><span className="bp-icon"><Icon size={23} aria-hidden /></span><div><span className="bp-step-label">0{index + 1}</span><h3>{tr(title)}</h3><p>{tr(body)}</p></div></li>)}</ol>
-      </div>
-      <div className="bp-source-links"><AppLink href="/timer" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '体验计时与训练入口', en: 'Try the timer and training tools' })}<ArrowUpRight size={16} aria-hidden /></AppLink><AppLink href="/recon" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看解法复盘工具', en: 'Explore reconstruction tools' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div>
-      <details className="bp-detail"><summary>{tr({ zh: '为什么这是长期需求？', en: 'Why is this a recurring need?' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><p>{tr({ zh: '对持续训练的选手，魔方是一项长期练习的竞技技能。选手反复还原、记录时间、研究解法和练习公式，争取更快、更稳定的成绩。计时器与训练器承接高频使用，教学、复盘和专业服务为练习提供方向。魔方根连接从学习到长期训练的任务。', en: 'Active competitors repeatedly solve, time, study solutions and practise algorithms for speed and consistency. Timers and trainers support frequent use, while lessons, reconstruction and specialist services guide the next steps. CubeRoot connects learning and lasting practice.' })}</p></div></details>
-      <div className="overview-industry-note"><strong>1,864</strong><div><span className="bp-step-label">WCA 2025</span><p>{tr({ zh: '世界锦标赛参赛人数，体现跨地区赛事基础；不代表本站用户或付费市场。', en: 'World Championship competitors, illustrating international activity rather than site users or the paying market.' })} <a href="https://www.worldcubeassociation.org/competitions/WC2025" target="_blank" rel="noopener noreferrer">{tr({ zh: '官方来源 ↗', en: 'Official source ↗' })}</a></p></div></div>
-    </section>
-
     <section id="bp-competition" className="overview-section overview-wrap" aria-labelledby="overview-competition-title">
-      <p className="overview-kicker">{tr({ zh: '02 / 竞争与定位', en: '02 / Competition & positioning' })}</p>
+      <p className="overview-kicker">{tr({ zh: '竞争与定位', en: 'Competition & positioning' })}</p>
       <h2 id="overview-competition-title">{tr({ zh: '内容、工具与服务，\n共同构成切入点。', en: 'Content, tools and service.\nA combined starting point.' })}</h2>
       <div className="bp-rival-grid">{COMPETITORS.map(({ name, url, focus, implication }, index) => <article data-site-surface="panel" className={url ? 'bp-rival' : 'bp-rival bp-rival-own'} key={name}>
         <span className="bp-rival-mark" aria-hidden>{['XC', 'AI', '根'][index]}</span>
@@ -88,7 +70,7 @@ export default function InvestorStory() {
     </section>
 
     <section id="bp-advantages" className="overview-section overview-wrap" aria-labelledby="overview-advantage-title">
-      <p className="overview-kicker">{tr({ zh: '03 / 优势与壁垒', en: '03 / Advantages & defensibility' })}</p>
+      <p className="overview-kicker">{tr({ zh: '优势与壁垒', en: 'Advantages & defensibility' })}</p>
       <h2 id="overview-advantage-title">{tr({ zh: '从内容触达，\n走到长期关系。', en: 'From content discovery\nto lasting relationships.' })}</h2>
       <div className="bp-moat-grid">{ADVANTAGES.map(({ Icon, title, tagline, body, href, linkLabel }, index) => <article data-site-surface="panel" key={title.en}><span className="bp-moat-index">0{index+1}</span><span className="bp-icon"><Icon size={30} strokeWidth={1.4} aria-hidden /></span><h3>{tr(title)}</h3><p>{tr(tagline)}</p><AppLink href={href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr(linkLabel)}<ArrowUpRight size={16} aria-hidden /></AppLink><details><summary>{tr({ zh: '优势依据', en: 'Supporting work' })}<ChevronDown size={15} aria-hidden /></summary><p>{tr(body)}</p></details></article>)}</div>
       <p className="overview-small">{tr(CREATOR_AUDIENCE.summary)}{tr({ zh: '，本人 2026 年 10 月确认，平台间未去重。组合优势通过真实使用与服务效果逐步积累为壁垒。', en: ', owner-confirmed in October 2026 and not deduplicated. Retention and useful delivery must turn the combined starting point into defensibility.' })}</p>

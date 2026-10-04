@@ -1,4 +1,4 @@
-import { ArrowUpRight, ChartNoAxesColumnIncreasing, Handshake, Megaphone } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ChartNoAxesColumnIncreasing, Handshake, Megaphone } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { tr } from '@/i18n/tr';
 
@@ -36,13 +36,13 @@ export const COOPERATION_INTRO = {
 
 export default function CooperationOpportunity() {
   return <section id="bp-cooperation" className="overview-section overview-wrap" aria-labelledby="bp-cooperation-title">
-    <p className="overview-kicker">{tr({ zh: '15 / 合作机会', en: '15 / Partnership opportunities' })}</p>
+    <p className="overview-kicker">{tr({ zh: '合作机会', en: 'Partnership opportunities' })}</p>
     <h2 id="bp-cooperation-title">{tr({ zh: '先通过业务建立信任，\n再决定合作走多远。', en: 'Build trust through delivery.\nDecide together what comes next.' })}</h2>
     <p className="overview-intro">{tr({ zh: '当前希望获得有明确用途的合作费用与资源支持，用于产品研发、内容制作、线上赛事和用户服务。以具体合作项目为起点，让对方看得见交付、也能复核效果。', en: 'We seek scoped project fees and resources for product development, content, online events and user services. Start with a defined engagement whose deliverables and outcomes can be reviewed.' })}</p>
     <div className="bp-streams">{OPTIONS.map(({ Icon, status, title, body, value, next }) => <article key={title.en} data-site-surface="panel">
       <span className="bp-stream-status">{tr(status)}</span><Icon size={30} aria-hidden />
       <h3>{tr(title)}</h3><p>{tr(body)}</p>
-      <dl className="overview-cost-list"><div><dt><strong>{tr({ zh: '合作价值与交付', en: 'Value & delivery' })}</strong><span>{tr(value)}</span></dt></div><div><dt><strong>{tr({ zh: '推进方式', en: 'How to proceed' })}</strong><span>{tr(next)}</span></dt></div></dl>
+      <details className="bp-cooperation-detail"><summary>{tr({ zh: '交付与推进方式', en: 'Delivery and next steps' })}<ChevronDown size={16} aria-hidden /></summary><dl className="overview-cost-list"><div><dt><strong>{tr({ zh: '合作价值与交付', en: 'Value & delivery' })}</strong><span>{tr(value)}</span></dt></div><div><dt><strong>{tr({ zh: '推进方式', en: 'How to proceed' })}</strong><span>{tr(next)}</span></dt></div></dl></details>
     </article>)}</div>
     <div className="overview-review" data-site-surface="panel"><Handshake size={26} aria-hidden /><div>
       <h3>{tr({ zh: '先明确一个项目，把交付与复核约定清楚。', en: 'Start with one project and agree delivery and review.' })}</h3>

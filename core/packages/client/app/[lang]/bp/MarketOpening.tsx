@@ -10,6 +10,7 @@ export default function MarketOpening() {
         <h1 id="bp-title">{tr({ zh: '数百万人的热爱。\n一个持续进阶的市场。', en: 'Millions of enthusiasts.\nA market for learning and practice.' })}</h1>
         <p className="overview-lead">{tr({ zh: '魔方根连接个人练习者、老师与培训机构，以个人和机构订阅、课程及计划中的线上赛事，服务从学习到持续进阶的需求。', en: 'CubeRoot connects practitioners, teachers and training organisations through individual and institutional subscriptions, courses and planned online competitions.' })}</p>
       </div>
+      <figure className="bp-cover-art"><img src="/images/overview/bp-glass-sculpture-v1.webp" srcSet="/images/overview/bp-glass-sculpture-mobile-v1.webp 800w, /images/overview/bp-glass-sculpture-v1.webp 1672w" sizes="(max-width: 760px) calc(100vw - 40px), 550px" width={1672} height={941} fetchPriority="high" alt={tr({ zh: '玻璃、金属与陶土方块构成的悬浮几何雕塑', en: 'A floating geometric sculpture of glass, metal and terracotta modules' })} /><figcaption>{tr({ zh: 'AI 概念图 · 专业积累，汇聚成形', en: 'AI concept illustration · expertise coming together' })}</figcaption></figure>
     </div>
     <div className="bp-market-cards">
       <article data-site-surface="panel"><Users size={26} aria-hidden /><span className="bp-market-label">{tr({ zh: '中国魔方爱好者', en: 'Cubing enthusiasts in China' })}</span><strong>{tr({ zh: '800 万', en: '8 million' })}</strong><span className="bp-market-status">{tr({ zh: '2026 年预测', en: '2026 forecast' })}</span><p>{tr({ zh: '2024 年约 700 万人；2026 年预计达到 800 万人。', en: 'About 7 million in 2024; forecast to reach 8 million in 2026.' })}</p></article>
