@@ -81,7 +81,12 @@ describe('Platform capabilities stay in canonical main-site entrypoints', () => 
     const view = read('components/platform/PlatformRouteView.tsx');
     expect(view).toContain("const learnerContent = learnerCourses || definition.id === 'course-lesson';");
     expect(view).toContain('!learnerContent && item.status');
-    expect(view).toContain('!learnerContent && fields?.length');
+    expect(view).toContain('entityDisplayFields(item, t)');
+    expect(view).not.toContain('item.fields');
+    const curated = view.slice(view.indexOf('function entityDisplayFields'), view.indexOf('function PlatformEntityList'));
+    expect(curated).toContain('baseAmountMinor');
+    expect(curated).not.toContain('currentRevision');
+    expect(curated).not.toContain('ownerUserId');
   });
 
   it('keeps /search as a URL-backed reuse of LandingSearch', () => {

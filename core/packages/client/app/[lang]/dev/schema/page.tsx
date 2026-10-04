@@ -348,7 +348,7 @@ const TABLES: Table[] = [
   ] },
 
   // ── main-site Platform ─────────────────────────────────
-  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203, 244], purpose: { zh: '主站 Platform 的 62 表 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The 62-table PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
+  { name: 'platform_*', domain: 'platform', origin: '0167', evolved: [203, 244, 258, 259, 260], purpose: { zh: '主站 Platform 的 PostgreSQL 底座：统一账号下的目录、学习、交易、内容、讲师、QR、隐私、审计、outbox 与幂等；不恢复旧 SQLite 双写，也不迁移少量 demo / 计时器历史数据', en: 'The PostgreSQL foundation for main-site Platform catalog, learning, commerce, content, instructors, QR, privacy, audit, outbox, and idempotency under canonical accounts; no legacy SQLite dual-write or small demo/timer-history migration' }, family: [
     'platform_instructors', 'platform_instructor_applications', 'platform_media_assets', 'platform_courses',
     'platform_course_owners', 'platform_course_revisions', 'platform_lessons', 'platform_lesson_revisions',
     'platform_learning_paths', 'platform_learning_path_items', 'platform_quizzes', 'platform_quiz_revisions',
@@ -362,6 +362,7 @@ const TABLES: Table[] = [
     'platform_course_reviews', 'platform_certificates', 'platform_checkins', 'platform_point_ledger',
     'platform_achievements', 'platform_user_achievements', 'platform_instructor_revenue_ledger',
     'platform_instructor_payouts', 'platform_instructor_payout_items', 'platform_invite_codes',
+    'platform_qr_scan_daily',
     'platform_invite_redemptions', 'platform_qr_codes', 'platform_qr_revisions', 'platform_qr_scans',
     'platform_qr_templates', 'platform_qr_card_jobs', 'platform_privacy_consents',
     'platform_analytics_events', 'platform_analytics_daily_aggregates', 'platform_retention_jobs',
@@ -809,6 +810,9 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 255, slug: 'ios_record_push', desc: { zh: '推送设备增加 APNs 通道与开发／生产环境隔离，兼容 Android。', en: 'Add APNs device targets and sandbox/production isolation while retaining Android compatibility.' } },
   { n: 256, slug: 'google_membership', desc: { zh: 'Google Play 订阅独立账本、账号归属与统一有效会员视图。', en: 'Google Play subscription ledger, account ownership and unified effective membership view.' } },
   { n: 257, slug: 'membership_benefits', desc: { zh: '会员权益在线编辑、可空英文、翻译失效与并发版本保护。', en: 'Editable membership benefits with optional English, translation invalidation and revision protection.' } },
+  { n: 258, slug: 'platform_qr_daily_scans', desc: { zh: '按 UTC 日保留二维码扫描与当日访客去重，补齐卡面模板和五维提示积木。', en: 'Store QR scans and daily visitor deduplication by UTC day; restore card templates and prompt blocks.' } },
+  { n: 259, slug: 'platform_learning_completion', desc: { zh: '课程结构化介绍、证书加密验证凭据和学习奖励防重。', en: 'Structured course presentation, encrypted certificate verification credentials and unique learning rewards.' } },
+  { n: 260, slug: 'platform_commerce_completion', desc: { zh: '商品分类、会员专享和展示资料，活动日程及新闻分类摘要。', en: 'Product categories, member exclusivity and presentation; event programs and news excerpts.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;
