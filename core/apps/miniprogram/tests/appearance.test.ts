@@ -57,3 +57,30 @@ describe('native appearance', () => {
     expect(account.nativeAppearanceStyle()).toBe('');
   });
 });
+
+describe('native background inheritance', () => {
+  it('preserves old messages and rejects invalid background metadata', () => {
+    expect(decodeNativeAppearance(appearance())).toEqual(appearance());
+    const decoded = decodeNativeAppearance({ ...appearance(), backgrounds: {
+      light: { id: '../secret', position: '50%;color:red' }, dark: { id: '08', position: '30%' },
+    } });
+    expect(decoded?.backgrounds).toEqual({ light: null, dark: { id: '08', position: '30%' } });
+  });
+  it.each([
+    [true, 'light', 'dark', '01'], [true, 'dark', 'light', '03'],
+    [false, 'dark', 'light', '01'], [false, 'light', 'dark', '03'],
+  ] as const)('resolves system and explicit schemes (%s, %s, %s)', async (followSystem, system, scheme, id) => {
+    let stored: unknown = null;
+    vi.stubGlobal('wx', { getStorageSync: () => stored,
+      setStorageSync: (_key: string, value: unknown) => { stored = value; },
+      getAppBaseInfo: () => ({ theme: system }) });
+    const native = await import('../src/lib/appearance');
+    native.receiveNativeAppearance({ ...appearance(), followSystem, scheme,
+      backgrounds: { light: { id: '01', position: '50%' }, dark: { id: '03', position: '65%' } }, softBackground: true });
+    expect(native.nativeAppearanceStyle()).toContain(`/assets/home-backgrounds/v1/${id}.webp`);
+    expect(native.nativeAppearanceStyle()).toContain('--cr-scene-filter:saturate(.65) contrast(.85)');
+    native.receiveNativeAppearance({ ...appearance(), followSystem, scheme, backgrounds: { light: null, dark: null } });
+    expect(native.nativeAppearanceStyle()).toContain('--cr-scene-image:none');
+    expect(native.nativeAppearanceStyle()).not.toContain('.webp');
+  });
+});

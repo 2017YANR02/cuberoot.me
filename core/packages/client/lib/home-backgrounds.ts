@@ -1,6 +1,6 @@
 /** Shared by the homepage picker and the appearance gallery. */
 export const HOME_BACKGROUND_KEY = 'home-background.v1';
-export const HOME_BACKGROUND_ASSETS = '/assets/home-backgrounds/v1';
+export { NATIVE_BACKGROUND_ASSETS as HOME_BACKGROUND_ASSETS } from '@cuberoot/shared/appearance';
 export const HOME_BACKGROUNDS = [
   { id: '01', zh: '雪山初晴', en: 'Snowy Dawn', position: '50%', family: 'Alto’s Adventure', description: { zh: '冰蓝雪山，暖白天光，清爽宁静。', en: 'Ice-blue peaks and warm morning light, fresh and still.' } },
   { id: '02', zh: '暮色松岭', en: 'Sunset Pines', position: '50%', family: 'Alto’s Adventure', description: { zh: '杏粉暮空，紫色山岭，稀疏松林。', en: 'Apricot skies, purple ridges and scattered pines at dusk.' } },

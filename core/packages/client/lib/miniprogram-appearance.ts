@@ -1,8 +1,16 @@
 import { NATIVE_APPEARANCE_TOKENS, type NativeAppearance, type NativeAppearanceColors } from '@cuberoot/shared/appearance';
 import { confirmMiniProgramEnvironment, loadMiniProgramNavigationApi, mayUseMiniProgramBridge } from './miniprogram-bridge';
-import { readEffective, readPalette, THEME_KEY } from './theme';
+import { readContrast, readEffective, readPalette, THEME_KEY } from './theme';
+
+import { readHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
+import { resolveHomeBackground } from './home-backgrounds';
 
 let lastPublished = '';
+
+function backgroundScene(scheme: 'light' | 'dark') {
+  const scene = resolveHomeBackground(readHomeBackgroundChoice(scheme), scheme);
+  return scene ? { id: scene.id, position: scene.position } : null;
+}
 
 /** Send committed home appearance, never a hover preview or a page-local theme. */
 export async function syncMiniProgramAppearance(): Promise<void> {
@@ -35,7 +43,9 @@ export async function syncMiniProgramAppearance(): Promise<void> {
     }
     const savedTheme = localStorage.getItem(THEME_KEY);
     const message: NativeAppearance = { type: 'cuberoot:appearance', scheme, colors,
-      followSystem: !palette && savedTheme !== 'light' && savedTheme !== 'dark' };
+      followSystem: !palette && savedTheme !== 'light' && savedTheme !== 'dark',
+      backgrounds: { light: backgroundScene('light'), dark: backgroundScene('dark') },
+      softBackground: readContrast() === 'soft' };
     const serialized = JSON.stringify(message);
     if (serialized === lastPublished) return;
     api.postMessage({ data: message });

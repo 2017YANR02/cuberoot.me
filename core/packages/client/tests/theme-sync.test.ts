@@ -4,6 +4,7 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ThemeColorSync from '@/components/ThemeColorSync';
 import { previewPalette } from '@/lib/theme';
+import { syncMiniProgramAppearance } from '@/lib/miniprogram-appearance';
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh/timer' }));
 vi.mock('@/lib/miniprogram-appearance', () => ({ syncMiniProgramAppearance: vi.fn() }));
 
@@ -60,6 +61,13 @@ describe('persisted appearance across WebView documents', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
     expect(changed).toHaveBeenCalledTimes(1);
     window.removeEventListener('theme-change', changed);
+  });
+  it('publishes background-only changes from the picker and other documents', () => {
+    vi.mocked(syncMiniProgramAppearance).mockClear();
+    window.dispatchEvent(new Event('home-background-change'));
+    expect(syncMiniProgramAppearance).toHaveBeenCalledTimes(1);
+    window.dispatchEvent(new StorageEvent('storage', { key: 'home-background.v1.dark' }));
+    expect(syncMiniProgramAppearance).toHaveBeenCalledTimes(2);
   });
   it('preserves local previews on unrelated storage updates', () => {
     previewPalette('hantan');

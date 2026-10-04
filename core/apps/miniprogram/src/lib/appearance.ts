@@ -1,6 +1,7 @@
-import { decodeNativeAppearance, type NativeAppearance } from '@cuberoot/shared/appearance';
+import { decodeNativeAppearance, NATIVE_BACKGROUND_ASSETS, type NativeAppearance } from '@cuberoot/shared/appearance';
 import { miniProgramApi } from './platform';
 import themes from '../theme.json';
+import { SITE_ORIGIN } from './runtime-config';
 
 const STORAGE_KEY = 'cuberoot.appearance.v1';
 let current: NativeAppearance | null | undefined;
@@ -13,22 +14,34 @@ function readAppearance() {
   return current ?? null;
 }
 
+function systemIsDark(): boolean {
+  const api = miniProgramApi();
+  try {
+    return (typeof api.getAppBaseInfo === 'function'
+      ? api.getAppBaseInfo() : api.getSystemInfoSync()).theme === 'dark';
+  } catch { return false; }
+}
+
 export function nativeAppearanceStyle(): string {
   const appearance = readAppearance();
-  return appearance && !appearance.followSystem
-    ? Object.entries(appearance.colors).map(([key, value]) => `${key}:${value}`).join(';')
-    : '';
+  const styles = appearance && !appearance.followSystem
+    ? Object.entries(appearance.colors).map(([key, value]) => `${key}:${value}`)
+    : [];
+  if (appearance?.backgrounds) {
+    const scheme = appearance.followSystem ? (systemIsDark() ? 'dark' : 'light') : appearance.scheme;
+    const scene = appearance.backgrounds[scheme];
+    styles.push(`--cr-scene-image:${scene ? `url("${SITE_ORIGIN}${NATIVE_BACKGROUND_ASSETS}/${scene.id}.webp")` : 'none'}`);
+    styles.push(`--cr-scene-position:${scene?.position ?? '50%'}`);
+    styles.push(`--cr-scene-filter:${appearance.softBackground ? 'saturate(.65) contrast(.85)' : 'none'}`);
+  }
+  return styles.join(';');
 }
 
 export function applyNativeAppearance(): void {
   const api = miniProgramApi();
   try { if (api.getLaunchOptionsSync?.().scene === 1154) return; } catch { /* optional host API */ }
   const appearance = readAppearance();
-  let systemDark = false;
-  try {
-    systemDark = (typeof api.getAppBaseInfo === 'function'
-      ? api.getAppBaseInfo() : api.getSystemInfoSync()).theme === 'dark';
-  } catch { /* light fallback */ }
+  const systemDark = systemIsDark();
   const dark = appearance && !appearance.followSystem ? appearance.scheme === 'dark' : systemDark;
   const defaults = dark ? themes.dark : themes.light;
   const colors = appearance && !appearance.followSystem ? appearance.colors : null;

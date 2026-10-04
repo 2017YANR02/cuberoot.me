@@ -12,11 +12,18 @@ export const NATIVE_APPEARANCE_TOKENS = {
   '--cr-danger': '--destructive',
 } as const;
 export type NativeAppearanceColors = Record<keyof typeof NATIVE_APPEARANCE_TOKENS, string>;
+export interface NativeBackgroundScene {
+  id: string;
+  position: string;
+}
+export const NATIVE_BACKGROUND_ASSETS = '/assets/home-backgrounds/v1';
 export interface NativeAppearance {
   type: 'cuberoot:appearance';
   scheme: 'light' | 'dark';
   followSystem: boolean;
   colors: NativeAppearanceColors;
+  backgrounds?: Record<'light' | 'dark', NativeBackgroundScene | null>;
+  softBackground?: boolean;
 }
 export function decodeNativeAppearance(value: unknown): NativeAppearance | null {
   if (!value || typeof value !== 'object') return null;
@@ -31,5 +38,18 @@ export function decodeNativeAppearance(value: unknown): NativeAppearance | null 
     if (typeof color !== 'string' || !/^#[\da-f]{6}$/i.test(color)) return null;
     colors[key] = color;
   }
-  return { type: 'cuberoot:appearance', scheme: message.scheme, followSystem: message.followSystem, colors };
+  const appearance: NativeAppearance = { type: 'cuberoot:appearance', scheme: message.scheme, followSystem: message.followSystem, colors };
+  // Old senders remain compatible; malformed scene metadata cannot become CSS or a URL.
+  if (message.backgrounds && typeof message.backgrounds === 'object') {
+    appearance.backgrounds = { light: null, dark: null };
+    for (const scheme of ['light', 'dark'] as const) {
+      const scene = message.backgrounds[scheme];
+      if (scene && typeof scene.id === 'string' && /^(0[1-9]|10)$/.test(scene.id)
+        && typeof scene.position === 'string' && /^(100|[0-9]{1,2})%$/.test(scene.position)) {
+        appearance.backgrounds[scheme] = { id: scene.id, position: scene.position };
+      }
+    }
+    appearance.softBackground = message.softBackground === true;
+  }
+  return appearance;
 }
