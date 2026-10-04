@@ -32,6 +32,7 @@ import {
 import { decodeMiniProgramSessionMessage } from './web-session-contract';
 import { tr } from './i18n';
 import { decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
+import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 
 export interface WebViewPageData {
   canRetry: boolean;
@@ -71,6 +72,7 @@ interface WebViewPageFactoryOptions {
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const sharedDestinations = new WeakMap<WebViewPageContext, string>();
 const shareMetadata = new WeakMap<WebViewPageContext, PageShareMessage>();
+const hiddenToolsPages = new WeakSet<WebViewPageContext>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const visiblePages = new WeakSet<WebViewPageContext>();
 const pausedRouteResumes = new WeakSet<WebViewPageContext>();
@@ -542,8 +544,16 @@ export function createWebViewPageOptions(
 
     onShow() {
       if (disposedPages.has(this)) return;
+      applyNativeAppearance();
       visiblePages.add(this);
       startNetworkRecovery(this);
+      if (hiddenToolsPages.delete(this)) {
+        // Reissue session handoff rather than replaying a consumed ticket URL.
+        const metadata = shareMetadata.get(this);
+        if (metadata) sharedDestinations.set(this, metadata.path);
+        void openWebRoute(this, this.data.routeKey);
+        return;
+      }
       if (sessionGateResumes.delete(this)) {
         void openWebRoute(this, this.data.routeKey);
         return;
@@ -559,6 +569,12 @@ export function createWebViewPageOptions(
       visiblePages.delete(this);
       if (!this.data.loginRequired) pausePendingRoute(this);
       stopNetworkRecovery(this);
+      // WeChat delivers postMessage only on back/destruction/share, not tab
+      // hiding. Flush the tools tab's appearance without destroying the timer.
+      if (fixedRouteKey === 'home' && this.data.src) {
+        hiddenToolsPages.add(this);
+        this.setData({ src: '' });
+      }
     },
 
     onUnload() {
@@ -581,6 +597,7 @@ export function createWebViewPageOptions(
     handleWebViewMessage(event) {
       const messages = Array.isArray(event.detail?.data) ? event.detail.data : [];
       for (const message of messages) {
+        receiveNativeAppearance(message);
         const metadata = decodePageShareMessage(message);
         if (metadata) shareMetadata.set(this, metadata);
       }
