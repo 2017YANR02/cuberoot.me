@@ -1,3 +1,4 @@
+import { EVENT_GROSS_PER_MONTH } from './bp-data';
 import type { LocalizedText } from '@/lib/infrastructure-costs';
 
 export type BpSection = {
@@ -11,7 +12,7 @@ export type BpSection = {
 };
 
 // Strategic proposals are deliberately separate from existing membership rights.
-// No prices, forecasts, valuation, funding figures or unverified operating counts.
+// Industry forecasts and founder planning assumptions are labelled explicitly.
 export const BUSINESS_SECTIONS: BpSection[] = [
   {
     id: 'bp-customers', number: '07',
@@ -30,12 +31,12 @@ export const BUSINESS_SECTIONS: BpSection[] = [
     id: 'bp-growth', number: '08',
     label: { zh: '获客、转化与续费', en: 'Acquisition, conversion & renewal' },
     title: { zh: '内容带来触达，训练带来反复使用。', en: 'Content creates discovery. Practice creates repeat use.' },
-    intro: { zh: '约 50 万关注使项目拥有自己的推广渠道。现阶段已有人经创始人介绍使用计时器和网站，下一步重点是扩大推广、改善使用路径，并把已有使用转化为持续会员关系。不同平台的关注合计按本人确认口径，不作为活跃客户数。', en: 'Approximately 500,000 aggregate follows provide founder-owned distribution. People introduced by the founder already use the timer and site. The next step is broader promotion, better onboarding and membership conversion. Owner-confirmed aggregate follows are not active customer counts.' },
+    intro: { zh: '约 50 万平台合计关注，以及创始人运营的约 500 人魔方老师群，使项目具备个人与机构两类触达渠道。现阶段已有人经创始人介绍使用计时器和网站，下一步重点是扩大推广、改善使用路径，并把已有使用转化为持续会员关系。不同平台的关注合计按本人确认口径，不作为活跃客户数。', en: 'Approximately 500,000 aggregate follows and a founder-led group of about 500 cubing teachers provide individual and institutional distribution channels. People introduced by the founder already use the timer and site. The next step is broader promotion, better onboarding and membership conversion. Owner-confirmed aggregate follows are not active customer counts.' },
     cards: [
       { title: { zh: '以具体训练问题组织内容', en: 'Content built around practice tasks' }, body: { zh: '教程、短视频与直播直接展示一个问题及其练法，例如公式熟练度、成绩波动或解法选择。内容中的入口链接到对应训练工具，让用户当场完成练习。按来源记录到访和练习完成情况，逐步判断哪些内容带来长期用户。', en: 'Lessons, videos and livestreams explain a specific task such as algorithm fluency, consistency or solution choice. Link directly to the matching tool and measure source visits and completed practice to identify content that brings lasting users.' } },
       { title: { zh: '让首次使用顺利进入日常训练', en: 'Make first use lead to a routine' }, body: { zh: '优先保证计时、公式训练、记录与复盘的使用稳定性。减少重复输入与入口寻找，让同一个账号持续积累记录，在需要专业帮助时清楚看到会员价值。保留数据导出与透明权益说明，依靠体验争取长期选择。', en: 'Prioritise reliable timing, algorithm practice, records and reconstruction. Reduce repeated input and navigation, preserve a coherent history and make premium help understandable. Keep export and entitlement transparency so users stay for the experience.' } },
       { title: { zh: '在真实需要出现时解释付费价值', en: 'Explain paid value when a need arises' }, body: { zh: '云端求解、高手解法复盘和个人视频反馈与具体训练需求对应。用户应能看懂免费范围、会员服务、交付节奏与额度。先确认服务被实际使用，再比较不同内容渠道带来的购买与续费，减少只靠短期促销的增长。', en: 'Cloud solving, expert reconstructions and personal review address concrete practice needs. Make free access, premium services, cadence and allowances clear. Measure delivery and renewal by acquisition source rather than relying on short-term promotions.' } },
-      { title: { zh: '机构通过示范、试用与复用进入', en: 'Bring educators in through practical demonstrations' }, body: { zh: '用企业介绍页、师生展示和课程资料说明现有价值，再围绕机构的实际课程安排组织试用。记录老师配置所需时间、学员使用情况与服务工作量。将反复出现的需求沉淀为标准服务，避免每家客户都变成无法复制的定制项目。', en: 'Demonstrate enterprise profiles, teacher–student visibility and resources, then pilot around actual courses. Track teacher setup time, learner use and delivery effort. Standardise repeated needs instead of turning every client into an unrepeatable custom project.' } },
+      { title: { zh: '机构通过示范、试用与复用进入', en: 'Bring educators in through practical demonstrations' }, body: { zh: '通过已有教师社群与正在洽谈的机构联系，用企业介绍页、师生展示和课程资料说明现有价值，再围绕实际课程安排组织试用。记录老师配置所需时间、学员使用情况与服务工作量。将反复出现的需求沉淀为标准服务，避免每家客户都变成无法复制的定制项目。', en: 'Reach educators through the existing teacher community and ongoing institutional discussions. Demonstrate profiles, teacher–student visibility and resources, then pilot around actual courses. Track teacher setup time, learner use and delivery effort. Standardise repeated needs instead of turning every client into an unrepeatable custom project.' } },
     ],
     conclusion: { zh: '获客路径：内容与推荐 → 使用计时器或训练器 → 留下练习记录 → 使用专业会员服务 → 持续训练与续费 → 用户反馈改善内容和产品。每一步都能分别观察，逐步提高整条路径的效率。', en: 'The path is content and referral → timing or training → practice records → specialist membership → continued use and renewal → feedback improving content and tools. Measure each step separately to improve the whole path.' },
   },
@@ -43,11 +44,11 @@ export const BUSINESS_SECTIONS: BpSection[] = [
     id: 'bp-roadmap', number: '09',
     label: { zh: '短期、中期与长期规划', en: 'Near, medium & long-term roadmap' },
     title: { zh: '从现有产品出发，逐步扩大经营能力。', en: 'Build operating capability from the existing product.' },
-    intro: { zh: '近期把已有计时、训练和会员服务打磨成可靠的日常产品；中期形成个人订阅与机构服务的经营闭环；长期将内容、工具、教学与赛事连接为面向全球的魔方平台。以下是推进顺序，具体排期与资源安排在合作中确认。', en: 'Near term: reliable daily tools and membership delivery. Medium term: working individual and educator subscription operations. Long term: a global platform linking content, tools, teaching and events. This is a sequence; detailed scheduling depends on agreed resources.' },
+    intro: { zh: '近期把已有计时、训练和会员服务打磨成可靠的日常产品；中期形成个人订阅与机构服务的经营闭环；长期将内容、工具、教学与赛事连接为面向全球的魔方平台。课程持续推进；线上赛事按每月 4 场的目标准备，商城暂列后续待办。', en: 'Near term: reliable daily tools and membership delivery. Medium term: working individual and educator subscription operations. Long term: a global platform linking content, tools, teaching and events. Course work continues; prepare for a target of four online events per month. Commerce stays on the later backlog.' },
     cards: [
-      { title: { zh: '首个季度：稳定产品与明确会员交付', en: 'First quarter: reliability & clear service delivery' }, body: { zh: '围绕现有用户整理计时器和训练器最常用的路径，解决影响持续练习的问题；公开清楚的会员权益、使用方式与交付规则；组织已有渠道的集中推广，建立来源、复练、会员使用与服务成本报表。机构方向选择能够实际承接的场景做示范。', en: 'Improve common timing and training paths for existing users; fix obstacles to continued practice. Clarify member entitlements, access and delivery. Run focused promotion through existing channels and report sources, repeat practice, premium use and costs. Demonstrate educator scenarios that can actually be served.' } },
-      { title: { zh: '后续两个季度：续费与机构服务', en: 'Following quarters: renewal & educator delivery' }, body: { zh: '持续更新复盘资源和进阶训练内容，形成会员反馈和续费运营；完善企业页面、资料组织与课程方案交付；将老师任务、学生练习和反馈连接到现有工具。依据使用效果决定开发顺序，避免同时铺开所有端和所有机构功能。', en: 'Maintain reconstructions and advanced practice content, member feedback and renewal operations. Improve profiles, resources and course-plan delivery. Connect teacher tasks, learner practice and feedback to existing tools. Prioritise demonstrated value rather than launching every platform and workflow at once.' } },
-      { title: { zh: '一年内：形成可以复核的经营模型', en: 'Within a year: an inspectable operating model' }, body: { zh: '分别报告个人订阅的新增、续费、服务使用与贡献情况，以及企业客户的上线、持续使用、续约与交付成本。把有效的内容推广方式和机构服务流程标准化；持续优化多端体验，以真实收入和支出判断是否扩大投入。', en: 'Report individual acquisition, renewal, service use and contribution; track enterprise onboarding, ongoing use, renewal and delivery costs. Standardise effective promotion and educator workflows. Improve cross-platform access and use actual revenue and costs to decide expansion.' } },
+      { title: { zh: '首个季度：稳定产品与明确会员交付', en: 'First quarter: reliability & clear service delivery' }, body: { zh: '围绕现有用户整理计时器和训练器最常用的路径，解决影响持续练习的问题；公开清楚的会员权益、使用方式与交付规则；组织已有渠道的集中推广，建立来源、复练、会员使用与服务成本报表。通过已有教师社群开展机构需求沟通与试用，并准备线上赛事规则、普通与智能魔方成绩审核和首场报名。', en: 'Improve common timing and training paths for existing users; fix obstacles to continued practice. Clarify member entitlements, access and delivery. Run focused promotion through existing channels and report sources, repeat practice, premium use and costs. Use the existing teacher community for educator discussions and trials, and prepare online-event rules, conventional and smart-cube result review, and first-event registration.' } },
+      { title: { zh: '后续两个季度：续费与机构服务', en: 'Following quarters: renewal & educator delivery' }, body: { zh: '持续推进课程、复盘资源和进阶训练内容，形成会员反馈和续费运营；线上赛事根据每场报名、完成率、争议与成本逐步形成固定节奏；完善企业页面、资料组织与课程方案交付；将老师任务、学生练习和反馈连接到现有工具。依据使用效果决定开发顺序，避免同时铺开所有端和所有机构功能。', en: 'Maintain courses, reconstructions, member feedback and renewal operations. Establish an online-event cadence based on entries, completion, disputes and costs per event. Improve profiles, resources and course-plan delivery. Connect teacher tasks, learner practice and feedback to existing tools. Prioritise demonstrated value rather than launching every platform and workflow at once.' } },
+      { title: { zh: '一年内：形成可以复核的经营模型', en: 'Within a year: an inspectable operating model' }, body: { zh: '分别报告个人订阅的新增、续费、服务使用与贡献情况，以及机构客户的上线、持续使用、续约与交付成本。课程按实际交付核算，线上赛事按实际报名与成本核算；商城是否启动留待后续评估。把有效的内容推广方式和机构服务流程标准化；持续优化多端体验，以真实收入和支出判断是否扩大投入。', en: 'Report individual acquisition, renewal, service use and contribution; track institutional onboarding, use, renewal and delivery costs. Account for course delivery and actual event entries and costs separately; assess commerce later. Standardise effective promotion and educator workflows. Improve cross-platform access and use actual revenue and costs to decide expansion.' } },
       { title: { zh: '长期：面向全球的魔方平台', en: 'Long term: a global cubing platform' }, body: { zh: '长期愿景是成为全球最大的魔方网站，并以持续使用、专业内容和可持续经营推进这一目标。逐步扩展中英双语资源、合作老师和机构网络，使学习、训练、复盘、教学与赛事信息在同一平台协同。规模扩张以产品稳定性、服务能力与现金流为前提。', en: 'The long-term ambition is to become the largest global cubing website through lasting use, specialist content and sustainable operations. Expand bilingual resources and educator partnerships so learning, practice, analysis, teaching and events work together. Scale only with reliability, delivery capacity and cash flow.' } },
     ],
   },
@@ -67,7 +68,7 @@ export const BUSINESS_SECTIONS: BpSection[] = [
     id: 'bp-metrics', number: '11',
     label: { zh: '经营指标与阶段验收', en: 'Operating metrics & milestone review' },
     title: { zh: '让用户使用、服务交付和经营结果相互对应。', en: 'Connect usage, delivery and business outcomes.' },
-    intro: { zh: '已有使用和真实付费会员是经营起点，持续增长与订阅效果需要统一口径记录。本版不披露具体活跃人数、付费人数或收入预测；以下指标用于后续月度运营与合作复核。', en: 'Existing use and real paid members are the operating starting point. Growth and subscription outcomes need consistent definitions. This version does not disclose specific active-user counts, paid counts or revenue forecasts. The following metrics support monthly operations and partner reviews.' },
+    intro: { zh: '已有使用和真实付费会员是经营起点，持续增长与订阅效果需要统一口径记录。本版不披露实际活跃人数、付费人数或已实现收入；线上赛事另列计划测算。以下指标用于后续月度运营复核。', en: 'Existing use and real paid members are the operating starting point. Growth and subscription outcomes need consistent definitions. This version does not disclose actual active-user counts, paid counts or realised revenue; online events have a separate planning scenario. These metrics support monthly operating reviews.' },
     cards: [
       { title: { zh: '个人用户：看实际练习', en: 'Individuals: actual practice' }, body: { zh: '统计完成计时或训练的用户、训练天数、次月回访、记录积累和核心功能使用。把首次访问、注册和实际练习分开；跨设备在合适的账号口径下去重。高频需求用真实复练记录展示，而不是仅用页面访问量说明。', en: 'Track users who complete timed solves or training, practice days, next-month return, accumulated records and core-feature use. Separate visits, registration and practice; deduplicate appropriately across devices. Demonstrate frequency with actual repeated practice.' } },
       { title: { zh: '会员：看交付和续费', en: 'Membership: delivery & renewal' }, body: { zh: '按个人与企业分别记录新增会员、权益使用、服务完成、到期续费、退款和客服问题。续费率以当期到期、可续费的订阅为分母；永久会员另列，不纳入周期订阅的续费率和经常性收入。', en: 'Track personal and enterprise acquisitions, entitlement use, completed services, due renewals, refunds and support issues separately. Renewal rates use subscriptions due and eligible to renew; lifetime membership is reported separately from recurring revenue and renewal.' } },
@@ -77,44 +78,47 @@ export const BUSINESS_SECTIONS: BpSection[] = [
   },
   {
     id: 'bp-financial', number: '12',
-    label: { zh: '收入模型与财务规划', en: 'Revenue model & financial planning' },
-    title: { zh: '围绕订阅经营，逐步形成持续收入。', en: 'Build sustained revenue around subscription operations.' },
-    intro: { zh: '个人订阅与企业订阅是主要收入方向；品牌合作和专项服务作为可选补充。财务规划按用户、续费、交付成本和固定投入展开。本版先明确计算逻辑与经营条件，不填写价格、融资金额、估值或未经验证的收益数字。', en: 'Individual and enterprise subscriptions are the main revenue directions; brand partnerships and project services are optional complements. Plan around customers, renewal, delivery costs and fixed investment. This version defines the model without prices, funding sums, valuation or unvalidated returns.' },
+    label: { zh: '收入结构与经营测算', en: 'Revenue structure & operating scenarios' },
+    title: { zh: '四类收入分开核算，服务成本逐项对应。', en: 'Four revenue lines, each matched to delivery costs.' },
+    intro: { zh: '个人订阅、机构订阅、课程和计划中的线上赛事分别记录收入与交付。订阅提供周期性服务，课程按实际销售与教学交付核算，赛事按场次核算；商城暂不计入近期经营计划。', en: 'Account separately for individual subscriptions, institutional subscriptions, courses and planned online events. Subscriptions provide periodic service, courses follow actual sales and teaching delivery, and events are accounted for per competition. Commerce is excluded from near-term plans.' },
     cards: [
-      { title: { zh: '个人订阅收入', en: 'Individual subscription revenue' }, body: { zh: '月度等价订阅收入 = 各周期有效个人订阅数 × 对应周期价格 ÷ 周期月数，再按实际退款和优惠调整。区分月度、年度等周期；预收年费与当月收入分开观察，避免把一次回款全部当作持续月收入。', en: 'Monthly equivalent subscription revenue is the sum of active individual subscriptions multiplied by their period price, divided by period months, adjusted for refunds and discounts. Separate annual cash receipts from monthly revenue to avoid treating one receipt as recurring monthly income.' } },
-      { title: { zh: '企业订阅与服务收入', en: 'Enterprise subscriptions & services' }, body: { zh: '企业周期收入按实际合同与交付周期核算。标准企业权益、额外课程方案、资料迁移或专项服务分别说明范围；一次性定制不并入订阅经常性收入。续约取决于企业是否持续获得展示、资料和教学服务价值。', en: 'Account for enterprise subscriptions by actual contracts and delivery periods. Define standard entitlements separately from additional planning, migration or project work; one-off customisation is not recurring subscription revenue. Renewal depends on ongoing value.' } },
-      { title: { zh: '单位经济与盈亏条件', en: 'Unit economics & break-even conditions' }, body: { zh: '每类会员的收入扣除支付、计算、存储和直接人工服务后，得到单位贡献；单位贡献覆盖固定开发、基础服务与内容维护，经营才具备持续性。获客成本同时计入推广和人工时间；长期客户价值在有真实留存与续费记录后核算。', en: 'Revenue less payment, compute, storage and direct delivery costs gives contribution per member. Contributions must cover fixed development, infrastructure and editorial work. Include promotion and labour in acquisition costs; calculate customer lifetime value only with actual retention and renewal evidence.' } },
-      { title: { zh: '保守、基准与扩展三种经营情景', en: 'Conservative, base & expansion scenarios' }, body: { zh: '保守情景优先维持可靠工具和既有服务；基准情景在个人订阅与企业服务稳定交付后增加协作；扩展情景以续费和单位贡献支持更多内容、多端和机构能力。增长较慢时收缩非核心投入，服务需求超出容量时优先补足交付能力。', en: 'Conservative operations protect reliable tools and existing delivery. The base scenario adds collaborators after individual and enterprise services stabilise. Expansion uses renewal and contribution evidence to support content, platforms and educator capabilities. Narrow non-core spending when growth slows and strengthen capacity when demand exceeds delivery.' } },
+      { title: { zh: '个人订阅', en: 'Individual subscriptions' }, body: { zh: '按月度、年度等周期记录有效订阅、实际回款与续费。预收年费按服务期分摊观察，永久会员另列；专业求解、复盘和人工服务分别记录使用量与直接成本。', en: 'Track active subscriptions, receipts and renewals by period. Allocate annual receipts across service periods and report lifetime memberships separately. Track solving, reconstruction and human-delivery usage and direct costs.' } },
+      { title: { zh: '机构订阅', en: 'Institutional subscriptions' }, body: { zh: '按实际订阅与服务周期核算。标准机构权益与额外课程方案、资料整理等服务明确区分；洽谈中的机构不计收入，一次性定制不计入经常性订阅收入。', en: 'Account by actual subscriptions and service periods. Separate standard benefits from extra course planning or resource work. Institutions in discussion generate no booked revenue; one-off customisation is not recurring subscription revenue.' } },
+      { title: { zh: '课程收入', en: 'Course revenue' }, body: { zh: '按实际课程订单、教学交付与退款核算，单独记录备课、内容制作、授课和答疑成本。课程与会员是否打包以实际发布的权益为准，同一笔订单不重复计入两类收入。', en: 'Account for actual course orders, teaching delivery and refunds, with preparation, production, teaching and support costs recorded separately. Bundles follow published terms; do not count an order in two revenue categories.' } },
+      { title: { zh: '线上赛事报名费', en: 'Online-event entry fees' }, body: { zh: `每月 4 场、每场 200 人、每人每场 20 元的计划，对应月报名费毛收入 ¥${EVENT_GROSS_PER_MONTH.toLocaleString('en-US')}。实际收入随报名与退款变化，逐场扣除支付、奖品、裁判审核、客服及技术成本。该测算不代表净利润或已实现收入。`, en: `The plan of four monthly events, 200 entrants each and CNY 20 per entry implies CNY ${EVENT_GROSS_PER_MONTH.toLocaleString('en-US')} in monthly gross fees. Actual receipts depend on entries and refunds, with payment, prize, review, support and technical costs recorded per event. This is neither profit nor realised revenue.` } },
     ],
-    conclusion: { zh: '资金缺口按“下一阶段必要支出与安全余量，减去可用自有资金和可合理确认的经营回款”核算；收入、成本与资金拨付按周期对齐。实际预算与回款核实后再讨论资金规模，不以粉丝数乘一个假设比例报价。', en: 'Calculate the funding gap as necessary stage spending plus an operating buffer, less available project funds and reasonably confirmed receipts. Align revenue, costs and funding periods, and set the amount after verification rather than applying a hypothetical conversion rate to followers.' },
+    conclusion: { zh: '各业务收入扣除直接服务成本后，才形成对固定开发、服务器、工具订阅与内容维护的贡献。机构意向、教师群成员和平台关注用于说明触达基础，经营结果以实际订单、交付与回款衡量。', en: 'Revenue contributes to fixed development, hosting, tooling and content only after direct delivery costs. Institutional interest, teacher-group membership and follows describe distribution; orders, delivery and receipts measure business results.' },
   },
   {
     id: 'bp-risks', number: '14',
     label: { zh: '主要风险与应对', en: 'Principal risks & responses' },
     title: { zh: '把关键风险纳入日常经营。', en: 'Manage the key risks as part of operations.' },
-    intro: { zh: '专业方向与获客基础提供起点，持续经营还需要解决竞争、交付与成本问题。每项风险对应观察信号和可执行的调整方式，让合作方可以看清项目如何应对变化。', en: 'Specialist work and distribution provide a starting point. Sustainable operations also require responses to competition, capacity and costs, with observable signals and practical adjustments for each risk.' },
+    intro: { zh: '专业方向与获客基础提供起点，持续经营还需要解决竞争、交付与成本问题。每项风险对应观察信号和可执行的调整方式，持续复核项目如何应对变化。', en: 'Specialist work and distribution provide a starting point. Sustainable operations also require responses to competition, capacity and costs, with observable signals and practical adjustments for each risk.' },
     cards: [
       { title: { zh: '竞品持续迭代与免费供给', en: 'Competitor iteration & free alternatives' }, body: { zh: '观察核心用户的选择与会员续费原因，持续改善训练体验、内容和专业服务。基础免费功能不作为唯一收费理由；把独特的教学和复盘价值做成可持续交付的服务。', en: 'Observe user choice and renewal reasons; improve training, content and specialist services. Do not rely on charging for common free features. Make teaching and reconstruction value deliverable over time.' } },
       { title: { zh: '关注到付费的转化有限', en: 'Limited conversion from audience to subscription' }, body: { zh: '分别看各内容渠道的实际练习、会员权益使用与续费，不把粉丝总量当作销售承诺。优先保留能带来持续用户的内容路径，并让销售节奏匹配真实反馈。', en: 'Track actual practice, premium use and renewal by source rather than promising sales from follower totals. Keep paths that bring lasting users and match promotion to feedback.' } },
       { title: { zh: '创始人与人工交付容量', en: 'Founder dependence & human service capacity' }, body: { zh: '人工复盘、定制与客服记录耗时和积压，制定排期、交接文档与质量标准。按真实任务增加协作，在交付容量跟上之前控制新增服务承诺。', en: 'Measure review, customisation and support effort and backlog. Document scheduling, handover and quality standards; add help for real tasks and avoid selling beyond capacity.' } },
       { title: { zh: '计算、存储与免费流量成本', en: 'Compute, storage & free-traffic costs' }, body: { zh: '持续监控高成本求解、调用和存储，设置服务监控与异常处置。对新功能先核算成本再确定权益，已公布权益按约定履行；开发工具订阅与用户侧算力分别核算。', en: 'Monitor expensive solving, requests and storage, with incident response. Cost new features before defining benefits and honour published entitlements. Account for development tooling separately from user-serving compute.' } },
       { title: { zh: '数据、内容与交付信任', en: 'Data, content & delivery trust' }, body: { zh: '机构和个人记录按用途授权与访问范围管理；保留数据导出与恢复流程。第三方内容和开源项目核对许可并注明来源；不将未经授权的用户记录、姓名或推荐用作宣传。', en: 'Manage records by authorised purpose and access; maintain export and recovery. Check licences and credit third-party work. Do not use records, identities or endorsements in promotion without permission.' } },
-      { title: { zh: '支付与多端发布进度', en: 'Payments & cross-platform release timing' }, body: { zh: '会员页面已标注测试状态，自动续费尚未开放。正式商业推广与实际支付、服务和平台发布能力对齐；分阶段推进，避免提前承诺尚未交付的付费功能或客户端。', en: 'The membership page identifies testing status and unavailable auto-renewal. Align commercial promotion with actual payment, delivery and platform capabilities; avoid promising unreleased paid features or clients.' } },
+      { title: { zh: '支付与线上赛事准备', en: 'Payments & online-event readiness' }, body: { zh: '会员推广与实际支付及服务能力对齐。线上赛事先明确普通与智能魔方的记录和审核标准、争议处理与退费规则，逐场跟踪报名及成本，再评估每月 4 场节奏。', en: 'Align membership promotion with payment and delivery readiness. Define conventional and smart-cube evidence, review, appeals and refunds before events. Track entries and costs per event before assessing a four-event monthly cadence.' } },
     ],
   },
 ];
 
 export const BP_NAV = [
+  ['bp-market-size', { zh: '市场规模', en: 'Market size' }],
   ['bp-summary', { zh: '执行摘要', en: 'Summary' }],
   ['bp-market', { zh: '行业与需求', en: 'Need' }],
   ['bp-competition', { zh: '竞争与优势', en: 'Competition' }],
   ['bp-product', { zh: '产品与创始人', en: 'Product' }],
   ['bp-business', { zh: '订阅模式', en: 'Subscriptions' }],
+  ['bp-courses', { zh: '课程与机构渠道', en: 'Courses & educators' }],
+  ['bp-events', { zh: '线上赛事', en: 'Online events' }],
   ['bp-customers', { zh: '客户与市场', en: 'Customers' }],
   ['bp-growth', { zh: '增长路径', en: 'Growth' }],
   ['bp-roadmap', { zh: '发展规划', en: 'Roadmap' }],
   ['bp-operations', { zh: '交付与指标', en: 'Delivery' }],
   ['bp-financial', { zh: '财务与成本', en: 'Financials' }],
   ['bp-risks', { zh: '风险应对', en: 'Risks' }],
-  ['bp-support', { zh: '合作安排', en: 'Partnership' }],
+  ['bp-sources', { zh: '资料来源', en: 'Sources' }],
 ] as const;

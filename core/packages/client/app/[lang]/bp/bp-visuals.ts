@@ -30,8 +30,8 @@ export const CHAPTER_VISUALS: Record<string, {
   'bp-roadmap': {
     style: 'timeline',
     captions: [
-      { zh: '可靠工具 · 清楚权益 · 审核上线', en: 'Reliable tools · benefits · launch' },
-      { zh: '会员运营 · 专业内容 · 机构交付', en: 'Membership · content · educator delivery' },
+      { zh: '订阅交付 · 课程 · 赛事准备', en: 'Subscriptions · courses · event preparation' },
+      { zh: '课程迭代 · 机构交付 · 线上比赛', en: 'Courses · educators · online events' },
       { zh: '续费模型 · 服务标准 · 成本核算', en: 'Renewal · standards · cost accounting' },
       { zh: '双语内容 · 多端体验 · 合作网络', en: 'Bilingual content · platforms · partnerships' },
     ],
@@ -62,10 +62,10 @@ export const CHAPTER_VISUALS: Record<string, {
     captions: [
       { zh: '个人会员 × 订阅周期', en: 'Individual members × subscription period' },
       { zh: '企业订阅 + 明确范围的服务', en: 'Enterprise subscriptions + scoped services' },
-      { zh: '收入 − 直接成本 = 单位贡献', en: 'Revenue − direct costs = contribution' },
-      { zh: '保守维持 → 稳定经营 → 扩展投入', en: 'Maintain → stabilise → expand' },
+      { zh: '课程订单 − 教学交付成本', en: 'Course orders − teaching costs' },
+      { zh: '4 场 × 200 人 × ¥20 · 计划毛收入', en: '4 events × 200 entrants × CNY 20 · planned gross fees' },
     ],
-    tags: [{ zh: '收入来源 01', en: 'Revenue 01' }, { zh: '收入来源 02', en: 'Revenue 02' }, { zh: '单位经济', en: 'Unit economics' }, { zh: '经营情景', en: 'Scenarios' }],
+    tags: [{ zh: '收入来源 01', en: 'Revenue 01' }, { zh: '收入来源 02', en: 'Revenue 02' }, { zh: '收入来源 03', en: 'Revenue 03' }, { zh: '收入来源 04', en: 'Revenue 04' }],
   },
   'bp-risks': {
     style: 'risks',
