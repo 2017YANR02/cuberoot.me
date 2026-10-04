@@ -74,7 +74,7 @@ describe('homepage development cards', () => {
     expect(host.querySelector('#card-teaching')?.getAttribute('href')).toBe(admin ? '/zh/courses' : undefined);
     const partnership = host.querySelector('#card-partnership');
     if (admin) {
-      expect(partnership?.getAttribute('href')).toBe('/zh/partnership');
+      expect(partnership?.getAttribute('href')).toBe('/zh/bp');
       expect(partnership?.classList.contains('is-disabled')).toBe(true);
       const lock = partnership?.parentElement?.querySelector<HTMLButtonElement>('.landing-card-lock');
       expect(lock?.disabled).toBe(true);

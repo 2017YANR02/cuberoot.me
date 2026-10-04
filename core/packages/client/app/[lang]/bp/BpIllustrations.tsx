@@ -39,7 +39,7 @@ export function FounderEvidence() {
       <span>{tr({ zh: '公开获奖档案', en: 'PUBLIC AWARD RECORD' })}<ArrowUpRight size={16} /></span>
     </a>
     <div className="bp-evidence-notes"><div><GraduationCap size={22} /><strong>{tr({ zh: '数学与物理背景', en: 'Mathematics & physics' })}</strong><p>{tr({ zh: '南开大学 · 乔治华盛顿大学', en: 'Nankai University · George Washington University' })}</p></div><div><Code2 size={22} /><strong>{tr({ zh: '从专业积累到产品开发', en: 'From expertise to development' })}</strong><p>{tr({ zh: '求解 · 训练 · 复盘 · 数据', en: 'Solving · training · reconstruction · data' })}</p></div></div>
-    <div className="bp-team-visual"><div><span className="bp-margin-label">{tr({ zh: '当前固定团队', en: 'CURRENT CORE TEAM' })}</span><strong>{tr({ zh: '约 3 人', en: 'Approx. 3 people' })}</strong><p>{tr({ zh: '创始人全职投入，合作伙伴侧两位成员参与。', en: 'Full-time founder, joined by two members from a partner’s team.' })}</p></div><div className="bp-team-people" aria-hidden><span><UserRound /></span><i>+</i><span><UserRound /></span><span><UserRound /></span></div></div>
+    <div className="bp-team-visual"><div><span className="bp-margin-label">{tr({ zh: '创始人全职投入', en: 'FULL-TIME FOUNDER' })}</span><strong>{tr({ zh: '教学 × 产品', en: 'Teaching × product' })}</strong><p>{tr({ zh: '连接课程内容、训练工具与教师社群中的实际需求。', en: 'Connecting courses, training tools and real needs from the teacher community.' })}</p></div><div className="bp-team-people" aria-hidden><span><UserRound /></span><i>+</i><span><BookOpen /></span></div></div>
   </div>;
 }
 
@@ -47,9 +47,9 @@ export function ReadingGuide() {
   return <div className="bp-reading-guide overview-wrap">
     <div><span className="bp-margin-label">{tr({ zh: '本计划的三个重点', en: 'THREE REASONS TO READ' })}</span><strong>{tr({ zh: '先看价值，再看如何实现。', en: 'The value, then the path to delivery.' })}</strong></div>
     {([
-      ['#bp-market', { zh: '为什么持续使用', en: 'Why repeat use' }, { zh: '练习是一项长期活动', en: 'Practice is an ongoing activity' }],
+      ['#bp-market-size', { zh: '市场有多大', en: 'How large is the market' }, { zh: '爱好者、机构与培训消费', en: 'Enthusiasts, institutions and training spending' }],
       ['#bp-advantages', { zh: '为什么由我们做', en: 'Why this team' }, { zh: '专业、内容与产品的组合', en: 'Expertise, content and product' }],
-      ['#bp-business', { zh: '如何形成收入', en: 'How revenue develops' }, { zh: '个人与企业订阅服务', en: 'Personal and enterprise services' }],
+      ['#bp-business', { zh: '如何形成收入', en: 'How revenue develops' }, { zh: '订阅、课程与线上赛事', en: 'Subscriptions, courses and online events' }],
     ] as const).map(([href, title, subtitle], i) => <a href={href} key={href}><span className="bp-guide-number">0{i + 1}</span><strong>{tr(title)}</strong><span>{tr(subtitle)}</span><ArrowUpRight size={17} /></a>)}
   </div>;
 }

@@ -199,7 +199,7 @@ const DIRECTORY_SEARCH_CARDS: LandingSearchCard[] = [
 // rather than independently browsable content. Dynamic [param] keys are also
 // excluded below; real dynamic content is enumerated from its own catalog.
 const SEARCH_EXCLUDED_ROUTES = new Set([
-  '', 'search', 'partnership', 'partnership/talking-points', 'vault',
+  '', 'search', 'partnership', 'partnership/talking-points', 'bp', 'bp/talking-points', 'vault',
   'teachers-edit', 'wca/persons/students', 'alg/lsll/case', 'alg/lsll/route',
   'recon/ground-truth', 'recon/submit', 'recon/submit-sketch',
 ]);
