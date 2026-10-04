@@ -20,7 +20,7 @@ import { MARKET_SOURCE } from './bp-data';
 import './bp-market.css';
 import { BUSINESS_SECTIONS, BP_NAV, type BpSection } from './bp-content';
 import { CHAPTER_VISUALS } from './bp-visuals';
-import { FounderEvidence, ProductAtlas, ServiceMap } from './BpIllustrations';
+import { FounderEvidence, ProductAtlas } from './BpIllustrations';
 import './bp.css';
 import './bp-editorial.css';
 
@@ -46,8 +46,10 @@ function NarrativeSection({ section }: { section: BpSection }) {
     : [Users, Layers3, ChartNoAxesColumnIncreasing, Globe2, ShieldCheck, Clock3];
   return (
     <section id={section.id} className={'overview-section overview-wrap bp-chapter bp-chapter-' + visual.style} aria-labelledby={section.id + '-title'}>
-      <p className="overview-kicker">{section.number} / {tr(section.label)}</p>
+      <p className="overview-kicker">{tr(section.label)}</p>
       <h2 id={section.id + '-title'}>{tr(section.title)}</h2>
+      <div className="bp-roadmap-composition">
+      <figure className="bp-roadmap-art"><img src="/images/overview/bp-learning-steps-v1.webp" width={1100} height={619} loading="lazy" alt={tr({ zh: '由玻璃与石材阶梯构成的进阶概念图', en: 'A conceptual progression of glass and stone platforms' })} /><figcaption>{tr({ zh: 'AI 概念图 · 持续进阶', en: 'AI concept illustration · steady progress' })}</figcaption></figure>
       <div className={'bp-visual bp-visual-' + visual.style}>
         {section.cards.map((card, index) => {
           const Icon = icons[index];
@@ -58,6 +60,7 @@ function NarrativeSection({ section }: { section: BpSection }) {
             {card.reference && <AppLink href={card.reference.href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr(card.reference.label)}<ArrowUpRight size={16} aria-hidden /></AppLink>}
           </article>;
         })}
+      </div>
       </div>
       <details className="bp-detail">
         <summary>{tr({ zh: '阅读完整商业说明', en: 'Read the full business rationale' })}<ChevronDown size={18} aria-hidden /></summary>
@@ -113,9 +116,9 @@ export default function BusinessPlanPage() {
       </nav>
 
       <section id="bp-summary" className="overview-section overview-wrap" aria-labelledby="bp-summary-title">
-        <p className="overview-kicker">{tr({ zh: '00 / 执行摘要', en: '00 / Executive summary' })}</p>
+        <p className="overview-kicker">{tr({ zh: '执行摘要', en: 'Executive summary' })}</p>
         <h2 id="bp-summary-title">{tr({ zh: '订阅、课程与线上赛事，\n围绕同一条学习路径展开。', en: 'Subscriptions, courses and online events.\nOne connected learning journey.' })}</h2>
-        <p className="overview-intro">{tr({ zh: '魔方速拧是一项依靠反复练习、记录和反馈提升的技能。计时器和训练器可以进入选手的日常练习，复盘与教学内容则帮助用户决定怎么练。魔方根已有可使用的工具和真实付费会员，课程业务正在开展，线上赛事计划按月组织。下一阶段重点是完善服务交付、推进课程和赛事准备，并扩大已有渠道的推广。', en: 'Speedcubing improves through repeated practice, records and feedback. Timers and trainers support routine practice, while reconstruction and lessons guide the next steps. CubeRoot has usable tools and real paid members, ongoing course work and planned monthly online events. Next steps strengthen service delivery, course and event preparation, and distribution.' })}</p>
+        <p className="overview-intro">{tr({ zh: '以计时、训练和复盘承接日常练习，以订阅和课程提供持续服务。已有可使用的产品与真实付费会员，课程正在开展，线上赛事筹备中。', en: 'Timing, training and reconstruction support daily practice; subscriptions and courses provide continuing service. Products and real paid members already exist, courses are in progress and online events are being prepared.' })}</p>
         <div className="bp-source-links"><AppLink href="/membership" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看当前会员权益', en: 'View current membership benefits' })}<ArrowUpRight size={16} aria-hidden /></AppLink><AppLink href="/achievements" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看已完成的产品与技术成果', en: 'Explore existing products and technical work' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div>
         <div className="bp-executive-bento">
           <div className="bp-executive-core" data-site-surface="panel">
@@ -128,24 +131,14 @@ export default function BusinessPlanPage() {
           <div className="bp-executive-tile" data-site-surface="panel"><Building2 size={26} aria-hidden /><h3>{tr({ zh: '机构订阅', en: 'Organisations' })}</h3><p>{tr({ zh: '展示 · 资料 · 课程与教学服务', en: 'Profiles · resources · teaching services' })}</p></div>
           <div className="bp-executive-milestone" data-site-surface="panel"><span className="bp-milestone-number">02<span>{tr({ zh: '个月', en: 'months' })}</span></span><div><h3>{tr({ zh: '规模化订阅推广目标', en: 'Target for expanded subscriptions' })}</h3><p>{tr({ zh: '支付与资质审核完成后推进', en: 'Subject to payment and qualification approvals' })}</p></div><ArrowUpRight size={25} aria-hidden /></div>
         </div>
-        <details className="bp-detail"><summary>{tr({ zh: '完整执行摘要与事实口径', en: 'Full executive summary & definitions' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><div className="bp-detail-columns">
-          {[
-            { title: { zh: '产品与目标客户', en: 'Product & customers' }, body: { zh: '服务持续训练的个人选手，以及需要展示、资料和教学服务的老师、工作室与机构。计时、公式训练、复盘和数据入口已在网站提供。', en: 'Serve regular practitioners and educators needing visibility, resources and teaching services. Timing, algorithms, reconstruction and data tools are already available on the website.' } },
-            { title: { zh: '收入方式', en: 'Revenue model' }, body: { zh: '以个人和企业的月度、年度会员为主要方向。个人侧交付专业求解、复盘与反馈；企业侧交付介绍页、师生展示、资料存储和课程方案。课程业务正在开展，线上赛事作为计划中的另一项收入来源；商城留待后续。', en: 'Monthly and annual personal and enterprise memberships are the main direction. Individuals receive specialist solving, reconstruction and feedback; organisations receive profiles, teacher–student visibility, storage and course planning. Course work is in progress, online events are another planned revenue stream, and commerce is deferred.' } },
-            { title: { zh: '执行与市场基础', en: 'Execution & distribution' }, body: { zh: '创始人有数学与物理背景、参赛与教学经历，以及约 50 万平台合计关注。创始人全职投入，并运营约 500 人的魔方老师群，与部分机构持续洽谈；已有用户在计时器和训练器中使用多项功能。', en: 'The founder combines mathematics and physics, competing and teaching, and about 500,000 aggregate follows. The founder works full time, runs a teacher group of about 500 members and is discussing opportunities with institutions; users already use multiple timer and trainer functions.' } },
-            { title: { zh: '下一阶段的执行重点', en: 'Next-stage priorities' }, body: { zh: '计划在本计划形成后的两个月内推进规模化订阅推广，前提是微信支付与相关资质审核完成、服务能够稳定交付。并行推进课程交付和线上赛事规则、报名及成绩审核准备。', en: 'Aim to expand subscription promotion within two months of this plan, conditional on WeChat payment and relevant qualification approvals and reliable delivery. Prepare course delivery and online-event rules, registration and result review in parallel.' } },
-          ].map(card => <article key={card.title.en} data-site-surface="panel"><h3>{tr(card.title)}</h3><p>{tr(card.body)}</p></article>)}
-        </div>
-        <p className="overview-small">{tr({ zh: '全职投入、付费会员、课程进展、教师社群与赛事计划由创始人确认。关注数为平台合计、未去重；行业预测、经营计划与已实现成果分别标注。', en: 'Full-time work, paid membership, courses, the teacher community and event plans are founder-confirmed. Follows are aggregate and not deduplicated. Industry forecasts, operating plans and realised results are labelled separately.' })}</p>
-        </div></details>
       </section>
 
       <InvestorStory />
 
       <section id="bp-product" className="overview-section overview-wrap" aria-labelledby="bp-product-title">
-        <p className="overview-kicker">{tr({ zh: '04 / 产品与已有使用', en: '04 / Product & existing use' })}</p>
+        <p className="overview-kicker">{tr({ zh: '产品与已有使用', en: 'Product & existing use' })}</p>
         <div className="overview-section-head"><h2 id="bp-product-title">{tr({ zh: '训练不是一次性需求，\n产品围绕持续使用展开。', en: 'Practice is a recurring need.\nThe product supports repeated use.' })}</h2></div>
-        <p className="overview-intro">{tr({ zh: '正在持续训练的选手，需要反复计时、练习识别与动作、比较记录并研究解法。计时器与训练器中的多项功能已经被使用；本计划不展开具体选手案例，把重点放在产品如何承接日常练习与专业服务。', en: 'Practising competitors repeatedly time solves, train recognition and execution, compare records and study solutions. Multiple timer and trainer functions are already in use. This plan focuses on the product’s practice and service role without identifying individual athletes.' })}</p>
+        <p className="overview-intro">{tr({ zh: '持续练习需要计时、训练与复盘。用户已在计时器和训练器中使用多项功能，日常工具也为专业服务提供入口。', en: 'Regular practice needs timing, training and reflection. Multiple timer and trainer functions are already in use, providing an entry point for specialist services.' })}</p>
         <div className="bp-product-story">
         <figure className="bp-product-preview">
           <div className="bp-preview-toolbar"><span className="bp-window-dots" aria-hidden><i /><i /><i /></span><span>cuberoot.me / timer</span><span>{tr({ zh: '真实产品界面', en: 'ACTUAL PRODUCT' })}</span></div>
@@ -160,18 +153,19 @@ export default function BusinessPlanPage() {
           ].map(step => <article className="bp-product-chapter" key={step.label.en}><span>{tr(step.label)}</span><h3>{tr(step.title)}</h3><p>{tr(step.body)}</p></article>)}
         </div>
         </div>
-        <ProductAtlas />
         <div className="overview-product-grid">
           {PRODUCTS.map(({ Icon, href, title, body }) => <AppLink href={href} key={href} prefetch={false} className="overview-product" data-site-surface="panel"><Icon size={27} aria-hidden /><h3>{tr(title)}</h3><p>{tr(body)}</p><span className="overview-text-link">{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></span></AppLink>)}
         </div>
+        <details className="bp-detail"><summary>{tr({ zh: '更多训练工具与技术积累', en: 'More training tools and technical work' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><ProductAtlas />
         <div className="overview-engine">
           <VisualCube view="iso" algorithm="R U R' U'" size={170} local alt={tr({ zh: '用于求解与训练的魔方状态展示', en: 'A cube state for solving and training' })} />
           <div><h3>{tr({ zh: '技术积累支撑专业训练服务', en: 'Technical work supports specialist practice' })}</h3><p>{tr({ zh: '求解器、状态可视化、复盘交互与打乱统计，为专业工具提供基础。原创成果可直接体验，公开数据与开源组件保留来源。工具、内容与服务在一个平台协同，减少用户在不同资料与工具之间切换。', en: 'Solvers, state visualisation, reconstruction and scramble statistics support specialist tools. Original work is inspectable; public data and open-source components are credited. Connecting tools, content and services reduces switching between resources.' })}</p><AppLink href="/achievements" prefetch={false} className="overview-text-link">{tr({ zh: '查看原创工作与在线入口', en: 'Inspect original work and tools' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div>
         </div>
+        </div></details>
       </section>
 
       <section id="bp-founder" className="overview-section overview-wrap overview-founder" aria-labelledby="bp-founder-title">
-        <div><p className="overview-kicker">{tr({ zh: '05 / 创始人与专业积累', en: '05 / Founder & expertise' })}</p><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
+        <div><p className="overview-kicker">{tr({ zh: '创始人与专业积累', en: 'Founder & expertise' })}</p><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
         <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name">{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span><span>WCA 2017YANR02</span></div></div><FounderEvidence /><details className="bp-detail"><summary>{tr({ zh: '创始人的专业与教学经历', en: 'Founder’s professional and teaching background' })}<ChevronDown size={18} aria-hidden /></summary><div className="overview-story bp-detail-body">
           <p>{tr({ zh: '颜瑞民拥有南开大学数学与金融数学、物理学学士学位，以及乔治华盛顿大学数学硕士学位。曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克铜牌。专业训练为求解算法、数据分析和复杂产品开发提供基础。', en: 'Ruimin Yan holds bachelor’s degrees in Mathematics and Financial Mathematics, and Physics from Nankai University, and a master’s in Mathematics from George Washington University. He won first prize twice in the National High School Mathematics League and a bronze medal at the Chinese Mathematical Olympiad.' })}</p>
           <p>{tr({ zh: '自 2017 年起参加 WCA 比赛，持续开展速拧课程、公式库和自媒体内容工作，著有《超脑思维：魔方游戏技巧从入门到精通》。内容创作、教学与亲身训练使他能够把专业能力转换为用户理解和使用的产品。', en: 'Competing in WCA events since 2017, he works on speedcubing courses, algorithms and media, and wrote Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery. Teaching, content and practice help translate expertise into usable products.' })}</p>
@@ -179,12 +173,11 @@ export default function BusinessPlanPage() {
       </section>
 
       <section id="bp-business" className="overview-section overview-wrap" aria-labelledby="bp-business-title">
-        <p className="overview-kicker">{tr({ zh: '06 / 商业模式与会员价值', en: '06 / Business model & membership value' })}</p>
+        <p className="overview-kicker">{tr({ zh: '商业模式与会员价值', en: 'Business model & membership value' })}</p>
         <h2 id="bp-business-title">{tr({ zh: '订阅服务长期练习，\n课程与赛事推动持续参与。', en: 'Subscriptions support practice.\nCourses and events sustain participation.' })}</h2>
-        <p className="overview-intro">{tr({ zh: '会员页面与公开套餐已列出个人、企业的月度与年度服务。用户付费的理由，是持续获得专业求解、复盘、反馈或机构服务，而日常工具提供高频入口。基础计时和训练保持开放，收费范围以实际发布的会员权益为准。', en: 'The membership page and public plans describe monthly and annual personal and enterprise services. Payment buys ongoing specialist solving, reconstruction, feedback or educator services; daily tools provide frequent access. Basic timing and training remain open, with paid scope defined by published entitlements.' })}</p>
+        <p className="overview-intro">{tr({ zh: '个人与机构订阅、课程、线上赛事分别核算。基础计时和训练保持开放，付费服务与交付范围以当前会员权益和课程为准。', en: 'Account separately for individual and institutional subscriptions, courses and online events. Basic timing and training remain open; paid scope follows published memberships and courses.' })}</p>
         <BusinessStreams />
-        <ServiceMap />
-        <div className="bp-subscriptions">
+        <details className="bp-detail"><summary>{tr({ zh: '个人与机构会员：具体权益', en: 'Individual and institutional membership benefits' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><div className="bp-subscriptions">
           {[{ href: '/membership#universal-perks-title', title: { zh: '个人会员', en: 'Individual membership' }, perks: benefits.items.filter(item => item.group === 'common' && item.enabled), explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { href: '/membership#enterprise-plans-title', title: { zh: '企业会员', en: 'Enterprise membership' }, perks: benefits.items.filter(item => item.group === 'enterprise' && item.enabled), explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
             <article data-site-surface="panel" key={plan.title.en}>
               <div className="bp-subscription-heading"><span className="bp-icon">{plan.title.en === 'Individual membership' ? <Users size={32} aria-hidden /> : <Building2 size={32} aria-hidden />}</span><span className="bp-subscription-tag">{tr({ zh: '持续服务', en: 'ONGOING SERVICE' })}</span></div>
@@ -194,6 +187,7 @@ export default function BusinessPlanPage() {
             </article>
           ))}
         </div>
+        </div></details>
         <details className="bp-detail"><summary>{tr({ zh: '会员交付与商业化进度', en: 'Member delivery & commercial progress' })}<ChevronDown size={18} aria-hidden /></summary><div className="bp-detail-body"><div className="bp-detail-columns">
           <article data-site-surface="panel"><h3>{tr({ zh: '共有权益与会员关系', en: 'Shared benefits & member relationships' })}</h3><p>{tr({ zh: '会员页还列出徽章、抢先体验、致谢、VIP 群与自定义展示等权益，为交流和身份认同提供补充。长期经营以专业服务的使用效果为核心，建立反馈、问题响应和内容更新机制。', en: 'Badges, early access, acknowledgments, community and custom presentation complement specialist services. Long-term membership centres on useful delivery, feedback, support and content updates.' })}</p></article>
           <article data-site-surface="panel"><h3>{tr({ zh: '已有付费，规模化上线仍需条件', en: 'Real paid members; launch conditions remain' })}</h3><p>{tr({ zh: '创始人确认已有真实付费会员。会员当前尚未正式全面开放，微信支付及部分资质审核仍在推进，自动续费尚未开放。目标是在两个月内推动更大规模订阅，按审核、支付和服务交付的实际完成情况执行。', en: 'The founder confirms real paid members. Membership has not fully launched; WeChat payment and qualification approvals remain in progress and auto-renewal is unavailable. The two-month expansion target depends on approvals, payment readiness and delivery.' })}</p></article>
@@ -206,10 +200,10 @@ export default function BusinessPlanPage() {
 
       <BusinessExpansion />
 
-      {BUSINESS_SECTIONS.filter(section => section.number !== '14').map(section => <NarrativeSection key={section.id} section={section} />)}
+      {BUSINESS_SECTIONS.filter(section => section.id === 'bp-roadmap').map(section => <NarrativeSection key={section.id} section={section} />)}
 
       <section id="bp-costs" className="overview-section overview-wrap" aria-labelledby="bp-costs-title">
-        <p className="overview-kicker">{tr({ zh: '13 / 已有投入与运营成本', en: '13 / Existing resources & operating costs' })}</p>
+        <p className="overview-kicker">{tr({ zh: '已有投入与运营成本', en: 'Existing resources & operating costs' })}</p>
         <h2 id="bp-costs-title">{tr({ zh: '让持续交付的成本可管理，\n让已有设备继续发挥作用。', en: 'Manage the cost of delivery.\nKeep using existing equipment.' })}</h2>
         <p className="overview-intro">{tr({ zh: '网站已记录 AI 开发工具、服务器、发布服务和工作设备等投入。本节列出成本类别与用途。下一阶段围绕订阅、课程和线上赛事安排开发与服务工作，已有设备按实际需要复用。', en: 'The site records development AI, hosting, distribution and equipment costs. This section lists cost categories and purposes. Plan development and delivery around subscriptions, courses and online events while reusing existing equipment.' })}</p>
         <div className="overview-cost-grid">
@@ -220,12 +214,19 @@ export default function BusinessPlanPage() {
         <p className="overview-small">{tr({ zh: '设备记录包含个人通用设备、曾用设备和估价，不视作全部属于项目的实付款；既有设备不重复列为新采购。开发工具、用户侧计算、人工服务与固定运行成本分别核算，实际预算由下一阶段任务形成。', en: 'Equipment records include general-purpose, former and estimated devices rather than a project payment ledger. Do not count existing equipment as new purchases. Account separately for tooling, user-serving compute, human delivery and fixed operations.' })}</p>
       </section>
 
-      {BUSINESS_SECTIONS.filter(section => section.number === '14').map(section => <NarrativeSection key={section.id} section={section} />)}
+      <section className="overview-section overview-wrap bp-appendix" aria-labelledby="bp-appendix-title">
+        <p className="overview-kicker">{tr({ zh: '经营与执行', en: 'OPERATIONS & EXECUTION' })}</p>
+        <h2 id="bp-appendix-title">{tr({ zh: '关键说明，按需展开。', en: 'The detail, when you need it.' })}</h2>
+        {BUSINESS_SECTIONS.filter(section => section.id !== 'bp-roadmap').map(section => <details id={section.id} className="bp-detail" key={section.id}>
+          <summary>{tr(section.label)}<ChevronDown size={18} aria-hidden /></summary>
+          <div className="bp-detail-body"><p>{tr(section.intro)}</p><div className="bp-detail-columns">{section.cards.map(card => <article key={card.title.en}><h3>{tr(card.title)}</h3><p>{tr(card.body)}</p>{card.reference && <AppLink href={card.reference.href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr(card.reference.label)}<ArrowUpRight size={16} aria-hidden /></AppLink>}</article>)}</div>{section.conclusion && <p>{tr(section.conclusion)}</p>}</div>
+        </details>)}
+      </section>
 
       <CooperationOpportunity />
 
       <section id="bp-sources" className="overview-section overview-wrap bp-sources" aria-labelledby="bp-sources-title">
-        <p className="overview-kicker">{tr({ zh: '16 / 资料来源与说明', en: '16 / Sources & definitions' })}</p>
+        <p className="overview-kicker">{tr({ zh: '资料来源与说明', en: 'Sources & definitions' })}</p>
         <h2 id="bp-sources-title">{tr({ zh: '市场、产品与经历，都有据可查。', en: 'Inspect the market, product and founder’s record.' })}</h2>
         <p className="overview-small"><a href={MARKET_SOURCE.url} target="_blank" rel="noopener noreferrer">{tr({ zh: '市场来源：《人民日报》2026-06-01《小小魔方，为何让人如此着迷》', en: 'Market source: People’s Daily, June 1, 2026, “Why is the little cube so captivating?”' })}</a></p>
         <div className="bp-source-links">{[

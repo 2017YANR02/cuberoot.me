@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, Building2, Code2, GraduationCap, Layers3, Radio, ScanSearch, Timer, UserRound, Users } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, BookOpen, Code2, GraduationCap, ScanSearch, UserRound } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { VisualCube } from '@/components/VisualCube';
 import { tr } from '@/i18n/tr';
@@ -17,18 +17,6 @@ export function ProductAtlas() {
       <div className="bp-recon-track" aria-hidden>{Array.from({ length: 12 }, (_, i) => <span key={i} />)}</div>
       <div className="bp-atlas-caption"><div><h3>{tr({ zh: '把解法，变成可研究的过程。', en: 'Make a solve a process to study.' })}</h3><p>{tr({ zh: '解法记录 · 动画 · 逐帧工具', en: 'Solve records · animation · frame tools' })}</p></div><AppLink href="/recon" prefetch={false} aria-label={tr({ zh: '体验复盘工具', en: 'Explore reconstruction' })}><ArrowUpRight /></AppLink></div>
     </article>
-  </div>;
-}
-
-export function ServiceMap() {
-  const layers = [
-    { Icon: Radio, title: { zh: '内容与专业积累', en: 'Content & expertise' }, parts: { zh: '教程 / 公式 / 高手解法', en: 'Lessons / algorithms / expert solutions' } },
-    { Icon: Timer, title: { zh: '日常练习入口', en: 'Everyday practice' }, parts: { zh: '计时 / 训练 / 记录 / 复盘', en: 'Timing / training / records / reconstruction' } },
-    { Icon: Layers3, title: { zh: '持续的会员服务', en: 'Continuing member services' }, parts: { zh: '专业帮助 / 教学资源 / 服务交付', en: 'Specialist help / teaching resources / delivery' } },
-  ];
-  return <div className="bp-service-map">
-    <div className="bp-service-intro"><span className="bp-margin-label">{tr({ zh: '产品与收入的关系', en: 'PRODUCT TO REVENUE' })}</span><h3>{tr({ zh: '一个平台。\n两类长期服务。', en: 'One platform.\nTwo ongoing services.' })}</h3><p>{tr({ zh: '用工具承接练习，用专业服务形成订阅价值。', en: 'Tools support practice. Specialist services create subscription value.' })}</p></div>
-    <div className="bp-service-layers">{layers.map(({ Icon, title, parts }, index) => <div className="bp-service-layer" key={title.en}><span className="bp-service-index">0{index + 1}</span><Icon size={23} /><div><strong>{tr(title)}</strong><span>{tr(parts)}</span></div>{index < 2 && <ArrowDown className="bp-service-connector" size={18} aria-hidden />}</div>)}<div className="bp-service-destinations"><span><Users size={17} />{tr({ zh: '个人订阅', en: 'Individuals' })}</span><span><Building2 size={17} />{tr({ zh: '企业订阅', en: 'Organisations' })}</span></div></div>
   </div>;
 }
 
