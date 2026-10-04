@@ -275,3 +275,8 @@
   .bp-editorial .overview-print-url { display: block; }
   .bp-editorial * { animation: none !important; transition: none !important; }
 }
+
+/* Evidence links sit beside the claim, without adding another visual panel. */
+.bp-editorial :is(.bp-visual article, .bp-streams article) > .overview-text-link { margin-top: 20px; }
+.bp-editorial .overview-summary .overview-text-link { justify-content: center; }
+.bp-editorial .overview-text-link > svg { flex-shrink: 0; }
