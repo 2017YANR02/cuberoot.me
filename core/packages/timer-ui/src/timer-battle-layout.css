@@ -73,3 +73,53 @@
 
 /* Raise the open picker above adjacent players, including rotated cells. */
 .timer-battle-cell:has(.pp-popup) { position: relative; z-index: 2; }
+
+/* Two players share the available stage, including on short phone screens. */
+.timer-battle-layout:is([data-layout='versus'], [data-layout='side']) .timer-battle-cell,
+.timer-battle-layout[data-layout='side'] .timer-battle-pair {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.timer-battle-layout[data-layout='side'] .timer-battle-row { min-height: 0; }
+.timer-battle-layout[data-layout='side'] .timer-battle-scramble {
+  --timer-cube-h: min(18vw, 12dvh, 100px);
+  --timer-scramble-fs: clamp(12px, 2vw, 18px);
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 30%;
+  padding: 6px;
+  overflow-y: auto;
+}
+
+.timer-battle-layout:is([data-layout='versus'], [data-layout='side']) .timing-surface--local {
+  container-type: size;
+  --timer-cube-h: min(18vw, 22cqh, 100px);
+  --timer-readout-max-size: 28cqh;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: stretch;
+}
+.timer-battle-layout:is([data-layout='versus'], [data-layout='side']) .timing-surface--local:has(.timing-surface-scramble-top) {
+  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
+}
+.timer-battle-layout[data-layout='side'] .timing-surface--local:not(:has(.timing-surface-scramble-top)) {
+  --timer-readout-max-size: 60cqh;
+}
+.timer-battle-layout:is([data-layout='versus'], [data-layout='side']) .timing-surface-scramble-top {
+  position: static;
+  transform: none;
+  max-height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+.timer-battle-layout:is([data-layout='versus'], [data-layout='side']) .timing-surface-core {
+  min-height: 0;
+  justify-content: center;
+  gap: 4px;
+}
+.timer-battle-layout:is([data-layout='versus'], [data-layout='side']) .timing-surface-sub {
+  position: static;
+  transform: none;
+  padding-top: 0;
+  gap: 4px;
+}
