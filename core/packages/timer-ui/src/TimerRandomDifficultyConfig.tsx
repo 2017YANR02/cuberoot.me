@@ -11,7 +11,7 @@
  * 不是同一个槽,没有共同含义 → 直接隐掉,按「四槽取最优」算(= /scramble/stats 的 XCross 口径)。
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
   dataVariantOfStage,
