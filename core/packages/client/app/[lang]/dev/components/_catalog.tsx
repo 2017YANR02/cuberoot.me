@@ -1531,6 +1531,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The scramble-source selector shared by the Web, Android, and iOS timers. Its fixed Real, Random state, and Manual input options plus popup, keyboard, focus, outside-dismiss, and viewport-clamp behavior live in one implementation. Every host passes the canonical realValue="wca". It remains uncontrolled by default and accepts open/onOpenChange for Android Back.',
   },
   {
+    name: 'TimerDifficultyHelp',
+    import: "import { TimerDifficultyHelp } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: '计时器难度说明浮层，支持点击、可选鼠标悬停，以及外部点击和 Esc 关闭。',
+    en: 'Timer difficulty help with click, optional mouse hover, outside dismissal and Escape.',
+  },
+  {
     name: 'TimerWcaSourceConfig',
     import: "import { TimerWcaSourceConfig } from '@cuberoot/timer-ui';",
     category: 'more',
