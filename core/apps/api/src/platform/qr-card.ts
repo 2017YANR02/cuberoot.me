@@ -503,6 +503,11 @@ function qrBody(value: string): { inner: string; dim: number } {
   };
 }
 
+export function renderQrCodeSvg(value: string): string {
+  const { inner, dim } = qrBody(value);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${dim} ${dim}" width="512" height="512"><rect width="${dim}" height="${dim}" fill="#FFFFFF"/>${inner}</svg>`;
+}
+
 function faceletSpots(count = 14) {
   const hash = (index: number, seed: number) => {
     let value = Math.imul(index + 1, 0x9e3779b1) ^ Math.imul(seed + 1, 0x85ebca6b);
@@ -604,7 +609,7 @@ export function renderQrCardSvg(entry: QrCardRenderEntry, url: string, options: 
     ? `<rect x="0" y="0" width="${foldX}" height="${height}" fill="${INK}"/><g clip-path="url(#frontArtClip)">${artLayer(frontArt, frontX, top, options.bleed, card.layout?.front)}</g><rect x="0" y="0" width="${foldX}" height="${height}" fill="url(#frontShade)"/>`
     : `<rect x="${frontX}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="${INK}"/>${options.pattern ? facelets(frontX, top, 'frontClip') : ''}<rect x="${frontX}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#frontGlow)"/>${cubeLogo(frontCenter - 3.75, top + 5, 7.5)}`;
 
-  const backBg = `<rect x="${foldX}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>${backArt ? `<g clip-path="url(#backArtClip)">${artLayer(backArt, foldX, top, options.bleed, card.layout?.back)}</g><rect x="${foldX}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="#FFFFFF" fill-opacity="0.62"/>` : options.pattern ? facelets(foldX, top, 'backClip') + notationPattern(foldX, top) : ''}`;
+  const backBg = `<rect x="${foldX}" y="${top}" width="${PANEL_W}" height="${PANEL_H}" fill="url(#backBg)"/>${backArt ? `<g clip-path="url(#backArtClip)">${artLayer(backArt, foldX, top, options.bleed, card.layout?.back)}</g>` : options.pattern ? facelets(foldX, top, 'backClip') + notationPattern(foldX, top) : ''}`;
 
   const hasAlg = content.hasAlgorithm;
   const qr = qrBody(url);

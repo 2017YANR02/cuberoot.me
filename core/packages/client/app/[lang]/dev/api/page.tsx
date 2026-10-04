@@ -452,6 +452,15 @@ const ENDPOINTS: Ep[] = [
   { d: 'teaching-saas', m: 'GET', p: '/v1/teaching/organizations/:orgSlug/weekly-reports/:reportId', g: 'login', c: 'no-store', zh: '读取当前角色范围内的周报聚合快照', en: 'Read a weekly-report aggregate snapshot within the caller\'s current student scope' },
   { d: 'teaching-saas', m: 'POST', p: '/v1/teaching/organizations/:orgSlug/weekly-reports/:reportId/publish', g: 'login', c: 'no-store', zh: '以总结、下周计划与可见性发布并冻结周报，要求幂等键', en: 'Publish and freeze a weekly report with summary, next-week plan, and visibility; requires an idempotency key' },
 
+  { d: 'platform', m: 'POST', p: '/v1/platform/orders/quote', g: 'login', c: 'no-store', zh: '无写入的优惠、会员价与库存报价', en: 'Preview coupon, member price and availability without writes' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/teachers/:id/courses', g: 'public', c: 'short', zh: '主站讲师名录关联的已发布课程', en: 'Published courses owned by a main-site teacher' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/learning/lessons/:lessonId/state', g: 'login', c: 'no-store', zh: '当前课时进度、笔记和测验历史', en: 'Current lesson progress, notes and quiz attempts' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/me/checkins', g: 'login', c: 'no-store', zh: '本地日签到与连续天数', en: 'Local-day check-ins and streaks' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/me/certificates', g: 'login', c: 'no-store', zh: '本人证书及验证链接', en: 'Own certificates and verification links' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/me/certificates', g: 'login', c: 'no-store', zh: '完成全部课时后领取证书', en: 'Claim a certificate after completing all lessons' },
+  { d: 'platform', m: 'POST', p: '/v1/platform/me/badges/refresh', g: 'login', c: 'no-store', zh: '从真实学习记录计算新成就', en: 'Award new achievements from actual learning records' },
+  { d: 'platform', m: 'GET', p: '/v1/platform/instructor/dashboard', g: 'login', c: 'no-store', zh: '讲师课程、学员、月度分成与结算概览', en: 'Instructor courses, learners, monthly revenue shares and payouts' },
+
   // ---- platform: public catalog ----
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions', g: 'public', c: 'no-store', zh: '公开线上比赛', en: 'List published online competitions' },
   { d: 'platform', m: 'GET', p: '/v1/platform/competitions/manage', g: 'login', c: 'no-store', zh: '本人可管理的赛事', en: 'List managed competitions' },

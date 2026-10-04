@@ -1016,5 +1016,11 @@
     "zh": "WCA 选手页个人 PB、历史记录与编辑流程来源；用 CubeRoot 现有账号、WCA 项目和成绩格式能力重新实现",
     "en": "Product flow behind personal PBs, history and editing on WCA person pages; reimplemented with CubeRoot's account, WCA event and result-formatting infrastructure",
     "long_en": "CubePB established the personal-best profile, history and editing workflow. CubeRoot's implementation is a clean integration on WCA person pages, built on its existing authentication, WCA event selection, raw result encoding, bilingual UI and PostgreSQL API. Original project licensed under GPL-3.0."
+  },
+  {
+    "name": "Cube Platform / 2017YANR02",
+    "url": "https://github.com/2017YANR02/cube-platform",
+    "zh": "学习空间、商业与二维码卡片功能源自维护者的原 Cube Platform；迁入主站后复用统一账号、论坛、讲师名录与媒体能力，保留原卡片模板和提示积木来源。",
+    "en": "Learning, commerce and QR card features originate from the maintainer’s Cube Platform. The main-site integration reuses canonical accounts, forums, teacher profiles and media while retaining the provenance of card templates and prompt blocks."
   }
 ]

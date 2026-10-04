@@ -151,11 +151,11 @@ async function priceItem(db: PlatformDb, raw: unknown, member: boolean, userId: 
     const predicate = variantId ? 'v.id = $1::uuid' : 'p.id = $1::uuid';
     const rows = await platformQuery<{
       id: string; product_id: string; product_type: 'physical' | 'digital'; sku: string;
-      product_title_zh: string; product_title_en: string; title_zh: string; title_en: string;
+      product_title_zh: string; product_title_en: string; title_zh: string; title_en: string; member_only: boolean;
       amount_minor: number | string; member_amount_minor: number | string | null; currency: string;
       inventory_on_hand: number; inventory_reserved: number;
     }>(db, `
-      SELECT v.id::text, p.id::text AS product_id, p.product_type, v.sku,
+      SELECT v.id::text, p.id::text AS product_id, p.product_type, p.member_only, v.sku,
              p.title_zh AS product_title_zh, p.title_en AS product_title_en,
              v.title_zh, v.title_en, v.amount_minor, v.member_amount_minor, v.currency,
              v.inventory_on_hand, v.inventory_reserved
@@ -165,6 +165,7 @@ async function priceItem(db: PlatformDb, raw: unknown, member: boolean, userId: 
     `, parameters);
     const row = rows[0];
     if (!row) notFound('Product variant');
+    if (row.member_only && !member) badRequest('This product requires an active membership');
     if (row.inventory_on_hand - row.inventory_reserved < quantity) conflict('Insufficient inventory');
     const base = safeMoney(row.amount_minor);
     const amount = member && row.member_amount_minor != null ? safeMoney(row.member_amount_minor) : base;
@@ -718,13 +719,15 @@ platformCommerceRoutes.delete('/me/shipping-addresses/:id', async (c) => {
 platformCommerceRoutes.get('/orders', async (c) => {
   const actor = await requirePlatformActor(c);
   const { page, pageSize, offset } = pagination(c);
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
   const rows = await platformQuery(platformDb(), `
     SELECT id::text, order_number AS "orderNumber", status, currency, total_amount_minor AS "totalAmountMinor",
            paid_at AS "paidAt", created_at AS "createdAt"
-    FROM platform_orders WHERE buyer_user_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3
-  `, [actor.userId, pageSize, offset]);
+    FROM platform_orders WHERE buyer_user_id = $1 AND ($4='' OR order_number ILIKE '%'||$4||'%') ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3
+  `, [actor.userId, pageSize, offset,q]);
   privateNoStore(c);
-  return c.json({ items: rows, page, pageSize });
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_orders WHERE buyer_user_id = $1 AND ($2='' OR order_number ILIKE '%'||$2||'%')`,[actor.userId,q]);
+  return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
 });
 
 platformCommerceRoutes.get('/orders/:id', async (c) => {
@@ -736,35 +739,12 @@ platformCommerceRoutes.get('/orders/:id', async (c) => {
   return c.json(row);
 });
 
-platformCommerceRoutes.post('/orders', async (c) => {
-  const actor = await requirePlatformActor(c);
-  const body = await readJsonObject(c);
-  const supplied = arrayField(body, 'items', { maxItems: 100 });
-  const rawItems = supplied?.length ? supplied : [body];
-  if (!rawItems.length) badRequest('items is required');
-  const clientOrderKey = stringField(body, 'clientOrderKey', { max: 120 }) ?? c.req.header('Idempotency-Key') ?? '';
-  const couponCode = stringField(body, 'couponCode', { max: 64 })?.toUpperCase();
-  const shippingAddressId = body.shippingAddressId == null
-    ? undefined
-    : resourceId(stringField(body, 'shippingAddressId', { max: 128 })!, 'shippingAddressId');
-  const result = await withIdempotency(c, actor, 'commerce.order.create', body, async (db) => {
-    const competitionTicketIds=rawItems.flatMap(raw=>isObject(raw)&&typeof raw.eventTicketTypeId==='string'?[resourceId(raw.eventTicketTypeId,'eventTicketTypeId')]:[]);
-    if(competitionTicketIds.length){
-      // Take order locks before ticket locks, matching cancellation/callback lock order.
-      const expired=await platformQuery<{id:string}>(db,`SELECT o.id::text FROM platform_orders o WHERE o.status='pending_payment'
-        AND o.created_at+INTERVAL '30 minutes'<=NOW() AND EXISTS(SELECT 1 FROM platform_order_items i JOIN platform_event_registrations r ON r.order_item_id=i.id
-          WHERE i.order_id=o.id AND r.competition_session_id IS NOT NULL AND r.event_id IN (SELECT event_id FROM platform_event_ticket_types WHERE id=ANY($1::uuid[])))
-        ORDER BY o.id FOR UPDATE OF o SKIP LOCKED`,[competitionTicketIds]);
-      for(const stale of expired){
-        await releaseOrder(db,stale.id,null);
-        await platformQuery(db,`UPDATE platform_payment_attempts SET status='cancelled',failure_code='reservation_expired' WHERE order_id=$1::uuid AND status IN ('initiated','pending')`,[stale.id]);
-        await platformQuery(db,`UPDATE platform_orders SET status='cancelled',cancelled_at=NOW() WHERE id=$1::uuid`,[stale.id]);
-        await enqueuePlatformEvent(db,'platform.order.reservation_expired','platform_order',stale.id,`order:${stale.id}:reservation-expired`,{orderId:stale.id});
-      }
-    }
-    const member = await hasMembership(db, actor.userId!);
+// Both preview and creation use the same authoritative pricing and eligibility rules.
+// Preview never reserves inventory, consumes a coupon, or creates an order.
+async function quoteOrder(db: PlatformDb, rawItems: unknown[], couponCode: string | undefined, userId: number) {
+    const member = await hasMembership(db, userId);
     const items: PricedItem[] = [];
-    for (const raw of rawItems) items.push(await priceItem(db, raw, member, actor.userId!));
+    for (const raw of rawItems) items.push(await priceItem(db, raw, member, userId));
     const competitionItems = items.filter(item => item.snapshot.competition);
     if (competitionItems.length && (items.length !== 1 || couponCode)) badRequest('Competition registration requires one project per order without a coupon');
     const currency = items[0].currency;
@@ -795,7 +775,7 @@ platformCommerceRoutes.post('/orders', async (c) => {
         SELECT COUNT(*) FILTER (WHERE status IN ('reserved','applied')) AS total,
                COUNT(*) FILTER (WHERE user_id = $2 AND status IN ('reserved','applied')) AS own
         FROM platform_coupon_redemptions WHERE coupon_id = $1::uuid
-      `, [coupon.id, actor.userId]);
+      `, [coupon.id, userId]);
       if (coupon.max_redemptions != null && Number(counts[0].total) >= coupon.max_redemptions) conflict('Coupon redemption limit reached');
       if (Number(counts[0].own) >= coupon.per_user_limit) conflict('Coupon per-user limit reached');
       discount = coupon.discount_type === 'fixed'
@@ -804,6 +784,50 @@ platformCommerceRoutes.post('/orders', async (c) => {
       couponId = coupon.id;
     }
     const total = subtotal - discount;
+    return { items, member, currency, subtotal, discount, total, couponId, couponEligibleSubtotalMinor };
+}
+
+platformCommerceRoutes.post('/orders/quote', async (c) => {
+  const actor = await requirePlatformActor(c);
+  const body = await readJsonObject(c);
+  const supplied = arrayField(body, 'items', { maxItems: 100 });
+  const rawItems = supplied?.length ? supplied : [body];
+  const couponCode = stringField(body, 'couponCode', { max: 64 })?.toUpperCase();
+  const quote = await platformTransaction(db => quoteOrder(db, rawItems, couponCode, actor.userId!));
+  privateNoStore(c);
+  return c.json({ currency:quote.currency, member:quote.member, subtotalAmountMinor:quote.subtotal,
+    discountAmountMinor:quote.discount,totalAmountMinor:quote.total,
+    items:quote.items.map(item=>({titleZh:item.snapshot.titleZh??item.snapshot.nameZh,titleEn:item.snapshot.titleEn??item.snapshot.nameEn,
+      quantity:item.quantity,unitAmountMinor:item.amountMinor,lineAmountMinor:item.amountMinor*item.quantity})) });
+});
+
+platformCommerceRoutes.post('/orders', async (c) => {
+  const actor = await requirePlatformActor(c);
+  const body = await readJsonObject(c);
+  const supplied = arrayField(body, 'items', { maxItems: 100 });
+  const rawItems = supplied?.length ? supplied : [body];
+  if (!rawItems.length) badRequest('items is required');
+  const clientOrderKey = stringField(body, 'clientOrderKey', { max: 120 }) ?? c.req.header('Idempotency-Key') ?? '';
+  const couponCode = stringField(body, 'couponCode', { max: 64 })?.toUpperCase();
+  const shippingAddressId = body.shippingAddressId == null
+    ? undefined
+    : resourceId(stringField(body, 'shippingAddressId', { max: 128 })!, 'shippingAddressId');
+  const result = await withIdempotency(c, actor, 'commerce.order.create', body, async (db) => {
+    const competitionTicketIds=rawItems.flatMap(raw=>isObject(raw)&&typeof raw.eventTicketTypeId==='string'?[resourceId(raw.eventTicketTypeId,'eventTicketTypeId')]:[]);
+    if(competitionTicketIds.length){
+      // Take order locks before ticket locks, matching cancellation/callback lock order.
+      const expired=await platformQuery<{id:string}>(db,`SELECT o.id::text FROM platform_orders o WHERE o.status='pending_payment'
+        AND o.created_at+INTERVAL '30 minutes'<=NOW() AND EXISTS(SELECT 1 FROM platform_order_items i JOIN platform_event_registrations r ON r.order_item_id=i.id
+          WHERE i.order_id=o.id AND r.competition_session_id IS NOT NULL AND r.event_id IN (SELECT event_id FROM platform_event_ticket_types WHERE id=ANY($1::uuid[])))
+        ORDER BY o.id FOR UPDATE OF o SKIP LOCKED`,[competitionTicketIds]);
+      for(const stale of expired){
+        await releaseOrder(db,stale.id,null);
+        await platformQuery(db,`UPDATE platform_payment_attempts SET status='cancelled',failure_code='reservation_expired' WHERE order_id=$1::uuid AND status IN ('initiated','pending')`,[stale.id]);
+        await platformQuery(db,`UPDATE platform_orders SET status='cancelled',cancelled_at=NOW() WHERE id=$1::uuid`,[stale.id]);
+        await enqueuePlatformEvent(db,'platform.order.reservation_expired','platform_order',stale.id,`order:${stale.id}:reservation-expired`,{orderId:stale.id});
+      }
+    }
+    const { items, member, currency, subtotal, discount, total, couponId, couponEligibleSubtotalMinor } = await quoteOrder(db, rawItems, couponCode, actor.userId!);
     let shippingSnapshotEncrypted: Buffer | null = null;
     let shippingKeyVersion: number | null = null;
     if (items.some((item) => item.fulfillmentType === 'shipment')) {
@@ -1199,8 +1223,8 @@ function couponEligibility(raw: Record<string, unknown>): CouponEligibility {
       result[key] = [];
       continue;
     }
-    if (!Array.isArray(value) || value.length === 0 || value.length > 500) {
-      badRequest(`eligibility.${key} must be a non-empty array with at most 500 items`);
+    if (!Array.isArray(value) || value.length > 500) {
+      badRequest(`eligibility.${key} must be an array with at most 500 items`);
     }
     result[key] = [...new Set(value.map((entry, index) => {
       if (typeof entry !== 'string') badRequest(`eligibility.${key}[${index}] must be a string`);
@@ -1255,6 +1279,7 @@ function couponDefinition(body: Record<string, unknown>, current?: CouponDefinit
 platformCommerceRoutes.get('/admin/coupons', async (c) => {
   await requirePlatformAdmin(c);
   const { page, pageSize, offset } = pagination(c);
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
   const rows = await platformQuery(platformDb(), `
     SELECT coupon.id::text, coupon.code, coupon.status, coupon.discount_type AS "discountType",
            coupon.discount_amount_minor AS "discountAmountMinor", coupon.discount_bps AS "discountBps",
@@ -1265,10 +1290,11 @@ platformCommerceRoutes.get('/admin/coupons', async (c) => {
            coupon.created_at AS "createdAt", coupon.updated_at AS "updatedAt"
     FROM platform_coupons coupon
     LEFT JOIN platform_coupon_redemptions redemption ON redemption.coupon_id = coupon.id
-    GROUP BY coupon.id ORDER BY coupon.created_at DESC, coupon.id DESC LIMIT $1 OFFSET $2
-  `, [pageSize, offset]);
+    WHERE ($3='' OR coupon.code ILIKE '%'||$3||'%') GROUP BY coupon.id ORDER BY coupon.created_at DESC, coupon.id DESC LIMIT $1 OFFSET $2
+  `, [pageSize, offset,q]);
   privateNoStore(c);
-  return c.json({ items: rows, page, pageSize });
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_coupons WHERE TRUE AND ($1='' OR code ILIKE '%'||$1||'%')`,[q]);
+  return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
 });
 
 platformCommerceRoutes.post('/admin/coupons', async (c) => {
@@ -1287,7 +1313,7 @@ platformCommerceRoutes.post('/admin/coupons', async (c) => {
       RETURNING id::text, code, status
     `, [definition.code, definition.status, definition.discountType, definition.discountAmountMinor,
       definition.discountBps, definition.currency, definition.minimumOrderAmountMinor, definition.maxRedemptions,
-      definition.perUserLimit, definition.startsAt, definition.endsAt, JSON.stringify(definition.eligibility), actor.userId]);
+      definition.perUserLimit, definition.startsAt, definition.endsAt, definition.eligibility, actor.userId]);
     return { status: 201, body: { ...definition, ...rows[0] }, resourceType: 'platform_coupon', resourceId: String(rows[0]!.id) };
   });
   return sendMutation(c, result);
@@ -1325,7 +1351,7 @@ platformCommerceRoutes.patch('/admin/coupons/:id', async (c) => {
       eligibility=$13::jsonb WHERE id=$1::uuid`, [id, definition.code, definition.status,
       definition.discountType, definition.discountAmountMinor, definition.discountBps, definition.currency,
       definition.minimumOrderAmountMinor, definition.maxRedemptions, definition.perUserLimit,
-      definition.startsAt, definition.endsAt, JSON.stringify(definition.eligibility)]);
+      definition.startsAt, definition.endsAt, definition.eligibility]);
     return { status: 200, body: { id, ...definition }, resourceType: 'platform_coupon', resourceId: id };
   });
   return sendMutation(c, result);
@@ -1346,13 +1372,15 @@ platformCommerceRoutes.get('/admin/orders', async (c) => {
   await requirePlatformAdmin(c);
   const { page, pageSize, offset } = pagination(c);
   const status = c.req.query('status');
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
   const rows = await platformQuery(platformDb(), `
     SELECT id::text, order_number AS "orderNumber", buyer_user_id AS "buyerUserId", status, currency,
            total_amount_minor AS "totalAmountMinor", paid_at AS "paidAt", created_at AS "createdAt"
-    FROM platform_orders WHERE ($1::text IS NULL OR status = $1) ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3
-  `, [status || null, pageSize, offset]);
+    FROM platform_orders WHERE ($1::text IS NULL OR status = $1) AND ($4='' OR order_number ILIKE '%'||$4||'%') ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3
+  `, [status || null, pageSize, offset,q]);
   privateNoStore(c);
-  return c.json({ items: rows, page, pageSize });
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_orders WHERE ($1::text IS NULL OR status=$1) AND ($2='' OR order_number ILIKE '%'||$2||'%')`,[status || null,q]);
+  return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
 });
 
 platformCommerceRoutes.get('/admin/orders/:id', async (c) => {
@@ -1467,7 +1495,7 @@ async function recordShipmentEvent(c: Context, entryType: ShipmentEventType) {
         ) VALUES ($1::uuid, $2::uuid, $3, $4, $5, $6::uuid, $7::jsonb, $8)
         RETURNING id::text
       `, [orderId, itemId, entryType, quantity, externalReference, returnRefundId,
-        JSON.stringify(storedMetadata), actor.userId]);
+        storedMetadata, actor.userId]);
       const ledgerId = ledgerRows[0].id;
       let orderStatus = order.status;
       if (entryType === 'return') {
@@ -1487,7 +1515,7 @@ async function recordShipmentEvent(c: Context, entryType: ShipmentEventType) {
           actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
         ) VALUES ($1, $2, $3, 'platform_order_item', $4, 'allowed', $5::jsonb)
       `, [actor.userId, actor.ownerKey, `commerce.fulfillment.${entryType}`, itemId,
-        JSON.stringify({ orderId, ledgerId, quantity, referenceHash })]);
+        { orderId, ledgerId, quantity, referenceHash }]);
       const eventPastTense = entryType === 'ship' ? 'shipped' : entryType === 'deliver' ? 'delivered' : 'returned';
       await enqueuePlatformEvent(db, `platform.order_item.${eventPastTense}`,
         'platform_order_item', itemId, `order-item:${itemId}:${entryType}:${ledgerId}`, {
@@ -1802,7 +1830,7 @@ platformCommerceRoutes.put('/instructor/payout-profile', async (c) => {
       INSERT INTO platform_audit_events (
         actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
       ) VALUES ($1, $2, 'commerce.payout_profile.update', 'platform_instructor', $3, 'allowed', $4::jsonb)
-    `, [actor.userId, actor.ownerKey, instructorId, JSON.stringify({ method, countryCode })]);
+    `, [actor.userId, actor.ownerKey, instructorId, { method, countryCode }]);
     return {
       status: 200,
       body: { instructorId, configured: true, keyVersion: encrypted.keyVersion, updatedAt: rows[0]!.updatedAt },
@@ -1863,7 +1891,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/generate', async (c) => {
       INSERT INTO platform_audit_events (
         actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
       ) VALUES ($1, $2, 'commerce.payout.generate', 'platform_instructor_payout', $3, 'allowed', $4::jsonb)
-    `, [actor.userId, actor.ownerKey, payout.id, JSON.stringify({ instructorId, currency, ledgerEntries: ledger.length })]);
+    `, [actor.userId, actor.ownerKey, payout.id, { instructorId, currency, ledgerEntries: ledger.length }]);
     await enqueuePlatformEvent(db, 'platform.instructor_payout.generated', 'platform_instructor_payout', payout.id,
       `payout:${payout.id}:generated`, { payoutId: payout.id, instructorId, amountMinor, currency });
     return {
@@ -1879,9 +1907,11 @@ platformCommerceRoutes.post('/admin/instructor-payouts/generate', async (c) => {
 platformCommerceRoutes.get('/admin/instructor-payouts', async (c) => {
   await requirePlatformAdmin(c);
   const { page, pageSize, offset } = pagination(c);
-  const rows = await platformQuery(platformDb(), `SELECT p.id::text, p.payout_number AS "payoutNumber", p.instructor_id::text AS "instructorId", p.status, p.amount_minor AS "amountMinor", p.currency, p.provider_reference AS "providerReference", p.failure_code AS "failureCode", p.created_at AS "createdAt" FROM platform_instructor_payouts p ORDER BY p.created_at DESC, p.id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]);
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
+  const rows = await platformQuery(platformDb(), `SELECT p.id::text, p.payout_number AS "payoutNumber", p.instructor_id::text AS "instructorId", p.status, p.amount_minor AS "amountMinor", p.currency, p.provider_reference AS "providerReference", p.failure_code AS "failureCode", p.created_at AS "createdAt" FROM platform_instructor_payouts p WHERE ($3='' OR p.payout_number ILIKE '%'||$3||'%') ORDER BY p.created_at DESC, p.id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q]);
   privateNoStore(c);
-  return c.json({ items: rows, page, pageSize });
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_instructor_payouts WHERE TRUE AND ($1='' OR payout_number ILIKE '%'||$1||'%')`,[q]);
+  return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
 });
 
 platformCommerceRoutes.post('/admin/instructor-payouts/:id/approve', async (c) => {
@@ -1952,7 +1982,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/paid', async (c) => {
     if (!['approved', 'processing'].includes(rows[0].status)) throw new PlatformApiError('INVALID_STATE', 409, 'Payout must be approved or processing');
     await platformQuery(db, `UPDATE platform_instructor_payouts SET status = 'paid', provider_reference = $2, paid_by_user_id = $3, paid_by_actor_key = $4, paid_at = NOW() WHERE id = $1::uuid`, [id, providerReference, actor.userId, actor.ownerKey]);
     const providerReferenceHash = hashReference(providerReference);
-    await platformQuery(db, `INSERT INTO platform_audit_events (actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata) VALUES ($1, $2, 'commerce.payout.mark_paid', 'platform_instructor_payout', $3, 'allowed', $4::jsonb)`, [actor.userId, actor.ownerKey, id, JSON.stringify({ providerReferenceHash })]);
+    await platformQuery(db, `INSERT INTO platform_audit_events (actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata) VALUES ($1, $2, 'commerce.payout.mark_paid', 'platform_instructor_payout', $3, 'allowed', $4::jsonb)`, [actor.userId, actor.ownerKey, id, { providerReferenceHash }]);
     return { status: 200, body: { id, status: 'paid' }, resourceType: 'platform_instructor_payout', resourceId: id };
   });
   return sendMutation(c, result);
@@ -2003,7 +2033,7 @@ platformCommerceRoutes.post('/admin/instructor-payouts/:id/reconcile-processing-
       ) VALUES ($1, $2, 'commerce.payout.reconcile_processing_refund',
         'platform_instructor_payout', $3, 'allowed', $4, $5::jsonb)
     `, [actor.userId, actor.ownerKey, id, `refund_after_processing_${outcome}`,
-      JSON.stringify({ outcome, evidenceReferenceHash, providerReferenceHash })]);
+      { outcome, evidenceReferenceHash, providerReferenceHash }]);
     await enqueuePlatformEvent(db, 'platform.instructor_payout.processing_refund_reconciled',
       'platform_instructor_payout', id, `payout:${id}:processing-refund:${outcome}`, {
         payoutId: id, outcome,
@@ -2023,7 +2053,7 @@ platformCommerceRoutes.post('/admin/reconciliation/runs', async (c) => {
   const actor = await requirePlatformAdmin(c);
   const body = await readJsonObject(c);
   const provider = enumField(body, 'provider', PLATFORM_PAYMENT_PROVIDERS, { required: true })!;
-  const suppliedMerchantAccount = stringField(body, 'merchantAccount', { required: true, max: 120 })!;
+  const suppliedMerchantAccount = stringField(body, 'merchantAccount', { max: 120 }) ?? merchantAccount(provider);
   if (suppliedMerchantAccount !== merchantAccount(provider)) badRequest('merchantAccount does not match the configured provider account');
   const statementDate = stringField(body, 'statementDate', { required: true, max: 10, pattern: /^\d{4}-\d{2}-\d{2}$/ })!;
   const parsedDate = new Date(`${statementDate}T00:00:00.000Z`);
@@ -2122,7 +2152,7 @@ platformCommerceRoutes.post('/admin/reconciliation/runs', async (c) => {
       INSERT INTO platform_audit_events (
         actor_user_id, actor_key, action, resource_type, resource_id, outcome, metadata
       ) VALUES ($1, $2, 'commerce.reconciliation.import', 'platform_reconciliation_batch', $3, 'allowed', $4::jsonb)
-    `, [actor.userId, actor.ownerKey, batchId, JSON.stringify({ provider, statementDate, recordCount: normalized.length, counts })]);
+    `, [actor.userId, actor.ownerKey, batchId, { provider, statementDate, recordCount: normalized.length, counts }]);
     await enqueuePlatformEvent(db, 'platform.reconciliation.imported', 'platform_reconciliation_batch', batchId,
       `reconciliation:${batchId}`, { provider, statementDate, recordCount: normalized.length, counts });
     return { status: 201, body: { provider, merchantAccount: suppliedMerchantAccount, statementDate, counts, items },
@@ -2134,9 +2164,11 @@ platformCommerceRoutes.post('/admin/reconciliation/runs', async (c) => {
 platformCommerceRoutes.get('/admin/reconciliation', async (c) => {
   await requirePlatformAdmin(c);
   const { page, pageSize, offset } = pagination(c);
-  const rows = await platformQuery(platformDb(), `SELECT id::text, provider, merchant_account AS "merchantAccount", statement_date AS "statementDate", provider_transaction_id AS "providerTransactionId", payment_attempt_id::text AS "paymentAttemptId", refund_id::text AS "refundId", amount_minor AS "amountMinor", currency, status, resolution_note AS "resolutionNote", resolved_at AS "resolvedAt", created_at AS "createdAt" FROM platform_reconciliation_records ORDER BY statement_date DESC, id DESC LIMIT $1 OFFSET $2`, [pageSize, offset]);
+  const q=c.req.query('q')?.trim().slice(0,200)??'';
+  const rows = await platformQuery(platformDb(), `SELECT id::text, provider, merchant_account AS "merchantAccount", statement_date AS "statementDate", provider_transaction_id AS "providerTransactionId", payment_attempt_id::text AS "paymentAttemptId", refund_id::text AS "refundId", amount_minor AS "amountMinor", currency, status, resolution_note AS "resolutionNote", resolved_at AS "resolvedAt", created_at AS "createdAt" FROM platform_reconciliation_records WHERE ($3='' OR provider_transaction_id ILIKE '%'||$3||'%') ORDER BY statement_date DESC, id DESC LIMIT $1 OFFSET $2`, [pageSize, offset,q]);
   privateNoStore(c);
-  return c.json({ items: rows, page, pageSize });
+  const counts=await platformQuery<{total:number}>(platformDb(),`SELECT COUNT(*)::int AS total FROM platform_reconciliation_records WHERE TRUE AND ($1='' OR provider_transaction_id ILIKE '%'||$1||'%')`,[q]);
+  return c.json({ items: rows, page, pageSize,total:counts[0]?.total??0 });
 });
 
 platformCommerceRoutes.post('/admin/reconciliation/:id/resolve', async (c) => {

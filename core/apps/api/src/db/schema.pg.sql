@@ -1131,6 +1131,7 @@ CREATE TRIGGER platform_course_owners_set_updated_at BEFORE UPDATE ON platform_c
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 CREATE TABLE platform_course_revisions (
+  presentation JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(presentation)='object'),
   course_id UUID NOT NULL REFERENCES platform_courses(id) ON DELETE RESTRICT,
   revision INTEGER NOT NULL CHECK (revision > 0),
   title_zh VARCHAR(240) NOT NULL DEFAULT '',
@@ -1284,6 +1285,9 @@ CREATE TABLE platform_quiz_questions (
 );
 
 CREATE TABLE platform_products (
+  category VARCHAR(120) NOT NULL DEFAULT '',
+  member_only BOOLEAN NOT NULL DEFAULT FALSE,
+  presentation JSONB NOT NULL DEFAULT '{}'::jsonb CHECK (jsonb_typeof(presentation)='object'),
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(120) NOT NULL UNIQUE CHECK (slug = LOWER(BTRIM(slug)) AND slug ~ '^[a-z0-9][a-z0-9_-]{0,119}$'),
   product_type VARCHAR(20) NOT NULL CHECK (product_type IN ('physical', 'digital')),
@@ -1328,6 +1332,8 @@ CREATE TRIGGER platform_product_variants_set_updated_at BEFORE UPDATE ON platfor
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 CREATE TABLE platform_events (
+  category VARCHAR(120) NOT NULL DEFAULT '',
+  program JSONB NOT NULL DEFAULT '[]'::jsonb CHECK (jsonb_typeof(program)='array'),
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(120) NOT NULL UNIQUE CHECK (slug = LOWER(BTRIM(slug)) AND slug ~ '^[a-z0-9][a-z0-9_-]{0,119}$'),
   title_zh VARCHAR(240) NOT NULL DEFAULT '',
@@ -1383,6 +1389,9 @@ CREATE TRIGGER platform_event_ticket_types_set_updated_at BEFORE UPDATE ON platf
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
 
 CREATE TABLE platform_news_articles (
+  category VARCHAR(120) NOT NULL DEFAULT '',
+  excerpt_zh TEXT NOT NULL DEFAULT '',
+  excerpt_en TEXT NOT NULL DEFAULT '',
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug VARCHAR(160) NOT NULL UNIQUE CHECK (slug = LOWER(BTRIM(slug)) AND slug ~ '^[a-z0-9][a-z0-9_-]{0,159}$'),
   title_zh VARCHAR(240) NOT NULL DEFAULT '',
@@ -1859,21 +1868,25 @@ CREATE TRIGGER platform_lesson_notes_set_updated_at BEFORE UPDATE ON platform_le
 
 CREATE TABLE platform_favorites (
   user_id BIGINT NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
-  target_type VARCHAR(20) NOT NULL CHECK (target_type IN ('course', 'product', 'event')),
+  target_type VARCHAR(20) NOT NULL CHECK (target_type IN ('course', 'product', 'event', 'news')),
   course_id UUID REFERENCES platform_courses(id) ON DELETE CASCADE,
   product_id UUID REFERENCES platform_products(id) ON DELETE CASCADE,
   event_id UUID REFERENCES platform_events(id) ON DELETE CASCADE,
+  news_article_id UUID REFERENCES platform_news_articles(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  CHECK ((course_id IS NOT NULL)::integer + (product_id IS NOT NULL)::integer + (event_id IS NOT NULL)::integer = 1),
+  CHECK ((course_id IS NOT NULL)::integer + (product_id IS NOT NULL)::integer + (event_id IS NOT NULL)::integer + (news_article_id IS NOT NULL)::integer = 1),
   CHECK (
     (target_type = 'course' AND course_id IS NOT NULL)
     OR (target_type = 'product' AND product_id IS NOT NULL)
     OR (target_type = 'event' AND event_id IS NOT NULL)
+    OR (target_type = 'news' AND news_article_id IS NOT NULL)
   )
 );
 CREATE UNIQUE INDEX uq_platform_favorites_course ON platform_favorites(user_id, course_id) WHERE course_id IS NOT NULL;
 CREATE UNIQUE INDEX uq_platform_favorites_product ON platform_favorites(user_id, product_id) WHERE product_id IS NOT NULL;
 CREATE UNIQUE INDEX uq_platform_favorites_event ON platform_favorites(user_id, event_id) WHERE event_id IS NOT NULL;
+
+CREATE UNIQUE INDEX uq_platform_favorites_news ON platform_favorites(user_id, news_article_id) WHERE news_article_id IS NOT NULL;
 
 CREATE TABLE platform_quiz_attempts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1922,6 +1935,9 @@ CREATE TRIGGER platform_course_reviews_set_updated_at BEFORE UPDATE ON platform_
 
 CREATE TABLE platform_certificates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  verification_code_encrypted BYTEA,
+  verification_key_version SMALLINT,
+  CONSTRAINT platform_certificate_code_pair CHECK ((verification_code_encrypted IS NULL) = (verification_key_version IS NULL)),
   verification_code_hash BYTEA NOT NULL UNIQUE CHECK (octet_length(verification_code_hash) = 32),
   user_id BIGINT REFERENCES app_users(id) ON DELETE SET NULL,
   course_id UUID NOT NULL REFERENCES platform_courses(id) ON DELETE RESTRICT,
@@ -1977,6 +1993,7 @@ CREATE TABLE platform_point_ledger (
   CHECK ((user_id IS NOT NULL)::integer + (subject_key IS NOT NULL)::integer = 1)
 );
 CREATE UNIQUE INDEX uq_platform_point_ledger_checkin ON platform_point_ledger(checkin_id) WHERE checkin_id IS NOT NULL;
+CREATE UNIQUE INDEX uq_platform_learning_reward_source ON platform_point_ledger(user_id,reason) WHERE entry_type='achievement' AND reason LIKE 'learning:%';
 CREATE INDEX idx_platform_point_ledger_user ON platform_point_ledger(user_id, created_at, id);
 
 CREATE TABLE platform_achievements (
@@ -1995,6 +2012,19 @@ CREATE TABLE platform_achievements (
 );
 CREATE TRIGGER platform_achievements_set_updated_at BEFORE UPDATE ON platform_achievements
   FOR EACH ROW EXECUTE FUNCTION trg_set_updated_at();
+
+INSERT INTO platform_achievements(achievement_key,title_zh,title_en,description_zh,description_en,rule_snapshot,point_reward) VALUES
+('first_lesson','第一课','First lesson','完成第一节课程','Complete your first lesson','{"metric":"lessons","threshold":1,"category":"learning"}',20),
+('lessons_5','勤学不辍','Keep learning','累计完成五节课程','Complete five lessons','{"metric":"lessons","threshold":5,"category":"learning"}',50),
+('first_review','乐于点评','First review','提交第一条课程评价','Write your first course review','{"metric":"reviews","threshold":1,"category":"community"}',20),
+('streak_7','七日不辍','Seven days','连续签到七天','Check in for seven consecutive days','{"metric":"streak","threshold":7,"category":"learning"}',70),
+('streak_30','月度坚持','Thirty days','连续签到三十天','Check in for thirty consecutive days','{"metric":"streak","threshold":30,"category":"learning"}',200),
+('first_order','首次下单','First purchase','完成第一笔付费订单','Complete your first paid order','{"metric":"orders","threshold":1,"category":"commerce"}',30),
+('first_post','首次分享','First post','发布首条通过审核的论坛内容','Publish your first approved forum post','{"metric":"posts","threshold":1,"category":"community"}',20),
+('posts_10','乐于交流','Join the conversation','发布十条通过审核的论坛内容','Publish ten approved forum posts','{"metric":"posts","threshold":10,"category":"community"}',60),
+('spend_1000','消费达人','Shopping milestone','人民币订单扣除已成功退款后累计消费1000元','Spend CNY 1,000 after successful refunds','{"metric":"spent_cny","threshold":1000,"category":"commerce"}',100),
+('points_1000','积分达人','Points milestone','奖励结算前拥有1000积分','Have 1,000 points before this award is evaluated','{"metric":"points","threshold":1000,"category":"learning"}',100)
+ON CONFLICT (achievement_key) DO NOTHING;
 
 CREATE TABLE platform_user_achievements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2218,6 +2248,16 @@ CREATE TABLE platform_qr_scans (
   CHECK (last_scanned_at >= first_scanned_at)
 );
 CREATE INDEX idx_platform_qr_scans_code_time ON platform_qr_scans(qr_code_id, last_scanned_at DESC);
+
+-- Daily facts start at deployment: lifetime aggregates cannot reconstruct past days.
+CREATE TABLE platform_qr_scan_daily (
+  qr_code_id UUID NOT NULL REFERENCES platform_qr_codes(id) ON DELETE RESTRICT,
+  scan_day DATE NOT NULL,
+  visitor_hash BYTEA NOT NULL CHECK (octet_length(visitor_hash) = 32),
+  scan_count BIGINT NOT NULL DEFAULT 1 CHECK (scan_count BETWEEN 1 AND 9007199254740991),
+  PRIMARY KEY (qr_code_id, scan_day, visitor_hash)
+);
+CREATE INDEX idx_platform_qr_scan_daily_day ON platform_qr_scan_daily(scan_day);
 
 CREATE TABLE platform_qr_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
