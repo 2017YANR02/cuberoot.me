@@ -267,7 +267,7 @@
 }
 
 .contact-detail-value {
-  justify-self: start;
+  justify-self: stretch;
   word-break: break-all;
 }
 
@@ -276,12 +276,14 @@
 }
 
 .contact-value-button {
-  flex: none;
+  flex: 0 1 auto;
   line-height: 1.5;
   max-width: 100%;
+  min-width: 0;
   overflow-wrap: anywhere;
   text-align: left;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-all;
   width: auto;
 }
 
