@@ -1,0 +1,100 @@
+{
+  "date": "2026-10-04",
+  "baselineCommit": "563618f807396d35c074d0092d83f1bddf6d9f58",
+  "hardware": {
+    "cpu": "Apple M5 Pro",
+    "logicalCpus": 18,
+    "memoryGiB": 64,
+    "node": "v24.21.0"
+  },
+  "scope": "aggregateVariant only; CSV reading included, metadata loading and output writing excluded. Not an end-to-end pipeline benchmark.",
+  "input": "Actual std.csv stage distances. Deterministic synthetic metadata was identical in old/new runs: scramble R U F2, events cycling 333/333oh/333bf/333fm, countries cycling China/USA/Germany/Japan/Canada/France. All rows compared, not a sample of the full CSV.",
+  "verification": "Full JSON string equality on every run, including histograms, event/country buckets, reservoir IDs, tie-selected colors and ordering; SHA-256 additionally recorded.",
+  "implementation": [
+    "Prepare column/color indices and aggregate bucket references once per header",
+    "Reuse six-value array",
+    "Allocate reservoir sample tuples only when selected; keep every RNG call and tie-breaking order"
+  ],
+  "rejected": [
+    "Replacing async readline iteration with event-driven reading: 1.2747 versus 1.2945 seconds, no gain",
+    "Lazy reservoir tuple allocation alone: small gain, combined with precomputed references in final version"
+  ],
+  "fixture": {
+    "rows": 4200,
+    "sha256": "7d1f1462cc07b4618e048b512e305cebc83f3b8c1c9415fa4aec10627701ab7f",
+    "command": "cd core && pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts",
+    "covers": [
+      "reservoir replacement",
+      "tied minima",
+      "missing metadata and scrambles",
+      "malformed stage values",
+      "empty numeric cell",
+      "CRLF and blank rows",
+      "country truncation"
+    ]
+  },
+  "reports": [
+    {
+      "label": "first-100000",
+      "rows": 100000,
+      "csvSha256": "0b01765f894e43a9b6ee4a61d9fc0ecc82966a5e89a881b8057656f04c35171a",
+      "runs": [
+        {
+          "name": "baseline",
+          "seconds": 1.328893875,
+          "sha256": "0f633c573a418779444bbe0a2ec29b479b288616e5c991c707be5c311a7a393e",
+          "bytes": 848897
+        },
+        {
+          "name": "final",
+          "seconds": 0.856356041,
+          "sha256": "0f633c573a418779444bbe0a2ec29b479b288616e5c991c707be5c311a7a393e",
+          "bytes": 848897
+        },
+        {
+          "name": "final",
+          "seconds": 0.909244667,
+          "sha256": "0f633c573a418779444bbe0a2ec29b479b288616e5c991c707be5c311a7a393e",
+          "bytes": 848897
+        },
+        {
+          "name": "baseline",
+          "seconds": 1.340443042,
+          "sha256": "0f633c573a418779444bbe0a2ec29b479b288616e5c991c707be5c311a7a393e",
+          "bytes": 848897
+        },
+        {
+          "name": "baseline",
+          "seconds": 1.3147228749999995,
+          "sha256": "0f633c573a418779444bbe0a2ec29b479b288616e5c991c707be5c311a7a393e",
+          "bytes": 848897
+        },
+        {
+          "name": "final",
+          "seconds": 0.9309934170000006,
+          "sha256": "0f633c573a418779444bbe0a2ec29b479b288616e5c991c707be5c311a7a393e",
+          "bytes": 848897
+        }
+      ]
+    },
+    {
+      "label": "full-standard-corpus",
+      "rows": 1352931,
+      "csvSha256": "19588589d63f79169f495cbb734b816bbc4053eaf68cc774b1b075298e438a96",
+      "runs": [
+        {
+          "name": "baseline",
+          "seconds": 17.870109624999998,
+          "sha256": "b5330c8304ad3d6c5c87c282ec0bcf902bcc93916443e513d6459d28cf25d18d",
+          "bytes": 851480
+        },
+        {
+          "name": "final",
+          "seconds": 12.522830833999997,
+          "sha256": "b5330c8304ad3d6c5c87c282ec0bcf902bcc93916443e513d6459d28cf25d18d",
+          "bytes": 851480
+        }
+      ]
+    }
+  ]
+}

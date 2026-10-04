@@ -158,6 +158,7 @@ impl MoveTable {
 #[cfg(not(target_arch = "wasm32"))]
 mod manager {
     use super::*;
+    use rayon::prelude::*;
 
     const N_TABLES: usize = 13;
 
@@ -528,11 +529,23 @@ mod manager {
 
     fn gen_mt_edge6(mgr: &MoveTableManager) -> Vec<u32> {
         let edge = mgr.ensure_edge();
-        let basic = as_i32(edge.as_u32());
-        create_multi_move_table(6, 2, 12, state_space::EDGE6 as i32, &basic)
-            .into_iter()
-            .map(|x| x as u32)
-            .collect()
+        let basic = edge.as_u32();
+        let mut table = vec![0u32; state_space::EDGE6 * 18];
+        // Each worker owns complete rows. Computing all 18 moves avoids the
+        // serial generator's inverse-row writes and needs no atomics or second
+        // 3 GB buffer; the coordinate and every output entry remain identical.
+        table.par_chunks_mut(18).enumerate().for_each(|(i, row)| {
+            let mut source = [0i32; 6];
+            let mut moved = [0i32; 6];
+            cc::index_to_array(&mut source, i as i32, 6, 2, 12);
+            for (mv, cell) in row.iter_mut().enumerate() {
+                for k in 0..6 {
+                    moved[k] = basic[source[k] as usize + mv] as i32;
+                }
+                *cell = cc::array_to_index(&moved, 6, 2, 12) as u32;
+            }
+        });
+        table
     }
 
     fn gen_mt_corn2(mgr: &MoveTableManager) -> Vec<u32> {

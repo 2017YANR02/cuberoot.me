@@ -1,0 +1,1171 @@
+{
+  "date": "2026-10-04",
+  "hardware": {
+    "cpu": "Apple M5 Pro",
+    "physicalMemoryGiB": 64,
+    "rayonThreads": 18
+  },
+  "baselineCommit": "563618f807396d35c074d0092d83f1bddf6d9f58",
+  "scope": "Native non-H48 3x3 table generation only. Table sizes, coordinates, seeds, depth limits, file formats and unreachable entries unchanged.",
+  "commands": {
+    "all": "CUBE_TABLE_DIR=<fresh isolated directory> cargo run --release --bin table_generator -- --only rust",
+    "single": "CUBE_TABLE_DIR=<fresh isolated directory> cargo run --release --bin table_generator -- --only rust --table <exact file stem>"
+  },
+  "candidateCompleteRun": {
+    "wall": 218.74060999997891,
+    "peakRssBytes": 27774746624,
+    "minimumFreePercent": 67,
+    "tables": 78,
+    "bytes": 45488310956,
+    "allByteIdentical": true,
+    "note": "This complete-run timing precedes restoring direct CAS on eight collision-coordinate tables; it is not a complete-run timing for final code."
+  },
+  "historicalReference": {
+    "date": "2026-09-23",
+    "seconds": 319.3,
+    "note": "Historical run only; not used for contemporary A/B speedup."
+  },
+  "representativeContemporaryComparisons": [
+    {
+      "table": "mt_edge6",
+      "baselineSeconds": 7.924,
+      "optimizedSeconds": 1.933,
+      "speedup": 4.0993,
+      "note": "single contemporary generation per version; reported table timer excludes process-monitor polling"
+    },
+    {
+      "table": "pt_eo_xcross_slot0_high_memory",
+      "baselineSeconds": 23.084,
+      "optimizedSeconds": 12.282,
+      "speedup": 1.8795,
+      "note": "single contemporary generation per version; reported table timer excludes process-monitor polling"
+    },
+    {
+      "table": "pt_cross_C4C5E0E1",
+      "baselineSeconds": 77.105,
+      "optimizedSeconds": 41.161,
+      "speedup": 1.8733,
+      "note": "single contemporary generation per version; reported table timer excludes process-monitor polling"
+    },
+    {
+      "table": "pt_cross_C4E0E1",
+      "baselineSeconds": 7.786,
+      "optimizedSeconds": 7.932,
+      "speedup": 0.9816,
+      "note": "single contemporary generation per version; reported table timer excludes process-monitor polling"
+    },
+    {
+      "table": "pt_cross_C4C5E0",
+      "baselineSeconds": 10.28,
+      "optimizedSeconds": 9.859,
+      "speedup": 1.0427,
+      "note": "single contemporary generation per version; reported table timer excludes process-monitor polling"
+    },
+    {
+      "table": "pt_pscross_E0E1E2",
+      "baselineSeconds": 3.742,
+      "optimizedSeconds": 3.807,
+      "speedup": 0.9829,
+      "note": "single contemporary generation per version; reported table timer excludes process-monitor polling"
+    }
+  ],
+  "mediumComparisons": {
+    "repetitions": 5,
+    "executionOrder": "alternating baseline/read-CAS/adaptive order in fresh directories",
+    "measure": "process wall time, includes initialization and write",
+    "allHashesMatchedCanonical": true,
+    "runs": [
+      {
+        "table": "pt_ep4eo12",
+        "variant": "baseline",
+        "run": 0,
+        "wall": 0.10610558302141726,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "read-cas",
+        "run": 0,
+        "wall": 0.0894606250221841,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "adaptive",
+        "run": 0,
+        "wall": 0.06909566704416648,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "baseline",
+        "run": 0,
+        "wall": 0.23666079196846113,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "read-cas",
+        "run": 0,
+        "wall": 0.2244527080329135,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "adaptive",
+        "run": 0,
+        "wall": 0.22869233303936198,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "baseline",
+        "run": 0,
+        "wall": 0.42233095900155604,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "read-cas",
+        "run": 0,
+        "wall": 0.38982350000878796,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "adaptive",
+        "run": 0,
+        "wall": 0.2513064579688944,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "baseline",
+        "run": 0,
+        "wall": 0.35213583399308845,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "read-cas",
+        "run": 0,
+        "wall": 0.2720225410303101,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "adaptive",
+        "run": 0,
+        "wall": 0.270533999952022,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "adaptive",
+        "run": 1,
+        "wall": 0.05014429200673476,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "read-cas",
+        "run": 1,
+        "wall": 0.08988187502836809,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "baseline",
+        "run": 1,
+        "wall": 0.11241416702978313,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "adaptive",
+        "run": 1,
+        "wall": 0.2292680829996243,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "read-cas",
+        "run": 1,
+        "wall": 0.23606216697953641,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "baseline",
+        "run": 1,
+        "wall": 0.24690554098924622,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "adaptive",
+        "run": 1,
+        "wall": 0.22848991601495072,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "read-cas",
+        "run": 1,
+        "wall": 0.36882604099810123,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "baseline",
+        "run": 1,
+        "wall": 0.4224767499836162,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "adaptive",
+        "run": 1,
+        "wall": 0.2741989999776706,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "read-cas",
+        "run": 1,
+        "wall": 0.2880802089930512,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "baseline",
+        "run": 1,
+        "wall": 0.3620737500023097,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "baseline",
+        "run": 2,
+        "wall": 0.1113222079584375,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "read-cas",
+        "run": 2,
+        "wall": 0.08971941703930497,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "adaptive",
+        "run": 2,
+        "wall": 0.05470908299321309,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "baseline",
+        "run": 2,
+        "wall": 0.2563000830123201,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "read-cas",
+        "run": 2,
+        "wall": 0.23433820897480473,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "adaptive",
+        "run": 2,
+        "wall": 0.23699333402328193,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "baseline",
+        "run": 2,
+        "wall": 0.4499126669834368,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "read-cas",
+        "run": 2,
+        "wall": 0.393485167005565,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "adaptive",
+        "run": 2,
+        "wall": 0.2529122499981895,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "baseline",
+        "run": 2,
+        "wall": 0.3656367919757031,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "read-cas",
+        "run": 2,
+        "wall": 0.2924673749948852,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "adaptive",
+        "run": 2,
+        "wall": 0.29366970795672387,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "adaptive",
+        "run": 3,
+        "wall": 0.05446645797928795,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "read-cas",
+        "run": 3,
+        "wall": 0.09242883301340044,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "baseline",
+        "run": 3,
+        "wall": 0.1163198750000447,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "adaptive",
+        "run": 3,
+        "wall": 0.23438383301254362,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "read-cas",
+        "run": 3,
+        "wall": 0.23645824997220188,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "baseline",
+        "run": 3,
+        "wall": 0.25073887495091185,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "adaptive",
+        "run": 3,
+        "wall": 0.241804166988004,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "read-cas",
+        "run": 3,
+        "wall": 0.38664391596103087,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "baseline",
+        "run": 3,
+        "wall": 0.4329023329773918,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "adaptive",
+        "run": 3,
+        "wall": 0.2914345000172034,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "read-cas",
+        "run": 3,
+        "wall": 0.28791012498550117,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "baseline",
+        "run": 3,
+        "wall": 0.3892251249635592,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "baseline",
+        "run": 4,
+        "wall": 0.11339537502499297,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "read-cas",
+        "run": 4,
+        "wall": 0.09708274999866262,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_ep4eo12",
+        "variant": "adaptive",
+        "run": 4,
+        "wall": 0.05221983295632526,
+        "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "baseline",
+        "run": 4,
+        "wall": 0.25700008403509855,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "read-cas",
+        "run": 4,
+        "wall": 0.23910604196134955,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_E0E1",
+        "variant": "adaptive",
+        "run": 4,
+        "wall": 0.23975995799992234,
+        "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "baseline",
+        "run": 4,
+        "wall": 0.42553237499669194,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "read-cas",
+        "run": 4,
+        "wall": 0.4057696250383742,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_pscross_C4C5",
+        "variant": "adaptive",
+        "run": 4,
+        "wall": 0.253124792012386,
+        "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "baseline",
+        "run": 4,
+        "wall": 0.36721749999560416,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "read-cas",
+        "run": 4,
+        "wall": 0.2951291250064969,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      },
+      {
+        "table": "pt_cross_C4E0",
+        "variant": "adaptive",
+        "run": 4,
+        "wall": 0.29593862500041723,
+        "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e"
+      }
+    ]
+  },
+  "discardedExperiments": [
+    {
+      "candidate": "reverse scanning every coordinate product",
+      "reason": "Repeated-piece products contain permanently unreachable collision coordinates; pt_pscross_E0E1 slowed from median 0.2456s to 0.3927s. Reverse scanning is enabled only for independent complete coordinate products."
+    },
+    {
+      "candidate": "combining forward and reverse hot loops",
+      "reason": "Forward-only coordinate performance regressed; restored the separately compiled original forward expansion."
+    },
+    {
+      "candidate": "pre-read before every CAS, including billion-state collision coordinates",
+      "reason": "pt_cross_C4C5E0 10.280s baseline vs 12.855s candidate; pt_pscross_E0E1E2 3.742s vs 4.760s. Restored direct CAS for these eight table families."
+    }
+  ],
+  "tables": [
+    {
+      "file": "mt_corn.bin",
+      "bytes": 1740,
+      "sha256": "f2df3c86daeb74f819e93e4e9bb28c0ca5b1953485cd80f6f97b184f8f4bb2cd",
+      "identical": true,
+      "candidateGenerationSeconds": 0.0,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_corn2.bin",
+      "bytes": 36300,
+      "sha256": "4062896439def784dedbe7f26c1f82f10b07fd840d70f3df3384dc6cd06a1b86",
+      "identical": true,
+      "candidateGenerationSeconds": 0.0,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_corn3.bin",
+      "bytes": 653196,
+      "sha256": "7718a51c3ab5cc7981614e3d75ff6766b952eb1853552dcbb4efc6b22bd2a77a",
+      "identical": true,
+      "candidateGenerationSeconds": 0.002,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_edge.bin",
+      "bytes": 1740,
+      "sha256": "6e8cfbdff0b285e3f23820da2fda79cfbddd8864bbcd5c34b1fb30962bc17f6b",
+      "identical": true,
+      "candidateGenerationSeconds": 0.0,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_edge2.bin",
+      "bytes": 38028,
+      "sha256": "a53993671adb527afb661bbdac29ab4fef44e44ff11c17af0b91b18222a44264",
+      "identical": true,
+      "candidateGenerationSeconds": 0.0,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_edge3.bin",
+      "bytes": 760332,
+      "sha256": "f02f050466299aa267a47cab5d4a486a2d5d07ae6a73bd291d97c41fd3d99b61",
+      "identical": true,
+      "candidateGenerationSeconds": 0.002,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_edge4.bin",
+      "bytes": 18247692,
+      "sha256": "8540074d6bacfa63224c05e6e84b07aa40758dcf20e9f6253e3389851c35acfd",
+      "identical": true,
+      "candidateGenerationSeconds": 0.034,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_edge6.bin",
+      "bytes": 3065610252,
+      "sha256": "35ab773afa08aa5fd946c000456b1fa835570e4cfd779f6b5da00b2c994c6f7c",
+      "identical": true,
+      "candidateGenerationSeconds": 1.933,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_eo12.bin",
+      "bytes": 147468,
+      "sha256": "350fdeedd7afce3b264fbd049370d455a047235132e668f44af0ebbc5efdc277",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_eo12_alt.bin",
+      "bytes": 147468,
+      "sha256": "8db59dc86cde06d2bf99ca3c7289a4b3ff0f7631164b5556044fd87fda8fe3b6",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_ep1.bin",
+      "bytes": 876,
+      "sha256": "6a36adfcebecc305aa913cb27d6557f49335f6df3d871db2d197572424db5d71",
+      "identical": true,
+      "candidateGenerationSeconds": 0.0,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_ep4.bin",
+      "bytes": 855372,
+      "sha256": "dc37317238ab8395095f6b39618eeeb9bd50a446f3f388007ad4f99c64712413",
+      "identical": true,
+      "candidateGenerationSeconds": 0.003,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "mt_ep5_high_memory.bin",
+      "bytes": 6842892,
+      "sha256": "ea6a8dc08c3fc4063e01e2d81f7657ab2fa7c91d4f6d28b0444c4c3fc229a86d",
+      "identical": true,
+      "candidateGenerationSeconds": 0.02,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_cross.bin",
+      "bytes": 139408,
+      "sha256": "8e9ff79eecf004b89eb0fef39824e2d5e31f1cca572351ed15db87bb8bbc65c7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.004,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_cross_C4C5C6.bin",
+      "bytes": 1313832976,
+      "sha256": "485601802ecde984263e5eee840481fe0a50f84c42530950fcf567b2a641a3b6",
+      "identical": true,
+      "candidateGenerationSeconds": 11.985,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 11.843,
+      "finalRunPeakRssBytes": 2668167168
+    },
+    {
+      "file": "pt_cross_C4C5E0.bin",
+      "bytes": 1313832976,
+      "sha256": "07203cccd7609871a49713940e78508f3d63dfc5ad3bff42b492cb6efe1ea799",
+      "identical": true,
+      "candidateGenerationSeconds": 12.855,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 9.859,
+      "finalRunPeakRssBytes": 2668134400
+    },
+    {
+      "file": "pt_cross_C4C5E0E1.bin",
+      "bytes": 10729635856,
+      "sha256": "448f98a0d2c025d12aac183113157ab4e5f9e8fb3fe62284dd32aa1637a5e9e0",
+      "identical": true,
+      "candidateGenerationSeconds": 41.161,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_cross_C4C6E0.bin",
+      "bytes": 1313832976,
+      "sha256": "4a9dbd08848b78c77f37045e47799e30b357ccd1cb3f40f845a1c2035c37fa89",
+      "identical": true,
+      "candidateGenerationSeconds": 11.331,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 10.575,
+      "finalRunPeakRssBytes": 2668183552
+    },
+    {
+      "file": "pt_cross_C4C6E0E2.bin",
+      "bytes": 10729635856,
+      "sha256": "474e86001c53688a558b526e9fb2a8c93b1a9158ae016c798fd79df7305888b2",
+      "identical": true,
+      "candidateGenerationSeconds": 38.875,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_cross_C4C7E0.bin",
+      "bytes": 1313832976,
+      "sha256": "b20148ac56547e4dbd15553ddaac7aaf0333c9e7f6ebe627aa41c3181e1e4d73",
+      "identical": true,
+      "candidateGenerationSeconds": 11.662,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 10.951,
+      "finalRunPeakRssBytes": 2668183552
+    },
+    {
+      "file": "pt_cross_C4E0.bin",
+      "bytes": 54743056,
+      "sha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "identical": true,
+      "candidateGenerationSeconds": 0.229,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_cross_C4E0E1.bin",
+      "bytes": 1313832976,
+      "sha256": "fb8b70160cb45bcc9c4f4c3119bbef5811b8450989ab86b7d04ad124933f171d",
+      "identical": true,
+      "candidateGenerationSeconds": 7.76,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 7.932,
+      "finalRunPeakRssBytes": 2668199936
+    },
+    {
+      "file": "pt_cross_C4E0E2.bin",
+      "bytes": 1313832976,
+      "sha256": "604867a90b0fa73a363cfa299abcc88a7d07f2c97f954667b8f7865bd31ad96d",
+      "identical": true,
+      "candidateGenerationSeconds": 8.189,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 7.405,
+      "finalRunPeakRssBytes": 2668183552
+    },
+    {
+      "file": "pt_cross_C4E0E3.bin",
+      "bytes": 1313832976,
+      "sha256": "6da80041db676a8191c87f864f4753db50f1fc41c41a8fb9a15bd7930d700d5f",
+      "identical": true,
+      "candidateGenerationSeconds": 8.228,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 7.616,
+      "finalRunPeakRssBytes": 2668183552
+    },
+    {
+      "file": "pt_cross_ins_C4.bin",
+      "bytes": 2280976,
+      "sha256": "8ba7040e10602e4a3b3adb29059148aaec14aa659d53f66ce0e20f764172cdee",
+      "identical": true,
+      "candidateGenerationSeconds": 0.013,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_eo_xcross_slot0_high_memory.bin",
+      "bytes": 2335703056,
+      "sha256": "9595c9272ff0be25b7fe09c896f10271d3f1a164545e1b3319c8286a02be10cb",
+      "identical": true,
+      "candidateGenerationSeconds": 12.282,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_eo_xcross_slot1_high_memory.bin",
+      "bytes": 2335703056,
+      "sha256": "73b8bbcc3663cb1a78d845e992787680b655c3f62db48bd37196dfb5f7a4a0e1",
+      "identical": true,
+      "candidateGenerationSeconds": 13.047,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_eo_xcross_slot2_high_memory.bin",
+      "bytes": 2335703056,
+      "sha256": "6841fc078ac552f4fe0884905d65d273801d218c4e2817dd17d0a4bede3a20c4",
+      "identical": true,
+      "candidateGenerationSeconds": 12.825,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_eo_xcross_slot3_high_memory.bin",
+      "bytes": 2335703056,
+      "sha256": "2f337a97c49678ee7261d3e9934c095f8f822c0902dfce83c9a92ae8eff9178f",
+      "identical": true,
+      "candidateGenerationSeconds": 12.844,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_ep4eo12.bin",
+      "bytes": 12165136,
+      "sha256": "5c029fdd05f74aa1aa9c5ad6008685c57effe3f2a8bf28cc5d143a156a9a1c53",
+      "identical": true,
+      "candidateGenerationSeconds": 0.044,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pair_C4E0.bin",
+      "bytes": 304,
+      "sha256": "3b85e0b2e65f66da9ddb82373e8877d8a7bbefc8fec56f50cf5d346dcd2898df",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross.bin",
+      "bytes": 139408,
+      "sha256": "c9cfe783890d338481585be10d267252be6158e82d911d4164c63a5f255b7c5c",
+      "identical": true,
+      "candidateGenerationSeconds": 0.004,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4.bin",
+      "bytes": 2280976,
+      "sha256": "6ba9bf68c198aecc4ea7e6eabec9a77c51478d45968688df501bfd0f5f090195",
+      "identical": true,
+      "candidateGenerationSeconds": 0.02,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4C5.bin",
+      "bytes": 47900176,
+      "sha256": "5c01738e5f0dcf92e4146037f4961dadb51373bc7314a2e43b90de3399edd1c0",
+      "identical": true,
+      "candidateGenerationSeconds": 0.196,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4C5C6.bin",
+      "bytes": 862202896,
+      "sha256": "07fb87f8f977ab4585d4c649a5eb7dc7d6e95470becf5ecaaefb2c5c2eacae33",
+      "identical": true,
+      "candidateGenerationSeconds": 5.654,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4C6.bin",
+      "bytes": 47900176,
+      "sha256": "66b03bdf7c151729092cde5c07546f7da9ce9273b593128e453a632908b2e0df",
+      "identical": true,
+      "candidateGenerationSeconds": 0.202,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4E0.bin",
+      "bytes": 54743056,
+      "sha256": "4c87d2fed0c925de1b8a8f094393864d9358877ef981c0248139a641e15d1f76",
+      "identical": true,
+      "candidateGenerationSeconds": 0.272,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4E1.bin",
+      "bytes": 54743056,
+      "sha256": "4acb955adf8bf6be636627608e45c06909b1f6edbcefa6a4bf1a4e07e36e69c7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.277,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4E2.bin",
+      "bytes": 54743056,
+      "sha256": "a24c389889aedf40402e94de19a98d3d00c774ff1c11b649082e3c754317a2ac",
+      "identical": true,
+      "candidateGenerationSeconds": 0.279,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C4E3.bin",
+      "bytes": 54743056,
+      "sha256": "693d1fe42e27c14fdd0f12f9b33f357b44c822a536726de20cccb5be04de1977",
+      "identical": true,
+      "candidateGenerationSeconds": 0.285,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C5.bin",
+      "bytes": 2280976,
+      "sha256": "3c3478657d8174567ca211bf4fb59e0f1c77788b9bf14b37cd491b254f0217a9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.02,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C6.bin",
+      "bytes": 2280976,
+      "sha256": "a3ae1ebe3fd63a31d79b6a6082639ba34b64a5cc5b18554f60efb203b42cb169",
+      "identical": true,
+      "candidateGenerationSeconds": 0.023,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_C7.bin",
+      "bytes": 2280976,
+      "sha256": "c77fb175bca71b19e4e485a816bacdf759146284417325dcb7d38b21f30886f7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.02,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_E0E1.bin",
+      "bytes": 50181136,
+      "sha256": "d2a4fdb5d78aac1214c145ccf96f828d70b4b32b214c4378daa8a732903ff7c6",
+      "identical": true,
+      "candidateGenerationSeconds": 0.186,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_E0E1E2.bin",
+      "bytes": 1003622416,
+      "sha256": "d840e9b4aba542ce0f948c718f25e5300405f30ae87b50c5147308ba0b75e27c",
+      "identical": true,
+      "candidateGenerationSeconds": 4.76,
+      "finalBranchValidation": "regenerated with final restored-CAS branch; complete cmp against canonical passed",
+      "finalGenerationSeconds": 3.807,
+      "finalRunPeakRssBytes": 2049245184
+    },
+    {
+      "file": "pt_pscross_E0E2.bin",
+      "bytes": 50181136,
+      "sha256": "863c47c2a5dc5c5c890ad525806fb5e41a52d5df545a21a69f96ecafcad7e17c",
+      "identical": true,
+      "candidateGenerationSeconds": 0.188,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C4_diff0.bin",
+      "bytes": 2280976,
+      "sha256": "d6edb7407d0358c16bceaefc65ffb3f2ba2416879c7f35d3a9fc6d2fc24d274c",
+      "identical": true,
+      "candidateGenerationSeconds": 0.018,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C4_diff1.bin",
+      "bytes": 2280976,
+      "sha256": "d6edb7407d0358c16bceaefc65ffb3f2ba2416879c7f35d3a9fc6d2fc24d274c",
+      "identical": true,
+      "candidateGenerationSeconds": 0.018,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C4_diff2.bin",
+      "bytes": 2280976,
+      "sha256": "d6edb7407d0358c16bceaefc65ffb3f2ba2416879c7f35d3a9fc6d2fc24d274c",
+      "identical": true,
+      "candidateGenerationSeconds": 0.018,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C4_diff3.bin",
+      "bytes": 2280976,
+      "sha256": "d6edb7407d0358c16bceaefc65ffb3f2ba2416879c7f35d3a9fc6d2fc24d274c",
+      "identical": true,
+      "candidateGenerationSeconds": 0.018,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C5_diff0.bin",
+      "bytes": 2280976,
+      "sha256": "aafac148ca75452bfe37650903a8f3f102205da89fe88485d94a9c2f0e7db1b7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.019,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C5_diff1.bin",
+      "bytes": 2280976,
+      "sha256": "aafac148ca75452bfe37650903a8f3f102205da89fe88485d94a9c2f0e7db1b7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.019,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C5_diff2.bin",
+      "bytes": 2280976,
+      "sha256": "aafac148ca75452bfe37650903a8f3f102205da89fe88485d94a9c2f0e7db1b7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.019,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C5_diff3.bin",
+      "bytes": 2280976,
+      "sha256": "aafac148ca75452bfe37650903a8f3f102205da89fe88485d94a9c2f0e7db1b7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.02,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C6_diff0.bin",
+      "bytes": 2280976,
+      "sha256": "a1c55351b461f992a5bd3f60e8427f150c363259c5b9a407efb1ea8c002263f3",
+      "identical": true,
+      "candidateGenerationSeconds": 0.019,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C6_diff1.bin",
+      "bytes": 2280976,
+      "sha256": "a1c55351b461f992a5bd3f60e8427f150c363259c5b9a407efb1ea8c002263f3",
+      "identical": true,
+      "candidateGenerationSeconds": 0.019,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C6_diff2.bin",
+      "bytes": 2280976,
+      "sha256": "a1c55351b461f992a5bd3f60e8427f150c363259c5b9a407efb1ea8c002263f3",
+      "identical": true,
+      "candidateGenerationSeconds": 0.021,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C6_diff3.bin",
+      "bytes": 2280976,
+      "sha256": "a1c55351b461f992a5bd3f60e8427f150c363259c5b9a407efb1ea8c002263f3",
+      "identical": true,
+      "candidateGenerationSeconds": 0.021,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C7_diff0.bin",
+      "bytes": 2280976,
+      "sha256": "0a20392e25eeff57f24e81ce2ecda656ea98f15c22c824eea97f606a49e046b9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.02,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C7_diff1.bin",
+      "bytes": 2280976,
+      "sha256": "0a20392e25eeff57f24e81ce2ecda656ea98f15c22c824eea97f606a49e046b9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.019,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C7_diff2.bin",
+      "bytes": 2280976,
+      "sha256": "0a20392e25eeff57f24e81ce2ecda656ea98f15c22c824eea97f606a49e046b9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.024,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pscross_ins_C7_diff3.bin",
+      "bytes": 2280976,
+      "sha256": "0a20392e25eeff57f24e81ce2ecda656ea98f15c22c824eea97f606a49e046b9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.023,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C4_E0.bin",
+      "bytes": 304,
+      "sha256": "b8f9dc4d26373e8fa306cb28f9fbbc7d981f2e0bd26e99c61de80ae30d16884f",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C4_E1.bin",
+      "bytes": 304,
+      "sha256": "df9c7988eda2638be186c53d204f39cba55b9a3eff5c22dbca2c5634d24b2703",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C4_E2.bin",
+      "bytes": 304,
+      "sha256": "981eaabc2de643c6f8bd45e00e531c5b59cf6976fca29a6cbcf850eda274ffe7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C4_E3.bin",
+      "bytes": 304,
+      "sha256": "704545647954077498ba46e9872a1b953372ef45e40afcd1f36b5e1784b5fff9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C5_E0.bin",
+      "bytes": 304,
+      "sha256": "b8f9dc4d26373e8fa306cb28f9fbbc7d981f2e0bd26e99c61de80ae30d16884f",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C5_E1.bin",
+      "bytes": 304,
+      "sha256": "df9c7988eda2638be186c53d204f39cba55b9a3eff5c22dbca2c5634d24b2703",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C5_E2.bin",
+      "bytes": 304,
+      "sha256": "981eaabc2de643c6f8bd45e00e531c5b59cf6976fca29a6cbcf850eda274ffe7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C5_E3.bin",
+      "bytes": 304,
+      "sha256": "704545647954077498ba46e9872a1b953372ef45e40afcd1f36b5e1784b5fff9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C6_E0.bin",
+      "bytes": 304,
+      "sha256": "b8f9dc4d26373e8fa306cb28f9fbbc7d981f2e0bd26e99c61de80ae30d16884f",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C6_E1.bin",
+      "bytes": 304,
+      "sha256": "df9c7988eda2638be186c53d204f39cba55b9a3eff5c22dbca2c5634d24b2703",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C6_E2.bin",
+      "bytes": 304,
+      "sha256": "981eaabc2de643c6f8bd45e00e531c5b59cf6976fca29a6cbcf850eda274ffe7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C6_E3.bin",
+      "bytes": 304,
+      "sha256": "704545647954077498ba46e9872a1b953372ef45e40afcd1f36b5e1784b5fff9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C7_E0.bin",
+      "bytes": 304,
+      "sha256": "b8f9dc4d26373e8fa306cb28f9fbbc7d981f2e0bd26e99c61de80ae30d16884f",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C7_E1.bin",
+      "bytes": 304,
+      "sha256": "df9c7988eda2638be186c53d204f39cba55b9a3eff5c22dbca2c5634d24b2703",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C7_E2.bin",
+      "bytes": 304,
+      "sha256": "981eaabc2de643c6f8bd45e00e531c5b59cf6976fca29a6cbcf850eda274ffe7",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    },
+    {
+      "file": "pt_pspair_C7_E3.bin",
+      "bytes": 304,
+      "sha256": "704545647954077498ba46e9872a1b953372ef45e40afcd1f36b5e1784b5fff9",
+      "identical": true,
+      "candidateGenerationSeconds": 0.001,
+      "finalBranchValidation": "complete candidate run: branch unchanged in final code"
+    }
+  ],
+  "representativeMethodNotes": [
+    "Large baseline controls run through the same filtered table_generator in fresh isolated directories. The immutable mt_edge6 dependency is hard-linked for XXCross so its generation is excluded.",
+    "Optimized independent-coordinate and mt_edge6 timings come from the complete candidate run; their final generation branches did not change. Restored-CAS collision timings come from final isolated runs.",
+    "Small dependent move tables can be built in isolated controls. Large-table controls are single runs, so small percentage differences are treated as comparable performance, not claimed speedups."
+  ],
+  "finalValidation": {
+    "complete": true,
+    "tables": 78,
+    "bytes": 45488310956,
+    "unchangedBranchesFromCompleteRun": 70,
+    "regeneratedAfterRestoringDirectCas": 8,
+    "method": "Every generated byte compared with canonical files via cmp. The final policy changes only the eight regenerated collision-coordinate tables; the other seventy branches retain the complete-run comparison.",
+    "finalCompleteRunSeconds": null,
+    "note": "No final all-table wall time claimed: validation combines the complete candidate run with eight final-branch regenerations."
+  }
+}
