@@ -97,7 +97,8 @@
 .bp-editorial .bp-toc { width: 100%; justify-content: center; gap: 36px; padding: 18px 24px; border: 0; }
 .bp-editorial .bp-toc a { font-size: 12px; }
 /* Surface grouping replaces decorative borders and repeated divider lines. */
-.bp-editorial :is(.bp-executive-bento > div, .bp-practice-stage, .bp-rival, .bp-moat-grid article, .overview-product, .bp-atlas > article, .bp-founder-art, .bp-subscriptions > article, .bp-visual article, .overview-cost-grid > div, .overview-review, .bp-streams > article, .bp-network, .bp-event-inputs article, .bp-event-calculation) {
+/* Keep grouped defaults below each card variant, regardless of selector-list members. */
+.bp-page.bp-editorial :where(.bp-executive-bento > div, .bp-practice-stage, .bp-rival, .bp-moat-grid article, .overview-product, .bp-atlas > article, .bp-founder-art, .bp-subscriptions > article, .bp-visual article, .overview-cost-grid > div, .overview-review, .bp-streams > article, .bp-network, .bp-event-inputs article, .bp-event-calculation) {
   border: 0;
   border-radius: 28px;
   background: var(--bp-surface);
@@ -107,8 +108,10 @@
 .bp-editorial :is(.bp-conclusion, .bp-backlog) { border: 0; padding-left: 0; }
 .bp-editorial .bp-icon { background: none; color: var(--accent); width: 38px; height: 38px; border-radius: 0; justify-content: flex-start; }
 .bp-editorial .bp-executive-bento { gap: 20px; }
-.bp-editorial .bp-executive-core { background: var(--primary); color: var(--primary-foreground); padding: 36px; }
-.bp-editorial .bp-executive-core :is(.bp-icon, .bp-mini-loop, p) { color: var(--primary-foreground); }
+.bp-editorial .bp-executive-core { background: var(--accent-soft); color: var(--foreground); padding: 36px; }
+.bp-editorial .bp-executive-core .bp-icon { color: var(--accent); }
+.bp-editorial .bp-executive-core .bp-mini-loop { color: var(--foreground); }
+.bp-editorial .bp-executive-core p { color: color-mix(in srgb, var(--foreground) 80%, var(--background)); }
 .bp-editorial .bp-executive-core h3 { font-size: 30px; }
 .bp-editorial .bp-milestone-number { font-size: 46px; }
 .bp-editorial .bp-practice-stage { padding: 44px; gap: 48px; }
