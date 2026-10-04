@@ -1,4 +1,5 @@
 import { handleAppleMembership } from './apple-membership';
+import { handleGoogleMembership } from './google-membership';
 import { App as NativeApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Clipboard } from '@capacitor/clipboard';
@@ -18,6 +19,7 @@ import {
 
 export const capacitorHost: InstalledAppHost = {
   appleMembership: Capacitor.getPlatform() === 'ios' ? handleAppleMembership : undefined,
+  googleMembership: Capacitor.getPlatform() === 'android' ? handleGoogleMembership : undefined,
   addBackButtonListener: (listener) => NativeApp.addListener('backButton', listener),
   addNetworkListener: (listener) => Network.addListener(
     'networkStatusChange',

@@ -90,6 +90,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'com.android.billingclient:billing:9.1.0'
     implementation 'com.getui:gtsdk:3.3.15.0'
     implementation 'com.getui:gtc:3.3.3.0'
     implementation fileTree(include: ['*.jar'], dir: 'libs')

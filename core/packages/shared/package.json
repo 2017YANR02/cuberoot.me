@@ -77,6 +77,7 @@
       "./auth/web-session": "runtime-neutral",
       "./installed-content": "runtime-neutral",
       "./apple-membership": "runtime-neutral",
+      "./google-membership": "runtime-neutral",
       "./mobile-embed": "runtime-neutral",
       "./result-penalty": "runtime-neutral",
       "./recon-ground-truth": "runtime-neutral",
@@ -375,6 +376,7 @@
     },
     "./installed-content": "./src/installed-content.ts",
     "./apple-membership": "./src/apple_membership.ts",
+    "./google-membership": "./src/google_membership.ts",
     "./mobile-embed": "./src/mobile_embed.ts",
     "./result-penalty": {
       "node": "./dist/result_penalty.js",

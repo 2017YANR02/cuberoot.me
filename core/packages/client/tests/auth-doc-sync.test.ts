@@ -96,6 +96,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/mobile', 'src/native/record-push.ts'], ['@cuberoot/mobile', 'src/native/record-push-controller.ts'],
     ['@cuberoot/mobile', 'android/app/src/main/java/me/cuberoot/app/RecordPushPlugin.java'],
     ['@cuberoot/mobile', 'ios/App/App/AppleMembershipPlugin.swift'],
+    ['@cuberoot/mobile', 'android/app/src/main/java/me/cuberoot/app/GoogleMembershipPlugin.java'],
     ['@cuberoot/mobile', 'src/apple-membership.ts'],
     ['@cuberoot/server', 'src/payment/apple-membership.ts'],
     ['@cuberoot/mobile', 'ios/App/App/RecordPushPlugin.swift'],

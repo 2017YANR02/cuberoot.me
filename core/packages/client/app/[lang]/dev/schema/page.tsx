@@ -42,6 +42,8 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'google_membership_accounts', domain: 'commerce', origin: '0256', purpose: { zh: 'Google 随机账号标识；合并保留，注销置空', en: 'Google obfuscated account identifiers, preserved on merge and tombstoned on deletion' } },
+  { name: 'google_membership_subscriptions', domain: 'commerce', origin: '0256', purpose: { zh: 'Google 服务端核验的订阅状态、替换关系及权益', en: 'Server-verified Google subscription state, replacement chains and grants' } },
   { name: 'apple_membership_accounts', domain: 'commerce', origin: '0254', purpose: { zh: 'Apple 随机账号 token 与 CubeRoot 用户绑定；合并保留 token，注销解除关联', en: 'Apple account tokens linked to CubeRoot users; merging preserves tokens and deletion clears ownership' } },
   { name: 'apple_membership_subscriptions', domain: 'commerce', origin: '0254', purpose: { zh: '按环境与原始交易保存签名证据和当前订阅权益', en: 'Signed evidence and current subscription grants keyed by environment and original transaction' } },
   { name: 'apple_membership_notifications', domain: 'commerce', origin: '0254', purpose: { zh: '已验签并完成处理的 Apple 通知去重记录', en: 'Deduplication records for verified and processed Apple notifications' } },
@@ -804,6 +806,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 253, slug: 'site_assistant_quota_1000', desc: { zh: '全站问答每日额度提高至 1000 次，保留当天已用次数与原子扣减。', en: 'Raise the site-wide assistant quota to 1000 per day, preserving existing usage and atomic reservations.' } },
   { n: 254, slug: 'apple_membership', desc: { zh: 'Apple 自动续费独立账本、账号绑定和有效会员视图；不覆盖网站支付权益。', en: 'Separate Apple subscription ledger, account binding and effective membership view; website grants remain intact.' } },
   { n: 255, slug: 'ios_record_push', desc: { zh: '推送设备增加 APNs 通道与开发／生产环境隔离，兼容 Android。', en: 'Add APNs device targets and sandbox/production isolation while retaining Android compatibility.' } },
+  { n: 256, slug: 'google_membership', desc: { zh: 'Google Play 订阅独立账本、账号归属与统一有效会员视图。', en: 'Google Play subscription ledger, account ownership and unified effective membership view.' } },
 ];
 
 const DOMAIN_KEYS = ['all', ...DOMAINS.map((d) => d.key)] as const;

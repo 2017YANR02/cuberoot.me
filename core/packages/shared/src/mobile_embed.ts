@@ -17,6 +17,7 @@ export interface MobileEmbedInitMessage {
   authProviders?: readonly MobileAuthProvider[];
   accountManagement?: boolean;
   appleMembership?: boolean;
+  googleMembership?: boolean;
 }
 
 export interface MobileEmbedAccountManageMessage {
@@ -103,7 +104,7 @@ export function mobileEmbedBackMessage(surface: MobileEmbedSurface): MobileEmbed
 
 export function mobileEmbedInitMessage(
   surface: MobileEmbedSurface,
-  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership'>,
+  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership'>,
 ): MobileEmbedInitMessage {
   return { surface, type: 'cuberoot:mobile:init', ...capabilities };
 }
@@ -193,6 +194,7 @@ export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | 
       || !candidate.authProviders.every(isMobileAuthProvider)
       || new Set(candidate.authProviders).size !== candidate.authProviders.length))
     || (candidate.appleMembership !== undefined && typeof candidate.appleMembership !== 'boolean')
+    || (candidate.googleMembership !== undefined && typeof candidate.googleMembership !== 'boolean')
     || (candidate.accountManagement !== undefined && typeof candidate.accountManagement !== 'boolean')) {
     return null;
   }
