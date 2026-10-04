@@ -524,10 +524,10 @@ jobs:
         run: |
           pnpm --filter @cuberoot/scramble-stats-build test:clock
 
-      - name: Verify stage statistics aggregation
+      - name: Verify stage statistics aggregation and intake
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
         working-directory: core
-        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts
+        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts
 
       - name: Verify SQ2 sampled builder runtime
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
