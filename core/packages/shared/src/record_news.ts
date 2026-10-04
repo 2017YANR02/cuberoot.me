@@ -21,7 +21,7 @@
 
 // === 项目名映射 ===
 
-import { EVENT_DISPLAY_ZH } from './wca_events.js';
+import { EVENT_DISPLAY_ZH } from '@cuberoot/shared/wca-events';
 
 export const EVENT_EN_MAP: Record<string, string> = {
   '3x3x3 Cube': '3x3',
