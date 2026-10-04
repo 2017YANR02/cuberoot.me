@@ -12,7 +12,9 @@ import { EXPENSES, EQUIPMENT_GROUPS } from '@/lib/infrastructure-costs';
 import InvestorStory from './InvestorStory';
 import { BUSINESS_SECTIONS, BP_NAV, type BpSection } from './bp-content';
 import { CHAPTER_VISUALS } from './bp-visuals';
+import { FounderEvidence, ProductAtlas, ReadingGuide, ServiceMap } from './BpIllustrations';
 import './bp.css';
+import './bp-editorial.css';
 
 const PRODUCTS = [
   { Icon: Timer, href: '/timer', title: { zh: '计时器与训练记录', en: 'Timer & practice records' }, body: { zh: '打乱、计时、训练记录和统计服务日常练习。选手反复还原、比较表现并积累记录，是平台高频使用的主要入口。', en: 'Scrambles, timing, records and statistics support routine practice. Repeated solves, comparisons and accumulated history make this a frequent entry point.' } },
@@ -73,7 +75,7 @@ function printBusinessPlan() {
 
 export default function PartnershipPage() {
   return (
-    <main className="overview-page bp-page">
+    <main className="overview-page bp-page bp-editorial">
       <header className="overview-nav overview-wrap">
         <div className="overview-brand">
           <CubeRootLogo height={30} variant="mark" />
@@ -88,6 +90,7 @@ export default function PartnershipPage() {
       </header>
 
       <section className="overview-hero overview-wrap" aria-labelledby="bp-title">
+        <span className="bp-hero-wordmark" aria-hidden>CUBEROOT</span>
         <div className="overview-hero-copy">
           <p className="overview-kicker"><span className="bp-live-dot" />{tr({ zh: '个人与企业订阅 · 2026 年 10 月', en: 'Individual & enterprise subscriptions · October 2026' })}</p>
           <h1 id="bp-title">{tr({ zh: '每天练习。\n持续进步。', en: 'Everyday practice.\nLasting progress.' })}</h1>
@@ -104,9 +107,12 @@ export default function PartnershipPage() {
           <p className="overview-reading">{tr({ zh: '先读摘要，再按目录查看完整商业逻辑与合作安排', en: 'Start with the summary, then explore the business model and partnership plan' })}</p>
         </div>
         <figure className="overview-cover">
+          <span className="bp-cover-coordinate" aria-hidden>01 / PRACTICE → PROGRESS</span>
           <img src="/images/overview/cubing-cover-v1.webp" width={1536} height={1024} alt={tr({ zh: '魔方与学习、数据元素组成的概念插画', en: 'A cube with abstract learning and data elements' })} fetchPriority="high" />
           <div className="bp-cover-label"><span>{tr({ zh: '练习 · 记录 · 复盘', en: 'PRACTICE · RECORD · REFLECT' })}</span><ArrowUpRight size={22} aria-hidden /></div>
-          <figcaption>{tr({ zh: 'AI 生成概念插画', en: 'AI-generated concept illustration' })}</figcaption>
+          <div className="bp-hero-product"><span><Timer size={15} />{tr({ zh: '真实计时器界面', en: 'ACTUAL TIMER INTERFACE' })}</span><img src="/images/overview/timer-preview-v2.webp" width={1440} height={900} alt={tr({ zh: '魔方根计时器产品预览', en: 'CubeRoot timer preview' })} /></div>
+          <div className="bp-hero-seal"><RotateCcw size={20} /><span>{tr({ zh: '练习 · 记录 · 复盘', en: 'PRACTISE · RECORD · REFLECT' })}</span></div>
+          <figcaption>{tr({ zh: '概念插画为 AI 生成；叠加画面为真实产品界面', en: 'AI-generated concept artwork with an actual product screenshot' })}</figcaption>
         </figure>
       </section>
 
@@ -117,6 +123,8 @@ export default function PartnershipPage() {
           { number: { zh: '02', en: '02' }, label: { zh: '个人 + 企业订阅方向', en: 'Individual + enterprise' }, text: { zh: '已有真实付费会员', en: 'Real paid members already' } },
         ].map(item => <div key={item.label.en}><span className="bp-stat-number">{tr(item.number)}</span><strong>{tr(item.label)}</strong><span>{tr(item.text)}</span></div>)}
       </div>
+
+      <ReadingGuide />
 
       <nav className="bp-toc overview-wrap" aria-label={tr({ zh: '商业计划书目录', en: 'Business plan contents' })}>
         {BP_NAV.map(([id, label]) => <a href={'#' + id} key={id}>{tr(label)}</a>)}
@@ -160,6 +168,7 @@ export default function PartnershipPage() {
           <img src="/images/overview/timer-preview-v2.webp" width={1440} height={900} loading="lazy" alt={tr({ zh: '魔方根计时器的真实界面，包含打乱、计时和阶段求解入口', en: 'The actual CubeRoot timer with scramble, timing and stage-solving controls' })} />
           <figcaption><div><Timer size={18} aria-hidden /><strong>{tr({ zh: '计时器 · 高频训练入口', en: 'Timer · the everyday practice entry' })}</strong></div><AppLink href="/timer" prefetch={false}>{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></AppLink></figcaption>
         </figure>
+        <ProductAtlas />
         <div className="overview-product-grid">
           {PRODUCTS.map(({ Icon, href, title, body }) => <AppLink href={href} key={href} prefetch={false} className="overview-product" data-site-surface="panel"><Icon size={27} aria-hidden /><h3>{tr(title)}</h3><p>{tr(body)}</p><span className="overview-text-link">{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></span></AppLink>)}
         </div>
@@ -171,7 +180,7 @@ export default function PartnershipPage() {
 
       <section id="bp-founder" className="overview-section overview-wrap overview-founder" aria-labelledby="bp-founder-title">
         <div><p className="overview-kicker">{tr({ zh: '05 / 创始人、团队与主体', en: '05 / Founder, team & entity' })}</p><h2 id="bp-founder-title">{tr({ zh: '懂专业，也能把产品做出来。', en: 'Domain expertise with product execution.' })}</h2><AppLink href="/about/ruimin" prefetch={false} className="overview-text-link">{tr({ zh: '颜瑞民 · 公开履历与获奖档案', en: 'Ruimin Yan · profile and awards' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-founder-note"><School size={24} aria-hidden /><p>{tr({ zh: '数学与物理 × 参赛与教学 × 内容与开发', en: 'Mathematics & physics × competing & teaching × content & development' })}</p></div></div>
-        <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name">{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span><span>WCA 2017YANR02</span></div></div><details className="bp-detail"><summary>{tr({ zh: '经历、团队与主体说明', en: 'Profile, team and entity details' })}<ChevronDown size={18} aria-hidden /></summary><div className="overview-story bp-detail-body">
+        <div className="bp-founder-profile"><div className="bp-founder-art" data-site-surface="panel"><span className="bp-founder-monogram" aria-hidden>∑</span><span className="bp-founder-name">{tr({ zh: '颜瑞民', en: 'Ruimin Yan' })}</span><p>{tr({ zh: '创始人 · 数学硕士 · 魔方内容创作者', en: 'Founder · mathematics graduate · cubing creator' })}</p><div className="bp-founder-credentials"><span>{tr({ zh: '南开大学', en: 'Nankai University' })}</span><span>{tr({ zh: '乔治华盛顿大学', en: 'George Washington University' })}</span><span>WCA 2017YANR02</span></div></div><FounderEvidence /><details className="bp-detail"><summary>{tr({ zh: '经历、团队与主体说明', en: 'Profile, team and entity details' })}<ChevronDown size={18} aria-hidden /></summary><div className="overview-story bp-detail-body">
           <p>{tr({ zh: '颜瑞民拥有南开大学数学与金融数学、物理学学士学位，以及乔治华盛顿大学数学硕士学位。曾两次获全国高中数学联赛一等奖，并获中国数学奥林匹克铜牌。专业训练为求解算法、数据分析和复杂产品开发提供基础。', en: 'Ruimin Yan holds bachelor’s degrees in Mathematics and Financial Mathematics, and Physics from Nankai University, and a master’s in Mathematics from George Washington University. He won first prize twice in the National High School Mathematics League and a bronze medal at the Chinese Mathematical Olympiad.' })}</p>
           <p>{tr({ zh: '自 2017 年起参加 WCA 比赛，持续开展速拧课程、公式库和自媒体内容工作，著有《超脑思维：魔方游戏技巧从入门到精通》。内容创作、教学与亲身训练使他能够把专业能力转换为用户理解和使用的产品。', en: 'Competing in WCA events since 2017, he works on speedcubing courses, algorithms and media, and wrote Superbrain Thinking: Rubik’s Cube Skills from Beginner to Mastery. Teaching, content and practice help translate expertise into usable products.' })}</p>
           <p>{tr({ zh: '目前项目已由个人独立推进转为约 3 人固定团队，包括创始人与合作伙伴侧投入的两位成员；项目全职推进。合作伙伴拥有更大的团队背景，但本计划仅按实际参与项目的人力说明，后续扩充按交付需要安排。', en: 'The project has moved from solo work to approximately three core team members: the founder and two contributors from a partner team. Work is full time. The partner’s wider team is not counted as project headcount; future expansion follows delivery needs.' })}</p>
@@ -183,7 +192,7 @@ export default function PartnershipPage() {
         <p className="overview-kicker">{tr({ zh: '06 / 商业模式与会员价值', en: '06 / Business model & membership value' })}</p>
         <h2 id="bp-business-title">{tr({ zh: '个人订阅提供专业帮助，\n企业订阅连接教学与服务。', en: 'Specialist help for individuals.\nTeaching services for organisations.' })}</h2>
         <p className="overview-intro">{tr({ zh: '会员页面与公开套餐已列出个人、企业的月度与年度服务。用户付费的理由，是持续获得专业求解、复盘、反馈或机构服务，而日常工具提供高频入口。基础计时和训练保持开放，收费范围以实际发布的会员权益为准。', en: 'The membership page and public plans describe monthly and annual personal and enterprise services. Payment buys ongoing specialist solving, reconstruction, feedback or educator services; daily tools provide frequent access. Basic timing and training remain open, with paid scope defined by published entitlements.' })}</p>
-        <div className="bp-business-spine"><span>{tr({ zh: '日常工具', en: 'Daily tools' })}</span><ArrowRight size={20} aria-hidden /><strong>{tr({ zh: '长期会员服务', en: 'Lasting member services' })}</strong><ArrowRight size={20} aria-hidden /><span>{tr({ zh: '订阅与续费', en: 'Subscriptions & renewal' })}</span></div>
+        <ServiceMap />
         <div className="bp-subscriptions">
           {[{ title: { zh: '个人会员', en: 'Individual membership' }, perks: PERSONAL_PERKS, explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { title: { zh: '企业会员', en: 'Enterprise membership' }, perks: ENTERPRISE_PERKS, explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
             <article data-site-surface="panel" key={plan.title.en}>
