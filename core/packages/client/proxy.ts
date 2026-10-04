@@ -116,7 +116,7 @@ function platformSeoRoute(rest: string): { rest: string; ownsCanonical: boolean;
   const match = matchPlatformRoute(segments);
   if (!match) return { rest, ownsCanonical: true, noindex: true };
   const noindex = match.definition.access !== 'public'
-    || ['search', 'offline', 'login', 'notifications'].includes(match.definition.id);
+    || ['search', 'offline', 'login', 'notifications', 'online-competition-preview', 'course-lesson', 'course-section-introduction', 'course-section-trial', 'course-section-core', 'certificate', 'qr'].includes(match.definition.id);
   const canonicalRest = match.definition.canonicalHref
     ? fillPlatformParams(match.definition.canonicalHref, match.params)
     : rest;

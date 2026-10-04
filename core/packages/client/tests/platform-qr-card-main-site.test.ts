@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   normalizeQrCard,
   QR_CARD_DEFAULT_BRAND,
@@ -12,7 +12,7 @@ import {
 } from '@/lib/platform-qr-card';
 import {
   composeQrArtPrompt,
-  FALLBACK_QR_PROMPT_LIBRARY,
+  getQrPromptLibrary,
   QR_PROMPT_DIMENSIONS,
 } from '@/lib/platform-qr-prompt';
 import {
@@ -126,7 +126,7 @@ describe('Platform QR card main-site contract', () => {
     expect(editor).toContain("t('添加链接', 'Add link')");
     expect(editor).toContain("t('删除链接', 'Delete link')");
     expect(editor).toContain('getPlatformQrCard(entity.id)');
-    expect(editor).toContain('savePlatformQrCard(entity.id, { ...current.card, intro: values.intro, term: values.term })');
+    expect(editor).toContain('card: { ...card, intro:');
     expect(editor).toContain('label: values.label.trim()');
     expect(editor).toContain('type: values.type');
     expect(editor).toContain('targetValue: values.targetValue.trim()');
@@ -240,16 +240,23 @@ describe('Platform QR card main-site contract', () => {
     expect(card.textStyles.brand).toMatchObject({ stroke: '#654321', strokeW: 0.2 });
   });
 
-  it('assembles the complete artwork prompt from the real dimension library', () => {
+  it('preserves an intentionally empty prompt library instead of restoring deleted templates', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ items: [] }), { status: 200 })));
+    try { expect(await getQrPromptLibrary()).toEqual({ blocks: [], presets: [] }); }
+    finally { vi.unstubAllGlobals(); }
+  });
+
+  it('assembles all selected dimensions from an editable library', () => {
+    const blocks = QR_PROMPT_DIMENSIONS.map(({ key }, index) => ({ id: String(index), dimension: key, body: `description-${index}`, nameZh: key, nameEn: key }));
     const selected = Object.fromEntries(QR_PROMPT_DIMENSIONS.map(({ key }) => [
       key,
-      FALLBACK_QR_PROMPT_LIBRARY.blocks.find((block) => block.dimension === key)?.id,
+      blocks.find((block) => block.dimension === key)?.id,
     ]));
-    const prompt = composeQrArtPrompt(selected, FALLBACK_QR_PROMPT_LIBRARY.blocks);
+    const prompt = composeQrArtPrompt(selected, blocks);
     expect(prompt).toContain('标准 WCA 配色三阶魔方');
     expect(prompt).toContain('竖版构图 1:2');
     for (const { key } of QR_PROMPT_DIMENSIONS) {
-      const block = FALLBACK_QR_PROMPT_LIBRARY.blocks.find((item) => item.id === selected[key]);
+      const block = blocks.find((item) => item.id === selected[key]);
       expect(prompt).toContain(block!.body);
     }
     expect(prompt.length).toBeLessThanOrEqual(4000);

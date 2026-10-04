@@ -43,6 +43,8 @@ vi.mock('@/lib/site-search', () => ({
     aboutMatches: [],
     stackMatches: [],
     algSetMatches: [],
+    platformMatches: [],
+    platformSearchError: false,
     totalCount: query.trim() ? options.cards.length : 0,
     yearMatch: null,
   }),

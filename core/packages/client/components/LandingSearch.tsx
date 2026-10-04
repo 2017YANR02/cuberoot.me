@@ -329,6 +329,7 @@ export default function LandingSearch({
     cardMatches, toolMatches, lookupMatches, statMatches,
     personMatches, compMatches,
     reconMatches, glossaryMatches, aboutMatches, stackMatches, algSetMatches,
+    platformMatches, platformSearchError,
     totalCount, yearMatch,
   } = useSiteSearch(query, 'lazy', { cards });
 
@@ -387,6 +388,7 @@ export default function LandingSearch({
   const goFirstResult = () => {
     if (yearMatch) { pushInternal(langHref('/wca/comp', `year=${yearMatch}`)); return; }
     if (pasteIntent) { goPasteIntent(pasteIntent); return; }
+    if (platformMatches.length > 0) { pushInternal(langHref(platformMatches[0].href)); return; }
     if (cardMatches.length > 0) { goCard(cardMatches[0]); return; }
     if (toolMatches.length > 0) { pushInternal(langHref(toolMatches[0].path)); return; }
     if (lookupMatches.length > 0) { pushInternal(langHref(lookupMatches[0].path, lookupMatches[0].extraQuery)); return; }
@@ -632,6 +634,14 @@ export default function LandingSearch({
               抑制这些泛文本匹配类,否则 tagline/术语里碰巧含 "2026" 的会混进来 */}
           {!yearMatch && (
           <>
+          {(platformMatches.length > 0 || platformSearchError) && <section className="landing-search-section">
+            <div className="landing-search-section-header"><Library size={14} strokeWidth={1.75} /><h3>{tr({ zh: '课程、活动与商城', en: 'Courses, events and shop' })}</h3></div>
+            {platformSearchError && <p role="status">{tr({ zh: '课程与商城搜索暂时不可用，其他结果仍可浏览。', en: 'Course and shop search is temporarily unavailable. Other results are still available.' })}</p>}
+            <div className="landing-search-grid">{platformMatches.slice(0, 12).map(item => <Link key={item.type + ':' + item.id} href={item.href} prefetch={false} className="landing-search-item" onClick={closeAfter}>
+              <span className="landing-search-item-name">{tr({ zh: item.titleZh || item.titleEn, en: item.titleEn || item.titleZh })}</span>
+            </Link>)}</div>
+            {platformMatches.length > 12 && <Link href={'/platform/search?q=' + encodeURIComponent(query.trim())} prefetch={false} onClick={closeAfter}>{tr({ zh: '查看全部内容结果', en: 'View all content results' })}</Link>}
+          </section>}
           {algSetMatches.length > 0 && (
             <section className="landing-search-section">
               <div className="landing-search-section-header">

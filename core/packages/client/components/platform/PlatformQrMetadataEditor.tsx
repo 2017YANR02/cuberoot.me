@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowDown, ArrowUp, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { useEffect, useRef, useState, type MutableRefObject, type FormEvent } from 'react';
+import { ArrowDown, ArrowUp, GripVertical, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { useT } from '@/hooks/useT';
-import { getPlatformQrCard, savePlatformQrCard } from '@/lib/platform-qr-card';
+import { getPlatformQrCard, type PlatformQrCard } from '@/lib/platform-qr-card';
 import {
   PLATFORM_QR_LINK_LIMIT,
   normalizePlatformQrLinks,
@@ -60,13 +60,17 @@ function move<T>(items: readonly T[], index: number, delta: -1 | 1): T[] {
   return next;
 }
 
-export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }: {
+export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction, cardDraft, saveRef }: {
   entity: PlatformEntity;
+  cardDraft?: PlatformQrCard;
+  saveRef?: MutableRefObject<(() => Promise<boolean>) | null>;
   resourceId: string;
   busy: string | null;
   runAction: (id: string, payload: Record<string, unknown>) => Promise<PlatformActionResult | undefined>;
 }) {
   const t = useT();
+  const dragIndex = useRef<number | null>(null);
+  const linksRef = useRef<HTMLOListElement>(null);
   const [values, setValues] = useState(() => valuesFromEntity(entity));
   const [savingCard, setSavingCard] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -82,8 +86,7 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
     }));
   };
 
-  const submit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const saveChanges = async (): Promise<boolean> => {
     const linkProblem = platformQrLinksProblem(values.links);
     if (linkProblem) {
       setMessage(linkProblem === 'limit'
@@ -93,7 +96,7 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
           : linkProblem === 'href'
             ? t('链接必须是站内绝对路径，或不含账号密码的 http(s) 网址。', 'Links must be site-absolute paths or credential-free HTTP(S) URLs.')
             : t('链接说明不能超过 240 个字符。', 'Link notes cannot exceed 240 characters.'));
-      return;
+      return false;
     }
     const targetProblem = platformQrTargetProblem(values.targetKind, values.targetValue);
     if (targetProblem) {
@@ -102,17 +105,16 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
         : targetProblem === 'internal'
           ? t('站内目标必须是以一个斜线开头的路径。', 'An internal destination must be a path beginning with one slash.')
           : t('外部目标必须是不含账号密码的 http(s) 网址。', 'An external destination must be a credential-free HTTP(S) URL.'));
-      return;
+      return false;
     }
     setMessage(null);
     setSavingCard(true);
     try {
       const initial = valuesFromEntity(entity);
-      if (values.intro !== initial.intro || values.term !== initial.term) {
-        const current = await getPlatformQrCard(entity.id);
-        await savePlatformQrCard(entity.id, { ...current.card, intro: values.intro, term: values.term });
-      }
-      await runAction(resourceId, {
+      let card = cardDraft;
+      if (!card && (values.intro !== initial.intro || values.term !== initial.term)) card = (await getPlatformQrCard(entity.id)).card;
+      const result = await runAction(resourceId, {
+        ...(card ? { card: { ...card, intro: values.intro !== initial.intro ? values.intro : card.intro, term: values.term !== initial.term ? values.term : card.term } } : {}),
         code: values.code.trim() || null,
         label: values.label.trim(),
         type: values.type,
@@ -127,12 +129,22 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
           ...(item.note?.trim() ? { note: item.note.trim() } : {}),
         })),
       });
+      if (result) setMessage(t('资料和设计已保存。', 'Details and design saved.'));
+      return Boolean(result);
     } catch (reason) {
       setMessage(reason instanceof Error ? reason.message : t('保存二维码资料失败。', 'Could not save QR details.'));
+      return false;
     } finally {
       setSavingCard(false);
     }
   };
+
+  useEffect(() => {
+    if (!saveRef) return;
+    saveRef.current = saveChanges;
+    return () => { saveRef.current = null; };
+  });
+  const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); void saveChanges(); };
 
   const working = savingCard || busy === `admin-save:${resourceId}`;
   return (
@@ -141,7 +153,7 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
       <div className="platform-form-grid">
         <label>
           <span>{t('编码', 'Code')}</span>
-          <input className="platform-field-control" value={values.code} pattern="[a-z0-9][a-z0-9_-]{5,79}" minLength={6} maxLength={80} onChange={(event) => setValues((current) => ({ ...current, code: event.target.value }))} />
+          <input className="platform-field-control" value={values.code} disabled={Boolean(entity.data?.isPrinted) || Boolean(cardDraft)} pattern="[a-z0-9][a-z0-9_-]{5,79}" minLength={6} maxLength={80} onChange={(event) => setValues((current) => ({ ...current, code: event.target.value }))} />
         </label>
         <label>
           <span>{t('内部名称', 'Internal label')}</span>
@@ -194,15 +206,24 @@ export function PlatformQrMetadataEditor({ entity, resourceId, busy, runAction }
           <button type="button" className="platform-button" disabled={values.links.length >= PLATFORM_QR_LINK_LIMIT} onClick={() => setValues((current) => ({ ...current, links: [...current.links, { label: '', href: '/' }] }))}><Plus aria-hidden />{t('添加链接', 'Add link')}</button>
         </div>
         {values.links.length ? (
-          <ol className={styles.linkList}>
+          <ol className={styles.linkList} ref={linksRef}>
             {values.links.map((item, index) => (
-              <li key={index}>
+              <li key={index} className={index === 0 ? styles.primaryLink : undefined}>
                 <div className={styles.linkFields}>
                   <label><span>{t('名称', 'Label')}</span><input className={styles.linkField} value={item.label} maxLength={160} onChange={(event) => updateLink(index, 'label', event.target.value)} /></label>
                   <label><span>{t('链接', 'URL')}</span><input className={styles.linkField} value={item.href} maxLength={4000} inputMode="url" onChange={(event) => updateLink(index, 'href', event.target.value)} /></label>
                   <label className={styles.noteField}><span>{t('说明（可选）', 'Note (optional)')}</span><input className={styles.linkField} value={item.note ?? ''} maxLength={240} onChange={(event) => updateLink(index, 'note', event.target.value)} /></label>
                 </div>
                 <div className={styles.linkActions}>
+                  <button type="button" className={styles.linkDrag} aria-label={t('拖动排序', 'Drag to reorder')} onPointerDown={event => { dragIndex.current = index; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={event => {
+                    if (dragIndex.current === null) return;
+                    const rows = Array.from(linksRef.current?.children ?? []);
+                    const next = rows.findIndex(row => { const box = row.getBoundingClientRect(); return event.clientY >= box.top && event.clientY <= box.bottom; });
+                    const previous = dragIndex.current;
+                    if (next < 0 || next === previous) return;
+                    dragIndex.current = next;
+                    setValues(current => { const links = [...current.links]; const [item] = links.splice(previous, 1); links.splice(next, 0, item); return { ...current, links }; });
+                  }} onPointerUp={event => { dragIndex.current = null; event.currentTarget.releasePointerCapture(event.pointerId); }} onPointerCancel={() => { dragIndex.current = null; }}><GripVertical aria-hidden /></button>
                   <button className={styles.linkAction} type="button" disabled={index === 0} aria-label={t('上移链接', 'Move link up')} onClick={() => setValues((current) => ({ ...current, links: move(current.links, index, -1) }))}><ArrowUp aria-hidden /></button>
                   <button className={styles.linkAction} type="button" disabled={index === values.links.length - 1} aria-label={t('下移链接', 'Move link down')} onClick={() => setValues((current) => ({ ...current, links: move(current.links, index, 1) }))}><ArrowDown aria-hidden /></button>
                   <button className={styles.linkAction} type="button" aria-label={t('删除链接', 'Delete link')} onClick={() => setValues((current) => ({ ...current, links: current.links.filter((_, itemIndex) => itemIndex !== index) }))}><Trash2 aria-hidden /></button>
