@@ -7,6 +7,7 @@ import { MINI_PROGRAM_LOGOUT_MESSAGE } from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from '@/lib/api-base';
 
 export interface MiniProgramNavigationApi {
+  switchTab?(options: { url: string }): void;
   getEnv?(callback: (result: { miniprogram?: boolean }) => void): void;
   navigateBack?(options?: {
     delta?: number;
@@ -84,6 +85,18 @@ export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi
   if (typeof window === 'undefined') return null;
   return [window.tt, window.wx, window.jWeixin]
     .find(supportsMiniProgramNavigation)?.miniProgram ?? null;
+}
+
+/** Leave the standalone WebView so the native Tools tab and tab bar return. */
+export async function openMiniProgramHome(): Promise<boolean> {
+  if (!mayUseMiniProgramBridge()) return false;
+  const miniProgram = await loadMiniProgramNavigationApi();
+  // A known Mini Program must not fall through to a tab-bar-less website home
+  // if the bridge is temporarily unavailable; leave this page available to retry.
+  if (!miniProgram) return isMiniProgramWebView();
+  if (!await confirmMiniProgramEnvironment(miniProgram)) return false;
+  miniProgram.switchTab?.({ url: '/pages/tools/index' });
+  return true;
 }
 
 async function loadDouyinJsSdk(): Promise<MiniProgramWebViewSdk | null> {
