@@ -83,10 +83,10 @@
 }
 
 .timer-random-difficulty-help-panel {
-  /* anchored-panel: clamped */
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
+  /* Body portal escapes the source row's scrolling clip; usePanelClamp keeps it in view. */
+  position: fixed;
+  top: var(--difficulty-help-top, 0px);
+  left: var(--difficulty-help-left, 0px);
   z-index: 100;
   width: max-content;
   min-width: min(260px, calc(100vw - 32px));
