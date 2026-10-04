@@ -44,6 +44,7 @@ pub mod table_timing;
 // sq1 two-phase:cstimer 移植的近最优 SQ1 求解器(slash 数,毫秒级;管道默认走它)。
 pub mod sq1_twophase;
 pub mod xcross_solver;
+pub mod xcross_table_gen;
 // xcross restricted optimal:任意受限 54-move 集 + 中心朝向 + center_offset/max_rot 的最优
 // xcross(cross + 1 F2L pair)IDA*。全自包含(运行时建表 + 双 PDB,无外部文件),
 // native+wasm 双轨可编。
