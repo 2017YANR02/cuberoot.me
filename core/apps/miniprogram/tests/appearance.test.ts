@@ -19,9 +19,10 @@ describe('native appearance', () => {
     const setData = vi.fn();
     const setTabBarStyle = vi.fn();
     const setNavigationBarColor = vi.fn();
-    const setStorageSync = vi.fn();
+    let stored: unknown = null;
+    const setStorageSync = vi.fn((_key: string, value: unknown) => { stored = value; });
     vi.stubGlobal('getCurrentPages', () => [{ setData }]);
-    vi.stubGlobal('wx', { getStorageSync: () => null, setStorageSync,
+    vi.stubGlobal('wx', { getStorageSync: () => stored, setStorageSync,
       getSystemInfoSync: () => ({ theme: 'light' }), setTabBarStyle, setNavigationBarColor, setBackgroundColor: vi.fn() });
     const { receiveNativeAppearance, nativeAppearanceStyle } = await import('../src/lib/appearance');
     receiveNativeAppearance(appearance());
@@ -33,5 +34,26 @@ describe('native appearance', () => {
     receiveNativeAppearance({ ...appearance(), followSystem: true });
     expect(nativeAppearanceStyle()).toBe('');
     expect(setNavigationBarColor).toHaveBeenLastCalledWith({ backgroundColor: '#fafafa', frontColor: '#000000' });
+  });
+
+  it('refreshes an already loaded account bundle after the tools bundle saves a new appearance', async () => {
+    let stored: unknown = null;
+    const setData = vi.fn();
+    vi.stubGlobal('getCurrentPages', () => [{ setData }]);
+    vi.stubGlobal('wx', { getStorageSync: () => stored,
+      setStorageSync: (_key: string, value: unknown) => { stored = value; },
+      getAppBaseInfo: () => ({ theme: 'light' }), setTabBarStyle: vi.fn(),
+      setNavigationBarColor: vi.fn(), setBackgroundColor: vi.fn() });
+    // The build bundles each entry separately, so each page has its own module state.
+    const account = await import('../src/lib/appearance');
+    expect(account.nativeAppearanceStyle()).toBe('');
+    vi.resetModules();
+    const tools = await import('../src/lib/appearance');
+    tools.receiveNativeAppearance(appearance());
+    account.applyNativeAppearance();
+    expect(account.nativeAppearanceStyle()).toContain('--cr-bg:#142b32');
+    expect(setData).toHaveBeenLastCalledWith({ appearanceStyle: account.nativeAppearanceStyle() });
+    tools.receiveNativeAppearance({ ...appearance(), followSystem: true });
+    expect(account.nativeAppearanceStyle()).toBe('');
   });
 });

@@ -5,10 +5,12 @@ import themes from '../theme.json';
 const STORAGE_KEY = 'cuberoot.appearance.v1';
 let current: NativeAppearance | null | undefined;
 function readAppearance() {
-  if (current !== undefined) return current;
+  // Each page entry bundles its own copy of this module. A cached null or old
+  // palette here would overwrite settings saved by the tools page on tab return.
+  // Native storage is shared across those bundles; memory is only a read fallback.
   try { current = decodeNativeAppearance(miniProgramApi().getStorageSync(STORAGE_KEY)); }
-  catch { current = null; }
-  return current;
+  catch { /* Keep the last available preference if native storage is unavailable. */ }
+  return current ?? null;
 }
 
 export function nativeAppearanceStyle(): string {
