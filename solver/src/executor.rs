@@ -22,9 +22,54 @@ use crate::cube_common::{string_to_alg, Move};
 /// 自行 `bump_node_count(1)` 即可;executor 只读取最终值。
 pub static GLOBAL_NODES: AtomicU64 = AtomicU64::new(0);
 
+#[cfg(not(target_arch = "wasm32"))]
+thread_local! {
+    // Only analyzer batches opt in. Direct solver callers keep the public
+    // counter's immediate-update behavior (including existing benchmarks).
+    static BATCH_NODES: std::cell::Cell<Option<u64>> = const { std::cell::Cell::new(None) };
+}
+
 #[inline]
 pub fn bump_node_count(n: u64) {
+    #[cfg(not(target_arch = "wasm32"))]
+    if BATCH_NODES.with(|counter| {
+        if let Some(pending) = counter.get() {
+            let next = pending.wrapping_add(n);
+            // Bound the unpublished count even during a long-running solve.
+            if next >= 65_536 {
+                GLOBAL_NODES.fetch_add(next, Ordering::Relaxed);
+                counter.set(Some(0));
+            } else {
+                counter.set(Some(next));
+            }
+            true
+        } else {
+            false
+        }
+    }) {
+        return;
+    }
     GLOBAL_NODES.fetch_add(n, Ordering::Relaxed);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct BatchNodeCount(Option<u64>);
+
+#[cfg(not(target_arch = "wasm32"))]
+impl BatchNodeCount {
+    fn begin() -> Self {
+        Self(BATCH_NODES.with(|counter| counter.replace(Some(0))))
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl Drop for BatchNodeCount {
+    fn drop(&mut self) {
+        let pending = BATCH_NODES.with(|counter| counter.replace(self.0).unwrap_or(0));
+        if pending != 0 {
+            GLOBAL_NODES.fetch_add(pending, Ordering::Relaxed);
+        }
+    }
 }
 
 /// 跨 chunk 的**进程级**累计完成数(opt-in 全局进度用;不开则不动)。
@@ -279,7 +324,10 @@ fn run_batch_core<T: Send + Sync>(
                     m.insert(id.clone(), (descr(alg), Instant::now()));
                 }
             }
-            *slot = solve(alg, id);
+            {
+                let _nodes = BatchNodeCount::begin();
+                *slot = solve(alg, id);
+            }
             if wd_on.is_some() {
                 if let Ok(mut m) = in_flight().lock() {
                     m.remove(id);
@@ -436,5 +484,28 @@ mod tests {
         bump_node_count(7);
         bump_node_count(5);
         assert_eq!(GLOBAL_NODES.load(Ordering::Relaxed), 12);
+    }
+
+    // Run in isolation: other solver tests intentionally update GLOBAL_NODES.
+    #[test]
+    #[ignore = "run alone to verify exact process-wide node counts"]
+    fn node_counter_parallel_batch_exact() {
+        GLOBAL_NODES.store(12, Ordering::Relaxed);
+
+        // All increments, including each worker's final partial batch, remain
+        // visible after parallel work completes. Also cross the flush limit.
+        std::thread::scope(|scope| {
+            for _ in 0..8 {
+                scope.spawn(|| {
+                    let _nodes = BatchNodeCount::begin();
+                    for _ in 0..10_003 {
+                        bump_node_count(17);
+                    }
+                });
+            }
+        });
+        assert_eq!(GLOBAL_NODES.load(Ordering::Relaxed), 12 + 8 * 10_003 * 17);
+        bump_node_count(3);
+        assert_eq!(GLOBAL_NODES.load(Ordering::Relaxed), 15 + 8 * 10_003 * 17);
     }
 }

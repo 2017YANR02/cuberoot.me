@@ -18,7 +18,7 @@
 | `pt_eo_xcross_slot{0..3}_high_memory.bin` | 4 | 2,335,703,056 | 9,342,812,224 |
 | 新增合计 | | | 9,349,655,116 |
 
-`333-eo` 现有 full 文件集（含可选对角表）为 33,808,236,204 字节。加上新表后为 **43,157,891,320 字节（43.2 GB / 40.2 GiB）**，低于该求解器原有的 55 GB 文件预算。**57 GiB 是 H48 h10 生成进程的 RSS 警戒线**，与 EO 的表文件预算是两种口径。
+`333-eo` 现有 full 文件集（含可选对角表）为 33,807,911,300 字节。加上新表后为 **43,157,566,416 字节（43.2 GB / 40.2 GiB）**，低于该求解器原有的 55 GB 文件预算。2026-10-04 原生 Cross+EO 改为查询已有完整 `pt_ep4eo12`，不再加载 `mt_edge2`、`mt_eo12` 和 `pt_cross`，因此比原清单少 324,904 字节；浏览器小表路径不变。**57 GiB 是 H48 h10 生成进程的 RSS 警戒线**，与 EO 的表文件预算是两种口径。
 
 这是会被加载的完整表文件口径，不等于 RSS，mmap 工作集和生成峰值。后两者必须在新机器上独立测量，不用文件大小代替。
 
@@ -51,6 +51,14 @@ cargo run --release --bin table_generator
 cargo run --release --bin table_generator -- --only h48-h10
 cargo run --release --bin table_generator -- --only h48-h7
 ```
+
+Rust 表可以按精确文件名补齐，依赖仍由同一生成器加载或生成，已存在的有效表不会重建：
+
+```bash
+cargo run --release --bin table_generator -- --only rust --table pt_cross_C4E0
+```
+
+`--table` 只与 `--only rust` 配合，支持带或不带 `.bin`；名称大小写与磁盘文件一致。选择未知表或当前档位禁用的表会报错。需要性能对照时用 `CUBE_TABLE_DIR` 指向隔离目录，保留正式表。
 
 只补某一类表时仍使用同一入口：`table_generator --only sq1`、`--only h48-h10`、`--only h48-h7` 或 `--only rust`。默认使用可用 CPU 并行度，不钳制到 12/14 线程；各大表依次生成。H48 h10 用仓库内固定版本的 nissy-core 原生源码，输出 `tables/h48-nissy-core/h48h10.dat`（30,336,314,216 字节，28.25 GiB）；H7 是只验证建表流程的小档位，输出 `h48h7.dat`，不供当前统计管道使用。原生进程的完整错误输出同步保存到同目录对应的 `*.dat.log`，进度 JSON 在失败时记录前一阶段。57 GiB RSS 警戒线触发即终止该子进程并报错。统计管道通过 `333opt/solve_h10.mts` 调用原生求解器读取 H10。SQ1 输出 `tables/sq1_wca_jsqfull.bin`（13,005,619,200 字节）。`eo_cross_analyzer` 仍按现有约束要求 `CUBE_ALLOW_HUGE_TABLES=1`。
 
@@ -92,10 +100,12 @@ H48 h10 重新生成时，原生 worker 在终端同一行显示 9 个阶段的�
 | 表文件生成 | 本机完成 | 2026-09-23，64 GiB Mac mini，18 个 Rayon 线程；基础 73 张 + high-memory 5 张，合计 45,488,310,956 字节，历时 319.3 秒 |
 | 新表格式与大小 | 本机核对 | 5 个文件 header 与预期字节数一致，SHA-256 已记录于本机验收日志 |
 | 生成峰值内存 | 本机实测 | macOS `/usr/bin/time -l` 最大 RSS 24,542,969,856 字节；peak memory footprint 24,700,948,784 字节 |
-| EO high-memory 分析器正确性和性能验收 | 未执行 | 稳态 RSS、mmap 工作集和新吞吐量待实测；H10 的本地统计运行已完成，见上文 |
+| EO high-memory 分析器正确性和性能验收 | 固定样例完成 | 2026-10-04 全部 5/100 条历史 fixture 输出一致；100 条暖缓存三轮中位数 10.36→9.57 秒，样例进程峰值 RSS 35.86 GiB。不是全语料稳态或私有内存；独立 mmap 工作集未测 |
 | `/dev/solvers` | 本机事实已同步 | 保留默认档旧吞吐，单列本机 high-memory 文件和生成记录 |
 
 本机自动日志为 `tables/generation-2026-09-23.log`；从逐表计时行提取的 78 行 CSV 为 `tables/generation-2026-09-23.csv`。两者均在 Git 忽略的表目录，不随仓库发布。当前 `step()` 以 0.1 秒显示耗时，`0.0s` 表示少于约 0.05 秒。
+
+2026-10-04 优化验收不覆盖以上历史记录。完整候选在隔离目录生成 78 张表，45,488,310,956 字节全部与原表一致，218.741 秒、峰值 RSS 27,774,746,624 字节（25.87 GiB），系统可用内存最低 67%。最终恢复八张碰撞坐标大表的原始 CAS 循环以避免局部退化，其余 70 张分支不再改变；最终逐分支证据和原始计时见 `testdata/benchmarks/rust-table-generation-2026-10-04.json`。不把候选整跑时间当作最终版全套耗时。原生 EO 的精确查表、默认/高内存档 fixture 与暖缓存重复测量见 `testdata/benchmarks/native-stage-search-2026-10-04.json`。
 
 ## 新机器到位后的验收清单
 

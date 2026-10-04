@@ -127,12 +127,14 @@ const TABLES: Record<string, SolverTbls> = {
     builtEn: 'joint prune tables for standard XCross through XXXXCross; the first-layer-solved conditional Second Layer distribution is a separate 26,880-state offline enumeration and does not load these big tables',
   },
   eo: {
-    move: [{ n: 'mt_edge2', b: 38028 }, { n: 'mt_eo12', b: 147468 }, { n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_ep4', b: 855372 }, { n: 'mt_eo12_alt', b: 147468 }],
-    prune: [{ n: 'pt_cross', b: 139408 }, { n: 'pt_ep4eo12', b: 12165136 }, { n: 'pt_cross_C4E0', b: 54743056 },
+    move: [{ n: 'mt_edge4', b: 18247692 }, { n: 'mt_corn', b: 1740 }, { n: 'mt_edge', b: 1740 }, { n: 'mt_edge6', b: 3065610252 }, { n: 'mt_corn2', b: 36300 }, { n: 'mt_ep4', b: 855372 }, { n: 'mt_eo12_alt', b: 147468 }],
+    prune: [{ n: 'pt_ep4eo12', b: 12165136 }, { n: 'pt_cross_C4E0', b: 54743056 },
       { n: 'pt_cross_C4E0E1', b: 1313832976 }, { n: 'pt_cross_C4E0E2', b: 1313832976 }, { n: 'pt_cross_C4E0E3', b: 1313832976 },
       { n: 'pt_cross_C4C5E0', b: 1313832976 }, { n: 'pt_cross_C4C6E0', b: 1313832976 }, { n: 'pt_cross_C4C7E0', b: 1313832976 },
       { n: 'pt_cross_C4C5C6', b: 1313832976 }, { n: 'pt_cross_C4C5E0E1', b: 10729635856 },
       { n: 'pt_cross_C4C6E0E2', b: 10729635856, cond: true }],
+    builtZh: '原生 Cross+EO 直接查询已有 pt_ep4eo12 的完整精确距离，不再搜索；24,330,240 态，最远 10 步。后续阶段保持严格最优搜索；浏览器仍使用独立的小表搜索路径。',
+    builtEn: 'Native Cross+EO reads exact distances directly from the existing complete pt_ep4eo12 table: 24,330,240 states, maximum distance 10. Later stages retain exact search; the browser keeps its separate small-table search path.',
     plan: {
       profile: 'high-memory (auto ≥56 GiB)',
       move: [{ n: 'mt_ep5_high_memory', b: 6842892 }],
@@ -143,8 +145,8 @@ const TABLES: Record<string, SolverTbls> = {
         { n: 'pt_eo_xcross_slot3_high_memory', b: 2335703056 },
       ],
       note: {
-        zh: '2026-09-23 已在 64 GiB Mac 本机生成并核对 5 个文件：合计 9,349,655,116 字节；18 个 Rayon 线程，生成器峰值 RSS 24.5 GB。表文件仅在本机，未随仓库或网站发布；分析器稳态 RSS、mmap 工作集和新吞吐量仍待实测。总物理内存达到 56 GiB 时自动选择；识别失败时回落默认档。',
-        en: 'Generated and verified all five files on a 64 GiB Mac on 2026-09-23: 9,349,655,116 bytes total, using 18 Rayon threads with a 24.5 GB generator peak RSS. The files remain local and are not shipped with the repository or website. Analyzer steady-state RSS, mmap working set, and new throughput remain unmeasured. Auto-selection starts at 56 GiB total physical memory; detection failure falls back to the default tier.',
+        zh: '5 个文件合计 9,349,655,116 字节，2026-10-04 重建后与原表逐字节一致。M5 Pro / 64 GiB / 18 线程的 EO 100 条固定样例，三轮暖缓存中位数 10.36→9.57 秒，样例进程峰值 RSS 35.86 GiB；这不是全语料稳态吞吐或私有内存。表文件仅在本机，未随仓库或网站发布。总物理内存达到 56 GiB 时自动选择；识别失败时回落默认档。',
+        en: 'The five files total 9,349,655,116 bytes; regeneration on 2026-10-04 matched the originals byte-for-byte. On M5 Pro / 64 GiB / 18 threads, the fixed 100-input EO fixture improved from 10.36 to 9.57 seconds by the median of three warm-cache runs, with a fixture-process peak RSS of 35.86 GiB. This is neither full-corpus steady-state throughput nor private memory. Files remain local and are not shipped with the repository or website. Auto-selection starts at 56 GiB physical memory; detection failure falls back to the default tier.',
       },
     },
   },

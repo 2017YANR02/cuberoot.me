@@ -9,7 +9,14 @@
 //! 默认档全 73 张实测 36.14 GB；high-memory 档另加 9.35 GB。
 
 use std::io::Write;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    OnceLock,
+};
 use std::time::Instant;
+
+static SELECTED_TABLE: OnceLock<String> = OnceLock::new();
+static MATCHED_TABLE: AtomicBool = AtomicBool::new(false);
 
 use cube_solver::move_tables;
 use cube_solver::prune_tables;
@@ -20,6 +27,13 @@ mod h48_native;
 
 fn step(name: &str, f: impl FnOnce()) {
     let table = name.split_whitespace().next().unwrap_or(name);
+    if SELECTED_TABLE
+        .get()
+        .is_some_and(|selected| selected != table)
+    {
+        return;
+    }
+    MATCHED_TABLE.store(true, Ordering::Relaxed);
     let path = move_tables::table_path(&format!("{table}.bin"));
     let before = std::fs::metadata(&path).ok();
     let t = Instant::now();
@@ -30,10 +44,16 @@ fn step(name: &str, f: impl FnOnce()) {
     eprintln!("done in {:>6.1}s", elapsed.as_secs_f64());
     let after = std::fs::metadata(&path).ok();
     let size = after.as_ref().map(|m| m.len()).unwrap_or(0);
-    let unchanged = before.as_ref().zip(after.as_ref()).is_some_and(|(a, b)| {
-        a.len() == b.len() && a.modified().ok() == b.modified().ok()
-    });
-    table_timing::record(table, elapsed, size, if unchanged { "skipped" } else { "generated" });
+    let unchanged = before
+        .as_ref()
+        .zip(after.as_ref())
+        .is_some_and(|(a, b)| a.len() == b.len() && a.modified().ok() == b.modified().ok());
+    table_timing::record(
+        table,
+        elapsed,
+        size,
+        if unchanged { "skipped" } else { "generated" },
+    );
 }
 
 fn main() {
@@ -41,9 +61,16 @@ fn main() {
     let only = match args.as_slice() {
         [] => "all",
         [flag, value] if flag == "--only" => value.as_str(),
-        _ => panic!("usage: table_generator [--only rust|sq1|h48-h7|h48-h10]"),
+        [flag, value, table_flag, table] if flag == "--only" && value == "rust" && table_flag == "--table" => {
+            SELECTED_TABLE.set(table.trim_end_matches(".bin").to_string()).unwrap();
+            "rust"
+        },
+        _ => panic!("usage: table_generator [--only rust|sq1|h48-h7|h48-h10] [--table exact_file_stem (rust only)]"),
     };
-    assert!(["all", "rust", "sq1", "h48-h7", "h48-h10"].contains(&only), "unknown --only target: {only}");
+    assert!(
+        ["all", "rust", "sq1", "h48-h7", "h48-h10"].contains(&only),
+        "unknown --only target: {only}"
+    );
     let rayon_threads = rayon::current_num_threads();
     cube_solver::logo::print_logo_block();
 
@@ -80,7 +107,10 @@ fn main() {
     );
 
     if only == "sq1" || only == "h48-h7" || only == "h48-h10" {
-        assert!(profile.high_memory(), "large-table generation requires a high-memory profile");
+        assert!(
+            profile.high_memory(),
+            "large-table generation requires a high-memory profile"
+        );
     }
     if !disable_huge && profile.high_memory() && (only == "all" || only == "sq1") {
         eprintln!("\n=== SQ1 WCA exact phase-2 table ===");
@@ -95,16 +125,33 @@ fn main() {
             }
             peak
         });
-        let generated = Sq1WcaSolver::generate_jsq_full_table().expect("SQ1 full-table generation failed");
+        let generated =
+            Sq1WcaSolver::generate_jsq_full_table().expect("SQ1 full-table generation failed");
         monitoring.store(false, std::sync::atomic::Ordering::Relaxed);
         let peak = memory_monitor.join().unwrap_or(0);
         let elapsed = started.elapsed();
-        table_timing::record("sq1_wca_jsqfull", elapsed, std::fs::metadata(move_tables::table_path("sq1_wca_jsqfull.bin")).map(|m| m.len()).unwrap_or(0), if generated { "generated" } else { "skipped" });
+        table_timing::record(
+            "sq1_wca_jsqfull",
+            elapsed,
+            std::fs::metadata(move_tables::table_path("sq1_wca_jsqfull.bin"))
+                .map(|m| m.len())
+                .unwrap_or(0),
+            if generated { "generated" } else { "skipped" },
+        );
         table_timing::record_peak("sq1_wca_jsqfull", peak);
-        eprintln!("[SQ1] peak generator RSS: {peak} bytes ({:.2} GiB)", peak as f64 / 1024_f64.powi(3));
-        eprintln!("[GEN] sq1_wca_jsqfull done in {:.1}s", elapsed.as_secs_f64());
+        eprintln!(
+            "[SQ1] peak generator RSS: {peak} bytes ({:.2} GiB)",
+            peak as f64 / 1024_f64.powi(3)
+        );
+        eprintln!(
+            "[GEN] sq1_wca_jsqfull done in {:.1}s",
+            elapsed.as_secs_f64()
+        );
     }
-    if !disable_huge && profile.high_memory() && (only == "all" || only == "h48-h7" || only == "h48-h10") {
+    if !disable_huge
+        && profile.high_memory()
+        && (only == "all" || only == "h48-h7" || only == "h48-h10")
+    {
         let dataid = if only == "h48-h7" { "h48h7" } else { "h48h10" };
         eprintln!("\n=== H48 {dataid} native table (57 GiB RSS alarm) ===");
         let started = Instant::now();
@@ -116,7 +163,12 @@ fn main() {
             }
         };
         let elapsed = started.elapsed();
-        table_timing::record(dataid, elapsed, bytes, if generated { "generated" } else { "skipped" });
+        table_timing::record(
+            dataid,
+            elapsed,
+            bytes,
+            if generated { "generated" } else { "skipped" },
+        );
         table_timing::record_peak(dataid, peak);
         eprintln!("[GEN] {dataid} done in {:.1}s", elapsed.as_secs_f64());
     }
@@ -173,49 +225,49 @@ fn main() {
     step("pt_cross", || {
         ptm.ensure_pt_cross();
     });
-    step("pt_cross_ins_c4", || {
+    step("pt_cross_ins_C4", || {
         ptm.ensure_pt_cross_ins_c4();
     });
-    step("pt_pair_c4e0", || {
+    step("pt_pair_C4E0", || {
         ptm.ensure_pt_pair_c4e0();
     });
-    step("pt_cross_c4e0", || {
+    step("pt_cross_C4E0", || {
         ptm.ensure_pt_cross_c4e0();
     });
     step("pt_pscross", || {
         ptm.ensure_pt_pscross();
     });
-    step("pt_pscross_e0e1", || {
+    step("pt_pscross_E0E1", || {
         ptm.ensure_pt_pscross_e0e1();
     });
-    step("pt_pscross_e0e2", || {
+    step("pt_pscross_E0E2", || {
         ptm.ensure_pt_pscross_e0e2();
     });
-    step("pt_pscross_c4c5", || {
+    step("pt_pscross_C4C5", || {
         ptm.ensure_pt_pscross_c4c5();
     });
-    step("pt_pscross_c4c6", || {
+    step("pt_pscross_C4C6", || {
         ptm.ensure_pt_pscross_c4c6();
     });
     step("pt_ep4eo12", || {
         ptm.ensure_pt_ep4eo12();
     });
-    step("pt_cross_c4e0e1", || {
+    step("pt_cross_C4E0E1", || {
         ptm.ensure_pt_cross_c4e0e1();
     });
-    step("pt_cross_c4e0e2", || {
+    step("pt_cross_C4E0E2", || {
         ptm.ensure_pt_cross_c4e0e2();
     });
-    step("pt_cross_c4e0e3", || {
+    step("pt_cross_C4E0E3", || {
         ptm.ensure_pt_cross_c4e0e3();
     });
-    step("pt_cross_c4c5e0", || {
+    step("pt_cross_C4C5E0", || {
         ptm.ensure_pt_cross_c4c5e0();
     });
-    step("pt_cross_c4c6e0", || {
+    step("pt_cross_C4C6E0", || {
         ptm.ensure_pt_cross_c4c6e0();
     });
-    step("pt_cross_c4c7e0", || {
+    step("pt_cross_C4C7E0", || {
         ptm.ensure_pt_cross_c4c7e0();
     });
 
@@ -239,7 +291,7 @@ fn main() {
     }
     for c in 0..4 {
         for e in 0..4 {
-            step(&format!("pt_pspair_C{}E{}", c + 4, e), || {
+            step(&format!("pt_pspair_C{}_E{}", c + 4, e), || {
                 ptm.ensure_pt_pspair_ce(c, e);
             });
         }
@@ -268,13 +320,20 @@ fn main() {
 
     if !disable_huge && profile.high_memory() {
         eprintln!("\n=== High-memory profile: EO XCross (5) ===");
-        high_memory_tables::generate();
+        if high_memory_tables::generate_selected(SELECTED_TABLE.get().map(String::as_str)) {
+            MATCHED_TABLE.store(true, Ordering::Relaxed);
+        }
     } else if disable_huge && profile.high_memory() {
         eprintln!("\n[SKIP] 5 high-memory tables (CUBE_DISABLE_HUGE_TABLES=1)");
     } else {
         eprintln!("\n[SKIP] 5 high-memory tables (default profile)");
     }
 
+    assert!(
+        MATCHED_TABLE.load(Ordering::Relaxed),
+        "unknown or disabled Rust table: {:?}",
+        SELECTED_TABLE.get()
+    );
     eprintln!(
         "\n=== All tables ready in {:.1}s ({:.1} min) ===",
         t0.elapsed().as_secs_f64(),
