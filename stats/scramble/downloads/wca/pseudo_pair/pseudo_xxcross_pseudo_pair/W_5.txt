@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / W / bin 5
-# Population in this bin: 663
+# Population in this bin: 666
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2349420001,F' U2 L F' D' B D' B2 L D2 F L2 D2 L2 D2 F' U L,W,TCG Power Up 2022 (2022-12-03~04),333 R2 A #3
@@ -173,7 +173,7 @@
 3300942001,D' R' F2 L' F B U' B R U2 D2 F2 D2 F' L2 U2 F2 R2,W,TCG Space II Santa Anita 2023 (2023-11-25~26),333 R1 C #3
 3347388001,B2 L U B' R F2 B' R2 D F D B2 R2 U R2 D' F2 U' L,W,The Nairobi Open 2023 (2023-12-16),333 R2 A E1
 946420001,D2 B D2 F' R2 B' L2 B D' L2 R F2 L' B2 F L2 U B2,W,Rocky Top 2018 (2018-12-01~02),333oh R1 B E1
-4874508001,U' R' D B2 U' L2 D U2 F2 D R B' D R' U F2 U2 F L2,W,BrizZon Side Open III 2025 (2025-07-19~20),333mbf Final B #1
+5855841007,R' B2 R' D R' D B U2 D F' U2 R' U2 D2 F2 U2 R' D' B R2,W,Finnish Quiet Championship 2026 (2026-10-03),333mbf Final A #1
 1291031021,D U2 L2 B2 F2 D' L2 B2 U' L2 B U R D' R2 B L' B' U B' R' B' L,W,Big n Blind in Bangalore 2019 (2019-08-31~09-02),333mbf Final A #2
 5813726001,R' D' L' F' R2 F2 U2 B2 U B2 U' L' B F' D2 B' R B,W,Mofunland Speedcubing Singapore 2026 (2026-09-05),333 Final A #1
 2441079001,F U R' D' F2 U2 L2 B2 R D2 B D2 F U2 R2 F2 B2 U2 R,W,Stevenage January 2023 (2023-01-21~22),333 R3 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_cross_pseudo_pair / BGWY / bin 1
-# Population in this bin: 694
+# Population in this bin: 695
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2478001,R2 B' D2 F' L2 D2 B F2 D R2 U' L B2 U2 L' F' D' F R2,W,Santo Domingo Spring 2014 (2014-03-23),333oh Final A E2
@@ -180,7 +180,7 @@
 824872001,D B2 F2 U R2 B2 D F2 U' R2 U' B F2 L' F2 R' U2 L' R F L',B,Bolivia Nationals 2018 (2018-07-05~07),333bf Final A E1
 825290001,L2 U B2 F2 U' R2 U B2 R2 D' F D2 L' B2 D2 L R2,Y,White City Cubing 2018 (2018-07-07~08),333 Final A E1
 2309199012,D B D' B2 L2 D' B2 L2 U' B2 F R U2 L U' R2 B2 R F D2,W,Cerrado Open 2022 (2022-11-18~20),333mbf Final A #1
-831680001,U' L2 U' F2 D F2 D2 B2 U' F2 R B' F' D2 R2 U' B R D2 L' R',G,Fredericksburg Summer Open 2018 (2018-07-21),333 R1 C #1
+5855275001,R2 L2 U R' B2 L B U L2 D F R2 F2 D' R2 L2 F2 L2 B',Y,Cubing Skills in Almaty 2026 (2026-09-26~27),333bf Final A #4
 2261655001,B U' F2 R U2 R2 U2 R' B2 D' B2 U' F2 R2 U D2 R2 B D,G,Minyons de Terrassa Open 2022 (2022-10-22),333oh R1 B E1
 2358944001,D F2 L' U' L D2 U2 B2 L2 F2 R2 F' R2 F R' D' F2 R,Y,Oulu Open 2022 (2022-12-10~11),333 R1 B E1
 1828549001,D F U' B2 D L2 U B2 D B' R U2 L' B' L' U L' D',W,Lima Cuberano 2022 (2022-03-12~13),333 R1 C #3

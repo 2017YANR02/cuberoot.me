@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxxcross / OR / bin 12
-# Population in this bin: 225
+# Population in this bin: 226
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5741620001,B' U2 F D2 B2 L2 F' R2 F D F2 R2 U' B' D B2 L2 R B' L',O,Wiltshire Summer 2026 (2026-07-04~05),333 R1 A #1
@@ -161,7 +161,7 @@
 3944024001,B2 F R2 D2 F' R2 F' D2 L2 R' U B' R' D L B' F2 D2 F,O,Ansan Summer 2024 (2024-07-20),333oh R1 A #4
 3954747001,B' F2 U2 L D2 L' R' D2 F2 L2 D2 B' R D' U' F' L' B L B,O,Surat Cubing Sprint 2024 (2024-07-21),333 R2 B #4
 3954924001,R2 U2 B2 F' D2 U2 R2 U2 F D B F' D2 R' U2 L F R D2 U2,O,Rubik's WCA North American Championship 2024 (2024-07-18~21),333 R1 G E1
-3961192022,D' B2 D F2 L2 D F2 U2 B2 R2 B2 R B L D F2 R' B F' L',O,New Rochelle at Nite 4 2024 (2024-07-25),333mbf Final B #1
+5852833003,F' L R D2 B2 F2 R' U2 L F D U2 B2 L' R' F L' D L,O,GAN WCA African Championship 2026 (2026-09-24~27),333mbf Final A E8
 3963703001,B2 D2 B U L U R B2 U2 D' R2 D L2 U B2 R2 U' F U' F',O,Open PUCP Cubing Community 2024 (2024-07-19~20),333 R2 D #4
 3965414028,L2 F' D2 B2 D2 F D2 F' D2 R B' D R U' R F' L B R B' L2 U2,O,NZ North Island Championship 2024 (2024-07-19~21),333mbf Final A #1
 3985552001,B R B' U D2 F D L2 B' F2 U2 D2 R U2 F2 R2 D2 B2 D',O,Moroccan Nationals 2024 (2024-08-03~04),333 R2 B E1

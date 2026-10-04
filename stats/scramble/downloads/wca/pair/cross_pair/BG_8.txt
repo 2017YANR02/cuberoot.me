@@ -1,8 +1,8 @@
 # Scramble samples — pair / cross_pair / BG / bin 8
-# Population in this bin: 433
+# Population in this bin: 435
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5836296001,R' U' F D' U L2 U' L2 F2 R F2 U F2 R2 D2 F L' F L2 R2 F2 R' U' F,B,VERK XVIII 2026 (2026-09-19~20),333fm R1 A #2
@@ -73,7 +73,7 @@
 5319202001,B2 U' F2 L2 R2 D' B2 L U F2 D' F2 L2 F' R' B U' L' B,B,Cubing at The Cube 2026 (2026-01-10~11),333 R1 C #1
 2801612032,R2 F L U D2 F R D F U2 R2 D2 F2 B' U2 B2 D R D L',B,SveKub Super League V: Uppsala 2023 (2023-06-16~18),333mbf Final A #1
 613246001,D' R U' L B D R' F U' F U2 F D2 R2 L2 F' U2 B2,B,NIT Trichy Open 2017 (2017-10-07~08),333 R2 D E2
-623366001,U2 F2 D' L' U' R' B R2 B U' F R2 F2 R2 U2 D' R2,B,Guatemala Championship 2017 (2017-10-21~22),333oh Final D #3
+5846856001,R F' L2 D2 L2 U2 B R2 U2 R2 B2 D' F2 L B U B2 F' U' R',B,Stork Cubing Przygodzice 2026 (2026-09-26~27),333 R2 A #3
 5587715001,U2 B2 L B2 R D2 B2 R2 D2 B D R' U' F L D' U2 L B',B,Odd Day in Hong Kong 2026 (2026-04-26),333 R1 H #4
 626568001,B2 L2 B R2 U2 R2 D2 F R2 D' B' L B' F R' D' B' U2 R U,B,Classic City Spooks 2017 (2017-10-27~29),333 R1 A E2
 4340426001,L' B' R' F2 R' F' R2 U' R B' R' F2 U2 L D2 R L2 F2 L',B,Na'Guara Metropolis Lara 2024 (2024-12-07),333 R1 D #5

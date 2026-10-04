@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / BGWY / bin 4
-# Population in this bin: 237
+# Population in this bin: 238
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 10812001,B2 L R' D2 B2 F D F R D2 L' B L B' U' R,W,Open Cube Project 2014 (2014-04-12),333 Final A E2
@@ -191,7 +191,7 @@
 4652624001,B2 F2 U' F2 D' L2 U2 L2 U2 L' D L' U' L F' D F L' F',B,BQHS Spring Open 2025 (2025-04-13),333 R2 D E1
 4658404001,F U2 L2 B L2 U2 F' U2 B D' L2 D' L' B' R D' R' U L,W,Tokyo Spring PM 2025 (2025-04-20),333 R1 C #5
 5569642067,R2 B2 U' L' U2 B R2 D2 B D2 L2 B' F L' D L R2 U' F L2 U',B,Langenstein City Blind Open 2026 (2026-04-18~19),333mbf Final A #1
-4678636001,B' L' D L' U2 B2 L' U2 D B2 U' L' R' F L' B',B,Martigny Open 2025 (2025-04-26~27),333 R2 A #1
+5845276001,B U2 R' U2 R U2 R' U2 R' F' D' F2 R' D B' F' L R',G,Hancock County NxNs 2026 (2026-09-26),333 R1 D #2
 5693041049,F2 L2 F U2 B L2 R2 F2 R2 L U B' R2 F D U F U R2 B' L2,G,Brilliant Big & Blind Bravo Orlando 2026 (2026-06-06~07),333mbf Final B #1
 5358708001,F L2 U2 L2 U2 F2 R F2 D2 R' D L2 F R U F D L' U2,G,Tramsheds VIII: Summer Sides 2026 (2026-02-01),333oh R1 C #3
 4821497001,D U2 L2 D R2 F2 D' F' D F2 R' F' R D' U' F' D2,G,Plymouth Puzzle-Off 2025 (2025-06-22),333 R2 C #2

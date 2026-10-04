@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xxcross / B / bin 6
-# Population in this bin: 771
+# Population in this bin: 773
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 1552680001,D' L2 B2 D L2 D R D' L' U R U' F2 R' F D' U',B,Cebu Open 2020 (2020-02-15~16),333 R2 A #4
@@ -148,7 +148,7 @@
 2676354001,L D2 F2 R2 B' U2 F' L2 U2 B' R' B' U2 R2 B L R2,B,Bangkok Cube Day Summer 2023 (2023-04-29~30),333 R1 A #5
 5631005020,U' R2 D2 B2 D2 B R D' F2 D2 R B2 L' U2 F2 D2 B2 R U F2 D,B,Toledo Big & Blind 2026 (2026-05-16),333mbf Final A #1
 2775069064,U2 R' F' R' L' D B2 R' B' U' F2 U R2 B2 R2 F2 D2 B U2 B' L,B,BrizZon Side Open III 2023 (2023-06-03~04),333mbf Final B #2
-2533429046,U' F2 D R' U' D L F D' U2 F R2 B2 L2 D2 F2 B' R2 U2 D B' L2,B,MBLD in a Madison Meeting Room 2023 (2023-03-04~05),333mbf Final A #2
+5846696001,F' U' D' B L' F R2 D L B' F2 R' B2 R L2 F2 L U2 L,B,Guadix Open 2026 (2026-09-26~27),333 R1 C #5
 2363729001,F' U' L2 U2 L' B' U D2 R U2 F2 R U2 D2 L' F2 L U,B,El CUBO Tour San Miguel 2022 (2022-12-11),333 R2 A #4
 4674819014,F' L B2 D B2 R2 D2 L2 R D L F2 D2 R' D U B L2,B,Please Be Solved Vancouver 2025 (2025-04-26),333mbf Final A #1
 5039763001,L' U2 L2 R' U2 L' D2 R' F' L' F D L D' B2 U' L',B,Eyes Open Open - Ōtautahi 2025 (2025-09-20~21),333oh Final A #4

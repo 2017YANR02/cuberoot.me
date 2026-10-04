@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxxcross / BGWY / bin 6
-# Population in this bin: 286
+# Population in this bin: 287
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 6373001,U D2 F U' L' F2 D R2 L D' L2 D' F2 R2 F2 U F2 R2 D,B,Rumia Open 2014 (2014-03-29~30),333 R1 A E2
@@ -105,7 +105,7 @@
 1443293001,B2 D' F2 U L2 D2 U' B2 U F' L R2 B U' F' D' B D' B',Y,SSL Final Stockholm 2019 (2019-12-07~08),333 R2 B #4
 4361280032,R2 U2 F2 R2 U' L2 R B2 D2 F2 U R U F2 D' F2 U2 L2 U',G,Goiânia Xiu 2024 (2024-12-14~15),333mbf Final A #2
 1475236001,B2 F' U2 R2 F' L2 B' L' U R2 B2 U B R2 F L2 B2 R2,Y,Shaoxing Open 2019 (2019-12-21~22),333 R2 A #3
-5778589001,F2 L2 B' R2 U2 B2 U2 B' D2 L2 U' B' L B L R U2 F' L',G,Robinson Lifestyle Ratchaphruek Open 2026 (2026-08-08~09),333 R2 A #3
+5850633001,R' B U2 R F' R2 U2 B2 L U' F U2 R2 F D2 L2 F2 U2 B,B,Colorado Cubing Weekend 2026 (2026-09-26~27),333 R2 A #3
 1599261010,L' U2 L' U2 B2 U2 B2 F2 L2 F' D' R' U2 B' F' D L' B' L B' L2,Y,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3
 1637808001,U' R2 L2 F L2 B' R2 U' L' D' F' D2 R2 D B2 U' L2 F2 U',W,Jieyang Good Morning 2021 (2021-01-31),333 R1 C E1
 1691692001,D2 L2 D' F' D' F2 R2 D2 R2 U' L2 U L' U L F' U' R' U,W,September Speedcubing Tour Kielce 2021 (2021-09-18~19),333 R1 D #2

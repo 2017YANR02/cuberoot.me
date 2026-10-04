@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / BG / bin 10
-# Population in this bin: 744
+# Population in this bin: 748
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4332297001,F' R2 U2 L2 B' L F D' R2 B' U' L2 D' R2 U D',G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333oh R1 A #2
@@ -197,7 +197,7 @@
 3243845001,L2 F2 U2 F L2 B' U2 B L2 F' U L F' R B U B' F R',B,NIT Trichy Cube Open 2023 (2023-11-05),333 Final A #1
 4332233001,F U B2 F2 L2 U F2 L2 R F U2 L' R2 D2 F2 L F D' B,G,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333 R1 B #2
 901881019,B2 U2 B2 D2 L2 F2 D R2 F2 U' L' B' L' B' U' B' R2 D F2 L' F' L2,B,Dutch Open 2018 (2018-10-13~14),333mbf Final A #1
-3012293037,D2 R' U' B2 U' B2 F2 L2 R' D U2 R B2 F' L R' F L' F2,B,Slovenian Nationals 2023 (2023-08-25~27),333mbf Final B #1
+5855745001,D2 R2 F D2 B F' L2 D2 F2 U' F D' U2 B2 R' B' D' L' D U,B,Poole Autumn 2026 (2026-10-03),333 R1 C #2
 1722398001,R B2 R' U2 F2 L' D2 U F2 L2 F D' L' B' U2 F L U2,G,Ticino Open Sunday 2021 (2021-11-07),333 Final B #2
 2154338001,D2 B2 U2 L' F' U F' R' D F B U2 B L2 F' B2 U2 L' B2,B,Pretzel Mania 2022 (2022-09-03~04),333 R1 F #4
 923341038,L2 B' L2 B' D2 F' R2 B2 U R' U B F' R2 D U' F L2 U' B R',G,LA Blind Cube Day 2018 (2018-11-03),333mbf Final B #1

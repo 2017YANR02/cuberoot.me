@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / R / bin 6
-# Population in this bin: 579
+# Population in this bin: 582
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 10957001,U2 L' F2 D2 R2 F2 L' F2 D2 R F L' F2 L2 R' F' R D,R,Lexington Spring 2014 (2014-04-12),333oh R1 B #2
@@ -90,7 +90,7 @@
 3542162001,F2 L' B2 R F2 L' U2 R2 B2 F2 R D2 B' R2 B2 F' R' U' F',R,Feltre Winter Open 2024 (2024-02-24~25),333 R2 A #3
 5705069001,B2 R' B2 U2 R2 U2 L' U2 F2 R D' U B2 D' L B D2 U' F,R,Hefei Cubing League 3x3 III 2026 (2026-06-17),333 R2 C #5
 5010708001,L2 R2 F U2 B' R2 B R' F' R2 F2 D' L F L' D2 L,R,La Cacería GT 2025 (2025-09-06),333 R1 D #1
-4289618001,L2 U2 B2 R B2 L2 B2 U2 L' D2 L F2 B U' B' R2 D2 F2,R,Campeonato Brasileiro de Cubo Mágico 2024 (2024-11-15~17),333 R2 A #4
+5848059001,L2 D2 L2 B' F L2 D2 B L' R D' B U R' U2 F R' D2,R,Aarhus Fall 2026 (2026-09-27),333 Final B #5
 4146040001,D2 B2 D2 R B2 L R' B2 R U2 D L' U L2 D' B L2 F2 U,R,Airdrie NxNs 2024 (2024-09-29),333 R1 A #1
 4600796001,F' B2 R L2 B' R2 D' F' D' F2 R' F U2 B R2 U2 B2,R,North Idaho Newcomers 2025 (2025-03-29),333 R1 C E1
 2566443001,U2 D' F' U2 D' B D2 B' D' B2 D2 R2 F2 D2 F U2 B L2,R,Bolton Spring 2023 (2023-03-18~19),333 R1 A #1

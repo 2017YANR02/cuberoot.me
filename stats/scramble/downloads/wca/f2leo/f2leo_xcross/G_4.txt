@@ -1,8 +1,8 @@
 # Scramble samples — f2leo / f2leo_xcross / G / bin 4
-# Population in this bin: 477
+# Population in this bin: 480
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 261001,R' F D L2 F' B U R2 B' R F L2 U L2 U' R2 U2 L2,G,Montréal Open 2014 (2014-03-15),333 R2 B #1
@@ -83,7 +83,7 @@
 5025875001,D2 R' F2 R' U2 R U2 F U2 F2 R D' L2 D' L U F' L,G,Kushtia Cube Open 2025 (2025-09-13),333 R1 A #5
 619073001,U B2 F2 U2 R2 D' R2 U' R B U2 R' D' U2 R2 U2 R' D',G,Home is not DNF 2017 (2017-10-14~15),333oh Final A E2
 2822494001,B D2 F2 U2 D' R2 U' L F L2 D' U2 F2 L2 F U2 D2 B,G,Flor de Lis Goiás 2023 (2023-06-24~25),333oh Final A #4
-5402041001,U2 L D2 F2 B' R2 D' B' L' F U2 B2 U L2 U2 R2 U F2,G,Unicentro Tunja lV 2026 (2026-02-22),333 R1 B #5
+5852591044,U2 B' U2 F2 D2 B' D' F2 L U' B D2 L2 F U2 L2 D2 R2 D2 F' L2 U2,G,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #2
 3649118001,D R F2 B' L D2 F U B2 D2 L2 B2 R2 U' B2 D2 L F' D',G,Open de Gatineau B 2024 (2024-04-07),333 R1 C #1
 633640001,R2 F' R2 D' F' D2 R2 B L2 U' L2 U R2 D' R2 D2,G,Munich Open 2017 (2017-11-04~05),333 R1 D #4
 2394106001,B' R' F2 D2 F2 U2 L' B2 F2 L2 B' R D2 R B' U B U2 F L' F,G,Nacionales Guatemala 2022 (2022-12-16~18),333bf Final A E2

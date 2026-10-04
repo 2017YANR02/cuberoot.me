@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / W / bin 4
-# Population in this bin: 181
-# Samples listed: 181 (all entries in this bin)
+# Population in this bin: 182
+# Samples listed: 182 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3194001,L' U2 L' R2 F2 R D2 F D L' R D' B2 D' F R2 B2 L,W,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 H E1
@@ -186,3 +186,4 @@
 5789191001,L2 B2 D' F2 D2 L2 D' F2 D R U' B2 F' D L R' U2 B',W,Korea Open 2026 (2026-08-15~17),333 R3 D #4
 5796913001,R D' L2 R2 B2 U2 R2 U' F2 R F' U B U B2 R2 D2 B2 F',W,Kuala Lumpur Cubing Challenge 2026 (2026-08-22~23),333 R2 C #5
 5813726001,R' D' L' F' R2 F2 U2 B2 U B2 U' L' B F' D2 B' R B,W,Mofunland Speedcubing Singapore 2026 (2026-09-05),333 Final A #1
+5845317001,R F' R' B2 U2 L' D2 U2 R B2 U2 F2 U' F D F' L2 U L',W,Hancock County NxNs 2026 (2026-09-26),333 R2 B #4

@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / R / bin 5
-# Population in this bin: 856
+# Population in this bin: 862
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3775412001,F L2 B D B' L B L F D B D2 R2 F' R2,R,Mriy Diy Cubing Lviv 2024 (2024-05-18~19),333 R1 A #4
@@ -31,7 +31,7 @@
 133306001,D B R F' L F' D2 B D R L2 F2 B' R2 B' D2 R2 L2 F,R,Toronto Open Spring 2015 (2015-04-25),333oh R1 B #1
 4020378031,B' R2 L2 U' R' F' R' D B F2 L' D2 R' F2 L' D2 B2 R2 B2 L' B' L',R,Shhicago II 2024 (2024-08-17~18),333mbf Final A #1
 3011484002,D2 U2 L' F2 U2 R F2 R' U' B2 F' L2 F D' U B' D U L B',R,Begastri Open 2023 (2023-08-26~27),333mbf Final A #1
-1001259011,D2 U R2 D2 L2 B2 D' L2 F' D B F2 U B2 F2 L' U' B L2 U L' F,R,Kiev Super Blind 2019 (2019-02-02~03),333mbf Final A #3
+5852583031,F R' B2 U2 R' U2 F2 L R' B' D2 U B2 F' D R2 U2 L' B2 L' F',R,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 A #2
 2892149001,B2 U' L F2 L2 F2 L2 F2 U2 B2 D2 B' R2 U R' F' L R',R,Czech Open 2023 (2023-07-14~16),333oh R1 C #1
 3847036001,D2 L2 B2 L2 R' U2 L2 D' B2 L' D2 L D R2 D B U F2,R,Budapest Summer 2024 (2024-06-08~09),333oh R1 C #3
 1938495001,L' D L' B2 R2 F2 L' R2 B2 D2 R' U' L2 F R' F' R U',R,X-Madrid Open 2022 (2022-05-21~22),333 R2 A #2

@@ -1,8 +1,8 @@
 # Scramble samples — pseudo / pseudo_xxcross / WY / bin 4
-# Population in this bin: 351
+# Population in this bin: 352
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3998525002,F2 R' D2 R' U2 B2 R F2 D2 U R2 U L D2 B' L' R F2 L' B R',W,Blind Till Nine in Vietnam 2024 (2024-08-10),333mbf Final A #2
@@ -96,7 +96,7 @@
 2987761001,B2 L' U2 F2 D2 R U2 R2 B2 U R D' F2 R' U B L B',Y,Araruama Open 2023 (2023-08-19~20),333oh R1 B #4
 779453001,D2 B2 L2 B F' U2 L2 F' R' D F U' B' F' L2 F R2 D U',W,Play Cube 2018 (2018-05-13),333 R1 H #1
 784008001,F B' D2 L' B2 D' L' F' R F B2 L2 B' R2 F' L2 U2 F' U2 F2,W,CCPA Open 2018 (2018-05-19),333 R1 B #3
-3646228001,B2 U2 B F2 D2 R2 B L2 B R' F L2 B2 D L R U' R B2,Y,Busan Spring 2024 (2024-04-06~07),333 R2 D #3
+5845317001,R F' R' B2 U2 L' D2 U2 R B2 U2 F2 U' F D F' L2 U L',W,Hancock County NxNs 2026 (2026-09-26),333 R2 B #4
 792351001,U D2 B D' L2 F R B2 D2 F' D B2 D F2 R2 L2 D L2,Y,Colorado Qualifier 2018 (2018-05-26~27),333 R3 B #3
 792695001,U' F2 D F2 D F2 L2 F2 L2 D R B2 R2 D' B D B2 D' R,W,Bayou Bash 2018 (2018-06-02),333oh R1 A E1
 809386040,L2 F' D2 F' R2 F' R' F2 L' D' B F R2 F2 D' U' R F L,Y,CubingUSA Western Championship 2018 (2018-06-15~17),333mbf Final B #2

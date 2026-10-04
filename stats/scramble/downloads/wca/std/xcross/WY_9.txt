@@ -1,15 +1,15 @@
 # Scramble samples — std / xcross / WY / bin 9
-# Population in this bin: 305
+# Population in this bin: 308
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5742360001,L B2 R U' R F L F' L2 B' D2 L2 F' R2 F2 D2 R2 L' D' F',W,Rubik's WCA North American Championship 2026 (2026-07-02~05),333 R1 L #4
-19726001,F' U2 L2 F' R2 U2 L2 F R2 D F' U' R' B' L' D L2 U R' B',W,Michigan May Madness 2014 (2014-05-10),333 R1 A E2
+5854780001,U F D2 L2 B' D2 B F2 D2 L R U R' B2 D R2 D L' F',W,Georgia September 2026 (2026-09-26),333oh Final A #2
 82765001,U B2 D2 R2 F2 L2 R2 U' B2 L' R2 B D2 F2 U F' L' R D F2,W,Game Pro Tour 2014 (2014-11-29~30),333oh Final A #3
 5087097031,L2 B D L D2 F2 L2 R2 B' R2 B F' L2 U R' B' L' F' U B,W,Blind Marathon in Rzeszów 2025 (2025-10-11),333mbf Final A #1
-91337001,D B2 F2 L2 U2 B2 D' F2 U' F2 L' D' U' R F D' B' R' B2 F2 R,W,Genius Kid India Open 2014 (2014-12-21),333 Final A #4
+5855902001,U2 R2 U' F L' F' B' R U L D2 B2 U2 B U2 F D2 L2 D2,W,GA Cubers Banana Scramble 2026 (2026-10-03),333oh Final A #3
 5107200001,U2 F R' B L2 B2 U B2 L2 B2 R2 D2 L' B F2 D2 U F2 L',W,UO Fall 2025 (2025-10-18),333 Final A #3
 5066611001,L' R2 F' D2 B U2 F L2 D2 R2 D L D' F2 D2 B U R' D2,W,Příbram Cube 2025 (2025-10-04~05),333 R2 B #5
 5284975001,R' F2 L B2 R' U2 B2 U2 R F D R' F' L' U' B F R2 U' B2,W,Christmas Cubing by Sorrento Beach 2025 (2025-12-21),333 R1 C #3
@@ -179,7 +179,7 @@
 4678669001,L' D2 F' R2 B U B L D B R' L2 U2 F2 R' F2 R2 F2 B2,W,Martigny Open 2025 (2025-04-26~27),333 Final B E1
 3497324001,U2 R B L D F U' R' B2 L D2 L U2 D2 B2 R2 F R2 B',W,Arizona Favorites 2024 (2024-02-10),333oh R1 A E2
 4958163001,R B2 R D2 B2 L2 D2 R' B2 D2 F D U B' R' F R' U2 F2 L2,W,Nairobi NxN Cubes 2025 (2025-08-23),333 Final A #3
-3532881001,L B U2 F' L2 R2 F2 D2 B L2 R2 U2 R2 L' F R F' D F2 U B,W,Ligerim Goiânia 2024 (2024-02-24),333 R1 A E1
+5856452001,U B' R D2 F U2 F2 U2 R2 B L2 B R' B D' F L U R,W,Adelaide Spring 2026 (2026-10-03),333 R2 E #5
 3580411001,R2 D2 L U2 B2 L' F2 D2 B2 D2 R D R' U R' B F' L F2 U',W,Speedcubing Bogotá 2024 (2024-03-09),333 R1 C E2
 3598273001,R' D' R B' R' U L F U2 D2 R2 L2 F2 U2 F D2 B2 L2 D',W,Ulaanbaatar Spring 2024 (2024-03-16),333 R1 G E1
 5620338001,F' L' B2 L2 U2 R U2 R2 D2 F' U' B L B D B2 R' B F',W,Dornogovi Toya Cup 2026 (2026-05-10),333 R1 D #4

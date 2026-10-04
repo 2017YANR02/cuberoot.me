@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xxxxcross / W / bin 11
-# Population in this bin: 623
+# Population in this bin: 627
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 38706001,U' L' F' R' F D B' R2 D B2 L U L2 U2 L2 U D2 B2,W,Croatian Open 2014 (2014-07-19~20),333oh Final A #1
@@ -54,7 +54,7 @@
 5814446001,U' B2 D2 R' B2 R2 U2 L2 U2 D' B L B2 L' U2 L2 R,W,KC College Cube Open 2026 (2026-09-05),333 R1 B E1
 2528490018,B' R B' D L2 D R2 L2 U' R' D2 L' B2 L F2 U2 B' L B2,W,SveKub Super League II: Hässleholm 2023 (2023-03-04~05),333mbf Final A #1
 4090288092,R2 U' F2 D' U2 R2 U' R2 F2 L2 R U2 R2 F' L' B L2 B' L R D2,W,Titan Big N' Blind 2024 (2024-09-07~08),333mbf Final A #2
-2617635001,D' R2 L B' U2 L F L2 F2 R B2 R' F2 D2 R2 L' D' F',W,UCSD Spring 2023 (2023-04-02),333 R1 B #5
+5851539001,R B R2 B2 D2 F' U2 B R2 D' F D' L2 B D2 R' D,W,Louisiana Championship 2026 (2026-09-26~27),333oh Final A #2
 314547001,B2 D2 L2 U B2 L2 F2 U B2 R B' D B2 R2 U L' F2 D' U' B2,W,Quijote Open 2016 (2016-06-18~19),333 R2 A #4
 5719817001,F U2 R' D2 U' L2 D F2 U B' D' U' B D' U2 F R',W,Shenyang Cubing League 3x3 II 2026 (2026-06-24),333 R1 B #2
 328854001,L2 F' R2 B D2 R2 U2 L2 B' L' F D' F2 R' D' F' D U' R' B',W,Houston Cube Blast 2016 (2016-07-16),333 R2 B #5
@@ -72,7 +72,7 @@
 5571347026,B' L' F' U' L B' L2 D R U B2 R2 U R2 U F2 U B2 U2 D' L' F,W,Blind League Dobřejovice II: Crownrise 2026 (2026-04-25),333mbf Final B #1
 4409067001,U D' R L2 U' R2 F2 U B F2 U' R2 U' D' B2 D B2 L2,W,Cubing at the Course CT 2025 (2025-01-04),333 R2 A #3
 463034001,L2 U' R2 B2 R2 U2 R2 D' R D U' F R U2 R F' U' L' B2,W,Anaadyanta Cube Open 2017 (2017-03-11),333 R1 J E2
-5550210001,R' F R D2 R B' R B D' B R2 U' B2 U2 F2 U' R2 D2,W,Cube Factory League Jeżów 2026 (2026-04-18~19),333 R1 A #3
+5854237001,D2 R' D F D' F R D2 B2 U' B2 R2 L2 U' B2 L2 F2 B',W,Balam Cubes Bekasi Comeback 2026 (2026-09-26~27),333 R1 A #5
 473096001,B D2 F2 D2 U2 F D F D B L2 D2 B' F2 R B U,W,The Hague Open 2017 (2017-03-25),333 R2 A #5
 2838433001,B2 U L2 F2 D L2 R2 U R2 D R' F2 L F2 U' B' R2 B' U' R',W,Utah Summer Side Events A 2023 (2023-06-30),333 R1 C E1
 2283708001,D B' U2 F2 D' R2 D L2 D F2 L2 R2 U2 R' B' D B2 L2 F',W,That's Odd Trondheim 2022 (2022-11-04~06),333 Final A E1

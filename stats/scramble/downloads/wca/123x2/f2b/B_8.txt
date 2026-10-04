@@ -1,8 +1,8 @@
 # Scramble samples — 123x2 / f2b / B / bin 8
-# Population in this bin: 432
+# Population in this bin: 434
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 11598001,B2 U2 B2 F2 L' F2 D2 L' U R2 F2 L2 R B2 D' B2 F L B',B,Coliseo de Tovar 2014 (2014-04-19),333bf Final A E1
@@ -29,7 +29,7 @@
 5402362001,D2 U2 B F R2 D2 R' B' D L' B2 D F' U F2 D2 U',B,Cubing with Dinosaurs Lehi 2026 (2026-02-21),333 R1 C #3
 170062001,F D B R' B2 D2 F B2 R F2 D2 F2 B U2 F' L2 B' R2 D2 L2,B,Lifestyle Seasons Winter 2015 (2015-08-01),333oh R1 B #5
 4554369001,L D2 R2 U2 B2 L' R2 F' D' L' F' R2 B' R U2 R U2 R,B,Korea Newcomers AM 2025 (2025-03-08),333 R1 I #1
-188446001,L D F' B2 D' L2 U F U2 F' D B2 U' F2 L2 D L2 B2,B,Tohoku Open 2015 (2015-09-13),333 R1 B #1
+5852597017,U' F2 D2 B' U R F' R2 B' R F L2 F2 U2 B2 D' F2 B2 U L',B,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 A #3
 4472446001,D R2 B' U2 F' R' F' R' D F2 L2 F2 D' L2 D L' U' B2,B,Tramsheds IV: Summer Saturday 2025 (2025-02-08),333 R2 C E2
 5060541001,D' B2 U' F2 D2 L2 B2 R2 U L D B' D R' B2 D2 L2 U2 R,B,UNSA Speedcubing Primavera 2025 (2025-09-27),333 R2 D E1
 235814001,U L2 U L2 U' R2 D R' F U2 F R' F D F' R2 U,B,Rubik's Cube Mumbai Open 2015 (2015-12-26~27),333ft Final C #3

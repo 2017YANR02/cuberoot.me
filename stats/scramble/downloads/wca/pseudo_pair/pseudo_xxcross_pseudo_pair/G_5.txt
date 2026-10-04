@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_pair / pseudo_xxcross_pseudo_pair / G / bin 5
-# Population in this bin: 699
+# Population in this bin: 704
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 8961001,L2 F R2 B2 L2 B2 R2 D' F' R' D R2 B' D2 L' F' L F',G,BP Cube Day 2014 (2014-04-05),333oh Final C #1
@@ -188,7 +188,7 @@
 2198704001,L2 U F2 L' U2 R D2 F2 D2 B' R' B2 F R' U2 L' D L,G,Even Day in Bacolod 2022 (2022-09-24),333 R1 A E2
 932484001,L' U L D F' B U2 B' U' B2 U2 D2 F' D2 L2 F L2 F U2,G,Lower Moreland Fall 2018 (2018-11-10),333oh R1 C #3
 932594001,B2 D2 B2 U' F2 R2 D R2 U' B2 D' R U2 F' L' F D' F D B F',G,CFL Sieradz 2018 (2018-11-10),333 R1 A #1
-933067001,D2 B2 D2 F D2 L2 B' R2 B' R' B' D2 R' F' D2 F' R' D F',G,SnoCo Fall 2018 (2018-11-17),333ft R1 A E1
+5848475001,D2 B' D F B L U2 L2 U B' U' B2 L2 B2 U2 B2 U' F2,G,Floripa ao Cubo 2026 (2026-09-26~27),333 R1 C #5
 3055774001,F L B U F2 U' L2 U R2 D' B2 F2 L' B2 R' U F2 L',G,Tanza Speedcubing Open 2023 (2023-09-10),333 R1 C #3
 4449808068,U2 L F' R' L2 U F2 D B2 U L' D' B2 D F U' B2 D,G,Amherst Winter Challenge 2025 (2025-01-25~26),333mbf Final A #1
 967880001,R2 B2 D2 L2 D2 R' D2 B F2 L U' L R B L2 R2 U2 B2,G,Sumatra Open 2018 (2018-12-29~30),333 R1 B E1

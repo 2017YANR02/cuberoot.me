@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_cross / G / bin 2
-# Population in this bin: 446
+# Population in this bin: 448
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 10544001,F2 D2 R' F2 L2 R' D2 R B F2 D' L' D' B2 L' R B' F2,G,Northpark Adelaide 2014 (2014-04-12),333 R2 A #3
@@ -54,7 +54,7 @@
 368795001,L2 R2 F R2 B' R2 D2 F2 R2 D' F' U R2 B' D2 R' U' R2 B,G,Slow N Steady Fall 2016 (2016-09-24),333 R1 A #1
 2663353001,F L2 D' F2 L2 D L2 D F2 D2 B2 U F R D2 F' D2 F U R,G,Cubing on Par B 2023 (2023-04-23),333 Final A #2
 380810001,F D' L2 U' F2 L2 U2 L' F2 L' B2 L2 U' F2 L2 U D,G,Rubik's Cube Pune Open 2016 (2016-10-15~16),333 R1 C #5
-4404133009,D2 F2 D2 L U2 L2 B' L2 B' U2 R2 U L D R2 U L2 D2 B' L',G,Viens Voir Gesté 2025 (2025-01-04),333mbf Final B #2
+5855625001,B' R D2 R2 B' F L2 R2 B L2 R' D2 R F2 R' D' U2 B2 F',G,Dublin Autumn Solving 2026 (2026-09-26~27),333 R2 C #5
 402915001,F2 L2 D' U2 R2 D L2 F2 D' B' R2 D R2 F' D' L' R' B' D' L B R',G,Calgary Limited Fall 2016 (2016-11-26),333bf Final E #3
 411983001,D L B L' B2 R U' R' D' R' F2 L2 U F2 B2 D R2 F2 U',G,Fuenlabrada Open 2016 (2016-12-10~11),333oh R1 B #4
 440766001,F' U' R U B2 U R' L U' B U2 F2 R' B2 L' U2 R B2,G,Cube Challenge Quark 2017 (2017-02-05),333 R2 B #5

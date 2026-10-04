@@ -1,8 +1,8 @@
 # Scramble samples — 223 / block223 / WY / bin 10
-# Population in this bin: 924
+# Population in this bin: 927
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3307504001,R2 F U R' B U R F R2 D' L2 U' B2 U2 R2 F2 R F' L',W,Texas Championship 2023 (2023-12-02~03),333 R2 C E1
@@ -201,7 +201,7 @@
 741965001,D' L2 R2 D2 F2 L2 U B2 F2 U2 L F2 R' U B' L U2 B2 L F L',W,Cube-A-POOLooza 2018 (2018-03-31),333 Final B #4
 3143348001,U' R2 D2 R2 B2 D' U' L' D L' F' R2 F L R2 B' L' F2,W,Gurugram Cube Open 2023 (2023-10-07~08),333 R1 B E1
 1661935001,R' U L U2 R' B2 F2 D2 R' F2 L D2 F' D' B U F L' R' D2,W,Wuhan Open 2021 (2021-06-05),333 R1 C #3
-1599261021,L2 B D2 L2 D2 F D2 B' F U2 R B' D' U F U2 L D' R2 F' U L' F,W,Side 'n Blind Forserum 2020 (2020-03-06~08),333mbf Final B #3
+5845890001,L2 R U2 R' D2 B2 U2 R2 D2 L' U B U2 R' B2 D U F' U' B,W,UC Canterbury Open 2026 (2026-09-26),333 R1 B #1
 4105486036,L2 U' R' U2 R2 F2 D2 F R2 B' D2 L2 B2 R D2 B R U' B D B R',W,SacQuiet Fall 2024 (2024-09-15),333mbf Final A #2
 4798521001,U' R' D2 L2 B' D L' D' L2 U2 L2 F2 L2 U2 F2 U R' B' D' L B',W,VIC Side State Championship 2025 (2025-06-14~15),333mbf Final A #1
 5413659021,U' F2 R' B2 D L2 F2 L2 F2 U2 B2 D2 U' R D U2 B U B' F' L,W,Blind League Dobřejovice I: Hearthborn 2026 (2026-02-28),333mbf Final A #1

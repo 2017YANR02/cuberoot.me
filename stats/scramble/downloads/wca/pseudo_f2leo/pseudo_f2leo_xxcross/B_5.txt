@@ -1,8 +1,8 @@
 # Scramble samples — pseudo_f2leo / pseudo_f2leo_xxcross / B / bin 5
-# Population in this bin: 959
+# Population in this bin: 964
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2679777001,L2 D R2 U' F2 U B2 D2 U' F' L2 D' F2 R' U' R' B' U2 R',B,Welcome to Olympia 2023 (2023-04-29),333 R1 B E2
@@ -153,7 +153,7 @@
 637626001,U' L2 F2 D' B2 D F2 R' F' U' R2 F R2 F L2 F2 R2 F L2,B,Porto Alegre Open 2017 (2017-11-04~05),333 R2 C #4
 641782001,D2 L2 B2 D B2 R2 U L' F U2 F R' B2 F2 D' B D2 L' R2,B,RubIquitos 2017 (2017-11-12),333 R2 A E2
 642921001,D2 F2 D B' U2 F2 L' B2 R U' R2 D' R2 D B2 U' L2 U B2,B,Chak-chak cubing in Kazan 2017 (2017-11-11~12),333 R2 B E2
-2723220001,L' D' L' U D2 B L2 B' D2 B2 D2 R' D2 U' R' D' U2 F2,B,Tumba Open 2023 (2023-05-20),333 R1 B #4
+5850528001,R B2 U' B2 D F2 R2 F2 U F' L B D2 B' F R2 F2 U',B,Colorado Cubing Weekend 2026 (2026-09-26~27),333oh R1 A #1
 1286266001,U2 L2 B2 F2 U2 F2 D L2 B2 L' B' L' B' D' U' F L2 D L2,B,Cubing in Cill Chainnigh 2019 (2019-08-31~09-01),333 R2 D #3
 649039001,B2 D2 U' L2 D L2 U' L2 U2 L2 F D' B' L B2 D' L U' F L',B,Berkeley Fall 2017 (2017-11-18~19),333oh R1 A E1
 1920135001,L2 B2 F R2 B2 F D2 B L2 D2 R D' B D' U' F2 U2 B R F2,B,Brasília Autumn 2022 (2022-05-14~15),333 R1 A #4
@@ -173,7 +173,7 @@
 3921101001,F' R F B R' U' B2 R' F2 D L2 F2 R2 D2 R2 B R2 D2 R2,B,Iguatemi Fortaleza IV 2024 (2024-07-06~07),333 R2 C E2
 3406498001,B D' F2 D2 F2 L R B2 L F2 R' D2 U F L D2 B' F2 U B,B,Don't DNF Dublin 2024 (2024-01-06),333bf R1 B E2
 661334009,B2 L' B2 U2 L D2 L' D2 L F2 D F' L2 D' R B U L' U2 L' B R2,B,Please Be Quiet UCLA 2017 (2017-04-29~30),333mbf Final A #1
-1200670001,R B2 L F2 L B2 F2 D2 F' L' U' L F2 R' D2 F R' D R,B,Jacksonville 2019 (2019-06-29),333 R1 A #5
+5847860012,B' D' R' B2 F2 L' R2 D2 F2 D' L R D2 U' F' U' B U2 B R',B,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final B #1
 661379027,R2 F' D2 U2 B' D2 U2 B U2 L' U' L2 R D' B2 U2 R B2 R' U B,B,Classic City Shhhhh 2017 (2017-06-03~04),333mbf Final A #2
 2348823001,L2 D2 B R U2 B2 L D2 B2 D2 R' B L R2 B',B,Darkhan Winter 2022 (2022-12-03),333 R1 C #4
 2873447001,U' B2 R2 U2 L2 F' D2 L2 F' U' B2 F' D' B' U' F' L' B,B,Michigan 2023 (2023-07-08~09),333 R3 B #3

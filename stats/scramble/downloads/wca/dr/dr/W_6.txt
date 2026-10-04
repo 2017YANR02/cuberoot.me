@@ -1,8 +1,8 @@
 # Scramble samples — dr / dr / W / bin 6
-# Population in this bin: 639
+# Population in this bin: 641
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 5415001,B2 D U L2 F2 U' B2 F2 R U2 F2 R' U L F2 L2 U2 R F L' F',W,Fénix 2014 (2014-03-29~30),333bf R2 A E1
@@ -12,7 +12,7 @@
 1349795063,L D2 L D2 R2 D2 R2 F R' D' R' D2 L D2 L B2 R2 F L',W,345 Cube Day Allen 2019 (2019-10-13),333mbf Final B #2
 41772001,D' R2 B2 D R2 B' D F D2 B' F' D2 R2 D F2,W,Indian Nationals 2014 (2014-07-25~27),333 R1 A #5
 48062001,F2 L2 D' F2 U L2 F2 R2 U2 F2 L B' L2 B2 L2 R U2 R' U,W,Rubik's Cube European Championships 2014 (2014-08-08~10),333oh R1 B E1
-50519001,F2 D U2 F2 R2 U2 L2 F2 U' B2 U2 L R2 D L' U2 L' R B L,W,Indian Cube Challenge 2014 (2014-08-15~17),333 R2 A #5
+5852577029,F D2 B U2 R2 F' R2 U2 R2 L U2 B' F' R2 D' B' R2 D2 L B',W,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf R1 B #1
 51312001,D U2 F2 L2 F2 R2 F2 U R2 F' D' B2 L' U2 F' D' R' U' R,W,Oleksandriia Open 2014 (2014-08-16~17),333oh R2 B #2
 2295005011,R' B U D2 L F L D U2 R2 L2 F' L2 B U2 F D2 F2 D2 F2 L',W,Colombia Nationals 2022 (2022-11-05~07),333mbf Final A #2
 2144688001,F' L F' R F B L' F' U F U R2 F2 R D2 R2 L B2,W,Singapore Mini 2022 (2022-09-03),333 Final A E2
@@ -43,7 +43,7 @@
 228973001,B2 L2 R2 D2 U' L2 D F2 D2 B2 D2 B L U2 L' B2 L' U2 F' D',W,Plenty o' Parity 2015 (2015-12-12~13),333 R1 G #1
 4753460001,D R2 D U2 L2 D L2 B2 R2 U' B2 F U' F U2 B D2 R2,W,Chien Kuo Cubing Party 2025 (2025-05-25),333 R1 E #4
 5664732001,L' R' B2 L U2 B2 D2 R' B2 F' D F R B2 D R2 D L,W,CubingUSA Heartland Championship 2026 (2026-05-22~24),333oh R1 B #5
-5280654001,U B' U2 L' U2 R F2 L B2 F2 L R F' U' R2 D F2 L' F L B2,W,Mindanao Championship 2025 (2025-12-14),333bf Final A E1
+5852594004,D L2 U' L2 U F2 U B L' F' D2 U2 L R B' L2 B L2 B',W,Multimatum: New York Multimate PBQ VI 2026 (2026-09-25~27),333mbf Final C #2
 4178004001,B2 L2 D2 F D2 R2 F' U' B' D' B' R' F' L F2 U2 L2 R,W,50 Years of Cubing in the Philippines 2024 (2024-10-06),333 R2 A #1
 5793326001,B2 L D' R D2 F' R' F2 L' D B2 U2 B2 L2 D L2 R D,W,Deerfield MA Summer 2026 (2026-08-22),333 R1 C E1
 250137001,R2 F2 D U B2 D L2 U B2 U' R D L' F' U2 F2 L2 D2 R2,W,Mantua Tiny Open 2016 (2016-02-06),333 Final A #3
