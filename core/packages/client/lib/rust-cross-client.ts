@@ -5,7 +5,7 @@
 // 下载量(2026-07-27 重划):
 //   · mt_*(移动表)默认由 WASM 现场生成(见 solver/src/mt_gen.rs),不单独下载；
 //     First Layer 例外,最终移动表封进 opt_first_layer,避免客户端执行 4490 万态 BFS。
-//   · pt_*(BFS 剪枝表)仍须下载,是唯一的网络成本。
+//   · pt_cross_C4E0 缓存优先，未命中时下载与现场生成竞速；其余 pt_* 下载。
 //   · std 池再拆两段:建池只拉 pt_cross(gz 50KB)就能算纯十字;xcross+ 要的
 //     pt_cross_C4E0(gz 20MB)由 `ensureXCross()` 在用户真的切到那些阶段时才补。
 // 结果:计时器/analyzer 默认视图(标准 · 十字)的冷启动从 ~30MB 降到 ~50KB。
@@ -13,12 +13,8 @@
 // 产物自包含在 /tools/solver/rust-cross/(dev 经 Next catch-all,prod 直取 static)。
 
 import { normalizeScramble } from './cross-solver';
-// 表的住址 + 那张 21MB 大表的下载单例(跨池共享,页面级也能先行预取)。
-import { BASE, TV, claimXCrossGz, releaseXCrossGz, tablesBaseUrl } from './rust-cross-tables';
-
-// 代码产物(worker/glue/wasm)固定文件名 + 1 天 CDN 缓存,重建后靠版本 query 失效。
-// 每次重建 wasm/worker 必须 bump。
-const V = 'v=20260925a';
+// 表的位置与完整性校验后的下载/生成竞速单例。
+import { BASE, TV, V, claimXCrossTable, tablesBaseUrl } from './rust-cross-tables';
 
 // 各表解压后(= 装进 WASM 线性内存的)字节数。实测自 tools/solver/rust-cross/tables/*.bin.gz
 // (`gzip -dc | wc -c`)。**表重建后尺寸若变需同步更新**(见 memory「WASM 重建仪式」)。
@@ -47,7 +43,7 @@ export const TABLE_BYTES: Record<string, number> = {
 };
 
 // 各 need 首次加载的表清单 —— 必须与 cross-solver-worker.js 的 init 分支严格一致。
-// **只列 pt_*/opt_*(必须下载的预构建产物)**;mt_* 不作为独立文件列出。
+// **只列 pt_*/opt_*(所需表，XCross 可下载或现场生成)**;mt_* 不作为独立文件列出。
 // eodr / htr / htr2 / fr / chain 零表下载(微表/距离表现场从内置运动学建)。
 // pocket / pyraminx / skewb 拉预算好的全空间距离表 opt_*(秒算,from_dist 直载,
 // 表缺失时 worker 回退现场 BFS)。
@@ -318,6 +314,7 @@ interface PoolWorker {
   dead: boolean;
   /** 该 worker 的 xcross 段:null=未补;Promise=补表中/已补(resolve 即可用)。 */
   xcross: Promise<void> | null;
+  xcrossReady: boolean;
   /** 补表中的 resolve 句柄:worker 死掉时要手动结算,否则 ensureXCross 永远等下去。 */
   xcrossResolve: (() => void) | null;
 }
@@ -337,6 +334,8 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
   // std 池:本会话是否已升级到 xcross+(切阶段后新 spawn 的 worker 直接带上大表 init,
   // 免得刚 ready 又补一次)。
   let wantXCross = false;
+  let terminated = false;
+  let tableAbort = new AbortController();
   let xcrossSeq = 1;
   const xcrossWaiters = new Map<number, () => void>();
 
@@ -391,7 +390,7 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
 
   // 仅在「有排队任务 + 未满 + 当前没有 worker 在加载」时串行预热一个(避免 N× 同时解压 27MB)。
   function maybeSpawn() {
-    if (loading || spawned >= size || queue.length === 0) return;
+    if (terminated || loading || spawned >= size || queue.length === 0) return;
     spawn();
   }
 
@@ -400,29 +399,44 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     loading = true;
     const w = new Worker(`${BASE}/cross-solver-worker.js?${V}`, { type: 'module' });
     // 已升级过的池:新 worker 直接带大表 init,ready 即具备 xcross 能力。
-    const bornWithXCross = wantXCross;
+    const bornWithXCross = wantXCross || need === 'variant';
     const pw: PoolWorker = {
       w, job: null, ready: false, dead: false,
-      xcross: bornWithXCross ? Promise.resolve() : null,
+      xcross: null, xcrossReady: false,
       xcrossResolve: null,
     };
     all.push(pw);
+    if (bornWithXCross) {
+      pw.xcross = new Promise<void>((resolve) => { pw.xcrossResolve = resolve; });
+    }
     w.onmessage = (e: MessageEvent) => {
+      if (pw.dead || terminated) return;
       const m = e.data;
       // xcross 补表回执:只结算等待者,不动 job(该 worker 可能正忙着别的任务)。
       if (m.type === 'xcross_ready') {
+        pw.xcrossReady = true;
         xcrossWaiters.get(m.id)?.();
         xcrossWaiters.delete(m.id);
         return;
       }
       if (m.type === 'ready') {
         pw.ready = true;
+        if (bornWithXCross) {
+          pw.xcrossReady = true;
+          pw.xcrossResolve?.();
+          pw.xcrossResolve = null;
+        }
         loading = false;
         if (!anyReady) { anyReady = true; resolveReady(); }
         assign(pw);
         return;
       }
       if (m.type === 'error') {
+        if (m.operation === 'ensure_xcross') {
+          xcrossWaiters.delete(m.id);
+          fail(pw, new Error(m.error || 'XCross attach failed'), true);
+          return;
+        }
         const job = pw.job;
         pw.job = null;
         if (job) { job.reject(new Error(m.error)); assign(pw); return; } // 求解错误,worker 仍存活
@@ -455,50 +469,38 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
         || 'worker crashed (可能内存不足 / out of memory)';
       fail(pw, new Error(detail), true);
     };
-    // 池已升级过:这个 worker 一 init 就要带上大表(ready 即具备 xcross 能力,不能等 ready 之后
-    // 再补 —— 中间派进来的 job 会打在没 attach 的 WASM 上直接 panic)。字节仍走整池那一份,
-    // 拿不到(已撒手 / 取表失败)才让它自己去取。gz 早已下好,这里的 await 只是一个微任务。
+    // The same verified table serves standard XCross and variant pools.
     if (bornWithXCross) {
-      void claimXCrossGz().then(
-        (gz) => { w.postMessage({ ...initMsg, xcross: true, gz }); dropXCrossGzIfDone(); },
-        () => w.postMessage({ ...initMsg, xcross: true }),
+      void claimXCrossTable(tableAbort.signal).then(
+        (xcrossBytes) => {
+          if (!pw.dead && !terminated) w.postMessage({ ...initMsg, xcross: true, xcrossBytes });
+        },
+        (error) => { if (!pw.dead) fail(pw, error, true); },
       );
     } else {
       w.postMessage({ ...initMsg, xcross: false });
     }
   }
 
-  // 大表(pt_cross_C4E0,gz 21MB)只下一次,字节从 rust-cross-tables 那个跨池单例取。
-  //
-  // 原先是每个 worker 自己 fetch:ensureAllXCross 向已起的 N 路一起广播,N 个 fetch 同一 URL
-  // 同时出发,而浏览器**不会**把并发的同 URL 请求合成一次下载 —— 实测(计时器面板,手机宽度
-  // 2 路)真的是两条 21MB 的流并行抢带宽,42MB 过线,首次切到 XCross 要等 7~15 秒。
-  // 主线程取一次 gz,再把这份字节分发给每个 worker(各自解压进自己的 WASM 内存,那部分本来
-  // 就得一人一份)。发完就撒手,不长期占着这 21MB。
-  /** 池里每一路都拿到过大表(= 不会再有新 worker 来要)后松手,别让这 21MB 常驻主线程 ——
-   *  手机上还压着两份 52MB 的解压表。此后万一还有人要,退回重新 fetch(缓存已热)。 */
-  function dropXCrossGzIfDone(): void {
-    if (spawned >= size && all.every((p) => p.dead || p.xcross)) releaseXCrossGz();
-  }
-
   // 给某个 worker 补 xcross 段(幂等:pw.xcross 一旦建立就复用同一个 Promise)。
   // worker 侧 ensure_xcross 会先 await 自己的 init,故 init 未完成时发也安全。
   function ensureWorkerXCross(pw: PoolWorker): Promise<void> {
-    if (pw.dead) return Promise.resolve();
-    if (pw.xcross) return pw.xcross;
+    if (pw.dead) return Promise.reject(new Error('XCross worker unavailable'));
+    if (pw.xcross) return pw.xcross.then(() => {
+      if (pw.dead) throw new Error('XCross worker unavailable');
+    });
     const id = xcrossSeq++;
     // resolve 句柄同步挂上:worker 中途死掉时 fail() 要能结算它(此刻表可能还没下完)。
     let settle!: () => void;
     const done = new Promise<void>((res) => { settle = res; });
     pw.xcrossResolve = settle;
     xcrossWaiters.set(id, () => { pw.xcrossResolve = null; settle(); });
-    pw.xcross = claimXCrossGz().then((gz) => {
-      if (pw.dead) { settle(); return done; }
+    pw.xcross = claimXCrossTable(tableAbort.signal).then((xcrossBytes) => {
+      if (pw.dead || terminated) throw new Error('aborted');
       // 不进 transfer list:每个 worker 要自己那一份,postMessage 的结构化克隆正是拷贝。
-      pw.w.postMessage({ type: 'ensure_xcross', id, gz });
-      dropXCrossGzIfDone();
-      return done;
-    }, (e) => {
+      pw.w.postMessage({ type: 'ensure_xcross', id, xcrossBytes });
+      return done.then(() => { if (pw.dead) throw new Error('XCross worker unavailable'); });
+    }).catch((e) => {
       xcrossWaiters.delete(id);
       pw.xcross = null;
       pw.xcrossResolve = null;
@@ -516,7 +518,12 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
   }
 
   async function ensureAllXCross(): Promise<void> {
+    if (terminated) throw new Error('aborted');
     wantXCross = true;
+    if (!all.some((p) => !p.dead)) {
+      all.length = 0; idle.length = 0; spawned = 0;
+      spawn();
+    }
     await Promise.all(all.filter((p) => !p.dead).map(ensureWorkerXCross));
   }
 
@@ -526,12 +533,17 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
     // 连后续 attach 都做不了,那个 worker 就此报废(曾表现为 UI 永远停在「加载 XCross 数据表」)。
     // ensureAllXCross 幂等,已就绪时只是 await 一批已 resolve 的 Promise。
     if (jobNeedsXCross(msg)) {
-      return ensureAllXCross().then(() => submitReady(msg, onPartial, onFace));
+      const signal = tableAbort.signal;
+      return ensureAllXCross().then(() => {
+        if (signal.aborted) throw new Error('aborted');
+        return submitReady(msg, onPartial, onFace);
+      });
     }
     return submitReady(msg, onPartial, onFace);
   }
 
   function submitReady(msg: Record<string, unknown>, onPartial?: Job['onPartial'], onFace?: Job['onFace']): Promise<unknown> {
+    if (terminated) return Promise.reject(new Error('aborted'));
     // 含 Rw/Fw/旋转的打乱(如 3BLD 朝向尾缀)会让魔方偏离白顶绿前;Rust 端 string_to_alg
     // 直接跳过无法识别 token 会静默算错,故先归正到白顶绿前的纯 HTM 再喂 worker。
     // pyraminx / skewb 例外:记号非 3x3 语义(pyram 小写 tips;skewb 角转 120°,X2=240°),
@@ -713,14 +725,16 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       if (need === 'cross') await ensureAllXCross();
     },
     hasXCross() {
-      return need !== 'cross' || wantXCross;
+      return need !== 'cross' || (all.some((p) => !p.dead) && all.every((p) => p.dead || p.xcrossReady));
     },
     clearQueue() { while (queue.length) queue.shift()!.reject(new Error('cancelled')); },
     abort() {
-      // 只终止在跑的 worker(有 job 的);空闲 ready worker 保留,避免无谓重载表。
+      tableAbort.abort();
+      tableAbort = new AbortController();
+      // Preserve ready idle workers, but stop incomplete table acquisition/attach.
       for (const pw of all) {
-        if (!pw.job) continue;
-        pw.job.reject(new Error('aborted'));
+        if (!pw.job && pw.ready && (!pw.xcross || pw.xcrossReady)) continue;
+        pw.job?.reject(new Error('aborted'));
         pw.job = null;
         try { pw.w.terminate(); } catch { /* */ }
         pw.dead = true;
@@ -729,12 +743,23 @@ export function createRustCrossPool(maxSize: number, need: 'cross' | 'cross_rest
       }
       for (let i = all.length - 1; i >= 0; i--) if (all[i].dead) { all.splice(i, 1); spawned--; }
       for (let i = idle.length - 1; i >= 0; i--) if (idle[i].dead) idle.splice(i, 1);
+      xcrossWaiters.clear();
       while (queue.length) queue.shift()!.reject(new Error('aborted'));
       loading = false;
     },
     terminate() {
-      releaseXCrossGz();
-      for (const pw of all) pw.w.terminate();
+      terminated = true;
+      tableAbort.abort();
+      for (const pw of all) {
+        pw.dead = true;
+        pw.job?.reject(new Error('aborted'));
+        pw.job = null;
+        pw.xcrossResolve?.();
+        pw.w.terminate();
+      }
+      xcrossWaiters.clear();
+      while (queue.length) queue.shift()!.reject(new Error('aborted'));
+      if (!anyReady) rejectReady(new Error('aborted'));
     },
   };
 }

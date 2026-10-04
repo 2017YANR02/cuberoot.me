@@ -510,6 +510,11 @@ export class XCrossRestrictSolverWasm {
     solve_xcross_restricted_moves(scramble: string, face: number, allowed_lo: number, allowed_hi: number, max_rot_count: number, extra: number, cap: number, k: number, combo: string, on_sol: Function): string;
 }
 
+/**
+ * Generate the canonical packed XCross table in a dedicated browser worker.
+ */
+export function generate_xcross_table(on_layer: Function): Uint8Array;
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
@@ -574,6 +579,7 @@ export interface InitOutput {
     readonly frsolverwasm_new: () => number;
     readonly frsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly frsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+    readonly generate_xcross_table: (a: any) => [number, number];
     readonly htrphase2solverwasm_new: () => number;
     readonly htrphase2solverwasm_solve: (a: number, b: number, c: number) => [number, number];
     readonly htrphase2solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
