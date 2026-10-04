@@ -12,6 +12,8 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { CONTRAST_KEY, THEME_KEY, restorePersistedAppearance } from '@/lib/theme';
 import { PALETTE_KEY } from '@/lib/palettes';
+import { HOME_BACKGROUND_CHANGE_EVENT } from '@/hooks/useHomeBackgroundChoice';
+import { HOME_BACKGROUND_KEY } from '@/lib/home-backgrounds';
 import { syncMiniProgramAppearance } from '@/lib/miniprogram-appearance';
 
 export default function ThemeColorSync() {
@@ -22,9 +24,16 @@ export default function ThemeColorSync() {
     observer.observe(document.documentElement, { attributes: true,
       attributeFilter: ['data-theme', 'data-palette', 'data-contrast', 'data-appearance-preview'] });
     window.addEventListener('theme-change', publish);
+    window.addEventListener(HOME_BACKGROUND_CHANGE_EVENT, publish);
+    const onBackgroundStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key.startsWith(HOME_BACKGROUND_KEY)) publish();
+    };
+    window.addEventListener('storage', onBackgroundStorage);
     publish();
     return () => {
       observer.disconnect();
+      window.removeEventListener(HOME_BACKGROUND_CHANGE_EVENT, publish);
+      window.removeEventListener('storage', onBackgroundStorage);
       window.removeEventListener('theme-change', publish);
     };
   }, [pathname]);

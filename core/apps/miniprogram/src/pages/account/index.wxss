@@ -422,3 +422,38 @@
   line-height: 1.45;
   white-space: nowrap;
 }
+
+/* Match SiteBackground's fixed landscape and token-based readability overlay. */
+.account-scenery {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.account-scenery-image {
+  position: absolute;
+  inset: 0;
+  background-image: var(--cr-scene-image, none);
+  background-size: cover;
+  background-position: var(--cr-scene-position, 50%) top;
+  filter: var(--cr-scene-filter, none);
+}
+
+.account-scenery::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--cr-bg) 72%, transparent),
+    color-mix(in srgb, var(--cr-bg) 16%, transparent) 18%,
+    color-mix(in srgb, var(--cr-bg) 48%, transparent) 42%,
+    color-mix(in srgb, var(--cr-bg) 48%, transparent) 100%);
+}
+
+.account-login-page,
+.account-user-page {
+  position: relative;
+  z-index: 1;
+}

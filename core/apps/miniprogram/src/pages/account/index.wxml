@@ -1,4 +1,5 @@
 <page-meta page-style="{{appearanceStyle}}" />
+<view wx:if="{{!isTimelineEntry}}" class="account-scenery" aria-hidden="true"><view class="account-scenery-image" /></view>
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
