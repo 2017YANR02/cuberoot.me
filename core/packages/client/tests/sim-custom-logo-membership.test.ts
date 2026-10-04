@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { DEFAULT_MEMBERSHIP_BENEFITS } from '@cuberoot/shared/membership-benefits';
 import {
   DEFAULT_SETTINGS,
   withCustomLogoAccess,
@@ -34,11 +35,17 @@ describe('simulator custom logo membership access', () => {
     const simPage = readFileSync(new URL('../app/[lang]/sim/SimPage.tsx', import.meta.url), 'utf8');
     const controls = readFileSync(new URL('../app/[lang]/sim/PlayerControls.tsx', import.meta.url), 'utf8');
     const membershipPage = readFileSync(new URL('../app/[lang]/membership/page.tsx', import.meta.url), 'utf8');
+    const benefitsHook = readFileSync(new URL('../hooks/useMembershipBenefits.ts', import.meta.url), 'utf8');
 
     expect(simPage).toContain('withCustomLogoAccess(settings, isMember)');
     expect(controls).toContain('setShowCustomLogoUpsell(true)');
     expect(controls).toContain('href="/membership"');
     expect(controls).not.toContain('<option value="custom" disabled={!canUseCustomLogo}>');
-    expect(membershipPage).toContain("universalPerks.includes('custom_sim_logo')");
+    expect(DEFAULT_MEMBERSHIP_BENEFITS.find(item => item.id === 'custom_sim_logo'))
+      .toMatchObject({ group: 'common', enabled: true });
+    expect(benefitsHook).toContain('items: DEFAULT_MEMBERSHIP_BENEFITS');
+    expect(membershipPage).toContain('useMembershipBenefits()');
+    expect(membershipPage).toContain("benefits.items.filter(item => item.group === 'common' && item.enabled)");
+    expect(membershipPage).toContain('renderPerks(universalPerks)');
   });
 });
