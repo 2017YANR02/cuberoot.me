@@ -71,6 +71,11 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  { name: 'platformMajorToMinor', sig: 'platformMajorToMinor(value: string): number | null', imp: "import { platformMajorToMinor, platformMinorToMajor, platformLocalDateTime } from '@/lib/platform-commerce-fields'", category: 'format', zh: '运营金额按十进制精确转换为分，共用金额回显与本地日期时间字段。', en: 'Exact decimal major-to-minor money conversion with shared money and local datetime display.' },
+  { name: 'platformLearningRequest', sig: "platformLearningRequest<T>(path: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal): Promise<T>", imp: "import { platformLearningRequest } from '@/lib/platform-learning'", category: 'api', zh: '学习工作台与课堂共用的鉴权、幂等请求和错误读取。', en: 'Authenticated, idempotent requests and error handling shared by learning workspaces and classrooms.' },
+  { name: 'qrAdminRequest', sig: 'qrAdminRequest<T>(path: string, options?: { method?: string; body?: unknown; signal?: AbortSignal }): Promise<T>', imp: "import { qrAdminRequest, qrAdminEntity } from '@/lib/platform-qr-admin'", category: 'api', zh: '二维码管理、统计、提示库与工作室的请求入口和列表实体转换。', en: 'Shared requests and entity conversion for QR management, statistics, prompts and studio.' },
+  { name: 'localizePlatformEntity', sig: 'localizePlatformEntity(item: PlatformEntity, lang: string): PlatformEntity', imp: "import { localizePlatformEntity } from '@/lib/platform-gateway'", category: 'i18n', zh: '只本地化展示标题和摘要，保留无损业务字段。', en: 'Localize display titles and summaries while retaining lossless business data.' },
+
   {
     name: 'useMembershipBenefits',
     sig: 'useMembershipBenefits(): { content, setContent }',

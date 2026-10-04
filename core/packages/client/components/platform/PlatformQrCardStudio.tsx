@@ -13,6 +13,9 @@ import {
 } from 'react';
 import { Check, Copy, Download, ExternalLink, FileImage, ImageDown, Magnet, Move, Pencil, Plus, Printer, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
+import { prepareImageUpload } from '@/lib/image-upload';
+import { qrAdminRequest, qrAdminEntity, type QrAdminPage, type QrAdminRow } from '@/lib/platform-qr-admin';
+import { PlatformQrMetadataEditor } from './PlatformQrMetadataEditor';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import SearchInput from '@/components/SearchInput';
@@ -310,7 +313,7 @@ function withPosition(card: PlatformQrCard, key: EditableElement, x: number, y: 
 }
 
 function withScale(card: PlatformQrCard, key: EditableElement, scale: number): PlatformQrCard {
-  const next = Math.max(key === 'front' || key === 'back' ? 0.5 : 0.3, Math.min(3, Math.round(scale * 100) / 100));
+  const next = Math.max(key === 'qr' ? 0.01 : key === 'front' || key === 'back' ? 0.5 : 0.3, Math.min(3, Math.round(scale * 100) / 100));
   if (key.startsWith('ct:')) {
     const id = key.slice(3);
     return {
@@ -440,7 +443,7 @@ function ElementInspector({
           <label className={styles.fieldWide}>
             <span>{isText ? t('字号倍率', 'Text scale') : t('缩放倍率', 'Scale')}</span>
             <span className={styles.rangeRow}>
-              <input className={styles.fieldRange} type="range" min={selected === 'front' || selected === 'back' ? 0.5 : 0.3} max={3} step={0.05} value={getScale(card, selected)} onChange={(event) => update((current) => withScale(current, selected, Number(event.target.value)))} />
+              <input className={styles.fieldRange} type="range" min={selected === 'qr' ? 0.01 : selected === 'front' || selected === 'back' ? 0.5 : 0.3} max={3} step={0.01} value={getScale(card, selected)} onChange={(event) => update((current) => withScale(current, selected, Number(event.target.value)))} />
               <output>{getScale(card, selected).toFixed(2)}×</output>
             </span>
           </label>
@@ -508,12 +511,13 @@ function PromptComposer({
 }) {
   const t = useT();
   const [library, setLibrary] = useState<QrPromptLibrary>(FALLBACK_QR_PROMPT_LIBRARY);
+  const [libraryError, setLibraryError] = useState('');
   const [selected, setSelected] = useState<Partial<Record<QrPromptDimension, string>>>({});
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
-    void getQrPromptLibrary(controller.signal).then(setLibrary).catch(() => undefined);
+    void getQrPromptLibrary(controller.signal).then(setLibrary).catch((error: Error) => { if (!controller.signal.aborted) setLibraryError(error.message); });
     return () => controller.abort();
   }, []);
 
@@ -549,6 +553,7 @@ function PromptComposer({
 
   return (
     <section className={styles.promptComposer} aria-labelledby="qr-prompt-title">
+      {libraryError ? <p role="alert">{libraryError}</p> : null}
       <div className={styles.sectionHeading}>
         <div>
           <span className={styles.kicker}>{t('AI 艺术辅助', 'AI artwork helper')}</span>
@@ -612,7 +617,7 @@ function PromptComposer({
             </button>
             {value.trim() ? <button type="button" className={styles.textButton} onClick={() => { setSelected({}); onChange(''); }}>{t('清空', 'Clear')}</button> : null}
           </div>
-          <p>{t('提示词会随“保存设计”写入当前二维码，方便下次复刻或微调。', 'The prompt is stored with this QR code when you save the design, so it can be reproduced or refined later.')}</p>
+          <p>{t('提示词会随“保存全部”写入当前二维码，方便下次复刻或微调。', 'The prompt is stored with this QR code when you save all changes, so it can be reproduced or refined later.')}</p>
         </div>
       </div>
     </section>
@@ -631,6 +636,30 @@ export function PlatformQrCardStudio({
   const t = useT();
   const [codesParam, setCodes] = useQueryState('codes', parseAsString);
   const [edit, setEdit] = useQueryState('edit', parseAsString);
+  const [catalog, setCatalog] = useState<Record<string, PlatformEntity>>({});
+  const [catalogPage, setCatalogPage] = useState(1);
+  const [catalogMore, setCatalogMore] = useState(false);
+  const [catalogError, setCatalogError] = useState('');
+  const [catalogBusy, setCatalogBusy] = useState(false);
+  const [batchBusy, setBatchBusy] = useState(false);
+  const mergeCatalog = (rows: QrAdminRow[]) => setCatalog(current => ({ ...current, ...Object.fromEntries(rows.map(row => [row.id, qrAdminEntity(row)])) }));
+  useEffect(() => {
+    const controller = new AbortController(); setCatalogBusy(true); setCatalogError('');
+    void qrAdminRequest<QrAdminPage>(`?page=${catalogPage}&pageSize=50&q=${encodeURIComponent(query)}`, { signal: controller.signal })
+      .then(result => { mergeCatalog(result.items); setCatalogMore(result.page * result.pageSize < result.total); })
+      .catch((e: Error) => { if (!controller.signal.aborted) setCatalogError(e.message); })
+      .finally(() => { if (!controller.signal.aborted) setCatalogBusy(false); });
+    return () => controller.abort();
+  }, [catalogPage, query]);
+  useEffect(() => { setCatalogPage(1); }, [query]);
+  useEffect(() => {
+    const identifiers = [...new Set([edit, ...(codesParam && codesParam !== '-' ? codesParam.split(',') : [])].filter((value): value is string => Boolean(value)))].filter(id => ![...entities, ...Object.values(catalog)].some(entity => entity.id === id || codeOf(entity) === id));
+    if (!identifiers.length) return;
+    const controller = new AbortController();
+    void Promise.all(identifiers.map(id => qrAdminRequest<QrAdminRow>(`/${encodeURIComponent(id)}`, { signal: controller.signal })))
+      .then(mergeCatalog).catch((e: Error) => { if (!controller.signal.aborted) setCatalogError(e.message); });
+    return () => controller.abort();
+  }, [edit, codesParam]);
   const [cards, setCards] = useState<Record<string, PlatformQrCard>>({});
   const [drafts, setDrafts] = useState<Record<string, PlatformQrCard>>({});
   const [dirtyIds, setDirtyIds] = useState<Set<string>>(() => new Set());
@@ -644,10 +673,11 @@ export function PlatformQrCardStudio({
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [guides, setGuides] = useState<{ x?: number; y?: number }>({});
   const [inlineEdit, setInlineEdit] = useState<InlineEdit | null>(null);
+  const metadataSave = useRef<(() => Promise<boolean>) | null>(null);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const gesture = useRef<Gesture | null>(null);
 
-  const usableEntities = useMemo(() => entities.filter((entity) => codeOf(entity)), [entities]);
+  const usableEntities = useMemo(() => Object.values({ ...Object.fromEntries(entities.map(entity => [entity.id, entity])), ...catalog }).filter(entity => codeOf(entity) && entity.status !== 'archived'), [entities, catalog]);
   const allCodes = useMemo(() => usableEntities.map(codeOf), [usableEntities]);
   const requestedCodes = useMemo(() => {
     if (codesParam == null || codesParam === '') return new Set(allCodes);
@@ -662,12 +692,10 @@ export function PlatformQrCardStudio({
   const visibleEntities = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     if (!needle) return usableEntities;
-    return usableEntities.filter((entity) => `${codeOf(entity)} ${entity.title} ${entity.summary ?? ''}`.toLocaleLowerCase().includes(needle));
+    return usableEntities.filter((entity) => `${codeOf(entity)} ${entity.title} ${entity.data?.label ?? ''} ${entity.data?.titleZh ?? ''} ${entity.data?.titleEn ?? ''} ${entity.summary ?? ''}`.toLocaleLowerCase().includes(needle));
   }, [query, usableEntities]);
   const activeEntity = useMemo(() => {
-    if (edit) return usableEntities.find((entity) => entity.id === edit || codeOf(entity).toLowerCase() === edit.toLowerCase())
-      ?? selectedEntities[0]
-      ?? usableEntities[0];
+    if (edit) return usableEntities.find((entity) => entity.id === edit || codeOf(entity).toLowerCase() === edit.toLowerCase());
     return selectedEntities[0] ?? usableEntities[0];
   }, [edit, selectedEntities, usableEntities]);
   const activeId = activeEntity?.id;
@@ -677,10 +705,10 @@ export function PlatformQrCardStudio({
   const wantedKey = wantedIds.join('\u0000');
 
   useEffect(() => {
-    const missing = wantedIds.filter((id) => !cards[id] && !loadingIds.has(id));
+    const missing = wantedIds.filter((id) => !cards[id] && !loadErrors[id]);
     if (!missing.length) return;
     const controller = new AbortController();
-    setLoadingIds((current) => new Set([...current, ...missing]));
+    setLoadingIds(new Set(missing));
     void Promise.allSettled(missing.map((id) => getPlatformQrCard(id, controller.signal))).then((results) => {
       if (controller.signal.aborted) return;
       setCards((current) => {
@@ -710,13 +738,15 @@ export function PlatformQrCardStudio({
     });
     return () => controller.abort();
     // wantedKey and loadNonce deliberately retrigger card hydration without duplicating loaded cards.
-  }, [cards, loadNonce, wantedKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loadNonce, wantedKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!selectedElement.startsWith('ct:')) return;
     if (!activeCard?.customTexts.some((item) => item.id === selectedElement.slice(3))) setSelectedElement('quote');
   }, [activeCard, selectedElement]);
 
+  if (!usableEntities.length && catalogBusy) return <PlatformState kind="loading" />;
+  if (!usableEntities.length && catalogError) return <PlatformState kind="error" message={catalogError} />;
   if (!usableEntities.length) {
     return (
       <div className={styles.empty}>
@@ -752,6 +782,12 @@ export function PlatformQrCardStudio({
     setSaveState('saving');
     setSaveMessage('');
     try {
+      if (metadataSave.current) {
+        const saved = await metadataSave.current();
+        setSaveState(saved ? 'saved' : 'error');
+        setSaveMessage(saved ? t('资料和设计已保存。', 'Details and design saved.') : t('请检查下方资料设置。', 'Check the details form below.'));
+        return saved;
+      }
       const result = await savePlatformQrCard(activeId, activeCard);
       setCards((current) => ({ ...current, [activeId]: result.card }));
       setDrafts((current) => ({ ...current, [activeId]: cloneCard(result.card) }));
@@ -783,23 +819,22 @@ export function PlatformQrCardStudio({
     setSelectedElement('quote');
   };
 
-  const uploadArt = (side: 'front' | 'back') => (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
+  const uploadArt = (side: 'front' | 'back') => async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]; event.target.value = '';
     if (!file) return;
-    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > MAX_ART_BYTES) {
-      setArtError(t('PNG、JPEG 或 WebP 图片不能超过 1.5 MB。', 'PNG, JPEG, or WebP artwork must be no larger than 1.5 MB.'));
-      return;
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size > 40 * 1024 * 1024) {
+      setArtError(t('请选择不超过 40 MB 的 PNG、JPEG 或 WebP。', 'Choose a PNG, JPEG or WebP up to 40 MB.')); return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== 'string') return;
-      updateDraft((card) => ({ ...card, [side === 'front' ? 'frontArt' : 'backArt']: reader.result }));
-      setSelectedElement(side);
-      setArtError('');
-    };
-    reader.onerror = () => setArtError(t('无法读取这张图片。', 'This image could not be read.'));
-    reader.readAsDataURL(file);
+    try {
+      let prepared = await prepareImageUpload(file, 3200);
+      for (const size of [2400, 1800, 1200]) {
+        if (prepared.dataB64.length * 0.75 <= MAX_ART_BYTES) break;
+        prepared = await prepareImageUpload(file, size);
+      }
+      if (prepared.dataB64.length * 0.75 > MAX_ART_BYTES) throw new Error(t('图片压缩后仍过大，请裁剪后重试。', 'The image is still too large after resizing. Crop it and retry.'));
+      updateDraft(card => ({ ...card, [side === 'front' ? 'frontArt' : 'backArt']: prepared.previewUrl }));
+      setSelectedElement(side); setArtError('');
+    } catch (error) { setArtError(error instanceof Error ? error.message : String(error)); }
   };
 
   const downloadArtworkPng = async (side: 'front' | 'back') => {
@@ -977,10 +1012,44 @@ export function PlatformQrCardStudio({
 
   const activeLoading = Boolean(activeId && loadingIds.has(activeId));
   const activeError = activeId ? loadErrors[activeId] : undefined;
+  const selectAll = async () => {
+    setCatalogBusy(true); setCatalogError('');
+    try {
+      const rows: QrAdminRow[] = [];
+      for (let page = 1; ; page += 1) {
+        const result = await qrAdminRequest<QrAdminPage>(`?page=${page}&pageSize=100&q=${encodeURIComponent(query)}`);
+        rows.push(...result.items.filter(row => row.status !== 'archived'));
+        if (page * result.pageSize >= result.total) break;
+      }
+      mergeCatalog(rows); void setCodes(rows.map(row => row.code).join(',') || '-');
+    } catch (error) { setCatalogError(error instanceof Error ? error.message : String(error)); }
+    finally { setCatalogBusy(false); }
+  };
+  const downloadBatch = async () => {
+    if (batchBusy) return; setBatchBusy(true); setSaveMessage('');
+    try {
+      for (const [index, entity] of selectedEntities.entries()) {
+        const card = drafts[entity.id] ?? cards[entity.id];
+        if (!card) throw new Error(t('请等待全部卡片加载完成。', 'Wait until all cards have loaded.'));
+        if (entity.id === activeId && metadataSave.current) {
+          if (!await metadataSave.current()) throw new Error(t('请检查当前二维码资料。', 'Check the current QR details.'));
+        } else if (dirtyIds.has(entity.id)) {
+          const result = await savePlatformQrCard(entity.id, card);
+          setCards(current => ({ ...current, [entity.id]: result.card }));
+          setDirtyIds(current => { const next = new Set(current); next.delete(entity.id); return next; });
+        }
+        const response = await fetch(qrCardPublicUrl(codeOf(entity), 'press', index), { cache: 'no-store' });
+        if (!response.ok) throw new Error(t(`无法导出 ${codeOf(entity)}，后续下载已停止。`, `Could not export ${codeOf(entity)}. Remaining downloads stopped.`));
+        triggerBrowserDownload(await response.blob(), `card-${codeOf(entity)}.svg`);
+      }
+      setSaveMessage(t('所选 SVG 已下载。', 'Selected SVG files downloaded.'));
+    } catch (error) { setSaveMessage(error instanceof Error ? error.message : String(error)); }
+    finally { setBatchBusy(false); }
+  };
   const activeIndex = Math.max(0, selectedEntities.findIndex((entity) => entity.id === activeId));
 
   const downloadAfterSave = async (event: ReactMouseEvent<HTMLAnchorElement>) => {
-    if (!activeId || !dirtyIds.has(activeId)) return;
+    if (!activeId) return;
     event.preventDefault();
     const href = event.currentTarget.href;
     if (await save()) window.location.assign(href);
@@ -988,6 +1057,8 @@ export function PlatformQrCardStudio({
 
   return (
     <div className={styles.studio}>
+      {catalogError ? <p role="alert">{catalogError}</p> : null}
+      {edit && !activeEntity ? <PlatformState kind={catalogBusy ? "loading" : "error"} message={t("指定二维码尚未加载，未切换到其他二维码。", "The requested code is not loaded. No other code has been selected.")} /> : null}
       <section className={styles.selector} aria-labelledby="qr-card-list-title">
         <div className={styles.selectorTop}>
           <div>
@@ -1005,9 +1076,10 @@ export function PlatformQrCardStudio({
             className={styles.search}
             inputClassName={styles.searchInput}
           />
-          <button type="button" className={styles.textButton} onClick={() => setSelectedCodes(new Set(allCodes))}>{t('全选', 'Select all')}</button>
+          <button type="button" className={styles.textButton} disabled={catalogBusy} onClick={() => { void selectAll(); }}>{t('全选', 'Select all')}</button>
           <button type="button" className={styles.textButton} onClick={() => setSelectedCodes(new Set())}>{t('清空', 'Clear')}</button>
         </div>
+        {catalogMore ? <button type="button" className={styles.textButton} disabled={catalogBusy} onClick={() => setCatalogPage(value => value + 1)}>{t('加载更多二维码', 'Load more QR codes')}</button> : null}
         <div className={styles.codeList}>
           {visibleEntities.map((entity) => {
             const code = codeOf(entity);
@@ -1089,8 +1161,8 @@ export function PlatformQrCardStudio({
                   <BoolToggle value={snapEnabled} onChange={setSnapEnabled} label={<span className={styles.snapLabel}><Magnet aria-hidden />{t('磁吸对齐（按住 Alt 暂时关闭）', 'Snap alignment (hold Alt to disable)')}</span>} />
                 </div>
                 <div className={styles.previewActions}>
-                  <button type="button" className="platform-button platform-button-primary" disabled={saveState === 'saving' || !dirtyIds.has(activeId)} onClick={() => { void save(); }}><Save aria-hidden />{saveState === 'saving' ? t('保存中…', 'Saving…') : t('保存设计', 'Save design')}</button>
-                  <button type="button" className="platform-button" disabled={!dirtyIds.has(activeId)} onClick={resetDraft}><RotateCcw aria-hidden />{t('撤销未保存修改', 'Discard unsaved changes')}</button>
+                  <button type="button" className="platform-button platform-button-primary" disabled={saveState === 'saving'} onClick={() => { void save(); }}><Save aria-hidden />{saveState === 'saving' ? t('保存中…', 'Saving…') : t('保存全部', 'Save all')}</button>
+                  <button type="button" className="platform-button" disabled={!dirtyIds.has(activeId!)} onClick={resetDraft}><RotateCcw aria-hidden />{t('撤销未保存修改', 'Discard unsaved changes')}</button>
                   <AppLink className={styles.detailLink} href={`/platform/admin/qr/${encodeURIComponent(activeCode)}`} prefetch={false}>{t('编辑跳转目标', 'Edit QR destination')}</AppLink>
                 </div>
                 {saveMessage ? <p className={saveState === 'error' ? styles.errorText : styles.statusText} role={saveState === 'error' ? 'alert' : 'status'}>{saveMessage}</p> : null}
@@ -1099,7 +1171,8 @@ export function PlatformQrCardStudio({
                   <a className="platform-button" href={qrCardPublicUrl(activeCode, 'clean', activeIndex)} onClick={(event) => { void downloadAfterSave(event); }}><Download aria-hidden />{t('下载无裁切线 SVG', 'Download clean SVG')}</a>
                   <button type="button" className="platform-button" onClick={() => { void downloadQrOnly(); }}><Download aria-hidden />{t('单独下载二维码', 'Download QR only')}</button>
                   <AppLink className="platform-button" href={`/platform/qr/${encodeURIComponent(activeCode)}?stay=1`} target="_blank" rel="noreferrer" prefetch={false}><ExternalLink aria-hidden />{t('预览落地页', 'Preview landing page')}</AppLink>
-                  <button type="button" className="platform-button" disabled={selectedEntities.some((entity) => loadingIds.has(entity.id) || !drafts[entity.id])} onClick={() => window.print()}><Printer aria-hidden />{t(`A4 打印 ${selectedEntities.length} 张`, `Print ${selectedEntities.length} on A4`)}</button>
+                  <button type="button" className="platform-button" disabled={batchBusy || selectedEntities.some(entity => !drafts[entity.id])} onClick={() => { void downloadBatch(); }}><Download aria-hidden />{t('下载所选 SVG', 'Download selected SVGs')}</button>
+                  <button type="button" className="platform-button" disabled={selectedEntities.some((entity) => loadingIds.has(entity.id) || !drafts[entity.id])} onClick={() => { void save().then(saved => { if (saved) window.print(); }); }}><Printer aria-hidden />{t(`A4 打印 ${selectedEntities.length} 张`, `Print ${selectedEntities.length} on A4`)}</button>
                 </div>
                 <p className={styles.outputHint}>{t('印刷版带 3 mm 出血和裁切线；无裁切线版是 40 mm 方形成品。A4 打印使用浏览器的 100% 缩放。', 'The press file includes 3 mm bleed and crop marks; the clean file is a 40 mm square. Print A4 at 100% browser scale.')}</p>
               </>
@@ -1177,6 +1250,17 @@ export function PlatformQrCardStudio({
               </div>
               {artError ? <p className={styles.errorText} role="alert">{artError}</p> : null}
 
+              <details><summary>{t('落地页、链接与主标题（与设计一起保存）', 'Landing page, links and main title (save with design)')}</summary>
+                <PlatformQrMetadataEditor entity={activeEntity!} resourceId={activeId!} busy={saveState === 'saving' ? `admin-save:${activeId}` : null} cardDraft={activeCard} saveRef={metadataSave} runAction={async (id, body) => {
+                  const row = await qrAdminRequest<QrAdminRow>(`/${encodeURIComponent(id)}`, { method: 'PATCH', body });
+                  mergeCatalog([row]);
+                  const result = await getPlatformQrCard(id);
+                  setCards(current => ({ ...current, [id]: result.card })); setDrafts(current => ({ ...current, [id]: result.card }));
+                  setDirtyIds(current => { const next = new Set(current); next.delete(id); return next; });
+                  if (row.code !== activeCode) { void setEdit(row.code); void setCodes(row.code); }
+                  return { id: row.id, code: row.code };
+                }} />
+              </details>
               <PromptComposer value={activeCard.frontArtPrompt} onChange={(frontArtPrompt) => updateDraft((card) => ({ ...card, frontArtPrompt }))} />
 
               <section className={styles.elementSection} aria-labelledby="qr-elements-title">
