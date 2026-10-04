@@ -1713,6 +1713,14 @@ export default function CompDetailPage() {
     );
   }
 
+  const meCompetitor = meWcaId
+    ? Object.values(data.users).find(person => person.wcaid === meWcaId)
+    : undefined;
+  const hasMyResults = !!meCompetitor && data.events.some(event =>
+    event.rs.some(round =>
+      (data.resultsByRound[roundKey(event.i, round.i)] ?? []).some(result => result.n === meCompetitor.number)
+    )
+  );
   const availableEventIds = new Set(data.events.filter(e => isWcaEvent(e.i)).map(e => e.i));
   const nonWcaEvents = data.events
     .filter(e => !isWcaEvent(e.i))
@@ -1896,7 +1904,7 @@ export default function CompDetailPage() {
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
         <div className="comp-view-tabs">
-          {meWcaId && (
+          {hasMyResults && (
             <button
               type="button"
               className={`comp-view-tab${modal?.kind === 'mine' ? ' is-active' : ''}`}
@@ -2213,9 +2221,9 @@ export default function CompDetailPage() {
           onClose={() => setModal(null)}
         />
       )}
-      {modal?.kind === 'mine' && meWcaId && (
+      {modal?.kind === 'mine' && hasMyResults && meCompetitor && (
         <CuberModal
-          number={Object.values(data.users).find(person => person.wcaid === meWcaId)?.number ?? -1}
+          number={meCompetitor.number}
           data={data}
           isZh={isZh}
           pbMap={pbMap}
@@ -2223,8 +2231,7 @@ export default function CompDetailPage() {
           personal
           loading={!fullLoaded}
           onSelectRound={(eventId, roundId) => {
-            const person = Object.values(data.users).find(candidate => candidate.wcaid === meWcaId);
-            if (person) setModal({ kind: 'round', number: person.number, eventId, roundId });
+            setModal({ kind: 'round', number: meCompetitor.number, eventId, roundId });
           }}
           onClose={() => setModal(null)}
         />
