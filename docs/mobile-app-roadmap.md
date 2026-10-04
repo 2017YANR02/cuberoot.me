@@ -23,7 +23,7 @@
 - Android 原生 Billing、服务端 subscriptionsv2 验单/确认、OIDC RTDN、独立权益账本和账号合并/注销归属接入；两端复用同一网页会员组件。商家、商品、服务账号、RTDN 与内部测试真实购买尚未配置/验收，不能标为支付可用。
 - 2026-10-04 已通过 shared build、Mobile Web build/Android sync、API/client/app-ui/Mobile 类型检查和 Android Release Java 编译。旧的 cubing worker 构建阻断在本次当前代码构建未复现；历史记录保留，不继续当作当前阻断。
 - 独立 PostgreSQL 16 验证 0256 迁移、购买归属、测试隔离、退款、pending→active 替换链、注销墓碑；不是生产 PG13 部署或真实 Google 验单证据。
-- 长期 RSA 4096 上传密钥已在仓库外生成，密码存本机 Keychain；JDK 21 正式签名 `assembleRelease bundleRelease` 成功。`me.cuberoot.app` 0.1.0 (1000)，targetSdk 36；APK 签名、ZIP 16 KB 对齐及 arm64/x86_64 ELF LOAD 16 KB 对齐通过。AAB 已上传 Play 内部测试并保存草稿，尚不代表已向测试人员分发。
+- 长期 RSA 4096 上传密钥已在仓库外生成，密码存本机 Keychain；JDK 21 正式签名 `assembleRelease bundleRelease` 成功。`me.cuberoot.app` 0.1.0 (1000)，targetSdk 36；APK 签名、ZIP 16 KB 对齐及 arm64/x86_64 ELF LOAD 16 KB 对齐通过。AAB 已上传并于 10-04 01:09 PDT 发布至 Play 内部测试轨道（未审核，临时名称 `me.cuberoot.app (unreviewed)`）；尚未指定测试人员，当前无人能通过内测链接获取。
 - 配置及真实验收清单见 [google-play-billing-setup.md](google-play-billing-setup.md)。商家账号及 Google Cloud 验单服务账号尚未配置；上传密钥的异地安全备份仍需所有者完成。
 
 ### 2026-09-29 远端主线整合（本地，未发布）
