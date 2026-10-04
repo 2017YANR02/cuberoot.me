@@ -164,7 +164,7 @@ export default function ContactDetails() {
         })}
       </dl>
 
-      <dl className="contact-details">
+      <dl className="contact-details contact-app-details">
         <div className="contact-details-row">
           <dt>
             <span className="contact-details-icon"><PanelsTopLeft size={ICON_SIZE} strokeWidth={1.8} aria-hidden="true" /></span>
