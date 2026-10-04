@@ -45,6 +45,7 @@ describe('Web solo attempt recording lifecycle', () => {
       settings: { bldMemo: false, multiStage: false },
       bluetoothCubeRef: ref({ status: { connected: true, brand: 'gan-v4', deviceName: 'GAN16ui' } }),
       smartCubeAttemptProducerRef: ref(producer),
+      setLiveSolve: vi.fn(),
       phaseSnapshotRef: ref('ready'),
       cubeStartedRef: ref(false),
       gyroStartRef: ref(0),
