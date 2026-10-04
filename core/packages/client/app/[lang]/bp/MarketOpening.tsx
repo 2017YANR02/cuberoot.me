@@ -7,10 +7,9 @@ export default function MarketOpening() {
     <div className="bp-market-heading">
       <div>
         <p className="overview-kicker">{tr({ zh: '中国魔方市场 / 商业计划书 · 2026.10', en: 'CHINA’S CUBING MARKET / BUSINESS PLAN · 2026.10' })}</p>
-        <h1 id="bp-title">{tr({ zh: '数百万人的热爱，\n持续学习与训练的市场。', en: 'Millions of enthusiasts.\nA market for learning and practice.' })}</h1>
+        <h1 id="bp-title">{tr({ zh: '数百万人的热爱。\n一个持续进阶的市场。', en: 'Millions of enthusiasts.\nA market for learning and practice.' })}</h1>
         <p className="overview-lead">{tr({ zh: '魔方根连接个人练习者、老师与培训机构，以个人和机构订阅、课程及计划中的线上赛事，服务从学习到持续进阶的需求。', en: 'CubeRoot connects practitioners, teachers and training organisations through individual and institutional subscriptions, courses and planned online competitions.' })}</p>
       </div>
-      <figure className="bp-market-art"><img src="/images/overview/cubing-cover-v1.webp" width={1536} height={1024} alt={tr({ zh: '魔方、学习与数据的概念插画', en: 'A conceptual illustration of cubing, learning and data' })} fetchPriority="high" /><figcaption>{tr({ zh: 'AI 概念插画', en: 'AI concept illustration' })}</figcaption></figure>
     </div>
     <div className="bp-market-cards">
       <article data-site-surface="panel"><Users size={26} aria-hidden /><span className="bp-market-label">{tr({ zh: '中国魔方爱好者', en: 'Cubing enthusiasts in China' })}</span><strong>{tr({ zh: '800 万', en: '8 million' })}</strong><span className="bp-market-status">{tr({ zh: '2026 年预测', en: '2026 forecast' })}</span><p>{tr({ zh: '2024 年约 700 万人；2026 年预计达到 800 万人。', en: 'About 7 million in 2024; forecast to reach 8 million in 2026.' })}</p></article>

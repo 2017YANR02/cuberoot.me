@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef } from 'react';
+import { useBpMotion } from './useBpMotion';
 import { ArrowRight, ArrowUpRight, BookOpen, Building2, ChartNoAxesColumnIncreasing, Check, ChevronDown, Clock3, Code2, Globe2, Layers3, Printer, Radio, RotateCcw, ScanSearch, School, ShieldCheck, Sparkles, Timer, Users } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -18,7 +20,7 @@ import { MARKET_SOURCE } from './bp-data';
 import './bp-market.css';
 import { BUSINESS_SECTIONS, BP_NAV, type BpSection } from './bp-content';
 import { CHAPTER_VISUALS } from './bp-visuals';
-import { FounderEvidence, ProductAtlas, ReadingGuide, ServiceMap } from './BpIllustrations';
+import { FounderEvidence, ProductAtlas, ServiceMap } from './BpIllustrations';
 import './bp.css';
 import './bp-editorial.css';
 
@@ -53,7 +55,6 @@ function NarrativeSection({ section }: { section: BpSection }) {
             <div className="bp-visual-top"><span className="bp-icon"><Icon size={24} strokeWidth={1.5} aria-hidden /></span><span className="bp-visual-tag">{tr(visual.tags[index])}</span></div>
             <h3>{tr(card.title)}</h3>
             <p>{tr(visual.captions[index])}</p>
-            <span className="bp-visual-step" aria-hidden>{String(index + 1).padStart(2, '0')}</span>
           </article>;
         })}
       </div>
@@ -79,8 +80,10 @@ function printBusinessPlan() {
 
 export default function BusinessPlanPage() {
   const { content: benefits } = useMembershipBenefits();
+  const pageRef = useRef<HTMLElement>(null);
+  useBpMotion(pageRef);
   return (
-    <main className="overview-page bp-page bp-editorial">
+    <main ref={pageRef} className="overview-page bp-page bp-editorial">
       <header className="overview-nav overview-wrap">
         <div className="overview-brand">
           <CubeRootLogo height={30} variant="mark" />
@@ -98,16 +101,14 @@ export default function BusinessPlanPage() {
 
       <div className="overview-summary overview-wrap">
         {[
-          { number: { zh: `${CREATOR_AUDIENCE.followersApprox / 10000} 万`, en: `${CREATOR_AUDIENCE.followersApprox / 1000}K` }, label: { zh: '约 · 平台合计关注', en: 'Approx. aggregate follows' }, text: { zh: '已有内容与推广渠道', en: 'An existing distribution channel' } },
-          { number: { zh: '500', en: '500' }, label: { zh: '约 · 教师社群成员', en: 'Approx. teacher-group members' }, text: { zh: '创始人为群主 · 机构合作洽谈中', en: 'Founder-led group · institution talks ongoing' } },
-          { number: { zh: '03', en: '03' }, label: { zh: '业务方向', en: 'Business streams' }, text: { zh: '订阅 · 课程 · 计划中的线上赛事', en: 'Subscriptions · courses · planned online events' } },
+          { number: { zh: `${CREATOR_AUDIENCE.followersApprox / 10000} 万`, en: `${CREATOR_AUDIENCE.followersApprox / 1000}K` }, label: { zh: '平台合计关注', en: 'Aggregate follows' }, text: { zh: '已有内容与推广渠道', en: 'An existing distribution channel' } },
+          { number: { zh: '500+', en: '500+' }, label: { zh: '教师社群成员', en: 'Teacher-group members' }, text: { zh: '创始人为群主 · 机构合作洽谈中', en: 'Founder-led group · institution talks ongoing' } },
+          { number: { zh: '3 类', en: '3' }, label: { zh: '业务方向', en: 'Business streams' }, text: { zh: '订阅 · 课程 · 计划中的线上赛事', en: 'Subscriptions · courses · planned online events' } },
         ].map(item => <div key={item.label.en}><span className="bp-stat-number">{tr(item.number)}</span><strong>{tr(item.label)}</strong><span>{tr(item.text)}</span></div>)}
       </div>
 
-      <ReadingGuide />
-
       <nav className="bp-toc overview-wrap" aria-label={tr({ zh: '商业计划书目录', en: 'Business plan contents' })}>
-        {BP_NAV.map(([id, label]) => <a href={'#' + id} key={id}>{tr(label)}</a>)}
+        {BP_NAV.filter(([id]) => ['bp-market-size', 'bp-product', 'bp-business', 'bp-competition', 'bp-roadmap', 'bp-cooperation'].includes(id)).map(([id, label]) => <a href={'#' + id} key={id}>{tr(label)}</a>)}
       </nav>
 
       <section id="bp-summary" className="overview-section overview-wrap" aria-labelledby="bp-summary-title">
@@ -143,11 +144,20 @@ export default function BusinessPlanPage() {
         <p className="overview-kicker">{tr({ zh: '04 / 产品与已有使用', en: '04 / Product & existing use' })}</p>
         <div className="overview-section-head"><h2 id="bp-product-title">{tr({ zh: '训练不是一次性需求，\n产品围绕持续使用展开。', en: 'Practice is a recurring need.\nThe product supports repeated use.' })}</h2></div>
         <p className="overview-intro">{tr({ zh: '正在持续训练的选手，需要反复计时、练习识别与动作、比较记录并研究解法。计时器与训练器中的多项功能已经被使用；本计划不展开具体选手案例，把重点放在产品如何承接日常练习与专业服务。', en: 'Practising competitors repeatedly time solves, train recognition and execution, compare records and study solutions. Multiple timer and trainer functions are already in use. This plan focuses on the product’s practice and service role without identifying individual athletes.' })}</p>
+        <div className="bp-product-story">
         <figure className="bp-product-preview">
           <div className="bp-preview-toolbar"><span className="bp-window-dots" aria-hidden><i /><i /><i /></span><span>cuberoot.me / timer</span><span>{tr({ zh: '真实产品界面', en: 'ACTUAL PRODUCT' })}</span></div>
           <img src="/images/overview/timer-preview-v3.png" width={2880} height={1344} loading="lazy" alt={tr({ zh: '魔方根计时器的真实界面，包含打乱、计时和阶段求解入口', en: 'The actual CubeRoot timer with scramble, timing and stage-solving controls' })} />
           <figcaption><div><Timer size={18} aria-hidden /><strong>{tr({ zh: '计时器 · 高频训练入口', en: 'Timer · the everyday practice entry' })}</strong></div><AppLink href="/timer" prefetch={false}>{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></AppLink></figcaption>
         </figure>
+        <div className="bp-product-chapters">
+          {[
+            { label: { zh: '计时', en: 'TIME' }, title: { zh: '每一次练习，\n都有记录。', en: 'Every practice.\nA new record.' }, body: { zh: '从打乱到计时，把日常练习留在同一个入口。', en: 'From scramble to timer, everyday practice starts in one place.' } },
+            { label: { zh: '训练', en: 'TRAIN' }, title: { zh: '理解解法，\n再进一步。', en: 'Understand a solve.\nGo one step further.' }, body: { zh: '阶段求解与状态展示，让选手研究不同的还原思路。', en: 'Stage solving and cube states help practitioners explore different solutions.' } },
+            { label: { zh: '进阶', en: 'PROGRESS' }, title: { zh: '从反复使用，\n到持续服务。', en: 'Repeated practice.\nContinuing service.' }, body: { zh: '以高频工具连接公式训练、解法复盘与专业会员服务。', en: 'Connect frequent practice with algorithms, reconstruction and specialist membership.' } },
+          ].map(step => <article className="bp-product-chapter" key={step.label.en}><span>{tr(step.label)}</span><h3>{tr(step.title)}</h3><p>{tr(step.body)}</p></article>)}
+        </div>
+        </div>
         <ProductAtlas />
         <div className="overview-product-grid">
           {PRODUCTS.map(({ Icon, href, title, body }) => <AppLink href={href} key={href} prefetch={false} className="overview-product" data-site-surface="panel"><Icon size={27} aria-hidden /><h3>{tr(title)}</h3><p>{tr(body)}</p><span className="overview-text-link">{tr({ zh: '打开体验', en: 'Try it' })}<ArrowUpRight size={16} aria-hidden /></span></AppLink>)}
