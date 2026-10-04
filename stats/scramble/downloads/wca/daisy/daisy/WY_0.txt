@@ -1,8 +1,8 @@
 # Scramble samples — daisy / daisy / WY / bin 0
-# Population in this bin: 354
+# Population in this bin: 356
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3012292035,U F2 R' D2 B' D2 B' F D2 L2 R2 B' R D2 R' U R F L' F' D,W,Slovenian Nationals 2023 (2023-08-25~27),333mbf Final A #1
@@ -37,7 +37,7 @@
 299516001,U' B' R F B2 L' D' L' U F B2 R D2 L' U2 R2 F2 D2 R2,W,Pahiyas Speedcubing Open 2016 (2016-05-14),333oh Final A #5
 302773001,U2 L2 B2 R2 U' R2 B2 D' B D' U B F2 R D2 L' D2 U R2,W,Minnesota Cube Melt 2016 (2016-05-21),333 R1 A #3
 4000071045,D' L' U2 R2 D' F2 L2 U2 L2 U F2 L2 F' D2 U2 L2 F' U' F L' F',Y,CubingUSA New England Quiet Championship 2024 (2024-08-10),333mbf Final A #2
-306827001,R2 B2 R2 F' L2 B D2 F U2 B' U B2 D2 R' F' U R2 U B',W,Slavonic Gymnasium Open 2016 (2016-05-21~22),333 Final A E2
+5849883001,D' F2 D2 L' F2 R2 L' F R2 U' L2 D' L2 U2 F2 B' U B,W,Ayutthaya Cube Open 2026 (2026-09-27),333oh Final A E1
 4439599001,L F U D R' F R B2 U2 R D2 B U2 B' U2 L2 B R2 D2,Y,Hungarian All-Rounder 1: Avengers 2025 (2025-01-25),333 R1 B #3
 315743001,F' R2 U' D2 B L D2 R L' U' F' U2 B' R2 B D2 F' L2 U2 B2,W,SCMU 2016 (2016-06-17~19),333oh Final A #2
 323323001,B D2 U2 F' L2 B' F R' B' U B D' F R' D2 R2 U B R2 B R',W,Cannes Summer Open 2016 (2016-07-02~03),333bf Final A E1

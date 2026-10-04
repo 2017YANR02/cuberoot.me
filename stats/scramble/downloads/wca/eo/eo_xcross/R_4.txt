@@ -1,8 +1,8 @@
 # Scramble samples — eo / eo_xcross / R / bin 4
-# Population in this bin: 62
-# Samples listed: 62 (all entries in this bin)
+# Population in this bin: 63
+# Samples listed: 63 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 27796001,U B2 D2 L2 D' R2 B2 U2 L D' B2 L2 D' B R D2 B' L B,R,Nottingham Summer 2014 (2014-06-14~15),333ft Final B #3
@@ -67,3 +67,4 @@
 5512705001,D' L2 B2 D2 R B2 U2 L' R2 U2 L' U' L D2 U' B2 D',R,Round Rock Splash & Solve 2026 (2026-04-04),333 R1 E #1
 5653592001,F2 R' L' D' F2 R' L' U B2 L U' D' L2 U F2 B2 U B2,R,Hobart Autumn 2026 (2026-05-24),333 R1 D #4
 5815523001,F' D2 F R' D F' D F B2 L' D2 L2 B2 R2 F2 L' U',R,Bremium Mega Day 2026 (2026-09-05),333oh Final B #1
+5846172001,D2 B2 R2 B2 R' F2 U2 L2 R' F2 L2 B' D2 R' F D2 F R2 B R,R,Tafalla Open 2026 (2026-09-26~27),333bf Final A #1

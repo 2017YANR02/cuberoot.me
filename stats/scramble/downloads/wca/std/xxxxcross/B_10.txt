@@ -1,8 +1,8 @@
 # Scramble samples — std / xxxxcross / B / bin 10
-# Population in this bin: 378
+# Population in this bin: 380
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3270001,D2 R D2 R' F2 D2 F2 R2 F2 R B U' R' U B' U' R2 D F',B,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 S #5
@@ -151,7 +151,7 @@
 3607413001,L' B2 U2 B' R2 B2 L2 D' R D2 U R2 F' L2 R2 F2 D' L B,B,CubingVic 2024 (2024-03-23),333bf Final A E1
 1404900001,F2 U B U' B' L D' L2 U2 R2 B R2 B2 L2 F2 D L2,B,Chengdu Winter 2019 (2019-11-09~10),333oh R1 A #5
 1408956051,R2 F2 U2 L F2 L' D2 U' F' R' D L' D2 U B D B2 U' B' L',B,Thailand Championship 2019 (2019-11-15~17),333mbf Final A #1
-1415265001,F U2 F D2 F2 L2 R2 F D U' R' B' F2 R2 D' L2 R D' R2,B,Michigan Cubing Club Delta 2019 (2019-11-16),333 R1 D E2
+5855745001,D2 R2 F D2 B F' L2 D2 F2 U' F D' U2 B2 R' B' D' L' D U,B,Poole Autumn 2026 (2026-10-03),333 R1 C #2
 5039411001,F2 D' F' B2 U' R B R2 B2 D B' R2 U2 F' D2 L2 F' B' U2,B,Washtenaw Slow Fall 2025 (2025-09-20),333 R1 B #1
 4847473001,D' U2 F2 D' R2 U2 B' L' R U R2 F' D F L U',B,Rubí Guanajuato 2025 (2025-07-05~06),333oh R2 A #3
 4469967001,L' F' L F2 L' F R B L F' L2 D2 R2 F L2 U' L,B,Cubing with the Cougars WV 2025 (2025-02-01~02),333oh Final D #5

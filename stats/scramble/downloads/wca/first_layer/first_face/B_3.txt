@@ -1,8 +1,8 @@
 # Scramble samples — first_layer / first_face / B / bin 3
-# Population in this bin: 60
-# Samples listed: 60 (all entries in this bin)
+# Population in this bin: 61
+# Samples listed: 61 (all entries in this bin)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 75305001,U2 R' U' D' L2 D2 B U B R F' U' B2 R2 D' L2 U D R2,B,Trondheim Fall 2014 (2014-11-08),333 R1 A E2
@@ -65,3 +65,4 @@
 5613314001,L B F' R2 D2 F2 R2 F' R' B' L' B D' F' D R2 D2 F' L',B,Früehligswürfelä z'Rootchrüüz 2026 (2026-05-09),333bf R1 A E1
 5675989001,L' D2 R' F2 R F2 U2 B' F' L2 U' L' R F D2 R B2 D2,B,Franconia Cube Days 2026 (2026-05-30~31),333 R1 B #3
 5738238001,U' B2 D' L2 D F2 D2 U' F' R2 D L B L' R2 U2 B2 F',B,Cube4fun in Barcin 2026 (2026-07-04~05),333 R2 A #2
+5847860014,L2 D2 B U2 L2 B' U2 B2 U' F L2 B2 D F2 L B U' R' D2 B R',B,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final B #1

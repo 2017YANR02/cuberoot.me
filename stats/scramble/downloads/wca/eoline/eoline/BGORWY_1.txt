@@ -1,8 +1,8 @@
 # Scramble samples — eoline / eoline / BGORWY / bin 1
-# Population in this bin: 478
+# Population in this bin: 480
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 4152799001,U L2 D' B2 L2 B' D2 F D2 U' B2 U2 B' F D' U2 B,G,Side Events in Nyack 2024 (2024-09-28~29),333oh R1 D #4
@@ -88,7 +88,7 @@
 1833526001,U B U' L2 B2 D2 F' U2 B U2 D' F2 D' B R2 F U,B,Kubiat Esther 2022 (2022-03-16~17),333 R2 B #4
 4252161001,U B2 D' R2 B2 D2 F2 D2 L2 F2 L B2 U L2 F' D2 U R B2 L2 D',Y,5BLD in a Madison Fall 2024 (2024-11-02~03),333bf Final B #2
 4713509001,U2 L' D B2 F2 U R2 U' R2 U2 F2 R' F2 L' D2 U' F L' B2 L,W,Gdańska Liga Speedcubingu III 2025 (2025-05-09~11),333bf R1 B #3
-608090001,B2 D2 U2 L F2 R2 D2 R F2 R U' F2 U2 R2 F2 U L' U2 F',Y,Melgar Summer 2017 (2017-09-30~10-01),333oh Final B #1
+5855105001,R U2 R2 D' L D' F2 R' F R2 L2 U2 B2 R B2 D L,G,Desafio Hungria em SP 2026 (2026-09-26),333 R1 A #2
 3897333001,L' R2 U2 L' D2 R' U2 L' F2 R' F' R' F' D2 F' L2 R' B',B,Gdańska Liga Speedcubingu IV 2024 (2024-06-29~30),333 R1 E E2
 634166001,U2 B R U2 F D2 B' R U2 R' B' L U2 D2 F2 U2 F2 L,O,Canberra Spring 2017 (2017-11-04~05),333oh Final A #3
 2644617001,R2 B2 F2 D' B2 D' B2 D2 L2 F L F' D B' F2 D2 R2 U' B',R,CubingUSA Southeast Championship 2023 (2023-04-15~16),333bf Final A #2

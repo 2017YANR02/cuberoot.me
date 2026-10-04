@@ -1,12 +1,12 @@
 # Scramble samples — pseudo / pseudo_xcross / BGOR / bin 2
-# Population in this bin: 549
+# Population in this bin: 552
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3733001,U2 R F' L' B2 L F2 R D' F' L2 D2 F2 D2 L' U2 R2 U2,G,Kharkiv Special 2014 (2014-03-22),333ft R1 A #2
-3708830003,U F R2 B2 D F2 R2 U' F2 U2 B2 R2 L' D2 L' F' U L D L',O,PSKG Premiere Cubing 2024 (2024-04-27~28),333mbf Final A #1
+5847787001,U2 L2 F2 R2 D' R2 B' R B2 U2 R F' L D2 L B D',R,Maltese Championship 2026 (2026-09-26),333 R1 A #5
 4380412001,U2 B2 F2 L D2 F2 R2 F D L2 F' R' D' B2 L B' L,G,Clash of Cubers: Celebes Speedcubing Masters 2024 (2024-12-14~15),333 Final B E1
 31993001,B2 D' L2 B2 R2 F2 U' L2 U B' U' B F' R B' L B' F2 L',B,ULA Rubiks 2014 (2014-06-27~28),333 R2 B #2
 4524713001,L' B2 F2 L2 U' R2 D2 R2 B2 R' U L F2 R2 B D2 B D2,O,Spark Melbourne February 2025 (2025-02-22~23),333 R1 D #2
@@ -31,7 +31,7 @@
 203865001,B2 R2 U2 L2 U F2 D2 U2 L2 F2 L D2 U' R' D R' B2 F' D U' L B',O,Puget Sound Open 2015 (2015-10-17),333bf Final A E1
 2261655001,B U' F2 R U2 R2 U2 R' B2 D' B2 U' F2 R2 U D2 R2 B D,G,Minyons de Terrassa Open 2022 (2022-10-22),333oh R1 B E1
 2292290001,B2 L2 D2 R' U' F U F' L' F U2 B2 U2 L2 F L2 F' L2 F2,R,Cubing Kazakhstan Nationals 2022 (2022-11-04~06),333 R1 F #3
-213170001,D2 R' L' B' U L' U R' D' L B2 D B2 U' R2 D B2 L2 D2,G,Melbourne Cube Days 2015 (2015-11-07~08),333 R1 A #2
+5847860012,B' D' R' B2 F2 L' R2 D2 F2 D' L R D2 U' F' U' B U2 B R',B,BLD Fall Fürth 2026 (2026-09-26~27),333mbf Final B #1
 220274001,D2 B2 F R2 U2 B R D' L' U2 L' D' B' L' D2 B2 L,B,River Hill Fall 2015 (2015-11-21),333 R2 A #1
 230296001,R2 B2 D2 B2 D' L2 U L2 U' B2 F' D' B2 L' U L2 D' U',R,Capivara Open 2015 (2015-12-12~13),333 R1 B E2
 1761589001,F2 R2 U' B2 L2 D' L2 D2 L F D F2 L D' F' L2 F2 D',B,Richmond Open A 2021 (2021-12-11),333oh R1 A #5

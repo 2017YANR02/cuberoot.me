@@ -1,13 +1,13 @@
 # Scramble samples — eo / eo_cross / BGOR / bin 3
-# Population in this bin: 811
+# Population in this bin: 812
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 3222001,U' R2 U L2 R2 F2 L2 U' R B2 U L' F2 D' F2 L2 F L,O,CMI Fiesta Open 2014 (2014-03-21~23),333oh R1 L E1
 17503001,R U2 R' F U2 F' R2 F2 D2 R' L2 U' L2 U D2 F2 U L2 U2,B,Mumbai Summer Open 2014 (2014-05-03~04),333 R1 C E2
-5284580001,D2 R2 D2 B2 R U2 L U2 L' B R2 B2 R B F2 L2 U2,G,Freezing Fryslân 2025 (2025-12-21),333 Final B #2
+5848213001,D2 B2 L F R2 F L' F2 U' R2 L2 B2 U2 L2 D' R2 U' B L,G,Blink and You'll Miss It NE 2026 (2026-09-26),333 R2 B #4
 3287184001,D2 L R U2 L R F2 D2 B' R' B' R2 F' R2 D' B D' B2 R',G,Sowega Solving 2023 (2023-11-25),333oh R1 B #3
 28514001,F U2 F2 R2 F2 D2 B U L2 B' U2 D2 L2 B U2 F R2 U2 B',G,Bucharest Rubik Summer 2014 (2014-06-15),333 R2 B E2
 899461001,U B2 R2 U R2 U L2 D U2 B2 F2 R' U R2 D F R B L2,B,Siberian Athens 2018 (2018-10-06~07),333oh R1 B E1

@@ -1,8 +1,8 @@
 # Scramble samples — std / cross / B / bin 8
-# Population in this bin: 674
+# Population in this bin: 678
 # Samples listed: 200 (uniform reservoir sample; cap = 200)
 # Source: wca_scrambles_no_wide_move.txt
-# Generated: 2026-09-27
+# Generated: 2026-10-04
 # Columns: id,scramble,bottom_color,competition,round
 
 2023001,U' R' D L D B U' F' R F U2 B2 U2 R2 F2 U B2 L2 U' B2 U',B,Zonhoven Open 2014 (2014-03-22~23),333 R2 B #3
@@ -70,7 +70,7 @@
 1725320001,U' R2 B2 L2 D B2 U2 B2 U F' U B L U R2 F2 U' B' D2 L',B,SacCubing X 2021 (2021-11-13),333 R2 B #3
 4024078029,U2 B2 L' D U' B2 F2 D' R2 L' B' F' R' B2 R2 B2 D' L2,B,Guangzhou Quiet Day 2024 (2024-08-17),333mbf Final A #1
 5640585001,D2 L2 B' L U2 R' B R' U D F2 R2 U2 L F2 L' B2 L' D2,B,Granollers Open 2026 (2026-05-16~17),333oh R1 B E1
-5701425001,L2 D L2 B' U B2 U2 L2 B' L F' U' D L2 F2 R2 L2,B,Cubing Skills in Bishkek 2026 (2026-06-13~14),333oh Final B #3
+5856363001,L2 D B2 U' L2 F2 L B D2 L2 B' U2 R' D F2 R B' F',B,Adelaide Spring 2026 (2026-10-03),333 R1 C #2
 4332272001,D B' L' U' L2 D' R U R2 L2 U' R2 U2 D L2 B R2 D2 L,B,Berkeley December Weekday Tricubealon 2024 (2024-12-04),333 R2 B E1
 334629001,L2 U' R' L2 U' D F L' U2 B D' F2 D' L2 U L2 D' F2 R2 F2,B,Ural Open 2016 (2016-07-25~27),333 R2 B #5
 342650001,L B2 U2 L2 B2 L D2 R2 D U' L' R2 B' R2 D' R B R B,B,SSN Cube Open 2016 (2016-08-05~06),333ft R1 F #2
