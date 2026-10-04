@@ -21,18 +21,47 @@
   overflow: hidden;
 }
 
-/* Keep the Web viewport budget above the shared workspace's min-height: 0.
-   PageNoticeBar publishes its height so the footer stays within the viewport. */
+/* The timer is one viewport; long scrambles and reports scroll in their own
+   regions. PageNoticeBar publishes the space already used above the shell. */
 .timer-shell.timer-workspace {
-  min-height: calc(100dvh - var(--page-notice-h, 0px));
+  height: calc(100dvh - var(--page-notice-h, 0px));
+  min-height: 0;
 }
 
-/* Let fully expanded scrambles grow the page beyond the viewport budget. */
-@media (min-width: 1024px) {
-  .timer-shell.timer-workspace {
-    height: auto;
-    grid-template-rows: auto minmax(min-content, 1fr);
-  }
+.timer-shell .timing-surface--solo,
+.timer-shell .timing-surface--net {
+  min-height: 0;
+  flex: 1 1 0;
+  container-type: size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
+  align-items: stretch;
+}
+.timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-scramble-top {
+  position: static;
+  inset: auto;
+  transform: none;
+  max-height: 100%;
+  align-self: stretch;
+}
+.timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-core {
+  --timer-readout-max-size: 25cqh;
+  grid-row: 2;
+  align-self: center;
+  gap: 8px;
+}
+.timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-sub {
+  --timer-cube-h: min(30vw, 26dvh, 260px, 25cqh);
+  position: static;
+  inset: auto;
+  transform: none;
+  padding-top: 0;
+  gap: 8px;
+}
+.timer-shell .timer-stage-source {
+  max-height: min(28dvh, 180px);
+  overflow-y: auto;
 }
 
 /* ── Topbar ─────────────────────────────────────────────── */
@@ -121,18 +150,40 @@
   white-space: nowrap;
 }
 
-.timer-live-solution {
+.shell-recap.timer-live-solution {
   width: 100%;
-  max-width: 720px;
   min-width: 0;
-  align-self: center;
-  padding: 12px 16px;
   box-sizing: border-box;
 }
 .timer-live-solution-label {
-  margin-bottom: 6px;
   color: var(--muted-foreground);
   font-size: 12px;
+}
+.timer-shell[data-live-reconstruction] .shell-recap-rail {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+.timer-shell[data-live-reconstruction] .timing-surface--solo {
+  grid-template-rows: 1fr;
+}
+.timer-shell[data-live-reconstruction] .timing-surface-scramble-top {
+  display: none;
+}
+.timer-shell[data-live-reconstruction] .timing-surface-core {
+  grid-row: 1;
+  align-self: center;
+}
+@media (max-width: 1023px) {
+  .timer-shell[data-live-reconstruction] .timer-stage-source,
+  .timer-shell[data-live-reconstruction] .timer-stage-footer,
+  .timer-shell[data-live-reconstruction] .shell-undersurface {
+    display: none;
+  }
+  .shell-recap.timer-live-solution {
+    flex: 0 0 42%;
+    height: auto;
+  }
 }
 
 /* Target indicator */
