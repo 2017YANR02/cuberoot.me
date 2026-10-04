@@ -120,5 +120,6 @@ export const BP_NAV = [
   ['bp-operations', { zh: '交付与指标', en: 'Delivery' }],
   ['bp-financial', { zh: '财务与成本', en: 'Financials' }],
   ['bp-risks', { zh: '风险应对', en: 'Risks' }],
+  ['bp-cooperation', { zh: '合作机会', en: 'Partnerships' }],
   ['bp-sources', { zh: '资料来源', en: 'Sources' }],
 ] as const;
