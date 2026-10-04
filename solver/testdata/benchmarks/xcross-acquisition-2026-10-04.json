@@ -1,0 +1,103 @@
+{
+  "environment": "M5 Pro 64 GiB; Chrome 154, fresh browser contexts; local HTTP fixture server",
+  "scope": "Runtime download/generation/cache acquisition with rebuilt production WASM; download timings are local, not internet measurements",
+  "referenceSha256": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+  "cases": [
+    {
+      "mode": "generation",
+      "source": "generated",
+      "ms": 707.5999999642372,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 1
+    },
+    {
+      "mode": "warm",
+      "source": "cache",
+      "ms": 34.09999996423721,
+      "requested": 1
+    },
+    {
+      "mode": "solve-six-faces",
+      "values": [
+        4,
+        3,
+        3,
+        5,
+        4,
+        4
+      ]
+    },
+    {
+      "mode": "download",
+      "source": "download",
+      "ms": 118.60000002384186,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 0
+    },
+    {
+      "mode": "wasm-fail",
+      "source": "download",
+      "ms": 121.69999998807907,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 0
+    },
+    {
+      "mode": "offline",
+      "source": "generated",
+      "ms": 683.2999999523163,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 0
+    },
+    {
+      "mode": "corrupt",
+      "source": "generated",
+      "ms": 684.5,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 0
+    },
+    {
+      "mode": "cancel",
+      "error": "AbortError",
+      "requested": 1,
+      "cancelled": 1
+    },
+    {
+      "mode": "cache-corrupt",
+      "source": "download",
+      "ms": 156.9000000357628,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 0
+    },
+    {
+      "mode": "cache-denied",
+      "source": "download",
+      "ms": 118.5,
+      "hash": "10f83b03eb6c1ed542a852697d627af00d8650fe1cd5fa30a1942c413124622e",
+      "length": 54743056,
+      "requested": 1,
+      "cancelled": 0
+    }
+  ],
+  "pageCheck": {
+    "url": "http://127.0.0.1:3000/zh/timer",
+    "action": "Select XCross; all six face counts and solutions rendered",
+    "pageErrors": []
+  },
+  "notVerified": [
+    "Mobile devices",
+    "Safari browser",
+    "Production deployment"
+  ]
+}

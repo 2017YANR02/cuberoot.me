@@ -61,6 +61,7 @@ export const firstlayersolverwasm_solve_stage: (a: number, b: number, c: number,
 export const frsolverwasm_new: () => number;
 export const frsolverwasm_solve: (a: number, b: number, c: number) => [number, number];
 export const frsolverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const generate_xcross_table: (a: any) => [number, number];
 export const htrphase2solverwasm_new: () => number;
 export const htrphase2solverwasm_solve: (a: number, b: number, c: number) => [number, number];
 export const htrphase2solverwasm_solve_moves: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];

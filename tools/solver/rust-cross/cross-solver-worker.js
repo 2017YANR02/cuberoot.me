@@ -85,10 +85,11 @@ async function buildOpt(tablesBase, name, Ctor) {
 // 2026-07-27:mt_*(移动表)全部改为 WASM 内现场生成(mt_gen),不再下载 —— 只有 pt_*
 // (BFS 剪枝表)还得 fetch。`need='cross'` 因此只拉 pt_cross(gz 50KB)就能算纯十字;
 // xcross 及以上要的 pt_cross_C4E0(gz 20MB)走 ensureXCross 惰性补(见下)。
-async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz) {
+async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz, xcrossBytes) {
   const mod = await import(glueUrl);
   await mod.default(wasmUrl);
-  const get = (n) => fetchTable(tableUrl(tablesBase, n));
+  const get = (n) => n === 'pt_cross_C4E0' && xcrossBytes
+    ? Promise.resolve(new Uint8Array(xcrossBytes)) : fetchTable(tableUrl(tablesBase, n));
   if (need === 'f2leo') {
     // f2leo / pseudo:唯一下载 pt_cross;4 张 mt 现场生成。pseudo 首次求解再现场建剪枝表。
     f2leoSolver = new mod.F2leoSolverWasm(await get('pt_cross'));
@@ -155,7 +156,7 @@ async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz) {
     // 免得刚 ready 又立刻补一次 —— 字节优先用主线程递过来的那份(整池只下一次)。
     solver = new mod.CrossSolverWasm(await get('pt_cross'));
     crossTablesBase = tablesBase;
-    if (wantXCross) await attachXCross(xcrossGz);
+    if (wantXCross) await attachXCross(xcrossGz, xcrossBytes);
   }
 }
 
@@ -164,14 +165,14 @@ async function init(glueUrl, wasmUrl, tablesBase, need, wantXCross, xcrossGz) {
 let crossTablesBase = '';
 let initDone = null;      // init 的 Promise,供后续消息 await
 let xcrossPending = null; // 进行中的 attach,合并重复请求
-// gz:主线程已经替整池下好的那份 gzip 字节(见 rust-cross-client 的 fetchXCrossGz ——
-// N 路各自 fetch 会真的并发下 N 份 21MB)。没给才自己去取:老主线程的旧协议,以及
-// bornWithXCross(池升级后新起的 worker,那时 HTTP 缓存已热)都走这条。
-function attachXCross(gz) {
+// New callers supply one verified raw table shared across the pool. The gzip /
+// fetch fallback only supports older hosts during a rolling static deployment.
+function attachXCross(gz, raw) {
   if (!solver) throw new Error('cross solver not initialized');
   if (solver.has_xcross()) return Promise.resolve();
   if (!xcrossPending) {
-    xcrossPending = (gz ? gunzip(gz) : fetchTable(tableUrl(crossTablesBase, 'pt_cross_C4E0')))
+    xcrossPending = (raw ? Promise.resolve(new Uint8Array(raw))
+      : gz ? gunzip(gz) : fetchTable(tableUrl(crossTablesBase, 'pt_cross_C4E0')))
       .then((bytes) => { solver.attach_xcross(bytes); })
       .finally(() => { xcrossPending = null; });
   }
@@ -183,13 +184,13 @@ self.onmessage = async (e) => {
   try {
     if (msg.type === 'init') {
       tableQuery = msg.tableQuery || '';
-      initDone = init(msg.glueUrl, msg.wasmUrl, msg.tablesBase, msg.need, msg.xcross, msg.gz);
+      initDone = init(msg.glueUrl, msg.wasmUrl, msg.tablesBase, msg.need, msg.xcross, msg.gz, msg.xcrossBytes);
       await initDone;
       self.postMessage({ type: 'ready' });
     } else if (msg.type === 'ensure_xcross') {
       // 池在用户切到 xcross+ 阶段时广播;init 未完成先等它(见 attachXCross 注释)。
       await initDone;
-      await attachXCross(msg.gz);
+      await attachXCross(msg.gz, msg.xcrossBytes);
       self.postMessage({ type: 'xcross_ready', id: msg.id });
     } else if (msg.type === 'solve') {
       if (!solver) throw new Error('cross solver not initialized');
@@ -469,6 +470,6 @@ self.onmessage = async (e) => {
       self.postMessage({ type: 'variant_moves', id: msg.id, data: JSON.parse(json), ms: performance.now() - t0 });
     }
   } catch (err) {
-    self.postMessage({ type: 'error', id: msg && msg.id, error: String(err && err.message || err) });
+    self.postMessage({ type: 'error', operation: msg && msg.type, id: msg && msg.id, error: String(err && err.message || err) });
   }
 };
