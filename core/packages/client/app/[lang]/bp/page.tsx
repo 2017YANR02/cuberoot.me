@@ -55,6 +55,7 @@ function NarrativeSection({ section }: { section: BpSection }) {
             <div className="bp-visual-top"><span className="bp-icon"><Icon size={24} strokeWidth={1.5} aria-hidden /></span><span className="bp-visual-tag">{tr(visual.tags[index])}</span></div>
             <h3>{tr(card.title)}</h3>
             <p>{tr(visual.captions[index])}</p>
+            {card.reference && <AppLink href={card.reference.href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr(card.reference.label)}<ArrowUpRight size={16} aria-hidden /></AppLink>}
           </article>;
         })}
       </div>
@@ -101,10 +102,10 @@ export default function BusinessPlanPage() {
 
       <div className="overview-summary overview-wrap">
         {[
-          { number: { zh: `${CREATOR_AUDIENCE.followersApprox / 10000} 万`, en: `${CREATOR_AUDIENCE.followersApprox / 1000}K` }, label: { zh: '平台合计关注', en: 'Aggregate follows' }, text: { zh: '已有内容与推广渠道', en: 'An existing distribution channel' } },
-          { number: { zh: '500+', en: '500+' }, label: { zh: '教师社群成员', en: 'Teacher-group members' }, text: { zh: '创始人为群主 · 机构合作洽谈中', en: 'Founder-led group · institution talks ongoing' } },
-          { number: { zh: '3 类', en: '3' }, label: { zh: '业务方向', en: 'Business streams' }, text: { zh: '订阅 · 课程 · 计划中的线上赛事', en: 'Subscriptions · courses · planned online events' } },
-        ].map(item => <div key={item.label.en}><span className="bp-stat-number">{tr(item.number)}</span><strong>{tr(item.label)}</strong><span>{tr(item.text)}</span></div>)}
+          { number: { zh: `${CREATOR_AUDIENCE.followersApprox / 10000} 万`, en: `${CREATOR_AUDIENCE.followersApprox / 1000}K` }, label: { zh: '平台合计关注', en: 'Aggregate follows' }, text: { zh: '已有内容与推广渠道', en: 'An existing distribution channel' }, href: '/about/ruimin#ruimin-profile-heading' },
+          { number: { zh: '500+', en: '500+' }, label: { zh: '教师社群成员', en: 'Teacher-group members' }, text: { zh: '创始人为群主 · 机构合作洽谈中', en: 'Founder-led group · institution talks ongoing' }, href: '/contact' },
+          { number: { zh: '3 类', en: '3' }, label: { zh: '业务方向', en: 'Business streams' }, text: { zh: '订阅 · 课程 · 计划中的线上赛事', en: 'Subscriptions · courses · planned online events' }, href: '#bp-business' },
+        ].map(item => <div key={item.label.en}><span className="bp-stat-number">{tr(item.number)}</span><strong>{tr(item.label)}</strong><span>{tr(item.text)}</span><AppLink href={item.href} prefetch={false} className="overview-text-link">{tr({ zh: '查看介绍', en: 'View details' })}<ArrowUpRight size={14} aria-hidden /></AppLink></div>)}
       </div>
 
       <nav className="bp-toc overview-wrap" aria-label={tr({ zh: '商业计划书目录', en: 'Business plan contents' })}>
@@ -115,6 +116,7 @@ export default function BusinessPlanPage() {
         <p className="overview-kicker">{tr({ zh: '00 / 执行摘要', en: '00 / Executive summary' })}</p>
         <h2 id="bp-summary-title">{tr({ zh: '订阅、课程与线上赛事，\n围绕同一条学习路径展开。', en: 'Subscriptions, courses and online events.\nOne connected learning journey.' })}</h2>
         <p className="overview-intro">{tr({ zh: '魔方速拧是一项依靠反复练习、记录和反馈提升的技能。计时器和训练器可以进入选手的日常练习，复盘与教学内容则帮助用户决定怎么练。魔方根已有可使用的工具和真实付费会员，课程业务正在开展，线上赛事计划按月组织。下一阶段重点是完善服务交付、推进课程和赛事准备，并扩大已有渠道的推广。', en: 'Speedcubing improves through repeated practice, records and feedback. Timers and trainers support routine practice, while reconstruction and lessons guide the next steps. CubeRoot has usable tools and real paid members, ongoing course work and planned monthly online events. Next steps strengthen service delivery, course and event preparation, and distribution.' })}</p>
+        <div className="bp-source-links"><AppLink href="/membership" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看当前会员权益', en: 'View current membership benefits' })}<ArrowUpRight size={16} aria-hidden /></AppLink><AppLink href="/achievements" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看已完成的产品与技术成果', en: 'Explore existing products and technical work' })}<ArrowUpRight size={16} aria-hidden /></AppLink></div>
         <div className="bp-executive-bento">
           <div className="bp-executive-core" data-site-surface="panel">
             <span className="bp-icon"><RotateCcw size={30} aria-hidden /></span>
@@ -183,10 +185,10 @@ export default function BusinessPlanPage() {
         <BusinessStreams />
         <ServiceMap />
         <div className="bp-subscriptions">
-          {[{ title: { zh: '个人会员', en: 'Individual membership' }, perks: benefits.items.filter(item => item.group === 'common' && item.enabled), explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { title: { zh: '企业会员', en: 'Enterprise membership' }, perks: benefits.items.filter(item => item.group === 'enterprise' && item.enabled), explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
+          {[{ href: '/membership#universal-perks-title', title: { zh: '个人会员', en: 'Individual membership' }, perks: benefits.items.filter(item => item.group === 'common' && item.enabled), explanation: { zh: '续费理由：持续练习中不断遇到新的解法与效率问题，会员获得专业资源和反馈。云端服务与高手内容可复用，个人视频复盘按已发布的数量与项目范围交付。', en: 'Renewal value: ongoing practice brings new solution and efficiency questions. Cloud tools and expert content are reusable; personal video review follows the published allowances and puzzle scope.' } }, { href: '/membership#enterprise-plans-title', title: { zh: '企业会员', en: 'Enterprise membership' }, perks: benefits.items.filter(item => item.group === 'enterprise' && item.enabled), explanation: { zh: '续费理由：企业展示、资料维护、课程安排和教学关系需要持续服务。标准权益覆盖可复用需求；额外定制明确范围与验收，持续完善机构的实际使用流程。', en: 'Renewal value: profiles, resources, courses and teaching relationships require continuing service. Standard benefits meet repeated needs; additional customisation needs explicit scope and acceptance.' } }].map(plan => (
             <article data-site-surface="panel" key={plan.title.en}>
               <div className="bp-subscription-heading"><span className="bp-icon">{plan.title.en === 'Individual membership' ? <Users size={32} aria-hidden /> : <Building2 size={32} aria-hidden />}</span><span className="bp-subscription-tag">{tr({ zh: '持续服务', en: 'ONGOING SERVICE' })}</span></div>
-              <h3>{tr(plan.title)}</h3>
+              <h3>{tr(plan.title)}</h3><AppLink href={plan.href} prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '核对会员页面的当前权益', en: 'Check the currently published benefits' })}<ArrowUpRight size={16} aria-hidden /></AppLink>
               <ul>{plan.perks.map(perk => <li key={perk.id}><Check size={16} aria-hidden /><span>{tr(benefitCopy(perk))}</span></li>)}</ul>
               <p>{tr(plan.explanation)}</p>
             </article>
@@ -211,8 +213,8 @@ export default function BusinessPlanPage() {
         <h2 id="bp-costs-title">{tr({ zh: '让持续交付的成本可管理，\n让已有设备继续发挥作用。', en: 'Manage the cost of delivery.\nKeep using existing equipment.' })}</h2>
         <p className="overview-intro">{tr({ zh: '网站已记录 AI 开发工具、服务器、发布服务和工作设备等投入。本节列出成本类别与用途。下一阶段围绕订阅、课程和线上赛事安排开发与服务工作，已有设备按实际需要复用。', en: 'The site records development AI, hosting, distribution and equipment costs. This section lists cost categories and purposes. Plan development and delivery around subscriptions, courses and online events while reusing existing equipment.' })}</p>
         <div className="overview-cost-grid">
-          <div><h3>{tr({ zh: '持续运行与开发服务', en: 'Ongoing development & operations' })}</h3><dl className="overview-cost-list">{EXPENSES.map(expense => <div key={expense.name.en}><dt><strong>{tr(expense.name)}</strong><span>{tr(expense.purpose)}</span></dt></div>)}</dl></div>
-          <div><h3>{tr({ zh: '已有开发与内容设备', en: 'Existing development & production equipment' })}</h3><div className="overview-equipment-pictures"><img src="/images/dev/infrastructure/mac-mini-m5-pro.webp" width={240} height={180} loading="lazy" alt="Mac mini" /><img src="/images/dev/infrastructure/canon-eos-r5-mark-ii-cutout.webp" width={240} height={180} loading="lazy" alt="Canon EOS R5 Mark II" /><img src="/images/dev/infrastructure/dji-mic-3.webp" width={240} height={180} loading="lazy" alt="DJI Mic 3" /></div><dl className="overview-cost-list">{EQUIPMENT_GROUPS.filter(group => group.items.length > 0).map(group => <div key={group.category.en}><dt><strong>{tr(group.category)}</strong><span>{group.items.slice(0, 3).map(item => tr(item.name)).join(' · ')}</span></dt></div>)}</dl></div>
+          <div><h3>{tr({ zh: '持续运行与开发服务', en: 'Ongoing development & operations' })}</h3><AppLink href="/dev/infrastructure#infra-expenses-title" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看公开支出明细', en: 'View the public expense breakdown' })}<ArrowUpRight size={16} aria-hidden /></AppLink><dl className="overview-cost-list">{EXPENSES.map(expense => <div key={expense.name.en}><dt><strong>{tr(expense.name)}</strong><span>{tr(expense.purpose)}</span></dt></div>)}</dl></div>
+          <div><h3>{tr({ zh: '已有开发与内容设备', en: 'Existing development & production equipment' })}</h3><AppLink href="/dev/infrastructure#infra-equipment-title" prefetch={false} target="_blank" rel="noopener noreferrer" className="overview-text-link">{tr({ zh: '查看设备、软件与价格记录', en: 'View equipment, software and price records' })}<ArrowUpRight size={16} aria-hidden /></AppLink><div className="overview-equipment-pictures"><img src="/images/dev/infrastructure/mac-mini-m5-pro.webp" width={240} height={180} loading="lazy" alt="Mac mini" /><img src="/images/dev/infrastructure/canon-eos-r5-mark-ii-cutout.webp" width={240} height={180} loading="lazy" alt="Canon EOS R5 Mark II" /><img src="/images/dev/infrastructure/dji-mic-3.webp" width={240} height={180} loading="lazy" alt="DJI Mic 3" /></div><dl className="overview-cost-list">{EQUIPMENT_GROUPS.filter(group => group.items.length > 0).map(group => <div key={group.category.en}><dt><strong>{tr(group.category)}</strong><span>{group.items.slice(0, 3).map(item => tr(item.name)).join(' · ')}</span></dt></div>)}</dl></div>
         </div>
         <div className="overview-advantage-grid bp-detail-grid">{SUPPORT_USES.map(item => <article data-site-surface="panel" key={item.title.en}><h3>{tr(item.title)}</h3><p>{tr(item.body)}</p></article>)}</div>
         <p className="overview-small">{tr({ zh: '设备记录包含个人通用设备、曾用设备和估价，不视作全部属于项目的实付款；既有设备不重复列为新采购。开发工具、用户侧计算、人工服务与固定运行成本分别核算，实际预算由下一阶段任务形成。', en: 'Equipment records include general-purpose, former and estimated devices rather than a project payment ledger. Do not count existing equipment as new purchases. Account separately for tooling, user-serving compute, human delivery and fixed operations.' })}</p>
@@ -227,6 +229,9 @@ export default function BusinessPlanPage() {
         <h2 id="bp-sources-title">{tr({ zh: '市场、产品与经历，都有据可查。', en: 'Inspect the market, product and founder’s record.' })}</h2>
         <p className="overview-small"><a href={MARKET_SOURCE.url} target="_blank" rel="noopener noreferrer">{tr({ zh: '市场来源：《人民日报》2026-06-01《小小魔方，为何让人如此着迷》', en: 'Market source: People’s Daily, June 1, 2026, “Why is the little cube so captivating?”' })}</a></p>
         <div className="bp-source-links">{[
+          ['/dev/infrastructure#infra-expenses-title', { zh: '公开支出与设备记录', en: 'Public expenses & equipment records' }],
+          ['/courses', { zh: '课程内容与教学入口', en: 'Courses & learning' }],
+          ['/contact', { zh: '创作者账号与社群介绍', en: 'Creator channels & communities' }],
           ['/membership', { zh: '会员权益与当前开放状态', en: 'Membership benefits & availability' }],
           ['/about/ruimin', { zh: '创始人公开履历与获奖资料', en: 'Founder profile & awards' }],
           ['/achievements', { zh: '原创工具与技术成果', en: 'Original tools & technical work' }],
