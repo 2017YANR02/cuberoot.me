@@ -24,7 +24,7 @@ import {
   CSTIMER_NONWCA_TIMER_EVENTS,
   CSTIMER_NONWCA_TIMER_KEYS,
   isCstimerNonWcaTimerEvent,
-} from '@cuberoot/puzzle-solvers/cstimer-nonwca';
+} from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
 import { cstimerWorkerScramble, warmCstimerWorker } from './cstimer_worker';
 import {
   _resetSharedCstimerNonWcaPool,

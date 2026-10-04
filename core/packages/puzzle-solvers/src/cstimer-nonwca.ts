@@ -8,28 +8,18 @@
  * Capacitor/Vite workers; neither host owns a second puzzle implementation.
  * Host code is responsible only for scheduling and buffering these synchronous
  * CPU-heavy calls away from the timing/input thread.
+ * Browser hosts must import metadata from cstimer-nonwca-events instead: this
+ * engine installs a message handler and must only be loaded inside a worker.
  */
 
 import cstimer from 'cstimer_module';
 
-export type CstimerNonWcaTimerEvent = 'kilominx' | 'mpyram';
-
-export const CSTIMER_NONWCA_TIMER_EVENTS = Object.freeze([
-  'kilominx',
-  'mpyram',
-] as const satisfies readonly CstimerNonWcaTimerEvent[]);
-
-/** Exact upstream scrambler identities; also used by csTimer import/export. */
-export const CSTIMER_NONWCA_TIMER_KEYS = Object.freeze({
-  kilominx: 'klmso',
-  mpyram: 'mpyrso',
-} as const satisfies Readonly<Record<CstimerNonWcaTimerEvent, string>>);
-
-export function isCstimerNonWcaTimerEvent(
-  event: string,
-): event is CstimerNonWcaTimerEvent {
-  return Object.prototype.hasOwnProperty.call(CSTIMER_NONWCA_TIMER_KEYS, event);
-}
+import {
+  CSTIMER_NONWCA_TIMER_KEYS,
+  isCstimerNonWcaTimerEvent,
+  type CstimerNonWcaTimerEvent,
+} from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
+export * from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
 
 /**
  * Generate one real random-state scramble with csTimer's canonical provider.
