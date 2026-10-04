@@ -942,6 +942,12 @@ body:has(.battle-container .penalty-dropdown.open) .clawd-deskpet {
 }
 
 /* Fullscreen: hide chrome rows, keep just the surface. */
+.timer-shell.fullscreen[data-mini-program-fullscreen] {
+  /* The hidden topbar no longer protects scrambles from the camera cutout. */
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  box-sizing: border-box;
+}
+
 .timer-shell.fullscreen .shell-topbar,
 .timer-shell.fullscreen .shell-stat-rail,
 .timer-shell.fullscreen .shell-device-actions,
