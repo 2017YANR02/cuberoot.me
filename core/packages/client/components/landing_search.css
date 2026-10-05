@@ -40,6 +40,10 @@
   max-height: none;
 }
 
+.landing-search-controls {
+  position: relative;
+}
+
 .landing-search-input {
   position: relative;
   display: flex;
@@ -79,11 +83,13 @@
 
 /* + 按钮的弹出菜单 */
 .landing-search-plus-menu {
+  /* anchored-panel: clamped; sibling of the filtered input to avoid WebView clipping. */
   position: absolute;
   top: calc(100% + 0.4rem);
   left: 0;
   z-index: 60;
-  min-width: 220px;
+  width: max-content;
+  max-width: calc(100vw - 16px);
   padding: 0.4rem;
   background: var(--card);
   border: 1px solid var(--border-default);
@@ -150,7 +156,7 @@
 }
 
 /* 智能粘贴 + 按钮(左侧,顶替原先的搜索图标位置) */
-.landing-search-plus {
+.landing-search-input .landing-search-plus {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -168,8 +174,17 @@
 }
 
 .landing-search-plus:hover {
-  color: var(--accent);
   background: var(--accent-soft);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-search-input .landing-search-plus:hover {
+    color: var(--accent);
+  }
+}
+
+.landing-search-input .landing-search-plus[aria-expanded='true'] {
+  color: var(--accent);
 }
 
 .landing-search-plus:active {
