@@ -1,5 +1,5 @@
 import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
-import { NetBattleAttemptRecorder, type NetRecordedAttempt } from '@cuberoot/shared/timer';
+import { NetBattleAttemptRecorder, netAttemptSolveId, type NetRecordedAttempt, type NetRecordingOutbox } from '@cuberoot/shared/timer';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import {
   BATTLE_EVENT_IDS,
@@ -94,6 +94,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react';
 
 import type { COPY, SupportedLanguage } from './copy';
@@ -727,9 +728,13 @@ export function LocalBattleMode({
   );
 }
 
+const emptySubscribe = () => () => {};
+const emptySnapshot = () => null;
+
 export interface NetBattleModeProps extends BattleModeBaseProps {
   sessionId?: string;
   recordGyro?: boolean;
+  recordingOutbox?: NetRecordingOutbox;
   onRecordSolve?(record: NetRecordedAttempt): Promise<void>;
   renderRecordedSolve?(record: NetRecordedAttempt): ReactNode;
   onOverlayCloseChange?(close: (() => void) | null): void;
@@ -752,7 +757,7 @@ function netResultText(timeMs: number, penalty: NetPenalty, precision: 2 | 3): s
 
 /** Shared-contract online room host; no room DTO, scoring or transport is reimplemented here. */
 export function NetBattleMode({
-  sessionId, recordGyro, onRecordSolve, renderRecordedSolve,
+  sessionId, recordGyro, onRecordSolve, recordingOutbox, renderRecordedSolve,
   accountIdentity,
   capability,
   copy,
@@ -807,7 +812,6 @@ export function NetBattleMode({
   const netAttemptRef = useRef(new NetBattleAttemptRecorder());
   const attemptAuthRef = useRef<NetBattleCredentials | null>(null);
   const [recordedSolve, setRecordedSolve] = useState<NetRecordedAttempt | null>(null);
-  const saveTailRef = useRef(Promise.resolve());
   const copiedResetRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -841,8 +845,10 @@ export function NetBattleMode({
     () => battleGroups(eventGroups, new Set<EventId>(NET_EVENTS)),
     [eventGroups],
   );
+  useSyncExternalStore(recordingOutbox?.subscribe ?? emptySubscribe, recordingOutbox?.getSnapshot ?? emptySnapshot, recordingOutbox?.getSnapshot ?? emptySnapshot);
   const myResult = room && credentials
-    ? room.results[String(room.round)]?.[credentials.playerId]
+    ? recordingOutbox?.result({ code: room.code, playerId: credentials.playerId, round: room.round })
+      ?? room.results[String(room.round)]?.[credentials.playerId]
     : undefined;
   const event = room && credentials ? playerEventOf(room, credentials.playerId) : lobbyEvent;
   const scramble = room && credentials ? myScramble(room, credentials.playerId) ?? '' : '';
@@ -863,15 +869,16 @@ export function NetBattleMode({
 
   const persistRecording = useCallback((record: NetRecordedAttempt) => {
     setRecordedSolve(record);
-    const save = () => onRecordSolve?.(record);
-    saveTailRef.current = saveTailRef.current.then(save).catch(save).catch(() => setError(copy.actionFailed));
-  }, [onRecordSolve, copy.actionFailed]);
+    void onRecordSolve?.(record).then(() => {
+      if (capability) void roomController.poll(capability.client.getNetRoom);
+    }).catch(() => setError(copy.actionFailed));
+  }, [onRecordSolve, copy.actionFailed, capability, roomController]);
   const onComplete = useCallback((result: SolveResult) => {
     const completed = netAttemptRef.current.finish(result);
     const auth = attemptAuthRef.current;
     if (!completed) return;
     if (completed.record) persistRecording(completed.record);
-    if (!capability || !auth) return;
+    if (onRecordSolve || !capability || !auth) return;
     const penalty: NetPenalty = result.autoPenalty === 'DNF' ? 'dnf' : result.autoPenalty;
     const { code, round } = completed.context;
     void roomController.submitResult(round, () => capability.client.postNetResult(code, auth, round, result.timeMs, penalty), { t: result.timeMs, p: penalty });
@@ -889,7 +896,7 @@ export function NetBattleMode({
       netTimerPhaseRef.current = 'running';
       setRecordedSolve(null);
       netAttemptRef.current.begin({ code: current.code, playerId: auth.playerId, round: current.round,
-        sessionId: sessionId ?? '', id: nextLocalBattleRoundId(), ts: Date.now(),
+        sessionId: sessionId ?? '', id: netAttemptSolveId({ code: current.code, playerId: auth.playerId, round: current.round }), ts: Date.now(),
         event: playerEventOf(current, auth.playerId), scramble: myScramble(current, auth.playerId) ?? '' }, startedAtMs,
         smartCube?.phase === 'connected' ? { model: smartCube.model ?? '', name: smartCube.deviceName } : undefined);
     },
@@ -1238,7 +1245,7 @@ export function NetBattleMode({
     );
   }
 
-  const currentResult = room.results[String(room.round)]?.[credentials.playerId];
+  const currentResult = myResult;
   const displayMs = timer.machine.phase === 'running'
     ? Math.max(0, timer.nowMs - (timer.machine.startedAtMs ?? timer.nowMs))
     : timer.machine.lastMs ?? currentResult?.t ?? 0;
@@ -1405,7 +1412,13 @@ export function NetBattleMode({
               onPenalty={(penalty) => {
                 if (!currentResult) return;
                 const record = netAttemptRef.current.penalty({ code: room.code, playerId: credentials.playerId, round: room.round }, penalty);
-                if (record) persistRecording(record);
+                if (onRecordSolve) {
+                  const identity = { code: room.code, playerId: credentials.playerId, round: room.round };
+                  const context = { ...identity, id: netAttemptSolveId(identity), ts: Date.now(), sessionId: sessionId ?? '', event, scramble };
+                  persistRecording(record ?? { context, solve: { id: context.id, ts: context.ts, event, scramble,
+                    timeMs: currentResult.t, penalty: penalty === 'dnf' ? 'DNF' : penalty } });
+                  return;
+                }
                 void roomController.submitResult(room.round, () => capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty), { t: currentResult.t, p: penalty });
               }}
               onNext={advanceRound} />

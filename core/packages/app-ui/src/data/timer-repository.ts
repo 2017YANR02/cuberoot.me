@@ -239,7 +239,8 @@ export class TimerRepository {
   saveNetSolve(sessionId: string, solve: Solve): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
-      const byEvent = data.database.dataBySession[sessionId];
+      const existingSession = Object.entries(data.database.dataBySession).find(([, events]) => Object.values(events).some(solves => solves?.some(item => item.id === solve.id)));
+      const byEvent = existingSession?.[1] ?? data.database.dataBySession[sessionId];
       if (!byEvent) throw new TimerSessionRepositoryError('unknown-session');
       byEvent[solve.event] = upsertNetRecordedSolve(byEvent[solve.event] ?? [], solve);
       return this.writeSessionData(data);

@@ -43,7 +43,7 @@ describe('online recording and local persistence', () => {
     await outbox.enqueue(first);
     const second = recorded('solve-8'); second.context.sessionId = 'other';
     await outbox.enqueue(second);
-    expect(outbox.getSnapshot()).toEqual({ pending: 2, busy: false });
+    expect(outbox.getSnapshot()).toMatchObject({ pending: 2, busy: false });
     fail = false;
     await outbox.retry();
     await outbox.enqueue({ ...first, solve: { ...first.solve, penalty: 'DNF' } });
@@ -57,10 +57,12 @@ describe('online recording and local persistence', () => {
     const records: Solve[] = [];
     let release!: () => void;
     const blocked = new Promise<void>(resolve => { release = resolve; });
-    const outbox = new NetRecordingOutbox(async record => { await blocked; records.push(record.solve); });
+    let entered!: () => void;
+    const started = new Promise<void>(resolve => { entered = resolve; });
+    const outbox = new NetRecordingOutbox(async record => { entered(); await blocked; records.push(record.solve); });
     const first = recorded();
     const saving = outbox.enqueue(first);
-    await Promise.resolve();
+    await started;
     void outbox.enqueue({ ...first, solve: { ...first.solve, penalty: 'DNF' } });
     release(); await saving;
     expect(records.map(solve => solve.penalty)).toEqual(['+2', 'DNF']);

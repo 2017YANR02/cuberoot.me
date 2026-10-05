@@ -1739,6 +1739,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The complete solve row, rolling header/values/PBs, day groups, quick menu, derived tags, and filters shared by Web and all five installed clients. Algorithms come from shared; FMC, MBLD, narrow-screen wrapping, touch height, and reading order live in one implementation. Hosts only inject setting persistence and real effects.',
   },
   {
+    name: 'TimerNetOutboxNotice',
+    import: "import { TimerNetOutboxNotice } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用的联机待处理成绩恢复和状态提示。挂在模式宿主，统一重启恢复、联网重试、存储失败提示及保留本机成绩的确认操作。',
+    en: 'Online result recovery and status shared by Web and installed clients. The mode host owns one recovery loop for restart, reconnect, storage failure, and acknowledging locally retained results.',
+  },
+  {
     name: 'TimerInfoToast',
     import: "import { TimerInfoToast } from '@cuberoot/timer-ui';",
     category: 'more',
