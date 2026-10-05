@@ -1,5 +1,6 @@
 import type {
   BleDeviceRef,
+  BleServiceRef,
   BleRequestOptions,
   BleTransport,
 } from '@cuberoot/app-ui';
@@ -69,7 +70,7 @@ export class HarmonyBleTransport implements BleTransport {
 
   async requestDevice(options: BleRequestOptions): Promise<BleDeviceRef> {
     const selected = await bridgeCall<NativeBleDevice>(
-      nativeBridge().bleRequestDevice(options.namePrefix),
+      nativeBridge().bleRequestDevice(JSON.stringify(options.namePrefixes ?? [options.namePrefix])),
     );
     const manufacturerData = new Map<number, Uint8Array>();
     for (const entry of selected.manufacturerData) {
@@ -95,6 +96,10 @@ export class HarmonyBleTransport implements BleTransport {
   async disconnect(deviceId: string): Promise<void> {
     clearDeviceListeners(deviceId);
     await bridgeCall<void>(nativeBridge().bleDisconnect(deviceId));
+  }
+
+  getServices(deviceId: string): Promise<BleServiceRef[]> {
+    return bridgeCall<BleServiceRef[]>(nativeBridge().bleGetServices(deviceId));
   }
 
   getMtu(deviceId: string): Promise<number | null> {

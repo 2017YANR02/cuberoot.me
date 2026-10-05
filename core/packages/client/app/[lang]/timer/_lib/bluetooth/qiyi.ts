@@ -1,3 +1,4 @@
+import { createQiyiResetCommand } from '@cuberoot/shared/smart-cube/qiyi';
 import {
   buildQiyiPacket,
   createQiyiCipher,
@@ -91,7 +92,6 @@ export const qiyiDriver: CubeDriver = {
         ctx?.onGyro?.(notification.gyro);
         return;
       }
-      const msg = pt.subarray(0, pt[1] ?? pt.length);
       if (notification.opcode === QIYI_OP_SYNC) {
         if (calibration?.waiting && notification.state === QIYI_SOLVED_STATE) {
           confirmedState = {
@@ -114,7 +114,7 @@ export const qiyiDriver: CubeDriver = {
 
       if (resetting) {
         if (pendingStates.length >= 128) calibration?.cancel(new Error('Too many states during calibration'));
-        else pendingStates.push(msg.slice());
+        else pendingStates.push(pt.slice());
         return;
       }
       applyState(notification);
@@ -144,11 +144,8 @@ export const qiyiDriver: CubeDriver = {
       throw error;
     }
 
-    const resetContent = [0x04, 0x17, 0x88, 0x8b, 0x31];
-    for (let i = 0; i < 54; i += 2) {
-      resetContent.push('LRDUFB'.indexOf(QIYI_SOLVED_STATE[i]) | ('LRDUFB'.indexOf(QIYI_SOLVED_STATE[i + 1]) << 4));
-    }
-    resetContent.push(0, 0);
+    const resetPacket = createQiyiResetCommand();
+    const resetContent = Array.from(resetPacket.subarray(2, resetPacket[1] - 2));
     calibration = createDeviceStateReset({
       automaticReply: true,
       sendReset: begin => send(resetContent, begin),

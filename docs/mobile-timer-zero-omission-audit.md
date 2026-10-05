@@ -265,7 +265,7 @@ shared 映射快照是 19 个 Timer ID：
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
 | `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | Mobile/Desktop 注册三类设备能力；Harmony 和实体设备矩阵待补 |
-| `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | Android/App 已有 GAN v2/v3/v4、MoYu32、QiYi 代码级 bridge；Giiker/GoCube/旧 MoYu 与 Web driver 集合仍需继续差分。型号级真机证据只登记 GAN v4 |
+| `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | 2026-10-05 App 已接 GAN v2/v3/v4、MoYu32、QiYi 设备校准回写，Giiker/GoCube/旧 MoYu 与 Web 共用 shared 协议会话；旧 MoYu 仍仅有转动与软件状态。Harmony 源码已接，HAP 受工具链版本阻断；各新增型号真机矩阵未验，现有型号级成功证据仍只登记 GAN v4 |
 | `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | Android picker 使用无 service 过滤扫描，再按 `GAN` / `WCU_MY3` / `QY-QYSC` / `XMD-TornadoV4-i` 前缀过滤、按地址去重且列表只显示名称；2026-09-20 当前扫描、连接、使用已确认。iOS 复用 manufacturer-data MAC；多品牌型号、自动重连、拒绝/后台/蓝牙关闭/距离中断仍缺矩阵 |
 | `device.smart-cube.status` | 型号、电量、协议、最后动作、魔方时钟/丢步诊断 | Web/App 已共用 `TimerSmartCubeDeviceModal` 展示设备名、电量、协议和连接/还原状态，并共用重置/状态回读、陀螺仪校准、断开、焦点与关闭行为；Web 只包平台环境、失败详情和 MAC 输入。最近一步按当前产品决定不展示，魔方时钟、丢步与连接诊断仍未形成完整共享可见面板 |
 | `device.smart-cube.scramble` | 状态定锚、打乱匹配、逐步提示、走偏修正、第一手起表、还原停表 | 3×3 GAN v4 自动起停主链已有旧版实证；提示、匹配、走偏修正、同批帧和 pending Worker 现在由 Web/五端共享并有自动回归，但最新 OPPO 可视提示/走偏修正仍待实体魔方复测，不能据此宣布设备完成 |

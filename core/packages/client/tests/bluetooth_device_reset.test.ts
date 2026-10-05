@@ -18,6 +18,25 @@ const versions = [
 ];
 
 describe('GAN device-state calibration', () => {
+  it('prevents a timed-out queued reset from writing later', async () => {
+    vi.useFakeTimers();
+    let release!: () => void;
+    const blocked = new Promise<void>(resolve => { release = resolve; });
+    const write = vi.fn();
+    const reset = createDeviceStateReset({
+      sendReset: async begin => { await blocked; if (begin?.()) write(); },
+      prepareSnapshot() {}, requestSnapshot: async () => {},
+    });
+    try {
+      const result = expect(reset.run()).rejects.toThrow('did not confirm');
+      await vi.advanceTimersByTimeAsync(4000);
+      await result;
+      release();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(write).not.toHaveBeenCalled();
+    } finally { reset.dispose(); vi.useRealTimers(); }
+  });
+
   it('publishes the physical GAN v2 state during the initial handshake', async () => {
     const gatt = makeFakeGatt('GAN12ui', { [ganV2Driver.service]: [GAN_V2_READ, GAN_V2_WRITE] });
     const cipher = createGanV2Cipher(new Uint8Array([0xab, 0x12, 0x34, 0x56, 0x78, 0x90]));

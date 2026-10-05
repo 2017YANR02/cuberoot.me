@@ -58,12 +58,15 @@ export const ganV3Driver: CubeDriver = {
 
     let commandChar: BluetoothRemoteGATTCharacteristic | null = null;
     let writeTail: Promise<void> = Promise.resolve();
-    const sendCommand = (command: Uint8Array, strict = false): Promise<void> => {
+    const sendCommand = (command: Uint8Array, strict = false, begin?: () => boolean): Promise<void> => {
       if (!commandChar) return strict ? Promise.reject(new Error('Device has no write characteristic')) : Promise.resolve();
       const encrypted = cipher.encrypt(command);
       const bytes = new Uint8Array(encrypted.length);
       bytes.set(encrypted);
-      const task = writeTail.then(() => writeGattValue(commandChar!, bytes));
+      const task = writeTail.then(() => {
+        if (begin && !begin()) return;
+        return writeGattValue(commandChar!, bytes);
+      });
       writeTail = task.catch(() => {});
       return strict ? task : task.catch(() => {});
     };
@@ -135,7 +138,7 @@ export const ganV3Driver: CubeDriver = {
     }
 
     calibration = createDeviceStateReset({
-      sendReset: () => sendCommand(createGanV3ResetCommand(), true),
+      sendReset: begin => sendCommand(createGanV3ResetCommand(), true, begin),
       prepareSnapshot: () => { decodeState.sync.reset(); },
       requestSnapshot: () => sendCommand(createGanV3FaceletsCommand(), true),
     });

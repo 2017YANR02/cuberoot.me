@@ -1,3 +1,9 @@
+import { GIIKER_DATA_SERVICE_UUID } from '@cuberoot/shared/smart-cube/giiker';
+import { createLegacyCubeSession } from '@cuberoot/shared/smart-cube/legacy-session';
+import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
+import { createGanV2ResetCommand } from '@cuberoot/shared/smart-cube/gan-v2';
+import { createGanV3ResetCommand } from '@cuberoot/shared/smart-cube/gan-v3';
+import { createGanV4ResetCommand } from '@cuberoot/shared/smart-cube/gan-v4';
 import {
   GAN_V2_NOTIFY_CHARACTERISTIC_UUID,
   GAN_V2_SERVICE_UUID,
@@ -46,7 +52,7 @@ import type { BleDeviceRef, BleServiceRef, BleTransport } from './transport';
 export type GanCubeProtocol = 'gan-v2' | 'gan-v3' | 'gan-v4';
 
 export interface GanCubeStatus {
-  protocol: GanCubeProtocol;
+  protocol: GanCubeProtocol | 'giiker';
   battery: number | null;
   moveCounter: number;
   pendingMoves: number;
@@ -83,8 +89,10 @@ function protocolForService(services: ReadonlyArray<BleServiceRef>): GanCubeProt
 }
 
 export class GanCubeConnection {
+  private legacy: ReturnType<typeof createLegacyCubeSession> | null = null;
+  private calibration: ReturnType<typeof createDeviceStateReset> | null = null;
   private deviceId: string | null = null;
-  private protocol: GanCubeProtocol | null = null;
+  private protocol: GanCubeProtocol | 'giiker' | null = null;
   private stopNotifications: (() => Promise<void>) | null = null;
   private sendCommand: ((command: Uint8Array) => Promise<void>) | null = null;
   private requestStateCommand: (() => Promise<void>) | null = null;
@@ -114,13 +122,16 @@ export class GanCubeConnection {
     if (!this.forcedProtocol && !namedProtocol) throw new Error('unsupported GAN protocol');
 
     const generation = ++this.generation;
-    const mac = await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
+    const knownMac = /^Gi/i.test(device.name) ? null : await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
     if (generation !== this.generation) throw new Error('smart cube connection closed');
+
 
     this.deviceId = device.id;
     const current = () => this.generation === generation && this.deviceId === device.id;
     const onDisconnect = () => {
       if (!current()) return;
+      this.calibration?.dispose();
+      this.calibration = null;
       this.generation++;
       this.deviceId = null;
       this.protocol = null;
@@ -135,6 +146,33 @@ export class GanCubeConnection {
     await this.transport.connect(device.id, onDisconnect);
     if (!current()) throw new Error('smart cube connection closed');
 
+    if (!this.forcedProtocol && /^Gi/i.test(device.name)) {
+      const services = await this.transport.getServices?.(device.id);
+      if (!current()) throw new Error('smart cube connection closed');
+      if (services?.some(service => service.uuid.toLowerCase() === GIIKER_DATA_SERVICE_UUID)) {
+        this.protocol = 'giiker';
+        let stateReady = false;
+        let moveCounter = 0;
+        const session = createLegacyCubeSession('giiker', {
+          read: (service, characteristic) => this.transport.read(device.id, service, characteristic),
+          write: (service, characteristic, bytes) => this.transport.write(device.id, service, characteristic, bytes),
+          subscribe: (service, characteristic, receive) => this.transport.subscribe(device.id, service, characteristic, receive),
+        }, {
+          onMove: move => { if (current()) { moveCounter++; this.callbacks.onMove(move); } },
+          onState: facelets => { if (current()) { stateReady = true; this.callbacks.onState?.(facelets); } },
+          onBattery: battery => { if (current()) this.callbacks.onStatus?.({ protocol: 'giiker', battery, moveCounter, pendingMoves: 0, badFrames: 0, stateReady }); },
+        });
+        this.legacy = session;
+        this.requestStateCommand = session.requestState;
+        await session.start();
+        if (!current()) throw new Error('smart cube connection closed');
+        this.callbacks.onStatus?.({ protocol: 'giiker', battery: null, moveCounter, pendingMoves: 0, badFrames: 0, stateReady });
+        void session.battery();
+        return;
+      }
+    }
+    const mac = knownMac ?? await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
+    if (!current()) throw new Error('smart cube connection closed');
     const protocol = this.forcedProtocol ?? await this.detectProtocol(device, namedProtocol);
     this.protocol = protocol;
     if (protocol === 'gan-v2') {
@@ -170,12 +208,13 @@ export class GanCubeConnection {
     service: string,
     characteristic: string,
     cipher: { encrypt(command: Uint8Array): Uint8Array },
-  ): (command: Uint8Array, strict?: boolean) => Promise<void> {
+  ): (command: Uint8Array, strict?: boolean, begin?: () => boolean) => Promise<void> {
     let writeTail: Promise<void> = Promise.resolve();
-    return (command, strict = true) => {
+    return (command, strict = true, begin) => {
       const encrypted = cipher.encrypt(command);
       const task = writeTail.then(() => {
         if (!current()) throw new Error('smart cube connection closed');
+        if (begin && !begin()) return;
         return this.transport.write(device.id, service, characteristic, encrypted);
       });
       writeTail = task.catch(() => undefined);
@@ -231,7 +270,7 @@ export class GanCubeConnection {
     const decodeState = createGanV2DecodeState({
       onState: (facelets) => {
         stateReady = true;
-        this.callbacks.onState?.(facelets);
+        this.calibration?.observe(facelets); this.callbacks.onState?.(facelets);
       },
     });
     const protocolError = { value: false };
@@ -251,6 +290,11 @@ export class GanCubeConnection {
         decodeState.badFrames, stateReady,
       );
       if (decodeState.badFrames >= 3) this.reportProtocolError(current, protocolError);
+    });
+    this.calibration = createDeviceStateReset({
+      sendReset: begin => send(createGanV2ResetCommand(), true, begin),
+      prepareSnapshot: () => { decodeState.prevMoveCnt = -1; decodeState.prevMoves = []; },
+      requestSnapshot: () => send(createGanV2FaceletsCommand()),
     });
     this.requestStateCommand = async () => {
       await send(createGanV2FaceletsCommand());
@@ -283,7 +327,7 @@ export class GanCubeConnection {
       },
       onState: (facelets) => {
         stateReady = true;
-        this.callbacks.onState?.(facelets);
+        this.calibration?.observe(facelets); this.callbacks.onState?.(facelets);
       },
     });
     const idleChecks = createGanV4IdleStateChecks({
@@ -308,6 +352,11 @@ export class GanCubeConnection {
         decodeState.badFrames, stateReady,
       );
       if (decodeState.badFrames >= 6) this.reportProtocolError(current, protocolError);
+    });
+    this.calibration = createDeviceStateReset({
+      sendReset: begin => send(createGanV3ResetCommand(), true, begin),
+      prepareSnapshot: () => { decodeState.sync.reset(); },
+      requestSnapshot: () => send(createGanV3FaceletsCommand()),
     });
     this.requestStateCommand = async () => {
       await send(createGanV3FaceletsCommand());
@@ -341,7 +390,7 @@ export class GanCubeConnection {
       },
       onState: (facelets) => {
         stateReady = true;
-        this.callbacks.onState?.(facelets);
+        this.calibration?.observe(facelets); this.callbacks.onState?.(facelets);
       },
     });
     const idleChecks = createGanV4IdleStateChecks({
@@ -367,6 +416,11 @@ export class GanCubeConnection {
       );
       if (decodeState.badFrames >= 6) this.reportProtocolError(current, protocolError);
     });
+    this.calibration = createDeviceStateReset({
+      sendReset: begin => send(createGanV4ResetCommand(), true, begin),
+      prepareSnapshot: () => { decodeState.sync.reset(); },
+      requestSnapshot: () => send(createGanV4FaceletsCommand()),
+    });
     this.requestStateCommand = async () => {
       await send(createGanV4FaceletsCommand());
       await send(createGanV4BatteryCommand());
@@ -376,7 +430,7 @@ export class GanCubeConnection {
     await send(createGanV4BatteryCommand());
   }
 
-  getProtocol(): GanCubeProtocol | null {
+  getProtocol(): GanCubeProtocol | 'giiker' | null {
     return this.protocol;
   }
 
@@ -385,7 +439,14 @@ export class GanCubeConnection {
     await this.requestStateCommand();
   }
 
+  async resetDeviceState(): Promise<void> {
+    if (!this.calibration) throw new Error('smart cube is not connected');
+    await this.calibration.run();
+  }
+
   async disconnect(): Promise<void> {
+    this.calibration?.dispose();
+    this.calibration = null;
     const deviceId = this.deviceId;
     this.deviceId = null;
     this.protocol = null;
@@ -394,6 +455,8 @@ export class GanCubeConnection {
     this.requestStateCommand = null;
     this.disposeTimers?.();
     this.disposeTimers = null;
+    await this.legacy?.dispose();
+    this.legacy = null;
     const stop = this.stopNotifications;
     this.stopNotifications = null;
     await stop?.().catch(() => undefined);
