@@ -13,6 +13,7 @@ import { tr, useLang } from '@/i18n/tr';
 import AppLink from '@/components/AppLink';
 import DonateModal from '@/components/DonateModal';
 import { displayCuberName } from '@/lib/cuber-name-display';
+import { pinyin } from 'pinyin-pro';
 import { useAuthUser, useIsAdmin } from '@/lib/auth-store';
 import { firstGlyph } from '@/lib/first-glyph';
 import {
@@ -24,6 +25,16 @@ import './support.css';
 
 const INITIAL_VISIBLE = 18;
 const CURRENCY_SYMBOL: Record<string, string> = { CNY: '¥', USD: '$', EUR: '€' };
+
+// WCA names already carry their preferred Latin spelling. Only romanize
+// Chinese-only credit names; keep the stored name untouched for editing.
+function supportName(rawName: string, isZh: boolean): string {
+  const name = displayCuberName(rawName, isZh);
+  if (isZh || !/^[\u3400-\u9fff·\s]+$/.test(name)) return name;
+  return pinyin(name, { toneType: 'none', type: 'array', surname: 'head', nonZh: 'consecutive' })
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ').replace(/\s+/g, ' ').trim();
+}
 
 function fmtAmount(amount: number, currency: string): string {
   const sym = CURRENCY_SYMBOL[currency] || '';
@@ -53,8 +64,8 @@ function PersonName({ name, wcaId }: { name: string; wcaId?: string }) {
 function AdminBtns<T>({ item, onEdit, onDelete }: { item: T; onEdit: (x: T) => void; onDelete: (x: T) => void }) {
   return (
     <div className="sponsor-admin">
-      <button className="sponsor-admin-btn" onClick={() => onEdit(item)} aria-label="edit"><Pencil size={13} /></button>
-      <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(item)} aria-label="delete"><Trash2 size={13} /></button>
+      <button className="sponsor-admin-btn" onClick={() => onEdit(item)} aria-label={tr({ zh: '编辑', en: 'Edit' })}><Pencil size={13} /></button>
+      <button className="sponsor-admin-del sponsor-admin-btn" onClick={() => onDelete(item)} aria-label={tr({ zh: '删除', en: 'Delete' })}><Trash2 size={13} /></button>
     </div>
   );
 }
@@ -66,7 +77,7 @@ function SponsorCard({ sponsor, isZh, admin, onEdit, onDelete }: {
   onEdit: (s: Sponsor) => void;
   onDelete: (s: Sponsor) => void;
 }) {
-  const name = displayCuberName(sponsor.name, isZh);
+  const name = supportName(sponsor.name, isZh);
   return (
     <div className="sponsor-card" title={sponsor.message || undefined}>
       <PersonAvatar name={name} wcaId={sponsor.wcaId} avatarUrl={sponsor.avatarUrl} />
@@ -87,7 +98,7 @@ function ContributorCard({ contributor, isZh, admin, onEdit, onDelete, onBump, o
   onBump: (ct: Contributor) => void;
   onOpenDetail: (ct: Contributor) => void;
 }) {
-  const name = displayCuberName(contributor.name, isZh);
+  const name = supportName(contributor.name, isZh);
   const countTitle = tr({ zh: '贡献 {n} 次', en: '{n} contributions' }).replace('{n}', String(contributor.score));
   const hasDetail = contributor.contributions.length > 0;
   return (
@@ -122,7 +133,7 @@ function ContributorDetail({ contributor, isZh, onClose }: {
   isZh: boolean;
   onClose: () => void;
 }) {
-  const name = displayCuberName(contributor.name, isZh);
+  const name = supportName(contributor.name, isZh);
   const items = contributor.contributions;
   return (
     <div className="sponsor-editor-backdrop" onClick={onClose}>
