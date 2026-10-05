@@ -279,7 +279,7 @@ export function LessonVideoPlayer({ src, poster, onError, onLoadedMetadata, auto
       const target = event.target instanceof HTMLElement ? event.target : null;
       if (!element || event.defaultPrevented || event.isComposing || event.altKey || event.metaKey) return;
       if (target?.closest('textarea, select, [contenteditable]:not([contenteditable="false"]), input:not([type="range"])')) return;
-      if (target && target !== document.body && target !== document.documentElement && !root.current?.contains(target) && !root.current?.closest('.platform-classroom')?.contains(target)) return;
+      if (target && target !== document.body && target !== document.documentElement && !root.current?.contains(target) && !root.current?.closest('.platform-classroom, .platform-learning-classroom')?.contains(target)) return;
       if (document.querySelector('.lesson-video-player') !== root.current && !root.current?.contains(target)) return;
       const key = event.key.toLowerCase();
       if (key === '?' && !event.ctrlKey) {

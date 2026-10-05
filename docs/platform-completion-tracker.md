@@ -1,8 +1,8 @@
 # Platform 完整移植与复用跟踪
 
-更新：2026-10-04。状态：**本地实现与复核完成，已合入 main，未发布**。本文件是本轮执行与复核入口；历史 `platform-product-migration-tracker.md` 的完成声明不作为本轮验收证据。
+更新：2026-10-04。状态：**已合入main；首次前端发布成功、后端部署受阻，QR修复后重新发布中**。本文件是本轮执行与复核入口；历史 `platform-product-migration-tracker.md` 的完成声明不作为本轮验收证据。
 
-当前工作入口：`/Users/eula/Documents/cuberoot.me` 的 `main`。用户追加要求直接放入main；下文隔离分支记录保留为实施历史，后续从main继续，不push。
+当前工作入口：`/Users/eula/Documents/cuberoot.me` 的 `main`。用户追加要求直接放入main并提交、push全部；下文隔离分支及不push记录保留为实施历史，后续从main继续。
 
 ## 授权与工作边界
 
@@ -126,3 +126,11 @@ PG 集成测试只有显式设置 `PLATFORM_COMMERCE_TEST_DATABASE_URL` 或 `PLA
 - 新每日扫码统计只能从部署后积累，历史累计不能反推每天分布。
 - 英文/中文界面均接入原本地化方式；原模板正文和用户业务内容保留原文，不伪造翻译。
 - 首次部署需要API与Web共同发布，并执行迁移；本轮没有push，现在线上不会自动出现这些改动。
+
+## 2026-10-04 二维码生成故障与发布恢复
+
+- 生产日志确认 `POST /v1/platform/admin/qr` 返回500，错误为 `inconsistent types deduced for parameter $3`；使用截图的批次1、数量1、目标 `/`，本地真实PG+HTTP复现相同text/varchar冲突。不是输入错误。
+- 为修订类型和审批人显式指定SQL参数类型；二维码修订、模板、卡片和任务JSONB直接传对象/数组，避免二次编码；同类启停与任务状态参数明确类型。失败请求在事务中回滚，无需补造此前失败的二维码。
+- 真实PG+HTTP四项通过：单个创建/幂等重试/搜索回读/SVG；批量及外链审批/修改；设计保存/复制/停用；模板编辑/任务状态。此回归已接入Test CI现有PG服务，普通本地无显式数据库环境时跳过。
+- 首次Deploy Core被旧schema/JSONB源码断言阻断；修订精确表集合、迁移账本及对象参数断言。同步修复client CSS守卫、评论空字符串契约，以及新课堂容器下Shift+N/P与影院布局。未放松守卫或跳过失败检查。
+- 本地前后端类型检查通过，API相关42项、schema等31项、client三文件15项通过（部分检查重叠，不累加）；生产发布结果待本次Actions确认。

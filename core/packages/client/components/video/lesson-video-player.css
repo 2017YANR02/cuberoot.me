@@ -91,8 +91,10 @@
 .lesson-video-help p { margin: 10px 0; }
 .lesson-video-help > .lesson-video-button { border: 0; padding: 6px 0; text-decoration: underline; background: transparent; }
 /* Theater mode keeps the lesson directory reachable below the expanded stage. */
-.platform-classroom:has(.lesson-video-player.is-theater) { grid-template-columns: minmax(0, 1fr); }
-.platform-classroom:has(.lesson-video-player.is-theater) .platform-classroom-stage { grid-row: 1; }
+.platform-classroom:has(.lesson-video-player.is-theater),
+.platform-learning-classroom:has(.lesson-video-player.is-theater) { grid-template-columns: minmax(0, 1fr); }
+.platform-classroom:has(.lesson-video-player.is-theater) .platform-classroom-stage,
+.platform-learning-classroom:has(.lesson-video-player.is-theater) > .platform-learning-stage { grid-row: 1; }
 .lesson-video-player.is-theater:not(:fullscreen) video { height: 75vh; }
 .lesson-video-shortcuts { position: fixed; inset: 0; margin: auto; box-sizing: border-box; width: min(1164px, calc(100% - 32px)); max-width: none; max-height: calc(100dvh - 32px); overflow: auto; overscroll-behavior: contain; border: 0; border-radius: 12px; padding: 24px; background: color-mix(in srgb, var(--player-ink) 13%, var(--player-base)); color: var(--player-ink); font: 13px/1.45 Arial, var(--font-sans); }
 .lesson-video-shortcuts::backdrop { background: color-mix(in srgb, var(--player-base) 60%, transparent); }
