@@ -96,7 +96,7 @@ export async function submitCompetitionCaptcha(c: Context) {
     && !(process.env.NODE_ENV !== 'production' && /^http:\/\/(?:localhost|127\.0\.0\.1):3000$/.test(origin))) return c.json({ code: 'invalid_origin' }, 403);
   const { ip, browser } = identity(c);
   if (!store.allow('verify:' + ip, 10)) { c.header('Retry-After', '60'); return c.json({ code: 'captcha_rate_limited' }, 429); }
-  let body: { id?: unknown; answer?: unknown };
+  let body: { id?: unknown; answer?: unknown; embedded?: unknown };
   try {
     const raw = await c.req.text();
     if (raw.length > 512) return c.json({ code: 'invalid_challenge' }, 400);
@@ -112,6 +112,13 @@ export async function submitCompetitionCaptcha(c: Context) {
   const issueTtl = Number.isSafeInteger(configuredTtl) && configuredTtl > 0 && configuredTtl <= COMPETITION_ACCESS_TTL
     ? configuredTtl : COMPETITION_ACCESS_TTL;
   const proof = await createCompetitionProof(process.env.COMPETITION_ACCESS_SECRET!, 'browser', c.req.header('user-agent') ?? '', Date.now(), issueTtl);
-  c.header('Set-Cookie', `${COMPETITION_ACCESS_COOKIE}=${proof}; Domain=cuberoot.me; Path=/; Max-Age=${issueTtl}; HttpOnly; Secure; SameSite=Lax`);
+  // Installed clients embed the site below a local App origin. Lax cookies
+  // cannot round-trip there; partition the proof under that App's top-level
+  // site instead. This only selects storage policy, never grants access: the
+  // origin, one-use answer, expiry and browser-bound signature still apply.
+  // Older engines that allow third-party cookies can use SameSite=None even
+  // when they do not yet implement Partitioned.
+  const cookiePolicy = body.embedded === true ? 'SameSite=None; Partitioned' : 'SameSite=Lax';
+  c.header('Set-Cookie', `${COMPETITION_ACCESS_COOKIE}=${proof}; Domain=cuberoot.me; Path=/; Max-Age=${issueTtl}; HttpOnly; Secure; ${cookiePolicy}`);
   return c.json({ expiresIn: issueTtl });
 }

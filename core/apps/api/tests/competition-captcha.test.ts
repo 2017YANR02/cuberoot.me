@@ -31,7 +31,7 @@ it('renders glyph outlines without exposing answer text', () => {
   expect(image).not.toContain('<text');
   expect(image).not.toContain('ABC234');
 });
-it('HTTP endpoints never expose an answer, reject bad origin, and mint only after one-use validation', async () => {
+it.each([false, true])('HTTP verification preserves one-use validation and cookie policy (embedded=%s)', async embedded => {
   vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
   const app = new Hono();
   app.get('/challenge', issueCompetitionCaptcha); app.post('/verify', submitCompetitionCaptcha);
@@ -43,7 +43,7 @@ it('HTTP endpoints never expose an answer, reject bad origin, and mint only afte
   const body = await response.json();
   expect(Object.keys(body).sort()).toEqual(['expiresIn', 'id', 'image']);
   const answer = issued.mock.results[0].value.answer;
-  const submit = (value: string, origin = headers.origin) => app.request('/verify', { method: 'POST', headers: { ...headers, origin }, body: JSON.stringify({ id: body.id, answer: value }) });
+  const submit = (value: string, origin = headers.origin) => app.request('/verify', { method: 'POST', headers: { ...headers, origin }, body: JSON.stringify({ id: body.id, answer: value, embedded }) });
   expect((await submit(answer, 'https://evil.example')).status).toBe(403);
   expect(consumed).not.toHaveBeenCalled();
   const wrong = await submit('WRONG');
@@ -53,11 +53,13 @@ it('HTTP endpoints never expose an answer, reject bad origin, and mint only afte
   const good = await submit(answer);
   expect(good.status).toBe(200);
   const cookie = good.headers.get('set-cookie')!;
-  expect(cookie).toContain('HttpOnly; Secure; SameSite=Lax');
+  expect(cookie).toContain(embedded ? 'HttpOnly; Secure; SameSite=None; Partitioned' : 'HttpOnly; Secure; SameSite=Lax');
+  if (!embedded) expect(cookie).not.toContain('Partitioned');
   expect(cookie).toContain('Max-Age=604800');
   expect(await good.json()).toEqual({ expiresIn: 604800 });
   const proof = cookie.split(';')[0].slice(COMPETITION_ACCESS_COOKIE.length + 1);
   expect(await verifyCompetitionProof(secret, proof, 'browser', 'test-browser')).toBe(true);
+  expect(await verifyCompetitionProof(secret, proof, 'browser', 'another-browser')).toBe(false);
   expect((await submit(answer)).status).toBe(400);
 });
 

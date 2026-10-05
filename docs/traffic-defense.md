@@ -1,5 +1,11 @@
 # 网络异常流量防护与费用止损
 
+## 2026-10-05 App 内嵌验证码 Cookie（本地，未发布）
+
+安装端工具页在本地 App origin 下用 iframe 加载网站。验证码答案正确后原 `SameSite=Lax` Cookie 无法在跨站 iframe 中回传，页面因此显示“浏览器未保存验证凭证”。验证码页现在随提交报告是否嵌入；API 仅在 `embedded === true` 时签发 `SameSite=None; Partitioned`，普通网页保留 Lax。Domain、HttpOnly、Secure、7 天期限、来源检查、一次性验证码、UA 绑定和所有入口验签保持原有规则；该标记不授予豁免。成功提交已消耗图片，即使后续 Cookie 检查失败也要求换图，避免重复提交已核销的 challenge。
+
+本机 macOS 27 WKWebView 隔离探针使用 `tauri://localhost` 嵌入本地 HTTPS 页：旧 Lax Cookie 未回传，分区 Cookie 在后续请求中回传。API 验证码与访问权限 10 项专项通过，覆盖普通/嵌入策略、错误来源、错误答案、重复核销及不同 UA。Android 所用 Capacitor 原生 Cookie manager 已开启第三方 Cookie；旧引擎忽略 Partitioned 时可使用 SameSite=None，但此轮未作 Android 真机验收。WebKit 的分区 Cookie 支持起点见 [Safari 18.4 官方说明](https://webkit.org/blog/16574/webkit-features-in-safari-18-4/#networking)，更旧的 iOS/macOS 不承诺此方案有效。五端实机验收、网站/API 发布仍待完成；这次修改不涉及 App 打包代码，受支持引擎的既有安装包可使用更新后的线上页面。
+
 ## 2026-09-29 联系页公开访问（本地待发布）
 
 保留远端对 `/privacy` 和 `/account` 的精确放行，补入 `/contact` 的裸路径、`/en` 与 `/zh` 版本（含尾斜杠）免图片验证码。Next 校验范围与 Vercel 未验证请求计数规则同步排除这三个精确页面；同名前缀和子路径仍受原规则保护。其他页面、受保护 API、扫描封禁与既有流量防护保持原样。
