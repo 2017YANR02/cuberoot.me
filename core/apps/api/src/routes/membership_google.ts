@@ -8,7 +8,9 @@ export const membershipGoogleRoutes = new Hono();
 membershipGoogleRoutes.use('/membership/google/*', bodyLimit({ maxSize: 32 * 1024 }));
 membershipGoogleRoutes.use('/membership/google/*', async (c, next) => {
   c.header('Cache-Control', 'no-store');
-  if (!googleIapEnabled()) return c.json({ error: 'Google subscriptions unavailable' }, 503);
+  // Provision and authenticate RTDN test delivery before enabling purchases.
+  const notification = c.req.method === 'POST' && c.req.path.endsWith('/membership/google/notifications');
+  if (!notification && !googleIapEnabled()) return c.json({ error: 'Google subscriptions unavailable' }, 503);
   await next();
 });
 membershipGoogleRoutes.get('/membership/google/me', async c => {
@@ -43,7 +45,11 @@ membershipGoogleRoutes.post('/membership/google/notifications', async c => {
     const data = JSON.parse(Buffer.from(envelope.message.data, 'base64').toString('utf8'));
     if (data.packageName !== GOOGLE_MEMBERSHIP_PACKAGE) return c.json({ error: 'Wrong package' }, 400);
     const token = data.subscriptionNotification?.purchaseToken ?? data.voidedPurchaseNotification?.purchaseToken;
-    if (token) await reconcileGoogleSubscription(token);
+    if (token) {
+      // Keep real notifications retryable while purchases/reconciliation are disabled.
+      if (!googleIapEnabled()) return c.json({ error: 'Google subscriptions unavailable' }, 503);
+      await reconcileGoogleSubscription(token);
+    }
     else if (!data.testNotification) return c.json({ received: true, ignored: true });
     return c.json({ received: true });
   } catch {
