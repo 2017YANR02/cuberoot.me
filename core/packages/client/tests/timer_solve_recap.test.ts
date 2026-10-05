@@ -274,13 +274,28 @@ describe('移动端复盘不再挤压计时区', () => {
     expect(read(RECAP_CSS)).toMatch(/\.shell-recap-body\s*\{[^}]*overflow-y:\s*auto/);
   });
 
-  it('长内容可撑高页面，最小一屏和桌面侧栏高度仍扣除通知栏', () => {
+  it('页面固定一屏且扣除通知栏，长内容不得撑高页面', () => {
     const visibleHeight = String.raw`calc\(100dvh - var\(--page-notice-h,\s*0px\)\)`;
     const shellLayout = shell.match(/\.timer-shell(?:\.timer-workspace)+\s*\{([^}]*)\}/)?.[1];
     expect(shellLayout).toBeDefined();
-    expect(shellLayout).toMatch(/(?:^|;)\s*height:\s*auto\s*;/);
-    expect(shellLayout).toMatch(new RegExp(String.raw`(?:^|;)\s*min-height:\s*${visibleHeight}\s*;`));
+    expect(shellLayout).toMatch(new RegExp(String.raw`(?:^|;)\s*height:\s*${visibleHeight}\s*;`));
+    expect(shellLayout).toMatch(/(?:^|;)\s*min-height:\s*0\s*;/);
+    expect(shellLayout).not.toMatch(/(?:^|;)\s*height:\s*auto\s*;/);
+    expect(shell).toMatch(/\.timer-shell\s*\{[^}]*overflow:\s*hidden/);
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toContain('var(--timer-workspace-height, calc(100dvh - var(--page-notice-h, 0px)))');
+  });
+
+  it('计时区可收缩，读数和魔方随可用高度缩放，长内容只在区域内滚动', () => {
+    const surface = shell.match(/\.timer-shell \.timing-surface--solo,\s*\.timer-shell \.timing-surface--net\s*\{([^}]*)\}/)?.[1];
+    expect(surface).toBeDefined();
+    expect(surface).toMatch(/min-height:\s*0\s*;/);
+    expect(surface).toMatch(/flex:\s*1 1 0\s*;/);
+    expect(surface).toMatch(/container-type:\s*size\s*;/);
+    expect(surface).toContain('grid-template-rows: minmax(0, 1fr) minmax(0, 2fr)');
+    expect(shell).toContain('--timer-readout-max-size: 25cqh');
+    expect(shell).toContain('--timer-cube-h: min(30vw, 26dvh, 260px, 25cqh)');
+    expect(shell).toMatch(/\.timer-shell :is\([^}]+\) \.timing-surface-scramble-top\s*\{[^}]*max-height:\s*100%;[^}]*overflow-y:\s*auto/);
+    expect(shell).toMatch(/\.timer-shell \.timer-stage-source\s*\{[^}]*max-height:\s*min\(28dvh, 180px\);[^}]*overflow-y:\s*auto/);
   });
 });

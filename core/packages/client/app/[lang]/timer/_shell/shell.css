@@ -21,38 +21,39 @@
   overflow: hidden;
 }
 
-/* Scrambles and provenance must always expand in full. Long text shrinks in
-   TimerScrambleStrip; exceptionally large content can grow the page. */
+/* Keep the timer within one viewport, including long scrambles and live
+   reconstruction. Overflow belongs to the bounded content regions. */
 .timer-shell.timer-workspace.timer-workspace {
-  height: auto;
-  min-height: calc(100dvh - var(--page-notice-h, 0px));
+  height: calc(100dvh - var(--page-notice-h, 0px));
+  min-height: 0;
 }
 
 .timer-shell .timing-surface--solo,
 .timer-shell .timing-surface--net {
-  min-height: 280px;
-  flex: 1 0 auto;
+  min-height: 0;
+  flex: 1 1 0;
+  container-type: size;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(min-content, 1fr);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 2fr);
   align-items: stretch;
 }
 .timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-scramble-top {
   position: static;
   inset: auto;
   transform: none;
-  max-height: none;
-  overflow: visible;
+  max-height: 100%;
+  overflow-y: auto;
   align-self: stretch;
 }
 .timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-core {
-  --timer-readout-max-size: 20dvh;
+  --timer-readout-max-size: 25cqh;
   grid-row: 2;
   align-self: center;
   gap: 8px;
 }
 .timer-shell :is(.timing-surface--solo, .timing-surface--net) .timing-surface-sub {
-  --timer-cube-h: min(30vw, 20dvh, 260px);
+  --timer-cube-h: min(30vw, 26dvh, 260px, 25cqh);
   position: static;
   inset: auto;
   transform: none;
@@ -60,8 +61,8 @@
   gap: 8px;
 }
 .timer-shell .timer-stage-source {
-  max-height: none;
-  overflow: visible;
+  max-height: min(28dvh, 180px);
+  overflow-y: auto;
 }
 
 /* ── Topbar ─────────────────────────────────────────────── */
