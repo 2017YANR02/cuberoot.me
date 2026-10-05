@@ -40,6 +40,7 @@ import {
 import { detectPasteIntent, type PasteIntent } from '@/lib/smart-paste';
 import { useSpeechToText } from '@/hooks/useSpeechToText';
 import './landing_search.css';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { tr } from '@/i18n/tr';
 import { useAuthUser, useAuthStore } from '@/lib/auth-store';
 import { authHeaders } from '@/lib/admin-api';
@@ -219,6 +220,8 @@ export default function LandingSearch({
     onResult: (text) => { setQuery(text); setOpen(true); },
   });
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
+  const plusMenuRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(plusMenuOpen, plusMenuRef);
   // SSR 和 hydration 首帧固定用同一个文案;挂载后才读取当天日期。
   // 否则服务器与手机跨 UTC 日期时会各选中相邻文案,触发 React #418。
   const [placeholderDay, setPlaceholderDay] = useState(0);
@@ -476,58 +479,83 @@ export default function LandingSearch({
 
   return (
     <div className={`landing-search${persistentResults ? ' landing-search--page' : ''}`} ref={wrapRef}>
-      <div
-        className="landing-search-input"
-        onMouseDown={e => {
-          // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
-          if (e.target === e.currentTarget) {
-            e.preventDefault();
-            textInputRef.current?.focus();
-          }
-        }}
-      >
-        <button
-          type="button"
-          className="landing-search-plus"
-          onClick={() => setPlusMenuOpen(v => !v)}
-          title={tr({ zh: '智能粘贴', en: 'Smart paste'
-        })}
-          aria-label={tr({ zh: '添加', en: 'Add'
-        })}
-          aria-expanded={plusMenuOpen}
-        >
-          <Plus size={18} strokeWidth={1.75} />
-        </button>
-        {/* allow-manual-search: Results update while typing; Enter submits a natural-language question. */}
-        <input
-          ref={textInputRef}
-          type="text"
-          autoFocus={autoFocus}
-          className="landing-search-field"
-          value={query}
-          onChange={e => { setQuery(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          onPaste={e => {
-            const intent = detectPasteIntent(e.clipboardData.getData('text'));
-            if (intent) { e.preventDefault(); goPasteIntent(intent); }
-          }}
-          onKeyDown={e => {
-            if (e.key === 'Escape') {
-              setOpen(false);
-              (e.target as HTMLInputElement).blur();
-            } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+      <div className="landing-search-controls">
+        <div
+          className="landing-search-input"
+          onMouseDown={e => {
+            // 点击容器自身(上下 padding / 元素间 gap 死区)→ 聚焦输入框
+            if (e.target === e.currentTarget) {
               e.preventDefault();
-              if (yearMatch || pasteIntent) goFirstResult();
-              else void askAssistant();
+              textInputRef.current?.focus();
             }
           }}
-          placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
-            : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
-              : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
-          aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
-        />
+        >
+          <button
+            type="button"
+            className="landing-search-plus"
+            onClick={() => setPlusMenuOpen(v => !v)}
+            title={tr({ zh: '智能粘贴', en: 'Smart paste'
+          })}
+            aria-label={tr({ zh: '添加', en: 'Add'
+          })}
+            aria-expanded={plusMenuOpen}
+          >
+            <Plus size={18} strokeWidth={1.75} />
+          </button>
+          {/* allow-manual-search: Results update while typing; Enter submits a natural-language question. */}
+          <input
+            ref={textInputRef}
+            type="text"
+            autoFocus={autoFocus}
+            className="landing-search-field"
+            value={query}
+            onChange={e => { setQuery(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onPaste={e => {
+              const intent = detectPasteIntent(e.clipboardData.getData('text'));
+              if (intent) { e.preventDefault(); goPasteIntent(intent); }
+            }}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                setOpen(false);
+                (e.target as HTMLInputElement).blur();
+              } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) {
+                e.preventDefault();
+                if (yearMatch || pasteIntent) goFirstResult();
+                else void askAssistant();
+              }
+            }}
+            placeholder={micStatus === 'starting' ? tr({ zh: '正在启动语音输入…', en: 'Starting voice input…' })
+              : micStatus === 'stopping' ? tr({ zh: '正在等待识别结果…', en: 'Waiting for speech results…' })
+                : listening ? tr({ zh: '请说…', en: 'Listening…' }) : rotatingPlaceholder(isZh, placeholderDay)}
+            aria-label={tr({ zh: '全站搜索', en: 'Site search' })}
+          />
+
+          <button
+            type="button"
+            className={`landing-search-mic${listening ? ' is-listening' : ''}`}
+            aria-pressed={listening}
+            disabled={micStatus === 'stopping'}
+            onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
+            title={listening
+              ? tr({ zh: '停止录音', en: 'Stop' })
+              : tr({ zh: '语音输入', en: 'Voice input' })}
+            aria-label={listening
+              ? tr({ zh: '停止录音', en: 'Stop' })
+              : tr({ zh: '语音输入', en: 'Voice input' })}
+          >
+            <Mic size={16} strokeWidth={1.75} />
+          </button>
+          {query.trim() && (
+            <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
+              onClick={() => void askAssistant()}
+              aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
+              <ArrowRight size={18} strokeWidth={1.75} />
+            </button>
+          )}
+        </div>
         {plusMenuOpen && (
-          <div className="landing-search-plus-menu" role="menu">
+          <div ref={plusMenuRef} className="landing-search-plus-menu" data-site-surface="popover" role="menu">
             <button type="button" className="landing-search-plus-menu-btn" role="menuitem" onClick={onSmartPaste}>
               <Clipboard size={14} strokeWidth={1.75} />
               <div className="landing-search-plus-menu-text">
@@ -538,28 +566,6 @@ export default function LandingSearch({
               </div>
             </button>
           </div>
-        )}
-        <button
-          type="button"
-          className={`landing-search-mic${listening ? ' is-listening' : ''}`}
-          aria-pressed={listening}
-          disabled={micStatus === 'stopping'}
-          onClick={() => { if (listening) micStop(); else { setOpen(true); micStart(); } }}
-          title={listening
-            ? tr({ zh: '停止录音', en: 'Stop' })
-            : tr({ zh: '语音输入', en: 'Voice input' })}
-          aria-label={listening
-            ? tr({ zh: '停止录音', en: 'Stop' })
-            : tr({ zh: '语音输入', en: 'Voice input' })}
-        >
-          <Mic size={16} strokeWidth={1.75} />
-        </button>
-        {query.trim() && (
-          <button type="button" className="landing-search-mic" disabled={assistantBusy || query.trim().length > 500}
-            onClick={() => void askAssistant()}
-            aria-label={tr({ zh: '提问', en: 'Ask' })} title={tr({ zh: '提问（回车）', en: 'Ask (Enter)' })}>
-            <ArrowRight size={18} strokeWidth={1.75} />
-          </button>
         )}
       </div>
 
