@@ -1761,7 +1761,7 @@ body[data-site-scenery] :is(
 .platform-entity-meta { display: flex; flex-wrap: wrap; gap: 8px 16px; color: var(--muted-foreground); }
 .platform-entity-cover { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; }
 .platform-pagination { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; margin-block: 24px; }
-.platform-pagination button { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--card); color: var(--foreground); }
-.platform-pagination input { width: 64px; padding: 8px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; }
-.platform-pagination select { width: fit-content; padding: 8px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; }
-.platform-pagination button:disabled { opacity: .45; cursor: default; }
+.platform-pagination .wse-page-btn { min-height: 44px; padding: 8px 14px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--card); color: var(--foreground); }
+.platform-pagination .paginator-input { width: 64px; padding: 8px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; }
+.platform-pagination .wse-page-select { width: fit-content; padding: 8px; color: var(--foreground); background: var(--background); border: 1px solid var(--input); border-radius: 6px; }
+.platform-pagination .wse-page-btn:disabled { opacity: .45; cursor: default; }

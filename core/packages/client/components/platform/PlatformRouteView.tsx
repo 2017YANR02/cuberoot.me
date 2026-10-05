@@ -885,9 +885,9 @@ function PlatformResourceRouteView({
               size={effectivePageSize} pageSizeOptions={[20, 50, 100]} isZh={lang === 'zh'} className="platform-pagination"
               onPageChange={value => { void setPage(value); }} onSizeChange={value => { void setPage(null); void setPageSize(value); }} />
               : <nav className="platform-pagination" aria-label={t('分页', 'Pagination')}>
-                <button type="button" disabled={page <= 1} onClick={() => { void setPage(page - 1); }}>{t('上一页', 'Previous')}</button>
+                <button type="button" className="wse-page-btn" disabled={page <= 1} onClick={() => { void setPage(page - 1); }}>{t('上一页', 'Previous')}</button>
                 <span>{t(`第 ${page} 页`, `Page ${page}`)}</span>
-                <button type="button" disabled={result.items.length < effectivePageSize} onClick={() => { void setPage(page + 1); }}>{t('下一页', 'Next')}</button>
+                <button type="button" className="wse-page-btn" disabled={result.items.length < effectivePageSize} onClick={() => { void setPage(page + 1); }}>{t('下一页', 'Next')}</button>
               </nav>
           ) : null}
 

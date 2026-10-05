@@ -572,6 +572,7 @@ jobs:
         working-directory: core
         env:
           DRIVE_TEST_PG: '1'
+          PLATFORM_QR_TEST_DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/cuberoot_test
           DB_HOST: 127.0.0.1
           DB_PORT: '5432'
           DB_USER: postgres
