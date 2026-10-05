@@ -253,7 +253,7 @@ export type {
   TimerStatRailProps,
   TimerTopbarProps,
 } from './TimerChrome';
-export { TimerDeviceCenter } from './TimerDeviceCenter';
+export { TimerDeviceCenter, TIMER_DEVICE_CENTER_LABELS } from './TimerDeviceCenter';
 export type { TimerDeviceCenterItem, TimerDeviceCenterProps } from './TimerDeviceCenter';
 export { TimerSmartCubeDeviceModal } from './TimerSmartCubeDeviceModal';
 export type {

@@ -2,7 +2,9 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>CubeRoot reads Stackmat timer signals from your audio input to record solve times.</string>
   <key>NSBluetoothAlwaysUsageDescription</key>
-  <string>CubeRoot connects to your smart cube for timing and move tracking.</string>
+  <string>CubeRoot connects to your smart cube or timer for timing and move tracking.</string>
 </dict>
 </plist>
