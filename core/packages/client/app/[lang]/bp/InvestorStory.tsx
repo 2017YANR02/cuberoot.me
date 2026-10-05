@@ -81,8 +81,8 @@ const COMPETITORS = [
       en: 'Conventional timing and multi-brand smart 3x3 support, with lessons, algorithms, solving and reconstruction, backed by creator and teacher communities.',
     },
     implication: {
-      zh: '把训练需求转成课程、个人与机构订阅，并以持续使用、续费和服务质量积累优势。线上赛事作为下一步业务。',
-      en: 'Turn practice needs into courses and individual and institutional subscriptions, building strength through continued use, renewals and service quality. Online events are the next planned business.',
+      zh: '把训练需求转成课程、个人与机构订阅，并以持续使用、续费和服务质量积累优势。线上赛事连接训练目标与持续参与。',
+      en: 'Turn practice needs into courses and individual and institutional subscriptions, building strength through continued use, renewals and service quality. Online events link practice goals with continued participation.',
     },
   },
 ];
