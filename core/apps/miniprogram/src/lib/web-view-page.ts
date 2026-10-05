@@ -30,7 +30,7 @@ import {
   type RequiredSessionDestination,
 } from './required-session';
 import { decodeMiniProgramSessionMessage } from './web-session-contract';
-import { tr } from './i18n';
+import { applyLocalizedTabBar, localizedWebsitePath, receiveNativeLocale, tr } from './i18n';
 import { decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
 import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 
@@ -58,6 +58,7 @@ export interface WebViewPageContext {
 }
 
 interface WebViewPageMethods {
+  refreshLocale(): void;
   handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
   handleWebViewMessage(event: WechatMiniprogram.CustomEvent<{ data?: unknown[] }>): void;
   loginWithMiniProgram(): Promise<void>;
@@ -509,6 +510,17 @@ export function retryWebRoute(context: WebViewPageContext): void {
   miniProgramNextTick(reopenOnce);
 }
 
+function refreshWebLocale(context: WebViewPageContext): void {
+  const labels = createWebViewPageData();
+  if (context.data.loginButtonBusyLabel === labels.loginButtonBusyLabel) return;
+  context.setData({ loginButtonBusyLabel: labels.loginButtonBusyLabel,
+    loginButtonLabel: labels.loginButtonLabel, loginRetryLabel: labels.loginRetryLabel,
+    retryLabel: labels.retryLabel,
+  });
+  const route = resolveWebRoute(context.data.routeKey);
+  if (route && visiblePages.has(context)) updateNavigationTitle(route.title);
+}
+
 /**
  * Keep every web-backed page as a thin route adapter. Loading, session handoff,
  * errors and retries must stay in this shared controller instead of page files.
@@ -542,15 +554,19 @@ export function createWebViewPageOptions(
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
 
+    refreshLocale() { refreshWebLocale(this); },
+
     onShow() {
       if (disposedPages.has(this)) return;
       applyNativeAppearance();
+      applyLocalizedTabBar();
       visiblePages.add(this);
+      refreshWebLocale(this);
       startNetworkRecovery(this);
       if (hiddenToolsPages.delete(this)) {
         // Reissue session handoff rather than replaying a consumed ticket URL.
         const metadata = shareMetadata.get(this);
-        if (metadata) sharedDestinations.set(this, metadata.path);
+        if (metadata) sharedDestinations.set(this, localizedWebsitePath(metadata.path));
         void openWebRoute(this, this.data.routeKey);
         return;
       }
@@ -598,6 +614,7 @@ export function createWebViewPageOptions(
       const messages = Array.isArray(event.detail?.data) ? event.detail.data : [];
       for (const message of messages) {
         receiveNativeAppearance(message);
+        receiveNativeLocale(message);
         const metadata = decodePageShareMessage(message);
         if (metadata) shareMetadata.set(this, metadata);
       }

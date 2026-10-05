@@ -12,9 +12,16 @@ export function localeFromLanguage(language: unknown): MiniProgramLocale {
   return language.trim().toLowerCase().startsWith('zh') ? 'zh' : 'en';
 }
 
+const LOCALE_STORAGE_KEY = 'cuberoot.locale.v1';
+
+/** Read storage each time: every page has its own bundled module instance. */
 export function getMiniProgramLocale(): MiniProgramLocale {
   try {
     const api = miniProgramApi();
+    // Moments single-page mode does not provide device storage.
+    const saved = api.getLaunchOptionsSync?.().scene === 1154
+      ? undefined : api.getStorageSync?.(LOCALE_STORAGE_KEY);
+    if (saved === 'en' || saved === 'zh') return saved;
     if (typeof api.getAppBaseInfo === 'function') {
       try {
         return localeFromLanguage(api.getAppBaseInfo().language);
@@ -36,10 +43,17 @@ export function tr(text: BilingualText, locale = getMiniProgramLocale()): string
 }
 
 export function localizedWebsitePath(href: string): string {
-  const path = href.length > 1 ? href.replace(/\/$/, '') : href;
-  if (getMiniProgramLocale() === 'en') return path;
-  if (path === '/') return '/zh';
-  return `/zh${path}`;
+  const locale = getMiniProgramLocale();
+  const hashIndex = href.indexOf('#');
+  const hash = hashIndex < 0 ? '' : href.slice(hashIndex);
+  const withoutHash = hashIndex < 0 ? href : href.slice(0, hashIndex);
+  const queryIndex = withoutHash.indexOf('?');
+  const pathname = queryIndex < 0 ? withoutHash : withoutHash.slice(0, queryIndex);
+  const query = queryIndex < 0 ? '' : withoutHash.slice(queryIndex)
+    .replace(/([?&])lang=[^&]*/g, '$1lang=' + locale);
+  const bare = pathname.replace(/^\/(?:en|zh)(?=\/|$)/, '').replace(/\/$/, '') || '/';
+  const path = locale === 'en' ? bare : '/zh' + (bare === '/' ? '' : bare);
+  return path + query + hash;
 }
 
 export function applyLocalizedTabBar(): void {
@@ -61,5 +75,18 @@ export function applyLocalizedTabBar(): void {
     });
   } catch {
     // The tab bar keeps its app.json fallback when the runtime is unavailable.
+  }
+}
+
+export function receiveNativeLocale(value: unknown): void {
+  if (!value || typeof value !== 'object') return;
+  const message = value as { type?: unknown; locale?: unknown };
+  if (message.type !== 'cuberoot:locale' || (message.locale !== 'en' && message.locale !== 'zh')) return;
+  try { miniProgramApi().setStorageSync(LOCALE_STORAGE_KEY, message.locale); }
+  catch { return; }
+  applyLocalizedTabBar();
+  // Tools messages can arrive after the destination page's onShow.
+  if (typeof getCurrentPages === 'function') {
+    for (const page of getCurrentPages()) page.refreshLocale?.();
   }
 }

@@ -25,6 +25,7 @@
 
 .account-primary-button {
   margin-top: 64rpx;
+  box-sizing: border-box;
   width: 100%;
 }
 
@@ -247,6 +248,7 @@
 }
 
 .contact-row-value {
+  flex-wrap: wrap;
   align-items: center;
   display: inline-flex;
   gap: 12rpx;
@@ -256,8 +258,9 @@
 }
 
 .contact-platform-value > text {
-  flex: none;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .contact-row-meta {

@@ -598,6 +598,24 @@ describe('mini program account page', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '我的' });
   });
 
+  it('refreshes account and contact text when a delayed tools locale message arrives', async () => {
+    const storage = new Map<string, unknown>();
+    const page = await loadPage({
+      getLaunchOptionsSync: normalLaunchOptions,
+      getAppBaseInfo: () => ({ language: 'zh_CN' }),
+      getStorageSync: (key: string) => storage.get(key),
+      setStorageSync: (key: string, value: unknown) => storage.set(key, value),
+      setNavigationBarTitle: vi.fn(),
+    });
+    vi.stubGlobal('getCurrentPages', () => [page]);
+    expect(page.data.contact.details.find((detail) => detail.id === 'author')?.label).toBe('作者');
+    const { receiveNativeLocale } = await import('../src/lib/i18n');
+    receiveNativeLocale({ type: 'cuberoot:locale', locale: 'en' });
+    expect(page.data.contact.details.find((detail) => detail.id === 'author')?.label).toBe('Author');
+    expect(page.data.release.versionLabel).toBe('Version');
+    expect(page.data).toMatchObject({ copy: { pageTitle: 'Me' }, loginRequired: true });
+  });
+
   it('renders the Moments login landing without using unavailable single-page APIs', async () => {
     const getStorageSync = vi.fn();
     const login = vi.fn();
@@ -652,7 +670,7 @@ describe('mini program account page', () => {
       isTimelineEntry: false,
       loginRequired: true,
     });
-    expect(getStorageSync).toHaveBeenCalledOnce();
+    expect(getStorageSync.mock.calls.filter(([key]: unknown[]) => key === 'cuberoot:session')).toHaveLength(1);
     expect(showShareMenu).toHaveBeenCalledWith({
       menus: ['shareAppMessage', 'shareTimeline'],
     });

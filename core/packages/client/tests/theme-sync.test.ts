@@ -2,9 +2,11 @@
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import i18n from '@/i18n/i18n-client';
 import ThemeColorSync from '@/components/ThemeColorSync';
 import { previewPalette } from '@/lib/theme';
 import { syncMiniProgramAppearance } from '@/lib/miniprogram-appearance';
+vi.mock('@/lib/miniprogram-bridge', () => ({ mayUseMiniProgramBridge: () => true }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/zh/timer' }));
 vi.mock('@/lib/miniprogram-appearance', () => ({ syncMiniProgramAppearance: vi.fn() }));
 
@@ -68,6 +70,19 @@ describe('persisted appearance across WebView documents', () => {
     expect(syncMiniProgramAppearance).toHaveBeenCalledTimes(1);
     window.dispatchEvent(new StorageEvent('storage', { key: 'home-background.v1.dark' }));
     expect(syncMiniProgramAppearance).toHaveBeenCalledTimes(2);
+  });
+  it('restores the saved locale in place on a storage event and foreground return', () => {
+    window.history.replaceState(null, '', '/zh/timer?players=2#wechat_redirect');
+    act(() => { void i18n.changeLanguage('zh'); });
+    localStorage.setItem('trainer-lang', 'en');
+    act(() => window.dispatchEvent(new StorageEvent('storage', { key: 'trainer-lang' })));
+    expect(i18n.language).toBe('en');
+    expect(window.location.pathname).toBe('/zh/timer');
+    expect(new URLSearchParams(window.location.search).get('players')).toBe('2');
+    expect(new URLSearchParams(window.location.search).get('lang')).toBe('en');
+    localStorage.setItem('trainer-lang', 'zh');
+    act(() => window.dispatchEvent(new Event('focus')));
+    expect(i18n.language).toBe('zh');
   });
   it('preserves local previews on unrelated storage updates', () => {
     previewPalette('hantan');

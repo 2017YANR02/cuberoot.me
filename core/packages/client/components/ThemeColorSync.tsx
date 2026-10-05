@@ -14,12 +14,15 @@ import { CONTRAST_KEY, THEME_KEY, restorePersistedAppearance } from '@/lib/theme
 import { PALETTE_KEY } from '@/lib/palettes';
 import { HOME_BACKGROUND_CHANGE_EVENT } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUND_KEY } from '@/lib/home-backgrounds';
+import i18n, { changeAppLanguage, normalizeAppLang, syncLangToUrl } from '@/i18n/i18n-client';
+import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
 import { syncMiniProgramAppearance } from '@/lib/miniprogram-appearance';
 
 export default function ThemeColorSync() {
   const pathname = usePathname();
   useEffect(() => {
     const publish = () => { void syncMiniProgramAppearance(); };
+    i18n.on('languageChanged', publish);
     const observer = new MutationObserver(publish);
     observer.observe(document.documentElement, { attributes: true,
       attributeFilter: ['data-theme', 'data-palette', 'data-contrast', 'data-appearance-preview'] });
@@ -31,6 +34,7 @@ export default function ThemeColorSync() {
     window.addEventListener('storage', onBackgroundStorage);
     publish();
     return () => {
+      i18n.off('languageChanged', publish);
       observer.disconnect();
       window.removeEventListener(HOME_BACKGROUND_CHANGE_EVENT, publish);
       window.removeEventListener('storage', onBackgroundStorage);
@@ -41,12 +45,21 @@ export default function ThemeColorSync() {
     // Mini-program tabs keep separate WebView documents alive. Their storage
     // is shared, but changing it does not update another document's html attrs.
     const restore = () => {
+      if (mayUseMiniProgramBridge()) {
+        try {
+          const saved = localStorage.getItem('trainer-lang');
+          if ((saved === 'en' || saved === 'zh') && normalizeAppLang(i18n.language) !== saved) {
+            syncLangToUrl(saved);
+            changeAppLanguage(saved);
+          }
+        } catch { /* Storage is optional in embedded browsers. */ }
+      }
       restorePersistedAppearance();
       window.dispatchEvent(new Event('theme-change'));
     };
     const onStorage = (event: StorageEvent) => {
       if (event.key === null || event.key === THEME_KEY
-        || event.key === PALETTE_KEY || event.key === CONTRAST_KEY) restore();
+        || event.key === PALETTE_KEY || event.key === CONTRAST_KEY || event.key === 'trainer-lang') restore();
     };
     const onVisible = () => {
       if (document.visibilityState === 'visible') restore();

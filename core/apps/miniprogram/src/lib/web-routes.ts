@@ -91,69 +91,74 @@ const DIRECTORY_TOOL_GROUPS: WebToolGroup[] = SITE_DIRECTORY_GROUPS.map((group) 
   }),
 }));
 
-const discoveryRoutes = {} as Record<DiscoveryRouteKey, WebRouteDefinition>;
-for (const group of SITE_DIRECTORY_GROUPS) {
-  for (const entry of group.entries) {
-    const key = directoryRouteKey(entry);
-    if (!key) continue;
-    discoveryRoutes[key] = {
-      title: tr(SITE_DIRECTORY_TEXTS[entry.nameKey]),
-      description: tr(group.sub),
-      path: localizedWebsitePath(entry.href),
-      publicEntry: true,
-      ...(entry.id === 'timer' ? { nativeTabPath: '/pages/timer/index' } : {}),
-      ...(!entry.internal ? { sessionHandoff: false } : {}),
-    };
+function createWebRoutes(): Record<WebRouteKey, WebRouteDefinition> {
+  const discoveryRoutes = {} as Record<DiscoveryRouteKey, WebRouteDefinition>;
+  for (const group of SITE_DIRECTORY_GROUPS) {
+    for (const entry of group.entries) {
+      const key = directoryRouteKey(entry);
+      if (!key) continue;
+      discoveryRoutes[key] = {
+        title: tr(SITE_DIRECTORY_TEXTS[entry.nameKey]),
+        description: tr(group.sub),
+        path: localizedWebsitePath(entry.href),
+        publicEntry: true,
+        ...(entry.id === 'timer' ? { nativeTabPath: '/pages/timer/index' } : {}),
+        ...(!entry.internal ? { sessionHandoff: false } : {}),
+      };
+    }
   }
+
+  return {
+    ...discoveryRoutes,
+    home: {
+      title: tr({ en: 'Cube Tools', zh: '魔方工具' }),
+      description: tr({ en: 'CubeRoot website home', zh: 'CubeRoot 网站主页' }),
+      path: localizedWebsitePath('/'),
+      publicEntry: true,
+      nativeTabPath: '/pages/tools/index',
+    },
+    account: {
+      title: tr({ en: 'Account', zh: '账号管理' }),
+      description: tr({ en: 'Manage your WCA account and sign-in methods', zh: '管理 WCA 账号与登录方式' }),
+      path: localizedWebsitePath('/account'),
+      publicEntry: false,
+    },
+    'account-link': {
+      title: tr({ en: 'Sign in to CubeRoot', zh: '登录 CubeRoot' }),
+      description: tr(isDouyinMiniProgram() ? {
+        en: 'Sign in to your existing account and get a one-time sign-in code',
+        zh: '登录原账号并获取一次性登录码',
+      } : {
+        en: 'Sign in to your existing account, then link WeChat under sign-in methods',
+        zh: '先登录已有账号，再在登录方式中绑定微信',
+      }),
+      path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin&mini_program=login' : ''}`,
+      publicEntry: false,
+      sessionHandoff: false,
+    },
+    privacy: {
+      title: tr({ en: 'Privacy', zh: '隐私说明' }),
+      description: tr({ en: 'View data, sign-in and deletion information', zh: '查看数据、登录与删除说明' }),
+      path: localizedWebsitePath('/privacy'),
+      publicEntry: false,
+      sessionHandoff: false,
+    },
+    logout: {
+      title: tr({ en: 'Sign out', zh: '退出登录' }),
+      description: tr({ en: 'Clear Mini Program and website sessions', zh: '清除小程序与网站登录状态' }),
+      path: `/auth/miniprogram#action=logout&next=${encodeURIComponent(localizedWebsitePath('/account'))}`,
+      publicEntry: false,
+      sessionHandoff: false,
+      loadFailureMessage: tr({
+        en: 'Signed out of the Mini Program, but website sign-out is incomplete. Check your connection and try again.',
+        zh: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
+      }),
+    },
+  };
+
 }
 
-export const WEB_ROUTES: Record<WebRouteKey, WebRouteDefinition> = {
-  ...discoveryRoutes,
-  home: {
-    title: tr({ en: 'Cube Tools', zh: '魔方工具' }),
-    description: tr({ en: 'CubeRoot website home', zh: 'CubeRoot 网站主页' }),
-    path: localizedWebsitePath('/'),
-    publicEntry: true,
-    nativeTabPath: '/pages/tools/index',
-  },
-  account: {
-    title: tr({ en: 'Account', zh: '账号管理' }),
-    description: tr({ en: 'Manage your WCA account and sign-in methods', zh: '管理 WCA 账号与登录方式' }),
-    path: localizedWebsitePath('/account'),
-    publicEntry: false,
-  },
-  'account-link': {
-    title: tr({ en: 'Sign in to CubeRoot', zh: '登录 CubeRoot' }),
-    description: tr(isDouyinMiniProgram() ? {
-      en: 'Sign in to your existing account and get a one-time sign-in code',
-      zh: '登录原账号并获取一次性登录码',
-    } : {
-      en: 'Sign in to your existing account, then link WeChat under sign-in methods',
-      zh: '先登录已有账号，再在登录方式中绑定微信',
-    }),
-    path: `${localizedWebsitePath('/account')}${isDouyinMiniProgram() ? '?view=signin&mini_program=login' : ''}`,
-    publicEntry: false,
-    sessionHandoff: false,
-  },
-  privacy: {
-    title: tr({ en: 'Privacy', zh: '隐私说明' }),
-    description: tr({ en: 'View data, sign-in and deletion information', zh: '查看数据、登录与删除说明' }),
-    path: localizedWebsitePath('/privacy'),
-    publicEntry: false,
-    sessionHandoff: false,
-  },
-  logout: {
-    title: tr({ en: 'Sign out', zh: '退出登录' }),
-    description: tr({ en: 'Clear Mini Program and website sessions', zh: '清除小程序与网站登录状态' }),
-    path: `/auth/miniprogram#action=logout&next=${encodeURIComponent(localizedWebsitePath('/account'))}`,
-    publicEntry: false,
-    sessionHandoff: false,
-    loadFailureMessage: tr({
-      en: 'Signed out of the Mini Program, but website sign-out is incomplete. Check your connection and try again.',
-      zh: '小程序已退出，网站退出暂未完成。请检查网络后重试。',
-    }),
-  },
-};
+export const WEB_ROUTES = createWebRoutes();
 
 const DIRECTORY_TOOLS = DIRECTORY_TOOL_GROUPS.flatMap((group) => group.tools);
 
@@ -201,7 +206,7 @@ export function resolveWebRouteShare(key: unknown, currentUrl?: string, metadata
   }
 
   const routeKey = key as WebRouteKey;
-  const route = WEB_ROUTES[routeKey];
+  const route = createWebRoutes()[routeKey];
   if (currentUrl !== undefined || !route.publicEntry) {
     const path = publicPageSharePath(currentUrl ?? route.path);
     if (!path) return null;
@@ -234,7 +239,7 @@ export function resolveWebRoute(key: unknown, sharedPath?: unknown): {
   if (typeof key !== 'string' || !Object.prototype.hasOwnProperty.call(WEB_ROUTES, key)) {
     return null;
   }
-  const route = WEB_ROUTES[key as WebRouteKey];
+  const route = createWebRoutes()[key as WebRouteKey];
   const path = sharedPath === undefined ? route.path : publicPageSharePath(sharedPath);
   if (!path || (sharedPath !== undefined && !route.publicEntry)) return null;
   const resolved = {
