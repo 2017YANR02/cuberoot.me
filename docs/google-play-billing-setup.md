@@ -43,9 +43,13 @@ Source integration is not merchant activation, deployment, a signed build, or pu
 
 Configured through the existing API secret-management process, not committed:
 
-### Vercel relay implementation — local, not deployed
+### Vercel relay implementation — deployed, purchase gate still closed
+
+Live evidence on 2026-10-05: isolated relay commit `b9207ebb11` deployed successfully through Deploy Core `37289869614`; API health reports the database connected. All five relay variables are configured for Vercel Production only, with a dedicated random HMAC secret also installed on the API. No JSON key was uploaded to Vercel. IAM Service Account Credentials API is enabled. Deployment `5761955c07` contains the complete runtime configuration and repairs same-revision redeploys being skipped by the build-path gate. Play test notification delivery now reaches the authenticated API endpoint with HTTP 200 (09:39:02 and 09:39:52 UTC); anonymous relay/RTDN requests return 401 and the purchase endpoint remains 503. The signed subscription-resource readiness probe still returns 502, so WIF/Play read access is not yet accepted. Safe allowlisted failure diagnostics were added in `98f51615d3`; no raw errors, receipts or credentials are logged. Real purchases and renewals/refunds are untested. The broader CI has a pre-existing authentication-documentation fingerprint failure, separate from successful relay checks and deployments.
 
 `POST /api/google-play` is a server-only, Production-gated relay. It accepts only signed `ready`, `subscription`, `acknowledge` and `verifyPush` operations for the fixed app/products; it cannot proxy arbitrary URLs, refund orders or update database entitlements. The dedicated HMAC secret is separate from the Google login relay secret. Signatures bind method/path/body/purpose and expire after 60 seconds; retries within that window are safe because these operations are idempotent. Request bodies are limited to 16 KiB and responses are not cached. Google errors and tokens are not logged or returned as diagnostics.
+
+The readiness failure was narrowed to STS `400 invalid_request`: a credential-free malformed-token comparison confirmed that HTTPS STS audience is rejected as an invalid resource name, while the scheme-less `//iam.googleapis.com/...` reaches token validation. Commit `752cd31379` separates the STS resource audience from the HTTPS JWT audience; the existing seven relay tests pass with an explicit assertion for both formats. Live acceptance of this fix is still pending.
 
 The existing API retains the RTDN endpoint, purchase ownership checks, replacement-chain checks, transaction/entitlement logic and acknowledgement-after-commit ordering. A configured relay fails closed rather than silently falling back to direct Google access. No mobile binary or database schema changes are introduced by this transport change.
 
@@ -58,7 +62,7 @@ Required Vercel **Production only** variables (never Preview/Development):
 
 The API additionally needs `GOOGLE_PLAY_RELAY_URL=https://google-api.cuberoot.me/api/google-play`. Leave `GOOGLE_IAP_ENABLED=0`. Verify the Google IAM Service Account Credentials API is enabled before probing WIF. Then use an authenticated read-only `ready` request to verify token exchange and both Play subscription resources, and send a real Play test notification to verify authenticated HTTP 200 delivery. Neither check is a real purchase lifecycle acceptance.
 
-Local evidence: shared build, API/client typechecks, 26 focused relay/route/policy tests passed; independent security review found no authorization or entitlement-ordering blocker. Reliability limitation: google-auth-library 10.9.1 creates its internal STS transport separately, so the configured 10s transport timeout does not cover that leg. The API request has an overall 50s deadline and Vercel caps the function at 60s; do not claim a 10s end-to-end authentication bound. Runtime variables, deployment and live WIF/RTDN success remain pending.
+Local evidence: shared build, API/client typechecks, 26 focused relay/route/policy tests passed; independent security review found no authorization or entitlement-ordering blocker. Reliability limitation: google-auth-library 10.9.1 creates its internal STS transport separately, so the configured 10s transport timeout does not cover that leg. The API request has an overall 50s deadline and Vercel caps the function at 60s; do not claim a 10s end-to-end authentication bound. See the live evidence above for deployment and remaining WIF/readiness status.
 
 | Variable | Meaning |
 | --- | --- |
