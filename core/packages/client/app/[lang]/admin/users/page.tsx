@@ -19,6 +19,7 @@ import { countryName } from '@/lib/country-name';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fetchAdminUsers, updateAdminRole, type AdminUserRecord, type AdminUsersResponse } from '@/lib/account-api';
 import { isValidIsoDate } from '@/lib/iso-date';
+import MembershipList from './MembershipList';
 import './users.css';
 
 const PROVIDERS = ['all', 'email', 'phone', 'wca', 'google', 'wechat', 'douyin', 'qq', 'alipay', 'apple', 'password', 'none'] as const;
@@ -200,6 +201,7 @@ export default function AdminUsersPage() {
   const [impersonationBusy, setImpersonationBusy] = useState(false);
   const [impersonationError, setImpersonationError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [membershipRevision, setMembershipRevision] = useState(0);
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   const [{ q, page }, setSearch] = useQueryStates({
@@ -256,7 +258,7 @@ export default function AdminUsersPage() {
       .catch(() => { if (!cancelled) setError('load'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [direction, from, isAdmin, mounted, page, provider, q, rangeProblem, sort, to]);
+  }, [direction, from, isAdmin, mounted, page, provider, q, rangeProblem, sort, to, membershipRevision]);
 
   const registrationPoints = useMemo<DailyActivityPoint[]>(() => (
     (data?.activity?.registrations ?? data?.daily ?? []).map((item) => ({ date: item.date, values: { registrations: item.count } }))
@@ -603,6 +605,7 @@ export default function AdminUsersPage() {
       )}
 
       {!data && !error && <p className="admin-users-status"><Loader2 size={16} className="admin-users-spin" />{t('正在加载用户数据…', 'Loading user data…')}</p>}
+      <MembershipList key={user?.uid ?? user?.wcaId} onChanged={() => setMembershipRevision(value => value + 1)} />
       {impersonationTarget && (
         <UserImpersonationDialog
           key={impersonationTarget.id}
