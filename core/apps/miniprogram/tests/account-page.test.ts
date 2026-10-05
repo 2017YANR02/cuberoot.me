@@ -575,7 +575,7 @@ describe('mini program account page', () => {
 
     page.onLoad();
 
-    expect(accountConfig).toEqual({ navigationBarTitleText: '' });
+    expect(accountConfig).toEqual({ navigationBarTitleText: '', disableScroll: true });
     expect(page.data).toMatchObject({
       isTimelineEntry: false,
       loginRequired: true,

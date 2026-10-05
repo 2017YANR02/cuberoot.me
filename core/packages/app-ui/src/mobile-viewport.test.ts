@@ -115,7 +115,7 @@ describe('mobile visible viewport layout', () => {
     expect(primaryNav).toBeDefined();
     expect(primaryNav).toContain('aria-label={copy.title}');
     expect(primaryNav).toContain('ref={primaryNavRef}');
-    expect(app.match(/viewportBottomInset=\{primaryNavBottomInset\}/g)).toHaveLength(8);
+    expect(app.match(/viewportBottomInset=\{primaryNavBottomInset\}/g)).toHaveLength(9);
     expect(app).not.toMatch(/viewportBottomInset=\{(?:64|96)\}/);
   });
 
