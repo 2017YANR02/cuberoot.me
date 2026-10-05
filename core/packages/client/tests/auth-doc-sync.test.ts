@@ -77,6 +77,7 @@ describe('/dev/auth source-review drift', () => {
     ['@cuberoot/server', 'src/routes/site_assistant.ts'],
     ['@cuberoot/client', 'components/LandingSearch.tsx'], ['@cuberoot/client', 'components/SiteAssistantDialog.tsx'],
     ['@cuberoot/client', 'app/[lang]/account/mcp/page.tsx'],
+    ['@cuberoot/client', 'app/[lang]/admin/page.tsx'],
     ['@cuberoot/client', 'app/[lang]/calendar/_components/GoogleBackupPanel.tsx'],
     ['@cuberoot/server', 'src/utils/account_delete.ts'], ['@cuberoot/server', 'src/utils/apple_login.ts'],
     ['@cuberoot/server', 'src/utils/future_oauth.ts'], ['@cuberoot/server', 'migrations/0999_auth_new.sql'],
