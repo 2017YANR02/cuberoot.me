@@ -26,10 +26,8 @@ import {
   mayUseMiniProgramBridge,
 } from '../_lib/bluetooth';
 import type { BluetoothCubeHandle, ConnectStage, ConnectPickOptions } from '../_lib/bluetooth';
-import { normalizeMac } from '../_lib/bluetooth/mac';
 import { ExternalLink } from 'lucide-react';
 import { tr } from '@/i18n/tr';
-import { ClearButton } from '@/components/ClearButton';
 
 interface Props {
   isZh: boolean;
@@ -118,8 +116,6 @@ function ConnectFailure() {
 }
 
 export default function BluetoothModal({ isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
-  const [macInput, setMacInput] = useState('');
-  const [macError, setMacError] = useState(false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
 
@@ -162,14 +158,6 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
     return () => { active = false; };
   }, [connectAttempt]);
 
-  const submitMac = (): void => {
-    const norm = normalizeMac(macInput);
-    if (!norm) { setMacError(true); return; }
-    setMacError(false);
-    setMacInput('');
-    onSubmitMac?.(norm);
-  };
-
   const clientEnvironment = detectClientEnvironment();
   const env = detectBluetoothEnv();
   const advice = envAdvice(env);
@@ -183,7 +171,6 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
 
   const macBody = macPrompt ? (
     <div className="modal-section">
-      <p style={{ margin: '0 0 8px' }}><strong>{macPrompt.deviceName}</strong></p>
       {macPrompt.isWrongKey && (
         <p style={{ fontSize: 12, color: 'var(--signal-warning)', margin: '0 0 8px' }}>
           {tr({
@@ -201,31 +188,7 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
         <li>Edge: <code>edge://bluetooth-internals/#devices</code></li>
       </ul>
       <p>{tr({ zh: '在 Name 列找到自己的智能魔方，复制同一行的 Address，粘贴到下方。', en: 'Find your cube in the Name column, copy the Address from that row, and paste it below.' })}</p>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <input
-          aria-label={tr({ zh: '魔方 MAC 地址', en: 'Cube MAC address' })}
-          autoComplete="off"
-          data-autofocus
-          data-mac-input
-          onChange={(event) => { setMacInput(event.target.value); setMacError(false); }}
-          onKeyDown={(event) => { if (event.key === 'Enter') submitMac(); }}
-          placeholder="xx:xx:xx:xx:xx:xx"
-          spellCheck={false}
-          style={{ width: '100%', padding: '8px 10px', fontFamily: 'var(--font-mono)', boxSizing: 'border-box' }}
-          type="text"
-          value={macInput}
-        />
-        {macInput && <ClearButton onClick={() => { setMacInput(''); setMacError(false); }} ariaLabel={tr({ zh: '清除地址', en: 'Clear address' })} />}
-      </div>
-      {macError && (
-        <p style={{ fontSize: 12, color: 'var(--destructive)', margin: '6px 0 0' }}>
-          {tr({ zh: '格式不对，应为 6 组两位十六进制，用冒号分隔。', en: 'Invalid format — expected 6 colon-separated hex octets.' })}
-        </p>
-      )}
-      <div className="modal-actions bt-mac-actions">
-        <button className="primary modal-action-btn" onClick={submitMac}>{tr({ zh: '确定', en: 'Confirm' })}</button>
-        <button className="modal-action-btn" onClick={() => onCancelMac?.()}>{tr({ zh: '取消', en: 'Cancel' })}</button>
-      </div>
+
     </div>
   ) : undefined;
 
@@ -281,7 +244,12 @@ export default function BluetoothModal({ isZh, cube, onClose, onConnect, connect
       onDisconnect={() => cube.disconnect()}
       onResetGyro={onResetGyro}
       onResetState={resetCube}
-      overrideBody={macBody}
+      macPrompt={macPrompt ? {
+        deviceName: macPrompt.deviceName,
+        instructions: macBody,
+        onSubmit: (mac) => onSubmitMac?.(mac),
+        onCancel: () => onCancelMac?.(),
+      } : undefined}
       snapshot={{
         battery: cube.status.battery,
         deviceName: cube.status.deviceName,

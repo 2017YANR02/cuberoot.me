@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import { createGanV4Cipher } from '@cuberoot/shared/smart-cube/gan-v4';
+import { GAN_V4_FIXTURE } from './gan-v4.fixture';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
@@ -15,6 +17,8 @@ it.each(['handshake failure', 'manual disconnect', 'pending subscription'] as co
   let releaseSubscribe!: () => void;
   const subscribeGate = new Promise<void>((resolve) => { releaseSubscribe = resolve; });
   const order: string[] = [];
+  let notify: ((value: DataView) => void) | undefined;
+  const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 1, 0x23, 0x45));
   let attempt = 0;
   let failHandshake = scenario === 'handshake failure';
   let disconnected: () => void = () => undefined;
@@ -32,7 +36,8 @@ it.each(['handshake failure', 'manual disconnect', 'pending subscription'] as co
     },
     getMtu: async () => 517,
     read: async () => new DataView(new ArrayBuffer(0)),
-    subscribe: async () => {
+    subscribe: async (_id, _service, _characteristic, onValue) => {
+      notify = onValue;
       const owner = attempt;
       if (owner === 1 && scenario === 'pending subscription') await subscribeGate;
       return async () => {
@@ -42,6 +47,8 @@ it.each(['handshake failure', 'manual disconnect', 'pending subscription'] as co
     },
     write: async () => {
       if (failHandshake) { failHandshake = false; throw new Error('handshake write failed'); }
+      const bytes = cipher.encrypt(Uint8Array.from(GAN_V4_FIXTURE.seed));
+      notify?.(new DataView(bytes.buffer as ArrayBuffer));
     },
   };
   function Harness() {
@@ -79,6 +86,39 @@ it.each(['handshake failure', 'manual disconnect', 'pending subscription'] as co
     expect(cube.deviceName).toBe('GAN16ui');
   } finally {
     await act(async () => { releaseSubscribe(); releaseStop(); await Promise.all([failed, retry, closing]); root.unmount(); });
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
+it.each(['WCU_MY32_5C3A', 'GAN16ui_C2AF'])('cancels Apple MAC entry without opening GATT for %s', async (name) => {
+  vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+  const connect = vi.fn();
+  const transport = {
+    initialize: async () => undefined,
+    requestDevice: async () => ({ id: 'Apple-UUID', name }),
+    getServices: async () => [],
+    connect,
+  } as unknown as BleTransport;
+  let cube!: InstalledAppSmartCube;
+  function Harness() {
+    cube = useInstalledSmartCube(() => transport, { language: 'en', onMove: () => undefined });
+    return null;
+  }
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<Harness />));
+    let pending!: Promise<unknown>;
+    await act(async () => { pending = cube.connect().catch((error: unknown) => error); });
+    expect(cube.macPrompt?.deviceName).toBe(name);
+    await act(async () => { cube.macPrompt!.onCancel(); await pending; });
+    expect(cube.phase).toBe('idle');
+    expect(cube.macPrompt).toBe(null);
+    expect(connect).not.toHaveBeenCalled();
+  } finally {
+    await act(async () => root.unmount());
     container.remove();
     vi.unstubAllGlobals();
   }

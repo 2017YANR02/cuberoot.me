@@ -15,6 +15,7 @@ import { useInstalledSmartCube } from './use-smart-cube';
 const state = vi.hoisted(() => ({
   onMove: vi.fn(), onSolved: vi.fn(), requestState: vi.fn(),
   connect: vi.fn<() => Promise<void>>(), disconnect: vi.fn<() => Promise<void>>(),
+  publishState: true,
   connectionKind: '' as '' | 'gan-v4' | 'moyu32' | 'qiyi',
   callbacks: null as null | {
     onDisconnect(): void;
@@ -33,7 +34,7 @@ vi.mock('./gan-v4-cube', () => ({
 
     async connect() {
       await state.connect();
-      state.callbacks?.onState(SOLVED_3X3);
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
     }
 
     async disconnect() { await state.disconnect(); }
@@ -50,7 +51,7 @@ vi.mock('./moyu32-cube', () => ({
 
     async connect() {
       await state.connect();
-      state.callbacks?.onState(SOLVED_3X3);
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
     }
 
     async disconnect() { await state.disconnect(); }
@@ -67,7 +68,7 @@ vi.mock('./qiyi-cube', () => ({
 
     async connect() {
       await state.connect();
-      state.callbacks?.onState(SOLVED_3X3);
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
     }
 
     async disconnect() { await state.disconnect(); }
@@ -99,6 +100,7 @@ describe('useInstalledSmartCube', () => {
 
   beforeEach(async () => {
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    state.publishState = true;
     state.callbacks = null;
     state.connectionKind = '';
     delete transport.getServices;
@@ -119,6 +121,7 @@ describe('useInstalledSmartCube', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     container.remove();
+    vi.useRealTimers();
   });
 
   it('keeps hosts without service discovery on the GAN v4 picker', () => {
@@ -203,6 +206,19 @@ describe('useInstalledSmartCube', () => {
     expect(cube.availableDevices).toEqual([]);
   });
 
+  it('never reports connected for a silent protocol and times out with an actionable error', async () => {
+    await act(async () => { await cube.disconnect(); });
+    state.publishState = false;
+    vi.useFakeTimers();
+    let pending!: Promise<unknown>;
+    await act(async () => { pending = cube.connect().catch((error: unknown) => error); });
+    expect(cube.phase).toBe('connecting');
+    await act(async () => { await vi.advanceTimersByTimeAsync(8_000); await pending; });
+    expect(cube.phase).toBe('error');
+    expect(cube.error).toBe('No valid cube state received. Check the MAC address and reconnect.');
+    expect(state.disconnect).toHaveBeenCalled();
+  });
+
   it('clears tracked cube state on an unexpected disconnect', async () => {
     await act(async () => state.callbacks?.onDisconnect());
     expect(cube.phase).toBe('idle');
@@ -273,7 +289,7 @@ describe('useInstalledSmartCube', () => {
 
     await act(async () => {
       state.callbacks?.onMove('R', 2);
-      state.callbacks?.onState(SOLVED_3X3);
+      if (state.publishState) state.callbacks?.onState(SOLVED_3X3);
     });
     expect(cube.phase).toBe('error');
     expect(cube.lastMove).toBe('');

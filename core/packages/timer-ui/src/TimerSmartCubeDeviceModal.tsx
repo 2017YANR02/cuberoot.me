@@ -8,6 +8,10 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 
+import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
+import { useModalBackdrop } from './useModalDismiss';
+import { ClearButton } from './ClearButton';
+
 import { modalFocusableElements } from './modal-focus';
 import type { TimerUiLanguage } from './TimerColorSubsetPicker';
 import type {
@@ -30,6 +34,12 @@ export interface TimerSmartCubeDeviceModalProps {
   connectionFailure?: ReactNode;
   intro?: ReactNode;
   language: TimerUiLanguage;
+  macPrompt?: {
+    deviceName: string;
+    instructions?: ReactNode;
+    onSubmit(mac: string): void;
+    onCancel(): void;
+  };
   onClose(): void;
   onConnect?(deviceId?: string): Promise<void> | void;
   onDisconnect?(): Promise<void> | void;
@@ -44,6 +54,11 @@ export interface TimerSmartCubeDeviceModalProps {
 
 const COPY = {
   en: {
+    macLabel: 'Cube MAC address',
+    macHint: 'Enter the real Bluetooth MAC address shown for this cube on your Windows computer or in the manufacturer’s app. The name suffix is not a complete address.',
+    macInvalid: 'Enter six colon-separated hex octets.',
+    clearMac: 'Clear address',
+    confirm: 'Confirm',
     battery: 'Battery',
     availableDevices: 'Available devices',
     cancel: 'Cancel',
@@ -74,6 +89,11 @@ const COPY = {
     title: 'Smart cube',
   },
   zh: {
+    macLabel: '魔方 MAC 地址',
+    macHint: '请输入在 Windows 电脑或厂商 App 中查到的这颗魔方的真实蓝牙 MAC 地址。名称末尾的四位字符不是完整地址。',
+    macInvalid: '请输入六组用冒号分隔的两位十六进制数。',
+    clearMac: '清除地址',
+    confirm: '确定',
     battery: '电量',
     availableDevices: '可用设备',
     cancel: '取消',
@@ -115,6 +135,7 @@ export function TimerSmartCubeDeviceModal({
   connectionFailure,
   intro,
   language,
+  macPrompt,
   onClose,
   onConnect,
   onDisconnect,
@@ -127,10 +148,11 @@ export function TimerSmartCubeDeviceModal({
   title,
 }: TimerSmartCubeDeviceModalProps) {
   const copy = COPY[language];
+  const [macInput, setMacInput] = useState('');
+  const [macError, setMacError] = useState(false);
   const [action, setAction] = useState<DeviceAction>(null);
   const [connectingDeviceId, setConnectingDeviceId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
-  const backdropStartedOutsideRef = useRef(false);
   const closeBlockedRef = useRef(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const mountedRef = useRef(true);
@@ -151,6 +173,7 @@ export function TimerSmartCubeDeviceModal({
     || snapshot.phase === 'connecting';
   const closeBlocked = action === 'disconnect' || action === 'reset';
   closeBlockedRef.current = closeBlocked;
+  const backdropProps = useModalBackdrop(() => onCloseRef.current(), closeBlocked);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -213,7 +236,9 @@ export function TimerSmartCubeDeviceModal({
     if (!dialog) return;
     const autofocus = dialog.querySelector<HTMLElement>('[data-autofocus]');
     autofocus?.focus();
-  }, [overrideBody !== undefined]);
+  }, [overrideBody !== undefined, macPrompt?.deviceName]);
+
+  useEffect(() => { setMacInput(''); setMacError(false); }, [macPrompt?.deviceName]);
 
   const runConnect = async (deviceId?: string) => {
     if (!onConnect || action !== null) return;
@@ -288,19 +313,7 @@ export function TimerSmartCubeDeviceModal({
   return createPortal(
     <div
       className="timer-smart-cube-device__overlay"
-      onPointerCancel={() => { backdropStartedOutsideRef.current = false; }}
-      onPointerDownCapture={(event) => {
-        backdropStartedOutsideRef.current = event.button === 0
-          && event.target === event.currentTarget;
-      }}
-      onClick={(event) => {
-        const startedOutside = backdropStartedOutsideRef.current;
-        backdropStartedOutsideRef.current = false;
-        if (startedOutside && event.target === event.currentTarget && !closeBlocked) {
-          event.stopPropagation();
-          onCloseRef.current();
-        }
-      }}
+      {...backdropProps}
     >
       <div
         aria-labelledby={titleId}
@@ -326,7 +339,29 @@ export function TimerSmartCubeDeviceModal({
           <span>{title ?? copy.title}</span>
         </h2>
 
-        {overrideBody ?? (
+        {macPrompt ? (
+          <form className="modal-section" onSubmit={(event) => {
+            event.preventDefault();
+            const mac = normalizeMac(macInput);
+            if (!mac || mac === '00:00:00:00:00:00') { setMacError(true); return; }
+            macPrompt.onSubmit(mac);
+          }}>
+            <strong>{macPrompt.deviceName}</strong>
+            {macPrompt.instructions ?? <p>{copy.macHint}</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <input aria-label={copy.macLabel} autoComplete="off" data-autofocus data-mac-input
+                onChange={(event) => { setMacInput(event.target.value); setMacError(false); }}
+                placeholder="xx:xx:xx:xx:xx:xx" spellCheck={false} type="text" value={macInput}
+                style={{ width: '100%', padding: '8px 10px', fontFamily: 'var(--font-mono)', boxSizing: 'border-box' }} />
+              {macInput && <ClearButton ariaLabel={copy.clearMac} onClick={() => { setMacInput(''); setMacError(false); }} />}
+            </div>
+            {macError && <p role="alert">{copy.macInvalid}</p>}
+            <div className="modal-actions bt-mac-actions">
+              <button className="primary modal-action-btn" type="submit">{copy.confirm}</button>
+              <button className="modal-action-btn" onClick={macPrompt.onCancel} type="button">{copy.cancel}</button>
+            </div>
+          </form>
+        ) : overrideBody ?? (
           <>
             {intro}
             {(connected || !listMode) && <section className="timer-smart-cube-device__summary bt-connected-summary modal-section">

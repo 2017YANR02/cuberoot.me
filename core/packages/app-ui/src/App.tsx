@@ -2763,6 +2763,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   ]);
 
   const closeSmartCubeDevice = useCallback(() => {
+    if (smartCube.phase === 'requesting' || smartCube.phase === 'connecting') void smartCube.disconnect();
     void smartCube.stopScan?.();
     setOpenOverlay((current) => {
       const next = current === TIMER_OVERLAY_IDS.smartCubeDevice ? null : current;
@@ -4943,13 +4944,14 @@ export function App({ host }: { host: InstalledAppHost }) {
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
           availableDevices={smartCube.availableDevices}
+          macPrompt={smartCube.macPrompt ?? undefined}
           capabilities={{
             ...timerDeviceRegistry.get('smart-cube')?.capabilities,
             gyro: Boolean(smartCube.quaternion),
             scan: Boolean(smartCube.scanDevices),
           }}
           connectionFailure={smartCube.phase === 'error'
-            ? <p className="timer-smart-cube-device__failure">{copy.smartCubeError}</p>
+            ? <p className="timer-smart-cube-device__failure">{smartCube.error || copy.smartCubeError}</p>
             : undefined}
           language={language}
           onClose={closeSmartCubeDevice}
