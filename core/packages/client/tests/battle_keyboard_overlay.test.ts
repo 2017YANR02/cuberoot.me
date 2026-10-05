@@ -78,7 +78,7 @@ describe('battle overlay keyboard suppression', () => {
       });
       expect(host.querySelector('.time-display')).toBe(readout);
       expect(readout?.textContent).toContain('1.234');
-      expect(host.querySelector('.timer-battle-player-header')).not.toBeNull();
+      expect(host.querySelector('.battle-readout-label')).not.toBeNull();
       act(() => host.querySelectorAll<HTMLButtonElement>('.timer-penalty-actions button')[1].click());
       expect(host.querySelector('.time-display')).toBe(readout);
       expect(readout?.textContent).toContain('3.234');

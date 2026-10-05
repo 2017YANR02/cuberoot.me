@@ -21,13 +21,14 @@ const COPY = {
   zh: { layout: '布局', side: '并排', versus: '面对面', flip: '旋转上方玩家' },
 } as const;
 
-export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, language, onLayoutChange, onFlipChange }: {
+export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, language, onLayoutChange, onFlipChange, hideFlipControl = false }: {
   playerCount: 2 | 3 | 4;
   layout: 'side' | 'versus';
   flipTopRow: boolean;
   language: 'en' | 'zh';
   onLayoutChange(value: 'side' | 'versus'): void;
   onFlipChange(value: boolean): void;
+  hideFlipControl?: boolean;
 }) {
   const copy = COPY[language];
   useEffect(() => {
@@ -42,7 +43,7 @@ export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, lan
     {playerCount === 2 && (['versus', 'side'] as const).map((value) => (
       <button type="button" key={value} aria-pressed={layout === value} onClick={() => onLayoutChange(value)}>{copy[value]}</button>
     ))}
-    {(playerCount > 2 || layout === 'versus') && <BoolToggle label={copy.flip} value={flipTopRow} onChange={onFlipChange} />}
+    {!hideFlipControl && (playerCount > 2 || layout === 'versus') && <BoolToggle label={copy.flip} value={flipTopRow} onChange={onFlipChange} />}
   </div>;
 }
 
