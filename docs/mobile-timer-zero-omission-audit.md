@@ -33,7 +33,7 @@
 | GAP-007 | Web 有成绩/图表/统计三栏、5 图、完整统计、case/跨分组/按天、纪录对比 | 紧凑 current/best 面板与 rolling picker 已迁 timer-ui 并由 Web/Mobile 真实消费；OPPO 已显示 time/ao5/ao12 共用面板且 360px 无横向溢出。完整 StatsModal/五图、case/跨分组/按天与纪录对比仍缺 | P0，紧凑面板接线完成不等于完整统计完成 |
 | GAP-008 | 设置注册表有 8 类、66 个稳定 ID（其中 1 个仅开发环境，1 个旧点击打乱字段只保留数据兼容） | copy/value/visibility/disabled/effect contract 已迁 shared；Web `SettingsPanel` 当前消费 65 项。五端共用计时 8、智能魔方 6、训练分段 2、真题 2、预览 2，字体/字号 4，训练目标/轮次 7、快捷键 2、显示 2、预朝向 2、颜色中立 1、声音 3、节拍器与自定义观察提示 3、恢复默认 1、导出 4，共 49 个当前可见且有真实 effect 的字段；相对 Web consumer 仍缺 16 项，其中 15 项为生产功能、1 项为开发态 | P0，49 项接线完成不等于设置 parity |
 | GAP-009 | Web “更多”包含打乱足迹、统计、语言、专项、盲拧助手、全屏、手动录入、replay、求解器、批量打乱、打印、清空 | 12 项 action/条件/effect 已共享；App 已真实接通 11 项：专项的 78 个 OLL/PLL case、严格生成、搜索/分组、切换/退出和弹层均由 Web/五端消费同一 shared/timer-ui 实现；统计复用共享页，盲拧助手/通用求解器/批量打乱复用 Tools canonical 子路由。仅 replay 仍绑定 Web 私有 decoder/重建状态；没有外跳 Web timer 或占位冒充 | P0，剩余 replay 及深层交互矩阵未完成 |
-| GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | 五端 App 只显示真实智能魔方入口。Android picker 已按已知名称前缀过滤并仅显示名称；2026-09-20 所有者确认当前扫描、连接和使用正常。GAN v2/v3/v4、MoYu32、QiYi 已有代码级 bridge；2026-09-22 起 Web/App 的标准 move/state 会话、Solo 起表/录制/引导/停表顺序和智能魔方状态/恢复弹层分别共用 `SmartCubeSessionController`、`SmartCubeSoloTimerController` 与 `TimerSmartCubeDeviceModal`。共享弹层覆盖设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开和统一关闭行为；Web 仍独有浏览器环境检测、失败详情与 MAC 输入。型号级真机证据仍只登记 GAN v4；Stackmat/智能计时器未实现且不渲染假入口 | P0，智能魔方局部同视图不等于统一设备中心完成；缺失能力保持不可见且仍登记为 gap |
+| GAP-010 | Web 有智能魔方、智能计时器、Stackmat 麦克风，各自完整弹层、状态与错误 | 五端 App 只显示真实智能魔方入口。Android picker 已按已知名称前缀过滤并仅显示名称；2026-09-20 所有者确认当前扫描、连接和使用正常。GAN v2/v3/v4、MoYu32、QiYi 已有代码级 bridge；2026-09-22 起 Web/App 的标准 move/state 会话、Solo 起表/录制/引导/停表顺序和智能魔方状态/恢复弹层分别共用 `SmartCubeSessionController`、`SmartCubeSoloTimerController` 与 `TimerSmartCubeDeviceModal`。共享弹层覆盖设备名、电量、协议、连接/还原状态、重置/状态回读、陀螺仪校准、断开和统一关闭行为；Web 仍独有浏览器环境检测、失败详情与 MAC 输入。型号级真机证据仍只登记 GAN v4；2026-10-05 Mobile/Desktop 已接入共享智能计时器/Stackmat 面板、BLE/音频 source 和权限配置；各平台硬件矩阵仍待验 | P0，智能魔方局部同视图不等于统一设备中心完成；缺失能力保持不可见且仍登记为 gap |
 | GAP-011 | Web 有手动录成绩、FMC/MBLD 特殊输入、轮次模拟、目标、每日目标、分段、BLD memo | 手动成绩/FMC/MBLD 与 CFOP 分段/BLD memo 已共享接入；分段共用 recorder/status/settings，手动键盘和 44px 触摸均可标记，智能三阶自动分段复用 canonical move-stream producer。轮次、目标、每日目标已于 2026-09-29 接共享设置和运行展示，实体设备矩阵仍缺，新增分段路径待 OPPO 真机 | P0 |
 | GAP-012 | Web 触摸有八向操作轮盘与撤销，键盘有可重绑快捷键，还有全屏/运行隐藏/UI fade | Mobile 已直接消费 shared 八向轮盘、默认键盘决策、任意键停表、分段/BLD memo 键与 44px 触摸标记、删除撤销 toast 与起表门禁；自定义改键持久化/UI 与运行隐藏全 UI 已接入；完整真机矩阵仍缺 | P1，但声称“UI/UX 完全一致”前仍是硬门槛 |
 
@@ -264,14 +264,14 @@ shared 映射快照是 19 个 Timer ID：
 
 | Parity ID | Web 可达行为/状态 | Mobile 快照 |
 | --- | --- | --- |
-| `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | 图标位置近似，功能集不等 |
+| `device.picker` | 统一设备入口区分智能魔方/智能计时器/Stackmat | Mobile/Desktop 注册三类设备能力；Harmony 和实体设备矩阵待补 |
 | `device.smart-cube.protocols` | GAN v2/v3/v4、Giiker、GoCube、MoYu/MoYu32、QiYi 等 Web 已有 driver，统一选择 | Android/App 已有 GAN v2/v3/v4、MoYu32、QiYi 代码级 bridge；Giiker/GoCube/旧 MoYu 与 Web driver 集合仍需继续差分。型号级真机证据只登记 GAN v4 |
 | `device.smart-cube.connect` | 扫描/连接/加密/MAC 输入/超时/拒绝/断连/重连/重置 | Android picker 使用无 service 过滤扫描，再按 `GAN` / `WCU_MY3` / `QY-QYSC` / `XMD-TornadoV4-i` 前缀过滤、按地址去重且列表只显示名称；2026-09-20 当前扫描、连接、使用已确认。iOS 复用 manufacturer-data MAC；多品牌型号、自动重连、拒绝/后台/蓝牙关闭/距离中断仍缺矩阵 |
 | `device.smart-cube.status` | 型号、电量、协议、最后动作、魔方时钟/丢步诊断 | Web/App 已共用 `TimerSmartCubeDeviceModal` 展示设备名、电量、协议和连接/还原状态，并共用重置/状态回读、陀螺仪校准、断开、焦点与关闭行为；Web 只包平台环境、失败详情和 MAC 输入。最近一步按当前产品决定不展示，魔方时钟、丢步与连接诊断仍未形成完整共享可见面板 |
 | `device.smart-cube.scramble` | 状态定锚、打乱匹配、逐步提示、走偏修正、第一手起表、还原停表 | 3×3 GAN v4 自动起停主链已有旧版实证；提示、匹配、走偏修正、同批帧和 pending Worker 现在由 Web/五端共享并有自动回归，但最新 OPPO 可视提示/走偏修正仍待实体魔方复测，不能据此宣布设备完成 |
 | `device.live-cube` | 3D/q2look/net/2D、陀螺仪、朝向、校准、fallback | 共用 LiveCubeState/SimCubeView，定锚、姿态/校准和现有 VisualCube 平面视图接入；无重复几何。生产 bundle 四条报告 WebGL 可见；真机实时转动/朝向/校准与图形失败恢复待验 |
-| `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | 缺 |
-| `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | 未实现；Mobile 不渲染麦克风假入口 |
+| `device.smart-timer` | GAN/QiYi timer 选择、连接、MAC、读数、错误、断开 | Mobile/Desktop 共享面板、协议会话和 BLE 接入已落地，型号实测待验 |
+| `device.stackmat` | 麦克风权限、输入设备、监听、信号级别、状态、精度、解码错误、停止 | Mobile/Desktop 共用音频 source、解码及面板，权限配置与原生构建完成；音频线/USB声卡及拒绝后恢复实测待验 |
 | `device.permission` | 未支持/未开蓝牙/拒绝/不再询问/系统设置返回后重试 | 需 Android、iOS、HarmonyOS NEXT、Windows 和 macOS 各平台状态矩阵 |
 
 ## 5. 本地多人模式（2～4 人）

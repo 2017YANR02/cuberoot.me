@@ -1,3 +1,4 @@
+import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
@@ -55,6 +56,8 @@ const desktopNetBattle = {
 };
 
 export const desktopHost: InstalledAppHost = {
+  createBleTransport: () => new TauriBleTransport(),
+  createStackmatSource: createStackmatMicSource,
   async addNetworkListener(listener) {
     const update = () => listener(navigator.onLine);
     window.addEventListener('online', update);

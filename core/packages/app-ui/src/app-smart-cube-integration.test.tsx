@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type { ExternalTimerEvent } from '@cuberoot/shared/timer/external/types';
+import type { StackmatMicSource } from '@cuberoot/shared/timer/external/stackmat-state';
 
 // Real App, timer/controller, repository and reconstruction UI. Only IndexedDB
 // IO, host radio and WebGL are replaced; this is not a physical GAN acceptance.
@@ -35,7 +37,19 @@ let radio: InstalledAppSmartCube;
 let backListener: (() => void) | null = null;
 let now = 1_000;
 let phase: TimerPhase = 'idle';
+const stackmatListeners = new Set<(event: ExternalTimerEvent) => void>();
+let stackmatListening = false;
+const stackmatSource: StackmatMicSource = {
+  kind: 'stackmat-mic', deviceName: 'Stackmat', deviceId: '', state: 'IDLE', lastTimeMs: 0,
+  get connected() { return stackmatListening; },
+  connect: async () => { stackmatListening = true; },
+  disconnect: async () => { stackmatListening = false; },
+  subscribe: listener => { stackmatListeners.add(listener); return () => { stackmatListeners.delete(listener); }; },
+  subscribeSnapshot: () => () => {}, listInputDevices: async () => [],
+  snapshot: () => ({phase:'idle', ms:0, listening:stackmatListening, signalLevel:0, signalPresent:false, noise:0, stateByte:'', unit:0, deviceId:''}),
+};
 const host: InstalledAppHost = {
+  createStackmatSource: () => stackmatSource,
   addBackButtonListener: async (listener) => {
     backListener = listener;
     return { remove: async () => { if (backListener === listener) backListener = null; } };
@@ -78,6 +92,7 @@ const move = (token: string, at: number) => {
 const settle = async () => { await act(async () => { await new Promise((done) => setTimeout(done, 30)); }); };
 
 beforeEach(async () => {
+  stackmatListening = false;
   now = 1_000;
   backListener = null;
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -428,4 +443,23 @@ describe('installed App GAN lifecycle integration', () => {
     expect(phase).toBe('idle');
     expect(container.querySelector('.shell-recap')).toBeNull();
   });
+});
+
+it('records one exact Stackmat reading with its starting scramble and keeps the panel reset-free', async () => {
+  await act(async () => setRadio({...radio, phase: 'idle', deviceName: ''}));
+  await act(async () => container.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
+  const item = [...container.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')].find(button => button.textContent?.includes('Stackmat'))!;
+  await act(async () => item.click());
+  const dialog = document.querySelector<HTMLElement>('.stackmat-modal')!;
+  expect(dialog).not.toBeNull();
+  expect(dialog.textContent).not.toContain('Reset state');
+  expect(dialog.textContent).toContain('Stop listening');
+  await act(async () => { for(const listener of stackmatListeners) listener({state:'RUNNING'}); });
+  expect(phase).toBe('running');
+  await act(async () => { for(const listener of stackmatListeners) listener({state:'STOPPED',solveTime:12345}); });
+  await settle();
+  await act(async () => { for(const listener of stackmatListeners) listener({state:'STOPPED',solveTime:12345}); });
+  await settle();
+  expect(saved()).toHaveLength(1);
+  expect(saved()[0]).toMatchObject({timeMs:12345, penalty:'ok', event:'333', scramble:'R'});
 });

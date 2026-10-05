@@ -1571,6 +1571,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The smart-cube status and recovery modal shared by Web and all five installed clients. Device name, battery, protocol, connected/solved state, reset/state refresh, gyro calibration, disconnect, focus trapping, and dismissal live in one implementation. Hosts inject only BLE transport actions; Web may add browser environment advice, failure detail, and MAC entry.',
   },
   {
+    name: 'BluetoothTimerModal / StackmatModal',
+    import: "import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';",
+    category: 'more',
+    zh: 'Web 与安装端共用的外部计时器面板。蓝牙计时器显示状态、最近成绩和断开；Stackmat 显示音频输入、信号电平、解码状态和精度。统一 MAC 输入、取消、遮罩关闭和焦点管理，宿主注入设备能力。',
+    en: 'External timer panels shared by Web and installed clients. Bluetooth timers expose state, last result and disconnect; Stackmat exposes audio inputs, signal level, decoder status and resolution. MAC entry, cancellation, dismissal and focus are shared; hosts inject device capabilities.',
+  },
+  {
     name: 'TimerDeviceCenter',
     import: "import { TimerDeviceCenter } from '@cuberoot/timer-ui';",
     category: 'more',

@@ -16,6 +16,7 @@ import {
 } from 'react';
 
 interface TimerControllerOptions {
+  inputBlocked?: () => boolean;
   canStart?: boolean;
   enabled?: boolean;
   holdMs: number;
@@ -35,11 +36,14 @@ export interface TimerController {
   pressUp(atMs?: number): boolean;
   reset(): boolean;
   startNow(elapsedMs?: number): boolean;
+  startExternal(elapsedMs?: number): boolean;
   startFromCube(atMs?: number): boolean;
   stopFromCube(atMs?: number): boolean;
+  stopExternal(timeMs: number, inspectionMs?: number): boolean;
 }
 
 export function useTimerController({
+  inputBlocked,
   canStart = true,
   enabled = true,
   holdMs,
@@ -55,6 +59,8 @@ export function useTimerController({
   const onCompleteRef = useRef(onComplete);
   const onStartRef = useRef(onStart);
   const onTransitionRef = useRef(onTransition);
+  const inputBlockedRef = useRef(inputBlocked);
+  inputBlockedRef.current = inputBlocked;
   const canStartRef = useRef(canStart);
   const enabledRef = useRef(enabled);
   const configRef = useRef<TimerMachineConfig>({
@@ -126,13 +132,13 @@ export function useTimerController({
   }, [machine.phase]);
 
   const pressDown = useCallback((atMs = performance.now()): boolean => (
-    enabledRef.current
+    !inputBlockedRef.current?.() && enabledRef.current
     && timerCanHandleAttemptPress(machineRef.current.phase, canStartRef.current)
     && apply({ type: 'press-down', nowMs: atMs }).accepted === true
   ), [apply]);
 
   const pressUp = useCallback((atMs = performance.now()): boolean => {
-    if (!enabledRef.current) return false;
+    if (inputBlockedRef.current?.() || !enabledRef.current) return false;
     if (!canStartRef.current && machineRef.current.phase !== 'running') {
       clearHoldTimeout();
       apply({ type: 'cancel-arm' });
@@ -158,7 +164,7 @@ export function useTimerController({
   }, [apply, clearHoldTimeout]);
 
   const startFromCube = useCallback((atMs?: number): boolean => (
-    enabledRef.current && canStartRef.current && apply({
+    !inputBlockedRef.current?.() && enabledRef.current && canStartRef.current && apply({
       type: 'start-from-cube',
       nowMs: performance.now(),
       atMs,
@@ -166,12 +172,12 @@ export function useTimerController({
   ), [apply]);
 
   const startNow = useCallback((elapsedMs = 0): boolean => (
-    enabledRef.current
+    !inputBlockedRef.current?.() && enabledRef.current
     && canStartRef.current
     && apply({ type: 'start-now', nowMs: performance.now(), elapsedMs }).effects.includes('run-started')
   ), [apply]);
 
-  const stopFromCube = useCallback((atMs?: number): boolean => apply({
+  const stopFromCube = useCallback((atMs?: number): boolean => !inputBlockedRef.current?.() && apply({
     type: 'stop-from-cube',
     nowMs: performance.now(),
     atMs,
@@ -193,7 +199,9 @@ export function useTimerController({
     pressUp,
     reset,
     startNow,
+    startExternal: (elapsedMs = 0) => canStartRef.current && apply({type: 'start-now', nowMs: performance.now(), elapsedMs}).effects.includes('run-started'),
     startFromCube,
     stopFromCube,
+    stopExternal: (timeMs, inspectionMs) => apply({type: 'stop-external', timeMs, inspectionMs}).accepted === true,
   };
 }

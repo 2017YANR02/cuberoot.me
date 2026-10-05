@@ -71,6 +71,22 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  {
+    name: 'useBluetoothTimer',
+    sig: 'useBluetoothTimer(createSource, options): BluetoothTimerHandle',
+    imp: "import { useBluetoothTimer } from '@cuberoot/timer-ui/external';",
+    category: 'hook',
+    zh: 'Web 与安装端共用的智能计时器控制层，注入 BLE source，订阅状态及硬件读数并释放连接。',
+    en: 'Shared Bluetooth timer controller with an injected source, device readings, state subscription and connection cleanup.',
+  },
+  {
+    name: 'useStackmat',
+    sig: 'useStackmat(createSource, options): StackmatHandle',
+    imp: "import { useStackmat } from '@cuberoot/timer-ui/external';",
+    category: 'hook',
+    zh: 'Web 与安装端共用的 Stackmat 控制层，注入音频 source，合并电平刷新并订阅设备计时事件。',
+    en: 'Shared Stackmat controller with an injected audio source, batched level updates and device timing events.',
+  },
   { name: 'platformMajorToMinor', sig: 'platformMajorToMinor(value: string): number | null', imp: "import { platformMajorToMinor, platformMinorToMajor, platformLocalDateTime } from '@/lib/platform-commerce-fields'", category: 'format', zh: '运营金额按十进制精确转换为分，共用金额回显与本地日期时间字段。', en: 'Exact decimal major-to-minor money conversion with shared money and local datetime display.' },
   { name: 'platformLearningRequest', sig: "platformLearningRequest<T>(path: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal): Promise<T>", imp: "import { platformLearningRequest } from '@/lib/platform-learning'", category: 'api', zh: '学习工作台与课堂共用的鉴权、幂等请求和错误读取。', en: 'Authenticated, idempotent requests and error handling shared by learning workspaces and classrooms.' },
   { name: 'qrAdminRequest', sig: 'qrAdminRequest<T>(path: string, options?: { method?: string; body?: unknown; signal?: AbortSignal }): Promise<T>', imp: "import { qrAdminRequest, qrAdminEntity } from '@/lib/platform-qr-admin'", category: 'api', zh: '二维码管理、统计、提示库与工作室的请求入口和列表实体转换。', en: 'Shared requests and entity conversion for QR management, statistics, prompts and studio.' },

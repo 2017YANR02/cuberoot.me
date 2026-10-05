@@ -1,3 +1,5 @@
+import { macFromPayload, QIYI_MAC_ADV } from '@cuberoot/shared/timer/external/mac';
+export { QIYI_MAC_ADV, QIYI_CIC_LIST } from '@cuberoot/shared/timer/external/mac';
 /**
  * Cube MAC-address discovery for Web Bluetooth.
  *
@@ -45,7 +47,7 @@ export const GAN_CIC_LIST: number[] = [...GAN_V4_MANUFACTURER_DATA_CICS];
 export const MOYU32_CIC_LIST: number[] = Array.from({ length: 255 }, (_v, i) => (i + 1) << 8);
 
 /** The single CIC QiYi uses for both the smart cube and the smart timer. */
-export const QIYI_CIC_LIST: number[] = [0x0504];
+
 
 /**
  * How to pull six MAC bytes out of a manufacturer-data payload.
@@ -91,11 +93,7 @@ export const MOYU32_MAC_ADV: MacAdvSpec = {
   layout: 'last6-reversed',
 };
 
-export const QIYI_MAC_ADV: MacAdvSpec = {
-  brand: 'qiyi',
-  cics: QIYI_CIC_LIST,
-  layout: 'first6-reversed',
-};
+
 
 /** Every spec we know, in the order the hook tries them by default. */
 export const ALL_MAC_ADV_SPECS: readonly MacAdvSpec[] = [GAN_MAC_ADV, MOYU32_MAC_ADV, QIYI_MAC_ADV];
@@ -120,23 +118,6 @@ import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
  * Read six MAC bytes out of a `len`-byte payload accessed through `getByte`,
  * per `spec`. Returns "XX:XX:XX:XX:XX:XX" or null when the payload is short.
  */
-function macFromPayload(
-  getByte: (k: number) => number,
-  len: number,
-  spec: MacAdvSpec,
-): string | null {
-  const n = spec.maxPayloadBytes === undefined ? len : Math.min(len, spec.maxPayloadBytes);
-  if (n < 6) return null;
-  const parts: string[] = [];
-  for (let i = 0; i < 6; i++) {
-    // 'last6-reversed': dv[n-1], dv[n-2], … dv[n-6]  (GAN, MoYu32)
-    // 'first6-reversed': dv[5],  dv[4],   … dv[0]    (QiYi cube + timer)
-    const idx = spec.layout === 'last6-reversed' ? n - 1 - i : 5 - i;
-    parts.push((getByte(idx) & 0xff).toString(16).padStart(2, '0'));
-  }
-  return parts.join(':').toUpperCase();
-}
-
 /**
  * Pull the cube MAC out of an `advertisementreceived` event's manufacturer
  * data. Handles both the Chrome `Map<companyId, DataView>` shape and Bluefy's
