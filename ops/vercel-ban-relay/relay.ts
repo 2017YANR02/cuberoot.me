@@ -30,8 +30,9 @@ export function managedRule(ips: string[], index = 0) {
   };
 }
 /** Keep existing slots, reserve two for incident rules, and queue excess IPs. */
-export function planCapacity(ips: string[], otherRules: number, existingRules: number, maxManagedIps = 24000) {
-  // Production accepts 24,000 entries; larger configs return INTERNAL_ERROR.
+export function planCapacity(ips: string[], otherRules: number, existingRules: number, maxManagedIps = 20000) {
+  // 2026-10-05: the existing 24,000-IP config exceeded the 400 KiB metadata
+  // mirror limit on edit. Owner approved 20,000 to retain update headroom.
   // This is an observed deployment budget, not a published Vercel IP limit.
   if (!Number.isSafeInteger(maxManagedIps) || maxManagedIps < 1) throw new Error('Invalid managed IP budget');
   if (otherRules + existingRules > 40) throw new Error('Custom rule capacity exceeded; preserve existing rules');
@@ -105,11 +106,13 @@ export async function run() {
   const exemption = active.rules[0];
   const ownerGroup = { conditions: [{ type: 'ip_address', op: 'inc', value: [...TRUSTED_IPS] }] };
   const isOwnerGroup = (g: { conditions: { type: string; op: string; value: unknown }[] }) => g.conditions.length === 1 && g.conditions[0].type === 'ip_address' && g.conditions[0].op === 'inc' && JSON.stringify(g.conditions[0].value) === JSON.stringify([...TRUSTED_IPS]);
+  let ownerExemptionError: string | undefined;
+  try {
   if (!exemption.conditionGroup.some(isOwnerGroup)) {
     await api('config', 'PATCH', { action: 'rules.update', id: exemption.id, value: {
       name: exemption.name, active: true,
       description: 'Mainland China and owner-confirmed exact IPs bypass traffic restrictions; application authentication remains required.',
-      conditionGroup: [...exemption.conditionGroup, ownerGroup], action: exemption.action,
+      conditionGroup: [...exemption.conditionGroup, ownerGroup], action: { mitigate: { action: 'bypass' } },
     } });
     active = await api('config/active');
     if (active.rules[0]?.id !== exemption.id || !active.rules[0]?.valid || !active.rules[0]?.active
@@ -117,7 +120,11 @@ export async function run() {
       throw new Error('Owner IP exemption readback mismatch');
     }
   }
-  const plan = planCapacity(ips, active.rules.filter((r: {name: string}) => !own(r)).length, active.rules.filter(own).length, config.maxManagedIps ?? 24000);
+  } catch (error) {
+    // A provider capacity failure must not block expiry cleanup for known bans.
+    ownerExemptionError = error instanceof Error ? error.message : String(error);
+  }
+  const plan = planCapacity(ips, active.rules.filter((r: {name: string}) => !own(r)).length, active.rules.filter(own).length, config.maxManagedIps ?? 20000);
   const { count } = plan;
   for (let i = 0; i < count; i++) {
     const part = plan.admitted.slice(i * 1875, (i + 1) * 1875);
@@ -150,7 +157,8 @@ export async function run() {
   state.lastSyncedAt = now;
   writeFileSync(`${root}/state.tmp`, JSON.stringify(state), { mode: 0o600 });
   renameSync(`${root}/state.tmp`, `${root}/state.json`);
-  console.log(JSON.stringify({ bannedIps: plan.admitted.length, pendingIps: plan.pending, capacityIps: plan.capacity, observedIps: ips.length, through: new Date(state.cursor).toISOString(), eventLagSeconds: Math.ceil((now - state.cursor) / 1000), eventError, ruleId: state.ruleId, expiryDays: 30 }));
+  console.log(JSON.stringify({ bannedIps: plan.admitted.length, pendingIps: plan.pending, capacityIps: plan.capacity, observedIps: ips.length, through: new Date(state.cursor).toISOString(), eventLagSeconds: Math.ceil((now - state.cursor) / 1000), eventError, ownerExemptionError, ruleId: state.ruleId, expiryDays: 30 }));
+  if (ownerExemptionError) await alertOnce('owner-exemption', '维护者 IP 的 Vercel 白名单尚未写入：' + ownerExemptionError + '。现有名单同步继续，需核对平台容量。');
   if (eventError) await alertOnce('events', '已同步现有名单并处理到期解除，但新事件读取受阻：' + eventError + '。采集进度保留，新 IP 可能延迟加入。');
   if (plan.pending) await alertOnce('capacity', '已同步 ' + plan.admitted.length + ' 个 IP 的 30 天封禁，还有 ' + plan.pending + ' 个等待规则容量。账本保留全部记录，到期解除继续执行；排队项不能视为已获得 30 天封禁。');
 }

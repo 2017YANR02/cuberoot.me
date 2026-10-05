@@ -91,7 +91,7 @@ test('capacity follows actual slots, reserves two rules, and queues without drop
  assert.equal(planCapacity(ips,10,30,56250).capacity,56250);
  assert.throws(()=>planCapacity(ips,40,0),/No custom/);
  assert.throws(()=>planCapacity(ips,40,1),/capacity exceeded/);
- const production=planCapacity(ips,10,13);assert.equal(production.capacity,24000);assert.equal(production.count,13);assert.equal(production.pending,43847);assert.deepEqual(production.admitted,ips.slice(0,24000));
+ const production=planCapacity(ips,10,13);assert.equal(production.capacity,20000);assert.equal(production.count,13);assert.equal(production.pending,47847);assert.deepEqual(production.admitted,ips.slice(0,20000));
  assert.throws(()=>planCapacity(ips,10,13,0),/Invalid managed/);
  assert.throws(()=>planCapacity(ips,10,13,NaN),/Invalid managed/);
 });
