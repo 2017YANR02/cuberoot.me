@@ -22,6 +22,7 @@ import PageNoticesAdmin from '@/components/PageNoticesAdmin';
 import { UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
+import { CompactSelect } from '@/components/CompactSelect';
 import { DateInput } from '@/components/DateInput';
 import { AccountPanel, LoginForm, IdentityChoicePanel, WcaLinkPrompt, DeleteAccountPanel, type SignedIn } from '@/components/AuthPanel';
 import { getIdentityChoice, useIdentityChoice } from '@/lib/identity-choice';
@@ -386,7 +387,7 @@ function BasicProfileEditor() {
     }
     let cancelled = false;
     setLocationsLoading(true);
-    fetch(`/account-locations/${countryIso2}.json?v=2`, { cache: 'force-cache' })
+    fetch(`/account-locations/${countryIso2}.json?v=3`, { cache: 'force-cache' })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const next = await response.json() as AccountRegion[];
@@ -557,55 +558,57 @@ function BasicProfileEditor() {
       {draft.countryIso2 && (
         <div className="account-basic-profile-field">
           <label className="auth-label" htmlFor="account-region">{t('省份', 'State or province')}</label>
-          <select
+          <CompactSelect
             id="account-region"
-            className="auth-input account-basic-profile-select"
-            value={draft.regionCode ?? ''}
-            disabled={saving || locationsLoading || locationsError || regions.length === 0}
-            onChange={(event) => updateDraft({ regionCode: event.target.value || null, cityName: null })}
-          >
-            <option value="" hidden>
-              {locationsLoading
+            ariaLabel={t('省份', 'State or province')}
+            label={draft.regionCode
+              ? (selectedRegion ? localizeCity(selectedRegion.name, isZh, draft.countryIso2) : draft.regionCode)
+              : locationsLoading
                 ? t('正在加载…', 'Loading…')
                 : locationsError
                   ? t('省份加载失败', 'Could not load states')
                   : regions.length === 0
                     ? t('暂无省份', 'No states or provinces')
                     : t('请选择省份', 'Select a state or province')}
-            </option>
-            {draft.regionCode && !selectedRegion && <option value={draft.regionCode}>{draft.regionCode}</option>}
-            {regions.map((region) => (
-              <option key={region.code} value={region.code}>{localizeCity(region.name, isZh, draft.countryIso2)}</option>
-            ))}
-          </select>
+            value={draft.regionCode ?? ''}
+            disabled={saving || locationsLoading || locationsError || regions.length === 0}
+            onChange={(value) => updateDraft({ regionCode: value || null, cityName: null })}
+            items={[
+              ...(draft.regionCode && !selectedRegion ? [{ value: draft.regionCode, label: draft.regionCode }] : []),
+              ...regions.map((region) => ({ value: region.code, label: localizeCity(region.name, isZh, draft.countryIso2) })),
+            ]}
+          />
         </div>
       )}
       {draft.regionCode && (
         <div className="account-basic-profile-field">
           <label className="auth-label" htmlFor="account-city">{t('城市', 'City')}</label>
-          <select
+          <CompactSelect
             id="account-city"
-            className="auth-input account-basic-profile-select"
-            value={draft.cityName ?? ''}
-            disabled={saving || locationsLoading || locationsError || !selectedRegion || selectedRegion.cities.length === 0}
-            onChange={(event) => updateDraft({ cityName: event.target.value || null })}
-          >
-            <option value="" hidden>
-              {locationsLoading
+            ariaLabel={t('城市', 'City')}
+            label={draft.cityName
+              ? t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2))
+              : locationsLoading
                 ? t('正在加载…', 'Loading…')
                 : locationsError
                   ? t('城市加载失败', 'Could not load cities')
                   : selectedRegion?.cities.length === 0
                     ? t('暂无城市', 'No cities')
                     : t('请选择城市', 'Select a city')}
-            </option>
-            {draft.cityName && !selectedRegion?.cities.includes(draft.cityName) && (
-              <option value={draft.cityName}>{t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2))}</option>
-            )}
-            {selectedRegion?.cities.map((city) => (
-              <option key={city} value={city}>{t(selectedRegion.cityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2))}</option>
-            ))}
-          </select>
+            value={draft.cityName ?? ''}
+            disabled={saving || locationsLoading || locationsError || !selectedRegion || selectedRegion.cities.length === 0}
+            onChange={(value) => updateDraft({ cityName: value || null })}
+            items={[
+              ...(draft.cityName && !selectedRegion?.cities.includes(draft.cityName) ? [{
+                value: draft.cityName,
+                label: t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2)),
+              }] : []),
+              ...(selectedRegion?.cities.map((city) => ({
+                value: city,
+                label: t(selectedRegion.cityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2)),
+              })) ?? []),
+            ]}
+          />
         </div>
       )}
       {error && <p className="auth-error" role="alert">{error}</p>}

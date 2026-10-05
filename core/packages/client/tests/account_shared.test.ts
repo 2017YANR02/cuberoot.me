@@ -165,7 +165,7 @@ describe('forum reply profile completeness', () => {
       ['GD', 'Dabu', '大埔'], ['TJ', 'Shimianzhuang', '拾棉庄'], ['HN', 'Gangdong', '江东'],
       ['FJ', 'Luxia', '路下'], ['TJ', 'Chengtougu', '蛏头沽'], ['TJ', 'Caijiapu', '蔡家堡'],
       ['TJ', 'Caodian', '糙甸'], ['TJ', 'Liuzikou', '柳子口'], ['GZ', 'Qinglang', '清浪'],
-      ['TJ', 'Mengquan', '蒙酄'],
+      ['TJ', 'Mengquan', '蒙酄'], ['CQ', 'Zhong', '忠县'],
     ]) expect(label(code, city), `${code}/${city}`).toBe(expected);
   });
   const profile: AccountBasicProfile = { fullName: 'Test User', birthDate: '2000-01-01', gender: 'male', countryIso2: 'CN', regionCode: 'GD', cityName: 'Shenzhen', countrySource: 'self' };
