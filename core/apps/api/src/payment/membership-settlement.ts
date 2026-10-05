@@ -1,5 +1,6 @@
 import { decimalToMinor, isRecord, requireText } from '@app-foundation/payments/core';
 import { withTransaction, type QueryRunner } from '../db/connection.js';
+import { notifyMembershipPayment, type PaidMembershipNotice } from './membership-payment-notify.js';
 
 export type MembershipProvider = 'alipay' | 'wechat' | 'xunhupay' | 'airwallex';
 export interface MembershipPayment {
@@ -97,7 +98,8 @@ export async function settleMembershipPayment(
 ): Promise<'settled' | 'duplicate'> {
   if (!Number.isSafeInteger(payment.amountMinor) || payment.amountMinor <= 0) return invalid();
   requireText(payment.orderNo, 'orderNo', 64); requireText(payment.transactionId, 'transactionId', 128);
-  return transact(async (run) => {
+  let notice: PaidMembershipNotice | undefined;
+  const result = await transact(async (run) => {
     // Serialize transaction-ID reuse even when malicious events name different local orders.
     await run('SELECT pg_advisory_xact_lock(hashtextextended(?, 0))', [`membership:payment:${payment.provider}:${payment.transactionId}`]);
     const [order] = await run<Order>('SELECT * FROM membership_orders WHERE out_trade_no = ? FOR UPDATE', [payment.orderNo]);
@@ -118,6 +120,10 @@ export async function settleMembershipPayment(
     await run(`UPDATE membership_orders SET status = 'paid', paid_at = NOW(), provider_txn = ?, raw_notify = ?::jsonb
       WHERE out_trade_no = ?`, [payment.transactionId, JSON.stringify(payment.raw), payment.orderNo]);
     await grantMembershipInTransaction(run, { wcaId: order.wca_id, name: order.name, plan, source: order.provider, orderNo: order.out_trade_no });
-    return 'settled';
+    notice = { orderNo: order.out_trade_no, name: order.name, memberKey: order.wca_id, plan: order.plan_slug,
+      amountMinor: order.amount_cents, currency: order.currency, channel: order.pay_channel || order.provider };
+    return 'settled' as const;
   });
+  if (notice) void notifyMembershipPayment(notice).catch(() => console.warn(`[membership] payment notification failed for ${payment.orderNo}`));
+  return result;
 }

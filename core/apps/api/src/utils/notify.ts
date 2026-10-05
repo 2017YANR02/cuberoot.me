@@ -43,6 +43,7 @@ export type NotificationKind =
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
   | 'wca_record'
+  | 'membership_payment'
   | 'document_change'
   | 'quiz_report' | 'quiz_hidden'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
@@ -74,6 +75,8 @@ export interface NotifyInput {
   link: string;
   /** Stable source key for repeatable background jobs. */
   dedupeKey?: string;
+  /** Some operational events use in-site/Bark only. */
+  email?: boolean;
 }
 
 const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
@@ -88,6 +91,7 @@ const KIND_TEXT: Record<NotificationKind, Record<MailLang, string>> = {
   forum_rejected: { zh: '驳回了你的帖子', en: 'declined your post' },
   comp_reg: { zh: '报名了国外比赛', en: 'registered for an overseas competition' },
   wca_record: { zh: '纪录快讯', en: 'Record news' },
+  membership_payment: { zh: '会员收款成功', en: 'Membership payment received' },
   document_change: { zh: '修改了你关注的协作文件', en: 'updated a collaborative file you follow' },
   quiz_report: { zh: '举报了一道社区题', en: 'reported a community quiz question' },
   quiz_hidden: { zh: '下架了你出的题', en: 'took down one of your questions' },
@@ -231,7 +235,7 @@ export async function notify(input: NotifyInput): Promise<void> {
     if (inserted.length) insertedTargets.push(key);
   }
 
-  if (!emailConfigured()) return;
+  if (input.email === false || !emailConfigured()) return;
   void (async () => {
     for (const key of insertedTargets) {
       try {
