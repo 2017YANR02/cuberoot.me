@@ -8,6 +8,8 @@ export const TIMER_OVERLAY_IDS = {
   puzzlePicker: 'timer.puzzle-picker',
   scrambleSource: 'timer.scramble-source',
   sessionSwitcher: 'timer.session-switcher',
+  smartTimerDevice: 'timer.smart-timer-device',
+  stackmatDevice: 'timer.stackmat-device',
   smartCubeDevice: 'timer.smart-cube-device',
   wcaCompetition: 'timer.wca-competition',
   wcaScrambleMarks: 'timer.wca-scramble-marks',

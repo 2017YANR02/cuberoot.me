@@ -1,4 +1,5 @@
 'use client';
+import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
@@ -3040,41 +3041,41 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         }
         devices={
           <TimerDeviceCenter
-            ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
+            ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
             items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
               ? {
                   active: bluetoothCube.status.connected,
                   detail: bluetoothCube.status.connected
-                    ? bluetoothCube.status.deviceName ?? tr({ zh: '已连接', en: 'Connected' })
+                    ? bluetoothCube.status.deviceName ?? tr(TIMER_DEVICE_CENTER_LABELS['connected'])
                     : undefined,
                   id: device.id,
                   kind: device.kind,
-                  label: tr({ zh: '智能魔方', en: 'Smart cube' }),
+                  label: tr(TIMER_DEVICE_CENTER_LABELS['smart-cube']),
                   onSelect: connectSmartCubeCenter,
                 }
               : device.kind === 'smart-timer'
                 ? {
                     active: bluetoothTimer.status.connected,
                     detail: bluetoothTimer.status.connected
-                      ? tr({ zh: '已连接', en: 'Connected' })
+                      ? tr(TIMER_DEVICE_CENTER_LABELS['connected'])
                       : undefined,
                     id: device.id,
                     kind: device.kind,
-                    label: tr({ zh: '智能计时器', en: 'Smart timer' }),
+                    label: tr(TIMER_DEVICE_CENTER_LABELS['smart-timer']),
                     onSelect: connectExternalBluetooth,
                   }
                 : {
                     active: stackmat.status.listening,
                     detail: stackmat.status.listening
-                      ? tr({ zh: '监听中', en: 'Listening' })
+                      ? tr(TIMER_DEVICE_CENTER_LABELS['listening'])
                       : undefined,
                     id: device.id,
                     kind: device.kind,
-                    label: tr({ zh: 'Stackmat 麦克风', en: 'Stackmat microphone' }),
+                    label: tr(TIMER_DEVICE_CENTER_LABELS['stackmat']),
                     onSelect: connectStackmat,
                   })}
-            menuLabel={tr({ zh: '可用计时设备', en: 'Available timer devices' })}
-            triggerLabel={tr({ zh: '设备', en: 'Devices' })}
+            menuLabel={tr(TIMER_DEVICE_CENTER_LABELS['menu'])}
+            triggerLabel={tr(TIMER_DEVICE_CENTER_LABELS['trigger'])}
           />
         }
       >

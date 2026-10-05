@@ -1,3 +1,5 @@
+import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';
+import { useExternalDevices } from './hooks/use-external-devices';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { decodeAppleMembershipRequest } from '@cuberoot/shared/apple-membership';
 import { decodeGoogleMembershipRequest } from '@cuberoot/shared/google-membership';
@@ -197,6 +199,7 @@ import {
   ManualScrambleQueueEditor,
   SegmentTime,
   TimerDeviceCenter,
+  TIMER_DEVICE_CENTER_LABELS,
   TimerSmartCubeDeviceModal,
   TimerInfoToast,
   TimerAttemptSplitSettings,
@@ -532,9 +535,9 @@ function MobileHistoryItem({
 
 export function App({ host }: { host: InstalledAppHost }) {
   const timerDeviceRegistry = useMemo(() => createTimerDeviceRegistry({
-    adapterIds: ['smart-cube'],
+    adapterIds: ['smart-cube', ...(host.createBleTransport ? ['smart-timer'] : []), ...(host.createStackmatSource ? ['stackmat'] : [])],
     registrations: TIMER_DEVICE_REGISTRATIONS,
-  }), []);
+  }), [host]);
   const [store, setStore] = useState<TimerStoreData | null>(null);
   const storeRef = useRef(store);
   storeRef.current = store;
@@ -632,6 +635,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   } | null>(null);
   const historyDetailRef = useRef(historyDetail);
   historyDetailRef.current = historyDetail;
+  const closeDeviceOverlayRef = useRef<() => void>(() => {});
   const [openOverlay, setOpenOverlay] = useState<TimerOverlayId | null>(null);
   const [moreOpen, setMoreOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -2349,6 +2353,9 @@ export function App({ host }: { host: InstalledAppHost }) {
           : 0,
       });
       if (action === 'close-overlay') {
+        if (openOverlayRef.current === TIMER_OVERLAY_IDS.smartCubeDevice
+          || openOverlayRef.current === TIMER_OVERLAY_IDS.smartTimerDevice
+          || openOverlayRef.current === TIMER_OVERLAY_IDS.stackmatDevice) closeDeviceOverlayRef.current();
         if (openOverlayRef.current === TIMER_OVERLAY_IDS.solveDetail) {
           closeHistorySolveDetail();
           return;
@@ -2480,6 +2487,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [attemptSplitRecorder] = useState(() => new TimerAttemptSplitRecorder(setAttemptSplitState));
   const attemptStartedAtRef = useRef(0);
   const timerDisplayMsRef = useRef(0);
+  const externalAttemptRef = useRef<{kind: 'smart-timer' | 'stackmat'; sessionId: string; snapshot: MobileScrambleAttemptSnapshot; running: boolean} | null>(null);
+  const externalActiveRef = useRef(false);
+  const externalOperationRef = useRef(0);
+  const [externalConnectAttempt, setExternalConnectAttempt] = useState<{kind: 'smart-timer' | 'stackmat'; promise: Promise<void>} | null>(null);
   const completeSolve = useCallback((result: SolveResult) => {
     setLastResult(result);
     setLastPenalty(result.autoPenalty);
@@ -2488,7 +2499,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     const attempt = attemptRef.current
       ?? (displayedEntry ? mobileScrambleAttemptSnapshot(displayedEntry) : null);
     attemptRef.current = null;
-    const sessionId = storeRef.current?.database.activeSessionId;
+    const sessionId = externalAttemptRef.current?.sessionId ?? storeRef.current?.database.activeSessionId;
     if (!attempt || !sessionId) {
       smartCubeAttemptProducerRef.current.reset();
       announce(copy.actionFailed);
@@ -2560,6 +2571,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [announce, applyStoreSnapshot, copy.saveRetryFailed, copy.saveSessionMissing, markSavedWcaSolve, pendingSolves, recoverLatestStoreSnapshot]);
 
   const timer = useTimerController({
+    inputBlocked: () => externalActiveRef.current,
     onTransition: onTimerSoundTransition,
     canStart: attemptCanStart,
     enabled: view !== 'settings' && timerVisible
@@ -2600,6 +2612,51 @@ export function App({ host }: { host: InstalledAppHost }) {
   cancelTimerArmRef.current = timer.cancelArm;
   const timerRef = useRef(timer);
   timerRef.current = timer;
+  const external = useExternalDevices(host, language, (kind, event) => {
+    if (event.state === 'DISCONNECT' || event.state === 'IDLE' || event.state === 'GAN_RESET') {
+      if (externalAttemptRef.current?.kind === kind) {
+        externalAttemptRef.current = null;
+        attemptRef.current = null;
+        timer.reset();
+      }
+      return;
+    }
+    const canReceiveStart = timerMode === 1 && timerVisible && view !== 'settings'
+      && !timerContextMutationBusy && attemptCanStartRef.current;
+    if (canReceiveStart && !externalAttemptRef.current
+      && (event.state === 'HANDS_ON' || event.state === 'GET_SET' || event.state === 'INSPECTION' || event.state === 'RUNNING')) {
+      const sessionId = storeRef.current?.database.activeSessionId;
+      const entry = scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx];
+      if (sessionId && entry) externalAttemptRef.current = {
+        kind, sessionId, snapshot: mobileScrambleAttemptSnapshot(entry), running: false,
+      };
+    }
+    const attempt = externalAttemptRef.current;
+    if (event.state === 'RUNNING' && canReceiveStart && attempt?.kind === kind
+      && !attempt.running && timerPhaseRef.current !== 'running') {
+      if (timer.startExternal(event.solveTime ?? 0)) {
+        attempt.running = true;
+        attemptRef.current = attempt.snapshot;
+      } else externalAttemptRef.current = null;
+    }
+    if (event.state === 'STOPPED' && attempt?.kind === kind && attempt.running
+      && typeof event.solveTime === 'number' && Number.isFinite(event.solveTime) && event.solveTime >= 0) {
+      timer.stopExternal(event.solveTime, event.inspectTime);
+      externalAttemptRef.current = null;
+    }
+  });
+  externalActiveRef.current = external.timer.status.connected || external.stackmat.status.listening;
+  const externalModalOpen = openOverlay === TIMER_OVERLAY_IDS.smartTimerDevice || openOverlay === TIMER_OVERLAY_IDS.stackmatDevice;
+  const previousExternalModalRef = useRef(false);
+  useEffect(() => {
+    if (previousExternalModalRef.current && !externalModalOpen) {
+      externalOperationRef.current++;
+      external.resolveMac(null);
+      if (!external.timer.status.connected) external.timer.disconnect();
+      if (!external.stackmat.status.listening) external.stackmat.stop();
+    }
+    previousExternalModalRef.current = externalModalOpen;
+  }, [externalModalOpen, external]);
   host.useTimerEffects(timerMode === 1
     ? timer.machine.phase
     : battleModeActive ? 'running' : 'idle');
@@ -2763,6 +2820,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   ]);
 
   const closeSmartCubeDevice = useCallback(() => {
+    externalOperationRef.current++;
     if (smartCube.phase === 'requesting' || smartCube.phase === 'connecting') void smartCube.disconnect();
     void smartCube.stopScan?.();
     setOpenOverlay((current) => {
@@ -2773,14 +2831,27 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [smartCube]);
 
   const connectSmartCube = useCallback(async (deviceId?: string) => {
+    const token = ++externalOperationRef.current;
     try {
+      await external.timer.disconnect();
+      if (token !== externalOperationRef.current) return;
+      external.stackmat.stop();
       const name = await smartCube.connect(deviceId);
       announce(copy.smartCubeConnected(name));
     } catch (error) {
       announce(copy.smartCubeError);
       throw error;
     }
-  }, [announce, copy, smartCube]);
+  }, [announce, copy, smartCube, external.timer, external.stackmat]);
+
+  closeDeviceOverlayRef.current = () => {
+    externalOperationRef.current++;
+    external.resolveMac(null);
+    if (!external.timer.status.connected) void external.timer.disconnect();
+    if (!external.stackmat.status.listening) external.stackmat.stop();
+    if (smartCube.phase === 'requesting' || smartCube.phase === 'connecting') void smartCube.disconnect();
+    void smartCube.stopScan?.();
+  };
 
   const scanSmartCubes = useCallback(async () => {
     try {
@@ -3753,25 +3824,60 @@ export function App({ host }: { host: InstalledAppHost }) {
     scrambleReady,
     scrambleStatus?.retryable === true && currentScrambleEntry !== undefined,
   );
+  const connectExternalTimer = async () => {
+    const token = ++externalOperationRef.current;
+    await smartCube.disconnect();
+    if (token !== externalOperationRef.current) return;
+    external.stackmat.stop();
+    await external.timer.connect();
+  };
+  const startStackmat = async (deviceId?: string) => {
+    const token = ++externalOperationRef.current;
+    await smartCube.disconnect();
+    await external.timer.disconnect();
+    if (token !== externalOperationRef.current) return;
+    await external.stackmat.start(deviceId);
+  };
+  const closeExternalDevice = () => {
+    externalOperationRef.current++;
+    setExternalConnectAttempt(null);
+    setOpenOverlay(null);
+  };
   const smartCubeDeviceCenter = (
     <TimerDeviceCenter
-      ariaLabel={copy.connectBluetooth}
+      ariaLabel={TIMER_DEVICE_CENTER_LABELS.title[language]}
       items={timerDeviceRegistry.list()
-        .filter((device) => device.kind === 'smart-cube')
-        .map((device) => ({
+        .map((device) => device.kind !== 'smart-cube' ? ({
+          id: device.id, kind: device.kind,
+          active: device.kind === 'smart-timer' ? external.timer.status.connected : external.stackmat.status.listening,
+          label: TIMER_DEVICE_CENTER_LABELS[device.kind][language],
+          detail: device.kind === 'smart-timer'
+            ? (external.timer.status.connected ? TIMER_DEVICE_CENTER_LABELS.connected[language] : undefined)
+            : (external.stackmat.status.listening ? TIMER_DEVICE_CENTER_LABELS.listening[language] : undefined),
+          onSelect: () => {
+            const kind = device.kind as 'smart-timer' | 'stackmat';
+            setOpenOverlay(kind === 'smart-timer' ? TIMER_OVERLAY_IDS.smartTimerDevice : TIMER_OVERLAY_IDS.stackmatDevice);
+            const active = kind === 'smart-timer' ? external.timer.status.connected : external.stackmat.status.listening;
+            if (!active) {
+              const promise = kind === 'smart-timer' ? connectExternalTimer() : startStackmat();
+              setExternalConnectAttempt({kind, promise});
+              void promise.catch(() => {}); // The shared modal owns the error message.
+            }
+          },
+        }) : ({
           active: smartCube.phase === 'connected',
           detail: smartCube.phase === 'connected'
-            ? `${smartCube.deviceName}${smartCube.lastMove ? ` · ${smartCube.lastMove}` : ''}`
+            ? smartCube.deviceName || TIMER_DEVICE_CENTER_LABELS.connected[language]
             : smartCube.phase === 'requesting' || smartCube.phase === 'connecting'
               ? copy.connectingBluetooth
               : undefined,
           id: device.id,
           kind: device.kind,
-          label: smartCube.phase === 'connected' ? copy.smartCubeDetails : copy.connect,
+          label: TIMER_DEVICE_CENTER_LABELS['smart-cube'][language],
           onSelect: openSmartCubeDevice,
         }))}
-      menuLabel={copy.connectBluetooth}
-      triggerLabel={copy.connect}
+      menuLabel={TIMER_DEVICE_CENTER_LABELS.menu[language]}
+      triggerLabel={TIMER_DEVICE_CENTER_LABELS.trigger[language]}
     />
   );
   const shellViewport = mobileShellViewportLayout(viewportHeight);
@@ -4972,6 +5078,20 @@ export function App({ host }: { host: InstalledAppHost }) {
           }}
         />
       )}
+
+      {openOverlay === TIMER_OVERLAY_IDS.smartTimerDevice && <BluetoothTimerModal
+        localize={value => value[language]} compact={!wideLayout}
+        devices={external.devices} onSelectDevice={external.selectDevice}
+        timer={{...external.timer, connect: connectExternalTimer}} macPrompt={external.macPrompt}
+        connectAttempt={externalConnectAttempt?.kind === 'smart-timer' ? externalConnectAttempt.promise : null}
+        onSubmitMac={external.resolveMac} onCancelMac={() => external.timer.disconnect()}
+        onClose={closeExternalDevice}
+      />}
+      {openOverlay === TIMER_OVERLAY_IDS.stackmatDevice && <StackmatModal
+        localize={value => value[language]} compact={!wideLayout}
+        stackmat={{...external.stackmat, start: startStackmat}} onClose={closeExternalDevice}
+        connectAttempt={externalConnectAttempt?.kind === 'stackmat' ? externalConnectAttempt.promise : null}
+      />}
 
       <nav data-timer-hide-while-running className="primary-nav" aria-label={copy.title} ref={primaryNavRef}>
         <button

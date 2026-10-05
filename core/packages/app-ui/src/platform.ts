@@ -1,3 +1,5 @@
+import type { BleTransport } from './smart-cube/transport';
+import type { StackmatMicSource } from '@cuberoot/shared/timer/external/stackmat-state';
 import type { AppleMembershipRequest, AppleMembershipResult } from '@cuberoot/shared/apple-membership';
 import type { GoogleMembershipRequest, GoogleMembershipResult } from '@cuberoot/shared/google-membership';
 import type {
@@ -89,6 +91,8 @@ export interface InstalledAppNetBattle {
 }
 
 export interface InstalledAppHost {
+  createBleTransport?(): BleTransport;
+  createStackmatSource?(): StackmatMicSource;
   appleMembership?(request: AppleMembershipRequest, session: WebSession): Promise<Omit<AppleMembershipResult, 'type' | 'requestId'>>;
   googleMembership?(request: GoogleMembershipRequest, session: WebSession): Promise<Omit<GoogleMembershipResult, 'type' | 'requestId'>>;
   addBackButtonListener?(listener: () => void): Promise<InstalledAppListener>;

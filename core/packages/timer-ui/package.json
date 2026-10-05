@@ -64,7 +64,8 @@
       "./timer-chrome.css": "react-dom",
       "./timer-stage-layout.css": "react-dom",
       "./timer-penalty-actions.css": "react-dom",
-      "./scramble-strip.css": "react-dom"
+      "./scramble-strip.css": "react-dom",
+      "./external": "react-dom"
     }
   },
   "exports": {
@@ -118,7 +119,8 @@
     "./timer-chrome.css": "./src/timer-chrome.css",
     "./timer-stage-layout.css": "./src/timer-stage-layout.css",
     "./timer-penalty-actions.css": "./src/timer-penalty-actions.css",
-    "./scramble-strip.css": "./src/scramble-strip.css"
+    "./scramble-strip.css": "./src/scramble-strip.css",
+    "./external": "./src/external/index.ts"
   },
   "sideEffects": true,
   "scripts": {

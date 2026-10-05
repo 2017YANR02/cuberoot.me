@@ -43,6 +43,14 @@ describe('hooks/ are all registered in /dev/utils', () => {
     // Web hook paths and must stay registered without copying a wrapper body.
     for (const m of src.matchAll(/export\s*\{\s*(use[A-Z]\w*)\s*\}\s*from/g)) exported.add(m[1]);
   }
+  // External timer hooks have real Web and installed consumers through this
+  // public barrel. Inspect its exports, not private implementation helpers.
+  const externalDir = join(ROOT, '..', 'timer-ui', 'src', 'external');
+  const barrel = readFileSync(join(externalDir, 'index.ts'), 'utf8');
+  for (const match of barrel.matchAll(/export \* from ['"]\.\/([^'"]+)['"]/g)) {
+    const source = readFileSync(join(externalDir, `${match[1]}.ts`), 'utf8');
+    for (const hook of source.matchAll(/export\s+(?:function|const)\s+(use[A-Z]\w*)/g)) exported.add(hook[1]);
+  }
   const registered = new Set(UTILS.filter((e) => e.category === 'hook').map((e) => e.name));
 
   it('found a meaningful number of hooks', () => {

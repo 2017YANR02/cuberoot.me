@@ -117,7 +117,7 @@ describe('StackmatModal direct connection attempt', () => {
       await connectAttempt.catch(() => undefined);
     });
 
-    expect(host.textContent).toContain('The browser denied microphone access');
+    expect(host.textContent).toContain('Microphone access was denied');
     expect(host.textContent).toContain('Start listening');
   });
 });

@@ -1323,3 +1323,14 @@ CubeRoot 应以这些证据证明不是简单套壳：
 ```
 
 最省心不是永远不更新 App，而是把“每天会变的内容”和“必须审核的客户端代码”分开。只要这个边界从第一天守住，CubeRoot 网站继续快速迭代，App 不需要跟着每次手工改一遍。
+
+
+### 2026-10-05：外部计时器接入 Mobile / Desktop
+
+- 设备入口文案以 Web 为准统一为「智能魔方 / 智能计时器 / Stackmat 麦克风」；菜单、入口和连接状态中英文均由 `TIMER_DEVICE_CENTER_LABELS` 同源提供。
+
+- Web、Mobile、Desktop 共用 `@cuberoot/timer-ui/external` 的 `BluetoothTimerModal`、`StackmatModal` 与 React controllers。智能计时器保留独立标题、设备状态、最近成绩和断开操作，不包含智能魔方的状态重置/陀螺仪重置。Stackmat 保留输入选择、电平、解码状态、精度和停止监听。
+- GAN / QiYi timer 的通知解析、加解密、hello 与 ACK 会话统一由 shared 驱动；安装端复用 Capacitor / Tauri BLE transport。桌面扫描由共享面板选择设备，QiYi 地址依次使用原生地址、广播及可取消的手动输入。连接/扫描取消、迟到连接释放和设备切换均有代际隔离。
+- Stackmat 复用同一 Web Audio 采集管线和 shared 解码器，Mobile / Desktop 宿主显式注入 source。Android 补 RECORD_AUDIO / MODIFY_AUDIO_SETTINGS，iOS/macOS 补用途说明，macOS 补 hardened-runtime audio-input entitlement；权限请求继续使用现有 Capacitor / Wry 媒体委托。取消待授权监听后，迟到音频流立即释放。
+- 安装端设备中心现在注册三类真实能力。外部计时冻结开始时项目、打乱和分组，保存设备最终读数；断连清理尝试，重复 STOPPED 不重复保存，外部设备接管时屏蔽普通触摸/键盘停表。
+- 当前证据：相关 Web/安装端定向回归、App真实计时与 repository 集成回归通过；Mobile/Desktop Web build、Android `assembleDebug`、iOS Simulator unsigned build、macOS `cargo build` 通过。原生权限弹窗、设备型号、音频线/USB声卡、后台恢复等仍需 Android、iOS、Windows、macOS 各自实体设备验收；本轮未发布。Harmony 未接入本轮新增宿主 capability，整体仍为 NOT COMPLETE。

@@ -1,3 +1,5 @@
+import { useBluetoothTimer as useSharedBluetoothTimer, type UseBluetoothTimerOptions, type BluetoothTimerHandle as SharedBluetoothTimerHandle } from '@cuberoot/timer-ui/external';
+export type { UseBluetoothTimerOptions } from '@cuberoot/timer-ui/external';
 import { mayUseMiniProgramBridge } from '../miniprogram_bridge';
 import { createMiniProgramTimerSource } from './miniprogram';
 /**
@@ -30,7 +32,6 @@ import { createMiniProgramTimerSource } from './miniprogram';
  * `_lib/external_timer/` than under `bluetooth/`.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { requestBluetoothDevice } from '../index';
 import type { BluetoothTimerDriver } from './driver';
 import { ganTimerDriver } from './gan_timer';
@@ -39,13 +40,11 @@ import { qiyiTimerMacFromName } from './mac';
 import { qiyiTimerDriver } from './qiyi_timer';
 import {
   createExternalTimerBus,
-  snapshotExternalTimer,
   type ExternalTimerEvent,
   type ExternalTimerKind,
   type ExternalTimerListener,
   type ExternalTimerSource,
   type ExternalTimerState,
-  type ExternalTimerStatus,
 } from './types';
 
 export type {
@@ -406,89 +405,9 @@ export function createBluetoothTimerSource(
 /*  React hook                                                         */
 /* ------------------------------------------------------------------ */
 
-export interface UseBluetoothTimerOptions extends BluetoothTimerSourceOptions {
-  /** Every decoded state change, in arrival order. */
-  onEvent?: (ev: ExternalTimerEvent) => void;
-  /**
-   * The one callback most consumers need: a solve was recorded BY THE DEVICE.
-   * `ms` is the device's own measurement — do not re-time it locally.
-   */
-  onStop?: (ms: number, ev: ExternalTimerEvent) => void;
-}
-
-export interface BluetoothTimerHandle {
-  status: ExternalTimerStatus;
-  /** Most recent event, or null before the first one. */
-  lastEvent: ExternalTimerEvent | null;
-  /** Open the picker + connect. Must be called from a user gesture. */
-  connect(): Promise<void>;
-  /** Connect a device already returned by a shared Web Bluetooth chooser. */
-  connectDevice(device: BluetoothDevice): Promise<void>;
-  disconnect(): void;
-  /** Escape hatch for callers that want the raw source (e.g. to subscribe). */
-  source: BluetoothTimerSource;
-}
-
-const DISCONNECTED_STATUS: ExternalTimerStatus = {
-  connected: false,
-  kind: 'unknown',
-  deviceName: '',
-  state: 'DISCONNECT',
-  lastTimeMs: 0,
-};
-
-export function useBluetoothTimer(opts: UseBluetoothTimerOptions = {}): BluetoothTimerHandle {
-  const [status, setStatus] = useState<ExternalTimerStatus>(DISCONNECTED_STATUS);
-  const [lastEvent, setLastEvent] = useState<ExternalTimerEvent | null>(null);
-
-  // Refs so the long-lived source closure never captures a stale callback.
-  const onEventRef = useRef(opts.onEvent);
-  const onStopRef = useRef(opts.onStop);
-  const onNeedMacRef = useRef(opts.onNeedMac);
-  const onConnectionLostRef = useRef(opts.onConnectionLost);
-  useEffect(() => { onEventRef.current = opts.onEvent; }, [opts.onEvent]);
-  useEffect(() => { onStopRef.current = opts.onStop; }, [opts.onStop]);
-  useEffect(() => { onNeedMacRef.current = opts.onNeedMac; }, [opts.onNeedMac]);
-  useEffect(() => { onConnectionLostRef.current = opts.onConnectionLost; }, [opts.onConnectionLost]);
-
-  const sourceRef = useRef<BluetoothTimerSource | null>(null);
-  if (sourceRef.current === null) {
-    sourceRef.current = createBluetoothTimerSource({
-      onNeedMac: (name) => onNeedMacRef.current?.(name) ?? Promise.resolve(null),
-      onConnectionLost: () => onConnectionLostRef.current?.(),
-    });
-  }
-  const source = sourceRef.current;
-
-  useEffect(() => {
-    const unsub = source.subscribe((ev) => {
-      setLastEvent(ev);
-      setStatus(snapshotExternalTimer(source));
-      onEventRef.current?.(ev);
-      if (ev.state === 'STOPPED' && typeof ev.solveTime === 'number') {
-        onStopRef.current?.(ev.solveTime, ev);
-      }
-    });
-    return () => {
-      unsub();
-      void source.disconnect();
-    };
-  }, [source]);
-
-  const connect = useCallback(async (): Promise<void> => {
-    await source.connect();
-    setStatus(snapshotExternalTimer(source));
-  }, [source]);
-
-  const connectDevice = useCallback(async (device: BluetoothDevice): Promise<void> => {
-    await source.connectDevice(device);
-    setStatus(snapshotExternalTimer(source));
-  }, [source]);
-
-  const disconnect = useCallback((): void => {
-    void source.disconnect();
-    setStatus(snapshotExternalTimer(source));
-  }, [source]);
-
-  return { status, lastEvent, connect, connectDevice, disconnect, source };
+export interface BluetoothTimerHandle extends Omit<SharedBluetoothTimerHandle, 'source' | 'refresh'> { source: BluetoothTimerSource; connectDevice(device: BluetoothDevice): Promise<void>; }
+export function useBluetoothTimer(options: UseBluetoothTimerOptions = {}): BluetoothTimerHandle {
+ const timer = useSharedBluetoothTimer(createBluetoothTimerSource, options);
+ const source = timer.source as BluetoothTimerSource;
+ return { ...timer, source, connectDevice: async device => { await source.connectDevice(device); timer.refresh(); } };
 }

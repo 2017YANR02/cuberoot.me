@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>CubeRoot reads Stackmat timer signals from your audio input to record solve times.</string>
   <key>CubeRootAPNSEnvironment</key>
   <string>$(APNS_ENVIRONMENT)</string>
   <key>CAPACITOR_DEBUG</key>
@@ -38,7 +40,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>CubeRoot uses Bluetooth to connect to a smart cube you select and read its turns.</string>
+	<string>CubeRoot uses Bluetooth to connect to your selected smart cube or timer and read turns or solve times.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
