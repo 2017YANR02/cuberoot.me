@@ -150,3 +150,23 @@ describe('GanV4CubeConnection', () => {
     expect([...cipher.decrypt(fake.writes[0]!)]).toEqual([...createGanV4HardwareInfoCommand()]);
   });
 });
+
+it('writes GAN hardware reset, waits for state confirmation, and rejects disconnect while pending', async () => {
+  const fake = fakeTransport();
+  const onState = vi.fn();
+  const cube = new GanV4CubeConnection(fake.transport, { onState, onMove: vi.fn(), onDisconnect: vi.fn(), onProtocolError: vi.fn() });
+  await cube.connect({ id: 'AB:CD:EF:01:23:45', name: 'GAN16ui' });
+  const cipher = createGanV4Cipher(Uint8Array.of(0xab, 0xcd, 0xef, 0x01, 0x23, 0x45));
+  let confirmed = false;
+  const reset = cube.resetDeviceState().then(() => { confirmed = true; });
+  await vi.waitFor(() => expect(fake.writes.length).toBe(5));
+  expect(cipher.decrypt(fake.writes[3])[0]).toBe(0xd2);
+  expect(confirmed).toBe(false);
+  const encrypted = cipher.encrypt(Uint8Array.from(GAN_V4_FIXTURE.solved));
+  fake.notification()!(new DataView(encrypted.buffer as ArrayBuffer));
+  await reset;
+  expect(confirmed).toBe(true);
+  const interrupted = expect(cube.resetDeviceState()).rejects.toThrow('disconnected');
+  await cube.disconnect();
+  await interrupted;
+});

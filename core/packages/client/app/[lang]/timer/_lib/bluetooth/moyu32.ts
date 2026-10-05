@@ -1,3 +1,4 @@
+import { createMoyu32ResetCommand } from '@cuberoot/shared/smart-cube/moyu32';
 import { createDeviceStateReset } from './device_reset';
 /**
  * MoYu32 smart-cube driver — the protocol every currently-sold MoYu smart
@@ -481,10 +482,7 @@ export const moyu32Driver: CubeDriver = {
     // Protocol PR #4: A2 writes solved facelets and automatically returns A3.
     calibration = createDeviceStateReset({
       automaticReply: true,
-      sendReset: begin => sendCmd(new Uint8Array([
-        0xa2, 0, 0, 0, 0x24, 0x92, 0x49, 0x49, 0x24, 0x92,
-        0x6d, 0xb6, 0xdb, 0x92, 0x49, 0x24, 0xb6, 0xdb, 0x6d, 0,
-      ]), true, begin),
+      sendReset: begin => sendCmd(createMoyu32ResetCommand(), true, begin),
       prepareSnapshot() {},
       requestSnapshot: async () => {},
     });

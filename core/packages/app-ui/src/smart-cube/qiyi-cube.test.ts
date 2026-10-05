@@ -326,3 +326,21 @@ describe('QiyiCubeConnection native bridge', () => {
     expect(fake.transport.disconnect).toHaveBeenCalledWith(ANDROID_DEVICE.id);
   });
 });
+it('waits for a QiYi sync reply during the write and preserves newer buffered turns', async () => {
+  const fake = fakeBle(ANDROID_DEVICE);
+  const onMove = vi.fn(); const onState = vi.fn();
+  const cube = new QiyiCubeConnection(fake.transport, { onMove, onState, onDisconnect: vi.fn(), onProtocolError: vi.fn() });
+  await cube.connect(ANDROID_DEVICE);
+  fake.emit(notificationFrame(QIYI_OP_HELLO, 1000));
+  onState.mockClear();
+  const reset = cube.resetDeviceState();
+  await vi.waitFor(() => expect(fake.decodedWrites().some(frame => frame[2] === 0x04)).toBe(true));
+  fake.emit(notificationFrame(QIYI_OP_STATE, 1100, 1));
+  expect(onMove).not.toHaveBeenCalled();
+  fake.emit(notificationFrame(0x04, 1200));
+  fake.emit(notificationFrame(QIYI_OP_STATE, 1300, 1));
+  await reset;
+  expect(onState).toHaveBeenCalledWith(QIYI_SOLVED_STATE);
+  expect(onMove.mock.calls).toHaveLength(1);
+  await cube.disconnect();
+});

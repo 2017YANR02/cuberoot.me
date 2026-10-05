@@ -20,11 +20,11 @@ const myMac = new Uint8Array([0xcf,0x30,0x16,0,0xa1,0xb2]);
 const myKey = expandKey(deriveKeyFromMac(MOYU32_KEY_BASE, myMac));
 const myIv = deriveKeyFromMac(MOYU32_IV_BASE, myMac);
 
-function qyReply(op: number, ts: number) {
+function qyReply(op: number, ts: number, move = 0) {
   const frame = new Uint8Array(48);
   frame.set([0xfe, 38, op]);
   new DataView(frame.buffer).setUint32(3, ts, false);
-  frame.set(QY_STICKERS, 7); frame[35] = 80;
+  frame.set(QY_STICKERS, 7); frame[34] = move; frame[35] = 80;
   const crc = crc16Modbus(frame.subarray(0, 36)); frame[36] = crc & 255; frame[37] = crc >> 8;
   return aesEcbEncrypt(frame, qyKey);
 }
@@ -113,7 +113,7 @@ describe('automatic state-write confirmations', () => {
     } finally { session.cleanup(); }
   });
 
-  it('writes QiYi encoded solved facelets and accepts only the 04 confirmation', async () => {
+  it('writes QiYi solved facelets, accepts only 04 confirmation and preserves buffered turns', async () => {
     const gatt = makeFakeGatt('QY-QYSC-1-A1B2', { [qiyiDriver.service]: [QY_CHAR] });
     const notify = gatt.char(qiyiDriver.service, QY_CHAR);
     const onState = vi.fn(); const onMove = vi.fn();
@@ -129,11 +129,13 @@ describe('automatic state-write confirmations', () => {
       notify.emit(qyReply(3, 1000));
       expect(onState).not.toHaveBeenCalled();
       notify.emit(qyReply(4, 2000));
+      notify.emit(qyReply(3, 2400, 4));
     });
     try {
       await session.resetDeviceState!();
-      expect(onState).toHaveBeenCalledExactlyOnceWith(SOLVED);
-      expect(onMove).not.toHaveBeenCalled();
+      expect(onState).toHaveBeenNthCalledWith(1, SOLVED);
+      expect(onState).toHaveBeenCalledTimes(2);
+      expect(onMove).toHaveBeenCalledExactlyOnceWith('R', 1500);
     } finally { session.cleanup(); }
   });
 });

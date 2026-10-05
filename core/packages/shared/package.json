@@ -169,7 +169,9 @@
       "./timer/external/qiyi": "runtime-neutral",
       "./timer/external/stackmat-state": "runtime-neutral",
       "./appearance": "runtime-neutral",
-      "./timer/external/session": "runtime-neutral"
+      "./timer/external/session": "runtime-neutral",
+      "./smart-cube/device-reset": "runtime-neutral",
+      "./smart-cube/legacy-session": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
@@ -551,7 +553,9 @@
     "./timer/external/qiyi": "./src/timer/external/qiyi.ts",
     "./timer/external/stackmat-state": "./src/timer/external/stackmat-state.ts",
     "./appearance": "./src/appearance.ts",
-    "./timer/external/session": "./src/timer/external/session.ts"
+    "./timer/external/session": "./src/timer/external/session.ts",
+    "./smart-cube/device-reset": "./src/smart_cube/device-reset.ts",
+    "./smart-cube/legacy-session": "./src/smart_cube/legacy-session.ts"
   },
   "scripts": {
     "build": "tsc -b",

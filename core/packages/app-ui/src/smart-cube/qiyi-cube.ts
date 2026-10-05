@@ -1,3 +1,5 @@
+import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
+import { createQiyiResetCommand, QIYI_SOLVED_STATE, QIYI_OP_SYNC } from '@cuberoot/shared/smart-cube/qiyi';
 import {
   createQiyiAckCommand,
   createQiyiCipher,
@@ -77,6 +79,8 @@ function canWrite(characteristic: BleServiceRef['characteristics'][number]): boo
 }
 
 export class QiyiCubeConnection {
+  private calibration: ReturnType<typeof createDeviceStateReset> | null = null;
+  private resetCommand: (() => Promise<void>) | null = null;
   private deviceId: string | null = null;
   private stopNotifications: (() => Promise<void>) | null = null;
   private requestStateCommand: (() => Promise<void>) | null = null;
@@ -108,6 +112,9 @@ export class QiyiCubeConnection {
     const current = () => this.generation === generation && this.deviceId === device.id;
     const onDisconnect = () => {
       if (!current()) return;
+      this.calibration?.dispose();
+      this.calibration = null;
+      this.resetCommand = null;
       this.generation++;
       this.deviceId = null;
       this.stopNotifications = null;
@@ -136,10 +143,11 @@ export class QiyiCubeConnection {
 
     const cipher = createQiyiCipher();
     let writeTail: Promise<void> = Promise.resolve();
-    const send = (command: Uint8Array, strict = true): Promise<void> => {
+    const send = (command: Uint8Array, strict = true, begin?: () => boolean): Promise<void> => {
       const encrypted = cipher.encrypt(command);
       const task = writeTail.then(() => {
         if (!current()) throw new Error('smart cube connection closed');
+        if (begin && !begin()) return;
         return this.transport.write(
           device.id,
           QIYI_SERVICE_UUID,
@@ -201,23 +209,17 @@ export class QiyiCubeConnection {
       clearHelloTimers();
     };
 
-    const stopNotifications = await this.transport.subscribe(
-      device.id,
-      QIYI_SERVICE_UUID,
-      QIYI_CHARACTERISTIC_UUID,
-      (value) => {
-        if (!current() || protocolError) return;
-        if (value.byteLength === 0 || value.byteLength % 16 !== 0) {
-          recordBadFrame();
-          return;
-        }
-        const plain = cipher.decrypt(bytesFromView(value));
+    let resetting = false;
+    let confirmed: { facelets: string; counter: number } | null = null;
+    let pending: Uint8Array[] = [];
+    const apply = (plain: Uint8Array) => {
         const notification = decodeQiyiNotification(plain, lastTimestamp);
         if (!notification.gyro && notification.opcode === null) {
           recordBadFrame();
           return;
         }
 
+        if (notification.opcode === QIYI_OP_SYNC) return;
         badFrames = 0;
         if (notification.opcode === QIYI_OP_HELLO || notification.opcode === QIYI_OP_STATE) {
           markProtocolReady();
@@ -239,6 +241,59 @@ export class QiyiCubeConnection {
           lastTimestamp = Math.max(lastTimestamp, notification.latestTimestamp);
         }
         emitStatus();
+    };
+    this.calibration = createDeviceStateReset({
+      automaticReply: true,
+      sendReset: begin => send(createQiyiResetCommand(), true, begin),
+      prepareSnapshot() {},
+      requestSnapshot: async () => {},
+    });
+    const calibration = this.calibration;
+    this.resetCommand = async () => {
+      if (resetting) throw new Error('Device calibration already in progress');
+      resetting = true; confirmed = null; pending = [];
+      try {
+        await calibration.run();
+        if (!current()) throw new Error('smart cube connection closed');
+        const snapshot = confirmed as { facelets: string; counter: number } | null;
+        if (!snapshot) throw new Error('Missing confirmed cube state');
+        lastTimestamp = snapshot.counter;
+        this.callbacks.onState?.(snapshot.facelets);
+      } finally {
+        resetting = false;
+        if (current()) for (const packet of pending) apply(packet);
+        pending = [];
+      }
+    };
+    const stopNotifications = await this.transport.subscribe(
+      device.id,
+      QIYI_SERVICE_UUID,
+      QIYI_CHARACTERISTIC_UUID,
+      (value) => {
+        if (!current() || protocolError) return;
+        if (value.byteLength === 0 || value.byteLength % 16 !== 0) {
+          recordBadFrame();
+          return;
+        }
+        const plain = cipher.decrypt(bytesFromView(value));
+
+        const snapshot = decodeQiyiNotification(plain, lastTimestamp);
+        if (snapshot.opcode === QIYI_OP_SYNC) {
+          if (this.calibration?.waiting && snapshot.state === QIYI_SOLVED_STATE) {
+            confirmed = { facelets: snapshot.state, counter: snapshot.timestamp ?? lastTimestamp };
+            this.calibration.observe(snapshot.state);
+          }
+          return;
+        }
+        if (resetting && !snapshot.gyro) {
+          if ((snapshot.opcode === QIYI_OP_HELLO || snapshot.opcode === QIYI_OP_STATE) && snapshot.timestamp !== null) {
+            void send(createQiyiAckCommand(snapshot.opcode, snapshot.timestamp), false);
+          }
+          if (pending.length >= 128) this.calibration?.cancel(new Error('Too many states during calibration'));
+          else pending.push(plain);
+          return;
+        }
+        apply(plain);
       },
     );
     if (!current()) {
@@ -268,7 +323,15 @@ export class QiyiCubeConnection {
     await this.requestStateCommand();
   }
 
+  async resetDeviceState(): Promise<void> {
+    if (!this.resetCommand) throw new Error('smart cube is not connected');
+    await this.resetCommand();
+  }
+
   async disconnect(): Promise<void> {
+    this.calibration?.dispose();
+    this.calibration = null;
+    this.resetCommand = null;
     const deviceId = this.deviceId;
     this.deviceId = null;
     this.generation++;
