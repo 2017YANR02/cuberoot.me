@@ -339,7 +339,7 @@ function DisplayNameEditor() {
 }
 
 type EditableBasicProfile = Pick<AccountBasicProfile, 'fullName' | 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>;
-type AccountRegion = { code: string; name: string; cities: string[] };
+type AccountRegion = { code: string; name: string; cities: string[]; cityNamesZh?: Record<string, string> };
 
 function BasicProfileEditor() {
   const t = useT();
@@ -386,7 +386,7 @@ function BasicProfileEditor() {
     }
     let cancelled = false;
     setLocationsLoading(true);
-    fetch(`/account-locations/${countryIso2}.json`, { cache: 'force-cache' })
+    fetch(`/account-locations/${countryIso2}.json?v=2`, { cache: 'force-cache' })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const next = await response.json() as AccountRegion[];
@@ -600,10 +600,10 @@ function BasicProfileEditor() {
                     : t('请选择城市', 'Select a city')}
             </option>
             {draft.cityName && !selectedRegion?.cities.includes(draft.cityName) && (
-              <option value={draft.cityName}>{localizeCity(draft.cityName, isZh, draft.countryIso2)}</option>
+              <option value={draft.cityName}>{t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2))}</option>
             )}
             {selectedRegion?.cities.map((city) => (
-              <option key={city} value={city}>{localizeCity(city, isZh, draft.countryIso2)}</option>
+              <option key={city} value={city}>{t(selectedRegion.cityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2))}</option>
             ))}
           </select>
         </div>
