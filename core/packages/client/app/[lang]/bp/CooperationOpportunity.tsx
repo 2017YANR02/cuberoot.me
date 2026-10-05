@@ -47,7 +47,7 @@ export default function CooperationOpportunity() {
     <div className="overview-review" data-site-surface="panel"><Handshake size={26} aria-hidden /><div>
       <h3>{tr({ zh: '先明确一个项目，把交付与复核约定清楚。', en: 'Start with one project and agree delivery and review.' })}</h3>
       <p>{tr({ zh: '共同确认目标受众、合作内容、双方投入与周期；执行后提供成果和实际传播、参与或使用情况，再讨论下一步。品牌曝光、销售转化和用户增长按真实结果报告。', en: 'Agree the audience, scope, contributions and period. Report deliverables and actual reach, participation or usage before discussing next steps. Report brand exposure, sales conversion and growth from observed results.' })}</p>
-      <p className="overview-small">{tr({ zh: '现阶段合作不涉及公司股权。未来资本合作须另行协商；当前合作不自动转换股权，也不预设优先投资权。', en: 'Current engagements do not involve company equity. Future investment requires a separate agreement; current engagements neither convert automatically into equity nor establish priority investment rights.' })}</p>
+      <p className="overview-small">{tr({ zh: '现阶段合作不涉及股权，未来资本合作另行协商。', en: 'Current engagements do not involve equity. Any future investment will be agreed separately.' })}</p>
     </div></div>
     <AppLink href="/contact" prefetch={false} className="overview-primary">{tr({ zh: '联系颜瑞民，讨论具体项目', en: 'Contact Ruimin Yan about a project' })}<ArrowUpRight size={17} aria-hidden /></AppLink>
   </section>;
