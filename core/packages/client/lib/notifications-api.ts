@@ -9,6 +9,7 @@ export type NotificationKind =
   | 'forum_review' | 'forum_approved' | 'forum_rejected'
   | 'comp_reg'
   | 'wca_record'
+  | 'membership_payment'
   | 'document_change'
   | 'cal_reminder' | 'cal_invite' | 'cal_rsvp'
   | 'teaching_message'

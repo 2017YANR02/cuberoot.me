@@ -8,6 +8,12 @@ const input = { recipients: ['2025LIAN01'], kind: 'wca_record' as const, actorKe
 
 describe('notification delivery deduplication', () => {
   beforeEach(() => { vi.clearAllMocks(); mocks.sendEmail.mockResolvedValue(undefined); });
+  it('supports inbox-only operational notices without sending email', async () => {
+    mocks.query.mockResolvedValue([{ id: 1 }]);
+    await notify({ ...input, kind: 'membership_payment', email: false });
+    expect(mocks.query).toHaveBeenCalledTimes(1);
+    expect(mocks.sendEmail).not.toHaveBeenCalled();
+  });
   it('does not email a repeated achievement', async () => {
     mocks.query.mockResolvedValue([]);
     await notify(input);

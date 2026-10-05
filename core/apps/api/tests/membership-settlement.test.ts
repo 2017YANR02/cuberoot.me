@@ -4,6 +4,7 @@ import postgres from 'postgres';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { QueryRunner } from '../src/db/connection.js';
 import { signXunhupay } from '@cuberoot/shared/payment';
+vi.mock('../src/payment/membership-payment-notify.js', () => ({ notifyMembershipPayment: vi.fn(async () => {}) }));
 
 const state = vi.hoisted(() => ({ db: null as unknown, alipayQuery: vi.fn(), wechatQuery: vi.fn() }));
 vi.mock('../src/db/connection.js', () => ({
@@ -26,6 +27,33 @@ vi.mock('../src/payment/wechat.js', () => ({ wechatConfigured: () => true, wecha
 vi.mock('../src/payment/airwallex.js', () => ({ airwallexAccountId: () => 'aw-merchant', airwallexChannelEnabled: () => false }));
 import { grantMembershipInTransaction, membershipPaymentEvidence, settleMembershipPayment, type MembershipPayment } from '../src/payment/membership-settlement.js';
 import { withTransaction } from '../src/db/connection.js';
+import { notifyMembershipPayment } from '../src/payment/membership-payment-notify.js';
+
+describe('payment notice transaction boundary', () => {
+  it.each(['commit', 'rollback', 'duplicate'] as const)('notifies only a committed new payment: %s', async (mode) => {
+    vi.mocked(notifyMembershipPayment).mockClear();
+    const run: QueryRunner = async <T>(sql: string) => {
+      let rows: unknown[] = [];
+      if (sql.includes('SELECT * FROM membership_orders')) rows = [{
+        out_trade_no: 'order-1', wca_id: '2017TEST01', name: 'Fixture', plan_slug: 'yearly',
+        amount_cents: 1000, currency: 'CNY', provider: 'wechat', pay_channel: 'wechat',
+        provider_txn: mode === 'duplicate' ? 'tx-1' : null, status: mode === 'duplicate' ? 'paid' : 'pending',
+      }];
+      if (sql.includes('SELECT slug, period')) rows = [{ slug: 'yearly', period: 'year', period_count: 1 }];
+      if (sql.includes('INSERT INTO memberships')) rows = [{}];
+      return rows as T[];
+    };
+    const result = settleMembershipPayment(evidence(), merchant, async callback => {
+      const value = await callback(run);
+      expect(notifyMembershipPayment).not.toHaveBeenCalled();
+      if (mode === 'rollback') throw new Error('commit failed');
+      return value;
+    });
+    if (mode === 'rollback') await expect(result).rejects.toThrow('commit failed');
+    else await expect(result).resolves.toBe(mode === 'duplicate' ? 'duplicate' : 'settled');
+    expect(notifyMembershipPayment).toHaveBeenCalledTimes(mode === 'commit' ? 1 : 0);
+  });
+});
 
 const merchants = (provider: string) => ({ alipay: 'ali-app', wechat: 'wx-merchant', xunhupay: 'xhp-app', airwallex: 'aw-merchant' })[provider];
 const merchant = (provider: string) => merchants(provider) || '';
