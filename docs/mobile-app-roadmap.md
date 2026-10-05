@@ -1,5 +1,11 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-05：工具页验证码分区凭证（本地，未发布）
+
+- 网站验证码页报告 iframe 环境，API 对嵌入页面签发 `SameSite=None; Partitioned`，普通浏览器保留 Lax；验证码、签名与 7 天期限不变。工具仍在 App 内打开，无系统浏览器跳转，也没有复制工具页或新增宿主代码。
+- macOS 27 的 WKWebView 隔离探针在 `tauri://localhost` 内验证旧 Cookie 不回传、分区 Cookie 回传；API 的 10 项专项通过。此证据不等于线上 CubeRoot App 全流程验收。
+- 待网站/API 发布及 macOS、iOS、Android、Windows、HarmonyOS 实机验收。旧 WebKit 不支持分区 Cookie，不能据此宣称已覆盖所有系统版本。详情见 `docs/traffic-defense.md` 的同日记录。
+
 
 ### 2026-10-05：macOS 原生真实 MAC 适配（本地）
 
