@@ -57,3 +57,31 @@ it('allows hover-dismiss to be disabled explicitly', async () => {
   await move(document.body, 500, 500);
   expect(popup()).not.toBeNull();
 });
+
+it('disables click and hover, closes an open menu, and allows selection after re-enabling', async () => {
+  await open();
+  expect(popup()).not.toBeNull();
+  const selections: string[] = [];
+  const render = (disabled: boolean) => act(async () => root.render(createElement(CompactSelect<string>, {
+    id: 'account-region', label: 'Province', ariaLabel: 'Province',
+    items: [{ value: 'SH', label: 'Shanghai' }], onChange: value => selections.push(value),
+    openOnHover: true, disabled,
+  })));
+  await render(true);
+  const trigger = host.querySelector('button')!;
+  expect(trigger.id).toBe('account-region');
+  expect(trigger.disabled).toBe(true);
+  expect(trigger.getAttribute('aria-expanded')).toBe('false');
+  expect(popup()).toBeNull();
+  const hover = new MouseEvent('pointerover', { bubbles: true });
+  Object.defineProperty(hover, 'pointerType', { value: 'mouse' });
+  await act(async () => { trigger.click(); trigger.dispatchEvent(hover); });
+  expect(popup()).toBeNull();
+  expect(selections).toEqual([]);
+  await render(false);
+  await act(async () => trigger.click());
+  expect(popup()).not.toBeNull();
+  await act(async () => (popup()!.querySelector('button') as HTMLButtonElement).click());
+  expect(selections).toEqual(['SH']);
+  expect(popup()).toBeNull();
+});

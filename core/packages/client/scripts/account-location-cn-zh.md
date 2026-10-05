@@ -39,6 +39,7 @@ correct characters or identity. Regression fixtures cover these specific errors.
 
 Additional source checks:
 
+- 重庆 Zhong is 忠县: [忠县政府基本县情](https://www.zhongxian.gov.cn/zxfz/). Preserve the suffix in this two-character name; stripping 县 leaves an invalid single-character display label. A full scan of all 3,839 labels found this was the only single-character label.
 - 天津汊百户: [武清统计公报](https://www.tjwq.gov.cn/zwgk/zfxxgk/wbj2/qtjj1/fdzdgknr27/tjxx27/202406/W020241231519677306689.pdf).
 - 天津拾棉庄: [天津文旅](https://whly.tj.gov.cn/tjswlzxw/jgbn/whtj/whfy/202411/t20241109_6775557.html).
 - 天津蒙酄: [蓟州官方环评](https://www.tjjz.gov.cn/zwgk/zfxxgkqjjg/zwfwb1/fdzdgknr9/xzxkfwsx9/202503/W020250331567019681751.pdf); coordinates refer to the 下仓 locality, not 孟圈 in 汉沽.

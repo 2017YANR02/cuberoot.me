@@ -28,8 +28,13 @@
   transition: background 0.2s;
 }
 
-.compact-select-trigger:hover {
+.compact-select-trigger:hover:not(:disabled) {
   background: color-mix(in srgb, var(--foreground) 8%, var(--popover));
+}
+
+.compact-select-trigger:disabled {
+  color: var(--faint-foreground);
+  cursor: not-allowed;
 }
 
 .compact-select-trigger:focus-visible {
@@ -64,7 +69,7 @@
   font-weight: inherit;
 }
 
-.compact-select--plain .compact-select-trigger:hover {
+.compact-select--plain .compact-select-trigger:hover:not(:disabled) {
   background: transparent;
   text-decoration: underline;
   text-underline-offset: 2px;
