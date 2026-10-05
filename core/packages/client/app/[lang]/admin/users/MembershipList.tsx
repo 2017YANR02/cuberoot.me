@@ -1,24 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { WCA_ID_REGEX } from '@cuberoot/shared/wca-person';
+import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { fmtDate, fmtPrice, fmtVipId } from '@/lib/membership-format';
-import { adminList, adminRevoke, publicMemberBadgeKind, type Membership, type MembershipPlan } from '@/lib/membership-api';
-
-function periodLabel(member: Membership, plan: MembershipPlan | undefined, t: ReturnType<typeof useT>): string {
-  if (member.lifetime || plan?.period === 'lifetime') return t('非年度 · 永久', 'Non-annual · Lifetime');
-  if (!plan) return t('周期未记录', 'Period not recorded');
-  const count = plan.periodCount;
-  switch (plan.period) {
-    case 'year': return t(`年度 · ${count} 年`, `Annual · ${count} year(s)`);
-    case 'month': return t(`非年度 · ${count} 个月`, `Non-annual · ${count} month(s)`);
-    case 'week': return t(`非年度 · ${count} 周`, `Non-annual · ${count} week(s)`);
-    case 'day': return t(`非年度 · ${count} 天`, `Non-annual · ${count} day(s)`);
-    default: return t('周期未记录', 'Period not recorded');
-  }
-}
+import { adminList, adminRevoke, type Membership } from '@/lib/membership-api';
 
 export default function MembershipList({ onChanged }: { onChanged: () => void }) {
   const t = useT();
@@ -63,14 +52,17 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
     {data && <div className="admin-users-table-scroll sticky-scroll">
       <table className="admin-users-table sticky-thead">
         <thead><tr>
-          <th>{t('会员', 'Member')}</th><th>{t('类型', 'Type')}</th>
-          <th>{t('周期', 'Period')}</th><th>{t('套餐', 'Plan')}</th>
-          <th>{t('最近支付方式', 'Latest payment method')}</th><th>{t('支付日期', 'Payment date (UTC)')}</th><th>{t('实付金额', 'Amount paid')}</th>
-          <th>{t('到期日期', 'Expires')}</th><th>{t('状态', 'Status')}</th><th>{t('操作', 'Actions')}</th>
+          <th>{t('会员', 'Member')}</th>
+          <th>{t('套餐', 'Plan')}</th>
+          <th>{t('最近支付方式', 'Latest payment method')}</th><th>{t('支付日', 'Payment date (UTC)')}</th><th>{t('实付金额', 'Amount paid')}</th>
+          <th>{t('到期日', 'Expires')}</th><th>{t('状态', 'Status')}</th><th>{t('操作', 'Actions')}</th>
         </tr></thead>
         <tbody>{data.members.map(member => {
           const plan = data.plans?.find(item => item.slug === member.planSlug);
-          const kind = publicMemberBadgeKind(member);
+          const accountId = /^u([1-9]\d*)$/.exec(member.wcaId)?.[1];
+          const profileHref = WCA_ID_REGEX.test(member.wcaId)
+            ? `/wca/persons/${member.wcaId}`
+            : accountId ? `/account?view=user&user=${accountId}` : null;
           const payment = member.payment;
           const manual = member.source === 'manual' || payment?.provider === 'manual';
           const methods: Record<string, string> = {
@@ -81,9 +73,12 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
           };
           const channel = payment?.payChannel || payment?.provider;
           return <tr key={member.wcaId}>
-            <td><strong>{displayCuberName(member.name, isZh)}</strong><span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), member.wcaId].filter(Boolean).join(' / ')}</span></td>
-            <td>{kind === 'enterpriseMember' ? t('企业', 'Enterprise') : kind === 'personalMember' ? t('个人', 'Individual') : t('类型未记录', 'Type not recorded')}</td>
-            <td>{periodLabel(member, plan, t)}</td>
+            <td>
+              {profileHref
+                ? <AppLink href={profileHref} prefetch={false} className="admin-users-name">{displayCuberName(member.name, isZh)}</AppLink>
+                : <strong>{displayCuberName(member.name, isZh)}</strong>}
+              <span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), member.wcaId].filter(Boolean).join(' / ')}</span>
+            </td>
             <td>{plan ? t(plan.nameZh, plan.nameEn) : member.planSlug || '—'}</td>
             <td>{manual ? t('手动开通', 'Manual grant') : channel ? methods[channel] || channel : t('未记录', 'Not recorded')}</td>
             <td>{manual ? '—' : payment?.paidAt ? fmtDate(payment.paidAt) : t('未记录', 'Not recorded')}</td>

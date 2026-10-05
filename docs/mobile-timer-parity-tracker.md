@@ -2,7 +2,16 @@
 
 状态：`ACTIVE — NOT COMPLETE`
 
-最后更新：2026-09-29
+最后更新：2026-10-05
+
+### 2026-10-05：本轮计时 UI 改动接入共享源（仅本地）
+
+- 原先只共享基础控件，Web `StageSolver` 及其播放器、Rust Worker 编排仍为 Web 私有，不能自动同步到 App。本次迁入 `timer-ui`；Web 原路径为兼容出口，App 通过薄弹窗适配直接消费同一实现。解法菜单、步数列、双色底、标题齿轮与限制/说明设置不再维护两份 UI。
+- App、Web 的面对面/并排入口统一交给共享 `TimerBattleSettings`；方向监听保留在常驻宿主，避免每次打开弹窗覆盖用户选择。手动输入占位文字来自 shared，空队列不再在计时区重复提示。
+- 三个安装宿主的 dev/build 从已有 canonical 静态资源复制四个 Worker/glue/WASM 文件；执行代码留在安装包，表数据走 static。资源 URL 以完整页面地址解析，覆盖 iOS 自定义协议 origin 为 null 的情况。
+- BoolToggle 的文字左、开关右由共享组件保证；AGENTS、`block-toggle-side` 与同源 CI 扫描器约束规范类的 reverse/order/rtl 覆盖及核心 JSX 顺序。Hook 脚本可单独验证；新注册项的会话信任/实际拦截仍须新会话加载后验证，不以脚本通过冒充工具已拦截。
+- 验证：shared build、client/timer-ui/app-ui 类型检查、Mobile 前端 production build、求解池/表获取/布局与守卫定向检查通过。App 构建预览实测手动打乱、双色底、真实 Cross 解法、解法下拉菜单与齿轮设置；多人布局切换位于设置内，三个开关均实测在标签右侧；控制台无错误。菜单在弹窗内部保持焦点，Escape 只关当前菜单，不连带关闭解法弹窗。
+- 微信小程序计时入口使用 WebView，不另复制 React UI；此次未推送，因此线上 WebView 与安装包均未更新。未构建/发布原生安装包，未做 Android/iOS 真机验收。六方法 StepSolve 面板、SQ1/Mega 等历史 parity 缺项不在本次 UI 同步范围，整体继续 NOT COMPLETE。
 
 ### 2026-09-29：同步远端并验证合并
 
@@ -340,7 +349,7 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 | --- | --- | --- | --- |
 | BASE-01 | 人数选择器已由 `@cuberoot/timer-ui` 共用；五端 App 可进入 `@cuberoot/app-ui` 的真实 2/3/4 人与联机页面，不再只读“1人”或外跳。Web 仍消费自己的 Battle/NetBattle 视图，完整 UI/UX 尚未收敛为同一个 React 视图 | capability guard + App 多人集成测试；五端设备和 Web/App 集合差分仍缺 | `进行中` |
 | BASE-02 | 原静态“3×3”已换成 Web/Mobile 共用项目选择器；43 项、二阶选择和重启恢复已在 OPPO 实证，但全项目能力与全视口视觉矩阵未完成 | shared catalog、共用组件、OPPO CDP | `进行中` |
-| BASE-03 | 静态“解法”文案已删除；222/pyra/skewb 的完整还原与逐面/V 提示已由 Web/Mobile 共用同一 solver/UI。333 六方法的 mask、阶段、执行、双语标签和可取消调度已迁到 runtime-neutral `@cuberoot/puzzle-solvers/timer-333-step`，Web 分步面板与复盘参考成为真实 consumer；但顶栏 StageSolver 的 Rust/WASM Worker/表宿主、六方法 React 面板仍未接 Mobile，SQ1/Megaminx 与 More 独立通用求解器也缺 | small hints 共用 UI；333 package exact golden + 旧 Web 路径 identity migration + stale/cancel/error 回归；Mobile 尚无 333 consumer，因此整体不完成 | `进行中` |
+| BASE-03 | 静态“解法”文案已删除；222/pyra/skewb 的完整还原与逐面/V 提示已由 Web/Mobile 共用同一 solver/UI。333 六方法的 mask、阶段、执行、双语标签和可取消调度已迁到 runtime-neutral `@cuberoot/puzzle-solvers/timer-333-step`，Web 分步面板与复盘参考成为真实 consumer；顶栏 StageSolver 现已通过共享 UI/Worker 与 Mobile adapter 接入；六方法 React 面板仍未接 Mobile，SQ1/Megaminx 与 More 独立通用求解器也缺 | small hints 共用 UI；333 package exact golden + 旧 Web 路径 identity migration + stale/cancel/error 回归；Mobile 已有 StageSolver consumer，但六方法面板及真机证据仍缺，整体不完成 | `进行中` |
 | BASE-04 | 重复比赛名根因是 Mobile 同时渲染两条来源；上方重复条已删除，打乱下方唯一出处现已收敛为 Web/Mobile 共用 `TimerWcaScrambleSource` | OPPO 重装后只显示一条出处；共享组件与独立对抗审核 | `完成` |
 | BASE-05 | 三项来源入口、手动队列、比赛/日期、比赛搜索、国旗、轮次/组别、2×2 配置、WCA 难度/合并/最优、非二阶按步数、随机 3×3-family 难度、完整出处、有限池练习进度与公开打卡已改为 Web/Mobile 共用 UI/纯逻辑；其他项目相关配置和完整异常/平台矩阵仍未关闭 | shared source/editor/WCA/random difficulty/by-steps/provenance/progress/marks；Web/Mobile occurrence、随机难度元数据/答案与保存成功后打卡回归、Web/OPPO 360px 成对实测 | `进行中` |
 | BASE-06 | 五端 App 已接真实 2～4 人本地模式和联机模式；但网站与 App 仍分别维护 Battle/Net React 视图，完整 UI、设置、历史、视频、多 BLE 与五平台设备矩阵尚未收敛 | Web `TimerShell`/Battle/Net 对比 `@cuberoot/app-ui` 的 `BattleModes`，并由定向集成测试锁基础流程 | `进行中` |
@@ -366,7 +375,7 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 | PAR-003 | 项目选择器 | 43 项目录、分组、ID bridge 来自 `@cuberoot/shared/timer`；弹层来自 `@cuberoot/timer-ui` | 目录全等、选择/恢复、来源兼容与无 333 fallback 测试 | 窄屏弹层、滚动、逐项选择 | `进行中` |
 | PAR-004 | 打乱来源入口 | 共用来源控件与 schema；平台只注入 fetch/cache adapter | 自动从 Web 事实源生成 `43 项 × 真题/随机/手动 × 配置` 集合差分；任何 App-only disabled 或缺入口直接失败 | 逐项目切换、输入、配置、重启恢复；二阶真题和手动输入列为首批 P0 反例 | `进行中` |
 | PAR-005 | 真题配置与出处 | 共用比赛/日期/轮组/难度交互；单条出处只显示一次 | 缓存、空池、回退、出处 fixture | Brockport Bolt 等真题实测 | `进行中` |
-| PAR-006 | 解法、难度和提示 | 共用可见控件及展开状态，不保留静态占位 | 222/pyra/skewb 多题逐公式迁移 fixture、空/错误/stale/运行态与支持边界；333 六方法引擎 exact golden、Web identity migration、调度 cancel/stale/error 已锁，仍缺 Mobile React consumer 与 StageSolver Worker/表 adapter；SQ1/Mega/Trainer/general solver 尚需各自矩阵 | 320/340px 点击、键盘展开、收起、纵向可达、无横向溢出；仍待 OPPO/iOS | `进行中` |
+| PAR-006 | 解法、难度和提示 | 共用可见控件及展开状态，不保留静态占位 | 222/pyra/skewb 多题逐公式迁移 fixture、空/错误/stale/运行态与支持边界；333 六方法引擎 exact golden、Web identity migration、调度 cancel/stale/error 已锁，StageSolver 共享 UI、Worker/表 adapter 已接入；仍缺六方法 Mobile React consumer；SQ1/Mega/Trainer/general solver 尚需各自矩阵 | 320/340px 点击、键盘展开、收起、纵向可达、无横向溢出；仍待 OPPO/iOS | `进行中` |
 | PAR-007 | 计时 Surface | 已有 `TimingSurface`/`SegmentTime` 继续作为唯一组件 | phase、检查、`+2`、DNF、pointer fixture；Installed App 的 Surface 不得 flex 缩到固有内容高度以下，防止数字裁切或后续内容遮挡 | OPPO 中文竖屏 idle 数字边界已验；仍待触摸长按、运行/检查/停止、横屏/大字、旋转/中断和其余平台 | `进行中` |
 | PAR-008 | 打乱文本与魔方图 | `@cuberoot/timer-ui/TimerCubePreview` 为 Web/五端唯一 dispatcher；显示开关和 2D/3D 控件、默认、归一化与持久化也共享；单人/联网使用独立 `TimingSurface.cornerSlot`，宿主只控制响应式外框 | renderer identity、333/pyra 分派、SQ1/Mega SVG、invalid fail-closed/recovery、2D/3D rebuild、设置交互/迁移/持久化、联网 consumer 与生产 chunk 测试 | OPPO 已安装准确 APK，但仍在通知层；横竖屏、拖动不误触、动态字号、全部支持项目与显示设置仍待完整矩阵 | `进行中` |
 | PAR-009 | 左下统计与成绩历史 | shared timer schema/stats；紧凑统计、成绩行、快捷菜单/底部操作表、注释编辑、Undo toast、筛选、成绩对比、基础成绩详情及网站当前打乱预览已由 Web 与五端共用；bulk 当前不可达；完整复盘已共用 ReconstructReport，完整统计继续提取共用 | 紧凑 current/best/rolling、Mobile 持久化、行 DOM/七项动作/焦点/视口/Undo/tag/filter/compare/detail/preview 单源回归通过；详情的异常 partial/倒序/超总时长/NaN 分段和 BLD memo 均 fail closed，App 智能魔方新成绩也已共用 move/stage producer | 本轮新 APK 与解锁后的详情、GAN、标签、TalkBack、多视口真机证据待补；iOS 和其余三端全状态矩阵仍待验 | `进行中` |

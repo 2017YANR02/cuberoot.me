@@ -1,10 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { useLang } from '@/i18n/tr';
-import { RMB_PER_USD, EXPENSES, ANNUAL_RECURRING_CNY, EQUIPMENT_GROUPS, ONE_TIME_TOTAL, type RecurringAmount, type EquipmentAmount } from '@/lib/infrastructure-costs';
 import './infrastructure.css';
 
 type Lang = 'zh' | 'en';
@@ -137,28 +135,6 @@ function localize<T>(lang: Lang, value: { zh: T; en: T }): T {
   return value[lang];
 }
 
-function formatYuan(lang: Lang, value: number): string {
-  return `${lang === 'zh' ? '¥' : 'CN¥'}${value.toLocaleString('en-US')}`;
-}
-
-function formatRecurringAmount(lang: Lang, amount: RecurringAmount): string {
-  const price = amount.currency === 'CNY'
-    ? formatYuan(lang, amount.value)
-    : `US$${amount.value.toLocaleString('en-US')}`;
-  const period = localize(lang, amount.period === 'month'
-    ? { zh: '/月', en: '/month' }
-    : { zh: '/年', en: '/year' });
-  return `${price}${period}`;
-}
-
-function formatEquipmentAmount(lang: Lang, amount: EquipmentAmount): string {
-  if (typeof amount === 'number') return formatYuan(lang, amount);
-  if ('label' in amount) return localize(lang, amount.label);
-  const formatted = formatYuan(lang, amount.value);
-  if (amount.qualifier === 'approx') return localize(lang, { zh: `约 ${formatted}`, en: `Approx. ${formatted}` });
-  return localize(lang, { zh: `首发 ${formatted} 起`, en: `Launched from ${formatted}` });
-}
-
 export default function InfrastructurePage() {
   const lang = useLang();
 
@@ -169,7 +145,7 @@ export default function InfrastructurePage() {
 
         <header className="infra-hero">
           <p className="infra-kicker">CubeRoot / Infrastructure</p>
-          <h1>{localize(lang, { zh: '生产基础设施', en: 'Production Infrastructure' })}</h1>
+          <h1>{localize(lang, { zh: '基础设施与运维', en: 'Infrastructure & Operations' })}</h1>
           <p className="infra-lead">
             {localize(lang, {
               zh: 'CubeRoot 目前运行在一台克制配置的通用计算实例上。这里公开它承载什么、怎样发布和恢复，以及出于安全不会公开什么。',
@@ -177,67 +153,16 @@ export default function InfrastructurePage() {
             })}
           </p>
           <div className="infra-hero-links">
-            <AppLink href="/dev/architecture">
+            <AppLink href="/dev/architecture" prefetch={false}>
               {localize(lang, { zh: '查看软件架构', en: 'View software architecture' })}
             </AppLink>
+            <AppLink href="/dev/expenses" prefetch={false}>{localize(lang, { zh: '查看支出与设备', en: 'View expenses & equipment' })}</AppLink>
           </div>
         </header>
 
-        <section className="infra-section" aria-labelledby="infra-equipment-title">
-          <div className="infra-section-heading">
-            <span>01</span>
-            <div>
-              <h2 id="infra-equipment-title">{localize(lang, { zh: '创作设备与软件', en: 'Production equipment and software' })}</h2>
-              <p>
-                {localize(lang, {
-                  zh: 'CubeRoot 用于拍摄、收音、剪辑与日常开发的设备。价格按现有记录展示；“约”表示近似金额，未标价项目不据此推算。',
-                  en: 'Equipment used for CubeRoot filming, audio capture, editing, and day-to-day development. Prices follow the available records; “approx.” marks estimates, and missing prices are not inferred.',
-                })}
-              </p>
-            </div>
-          </div>
-          <div className="infra-equipment-groups">
-            {EQUIPMENT_GROUPS.map((group) => (
-              <section className="infra-equipment-group" key={group.category.en} aria-label={localize(lang, group.category)}>
-                <h3>{localize(lang, group.category)}</h3>
-                <dl className="infra-expenses infra-equipment-list">
-                  {group.items.map((item) => (
-                    <div key={item.name.en} className="infra-equipment-featured" data-site-surface="panel">
-                      <div className="infra-equipment-art">
-                        <Image
-                          className="infra-equipment-image"
-                          src={item.imageSrc}
-                          alt={localize(lang, item.name)}
-                          width={180}
-                          height={180}
-                          sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
-                          unoptimized
-                        />
-                      </div>
-                      <dt>
-                        <span>
-                          {item.href ? (
-                            <a href={item.href} target="_blank" rel="noreferrer">
-                              {localize(lang, item.name)}
-                            </a>
-                          ) : (
-                            localize(lang, item.name)
-                          )}
-                        </span>
-                        <small>{localize(lang, item.detail)}</small>
-                      </dt>
-                      <dd>{formatEquipmentAmount(lang, item.amount)}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </section>
-            ))}
-          </div>
-        </section>
-
         <section className="infra-section infra-overview" aria-labelledby="infra-overview-title">
           <div className="infra-section-heading">
-            <span>02</span>
+            <span>01</span>
             <div>
               <h2 id="infra-overview-title">{localize(lang, { zh: '公开规格', en: 'Public profile' })}</h2>
               <p>
@@ -264,57 +189,9 @@ export default function InfrastructurePage() {
           </p>
         </section>
 
-        <section className="infra-section" aria-labelledby="infra-expenses-title">
-          <div className="infra-section-heading">
-            <span>03</span>
-            <div>
-              <h2 id="infra-expenses-title">{localize(lang, { zh: '支出总览', en: 'Expense overview' })}</h2>
-              <p>
-                {localize(lang, {
-                  zh: '一次性设备费用与年度固定支出分开统计。',
-                  en: 'One-time equipment costs and annual recurring expenses are tracked separately.',
-                })}
-              </p>
-            </div>
-          </div>
-          <dl className="infra-specs infra-cost-summary">
-            <div>
-              <dt>{localize(lang, { zh: '一次性总费用', en: 'One-time total' })}</dt>
-              <dd>{localize(lang, { zh: `${formatYuan('zh', ONE_TIME_TOTAL)} 起`, en: `From ${formatYuan('en', ONE_TIME_TOTAL)}` })}</dd>
-            </div>
-            <div>
-              <dt>{localize(lang, { zh: '年度固定支出', en: 'Annual recurring total' })}</dt>
-              <dd>{localize(lang, {
-                zh: `约 ${formatYuan('zh', Math.round(ANNUAL_RECURRING_CNY))}/年`,
-                en: `Approx. US$${Math.round(ANNUAL_RECURRING_CNY / RMB_PER_USD).toLocaleString('en-US')}/year`,
-              })}</dd>
-            </div>
-          </dl>
-          <h3 className="infra-expense-detail-title">
-            {localize(lang, { zh: '年度支出明细', en: 'Annual expense details' })}
-          </h3>
-          <dl className="infra-expenses">
-            {EXPENSES.map((expense) => (
-              <div key={expense.name.en}>
-                <dt>
-                  <span>{localize(lang, expense.name)}</span>
-                  <small>{localize(lang, expense.purpose)}</small>
-                </dt>
-                <dd>{formatRecurringAmount(lang, expense.amount)}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="infra-expense-note">
-            {localize(lang, {
-              zh: `一次性总费用按上方所有已标价设备合计，包含曾用 Canon EOS R6 与 Mac mini。MacBook Pro 按同配置 512GB 基础机型首发价计入；截图未显示存储容量，因此总额为最低值。两台未标价手机与免费软件不计入。年度费用按 2026-08-27 人民币汇率中间价 1 美元 = ${RMB_PER_USD.toFixed(4)} 元换算，实际支出会随汇率变动，不含用量计费与税费。`,
-              en: `The one-time total includes every priced item above, including the former Canon EOS R6 and Mac mini. The MacBook Pro is counted at the launch price of the 512GB base configuration; because the screenshot does not show its storage capacity, this is a minimum total. The two unpriced phones and free software are excluded. Annual costs use the 2026-08-27 RMB central parity rate of US$1 = CN¥${RMB_PER_USD.toFixed(4)} and vary with exchange rates; usage charges and taxes are excluded.`,
-            })}
-          </p>
-        </section>
-
         <section className="infra-section" aria-labelledby="infra-path-title">
           <div className="infra-section-heading">
-            <span>04</span>
+            <span>02</span>
             <div>
               <h2 id="infra-path-title">{localize(lang, { zh: '一次请求经过哪里', en: 'The request path' })}</h2>
               <p>
@@ -343,7 +220,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section" aria-labelledby="infra-ops-title">
           <div className="infra-section-heading">
-            <span>05</span>
+            <span>03</span>
             <div>
               <h2 id="infra-ops-title">{localize(lang, { zh: '怎样保持可恢复', en: 'How recovery works' })}</h2>
               <p>
@@ -372,7 +249,7 @@ export default function InfrastructurePage() {
 
         <section className="infra-section infra-disclosure" aria-labelledby="infra-disclosure-title">
           <div className="infra-section-heading">
-            <span>06</span>
+            <span>04</span>
             <div>
               <h2 id="infra-disclosure-title">{localize(lang, { zh: '公开边界', en: 'Disclosure boundary' })}</h2>
               <p>

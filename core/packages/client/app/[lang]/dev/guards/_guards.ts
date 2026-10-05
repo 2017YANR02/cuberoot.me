@@ -78,6 +78,15 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     en: { title: 'Disposable trees linking into the live workspace', desc: 'Temporary verification trees and worktrees may not reuse live node_modules or packages through junctions or symlinks. Each tree runs its own pnpm install --offline --frozen-lockfile and relies on the pnpm store for safe deduplication; Codex blocks link creation before execution and CI pins both dangerous commands and the safe replacement.' },
   },
   {
+    id: 'toggle-side',
+    scope: 'project',
+    hook: 'block-toggle-side.mts',
+    test: 'toggle-side-guard.test.ts',
+    baseline: '0',
+    zh: { title: '开关在右', desc: '共享 BoolToggle 与计时设置行文字在左、开关在右；禁止 CSS reverse/order/rtl 反转。覆盖 Web、timer-ui 与 app-ui，CI 检查完整源码，Hook 检查新增片段。' },
+    en: { title: 'Switch on the right', desc: 'Shared boolean labels precede switches. No CSS reverse/order/rtl overrides across Web, timer-ui or app-ui. CI checks full sources; the hook checks added fragments.' },
+  },
+  {
     id: 'checkbox',
     scope: 'project',
     hook: 'hook-detect-raw-checkbox.mjs',

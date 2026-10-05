@@ -37,7 +37,7 @@ test('relay publishes chunked rules, verifies order, avoids redundant writes and
  process.env.CUBEROOT_BAN_CONFIG=config;process.env.CUBEROOT_BAN_STATE_DIR=dir;
  const current=Date.now(),source=[...SOURCES][0];
  const events=Array.from({length:1900},(_,i)=>({startTime:new Date(current-60000).toISOString(),public_ip:`10.1.${Math.floor(i/250)}.${i%250+1}`,ruleId:source,action:'deny'}));
- let rules=[{id:'rule_china_mainland_traffic_exemption_aOC64j',name:'CN',valid:true}];let writes=0,fail=false;
+ let rules=[{id:'rule_china_mainland_traffic_exemption_aOC64j',name:'CN',valid:true,active:true,action:{mitigate:{action:'bypass'}},conditionGroup:[{conditions:[{type:'geo_country',op:'eq',value:'CN'}]}]}];let writes=0,fail=false;
  global.fetch=async(url,init)=>{
   const u=new URL(url);let result={};
   if(u.pathname.endsWith('/events')) result={actions:events.filter((_,i)=>i%20===Math.floor(Number(u.searchParams.get('startTimestamp'))/60000)%20)};
@@ -53,7 +53,7 @@ test('relay publishes chunked rules, verifies order, avoids redundant writes and
  };
  try {
   writeFileSync(join(dir,'state.json'),JSON.stringify({cursor:current-22*60000,bans:{}}));
-  await run();const first=JSON.parse(readFileSync(join(dir,'state.json')));assert.equal(Object.keys(first.bans).length,1900);assert.equal(rules.length,3);assert.equal(rules[1].name,MANAGED_NAME_FOR_TEST());
+  await run();const first=JSON.parse(readFileSync(join(dir,'state.json')));assert.equal(Object.keys(first.bans).length,1900);assert.equal(rules.length,3);assert.equal(rules[1].name,MANAGED_NAME_FOR_TEST());assert.deepEqual(rules[0].conditionGroup[1].conditions[0].value,['154.44.14.212']);
   const written=writes;await run();assert.equal(writes,written);assert.deepEqual(JSON.parse(readFileSync(join(dir,'state.json'))).bans,first.bans);
   events.push({...events[0],public_ip:'203.0.113.199'});fail=true;
   // Force inclusion in one of the upcoming overlap windows.
@@ -91,7 +91,7 @@ test('capacity follows actual slots, reserves two rules, and queues without drop
  assert.equal(planCapacity(ips,10,30,56250).capacity,56250);
  assert.throws(()=>planCapacity(ips,40,0),/No custom/);
  assert.throws(()=>planCapacity(ips,40,1),/capacity exceeded/);
- const production=planCapacity(ips,10,13);assert.equal(production.capacity,24000);assert.equal(production.count,13);assert.equal(production.pending,43847);assert.deepEqual(production.admitted,ips.slice(0,24000));
+ const production=planCapacity(ips,10,13);assert.equal(production.capacity,20000);assert.equal(production.count,13);assert.equal(production.pending,47847);assert.deepEqual(production.admitted,ips.slice(0,20000));
  assert.throws(()=>planCapacity(ips,10,13,0),/Invalid managed/);
  assert.throws(()=>planCapacity(ips,10,13,NaN),/Invalid managed/);
 });
@@ -102,11 +102,17 @@ test('a full queue still publishes admitted IPs and removes expired bans on the 
  const previous={config:process.env.CUBEROOT_BAN_CONFIG,state:process.env.CUBEROOT_BAN_STATE_DIR,bark:process.env.BARK_KEY,fetch:global.fetch};
  process.env.CUBEROOT_BAN_CONFIG=config;process.env.CUBEROOT_BAN_STATE_DIR=dir;delete process.env.BARK_KEY;
  const now=Date.now(),ips=Array.from({length:4000},(_,i)=>`10.2.${Math.floor(i/250)}.${i%250+1}`);const bans=Object.fromEntries(ips.map(ip=>[ip,now+86400000]));
- let rules=[{id:'rule_china_mainland_traffic_exemption_aOC64j',name:'CN',valid:true},...Array.from({length:36},(_,i)=>({id:'other-'+i,name:'Other '+i,valid:true}))];
+ let rules=[{id:'rule_china_mainland_traffic_exemption_aOC64j',name:'CN',valid:true,active:true,action:{mitigate:{action:'bypass'}},conditionGroup:[{conditions:[{type:'geo_country',op:'eq',value:'CN'}]}]},...Array.from({length:36},(_,i)=>({id:'other-'+i,name:'Other '+i,valid:true}))];
  global.fetch=async(url,init)=>{const u=new URL(url);if(u.pathname.endsWith('/events'))return Response.json({actions:[]});if(init.method==='PATCH'){const b=JSON.parse(init.body);if(b.action==='rules.insert')rules.push({...b.value,id:'managed',valid:true});if(b.action==='rules.update')rules=rules.map(r=>r.id===b.id?{...b.value,id:b.id,valid:true}:r);if(b.action==='rules.priority'){const [r]=rules.splice(rules.findIndex(r=>r.id===b.id),1);rules.splice(b.value,0,r);}return Response.json({});}return Response.json({rules});};
  const installed=()=>rules[1].conditionGroup.flatMap(g=>g.conditions[0].value);
  try {writeFileSync(join(dir,'state.json'),JSON.stringify({cursor:now,bans}));await run();assert.equal(rules.length,38);assert.deepEqual(installed(),ips.slice(0,1875));let state=JSON.parse(readFileSync(join(dir,'state.json')));assert.equal(Object.keys(state.bans).length,4000);assert.ok(state.lastSyncedAt);
  const workingFetch=global.fetch;global.fetch=async(url,init)=>new URL(url).pathname.endsWith('/events')?Response.json({error:'temporary'},{status:503}):workingFetch(url,init);
  for(const ip of ips.slice(0,10))state.bans[ip]=now-1;writeFileSync(join(dir,'state.json'),JSON.stringify(state));await run();assert.deepEqual(installed(),ips.slice(10,1885));assert.equal(Object.keys(JSON.parse(readFileSync(join(dir,'state.json'))).bans).length,3990);
  }finally{global.fetch=previous.fetch;for(const [key,value] of [['CUBEROOT_BAN_CONFIG',previous.config],['CUBEROOT_BAN_STATE_DIR',previous.state],['BARK_KEY',previous.bark]]){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
+});
+
+test('owner IP is removed from persisted bans and ignored in new events', () => {
+ const s = absorb({cursor: now, bans: {'154.44.14.212': now + 86400000}}, [{...event, public_ip:'154.44.14.212'}, event], now);
+ assert.equal(s.bans['154.44.14.212'], undefined);
+ assert.ok(s.bans[event.public_ip] > now);
 });

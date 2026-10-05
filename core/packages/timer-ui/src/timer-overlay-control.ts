@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 
 export const TIMER_OVERLAY_IDS = {
   drillPicker: 'timer.drill-picker',
+  stageSolver: 'timer.stage-solver',
   historyCompare: 'timer.history-compare',
   historyQuickMenu: 'timer.history-quick-menu',
   solveDetail: 'timer.solve-detail',

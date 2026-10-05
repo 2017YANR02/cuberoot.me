@@ -119,14 +119,14 @@ function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
   return { onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd, onClickCapture };
 }
 
-function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
+function SolverBody({ scramble, isZh, compact, settingsSlot, onPrevScramble, onNextScramble }: Props & ScrambleNav & { compact: boolean; settingsSlot?: HTMLElement | null }) {
   return (
     <>
       {/* 打乱原文。手机上这块是全屏浮层,盖住了计时器自己的打乱条;桌面左栏也够窄,
           转头去主区对照同样麻烦 —— 解法讲的是哪条打乱,就摆在解法旁边。
           尚未生成打乱(首帧 / 换项目那一刻)时整块不渲染,不留空行。 */}
       {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
-      <StageSolver scramble={scramble} lang={isZh ? 'zh' : 'en'} compact={compact} />
+      <StageSolver scramble={scramble} lang={isZh ? 'zh' : 'en'} compact={compact} settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
       <StepSolve scramble={scramble} isZh={isZh} />
     </>
   );
@@ -135,6 +135,7 @@ function SolverBody({ scramble, isZh, compact }: Props & { compact: boolean }) {
 /** Full-screen sheet. Own component so useModalDismiss's Escape + body-scroll-lock
  *  mount and unmount with the sheet itself. `onDock` 只有桌面传(手机没有左栏可回)。 */
 function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble, onNextScramble }: Props & ScrambleNav & { compact: boolean; onClose: () => void; onDock?: () => void }) {
+  const [settingsSlot, setSettingsSlot] = useState<HTMLSpanElement | null>(null);
   useModalDismiss(onClose);
   const swipe = useScrambleSwipe({ onPrevScramble, onNextScramble });
   const title = tr(PANEL_TITLE);
@@ -142,15 +143,16 @@ function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble,
     <div className="solver-sheet" data-no-timer role="dialog" aria-modal="true" aria-label={title} {...swipe}>
       <div className="solver-sheet-head">
         <span className="solver-sheet-title">{title}</span>
+        <span className="solver-settings-slot" ref={setSettingsSlot} />
         {onDock && (
           <button
             type="button"
             className="solver-layout-action"
             onClick={onDock}
             title={tr({ zh: '还原到左侧面板', en: 'Restore to side panel' })}
+            aria-label={tr({ zh: '还原到左侧面板', en: 'Restore to side panel' })}
           >
             <Minimize2 size={16} aria-hidden="true" />
-            {tr({ zh: '还原', en: 'Restore' })}
           </button>
         )}
         <button
@@ -163,7 +165,7 @@ function SolverSheet({ scramble, isZh, compact, onClose, onDock, onPrevScramble,
         </button>
       </div>
       <div className="solver-sheet-body">
-        <SolverBody scramble={scramble} isZh={isZh} compact={compact} />
+        <SolverBody scramble={scramble} isZh={isZh} compact={compact} settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
       </div>
     </div>
   );
@@ -179,6 +181,7 @@ export default function SolverHintPanel({
   onPrevScramble,
   onNextScramble,
 }: Props & ScrambleNav) {
+  const [settingsSlot, setSettingsSlot] = useState<HTMLSpanElement | null>(null);
   const isPhone = useIsMobile(560);
   const isDesktopRail = !useIsMobile(1023); // ≥1024 时面板是左侧 ~360px 窄栏
 
@@ -300,6 +303,7 @@ export default function SolverHintPanel({
             {/* 收起时箭头留在入口内；展开时移到全屏按钮右侧。 */}
             {isDesktopRail && !railOpen && <ChevronRight size={14} className="solver-panel-chevron" />}
           </button>
+          {railBodyOpen && <span className="solver-settings-slot" ref={setSettingsSlot} />}
           {isDesktopRail && railOpen && (
             <button
               type="button"
@@ -327,7 +331,7 @@ export default function SolverHintPanel({
         </div>
         {railBodyOpen && (
           <div className="solver-panel-body">
-            <SolverBody scramble={scramble} isZh={isZh} compact />
+            <SolverBody scramble={scramble} isZh={isZh} compact settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
           </div>
         )}
       </aside>

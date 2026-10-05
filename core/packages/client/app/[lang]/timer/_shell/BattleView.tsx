@@ -16,7 +16,7 @@ import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format'
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 
-import { TimerPuzzlePicker, TimerCubePreview, TimerScrambleStrip, TimerWcaScrambleSource, TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
+import { TimerPuzzlePicker, TimerCubePreview, TimerScrambleStrip, TimerWcaScrambleSource, TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, useTimerBattleOrientation, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
@@ -555,7 +555,10 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   if (!visible) return null;
-  return <TimerBattleSettings language={isZh ? 'zh' : 'en'} onClose={onClose}
+  return <TimerBattleSettings layout={store.mode === '1v1' ? {
+    playerCount: store.playerCount as 2 | 3 | 4, layout: store.layout, flipTopRow: store.flipTopRow,
+    onLayoutChange: store.setLayout, onFlipChange: store.setFlipTopRow,
+  } : undefined} language={isZh ? 'zh' : 'en'} onClose={onClose}
     keys={store.playerKeys.slice(0, store.playerCount)} onKeyChange={store.setPlayerKey}
     precision={{ value: store.timerPrecision, onChange: store.setTimerPrecision }}
     inspection={{ value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] }}
@@ -574,7 +577,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
       {settings.scrambleSource === 'wca' && <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />}
     </div>}
     >
-    <BoolToggle value={store.flipTopRow} onChange={store.setFlipTopRow} label={tr({ en: 'Rotate top players', zh: '旋转上方玩家' })} />
     <BoolToggle value={store.voice} onChange={store.setVoice} label={tr({ en: 'Voice alert', zh: '语音提示' })} />
     <label className="setting-item"><span>{tr({ en: 'Scramble size', zh: '打乱大小' })}</span>
       <input type="range" min={0.5} max={2} step={0.1} value={store.scrambleScale} onChange={(event) => store.setScrambleScale(Number(event.target.value))} />
@@ -611,6 +613,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   const { i18n } = useTranslation();
   const store = useBattleStore();
   const { mode } = store;
+  useTimerBattleOrientation(playerCount, store.setLayout, mode === '1v1');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [vsHistoryOpen, setVsHistoryOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -745,10 +748,6 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       <div className="battle-container">
 
       <TimerStageLayout>
-      {mode === '1v1' && <TimerBattleLayoutControls
-        hideFlipControl playerCount={playerCount as 2 | 3 | 4} layout={store.layout} flipTopRow={flipTop}
-        language={store.locale === 'zh' ? 'zh' : 'en'} onLayoutChange={store.setLayout} onFlipChange={store.setFlipTopRow}
-      />}
       {mode === '1v1' && (
         <TimerBattleLayout
           playerCount={playerCount as 2 | 3 | 4}

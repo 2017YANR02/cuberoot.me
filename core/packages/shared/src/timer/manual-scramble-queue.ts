@@ -15,8 +15,8 @@ export function parseManualScrambleQueue(input: string): string[] {
 }
 
 export const TIMER_MANUAL_SCRAMBLE_EMPTY_COPY = Object.freeze({
-  en: 'Paste scrambles above — one per line',
-  zh: '在上方「打乱来源」粘贴打乱,每行一条',
+  en: 'One per line',
+  zh: '每行一条',
 });
 
 export interface ManualScrambleQueueTake {

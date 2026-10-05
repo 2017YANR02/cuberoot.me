@@ -121,8 +121,8 @@ describe('第一层已还原条件下的第二层分布', () => {
     expect(Object.hasOwn(TABLE_SETS, 'second_layer')).toBe(false);
     expect(Object.hasOwn(EXACT_VARIANT_STAGES, 'second_layer')).toBe(false);
 
+    expect(readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/StageSolver')), 'utf8')).not.toMatch(/b?second_layer/);
     const filesWithoutAnyAlias = [
-      'core/packages/client/components/StageSolver.tsx',
       'core/packages/client/components/RecentScrambles.tsx',
       'core/packages/client/app/[lang]/scramble/gen/SheetView.tsx',
       'core/packages/client/app/[lang]/scramble/gen/useCompSteps.ts',

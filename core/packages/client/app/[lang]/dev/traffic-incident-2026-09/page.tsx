@@ -8,7 +8,7 @@ import JsonLd from '@/components/JsonLd';
 import { useT } from '@/hooks/useT';
 import { tr, useLang } from '@/i18n/tr';
 import { PAGE_META } from '@/lib/page-meta';
-import { ASSETS, FIREWALL_SNAPSHOTS, REPO, TIMELINE } from './_data';
+import { ASSETS, FIREWALL_SNAPSHOTS, REPO, TIMELINE, FOLLOW_UP } from './_data';
 import './incident.css';
 
 export default function TrafficIncidentPage() {
@@ -20,6 +20,7 @@ export default function TrafficIncidentPage() {
     ['evidence', t('日志与截图', 'Logs and screenshots')],
     ['numbers', t('请求与访问量', 'Requests and visitors')],
     ['timeline', t('处置时间线', 'Response timeline')],
+    ['follow-up', t('后续防护与误封修复', 'Later protection and false-positive fixes')],
     ['defense', t('防护如何工作', 'How protection works')],
     ['lessons', t('问题与后续工作', 'Issues and next steps')],
   ];
@@ -37,7 +38,7 @@ export default function TrafficIncidentPage() {
           <header className="incident-hero">
             <div className="incident-hero-copy">
               <p className="incident-eyebrow"><span /> {t('事件档案', 'INCIDENT ARCHIVE')} · 001</p>
-              <p className="incident-dateline">2026.09.22 — 09.25</p>
+              <p className="incident-dateline">2026.09.22 — 10.05</p>
               <h1>{t('9 月流量事件记录', 'September traffic incident')}</h1>
               <p className="incident-deck">{t('9 月 22 日，计算器访问量突增。本文记录排查依据、停站与恢复过程，以及新增的防护措施。', 'Calculator traffic spiked on September 22. This record covers the investigation, service pauses, reopening and protection changes.')}</p>
               <p className="incident-byline">{t('CubeRoot · 运维记录', 'CubeRoot · Operations log')}</p>
@@ -60,7 +61,7 @@ export default function TrafficIncidentPage() {
             </figure>
           </header>
 
-          <div className="incident-snapshot-note"><FileText size={17} aria-hidden="true" /><p>{t('记录截至 2026-09-25。页面中的流量和配置均为当时状态。', 'Record through September 25, 2026. Traffic and configuration shown here are historical.')}</p></div>
+          <div className="incident-snapshot-note"><FileText size={17} aria-hidden="true" /><p>{t('复盘补充至 2026-10-05；截图和流量数字保留原统计时段，后续措施按发布与验收记录区分，不代表实时监控。', 'Review updated through October 5, 2026. Screenshots and traffic figures retain their original windows; later measures distinguish release and acceptance evidence. This is not live monitoring.')}</p></div>
 
           <nav className="incident-toc" aria-label={t('文章目录', 'Article contents')}>{toc.map(([id, label], index) => <a key={id} href={`#${id}`}><span>0{index + 1}</span>{label}<ArrowDown size={14} aria-hidden="true" /></a>)}</nav>
 
@@ -114,14 +115,19 @@ export default function TrafficIncidentPage() {
             <ol className="incident-timeline">{TIMELINE.map((event, index) => <li key={`${event.date}-${event.time}`}><div className="incident-timeline-date"><strong>{event.date}</strong><span>{event.time}</span></div><div className="incident-timeline-node">{index === TIMELINE.length - 1 ? <Check size={13} /> : <span />}</div><div className="incident-timeline-copy"><h3>{tr(event)}</h3><p>{tr(event.detail)}</p></div></li>)}</ol>
           </section>
 
+          <section id="follow-up" className="incident-section">
+            <div className="incident-section-heading"><span>{t('后续处置', 'FOLLOW-UP')}</span><h2>{t('从流量止损到全站验证', 'From spending protection to site-wide verification')}</h2><p>{t('以下时间仍为 PDT（UTC−7）；精确部署记录见文末维护文档。', 'Times remain PDT (UTC−7); detailed release evidence is linked in the maintenance documents below.')}</p></div>
+            <ol className="incident-timeline">{FOLLOW_UP.map(event => <li key={`${event.date}-${event.time}`}><div className="incident-timeline-date"><strong>{event.date}</strong><span>{event.time}</span></div><div className="incident-timeline-node"><span /></div><div className="incident-timeline-copy"><h3>{tr(event.title)}</h3><p>{tr(event.detail)}</p></div></li>)}</ol>
+          </section>
+
           <section id="defense" className="incident-section">
             <div className="incident-section-heading"><span>05 / {t('设计', 'THE DESIGN')}</span><h2>{t('Vercel 与阿里云分别防护', 'Protection on Vercel and the self-hosted server')}</h2></div>
             <p className="incident-prose">{t('主站由 Vercel 和阿里云分线路服务，API 有独立域名。Vercel 防火墙不覆盖阿里云；阿里云日志也看不到 Vercel 的独立请求。两边分别配置规则和监控。', 'The main site uses Vercel and a self-hosted Alibaba Cloud server; the API has its own domain. Vercel’s firewall does not cover that server, and server logs do not see Vercel-only requests. Each has separate rules and monitoring.')}</p>
             <figure className="incident-routing">
               <div className="incident-routing-origin"><Globe2 size={22} /><strong>{t('访问 cuberoot.me', 'Visit cuberoot.me')}</strong><span>{t('DNS 分线路', 'DNS routes traffic')}</span></div>
               <div className="incident-route-lanes">
-                <div className="incident-lane" data-site-surface="panel"><div className="incident-lane-title"><ShieldCheck size={22} /><h3>Vercel</h3></div><div className="incident-route-node">{t('平台 DDoS 缓解 + WAF', 'Platform DDoS mitigation + WAF')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('挑战 / 拒绝 / 单 IP 限流', 'Challenge / deny / per-IP limits')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('生产页面', 'Production pages')}</div><p>{t('Firewall 观测 · 独立费用预算暂停', 'Firewall observations · separate spend pause')}</p></div>
-                <div className="incident-lane" data-site-surface="panel"><div className="incident-lane-title"><Server size={22} /><h3>{t('阿里云自有服务器', 'Self-hosted server')}</h3></div><div className="incident-route-node">{t('nginx：主站 / next / API', 'nginx: main / next / API')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('单 IP + 总量 + 并发限制', 'Per-IP + aggregate + concurrency limits')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('Next.js / 独立 Hono API', 'Next.js / independent Hono API')}</div><p>{t('本地日志 → 分钟检查 → 维护 / 503', 'Local logs → minute checks → maintenance / 503')}</p></div>
+                <div className="incident-lane" data-site-surface="panel"><div className="incident-lane-title"><ShieldCheck size={22} /><h3>Vercel</h3></div><div className="incident-route-node">{t('平台 DDoS 缓解 + WAF', 'Platform DDoS mitigation + WAF')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('挑战 / 拒绝 / 单 IP 限流', 'Challenge / deny / per-IP limits')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('全站手动验证码与签名凭证 → 页面', 'Site-wide CAPTCHA and signed proof → pages')}</div><p>{t('Firewall 观测 · 独立费用预算暂停', 'Firewall observations · separate spend pause')}</p></div>
+                <div className="incident-lane" data-site-surface="panel"><div className="incident-lane-title"><Server size={22} /><h3>{t('阿里云自有服务器', 'Self-hosted server')}</h3></div><div className="incident-route-node">{t('nginx：主站 / next / API', 'nginx: main / next / API')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('单 IP + 总量 + 并发限制', 'Per-IP + aggregate + concurrency limits')}</div><ArrowDown size={18} /><div className="incident-route-node">{t('Next / API 验证凭证 → 业务内容', 'Next / API proof checks → application content')}</div><p>{t('本地日志 → 分钟检查 → 维护 / 503', 'Local logs → minute checks → maintenance / 503')}</p></div>
               </div><figcaption>{t('覆盖示意：API 也可直接访问；上图省略 static 与开发预览等独立入口，不能把两条主站线路当作完整网络拓扑。', 'Coverage illustration: the API can also be accessed directly. Static assets and development previews are omitted; these two routes are not the complete network topology.')}</figcaption>
             </figure>
             <figure className="incident-evidence"><a href={`${ASSETS}vercel-firewall-rules-sep25-v1.png`} target="_blank" rel="noreferrer" aria-label={t('打开 Vercel 防护规则原图', 'Open the original Vercel firewall rules screenshot')}><Image src={`${ASSETS}vercel-firewall-rules-sep25-v1.png`} alt={t('Vercel 规则截图：计算器拒绝、计算器和比赛 API 限流、详情页验证、Bot Protection Challenge、AI Bots Deny', 'Vercel rules: calculator deny, calculator and competition API rate limits, detail-page challenge, Bot Protection Challenge, and AI Bots Deny')} width={1088} height={730} loading="lazy" unoptimized /></a><figcaption><span>E3</span><div>{t('Vercel 防火墙规则，截图于 9 月 25 日 09:38 UTC。截图记录配置，不代表拦截效果。', 'Vercel firewall rules captured on September 25 at 09:38 UTC. The screenshot records configuration, not effectiveness.')}</div></figcaption></figure>
@@ -131,7 +137,7 @@ export default function TrafficIncidentPage() {
               [t('作判断', 'Evaluate'), t('极高单分钟 / 持续两分钟', 'Extreme minute / sustained pair')],
               [t('切维护', 'Switch'), t('主站、next 与 API', 'Main site, next and API')],
               [t('通知人', 'Notify'), t('尝试推送，人工决定恢复', 'Attempt alert; reopen manually')],
-            ].map(([title, detail], index) => <li key={title}><span>0{index + 1}</span><strong>{title}</strong><p>{detail}</p></li>)}</ol><p className="incident-guard-boundary">{t('此程序只覆盖阿里云，检查频率为每分钟一次。定时器已运行；超阈值后的停站和告警送达尚未做生产演练。', 'This guard covers only the self-hosted server and checks once a minute. The timer has run; a production threshold trip and alert delivery have not yet been drilled.')}</p></div>
+            ].map(([title, detail], index) => <li key={title}><span>0{index + 1}</span><strong>{title}</strong><p>{detail}</p></li>)}</ol><p className="incident-guard-boundary">{t('此程序只覆盖阿里云，检查频率为每分钟一次。9 月 25 日已有真实自动停站记录，随后修正了把限流当作停站原因的问题；告警送达与恢复演练仍须单独核对。', 'This guard covers only the self-hosted server and checks once a minute. A real maintenance trip occurred on September 25; rate-limit responses were subsequently removed as independent trip reasons. Alert delivery and recovery drills still need separate evidence.')}</p></div>
 
             <div className="incident-details">
               <details><summary>{t('接口与缓存改动', 'API and cache changes')}</summary><div><p>{t('为比赛代理拒绝未知、重复或畸形参数；让缓存键只保留有效参数与版本号；复用缓存及相同回源合并；限制单来源之外的总量与并发；公开 next 别名复用限制，避免换入口绕过。robots 只约束合作爬虫。', 'Reject unknown, repeated or malformed competition-proxy parameters; keep effective parameters and version in cache keys; reuse caching and request coalescing; limit aggregate work and concurrency; protect the public next alias too. Robots directives only guide cooperative crawlers.')}</p><p>{t('初始阈值来自短期观测，需要调整。代码扫描每份日志尾部最多 32 MiB，本地机器故障也会影响守护；目前不应宣称覆盖所有异常。', 'Initial thresholds came from short observations and need tuning. The guard reads at most 32 MiB from each log tail, and local machine failures affect it too. It cannot claim to catch every anomaly.')}</p><a href={`${REPO}core/scripts/traffic-guard.ts`} target="_blank" rel="noreferrer">{t('阅读守护程序源码', 'Read the guard source')} ↗</a></div></details>
