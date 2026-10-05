@@ -3,14 +3,16 @@ import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
 import { isIP } from 'node:net';
 import { pathToFileURL } from 'node:url';
 const DAY = 86400000;
+// Owner-confirmed fixed egress; mirrored by the nginx scanner policy.
+export const TRUSTED_IPS = new Set(['154.44.14.212']);
 export const MANAGED_NAME = 'Rolling 30-day incident IP bans';
 export const SOURCES = new Set(['rule_auto_ban_sensitive_file_scanners_for_1h_u5zqIL', 'rule_incident_rotating_browser_scraper_ban_30_days_S2oBpk']);
 export type Ledger = { cursor: number; bans: Record<string, number>; ruleId?: string; lastSyncedAt?: number };
 type BanEvent = { startTime: string; public_ip: string; ruleId: string; action: string };
 export function absorb(state: Ledger, events: BanEvent[], now: number) {
-  for (const [ip, expiry] of Object.entries(state.bans)) if (!isIP(ip) || !Number.isFinite(expiry) || expiry <= now) delete state.bans[ip];
+  for (const [ip, expiry] of Object.entries(state.bans)) if (TRUSTED_IPS.has(ip) || !isIP(ip) || !Number.isFinite(expiry) || expiry <= now) delete state.bans[ip];
   for (const event of events) {
-    if (event.action !== 'deny' || !SOURCES.has(event.ruleId) || !isIP(event.public_ip)) continue;
+    if (TRUSTED_IPS.has(event.public_ip) || event.action !== 'deny' || !SOURCES.has(event.ruleId) || !isIP(event.public_ip)) continue;
     const started = Date.parse(event.startTime.replace(' ', 'T') + (/Z$|[+-]\d\d:\d\d$/.test(event.startTime) ? '' : 'Z'));
     if (!Number.isFinite(started) || started > now + 60000 || started + 30 * DAY <= now) continue;
     // Repeated API reads and native 24h renewals must not extend an active ban.
@@ -99,6 +101,22 @@ export async function run() {
   let active = await api('config/active');
   const own = (r: {name: string}) => r.name === MANAGED_NAME || /^Rolling 30-day incident IP bans \d+$/.test(r.name);
   if (active.rules?.[0]?.id !== 'rule_china_mainland_traffic_exemption_aOC64j') throw new Error('China exemption order changed; operator review required');
+  // Extend the existing first bypass rule, preserving its ID and relay ordering.
+  const exemption = active.rules[0];
+  const ownerGroup = { conditions: [{ type: 'ip_address', op: 'inc', value: [...TRUSTED_IPS] }] };
+  const isOwnerGroup = (g: { conditions: { type: string; op: string; value: unknown }[] }) => g.conditions.length === 1 && g.conditions[0].type === 'ip_address' && g.conditions[0].op === 'inc' && JSON.stringify(g.conditions[0].value) === JSON.stringify([...TRUSTED_IPS]);
+  if (!exemption.conditionGroup.some(isOwnerGroup)) {
+    await api('config', 'PATCH', { action: 'rules.update', id: exemption.id, value: {
+      name: exemption.name, active: true,
+      description: 'Mainland China and owner-confirmed exact IPs bypass traffic restrictions; application authentication remains required.',
+      conditionGroup: [...exemption.conditionGroup, ownerGroup], action: exemption.action,
+    } });
+    active = await api('config/active');
+    if (active.rules[0]?.id !== exemption.id || !active.rules[0]?.valid || !active.rules[0]?.active
+      || !active.rules[0].conditionGroup.some(isOwnerGroup)) {
+      throw new Error('Owner IP exemption readback mismatch');
+    }
+  }
   const plan = planCapacity(ips, active.rules.filter((r: {name: string}) => !own(r)).length, active.rules.filter(own).length, config.maxManagedIps ?? 24000);
   const { count } = plan;
   for (let i = 0; i < count; i++) {
