@@ -47,3 +47,11 @@ it.each([
   expect((await pending as Error).message).toBe('smart cube connection closed');
   expect(connect).not.toHaveBeenCalled();
 });
+
+it.each(['gan', 'moyu32'] as const)('uses native macAddress without changing the Apple UUID for %s', async (family) => {
+  const device = { id: '11111111-2222-3333-4444-555555555555', name: 'cube', macAddress: 'AB:CD:EF:01:23:45' };
+  const prompt = vi.fn();
+  expect(await resolveCubeMac(device, family, prompt)).toEqual(Uint8Array.of(0xab, 0xcd, 0xef, 1, 0x23, 0x45));
+  expect(device.id).toBe('11111111-2222-3333-4444-555555555555');
+  expect(prompt).not.toHaveBeenCalled();
+});
