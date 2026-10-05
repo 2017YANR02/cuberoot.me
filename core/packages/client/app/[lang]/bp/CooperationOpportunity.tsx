@@ -25,11 +25,11 @@ const OPTIONS = [
   },
   {
     Icon: ChartNoAxesColumnIncreasing,
-    status: { zh: '未来可选 · 另行讨论', en: 'Future option · separate discussion' },
+    status: { zh: '着眼长期，共同探索', en: 'Explore the long term together' },
     title: { zh: '未来资本合作', en: 'Potential future investment' },
-    body: { zh: '随着产品与经营更加成熟，如果届时双方都有意愿，可以再讨论投资。是否开展、以什么方式开展，都留到那时再决定。', en: 'As the product and business mature, we could discuss investment if both parties are interested at that time. Whether to proceed, and on what terms, would be decided then.' },
-    value: { zh: '届时依据经营表现与发展需求评估合作空间；当前不预设估值、股权比例，也不承诺未来投资机会。', en: 'Assess the opportunity against operating performance and business needs at that time. No valuation or equity percentage is set, and no future investment opportunity is promised.' },
-    next: { zh: '独立于当前业务合作，未来是否讨论由双方重新决定。', en: 'Separate from today’s business partnerships; both parties would decide afresh whether to explore it.' },
+    body: { zh: '随着产品与经营更加成熟，期待在双方认可的基础上，进一步探讨战略投资与更深层的合作，让今天建立的信任拥有更长远的发展空间。', en: 'As the product and business mature, we look forward to exploring strategic investment and deeper collaboration where our interests align, building on the trust established today.' },
+    value: { zh: '以更清晰的经营表现和发展目标为基础，共同探讨适合双方的合作方式与条件。', en: 'Use a clearer picture of operating performance and development goals to explore arrangements and terms that work for both parties.' },
+    next: { zh: '先通过业务合作积累了解与信任，让后续交流有更扎实的基础。', en: 'Build understanding and trust through business collaboration, giving future discussions a stronger foundation.' },
     href: '#bp-roadmap',
     link: { zh: '了解长期发展方向', en: 'Explore the long-term direction' },
   },
@@ -42,8 +42,8 @@ export const COOPERATION_INTRO = {
 };
 
 export const COOPERATION_EQUITY_POSITION = {
-  zh: '接下来几个月，我会先专注业务合作，暂不出让公司股权。以后是否讨论投资，再看双方意愿与合作情况，现在不作承诺。',
-  en: 'Over the next few months, I will focus on business partnerships without offering company equity. Whether we discuss investment later will depend on mutual interest and how the collaboration develops; there is no commitment now.',
+  zh: '接下来几个月，我们先以业务合作为起点。随着合作深入、业务发展，期待在双方认可的基础上，进一步探讨长期合作与投资的可能。',
+  en: 'Over the next few months, we would begin with business collaboration. As the relationship and business develop, we look forward to exploring longer-term partnerships and possible investment where our interests align.',
 };
 
 export default function CooperationOpportunity() {
