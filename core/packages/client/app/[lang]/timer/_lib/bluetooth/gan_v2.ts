@@ -88,12 +88,15 @@ export const ganV2Driver: CubeDriver = {
     }
 
     let writeTail: Promise<void> = Promise.resolve();
-    const sendCommand = (command: Uint8Array, strict = false): Promise<void> => {
+    const sendCommand = (command: Uint8Array, strict = false, begin?: () => boolean): Promise<void> => {
       if (!commandChar) return strict ? Promise.reject(new Error('Device has no write characteristic')) : Promise.resolve();
       const encrypted = cipher.encrypt(command);
       const bytes = new Uint8Array(encrypted.length);
       bytes.set(encrypted);
-      const task = writeTail.then(() => writeGattValue(commandChar!, bytes));
+      const task = writeTail.then(() => {
+        if (begin && !begin()) return;
+        return writeGattValue(commandChar!, bytes);
+      });
       writeTail = task.catch(() => {});
       return strict ? task : task.catch(() => {});
     };
@@ -106,7 +109,7 @@ export const ganV2Driver: CubeDriver = {
 
     let cleaned = false;
     calibration = createDeviceStateReset({
-      sendReset: () => sendCommand(createGanV2ResetCommand(), true),
+      sendReset: begin => sendCommand(createGanV2ResetCommand(), true, begin),
       prepareSnapshot: () => { decodeState.prevMoveCnt = -1; decodeState.prevMoves = []; },
       requestSnapshot: () => sendCommand(createGanV2FaceletsCommand(), true),
     });

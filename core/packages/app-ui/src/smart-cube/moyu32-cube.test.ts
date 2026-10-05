@@ -293,3 +293,21 @@ describe('Moyu32CubeConnection native bridge', () => {
     expect(fake.transport.disconnect).toHaveBeenCalledWith(ANDROID_DEVICE.id);
   });
 });
+it('confirms hardware calibration and discards buffered turns older than its counter', async () => {
+  const fake = fakeBle(ANDROID_DEVICE, ANDROID_MAC);
+  const onMove = vi.fn(); const onState = vi.fn();
+  const cube = new Moyu32CubeConnection(fake.transport, { onMove, onState, onDisconnect: vi.fn(), onProtocolError: vi.fn() });
+  await cube.connect(ANDROID_DEVICE);
+  fake.emit(stateFrame(MOYU32_SOLVED_STATE, 10));
+  onState.mockClear();
+  const reset = cube.resetDeviceState();
+  await vi.waitFor(() => expect(fake.decodedWrites().at(-1)?.[0]).toBe(0xa2));
+  fake.emit(moveFrame(11, [0], [100])); // Queued before the confirmed baseline.
+  expect(onMove).not.toHaveBeenCalled();
+  fake.emit(stateFrame(MOYU32_SOLVED_STATE, 12));
+  fake.emit(moveFrame(13, [2], [50])); // New turn must survive calibration.
+  await reset;
+  expect(onState).toHaveBeenCalledExactlyOnceWith(MOYU32_SOLVED_STATE);
+  expect(onMove.mock.calls).toEqual([['B', 50]]);
+  await cube.disconnect();
+});

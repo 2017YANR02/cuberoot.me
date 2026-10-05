@@ -125,9 +125,13 @@ export class HarmonyBridge {
   }
 
   async bleRequestDevice(namePrefix: string): Promise<string> {
-    if (namePrefix !== 'GAN') return failure();
     try {
-      return successValue(await this.bluetooth.requestDevice(namePrefix));
+      const decoded = JSON.parse(namePrefix) as Object;
+      if (!Array.isArray(decoded)) return failure();
+      const prefixes = decoded as string[];
+      const allowed: string[] = ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'];
+      if (prefixes.length === 0 || prefixes.some((prefix: string): boolean => !allowed.includes(prefix))) return failure();
+      return successValue(await this.bluetooth.requestDevice(prefixes));
     } catch (_) {
       return failure();
     }
@@ -149,6 +153,11 @@ export class HarmonyBridge {
     } catch (_) {
       return failure();
     }
+  }
+
+  async bleGetServices(deviceId: string): Promise<string> {
+    try { return successValue(this.bluetooth.getServices(deviceId)); }
+    catch (_) { return failure(); }
   }
 
   async bleGetMtu(deviceId: string): Promise<string> {

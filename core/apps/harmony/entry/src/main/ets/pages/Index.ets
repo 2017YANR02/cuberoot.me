@@ -130,6 +130,7 @@ struct Index {
             'bleConnect',
             'bleDisconnect',
             'bleGetMtu',
+            'bleGetServices',
             'bleRead',
             'bleWrite',
             'bleSubscribe',

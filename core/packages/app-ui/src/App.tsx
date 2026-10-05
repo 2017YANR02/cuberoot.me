@@ -2868,8 +2868,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [announce, copy.smartCubeDisconnected, smartCube]);
 
   const resetSmartCubeState = useCallback(async () => {
-    smartCube.resetState?.();
-    await smartCube.requestState?.();
+    if (smartCube.resetDeviceState) await smartCube.resetDeviceState();
+    else smartCube.resetState?.();
   }, [smartCube]);
 
   const openSmartCubeDevice = useCallback(() => {

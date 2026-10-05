@@ -1,3 +1,4 @@
+import { startLegacyWebCube } from './legacy_session';
 /**
  * GoCube / Rubik's Connected driver.
  *
@@ -48,18 +49,12 @@
  */
 
 import {
-  GOCUBE_COMMAND_BATTERY,
-  GOCUBE_COMMAND_STATE,
-  GOCUBE_NOTIFY_CHARACTERISTIC_UUID,
   GOCUBE_SERVICE_UUID,
-  GOCUBE_STATE_REACK_AFTER_MOVES,
-  GOCUBE_WRITE_CHARACTERISTIC_UUID,
-  createGoCubeCommand,
   matchesGoCubeName,
   parseGoCubeNotification,
 } from '@cuberoot/shared/smart-cube/gocube';
 import { fromFaceletString } from '../cube/state';
-import type { CubeDriver, CubeDriverStartResult, GyroQuaternion } from './driver';
+import type { CubeDriver, GyroQuaternion } from './driver';
 import type { CubeBrand } from './types';
 
 /**
@@ -130,96 +125,7 @@ export const gocubeDriver: CubeDriver = {
     return matchesGoCubeName(device.name);
   },
 
-  async start(server, onMove, ctx): Promise<CubeDriverStartResult> {
-    const service = await server.getPrimaryService(GOCUBE_SERVICE_UUID);
-    const writeChar = await service.getCharacteristic(GOCUBE_WRITE_CHARACTERISTIC_UUID);
-    const notifyChar = await service.getCharacteristic(GOCUBE_NOTIFY_CHARACTERISTIC_UUID);
-
-    let lastBattery: number | null = null;
-    let batteryWaiters: Array<(v: number | null) => void> = [];
-    let movesSinceAck = 0;
-
-    const writeCmd = (cmd: number): Promise<void> => {
-      // The Web Bluetooth typings accept BufferSource — pass the underlying
-      // ArrayBuffer to keep the call portable (some platforms reject the
-      // Uint8Array view directly).
-      return writeChar.writeValue(createGoCubeCommand(cmd));
-    };
-
-    const onChar = (ev: Event): void => {
-      const target = ev.target as BluetoothRemoteGATTCharacteristic;
-      const dv = target.value;
-      if (!dv) return;
-      const notification = parseGoCubeNotification(dv);
-      if (!notification) return;
-
-      if (notification.type === 'moves') {
-        for (const move of notification.moves) {
-          onMove(move);
-          movesSinceAck++;
-        }
-        if (movesSinceAck > GOCUBE_STATE_REACK_AFTER_MOVES) {
-          movesSinceAck = 0;
-          void writeCmd(GOCUBE_COMMAND_STATE).catch(() => {});
-        }
-      } else if (notification.type === 'state') {
-        // Full state dump. The cube sends one on connect (we ask for it) and
-        // one after every re-ack, so this is both the initial truth and a
-        // periodic correction for anything the move stream lost.
-        if (ctx?.onState && fromFaceletString(notification.facelets)) {
-          ctx.onState(notification.facelets);
-        }
-      } else if (notification.type === 'orientation') {
-        // Orientation. GoCube pushes these ~15x/s once connected, so only
-        // pay the ASCII parse when someone is listening.
-        // No angular velocity in this protocol — the second arg stays
-        // undefined rather than being faked from finite differences.
-        ctx?.onGyro?.(notification.quaternion);
-      } else if (notification.type === 'battery') {
-        lastBattery = notification.level;
-        const waiters = batteryWaiters;
-        batteryWaiters = [];
-        for (const w of waiters) w(lastBattery);
-      }
-    };
-
-    notifyChar.addEventListener('characteristicvaluechanged', onChar);
-    await notifyChar.startNotifications();
-
-    // Kick the cube: requesting a state dump arms the move stream, matching
-    // cstimer's init().
-    try { await writeCmd(GOCUBE_COMMAND_STATE); } catch { /* ignore */ }
-
-    let cleaned = false;
-    const cleanup = (): void => {
-      if (cleaned) return;
-      cleaned = true;
-      notifyChar.removeEventListener('characteristicvaluechanged', onChar);
-      void notifyChar.stopNotifications().catch(() => {});
-      // Resolve any pending battery waiters with what we have.
-      const waiters = batteryWaiters;
-      batteryWaiters = [];
-      for (const w of waiters) w(lastBattery);
-    };
-
-    const battery = async (): Promise<number | null> => {
-      // Issue the battery command and wait up to 1s for the 0x05 reply.
-      let finish: (value: number | null) => void = () => {};
-      const response = new Promise<number | null>(resolve => {
-        let done = false;
-        finish = (value: number | null): void => {
-          if (done) return;
-          done = true;
-          batteryWaiters = batteryWaiters.filter((waiter) => waiter !== finish);
-          resolve(value);
-        };
-        batteryWaiters.push(finish);
-        setTimeout(() => finish(lastBattery), 1000);
-      });
-      try { await writeCmd(GOCUBE_COMMAND_BATTERY); } catch { finish(lastBattery); }
-      return response;
-    };
-
-    return { battery, cleanup };
+  start(server, onMove, context) {
+    return startLegacyWebCube('gocube', server, onMove, context);
   },
 };

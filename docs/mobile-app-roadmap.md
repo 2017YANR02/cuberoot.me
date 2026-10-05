@@ -1,5 +1,12 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-05：智能魔方设备校准与旧型号接入（本地，实体设备待验）
+
+- Web/安装端共用 shared 设备校准事务；GAN v2/v3/v4、MoYu32、QiYi 的“重置状态”真实写入设备并等待复原状态确认，写失败、超时或断连不得报成功。校准不触发正常复原停表；MoYu32 过滤旧计数帧，QiYi 保留校准期间的新转动，超时后排队写入不得迟发。
+- Giiker（含小米名称）、GoCube / Rubik’s Connected、旧 MoYu 的协议会话提至 shared，Web 与 app-ui 均消费；扫描、订阅、转动、设备支持的状态/电量/姿态及断连清理接入 Mobile/Desktop。Gi 名称用实际 GATT 服务区分 GAN 与 Giiker。旧 MoYu 仅上报转动，没有绝对状态/设备校准/电量协议，沿用 Web 的软件复原基准，不宣称具备硬件回写。
+- Harmony 源码补多前缀扫描、受限 GATT 服务发现及同一协议消费；本机 HAP 被既有工具链版本挡住（工程 modelVersion 6.0.2，已安装 Hvigor 只支持 6.0.1），没有降级工程配置。ArkTS 编译与实体设备仍未验收。
+- 验证：安装端定向 50 项、Web 定向 26 项通过（另 5 项 upstream oracle 因本地 fixture 缺失跳过）；shared build，app-ui/client/Mobile/Harmony 类型检查，Mobile/Desktop/Harmony Web 构建和 Capacitor Android/iOS sync 通过。Android Debug APK、iOS Simulator 无签名构建及 macOS Debug 无签名 .app 通过；Windows 原生构建需 Windows 环境。全部新增型号及 macOS GAN16ui / WCU_MY32 真实转动、校准后继续计时、后台与断线恢复仍待实机验证；未安装、签名公证或发布。
+
 ### 2026-10-05：工具页验证码分区凭证（本地，未发布）
 
 - 网站验证码页报告 iframe 环境，API 对嵌入页面签发 `SameSite=None; Partitioned`，普通浏览器保留 Lax；验证码、签名与 7 天期限不变。工具仍在 App 内打开，无系统浏览器跳转，也没有复制工具页或新增宿主代码。

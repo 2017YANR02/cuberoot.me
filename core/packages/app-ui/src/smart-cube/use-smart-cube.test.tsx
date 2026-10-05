@@ -39,6 +39,7 @@ vi.mock('./gan-v4-cube', () => ({
 
     async disconnect() { await state.disconnect(); }
     async requestState() { state.requestState(); }
+    async resetDeviceState() { state.callbacks?.onState(SOLVED_3X3); }
   },
 }));
 
@@ -56,6 +57,7 @@ vi.mock('./moyu32-cube', () => ({
 
     async disconnect() { await state.disconnect(); }
     async requestState() { state.requestState(); }
+    async resetDeviceState() { state.callbacks?.onState(SOLVED_3X3); }
   },
 }));
 
@@ -73,6 +75,7 @@ vi.mock('./qiyi-cube', () => ({
 
     async disconnect() { await state.disconnect(); }
     async requestState() { state.requestState(); }
+    async resetDeviceState() { state.callbacks?.onState(SOLVED_3X3); }
   },
 }));
 
@@ -124,6 +127,17 @@ describe('useInstalledSmartCube', () => {
     vi.useRealTimers();
   });
 
+  it('does not count hardware calibration as a solve or turn', async () => {
+    await act(async () => { await cube.connect(); });
+    act(() => state.callbacks?.onMove('R', 100));
+    expect(cube.solved).toBe(false);
+    state.onMove.mockClear(); state.onSolved.mockClear();
+    await act(async () => { await cube.resetDeviceState!(); });
+    expect(cube.facelets).toBe(SOLVED_3X3);
+    expect(state.onSolved).not.toHaveBeenCalled();
+    expect(state.onMove).not.toHaveBeenCalled();
+  });
+
   it('keeps hosts without service discovery on the GAN v4 picker', () => {
     expect(state.connectionKind).toBe('gan-v4');
     expect(cube.model).toBe('gan-v4');
@@ -150,7 +164,7 @@ describe('useInstalledSmartCube', () => {
     expect(cube.model).toBe('moyu32');
     expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
       namePrefix: 'GAN',
-      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'],
       services: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
       optionalServices: expect.arrayContaining([GAN_V4_SERVICE_UUID, MOYU32_SERVICE_UUID, QIYI_SERVICE_UUID]),
     }));
@@ -169,7 +183,7 @@ describe('useInstalledSmartCube', () => {
     expect(state.connectionKind).toBe('qiyi');
     expect(cube.model).toBe('qiyi');
     expect(transport.requestDevice).toHaveBeenLastCalledWith(expect.objectContaining({
-      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i'],
+      namePrefixes: ['GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-'],
       services: expect.arrayContaining([QIYI_SERVICE_UUID]),
       optionalServices: expect.arrayContaining([QIYI_SERVICE_UUID]),
     }));
@@ -180,7 +194,7 @@ describe('useInstalledSmartCube', () => {
     const stopScan = vi.fn(async () => undefined);
     transport.scanDevices = vi.fn(async (options, onDevices) => {
       expect(options.namePrefixes).toEqual([
-        'GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i',
+        'GAN', 'MG', 'AiCube', 'Gi', 'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i', 'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-',
       ]);
       onDevices([
         { id: 'moyu', name: 'WCU_MY32_A1B2', rssi: -41 },

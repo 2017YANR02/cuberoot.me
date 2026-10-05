@@ -1,3 +1,7 @@
+import { matchesGiikerName, GIIKER_DATA_SERVICE_UUID, GIIKER_RW_SERVICE_UUID } from '@cuberoot/shared/smart-cube/giiker';
+import { matchesGoCubeName, GOCUBE_SERVICE_UUID } from '@cuberoot/shared/smart-cube/gocube';
+import { matchesMoyuName, MOYU_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu';
+import { LegacyCubeConnection, type LegacyCubeStatus } from './legacy-cube';
 import { GAN_V2_SERVICE_UUID, matchesGanV2Name } from '@cuberoot/shared/smart-cube/gan-v2';
 import { GAN_V3_SERVICE_UUID, matchesGanV3Name } from '@cuberoot/shared/smart-cube/gan-v3';
 import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
@@ -20,7 +24,7 @@ import { Moyu32CubeConnection, type Moyu32CubeStatus } from './moyu32-cube';
 import { QiyiCubeConnection, type QiyiCubeStatus } from './qiyi-cube';
 import type { BleDeviceRef, BleRequestOptions, BleTransport } from './transport';
 
-type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32' | 'qiyi';
+type InstalledCubeModel = 'gan-v2' | 'gan-v3' | 'gan-v4' | 'moyu32' | 'qiyi' | 'giiker' | 'gocube' | 'moyu';
 
 const DISCOVERABLE_CUBE_SERVICES = [
   GAN_V2_SERVICE_UUID,
@@ -28,11 +32,13 @@ const DISCOVERABLE_CUBE_SERVICES = [
   GAN_V4_SERVICE_UUID,
   MOYU32_SERVICE_UUID,
   QIYI_SERVICE_UUID,
+  GIIKER_DATA_SERVICE_UUID, GIIKER_RW_SERVICE_UUID, GOCUBE_SERVICE_UUID, MOYU_SERVICE_UUID,
 ] as const;
 
 const SMART_CUBE_NAME_PREFIXES = [
   'GAN', 'MG', 'AiCube', 'Gi',
   'WCU_MY3', 'QY-QYSC', 'XMD-TornadoV4-i',
+  'Mi Smart Magic Cube', 'Hi-', 'GoCube', 'Rubik', 'MHC', 'MoYu', 'MY-',
 ] as const;
 const SMART_CUBE_SCAN_TIMEOUT_MS = 8_000;
 
@@ -70,6 +76,9 @@ function modelForDeviceName(name: string): InstalledCubeModel | null {
   if (matchesGanV4Name(name)) return 'gan-v4';
   if (matchesGanV3Name(name)) return 'gan-v3';
   if (matchesGanV2Name(name)) return 'gan-v2';
+  if (matchesGiikerName(name)) return 'giiker';
+  if (matchesGoCubeName(name)) return 'gocube';
+  if (matchesMoyuName(name)) return 'moyu';
   return null;
 }
 
@@ -83,10 +92,12 @@ export function useInstalledSmartCube(
     | GanV4CubeConnection
     | GanCubeConnection
     | Moyu32CubeConnection
-    | QiyiCubeConnection;
+    | QiyiCubeConnection
+    | LegacyCubeConnection;
   const connectionRef = useRef<SmartCubeConnection | null>(null);
   const generationRef = useRef(0);
   const busyRef = useRef(false);
+  const calibratingRef = useRef(false);
   const cleanupRef = useRef<Promise<void>>(Promise.resolve());
   const scannedDevicesRef = useRef(new Map<string, BleDeviceRef>());
   const scanGenerationRef = useRef(0);
@@ -114,7 +125,7 @@ export function useInstalledSmartCube(
   const [facelets, setFacelets] = useState('');
   const [quaternion, setQuaternion] = useState<GyroQuaternion | null>(null);
   const [status, setStatus] = useState<
-    GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus | null
+    GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus | LegacyCubeStatus | null
   >(null);
   const [solved, setSolved] = useState(true);
 
@@ -128,11 +139,12 @@ export function useInstalledSmartCube(
         setSolved(snapshot.solved);
       },
       onMove: ({ facelets: nextFacelets, metadata, move, timestamp }) => {
+        if (calibratingRef.current) return;
         if (metadata) onMoveRef.current(move, timestamp, nextFacelets, metadata);
         else onMoveRef.current(move, timestamp, nextFacelets);
       },
       onSolved: (timestamp) => {
-        if (timestamp !== undefined) onSolvedRef.current?.(timestamp);
+        if (!calibratingRef.current && timestamp !== undefined) onSolvedRef.current?.(timestamp);
       },
     });
   }
@@ -169,6 +181,7 @@ export function useInstalledSmartCube(
 
   const disconnect = useCallback(async () => {
     generationRef.current++;
+    calibratingRef.current = false;
     cancelMacRef.current?.();
     cancelMacRef.current = null;
     cancelReadyRef.current?.();
@@ -255,7 +268,8 @@ export function useInstalledSmartCube(
         if (!current()) throw new Error('smart cube connection closed');
         if (macAddress) device = { ...device, macAddress };
       }
-      const session = sessionController.open({ publishInitialState: false });
+      // Old MoYu is a turn-only protocol; its software baseline starts solved, like Web.
+      const session = sessionController.open({ publishInitialState: namedModel === 'moyu' });
       let connection!: SmartCubeConnection;
       let resolveReady!: () => void;
       let rejectReady!: (error: Error) => void;
@@ -289,6 +303,7 @@ export function useInstalledSmartCube(
           if (connectionRef.current !== connection || !session.isCurrent()) return;
           cancelReady();
           onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
+          void disposeConnection(connection);
           connectionRef.current = null;
           setDeviceName('');
           resetCubeState();
@@ -318,8 +333,7 @@ export function useInstalledSmartCube(
         },
         onState: (nextFacelets: string) => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
-          session.adoptFacelets(nextFacelets, performance.now());
-          resolveReady();
+          if (session.adoptFacelets(nextFacelets, performance.now())) resolveReady();
         },
         onGyro: onGyroRef.current
           ? (nextQuaternion: GyroQuaternion, velocity?: GyroVelocity) => {
@@ -329,14 +343,16 @@ export function useInstalledSmartCube(
           }
           : undefined,
         onStatus: (
-          nextStatus: GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus,
+          nextStatus: GanV4CubeStatus | GanCubeStatus | Moyu32CubeStatus | QiyiCubeStatus | LegacyCubeStatus,
         ) => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
           setStatus(nextStatus);
           setModel(nextStatus.protocol);
         },
       };
-      if (namedModel === 'moyu32') {
+      if (namedModel === 'giiker' || namedModel === 'gocube' || namedModel === 'moyu') {
+        connection = new LegacyCubeConnection(transport, connectionCallbacks, namedModel);
+      } else if (namedModel === 'moyu32') {
         connection = new Moyu32CubeConnection(transport, connectionCallbacks);
       } else if (namedModel === 'qiyi') {
         connection = new QiyiCubeConnection(transport, connectionCallbacks);
@@ -348,6 +364,7 @@ export function useInstalledSmartCube(
       connectionRef.current = connection;
       try {
         await connection.connect(device);
+        if (namedModel === 'moyu') resolveReady();
         if (!current()) throw new Error('smart cube connection closed');
         let timeout: ReturnType<typeof setTimeout> | undefined;
         try {
@@ -408,6 +425,23 @@ export function useInstalledSmartCube(
     sessionController.resetState();
   }, [sessionController]);
 
+  const resetDeviceState = useCallback(async () => {
+    const connection = connectionRef.current;
+    if (!connection || !('resetDeviceState' in connection)) throw new Error('Device calibration unavailable');
+    if (calibratingRef.current) throw new Error('Device calibration already in progress');
+    const generation = generationRef.current;
+    calibratingRef.current = true;
+    sessionController.resetState();
+    try {
+      await connection.resetDeviceState();
+      if (generation !== generationRef.current) throw new Error('Cube connection changed');
+      sessionController.resetClock();
+      sessionController.republish();
+    } finally {
+      if (generation === generationRef.current) calibratingRef.current = false;
+    }
+  }, [sessionController]);
+
   const requestState = useCallback(async () => {
     if (!connectionRef.current) throw new Error('smart cube is not connected');
     await connectionRef.current.requestState();
@@ -431,6 +465,7 @@ export function useInstalledSmartCube(
   return {
     connect, deviceName, disconnect, error, facelets, lastMove, macPrompt, model, phase, quaternion,
     requestState, resetState, solved, status,
+    ...(phase === 'connected' && model !== 'giiker' && model !== 'gocube' && model !== 'moyu' ? { resetDeviceState } : {}),
     ...(supportsDeviceScan ? {
       availableDevices: availableDevices.map(({ id, name, rssi }) => ({ id, name, rssi })),
       scanDevices,

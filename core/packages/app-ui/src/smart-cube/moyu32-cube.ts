@@ -1,3 +1,5 @@
+import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
+import { createMoyu32ResetCommand, MOYU32_SOLVED_STATE, MOYU32_MESSAGE_MOVE } from '@cuberoot/shared/smart-cube/moyu32';
 import {
   createMoyu32Cipher,
   createMoyu32Command,
@@ -57,6 +59,8 @@ function hasCharacteristic(
 }
 
 export class Moyu32CubeConnection {
+  private calibration: ReturnType<typeof createDeviceStateReset> | null = null;
+  private resetCommand: (() => Promise<void>) | null = null;
   private deviceId: string | null = null;
   private stopNotifications: (() => Promise<void>) | null = null;
   private sendCommand: ((command: Uint8Array, strict?: boolean) => Promise<void>) | null = null;
@@ -86,6 +90,9 @@ export class Moyu32CubeConnection {
     const current = () => this.generation === generation && this.deviceId === device.id;
     const onDisconnect = () => {
       if (!current()) return;
+      this.calibration?.dispose();
+      this.calibration = null;
+      this.resetCommand = null;
       this.generation++;
       this.deviceId = null;
       this.stopNotifications = null;
@@ -109,10 +116,11 @@ export class Moyu32CubeConnection {
 
     const cipher = createMoyu32Cipher(mac);
     let writeTail: Promise<void> = Promise.resolve();
-    const send = (command: Uint8Array, strict = true): Promise<void> => {
+    const send = (command: Uint8Array, strict = true, begin?: () => boolean): Promise<void> => {
       const encrypted = cipher.encrypt(command);
       const task = writeTail.then(() => {
         if (!current()) throw new Error('smart cube connection closed');
+        if (begin && !begin()) return;
         return this.transport.write(
           device.id,
           MOYU32_SERVICE_UUID,
@@ -134,18 +142,10 @@ export class Moyu32CubeConnection {
       this.callbacks.onProtocolError();
     };
 
-    const stopNotifications = await this.transport.subscribe(
-      device.id,
-      MOYU32_SERVICE_UUID,
-      MOYU32_NOTIFY_CHARACTERISTIC_UUID,
-      (value) => {
-        if (!current() || protocolError.value) return;
-        let plain: Uint8Array;
-        try {
-          plain = cipher.decrypt(bytesFromView(value));
-        } catch {
-          return;
-        }
+    let resetting = false;
+    let confirmed: { facelets: string; counter: number } | null = null;
+    let pending: Uint8Array[] = [];
+    const apply = (plain: Uint8Array) => {
         const notification = decodeMoyu32Notification(plain, decodeState);
         if (notification.state) {
           stateReady = true;
@@ -162,6 +162,63 @@ export class Moyu32CubeConnection {
           stateReady,
         });
         if (decodeState.badFrames >= KEY_ERROR_THRESHOLD) reportProtocolError();
+    };
+    this.calibration = createDeviceStateReset({
+      automaticReply: true,
+      sendReset: begin => send(createMoyu32ResetCommand(), true, begin),
+      prepareSnapshot() {},
+      requestSnapshot: async () => {},
+    });
+    const calibration = this.calibration;
+    this.resetCommand = async () => {
+      if (resetting) throw new Error('Device calibration already in progress');
+      resetting = true; confirmed = null; pending = [];
+      try {
+        await calibration.run();
+        if (!current()) throw new Error('smart cube connection closed');
+        const snapshot = confirmed as { facelets: string; counter: number } | null;
+        if (!snapshot) throw new Error('Missing confirmed cube state');
+        decodeState.prevMoveCount = snapshot.counter;
+        decodeState.deviceTime = 0;
+        this.callbacks.onState?.(snapshot.facelets);
+      } finally {
+        resetting = false;
+        if (current()) for (const packet of pending) {
+          const diff = (packet[11] - decodeState.prevMoveCount) & 0xff;
+          if (diff === 0 || diff >= 128) continue;
+          apply(packet);
+        }
+        pending = [];
+      }
+    };
+    const stopNotifications = await this.transport.subscribe(
+      device.id,
+      MOYU32_SERVICE_UUID,
+      MOYU32_NOTIFY_CHARACTERISTIC_UUID,
+      (value) => {
+        if (!current() || protocolError.value) return;
+        let plain: Uint8Array;
+        try {
+          plain = cipher.decrypt(bytesFromView(value));
+        } catch {
+          return;
+        }
+
+        if (resetting && plain[0] === MOYU32_MESSAGE_STATE) {
+          const snapshotState = createMoyu32DecodeState();
+          const snapshot = decodeMoyu32Notification(plain, snapshotState);
+          if (this.calibration?.waiting && snapshot.state === MOYU32_SOLVED_STATE) {
+            confirmed = { facelets: snapshot.state, counter: snapshotState.prevMoveCount };
+            this.calibration.observe(snapshot.state);
+          }
+          return;
+        }
+        if (resetting && plain[0] === MOYU32_MESSAGE_MOVE) {
+          if (pending.length >= 128) this.calibration?.cancel(new Error('Too many moves during calibration'));
+          else pending.push(plain);
+          return;
+        }
+        apply(plain);
       },
     );
     if (!current()) {
@@ -171,6 +228,7 @@ export class Moyu32CubeConnection {
     this.stopNotifications = stopNotifications;
 
     this.requestStateCommand = async () => {
+      decodeState.prevMoveCount = -1;
       await send(createMoyu32Command(MOYU32_MESSAGE_STATE));
       await send(createMoyu32Command(MOYU32_MESSAGE_BATTERY));
     };
@@ -189,7 +247,15 @@ export class Moyu32CubeConnection {
     await this.requestStateCommand();
   }
 
+  async resetDeviceState(): Promise<void> {
+    if (!this.resetCommand) throw new Error('smart cube is not connected');
+    await this.resetCommand();
+  }
+
   async disconnect(): Promise<void> {
+    this.calibration?.dispose();
+    this.calibration = null;
+    this.resetCommand = null;
     const deviceId = this.deviceId;
     const disableGyro = this.gyroEnabled && this.sendCommand;
     if (disableGyro) await disableGyro(

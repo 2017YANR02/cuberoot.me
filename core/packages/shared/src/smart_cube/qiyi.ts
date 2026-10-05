@@ -168,3 +168,11 @@ export function decodeQiyiNotification(
     state: timestamp >= previousTimestamp ? parseQiyiFacelets(msg) : null,
   };
 }
+
+/** Calibrate the physically solved cube; a write requires a confirmed state reply. */
+export function createQiyiResetCommand(): Uint8Array {
+  const content = [0x04, 0x17, 0x88, 0x8b, 0x31];
+  for (let i = 0; i < 54; i += 2) content.push('LRDUFB'.indexOf(QIYI_SOLVED_STATE[i]) | ('LRDUFB'.indexOf(QIYI_SOLVED_STATE[i + 1]) << 4));
+  content.push(0, 0);
+  return buildQiyiPacket(content);
+}

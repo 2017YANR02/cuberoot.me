@@ -162,3 +162,8 @@ export function decodeMoyu32Notification(
   }
   return result;
 }
+
+/** Calibrate the physically solved cube; a write requires a confirmed state reply. */
+export function createMoyu32ResetCommand(): Uint8Array {
+  return new Uint8Array([0xa2, 0, 0, 0, 0x24, 0x92, 0x49, 0x49, 0x24, 0x92, 0x6d, 0xb6, 0xdb, 0x92, 0x49, 0x24, 0xb6, 0xdb, 0x6d, 0]);
+}

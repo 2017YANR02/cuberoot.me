@@ -1,3 +1,5 @@
+import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
+import { createGanV4ResetCommand } from '@cuberoot/shared/smart-cube/gan-v4';
 import {
   GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
   GAN_V4_SERVICE_UUID,
@@ -44,6 +46,7 @@ function bytesFromView(view: DataView): Uint8Array {
 }
 
 export class GanV4CubeConnection {
+  private calibration: ReturnType<typeof createDeviceStateReset> | null = null;
   private deviceId: string | null = null;
   private stopNotifications: (() => Promise<void>) | null = null;
   private writeTail: Promise<void> = Promise.resolve();
@@ -75,6 +78,8 @@ export class GanV4CubeConnection {
     const current = () => this.generation === generation && this.deviceId === device.id;
     await this.transport.connect(device.id, () => {
       if (!current()) return;
+      this.calibration?.dispose();
+      this.calibration = null;
       this.generation++;
       this.deviceId = null;
       this.stopNotifications = null;
@@ -87,10 +92,11 @@ export class GanV4CubeConnection {
 
     const cipher = createGanV4Cipher(mac);
     let protocolErrorReported = false;
-    const sendCommand = (command: Uint8Array): Promise<void> => {
+    const sendCommand = (command: Uint8Array, begin?: () => boolean): Promise<void> => {
       const encrypted = cipher.encrypt(command);
       const task = this.writeTail.then(() => {
         if (!current()) throw new Error('smart cube connection closed');
+        if (begin && !begin()) return;
         return this.transport.write(device.id, GAN_V4_SERVICE_UUID, GAN_V4_WRITE_CHARACTERISTIC_UUID, encrypted);
       });
       this.writeTail = task.catch(() => undefined);
@@ -116,7 +122,12 @@ export class GanV4CubeConnection {
         stateReady = false;
         sendRecoveryCommand(createGanV4FaceletsCommand());
       },
-      onState: (facelets) => { stateReady = true; this.callbacks.onState?.(facelets); },
+      onState: (facelets) => { stateReady = true; this.calibration?.observe(facelets); this.callbacks.onState?.(facelets); },
+    });
+    this.calibration = createDeviceStateReset({
+      sendReset: begin => sendCommand(createGanV4ResetCommand(), begin),
+      prepareSnapshot: () => { decodeState.sync.reset(); },
+      requestSnapshot: () => sendCommand(createGanV4FaceletsCommand()),
     });
     this.idleStateChecks = createGanV4IdleStateChecks({
       schedule: (callback, delay) => setTimeout(callback, delay),
@@ -167,7 +178,14 @@ export class GanV4CubeConnection {
     await this.sendCommand(createGanV4BatteryCommand());
   }
 
+  async resetDeviceState(): Promise<void> {
+    if (!this.calibration) throw new Error('smart cube is not connected');
+    await this.calibration.run();
+  }
+
   async disconnect(): Promise<void> {
+    this.calibration?.dispose();
+    this.calibration = null;
     const deviceId = this.deviceId;
     this.deviceId = null;
     this.generation++;

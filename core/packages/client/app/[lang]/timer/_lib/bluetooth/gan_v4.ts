@@ -128,7 +128,7 @@ export const ganV4Driver: CubeDriver = {
     // is resolved after we subscribe). The decoder only ever calls these from
     // a notification, long after start() has finished, so a late binding is
     // safe — and it keeps the handshake order identical to cstimer's.
-    let sendCmd: (req: Uint8Array, strict?: boolean) => Promise<void> = async () => {};
+    let sendCmd: (req: Uint8Array, strict?: boolean, begin?: () => boolean) => Promise<void> = async () => {};
 
     let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
     const decState: MoveDecodeState = createGanV4DecodeState({
@@ -195,7 +195,7 @@ export const ganV4Driver: CubeDriver = {
     }
 
     let writeTail: Promise<void> = Promise.resolve();
-    sendCmd = (req: Uint8Array, strict = false): Promise<void> => {
+    sendCmd = (req: Uint8Array, strict = false, begin?: () => boolean): Promise<void> => {
       if (!cmdChar) return strict ? Promise.reject(new Error('Device has no write characteristic')) : Promise.resolve();
       const enc = cipher.encrypt(req);
       // Detach into a fresh ArrayBuffer-backed Uint8Array — the strict TS
@@ -203,7 +203,10 @@ export const ganV4Driver: CubeDriver = {
       // chained subarrays surface as `ArrayBufferLike`.
       const buf = new Uint8Array(enc.length);
       buf.set(enc);
-      const task = writeTail.then(() => writeGattValue(cmdChar!, buf));
+      const task = writeTail.then(() => {
+        if (begin && !begin()) return;
+        return writeGattValue(cmdChar!, buf);
+      });
       writeTail = task.catch(() => {});
       return strict ? task : task.catch(() => {});
     };
@@ -216,7 +219,7 @@ export const ganV4Driver: CubeDriver = {
     }
 
     calibration = createDeviceStateReset({
-      sendReset: () => sendCmd(createGanV4ResetCommand(), true),
+      sendReset: begin => sendCmd(createGanV4ResetCommand(), true, begin),
       prepareSnapshot: () => { decState.sync.reset(); },
       requestSnapshot: () => sendCmd(createGanV4FaceletsCommand(), true),
     });

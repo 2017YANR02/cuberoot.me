@@ -1,3 +1,5 @@
+import type { GanCubeStatus } from './smart-cube/gan-cube';
+import type { LegacyCubeStatus } from './smart-cube/legacy-cube';
 import type { BleTransport } from './smart-cube/transport';
 import type { StackmatMicSource } from '@cuberoot/shared/timer/external/stackmat-state';
 import type { AppleMembershipRequest, AppleMembershipResult } from '@cuberoot/shared/apple-membership';
@@ -65,12 +67,13 @@ export interface InstalledAppSmartCube {
   phase: TimerDeviceConnectionPhase;
   /** Optional for older host/test adapters; the shared smart-cube adapter supplies these. */
   quaternion?: GyroQuaternion | null;
-  status?: GanV4CubeStatus | Moyu32CubeStatus | QiyiCubeStatus | null;
+  status?: GanCubeStatus | GanV4CubeStatus | Moyu32CubeStatus | QiyiCubeStatus | LegacyCubeStatus | null;
   solved?: boolean;
   scanning?: boolean;
   scanDevices?(): Promise<void>;
   stopScan?(): Promise<void>;
   resetState?(): void;
+  resetDeviceState?(): Promise<void>;
   requestState?(): Promise<void>;
 }
 
