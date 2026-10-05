@@ -32,6 +32,7 @@ export interface TimingSurfaceProps {
   cornerSlot?: ReactNode;
   children?: ReactNode;
   digitsCorner?: ReactNode;
+  readoutLabel?: ReactNode;
   className?: string;
   interactive?: boolean;
   ariaLabel?: string;
@@ -57,6 +58,7 @@ export default function TimingSurface({
   cornerSlot,
   children,
   digitsCorner,
+  readoutLabel,
   className,
   interactive = false,
   ariaLabel,
@@ -151,6 +153,7 @@ export default function TimingSurface({
     >
       {scrambleAbove && scrambleSlot && <div className="timing-surface-scramble timing-surface-scramble-top surface-chrome">{scrambleSlot}</div>}
       <div className="timing-surface-core" ref={coreRef}>
+        {readoutLabel}
         <div className="timer-display-wrap">
           <div
             ref={digitsRef}
