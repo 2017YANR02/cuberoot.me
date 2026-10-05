@@ -34,7 +34,8 @@ function googleClient() {
   if (!audience || !/^https:\/\/iam\.googleapis\.com\/projects\/\d+\/locations\/global\/workloadIdentityPools\/[a-z0-9-]+\/providers\/[a-z0-9-]+$/.test(audience)
     || !email || !/^[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$/.test(email)) throw new Error('WIF configuration unavailable');
   const client = ExternalAccountClient.fromJSON({
-    type: 'external_account', audience,
+    // STS requires a scheme-less resource name; the JWT aud remains the HTTPS URL.
+    type: 'external_account', audience: audience.slice('https:'.length),
     subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
     token_url: 'https://sts.googleapis.com/v1/token',
     service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${email}:generateAccessToken`,
@@ -75,7 +76,7 @@ export async function POST(req: Request): Promise<Response> {
     if (operation.operation === 'ready') {
       // A read-only probe checks both impersonation and existing Play app permissions.
       const products = await Promise.all(GOOGLE_MEMBERSHIP_PRODUCT_IDS.map(async productId => {
-        await client.request({ url: `${apiBase}/monetization/subscriptions/${productId}`, timeout: 10_000, retry: false, maxRedirects: 0 });
+        await client.request({ url: `${apiBase}/subscriptions/${productId}`, timeout: 10_000, retry: false, maxRedirects: 0 });
         return productId;
       }));
       return json({ ready: true, products });
@@ -87,8 +88,20 @@ export async function POST(req: Request): Promise<Response> {
     }
     await client.request({ method: 'POST', url: `${apiBase}/purchases/subscriptions/${operation.productId}/tokens/${token}:acknowledge`, data: {}, timeout: 15_000, retry: false, maxRedirects: 0 });
     return json({ acknowledged: true });
-  } catch {
-    // Never log Google errors: they can include auth headers, receipts and URLs.
+  } catch (error) {
+    // Never log the error object/message: it can contain auth headers or receipts.
+    // Only allowlisted protocol codes and numeric status are useful for operations.
+    const response = (error as { response?: { status?: unknown; data?: { error?: unknown } } })?.response;
+    const upstreamError = response?.data?.error;
+    const code = typeof upstreamError === 'string' ? upstreamError
+      : (upstreamError as { status?: unknown } | undefined)?.status;
+    const knownCodes = ['invalid_target', 'invalid_grant', 'invalid_request', 'unauthorized_client',
+      'access_denied', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'NOT_FOUND', 'RESOURCE_EXHAUSTED'];
+    console.warn('Google Play relay failed', {
+      operation: operation.operation,
+      status: typeof response?.status === 'number' ? response.status : null,
+      code: typeof code === 'string' && knownCodes.includes(code) ? code : 'unclassified',
+    });
     return json({ error: 'Google operation failed' }, 502);
   }
 }
