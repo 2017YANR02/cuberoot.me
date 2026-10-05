@@ -79,7 +79,7 @@ import {
   TimerStageLayout,
   TimerBattleSettings,
   TimerBattleCubeControls,
-  TimerBattleLayoutControls,
+  useTimerBattleOrientation,
   TimingSurface,
   TimerPenaltyActions,
   shouldIgnoreTimerTarget,
@@ -248,6 +248,7 @@ export function LocalBattleMode({
   const [failedScrambleEvents, setFailedScrambleEvents] = useState<Set<EventId>>(() => new Set());
   const [cubeHolder, setCubeHolder] = useState(0);
   const [layout, setLayout] = useState<'side' | 'versus'>('versus');
+  useTimerBattleOrientation(state.playerCount, setLayout);
   const [syncStart, setSyncStart] = useState(false);
   useEffect(() => { setSyncStart(window.localStorage.getItem('battle_syncStart') === 'true'); }, []);
   const [flipTopRow, setFlipTopRow] = useState(true);
@@ -586,7 +587,6 @@ export function LocalBattleMode({
   return (
     <section className="battle-mode battle-mode--local" aria-label={copy.battleLocalTitle}>
       <TimerStageLayout devices={smartCube && deviceControls}>
-      <TimerBattleLayoutControls playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow} language={language} onLayoutChange={setLayout} onFlipChange={setFlipTopRow} />
       <TimerBattleLayout middle={<TimerBattleToolbar language={language} disabled={active} onHistory={() => setHistoryOpen(true)}
         onSettings={() => setSettingsOpen(true)} onNext={nextRound}
         startDisabled={visiblePlayers.some((player) => !player.scramble)}
@@ -691,7 +691,10 @@ export function LocalBattleMode({
         <p aria-live="polite" className="battle-round-status">{copy.battleAllFinished}</p>
       )}
       <div className="battle-local-tools" data-no-timer>
-        {settingsOpen && <TimerBattleSettings language={language} onClose={() => setSettingsOpen(false)}
+        {settingsOpen && <TimerBattleSettings layout={{
+          playerCount: state.playerCount as 2 | 3 | 4, layout, flipTopRow,
+          onLayoutChange: setLayout, onFlipChange: setFlipTopRow,
+        }} language={language} onClose={() => setSettingsOpen(false)}
           syncStart={{ value: syncStart, onChange: value => {
             setSyncStart(value); window.localStorage.setItem('battle_syncStart', String(value));
           } }}

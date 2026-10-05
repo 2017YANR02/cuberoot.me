@@ -387,6 +387,9 @@
 .solver-layout-action:hover { background: var(--shell-hover); color: var(--foreground); }
 .solver-layout-action:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 .solver-panel-body { width: 100%; margin-top: 8px; }
+.solver-panel-body .stsv-controls { justify-content: center; }
+.solver-panel-body .stsv-angles { justify-content: center; }
+.solver-panel-body .stsv-result { margin-inline: auto; }
 /* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
    大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
 .solver-panel-scramble {
@@ -550,6 +553,7 @@
   border-bottom: 1px solid var(--shell-divider);
 }
 .solver-sheet-title { font-size: 15px; font-weight: 600; }
+.solver-settings-slot { display: flex; align-items: center; flex: 1; }
 /* Toolbar convention: title left, close right — the one place a spacer is right. */
 .solver-sheet-close {
   margin-left: auto;
@@ -647,6 +651,9 @@
     border-radius: 0;
     background: transparent;
   }
+  .timer-shell:has(.shell-rail .solver-panel[data-open='true']) .shell-rail .solver-panel-headrow:has(.solver-settings-slot) .solver-panel-head {
+    flex: 0 0 auto;
+  }
   /* Header, rail collapsed (all closed): free-floating pill under the topbar
      icons (not flush to the viewport edge, so it's rounded all the way round). */
   .shell-rail .solver-panel[data-open='false'] .solver-panel-head {
@@ -670,12 +677,7 @@
   .shell-rail .solver-panel[data-open='false'] .solver-panel-chevron { transform: rotate(0deg); }
   .shell-rail .solver-panel[data-open='true']  .solver-panel-chevron { transform: rotate(180deg); }
 
-  /* The rail is a narrow tall column — stack the 3D player ABOVE the solution
-     list (StageSolver's default puts them side-by-side, only collapsing under a
-     viewport-width query that never fires on a wide desktop). Stacking gives
-     each solution's full move sequence the rail's whole width, so deeper-stage
-     algs aren't clipped. Override only from this wrapper (shared CSS off-limits). */
-  .shell-rail .solver-panel-body .stsv-result { flex-direction: column-reverse; }
+  /* Keep StageSolver's solution-menu-first order in the narrow desktop rail. */
   .shell-rail .solver-panel-body .stsv-player {
     position: static;
     flex-basis: auto;

@@ -898,3 +898,8 @@ button {
     transition: none;
   }
 }
+
+.app-solver-settings-slot { display: flex; flex: 1; align-items: center; }
+.app-stage-solver > p { overflow-wrap: anywhere; }
+.app-stage-solver .stsv-controls, .app-stage-solver .stsv-angles { justify-content: center; }
+.app-stage-solver .stsv-result { margin-inline: auto; }

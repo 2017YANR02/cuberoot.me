@@ -37,7 +37,7 @@ import { RangeSlider } from '@/components/RangeSlider/RangeSlider';
 import { ParamSliders, type ParamSliderSpec } from '@/components/ParamSliders';
 import { Spinner } from '@/components/Spinner/Spinner';
 import ResetDefaultsButton from '@/components/ResetDefaultsButton';
-import PlaybackBar from '@/components/PlaybackBar';
+import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import CountryShareBar from '@/components/CountryShareBar/CountryShareBar';
 import { VARIANT_ORDER } from '@/lib/scramble-variants';
@@ -1307,7 +1307,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'PlaybackBar',
-    import: "import PlaybackBar from '@/components/PlaybackBar';",
+    import: "import PlaybackBar from '@cuberoot/timer-ui/PlaybackBar';",
     category: 'input',
     zh: '魔方解法播放控制条(twizzle alpha.twizzle.net/edit 两排式:进度条 + 计数在上,传输按钮在下)。recon 的 ReconPlayerBase 与 /sim 引擎播放条共用同一份,像素一致 —— 不要各页手写一排按钮/滑条。leading / trailing 往按钮排两端塞额外控件(/sim 的阶段色块 + 锚点下拉)。内部滑条用 PlaybackScrubber。',
     en: 'Cube alg-playback transport (twizzle alpha.twizzle.net/edit two-row layout: scrubber + counter on top, transport buttons below). Shared pixel-for-pixel by recon’s ReconPlayerBase and /sim’s engine playback bar — don’t hand-roll a per-page control row. leading / trailing slot extra controls into the button row (/sim’s stickering + anchor selects). Wraps PlaybackScrubber internally.',
@@ -1607,7 +1607,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerBattleLayout',
-    import: "import { TimerBattleLayout, TimerBattleLayoutControls } from '@cuberoot/timer-ui';",
+    import: "import { TimerBattleLayout, TimerBattleLayoutControls, useTimerBattleOrientation } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与五端 App 共用的 2～4 人排布、并排/面对面切换、上排旋转和成对共用打乱；宿主注入玩家内容与设置回调。',
     en: 'Shared 2–4 player arrangement, side-by-side/face-to-face controls, top-row rotation, and paired scramble rows for Web and installed apps. Hosts supply player content and settings callbacks.',
@@ -2209,7 +2209,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'CuberReconPlayer',
-    import: "import CuberReconPlayer from '@/components/CuberReconPlayer';",
+    import: "import CuberReconPlayer from '@cuberoot/timer-ui/CuberReconPlayer';",
     category: 'display',
     zh: `用 /sim 的 cuber WebGL 引擎做的只读 NxN 复盘播放器,常驻背视图 + 播放 / 步进 / 拖条,作为 TwistySection 的 NxN 替代。`,
     en: `Read-only NxN recon player on /sim's cuber WebGL engine with an always-on back view and play/step/scrub controls; an NxN alternative to TwistySection.`,
@@ -2565,7 +2565,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'StageSolver',
-    import: "import StageSolver from '@/components/StageSolver';",
+    import: "import StageSolver from '@cuberoot/timer-ui/StageSolver';",
     category: 'more',
     zh: `逐阶段最优解浏览器,6 视角对比步数 + 可执行多解列表 + 共享 3D 播放,覆盖 cross / EO / DR / HTR 等方法,用在 analyzer 与 gen 行内。`,
     en: `Per-stage optimal-solve explorer: 6-view move counts + executable solution list + shared 3D player across cross/EO/DR/HTR methods; used in analyzer and gen.`,

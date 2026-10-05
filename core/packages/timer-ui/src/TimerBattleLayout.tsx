@@ -21,7 +21,19 @@ const COPY = {
   zh: { layout: '布局', side: '并排', versus: '面对面', flip: '旋转上方玩家' },
 } as const;
 
-export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, language, onLayoutChange, onFlipChange, hideFlipControl = false }: {
+/** Orientation follows the mounted battle, independently of its settings dialog. */
+export function useTimerBattleOrientation(playerCount: number, onLayoutChange: (value: 'side' | 'versus') => void, autoOrientation = true) {
+  useEffect(() => {
+    if (!autoOrientation || playerCount !== 2 || typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia('(orientation: landscape)');
+    const update = () => onLayoutChange(media.matches ? 'side' : 'versus');
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, [autoOrientation, onLayoutChange, playerCount]);
+}
+
+export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, language, onLayoutChange, onFlipChange, hideFlipControl = false, autoOrientation = true }: {
   playerCount: 2 | 3 | 4;
   layout: 'side' | 'versus';
   flipTopRow: boolean;
@@ -29,16 +41,10 @@ export function TimerBattleLayoutControls({ playerCount, layout, flipTopRow, lan
   onLayoutChange(value: 'side' | 'versus'): void;
   onFlipChange(value: boolean): void;
   hideFlipControl?: boolean;
+  autoOrientation?: boolean;
 }) {
   const copy = COPY[language];
-  useEffect(() => {
-    if (playerCount !== 2 || typeof window.matchMedia !== 'function') return;
-    const media = window.matchMedia('(orientation: landscape)');
-    const update = () => onLayoutChange(media.matches ? 'side' : 'versus');
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, [onLayoutChange, playerCount]);
+  useTimerBattleOrientation(playerCount, onLayoutChange, autoOrientation);
   return <div className="timer-battle-layout-controls" role="group" aria-label={copy.layout} data-no-timer>
     {playerCount === 2 && (['versus', 'side'] as const).map((value) => (
       <button type="button" key={value} aria-pressed={layout === value} onClick={() => onLayoutChange(value)}>{copy[value]}</button>

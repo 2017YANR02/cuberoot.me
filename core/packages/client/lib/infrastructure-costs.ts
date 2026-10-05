@@ -1,8 +1,8 @@
-// Shared cost inventory for the infrastructure and partner-brief pages.
+// Shared cost inventory for the expenses and partner-brief pages.
 // These are owner-recorded figures, not live vendor prices or a project expense ledger.
 export type LocalizedText = { zh: string; en: string };
 
-export type RecurringAmount = { value: number; currency: 'CNY' | 'USD'; period: 'month' | 'year' };
+export type RecurringAmount = { value: number; currency: 'CNY' | 'USD'; period: 'month' | 'year'; plusUsage?: boolean; displayValue?: string };
 
 export type EquipmentAmount =
   | number
@@ -16,6 +16,7 @@ export type EquipmentGroup = {
     detail: LocalizedText;
     amount: EquipmentAmount;
     imageSrc: string;
+    imageScale?: number;
     href?: string;
   }[];
 };
@@ -24,13 +25,21 @@ export const RMB_PER_USD = 6.7840;
 
 export const EXPENSES: readonly { name: LocalizedText; amount: RecurringAmount; purpose: LocalizedText }[] = [
   {
+    name: { zh: '实习生', en: 'Internship' },
+    amount: { value: 3600, currency: 'CNY', period: 'month' },
+    purpose: {
+      zh: '¥300/天，每周 3 天、每月约 12 天；预计月支出',
+      en: 'CN¥300/day, three days/week and approximately 12 days/month; estimated monthly cost',
+    },
+  },
+  {
     name: { zh: '阿里云服务器', en: 'Alibaba Cloud server' },
     amount: { value: 300, currency: 'CNY', period: 'month' },
     purpose: { zh: '主站、API 与数据服务', en: 'Primary web, API, and data services' },
   },
   {
     name: { zh: 'Codex Pro', en: 'Codex Pro' },
-    amount: { value: 200, currency: 'USD', period: 'month' },
+    amount: { value: 300, currency: 'USD', period: 'month', displayValue: '200+100' },
     purpose: { zh: 'AI 开发工具', en: 'AI development tooling' },
   },
   {
@@ -40,7 +49,7 @@ export const EXPENSES: readonly { name: LocalizedText; amount: RecurringAmount; 
   },
   {
     name: { zh: 'Vercel Pro', en: 'Vercel Pro' },
-    amount: { value: 20, currency: 'USD', period: 'month' },
+    amount: { value: 20, currency: 'USD', period: 'month', plusUsage: true },
     purpose: { zh: 'Web 构建与托管', en: 'Web builds and hosting' },
   },
   {
@@ -56,11 +65,54 @@ export const EXPENSES: readonly { name: LocalizedText; amount: RecurringAmount; 
     amount: { value: 208, currency: 'CNY', period: 'year' },
     purpose: { zh: '视频剪辑软件', en: 'Video editing software' },
   },
+  {
+    name: { zh: '企业网银服务费', en: 'Business online banking service fee' },
+    amount: { value: 25, currency: 'CNY', period: 'month' },
+    purpose: { zh: '对公账户网上银行服务', en: 'Online banking for the business account' },
+  },
 ] as const;
 
 export const ANNUAL_RECURRING_CNY = EXPENSES.reduce((total, expense) => total + annualExpenseCny(expense.amount), 0);
 
 export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
+  {
+    category: { zh: '供电与存储', en: 'Power and storage' },
+    items: [
+      {
+        name: { zh: 'SanDisk Extreme 128GB SD 存储卡', en: 'SanDisk Extreme 128GB SD card' },
+        detail: { zh: '含数据恢复软件；实付款', en: 'Includes data recovery software; amount paid' },
+        amount: 168.16,
+        imageSrc: '/images/dev/infrastructure/sandisk-extreme-128gb-cutout.webp',
+      },
+      {
+        name: { zh: '沣标 FB LP-E6P 相机电池 ×4', en: 'FB LP-E6P camera batteries ×4' },
+        detail: {
+          zh: 'Type-C 直充；已确认 2400mAh 两块、2600mAh 一块。金额为三笔已完成订单合计（¥164.87 + ¥156.10 + ¥191）；第 4 块规格和价格待补，未计入合计。',
+          en: 'USB-C charging; two 2400mAh and one 2600mAh batteries confirmed. Amount covers three completed orders (CN¥164.87 + CN¥156.10 + CN¥191); the fourth battery’s specifications and price are pending and excluded from the total.',
+        },
+        amount: 511.97,
+        imageSrc: '/images/dev/infrastructure/fb-lp-e6p-cutout.webp',
+      },
+      {
+        name: { zh: '影视飓风 × 闪极 随行 Mini 充电宝', en: 'Mediastorm × SHARGE Mini power bank' },
+        detail: { zh: '胶卷绿，5000mAh；自带线、USB-C 接口与 Lightning 转接；实付款', en: 'Film green, 5000mAh; built-in cable, USB-C connector and Lightning adapter; amount paid' },
+        amount: 149,
+        imageSrc: '/images/dev/infrastructure/sharge-mediastorm-mini-cutout.webp',
+      },
+      {
+        name: { zh: 'Anker 能量舱 165W 充电宝', en: 'Anker 165W power bank' },
+        detail: { zh: '25000mAh；70cm 伸缩线、30cm 挂绳线，四口同充；实付款', en: '25000mAh; 70cm retractable cable, 30cm lanyard cable, four-device charging; amount paid' },
+        amount: 469,
+        imageSrc: '/images/dev/infrastructure/anker-165w-25000mah-cutout.webp',
+      },
+      {
+        name: { zh: 'CHIPFANCIER × 影视飓风 Gold4 2TB', en: 'CHIPFANCIER × Mediastorm Gold4 2TB' },
+        detail: { zh: 'CFexpress Type B 4.0 存储卡，含 USB 3.2 单卡槽读卡器；套装实付款', en: 'CFexpress Type B 4.0 card with USB 3.2 single-slot reader; bundle amount paid' },
+        amount: 2309,
+        imageSrc: '/images/dev/infrastructure/chipfancier-gold4-2tb-cutout.webp',
+      },
+    ],
+  },
   {
     category: { zh: '影像设备', en: 'Imaging' },
     items: [
@@ -69,6 +121,11 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
         detail: { zh: '当前相机机身', en: 'Current camera body' },
         amount: 24000,
         imageSrc: '/images/dev/infrastructure/canon-eos-r5-mark-ii-cutout.webp',
+        // Match R6's physical scale while compensating for transparent canvas padding.
+        // Alpha bounds: R5 II 466px, R6 673px; body widths: 138.5mm / 138.4mm.
+        // Canon specs: https://personal.canon.jp/product/camera/eos/r5mk2/spec
+        // https://cam.start.canon/en/C004/manual/html/UG-09_Reference_0100.html
+        imageScale: (673 / 466) * (138.5 / 138.4),
       },
       {
         name: { zh: 'Canon EOS R6', en: 'Canon EOS R6' },
@@ -79,7 +136,7 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
       {
         name: { zh: 'Canon EF 100–400mm f/4.5–5.6L IS II USM', en: 'Canon EF 100–400mm f/4.5–5.6L IS II USM' },
         detail: { zh: '长焦镜头', en: 'Telephoto lens' },
-        amount: { value: 16000, qualifier: 'approx' },
+        amount: 13900,
         imageSrc: '/images/dev/infrastructure/canon-ef-100-400.webp',
       },
       {
@@ -142,14 +199,14 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
     items: [
       {
         name: { zh: 'iPhone 15 Pro Max 512 GB', en: 'iPhone 15 Pro Max 512 GB' },
-        detail: { zh: '手机', en: 'Phone' },
-        amount: { label: { zh: '未标价', en: 'Price not listed' } },
+        detail: { zh: '手机；中国大陆发售价', en: 'Phone; mainland China launch price' },
+        amount: 11999,
         imageSrc: '/images/dev/infrastructure/iphone-15-pro-max.webp',
       },
       {
         name: { zh: 'iPhone 12 Pro Max 512 GB', en: 'iPhone 12 Pro Max 512 GB' },
-        detail: { zh: '手机', en: 'Phone' },
-        amount: { label: { zh: '未标价', en: 'Price not listed' } },
+        detail: { zh: '手机；中国大陆发售价', en: 'Phone; mainland China launch price' },
+        amount: 11899,
         imageSrc: '/images/dev/infrastructure/iphone-12-pro-max.webp',
       },
       {
@@ -163,6 +220,13 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
         detail: { zh: 'Windows 11 笔记本电脑', en: 'Windows 11 laptop' },
         amount: 25000,
         imageSrc: '/images/dev/infrastructure/alienware-m17-r4.webp',
+      },
+      {
+        name: { zh: '小米曲面显示器 34 英寸', en: 'Mi Curved Gaming Monitor 34"' },
+        detail: { zh: '黑色；WQHD 带鱼屏、144Hz；实付款', en: 'Black; WQHD ultrawide display, 144Hz; amount paid' },
+        amount: 2190,
+        imageSrc: '/images/dev/infrastructure/xiaomi-curved-monitor-34.webp',
+        href: 'https://www.mi.com/monitor34',
       },
       {
         name: { zh: '狼蛛 S98 无线三模机械键盘', en: 'AULA S98 tri-mode wireless mechanical keyboard' },
@@ -213,7 +277,7 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
           zh: '四个雷雳 3 端口；2 GHz 四核 Intel Core i5、16GB LPDDR4X、Intel Iris Plus Graphics；截图未显示存储容量',
           en: 'Four Thunderbolt 3 ports; 2GHz quad-core Intel Core i5, 16GB LPDDR4X, Intel Iris Plus Graphics; storage capacity not shown',
         },
-        amount: { value: 14499, qualifier: 'launchedFrom' },
+        amount: 14499,
         imageSrc: '/images/dev/infrastructure/macbook-pro-13-2020.webp',
         href: 'https://support.apple.com/zh-cn/111339',
       },
@@ -221,7 +285,19 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
   },
 ] as const;
 
-export const ONE_TIME_TOTAL = EQUIPMENT_GROUPS.reduce((total, group) => total + equipmentGroupTotal(group), 0);
+export const ONE_TIME_EXPENSES = [
+  {
+    name: { zh: '公司注册工位（一年）', en: 'Company registration workspace (one year)' },
+    detail: {
+      zh: '上海徐汇站 1 期开放工位；租期一年，计划仅租这一年。订单总额含 ¥2,200 押金。',
+      en: 'Open workspace at Shanghai Xuhui Station Phase 1; a single planned one-year lease. The order total includes a CN¥2,200 deposit.',
+    },
+    amount: 20152,
+  },
+] as const;
+
+export const ONE_TIME_TOTAL = EQUIPMENT_GROUPS.reduce((total, group) => total + equipmentGroupTotal(group), 0)
+  + ONE_TIME_EXPENSES.reduce((total, expense) => total + expense.amount, 0);
 
 
 export function annualExpenseCny(amount: RecurringAmount): number {

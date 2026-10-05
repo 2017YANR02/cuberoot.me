@@ -15,7 +15,7 @@ const dir = mkdtempSync(join(tmpdir(), 'cuberoot-scanner-check-'));
 chmodSync(dir, 0o755);
 mkdirSync(join(dir, 'logs'));
 const journal = join(dir, 'bans.tsv');
-writeFileSync(journal, `198.51.100.250\t${Math.floor(Date.now() / 1000) - 1}\n`);
+writeFileSync(journal, `154.44.14.212\t${Math.floor(Date.now() / 1000) + 3600}\n198.51.100.250\t${Math.floor(Date.now() / 1000) - 1}\n`);
 // This isolated listener may run as the nginx nobody/www worker user.
 chmodSync(journal, 0o666);
 const policy = readFileSync(source, 'utf8').replaceAll('/var/lib/cuberoot-scanner/bans.tsv', journal);
@@ -79,6 +79,10 @@ try {
     try { await get('/ready', '127.0.0.1'); ready = true; break; } catch { await delay(50); }
   }
   assert(ready, `isolated nginx did not start; see ${dir}/error.log`);
+  // Owner allowlist must override a persisted ban and never accumulate a new one.
+  for (let i = 0; i < 12; i++) await expectStatus("/wca/comp/unverified", "154.44.14.212", 307);
+  await expectStatus("/.env", "154.44.14.212", 200);
+  await expectStatus("/healthy", "154.44.14.212", 200);
   const probes = [
     '/.env', '/admin/.env', '/.env.production', '/.ENV.local', '/a/.env/backup',
     '/.git/config', '/.git/HEAD', '/.svn/entries', '/.hg/store',

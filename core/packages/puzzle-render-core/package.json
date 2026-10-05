@@ -113,7 +113,10 @@
       "./sim/worldInteraction": "react-dom",
       "./support/cube-net-svg": "mixed",
       "./engine/nxn/vcStageMask": "mixed",
-      "./support/puzzle-image/masks": "mixed"
+      "./support/puzzle-image/masks": "mixed",
+      "./engine/coreOpacity": "mixed",
+      "./engine/backView": "react-dom",
+      "./support/three": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -225,7 +228,10 @@
     "./sim/worldInteraction": "./src/sim/worldInteraction.ts",
     "./support/cube-net-svg": "./src/support/cube-net-svg.ts",
     "./engine/nxn/vcStageMask": "./src/engine/nxn/vcStageMask.ts",
-    "./support/puzzle-image/masks": "./src/support/puzzle-image/masks.ts"
+    "./support/puzzle-image/masks": "./src/support/puzzle-image/masks.ts",
+    "./engine/coreOpacity": "./src/engine/coreOpacity.ts",
+    "./engine/backView": "./src/engine/backView.ts",
+    "./support/three": "./src/support/three.ts"
   },
   "scripts": {
     "build": "tsc -b && esbuild src/iso-svg.ts --bundle --platform=node --target=node20 --format=esm --outfile=dist/iso-svg.js",

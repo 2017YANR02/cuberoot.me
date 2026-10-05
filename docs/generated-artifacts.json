@@ -574,6 +574,21 @@
       "driftPolicy": "The generator requires an explicit TNoodle i18n directory and --write or --check. Generated headers remain repository-relative and must never record a machine-local checkout path."
     },
     {
+      "id": "runtime.stage-solver-assets",
+      "kind": "build-output",
+      "source": {
+        "locator": "Canonical stage solver workers and WASM",
+        "paths": ["tools/solver/rust-cross/cross-solver-worker.js", "tools/solver/rust-cross/xcross-table-worker.js", "tools/solver/rust-cross/cross_solver.js", "tools/solver/rust-cross/cross_solver_bg.wasm", "core/scripts/copy-stage-solver-assets.mts"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE" },
+      "owner": "core/scripts/copy-stage-solver-assets.mts",
+      "workingDirectory": "core",
+      "command": "node scripts/build-cubing-worker.mjs <host-public-dir>/cubing-chunks",
+      "transientOutputs": ["core/apps/mobile/public/tools/solver/rust-cross/**", "core/apps/desktop/public/tools/solver/rust-cross/**", "core/apps/harmony/public/tools/solver/rust-cross/**"],
+      "verification": ["host production build and stage solver runtime smoke check"],
+      "driftPolicy": "Host dev/build copies the four executable assets from the canonical static tree. Never hand-edit host copies; table data continues to use the configured static host."
+    },
+    {
       "id": "runtime.cubing-worker",
       "kind": "build-output",
       "source": {

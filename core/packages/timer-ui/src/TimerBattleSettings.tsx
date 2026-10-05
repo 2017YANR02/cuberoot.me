@@ -1,11 +1,14 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { isLocalBattleAssignableKey } from '@cuberoot/shared/timer';
 import BoolToggle from './BoolToggle';
+import { TimerBattleLayoutControls } from './TimerBattleLayout';
+import type { ComponentProps } from 'react';
 import { TimerRoomDialog } from './TimerRoomDialog';
 
 interface Setting<T> { value: T; onChange(value: T): void }
 export interface TimerBattleSettingsProps {
   language: 'en' | 'zh';
+  layout?: Omit<ComponentProps<typeof TimerBattleLayoutControls>, 'language' | 'autoOrientation'>;
   onClose(): void;
   keys: readonly string[];
   onKeyChange(playerId: number, key: string): void;
@@ -43,10 +46,11 @@ export function TimerBattleKeyBindings({ language, keys, onChange }: { language:
     </button>
   </div>)}</fieldset>;
 }
-export function TimerBattleSettings({ language, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children }: TimerBattleSettingsProps) {
+export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children }: TimerBattleSettingsProps) {
   const copy = COPY[language];
-  return <TimerRoomDialog title={copy.settings} language={language} onClose={onClose}>
+  return <TimerRoomDialog className="timer-battle-settings-dialog" title={copy.settings} language={language} onClose={onClose}>
     <div className="timer-battle-settings">
+      {layout && <TimerBattleLayoutControls {...layout} language={language} autoOrientation={false} />}
       {source}
       {precision && <label>{copy.precision}<select value={precision.value} onChange={(event) => precision.onChange(Number(event.target.value))}>{(precision.options ?? [0, 1, 2, 3]).map((value) => <option value={value} key={value}>{(10 ** -value).toFixed(value)}s</option>)}</select></label>}
       {inspection && <label>{copy.inspection}<select value={inspection.value} onChange={(event) => inspection.onChange(Number(event.target.value))}>{(inspection.options ?? [0, 15]).map((value) => <option value={value} key={value}>{value === 0 ? copy.off : value === 9999 ? '∞' : `${value}s`}</option>)}</select></label>}

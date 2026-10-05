@@ -20,7 +20,7 @@ export { TimerBattleSettings, TimerBattleKeyBindings, type TimerBattleSettingsPr
 export { TimerBattleToolbar, type TimerBattleToolbarProps } from './TimerBattleToolbar';
 export { TimerBattleCubeControls, type TimerBattleCubeControlsProps } from './TimerBattleCubeControls';
 export type { TimerBattlePlayerProps } from './TimerBattlePlayer';
-export { TimerBattleLayout, TimerBattleLayoutControls } from './TimerBattleLayout';
+export { TimerBattleLayout, TimerBattleLayoutControls, useTimerBattleOrientation } from './TimerBattleLayout';
 export type { TimerBattleLayoutProps, TimerBattleCell } from './TimerBattleLayout';
 import './timer-penalty-actions.css';
 export { TimerPenaltyActions } from './TimerPenaltyActions';

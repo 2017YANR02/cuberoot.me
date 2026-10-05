@@ -98,7 +98,16 @@
 .timer-battle-history-results > div { display: flex; flex-direction: column; gap: 8px; }
 .timer-battle-history-results strong { font: 28px var(--font-mono); }
 .timer-battle-history-scramble p { overflow-wrap: anywhere; }
+.timer-room-dialog.timer-battle-settings-dialog {
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
 .timer-battle-settings { display: flex; flex-direction: column; gap: 16px; }
+.timer-battle-settings > .bool-toggle {
+  justify-content: space-between;
+  width: 100%;
+}
 .timer-battle-settings > label, .timer-battle-key-bindings > div, .timer-battle-cube-device { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .timer-battle-settings select, .timer-battle-key-bindings button { min-height: 44px; padding: 6px 12px; border: 1px solid var(--border-default); border-radius: 6px; background: var(--background); color: var(--foreground); font: inherit; }
 .timer-battle-key-bindings { border: 0; padding: 0; margin: 0; }

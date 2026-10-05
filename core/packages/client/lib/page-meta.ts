@@ -350,10 +350,17 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/architecture/flow': { title: { zh: '请求流程', en: 'Request Flow' } },
   'dev/architecture/history': { title: { zh: '历程', en: 'History' } },
   'dev/infrastructure': {
-    title: { zh: '生产基础设施', en: 'Production Infrastructure' },
+    title: { zh: '基础设施与运维', en: 'Infrastructure & Operations' },
     description: {
       zh: 'CubeRoot 生产环境的公开档案:容量、请求路径、发布恢复、健康检查、备份和安全披露边界。',
       en: 'A public profile of CubeRoot production capacity, request routing, release recovery, health checks, backups, and disclosure boundaries.',
+    },
+  },
+  'dev/expenses': {
+    title: { zh: '支出与设备', en: 'Expenses & Equipment' },
+    description: {
+      zh: 'CubeRoot 的投入概览：设备价格、工位租赁、人员与服务订阅，以及订单金额、发售价和可退押金的统计口径。',
+      en: 'An overview of CubeRoot investment: equipment prices, workspace rental, staffing and subscriptions, with the basis for order amounts, launch prices and refundable deposits.',
     },
   },
   'dev/components': { title: { zh: '组件库', en: 'Components' } },
@@ -400,7 +407,7 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
   'dev/llm/sonnet-5': { title: { zh: 'Claude Sonnet 5', en: 'Claude Sonnet 5' } },
   'dev/traffic-incident-2026-09': {
     title: { zh: '2026 年 9 月流量事件记录', en: 'September 2026 traffic incident' },
-    description: { zh: 'CubeRoot 9 月 22—25 日流量事件记录：Vercel 截图、日志分析、停站与恢复过程、防护措施和待解决的问题。', en: 'CubeRoot traffic incident, September 22–25: Vercel screenshots, log analysis, pauses, reopening, protection changes and remaining issues.' },
+    description: { zh: 'CubeRoot 2026 年 9 月流量事件及截至 10 月 5 日的后续处置：停站恢复、全站验证码、七天通行、自动封禁、名单容量和误封修复。', en: 'CubeRoot September 2026 traffic incident and follow-up through October 5: recovery, site-wide CAPTCHA, seven-day access, automatic bans, list capacity and false-positive fixes.' },
   },
   'dev/dns-routing': {
     title: { zh: '同一个网址，为什么会连到不同的服务器？', en: 'Why can one web address reach different servers?' },

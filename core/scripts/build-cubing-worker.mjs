@@ -30,3 +30,9 @@ const result = await build({
 });
 if (result.errors.length) throw new Error(`cubing worker build failed with ${result.errors.length} errors`);
 console.log(`[build-cubing-worker] ${outputRelative}/search-worker-entry.js ${(statSync(outFile).size / 1024).toFixed(1)} KB`);
+
+// Installed hosts must ship solver executable assets, never load remote app code.
+if (outputRelative.startsWith('apps/')) {
+  const { copyStageSolverAssets } = await import('./copy-stage-solver-assets.mts');
+  copyStageSolverAssets(path.dirname(outDir));
+}

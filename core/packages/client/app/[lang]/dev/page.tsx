@@ -58,16 +58,33 @@ const CARDS: Card[] = [
     glyph: '▤',
     accent: 'var(--signal-info)',
     zh: {
-      title: '基础设施',
+      title: '基础设施与运维',
       sub: 'Infrastructure',
       tagline: '生产环境的公开档案:容量、请求路径、发布、监控、备份和安全披露边界',
       meta: '4 vCPU / 16 GiB / 发布与恢复',
     },
     en: {
-      title: 'Infrastructure',
+      title: 'Infrastructure & Operations',
       sub: 'Production systems',
       tagline: 'A public profile of production capacity, request routing, releases, monitoring, backups, and disclosure boundaries',
       meta: '4 vCPU / 16 GiB / release and recovery',
+    },
+  },
+  {
+    href: '/dev/expenses',
+    glyph: '¥',
+    accent: 'var(--signal-info)',
+    zh: {
+      title: '支出与设备',
+      sub: 'Expenses & Equipment',
+      tagline: '设备、工位、人员与服务订阅的投入概览，公开金额和统计口径',
+      meta: '一次性投入 / 持续支出 / 设备清单',
+    },
+    en: {
+      title: 'Expenses & Equipment',
+      sub: 'Investment overview',
+      tagline: 'Equipment, workspace, staffing and subscriptions, with amounts and their accounting basis',
+      meta: 'One-off investment / recurring costs / equipment inventory',
     },
   },
   {

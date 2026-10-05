@@ -22,7 +22,7 @@ import { canTrainerDifficulty } from '../_lib/scramble/trainer-source';
 import { tr } from '@/i18n/tr';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
 import { use222Type } from '@/lib/scramble-222-mode';
-import { SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from '@cuberoot/shared/timer';
+import { TIMER_MANUAL_SCRAMBLE_EMPTY_COPY, SCRAMBLE_222_TYPES, WCA_SCRAMBLE_222_TYPES, type Scramble222Type } from '@cuberoot/shared/timer';
 import { ManualScrambleQueueEditor } from '@cuberoot/timer-ui';
 
 interface Props {
@@ -59,6 +59,7 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
       {src === 'manual' && (
         <ManualScrambleQueueEditor
           ariaLabel={tr({ zh: '手动输入打乱', en: 'Manual scrambles' })}
+          placeholder={tr(TIMER_MANUAL_SCRAMBLE_EMPTY_COPY)}
           onChange={(manualScrambles) => updateSettings({ manualScrambles })}
           value={s.manualScrambles}
         />

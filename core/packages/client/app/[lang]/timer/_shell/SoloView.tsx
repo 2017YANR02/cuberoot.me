@@ -73,7 +73,6 @@ import {
   timerEventPickerName,
   TIMER_WCA_SCRAMBLE_SOURCE_COPY,
   TIMER_MORE_ACTION_COPY,
-  TIMER_MANUAL_SCRAMBLE_EMPTY_COPY,
   TIMER_SCRAMBLE_CLICK_TITLE_COPY,
   TIMER_GESTURE_ACTION_CONTRACTS,
   timerClearCurrentEventConfirmation,
@@ -3100,7 +3099,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
               correctionActive={scrambleGuidance.correctionActive}
               fallback={settings.scrambleSource === 'manual' && manualQueue.length === 0
-                ? tr(TIMER_MANUAL_SCRAMBLE_EMPTY_COPY)
+                ? ''
                 : '—'}
               fallbackKind="empty"
               font={settings.scrambleFont}

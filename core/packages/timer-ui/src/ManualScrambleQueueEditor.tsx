@@ -1,5 +1,6 @@
 export interface ManualScrambleQueueEditorProps {
   ariaLabel: string;
+  placeholder?: string;
   onChange: (value: string) => void;
   value: string;
 }
@@ -14,6 +15,7 @@ export interface ManualScrambleQueueEditorProps {
  */
 export function ManualScrambleQueueEditor({
   ariaLabel,
+  placeholder,
   onChange,
   value,
 }: ManualScrambleQueueEditorProps) {
@@ -25,6 +27,7 @@ export function ManualScrambleQueueEditor({
         autoCorrect="off"
         className="scramble-src-manual-input"
         onChange={(event) => onChange(event.currentTarget.value)}
+        placeholder={placeholder}
         rows={3}
         spellCheck={false}
         value={value}

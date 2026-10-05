@@ -209,6 +209,10 @@
   font-weight: 680;
 }
 
+.infra-equipment-groups + .infra-expense-detail-title {
+  margin-top: 32px;
+}
+
 .infra-expense-note {
   max-width: 780px;
   margin: 14px 0 0 66px;
@@ -268,6 +272,41 @@
   object-fit: contain;
   filter: drop-shadow(0 5px 8px color-mix(in srgb, var(--foreground) 18%, transparent));
 }
+
+.infra-equipment-art.infra-brand-art {
+  aspect-ratio: 16 / 9;
+  padding: 28px;
+}
+
+.infra-brand-logo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.infra-brand-logo.infra-brand-logo-wide {
+  width: 240px;
+}
+
+.infra-brand-logo.infra-brand-app-icon {
+  border-radius: 22.5%;
+}
+
+.infra-brand-logo.infra-brand-logo-dark {
+  display: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme=light]):not([data-palette-scheme=light]) .infra-brand-logo-dark { display: block; }
+  html:not([data-theme=light]):not([data-palette-scheme=light]) .infra-brand-logo-light { display: none; }
+}
+
+html[data-theme=dark]:not([data-palette-scheme=light]) .infra-brand-logo-dark,
+html[data-palette-scheme=dark] .infra-brand-logo-dark { display: block; }
+html[data-theme=dark]:not([data-palette-scheme=light]) .infra-brand-logo-light,
+html[data-palette-scheme=dark] .infra-brand-logo-light { display: none; }
 
 .infra-equipment-featured dt {
   padding: 18px 18px 14px;
