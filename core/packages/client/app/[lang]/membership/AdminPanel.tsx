@@ -3,21 +3,19 @@
 /**
  * 会员管理面板(仅 admin 可见)。
  *  - 手动开通:搜 WCA 选手 → 选套餐 → 开通(给已打赏用户 / 在线支付未开通时用)。
- *  - 会员列表:当前会员 + 到期,可撤销。
+ *  - 会员名单与撤销操作位于 /admin/users。
  *  - 套餐:改价格(元)/ 启用,免动 migration。
  */
 import { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Check } from 'lucide-react';
+import { Plus, Check } from 'lucide-react';
 import { tr } from '@/i18n/tr';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import BoolToggle from '@/components/BoolToggle';
 import { fetchPersonCard, type WcaPersonLite } from '@/lib/wca-api';
-import { displayCuberName } from '@/lib/cuber-name-display';
-import { fmtDate } from '@/lib/membership-format';
 import {
-  adminGrant, adminList, adminRevoke, adminUpdatePlan,
+  adminGrant, adminList, adminUpdatePlan,
   isAutoRenewPlanSlug,
-  type MembershipPlan, type Membership,
+  type MembershipPlan,
 } from '@/lib/membership-api';
 
 interface Props {
@@ -38,7 +36,6 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
   const [granting, setGranting] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const [members, setMembers] = useState<Membership[]>([]);
   const [adminPlans, setAdminPlans] = useState<MembershipPlan[]>(plans);
   const [priceDraft, setPriceDraft] = useState<Record<string, string>>({});
   const [planSaved, setPlanSaved] = useState<string | null>(null);
@@ -53,7 +50,6 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
 
   function loadList() {
     adminList().then((r) => {
-      setMembers(r.members);
       const listedPlans = r.plans ?? plans;
       setAdminPlans(listedPlans);
       setPriceDraft(Object.fromEntries(listedPlans.map((p) => [p.slug, String(p.priceCents / 100)])));
@@ -90,13 +86,6 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
     } finally {
       setGranting(false);
     }
-  }
-
-  async function revoke(wcaId: string) {
-    if (!window.confirm(tr({ zh: '撤销 {n} 的会员?', en: 'Revoke membership of {n}?'
-    }).replace('{n}', wcaId))) return;
-    try { await adminRevoke(wcaId); loadList(); }
-    catch (e) { window.alert(e instanceof Error ? e.message : String(e)); }
   }
 
   async function savePlan(p: MembershipPlan) {
@@ -192,31 +181,6 @@ export default function AdminPanel({ plans, isZh, onPlanUpdated, onViewRenewal }
         <p className="mem-note">{tr({ zh: '自动续费尚未接通，暂不能公开；仍可保存价格、查看签约说明或关闭已公开的套餐。签约说明使用已保存的价格，不代表已开通代扣。', en: 'Auto-renewal cannot be made public yet. You can still save prices, view authorization details, or hide an active plan. Saved prices in these details do not mean recurring billing is available.' })}</p>
       </div>
 
-      {/* 会员列表 */}
-      <div className="mem-admin-block">
-        <div className="mem-admin-subtitle">{tr({ zh: '会员 ({n})', en: 'Members ({n})'
-        }).replace('{n}', String(members.length))}</div>
-        <div className="mem-admin-list">
-          {members.map((m) => (
-            <div key={m.wcaId} className="mem-admin-member">
-              <span className="mem-admin-mname">{displayCuberName(m.name, isZh)}</span>
-              <span className="mem-admin-mwca">{[m.vipId, m.wcaId].filter(Boolean).join(' / ')}</span>
-              <span className="mem-admin-mexp">
-                {m.lifetime ? tr({ zh: '永久', en: 'Lifetime' }) : `→ ${fmtDate(m.expiresAt)}`}
-                {!m.active && ` (${tr({ zh: '已过期', en: 'expired'
-                })})`}
-              </span>
-              {m.active && (
-                <button className="mem-admin-revoke" onClick={() => void revoke(m.wcaId)} aria-label="revoke">
-                  <Trash2 size={13} />
-                </button>
-              )}
-            </div>
-          ))}
-          {members.length === 0 && <div className="mem-admin-empty">{tr({ zh: '暂无会员', en: 'No members yet'
-        })}</div>}
-        </div>
-      </div>
     </section>
   );
 }
