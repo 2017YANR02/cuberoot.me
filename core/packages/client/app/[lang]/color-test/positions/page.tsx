@@ -190,6 +190,11 @@ export default function ColorPositionsPage() {
             <i style={{ width: `${((index + (selected ? 1 : 0)) / round.length) * 100}%` }} />
           </div>
 
+          <div className="position-top-indicator">
+            <span>{tr({ zh: '顶面', en: 'Top face' })}</span>
+            <ColorSwatch face={topFace} compact showLabel={showColorNames} />
+          </div>
+
           <h2 id="position-question">
             {question.direction === 'opposite'
               ? tr({
