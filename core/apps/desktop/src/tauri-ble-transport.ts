@@ -84,6 +84,21 @@ export class TauriBleTransport implements BleTransport {
   private readonly serviceCache = new Map<string, BleServiceRef[]>();
   private readonly writeModes = new Map<string, Map<string, 'withResponse' | 'withoutResponse'>>();
 
+  async getDeviceMac(deviceId: string): Promise<string | null> {
+    // Windows already supplies the real address. Only Apple UUID identities
+    // need the optional native lookup; never replace the BLEC connection ID.
+    if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(deviceId)) return null;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        invoke<string | null>('ble_device_mac', { deviceId }).catch(() => null),
+        new Promise<null>((resolve) => { timeout = setTimeout(() => resolve(null), 4_000); }),
+      ]);
+    } finally {
+      if (timeout !== undefined) clearTimeout(timeout);
+    }
+  }
+
   async initialize(): Promise<void> {
     if (!await checkPermissions(true)) throw new Error('Bluetooth permission denied');
     if (await getAdapterState() !== 'On') throw new Error('Bluetooth unavailable');

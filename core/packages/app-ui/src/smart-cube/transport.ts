@@ -1,5 +1,7 @@
 export interface BleDeviceRef {
   id: string;
+  /** Verified native Bluetooth address, distinct from the platform connection ID. */
+  macAddress?: string;
   manufacturerData?: ReadonlyMap<number, Uint8Array>;
   name: string;
   rssi?: number;
@@ -39,6 +41,7 @@ export interface BleRequestOptions {
 }
 
 export interface BleTransport {
+  getDeviceMac?(deviceId: string): Promise<string | null>;
   connect(deviceId: string, onDisconnect: () => void): Promise<void>;
   disconnect(deviceId: string): Promise<void>;
   getServices?(deviceId: string): Promise<BleServiceRef[]>;

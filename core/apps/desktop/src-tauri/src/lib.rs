@@ -2,6 +2,7 @@ use keyring::{Entry, Error as KeyringError};
 use tauri::Manager;
 
 mod ble_notifications;
+mod ble_address;
 
 const SERVICE: &str = "me.cuberoot.app";
 
@@ -45,7 +46,7 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_blec::init())
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe])
+        .invoke_handler(tauri::generate_handler![secure_get, secure_set, secure_remove, ble_notifications::ble_subscribe, ble_address::ble_device_mac])
         .run(tauri::generate_context!())
         .expect("error while running CubeRoot");
 }
