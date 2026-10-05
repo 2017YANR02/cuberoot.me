@@ -1,5 +1,6 @@
 <page-meta page-style="{{appearanceStyle}}" />
 <view wx:if="{{!isTimelineEntry}}" class="account-scenery" aria-hidden="true"><view class="account-scenery-image" /></view>
+<scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
@@ -276,3 +277,4 @@
     </view>
   </view>
 </view>
+</scroll-view>

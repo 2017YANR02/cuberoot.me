@@ -1,16 +1,9 @@
-/* Account content only scrolls vertically; do not expose an x-axis scrollbar. */
-page {
-  overflow-x: hidden;
-}
-
-/* Page-local: include the WebView's root scrolling element, not only <page>.
-   Zero height affects horizontal bars; leave vertical scrollbar width alone. */
-::-webkit-scrollbar {
-  height: 0;
-}
-
-::-webkit-scrollbar:horizontal {
-  display: none;
+/* Native scroll-view owns scrolling; the outer page is disabled in index.json. */
+.account-scroll {
+  height: 100vh;
+  width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
 .account-login-page,
