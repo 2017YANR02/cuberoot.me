@@ -144,6 +144,25 @@ describe('shared timer keydown priority golden matrix', () => {
       .toEqual({ id: 'none' });
   });
 
+  it('reserves Space for timing after focusing a control in a no-timer region', () => {
+    for (const select of [false, true]) {
+      const target = { ...PLAIN_TARGET, noTimerRegion: true, select };
+      for (const phase of ['idle', 'holding', 'ready', 'inspecting', 'running', 'stopped'] as TimerPhase[]) {
+        expect(down(key('Space'), { target, phase })).toEqual({
+          command: { id: 'press-down', warmupSound: true },
+          preventDefault: true,
+          blurActiveElement: true,
+        });
+      }
+      expect(down(key('Space', { repeat: true }), { target })).toEqual({
+        command: { id: 'none' }, preventDefault: true, blurActiveElement: false,
+      });
+      expect(down(key('Space'), { target, modal: 'blocking' }).command).toEqual({ id: 'none' });
+      expect(down(key('Space'), { target: { ...target, textEntry: true } }).command)
+        .toEqual({ id: 'none' });
+    }
+  });
+
   it('keeps Space and Escape fixed ahead of the editable map', () => {
     expect(down(key('Space'))).toEqual({
       command: { id: 'press-down', warmupSound: true },
@@ -272,7 +291,9 @@ describe('keyup, phase, and external pointer policy', () => {
     expect(shared.timerKeyUpDecision({ ...base, modalOpen: true }).command).toEqual({ id: 'none' });
     expect(shared.timerKeyUpDecision({
       ...base, target: { ...PLAIN_TARGET, noTimerRegion: true },
-    }).command).toEqual({ id: 'none' });
+    })).toEqual({
+      command: { id: 'press-up' }, preventDefault: true, blurActiveElement: false,
+    });
     expect(shared.timerKeyUpDecision({ ...base, input: key('KeyD') }).command).toEqual({ id: 'none' });
   });
 
