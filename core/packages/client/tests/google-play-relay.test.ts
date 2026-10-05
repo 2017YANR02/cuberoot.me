@@ -52,6 +52,7 @@ it('uses WIF with only the Play scope and probes both fixed products', async () 
   expect(response.status).toBe(200); expect(response.headers.get('cache-control')).toBe('no-store');
   expect(mocks.request).toHaveBeenCalledTimes(2);
   const config = mocks.fromJSON.mock.calls[0][0];
+  expect(config.audience).toBe('//iam.googleapis.com/projects/123/locations/global/workloadIdentityPools/pool/providers/provider');
   expect(config.scopes).toEqual(['https://www.googleapis.com/auth/androidpublisher']);
   expect(config).not.toHaveProperty('private_key');
   await config.subject_token_supplier.getSubjectToken();
