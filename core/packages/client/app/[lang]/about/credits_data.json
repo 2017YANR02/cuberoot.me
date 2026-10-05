@@ -1022,5 +1022,17 @@
     "url": "https://github.com/2017YANR02/cube-platform",
     "zh": "学习空间、商业与二维码卡片功能源自维护者的原 Cube Platform；迁入主站后复用统一账号、论坛、讲师名录与媒体能力，保留原卡片模板和提示积木来源。",
     "en": "Learning, commerce and QR card features originate from the maintainer’s Cube Platform. The main-site integration reuses canonical accounts, forums, teacher profiles and media while retaining the provenance of card templates and prompt blocks."
+  },
+  {
+    "name": "GeoNames",
+    "url": "https://www.geonames.org/",
+    "zh": "账号地名中文补充参考 GeoNames 数据（CC BY 4.0）；结合行政区汉字、原始坐标与省份消歧，避免将历史别名或治所误用为当前名称。",
+    "en": "Supplemental account location labels use GeoNames data (CC BY 4.0), checked against administrative names, source coordinates and province context to avoid substituting historical aliases or administrative seats."
+  },
+  {
+    "name": "Administrative divisions of China / modood",
+    "url": "https://github.com/modood/Administrative-divisions-of-China",
+    "zh": "账号中国城市中文标签的行政区汉字参考该项目整理的国家统计局行政区划数据；保留原始账号地点标识，按省份核对同音地名。",
+    "en": "Chinese account location labels reference National Bureau of Statistics administrative names collected by this project, preserving stored location identifiers and checking homographs by province."
   }
 ]

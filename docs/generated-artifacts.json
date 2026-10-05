@@ -449,7 +449,7 @@
       "kind": "checked-in-generated",
       "source": {
         "url": "https://github.com/dr5hn/countrystatecity-npm",
-        "paths": ["core/packages/client/scripts/build-account-locations.mjs"]
+        "paths": ["core/packages/client/scripts/build-account-locations.mjs", "core/packages/client/scripts/account-location-cn-zh.json", "core/packages/client/scripts/account-location-cn-zh.md"]
       },
       "license": { "spdx": "ODbL-1.0", "evidence": "https://github.com/dr5hn/countrystatecity-npm/blob/master/LICENSE" },
       "owner": ["core/packages/client/scripts/build-account-locations.mjs", "core/packages/shared/scripts/account-location-artifact.mjs"],
@@ -457,7 +457,7 @@
       "command": "pnpm build:account-locations",
       "outputs": ["core/packages/client/public/account-locations/*.json", "core/packages/shared/src/data/account_location_requirements.ts"],
       "verification": ["pnpm check:account-locations"],
-      "driftPolicy": "Regenerate the compact per-country files through the pinned development dependency; never hand-edit them."
+      "driftPolicy": "Regenerate the compact per-country files through the pinned development dependency; never hand-edit them. CN display labels come from the province-scoped Chinese label source; regeneration fails for missing translations."
     },
     {
       "id": "shared.timer-trainer-case-data",
