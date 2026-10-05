@@ -221,6 +221,7 @@ describe('installed App GAN lifecycle integration', () => {
     const connect = vi.fn(async () => 'GAN16ui');
     const disconnect = vi.fn(async () => undefined);
     const requestState = vi.fn(async () => undefined);
+    const resetDeviceState = vi.fn(async () => undefined);
     const resetState = vi.fn();
     await act(async () => setRadio({
       ...radio,
@@ -228,6 +229,7 @@ describe('installed App GAN lifecycle integration', () => {
       disconnect,
       quaternion: { w: 1, x: 0, y: 0, z: 0 },
       requestState,
+      resetDeviceState,
       resetState,
       solved: false,
       status: {
@@ -257,8 +259,9 @@ describe('installed App GAN lifecycle integration', () => {
       .find((candidate) => candidate.textContent?.includes(label))!;
 
     await act(async () => button('Reset state').click());
-    expect(resetState).toHaveBeenCalledOnce();
-    expect(requestState).toHaveBeenCalledOnce();
+    expect(resetDeviceState).toHaveBeenCalledOnce();
+    expect(resetState).not.toHaveBeenCalled();
+    expect(requestState).not.toHaveBeenCalled();
     expect(button('Reset gyroscope').disabled).toBe(false);
 
     await act(async () => button('Disconnect').click());

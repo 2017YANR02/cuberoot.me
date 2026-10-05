@@ -237,6 +237,7 @@ const NEXT_PATHS = [
   corePath('patches', '**'),
   corePath('scripts', 'resolve-workspace-path.mjs'),
   corePath('scripts', 'build-cubing-worker.mjs'),
+  corePath('scripts', 'vercel-ignore-build.ts'),
   repoPath('ops', 'systemd', 'cuberoot-next.service'),
   repoPath('.github', 'workflows', 'deploy_next.yml'),
 ] as const;
