@@ -1,3 +1,6 @@
+import { createNetOutboxStorage } from '@cuberoot/timer-ui';
+import { uploadNetRecordedAttempt, decodeNetBattleSession } from '@cuberoot/shared/timer';
+import * as netBattleClient from '@/lib/battle-room-api';
 import { NetRecordingOutbox, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 /**
  * localStorage-backed solve store.
@@ -625,12 +628,23 @@ export {
 } from './import_export';
 
 /** Online recordings keep the session selected at attempt start. */
+const netSolveSavedListeners = new Set<(sessionId: string, solve: Solve) => void>();
+export function subscribeNetSolveSaved(listener: (sessionId: string, solve: Solve) => void): () => void {
+  netSolveSavedListeners.add(listener);
+  return () => { netSolveSavedListeners.delete(listener); };
+}
 export function saveNetSolve(sessionId: string, solve: Solve): void {
   const db = loadRaw();
-  const byEvent = db.dataBySession[sessionId];
+  const existingSession = Object.entries(db.dataBySession).find(([, events]) => Object.values(events).some(solves => solves?.some(item => item.id === solve.id)));
+  const byEvent = existingSession?.[1] ?? db.dataBySession[sessionId];
   if (!byEvent) throw new Error('Unknown timer session');
   byEvent[solve.event] = upsertNetRecordedSolve(byEvent[solve.event] ?? [], solve);
   if (!saveRaw(db)) throw new TimerSessionWriteError();
+  for (const listener of netSolveSavedListeners) listener(existingSession?.[0] ?? sessionId, solve);
 }
 
-export const netRecordingOutbox = new NetRecordingOutbox(record => saveNetSolve(record.context.sessionId, record.solve));
+export const netRecordingOutbox = new NetRecordingOutbox(record => saveNetSolve(record.context.sessionId, record.solve), createNetOutboxStorage());
+
+netRecordingOutbox.setUploader(record => uploadNetRecordedAttempt(record, netBattleClient, {
+  load: async () => { const raw = sessionStorage.getItem('net_battle_session'); return raw ? decodeNetBattleSession(JSON.parse(raw)) : null; },
+}));

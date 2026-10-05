@@ -2,7 +2,7 @@
 
 import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
 
-import { TimerWorkspace, TimerInfoToast } from '@cuberoot/timer-ui';
+import { TimerWorkspace } from '@cuberoot/timer-ui';
 
 import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
@@ -34,12 +34,12 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
  * 的语义是「向全房上报准备」,不是「起自己的表」,不能交给魔方代劳。
  */
 
-import { useCallback, useSyncExternalStore, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
 
 
 import { TimerPuzzlePicker, TimerCubePreview, SegmentTime, TimerTopbar, TimerDeviceCenter, TimerRoomRoundStatus, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
-import { TIMER_EVENT_PICKER_GROUPS, NetBattleAttemptRecorder, NET_RECORDING_SAVE_COPY, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
+import { TIMER_EVENT_PICKER_GROUPS, NetBattleAttemptRecorder, netAttemptSolveId, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
@@ -72,7 +72,7 @@ import { tr } from '@/i18n/tr';
 import { useTranslation } from 'react-i18next';
 
 import {
-  createNetRoom, joinNetRoom, getNetRoom, postNetStatus, postNetResult,
+  createNetRoom, joinNetRoom, getNetRoom, postNetStatus,
   nextNetRound, leaveNetRoom, postNetEvent, ensureNetScramble,
   postNetSyncStart, postNetAdmin, postNetKick, renameNetPlayer,
   type NetRoomState, type NetPenalty, type NetResult, type NetIdentity,
@@ -273,7 +273,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [roomController]);
 
   // ── 计时器(复用 Solo 的状态机;设置沿用用户 timer 设置)──────
-  const myResult = room && pid ? room.results[String(room.round)]?.[pid] : undefined;
+  useSyncExternalStore(netRecordingOutbox.subscribe, netRecordingOutbox.getSnapshot, netRecordingOutbox.getSnapshot);
+  const myResult = room && pid ? netRecordingOutbox.result({ code: room.code, playerId: pid, round: room.round })
+    ?? room.results[String(room.round)]?.[pid] : undefined;
   const myEvent = room && pid ? playerEventOf(room, pid) : (room?.event ?? '333');
   const onlinePlayerCount = room
     ? Math.max(1, Object.values(room.players).filter(player => isNetOnline(player, room.now)).length)
@@ -311,7 +313,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   // 改自己的项目(仅本轮尚未交卷时可改)。服务端用共享生成器 set-if-absent 回填。
   const changeEvent = useCallback((selId: string) => {
     const r = roomRef.current, auth = credentialsRef.current;
-    if (!r || !auth) return;
+    if (!r || !auth || netRecordingOutbox.result({ code: r.code, playerId: auth.playerId, round: r.round })) return;
     const ev = selectorIdToNetEvent(selId);
     if (!ev || ev === playerEventOf(r, auth.playerId)) return;
     void roomController.execute(() => postNetEvent(r.code, auth, ev), { onSuccess: () => timerReset() });
@@ -319,23 +321,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [roomController]);
 
   const netAttemptRef = useRef(new NetBattleAttemptRecorder());
-  const pendingRecording = useSyncExternalStore(netRecordingOutbox.subscribe, netRecordingOutbox.getSnapshot, netRecordingOutbox.getSnapshot);
-  const recordingNotice = pendingRecording.pending > 0 && <TimerInfoToast durationMs={null}
-    message={tr(NET_RECORDING_SAVE_COPY.message)} undoLabel={tr(NET_RECORDING_SAVE_COPY.retry)}
-    actionBusy={pendingRecording.busy} actionDisabled={pendingRecording.busy}
-    onUndo={() => { void netRecordingOutbox.retry(); }} onDismiss={() => undefined} />;
-  const attemptAuthRef = useRef<NetBattleCredentials | null>(null);
   const onSolve = useCallback((res: SolveResult) => {
     const completed = netAttemptRef.current.finish(res);
-    const auth = attemptAuthRef.current;
     if (!completed) return;
     if (completed.record) {
-      void netRecordingOutbox.enqueue(completed.record);
+      void netRecordingOutbox.enqueue(completed.record, true).then(() => roomController.poll(getNetRoom));
     }
-    if (!auth) return;
-    const { code, round } = completed.context;
-    const penalty: NetPenalty = res.autoPenalty === 'DNF' ? 'dnf' : res.autoPenalty;
-    void roomController.submitResult(round, () => postNetResult(code, auth, round, res.timeMs, penalty), { t: res.timeMs, p: penalty });
+
   }, [roomController, tr]);
 
   const timer = useTimer(onSolve, (startedAtMs: number) => {
@@ -344,10 +336,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const event = netEventToSelectorId(playerEventOf(r, auth.playerId)) as EventId;
     const scramble = myScramble(r, auth.playerId) ?? '';
     const identity = makeSolve({ event, scramble, timeMs: 0, penalty: 'ok' });
-    attemptAuthRef.current = { ...auth };
     const bt = btStatusRef.current;
     netAttemptRef.current.begin({ code: r.code, playerId: auth.playerId, round: r.round,
-      sessionId: getActiveSessionId(), id: identity.id, ts: identity.ts, event, scramble },
+      sessionId: getActiveSessionId(), id: netAttemptSolveId({ code: r.code, playerId: auth.playerId, round: r.round }), ts: identity.ts, event, scramble },
       startedAtMs, bt?.connected ? { model: bt.brand, name: bt.deviceName } : undefined);
     phaseRef.current = 'running';
   });
@@ -1048,15 +1039,15 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const adjustPenalty = useCallback((p: NetPenalty) => {
     const r = roomRef.current, id = pidRef.current;
     if (!r || !id) return;
-    const cur = r.results[String(r.round)]?.[id];
+    const cur = netRecordingOutbox.result({ code: r.code, playerId: id, round: r.round }) ?? r.results[String(r.round)]?.[id];
     if (!cur) return;
     const local = netAttemptRef.current.penalty({ code: r.code, playerId: id, round: r.round }, p);
-    if (local) {
-      void netRecordingOutbox.enqueue(local);
-    }
-    const auth = credentialsRef.current;
-    if (!auth || auth.playerId !== id) return;
-    void roomController.submitResult(r.round, () => postNetResult(r.code, auth, r.round, cur.t, p), { t: cur.t, p });
+    const event = netEventToSelectorId(playerEventOf(r, id)) as EventId;
+    const identity = { code: r.code, playerId: id, round: r.round };
+    const solve = makeSolve({ event, scramble: myScramble(r, id) ?? '', timeMs: cur.t, penalty: p === 'dnf' ? 'DNF' : p });
+    solve.id = netAttemptSolveId(identity);
+    const record = local ?? { context: { ...identity, id: solve.id, ts: solve.ts, event, scramble: solve.scramble, sessionId: getActiveSessionId() }, solve };
+    void netRecordingOutbox.enqueue(record, true).then(() => roomController.poll(getNetRoom));
   }, [roomController]);
 
   // ── 邀请链接复制 ────────────────────────────────────────────
@@ -1176,7 +1167,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onCodeChange={setJoinCode} onJoin={doJoin} onCreate={doCreate}
           onCancelInvite={() => { setErr(null); void setRoomParam(null); }} onExit={onExitNet} />
       </div>
-      {recordingNotice}
     </TimerWorkspace>;
   }
   const curResults = room.results[String(room.round)] ?? {};
@@ -1490,7 +1480,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onConnect={pick => bluetoothCube.connect(pick)}
         />
       )}
-      {recordingNotice}
     </TimerWorkspace>
   );
 }

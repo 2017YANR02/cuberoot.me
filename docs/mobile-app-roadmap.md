@@ -1356,3 +1356,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 轮询隐藏暂停、可见或联网时立即刷新，同一 membership 不重叠；恢复断网保留原 capability 并重试，明确被踢/失效才清理。被撤销的已保存身份不会自动以新人身份重入。异步 session clear/save 串行，退出与被踢清除计时、倒计时、旧弹层及复盘展示。
 - App 与 Web 都保留本机结算直到显式下一轮；较新轮询不会吞掉推进意图，强制推进期间仍保留正在计时的旧轮及历史结果。成绩上传和罚时变更按 membership/轮次串行；服务端 advanced 响应只有历史成绩与本次提交一致才算成功，否则显示既有 result-rejected 错误，本机录制仍独立保留。
 - 当前证据：定向 Web 8 文件 96 项与 App 页面集成 14 项通过；shared build、App/client typecheck 通过。Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows 原生构建/真实联机多设备验收未执行，Harmony HAP 工具链版本阻断未改变。本轮无 API 改动、无发布；持久化成绩重试队列仍是后续步骤，整体保持 NOT COMPLETE。
+
+
+### 2026-10-05：联机成绩持久化待处理队列
+
+- Web 与五端 App 共用 `NetRecordingOutbox` 的版本化待处理日志和 `uploadNetRecordedAttempt`；DOM 宿主复用 IndexedDB adapter 与 `TimerNetOutboxNotice`。根计时/App 宿主负责启动恢复、联网/回前台及有界间隔重试，切换到单人或历史页也会恢复。此记录取代此前“队列仅进程内保留”的限制。
+- 入队写日志独立于网络交付锁，上一条上传挂起时后续成绩/罚时仍能落盘。每条以稳定房间/玩家/轮次 ID 幂等保存，状态回写/删除使用 revision 比较；上传与本机保存分别确认，两者完成才清除日志。刷新后修改罚时保留原动作流、时间戳及分组；本机已存记录按 ID 跨分组定位，避免切分组后重复插入。手动联机成绩也进入本机历史，只有包含动作的成绩展示复盘报告。本机已完成但尚未上传的本轮成绩（含刷新恢复）禁止重复起表与换项目；是否收齐成绩仍以房间服务端状态为准。
+- 队列不保存 playerToken。安装端上传时读取原有安全会话；Web 仍使用原来的 sessionStorage 身份。先核对房间/玩家、项目、打乱、轮次及已收成绩，再发送；与服务端整数毫秒口径一致。已失效或未被原轮接受的成绩保留本机，只有用户点击“保留本机成绩”才移除相应失败上传项。浏览器完整关闭导致 sessionStorage 身份丢失时，日志和本机成绩仍在，不能伪造原身份或自动以新人提交旧成绩。
+- 跨窗口交付使用 Web Locks；缺少独占锁时只落日志并显示恢复失败，不执行不安全的并发交付。日志本身写失败时明确提示勿关闭；损坏日志保持原样，不自动覆盖。原分组已删除时不会悄悄转存其他分组，条目继续保留等待处理。上述状态均不能记成成功上传或账号云同步。
+- 当前证据：使用真实 fake-indexeddb 的跨实例恢复、上传挂起期间入队、旧 ACK/new penalty、清理失败重放、缺锁/配额失败、拒收确认与服务端确认回归通过；Web 定向含 catalog/架构守卫 5 文件 39 项、App 页面/仓储 2 文件 50 项通过。shared build、App/client typecheck、Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。真实断网/杀进程/重启及五平台实体设备验收尚未完成；Windows native 未在 Mac 构建，Harmony HAP 既有工具链阻断不变；未发布，整体保持 NOT COMPLETE。

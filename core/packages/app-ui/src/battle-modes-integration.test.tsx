@@ -403,7 +403,7 @@ describe('installed app multiplayer modes', () => {
       handlers!.onSolved(clock);
     });
     await act(async () => Promise.resolve());
-    expect(postNetResult).toHaveBeenCalledTimes(1);
+    expect(postNetResult).not.toHaveBeenCalled();
     expect(onRecordSolve).toHaveBeenCalledTimes(1);
     expect(onRecordSolve.mock.calls[0]![0]).toMatchObject({
       context: { code: '1234', round: 1, sessionId: 'session-original' },

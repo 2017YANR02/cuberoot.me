@@ -77,7 +77,8 @@ describe('mobile timer repository contract', () => {
       scramble: 'R', event: '333' as const, moves: [{ m: "R'", ts: 0 }] };
     await repo.createSession('Another session', '333');
     await repo.saveNetSolve(original, solve);
-    await repo.saveNetSolve(original, { ...solve, penalty: '+2' });
+    const other = (await repo.load()).database.activeSessionId;
+    await repo.saveNetSolve(other, { ...solve, ts: 999, moves: undefined, penalty: '+2' });
     const data = await repo.load();
     expect(data.database.activeSessionId).not.toBe(original);
     expect(activeTimerSolves(data, '333')).toEqual([]);

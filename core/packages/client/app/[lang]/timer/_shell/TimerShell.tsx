@@ -24,6 +24,8 @@
  * real URL param.
  */
 
+import { TimerNetOutboxNotice } from '@cuberoot/timer-ui';
+import { netRecordingOutbox } from '../_lib/storage/db';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useQueryState, createParser } from 'nuqs';
@@ -52,6 +54,7 @@ const parseAsPlayers = createParser<PlayersMode>({
 });
 
 export default function TimerShell() {
+  const notice = <TimerNetOutboxNotice outbox={netRecordingOutbox} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} />;
   const [mounted, setMounted] = useState(false);
   const [presenceReport, setPresenceReport] = useState<TimerPresenceReport>({
     normal: 1,
@@ -114,30 +117,30 @@ export default function TimerShell() {
   // remounts the page — each view owns its own engine state.
   if (mounted && isNet) {
     return (
-      <NetBattleView
+      <>{notice}<NetBattleView
         playersControl={playersControl}
         presenceControl={presenceControl}
         onPresenceChange={setPresenceReport}
         onExitNet={() => { void setRoomParam(null); void setPlayersParam(1); }}
-      />
+      /></>
     );
   }
   if (mounted && playerCount >= 2) {
     return (
-      <BattleView
+      <>{notice}<BattleView
         playerCount={playerCount}
         playersControl={playersControl}
         presenceControl={presenceControl}
         onPresenceChange={setPresenceReport}
-      />
+      /></>
     );
   }
 
   return (
-    <SoloView
+    <>{notice}<SoloView
       playersControl={playersControl}
       presenceControl={presenceControl}
       onPresenceChange={setPresenceReport}
-    />
+    /></>
   );
 }
