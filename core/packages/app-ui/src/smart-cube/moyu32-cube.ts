@@ -11,9 +11,10 @@ import {
   MOYU32_NOTIFY_CHARACTERISTIC_UUID,
   MOYU32_SERVICE_UUID,
   MOYU32_WRITE_CHARACTERISTIC_UUID,
-  moyu32DefaultMac,
 } from '@cuberoot/shared/smart-cube/moyu32';
 import type { GyroSink } from '@cuberoot/shared/smart-cube/gan-crypto';
+
+import { resolveCubeMac } from './mac';
 
 import type { BleDeviceRef, BleTransport } from './transport';
 
@@ -30,6 +31,7 @@ export interface Moyu32CubeStatus {
 
 export interface Moyu32CubeCallbacks {
   onDisconnect(): void;
+  onNeedMac?(deviceName: string): Promise<string | null>;
   onMove(move: string, deviceTimestamp?: number): void;
   onProtocolError(): void;
   onState?(facelets: string): void;
@@ -41,20 +43,6 @@ function bytesFromView(view: DataView): Uint8Array {
   const bytes = new Uint8Array(view.byteLength);
   bytes.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
   return bytes;
-}
-
-function macBytesFromId(deviceId: string): Uint8Array | null {
-  const pairs = deviceId.match(/^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$/i)?.[0].split(':');
-  if (!pairs) return null;
-  return Uint8Array.from(pairs.map((pair) => Number.parseInt(pair, 16)));
-}
-
-function macBytesFromDevice(device: BleDeviceRef): Uint8Array | null {
-  const nativeMac = macBytesFromId(device.id);
-  if (nativeMac) return nativeMac;
-  const fallback = moyu32DefaultMac(device.name);
-  if (!fallback) return null;
-  return macBytesFromId(fallback);
 }
 
 function hasCharacteristic(
@@ -90,11 +78,11 @@ export class Moyu32CubeConnection {
 
   private async connectDevice(device: BleDeviceRef): Promise<void> {
     if (!matchesMoyu32Name(device.name)) throw new Error('unsupported MoYu32 protocol');
-    const mac = macBytesFromDevice(device);
-    if (!mac) throw new Error('MoYu32 MAC unavailable');
+    const generation = ++this.generation;
+    const mac = await resolveCubeMac(device, 'moyu32', this.callbacks.onNeedMac);
+    if (generation !== this.generation) throw new Error('smart cube connection closed');
 
     this.deviceId = device.id;
-    const generation = ++this.generation;
     const current = () => this.generation === generation && this.deviceId === device.id;
     const onDisconnect = () => {
       if (!current()) return;

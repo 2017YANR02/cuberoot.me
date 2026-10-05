@@ -161,11 +161,34 @@ describe('shared smart-cube device modal', () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it('validates the shared MAC form and normalizes a submitted address', async () => {
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    await act(async () => root.render(createElement(TimerSmartCubeDeviceModal, {
+      language: 'en', onClose: vi.fn(), snapshot: { phase: 'connecting', deviceName: 'WCU_MY32_5C3A' },
+      macPrompt: { deviceName: 'WCU_MY32_5C3A', onSubmit, onCancel },
+    })));
+    const form = document.body.querySelector('form')!;
+    await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('six');
+    const input = form.querySelector('input')!;
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, 'ab-cd-ef-01-23-45');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await act(async () => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    expect(onSubmit).toHaveBeenCalledWith('AB:CD:EF:01:23:45');
+    await act(async () => [...form.querySelectorAll('button')].find((button) => button.textContent === 'Cancel')!.click());
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
   it('keeps the Web adapter on the shared status and recovery surface', () => {
     const source = readFileSync('app/[lang]/timer/_components/BluetoothModal.tsx', 'utf8');
     expect(source).toContain("import { TimerSmartCubeDeviceModal } from '@cuberoot/timer-ui';");
     expect(source).toContain('<TimerSmartCubeDeviceModal');
-    expect(source).toContain('overrideBody={macBody}');
+    expect(source).toContain('instructions: macBody');
+    expect(source).not.toContain('data-mac-input');
     expect(source).not.toContain('useModalBackdrop');
     expect(source).not.toContain('<div className="modal-section bt-connected-summary">');
   });

@@ -3,6 +3,7 @@ import { GAN_V3_SERVICE_UUID, matchesGanV3Name } from '@cuberoot/shared/smart-cu
 import { GAN_V4_SERVICE_UUID, matchesGanV4Name } from '@cuberoot/shared/smart-cube/gan-v4';
 import { matchesMoyu32Name, MOYU32_SERVICE_UUID } from '@cuberoot/shared/smart-cube/moyu32';
 import { matchesQiyiName, QIYI_SERVICE_UUID } from '@cuberoot/shared/smart-cube/qiyi';
+import { normalizeMac } from '@cuberoot/shared/timer/external/mac';
 import { SmartCubeSessionController } from '@cuberoot/shared/smart-cube/session';
 import type { TimerDeviceConnectionEvent } from '@cuberoot/shared/timer/device-contract';
 import type { GyroQuaternion, GyroVelocity } from '@cuberoot/shared/smart-cube/gan-crypto';
@@ -99,6 +100,11 @@ export function useInstalledSmartCube(
   onSolvedRef.current = onSolved;
   onGyroRef.current = onGyro;
   onConnectionEventRef.current = onConnectionEvent;
+  const [macPrompt, setMacPrompt] = useState<InstalledAppSmartCube['macPrompt']>(null);
+  const [error, setError] = useState<string | null>(null);
+  const cancelMacRef = useRef<(() => void) | null>(null);
+  const cancelReadyRef = useRef<(() => void) | null>(null);
+  const knownMacsRef = useRef(new Map<string, string>());
   const [phase, setPhase] = useState<InstalledAppSmartCube['phase']>('idle');
   const [availableDevices, setAvailableDevices] = useState<readonly BleDeviceRef[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -163,6 +169,11 @@ export function useInstalledSmartCube(
 
   const disconnect = useCallback(async () => {
     generationRef.current++;
+    cancelMacRef.current?.();
+    cancelMacRef.current = null;
+    cancelReadyRef.current?.();
+    cancelReadyRef.current = null;
+    setMacPrompt(null);
     busyRef.current = false;
     const connection = connectionRef.current;
     connectionRef.current = null;
@@ -227,6 +238,7 @@ export function useInstalledSmartCube(
     try {
       await cleanup;
       if (!current()) throw new Error('smart cube connection closed');
+      setError(null);
       setPhase('requesting');
       await transport.initialize();
       if (!current()) throw new Error('smart cube connection closed');
@@ -240,9 +252,37 @@ export function useInstalledSmartCube(
       setModel(namedModel);
       const session = sessionController.open({ publishInitialState: false });
       let connection!: SmartCubeConnection;
+      let resolveReady!: () => void;
+      let rejectReady!: (error: Error) => void;
+      const ready = new Promise<void>((resolve, reject) => { resolveReady = resolve; rejectReady = reject; });
+      // State may fail while native setup is still pending. Observe immediately.
+      void ready.catch(() => undefined);
+      const cancelReady = () => rejectReady(new Error('smart cube connection closed'));
+      cancelReadyRef.current = cancelReady;
+      let suppliedMac: string | null = null;
       const connectionCallbacks = {
+        onNeedMac: async (deviceName: string): Promise<string | null> => {
+          if (!current()) throw new Error('smart cube connection closed');
+          const cached = knownMacsRef.current.get(device.id);
+          if (cached) { suppliedMac = cached; return cached; }
+          const mac = await new Promise<string | null>((resolve) => {
+            const finish = (value: string | null) => {
+              if (cancelMacRef.current !== cancel) return;
+              cancelMacRef.current = null;
+              setMacPrompt(null);
+              resolve(value);
+            };
+            const cancel = () => finish(null);
+            cancelMacRef.current = cancel;
+            setMacPrompt({ deviceName, onSubmit: (value) => finish(normalizeMac(value)), onCancel: () => { void disconnect(); } });
+          });
+          if (!current()) throw new Error('smart cube connection closed');
+          suppliedMac = mac;
+          return mac;
+        },
         onDisconnect: () => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
+          cancelReady();
           onConnectionEventRef.current?.({ kind: 'disconnected', reason: 'gatt-lost' });
           connectionRef.current = null;
           setDeviceName('');
@@ -259,6 +299,7 @@ export function useInstalledSmartCube(
         },
         onProtocolError: () => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
+          rejectReady(new Error('Cube protocol error; check the MAC address'));
           const event: TimerDeviceConnectionEvent = {
             kind: 'error',
             error: { code: 'protocol-error', retryable: true },
@@ -273,6 +314,7 @@ export function useInstalledSmartCube(
         onState: (nextFacelets: string) => {
           if (connectionRef.current !== connection || !session.isCurrent()) return;
           session.adoptFacelets(nextFacelets, performance.now());
+          resolveReady();
         },
         onGyro: onGyroRef.current
           ? (nextQuaternion: GyroQuaternion, velocity?: GyroVelocity) => {
@@ -299,7 +341,24 @@ export function useInstalledSmartCube(
         connection = new GanV4CubeConnection(transport, connectionCallbacks);
       }
       connectionRef.current = connection;
-      await connection.connect(device);
+      try {
+        await connection.connect(device);
+        if (!current()) throw new Error('smart cube connection closed');
+        let timeout: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([ready, new Promise<never>((_resolve, reject) => {
+            timeout = setTimeout(() => reject(new Error('Cube did not return a valid state; check the MAC address')), 8_000);
+          })]);
+        } finally {
+          if (timeout !== undefined) clearTimeout(timeout);
+        }
+      } catch (error) {
+        if (suppliedMac) knownMacsRef.current.delete(device.id);
+        throw error;
+      } finally {
+        if (cancelReadyRef.current === cancelReady) cancelReadyRef.current = null;
+      }
+      if (suppliedMac) knownMacsRef.current.set(device.id, suppliedMac);
       if (connectionRef.current !== connection) throw new Error('smart cube connection closed');
       if (connection instanceof GanCubeConnection) {
         setModel(connection.getProtocol() ?? namedModel);
@@ -323,7 +382,16 @@ export function useInstalledSmartCube(
         await cleanup;
         // Disconnect permits retry immediately. Its asynchronous transport
         // cleanup must not mark a newer connection (or unmounted host) failed.
-        if (generationRef.current === cleanupGeneration) setPhase('error');
+        if (generationRef.current === cleanupGeneration) {
+          const detail = error instanceof Error ? error.message : String(error);
+          const explanations: Record<string, { en: string; zh: string }> = {
+            'Cube MAC address required': { en: 'Enter the cube’s real Bluetooth MAC address to connect.', zh: '连接需要这颗魔方的真实蓝牙 MAC 地址。' },
+            'Cube did not return a valid state; check the MAC address': { en: 'No valid cube state received. Check the MAC address and reconnect.', zh: '未收到有效魔方状态，请核对 MAC 地址后重新连接。' },
+            'Cube protocol error; check the MAC address': { en: 'Cube data could not be decoded. Check the MAC address and reconnect.', zh: '无法解码魔方数据，请核对 MAC 地址后重新连接。' },
+          };
+          setError(explanations[detail]?.[language] ?? detail);
+          setPhase('error');
+        }
       }
       throw error;
     } finally {
@@ -342,6 +410,8 @@ export function useInstalledSmartCube(
 
   useEffect(() => () => {
     generationRef.current++;
+    cancelMacRef.current?.();
+    cancelReadyRef.current?.();
     scanGenerationRef.current++;
     busyRef.current = false;
     if (scanTimerRef.current !== null) globalThis.clearTimeout(scanTimerRef.current);
@@ -354,7 +424,7 @@ export function useInstalledSmartCube(
 
   const supportsDeviceScan = Boolean(transportRef.current?.scanDevices);
   return {
-    connect, deviceName, disconnect, facelets, lastMove, model, phase, quaternion,
+    connect, deviceName, disconnect, error, facelets, lastMove, macPrompt, model, phase, quaternion,
     requestState, resetState, solved, status,
     ...(supportsDeviceScan ? {
       availableDevices: availableDevices.map(({ id, name, rssi }) => ({ id, name, rssi })),

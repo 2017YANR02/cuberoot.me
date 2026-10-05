@@ -1,5 +1,13 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-05：macOS 智能魔方地址与握手修复（本地，实机待复测）
+
+- 所有者报告 Windows 智能魔方主流程体验正常；macOS `WCU_MY32_5C3A` 显示连接/协议但无转动，`GAN16ui_C2AF` 显示泛化连接失败。这是失败实测，不记为 macOS BLE 验收通过。
+- Apple BLE 设备 ID 为 UUID，不能当作密钥所需的 MAC。安装端移除 MY32 名称前缀猜址，Windows/Android 的真实 MAC 路径保持；GAN 保留广播/完整名称地址获取。缺少可靠地址时使用 Web/安装端共用的 MAC 表单，请求真实地址；成功地址仅在当前 hook 会话缓存，失败后移除。
+- 安装端握手完成后还须收到有效状态帧才发布 connected；8 秒未收到状态会清理连接并给出核对 MAC 的提示。补齐输入取消、关闭弹层、异步 MAC 恢复后不得重开 GATT 的清理边界。没有新增自动重连或扩大型号支持。
+- 地址、首状态超时、协议、取消清理以及 Web/安装端共享表单的定向自动检查已通过；App/Web 类型检查通过。macOS 两颗实体魔方的转动、自动计时、复盘与断线恢复仍须所有者复测，不把 Windows 体验或合成帧测试当作 macOS 成功证据。未发布。
+
+
 > Android、iOS、HarmonyOS NEXT、Windows 和 macOS 已由仓库所有者于 2026-08-31 确认为同一个完整产品目标。五端一次设计，但绝不维护五套业务代码；宿主、共享层、能力接口和总体完成口径以 [cross-platform-app-contract.md](./cross-platform-app-contract.md) 为最高优先级合同，当前状态只在本路线图记录。网站继续作为第六个在线 surface 与内容事实源。
 
 > 顶层产品结构已由仓库所有者于 2026-08-30 明确为“计时 / 工具 / 我的”三栏，且五端共用 `@cuberoot/app-ui` 的同一 React 实现；网站首页、子页面和未改写的 `/account` 必须直接复用，不在 App 复制。页面或按钮可见不等于完成；所有当前已配置登录方式、子页交互与会话状态都要按平台端到端验收。唯一合同与成本回退规则见 [mobile-three-tab-contract.md](./mobile-three-tab-contract.md)。

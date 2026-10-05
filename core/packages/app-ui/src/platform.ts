@@ -51,6 +51,8 @@ export interface InstalledAppSmartCubeOptions {
 export type InstalledAppSmartCubeDevice = TimerDeviceAvailableDevice;
 
 export interface InstalledAppSmartCube {
+  error?: string | null;
+  macPrompt?: { deviceName: string; onSubmit(mac: string): void; onCancel(): void } | null;
   availableDevices?: readonly TimerDeviceAvailableDevice[];
   connect(deviceId?: string): Promise<string>;
   deviceName: string;

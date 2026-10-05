@@ -22,11 +22,11 @@ const ANDROID_DEVICE: BleDeviceRef = {
   name: 'WCU_MY32_A1B2',
 };
 const ANDROID_MAC = Uint8Array.of(0xab, 0xcd, 0xef, 0x01, 0x23, 0x45);
-const NAME_DERIVED_DEVICE: BleDeviceRef = {
+const APPLE_DEVICE: BleDeviceRef = {
   id: 'native-device-id',
   name: 'WCU_MY32_A1B2',
 };
-const NAME_DERIVED_MAC = Uint8Array.of(0xcf, 0x30, 0x16, 0x00, 0xa1, 0xb2);
+const SUPPLIED_MAC = ANDROID_MAC;
 
 interface WriteRecord {
   characteristic: string;
@@ -152,19 +152,20 @@ function fakeBle(
 }
 
 describe('Moyu32CubeConnection native bridge', () => {
-  it('derives the fallback MAC from the device name and sequences encrypted commands', async () => {
-    const fake = fakeBle(NAME_DERIVED_DEVICE, NAME_DERIVED_MAC);
+  it('uses the supplied real MAC on Apple and sequences encrypted commands', async () => {
+    const fake = fakeBle(APPLE_DEVICE, SUPPLIED_MAC);
     const connection = new Moyu32CubeConnection(fake.transport, {
+      onNeedMac: async () => 'AB:CD:EF:01:23:45',
       onDisconnect: vi.fn(),
       onGyro: vi.fn(),
       onMove: vi.fn(),
       onProtocolError: vi.fn(),
     });
 
-    await connection.connect(NAME_DERIVED_DEVICE);
-    expect(fake.transport.getServices).toHaveBeenCalledWith(NAME_DERIVED_DEVICE.id);
+    await connection.connect(APPLE_DEVICE);
+    expect(fake.transport.getServices).toHaveBeenCalledWith(APPLE_DEVICE.id);
     expect(fake.transport.subscribe).toHaveBeenCalledWith(
-      NAME_DERIVED_DEVICE.id,
+      APPLE_DEVICE.id,
       MOYU32_SERVICE_UUID,
       MOYU32_NOTIFY_CHARACTERISTIC_UUID,
       expect.any(Function),
@@ -191,7 +192,7 @@ describe('Moyu32CubeConnection native bridge', () => {
       createMoyu32Command(MOYU32_MESSAGE_GYRO_SWITCH, 0, 0).slice(0, 3),
     );
     expect(fake.stopNotifications).toHaveBeenCalledOnce();
-    expect(fake.transport.disconnect).toHaveBeenCalledWith(NAME_DERIVED_DEVICE.id);
+    expect(fake.transport.disconnect).toHaveBeenCalledWith(APPLE_DEVICE.id);
   });
 
   it('decodes state, battery, gyro and accumulated device timestamps', async () => {
