@@ -416,7 +416,7 @@ html[data-theme='dark'] .stsv {
 .stsv-hint { color: var(--sv-text-mute); font-size: 12px; margin: 2px 0 8px; }
 
 /* ── 6 视角对比 ── */
-/* 视角格现随控件同排(紧挨「数量上限」右侧):作为 .stsv-controls(align-items:end)的一个 flex 子项,
+/* 视角格现随控件同排(与设置入口相邻):作为 .stsv-controls(align-items:end)的一个 flex 子项,
    自身无外边距,底边与相邻 select 对齐;窄屏 controls 换行时整块一起下移。 */
 .stsv-angles {
   display: flex;
@@ -577,3 +577,33 @@ html[data-theme='dark'] .stsv {
 @media (max-width: 480px) {
   .stsv-controls { gap: 10px; }
 }
+
+/* Settings expand in flow so the timer's scroll container cannot clip them. */
+.stsv-settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 33px;
+  height: 33px;
+  padding: 0;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.stsv-settings-toggle:hover,
+.stsv-settings-toggle[aria-expanded="true"] { color: var(--accent); border-color: var(--accent); }
+.stsv-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: var(--card);
+}
+.stsv-settings-limits { display: flex; flex-wrap: wrap; gap: 16px; }
+.stsv-settings .stsv-moverestrict { margin: 0; }
+.stsv-settings .stsv-mr-grid { flex-wrap: wrap; }
