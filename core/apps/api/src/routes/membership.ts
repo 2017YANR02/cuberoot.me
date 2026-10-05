@@ -782,13 +782,25 @@ membershipRoutes.post('/membership/admin/grant', async (c) => {
 membershipRoutes.get('/membership/admin/list', async (c) => {
   c.header('Cache-Control', 'no-store');
   await requireAdmin(c);
-  const members = await query<MembershipRow>('SELECT * FROM memberships ORDER BY started_at DESC LIMIT 500');
+  const members = await query<MembershipRow & { payment: {
+    provider: string; payChannel: string | null; paidAt: string | null;
+    amountCents: number; currency: string;
+  } | null }>(`
+    SELECT m.*, CASE WHEN o.out_trade_no IS NULL THEN NULL ELSE json_build_object(
+      'provider', o.provider, 'payChannel', o.pay_channel, 'paidAt', o.paid_at,
+      'amountCents', o.amount_cents, 'currency', o.currency
+    ) END AS payment
+    FROM memberships m
+    LEFT JOIN membership_orders o ON o.out_trade_no = m.last_order_no
+      AND o.wca_id = m.wca_id AND o.status = 'paid'
+    ORDER BY m.started_at DESC LIMIT 500
+  `);
   const orders = await query<OrderRow>(
     'SELECT out_trade_no, wca_id, name, plan_slug, amount_cents, provider, pay_channel, status, created_at, paid_at FROM membership_orders ORDER BY created_at DESC LIMIT 200',
   );
   const plans = await query<PlanRow>('SELECT * FROM membership_plans ORDER BY sort, price_cents');
   return c.json({
-    members: members.map(membershipToJson),
+    members: members.map(member => ({ ...membershipToJson(member), payment: member.payment })),
     plans: plans.map(planToJson),
     orders: orders.map((o) => ({
       outTradeNo: o.out_trade_no, wcaId: o.wca_id, name: o.name, planSlug: o.plan_slug,

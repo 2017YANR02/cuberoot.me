@@ -253,8 +253,19 @@ export async function adminGrant(body: { wcaId: string; plan: string; name?: str
   return handleApi(await fetch(`${BASE}/admin/grant`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 
-export async function adminList(): Promise<{ members: Membership[]; plans?: MembershipPlan[]; orders: AdminOrder[] }> {
-  return handleApi(await fetch(`${BASE}/admin/list`, { headers: authHeaders(false) }));
+export interface AdminMembership extends Membership {
+  /** Exact last granting order; undefined when connected to an older API. */
+  payment?: {
+    provider: string;
+    payChannel: string | null;
+    paidAt: string | null;
+    amountCents: number;
+    currency: string;
+  } | null;
+}
+
+export async function adminList(): Promise<{ members: AdminMembership[]; plans?: MembershipPlan[]; orders: AdminOrder[] }> {
+  return handleApi(await fetch(`${BASE}/admin/list?v=2`, { headers: authHeaders(false) }));
 }
 
 export async function adminRevoke(wcaId: string): Promise<{ ok: boolean }> {
