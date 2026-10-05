@@ -34,7 +34,8 @@ function googleClient() {
   if (!audience || !/^https:\/\/iam\.googleapis\.com\/projects\/\d+\/locations\/global\/workloadIdentityPools\/[a-z0-9-]+\/providers\/[a-z0-9-]+$/.test(audience)
     || !email || !/^[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$/.test(email)) throw new Error('WIF configuration unavailable');
   const client = ExternalAccountClient.fromJSON({
-    type: 'external_account', audience,
+    // STS requires a scheme-less resource name; the JWT aud remains the HTTPS URL.
+    type: 'external_account', audience: audience.slice('https:'.length),
     subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
     token_url: 'https://sts.googleapis.com/v1/token',
     service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${email}:generateAccessToken`,
