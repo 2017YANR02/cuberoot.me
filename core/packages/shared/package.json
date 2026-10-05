@@ -78,6 +78,7 @@
       "./installed-content": "runtime-neutral",
       "./apple-membership": "runtime-neutral",
       "./google-membership": "runtime-neutral",
+      "./google-play-relay": "runtime-neutral",
       "./mobile-embed": "runtime-neutral",
       "./result-penalty": "runtime-neutral",
       "./recon-ground-truth": "runtime-neutral",
@@ -379,6 +380,7 @@
     "./installed-content": "./src/installed-content.ts",
     "./apple-membership": "./src/apple_membership.ts",
     "./google-membership": "./src/google_membership.ts",
+    "./google-play-relay": { "node": "./dist/google-play-relay.js", "default": "./src/google-play-relay.ts" },
     "./mobile-embed": "./src/mobile_embed.ts",
     "./result-penalty": {
       "node": "./dist/result_penalty.js",
