@@ -1,3 +1,8 @@
+/* Account content only scrolls vertically; do not expose an x-axis scrollbar. */
+page {
+  overflow-x: hidden;
+}
+
 .account-login-page,
 .account-user-page {
   padding-top: 72rpx;
