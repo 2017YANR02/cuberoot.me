@@ -28,6 +28,17 @@ Source integration is not merchant activation, deployment, a signed build, or pu
 
 ## Backend configuration (disabled by default)
 
+### Configuration evidence — 2026-10-05
+
+- Owner-generated service-account JSON was installed on the existing API host at `/root/.config/cuberoot/google-play-service-account.json`, outside the deployed artifact tree. The private key parses successfully, its project/account identity matches the dedicated billing account, and file permissions are `0600` in a `0700` directory. No key material is committed or logged.
+- The temporary project exception for service-account key creation has been removed: Console shows inherited parent policy, enforced. This does not revoke the existing key.
+- The deployed API contains the Google notification handler, but all `GOOGLE_IAP_*` runtime variables are still absent. Purchases remain disabled; installation alone is not runtime activation.
+- After owner acceptance of its terms, Google Play Android Developer API was enabled; Console shows enabled. A local, read-only request using the dedicated service-account credential returned HTTP 200 from `monetization.subscriptions.list`, with both intended monthly/yearly base plans ACTIVE. This verifies credential/API/app read access, not production-server connectivity or real receipt reconciliation.
+- Pub/Sub API was enabled after owner confirmation. Topic `projects/project-f1300a56-30f8-42e7-8ca/topics/cuberoot-play-rtdn` exists, with topic-only Pub/Sub Publisher granted to `google-play-developer-notifications@system.gserviceaccount.com`. No paid Cloud upgrade was performed despite the expired-trial banner.
+- Authenticated push subscription `cuberoot-play-rtdn-push` exists and Console reports it valid. Its endpoint and audience are both `https://api.cuberoot.me/v1/membership/google/notifications`; the dedicated keyless identity is `cuberoot-play-rtdn-push@project-f1300a56-30f8-42e7-8ca.iam.gserviceaccount.com`. Wrapped payloads, 60-second acknowledgement deadline, 10–600-second exponential retry, seven-day unacknowledged retention and no expiration are configured. No dead-letter topic is configured yet.
+- Play Console saved the topic binding with real-time notifications enabled for subscriptions and voided purchases. A test-send action was attempted, but no explicit success receipt was captured; publication and authenticated HTTP 200 delivery are not yet verified.
+- A local route change permits authenticated RTDN test delivery while purchases remain disabled, retaining OIDC verification before parsing and HTTP 503 for real purchase-token reconciliation while disabled. Four focused route tests and the server typecheck passed. This change is not deployed yet; the deployed middleware still gates the entire notification route behind `GOOGLE_IAP_ENABLED`.
+
 Configured through the existing API secret-management process, not committed:
 
 | Variable | Meaning |
