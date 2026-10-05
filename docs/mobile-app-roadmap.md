@@ -42,6 +42,8 @@
 
 ### 2026-10-04 Google Play 首发内购（开发中，未开通）
 
+- 2026-10-05 Vercel Google Play 中转代码本地接通（未发布）：固定四种签名操作、Production 限制、短期 WIF，无 JSON 私钥上传；原 API 保留账号归属、权益事务与提交后确认购买。shared build、API/client 类型检查与 26 项针对性检查通过，独立安全审查完成。运行变量、部署、真实 WIF 换票和 RTDN HTTP 200 仍待验证；支付保持关闭，不代表真实购买通过。此传输改动不新增 App 包或 DB migration。
+- 2026-10-05 已配置 Vercel→Google 的无私钥身份联合：`cuberoot-play-production/vercel-production`，只接受 `cube-root/cuberoot-me/production`；Google 服务账号主体页已核对精确主体的 `Workload Identity User` 授权。未扩大 Play 权限、未上传 JSON 私钥；中转代码、运行环境变量、短期令牌交换与 RTDN HTTP 200 尚未验证，支付仍关闭，不算验单闭环。
 - 后续内测构建 `0.1.0 (1001)` 基于干净源码 `c140e273794cbdc8217502626386228e09d02ea9`，通过 `MOBILE_VERSION_CODE=1001` 单独递增 Android 构建号。shared build、app-ui/Mobile typecheck、Mobile build/sync、正式签名 AAB/APK、签名和 ZIP 对齐检查通过。AAB SHA-256 `bc97d5ea7b344fe3014ccd3ae440211f3a5e5e9b774de297b65e1a66bd3512a6`；APK `6b9bd994f661f0aa56b48f3a29718a6396af3da08005e639ec8be8b120ae399d`。内测重点：新增双人布局的 `cqh` 在 WebView 103 上存在源码推导的兼容性风险，尚未真机复现或修复；不作为正式上线通过证据。
 - Android 原生 Billing、服务端 subscriptionsv2 验单/确认、OIDC RTDN、独立权益账本和账号合并/注销归属接入；两端复用同一网页会员组件。商家验证、服务账号、RTDN 与内部测试真实购买尚未完成，不能标为支付可用。
 - Play Console 两个商品及基础方案 `monthly` / `yearly` 已创建并启用，分别 USD 3.99/月、USD 39.99/年（所有者确认）；各开放 147 个 Play 国家/地区，排除欧盟 27 国及自动新增地区，无试用/优惠。保持 iOS 非欧盟策略，不声称两平台地区数量一致；商品启用不等于正式上架或真实支付验收。
@@ -49,7 +51,7 @@
 - 2026-10-04 已通过 shared build、Mobile Web build/Android sync、API/client/app-ui/Mobile 类型检查和 Android Release Java 编译。旧的 cubing worker 构建阻断在本次当前代码构建未复现；历史记录保留，不继续当作当前阻断。
 - 独立 PostgreSQL 16 验证 0256 迁移、购买归属、测试隔离、退款、pending→active 替换链、注销墓碑；不是生产 PG13 部署或真实 Google 验单证据。
 - 长期 RSA 4096 上传密钥已在仓库外生成，密码存本机 Keychain；JDK 21 正式签名 `assembleRelease bundleRelease` 成功。`me.cuberoot.app` 0.1.0 (1000)，targetSdk 36；APK 签名、ZIP 16 KB 对齐及 arm64/x86_64 ELF LOAD 16 KB 对齐通过。AAB 已上传并于 10-04 01:09 PDT 发布至 Play 内部测试轨道（未审核，临时名称 `me.cuberoot.app (unreviewed)`）；尚未指定测试人员，当前无人能通过内测链接获取。
-- 配置及真实验收清单见 [google-play-billing-setup.md](google-play-billing-setup.md)。商家资料已建立，银行验证待所有者完成、税务补充材料审核中；Google Cloud 专用验单服务账号已创建，所有者确认后仅获 CubeRoot 应用读取、财务数据和订单/订阅管理权限，Play 状态有效；尚无服务账号密钥，API 启用、服务器配置和 RTDN 待完成。Cloud 提示免费试用今日结束，未升级付费；上传密钥的异地安全备份仍需所有者完成。
+- 配置及真实验收清单见 [google-play-billing-setup.md](google-play-billing-setup.md)。商家资料已建立，银行验证待所有者完成、税务补充材料审核中；验单密钥已安全安装于服务器、API 已启用、Pub/Sub 认证推送及 Play 主题绑定已保存。2026-10-05 的 `d0b3e02d63` 已通过 Deploy Core 部署，通知身份和 audience 已配置，支付保持关闭。服务器连接 Google 公钥、OAuth 与 Play 验单接口超时，通知仍返回 401，尚未通过真实送达或购买验收。Cloud 未升级付费；上传密钥的异地安全备份仍需所有者完成。
 
 ### 2026-09-29 远端主线整合（本地，未发布）
 
