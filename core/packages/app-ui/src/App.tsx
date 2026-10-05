@@ -1,3 +1,5 @@
+import { NetRecordingOutbox, NET_RECORDING_SAVE_COPY } from '@cuberoot/shared/timer';
+import { useSyncExternalStore } from 'react';
 import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';
 import { useExternalDevices } from './hooks/use-external-devices';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
@@ -381,6 +383,7 @@ const MOBILE_EMBED_INIT_RETRY_MS = 400;
 const MOBILE_EMBED_INIT_RETRIES = 25;
 const MOBILE_EMBED_AUTH_TIMEOUT_MS = 10_000;
 const repository = new TimerRepository(new IndexedDbTimerStoreDriver());
+const netRecordingOutbox = new NetRecordingOutbox(({ context, solve }) => repository.saveNetSolve(context.sessionId, solve));
 
 type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings';
 type PrimaryView = Extract<AppView, 'timer' | 'tools' | 'account'>;
@@ -534,6 +537,7 @@ function MobileHistoryItem({
 }
 
 export function App({ host }: { host: InstalledAppHost }) {
+  const pendingNetRecording = useSyncExternalStore(netRecordingOutbox.subscribe, netRecordingOutbox.getSnapshot);
   const timerDeviceRegistry = useMemo(() => createTimerDeviceRegistry({
     adapterIds: ['smart-cube', ...(host.createBleTransport ? ['smart-timer'] : []), ...(host.createStackmatSource ? ['stackmat'] : [])],
     registrations: TIMER_DEVICE_REGISTRATIONS,
@@ -2730,6 +2734,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     },
     onGyro: (quaternion, timestamp) => {
       smartCubeQuatRef.current = quaternion;
+      if (timerModeRef.current !== 1) battleSmartCubeHandlersRef.current?.onGyro?.(quaternion, timestamp);
       if (timerModeRef.current === 1 && timerPhaseRef.current === 'running'
         && storeRef.current?.settings.recordGyro) {
         smartCubeAttemptProducerRef.current.recordGyro(quaternion, timestamp - attemptStartedAtRef.current);
@@ -4403,6 +4408,19 @@ export function App({ host }: { host: InstalledAppHost }) {
 
         {view === 'timer' && timerMode === 'net' && (
           <NetBattleMode
+            sessionId={store!.database.activeSessionId}
+            recordGyro={store!.settings.recordGyro}
+            onRecordSolve={async ({ context, solve }) => {
+              const revision = storeSnapshotGateRef.current.beginMutation();
+              await netRecordingOutbox.enqueue({ context, solve });
+              const data = await repository.load();
+              storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
+            }}
+            renderRecordedSolve={({ solve }) => (
+              <Suspense fallback={<Spinner label={{ en: 'Loading', zh: '加载中' }[language]} />}>
+                <ReconstructReport solve={solve} history={solves} host={reconstructionHost} isZh={language === 'zh'} />
+              </Suspense>
+            )}
             onOverlayCloseChange={onBattleOverlayCloseChange}
             accountIdentity={auth.session ? {
               name: auth.session.user.name || `#${auth.session.user.uid}`,
@@ -5149,6 +5167,17 @@ export function App({ host }: { host: InstalledAppHost }) {
           undoLabel={copy.retry}
           viewportBottomInset={primaryNavBottomInset}
         />
+      ) : pendingNetRecording.pending > 0 ? (
+        <TimerInfoToast durationMs={null} message={NET_RECORDING_SAVE_COPY.message[language]}
+          undoLabel={NET_RECORDING_SAVE_COPY.retry[language]} onDismiss={() => undefined}
+          actionBusy={pendingNetRecording.busy} actionDisabled={pendingNetRecording.busy}
+          viewportBottomInset={primaryNavBottomInset}
+          onUndo={() => {
+            const revision = storeSnapshotGateRef.current.beginMutation();
+            void netRecordingOutbox.retry().then(() => repository.load())
+              .then(data => storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot))
+              .catch(() => announce(copy.actionFailed));
+          }} />
       ) : undoToast && (
         <TimerInfoToast
           message={undoToast.message}

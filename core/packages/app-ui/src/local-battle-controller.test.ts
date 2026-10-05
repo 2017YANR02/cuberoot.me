@@ -220,3 +220,38 @@ describe('shared local battle transition', () => {
     expect(nextLocalBattleCubeHolder(state, 0)).toBeNull();
   });
 });
+
+it('synchronizes the hold, cancellation and shared start time without arming a running cube', () => {
+  let state = loadScramble(initialLocalBattleState(2));
+  const dispatch = (playerId: number, action: Extract<LocalBattleAction, { type: 'player-timer' }>['action']) => {
+    const next = transitionLocalBattle(state, { type: 'player-timer', playerId, action }, { inspectionSec: 0, syncStart: true });
+    state = next.state; return next;
+  };
+  expect(dispatch(0, { type: 'press-down', nowMs: 0 }).effects).toEqual([]);
+  expect(dispatch(0, { type: 'hold-ready' }).accepted).toBe(false);
+  expect(dispatch(1, { type: 'press-down', nowMs: 200 }).effects).toEqual([{ type: 'player-timer', playerId: 1, effect: 'hold-started' }]);
+  dispatch(0, { type: 'press-up', nowMs: 250 });
+  expect(dispatch(1, { type: 'hold-ready' }).accepted).toBe(false);
+  dispatch(0, { type: 'press-down', nowMs: 300 });
+  dispatch(0, { type: 'hold-ready' });
+  dispatch(1, { type: 'press-up', nowMs: 650 });
+  expect(state.players.slice(0, 2).map(p => p.timer.startedAtMs)).toEqual([650, 650]);
+  expect(dispatch(0, { type: 'arm-from-cube', nowMs: 700 }).accepted).toBe(false);
+  expect(dispatch(0, { type: 'stop-from-cube', nowMs: 750 }).accepted).toBe(false);
+  expect(state.players[0].timer.phase).toBe('running');
+});
+
+it('keeps the finished scramble while preparing the next and changing its penalty', () => {
+  let state = loadScramble(initialLocalBattleState(2));
+  state = apply(state, { type: 'start-all', nowMs: 1000 }).state;
+  for (const playerId of [0, 1]) state = apply(state, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: 2000 } }).state;
+  const pending = apply(state, { type: 'request-next-scramble', event: '333', preserveResults: true });
+  const request = pending.effects.find(effect => effect.type === 'request-scramble')!;
+  state = apply(pending.state, { type: 'scramble-ready', event: '333', revision: request.revision, scramble: 'F' }).state;
+  state = apply(state, { type: 'set-penalty', playerId: 0, penalty: '+2' }).state;
+  expect(createLocalBattleRound(state, 'first', 1000)!.attempts.map(a => a.solve.scramble)).toEqual(["R U R'", "R U R'"]);
+  const next = apply(state, { type: 'player-timer', playerId: 0, action: { type: 'press-down', nowMs: 3000 } });
+  expect(next.effects.some(effect => effect.type === 'round-reset')).toBe(true);
+  expect(next.state.players[0].scramble).toBe('F');
+  expect(next.state.players[0].result).toBeNull();
+});

@@ -18,6 +18,11 @@ import { fromWcaSpelling, toWcaSpelling, type EventId } from '@/app/[lang]/timer
 import { persistItem } from '@/lib/safe-storage';
 import {
   BATTLE_EVENT_IDS,
+  initialTimerMachineState,
+  transitionLocalBattle,
+  createLocalBattleRound,
+  type LocalBattleState,
+  type LocalBattleAction,
   LOCAL_BATTLE_MAX_PLAYERS,
   assignLocalBattlePlayerKey,
   groupLocalBattlePlayersByEvent,
@@ -29,7 +34,6 @@ import {
   normalizeLocalBattlePlayerCount,
   decodeLocalBattleRounds,
   type LocalBattleRound,
-  type Solve as SharedSolve,
 } from '@cuberoot/shared/timer';
 
 // Battle puzzle id ⇄ timer EventId. Both directions come from the ONE mapping
@@ -444,6 +448,7 @@ export interface BattleState {
   scrambleImageUrls: (string | null)[];
   // 每位玩家是否正在加载打乱
   scrambleLoadings: boolean[];
+  scrambleRevisions: number[];
   // 赢家标识
   winners: number[];
   /** Atomic multiplayer history; never reconstructed from per-player array indexes. */
@@ -570,6 +575,60 @@ export interface BattleState {
 const initialBattleSessionId = localStorage.getItem(LS_PREFIX + 'sessionId') || '1';
 const initialBattleHistory = loadStoredBattleRounds(initialBattleSessionId);
 
+/** Project legacy view/storage fields into the canonical multiplayer machine. */
+function localState(s: BattleState): LocalBattleState {
+  return { playerCount: s.playerCount, players: s.players.map((p, id) => {
+    const phase = p.isTiming ? 'running' : p.hasFinished ? 'stopped' : p.canStart ? 'ready'
+      : p.isReady ? 'holding' : p.isInspecting ? 'inspecting' : 'idle';
+    return { id, event: battleToTimerEvent(s.puzzleIds[id]), scramble: s.scrambles[id] ?? '',
+      scrambleRevision: s.scrambleRevisions[id] ?? 0, penalty: p.penalty, resultScramble: p.resultScramble,
+      result: p.hasFinished ? p.timerResult ?? { timeMs: p.time, inspectionMs: 0, autoPenalty: p.penalty === 'dnf' ? 'DNF' : p.penalty } : null,
+      timer: { ...initialTimerMachineState(), ...p.timerState, phase,
+        lastMs: p.hasFinished || p.time > 0 ? p.time : null,
+        startedAtMs: p.isTiming ? p.startTime : null,
+        inspectionStartedAtMs: p.isInspecting ? p.inspectionStart : p.isTiming ? p.timerState?.inspectionStartedAtMs ?? null : null,
+        inspectionSec: p.isInspecting ? p.timerState?.inspectionSec ?? s.inspectionTime : p.timerState?.inspectionSec ?? null,
+      } };
+  }) };
+}
+
+function applyLocalAction(get: () => BattleState, set: (patch: Partial<BattleState>) => void, action: LocalBattleAction): boolean {
+  const s = get();
+  const transition = transitionLocalBattle(localState(s), action, { inspectionSec: s.inspectionTime, syncStart: s.syncStart, minSolveMs: MIN_SOLVE_TIME });
+  if (!transition.accepted) return false;
+  set({ scrambles: transition.state.players.map(p => p.scramble || null),
+    scrambleRevisions: transition.state.players.map(p => p.scrambleRevision),
+    players: s.players.map((p, id) => {
+    const next = transition.state.players[id], timer = next.timer;
+    return { ...p, timerState: timer, timerResult: next.result, resultScramble: next.resultScramble, isTiming: timer.phase === 'running', hasFinished: next.result !== null,
+      isReady: timer.phase === 'holding' || timer.phase === 'ready' && (p.isReady || s.syncStart), canStart: timer.phase === 'ready',
+      isInspecting: timer.inspectionStartedAtMs !== null && timer.phase !== 'running',
+      inspectionStart: timer.inspectionStartedAtMs ?? 0,
+      startTime: timer.startedAtMs ?? p.startTime, time: next.result?.timeMs ?? (timer.phase === 'running' ? 0 : p.time),
+      penalty: next.penalty,
+    };
+  }) });
+  for (const effect of transition.effects) {
+    if (effect.type !== 'player-timer') continue;
+    if (effect.effect === 'hold-cancelled' || effect.effect === 'run-started') get().cancelReadyTimer(effect.playerId);
+    if (effect.effect === 'hold-started') {
+      get().cancelReadyTimer(effect.playerId);
+      const timers = [...get().readyTimers];
+      timers[effect.playerId] = setTimeout(() => {
+        const next = [...get().readyTimers]; next[effect.playerId] = null; set({ readyTimers: next });
+        applyLocalAction(get, set, { type: 'player-timer', playerId: effect.playerId, action: { type: 'hold-ready' } });
+      }, s.startDelay);
+      set({ readyTimers: timers });
+    }
+    if (effect.effect === 'run-stopped') {
+      const raf = s.players[effect.playerId].rafId;
+      if (raf !== null) cancelAnimationFrame(raf);
+    }
+  }
+  if (transition.effects.some(effect => effect.type === 'player-timer' && effect.effect === 'run-stopped')) get().checkBothFinished();
+  return true;
+}
+
 export const useBattleStore = create<BattleState>((set, get) => ({
   // NOTE: 初始值 — 1:1 翻译自 battle.js state 对象（行 99~141）
   mode: (localStorage.getItem(LS_PREFIX + 'mode') as BattleMode) || '1v1',
@@ -607,6 +666,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   scrambles: Array.from({ length: MAX_PLAYERS }, () => null),
   scrambleImageUrls: Array.from({ length: MAX_PLAYERS }, () => null),
   scrambleLoadings: Array.from({ length: MAX_PLAYERS }, () => false),
+  scrambleRevisions: Array.from({ length: MAX_PLAYERS }, () => 0),
   winners: [],
   battleRounds: initialBattleHistory.rounds,
   battleHistoryWarning: initialBattleHistory.warning,
@@ -648,6 +708,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
     const s = get();
+    const revisions = new Map<string, number>();
+    if (s.mode !== 'solo' && s.players.slice(0, s.playerCount).some(p => p.isTiming || p.isReady || p.canStart || p.isInspecting)) return;
     const n = s.mode === 'solo' ? 1 : s.playerCount;
     const targets = playerId === undefined
       ? Array.from({ length: n }, (_, i) => i)
@@ -661,6 +723,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       activeSlots.filter((playerId) => targetEvents.has(s.puzzleIds[playerId])),
     );
     const affected = [...groups.values()].flat();
+    if (s.mode !== 'solo') for (const [puzzle, ids] of groups) {
+      applyLocalAction(get, set, { type: 'request-next-scramble', event: battleToTimerEvent(puzzle),
+        preserveResults: s.players.slice(0, s.playerCount).every(p => p.hasFinished) });
+      revisions.set(puzzle, get().scrambleRevisions[ids[0]]);
+    }
     // WCA 真实打乱模式(打乱来源在共享的 timer 设置里,Solo / Duo 同一份配置)
     const useWca = getSettings().scrambleSource === 'wca';
 
@@ -680,6 +747,13 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     // (无组件读取),故不再调 generateScrambleImageUrl(该函数在 Next port 缺 image.js 全局会抛)。
     const commit = (idxs: number[], text: string) => {
       const cur = get();
+      if (cur.mode !== s.mode) return;
+      if (cur.mode !== 'solo') {
+        const puzzle = s.puzzleIds[idxs[0]];
+        const revision = revisions.get(puzzle)!;
+        if (idxs.some(id => cur.puzzleIds[id] !== puzzle || cur.scrambleRevisions[id] !== revision)) return;
+        if (!applyLocalAction(get, set, { type: 'scramble-ready', event: battleToTimerEvent(puzzle), revision, scramble: text })) return;
+      }
       const ns: (string | null)[] = [...cur.scrambles];
       const ni: (string | null)[] = [...cur.scrambleImageUrls];
       const nl: boolean[] = [...cur.scrambleLoadings];
@@ -721,6 +795,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   // 所以「一半人用魔方、一半人用键盘」是自然成立的,不需要第二套状态。
 
   cubeArm: (playerId: number): boolean => {
+    if (get().mode !== 'solo') {
+      if (get().players.slice(0, get().playerCount).every(p => p.hasFinished)) get().resetForNextRound();
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'arm-from-cube', nowMs: performance.now() } });
+    }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     // 上一轮全员拧完了 → 这一下是「开下一轮」。和 playerDown 同一条规则。
@@ -756,6 +834,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   cubeStart: (playerId: number, atMs: number): boolean => {
+    if (get().mode !== 'solo') {
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'start-from-cube', nowMs: atMs, atMs } });
+    }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     const p = s.players[playerId];
@@ -782,6 +863,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   },
 
   cubeStop: (playerId: number, atMs: number): boolean => {
+    if (get().mode !== 'solo') {
+      return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'stop-from-cube', nowMs: atMs, atMs } });
+    }
     const s = get();
     if (!inPlay(s, playerId)) return false;
     const p = s.players[playerId];
@@ -907,38 +991,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return false;
     }
 
-    // === 1v1 模式原有逻辑(推广到 N 人:全员完成才能进入下一轮) ===
-    if (s.players.slice(0, s.playerCount).every(pl => pl.hasFinished)) {
-      get().resetForNextRound();
-    }
-
-    // NOTE: 重新读取——resetForNextRound 可能改了 players
-    const ps = get().players[playerId];
-
-    if (ps.isTiming) {
-      const elapsed = performance.now() - ps.startTime;
-      if (elapsed > MIN_SOLVE_TIME) {
-        const newPlayers = [...get().players];
-        newPlayers[playerId] = {
-          ...ps,
-          time: elapsed,
-          hasFinished: true,
-          isTiming: false,
-        };
-        if (ps.rafId !== null) cancelAnimationFrame(ps.rafId);
-        set({ players: newPlayers });
-        // NOTE: 立即触发 confetti + vibrate（在 UI 组件中处理）
-        get().checkBothFinished();
-      }
-      return true;
-    } else if (!ps.hasFinished && !ps.canStart && get().scrambles[playerId]) {
-      const newPlayers = [...get().players];
-      newPlayers[playerId] = { ...ps, isReady: true };
-      set({ players: newPlayers });
-      get().checkBothReady(playerId);
-      return true;
-    }
-    return false;
+    if (get().players.slice(0, get().playerCount).every(p => p.hasFinished)) get().resetForNextRound();
+    return applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'press-down', nowMs: performance.now() } });
   },
 
   // 1:1 翻译自 battle.js playerUp()（行 641~711）
@@ -988,50 +1042,14 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // === 1v1 模式原有逻辑 ===
-    if (p.canStart) {
-      const startTime = performance.now();
-      const newPlayers = [...s.players];
-      if (s.syncStart) {
-        // --- 同时开始:第一名玩家松手触发,带着全部已绿灯的玩家共用同一 startTime ---
-        for (let i = 0; i < s.playerCount; i++) {
-          const player = s.players[i];
-          if (player.canStart) {
-            newPlayers[i] = {
-              ...player,
-              canStart: false,
-              isTiming: true,
-              isReady: false,
-              startTime,
-              time: 0,
-              penalty: PENALTY.OK,
-            };
-          }
-        }
-      } else {
-        // --- 各自开始:只起自己这一路,别人还在看打乱 / 还在拧都不受影响 ---
-        newPlayers[playerId] = {
-          ...p,
-          canStart: false,
-          isTiming: true,
-          isReady: false,
-          startTime,
-          time: 0,
-          penalty: PENALTY.OK,
-        };
-      }
-      set({ players: newPlayers });
-    } else if (p.isReady && !p.isTiming && !p.hasFinished) {
-      // NOTE: 红灯期间松手 → 恢复 idle（黑色），取消红灯延时。
-      //   同时开始:延时是全员共有的,整条作废;各自开始:只作废自己那条。
-      get().cancelReadyTimer(s.syncStart ? undefined : playerId);
-      const newPlayers = [...s.players];
-      newPlayers[playerId] = { ...p, isReady: false };
-      set({ players: newPlayers });
-    }
+    applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'press-up', nowMs: performance.now() } });
   },
 
   playerCancel: (playerId: number) => {
+    if (get().mode !== 'solo') {
+      applyLocalAction(get, set, { type: 'player-timer', playerId, action: { type: 'cancel-press' } });
+      return;
+    }
     const s = get();
     if (!inPlay(s, playerId)) return;
     const player = s.players[playerId];
@@ -1064,7 +1082,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const solo = s.mode === 'solo';
 
     // 单人点亮:solo 与「各自开始」共用同一条路径
-    if (solo || !s.syncStart) {
+    if (solo) {
       const target = solo ? 0 : playerId;
       const p = s.players[target];
       if (!p.isReady || p.canStart) return;
@@ -1084,26 +1102,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       return;
     }
 
-    // === 同时开始(推广到 N 人:全员按住才进入红灯延时) ===
-    const active = s.players.slice(0, s.playerCount);
-    if (active.every(pl => pl.isReady && !pl.canStart)) {
-      const timer = setTimeout(() => {
-        const curr = get();
-        if (curr.players.slice(0, curr.playerCount).every(pl => pl.isReady)) {
-          const newPlayers = [...curr.players];
-          const timers = [...curr.readyTimers];
-          for (let i = 0; i < curr.playerCount; i++) {
-            newPlayers[i] = { ...curr.players[i], canStart: true };
-            timers[i] = null;
-          }
-          set({ players: newPlayers, readyTimers: timers });
-        }
-      }, s.startDelay);
-      // 同一 handle 写进全部参战槽位 —— 任一槽位被取消即整条作废
-      const timers = [...s.readyTimers];
-      for (let i = 0; i < s.playerCount; i++) timers[i] = timer;
-      set({ readyTimers: timers });
-    }
+    // Multiplayer callers dispatch through applyLocalAction; no second readiness machine.
   },
 
   // playerId 省略 = 清掉全部槽位(换人数 / 同时开始模式下任一人松手)
@@ -1173,23 +1172,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       get().computeWinner();
       const finalized = get();
       const roundId = createLocalBattleRoundId();
-      const attempts = finalized.players.slice(0, finalized.playerCount).map((player, playerId) => {
-        const solve: SharedSolve = {
-          id: `${roundId}-${playerId}`,
-          timeMs: player.time,
-          penalty: player.penalty === PENALTY.DNF ? 'DNF' : player.penalty,
-          scramble: finalized.scrambles[playerId] || '',
-          event: battleToTimerEvent(finalized.puzzleIds[playerId]),
-          ts: roundTs,
-        };
-        return { playerId, solve };
-      });
-      const round: LocalBattleRound = {
-        id: roundId,
-        ts: roundTs,
-        attempts,
-        winners: finalized.winners,
-      };
+      const round = createLocalBattleRound(localState(finalized), roundId, roundTs);
+      if (!round) return;
       const battleRounds = [...finalized.battleRounds, round];
       const persisted = persistBattleRounds(finalized.sessionId, battleRounds);
       set({
@@ -1224,18 +1208,8 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       set({ players: newPlayers });
       return;
     }
-    // === 1v1 原有逻辑(推广到 N 人) ===
-    const newPlayers = [...s.players];
-    for (let i = 0; i < s.playerCount; i++) {
-      newPlayers[i] = {
-        ...s.players[i],
-        isReady: false,
-        canStart: false,
-        isTiming: false,
-        hasFinished: false,
-      };
-    }
-    set({ players: newPlayers, winners: [] });
+    applyLocalAction(get, set, { type: 'reset-round' });
+    set({ winners: [] });
   },
 
   // 1:1 翻译自 battle.js computeWinner()（行 963~1001;推广到 N 人,最小有效成绩者胜,可并列）
@@ -1273,6 +1247,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       }
       set({ players: newPlayers });
       get().saveSolveHistory();
+      return;
+    }
+
+    // The current round has no history entry until every player finishes.
+    if (!newPlayers.slice(0, s.playerCount).every(player => player.hasFinished)) {
+      set({ players: newPlayers });
       return;
     }
 
@@ -1431,6 +1411,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   changePuzzle: (target: number, newPuzzleId: string) => {
     const s = get();
     if (s.puzzleIds[target] === newPuzzleId) return;
+    if (s.mode !== 'solo' && !transitionLocalBattle(localState(s), { type: 'set-player-event', playerId: target, event: battleToTimerEvent(newPuzzleId) }, { inspectionSec: s.inspectionTime }).accepted) return;
 
     s.saveSolveHistory();
 
@@ -1516,6 +1497,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const count = normalizeLocalBattlePlayerCount(n);
     const s = get();
     if (s.playerCount === count) return;
+    if (s.mode !== 'solo' && !transitionLocalBattle(localState(s), { type: 'set-player-count', playerCount: count }, { inspectionSec: s.inspectionTime }).accepted) return;
     s.saveSolveHistory();
     get().cancelReadyTimer();
     set({

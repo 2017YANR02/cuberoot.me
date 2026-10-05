@@ -186,11 +186,13 @@ function useTimerAnimation(playerId: number, timeRef: React.RefObject<HTMLDivEle
 // NOTE: WCA Inspection 倒计时显示 — 通过 subscribe 直接写 DOM
 function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
-    const unsubscribe = useBattleStore.subscribe((state) => {
+    let frame = 0;
+    const update = () => {
+      const state = useBattleStore.getState();
       const p = state.players[playerId];
       if (p.isInspecting && timeRef.current) {
         const elapsed = (performance.now() - p.inspectionStart) / 1000;
-        const limit = state.inspectionTime;
+        const limit = p.timerState?.inspectionSec ?? state.inspectionTime;
         if (limit < 9999) {
           if (elapsed >= limit + 2) {
             timeRef.current.textContent = 'DNF';
@@ -203,8 +205,10 @@ function useInspectionDisplay(playerId: number, timeRef: React.RefObject<HTMLDiv
           timeRef.current.textContent = Math.floor(elapsed).toString();
         }
       }
-    });
-    return () => unsubscribe();
+      frame = requestAnimationFrame(update);
+    };
+    frame = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(frame);
   }, [playerId, timeRef]);
 }
 
@@ -555,6 +559,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
     keys={store.playerKeys.slice(0, store.playerCount)} onKeyChange={store.setPlayerKey}
     precision={{ value: store.timerPrecision, onChange: store.setTimerPrecision }}
     inspection={{ value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] }}
+    syncStart={{ value: store.syncStart, onChange: store.setSyncStart }}
     hold={{ value: store.startDelay, onChange: store.setStartDelay }}
     preview={{ value: store.showImage, onChange: store.setShowImage }}
     hideTime={{ value: !store.showTime, onChange: () => store.toggleShowTime() }}
@@ -570,7 +575,6 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
     </div>}
     >
     <BoolToggle value={store.flipTopRow} onChange={store.setFlipTopRow} label={tr({ en: 'Rotate top players', zh: '旋转上方玩家' })} />
-    <BoolToggle value={store.syncStart} onChange={store.setSyncStart} label={tr({ en: 'Start together', zh: '同时开始' })} />
     <BoolToggle value={store.voice} onChange={store.setVoice} label={tr({ en: 'Voice alert', zh: '语音提示' })} />
     <label className="setting-item"><span>{tr({ en: 'Scramble size', zh: '打乱大小' })}</span>
       <input type="range" min={0.5} max={2} step={0.1} value={store.scrambleScale} onChange={(event) => store.setScrambleScale(Number(event.target.value))} />

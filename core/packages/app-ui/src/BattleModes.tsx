@@ -1,3 +1,5 @@
+import { NetBattleAttemptRecorder, type NetRecordedAttempt } from '@cuberoot/shared/timer';
+import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import {
   BATTLE_EVENT_IDS,
   DEFAULT_TIMER_TYPOGRAPHY,
@@ -199,6 +201,7 @@ export interface LocalBattleModeProps extends BattleModeBaseProps {
 }
 
 export interface BattleSmartCubeHandlers {
+  onGyro?(quaternion: Quat, timestamp: number): void;
   onMove(move: string, timestamp: number, facelets: string): void;
   onSolved(timestamp: number): void;
 }
@@ -245,6 +248,8 @@ export function LocalBattleMode({
   const [failedScrambleEvents, setFailedScrambleEvents] = useState<Set<EventId>>(() => new Set());
   const [cubeHolder, setCubeHolder] = useState(0);
   const [layout, setLayout] = useState<'side' | 'versus'>('versus');
+  const [syncStart, setSyncStart] = useState(false);
+  useEffect(() => { setSyncStart(window.localStorage.getItem('battle_syncStart') === 'true'); }, []);
   const [flipTopRow, setFlipTopRow] = useState(true);
   const inputBlockedRef = useRef(inputBlocked);
   inputBlockedRef.current = inputBlocked || historyOpen || settingsOpen;
@@ -279,17 +284,24 @@ export function LocalBattleMode({
 
   const processEffectsRef = useRef<(effects: readonly LocalBattleEffect[]) => void>(() => undefined);
   const dispatch = useCallback((action: LocalBattleAction): boolean => {
-    const transition = transitionLocalBattle(stateRef.current, action, { inspectionSec });
+    const transition = transitionLocalBattle(stateRef.current, action, { inspectionSec, syncStart });
     if (!transition.accepted) return false;
+    if (action.type === 'set-player-event' || action.type === 'set-player-count' || action.type === 'next-round' || action.type === 'request-next-scramble' && !action.preserveResults) {
+      roundIdRef.current = nextLocalBattleRoundId(); roundTimestampRef.current = Date.now(); setWinners([]);
+    }
     stateRef.current = transition.state;
     setState(transition.state);
     setNowMs(performance.now());
     processEffectsRef.current(transition.effects);
     return true;
-  }, [inspectionSec]);
+  }, [inspectionSec, syncStart]);
 
   processEffectsRef.current = (effects) => {
     for (const effect of effects) {
+      if (effect.type === 'round-reset') {
+        roundIdRef.current = nextLocalBattleRoundId(); roundTimestampRef.current = Date.now(); setWinners([]);
+        continue;
+      }
       if (effect.type === 'request-scramble') {
         setFailedScrambleEvents((current) => {
           if (!current.has(effect.event)) return current;
@@ -341,6 +353,9 @@ export function LocalBattleMode({
           roundsRef.current = nextRounds;
           setRounds(nextRounds);
           void roundStoreRef.current?.save(nextRounds).catch(() => setStorageError(copy.actionFailed));
+          if (existing === -1) for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) {
+            dispatch({ type: 'request-next-scramble', event, preserveResults: true });
+          }
         }
         continue;
       }
@@ -410,7 +425,7 @@ export function LocalBattleMode({
           dispatch({
             type: 'player-timer',
             playerId: holder,
-            action: { type: 'press-down', nowMs: performance.now() },
+            action: { type: 'arm-from-cube', nowMs: performance.now() },
           });
         }
       },
@@ -507,11 +522,6 @@ export function LocalBattleMode({
     onModeChange(mode);
   };
 
-  const startAll = () => {
-    setWinners([]);
-    dispatch({ type: 'start-all', nowMs: performance.now() });
-  };
-
   const nextRound = () => {
     setWinners([]);
     if (dispatch({ type: 'next-round' })) {
@@ -578,7 +588,7 @@ export function LocalBattleMode({
       <TimerStageLayout devices={smartCube && deviceControls}>
       <TimerBattleLayoutControls playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow} language={language} onLayoutChange={setLayout} onFlipChange={setFlipTopRow} />
       <TimerBattleLayout middle={<TimerBattleToolbar language={language} disabled={active} onHistory={() => setHistoryOpen(true)}
-        onSettings={() => setSettingsOpen(true)} onNext={nextRound} onStart={startAll}
+        onSettings={() => setSettingsOpen(true)} onNext={nextRound}
         startDisabled={visiblePlayers.some((player) => !player.scramble)}
         controls={<TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online}
           onChange={changeMode} playerLabel={copy.players} value={state.playerCount as 2 | 3 | 4} />}
@@ -682,6 +692,9 @@ export function LocalBattleMode({
       )}
       <div className="battle-local-tools" data-no-timer>
         {settingsOpen && <TimerBattleSettings language={language} onClose={() => setSettingsOpen(false)}
+          syncStart={{ value: syncStart, onChange: value => {
+            setSyncStart(value); window.localStorage.setItem('battle_syncStart', String(value));
+          } }}
           keys={playerKeys.slice(0, state.playerCount)}
           onKeyChange={(playerId, key) => {
             const next = assignLocalBattlePlayerKey(playerKeysRef.current, playerId, key);
@@ -716,6 +729,10 @@ export function LocalBattleMode({
 }
 
 export interface NetBattleModeProps extends BattleModeBaseProps {
+  sessionId?: string;
+  recordGyro?: boolean;
+  onRecordSolve?(record: NetRecordedAttempt): Promise<void>;
+  renderRecordedSolve?(record: NetRecordedAttempt): ReactNode;
   onOverlayCloseChange?(close: (() => void) | null): void;
   accountIdentity?: NetIdentity;
   capability?: InstalledAppNetBattle;
@@ -736,6 +753,7 @@ function netResultText(timeMs: number, penalty: NetPenalty, precision: 2 | 3): s
 
 /** Shared-contract online room host; no room DTO, scoring or transport is reimplemented here. */
 export function NetBattleMode({
+  sessionId, recordGyro, onRecordSolve, renderRecordedSolve,
   accountIdentity,
   capability,
   copy,
@@ -787,7 +805,10 @@ export function NetBattleMode({
   const admissionGateRef = useRef(createNetAdmissionGate());
   const autoStartedRef = useRef<number | null>(null);
   const advanceBusyRef = useRef(false);
-  const solvingRoundRef = useRef(0);
+  const netAttemptRef = useRef(new NetBattleAttemptRecorder());
+  const attemptAuthRef = useRef<NetBattleCredentials | null>(null);
+  const [recordedSolve, setRecordedSolve] = useState<NetRecordedAttempt | null>(null);
+  const saveTailRef = useRef(Promise.resolve());
   const copiedResetRef = useRef<number | null>(null);
   const mountedRef = useRef(true);
   const surfaceRef = useRef<HTMLDivElement>(null);
@@ -845,32 +866,40 @@ export function NetBattleMode({
     };
   }, []);
 
+  const persistRecording = useCallback((record: NetRecordedAttempt) => {
+    setRecordedSolve(record);
+    const save = () => onRecordSolve?.(record);
+    saveTailRef.current = saveTailRef.current.then(save).catch(save).catch(() => setError(copy.actionFailed));
+  }, [onRecordSolve, copy.actionFailed]);
   const onComplete = useCallback((result: SolveResult) => {
-    const currentRoom = roomRef.current;
-    const auth = credentialsRef.current;
-    if (!capability || !currentRoom || !auth) return;
-    const penalty: NetPenalty = result.autoPenalty === 'DNF'
-      ? 'dnf'
-      : result.autoPenalty === '+2' ? '+2' : 'ok';
-    const round = solvingRoundRef.current || currentRoom.round;
-    void capability.client.postNetResult(currentRoom.code, auth, round, result.timeMs, penalty)
+    const completed = netAttemptRef.current.finish(result);
+    const auth = attemptAuthRef.current;
+    if (!completed) return;
+    if (completed.record) persistRecording(completed.record);
+    if (!capability || !auth) return;
+    const penalty: NetPenalty = result.autoPenalty === 'DNF' ? 'dnf' : result.autoPenalty;
+    const { code, round } = completed.context;
+    void capability.client.postNetResult(code, auth, round, result.timeMs, penalty)
       .then(applyRoom)
-      .catch(() => capability.client.postNetResult(
-        currentRoom.code,
-        auth,
-        round,
-        result.timeMs,
-        penalty,
-      ).then(applyRoom).catch(fail));
-  }, [applyRoom, capability, fail]);
+      .catch(() => capability.client.postNetResult(code, auth, round, result.timeMs, penalty)
+        .then(applyRoom).catch(fail));
+  }, [applyRoom, capability, fail, persistRecording]);
 
   const timer = useTimerController({
     canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && !renameOpen && Boolean(room && credentials && scramble && !myResult),
     holdMs,
     inspectionSec,
     onComplete,
-    onStart: () => {
-      solvingRoundRef.current = roomRef.current?.round ?? 0;
+    onStart: (startedAtMs) => {
+      const current = roomRef.current, auth = credentialsRef.current;
+      if (!current || !auth) return;
+      attemptAuthRef.current = { ...auth };
+      netTimerPhaseRef.current = 'running';
+      setRecordedSolve(null);
+      netAttemptRef.current.begin({ code: current.code, playerId: auth.playerId, round: current.round,
+        sessionId: sessionId ?? '', id: nextLocalBattleRoundId(), ts: Date.now(),
+        event: playerEventOf(current, auth.playerId), scramble: myScramble(current, auth.playerId) ?? '' }, startedAtMs,
+        smartCube?.phase === 'connected' ? { model: smartCube.model ?? '', name: smartCube.deviceName } : undefined);
     },
   });
   const timerPhase = timer.machine.phase;
@@ -908,7 +937,14 @@ export function NetBattleMode({
   useEffect(() => {
     if (!onSmartCubeHandlersChange) return undefined;
     const handlers: BattleSmartCubeHandlers = {
-      onMove(_move, timestamp, facelets) {
+      onGyro(quaternion, timestamp) {
+        if (recordGyro && netTimerPhaseRef.current === 'running') netAttemptRef.current.recordGyro(quaternion, timestamp);
+      },
+      onMove(move, timestamp, facelets) {
+        if (netTimerPhaseRef.current === 'running') {
+          netAttemptRef.current.recordMove(move, timestamp);
+          return;
+        }
         if (!netSmartCubeSupported
           || gate.gated
           || countdownMs !== null
@@ -917,6 +953,7 @@ export function NetBattleMode({
           || !canManuallyStart) return;
         if (timer.startFromCube(timestamp)) {
           netTimerPhaseRef.current = 'running';
+          netAttemptRef.current.recordMove(move, timestamp);
           setNetSmartCubeHint(null);
           return;
         }
@@ -933,6 +970,7 @@ export function NetBattleMode({
     return () => onSmartCubeHandlersChange(null);
   }, [
     canManuallyStart,
+    recordGyro,
     countdownMs,
     event,
     gate.gated,
@@ -1056,7 +1094,7 @@ export function NetBattleMode({
       setCountdownMs(null);
       if (autoStartedRef.current === startAt) return;
       autoStartedRef.current = startAt;
-      solvingRoundRef.current = room?.round ?? 0;
+      if (netTimerPhaseRef.current === 'running') return;
       timer.startNow(Math.max(0, -left));
     };
     tick();
@@ -1399,7 +1437,12 @@ export function NetBattleMode({
               idle={timerPhase === 'idle' || timerPhase === 'stopped'} countdown={countdownMs !== null}
               cubeAutoReadySuspended={smartCube?.phase === 'connected'}
               onReady={() => { void capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready').then(applyRoom).catch(fail); }}
-              onPenalty={(penalty) => { if (currentResult) void capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty).then(applyRoom).catch(fail); }}
+              onPenalty={(penalty) => {
+                if (!currentResult) return;
+                const record = netAttemptRef.current.penalty({ code: room.code, playerId: credentials.playerId, round: room.round }, penalty);
+                if (record) persistRecording(record);
+                void capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty).then(applyRoom).catch(fail);
+              }}
               onNext={advanceRound} />
           </TimingSurface>
         </>
@@ -1420,6 +1463,7 @@ export function NetBattleMode({
           writeClipboardText={writeClipboardText}
         />
       )}
+      {recordedSolve && timerPhase !== 'running' && renderRecordedSolve?.(recordedSolve)}
     </section>
   );
 }

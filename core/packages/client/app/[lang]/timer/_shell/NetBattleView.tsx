@@ -1,6 +1,6 @@
 'use client';
 
-import { TimerWorkspace } from '@cuberoot/timer-ui';
+import { TimerWorkspace, TimerInfoToast } from '@cuberoot/timer-ui';
 
 import type { CubeMoveMetadata } from '../_lib/bluetooth';
 
@@ -32,12 +32,12 @@ import type { CubeMoveMetadata } from '../_lib/bluetooth';
  * 的语义是「向全房上报准备」,不是「起自己的表」,不能交给魔方代劳。
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useSyncExternalStore, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState } from 'nuqs';
 
 
 import { TimerPuzzlePicker, TimerCubePreview, SegmentTime, TimerTopbar, TimerDeviceCenter, TimerRoomRoundStatus, TimerRoomLobby, TimerRoomIdentity, TimerRoomDialog, TimerRoomAdmin, TimerRoomHistory, TimerRoomToolbar, TimerRoomLayout, TimerRoomPlayers, timerRoomPlayerName, TimerScrambleStrip, TimingSurface } from '@cuberoot/timer-ui';
-import { TIMER_EVENT_PICKER_GROUPS, SmartCubeAttemptProducer, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
+import { TIMER_EVENT_PICKER_GROUPS, NetBattleAttemptRecorder, NET_RECORDING_SAVE_COPY, timerSupportsNetBattleSmartCube } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import VideoStrip, { VideoToggle, useVideoRoom } from '../_battle/VideoStrip';
 import BluetoothModal from '../_components/BluetoothModal';
@@ -50,12 +50,12 @@ import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { useNetBattleLiveCube, type NetBattleLiveCubePlayer } from '../_lib/net-battle-live';
 import { useTimer, type SolveResult } from '../_shared/useTimer';
 import { formatInspectionDisplay, inspectionPenalty } from '../_shared/inspection';
-import { appendSolves, makeSolve, updateSolves } from '../_lib/storage/db';
+import { getActiveSessionId, makeSolve, netRecordingOutbox } from '../_lib/storage/db';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useSettings } from '../_lib/settings';
 import { formatMs } from '../_lib/stats';
-import type { EventId, Solve } from '../_lib/types';
+import type { EventId } from '../_lib/types';
 import CubeRootLogo from '@/components/CubeRootLogo';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { EventIcon } from '@/components/EventIcon';
@@ -329,7 +329,6 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const gateRef = useRef(gate.gated); gateRef.current = gate.gated;
   const startAtRef = useRef(startAt); startAtRef.current = startAt;
 
-  const solvingRoundRef = useRef(0);
   const advBusyRef = useRef(false);
 
   const advance = useCallback((force = false) => {
@@ -361,74 +360,46 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applyState]);
 
-  /**
-   * 这一把的转动流(智能魔方才有)。房间只收一个成绩数字,所以在此之前,联机房里
-   * 用智能魔方拧的每一把都是**扔掉的** —— 没有复盘、没有回放、不进统计。
-   * 记下来之后走的是和 Solo 完全同一条:同样的 `makeSolve` + `finishSolveFields`
-   * + `appendSolves`,于是复盘 / 回放 / 分段统计一行新代码都不用写就都有了。
-   */
-  const attemptProducerRef = useRef(new SmartCubeAttemptProducer());
-  /** 起表那一刻的打乱与设备 —— 中途换轮 / 掉线都不该改写这一把记的是什么。 */
-  const scrambleAtStartRef = useRef('');
-  const eventAtStartRef = useRef<EventId>('333');
-
-  /** 刚留档的那条本机记录 —— 之后改罚时要跟着改,别让两边对同一把给出两个判罚。 */
-  const localSolveRef = useRef<{ event: EventId; solve: Solve } | null>(null);
-
+  const netAttemptRef = useRef(new NetBattleAttemptRecorder());
+  const pendingRecording = useSyncExternalStore(netRecordingOutbox.subscribe, netRecordingOutbox.getSnapshot, netRecordingOutbox.getSnapshot);
+  const recordingNotice = pendingRecording.pending > 0 && <TimerInfoToast durationMs={null}
+    message={tr(NET_RECORDING_SAVE_COPY.message)} undoLabel={tr(NET_RECORDING_SAVE_COPY.retry)}
+    actionBusy={pendingRecording.busy} actionDisabled={pendingRecording.busy}
+    onUndo={() => { void netRecordingOutbox.retry(); }} onDismiss={() => undefined} />;
+  const attemptAuthRef = useRef<NetBattleCredentials | null>(null);
   const onSolve = useCallback((res: SolveResult) => {
-    const r = roomRef.current, auth = credentialsRef.current;
-    // 本机留档先做:上传失败也不该连自己的复盘一起丢。
-    localSolveRef.current = null;
-    const fields = attemptProducerRef.current.finishSolveFields({
-      event: eventAtStartRef.current,
-      scramble: scrambleAtStartRef.current,
-      timeMs: res.timeMs,
-    });
-    if (fields.moves && scrambleAtStartRef.current) {
-      const ev = eventAtStartRef.current;
-      const solve = makeSolve({
-        timeMs: res.timeMs,
-        scramble: scrambleAtStartRef.current,
-        event: ev,
-        penalty: res.autoPenalty,
-      });
-      Object.assign(solve, fields);
-      if (res.inspectionMs > 0) solve.inspectionMs = Math.round(res.inspectionMs);
-
-      appendSolves(ev, [solve]);
-      localSolveRef.current = { event: ev, solve };
+    const completed = netAttemptRef.current.finish(res);
+    const auth = attemptAuthRef.current;
+    if (!completed) return;
+    if (completed.record) {
+      void netRecordingOutbox.enqueue(completed.record);
     }
-    if (!r || !auth) return;
-    const p: NetPenalty = res.autoPenalty === 'DNF' ? 'dnf' : res.autoPenalty === '+2' ? '+2' : 'ok';
-    const round = solvingRoundRef.current || r.round;
-    void postNetResult(r.code, auth, round, res.timeMs, p)
-      .then((st) => applyState(st))
-      .catch(() => {
-        // 一次静默重试;仍失败给出提示(下一轮照常,丢的是本轮成绩)
-        void postNetResult(r.code, auth, round, res.timeMs, p).then(applyState).catch(() =>
-          setErr(tr({ zh: '成绩上传失败,请检查网络', en: 'Failed to upload result — check your connection' })));
-      });
-  }, [applyState]);
+    if (!auth) return;
+    const { code, round } = completed.context;
+    const penalty: NetPenalty = res.autoPenalty === 'DNF' ? 'dnf' : res.autoPenalty;
+    void postNetResult(code, auth, round, res.timeMs, penalty).then(applyState)
+      .catch(() => postNetResult(code, auth, round, res.timeMs, penalty).then(applyState)
+        .catch(() => setErr(tr({ zh: '成绩上传失败,请检查网络', en: 'Failed to upload result — check your connection' }))));
+  }, [applyState, tr]);
 
-  // Every start path (keys, countdown and cube) freezes the context synchronously.
-  // A room poll or the running-phase effect must never reset the first BLE move.
   const timer = useTimer(onSolve, (startedAtMs: number) => {
-    const r = roomRef.current, id = pidRef.current;
-    scrambleAtStartRef.current = (r && id ? myScramble(r, id) : null) ?? '';
-    eventAtStartRef.current = (r && id
-      ? netEventToSelectorId(playerEventOf(r, id))
-      : '333') as EventId;
-    solvingRoundRef.current = r?.round ?? 0;
+    const r = roomRef.current, auth = credentialsRef.current;
+    if (!r || !auth) return;
+    const event = netEventToSelectorId(playerEventOf(r, auth.playerId)) as EventId;
+    const scramble = myScramble(r, auth.playerId) ?? '';
+    const identity = makeSolve({ event, scramble, timeMs: 0, penalty: 'ok' });
+    attemptAuthRef.current = { ...auth };
     const bt = btStatusRef.current;
-    attemptProducerRef.current.begin(startedAtMs, bt?.connected
-      ? { model: bt.brand, name: bt.deviceName } : undefined);
+    netAttemptRef.current.begin({ code: r.code, playerId: auth.playerId, round: r.round,
+      sessionId: getActiveSessionId(), id: identity.id, ts: identity.ts, event, scramble },
+      startedAtMs, bt?.connected ? { model: bt.brand, name: bt.deviceName } : undefined);
     phaseRef.current = 'running';
   });
   const phaseRef = useRef(timer.phase); phaseRef.current = timer.phase;
   const cubeStartedRef = useRef(false);
   useEffect(() => {
     if (timer.phase !== 'running') cubeStartedRef.current = false;
-    if (timer.phase === 'idle') attemptProducerRef.current.reset();
+    if (timer.phase === 'idle') netAttemptRef.current.reset();
   }, [timer.phase]);
 
   // 实时状态上报(观察中/计时中)— 纯装饰,失败静默
@@ -762,7 +733,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   };
 
   const bluetoothCube = useBluetoothCube({
-    onGyro: settings.gyroEnabled ? (q) => { gyroQuatRef.current = q; } : undefined,
+    onGyro: settings.gyroEnabled ? (q) => {
+      gyroQuatRef.current = q;
+      if (settings.recordGyro && phaseRef.current === 'running') netAttemptRef.current.recordGyro(q, performance.now());
+    } : undefined,
     onMove: (move, ts, _facelets, metadata) => {
       // 双方都交卷后，自己的下一次转动才切到下一轮；另一台设备继续保留结算画面。
       if (myResult && roundSettled && !advBusyRef.current) advance(false);
@@ -996,7 +970,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const subs = btSubscribersRef.current;
     const recorder = (m: string, ts: number) => {
       if (phaseRef.current !== 'running') return;
-      attemptProducerRef.current.recordMove(m, ts);
+      netAttemptRef.current.recordMove(m, ts);
     };
     subs.add(recorder);
     return () => { subs.delete(recorder); };
@@ -1138,12 +1112,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     if (!r || !id) return;
     const cur = r.results[String(r.round)]?.[id];
     if (!cur) return;
-    // 本机那条记录也要跟着改 —— 同一把在房间记分板上是 DNF、在自己的历史里还是有效
-    // 成绩,那两边就对不上了。留档只在有转动流时发生,所以这里可能是 null。
-    const local = localSolveRef.current;
+    const local = netAttemptRef.current.penalty({ code: r.code, playerId: id, round: r.round }, p);
     if (local) {
-      local.solve.penalty = p === 'dnf' ? 'DNF' : p === '+2' ? '+2' : 'ok';
-      updateSolves(local.event, [local.solve]);
+      void netRecordingOutbox.enqueue(local);
     }
     const auth = credentialsRef.current;
     if (!auth || auth.playerId !== id) return;
@@ -1267,6 +1238,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onCodeChange={setJoinCode} onJoin={doJoin} onCreate={doCreate}
           onCancelInvite={() => { setErr(null); void setRoomParam(null); }} onExit={onExitNet} />
       </div>
+      {recordingNotice}
     </TimerWorkspace>;
   }
   const curResults = room.results[String(room.round)] ?? {};
@@ -1580,6 +1552,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
           onConnect={pick => bluetoothCube.connect(pick)}
         />
       )}
+      {recordingNotice}
     </TimerWorkspace>
   );
 }

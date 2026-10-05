@@ -36,10 +36,10 @@ describe('TimerSmartCubeMoveRecorder', () => {
     expect(solo).toContain('smartCubeAttemptProducerRef.current.recordMove(');
     expect(solo).not.toMatch(/movesRef|solveStartTsRef/);
     for (const source of [net]) {
-      expect(source).toContain('new SmartCubeAttemptProducer()');
-      expect(source).toContain('attemptProducerRef.current.begin(');
-      expect(source).toContain('attemptProducerRef.current.recordMove(');
-      expect(source).toContain('attemptProducerRef.current.finishSolveFields(');
+      expect(source).toContain('new NetBattleAttemptRecorder()');
+      expect(source).toContain('netAttemptRef.current.begin(');
+      expect(source).toContain('netAttemptRef.current.recordMove(');
+      expect(source).toContain('netAttemptRef.current.finish(');
       expect(source).not.toMatch(/movesRef|solveStartTsRef/);
     }
 
