@@ -16,7 +16,7 @@ const worker = (mode: string) => FakeWorker.all.find((w) => w.messages[0]?.mode 
 beforeEach(() => {
   vi.resetModules(); vi.useFakeTimers(); FakeWorker.all = [];
   vi.stubGlobal('Worker', FakeWorker);
-  vi.stubGlobal('location', { origin: 'https://example.test' });
+  vi.stubGlobal('location', { origin: 'https://example.test', href: 'https://example.test/zh/timer' });
 });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
 

@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
   type ReactNode,
+  type RefObject,
 } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -34,6 +35,8 @@ export interface CompactSelectProps<T extends string | number> {
   className?: string;
   triggerClassName?: string;
   popupClassName?: string;
+  /** Align option content with an external row containing the trigger. */
+  contentAnchorRef?: RefObject<HTMLElement | null>;
   variant?: 'pill' | 'plain';
   /** Some icon-only triggers are self-explanatory and do not need a caret. */
   showArrow?: boolean;
@@ -76,6 +79,7 @@ export function CompactSelect<T extends string | number>({
   className,
   triggerClassName,
   popupClassName,
+  contentAnchorRef,
   variant = 'pill',
   showArrow = true,
   footer,
@@ -153,13 +157,17 @@ export function CompactSelect<T extends string | number>({
         safeTop,
         viewportTop + viewportHeight - VIEWPORT_MARGIN - Math.max(0, viewportBottomInset),
       );
-      const anchor = trigger.getBoundingClientRect();
+      const anchor = (contentAnchorRef?.current ?? trigger).getBoundingClientRect();
       const panelRect = panel.getBoundingClientRect();
+      const optionContent = panel.querySelector('.compact-select-option')?.firstElementChild;
+      const contentInset = contentAnchorRef?.current && optionContent
+        ? optionContent.getBoundingClientRect().left - panelRect.left
+        : 0;
       const safeWidth = Math.max(0, safeRight - safeLeft);
       const naturalWidth = panel.scrollWidth || panelRect.width || anchor.width;
       const desiredWidth = Math.min(naturalWidth, safeWidth);
       const left = Math.min(
-        Math.max(anchor.left, safeLeft),
+        Math.max(anchor.left - contentInset, safeLeft),
         Math.max(safeLeft, safeRight - desiredWidth),
       );
       const belowTop = anchor.bottom + PANEL_GAP;
@@ -191,7 +199,7 @@ export function CompactSelect<T extends string | number>({
       window.visualViewport?.removeEventListener('resize', positionPanel);
       window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
-  }, [items.length, open, viewportBottomInset]);
+  }, [contentAnchorRef, items.length, open, viewportBottomInset]);
 
   const panelStyle = geometry ? {
     left: geometry.left,
@@ -209,6 +217,13 @@ export function CompactSelect<T extends string | number>({
         className,
       ].filter(Boolean).join(' ')}
       data-no-timer={dataNoTimer ? '' : undefined}
+      onKeyDown={event => {
+        if (!open || event.key !== 'Escape') return;
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+        triggerRef.current?.focus();
+      }}
     >
       <button
         ref={triggerRef}
@@ -274,7 +289,7 @@ export function CompactSelect<T extends string | number>({
         </div>,
         // Native modal dialogs make the rest of the document inert. Keep the
         // shared, viewport-clamped popup in its trigger's top-layer surface.
-        triggerRef.current?.closest('dialog') ?? document.body,
+        triggerRef.current?.closest('dialog, [role="dialog"]') ?? document.body,
       )}
     </div>
   );

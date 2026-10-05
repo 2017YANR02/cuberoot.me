@@ -61,14 +61,13 @@
   font-size: 12px;
 }
 .timer-battle-layout-controls > button {
-  border: 1px solid var(--border-default);
-  border-radius: 6px;
+  border: none;
   background: transparent;
   color: var(--foreground);
   cursor: pointer;
 }
 .timer-battle-layout-controls > button[aria-pressed="true"] {
-  border-color: var(--accent);
+  color: var(--accent);
   background: var(--accent-soft);
 }
 
@@ -148,4 +147,11 @@
   .shell-topbar.timer-battle-toolbar { gap: 2px; padding-inline: 6px; }
   .timer-battle-toolbar .timer-room-actions { gap: 2px; }
   .timer-battle-toolbar .timer-room-actions > button { min-width: 32px; padding-inline: 6px; }
+}
+
+/* Keep battle toolbar icon controls unframed, including the puzzle trigger. */
+.timer-battle-toolbar .timer-room-actions > button,
+.timer-battle-toolbar .timer-room-actions .pp-trigger {
+  border: none;
+  background: none;
 }

@@ -6,12 +6,14 @@ import { useModalBackdrop } from './useModalDismiss';
 
 export interface TimerRoomDialogProps {
   title: string;
+  className?: string;
+  headerControls?: ReactNode;
   language: 'en' | 'zh';
   onClose(): void;
   children: ReactNode;
 }
 
-export function TimerRoomDialog({ title, language, onClose, children }: TimerRoomDialogProps) {
+export function TimerRoomDialog({ title, className, headerControls, language, onClose, children }: TimerRoomDialogProps) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -35,7 +37,7 @@ export function TimerRoomDialog({ title, language, onClose, children }: TimerRoo
   if (typeof document === 'undefined') return null;
   const close = { en: 'Close', zh: '关闭' }[language];
   return createPortal(<div className="timer-room-overlay" data-no-timer {...backdrop}>
-    <div className="timer-room-dialog" data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
+    <div className={`timer-room-dialog${className ? ` ${className}` : ''}`} data-site-surface="panel" role="dialog" aria-modal="true" aria-labelledby={titleId}
       ref={ref} tabIndex={-1} onKeyUp={(event) => event.stopPropagation()} onKeyDown={(event) => {
         event.stopPropagation();
         if (event.key === 'Escape') { event.preventDefault(); closeRef.current(); }
@@ -46,7 +48,7 @@ export function TimerRoomDialog({ title, language, onClose, children }: TimerRoo
         else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
         else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
       }}>
-      <header className="timer-room-dialog-head"><h2 id={titleId}>{title}</h2><button type="button" aria-label={close} onClick={onClose}><X size={18} /></button></header>
+      <header className="timer-room-dialog-head"><h2 id={titleId}>{title}</h2>{headerControls}<button type="button" aria-label={close} onClick={onClose}><X size={18} /></button></header>
       {children}
     </div>
   </div>, document.body);

@@ -377,6 +377,7 @@ import {
 
 const SITE_ORIGIN = 'https://cuberoot.me';
 const ReconstructReport = lazy(() => import('@cuberoot/timer-ui/reconstruct-report'));
+const StageSolverDialog = lazy(() => import('./StageSolverDialog'));
 const SolveRecap = lazy(() => import('@cuberoot/timer-ui/solve-recap'));
 const MOBILE_EMBED_SURFACES = ['tools', 'account'] as const;
 const MOBILE_EMBED_INIT_RETRY_MS = 400;
@@ -1926,7 +1927,8 @@ export function App({ host }: { host: InstalledAppHost }) {
         && (openOverlay !== TIMER_OVERLAY_IDS.solveDetail || historyDetailSolve !== null)
       )
       : timerVisible && (
-        (openOverlay !== TIMER_OVERLAY_IDS.drillPicker
+        (openOverlay !== TIMER_OVERLAY_IDS.stageSolver || activeEvent === '333')
+        && (openOverlay !== TIMER_OVERLAY_IDS.drillPicker
           || timerEventSupportsDrill(activeEvent))
         && (openOverlay !== TIMER_OVERLAY_IDS.wcaCompetition
           || (scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)))
@@ -2981,7 +2983,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     return { ...descriptor, retryable };
   })();
   const scrambleText = scrambleSource === 'manual' && scramble.length === 0
-    ? TIMER_MANUAL_SCRAMBLE_EMPTY_COPY[language]
+    ? ''
     : activeEvent === 'custom' && scramble.length === 0
       ? '—'
       : scramble;
@@ -4171,6 +4173,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   >
                     <ManualScrambleQueueEditor
                       ariaLabel={copy.manualScrambles}
+                      placeholder={TIMER_MANUAL_SCRAMBLE_EMPTY_COPY[language]}
                       onChange={updateManualScrambles}
                       value={manualScrambles}
                     />
@@ -4374,6 +4377,24 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onPick={(target) => setDrillTarget(target)}
                 />
               )}
+              {activeEvent === '333' && <div className="mobile-solution-hints surface-chrome" data-no-timer>
+                <button type="button" className="timer-small-hints-trigger"
+                  disabled={timer.machine.phase === 'running' || timer.machine.phase === 'inspecting'}
+                  onClick={() => {
+                    openOverlayRef.current = TIMER_OVERLAY_IDS.stageSolver;
+                    setOpenOverlay(TIMER_OVERLAY_IDS.stageSolver);
+                  }}>
+                  {({ zh: '解法', en: 'Solve' })[language]}
+                </button>
+                {openOverlay === TIMER_OVERLAY_IDS.stageSolver && <Suspense fallback={null}>
+                  <StageSolverDialog scramble={scramble} language={language}
+                    onPrevScramble={previousDisplayedScramble} onNextScramble={nextDisplayedScramble}
+                    onClose={() => {
+                    openOverlayRef.current = null;
+                    setOpenOverlay(null);
+                  }} />
+                </Suspense>}
+              </div>}
               <MobileSmallPuzzleHints
                 event={activeEvent}
                 language={language}
