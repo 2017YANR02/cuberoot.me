@@ -12,7 +12,7 @@ import { useQueryState } from 'nuqs';
 import { tr, useLang } from '@/i18n/tr';
 import { useAuthStore, isAdmin, getSessionToken, getWcaToken } from '@/lib/auth-store';
 import { isMiniProgramCommerceRestricted } from '@/lib/miniprogram-bridge';
-import { fmtPrice, fmtDate } from '@/lib/membership-format';
+import { fmtPrice, fmtDate, fmtVipId } from '@/lib/membership-format';
 import { benefitCopy } from '@cuberoot/shared/membership-benefits';
 import { useMembershipBenefits } from '@/hooks/useMembershipBenefits';
 import BenefitsEditor from './BenefitsEditor';
@@ -273,7 +273,7 @@ export default function MembershipPage() {
         <div className={`mem-status${expiry?.expiringSoon ? ' is-warning' : ''}${expiry?.expired ? ' is-expired' : ''}`}>
           {expiry?.expired && <AlertTriangle size={16} className="mem-status-icon" />}
           <span className="mem-status-text">
-            {membership.vipId && <><strong>{membership.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}</strong>{' '}</>}
+            {membership.vipId && <><strong>{fmtVipId(membership.vipId)}</strong>{' '}</>}
             {membership.lifetime
               ? tr({ zh: '你是永久会员,感谢长期的支持 ♡', en: "You're a lifetime member — thank you for the support ♡"
             })

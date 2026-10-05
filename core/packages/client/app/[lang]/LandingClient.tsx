@@ -13,6 +13,7 @@ import HeaderToggles from '@/components/HeaderToggles';
 import './home-background.css';
 import { useTranslation } from 'react-i18next';
 import { useAuthUser, nextQuery } from '@/lib/auth-store';
+import { fmtVipId } from '@/lib/membership-format';
 import LandingSearch from '@/components/LandingSearch';
 import PersonUpcomingComps from '@/components/persons/sections/PersonUpcomingComps';
 import SearchInput from '@/components/SearchInput';
@@ -314,7 +315,7 @@ export default function LandingPage() {
     const query = memberQueries[section.id].trim().toLowerCase();
     const sectionMembers = orderedMembers.filter((member) => member.planSlug.startsWith('enterprise_') === section.enterprise);
     const members = sectionMembers.filter((member) => !query || [
-      member.name, member.wcaId, member.vipId ?? '', member.vipId?.replace(/^VIP0+(\d+)$/, 'VIP$1') ?? '',
+      member.name, member.wcaId, member.vipId ?? '', fmtVipId(member.vipId ?? ''),
     ].some((value) => value.toLowerCase().includes(query)));
     return (
       <section key={section.id} className="cards-section" aria-labelledby={`${section.id}-members-title`}>
@@ -340,7 +341,7 @@ export default function LandingPage() {
                 {member.avatarUrl
                   ? <img src={member.avatarUrl} alt="" className="landing-member-avatar" />
                   : <User size={24} aria-hidden="true" />}
-                <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${member.vipId.replace(/^VIP0+(\d+)$/, 'VIP$1')}` : ''}</span>
+                <span>{displayCuberName(member.name, lang === 'zh')}{member.vipId ? ` ${fmtVipId(member.vipId)}` : ''}</span>
               </Link>
             ))}
           </div>

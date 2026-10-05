@@ -1,4 +1,9 @@
-// Display formatters shared across the /membership pages (page + PayModal + AdminPanel).
+// Display formatters shared across membership surfaces.
+
+/** Compact display only; retain the original identifier for storage and API calls. */
+export function fmtVipId(vipId: string): string {
+  return vipId.replace(/^VIP0+(\d+)$/, 'VIP$1');
+}
 
 /** Price in minor units (cents) with its currency symbol; integer amounts drop the decimals. */
 export function fmtPrice(cents: number, currency: string): string {
