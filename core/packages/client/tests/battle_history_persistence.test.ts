@@ -51,6 +51,17 @@ beforeEach(() => {
 });
 
 describe('atomic local-battle persistence', () => {
+  it('does not change previous history when a finished player changes penalty before the others finish', () => {
+    const previous = { time: 2000, penalty: 'ok' as const, scramble: 'R', date: '2026-10-05T00:00:00Z' };
+    useBattleStore.setState({ players: useBattleStore.getState().players.map((player, index) => ({
+      ...player, hasFinished: index === 0, isTiming: index === 1, penalty: 'ok',
+      solveHistory: [previous],
+    })) });
+    useBattleStore.getState().handlePenalty(0, '+2');
+    expect(useBattleStore.getState().players[0].penalty).toBe('+2');
+    expect(useBattleStore.getState().players.slice(0, 2).map(player => player.solveHistory)).toEqual([[previous], [previous]]);
+  });
+
   it('Reset All removes every legacy event/player key and the recovery copy', () => {
     localStorage.setItem('battle_1v1_history_1_222_0', '[{"time":1000}]');
     localStorage.setItem('battle_1v1_history_1_333_3', '[{"time":2000}]');

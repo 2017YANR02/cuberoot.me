@@ -1,3 +1,4 @@
+import { NetRecordingOutbox, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 /**
  * localStorage-backed solve store.
  *
@@ -622,3 +623,14 @@ export {
   exportTsv,
   exportSpeedstacks,
 } from './import_export';
+
+/** Online recordings keep the session selected at attempt start. */
+export function saveNetSolve(sessionId: string, solve: Solve): void {
+  const db = loadRaw();
+  const byEvent = db.dataBySession[sessionId];
+  if (!byEvent) throw new Error('Unknown timer session');
+  byEvent[solve.event] = upsertNetRecordedSolve(byEvent[solve.event] ?? [], solve);
+  if (!saveRaw(db)) throw new TimerSessionWriteError();
+}
+
+export const netRecordingOutbox = new NetRecordingOutbox(record => saveNetSolve(record.context.sessionId, record.solve));

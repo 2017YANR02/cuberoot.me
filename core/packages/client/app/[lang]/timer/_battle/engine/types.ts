@@ -1,3 +1,4 @@
+import type { TimerMachineState, SolveResult } from '@cuberoot/shared/timer';
 /**
  * Battle 模块类型定义
  * 1:1 翻译自 battle.js state 对象和 createPlayer()（行 99~171）
@@ -19,6 +20,9 @@ export interface SolveEntry {
 
 // NOTE: 玩家状态（对应 createPlayer() 返回的对象）
 export interface PlayerState {
+  timerState?: TimerMachineState;
+  timerResult?: SolveResult | null;
+  resultScramble?: string;
   id: number;
   isReady: boolean;
   canStart: boolean;

@@ -39,6 +39,7 @@ export interface LocalBattlePlayerState {
   event: EventId;
   penalty: LocalBattlePenalty;
   result: SolveResult | null;
+  resultScramble?: string;
   scramble: string;
   scrambleRevision: number;
   timer: TimerMachineState;
@@ -49,23 +50,28 @@ export interface LocalBattleState {
   players: LocalBattlePlayerState[];
 }
 
-export interface LocalBattleConfig extends TimerMachineConfig {}
+export interface LocalBattleConfig extends TimerMachineConfig {
+  syncStart?: boolean;
+  minSolveMs?: number;
+}
 
 export type LocalBattleAction =
   | { type: 'set-player-count'; playerCount: number }
   | { type: 'set-player-event'; playerId: number; event: EventId }
-  | { type: 'request-next-scramble'; event: EventId }
+  | { type: 'request-next-scramble'; event: EventId; preserveResults?: boolean }
   | { type: 'scramble-ready'; event: EventId; revision: number; scramble: string }
   | { type: 'scramble-failed'; event: EventId; revision: number }
   | { type: 'player-timer'; playerId: number; action: TimerMachineAction }
   | { type: 'start-all'; nowMs: number }
   | { type: 'set-penalty'; playerId: number; penalty: LocalBattlePenalty }
-  | { type: 'next-round' };
+  | { type: 'next-round' }
+  | { type: 'reset-round' };
 
 export type LocalBattleEffect =
   | { type: 'player-timer'; playerId: number; effect: TimerMachineEffect }
   | { type: 'request-scramble'; event: EventId; revision: number }
-  | { type: 'round-complete'; winners: number[] };
+  | { type: 'round-complete'; winners: number[] }
+  | { type: 'round-reset' };
 
 export interface LocalBattleTransition {
   state: LocalBattleState;
@@ -178,9 +184,10 @@ export function createLocalBattleRound(
       id: `${roundId}:${player.id}`,
       event: player.event,
       penalty: player.penalty === 'dnf' ? 'DNF' : player.penalty,
-      scramble: player.scramble,
+      scramble: player.resultScramble ?? player.scramble,
       timeMs: player.result!.timeMs,
       ts: timestamp,
+      ...(player.result!.inspectionMs > 0 ? { inspectionMs: Math.round(player.result!.inspectionMs) } : {}),
     },
   }));
   const round: LocalBattleRound = { id: roundId, ts: timestamp, attempts, winners: [] };
@@ -298,7 +305,9 @@ export function transitionLocalBattle(
     const playerCount = normalizeLocalBattlePlayerCount(action.playerCount);
     if (playerCount === state.playerCount) return { state, effects: [], accepted: false };
     if (playerCount < state.playerCount) {
-      return { state: { ...state, playerCount }, effects: [], accepted: true };
+      return { state: { ...state, playerCount, players: state.players.map(player => ({
+        ...player, result: null, penalty: 'ok', timer: initialTimerMachineState(),
+      })) }, effects: [], accepted: true };
     }
 
     const sources = new Map<EventId, LocalBattlePlayerState>();
@@ -309,7 +318,9 @@ export function transitionLocalBattle(
     let revision = nextScrambleRevision(state.players);
     const effects: LocalBattleEffect[] = [];
     const nextPlayers = state.players.map((player) => {
-      if (player.id < state.playerCount || player.id >= playerCount) return player;
+      if (player.id < state.playerCount || player.id >= playerCount) return {
+        ...player, result: null, penalty: 'ok' as const, timer: initialTimerMachineState(),
+      };
       const source = sources.get(player.event);
       if (source) {
         return {
@@ -359,7 +370,7 @@ export function transitionLocalBattle(
       scramble: shared?.scramble ?? '',
       scrambleRevision: revision,
       timer: initialTimerMachineState(),
-    } : player);
+    } : { ...player, result: null, penalty: 'ok' as const, timer: initialTimerMachineState() });
     return {
       state: { ...state, players: nextPlayers },
       effects: shared ? [] : [{ type: 'request-scramble', event: action.event, revision }],
@@ -380,12 +391,12 @@ export function transitionLocalBattle(
         ...state,
         players: state.players.map((player) => targetIds.has(player.id) ? {
           ...player,
-          penalty: 'ok',
-          result: null,
+          penalty: action.preserveResults ? player.penalty : 'ok',
+          result: action.preserveResults ? player.result : null,
           scramble: '',
           scrambleRevision: revision,
-          timer: initialTimerMachineState(),
-        } : player),
+          timer: action.preserveResults ? player.timer : initialTimerMachineState(),
+        } : action.preserveResults ? player : { ...player, penalty: 'ok', result: null, timer: initialTimerMachineState() }),
       },
       effects: [{ type: 'request-scramble', event: action.event, revision }],
       accepted: true,
@@ -412,6 +423,14 @@ export function transitionLocalBattle(
     };
   }
 
+  if (action.type === 'player-timer' && (action.action.type === 'press-down' || action.action.type === 'arm-from-cube')
+    && Number.isInteger(action.playerId) && action.playerId >= 0 && action.playerId < state.playerCount
+    && players.every(player => player.result !== null)) {
+    const reset = transitionLocalBattle(state, { type: 'reset-round' }, config);
+    const next = transitionLocalBattle(reset.state, action, config);
+    return { ...next, accepted: true, effects: [...reset.effects, ...next.effects] };
+  }
+
   if (action.type === 'player-timer') {
     if (!Number.isInteger(action.playerId)
       || action.playerId < 0
@@ -419,14 +438,47 @@ export function transitionLocalBattle(
       return { state, effects: [], accepted: false };
     }
     const player = state.players[action.playerId];
-    const startsOrRecordsAttempt = action.action.type === 'start-now'
+    const startsOrRecordsAttempt = action.action.type === 'arm-from-cube' || action.action.type === 'start-now'
       || action.action.type === 'start-from-cube'
       || action.action.type === 'stop-external'
       || (action.action.type === 'press-down' && player.timer.phase !== 'running');
     if (startsOrRecordsAttempt && (player.scramble.length === 0 || player.result !== null)) {
       return { state, effects: [], accepted: false };
     }
-    const timerTransition = transitionTimer(player.timer, action.action, config);
+    const input = action.action;
+    if (input.type === 'arm-from-cube' && (player.timer.phase === 'running' || player.timer.phase === 'holding' || player.timer.phase === 'ready')) return { state, effects: [], accepted: false };
+    if (player.timer.phase === 'running' && (input.type === 'press-down' || input.type === 'stop-from-cube')) {
+      const stoppedAt = input.type === 'stop-from-cube' ? Math.min(input.nowMs, input.atMs ?? input.nowMs) : input.nowMs;
+      if (stoppedAt - (player.timer.startedAtMs ?? stoppedAt) <= (config.minSolveMs ?? 100)) {
+        return { state, effects: [], accepted: false };
+      }
+    }
+    if (player.result && input.type !== 'reset') return { state, effects: [], accepted: false };
+    // A synchronized hold starts its delay only once every player is holding.
+    if (config.syncStart && (input.type === 'hold-ready' || input.type === 'press-up'
+      || input.type === 'start-from-cube' || input.type === 'cancel-press' || input.type === 'cancel-arm')) {
+      const allHolding = players.every(item => item.timer.phase === 'holding');
+      const allReady = players.every(item => item.timer.phase === 'ready');
+      if (input.type === 'hold-ready' && !allHolding) return { state, effects: [], accepted: false };
+      if (input.type === 'start-from-cube' && !allReady) return { state, effects: [], accepted: false };
+      const together = input.type === 'hold-ready' || allReady && (input.type === 'press-up' || input.type === 'start-from-cube');
+      const cancel = input.type === 'cancel-press' || input.type === 'cancel-arm';
+      if (together || cancel || input.type === 'press-up' && player.timer.phase === 'holding') {
+        const effects: LocalBattleEffect[] = [];
+        const nextPlayers = state.players.map(item => {
+          if (item.id >= state.playerCount || item.result || item.timer.phase === 'running') return item;
+          effects.push({ type: 'player-timer', playerId: item.id, effect: 'hold-cancelled' });
+          if (!together && !cancel && item.id !== action.playerId) return item;
+          const transition = transitionTimer(item.timer, input, config);
+          effects.push(...transition.effects.map((effect): LocalBattleEffect => ({ type: 'player-timer', playerId: item.id, effect })));
+          return { ...item, timer: transition.state };
+        });
+        return { state: { ...state, players: nextPlayers }, effects, accepted: true };
+      }
+    }
+    const timerInput: TimerMachineAction = config.syncStart && input.type === 'arm-from-cube'
+      ? { type: 'press-down', nowMs: input.nowMs } : input;
+    const timerTransition = transitionTimer(player.timer, timerInput, config);
     if (timerTransition.accepted === false
       || (timerTransition.state === player.timer && timerTransition.effects.length === 0)) {
       return { state, effects: [], accepted: false };
@@ -442,13 +494,15 @@ export function transitionLocalBattle(
         ...candidate,
         penalty,
         result: timerTransition.solve ?? candidate.result,
+        resultScramble: timerTransition.solve ? candidate.scramble : candidate.resultScramble,
         timer: timerTransition.state,
       } : candidate),
     };
     return {
       state: nextState,
       effects: [
-        ...timerTransition.effects.map((effect): LocalBattleEffect => ({
+        ...timerTransition.effects.filter(effect => effect !== 'hold-started' || !config.syncStart
+          || visiblePlayers(nextState).every(item => item.timer.phase === 'holding')).map((effect): LocalBattleEffect => ({
           type: 'player-timer',
           playerId: action.playerId,
           effect,
@@ -498,6 +552,11 @@ export function transitionLocalBattle(
   }
 
   if (contextLocked) return { state, effects: [], accepted: false };
+  if (action.type === 'reset-round') return {
+    state: { ...state, players: state.players.map(player => ({ ...player, result: null,
+      penalty: 'ok', timer: { ...initialTimerMachineState(), lastMs: player.timer.lastMs } })) },
+    effects: [{ type: 'round-reset' }], accepted: true,
+  };
   const events = [...new Set(players.map((player) => player.event))];
   let revision = nextScrambleRevision(state.players);
   const revisionByEvent = new Map(events.map((event) => [event, revision++]));

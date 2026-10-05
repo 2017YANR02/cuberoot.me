@@ -14,13 +14,14 @@ export interface TimerBattleSettingsProps {
   hold?: Setting<number>;
   preview?: Setting<boolean>;
   hideTime?: Setting<boolean>;
+  syncStart?: Setting<boolean>;
   source?: ReactNode;
   devices?: ReactNode;
   children?: ReactNode;
 }
 const COPY = {
-  en: { settings: 'Settings', keys: 'Key bindings', player: 'Player', press: 'Press a key…', space: 'Space', precision: 'Precision', inspection: 'Inspection', off: 'Off', hold: 'Hold to start', preview: 'Show scramble preview', hide: 'Hide running time' },
-  zh: { settings: '设置', keys: '按键', player: '玩家', press: '按任意键…', space: '空格', precision: '精度', inspection: '观察', off: '关闭', hold: '按住起表', preview: '显示打乱图', hide: '隐藏计时读数' },
+  en: { sync: 'Start together', settings: 'Settings', keys: 'Key bindings', player: 'Player', press: 'Press a key…', space: 'Space', precision: 'Precision', inspection: 'Inspection', off: 'Off', hold: 'Hold to start', preview: 'Show scramble preview', hide: 'Hide running time' },
+  zh: { sync: '同时开始', settings: '设置', keys: '按键', player: '玩家', press: '按任意键…', space: '空格', precision: '精度', inspection: '观察', off: '关闭', hold: '按住起表', preview: '显示打乱图', hide: '隐藏计时读数' },
 };
 export function TimerBattleKeyBindings({ language, keys, onChange }: { language: 'en' | 'zh'; keys: readonly string[]; onChange(playerId: number, key: string): void }) {
   const copy = COPY[language];
@@ -42,7 +43,7 @@ export function TimerBattleKeyBindings({ language, keys, onChange }: { language:
     </button>
   </div>)}</fieldset>;
 }
-export function TimerBattleSettings({ language, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, source, devices, children }: TimerBattleSettingsProps) {
+export function TimerBattleSettings({ language, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children }: TimerBattleSettingsProps) {
   const copy = COPY[language];
   return <TimerRoomDialog title={copy.settings} language={language} onClose={onClose}>
     <div className="timer-battle-settings">
@@ -51,6 +52,7 @@ export function TimerBattleSettings({ language, onClose, keys, onKeyChange, prec
       {inspection && <label>{copy.inspection}<select value={inspection.value} onChange={(event) => inspection.onChange(Number(event.target.value))}>{(inspection.options ?? [0, 15]).map((value) => <option value={value} key={value}>{value === 0 ? copy.off : value === 9999 ? '∞' : `${value}s`}</option>)}</select></label>}
       {hold && <label>{copy.hold}<span>{(hold.value / 1000).toFixed(2)}s</span><input type="range" min={0} max={1000} step={50} value={hold.value} onChange={(event) => hold.onChange(Number(event.target.value))} /></label>}
       {preview && <BoolToggle label={copy.preview} {...preview} />}
+      {syncStart && <BoolToggle label={copy.sync} {...syncStart} />}
       {hideTime && <BoolToggle label={copy.hide} {...hideTime} />}
       <TimerBattleKeyBindings language={language} keys={keys} onChange={onKeyChange} />
       {devices}

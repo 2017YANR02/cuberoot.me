@@ -1341,3 +1341,10 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - Stackmat 复用同一 Web Audio 采集管线和 shared 解码器，Mobile / Desktop 宿主显式注入 source。Android 补 RECORD_AUDIO / MODIFY_AUDIO_SETTINGS，iOS/macOS 补用途说明，macOS 补 hardened-runtime audio-input entitlement；权限请求继续使用现有 Capacitor / Wry 媒体委托。取消待授权监听后，迟到音频流立即释放。
 - 安装端设备中心现在注册三类真实能力。外部计时冻结开始时项目、打乱和分组，保存设备最终读数；断连清理尝试，重复 STOPPED 不重复保存，外部设备接管时屏蔽普通触摸/键盘停表。
 - 当前证据：相关 Web/安装端定向回归、App真实计时与 repository 集成回归通过；Mobile/Desktop Web build、Android `assembleDebug`、iOS Simulator unsigned build、macOS `cargo build` 通过。原生权限弹窗、设备型号、音频线/USB声卡、后台恢复等仍需 Android、iOS、Windows、macOS 各自实体设备验收；本轮未发布。Harmony 未接入本轮新增宿主 capability，整体仍为 NOT COMPLETE。
+
+### 2026-10-05：联机录制与本地多人状态机统一
+
+- Web 与五端 App 产品层共用 `NetBattleAttemptRecorder`：起表冻结房间、玩家、轮次、项目、打乱、本地分组和记录 ID；保存智能魔方首末招、设备、陀螺仪及阶段信息。房间轮询或下一轮倒计时不覆盖正在录制的尝试，上传房间成绩与本机复盘保存相互独立。App 联机页接入既有 `ReconstructReport`，保存后也进入本机历史。
+- 两端使用 `NetRecordingOutbox` 与按 ID 幂等保存；失败显示重试，改罚时只更新对应记录且保留已有备注/反馈。队列在当前进程内跨模式/房间保留，尚不保证关闭应用后恢复未落盘记录；这不是账号云同步。
+- Web 本地 2～4 人起停、预备取消、观察、同步开始和下一轮生命周期改用 App 已消费的 `transitionLocalBattle`。共享设置提供「同时开始」，共享轮次生成冻结本轮打乱/观察时长，预取下一题不会污染旧轮次。修正先完成者改罚时覆盖上一轮旧历史的问题。
+- 当前证据：Web 定向 7 文件 80 项、App 状态机/页面消费/仓储定向 3 文件 61 项通过；App/client typecheck、shared build、Mobile Capacitor 双平台同步、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug `.app`、Harmony Web build 通过。Windows 原生构建未在此 Mac 执行；Harmony HAP 仍受既有本机 Hvigor 6.0.1 与工程 6.0.2 不匹配阻断。未进行真实联机房间、实体魔方、多设备或五平台 UI 全量验收，未发布，整体仍为 NOT COMPLETE。

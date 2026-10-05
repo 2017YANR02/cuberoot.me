@@ -324,7 +324,8 @@ describe('installed app multiplayer modes', () => {
 
   it('routes a batched smart-cube scramble completion and first solve move through the online timer', async () => {
     const openDevice = vi.fn();
-    const state = roomState();
+    const onRecordSolve = vi.fn(async (_record: import('@cuberoot/shared/timer').NetRecordedAttempt) => undefined);
+    let state = roomState();
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
     const postNetResult = vi.fn(async () => state);
     const client = {
@@ -358,6 +359,9 @@ describe('installed app multiplayer modes', () => {
       <NetBattleMode
         {...baseProps}
         capability={capability}
+        sessionId="session-original"
+        onRecordSolve={onRecordSolve}
+        recordGyro
         deviceControls={<button data-device-controls onClick={openDevice}>Device operations</button>}
         onSmartCubeHandlersChange={(next) => { handlers = next; }}
         smartCube={smartCube}
@@ -370,7 +374,9 @@ describe('installed app multiplayer modes', () => {
     expect(openDevice).toHaveBeenCalledOnce();
     expect(smartCube.disconnect).not.toHaveBeenCalled();
 
-    const startedAt = performance.now();
+    const startedAt = Math.ceil(performance.now());
+    let clock = startedAt;
+    const performanceSpy = vi.spyOn(performance, 'now').mockImplementation(() => clock);
     await act(async () => {
       handlers!.onMove('F', startedAt - 20, SOLVED_3X3);
       handlers!.onSolved(startedAt - 10);
@@ -379,11 +385,32 @@ describe('installed app multiplayer modes', () => {
 
     await act(async () => {
       handlers!.onMove("R'", startedAt, smartCubeTargetFacelets("R U R'")!);
-      handlers!.onMove('R', startedAt + 10, 'U'.repeat(54));
-      handlers!.onSolved(startedAt + 1_010);
+      clock = startedAt + 10;
+      handlers!.onMove('R', clock, 'U'.repeat(54));
+    });
+    // A newer room countdown must not replace the active attempt's round or clock.
+    state = { ...state, revision: 2, round: 2, syncStart: true,
+      roundRoster: ['abcdef'], startAt: Date.now() - 10, now: Date.now(),
+      scrambles: { '333': 'F' }, results: { '1': {}, '2': {} } };
+    await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
+    await act(async () => {
+      clock = startedAt + 510;
+      handlers!.onGyro?.({ w: 1, x: 0, y: 0, z: 0 }, clock);
+      handlers!.onMove("U'", clock, 'U'.repeat(54));
+      clock = startedAt + 1010;
+      handlers!.onMove("R'", clock, SOLVED_3X3);
+      handlers!.onSolved(clock);
     });
     await act(async () => Promise.resolve());
     expect(postNetResult).toHaveBeenCalledTimes(1);
+    expect(onRecordSolve).toHaveBeenCalledTimes(1);
+    expect(onRecordSolve.mock.calls[0]![0]).toMatchObject({
+      context: { code: '1234', round: 1, sessionId: 'session-original' },
+      solve: { timeMs: 1000, scramble: "R U R'", moves: [
+        { m: 'R', ts: 0 }, { m: "U'", ts: 500 }, { m: "R'", ts: 1000 },
+      ], gyro: expect.any(String) },
+    });
+    performanceSpy.mockRestore();
   });
 
   it('routes one installed smart cube through the shared local-battle timer and hands it off', async () => {
@@ -408,13 +435,17 @@ describe('installed app multiplayer modes', () => {
     expect(handlers).not.toBeNull();
     const target = smartCubeTargetFacelets("R U R'")!;
     const at = performance.now();
+    let clock = at;
+    const performanceSpy = vi.spyOn(performance, 'now').mockImplementation(() => clock);
     await act(async () => handlers!.onMove('F', at - 20, SOLVED_3X3));
     await act(async () => handlers!.onSolved(at - 10));
     expect(host.querySelectorAll('.timer-penalty-actions')).toHaveLength(0);
 
     await act(async () => handlers!.onMove('R', at, target));
     await act(async () => handlers!.onMove('U', at + 10, 'U'.repeat(54)));
-    await act(async () => handlers!.onSolved(at + 1_010));
+    clock = at + 1_010;
+    await act(async () => handlers!.onSolved(clock));
+    performanceSpy.mockRestore();
 
     await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Settings"]')!.click());
     const holderButtons = document.querySelectorAll<HTMLButtonElement>('.timer-battle-cube-controls [aria-label="Now up"] button');
