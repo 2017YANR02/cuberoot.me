@@ -7,20 +7,48 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background-color: var(--background);
     color: var(--foreground);
-    height: 100dvh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     user-select: none;
     -webkit-user-select: none;
     -webkit-touch-callout: none;
-    overflow: hidden;
-    overscroll-behavior: none;
-    touch-action: none;
+    overflow: visible;
+    touch-action: pan-y;
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Web battle content expands into the document, including separate and shared
+   scrambles. Keep timer presses on the digits; free space can scroll the page. */
+.battle-container .timer-battle-layout,
+.battle-container .timer-battle-layout .timer-battle-scramble {
+    flex: 1 0 auto;
+    max-height: none;
+    overflow: visible;
+}
+.battle-container .timer-battle-layout .timer-battle-scramble { flex: 0 0 auto; }
+.battle-container .timer-battle-layout .timing-surface--local {
+    container-type: normal;
+    --timer-cube-h: min(18vw, 12dvh, 100px);
+    --timer-readout-max-size: 12dvh;
+    grid-template-rows: minmax(min-content, 1fr);
+    touch-action: pan-y;
+}
+.battle-container .timer-battle-layout .timing-surface--local:has(.timing-surface-scramble-top) {
+    grid-template-rows: auto minmax(min-content, 1fr);
+}
+.battle-container .timer-battle-layout .timing-surface--local:not(:has(.timing-surface-scramble-top)) {
+    --timer-readout-max-size: 12dvh;
+}
+.battle-container .timer-battle-layout .timing-surface-scramble-top {
+    max-height: none;
+    overflow: visible;
+    scrollbar-gutter: auto;
+}
+.battle-container .timer-battle-layout .timer-display { touch-action: none; }
 
 .player-area {
     flex: 1;
@@ -29,7 +57,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    touch-action: none;
+    touch-action: pan-y;
     -webkit-tap-highlight-color: transparent;
     cursor: pointer;
     padding: 0;

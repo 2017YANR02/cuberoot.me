@@ -33,7 +33,7 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-areas: 'self opponent';
-  overflow: hidden;
+  overflow: visible;
 }
 .net-pk-side {
   min-width: 0;
@@ -94,8 +94,7 @@
     grid-template-areas:
       'opponent'
       'self';
-    overflow-y: auto;
-    overscroll-behavior: contain;
+    overflow: visible;
   }
   .net-pk-side.is-opponent {
     border-left: 0;

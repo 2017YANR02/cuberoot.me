@@ -264,14 +264,14 @@ describe('移动端复盘不再挤压计时区', () => {
     expect(shell).not.toMatch(/--recap-h|:has\(> \.shell-recap\)|timer-shell:has\(\.shell-recap\)/);
   });
 
-  it('桌面实时解法与最终复盘共用右栏，窄屏实时区独立滚动', () => {
+  it('桌面实时解法与最终复盘共用右栏，内容随整页展开', () => {
     expect(src).toContain('recap={liveSolutionPanel ?? solveRecap}');
     expect(src).toContain('panelOpen={Boolean(panelTab) && !liveSolutionPanel}');
     expect(src).toContain('{!isDesktop && liveSolutionPanel}');
     expect(src).toMatch(/className="shell-recap-body">\s*<LiveReconstructReport/);
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toMatch(/\.shell-recap-rail > \.shell-recap\s*\{[^}]*height:\s*100%/);
-    expect(read(RECAP_CSS)).toMatch(/\.shell-recap-body\s*\{[^}]*overflow-y:\s*auto/);
+    expect(shell).toMatch(/\.timer-shell :is\([^}]*\.shell-recap-body[^}]*\)\s*\{[^}]*height:\s*auto;[^}]*max-height:\s*none;[^}]*overflow:\s*visible/);
   });
 
   it('页面至少填满视口，打乱和来源内容可自然撑高页面', () => {
