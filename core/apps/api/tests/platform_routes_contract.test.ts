@@ -281,7 +281,11 @@ describe('Platform route and security contract', () => {
     expect(reconcile).toContain("SET status = 'paid'");
     expect(reconcile).toContain('SET released_at = NOW()');
     expect(reconcile).toContain('providerReference is required');
-    expect(reconcile).toContain('JSON.stringify({ outcome, evidenceReferenceHash, providerReferenceHash })');
+    // postgres serializes the JSONB object parameter; pre-serialization stores a JSON string.
+    expect(reconcile).toContain('const evidenceReferenceHash = hashReference(evidenceReference)');
+    expect(reconcile).toContain('const providerReferenceHash = providerReference ? hashReference(providerReference) : null');
+    expect(reconcile).toContain('{ outcome, evidenceReferenceHash, providerReferenceHash }]);');
+    expect(reconcile).not.toContain('JSON.stringify({ outcome, evidenceReferenceHash, providerReferenceHash })');
   });
 
   it('publishes only active membership plans with public cache and order-compatible pricing fields', () => {
