@@ -17,11 +17,11 @@ const OPTIONS = [
     Icon: Trophy,
     status: { zh: '从一场线上赛开始', en: 'Start with one online event' },
     title: { zh: '一起办线上赛', en: 'Run an online event together' },
-    body: { zh: '线上赛事正在筹备。我们可以先合作一场，把报名、比赛体验和组织流程做好，再根据参与情况决定是否持续举办。', en: 'Online events are being prepared. We could begin with one event, get registration and the competition experience right, then decide whether to continue based on participation.' },
+    body: { zh: '线上赛事合作可以从一场比赛开始，把报名、比赛体验和组织流程做好，再根据参与情况决定是否持续举办。', en: 'We could start an online-event partnership with one competition, focus on registration and the participant experience, then decide whether to continue based on participation.' },
     value: { zh: '可以围绕赛事项目收益、冠名或相关业务推广讨论合作，选择与您的商业目标相符的方式。', en: 'Possible arrangements include project earnings, event naming or promotion of a relevant business, depending on your commercial goals.' },
     next: { zh: '报名收入、奖品与组织成本分别记录，合作前约定双方投入和收益安排。', en: 'Track entry fees, prizes and operating costs separately, and agree contributions and any sharing of earnings before starting.' },
     href: '#bp-events',
-    link: { zh: '看看赛事计划', en: 'Explore the event plan' },
+    link: { zh: '看看赛事方案', en: 'Explore the event format' },
   },
   {
     Icon: Building2,
