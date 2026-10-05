@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "backup:recon": "tsx src/bin/backup_recon.ts",
-    "build:deps": "pnpm --filter @cuberoot/shared build",
+    "build:deps": "pnpm --filter \"@cuberoot/stats-build^...\" -r build",
     "compute": "tsx src/bin/compute.ts",
     "compute:all": "tsx src/bin/compute_all.ts",
     "validate-queries": "tsx src/bin/validate_queries.ts",
