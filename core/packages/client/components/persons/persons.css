@@ -1406,3 +1406,12 @@ html[data-theme=dark] .wp-bycomp-table tbody tr.wp-row-target td:not(.wp-cell-ao
 }
 /* 但第一名仍保留粉色(与官方行口径一致),覆盖上面对直播行 pos 的弱化 */
 .wp-row-live .wp-cell-pos.wp-pos-first { color: var(--wp-pink); }
+
+/* 手机长表建立独立布局/绘制边界，滚动时不反复处理整页。
+   保留真实高度并持续分批布局，避免首次滚近时集中布局全部成绩。
+   仅限窄屏成绩表（这里不吸顶）；展开内联菜单/弹窗时解除，保留其视口定位与溢出。 */
+@media (max-width: 767px) {
+    .wp-tabs-card:has(.wp-results-tab .wp-bycomp-table):not(:has([aria-expanded="true"], [role="dialog"])) {
+        contain: layout paint;
+    }
+}
