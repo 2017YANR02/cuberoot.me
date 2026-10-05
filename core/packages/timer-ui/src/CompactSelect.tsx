@@ -20,6 +20,8 @@ export interface CompactSelectItem<T extends string | number> {
 }
 
 export interface CompactSelectProps<T extends string | number> {
+  id?: string;
+  disabled?: boolean;
   label: ReactNode;
   items: readonly CompactSelectItem<T>[];
   value?: T;
@@ -61,6 +63,8 @@ const PANEL_GAP = 6;
  * viewport clamping implementation.
  */
 export function CompactSelect<T extends string | number>({
+  id,
+  disabled = false,
   label,
   items,
   value,
@@ -86,6 +90,10 @@ export function CompactSelect<T extends string | number>({
   const panelRef = useRef<HTMLDivElement>(null);
   const close = () => setOpen(false);
   usePopoverDismiss(open, close, panelRef, triggerRef);
+
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
 
   useEffect(() => {
     if (!open || !dismissOnMouseLeave) return;
@@ -204,15 +212,17 @@ export function CompactSelect<T extends string | number>({
     >
       <button
         ref={triggerRef}
+        id={id}
+        disabled={disabled}
         type="button"
         className={['compact-select-trigger', triggerClassName].filter(Boolean).join(' ')}
-        onClick={() => setOpen(current => !current)}
+        onClick={() => { if (!disabled) setOpen(current => !current); }}
         onPointerEnter={event => {
-          if (openOnHover && event.pointerType === 'mouse') setOpen(true);
+          if (!disabled && openOnHover && event.pointerType === 'mouse') setOpen(true);
         }}
         aria-label={ariaLabel}
         aria-description={valueText}
-        aria-expanded={open}
+        aria-expanded={open && !disabled}
         aria-haspopup="listbox"
         title={title}
       >
@@ -227,7 +237,7 @@ export function CompactSelect<T extends string | number>({
         )}
       </button>
 
-      {open && typeof document !== 'undefined' && createPortal(
+      {open && !disabled && typeof document !== 'undefined' && createPortal(
         <div
           ref={panelRef}
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
