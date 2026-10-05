@@ -70,6 +70,21 @@ function repository(driver = new MemoryDriver()) {
 }
 
 describe('mobile timer repository contract', () => {
+  it('saves a recorded online attempt in its original session and only updates its penalty on retry', async () => {
+    const { repo } = repository();
+    const original = (await repo.load()).database.activeSessionId;
+    const solve = { id: 'net-attempt', ts: 123, timeMs: 1000, penalty: 'ok' as const,
+      scramble: 'R', event: '333' as const, moves: [{ m: "R'", ts: 0 }] };
+    await repo.createSession('Another session', '333');
+    await repo.saveNetSolve(original, solve);
+    await repo.saveNetSolve(original, { ...solve, penalty: '+2' });
+    const data = await repo.load();
+    expect(data.database.activeSessionId).not.toBe(original);
+    expect(activeTimerSolves(data, '333')).toEqual([]);
+    await repo.activateSession(original);
+    expect(activeTimerSolves(await repo.load(), '333')).toEqual([{ ...solve, penalty: '+2' }]);
+  });
+
   it('resets preferences in queue without changing solves, sessions, recovery, or host preferences', async () => {
     const { repo, driver } = repository();
     await repo.addSolve({ timeMs: 1234, penalty: 'ok', scramble: 'R', event: '333' });

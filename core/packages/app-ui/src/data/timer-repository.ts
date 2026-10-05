@@ -1,3 +1,4 @@
+import { upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import {
   MAX_TIMER_BACKUP_BYTES,
   activateTimerSession,
@@ -232,6 +233,16 @@ export class TimerRepository {
       if (!decoded) throw new CorruptTimerStoreError();
       await this.driver.write(decoded);
       return decoded;
+    });
+  }
+
+  saveNetSolve(sessionId: string, solve: Solve): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const byEvent = data.database.dataBySession[sessionId];
+      if (!byEvent) throw new TimerSessionRepositoryError('unknown-session');
+      byEvent[solve.event] = upsertNetRecordedSolve(byEvent[solve.event] ?? [], solve);
+      return this.writeSessionData(data);
     });
   }
 

@@ -479,3 +479,8 @@ Android / iOS / HarmonyOS NEXT / Windows / macOS: build / install / device / int
 - `trainer-source.ts` 的 `TRAINER_EVENTS` 包含 WCA spelling `333bf/333ft`，而 `SoloView` 传入 internal `EventId`；因此当前真可达难度生成项目必须用 UI/fixture 实测，不能直接把注释所说的“3×3 族”写入 Mobile 能力表。
 - Web `generateScramble` 底层仍有 unknown 时返回 333 的历史 fallback；迁移时应用 exhaustive registry 消除这条危险路径，而不是把它复制到 shared/Mobile。同一个已登记的 Web 可达项目行为仍要保持。
 - 如果 Web 本身有 bug，先用用户可见的 fixture 和产品决定修正 Web，再让 shared UI 同时供 Web/Mobile 消费；不应为“一模一样”刻意新造一个已知 bug。
+
+
+### 2026-10-05 联机录制与多人状态机增量
+
+Web/App 已共同消费 shared 的 `NetBattleAttemptRecorder`、`NetRecordingOutbox` 和 `transitionLocalBattle`（本地 2～4 人起停、观察、同步准备、轮次与打乱修订号）。App 联机复盘使用既有 `ReconstructReport`；失败本地保存可重试，原分组与轮次固定，改罚时不覆盖前轮历史。源码与构建证据、重试队列仅进程内保留等边界统一见 `mobile-app-roadmap.md` 的同日记录。两端 Battle/Net 视图仍分别存在；视频、多路 BLE、真实多设备及五平台 UI/UX 矩阵仍未完成，整体维持 **ACTIVE — NOT COMPLETE**。

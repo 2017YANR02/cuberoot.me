@@ -622,3 +622,8 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 
 
 2026-10-05 增量（PAR-014/015/016）：Mobile/Desktop 接入智能计时器与 Stackmat。Web 与安装端共用 `timer-ui/external` 面板和 controllers，shared GAN/QiYi 协议会话以及 Stackmat 解码；宿主分别提供 BLE / 媒体权限配置。智能计时器连接后只有断开设备操作，保留独立状态与最近成绩。局部自动回归与原生构建证据见 `mobile-app-roadmap.md`；四平台实体硬件、后台、权限恢复、Harmony 能力和整体零遗漏矩阵未完成，不能标记整体 parity 完成。
+
+
+### 2026-10-05 联机录制与多人状态机增量
+
+Web/App 已共同消费 shared 的 `NetBattleAttemptRecorder`、`NetRecordingOutbox` 和 `transitionLocalBattle`（本地 2～4 人起停、观察、同步准备、轮次与打乱修订号）。App 联机复盘使用既有 `ReconstructReport`；失败本地保存可重试，原分组与轮次固定，改罚时不覆盖前轮历史。源码与构建证据、重试队列仅进程内保留等边界统一见 `mobile-app-roadmap.md` 的同日记录。两端 Battle/Net 视图仍分别存在；视频、多路 BLE、真实多设备及五平台 UI/UX 矩阵仍未完成，整体维持 **ACTIVE — NOT COMPLETE**。

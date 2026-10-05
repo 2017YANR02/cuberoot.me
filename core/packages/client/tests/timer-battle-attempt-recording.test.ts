@@ -1,3 +1,4 @@
+import { NetBattleAttemptRecorder } from '@cuberoot/shared/timer';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
@@ -108,20 +109,21 @@ describe('local battle shared attempt', () => {
 
 describe('online battle shared attempt', () => {
   it.each(['timer', 'cube'])('preserves the %s start across effects, room updates and disconnects', (mode) => {
-    const producer = new SmartCubeAttemptProducer();
-    const roomRef = ref({ round: 7, scramble: 'R U', event: '333' });
+    const producer = new NetBattleAttemptRecorder();
+    const roomRef = ref({ code: '1234', round: 7, scramble: 'R U', event: '333' });
     const appendSolves = vi.fn();
     const context = {
-      roomRef, pidRef: ref('self'), credentialsRef: ref(null),
-      scrambleAtStartRef: ref(''), eventAtStartRef: ref('333'), solvingRoundRef: ref(0),
+      roomRef, pidRef: ref('self'), credentialsRef: ref({ playerId: 'self', playerToken: 'token' }),
+      attemptAuthRef: ref(null), getActiveSessionId: () => 'original-session',
+      netRecordingOutbox: { enqueue: appendSolves }, postNetResult: vi.fn(async () => ({})), applyState: vi.fn(), tr: vi.fn(), setErr: vi.fn(),
       btStatusRef: ref({ connected: true, brand: 'gan-v4', deviceName: 'Original' }),
-      attemptProducerRef: ref(producer), phaseRef: ref('ready'), localSolveRef: ref(null),
+      netAttemptRef: ref(producer), phaseRef: ref('ready'), localSolveRef: ref(null),
       cubeStartedRef: ref(false), gateRef: ref(false), startAtRef: ref(null), canSolveRef: ref(true),
       timer: { phase: 'running', startFromCube: (_timestamp: number) => false },
       myScramble: (r: typeof roomRef.current) => r.scramble,
       playerEventOf: (r: typeof roomRef.current) => r.event,
       netEventToSelectorId: (event: string) => event,
-      makeSolve: (solve: unknown) => solve, appendSolves,
+      makeSolve: () => ({ id: 'solve-1', ts: 1000 }), appendSolves,
     };
     const start = callback(net, node => ts.isCallExpression(node)
       && node.expression.getText() === 'useTimer' ? node.arguments[1] : undefined, context);
@@ -134,16 +136,17 @@ describe('online battle shared attempt', () => {
     producer.recordMove("U'", 1_000);
     const phaseEffect = callback(net, node => ts.isCallExpression(node)
       && node.expression.getText() === 'useEffect'
-      && node.arguments[0]?.getText().includes('attemptProducerRef.current.reset()')
+      && node.arguments[0]?.getText().includes('netAttemptRef.current.reset()')
       ? node.arguments[0] : undefined, context);
     phaseEffect();
-    roomRef.current = { round: 8, scramble: 'F', event: '222' };
+    roomRef.current = { code: '5678', round: 8, scramble: 'F', event: '222' };
     context.btStatusRef.current.connected = false;
     producer.recordMove("R'", 1_500);
     const solve = callback(net, named('onSolve'), context);
     solve({ timeMs: 500, autoPenalty: '+2', inspectionMs: 15_100 });
-    expect(context.solvingRoundRef.current).toBe(7);
-    const saved = appendSolves.mock.calls[0]![1][0];
+    expect(context.postNetResult).toHaveBeenCalledWith('1234', { playerId: 'self', playerToken: 'token' }, 7, 500, '+2');
+    const saved = appendSolves.mock.calls[0]![0].solve;
+    expect(appendSolves.mock.calls[0]![0].context.sessionId).toBe('original-session');
     expect(saved).toMatchObject({ event: '333', scramble: 'R U', timeMs: 500, penalty: '+2',
       inspectionMs: 15_100, device: { name: 'Original' }, stageSegments: { solvedMs: 500 },
       moves: [{ m: "U'", ts: 0 }, { m: "R'", ts: 500 }] });
@@ -154,6 +157,6 @@ describe('online battle shared attempt', () => {
     context.timer.phase = 'idle';
     phaseEffect();
     expect(producer.recordMove('U', 2_100)).toBe(false);
-    expect(producer.finish().moves).toEqual([]);
+    expect(producer.finish({ timeMs: 0, inspectionMs: 0, autoPenalty: 'ok' })).toBeNull();
   });
 });
