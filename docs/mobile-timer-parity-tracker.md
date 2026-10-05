@@ -627,3 +627,8 @@ Next/Web transport     Capacitor adapters Tauri adapters      ArkTS/ArkWeb adapt
 ### 2026-10-05 联机录制与多人状态机增量
 
 Web/App 已共同消费 shared 的 `NetBattleAttemptRecorder`、`NetRecordingOutbox` 和 `transitionLocalBattle`（本地 2～4 人起停、观察、同步准备、轮次与打乱修订号）。App 联机复盘使用既有 `ReconstructReport`；失败本地保存可重试，原分组与轮次固定，改罚时不覆盖前轮历史。源码与构建证据、重试队列仅进程内保留等边界统一见 `mobile-app-roadmap.md` 的同日记录。两端 Battle/Net 视图仍分别存在；视频、多路 BLE、真实多设备及五平台 UI/UX 矩阵仍未完成，整体维持 **ACTIVE — NOT COMPLETE**。
+
+
+### 2026-10-05 联机控制流程增量
+
+Web/App 已接同一 shared 房间 controller、轮询及会话恢复；App 结算改为与 Web 一致的本机显式推进。覆盖同码重入晚回包、恢复断网保留身份、被踢不自动重新加入、并发轮询/切轮、成绩重试与改罚时顺序。具体构建与验收边界见 `mobile-app-roadmap.md` 同日“联机房间控制流程同源”记录。持久化成绩重试队列、视频、多 BLE 及真实多设备矩阵仍未关闭，整体继续 **ACTIVE — NOT COMPLETE**。

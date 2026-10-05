@@ -128,6 +128,7 @@ describe('installed app multiplayer modes', () => {
     await act(async () => root.unmount());
     host.remove();
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('renders real 2/3/4 and online mode choices without a browser fallback', async () => {
@@ -491,7 +492,31 @@ describe('installed app multiplayer modes', () => {
     expect(surface.querySelector('.timer-display')?.textContent).toBe('3');
   });
 
-  it('uses the shared room transition to advance a settled round without forcing it', async () => {
+  it('restores the same room identity after a temporary outage and clears an expired room on wake', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    const state = roomState();
+    const session = { code: '1234', playerId: 'abcdef', playerToken: 'x'.repeat(48), name: 'Cuber' };
+    const clear = vi.fn(async () => undefined);
+    const getNetRoom = vi.fn().mockRejectedValueOnce(new Error('Failed to fetch')).mockResolvedValueOnce(state)
+      .mockRejectedValue(new Error('room not found'));
+    const joinNetRoom = vi.fn();
+    const capability: InstalledAppNetBattle = {
+      client: { getNetRoom, joinNetRoom } as unknown as NetBattleClient,
+      sessions: { clear, load: vi.fn(async () => session), save: vi.fn(async () => undefined) },
+    };
+    await act(async () => root.render(<NetBattleMode {...baseProps} capability={capability} />));
+    expect(clear).not.toHaveBeenCalled();
+    await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+    expect(host.querySelector('.timer-room-stage')).not.toBeNull();
+    expect(joinNetRoom).not.toHaveBeenCalled();
+    expect(getNetRoom.mock.calls[1]?.[1]).toMatchObject({ playerId: session.playerId, playerToken: session.playerToken });
+    await act(async () => { window.dispatchEvent(new Event('online')); });
+    expect(clear).toHaveBeenCalledOnce();
+    expect(host.querySelector('.timer-room-stage')).toBeNull();
+    expect(host.textContent).toContain('Room not found or expired');
+  });
+
+  it('holds a settled round until this device requests the next round', async () => {
     const state = roomState();
     state.results = { '1': { abcdef: { t: 1_000, p: 'ok' } } };
     const nextState = { ...state, revision: 2, round: 2, results: { ...state.results, '2': {} } };
@@ -515,6 +540,9 @@ describe('installed app multiplayer modes', () => {
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     await act(async () => Promise.resolve());
 
+    expect(nextNetRound).not.toHaveBeenCalled();
+    const nextButton = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Next round'))!;
+    await act(async () => nextButton.click());
     expect(nextNetRound).toHaveBeenCalledWith('1234', credentials, 1, false);
   });
 

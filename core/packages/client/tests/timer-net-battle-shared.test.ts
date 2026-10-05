@@ -44,6 +44,23 @@ const ROOM: NetRoomState = {
 };
 
 describe('shared online battle migration', () => {
+  it('serializes a slow expired-session clear before saving a new membership', async () => {
+    let raw: string | null = null;
+    let release!: () => void;
+    const clearing = new Promise<void>(resolve => { release = resolve; });
+    const store = createNetBattleSessionStore({
+      getItem: async () => raw,
+      setItem: async (_key, value) => { raw = value; },
+      removeItem: async () => { await clearing; raw = null; },
+    });
+    const oldClear = store.clear();
+    const session = { code: '0427', name: 'Cuber', ...AUTH };
+    const newSave = store.save(session);
+    release();
+    await Promise.all([oldClear, newSave]);
+    expect(await store.load()).toEqual(session);
+  });
+
   it('owns the one secure-session key and JSON codec for every installed host', async () => {
     let raw: string | null = null;
     const storage = {
