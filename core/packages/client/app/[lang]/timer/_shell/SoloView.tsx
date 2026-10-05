@@ -1,6 +1,6 @@
 'use client';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
-import { timerHidesRunningUi } from '@cuberoot/shared/timer';
+import { timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
 import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
@@ -189,7 +189,7 @@ import {
   takeCube222SpecialScramble,
 } from '../_lib/scramble/cube222-special-pool';
 import {
-  loadAll, saveAll, makeSolve,
+  loadAll, saveAll, makeSolve, subscribeNetSolveSaved,
   listSessions, getActiveSessionId, moveSolveToSession,
   getSelectedSessionEvent, selectSessionForEvent,
 } from '../_lib/storage/db';
@@ -452,6 +452,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // save triggered by a session switch (we just re-loaded the active session's
   // data; writing it straight back is harmless but pointless).
   const skipNextSaveRef = useRef(true);
+  useEffect(() => subscribeNetSolveSaved((sessionId, solve) => {
+    if (getActiveSessionId() !== sessionId) return;
+    setByEvent(current => ({ ...current, [solve.event]: upsertNetRecordedSolve(current[solve.event] ?? [], solve) }));
+  }), []);
   useEffect(() => {
     if (skipNextSaveRef.current) { skipNextSaveRef.current = false; return; }
     saveAll(byEvent);

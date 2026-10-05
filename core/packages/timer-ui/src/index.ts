@@ -339,3 +339,6 @@ export { ResetDefaultsButton, TimerResetSettings, TIMER_RESET_SETTING_FIELD_IDS 
 export { TimerExportSettings, TIMER_EXPORT_SETTING_FIELD_IDS, type TimerExportFormat } from './TimerExportSettings';
 
 export { TimerDifficultyHelp } from './TimerDifficultyHelp';
+
+export { createNetOutboxStorage } from './net-outbox-storage';
+export { TimerNetOutboxNotice } from './TimerNetOutboxNotice';

@@ -1,4 +1,4 @@
-import { NetBattleAttemptRecorder } from '@cuberoot/shared/timer';
+import { NetBattleAttemptRecorder, netAttemptSolveId, type NetRecordedAttempt } from '@cuberoot/shared/timer';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import ts from 'typescript';
@@ -111,11 +111,13 @@ describe('online battle shared attempt', () => {
   it.each(['timer', 'cube'])('preserves the %s start across effects, room updates and disconnects', (mode) => {
     const producer = new NetBattleAttemptRecorder();
     const roomRef = ref({ code: '1234', round: 7, scramble: 'R U', event: '333' });
-    const appendSolves = vi.fn();
+    const appendSolves = vi.fn(async (_record: NetRecordedAttempt, _upload: boolean) => undefined);
     const context = {
+      netAttemptSolveId,
+      getNetRoom: vi.fn(),
       roomRef, pidRef: ref('self'), credentialsRef: ref({ playerId: 'self', playerToken: 'token' }),
       attemptAuthRef: ref(null), getActiveSessionId: () => 'original-session',
-      roomController: { submitResult: (_round: number, request: () => Promise<unknown>) => request() },
+      roomController: { poll: vi.fn() },
       netRecordingOutbox: { enqueue: appendSolves }, postNetResult: vi.fn(async () => ({})), applyState: vi.fn(), tr: vi.fn(), setErr: vi.fn(),
       btStatusRef: ref({ connected: true, brand: 'gan-v4', deviceName: 'Original' }),
       netAttemptRef: ref(producer), phaseRef: ref('ready'), localSolveRef: ref(null),
@@ -145,7 +147,7 @@ describe('online battle shared attempt', () => {
     producer.recordMove("R'", 1_500);
     const solve = callback(net, named('onSolve'), context);
     solve({ timeMs: 500, autoPenalty: '+2', inspectionMs: 15_100 });
-    expect(context.postNetResult).toHaveBeenCalledWith('1234', { playerId: 'self', playerToken: 'token' }, 7, 500, '+2');
+    expect(appendSolves.mock.calls[0]?.[1]).toBe(true);
     const saved = appendSolves.mock.calls[0]![0].solve;
     expect(appendSolves.mock.calls[0]![0].context.sessionId).toBe('original-session');
     expect(saved).toMatchObject({ event: '333', scramble: 'R U', timeMs: 500, penalty: '+2',

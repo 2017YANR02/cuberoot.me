@@ -632,3 +632,8 @@ Web/App 已共同消费 shared 的 `NetBattleAttemptRecorder`、`NetRecordingOut
 ### 2026-10-05 联机控制流程增量
 
 Web/App 已接同一 shared 房间 controller、轮询及会话恢复；App 结算改为与 Web 一致的本机显式推进。覆盖同码重入晚回包、恢复断网保留身份、被踢不自动重新加入、并发轮询/切轮、成绩重试与改罚时顺序。具体构建与验收边界见 `mobile-app-roadmap.md` 同日“联机房间控制流程同源”记录。持久化成绩重试队列、视频、多 BLE 及真实多设备矩阵仍未关闭，整体继续 **ACTIVE — NOT COMPLETE**。
+
+
+### 2026-10-05 联机持久化待处理队列增量
+
+Web/App 已共同接入持久化联机成绩队列，覆盖本机保存、房间上传、重启恢复、同轮罚时更新与原身份校验。手动成绩也留档，只有动作记录提供复盘；日志写失败、恢复阻断及房间拒收有同源提示。此项关闭此前“待处理队列仅进程内保留”的源码缺口。构建/回归证据、Web sessionStorage 身份限制和真实杀进程/多设备验收边界见 `mobile-app-roadmap.md` 同日记录；总体继续 **ACTIVE — NOT COMPLETE**。
