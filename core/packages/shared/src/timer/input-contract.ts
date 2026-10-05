@@ -305,6 +305,16 @@ export function timerKeyDownDecision(context: TimerKeyDownContext): TimerKeyboar
 
   if (target.textEntry) return decision();
 
+  // Focus left on a switch/button must not give Space back to the browser.
+  // Text entry and modal guards above still own their keyboard interaction.
+  if (input.code === 'Space') {
+    if (input.repeat) return decision({ id: 'none' }, true);
+    if (!context.timingEnabled) {
+      return decision({ id: 'next-scramble' }, true, true);
+    }
+    return decision({ id: 'press-down', warmupSound: true }, true, true);
+  }
+
   if (target.noTimerRegion) {
     const allowed = timerCanSwitchScramble(phase)
       && !input.repeat
@@ -316,14 +326,6 @@ export function timerKeyDownDecision(context: TimerKeyDownContext): TimerKeyboar
       return decision({ id: 'next-scramble' }, true);
     }
     return decision();
-  }
-
-  if (input.code === 'Space') {
-    if (input.repeat) return decision({ id: 'none' }, true);
-    if (!context.timingEnabled) {
-      return decision({ id: 'next-scramble' }, true, true);
-    }
-    return decision({ id: 'press-down', warmupSound: true }, true, true);
   }
 
   if (input.repeat) return decision();
@@ -371,7 +373,7 @@ export function timerKeyDownDecision(context: TimerKeyDownContext): TimerKeyboar
 
 /** Keyup owns only Space release; all other actions are keydown-only. */
 export function timerKeyUpDecision(context: TimerKeyUpContext): TimerKeyboardDecision {
-  if (context.modalOpen || context.target.textEntry || context.target.noTimerRegion) {
+  if (context.modalOpen || context.target.textEntry) {
     return decision();
   }
   if (context.input.code !== 'Space') return decision();
