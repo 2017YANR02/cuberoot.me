@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { fmtDate } from '@/lib/membership-format';
+import { fmtDate, fmtVipId } from '@/lib/membership-format';
 import { adminList, adminRevoke, publicMemberBadgeKind, type Membership, type MembershipPlan } from '@/lib/membership-api';
 
 function periodLabel(member: Membership, plan: MembershipPlan | undefined, t: ReturnType<typeof useT>): string {
@@ -56,7 +56,6 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
   return <section aria-labelledby="admin-membership-list-title">
     <div className="admin-users-list-heading">
       <h2 id="admin-membership-list-title">{t('订阅会员', 'Membership records')}</h2>
-      <button type="button" className="admin-users-page-button" onClick={reload}>{t('刷新', 'Refresh')}</button>
     </div>
     {failed && <p className="admin-users-error" role="alert">{t('会员列表加载失败，请重试。', 'Could not load memberships. Please retry.')}</p>}
     {revokeError && <p className="admin-users-error" role="alert">{revokeError}</p>}
@@ -72,7 +71,7 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
           const plan = data.plans?.find(item => item.slug === member.planSlug);
           const kind = publicMemberBadgeKind(member);
           return <tr key={member.wcaId}>
-            <td><strong>{displayCuberName(member.name, isZh)}</strong><span className="admin-users-id">{[member.vipId, member.wcaId].filter(Boolean).join(' / ')}</span></td>
+            <td><strong>{displayCuberName(member.name, isZh)}</strong><span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), member.wcaId].filter(Boolean).join(' / ')}</span></td>
             <td>{kind === 'enterpriseMember' ? t('企业', 'Enterprise') : kind === 'personalMember' ? t('个人', 'Individual') : t('类型未记录', 'Type not recorded')}</td>
             <td>{periodLabel(member, plan, t)}</td>
             <td>{plan ? t(plan.nameZh, plan.nameEn) : member.planSlug || '—'}</td>
