@@ -1,6 +1,6 @@
 import { GOOGLE_MEMBERSHIP_PRODUCT_IDS } from '@cuberoot/shared/google-membership';
 
-export const GOOGLE_MEMBERSHIP_PACKAGE = 'me.cuberoot.app';
+export { GOOGLE_PLAY_PACKAGE as GOOGLE_MEMBERSHIP_PACKAGE } from '@cuberoot/shared/google-play-relay';
 export interface GoogleSubscription {
   subscriptionState?: string;
   acknowledgementState?: string;
