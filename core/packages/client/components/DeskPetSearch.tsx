@@ -72,7 +72,6 @@ const CSS = `
 .deskpet-character-setting{display:flex;align-items:center;gap:12px;padding:6px 10px;font-size:13px;}
 .deskpet-character-sizes{display:flex;gap:2px;}
 .deskpet-character-menu .deskpet-character-size{width:auto;padding:6px 10px;white-space:nowrap;}
-.deskpet-character-random .bool-toggle-label{order:-1;}
 .deskpet-character-random .pill-toggle{flex:none;}
 /* Donate heart — filled warm red, a theme-independent semantic color. */
 .deskpet-toolbar .heart-icon{fill:#ff5a5f;color:#ff5a5f;}

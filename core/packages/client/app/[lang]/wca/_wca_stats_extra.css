@@ -304,7 +304,7 @@
    → 与相邻控件上下居中对齐;events-bar 里的「废止项」不是 .wse-filter 直接子,仍 26px 不受影响 */
 .wse-filter > .pill-toggle.wse-pill { height: 34px; font-size: 13px; }
 
-/* 布尔开关(BoolToggle:左滑钮 + 右文字)。作 .wse-filter 直接子(无 label)时纵向居中,
+/* 布尔开关(BoolToggle:左文字 + 右滑钮)。作 .wse-filter 直接子(无 label)时纵向居中,
    跟相邻「label+控件」filter 对齐。 */
 .wse-filter:has(> .bool-toggle) { justify-content: center; }
 
