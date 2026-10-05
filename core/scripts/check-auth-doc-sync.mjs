@@ -16,6 +16,7 @@ const ROOTS = [
   'packages/client/app/api/page-access',
 ];
 const EXACT = new Set([
+  'packages/client/app/[lang]/admin/page.tsx',
   'packages/client/lib/store-membership-bridge.ts',
   'packages/client/i18n/i18n-client.ts',
   'packages/client/app/[lang]/calendar/_components/GoogleBackupPanel.tsx',
