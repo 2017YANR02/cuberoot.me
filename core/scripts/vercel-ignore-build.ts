@@ -8,6 +8,9 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 try {
   const base = process.env.VERCEL_GIT_PREVIOUS_SHA;
   if (!base) throw new Error('No previous deployment');
+  // An explicit redeploy of the same revision must pick up runtime/env changes.
+  const head = execFileSync('git', ['-C', root, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+  if (base === head) throw new Error('Explicit same-revision redeploy');
   const workflow = readFileSync(new URL('../../.github/workflows/deploy_next.yml', import.meta.url), 'utf8');
   const push = workflow.match(/\n  push:\n([\s\S]*?)(?=\n\S|$)/)?.[1];
   const block = push?.match(/    paths:\n((?:      - '[^']+'\n)+)/)?.[1];
