@@ -72,3 +72,5 @@ export * from './export-cstimer';
 export * from './export-speedstacks';
 
 export * from './net-attempt';
+
+export * from './net-room-controller';

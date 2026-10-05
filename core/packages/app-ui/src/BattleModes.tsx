@@ -1,3 +1,4 @@
+import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
 import { NetBattleAttemptRecorder, type NetRecordedAttempt } from '@cuberoot/shared/timer';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import {
@@ -27,9 +28,7 @@ import {
   netErrorMessage,
   nextLocalBattleCubeHolder,
   normalizeNetBattleRoomCode,
-  pendingCount,
   playerEventOf,
-  preferLatestNetRoomState,
   selectorIdToNetEvent,
   summarizeLocalBattleRounds,
   syncGate,
@@ -800,11 +799,11 @@ export function NetBattleMode({
   const [countdownMs, setCountdownMs] = useState<number | null>(null);
   const roomRef = useRef(room);
   const credentialsRef = useRef(credentials);
-  const activeCodeRef = useRef<string | null>(null);
+  const roomControllerRef = useRef(new NetRoomController());
+  const roomController = roomControllerRef.current;
   const offsetRef = useRef<number | null>(null);
   const admissionGateRef = useRef(createNetAdmissionGate());
   const autoStartedRef = useRef<number | null>(null);
-  const advanceBusyRef = useRef(false);
   const netAttemptRef = useRef(new NetBattleAttemptRecorder());
   const attemptAuthRef = useRef<NetBattleCredentials | null>(null);
   const [recordedSolve, setRecordedSolve] = useState<NetRecordedAttempt | null>(null);
@@ -848,12 +847,6 @@ export function NetBattleMode({
   const event = room && credentials ? playerEventOf(room, credentials.playerId) : lobbyEvent;
   const scramble = room && credentials ? myScramble(room, credentials.playerId) ?? '' : '';
 
-  const applyRoom = useCallback((incoming: NetRoomState) => {
-    if (activeCodeRef.current !== incoming.code) return;
-    offsetRef.current = blendClockOffset(offsetRef.current, incoming.now, Date.now());
-    setRoom((current) => preferLatestNetRoomState(current, incoming));
-  }, []);
-
   const fail = useCallback((reason: unknown) => {
     setError(netErrorMessage(reason)[language]);
   }, [language]);
@@ -862,6 +855,8 @@ export function NetBattleMode({
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+      admissionGateRef.current.cancel();
+      roomController.deactivate();
       if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
     };
   }, []);
@@ -879,11 +874,8 @@ export function NetBattleMode({
     if (!capability || !auth) return;
     const penalty: NetPenalty = result.autoPenalty === 'DNF' ? 'dnf' : result.autoPenalty;
     const { code, round } = completed.context;
-    void capability.client.postNetResult(code, auth, round, result.timeMs, penalty)
-      .then(applyRoom)
-      .catch(() => capability.client.postNetResult(code, auth, round, result.timeMs, penalty)
-        .then(applyRoom).catch(fail));
-  }, [applyRoom, capability, fail, persistRecording]);
+    void roomController.submitResult(round, () => capability.client.postNetResult(code, auth, round, result.timeMs, penalty), { t: result.timeMs, p: penalty });
+  }, [roomController, capability, fail, persistRecording]);
 
   const timer = useTimerController({
     canStart: !inputBlocked && !showAdmin && !showHistory && !qrOpen && !renameOpen && Boolean(room && credentials && scramble && !myResult),
@@ -1009,73 +1001,69 @@ export function NetBattleMode({
 
   useEffect(() => {
     if (!capability) return;
-    let cancelled = false;
     const intent = admissionGateRef.current.beginBackground();
     if (intent === null) return;
-    void capability.sessions.load().then(async (session) => {
-      if (!session || cancelled || !admissionGateRef.current.isCurrent(intent)) return;
-      const auth = { playerId: session.playerId, playerToken: session.playerToken };
-      const restored = await capability.client.getNetRoom(session.code, auth);
-      if (cancelled || !admissionGateRef.current.isCurrent(intent) || !restored.players[session.playerId]) return;
-      activeCodeRef.current = restored.code;
-      setName(session.name);
-      setCredentials(auth);
-      applyRoom(restored);
-    }).catch(async () => {
-      if (!cancelled) await capability.sessions.clear().catch(() => undefined);
+    return startNetRoomRestore({
+      current: () => admissionGateRef.current.isCurrent(intent),
+      load: () => capability.sessions.load(),
+      getRoom: capability.client.getNetRoom,
+      clear: () => capability.sessions.clear(),
+      restored: (session, state) => {
+        const auth = { playerId: session.playerId, playerToken: session.playerToken };
+        credentialsRef.current = auth;
+        setName(session.name); setCredentials(auth); setError('');
+        roomController.activate(state, auth);
+      },
+      missing: () => undefined,
+      error: error => roomController.callbacks.onError(error),
     });
-    return () => { cancelled = true; };
-  }, [applyRoom, capability]);
+  }, [roomController, capability]);
 
+  roomController.callbacks = {
+    onState: state => {
+      roomRef.current = state;
+      offsetRef.current = blendClockOffset(offsetRef.current, state.now, Date.now());
+      setRoom(state);
+    },
+    onError: fail,
+    onGone: reason => {
+      admissionGateRef.current.cancel();
+      credentialsRef.current = null;
+      roomRef.current = null;
+      setBusy(false); setRoom(null); setCredentials(null); setCountdownMs(null);
+      setRecordedSolve(null); setShowAdmin(false); setShowHistory(false); setRenameOpen(false); setQrOpen(false); setRoomActionTarget(null);
+      autoStartedRef.current = null; offsetRef.current = null;
+      netAttemptRef.current.reset(); timer.reset();
+      fail(new Error(reason));
+      void capability?.sessions.clear().catch(() => undefined);
+    },
+    isTiming: () => netTimerPhaseRef.current === 'running',
+  };
   useEffect(() => {
     if (!capability || !room || !credentials) return;
-    let stopped = false;
-    let running = false;
-    const tick = async () => {
-      if (running || document.hidden) return;
-      running = true;
-      try {
-        const next = await capability.client.getNetRoom(room.code, credentials);
-        if (stopped) return;
-        if (!next.players[credentials.playerId]) {
-          activeCodeRef.current = null;
-          setRoom(null);
-          setCredentials(null);
-          await capability.sessions.clear();
-          return;
-        }
-        applyRoom(next);
-      } catch (reason) {
-        if (!stopped) fail(reason);
-      } finally {
-        running = false;
-      }
-    };
-    const interval = window.setInterval(() => { void tick(); }, 1_000);
-    const onVisible = () => { if (!document.hidden) void tick(); };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      stopped = true;
-      window.clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisible);
-    };
-  }, [applyRoom, capability, credentials, fail, room?.code]);
+    return startNetRoomPolling(roomController, capability.client.getNetRoom, {
+      visible: () => !document.hidden,
+      subscribeWake: wake => {
+        document.addEventListener('visibilitychange', wake);
+        window.addEventListener('online', wake);
+        return () => { document.removeEventListener('visibilitychange', wake); window.removeEventListener('online', wake); };
+      },
+    });
+  }, [capability, credentials, room?.code, roomController]);
 
   useEffect(() => {
     if (!capability || !room || !credentials || scramble) return;
-    void capability.client.ensureNetScramble(room.code, credentials, event)
-      .then(applyRoom)
-      .catch(fail);
-  }, [applyRoom, capability, credentials, event, fail, room, scramble]);
+    void roomController.ensure(event, () => capability.client.ensureNetScramble(room.code, credentials, event));
+  }, [roomController, capability, credentials, event, fail, room, scramble]);
 
   useEffect(() => {
     if (!capability || !room || !credentials) return;
     if (timerPhase === 'inspecting') {
-      void capability.client.postNetStatus(room.code, credentials, 'inspecting').then(applyRoom).catch(() => undefined);
+      void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, 'inspecting'), { quiet: true });
     } else if (timerPhase === 'running') {
-      void capability.client.postNetStatus(room.code, credentials, 'solving').then(applyRoom).catch(() => undefined);
+      void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, 'solving'), { quiet: true });
     }
-  }, [applyRoom, capability, credentials, room?.code, timerPhase]);
+  }, [roomController, capability, credentials, room?.code, timerPhase]);
 
   useEffect(() => {
     const startAt = room?.startAt ?? null;
@@ -1116,35 +1104,23 @@ export function NetBattleMode({
   }, [room?.round, timer.machine.phase, timer.reset]);
 
   const advanceRound = useCallback((force: boolean) => {
-    const currentRoom = roomRef.current;
-    const auth = credentialsRef.current;
-    if (!capability || !currentRoom || !auth || advanceBusyRef.current) return;
-    advanceBusyRef.current = true;
-    void capability.client.nextNetRound(currentRoom.code, auth, currentRoom.round, force)
-      .then(applyRoom)
-      .catch(fail)
-      .finally(() => { advanceBusyRef.current = false; });
-  }, [applyRoom, capability, fail]);
-
-  useEffect(() => {
-    if (!room || !myResult || pendingCount(room) > 0) return;
-    advanceRound(false);
-  }, [advanceRound, myResult, room]);
+    if (capability) void roomController.advance(capability.client.nextNetRound, force);
+  }, [capability, roomController]);
 
   const adopt = useCallback(async (
     admission: { state: NetRoomState; credentials: NetBattleCredentials },
     identityName: string,
   ) => {
     if (!capability) return;
-    activeCodeRef.current = admission.state.code;
+    credentialsRef.current = admission.credentials;
     setCredentials(admission.credentials);
-    applyRoom(admission.state);
+    roomController.activate(admission.state, admission.credentials);
     await capability.sessions.save({
       code: admission.state.code,
       name: identityName,
       ...admission.credentials,
     } satisfies NetBattleSession);
-  }, [applyRoom, capability]);
+  }, [roomController, capability]);
 
   const createRoom = () => {
     if (!capability) return;
@@ -1161,11 +1137,8 @@ export function NetBattleMode({
         }
         await adopt(admission, identityName);
       })
-      .catch(fail)
-      .finally(() => {
-        admissionGateRef.current.finish(intent);
-        setBusy(false);
-      });
+      .catch(error => { if (admissionGateRef.current.isCurrent(intent)) fail(error); })
+      .finally(() => { if (admissionGateRef.current.finish(intent)) setBusy(false); });
   };
 
   const joinRoom = (rawCode: string) => {
@@ -1198,12 +1171,17 @@ export function NetBattleMode({
   const leaveRoom = useCallback(async () => {
     const currentRoom = roomRef.current;
     const auth = credentialsRef.current;
-    activeCodeRef.current = null;
+    roomController.deactivate();
+    credentialsRef.current = null; roomRef.current = null;
+    netAttemptRef.current.reset();
+    setBusy(false);
     admissionGateRef.current.cancel();
     setRoom(null);
     setCredentials(null);
     setError('');
     setCountdownMs(null);
+    setRecordedSolve(null); setShowAdmin(false); setShowHistory(false); setRenameOpen(false); setQrOpen(false); setRoomActionTarget(null);
+    autoStartedRef.current = null; offsetRef.current = null;
     timer.reset();
     await capability?.sessions.clear().catch(() => undefined);
     if (capability && currentRoom && auth) {
@@ -1296,12 +1274,7 @@ export function NetBattleMode({
             onSelect={(selectorId) => {
               const next = selectorIdToNetEvent(selectorId);
               if (!next || next === event) return;
-              void capability.client.postNetEvent(room.code, credentials, next)
-                .then((nextRoom) => {
-                  timer.reset();
-                  applyRoom(nextRoom);
-                })
-                .catch(fail);
+              void roomController.execute(() => capability.client.postNetEvent(room.code, credentials, next), { onSuccess: () => timer.reset() });
             }}
             puzzleLabel={copy.puzzle}
             selectedEvent={event}
@@ -1321,19 +1294,15 @@ export function NetBattleMode({
         language={language} busy={roomActionTarget !== null} onClose={() => setShowAdmin(false)}
         onSyncStart={(value) => {
           setRoomActionTarget('sync');
-          void capability.client.postNetSyncStart(room.code, credentials, value)
-            .then(applyRoom).catch(fail).finally(() => setRoomActionTarget(null));
+          void roomController.execute(() => capability.client.postNetSyncStart(room.code, credentials, value), { onSettled: () => setRoomActionTarget(null) });
         }}
         onTransfer={(id) => {
           setRoomActionTarget(id);
-          void capability.client.postNetAdmin(room.code, credentials, id)
-            .then((nextRoom) => { applyRoom(nextRoom); setShowAdmin(false); })
-            .catch(fail).finally(() => setRoomActionTarget(null));
+          void roomController.execute(() => capability.client.postNetAdmin(room.code, credentials, id), { onSuccess: () => setShowAdmin(false), onSettled: () => setRoomActionTarget(null) });
         }}
         onKick={(id) => {
           setRoomActionTarget(id);
-          void capability.client.postNetKick(room.code, credentials, id)
-            .then(applyRoom).catch(fail).finally(() => setRoomActionTarget(null));
+          void roomController.execute(() => capability.client.postNetKick(room.code, credentials, id), { onSettled: () => setRoomActionTarget(null) });
         }} />}
       {showHistory && <TimerRoomHistory room={room} currentPlayerId={credentials.playerId}
         language={language} precision={precision} onClose={() => setShowHistory(false)} />}
@@ -1342,9 +1311,7 @@ export function NetBattleMode({
           onQueryChange={setName} onChange={(person) => { setSelectedPerson(person); setName(''); }} />
         <div className="timer-room-actions"><button type="button" disabled={busy} onClick={() => {
           setBusy(true);
-          void capability.client.renameNetPlayer(room.code, credentials, identity)
-            .then((nextRoom) => { applyRoom(nextRoom); setRenameOpen(false); })
-            .catch(fail).finally(() => setBusy(false));
+          void roomController.execute(() => capability.client.renameNetPlayer(room.code, credentials, identity), { onSuccess: () => setRenameOpen(false), onSettled: () => setBusy(false) });
         }}>{copy.save}</button></div>
       </TimerRoomDialog>}
       <TimerRoomLayout devices={smartCube && deviceControls} toolbar={<TimerRoomToolbar language={language} code={room.code} round={room.round}
@@ -1404,9 +1371,7 @@ export function NetBattleMode({
               pointer.preventDefault();
               if (gate.gated) {
                 const phase = gate.ready ? 'idle' : 'ready';
-                void capability.client.postNetStatus(room.code, credentials, phase)
-                  .then(applyRoom)
-                  .catch(fail);
+                void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, phase));
                 return;
               }
               if (!canManuallyStart && timerPhase !== 'running') return;
@@ -1436,12 +1401,12 @@ export function NetBattleMode({
             <TimerRoomRoundStatus room={room} currentPlayerId={credentials.playerId} language={language}
               idle={timerPhase === 'idle' || timerPhase === 'stopped'} countdown={countdownMs !== null}
               cubeAutoReadySuspended={smartCube?.phase === 'connected'}
-              onReady={() => { void capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready').then(applyRoom).catch(fail); }}
+              onReady={() => { void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready')); }}
               onPenalty={(penalty) => {
                 if (!currentResult) return;
                 const record = netAttemptRef.current.penalty({ code: room.code, playerId: credentials.playerId, round: room.round }, penalty);
                 if (record) persistRecording(record);
-                void capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty).then(applyRoom).catch(fail);
+                void roomController.submitResult(room.round, () => capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty), { t: currentResult.t, p: penalty });
               }}
               onNext={advanceRound} />
           </TimingSurface>

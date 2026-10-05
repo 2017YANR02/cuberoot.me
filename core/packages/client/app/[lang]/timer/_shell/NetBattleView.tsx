@@ -1,5 +1,7 @@
 'use client';
 
+import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
+
 import { TimerWorkspace, TimerInfoToast } from '@cuberoot/timer-ui';
 
 import type { CubeMoveMetadata } from '../_lib/bluetooth';
@@ -82,8 +84,7 @@ import {
   playerEventOf, myScramble, netErrorMessage,
   isNetAdmin, syncGate, normalizeNetBattleRoomCode,
   isNetRoundParticipant,
-  decodeNetBattleSession, isNetBattleRoomCode, preferLatestNetRoomState, type NetBattleSession,
-  acceptNetRoomResponse,
+  decodeNetBattleSession, isNetBattleRoomCode, type NetBattleSession,
   createNetAdmissionGate,
 } from '@/lib/battle-room-logic';
 
@@ -208,16 +209,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   /** 邀请二维码弹窗(队友扫码直接落加入页)。建房时自动弹一次,所以要声明在 doCreate 之前。 */
   const [qrOpen, setQrOpen] = useState(false);
   const roomRef = useRef(room); roomRef.current = room;
-  const activeRoomCodeRef = useRef<string | null>(null);
-  const acceptedStateRef = useRef<NetRoomState | null>(null);
-  /** Keep each device on the completed round until that device asks to continue. */
-  const holdAdvancedRoundRef = useRef(true);
-  const pendingAdvancedStateRef = useRef<NetRoomState | null>(null);
+  const roomControllerRef = useRef(new NetRoomController());
+  const roomController = roomControllerRef.current;
   /** Synchronous latch + monotonic intent; React state alone cannot stop same-tick double submit. */
   const admissionGateRef = useRef<ReturnType<typeof createNetAdmissionGate> | null>(null);
   admissionGateRef.current ??= createNetAdmissionGate();
   const admissionGate = admissionGateRef.current;
-  useEffect(() => () => { admissionGate.cancel(); }, [admissionGate]);
+  useEffect(() => () => { admissionGate.cancel(); roomController.deactivate(); }, [admissionGate, roomController]);
   const pidRef = useRef(pid); pidRef.current = pid;
   const credentialsRef = useRef<NetBattleCredentials | null>(null);
   credentialsRef.current = pid && playerToken ? { playerId: pid, playerToken } : null;
@@ -263,41 +261,16 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [authUser, wcaSelf, picked, name]);
   const identityRef = useRef(identity); identityRef.current = identity;
 
-  const applyState = useCallback((st: NetRoomState) => {
-    const current = roomRef.current;
-    if (current && st.round > current.round && holdAdvancedRoundRef.current) {
-      pendingAdvancedStateRef.current = preferLatestNetRoomState(pendingAdvancedStateRef.current, st);
-      // 保持上一轮的成绩/轮次，但更新时钟和在线心跳，避免等待期间把对手误判为离线。
-      setRoom(prev => {
-        if (!prev || prev.round >= st.round) return prev;
-        const players = Object.fromEntries(Object.entries(prev.players).map(([id, player]) => {
-          const latest = st.players[id];
-          return [id, latest ? { ...player, seen: latest.seen } : player];
-        })) as NetRoomState['players'];
-        return { ...prev, now: st.now, players };
-      });
-      return;
-    }
-    const accepted = acceptNetRoomResponse(activeRoomCodeRef.current, acceptedStateRef.current, st);
-    if (accepted !== st) return;
-    acceptedStateRef.current = st;
-    offsetRef.current = blendClockOffset(offsetRef.current, st.now, Date.now());
-    holdAdvancedRoundRef.current = true;
-    pendingAdvancedStateRef.current = null;
-    setRoom(prev => preferLatestNetRoomState(prev, st));
-  }, []);
-
   const adopt = useCallback((state: NetRoomState, credentials: NetBattleCredentials, nm: string) => {
-    activeRoomCodeRef.current = state.code;
-    holdAdvancedRoundRef.current = true;
-    pendingAdvancedStateRef.current = null;
+    credentialsRef.current = credentials;
+    pidRef.current = credentials.playerId;
     setPid(credentials.playerId);
     setPlayerToken(credentials.playerToken);
-    applyState(state);
+    roomController.activate(state, credentials);
     setErr(null);
     try { sessionStorage.setItem(SS_KEY, JSON.stringify({ code: state.code, ...credentials, name: nm } satisfies SavedSession)); } catch { /* ignore */ }
     if (nm) persistItem(LS_NAME, nm);
-  }, [applyState]);
+  }, [roomController]);
 
   // ── 计时器(复用 Solo 的状态机;设置沿用用户 timer 设置)──────
   const myResult = room && pid ? room.results[String(room.round)]?.[pid] : undefined;
@@ -329,22 +302,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const gateRef = useRef(gate.gated); gateRef.current = gate.gated;
   const startAtRef = useRef(startAt); startAtRef.current = startAt;
 
-  const advBusyRef = useRef(false);
-
   const advance = useCallback((force = false) => {
-    const r = roomRef.current, auth = credentialsRef.current;
-    if (!r || !auth || advBusyRef.current) return;
-    holdAdvancedRoundRef.current = false;
-    advBusyRef.current = true;
-    // 服务端为开轮者项目生成新打乱；客户端不能自报有利打乱。
-    void nextNetRound(r.code, auth, r.round, force)
-      .then(applyState)
-      .catch((e: Error) => setErr(tr(netErrorMessage(e))))
-      .finally(() => {
-        advBusyRef.current = false;
-        holdAdvancedRoundRef.current = true;
-      });
-  }, [applyState]);
+    void roomController.advance(nextNetRound, force);
+  }, [roomController]);
 
   // 双方交卷后不自动推进；每台设备在自己的下一次操作时独立进入下一轮。
 
@@ -354,11 +314,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     if (!r || !auth) return;
     const ev = selectorIdToNetEvent(selId);
     if (!ev || ev === playerEventOf(r, auth.playerId)) return;
-    void postNetEvent(r.code, auth, ev)
-      .then((st) => { applyState(st); timerReset(); })
-      .catch((e: Error) => setErr(tr(netErrorMessage(e))));
+    void roomController.execute(() => postNetEvent(r.code, auth, ev), { onSuccess: () => timerReset() });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [applyState]);
+  }, [roomController]);
 
   const netAttemptRef = useRef(new NetBattleAttemptRecorder());
   const pendingRecording = useSyncExternalStore(netRecordingOutbox.subscribe, netRecordingOutbox.getSnapshot, netRecordingOutbox.getSnapshot);
@@ -377,10 +335,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     if (!auth) return;
     const { code, round } = completed.context;
     const penalty: NetPenalty = res.autoPenalty === 'DNF' ? 'dnf' : res.autoPenalty;
-    void postNetResult(code, auth, round, res.timeMs, penalty).then(applyState)
-      .catch(() => postNetResult(code, auth, round, res.timeMs, penalty).then(applyState)
-        .catch(() => setErr(tr({ zh: '成绩上传失败,请检查网络', en: 'Failed to upload result — check your connection' }))));
-  }, [applyState, tr]);
+    void roomController.submitResult(round, () => postNetResult(code, auth, round, res.timeMs, penalty), { t: res.timeMs, p: penalty });
+  }, [roomController, tr]);
 
   const timer = useTimer(onSolve, (startedAtMs: number) => {
     const r = roomRef.current, auth = credentialsRef.current;
@@ -406,8 +362,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   useEffect(() => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
-    if (timer.phase === 'inspecting') void postNetStatus(r.code, auth, 'inspecting').catch(() => {});
-    else if (timer.phase === 'running') void postNetStatus(r.code, auth, 'solving').catch(() => {});
+    if (timer.phase === 'inspecting') void roomController.execute(() => postNetStatus(r.code, auth, 'inspecting'), { quiet: true });
+    else if (timer.phase === 'running') void roomController.execute(() => postNetStatus(r.code, auth, 'solving'), { quiet: true });
   }, [timer.phase]);
 
   // ── 同时开始:准备开关 + 倒计时归零同时起表 ────────────────────
@@ -418,8 +374,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
     const next = r.players[auth.playerId]?.ph === 'ready' ? 'idle' : 'ready';
-    void postNetStatus(r.code, auth, next).then(applyState).catch(() => {});
-  }, [applyState]);
+    void roomController.execute(() => postNetStatus(r.code, auth, next));
+  }, [roomController]);
 
   // 倒计时:startAt(服务器时钟)换算到本机(减去时钟偏移),归零即 startNow 同时起表。
   // 每个 startAt 只消费一次;断线/后台后迟到的 roster 成员从服务器起点恢复。
@@ -438,6 +394,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
       const late = -left;
       const r = roomRef.current, id = pidRef.current;
       if (!r || !id || r.results[String(r.round)]?.[id]) return; // 已交卷的人不跟着起表
+      if (phaseRef.current === 'running') return;
       timerStartNow(late);
     };
     tick();
@@ -460,44 +417,39 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const handleRoomGone = useCallback((msg: string) => {
     admissionGate.cancel();
     setBusy(false);
-    activeRoomCodeRef.current = null;
-    acceptedStateRef.current = null;
+    roomController.deactivate();
+    timerReset();
+    netAttemptRef.current.reset();
     setRoom(null); setPid(null); setPlayerToken(null); setErr(msg);
+    roomRef.current = null; credentialsRef.current = null;
+    setShowAdmin(false); setShowStats(false); setRenameOpen(false); setQrOpen(false); setCountdownMs(null);
+    autoStartedRef.current = null; offsetRef.current = null;
     try { sessionStorage.removeItem(SS_KEY); } catch { /* ignore */ }
     void setRoomParam(null);
   }, [admissionGate, setRoomParam]);
 
+  roomController.callbacks = {
+    onState: state => {
+      roomRef.current = state;
+      offsetRef.current = blendClockOffset(offsetRef.current, state.now, Date.now());
+      setRoom(state);
+    },
+    onError: error => setErr(tr(netErrorMessage(error))),
+    onGone: reason => handleRoomGone(tr(netErrorMessage(new Error(reason)))),
+    isTiming: () => phaseRef.current === 'running',
+  };
   const code = room?.code ?? null;
   useEffect(() => {
     if (!code || !pid || !playerToken) return;
-    const auth = { playerId: pid, playerToken } satisfies NetBattleCredentials;
-    let stopped = false;
-    let running = false;
-    const tick = async () => {
-      if (running) return;
-      running = true;
-      try {
-        const st = await getNetRoom(code, auth);
-        if (stopped) return;
-        // 自己已不在玩家表里 = 被房主踢了(房间还在,只是没我了)
-        if (!st.players[pid]) {
-          handleRoomGone(tr({ zh: '你已被房主移出房间', en: 'The host removed you from the room' }));
-          return;
-        }
-        applyState(st);
-      } catch (e) {
-        if (!stopped && (e as Error).message === 'room not found') {
-          handleRoomGone(tr({ zh: '房间已解散或过期', en: 'Room was closed or expired' }));
-        } else if (!stopped && (e as Error).message === 'invalid player capability') {
-          handleRoomGone(tr(netErrorMessage(e)));
-        }
-      } finally { running = false; }
-    };
-    const iv = window.setInterval(() => { if (!document.hidden) void tick(); }, 1000);
-    const onVis = () => { if (!document.hidden) void tick(); };
-    document.addEventListener('visibilitychange', onVis);
-    return () => { stopped = true; window.clearInterval(iv); document.removeEventListener('visibilitychange', onVis); };
-  }, [code, pid, playerToken, applyState, handleRoomGone]);
+    return startNetRoomPolling(roomController, getNetRoom, {
+      visible: () => !document.hidden,
+      subscribeWake: wake => {
+        document.addEventListener('visibilitychange', wake);
+        window.addEventListener('online', wake);
+        return () => { document.removeEventListener('visibilitychange', wake); window.removeEventListener('online', wake); };
+      },
+    });
+  }, [code, pid, playerToken, roomController]);
 
   // 计时中的玩家滚动读数:rAF 直接写 span.textContent(0.01s 精度,60fps 平滑),
   // 不走 React 重渲(同 Solo 计时器的做法)—— 否则整个 NetBattleView 每帧重渲太重。
@@ -525,19 +477,13 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }, [room]);
 
   // 我的项目当前轮打乱缺失 → 请求服务端共享生成器 set-if-absent 回填。
-  const ensuredKeyRef = useRef<string>('');
   useEffect(() => {
     const auth = credentialsRef.current;
     if (!room || !auth) return;
     const ev = playerEventOf(room, auth.playerId);
     if (room.scrambles?.[ev]) return;
-    const key = `${room.round}:${ev}`;
-    if (ensuredKeyRef.current === key) return;
-    ensuredKeyRef.current = key;
-    void ensureNetScramble(room.code, auth, ev)
-      .then(applyState)
-      .catch(() => { ensuredKeyRef.current = ''; });
-  }, [room, pid, playerToken, applyState]);
+    void roomController.ensure(ev, () => ensureNetScramble(room.code, auth, ev));
+  }, [room, pid, playerToken, roomController]);
 
   // ── 建房 / 加入 / 恢复 / 离开 ───────────────────────────────
   const doCreate = useCallback(() => {
@@ -594,23 +540,18 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     const intent = admissionGate.beginBackground();
     if (intent === null) return;
     autoJoinRef.current = true;
-    let dead = false;
     const codeUp = normalizeNetBattleRoomCode(roomParam);
-    void (async () => {
-      try {
-        const saved = readSession();
-        if (saved && saved.code === codeUp) {
-          const savedAuth = { playerId: saved.playerId, playerToken: saved.playerToken } satisfies NetBattleCredentials;
-          const st = await getNetRoom(codeUp, savedAuth);
-          if (!dead && admissionGate.isCurrent(intent) && st.players[saved.playerId]) {
-            adopt(st, savedAuth, saved.name); return;
-          }
-        }
-      } catch { /* 读不到就当新人,照常加入 */ }
-      if (!dead && admissionGate.isCurrent(intent)) doJoin(codeUp);
-    })();
+    const stop = startNetRoomRestore({
+      current: () => admissionGate.isCurrent(intent),
+      load: async () => { const session = readSession(); return session?.code === codeUp ? session : null; },
+      getRoom: getNetRoom,
+      clear: async () => { try { sessionStorage.removeItem(SS_KEY); } catch { /* ignore */ } },
+      restored: (session, state) => adopt(state, session, session.name),
+      missing: () => doJoin(codeUp),
+      error: error => setErr(tr(netErrorMessage(error))),
+    });
     return () => {
-      dead = true;
+      stop();
       if (admissionGate.isCurrent(intent)) admissionGate.cancel();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -620,34 +561,30 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   const setSyncStart = useCallback((v: boolean) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
-    void postNetSyncStart(r.code, auth, v).then(applyState).catch((e: Error) => setErr(tr(netErrorMessage(e))));
-  }, [applyState]);
+    void roomController.execute(() => postNetSyncStart(r.code, auth, v));
+  }, [roomController]);
 
   const transferAdmin = useCallback((target: string) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
-    void postNetAdmin(r.code, auth, target)
-      .then((st) => { applyState(st); setShowAdmin(false); })
-      .catch((e: Error) => setErr(tr(netErrorMessage(e))));
-  }, [applyState]);
+    void roomController.execute(() => postNetAdmin(r.code, auth, target), { onSuccess: () => setShowAdmin(false) });
+  }, [roomController]);
 
   const kickPlayer = useCallback((target: string) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
-    void postNetKick(r.code, auth, target).then(applyState).catch((e: Error) => setErr(tr(netErrorMessage(e))));
-  }, [applyState]);
+    void roomController.execute(() => postNetKick(r.code, auth, target));
+  }, [roomController]);
 
   // ── 房内改名 ────────────────────────────────────────────────
   const doRename = useCallback((next: NetIdentity) => {
     const r = roomRef.current, auth = credentialsRef.current;
     if (!r || !auth) return;
-    void renameNetPlayer(r.code, auth, next)
-      .then(applyState)
-      .catch((e: Error) => setErr(tr(netErrorMessage(e))));
+    void roomController.execute(() => renameNetPlayer(r.code, auth, next));
     // 记的是「我要的名字」而不是服务端去重后的结果:存下 'Cuber (2)' 的话,
     // 下次进别的房就成了 'Cuber (2) (2)'。
     if (!authUser && next.name) persistItem(LS_NAME, next.name);
-  }, [applyState, authUser]);
+  }, [roomController, authUser]);
 
   // 登录用户的房内名字跟着账号走(所以不给他们改名入口)。建房/加入时已经用的是账号名,
   // 但 WCA 官方姓名是异步查回来的,晚到就在这儿补一次。
@@ -667,13 +604,14 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
 
   const doLeave = useCallback(() => {
     const r = roomRef.current, auth = credentialsRef.current;
-    activeRoomCodeRef.current = null;
+    roomController.deactivate();
     admissionGate.cancel();
     setBusy(false);
-    acceptedStateRef.current = null;
-    holdAdvancedRoundRef.current = true;
-    pendingAdvancedStateRef.current = null;
+    netAttemptRef.current.reset();
     setRoom(null); setPid(null); setPlayerToken(null); setErr(null);
+    roomRef.current = null; credentialsRef.current = null;
+    setShowAdmin(false); setShowStats(false); setRenameOpen(false); setQrOpen(false); setCountdownMs(null);
+    autoStartedRef.current = null; offsetRef.current = null;
     autoJoinRef.current = false;
     prevRoundRef.current = null;
     try { sessionStorage.removeItem(SS_KEY); } catch { /* ignore */ }
@@ -739,7 +677,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     } : undefined,
     onMove: (move, ts, _facelets, metadata) => {
       // 双方都交卷后，自己的下一次转动才切到下一轮；另一台设备继续保留结算画面。
-      if (myResult && roundSettled && !advBusyRef.current) advance(false);
+      if (myResult && roundSettled && !roomController.isAdvancing) advance(false);
       // 先起表,后广播:如果这一手就是起表那一手,下面的录制订阅必须已经看到
       // 「在计时」。它读的是 `phaseRef`,而上面那行是同步写的 —— 等 React 重渲染
       // 就会丢掉这一步,而 BLE 可能在同一个调用栈里连给两手。
@@ -1118,8 +1056,8 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     }
     const auth = credentialsRef.current;
     if (!auth || auth.playerId !== id) return;
-    void postNetResult(r.code, auth, r.round, cur.t, p).then(applyState).catch(() => {});
-  }, [applyState]);
+    void roomController.submitResult(r.round, () => postNetResult(r.code, auth, r.round, cur.t, p), { t: cur.t, p });
+  }, [roomController]);
 
   // ── 邀请链接复制 ────────────────────────────────────────────
   const [linkCopied, setLinkCopied] = useState(false);
