@@ -3,7 +3,7 @@
 // Reads the hook payload on stdin ({tool_name, tool_input}), scans the NEW content
 // from normalized newly added content and DENIES (JSON
 // permissionDecision=deny on stdout + exit 0; exit 2 is ignored in auto mode) when it
-// adds a `type="checkbox"`. Boolean toggles must use <BoolToggle> (knob left, label
+// adds a `type="checkbox"`. Boolean toggles must use <BoolToggle> (label left, switch
 // right); genuine multi-select grids can opt out with an inline `allow-checkbox: reason`.
 // Mirrors the CI ratchet tests/no-raw-checkbox.test.ts (which is authoritative).
 const CHECKBOX = /type=["']checkbox["']/;
@@ -33,7 +33,7 @@ process.stdin.on('end', () => {
 
   if (CHECKBOX.test(text) && !/allow-checkbox/.test(text)) {
     deny(
-      '裸 <input type="checkbox">(☑)被禁止:布尔开关一律用 <BoolToggle>(左滑钮 + 右文字,' +
+      '裸 <input type="checkbox">(☑)被禁止:布尔开关一律用 <BoolToggle>(左文字 + 右滑钮,' +
         "import BoolToggle from '@/components/BoolToggle')。二选一用 PillToggle 的 onLabel/offLabel。" +
         '确属多选网格/列表的特例:在该处加行内注释 allow-checkbox: <理由>。详见 /dev/components。',
     );

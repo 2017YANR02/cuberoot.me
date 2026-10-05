@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import BoolToggle from '@/components/BoolToggle';
+import SharedBoolToggle from '@cuberoot/timer-ui/BoolToggle';
 import {
   DEFAULT_TIMER_TIMING_SETTINGS,
   TIMER_SETTING_FIELD_CONTRACTS,
@@ -65,6 +66,26 @@ describe('shared Timer Timing settings UI', () => {
     })));
     return onChange;
   }
+
+  it.each([
+    ['Web', BoolToggle],
+    ['shared App', SharedBoolToggle],
+  ] as const)('%s puts the label before the switch and preserves click/disabled behavior', async (_name, Toggle) => {
+    const onChange = vi.fn();
+    await act(async () => root.render(createElement(Toggle, { label: 'Algorithms', value: false, onChange })));
+    const label = host.querySelector<HTMLButtonElement>('.bool-toggle-label')!;
+    const control = host.querySelector<HTMLButtonElement>('[role="switch"]')!;
+    expect(label.nextElementSibling).toBe(control);
+    expect(control.getAttribute('aria-label')).toBe('Algorithms');
+    expect(control.getAttribute('aria-checked')).toBe('false');
+    await act(async () => { label.click(); control.click(); });
+    expect(onChange.mock.calls).toEqual([[true], [true]]);
+    onChange.mockClear();
+    await act(async () => root.render(createElement(Toggle, { label: 'Algorithms', value: true, onChange, disabled: true })));
+    expect(control.getAttribute('aria-checked')).toBe('true');
+    await act(async () => { label.click(); control.click(); });
+    expect(onChange).not.toHaveBeenCalled();
+  });
 
   it('renders the exact eight contract fields, Web DOM classes, labels, and value policies', async () => {
     await render();

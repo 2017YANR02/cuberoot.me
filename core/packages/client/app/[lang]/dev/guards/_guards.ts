@@ -83,8 +83,8 @@ export const PAIRED_GUARDS: PairedGuard[] = [
     hook: 'hook-detect-raw-checkbox.mjs',
     test: 'no-raw-checkbox.test.ts',
     baseline: '0（113→0）',
-    zh: { title: '裸 checkbox', desc: '禁 <input type="checkbox">,布尔开关统一走 BoolToggle（左滑钮 + 右文字）。多选网格/列表例外,行内 allow-checkbox 豁免。' },
-    en: { title: 'Raw checkbox', desc: 'No bare <input type="checkbox"> — boolean toggles go through BoolToggle (left switch + right label). Multi-select grids are exempt via inline allow-checkbox.' },
+    zh: { title: '裸 checkbox', desc: '禁 <input type="checkbox">,布尔开关统一走 BoolToggle（左文字 + 右滑钮）。多选网格/列表例外,行内 allow-checkbox 豁免。' },
+    en: { title: 'Raw checkbox', desc: 'No bare <input type="checkbox"> — boolean toggles go through BoolToggle (left label + right switch). Multi-select grids are exempt via inline allow-checkbox.' },
   },
   {
     id: 'date-input',

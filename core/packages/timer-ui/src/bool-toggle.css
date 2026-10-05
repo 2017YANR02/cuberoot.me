@@ -1,7 +1,8 @@
-/* 布尔开关:左滑钮 + 右文字。见 components/BoolToggle.tsx。 */
+/* 布尔开关:左文字 + 右滑钮。见 components/BoolToggle.tsx。 */
 .bool-toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
 }
 .bool-toggle-label {
