@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState, type ComponentType } from 'react';
+import { useRouter } from 'next/navigation';
 import { Crown, Gift, HardDrive, HeartHandshake, Inbox, MessageSquare, ShieldCheck, Users, Wrench } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
-import { useIsAdmin } from '@/lib/auth-store';
+import { loginHref, useAuthStore, useIsAdmin } from '@/lib/auth-store';
 import './admin.css';
 
 interface AdminDestination {
@@ -29,11 +30,16 @@ const DESTINATIONS: AdminDestination[] = [
 
 export default function AdminPage() {
   const t = useT();
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const isAdmin = useIsAdmin();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    if (mounted && !user) router.replace(loginHref());
+  }, [mounted, user, router]);
 
-  if (!mounted) return <main className="admin-hub" />;
+  if (!mounted || !user) return <main className="admin-hub" />;
   if (!isAdmin) {
     return (
       <main className="admin-hub">
