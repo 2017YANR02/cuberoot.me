@@ -115,6 +115,7 @@ describe('online battle shared attempt', () => {
     const context = {
       roomRef, pidRef: ref('self'), credentialsRef: ref({ playerId: 'self', playerToken: 'token' }),
       attemptAuthRef: ref(null), getActiveSessionId: () => 'original-session',
+      roomController: { submitResult: (_round: number, request: () => Promise<unknown>) => request() },
       netRecordingOutbox: { enqueue: appendSolves }, postNetResult: vi.fn(async () => ({})), applyState: vi.fn(), tr: vi.fn(), setErr: vi.fn(),
       btStatusRef: ref({ connected: true, brand: 'gan-v4', deviceName: 'Original' }),
       netAttemptRef: ref(producer), phaseRef: ref('ready'), localSolveRef: ref(null),

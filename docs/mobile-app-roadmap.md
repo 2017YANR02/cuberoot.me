@@ -1348,3 +1348,11 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 两端使用 `NetRecordingOutbox` 与按 ID 幂等保存；失败显示重试，改罚时只更新对应记录且保留已有备注/反馈。队列在当前进程内跨模式/房间保留，尚不保证关闭应用后恢复未落盘记录；这不是账号云同步。
 - Web 本地 2～4 人起停、预备取消、观察、同步开始和下一轮生命周期改用 App 已消费的 `transitionLocalBattle`。共享设置提供「同时开始」，共享轮次生成冻结本轮打乱/观察时长，预取下一题不会污染旧轮次。修正先完成者改罚时覆盖上一轮旧历史的问题。
 - 当前证据：Web 定向 7 文件 80 项、App 状态机/页面消费/仓储定向 3 文件 61 项通过；App/client typecheck、shared build、Mobile Capacitor 双平台同步、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug `.app`、Harmony Web build 通过。Windows 原生构建未在此 Mac 执行；Harmony HAP 仍受既有本机 Hvigor 6.0.1 与工程 6.0.2 不匹配阻断。未进行真实联机房间、实体魔方、多设备或五平台 UI 全量验收，未发布，整体仍为 NOT COMPLETE。
+
+
+### 2026-10-05：联机房间控制流程同源
+
+- Web 与 App 的轮询、恢复、响应接纳、退出失效、推进保护和上传重试共同使用 shared 的 `NetRoomController`、`startNetRoomPolling`、`startNetRoomRestore`。宿主仅注入请求、会话存储、页面状态与可见性/联网事件。每次 membership 都有独立代际；同码退出重进后，旧请求成功/失败/重试不能修改新房间。
+- 轮询隐藏暂停、可见或联网时立即刷新，同一 membership 不重叠；恢复断网保留原 capability 并重试，明确被踢/失效才清理。被撤销的已保存身份不会自动以新人身份重入。异步 session clear/save 串行，退出与被踢清除计时、倒计时、旧弹层及复盘展示。
+- App 与 Web 都保留本机结算直到显式下一轮；较新轮询不会吞掉推进意图，强制推进期间仍保留正在计时的旧轮及历史结果。成绩上传和罚时变更按 membership/轮次串行；服务端 advanced 响应只有历史成绩与本次提交一致才算成功，否则显示既有 result-rejected 错误，本机录制仍独立保留。
+- 当前证据：定向 Web 8 文件 96 项与 App 页面集成 14 项通过；shared build、App/client typecheck 通过。Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows 原生构建/真实联机多设备验收未执行，Harmony HAP 工具链版本阻断未改变。本轮无 API 改动、无发布；持久化成绩重试队列仍是后续步骤，整体保持 NOT COMPLETE。
