@@ -517,7 +517,7 @@ describe('deployment workflow path contracts', () => {
   it('builds stats runtime dependencies before every workflow tsx entrypoint', () => {
     const { manifest } = readWorkspacePackage('@cuberoot/stats-build');
     expect(manifest.scripts?.['build:deps']).toBe(
-      'pnpm --filter @cuberoot/shared build',
+      'pnpm --filter "@cuberoot/stats-build^..." -r build',
     );
 
     const statsWorkflows = workflowNames()

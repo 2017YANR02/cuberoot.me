@@ -261,6 +261,7 @@ jobs:
         run: npx tsx src/bin/sor_over_time_daily_build.ts
 
       - name: Setup SSH for stats deploy
+        id: stats_ssh
         env:
           SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -271,6 +272,7 @@ jobs:
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
 
       - name: Upload historical ranks TSVs to server
+        id: historical_ranks_upload
         if: github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra'
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -296,7 +298,7 @@ jobs:
 
       # apply_load 自己会清理;这里兜住 scp 中断、apply step 未启动等情况。
       - name: Cleanup historical ranks upload
-        if: always() && (github.event_name == 'schedule' || inputs.pipeline != 'wca_stats_extra')
+        if: always() && steps.stats_ssh.outcome == 'success' && contains(fromJSON('["success", "failure", "cancelled"]'), steps.historical_ranks_upload.outcome)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -333,6 +335,7 @@ jobs:
         run: npx tsx src/bin/wca_stats_extra_build.ts
 
       - name: Upload WCA stats extra TSVs to server
+        id: wca_stats_extra_upload
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -354,7 +357,7 @@ jobs:
 
       # apply_load 自己会清理;这里兜住 scp 中断、apply step 未启动等情况。
       - name: Cleanup WCA stats extra upload
-        if: always()
+        if: always() && steps.stats_ssh.outcome == 'success' && contains(fromJSON('["success", "failure", "cancelled"]'), steps.wca_stats_extra_upload.outcome)
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
