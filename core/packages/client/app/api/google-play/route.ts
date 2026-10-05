@@ -87,8 +87,20 @@ export async function POST(req: Request): Promise<Response> {
     }
     await client.request({ method: 'POST', url: `${apiBase}/purchases/subscriptions/${operation.productId}/tokens/${token}:acknowledge`, data: {}, timeout: 15_000, retry: false, maxRedirects: 0 });
     return json({ acknowledged: true });
-  } catch {
-    // Never log Google errors: they can include auth headers, receipts and URLs.
+  } catch (error) {
+    // Never log the error object/message: it can contain auth headers or receipts.
+    // Only allowlisted protocol codes and numeric status are useful for operations.
+    const response = (error as { response?: { status?: unknown; data?: { error?: unknown } } })?.response;
+    const upstreamError = response?.data?.error;
+    const code = typeof upstreamError === 'string' ? upstreamError
+      : (upstreamError as { status?: unknown } | undefined)?.status;
+    const knownCodes = ['invalid_target', 'invalid_grant', 'invalid_request', 'unauthorized_client',
+      'access_denied', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'NOT_FOUND', 'RESOURCE_EXHAUSTED'];
+    console.warn('Google Play relay failed', {
+      operation: operation.operation,
+      status: typeof response?.status === 'number' ? response.status : null,
+      code: typeof code === 'string' && knownCodes.includes(code) ? code : 'unclassified',
+    });
     return json({ error: 'Google operation failed' }, 502);
   }
 }
