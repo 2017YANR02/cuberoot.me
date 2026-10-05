@@ -8,7 +8,7 @@ export async function resolveCubeMac(
   family: 'gan' | 'moyu32',
   requestMac?: (deviceName: string) => Promise<string | null>,
 ): Promise<Uint8Array> {
-  const nativeMac = normalizeMac(device.id);
+  const nativeMac = normalizeMac(device.macAddress) ?? normalizeMac(device.id);
   if (nativeMac && nativeMac !== '00:00:00:00:00:00') return macStringToBytes(nativeMac);
   if (family === 'gan') {
     for (const companyId of GAN_V4_MANUFACTURER_DATA_CICS) {

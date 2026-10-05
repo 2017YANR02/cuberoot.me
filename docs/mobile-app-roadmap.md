@@ -1,5 +1,13 @@
 # CubeRoot 五端 App 完整路线图
 
+
+### 2026-10-05：macOS 原生真实 MAC 适配（本地）
+
+- Desktop 保留 BLEC/CoreBluetooth 的 UUID 作为设备连接身份，新增 macOS 可选原生查询，把真实地址单独通过 `macAddress` 交给 GAN/MoYu32 共享密钥逻辑。Windows 的真实 MAC 路径不变，不新增协议或计时副本。
+- 原生查询在 blocking worker/独立队列运行，检查 `retrieveAddressForPeripheral:` 是否存在、返回类型和六字节长度；接口异常/不可用返回空值，前端 4 秒总等待超时后使用既有广播/手填兜底。此未公开接口可能随系统更新失效；超时不会强制终止已进入系统调用的 worker。
+- macOS 27.0 (26A428) 本机临时只读扫描实测：`GAN16ui_C2AF` 自动返回真实 MAC，末两字节为 C2AF；没有打印完整地址，也没有向设备写入。此次未扫描到 `WCU_MY32_5C3A`，MoYu 取址仍待实物验证。取址成功不等于协议解密、转动或自动计时验收。
+- Desktop Web build、macOS `cargo build`、原生 2 项及 TS 定向 40 项测试通过，独立审查确认 UUID/MAC 分离及 Windows 路径。此次只交付本地开发构建，未打包安装、签名、公证或发布。
+
 ### 2026-10-05：macOS 智能魔方地址与握手修复（本地，实机待复测）
 
 - 所有者报告 Windows 智能魔方主流程体验正常；macOS `WCU_MY32_5C3A` 显示连接/协议但无转动，`GAN16ui_C2AF` 显示泛化连接失败。这是失败实测，不记为 macOS BLE 验收通过。

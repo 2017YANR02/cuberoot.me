@@ -243,13 +243,18 @@ export function useInstalledSmartCube(
       await transport.initialize();
       if (!current()) throw new Error('smart cube connection closed');
       const supportsServiceDiscovery = Boolean(transport.getServices);
-      const device = scannedDevice
+      let device = scannedDevice
         ?? await transport.requestDevice(requestOptions(language, supportsServiceDiscovery));
       if (!current()) throw new Error('smart cube connection closed');
       setPhase('connecting');
       setDeviceName(device.name);
       const namedModel = modelForDeviceName(device.name);
       setModel(namedModel);
+      if (namedModel === 'moyu32' || namedModel?.startsWith('gan-')) {
+        const macAddress = await transport.getDeviceMac?.(device.id);
+        if (!current()) throw new Error('smart cube connection closed');
+        if (macAddress) device = { ...device, macAddress };
+      }
       const session = sessionController.open({ publishInitialState: false });
       let connection!: SmartCubeConnection;
       let resolveReady!: () => void;

@@ -212,3 +212,31 @@ describe('nearestNamedDevice', () => {
     expect(bleMocks.send).toHaveBeenCalledWith('write', [1, 2], 'withoutResponse', 'service');
   });
 });
+
+describe('native protocol address lookup', () => {
+  it('uses the Apple UUID only for lookup and preserves it for GATT', async () => {
+    const id = '11111111-2222-3333-4444-555555555555';
+    bleMocks.invoke.mockResolvedValueOnce('AB:CD:EF:01:23:45');
+    const transport = new TauriBleTransport();
+    expect(await transport.getDeviceMac(id)).toBe('AB:CD:EF:01:23:45');
+    expect(bleMocks.invoke).toHaveBeenCalledWith('ble_device_mac', { deviceId: id });
+    await transport.connect(id, vi.fn());
+    expect(bleMocks.connect).toHaveBeenCalledWith(id, expect.any(Function));
+  });
+  it('does not call the macOS adapter for a Windows MAC address', async () => {
+    expect(await new TauriBleTransport().getDeviceMac('AB:CD:EF:01:23:45')).toBeNull();
+    expect(bleMocks.invoke).not.toHaveBeenCalled();
+  });
+  it('keeps the existing fallback when native lookup is unavailable', async () => {
+    bleMocks.invoke.mockRejectedValueOnce(new Error('unavailable'));
+    expect(await new TauriBleTransport().getDeviceMac('11111111-2222-3333-4444-555555555555')).toBeNull();
+  });
+});
+
+it('falls back after four seconds even if the optional native call never returns', async () => {
+  vi.useFakeTimers();
+  bleMocks.invoke.mockReturnValueOnce(new Promise(() => undefined));
+  const result = new TauriBleTransport().getDeviceMac('11111111-2222-3333-4444-555555555555');
+  await vi.advanceTimersByTimeAsync(4_000);
+  expect(await result).toBeNull();
+});

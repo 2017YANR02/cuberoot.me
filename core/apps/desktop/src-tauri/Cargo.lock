@@ -817,6 +817,7 @@ dependencies = [
 name = "cuberoot-desktop"
 version = "0.1.0"
 dependencies = [
+ "cc",
  "keyring",
  "serde_json",
  "tauri",
