@@ -321,6 +321,17 @@
   white-space: nowrap;
 }
 
+.position-top-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .position-prompt-mark {
   min-width: 4rem;
   color: var(--muted-foreground);
