@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { memo, Fragment, useEffect, useMemo, useState } from 'react';
 import { RecordBadge } from '@/components/RecordBadge';
 import AppLink from '@/components/AppLink';
 import { AchievementBadge } from './AchievementBadge';
@@ -22,7 +22,9 @@ interface Achievement {
   isOnlyFirst: boolean;
 }
 
-export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [], results = [], comps = [], countryIso2 = '', extraAchievements = [], memberKind = null, femaleRecords = [], femaleNationalComplete = false }: {
+const EMPTY: never[] = [];
+
+export const GrandSlamBadges = memo(function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = EMPTY, results = EMPTY, comps = EMPTY, countryIso2 = '', extraAchievements = EMPTY, memberKind = null, femaleRecords = EMPTY, femaleNationalComplete = false }: {
   rows: Achievement[]; wcaId: string; isZh: boolean;
   records?: WcaPersonProfile['personal_records'];
   podiums?: (Pick<ChampionshipPodiumRow, 'level' | 'place' | 'eventId'> & Partial<ChampionshipPodiumRow>)[];
@@ -44,7 +46,8 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
     const group = femaleGroups.get(key);
     femaleGroups.set(key, group ? { ...group, event: undefined, rows: [...group.rows, ...entry.rows] } : entry);
   }
-  const explorer = useMemo(() => groupExplorerAchievements([...personalExplorerAchievements(results, comps, countryIso2, podiums), ...extraAchievements]), [results, comps, countryIso2, podiums, extraAchievements]);
+  const personal = useMemo(() => personalExplorerAchievements(results, comps, countryIso2, podiums), [results, comps, countryIso2, podiums]);
+  const explorer = useMemo(() => groupExplorerAchievements([...personal, ...extraAchievements]), [personal, extraAchievements]);
   const achievements = rows.filter(row => row.wcaId === wcaId);
   const compNames = new Map(comps.map(comp => [comp.id, comp.name]));
   const official = results.filter(row => !row.live && row.competition_id && row.event_id);
@@ -150,9 +153,9 @@ export function GrandSlamBadges({ rows, wcaId, isZh, records = {}, podiums = [],
       </div>
     </section>
   );
-}
+});
 
-export default function PersonAchievements({ wcaId, isZh, records, results, comps, countryIso2, femaleRecords, femaleNationalComplete }: { wcaId: string; isZh: boolean; records: WcaPersonProfile['personal_records']; results: WcaResultRow[] | null; comps: WcaCompetition[] | null; countryIso2?: string; femaleRecords?: FemalePersonRecord[]; femaleNationalComplete?: boolean }) {
+const PersonAchievements = memo(function PersonAchievements({ wcaId, isZh, records, results, comps, countryIso2, femaleRecords, femaleNationalComplete }: { wcaId: string; isZh: boolean; records: WcaPersonProfile['personal_records']; results: WcaResultRow[] | null; comps: WcaCompetition[] | null; countryIso2?: string; femaleRecords?: FemalePersonRecord[]; femaleNationalComplete?: boolean }) {
   const [member, setMember] = useState<{ wcaId: string; kind: ReturnType<typeof publicMemberBadgeKind> } | null>(null);
   useEffect(() => {
     let controller: AbortController | undefined;
@@ -178,7 +181,7 @@ export default function PersonAchievements({ wcaId, isZh, records, results, comp
   useEffect(() => {
     if (markers === null) return;
     const controller = new AbortController();
-    fetchExplorerAchievements(wcaId, markers.split(','), controller.signal, podiums?.wcaId === wcaId ? podiums.rows : []).then(rows => { if (!controller.signal.aborted) setExtra({ wcaId, rows }); });
+    fetchExplorerAchievements(wcaId, markers.split(','), controller.signal, podiums?.wcaId === wcaId ? podiums.rows : EMPTY).then(rows => { if (!controller.signal.aborted) setExtra({ wcaId, rows }); });
     return () => controller.abort();
   }, [wcaId, markers, podiums]);
   const [rows, setRows] = useState<Achievement[]>([]);
@@ -198,5 +201,7 @@ export default function PersonAchievements({ wcaId, isZh, records, results, comp
       .catch(() => { /* An unavailable achievement feed must not block the person profile. */ });
     return () => controller.abort();
   }, []);
-  return <GrandSlamBadges rows={rows} wcaId={wcaId} isZh={isZh} records={records} results={results ?? []} comps={comps ?? []} countryIso2={countryIso2} femaleRecords={femaleRecords} femaleNationalComplete={femaleNationalComplete} memberKind={member?.wcaId === wcaId ? member.kind : null} extraAchievements={extra?.wcaId === wcaId ? extra.rows : []} podiums={podiums?.wcaId === wcaId ? podiums.rows : []} />;
-}
+  return <GrandSlamBadges rows={rows} wcaId={wcaId} isZh={isZh} records={records} results={results ?? EMPTY} comps={comps ?? EMPTY} countryIso2={countryIso2} femaleRecords={femaleRecords} femaleNationalComplete={femaleNationalComplete} memberKind={member?.wcaId === wcaId ? member.kind : null} extraAchievements={extra?.wcaId === wcaId ? extra.rows : EMPTY} podiums={podiums?.wcaId === wcaId ? podiums.rows : EMPTY} />;
+});
+
+export default PersonAchievements;
