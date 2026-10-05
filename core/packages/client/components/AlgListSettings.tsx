@@ -86,18 +86,11 @@ export default function AlgListSettings({
       className={`alg-list-settings${className ? ` ${className}` : ''}`}
     >
       {showViewMode && (
-        <span className="alg-list-settings-row">
-          <span className="alg-list-settings-label">{tr({ zh: '列表内容', en: 'List content' })}</span>
-          <select
-            className="alg-notation-style-select"
-            value={view}
-            onChange={event => onViewChange(event.target.value as AlgViewMode)}
-            aria-label={tr({ zh: '列表内容', en: 'List content' })}
-          >
-            <option value="cards">{tr({ zh: '图', en: 'Images' })}</option>
-            <option value="full">{tr({ zh: '公式', en: 'Algs' })}</option>
-          </select>
-        </span>
+        <BoolToggle
+          value={view === 'full'}
+          onChange={show => onViewChange(show ? 'full' : 'cards')}
+          label={tr({ zh: '是否有公式', en: 'Show algorithms' })}
+        />
       )}
       {notationStyle && onNotationStyleChange && (
         <span className="alg-list-settings-row">
