@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { fmtDate, fmtVipId } from '@/lib/membership-format';
+import { fmtDate, fmtPrice, fmtVipId } from '@/lib/membership-format';
 import { adminList, adminRevoke, publicMemberBadgeKind, type Membership, type MembershipPlan } from '@/lib/membership-api';
 
 function periodLabel(member: Membership, plan: MembershipPlan | undefined, t: ReturnType<typeof useT>): string {
@@ -65,16 +65,29 @@ export default function MembershipList({ onChanged }: { onChanged: () => void })
         <thead><tr>
           <th>{t('会员', 'Member')}</th><th>{t('类型', 'Type')}</th>
           <th>{t('周期', 'Period')}</th><th>{t('套餐', 'Plan')}</th>
+          <th>{t('最近支付方式', 'Latest payment method')}</th><th>{t('支付日期', 'Payment date (UTC)')}</th><th>{t('实付金额', 'Amount paid')}</th>
           <th>{t('到期日期', 'Expires')}</th><th>{t('状态', 'Status')}</th><th>{t('操作', 'Actions')}</th>
         </tr></thead>
         <tbody>{data.members.map(member => {
           const plan = data.plans?.find(item => item.slug === member.planSlug);
           const kind = publicMemberBadgeKind(member);
+          const payment = member.payment;
+          const manual = member.source === 'manual' || payment?.provider === 'manual';
+          const methods: Record<string, string> = {
+            alipay: t('支付宝', 'Alipay'), wechat: t('微信支付', 'WeChat Pay'),
+            card_cn: t('境内银行卡', 'Domestic bank card'), card_global: t('国际银行卡', 'International bank card'),
+            airwallex: 'Airwallex', xunhupay: t('虎皮椒支付', 'Xunhupay'),
+            apple: 'Apple App Store', google: 'Google Play',
+          };
+          const channel = payment?.payChannel || payment?.provider;
           return <tr key={member.wcaId}>
             <td><strong>{displayCuberName(member.name, isZh)}</strong><span className="admin-users-id">{[member.vipId && fmtVipId(member.vipId), member.wcaId].filter(Boolean).join(' / ')}</span></td>
             <td>{kind === 'enterpriseMember' ? t('企业', 'Enterprise') : kind === 'personalMember' ? t('个人', 'Individual') : t('类型未记录', 'Type not recorded')}</td>
             <td>{periodLabel(member, plan, t)}</td>
             <td>{plan ? t(plan.nameZh, plan.nameEn) : member.planSlug || '—'}</td>
+            <td>{manual ? t('手动开通', 'Manual grant') : channel ? methods[channel] || channel : t('未记录', 'Not recorded')}</td>
+            <td>{manual ? '—' : payment?.paidAt ? fmtDate(payment.paidAt) : t('未记录', 'Not recorded')}</td>
+            <td>{manual ? t('无支付', 'No payment') : payment ? `${fmtPrice(payment.amountCents, payment.currency)} ${payment.currency}` : t('未记录', 'Not recorded')}</td>
             <td>{member.lifetime ? t('永久', 'Lifetime') : fmtDate(member.expiresAt) || '—'}</td>
             <td>{member.active ? t('有效', 'Active') : t('已失效', 'Inactive')}</td>
             <td>{member.active && <button type="button" className="admin-users-page-button" disabled={revoking !== null} onClick={() => void revoke(member)}>
