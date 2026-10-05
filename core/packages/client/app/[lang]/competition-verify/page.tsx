@@ -44,7 +44,7 @@ export default function CompetitionVerifyPage() {
     try {
       const response = await fetch(apiUrl('/v1/competition-access/verify'), {
         method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ id: challenge.id, answer }), signal: AbortSignal.timeout(15_000),
+        body: JSON.stringify({ id: challenge.id, answer, embedded: window.parent !== window }), signal: AbortSignal.timeout(15_000),
       });
       if (!response.ok) {
         const failure = await response.json().catch(() => null);
@@ -68,6 +68,8 @@ export default function CompetitionVerifyPage() {
         if (response.status === 403) throw new Error(blockedMessage(response));
         throw new Error(t('验证服务暂时不可用，请稍后重试。', 'Verification is temporarily unavailable. Please try again later.'));
       }
+      // Successful verification consumes the challenge even if storage fails.
+      setNeedsRefresh(true);
       const check = await fetch(apiUrl('/v1/competition-access/check'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (!check.ok) throw new Error(t('浏览器未保存验证凭证，请允许本站 Cookie 后重试。', 'The browser did not save verification. Allow site cookies and retry.'));
       window.location.replace(safeCompetitionReturn(returnTo));
