@@ -17,7 +17,6 @@ import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 
 import { TimerPuzzlePicker, TimerCubePreview, TimerScrambleStrip, TimerWcaScrambleSource, TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, TimerBattleLayoutControls, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
-import { BattleDeviceCenter, BattleCubesProvider, BattleCubeSettingsGroup, BattleCubeDot, useBattleCubesCtx } from '@/app/[lang]/timer/_battle/BattleCubes';
 import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
 import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
@@ -44,12 +43,9 @@ function BattlePresenceReporter({
   playerCount: number;
   onChange?: (report: TimerPresenceReport) => void;
 }) {
-  const { isLive, handleFor } = useBattleCubesCtx();
-  const cubeMode = useBattleStore(s => s.cubeMode);
   const players = useBattleStore(s => s.players);
   const puzzleIds = useBattleStore(s => s.puzzleIds);
-  const connected = [0, 1, 2, 3].map(isLive);
-  const mix = battlePresenceMix(playerCount, cubeMode, connected);
+  const mix = battlePresenceMix(playerCount, 'own', [false, false, false, false]);
   const events = Array.from(new Set(
     puzzleIds.slice(0, playerCount).map(battleToTimerEvent),
   ));
@@ -65,21 +61,13 @@ function BattlePresenceReporter({
       ...(Number.isFinite(at) ? { at } : {}),
     }];
   });
-  const devices = Array.from(new Map(
-    Array.from({ length: playerCount }, (_, index) => handleFor(index)?.status)
-      .filter(status => status?.connected)
-      .map(status => [status!.deviceId || status!.deviceName, {
-        name: status!.deviceName,
-        ...(status!.deviceId ? { id: status!.deviceId } : {}),
-      }]),
-  ).values());
   const report: TimerPresenceReport = {
     ...mix,
     mode: 'local',
     players: playerCount,
     events,
     results,
-    devices,
+    devices: [],
   };
   const signature = JSON.stringify(report);
   useEffect(() => { onChange?.(report); }, [signature, onChange]);
@@ -395,7 +383,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
     >
       <TimerBattlePlayer playerNumber={playerId + 1} language={store.locale === 'zh' ? 'zh' : 'en'}
         score={player.points} winner={store.winners.includes(playerId)}
-        controls={<><BattleEventButton playerId={playerId} /><BattleCubeDot playerId={playerId} /></>}
+        hideHeader
         actions={player.hasFinished && !player.isTiming && player.time > 0 ? (
           <TimerPenaltyActions language={store.locale === 'zh' ? 'zh' : 'en'} value={player.penalty}
             onChange={(penalty) => store.handlePenalty(playerId, penalty)} />
@@ -403,6 +391,7 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
       >
       <TimingSurface
         layout="local"
+        readoutLabel={<strong className="battle-readout-label">{tr({ en: `Player ${playerId + 1}`, zh: `玩家 ${playerId + 1}` })}</strong>}
         phase={player.isTiming ? 'running' : player.isInspecting ? 'inspecting' : 'idle'}
         colorClass=""
         surfaceRef={surfaceRef}
@@ -446,7 +435,9 @@ function BattleEventButton({ playerId }: { playerId: number }) {
       open={isOpen} onOpenChange={open => setOpen(playerId, open)}
       onSelect={id => {
         const event = timerEventIdFromSelector(id);
-        if (event) changePuzzle(playerId, timerToBattleEvent(event));
+        if (event) {
+          for (let id = 0; id < 4; id++) changePuzzle(id, timerToBattleEvent(event));
+        }
       }} />
   );
 }
@@ -577,7 +568,8 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
       </label>
       {settings.scrambleSource === 'wca' && <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />}
     </div>}
-    devices={<BattleCubeSettingsGroup />}>
+    >
+    <BoolToggle value={store.flipTopRow} onChange={store.setFlipTopRow} label={tr({ en: 'Rotate top players', zh: '旋转上方玩家' })} />
     <BoolToggle value={store.syncStart} onChange={store.setSyncStart} label={tr({ en: 'Start together', zh: '同时开始' })} />
     <BoolToggle value={store.voice} onChange={store.setVoice} label={tr({ en: 'Voice alert', zh: '语音提示' })} />
     <label className="setting-item"><span>{tr({ en: 'Scramble size', zh: '打乱大小' })}</span>
@@ -625,25 +617,22 @@ export default function BattleView({ playerCount, playersControl, presenceContro
     useBattleStore.getState().setPlayerCount(playerCount);
   }, [playerCount]);
 
-  // 各玩家项目进 URL(?event=,与 Solo 用同一 timer EventId 记号、逗号分隔、按
-  // 玩家顺序,强制显式展示 —— 用户选了不同项目时也要能看到/分享)。
-  //   有 ?event= 且和当前 store 不同 → 以 URL 为准写回 store(分享链接场景,只跑一次);
-  //   否则 store.puzzleIds 变了就强制写回 URL(localStorage 落地的默认值也要显式展示)。
+  // All local players use one event; old comma-separated URLs use their first event.
   const [eventsParam, setEventsParam] = useQueryState('event', parseAsString.withOptions({ history: 'replace' }));
   const validBattleIds = useMemo(() => new Set(PUZZLES.map(p => p.id)), []);
   const battleUrlInitRef = useRef(false);
   useEffect(() => {
     if (battleUrlInitRef.current || !eventsParam) return;
     battleUrlInitRef.current = true;
-    eventsParam.split(',').slice(0, playerCount).forEach((timerId, i) => {
-      const battleId = timerToBattleEvent(timerId);
+    Array.from({ length: 4 }, (_, i) => i).forEach((i) => {
+      const battleId = timerToBattleEvent(eventsParam.split(',')[0]);
       if (validBattleIds.has(battleId) && battleId !== useBattleStore.getState().puzzleIds[i]) {
         useBattleStore.getState().changePuzzle(i, battleId);
       }
     });
   }, [eventsParam, playerCount, validBattleIds]);
   useEffect(() => {
-    const ids = store.puzzleIds.slice(0, playerCount).map(battleToTimerEvent).join(',');
+    const ids = battleToTimerEvent(store.puzzleIds[0]);
     if (ids && eventsParam !== ids) void setEventsParam(ids, { history: 'replace' });
   }, [store.puzzleIds, playerCount, eventsParam, setEventsParam]);
 
@@ -659,6 +648,10 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   useEffect(() => {
     if (defaultedRef.current) return;
     defaultedRef.current = true;
+    const initial = useBattleStore.getState();
+    const event = timerToBattleEvent(eventsParam?.split(',')[0] || battleToTimerEvent(initial.puzzleIds[0]));
+    if (validBattleIds.has(event)) for (let id = 0; id < 4; id++) initial.changePuzzle(id, event);
+    initial.setCubeMode('own');
     if (useBattleStore.getState().mode === 'solo') {
       useBattleStore.getState().setMode('1v1');
     }
@@ -739,16 +732,17 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   //   关掉后上排文字/图正立,控制条也从「对面视角上角」回到本屏上角。
   const flipTop = store.flipTopRow;
   const middleBar = <TimerBattleToolbar language={i18n.language === 'zh' ? 'zh' : 'en'}
+    eventControl={<BattleEventButton playerId={0} />}
     onSettings={handleSettingsClick} onHistory={() => setVsHistoryOpen(true)}
     controls={<>{playersControl}{presenceControl}</>} brand={<CubeRootLogo className="middle-logo" />} />;
   return (
-    <BattleCubesProvider>
+    <>
       <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
       <div className="battle-container">
 
-      <TimerStageLayout devices={mode === '1v1' ? <BattleDeviceCenter /> : undefined}>
+      <TimerStageLayout>
       {mode === '1v1' && <TimerBattleLayoutControls
-        playerCount={playerCount as 2 | 3 | 4} layout={store.layout} flipTopRow={flipTop}
+        hideFlipControl playerCount={playerCount as 2 | 3 | 4} layout={store.layout} flipTopRow={flipTop}
         language={store.locale === 'zh' ? 'zh' : 'en'} onLayoutChange={store.setLayout} onFlipChange={store.setFlipTopRow}
       />}
       {mode === '1v1' && (
@@ -758,7 +752,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
           flipTopRow={flipTop}
           middle={middleBar}
           bottomScramble={bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined}
-          topScramble={topSame ? <ScramblePanel ids={[2, 3]} /> : undefined}
+          topScramble={topSame ? <ScramblePanel ids={[2, 3]} imgHeight="var(--timer-cube-h)" /> : undefined}
           renderPlayer={(playerId, cell) => <TimerArea playerId={playerId}
             hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} />}
         />
@@ -827,6 +821,6 @@ export default function BattleView({ playerCount, playersControl, presenceContro
         <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />
       )}
       </div>
-    </BattleCubesProvider>
+    </>
   );
 }
