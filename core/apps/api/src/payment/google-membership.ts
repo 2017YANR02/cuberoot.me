@@ -2,6 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { GoogleAuth, OAuth2Client } from 'google-auth-library';
 import { query, withTransaction } from '../db/connection.js';
 import { GOOGLE_MEMBERSHIP_PACKAGE, googleMembershipGrant, type GoogleSubscription } from './google-membership-policy.js';
+import { validGooglePurchaseToken } from '@cuberoot/shared/google-play-relay';
+import type { GoogleMembershipProductId } from '@cuberoot/shared/google-membership';
+import { googlePlayRelay, useGooglePlayRelay } from './google-play-relay.js';
+export { validGooglePurchaseToken } from '@cuberoot/shared/google-play-relay';
 
 export const googleIapEnabled = () => process.env.GOOGLE_IAP_ENABLED === '1';
 let auth: GoogleAuth | undefined;
@@ -11,7 +15,10 @@ function client() {
 }
 const apiBase = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${GOOGLE_MEMBERSHIP_PACKAGE}/purchases`;
 export async function googleAccountId(uid: number): Promise<string> {
-  await client().getAccessToken();
+  if (!googleIapEnabled()) throw new Error('Google membership disabled');
+  if (useGooglePlayRelay()) {
+    if ((await googlePlayRelay({ operation: 'ready' })).ready !== true) throw new Error('Google relay not ready');
+  } else await client().getAccessToken();
   return withTransaction(async run => {
     const users = await run('SELECT id FROM app_users WHERE id = ? FOR UPDATE', [uid]);
     if (!users.length) throw new Error('Account unavailable');
@@ -22,17 +29,17 @@ export async function googleAccountId(uid: number): Promise<string> {
     return token;
   });
 }
-export function validGooglePurchaseToken(value: unknown): value is string {
-  return typeof value === 'string' && value.length >= 8 && value.length <= 4096 && !/\s/.test(value);
-}
 /** A notification/client token is only a lookup hint. Serialize Google reconciliation
  * (including replacement chains) so delayed responses cannot resurrect revoked grants. */
 export async function reconcileGoogleSubscription(token: string, expectedUid?: number): Promise<void> {
   if (!validGooglePurchaseToken(token)) throw new Error('Invalid purchase token');
-  const api = await client().getClient();
+  if (!googleIapEnabled()) throw new Error('Google membership disabled');
+  const api = useGooglePlayRelay() ? null : await client().getClient();
   const acknowledged = await withTransaction(async run => {
     await run("SELECT pg_advisory_xact_lock(hashtextextended('google-membership', 0))");
-    const { data } = await api.request<GoogleSubscription>({ url: `${apiBase}/subscriptionsv2/tokens/${encodeURIComponent(token)}`, timeout: 20_000 });
+    const data = api
+      ? (await api.request<GoogleSubscription>({ url: `${apiBase}/subscriptionsv2/tokens/${encodeURIComponent(token)}`, timeout: 20_000 })).data
+      : (await googlePlayRelay({ operation: 'subscription', token })).subscription as GoogleSubscription;
     const grant = googleMembershipGrant(data);
     let accountId = data.externalAccountIdentifiers?.obfuscatedExternalAccountId;
     const linked = data.linkedPurchaseToken ? await run<{ account_token: string }>('SELECT account_token FROM google_membership_subscriptions WHERE purchase_token = ?', [data.linkedPurchaseToken]) : [];
@@ -64,7 +71,10 @@ export async function reconcileGoogleSubscription(token: string, expectedUid?: n
     return !grant.pending && data.acknowledgementState === 'ACKNOWLEDGEMENT_STATE_PENDING' ? grant.productId : null;
   });
   // Acknowledge only after durable grant/ownership storage; retry is safe if the response is lost.
-  if (acknowledged) await api.request({ method: 'POST', url: `${apiBase}/subscriptions/${encodeURIComponent(acknowledged)}/tokens/${encodeURIComponent(token)}:acknowledge`, data: {}, timeout: 20_000 });
+  if (acknowledged) {
+    if (api) await api.request({ method: 'POST', url: `${apiBase}/subscriptions/${encodeURIComponent(acknowledged)}/tokens/${encodeURIComponent(token)}:acknowledge`, data: {}, timeout: 20_000 });
+    else if ((await googlePlayRelay({ operation: 'acknowledge', token, productId: acknowledged as GoogleMembershipProductId })).acknowledged !== true) throw new Error('Google acknowledgement failed');
+  }
 }
 export async function syncGoogleSubscriptions(uid: number) {
   const subscriptions = await query<{ purchase_token: string }>(`SELECT s.purchase_token FROM google_membership_subscriptions s
@@ -76,6 +86,10 @@ export async function verifyGooglePushAuthorization(authorization: string | unde
   const audience = process.env.GOOGLE_IAP_RTDN_AUDIENCE;
   const email = process.env.GOOGLE_IAP_RTDN_SERVICE_ACCOUNT;
   if (!audience || !email || !authorization?.startsWith('Bearer ')) throw new Error('Push authentication required');
+  if (useGooglePlayRelay()) {
+    if ((await googlePlayRelay({ operation: 'verifyPush', idToken: authorization.slice(7) })).verified !== true) throw new Error('Wrong push identity');
+    return;
+  }
   const ticket = await new OAuth2Client().verifyIdToken({ idToken: authorization.slice(7), audience });
   const payload = ticket.getPayload();
   if (payload?.email !== email || payload.email_verified !== true) throw new Error('Wrong push identity');
