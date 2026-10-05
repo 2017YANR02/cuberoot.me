@@ -3,6 +3,16 @@ page {
   overflow-x: hidden;
 }
 
+/* Page-local: include the WebView's root scrolling element, not only <page>.
+   Zero height affects horizontal bars; leave vertical scrollbar width alone. */
+::-webkit-scrollbar {
+  height: 0;
+}
+
+::-webkit-scrollbar:horizontal {
+  display: none;
+}
+
 .account-login-page,
 .account-user-page {
   padding-top: 72rpx;
