@@ -76,7 +76,7 @@ export async function POST(req: Request): Promise<Response> {
     if (operation.operation === 'ready') {
       // A read-only probe checks both impersonation and existing Play app permissions.
       const products = await Promise.all(GOOGLE_MEMBERSHIP_PRODUCT_IDS.map(async productId => {
-        await client.request({ url: `${apiBase}/monetization/subscriptions/${productId}`, timeout: 10_000, retry: false, maxRedirects: 0 });
+        await client.request({ url: `${apiBase}/subscriptions/${productId}`, timeout: 10_000, retry: false, maxRedirects: 0 });
         return productId;
       }));
       return json({ ready: true, products });
