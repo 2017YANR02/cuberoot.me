@@ -1,3 +1,4 @@
+import i18n, { normalizeAppLang } from '@/i18n/i18n-client';
 import { NATIVE_APPEARANCE_TOKENS, type NativeAppearance, type NativeAppearanceColors } from '@cuberoot/shared/appearance';
 import { confirmMiniProgramEnvironment, loadMiniProgramNavigationApi, mayUseMiniProgramBridge } from './miniprogram-bridge';
 import { readContrast, readEffective, readPalette, THEME_KEY } from './theme';
@@ -6,6 +7,7 @@ import { readHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { resolveHomeBackground } from './home-backgrounds';
 
 let lastPublished = '';
+let lastLocale = '';
 
 function backgroundScene(scheme: 'light' | 'dark') {
   const scene = resolveHomeBackground(readHomeBackgroundChoice(scheme), scheme);
@@ -14,10 +16,16 @@ function backgroundScene(scheme: 'light' | 'dark') {
 
 /** Send committed home appearance, never a hover preview or a page-local theme. */
 export async function syncMiniProgramAppearance(): Promise<void> {
-  if (!mayUseMiniProgramBridge() || !/^\/(?:zh\/?)?$/.test(location.pathname)) return;
+  if (!mayUseMiniProgramBridge()) return;
   try {
     const api = await loadMiniProgramNavigationApi();
     if (!api?.postMessage || !await confirmMiniProgramEnvironment(api)) return;
+    const locale = normalizeAppLang(i18n.language);
+    if (locale !== lastLocale) {
+      api.postMessage({ data: { type: 'cuberoot:locale', locale } });
+      lastLocale = locale;
+    }
+    if (!/^\/(?:zh\/?)?$/.test(location.pathname)) return;
     const root = document.documentElement;
     const palette = readPalette();
     const scheme = readEffective();
