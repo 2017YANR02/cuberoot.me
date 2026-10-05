@@ -2779,8 +2779,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       )
     : null;
 
-  // Live and completed reconstruction share the bounded desktop dock. On
-  // narrow screens the live score gets its own scroll area below the timer.
+  // Live and completed reconstruction share the desktop dock. Both expand
+  // naturally with the document; narrow screens show live moves below the timer.
   const liveSolutionPanel = timer.phase === 'running' && liveSolve ? (
     <section className="shell-recap timer-live-solution" data-no-timer
       aria-label={tr({ zh: '实时解法', en: 'Live solution' })}>

@@ -65,6 +65,19 @@
   overflow: visible;
 }
 
+/* Scrambles, results and recaps expand with the document. The solution panel
+   keeps its independent scrolling; full-screen results use one outer scroller. */
+.timer-shell :is(.timer-workspace-panel, .timer-workspace-panel-body,
+  .shell-recap, .shell-recap-body, .history-panel, .history-list,
+  .stats-panel, .case-stats-panel, .case-stats-scroll,
+  .reconstruct-move-list, .reconstruct-playback-side) {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+.timer-shell .shell-recap { flex: 0 0 auto; }
+.timer-shell .shell-recap-rail > .shell-recap { height: auto; }
+
 /* ── Topbar ─────────────────────────────────────────────── */
 /* 「难度」开关的挂点。内容由打乱来源条里的 WcaSourceConfig / GenDiffConfig portal 过来
    —— 它们才知道当前项目 / 当前比赛能不能筛难度,开关却属于这排常驻控件(摆在「解法」左边)。
@@ -182,7 +195,7 @@
     display: none;
   }
   .shell-recap.timer-live-solution {
-    flex: 0 0 42%;
+    flex: 0 0 auto;
     height: auto;
   }
 }
@@ -767,6 +780,8 @@
   z-index: 61;
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .shell-panel-tabs {
   display: flex;
@@ -804,11 +819,12 @@
 .shell-panel-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
+  overflow: visible;
   padding: 12px 14px 18px;
 }
+.shell-panel--sheet .shell-panel-tabs,
+.shell-panel--sheet .shell-panel-body { flex: 0 0 auto; }
+.timer-shell .shell-panel--sheet { overflow-y: auto; }
 .shell-panel-body::-webkit-scrollbar { width: 10px; }
 .shell-panel-body::-webkit-scrollbar-track { background: transparent; }
 .shell-panel-body::-webkit-scrollbar-thumb {
