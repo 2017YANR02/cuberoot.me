@@ -24,7 +24,6 @@ import {
   matchesGanV3Name,
 } from '@cuberoot/shared/smart-cube/gan-v3';
 import {
-  GAN_V4_MANUFACTURER_DATA_CICS,
   GAN_V4_NOTIFY_CHARACTERISTIC_UUID,
   GAN_V4_SERVICE_UUID,
   GAN_V4_WRITE_CHARACTERISTIC_UUID,
@@ -36,10 +35,11 @@ import {
   createGanV4HistoryCommand,
   createGanV4IdleStateChecks,
   decodeGanV4Frame,
-  extractGanV4MacFromAdvertisement,
   matchesGanV4Name,
 } from '@cuberoot/shared/smart-cube/gan-v4';
 import type { GyroSink } from '@cuberoot/shared/smart-cube/gan-crypto';
+
+import { resolveCubeMac } from './mac';
 
 import type { BleDeviceRef, BleServiceRef, BleTransport } from './transport';
 
@@ -56,6 +56,7 @@ export interface GanCubeStatus {
 
 export interface GanCubeCallbacks {
   onDisconnect(): void;
+  onNeedMac?(deviceName: string): Promise<string | null>;
   onMove(move: string, deviceTimestamp?: number): void;
   onProtocolError(): void;
   onState?(facelets: string): void;
@@ -67,31 +68,6 @@ function bytesFromView(view: DataView): Uint8Array {
   const bytes = new Uint8Array(view.byteLength);
   bytes.set(new Uint8Array(view.buffer, view.byteOffset, view.byteLength));
   return bytes;
-}
-
-function macBytesFromAndroidDeviceId(deviceId: string): Uint8Array | null {
-  const pairs = deviceId.match(/^[0-9a-f]{2}(?::[0-9a-f]{2}){5}$/i)?.[0].split(':');
-  if (!pairs) return null;
-  return Uint8Array.from(pairs.map((pair) => Number.parseInt(pair, 16)));
-}
-
-function macBytesFromName(name: string): Uint8Array | null {
-  const match = /([0-9a-f]{12})$/i.exec(name);
-  if (!match) return null;
-  return Uint8Array.from({ length: 6 }, (_value, index) => Number.parseInt(
-    match[1].slice(index * 2, index * 2 + 2),
-    16,
-  ));
-}
-
-function macBytesFromDevice(device: BleDeviceRef): Uint8Array | null {
-  const androidMac = macBytesFromAndroidDeviceId(device.id);
-  if (androidMac) return androidMac;
-  for (const companyId of GAN_V4_MANUFACTURER_DATA_CICS) {
-    const mac = extractGanV4MacFromAdvertisement(device.manufacturerData?.get(companyId));
-    if (mac) return mac;
-  }
-  return macBytesFromName(device.name);
 }
 
 function hasService(services: ReadonlyArray<BleServiceRef>, uuid: string): boolean {
@@ -137,11 +113,11 @@ export class GanCubeConnection {
     }
     if (!this.forcedProtocol && !namedProtocol) throw new Error('unsupported GAN protocol');
 
-    const mac = macBytesFromDevice(device);
-    if (!mac) throw new Error('GAN MAC unavailable');
+    const generation = ++this.generation;
+    const mac = await resolveCubeMac(device, 'gan', this.callbacks.onNeedMac);
+    if (generation !== this.generation) throw new Error('smart cube connection closed');
 
     this.deviceId = device.id;
-    const generation = ++this.generation;
     const current = () => this.generation === generation && this.deviceId === device.id;
     const onDisconnect = () => {
       if (!current()) return;
