@@ -141,6 +141,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Defaults to WCA then IP country without duplicates; guests see IP only. Manual choices and unpins sync per account across menus and tabs in this browser, with an empty server snapshot.',
   },
   {
+    name: 'useDeskPetVisible',
+    sig: 'useDeskPetVisible(): readonly [boolean, (visible: boolean) => void]',
+    imp: "import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';",
+    category: 'hook',
+    zh: '桌宠显示偏好，默认开启，保存在当前浏览器并同步页面与标签页。',
+    en: 'Desk-pet visibility, enabled by default, persisted in the current browser and synced across pages and tabs.',
+  },
+  {
     name: 'useHomeBackgroundChoice',
     sig: 'useHomeBackgroundChoice(theme: EffectiveTheme): readonly [HomeBackgroundChoice, (value: HomeBackgroundChoice) => void]',
     imp: "import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';",

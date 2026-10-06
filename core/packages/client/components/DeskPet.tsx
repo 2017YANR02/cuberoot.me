@@ -21,6 +21,7 @@ import AppLink from '@/components/AppLink';
 import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
 import { ORIGINAL_CHARACTERS, ORIGINAL_SCENES, type OriginalCharacterId } from '@/lib/deskpet-originals';
@@ -221,9 +222,15 @@ export default function DeskPet() {
   const [mounted, setMounted] = useState(false);
   const [size, setSize] = useState<Size>('m');
   const [character, setCharacter] = useState<ThemeId>('rootbeast');
-  const [hidden, setHidden] = useState(false);
+  const [visible] = useDeskPetVisible();
+  const [temporarilyHidden, setHidden] = useState(false);
+  const hidden = !visible || temporarilyHidden;
   const [resting, setResting] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    setHidden(false);
+    if (!visible) setSearchOpen(false);
+  }, [visible]);
   const [touchActionsVisible, setTouchActionsVisible] = useState(false);
   const [lang, setLang] = useState<'zh' | 'en'>('en');
   const [randomMode, setRandomMode] = useState(false);
