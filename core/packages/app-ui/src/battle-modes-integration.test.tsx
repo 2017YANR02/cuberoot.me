@@ -35,6 +35,7 @@ const eventGroups = [{
   items: [
     { id: '333', label: '3×3', iconClass: '333' },
     { id: '222', label: '2×2', iconClass: '222' },
+    { id: '333bf', label: '3×3 blindfolded', iconClass: '333bf' },
   ],
 }];
 
@@ -335,9 +336,9 @@ describe('installed app multiplayer modes', () => {
     expect(writeClipboardText).not.toHaveBeenCalled();
     await act(async () => dispatchPointer(surface, 'pointercancel', 1));
     await act(async () => host.querySelector<HTMLButtonElement>(
-      `[aria-label="${COPY.en.battleCopyCode}"]`,
+      `[aria-label="${COPY.en.battleCopyInvite}"]`,
     )!.click());
-    expect(writeClipboardText).toHaveBeenCalledWith('1234');
+    expect(writeClipboardText).toHaveBeenCalledWith('https://cuberoot.me/timer?players=net&room=1234');
     expect(host.textContent).toContain(COPY.en.battleInviteCopied);
     await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Room settings"]')!.click());
     const syncStart = document.querySelector<HTMLButtonElement>('[role="switch"][aria-label="Synchronized start"]')!;
@@ -556,8 +557,11 @@ describe('installed app multiplayer modes', () => {
     expect(host.textContent).toContain('Room not found or expired');
   });
 
-  it('holds a settled round until this device requests the next round', async () => {
+  it.each(['333', '333bld'] as const)('holds a settled %s round with its canonical event label until this device requests the next round', async (event) => {
     const state = roomState();
+    state.event = event;
+    state.players.abcdef.event = event;
+    state.scrambles = { [event]: "R U R'" };
     state.results = { '1': { abcdef: { t: 1_000, p: 'ok' } } };
     const nextState = { ...state, revision: 2, round: 2, results: { ...state.results, '2': {} } };
     const credentials = { playerId: 'abcdef', playerToken: 'x'.repeat(48) };
@@ -580,6 +584,8 @@ describe('installed app multiplayer modes', () => {
     await act(async () => host.querySelector<HTMLButtonElement>('.timer-room-lobby-actions button')!.click());
     await act(async () => Promise.resolve());
 
+    expect(host.querySelector('.timer-room-event')?.textContent).toBe(event === '333' ? '3×3' : '3×3 blindfolded');
+    expect(host.querySelector('.timer-room-event .cubing-icon')).not.toBeNull();
     expect(nextNetRound).not.toHaveBeenCalled();
     const nextButton = [...host.querySelectorAll<HTMLButtonElement>('button')].find(button => button.textContent?.includes('Next round'))!;
     await act(async () => nextButton.click());

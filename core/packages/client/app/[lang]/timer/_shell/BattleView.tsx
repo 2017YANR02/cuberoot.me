@@ -1,40 +1,60 @@
-import { LOCAL_BATTLE_SCRAMBLE_COPY } from '@cuberoot/shared/timer';
-import { TimerBattleSourceSettings, TimerBattleAppearanceSettings } from '@cuberoot/timer-ui';
 'use client';
+
+import { LOCAL_BATTLE_SCRAMBLE_COPY } from '@cuberoot/shared/timer';
+import {
+  TimerBattleAppearanceSettings,
+  TimerBattleSourceSettings,
+  TimerLocalBattlePage,
+  TimerLocalBattlePlayer,
+} from '@cuberoot/timer-ui';
 
 /**
  * Web adapter for the shared local battle layout, player controls and dialogs.
  * The battle store, RAF timer nodes, WCA source and device transports stay here.
  */
 
-import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQueryState, parseAsString } from 'nuqs';
-import { Settings as SettingsIcon, ClipboardList, Timer as TimerIcon } from 'lucide-react';
-import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
-import { PUZZLES, PENALTY } from '@/app/[lang]/timer/_battle/engine/constants';
+import {
+  battleToTimerEvent,
+  isScrambleHidden,
+  keyToPlayer,
+  prefetchBattleScrambles,
+  timerToBattleEvent,
+  useBattleStore,
+} from '@/app/[lang]/timer/_battle/engine/battle_store';
+import { PENALTY, PUZZLES } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
+import { parseAsString, useQueryState } from 'nuqs';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
-import { TimerPuzzlePicker, TimerCubePreview, TimerScrambleStrip, TimerWcaScrambleSource, TimerStageLayout, TimerBattleToolbar, TimerBattleSettings, TimerBattleLayout, useTimerBattleOrientation, TimerBattlePlayer, TimerPenaltyActions, TimingSurface, shouldIgnoreTimerTarget } from '@cuberoot/timer-ui';
-import HistoryPanel from '@/app/[lang]/timer/_battle/HistoryPanel';
-import VsHistoryPanel from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
-import CubeRootLogo from '@/components/CubeRootLogo';
-import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, timerEventSelectorId } from '@cuberoot/shared/timer';
+import { useBattleHistoryProps } from '@/app/[lang]/timer/_battle/VsHistoryPanel';
+import { updateSettings, useSettings } from '@/app/[lang]/timer/_lib/settings';
 import { eventInfo } from '@/app/[lang]/timer/_lib/types';
-import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
+import CubeRootLogo from '@/components/CubeRootLogo';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
-import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { localizeCompName } from '@/lib/comp-localize';
+import { compFlagIso2, flagDataVersion, loadFlagData } from '@/lib/country-flags';
+import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, timerEventSelectorId } from '@cuberoot/shared/timer';
+import {
+  TimerBattleSettings,
+  TimerCubePreview,
+  TimerPenaltyActions,
+  TimerPuzzlePicker,
+  TimerScrambleStrip,
+  TimerWcaScrambleSource,
+  shouldIgnoreTimerTarget,
+  useTimerBattleOrientation,
+} from '@cuberoot/timer-ui';
 
 import '@/app/[lang]/timer/_battle/battle.css';
-import './shell.css';
-import { tr } from '@/i18n/tr';
 import { battlePresenceMix, type TimerPresenceReport } from '@/app/[lang]/timer/_lib/presence';
+import { tr } from '@/i18n/tr';
+import './shell.css';
 
 function BattlePresenceReporter({
   playerCount,
@@ -95,7 +115,7 @@ export function useKeyboardControls(suppressed: boolean) {
     keyPressedRef.current = {};
     if (suppressed) {
       const store = useBattleStore.getState();
-      for (let playerId = 0; playerId < store.playerCount; playerId++) {
+      for (let playerId = 0;playerId < store.playerCount;playerId++) {
         store.playerCancel(playerId);
       }
       return;
@@ -377,30 +397,28 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
       className={areaClasses}
       ref={areaRef}
     >
-      <TimerBattlePlayer background={{ color: store.bgColors[playerId], image: store.bgImages[playerId], opacity: store.bgOpacity }} playerNumber={playerId + 1} language={store.locale === 'zh' ? 'zh' : 'en'}
-        score={player.points} winner={store.winners.includes(playerId)}
-        hideHeader
-        actions={player.hasFinished && !player.isTiming && player.time > 0 ? (
+      <TimerLocalBattlePlayer player={{
+        background: { color: store.bgColors[playerId], image: store.bgImages[playerId], opacity: store.bgOpacity },
+        playerNumber: playerId + 1,
+        language: store.locale === 'zh' ? 'zh' : 'en',
+        score: player.points,
+        winner: store.winners.includes(playerId),
+        actions: player.hasFinished && !player.isTiming && player.time > 0 ? (
           <TimerPenaltyActions language={store.locale === 'zh' ? 'zh' : 'en'} value={player.penalty}
             onChange={(penalty) => store.handlePenalty(playerId, penalty)} />
-        ) : undefined}
-      >
-      <TimingSurface
-        layout="local"
-        readoutLabel={<strong className="battle-readout-label">{tr({ en: `Player ${playerId + 1}`, zh: `玩家 ${playerId + 1}` })}</strong>}
-        phase={player.isTiming ? 'running' : player.isInspecting ? 'inspecting' : 'idle'}
-        colorClass=""
-        surfaceRef={surfaceRef}
-        digits={<div className={timeClasses} ref={timeRef}
-          dangerouslySetInnerHTML={{ __html: renderTimeContent() }} />}
-        scrambleSlot={!hideScramble && <ScramblePanel ids={[playerId]} part="text" />}
-        cornerSlot={!hideScramble && store.showImage
+        ) : undefined
+      }} timing={{
+        phase: player.isTiming ? 'running' : player.isInspecting ? 'inspecting' : 'idle',
+        colorClass: "",
+        surfaceRef: surfaceRef,
+        digits: <div className={timeClasses} ref={timeRef}
+          dangerouslySetInnerHTML={{ __html: renderTimeContent() }} />,
+        scrambleSlot: !hideScramble && <ScramblePanel ids={[playerId]} part="text" />,
+        cornerSlot: !hideScramble && store.showImage
           ? <ScramblePanel ids={[playerId]} part="preview" imgHeight="var(--timer-cube-h)" />
-          : undefined}
-      >
-        <div className="ao5-display" dangerouslySetInnerHTML={{ __html: ao5Text }} />
-      </TimingSurface>
-      </TimerBattlePlayer>
+          : undefined
+      }}
+        average={<div className="ao5-display" dangerouslySetInnerHTML={{ __html: ao5Text }} />} />
     </div>
   );
 }
@@ -441,42 +459,43 @@ function BattleEventButton({ playerId }: { playerId: number }) {
 
 // ===== SettingsPanel 组件 =====
 
-function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => void }) {
+function useBattleSettingsProps(onClose: () => void): React.ComponentProps<typeof TimerBattleSettings> {
   const store = useBattleStore();
   const settings = useSettings();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
-  if (!visible) return null;
-  return <TimerBattleSettings layout={store.mode === '1v1' ? {
-    playerCount: store.playerCount as 2 | 3 | 4, layout: store.layout, flipTopRow: store.flipTopRow,
-    onLayoutChange: store.setLayout, onFlipChange: store.setFlipTopRow,
-  } : undefined} language={isZh ? 'zh' : 'en'} onClose={onClose} onReset={() => store.resetAll()}
-    keys={store.playerKeys.slice(0, store.playerCount)} onKeyChange={store.setPlayerKey}
-    precision={{ value: store.timerPrecision, onChange: store.setTimerPrecision }}
-    inspection={{ value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] }}
-    syncStart={{ value: store.syncStart, onChange: store.setSyncStart }}
-    hold={{ value: store.startDelay, onChange: store.setStartDelay }}
-    preview={{ value: store.showImage, onChange: store.setShowImage }}
-    hideTime={{ value: !store.showTime, onChange: () => store.toggleShowTime() }}
-    source={<TimerBattleSourceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })}
+  return {
+    layout: store.mode === '1v1' ? {
+      playerCount: store.playerCount as 2 | 3 | 4, layout: store.layout, flipTopRow: store.flipTopRow,
+      onLayoutChange: store.setLayout, onFlipChange: store.setFlipTopRow,
+    } : undefined,
+    language: isZh ? 'zh' : 'en',
+    onClose: onClose,
+    onReset: () => store.resetAll(),
+    keys: store.playerKeys.slice(0, store.playerCount),
+    onKeyChange: store.setPlayerKey,
+    precision: { value: store.timerPrecision, onChange: store.setTimerPrecision },
+    inspection: { value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] },
+    syncStart: { value: store.syncStart, onChange: store.setSyncStart },
+    hold: { value: store.startDelay, onChange: store.setStartDelay },
+    preview: { value: store.showImage, onChange: store.setShowImage },
+    hideTime: { value: !store.showTime, onChange: () => store.toggleShowTime() },
+    source: <TimerBattleSourceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })}
       value={settings.scrambleSource === 'wca' ? 'wca' : 'random'} onChange={scrambleSource => updateSettings({ scrambleSource })}>
       <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />
-    </TimerBattleSourceSettings>}
-    >
-    <TimerBattleAppearanceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })} playerCount={store.playerCount}
+    </TimerBattleSourceSettings>, children: <> <TimerBattleAppearanceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })} playerCount={store.playerCount}
       value={{ bgColors: store.bgColors, bgImages: store.bgImages, bgOpacity: store.bgOpacity, scrambleScale: store.scrambleScale }}
       onChange={patch => {
         if (patch.scrambleScale !== undefined) store.setScrambleScale(patch.scrambleScale);
         if (patch.bgOpacity !== undefined) store.setBgOpacity(patch.bgOpacity);
-        for (let id = 0; id < store.playerCount; id++) {
+        for (let id = 0;id < store.playerCount;id++) {
           if (patch.bgImages?.[id] && patch.bgImages[id] !== store.bgImages[id]) store.setBgImage(id, patch.bgImages[id]);
           else if (patch.bgColors && (patch.bgColors[id] !== store.bgColors[id] || patch.bgImages?.[id] !== store.bgImages[id])) {
             if (patch.bgColors[id]) store.setBgColor(id, patch.bgColors[id]); else store.resetBg(id);
           }
         }
-      }} />
-
-  </TimerBattleSettings>;
+      }} /> </>
+  };
 }
 // ===== 主组件 =====
 
@@ -608,6 +627,9 @@ export default function BattleView({ playerCount, playersControl, presenceContro
     }
   }, [mode, store]);
 
+  const settingsProps = useBattleSettingsProps(closeSettings);
+  const historyProps = useBattleHistoryProps({ onClose: () => setVsHistoryOpen(false) });
+
   if (!mounted) {
     // SSG/first-paint placeholder — 避免 hydration mismatch 重建整树。
     return <div className="battle-container" />;
@@ -620,92 +642,26 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   // 上排是否翻转 180°(围坐一桌面向对面 = true;同向观看 = false,用户可关)。
   //   关掉后上排文字/图正立,控制条也从「对面视角上角」回到本屏上角。
   const flipTop = store.flipTopRow;
-  const middleBar = <TimerBattleToolbar language={i18n.language === 'zh' ? 'zh' : 'en'}
-    eventControl={<BattleEventButton playerId={0} />}
-    onSettings={handleSettingsClick} onHistory={() => setVsHistoryOpen(true)}
-    controls={<>{playersControl}{presenceControl}</>} brand={<CubeRootLogo className="middle-logo" />} />;
-  return (
-    <>
-      <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
-      <div className="battle-container">
-
-      <TimerStageLayout>
-      {mode === '1v1' && (
-        <TimerBattleLayout
-          playerCount={playerCount as 2 | 3 | 4}
-          layout={store.layout}
-          flipTopRow={flipTop}
-          middle={middleBar}
-          bottomScramble={bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined}
-          topScramble={topSame ? <ScramblePanel ids={[2, 3]} imgHeight="var(--timer-cube-h)" /> : undefined}
-          renderPlayer={(playerId, cell) => <TimerArea playerId={playerId}
-            hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} />}
-        />
-      )}
-      </TimerStageLayout>
-      {/* === Solo 模式 === */}
-      {mode === 'solo' && (
-        <TimerArea playerId={0} />
-      )}
-
-      {/* 底部导航栏 — Solo 模式;人数下拉也塞在这里(solo 没 middle-bar) */}
-      {mode === 'solo' && (
-        <nav className="bottom-nav" data-no-timer>
-          <div className="bottom-nav-mode">{playersControl}</div>
-          <button
-            className={`nav-tab${store.activeTab === 'timer' ? ' active' : ''}`}
-            onClick={() => store.switchTab('timer')}
-          >
-            {/* lucide Timer 替代 icon_timer.png(no-emoji / no raster) */}
-            <TimerIcon size={22} className="nav-tab-icon" />
-            <span>{tr({ zh: '计时', en: 'Timer'
-            })}</span>
-          </button>
-          <button
-            className={`nav-tab${store.activeTab === 'results' ? ' active' : ''}`}
-            onClick={() => store.switchTab('results')}
-          >
-            <ClipboardList size={22} />
-            <span>{tr({ zh: '成绩', en: 'Results'
-            })}</span>
-          </button>
-          <button
-            className={`nav-tab${store.activeTab === 'settings' ? ' active' : ''}`}
-            onClick={() => store.switchTab('settings')}
-          >
-            <SettingsIcon size={22} />
-            <span>{tr({ zh: '设置', en: 'Settings'
-            })}</span>
-          </button>
-        </nav>
-      )}
-
-      {mode === '1v1' && (
-        <SettingsPanel visible={settingsOpen} onClose={closeSettings} />
-      )}
-
-      {/* 1v1 对战历史面板 */}
-      {mode === '1v1' && vsHistoryOpen && (
-        <VsHistoryPanel onClose={() => setVsHistoryOpen(false)} />
-      )}
-
-      {/* 设置面板 — Solo tab 模式 */}
-      {mode === 'solo' && store.activeTab === 'settings' && (
-        <SettingsPanel visible={true} onClose={() => store.switchTab('timer')} />
-      )}
-
-      {/* 历史面板 — Solo results tab */}
-      {mode === 'solo' && store.activeTab === 'results' && (
-        <div className="history-overlay visible">
-          <HistoryPanel />
-        </div>
-      )}
-
-      {/* 里程碑 Toast */}
-      {toastMsg && (
-        <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />
-      )}
-      </div>
-    </>
-  );
+  return <>
+    <BattlePresenceReporter playerCount={playerCount} onChange={onPresenceChange} />
+    <TimerLocalBattlePage className="battle-container" toolbar={{
+      language: i18n.language === 'zh' ? 'zh' : 'en',
+      eventControl: <BattleEventButton playerId={0} />,
+      onSettings: handleSettingsClick,
+      onHistory: () => setVsHistoryOpen(true),
+      controls: <>{playersControl}{presenceControl}</>,
+      brand: <CubeRootLogo className="middle-logo" />
+    }} layout={{
+      playerCount: playerCount as 2 | 3 | 4,
+      layout: store.layout,
+      flipTopRow: flipTop,
+      bottomScramble: bottomSame ? <ScramblePanel ids={[0, 1]} imgHeight="var(--timer-cube-h)" /> : undefined,
+      topScramble: topSame ? <ScramblePanel ids={[2, 3]} imgHeight="var(--timer-cube-h)" /> : undefined,
+      renderPlayer: (playerId, cell) => <TimerArea playerId={playerId}
+        hideScramble={cell.hideScramble} controlsCorner={cell.controlsCorner} />
+    }}
+      settings={settingsOpen && settingsProps}
+      history={vsHistoryOpen && historyProps}
+      feedback={toastMsg && <MilestoneToast message={toastMsg} onDone={() => setToastMsg(null)} />} />
+  </>;
 }

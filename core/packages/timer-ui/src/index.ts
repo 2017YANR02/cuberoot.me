@@ -362,3 +362,5 @@ export { TimerRankSettings, TIMER_RANK_SETTING_FIELD_IDS } from './TimerRankSett
 export { TimerSyncSeedSettings, TIMER_SYNC_SEED_SETTING_FIELD_IDS } from './TimerSyncSeedSettings';
 
 export { TimerTrainerSubsetModal } from './TimerTrainerSubsetModal';
+export { TimerLocalBattlePage, TimerLocalBattlePlayer, type TimerLocalBattlePageProps } from './TimerLocalBattlePage';
+export { TimerNetBattlePage, TimerNetBattleStage, TimerNetBattleEvent, type TimerNetBattlePageProps, type TimerNetBattleStageProps } from './TimerNetBattlePage';

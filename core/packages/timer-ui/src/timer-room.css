@@ -118,3 +118,5 @@
 .timer-battle-cube-controls p { font-size: 13px; color: var(--muted-foreground); }
 .timer-battle-cube-device { margin-block: 12px; }
 .timer-battle-cube-device .shell-device-center { position: relative; inset: auto; }
+
+.timer-room-event { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }

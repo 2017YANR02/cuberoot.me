@@ -1606,6 +1606,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared battle video authorization, generation isolation, background cleanup, and media controls. Hosts provide the API origin and native media permissions.',
   },
   {
+    name: 'TimerLocalBattlePage / TimerLocalBattlePlayer / TimerNetBattlePage / TimerNetBattleStage / TimerNetBattleEvent',
+    import: "import { TimerLocalBattlePage, TimerLocalBattlePlayer, TimerNetBattlePage, TimerNetBattleStage, TimerNetBattleEvent } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与五端 App 共用完整本地多人和联机页面，集中维护大厅、房间、视频、计时区、玩家布局以及设置、历史、邀请和改名弹窗；宿主保留状态、存储、输入和系统能力适配。',
+    en: 'Complete local and online battle pages shared by Web and installed apps: lobby, room, video, timing, player layouts, settings, history, invitations, and rename dialogs. Hosts retain state, storage, input, and system adapters.',
+  },
+  {
     name: 'TimerRoomPlayers',
     import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity, TimerRoomRoundStatus } from '@cuberoot/timer-ui';",
     category: 'more',
