@@ -605,6 +605,7 @@ export function LocalBattleMode({
       onHistory: () => setHistoryOpen(true),
       onSettings: () => setSettingsOpen(true),
       eventControl: <TimerPuzzlePicker dataNoTimer disabled={active} groups={pickerGroups} puzzleLabel={copy.puzzle}
+        scrambleTypeLabel={copy.scrambleType}
         selectedEvent={timerEventSelectorId(visiblePlayers[0].event)} onSelect={selectorId => {
           const event = timerEventIdFromSelector(selectorId);
           if (!event || !dispatch({ type: 'set-event', event })) return;
@@ -1281,7 +1282,7 @@ export function NetBattleMode({
           onChange={(person) => { setSelectedPerson(person); setName(''); }} />,
         event: <TimerPuzzlePicker dataNoTimer disabled={busy} groups={eventPickerGroups}
           onSelect={(selectorId) => { const next = selectorIdToNetEvent(selectorId); if (next) setLobbyEvent(next); }}
-          puzzleLabel={copy.puzzle} selectedEvent={netEventToSelectorId(lobbyEvent)} />
+          puzzleLabel={copy.puzzle} scrambleTypeLabel={copy.scrambleType} selectedEvent={netEventToSelectorId(lobbyEvent)} />
       }} />;
   }
 

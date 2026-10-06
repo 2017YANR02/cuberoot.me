@@ -2958,6 +2958,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               if (nextEvent) selectEvent(nextEvent);
             }}
             puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })}
+            scrambleTypeLabel={tr({ zh: '打乱类型', en: 'Scramble type' })}
             dataNoTimer
           />
           {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}

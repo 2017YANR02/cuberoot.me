@@ -3831,6 +3831,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     onSelect={selectTimerEvent}
                     open={openOverlay === TIMER_OVERLAY_IDS.puzzlePicker}
                     puzzleLabel={copy.puzzle}
+                    scrambleTypeLabel={copy.scrambleType}
                     selectedEvent={activeEvent}
                   />
                   <TimerScrambleSourceSelect

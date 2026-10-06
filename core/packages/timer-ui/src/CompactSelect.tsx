@@ -48,6 +48,9 @@ export interface CompactSelectProps<T extends string | number> {
   dismissOnMouseLeave?: boolean;
   /** Fixed content below the popup, such as Mobile's bottom navigation. */
   viewportBottomInset?: number;
+  /** Optional host control for modal/back-button coordination. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface PanelGeometry {
@@ -87,13 +90,28 @@ export function CompactSelect<T extends string | number>({
   openOnHover = false,
   dismissOnMouseLeave = openOnHover,
   viewportBottomInset = 0,
+  open: controlledOpen,
+  onOpenChange,
 }: CompactSelectProps<T>) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = (next: boolean | ((current: boolean) => boolean)) => {
+    const value = typeof next === 'function' ? next(open) : next;
+    if (controlledOpen === undefined) setInternalOpen(next);
+    onOpenChange?.(value);
+  };
   const [geometry, setGeometry] = useState<PanelGeometry | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const previousOpenRef = useRef(open);
   const close = () => setOpen(false);
   usePopoverDismiss(open, close, panelRef, triggerRef);
+
+  useEffect(() => {
+    const wasOpen = previousOpenRef.current;
+    previousOpenRef.current = open;
+    if (controlledOpen !== undefined && wasOpen && !open && !disabled) triggerRef.current?.focus();
+  }, [controlledOpen, disabled, open]);
 
   useEffect(() => {
     if (disabled) setOpen(false);
