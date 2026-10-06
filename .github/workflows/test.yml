@@ -693,9 +693,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .node-version
-            core
+            /.node-version
+            /core/
+            /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/solver/rust-cross/xcross-table-worker.js
+            /tools/solver/rust-cross/cross_solver.js
+            /tools/solver/rust-cross/cross_solver_bg.wasm
           filter: blob:none
 
       - uses: pnpm/action-setup@v6
@@ -857,9 +862,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .node-version
-            core
+            /.node-version
+            /core/
+            /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/solver/rust-cross/xcross-table-worker.js
+            /tools/solver/rust-cross/cross_solver.js
+            /tools/solver/rust-cross/cross_solver_bg.wasm
           filter: blob:none
       - uses: pnpm/action-setup@v6
         with:
@@ -893,9 +903,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          sparse-checkout-cone-mode: false
           sparse-checkout: |
-            .node-version
-            core
+            /.node-version
+            /core/
+            /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/solver/rust-cross/xcross-table-worker.js
+            /tools/solver/rust-cross/cross_solver.js
+            /tools/solver/rust-cross/cross_solver_bg.wasm
           filter: blob:none
 
       - uses: pnpm/action-setup@v6

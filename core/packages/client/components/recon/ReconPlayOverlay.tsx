@@ -1,4 +1,5 @@
 'use client';
+import './ReconPlayOverlay.css';
 import Overlay from '@cuberoot/timer-ui/recon/ReconPlayOverlay';
 import { useTranslation } from 'react-i18next';
 import type { ComponentProps } from 'react';
