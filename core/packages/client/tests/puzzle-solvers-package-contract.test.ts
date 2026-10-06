@@ -39,6 +39,8 @@ const PUBLIC_SUBPATHS = [
   'timer-333-step',
   'timer-333-thistle',
   'timer-small-hints',
+  'timer-mega-state',
+  'timer-mega-hints',
   'kociemba/cube',
   'kociemba/coords',
   'kociemba/movetables',

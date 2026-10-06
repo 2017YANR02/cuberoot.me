@@ -221,16 +221,20 @@ describe('component reuse rule registry', () => {
       'utf8',
     );
     const compact = readFileSync(join(ROOT, 'components', 'CompactSelect.tsx'), 'utf8');
-    const rolling = readFileSync(
-      join(ROOT, 'app', '[lang]', 'timer', '_components', 'RollingStatsPicker.tsx'),
-      'utf8',
-    );
+    const timerUiEntry = import.meta.resolve('@cuberoot/timer-ui');
+    const rolling = readFileSync(new URL('./TimerRollingStatsPicker.tsx', timerUiEntry), 'utf8');
+    const stats = readFileSync(new URL('./TimerStatsPanel.tsx', timerUiEntry), 'utf8');
+    const history = readFileSync(new URL('./TimerHistoryWorkspace.tsx', timerUiEntry), 'utf8');
     expect(wca).toContain("from '@/components/CompactSelect'");
     expect(wca).toContain('<CompactSelect');
     expect(compact).toContain("from '@cuberoot/timer-ui/compact-select'");
-    expect(rolling).toContain("from '@cuberoot/timer-ui'");
-    expect(rolling).toContain('<TimerRollingStatsPicker');
-    expect(rolling).not.toContain('<CompactSelect');
+    expect(rolling).toContain("from './CompactSelect'");
+    expect(rolling).toContain('<CompactSelect');
+    for (const source of [stats, history]) {
+      expect(source).toContain("from './TimerRollingStatsPicker'");
+      expect(source).toContain('<TimerRollingStatsPicker');
+      expect(source).not.toContain('<CompactSelect');
+    }
   });
 
   it('allows status crosses, text buttons, the shared component, and reasoned exceptions', () => {

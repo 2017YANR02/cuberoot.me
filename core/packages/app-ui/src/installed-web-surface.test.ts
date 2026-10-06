@@ -49,7 +49,10 @@ describe('installed website surfaces', () => {
   it('correlates Account session handoff and exposes native login failures', () => {
     expect(app).toContain('pending.requestId !== webSessionResult.requestId');
     expect(app).toContain('MOBILE_EMBED_AUTH_TIMEOUT_MS');
-    expect(app).toContain('accountLoginRequestedRef.current = true');
+    expect(app).toMatch(/if \(accountSource && authRequest\) \{\s*void auth\.login\(authRequest\.provider\);/);
+    // Browser.open resolves before the callback: delayed login failures must
+    // still reach the Account error state once the auth client is no longer busy.
+    expect(app).toMatch(/if \(auth\.busy\) return;\s*if \(auth\.error\) \{\s*setWebSurfaceStatus\(\(current\) => \(\{ \.\.\.current, account: 'error' \}\)\);\s*announce\(copy\.authError\);/);
   });
 
   it('keeps both browsing contexts mounted and gates Android Back on a live bridge', () => {

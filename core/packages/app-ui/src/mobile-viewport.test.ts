@@ -115,7 +115,28 @@ describe('mobile visible viewport layout', () => {
     expect(primaryNav).toBeDefined();
     expect(primaryNav).toContain('aria-label={copy.title}');
     expect(primaryNav).toContain('ref={primaryNavRef}');
-    expect(app.match(/viewportBottomInset=\{primaryNavBottomInset\}/g)).toHaveLength(9);
+    const source = ts.createSourceFile('App.tsx', app, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+    const insetConsumers: string[] = [];
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+        const inset = node.attributes.properties.find(attribute => (
+          ts.isJsxAttribute(attribute) && attribute.name.getText(source) === 'viewportBottomInset'
+        ));
+        if (inset && ts.isJsxAttribute(inset)) {
+          expect(inset.initializer?.getText(source)).toBe('{primaryNavBottomInset}');
+          insetConsumers.push(node.tagName.getText(source));
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+    // Workspace extraction changes the JSX count; require each actual overlay
+    // owner (including both save-failure and undo toasts) to receive the inset.
+    expect(insetConsumers.sort()).toEqual([
+      'TimerHistoryWorkspace', 'TimerInfoToast', 'TimerInfoToast', 'TimerMoreMenu',
+      'TimerNetOutboxNotice', 'TimerSessionSwitcher', 'TimerStatisticsWorkspace',
+      'TimerWcaScrambleProgress',
+    ].sort());
     expect(app).not.toMatch(/viewportBottomInset=\{(?:64|96)\}/);
   });
 

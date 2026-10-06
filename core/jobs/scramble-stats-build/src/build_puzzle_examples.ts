@@ -66,6 +66,25 @@ const PUZZLES: PuzzleSpec[] = [
 ];
 
 type Sample = [string, string, string?]; // [id, scramble, optScramble?]
+type CompMeta = [string, string, number, string, string, (0 | 1)];
+
+// 增量语料保留历史 id；WCA 撤回/重新发布的打乱可能已不在当前 TSV。
+// 只端出能 join 当前比赛元数据的真题，不把孤儿 id 交给计时器。
+export function assemblePuzzleSamples(
+  ids: string[],
+  scrambleOf: Map<string, string>,
+  optOf: Map<string, string>,
+  idMeta: Record<string, CompMeta>,
+): Sample[] {
+  const samples: Sample[] = [];
+  for (const id of ids) {
+    const scr = scrambleOf.get(id);
+    if (scr === undefined || !idMeta[id]) continue;
+    const opt = optOf.get(id);
+    samples.push(opt ? [id, scr, opt] : [id, scr]);
+  }
+  return samples;
+}
 
 // 反演解法 → 最优(最短)等价打乱:复现同一状态所需的最少步数序列(前端「原始/最优」切换用)。
 // 通用记号规则:X2 自逆;X' ↔ X;pyraminx 小写 tip(u/l/r/b)同理。
@@ -376,11 +395,11 @@ async function buildCompMeta(
   compTsv: string,
 ): Promise<{
   comps: Record<string, [string, string]>;
-  idMeta: Record<string, [string, string, number, string, string, (0 | 1)]>;
+  idMeta: Record<string, CompMeta>;
   idToComp: Map<string, string>;
 }> {
   const comps: Record<string, [string, string]> = {};
-  const idMeta: Record<string, [string, string, number, string, string, (0 | 1)]> = {};
+  const idMeta: Record<string, CompMeta> = {};
   const idToComp = new Map<string, string>();
   if (allIds.size === 0) return { comps, idMeta, idToComp };
   const compNames = await loadCompNames(compTsv);
@@ -412,6 +431,10 @@ async function buildCompMeta(
       idMeta[id] = [ci, c[evIdx], Number(c[numIdx]), c[rndIdx], c[grpIdx], c[exIdx] === '1' ? 1 : 0];
       if (!(ci in comps)) comps[ci] = compNames.get(ci) ?? [ci, ''];
     }
+  }
+  const orphanIds = [...wantedIds].filter((id) => !idMeta[id]);
+  if (orphanIds.length) {
+    console.warn(`  [examples] omitted ${orphanIds.length} sampled IDs absent from current Scrambles.tsv: ${orphanIds.join(', ')}`);
   }
   return { comps, idMeta, idToComp };
 }
@@ -529,13 +552,7 @@ async function main() {
       for (const col of spec.metricsCsv.cols) {
         const bins: Record<string, Sample[]> = {};
         for (const v of [...sampledPerMetric[col].keys()].sort((a, b) => a - b)) {
-          const arr: Sample[] = [];
-          for (const id of sampledPerMetric[col].get(v)!) {
-            const scr = scrambleOf.get(id);
-            if (scr === undefined) continue;
-            const opt = optOf.get(id);
-            arr.push(opt ? [id, scr, opt] : [id, scr]);
-          }
+          const arr = assemblePuzzleSamples(sampledPerMetric[col].get(v)!, scrambleOf, optOf, idMeta);
           if (arr.length) bins[String(v)] = arr;
         }
         const entry: Record<string, unknown> = { bins };
@@ -549,13 +566,7 @@ async function main() {
       }
       const typesOut: Record<string, Sample[]> = {};
       for (const [type, ids] of Object.entries(sampledPerType)) {
-        const arr: Sample[] = [];
-        for (const id of ids) {
-          const scr = scrambleOf.get(id);
-          if (scr === undefined) continue;
-          const opt = optOf.get(id);
-          arr.push(opt ? [id, scr, opt] : [id, scr]);
-        }
+        const arr = assemblePuzzleSamples(ids, scrambleOf, optOf, idMeta);
         if (arr.length) typesOut[type] = arr;
         note.push(`${type}=${arr.length}/${perTypeFull?.[type].length ?? 0}`);
       }
@@ -640,13 +651,7 @@ async function main() {
     const assemble = (sampled: Map<number, string[]>, optMap: Map<string, string>): Record<string, Sample[]> => {
       const bins: Record<string, Sample[]> = {};
       for (const len of [...sampled.keys()].sort((a, b) => a - b)) {
-        const arr: Sample[] = [];
-        for (const id of sampled.get(len)!) {
-          const scr = scrambleOf.get(id);
-          if (scr === undefined) continue;
-          const opt = optMap.get(id);
-          arr.push(opt ? [id, scr, opt] : [id, scr]);
-        }
+        const arr = assemblePuzzleSamples(sampled.get(len)!, scrambleOf, optMap, idMeta);
         if (arr.length > 0) bins[String(len)] = arr;
       }
       return bins;
@@ -706,4 +711,6 @@ async function main() {
   console.log(`Wrote ${outPath} (${(fs.statSync(outPath).size / 1024).toFixed(1)} KB)`);
 }
 
-main().catch((err) => { console.error(err); process.exit(1); });
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => { console.error(err); process.exit(1); });
+}

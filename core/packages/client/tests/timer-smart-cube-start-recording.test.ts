@@ -4,6 +4,7 @@ import ts from 'typescript';
 import { describe, expect, it, vi } from 'vitest';
 import { SmartCubeAttemptProducer } from '@cuberoot/shared/timer/smart-cube-attempt';
 import { shouldAutoRecap } from '@cuberoot/shared/timer/reconstruct/recap';
+import { timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 
 const source = ts.createSourceFile('SoloView.tsx', readFileSync(
   new URL('../app/[lang]/timer/_shell/SoloView.tsx', import.meta.url), 'utf8',
@@ -43,6 +44,8 @@ describe('Web solo attempt recording lifecycle', () => {
       attemptSplitRecorder: { begin: vi.fn() },
       event: '333',
       settings: { bldMemo: false, multiStage: false },
+      getSettings: () => ({ preScrT: 'z2' }),
+      timerSmartCubeAttemptScramble,
       bluetoothCubeRef: ref({ status: { connected: true, brand: 'gan-v4', deviceName: 'GAN16ui' } }),
       smartCubeAttemptProducerRef: ref(producer),
       setLiveSolve: vi.fn(),

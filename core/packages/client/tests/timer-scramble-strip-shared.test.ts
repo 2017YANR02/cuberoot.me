@@ -298,9 +298,18 @@ describe('shared TimerScrambleStrip', () => {
   });
 
   it('keeps Solo and NetBattle as real consumers instead of private strip renderers', () => {
+    const netPage = readFileSync(new URL('./TimerNetBattlePage.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
     for (const file of ['SoloView.tsx', 'NetBattleView.tsx']) {
       const source = readFileSync(join(process.cwd(), 'app', '[lang]', 'timer', '_shell', file), 'utf8');
-      expect(source).toContain('<TimerScrambleStrip');
+      if (file === 'SoloView.tsx') {
+        expect(source).toContain('<TimerScrambleStrip');
+      } else {
+        expect(source).toContain('<TimerNetBattlePage');
+        expect(source).toContain('stage: ownTimingStage');
+        expect(source).toContain('scramble: displayScramble');
+        expect(netPage).toContain('<TimerNetBattleStage {...room.stage}');
+        expect(netPage).toContain('<TimerScrambleStrip {...scramble}');
+      }
       expect(source).not.toMatch(/<div\s+className=\{`scramble-strip/);
       expect(source).not.toContain('import ScrambleHintText');
     }

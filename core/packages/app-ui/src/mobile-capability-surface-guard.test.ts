@@ -53,7 +53,9 @@ describe('Mobile capability surface guard', () => {
 
   it('routes clipboard writes through the installed host capability', () => {
     expect(app).toContain('host.writeClipboardText');
-    expect(battleModes).toContain('writeClipboardText(room.code)');
+    expect(app).toContain('writeClipboardText={host.writeClipboardText}');
+    expect(battleModes).toContain('copyKind: "invite"');
+    expect(battleModes).toContain("writeClipboardText(`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`)");
     expect(`${app}\n${battleModes}`).not.toContain('navigator.clipboard');
   });
 

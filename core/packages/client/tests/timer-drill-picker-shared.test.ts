@@ -214,11 +214,15 @@ describe('shared TimerDrillPicker', () => {
   });
 
   it('keeps the shared green pill visible before color-mix support', () => {
-    const fallback = pillCss.indexOf('background: var(--toggle-on, var(--signal-success));');
-    const enhanced = pillCss.indexOf(
-      'background: color-mix(in srgb, var(--toggle-on, var(--signal-success)) 72%, black);',
-    );
-    expect(fallback).toBeGreaterThan(-1);
-    expect(enhanced).toBeGreaterThan(fallback);
+    const supports = pillCss.indexOf('@supports (background: color-mix(');
+    expect(supports).toBeGreaterThan(-1);
+    for (const css of [pillCss.slice(0, supports), pillCss.slice(supports)]) {
+      for (const selector of ['.timer-222-mode-toggle.is-on', '.timer-222-mode-toggle.is-on:hover']) {
+        const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const rule = css.match(new RegExp(`${escaped}\\s*\\{([^}]+)\\}`))?.[1];
+        expect(rule).toContain('background: var(--toggle-on, var(--signal-success));');
+        expect(rule).toContain('border-color: var(--toggle-on, var(--signal-success));');
+      }
+    }
   });
 });
