@@ -75,6 +75,24 @@
   text-underline-offset: 2px;
 }
 
+/* Timer toolbar types share the adjacent players/source control sizing. */
+.compact-select.timer-scramble-type-select {
+  align-self: center;
+  width: fit-content;
+}
+
+.compact-select.timer-scramble-type-select .compact-select-trigger {
+  width: auto;
+  height: 32px;
+  padding-inline: 4px;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.compact-select.timer-scramble-type-select .compact-select-trigger:hover:not(:disabled) {
+  text-decoration: none;
+}
+
 /* anchored-panel: clamped (body portal + visualViewport bounds in component) */
 .compact-select-popup {
   position: fixed;

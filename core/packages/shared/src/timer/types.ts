@@ -229,11 +229,11 @@ export const EVENTS: EventInfo[] = [
   { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
 
   // CFOP step training
-  { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字训练',   group: 'cfop'
+  { id: 'cross',  nameEn: 'Cross only',  nameZh: '十字',       group: 'cfop'
 },
-  { id: 'f2l',    nameEn: 'F2L',         nameZh: 'F2L 训练',   group: 'cfop'
+  { id: 'f2l',    nameEn: 'F2L',         nameZh: 'F2L',        group: 'cfop'
 },
-  { id: 'll',     nameEn: 'LL',          nameZh: 'LL 训练',    group: 'cfop'
+  { id: 'll',     nameEn: 'LL',          nameZh: 'LL',         group: 'cfop'
 },
 
   // Last-layer training

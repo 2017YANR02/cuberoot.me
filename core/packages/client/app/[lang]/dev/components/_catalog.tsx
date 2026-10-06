@@ -1532,8 +1532,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerPuzzlePicker',
     import: "import { TimerPuzzlePicker } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web、Android 与 iOS 计时器共用的项目选择器；触发器、43 项菜单、焦点恢复、Escape、点外关闭、视口 clamp 和旧 Android WebView 窄屏布局只维护这一份。项目目录来自 @cuberoot/shared/timer；默认非受控，也可用 open/onOpenChange 接入 Android Back，宿主只接 selectedEvent/onSelect。',
-    en: 'The puzzle picker shared by the Web, Android, and iOS timers. Its trigger, 43-item menu, focus restoration, Escape/outside close, viewport clamp, and narrow-layout fallback for older Android WebViews live in one implementation. The catalog comes from @cuberoot/shared/timer. It remains uncontrolled by default and accepts open/onOpenChange for Android Back; hosts otherwise only wire selectedEvent/onSelect.',
+    zh: 'Web 与 App 共用的项目选择器。传 scrambleTypeLabel 后将三阶专项移入独立打乱类型下拉，默认 WCA；目录与旧成绩标识映射来自 shared，类型菜单复用 CompactSelect。省略此属性时保留全部存储模式，供数据导入使用。项目菜单支持 open/onOpenChange、焦点恢复、Escape、点外关闭和视口钳制。',
+    en: 'The shared Web/App puzzle picker. Passing scrambleTypeLabel moves 3×3 training modes into a separate scramble-type dropdown, defaulting to WCA. Shared owns the catalog and legacy solve identities; CompactSelect renders the type menu. Omitting the prop retains all storage modes for data import. The puzzle menu supports open/onOpenChange, focus restoration, Escape, outside dismissal, and viewport clamping.',
   },
   {
     name: 'TimerDrillPicker',
