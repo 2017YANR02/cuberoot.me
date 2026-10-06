@@ -1,3 +1,4 @@
+import { normalizeTimerSyncSeed, type TimerSyncSeedSettings } from './sync-seed';
 import { normalizeTimerRankScopes, type TimerRankScope } from './settings-contract';
 import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-client';
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
@@ -77,7 +78,7 @@ export interface TimerSessionMeta {
   event?: EventId;
 }
 
-export interface TimerStoreSettings extends
+export interface TimerStoreSettings extends TimerSyncSeedSettings,
   TimerMetronomeSettings,
   TimerSoundSettings,
   TimerPreScrambleSettings,
@@ -97,6 +98,8 @@ export interface TimerStoreSettings extends
   event: EventId;
   keymap: TimerKeymapOverrides;
   cnMode: CnMode;
+  ollSubset?: string[];
+  pllSubset?: string[];
   /** Shared 2x2 full-state generation style; also selects WCA original vs optimal-equivalent rows. */
   scramble222Mode: Scramble222Mode;
   /** Shared 2x2 specialist state family. A real-WCA source treats 3-gen as full state. */
@@ -495,7 +498,10 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
     rankCountry: typeof value.rankCountry === 'string' && /^[a-z]{2}$/i.test(value.rankCountry) ? value.rankCountry.toUpperCase() : '',
     autoBackupEvery: normalizeTimerAutoBackupEvery(value.autoBackupEvery),
     keymap: normalizeTimerKeymap(value.keymap),
+    ollSubset: Array.isArray(value.ollSubset) ? value.ollSubset.filter((id): id is string => typeof id === 'string') : undefined,
+    pllSubset: Array.isArray(value.pllSubset) ? value.pllSubset.filter((id): id is string => typeof id === 'string') : undefined,
     cnMode: normalizeTimerColorNeutralMode(value.cnMode),
+    ...normalizeTimerSyncSeed(value as Partial<TimerSyncSeedSettings>),
     // Early Mobile builds offered a wider timing range than Web. Normalize at
     // the shared migration boundary: 300 remains a valid user choice, while
     // legacy 0/out-of-Web-range values gain the canonical Web meaning.
@@ -684,6 +690,7 @@ export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerSto
     event: '333',
     keymap: {},
     cnMode: 'none',
+    ...normalizeTimerSyncSeed(),
     ...DEFAULT_TIMER_TYPOGRAPHY,
     ...normalizeTimerDisplaySettings(),
     ...normalizeTimerPreScrambleSettings(),

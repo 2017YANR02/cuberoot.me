@@ -1,3 +1,4 @@
+import { normalizeTimerSyncSeed, consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 /**
  * User-facing settings — persisted to localStorage as a single JSON blob.
  *
@@ -201,6 +202,7 @@ export interface TimerSettings extends
    * resumes the same sequence. Reset whenever `syncSeed` changes or is cleared.
    */
   syncSeedCounter: number;
+  syncSeedRevision: number;
 
   /** Auto-backup every N saves. 0 = disabled, max 30. */
   autoBackupEvery: number;
@@ -296,6 +298,7 @@ export const DEFAULTS: TimerSettings = {
   inspectionBeepAt: [],
   syncSeed: null,
   syncSeedCounter: 0,
+  syncSeedRevision: 0,
   autoBackupEvery: 10,
   bluetoothAutoReadyMigrated: true,
   keymap: {},
@@ -334,6 +337,7 @@ function load(): TimerSettings {
       ...DEFAULTS,
       ...parsed,
       ...normalizedTiming,
+      ...normalizeTimerSyncSeed(parsed),
       ...normalizedSplits,
       ...normalizedScramblePreview,
       ...normalizedSmartCube,
@@ -453,6 +457,7 @@ export function updateSettings(patch: Partial<TimerSettings>): void {
   _cache = {
     ...candidate,
     ...normalizeTimerTimingSettings(candidate),
+    ...normalizeTimerSyncSeed(candidate),
     ...normalizeTimerTypography(candidate),
     ...normalizeTimerDisplaySettings(candidate),
     ...normalizeTimerPreScrambleSettings(candidate),
@@ -492,3 +497,14 @@ export function useSettings(): TimerSettings {
 // 计时器曾经有自己独立于站点的明暗(data-timer-theme + settings.theme,cstimer 遗留),
 // 于是同一个 <html> 上挂两套主题:shell 走站点 token、内层走那套硬码灰阶,二者可能相反
 // (站点浅色 + 计时器深色 → 浅底配深控件)。现已整体并入站点主题,颜色全走 :root token。
+
+/** Commit before publishing a visible seeded slot; storage failure leaves the index reusable. */
+export function commitTimerSeed(ticket: TimerSeedTicket): void {
+  const current = getSettings();
+  const patch = consumeTimerSeed(current, ticket);
+  if (!patch) throw new Error('Seed position changed');
+  const next = { ...current, ...patch };
+  localStorage.setItem(KEY, JSON.stringify(next));
+  _cache = next;
+  for (const listener of _listeners) listener();
+}

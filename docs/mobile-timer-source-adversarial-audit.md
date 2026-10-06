@@ -96,3 +96,7 @@ WCA difficulty 共享层新增证据：`timer_wca_difficulty_shared.test.ts` 与
 5. 真题配置迁移后，每个配置字段参与 pool/cache/inflight identity。
 
 本审计没有声称 43 个项目都有随机生成器：生成能力仍是 42/43。只有 `custom` 经 shared 显式 predicate 授权的空文本可作为 canonical ready 槽；其他 explicit unsupported、provider 空返回或 333 替代项一律不算通过。
+
+### 2026-10-06 同步种子增量
+
+单人计时的种子/计数、42 项目生成及自定义空题、二阶类型、OLL/PLL 子集已共用 shared 引擎与 timer-ui 控件。历史槽保存请求，成功持久化后推进计数；预取、失败、取消和历史回看不额外消费，同 seed 重置也拒绝旧 revision。Web 主线程 solver ready 不再重置种子历史；App 快照竞争只单调合并同 revision 的进度。Chrome Web/App 实测应用、重置与重启后的两条打乱逐字一致。设置 effect 62→64，64 个生产字段均已接入，fake-cube 开发字段仍未接；不等于五端完整 parity。完整验证与既有 2 条过期历史源码断言见 mobile-app-roadmap.md 同日记录。

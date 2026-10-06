@@ -1,4 +1,8 @@
 'use client';
+import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
+import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
+import { nextSeededScramble } from '../_lib/scramble/sync-seed';
+import { commitTimerSeed } from '../_lib/settings';
 import { TimerReplayImportModal } from '@cuberoot/timer-ui';
 import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
 import { apiUrl as replayApiUrl } from '@/lib/api-base';
@@ -320,6 +324,7 @@ import { tr } from '@/i18n/tr';
 const TPS_WINDOW_MOVES = 12;
 
 interface TimerScrambleHistoryEntry {
+  seedRequest?: TimerSeedRequest;
   id: number;
   scramble: string;
   /** Stable occurrence provenance; separate official slots may share text. */
@@ -575,7 +580,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
   const [type222] = use222Type();
-  const wca222Type = event === '222' && settings.scrambleSource === 'wca' && !settings.syncSeed
+  const wca222Type = event === '222' && settings.scrambleSource === 'wca'
     && isCube222StateType(type222) ? type222 : undefined;
   const wca222TypeSig = wca222Type ?? '';
   // 随机来源的专项状态由 @cuberoot/puzzle-solvers 的同一状态模型生成；Web 只加 Worker 调度层。
@@ -640,7 +645,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     : 'random';
   // 按步数生成签名:随机来源一律生效；非 WCA 项目即便全局来源仍记着「真题」也只能本地生成，
   // 因此同样要让难度变化重置打乱队列。WCA 项目的真题来源由 wcaStepSig 负责。
-  const genStepsSig = !special222Type && (settings.scrambleSource === 'random'
+  const genStepsSig = !settings.syncSeed && !special222Type && (settings.scrambleSource === 'random'
     || (settings.scrambleSource === 'wca' && !wcaEventId(event)))
     ? genByStepsSig(event, settings, mode222)
     : '';
@@ -652,10 +657,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     : null;
   // 随机来源的「难度」(3×3 族):按所选阶段的最优步数直接生成状态(lib/cross-trainer)。
   // 与真题难度筛互斥 —— 那边筛真题,这边生成,二者只按当前来源取其一。
-  const trainerSpec = settings.scrambleSource === 'random' ? trainerSpecOf(event, settings) : null;
+  const trainerSpec = !settings.syncSeed && settings.scrambleSource === 'random' ? trainerSpecOf(event, settings) : null;
   const trainerSpecRef = useRef(trainerSpec);
   trainerSpecRef.current = trainerSpec;
-  const trainerSigVal = settings.scrambleSource === 'random' ? trainerSig(event, settings) : '';
+  const trainerSigVal = !settings.syncSeed && settings.scrambleSource === 'random' ? trainerSig(event, settings) : '';
 
   // 云端大表只服务三阶随机状态。同步种子要求严格按消费顺序推进，后台预生成会破坏该契约，
   // 因而设置行会同步置灰。难度/专项状态仍先照原规则生成，再求同一状态的最短打乱。
@@ -729,6 +734,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return (p === 'idle' || p === 'stopped' || p === 'inspecting') && !getSettings().syncSeed;
   }, []);
 
+  const seedOptionsSignature = JSON.stringify([settings.syncSeed, settings.syncSeedRevision, settings.cnMode, mode222, type222, settings.ollSubset, settings.pllSubset]);
   const genScramble = useCallback((): TimerScrambleHistoryEntry => {
     // Manual queue: walk the user-typed lines in order, wrapping at the end.
     // Empty queue → '' placeholder (the strip shows a "paste scrambles" hint).
@@ -736,6 +742,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       const taken = takeManualScramble(manualQueueRef.current, manualCursorRef.current);
       manualCursorRef.current = taken.nextCursor;
       return timerScrambleHistoryEntry(taken.scramble);
+    }
+    const ticket = timerSeedTicket(getSettings());
+    if (ticket && event !== 'custom' && !(settings.scrambleSource === 'wca' && hasWcaSource(wcaSpecRef.current))) {
+      return { ...timerScrambleHistoryEntry(''), seedRequest: {
+        ticket, event, cnMode: getSettings().cnMode, scramble222Mode: mode222, scramble222Type: type222,
+        trainerCaseIds: event === 'oll' ? getSettings().ollSubset : event === 'pll' ? getSettings().pllSubset : undefined,
+        drill: drillAllowed ? drillTarget : null,
+      } };
     }
     // Buffered async path: a ready optimal scramble is instant; '' is filled by
     // the effect below while the pool keeps the next three states warm.
@@ -773,7 +787,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // Local generation: serve from the background buffer (instant), except in
     // deterministic seeded-sync mode where consumption order must stay exact.
     const s = getSettings();
-    if (s.syncSeed) return timerScrambleHistoryEntry(generateScramble(event));
     // 二阶专项类型复用 runtime-neutral provider 与 Web Worker 队列。目标条件由共享状态谓词保证,
     // 因此它优先于普通难度 / 按步数链；空串只表示 worker 尚未返回,由下方 effect 补位。
     const special = special222TypeRef.current;
@@ -807,7 +820,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey, non222ByStepsEvent]);
+  }, [seedOptionsSignature, drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey, non222ByStepsEvent]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: TimerScrambleHistoryEntry[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -844,15 +857,36 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     value: string,
     wca: WcaDispensedScramble | null = null,
     trainerMeta: TrainerMeta | null = null,
+    caseId: string | null = null,
   ) => {
     const current = scrambleHistRef.current;
     const entry = current.list[current.idx];
     if (entry?.id !== expectedId || entry.scramble !== '') return false;
     const list = [...current.list];
-    list[current.idx] = { ...entry, scramble: value, trainerMeta, wca };
+    list[current.idx] = { ...entry, scramble: value, trainerMeta, wca, caseId };
     applyScrambleHist({ list, idx: current.idx });
     return true;
   }, [applyScrambleHist]);
+  const seedRequest = currentScrambleEntry.seedRequest;
+  const [seedFailedId, setSeedFailedId] = useState<number | null>(null);
+  const [seedRetry, setSeedRetry] = useState(0);
+  const seedFailed = seedFailedId === currentScrambleEntryId;
+  const seedLoading = Boolean(seedRequest && !scramble && !seedFailed);
+  useEffect(() => {
+    if (!seedRequest || scramble || competition.enabled) return;
+    const controller = new AbortController();
+    const entryId = currentScrambleEntryId;
+    setSeedFailedId(null);
+    void nextSeededScramble(seedRequest, controller.signal).then(result => {
+      if (controller.signal.aborted || !isCurrentEmptyScrambleEntry(entryId)
+        || scrambleGeneratorAtHistoryResetRef.current !== genScramble) return;
+      commitTimerSeed(seedRequest.ticket);
+      fillCurrentEmptyScrambleEntry(entryId, result.scramble, null, null, result.caseId);
+    }).catch(() => {
+      if (!controller.signal.aborted && isCurrentEmptyScrambleEntry(entryId)) setSeedFailedId(entryId);
+    });
+    return () => controller.abort();
+  }, [seedRequest, currentScrambleEntryId, scramble, seedRetry, competition.enabled, genScramble, isCurrentEmptyScrambleEntry, fillCurrentEmptyScrambleEntry]);
   // 「预打乱朝向」只进打乱图,不改打乱正文(同 csTimer:正文保持官方口径,图按你手持的朝向画)。
   const previewScramble = applyOrientationPrefix(
     scramble,
@@ -1055,7 +1089,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // 枫叶/齿轮启用精确难度后由完整图生成，不再启动 csTimer Worker 补位；尤其 0 步的
     // 恒等打乱也不能被当成「Worker 尚未返回」。
     const special = special222TypeRef.current;
-    if ((!special && !isNonWcaEvent(event)) || settings.scrambleSource === 'manual' || genStepsSig) {
+    if (settings.syncSeed || (!special && !isNonWcaEvent(event)) || settings.scrambleSource === 'manual' || genStepsSig) {
       setCstimerLoading(false);
       setCstimerFailed(false);
       return;
@@ -1146,10 +1180,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ]);
 
   const attemptCanStart = competition.enabled ? competition.authorized && Boolean(competition.attempt) : timerCanStartAttempt({
-    availability: randomOptimalLoading || scrambleLoading || cstimerLoading
+    availability: seedLoading || randomOptimalLoading || scrambleLoading || cstimerLoading
       || trainerLoading || byStepsLoading
       ? 'loading'
-      : randomOptimalFailed || byStepsFailed || cstimerFailed || trainerMiss !== null
+      : seedFailed || randomOptimalFailed || byStepsFailed || cstimerFailed || trainerMiss !== null
         || wcaSourceEmpty || wcaSourceFailed
         ? 'unavailable'
         : 'ready',
@@ -1300,6 +1334,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const scrambleResetRef = useRef(true);
   useEffect(() => {
     if (scrambleResetRef.current) { scrambleResetRef.current = false; return; }
+    // Seeded generation owns a separate worker; main-thread solver readiness
+    // must not discard a displayed ticket and consume another index on reload.
+    if (getSettings().syncSeed && scrambleGeneratorAtHistoryResetRef.current === genScramble) return;
     scrambleGeneratorAtHistoryResetRef.current = genScramble;
     applyScrambleHist({ list: [genScramble()], idx: 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2752,6 +2789,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ) : null;
 
   const retryDisplayedScramble = () => {
+    if (seedFailed) { setSeedRetry(value => value + 1); return; }
     if (byStepsFailed) {
       setByStepsRetry((value) => value + 1);
       return;
@@ -2780,7 +2818,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (cstimerFailed) { setCstimerRetry((value) => value + 1); return; }
     if (wcaSourceFailed) setWcaRetry((value) => value + 1);
   };
-  const scrambleStatusReason = randomOptimalLoading
+  const scrambleStatusReason = seedFailed ? 'error-generated' : seedLoading ? 'loading-generated' : randomOptimalLoading
     ? 'loading-optimal'
     : scrambleLoading
       ? 'loading-real'
