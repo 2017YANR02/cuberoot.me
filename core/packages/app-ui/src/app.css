@@ -886,6 +886,8 @@ button {
 .app-shell[data-wide='true'] > .app-titlebar + .view-container { grid-row: 3; }
 .app-shell[data-wide='true'].app-shell--timer-fullscreen > .view-container { grid-row: 1; }
 .view-container.timer-workspace { --timer-workspace-height: 100%; }
+/* Online workspace lives inside the host navigation viewport. */
+.battle-mode--net.timer-workspace { --timer-workspace-height: 100%; min-height: 100%; }
 .app-shell[data-wide='true'] .mobile-timer-stage { min-height: 0; }
 .app-shell[data-wide='true'] .battle-mode { width: 100%; }
 .app-shell[data-wide='true'] .history-view.timer-workspace-panel { width: 100%; margin: 0; padding: 0; }

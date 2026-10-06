@@ -37,7 +37,7 @@ function formatDateOnly(isoDate: string): string {
 
 export { buildLocalBattleCsv } from '@cuberoot/shared/timer';
 
-export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
+export function useBattleHistoryProps({ onClose }: { onClose: () => void }): React.ComponentProps<typeof TimerBattleHistory> {
   const store = useBattleStore();
   const { i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
@@ -58,11 +58,18 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
     : store.battleHistoryWarning === 'legacy-mirror-stale'
       ? tr({ zh: '对战轮次已经保存，但个人统计镜像未能同步；轮次不会丢失，个人统计可能暂时过期。', en: 'Battle rounds were saved, but the individual statistics mirror could not be synchronized. Rounds are safe; personal stats may be temporarily stale.' })
       : tr({ zh: '对战历史未能保存到本机。请保持页面打开并立即导出 CSV；刷新后本次改动可能丢失。', en: 'Battle history could not be saved on this device. Keep this page open and export CSV now; this change may be lost after refresh.' })}</p>;
-  return <TimerBattleHistory rounds={rounds} playerCount={store.playerCount} language={isZh ? 'zh' : 'en'}
-    precision={store.timerPrecision as 0 | 1 | 2 | 3} onClose={onClose} onClear={() => store.resetAll()} onExport={exportCSV} warning={warning}
-    onDelete={(id) => { const index = rounds.findIndex((round) => round.id === id); if (index >= 0) store.deleteVsRound(index); return !useBattleStore.getState().battleRounds.some(round => round.id === id); }}
-    roundActions={(round) => <RoundReplay round={round} isZh={isZh} />}
-    legacy={<>
+  return {
+    rounds,
+    playerCount: store.playerCount,
+    language: isZh ? 'zh' : 'en',
+    precision: store.timerPrecision as 0 | 1 | 2 | 3,
+    onClose: onClose,
+    onClear: () => store.resetAll(),
+    onExport: exportCSV,
+    warning: warning,
+    onDelete: (id) => { const index = rounds.findIndex((round) => round.id === id); if (index >= 0) store.deleteVsRound(index); return !useBattleStore.getState().battleRounds.some(round => round.id === id); },
+    roundActions: (round) => <RoundReplay round={round} isZh={isZh} />,
+    legacy: <>
       {legacyHistory.records.length > 0 && <>
         <p role="status">{tr({ zh: '旧版个人记录保留为独立记录，不与轮次合并。', en: 'Legacy individual records are preserved separately from verified rounds.' })}</p>
         {legacyHistory.records.toReversed().map((record, index) => {
@@ -75,7 +82,8 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
         })}
       </>}
       {legacyHistory.skippedKeys > 0 && <p role="alert">{tr({ zh: `${legacyHistory.skippedKeys} 组旧版记录已损坏，未参与展示或配对。`, en: `${legacyHistory.skippedKeys} legacy history groups are damaged and were not displayed or paired.` })}</p>}
-    </>} />;
+    </>,
+  };
 }
 
 /** Reconstruction remains a Web storage capability, injected into shared round details. */
@@ -93,4 +101,8 @@ function RoundReplay({ round, isZh }: { round: LocalBattleRound; isZh: boolean }
     <button type="button" onClick={() => setSolve(recon.hit)}><Waypoints size={14} />{tr({ zh: 'P1 复盘', en: 'P1 reconstruction' })}</button>
     {solve && <ReconstructModal solve={solve} isZh={isZh} history={recon.solves} onClose={() => setSolve(null)} />}
   </>;
+}
+
+export default function VsHistoryPanel(props: { onClose: () => void }) {
+  return <TimerBattleHistory {...useBattleHistoryProps(props)} />;
 }

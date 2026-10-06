@@ -12,6 +12,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { updateSettings } from '@/app/[lang]/timer/_lib/settings';
 
 vi.mock('@/app/[lang]/timer/_battle/engine/engine_loader', () => ({
   isScrambleEngineReady: () => true,
@@ -77,6 +78,7 @@ function stopSolve(playerId: number, afterMs = 5000) {
 }
 
 beforeEach(() => {
+  updateSettings({ scrambleSource: 'random' });
   vi.useFakeTimers();
   // performance.now() 跟随 fake timer,elapsed 才是可预期的
   vi.setSystemTime(0);

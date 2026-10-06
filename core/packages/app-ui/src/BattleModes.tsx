@@ -1,45 +1,52 @@
-import { createBattleVideoClient } from '@cuberoot/shared/video';
-import VideoStrip, { VideoToggle, useTimerBattleVideo } from '@cuberoot/timer-ui/video/TimerBattleVideo';
-import { mobileApiUrl } from './data/wca-source-adapter';
-const battleVideoClient = createBattleVideoClient({ apiUrl: mobileApiUrl, fetcher: (...args) => fetch(...args) });
-import { defaultLocalBattlePreferences, readLocalBattlePreferences, saveLocalBattlePreferences, LOCAL_BATTLE_INSPECTIONS, LOCAL_BATTLE_PRECISIONS, type LocalBattlePreferences } from '@cuberoot/shared/timer';
-import { TimerBattleAppearanceSettings } from '@cuberoot/timer-ui';
-import { requestLocalBattleScramble, LOCAL_BATTLE_SCRAMBLE_COPY, type LocalBattleScramble } from '@cuberoot/shared/timer';
-import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
-import { NetBattleAttemptRecorder, netAttemptSolveId, type NetRecordedAttempt, type NetRecordingOutbox } from '@cuberoot/shared/timer';
+import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
+import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
+import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import {
   BATTLE_EVENT_IDS,
   DEFAULT_TIMER_TYPOGRAPHY,
-  type TimerTypographySettings,
   LOCAL_BATTLE_DEFAULT_PLAYER_KEYS,
+  LOCAL_BATTLE_INSPECTIONS,
+  LOCAL_BATTLE_PRECISIONS,
+  LOCAL_BATTLE_SCRAMBLE_COPY,
   NET_EVENTS,
+  NetBattleAttemptRecorder,
+  NetRoomController,
   assignLocalBattlePlayerKey,
+  averageOfN,
   blendClockOffset,
   canManuallyStartNetAttempt,
   createLocalBattleKeyStore,
   createLocalBattleRound,
   createLocalBattleRoundStore,
   createNetAdmissionGate,
-  effectiveNetMs,
+  defaultLocalBattlePreferences,
   formatMs,
   formatTimerTimingDisplay,
   generateTimerScramble,
   initialLocalBattleState,
-  isNetAdmin,
   isLocalBattleScrambleHidden,
+  isNetAdmin,
   isNetBattleRoomCode,
   isNetRoundParticipant,
   localBattlePlayerForKey,
   myScramble,
+  netAttemptSolveId,
   netErrorMessage,
   nextLocalBattleCubeHolder,
   normalizeNetBattleRoomCode,
   playerEventOf,
+  readLocalBattlePreferences,
+  requestLocalBattleScramble,
+  saveLocalBattlePreferences,
   selectorIdToNetEvent,
+  startNetRoomPolling,
+  startNetRoomRestore,
   summarizeLocalBattleRounds,
   syncGate,
   timerEventIdFromSelector,
+  timerEventSelectorId,
+  netEventToSelectorId,
   timerSupportsLocalBattleSmartCube,
   timerSupportsNetBattleSmartCube,
   transitionLocalBattle,
@@ -47,54 +54,46 @@ import {
   type LocalBattleAction,
   type LocalBattleEffect,
   type LocalBattlePlayerState,
+  type LocalBattlePreferences,
   type LocalBattleRound,
+  type LocalBattleScramble,
   type LocalBattleState,
   type NetBattleCredentials,
   type NetBattleEventId,
-  type NetIdentity,
   type NetBattleSession,
+  type NetIdentity,
   type NetPenalty,
+  type NetRecordedAttempt,
+  type NetRecordingOutbox,
   type NetRoomState,
   type Penalty,
   type SolveResult,
   type TimerScramblePreviewSettings,
   type TimerStoreSettings,
+  type TimerTypographySettings,
 } from '@cuberoot/shared/timer';
-import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
-import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
+import { createBattleVideoClient } from '@cuberoot/shared/video';
 import {
   SegmentTime,
-  RoomQrModal,
-  TimerPlayersSelect,
-  TimerCubePreview,
-  TimerPuzzlePicker,
-  TimerScrambleStrip,
-  TimerTopbar,
-  TimerRoomRoundStatus,
-  TimerRoomLobby,
-  TimerRoomIdentity,
-  TimerRoomDialog,
-  TimerRoomAdmin,
-  TimerRoomHistory,
-  TimerRoomToolbar,
-  TimerRoomLayout,
-  TimerRoomPlayers,
-  TimerBattleLayout,
-  TimerBattlePlayer,
-  TimerBattleHistory,
-  TimerBattleToolbar,
-  TimerStageLayout,
-  TimerBattleSettings,
+  TimerBattleAppearanceSettings,
   TimerBattleCubeControls,
-  useTimerBattleOrientation,
-  TimingSurface,
+  TimerCubePreview,
+  TimerLocalBattlePage,
+  TimerLocalBattlePlayer,
+  TimerNetBattleEvent,
+  TimerNetBattlePage,
   TimerPenaltyActions,
+  TimerPlayersSelect,
+  TimerPuzzlePicker,
+  TimerRoomIdentity,
+  TimerScrambleStrip,
   shouldIgnoreTimerTarget,
+  useTimerBattleOrientation,
   type TimerPlayersValue,
   type TimerPuzzlePickerGroup,
 } from '@cuberoot/timer-ui';
+import { useTimerBattleVideo } from '@cuberoot/timer-ui/video/TimerBattleVideo';
 import {
-  type ReactNode,
   createRef,
   useCallback,
   useEffect,
@@ -102,7 +101,10 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type ReactNode,
 } from 'react';
+import { mobileApiUrl } from './data/wca-source-adapter';
+const battleVideoClient = createBattleVideoClient({ apiUrl: mobileApiUrl, fetcher: (...args) => fetch(...args) });
 
 import type { COPY, SupportedLanguage } from './copy';
 
@@ -295,9 +297,9 @@ export function LocalBattleMode({
   const visiblePlayers = state.players.slice(0, state.playerCount);
   const active = visiblePlayers.some((player) => (
     player.timer.phase === 'inspecting'
-      || player.timer.phase === 'holding'
-      || player.timer.phase === 'ready'
-      || player.timer.phase === 'running'
+    || player.timer.phase === 'holding'
+    || player.timer.phase === 'ready'
+    || player.timer.phase === 'running'
   ));
   const pickerGroups = useMemo(
     () => battleGroups(eventGroups, new Set(BATTLE_EVENT_IDS)),
@@ -400,8 +402,8 @@ export function LocalBattleMode({
       dispatch({ type: 'set-event', event });
     } else for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) dispatch({ type: 'request-next-scramble', event });
     return () => { for (const request of requestsRef.current.values()) request.abort(); };
-  // Provider identity changes only with the actual source configuration.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Provider identity changes only with the actual source configuration.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrambleProvider]);
 
   useEffect(() => {
@@ -487,7 +489,7 @@ export function LocalBattleMode({
 
   useEffect(() => {
     if (!inputBlocked && !historyOpen && !settingsOpen) return;
-    for (let playerId = 0; playerId < stateRef.current.playerCount; playerId += 1) {
+    for (let playerId = 0;playerId < stateRef.current.playerCount;playerId += 1) {
       dispatch({ type: 'player-timer', playerId, action: { type: 'cancel-press' } });
     }
   }, [dispatch, inputBlocked, historyOpen, settingsOpen]);
@@ -499,7 +501,7 @@ export function LocalBattleMode({
       const playerId = localBattlePlayerForKey(playerKeysRef.current, event.key);
       if (playerId === undefined || playerId >= stateRef.current.playerCount) return;
       if (event.target instanceof HTMLElement && (
-        event.target.matches('input,textarea,select,button') || event.target.isContentEditable
+        event.target.matches('input,textarea,select,button') || event.target.isContentEditable || Boolean(event.target.closest('[data-no-timer]'))
       )) return;
       event.preventDefault();
       down.add(event.key);
@@ -540,14 +542,6 @@ export function LocalBattleMode({
     onModeChange(mode);
   };
 
-  const nextRound = () => {
-    setWinners([]);
-    if (dispatch({ type: 'next-round' })) {
-      roundIdRef.current = nextLocalBattleRoundId();
-      roundTimestampRef.current = Date.now();
-    }
-  };
-
   const renderPlayerScramble = (player: LocalBattlePlayerState) => {
     const scrambleFailed = failedScrambleEvents.has(player.event);
     const sameEventPlayerIds = visiblePlayers
@@ -586,7 +580,7 @@ export function LocalBattleMode({
         title={scrambleFailed ? copy.retry : undefined}
         verificationLabels={scrambleLabels(copy)}
       >{scrambleRows[player.event] && renderSource?.(scrambleRows[player.event]!)}</TimerScrambleStrip>
-          ) : undefined;
+    ) : undefined;
   };
   const sharedScramble = (ids: number[]) => {
     const player = visiblePlayers[ids[0]];
@@ -602,166 +596,177 @@ export function LocalBattleMode({
   };
   const summaries = summarizeLocalBattleRounds(rounds, state.playerCount);
 
-  return (
-    <section className="battle-mode battle-mode--local" aria-label={copy.battleLocalTitle}>
-      <TimerStageLayout devices={smartCube && deviceControls}>
-      <TimerBattleLayout middle={<TimerBattleToolbar language={language} disabled={active} onHistory={() => setHistoryOpen(true)}
-        onSettings={() => setSettingsOpen(true)} onNext={nextRound}
-        eventControl={<TimerPuzzlePicker dataNoTimer disabled={active} groups={pickerGroups} puzzleLabel={copy.puzzle}
-          selectedEvent={visiblePlayers[0].event} onSelect={selectorId => {
-            const event = timerEventIdFromSelector(selectorId);
-            if (!event || !dispatch({ type: 'set-event', event })) return;
-            try { window.localStorage.setItem('battle_puzzle', event); } catch { setStorageError(copy.actionFailed); }
-          }} />}
-        startDisabled={visiblePlayers.some((player) => !player.scramble)}
-        controls={<TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online}
-          onChange={changeMode} playerLabel={copy.players} value={state.playerCount as 2 | 3 | 4} />}
-      />} playerCount={state.playerCount as 2 | 3 | 4} layout={layout} flipTopRow={flipTopRow}
-        bottomScramble={sharedScramble([0, 1])}
-        topScramble={state.playerCount === 4 ? sharedScramble([2, 3]) : undefined}
-        renderPlayer={(playerId, cell) => {
-          const player = visiblePlayers[playerId];
-          const result = player.result;
+  return <TimerLocalBattlePage className="battle-mode battle-mode--local" ariaLabel={copy.battleLocalTitle}
+    devices={smartCube && deviceControls} toolbar={{
+      language: language,
+      disabled: active,
+      onHistory: () => setHistoryOpen(true),
+      onSettings: () => setSettingsOpen(true),
+      eventControl: <TimerPuzzlePicker dataNoTimer disabled={active} groups={pickerGroups} puzzleLabel={copy.puzzle}
+        selectedEvent={timerEventSelectorId(visiblePlayers[0].event)} onSelect={selectorId => {
+          const event = timerEventIdFromSelector(selectorId);
+          if (!event || !dispatch({ type: 'set-event', event })) return;
+          try { window.localStorage.setItem('battle_puzzle', event); } catch { setStorageError(copy.actionFailed); }
+        }} />,
+      startDisabled: visiblePlayers.some((player) => !player.scramble),
+      controls: <TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online}
+        onChange={changeMode} playerLabel={copy.players} value={state.playerCount as 2 | 3 | 4} />
+    }} layout={{
+      playerCount: state.playerCount as 2 | 3 | 4,
+      layout: layout,
+      flipTopRow: flipTopRow,
+      bottomScramble: sharedScramble([0, 1]),
+      topScramble: state.playerCount === 4 ? sharedScramble([2, 3]) : undefined,
+      renderPlayer: (playerId, cell) => {
+        const player = visiblePlayers[playerId];
+        const result = player.result;
+        const averageSolves = rounds.flatMap(round => round.attempts
+          .filter(attempt => attempt.playerId === player.id && attempt.solve.event === player.event)
+          .map(attempt => attempt.solve));
+        const average = averageOfN(averageSolves, 5);
 
-          const isWinner = result !== null && winners.includes(player.id);
-          const sameEventPlayerIds = visiblePlayers
-            .filter((candidate) => candidate.event === player.event)
-            .map((candidate) => candidate.id);
-          const scrambleHidden = isLocalBattleScrambleHidden(
-            visiblePlayers.map((candidate) => ({
-              hasFinished: candidate.result !== null,
-              isTiming: candidate.timer.phase === 'running',
-            })),
-            sameEventPlayerIds,
-          );
-          return (
-            <TimerBattlePlayer className="battle-player" playerNumber={player.id + 1}
-              language={language} background={{ color: preferences.bgColors[player.id], image: preferences.bgImages[player.id], opacity: preferences.bgOpacity }} score={summaries.find((summary) => summary.playerId === player.id)?.wins ?? 0}
-              winner={isWinner}
-
-              actions={result ? <TimerPenaltyActions language={language} value={player.penalty}
-                onChange={(penalty) => dispatch({ type: 'set-penalty', playerId: player.id, penalty })} /> : undefined}
-            >
-              <TimingSurface
-                layout="local"
-                ariaLabel={copy.battlePlayer(player.id + 1)}
-                className="battle-player-timer"
-                cornerSlot={!cell.hideScramble && !scrambleHidden && showPreview && player.scramble ? (
-                  <TimerCubePreview
-                    ariaLabel={copy.cubeState}
-                    event={player.event}
-                    fill
-                    scramble={player.scramble}
-                    visualization={scramblePreviewSettings?.prefer3D ? '3D' : '2D'}
-                  />
-                ) : undefined}
-                colorClass={`${localPlayerColor(player)} tf-${typographySettings.timerFont}`} fontScale={typographySettings.timerFontScale}
-                digits={<SegmentTime text={playerDisplay(player, nowMs, {
-                  hideTime,
-                  inspectionSec,
-                  precision,
-                  runningPrecision,
-                })} />}
-                interactive={player.scramble.length > 0}
-                onContextMenu={(event) => event.preventDefault()}
-                onPointerCancel={() => dispatch({
-                  type: 'player-timer', playerId: player.id, action: { type: 'cancel-press' },
-                })}
-                onPointerDown={(event) => {
-                  if (inputBlockedRef.current || event.button !== 0 || shouldIgnoreTimerTarget(event.target)) return;
-                  event.preventDefault();
-                  event.currentTarget.setPointerCapture(event.pointerId);
-                  setWinners([]);
-                  dispatch({
-                    type: 'player-timer',
-                    playerId: player.id,
-                    action: { type: 'press-down', nowMs: performance.now() },
-                  });
-                }}
-                onPointerUp={(event) => {
-                  if (shouldIgnoreTimerTarget(event.target)) return;
-                  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                    event.currentTarget.releasePointerCapture(event.pointerId);
-                  }
-                  dispatch({
-                    type: 'player-timer',
-                    playerId: player.id,
-                    action: { type: 'press-up', nowMs: performance.now() },
-                  });
-                }}
-                phase={player.timer.phase}
-                scrambleSlot={!cell.hideScramble ? renderPlayerScramble(player) : undefined}
-                surfaceRef={surfaceRefs[player.id]}
+        const isWinner = result !== null && winners.includes(player.id);
+        const sameEventPlayerIds = visiblePlayers
+          .filter((candidate) => candidate.event === player.event)
+          .map((candidate) => candidate.id);
+        const scrambleHidden = isLocalBattleScrambleHidden(
+          visiblePlayers.map((candidate) => ({
+            hasFinished: candidate.result !== null,
+            isTiming: candidate.timer.phase === 'running',
+          })),
+          sameEventPlayerIds,
+        );
+        return (
+          <TimerLocalBattlePlayer average={average !== null && <div className="ao5-display">ao5: {Number.isFinite(average) ? formatMs(average, precision) : 'DNF'}</div>} player={{
+            className: "battle-player",
+            playerNumber: player.id + 1,
+            language: language,
+            background: { color: preferences.bgColors[player.id], image: preferences.bgImages[player.id], opacity: preferences.bgOpacity },
+            score: summaries.find((summary) => summary.playerId === player.id)?.wins ?? 0,
+            winner: isWinner,
+            actions: result ? <TimerPenaltyActions language={language} value={player.penalty}
+              onChange={(penalty) => dispatch({ type: 'set-penalty', playerId: player.id, penalty })} /> : undefined
+          }} timing={{
+            ariaLabel: copy.battlePlayer(player.id + 1),
+            className: "battle-player-timer",
+            cornerSlot: !cell.hideScramble && !scrambleHidden && showPreview && player.scramble ? (
+              <TimerCubePreview
+                ariaLabel={copy.cubeState}
+                event={player.event}
+                fill
+                scramble={player.scramble}
+                visualization={scramblePreviewSettings?.prefer3D ? '3D' : '2D'}
               />
-            </TimerBattlePlayer>
-          );
-        }}
-      />
-      </TimerStageLayout>
-      {visiblePlayers.every((player) => player.result !== null) && (
-        <p aria-live="polite" className="battle-round-status">{copy.battleAllFinished}</p>
-      )}
-      <div className="battle-local-tools" data-no-timer>
-        {settingsOpen && <TimerBattleSettings layout={{
-          playerCount: state.playerCount as 2 | 3 | 4, layout, flipTopRow,
-          onLayoutChange: layout => updatePreferences({ layout }), onFlipChange: flipTopRow => updatePreferences({ flipTopRow }),
-        }} language={language} onClose={() => setSettingsOpen(false)}
-          onReset={async () => {
-            await historyWritesRef.current;
-            try {
-              await roundStoreRef.current!.clear(); roundsRef.current = []; setRounds([]); setStorageError('');
-              dispatch({ type: 'reset-round' });
-              for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) dispatch({ type: 'request-next-scramble', event });
-            } catch (error) { setStorageError(copy.actionFailed); throw error; }
-          }}
-          source={sourceSettings?.(visiblePlayers[0].event)}
-          syncStart={{ value: syncStart, onChange: value => {
-            updatePreferences({ syncStart: value });
-          } }}
-          keys={playerKeys.slice(0, state.playerCount)}
-          onKeyChange={(playerId, key) => {
-            const next = assignLocalBattlePlayerKey(playerKeysRef.current, playerId, key);
-            playerKeysRef.current = next; setPlayerKeys(next);
-            void keyStoreRef.current?.save(next).catch(() => setStorageError(copy.actionFailed));
-          }}
-          precision={{ value: precision, options: LOCAL_BATTLE_PRECISIONS, onChange: value => updatePreferences({ precision: value as LocalBattlePreferences['precision'] }) }}
-          inspection={{ value: inspectionSec, options: LOCAL_BATTLE_INSPECTIONS, onChange: inspectionSec => updatePreferences({ inspectionSec }) }}
-          hold={{ value: holdMs, onChange: holdMs => updatePreferences({ holdMs }) }}
-          preview={{ value: showPreview, onChange: showImage => { updatePreferences({ showImage }); onSettingsChange?.({ showCubePreview: showImage }); } }}
-          hideTime={{ value: hideTime, onChange: hideTime => updatePreferences({ hideTime }) }}
-          devices={smartCube && <TimerBattleCubeControls language={language} mode="shared" holder={cubeHolder}
-            onHolderChange={setCubeHolder} deviceControl={() => deviceControls}
-            players={visiblePlayers.map((player) => ({ id: player.id, disabled: active || !timerSupportsLocalBattleSmartCube(player.event) || player.result !== null }))} />}
-        ><TimerBattleAppearanceSettings language={language} playerCount={state.playerCount} value={preferences} onChange={updatePreferences} />
-        </TimerBattleSettings>}
-        {historyOpen && <TimerBattleHistory rounds={rounds} playerCount={state.playerCount} language={language} precision={precision}
-          onClose={() => setHistoryOpen(false)} onBackChange={onOverlayCloseChange}
-          warning={storageError && <p role="alert">{storageError}</p>}
-          onExport={onExportRounds ? () => { void onExportRounds(roundsRef.current).catch(() => setStorageError(copy.actionFailed)); } : undefined}
-          onDelete={async (id) => {
-            await historyWritesRef.current;
-            const next = roundsRef.current.filter(round => round.id !== id);
-            try {
-              await roundStoreRef.current!.save(next);
-              roundsRef.current = next; setRounds(next); setStorageError('');
-              if (id === roundIdRef.current) dispatch({ type: 'reset-round' });
-            } catch (error) { setStorageError(copy.actionFailed); throw error; }
-          }}
-          onClear={async () => {
-            await historyWritesRef.current;
-            try {
-              await roundStoreRef.current!.clear();
-              roundsRef.current = []; setRounds([]); setStorageError('');
-              dispatch({ type: 'reset-round' });
-            } catch (error) { setStorageError(copy.actionFailed); throw error; }
-          }} />}
-      </div>
-      {storageError && <p aria-live="assertive" className="battle-error">{storageError}</p>}
-    </section>
-  );
+            ) : undefined,
+            colorClass: `${localPlayerColor(player)} tf-${typographySettings.timerFont}`,
+            fontScale: typographySettings.timerFontScale,
+            digits: <SegmentTime text={playerDisplay(player, nowMs, {
+              hideTime,
+              inspectionSec,
+              precision,
+              runningPrecision,
+            })} />,
+            interactive: player.scramble.length > 0,
+            onContextMenu: (event) => event.preventDefault(),
+            onPointerCancel: () => dispatch({
+              type: 'player-timer', playerId: player.id, action: { type: 'cancel-press' },
+            }),
+            onPointerDown: (event) => {
+              if (inputBlockedRef.current || event.button !== 0 || shouldIgnoreTimerTarget(event.target)) return;
+              event.preventDefault();
+              event.currentTarget.setPointerCapture(event.pointerId);
+              setWinners([]);
+              dispatch({
+                type: 'player-timer',
+                playerId: player.id,
+                action: { type: 'press-down', nowMs: performance.now() },
+              });
+            },
+            onPointerUp: (event) => {
+              if (shouldIgnoreTimerTarget(event.target)) return;
+              if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                event.currentTarget.releasePointerCapture(event.pointerId);
+              }
+              dispatch({
+                type: 'player-timer',
+                playerId: player.id,
+                action: { type: 'press-up', nowMs: performance.now() },
+              });
+            },
+            phase: player.timer.phase,
+            scrambleSlot: !cell.hideScramble ? renderPlayerScramble(player) : undefined,
+            surfaceRef: surfaceRefs[player.id]
+          }} />
+        );
+      }
+    }}
+    settings={settingsOpen && {
+      layout: {
+        playerCount: state.playerCount as 2 | 3 | 4, layout, flipTopRow,
+        onLayoutChange: layout => updatePreferences({ layout }), onFlipChange: flipTopRow => updatePreferences({ flipTopRow }),
+      },
+      language: language,
+      onClose: () => setSettingsOpen(false),
+      onReset: async () => {
+        await historyWritesRef.current;
+        try {
+          await roundStoreRef.current!.clear(); roundsRef.current = []; setRounds([]); setStorageError('');
+          dispatch({ type: 'reset-round' });
+          for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) dispatch({ type: 'request-next-scramble', event });
+        } catch (error) { setStorageError(copy.actionFailed); throw error; }
+      },
+      source: sourceSettings?.(visiblePlayers[0].event),
+      syncStart: {
+        value: syncStart, onChange: value => {
+          updatePreferences({ syncStart: value });
+        }
+      },
+      keys: playerKeys.slice(0, state.playerCount),
+      onKeyChange: (playerId, key) => {
+        const next = assignLocalBattlePlayerKey(playerKeysRef.current, playerId, key);
+        playerKeysRef.current = next; setPlayerKeys(next);
+        void keyStoreRef.current?.save(next).catch(() => setStorageError(copy.actionFailed));
+      },
+      precision: { value: precision, options: LOCAL_BATTLE_PRECISIONS, onChange: value => updatePreferences({ precision: value as LocalBattlePreferences['precision'] }) },
+      inspection: { value: inspectionSec, options: LOCAL_BATTLE_INSPECTIONS, onChange: inspectionSec => updatePreferences({ inspectionSec }) },
+      hold: { value: holdMs, onChange: holdMs => updatePreferences({ holdMs }) },
+      preview: { value: showPreview, onChange: showImage => { updatePreferences({ showImage }); onSettingsChange?.({ showCubePreview: showImage }); } },
+      hideTime: { value: hideTime, onChange: hideTime => updatePreferences({ hideTime }) },
+      devices: smartCube && <TimerBattleCubeControls language={language} mode="shared" holder={cubeHolder}
+        onHolderChange={setCubeHolder} deviceControl={() => deviceControls}
+        players={visiblePlayers.map((player) => ({ id: player.id, disabled: active || !timerSupportsLocalBattleSmartCube(player.event) || player.result !== null }))} />, children: <> <TimerBattleAppearanceSettings language={language} playerCount={state.playerCount} value={preferences} onChange={updatePreferences} /> </>
+    }} history={historyOpen && {
+      rounds: rounds,
+      playerCount: state.playerCount,
+      language: language,
+      precision: precision,
+      onClose: () => setHistoryOpen(false),
+      onBackChange: onOverlayCloseChange,
+      warning: storageError && <p role="alert">{storageError}</p>,
+      onExport: onExportRounds ? () => { void onExportRounds(roundsRef.current).catch(() => setStorageError(copy.actionFailed)); } : undefined,
+      onDelete: async (id) => {
+        await historyWritesRef.current;
+        const next = roundsRef.current.filter(round => round.id !== id);
+        try {
+          await roundStoreRef.current!.save(next);
+          roundsRef.current = next; setRounds(next); setStorageError('');
+          if (id === roundIdRef.current) dispatch({ type: 'reset-round' });
+        } catch (error) { setStorageError(copy.actionFailed); throw error; }
+      },
+      onClear: async () => {
+        await historyWritesRef.current;
+        try {
+          await roundStoreRef.current!.clear();
+          roundsRef.current = []; setRounds([]); setStorageError('');
+          dispatch({ type: 'reset-round' });
+        } catch (error) { setStorageError(copy.actionFailed); throw error; }
+      }
+    }}
+    feedback={visiblePlayers.every(player => player.result !== null) && <p aria-live="polite" className="battle-round-status">{copy.battleAllFinished}</p>}
+    error={storageError} />;
 }
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 const emptySnapshot = () => null;
 
 export interface NetBattleModeProps extends BattleModeBaseProps {
@@ -826,8 +831,8 @@ export function NetBattleMode({
   useEffect(() => {
     onOverlayCloseChange?.(qrOpen ? () => setQrOpen(false)
       : renameOpen ? () => setRenameOpen(false)
-      : showAdmin ? () => setShowAdmin(false)
-        : showHistory ? () => setShowHistory(false) : null);
+        : showAdmin ? () => setShowAdmin(false)
+          : showHistory ? () => setShowHistory(false) : null);
     return () => onOverlayCloseChange?.(null);
   }, [onOverlayCloseChange, qrOpen, renameOpen, showAdmin, showHistory]);
   const [joinCode, setJoinCode] = useState('');
@@ -882,7 +887,7 @@ export function NetBattleMode({
   useSyncExternalStore(recordingOutbox?.subscribe ?? emptySubscribe, recordingOutbox?.getSnapshot ?? emptySnapshot, recordingOutbox?.getSnapshot ?? emptySnapshot);
   const myResult = room && credentials
     ? recordingOutbox?.result({ code: room.code, playerId: credentials.playerId, round: room.round })
-      ?? room.results[String(room.round)]?.[credentials.playerId]
+    ?? room.results[String(room.round)]?.[credentials.playerId]
     : undefined;
   const event = room && credentials ? playerEventOf(room, credentials.playerId) : lobbyEvent;
   const scramble = room && credentials ? myScramble(room, credentials.playerId) ?? '' : '';
@@ -929,9 +934,11 @@ export function NetBattleMode({
       attemptAuthRef.current = { ...auth };
       netTimerPhaseRef.current = 'running';
       setRecordedSolve(null);
-      netAttemptRef.current.begin({ code: current.code, playerId: auth.playerId, round: current.round,
+      netAttemptRef.current.begin({
+        code: current.code, playerId: auth.playerId, round: current.round,
         sessionId: sessionId ?? '', id: netAttemptSolveId({ code: current.code, playerId: auth.playerId, round: current.round }), ts: Date.now(),
-        event: playerEventOf(current, auth.playerId), scramble: myScramble(current, auth.playerId) ?? '' }, startedAtMs,
+        event: playerEventOf(current, auth.playerId), scramble: myScramble(current, auth.playerId) ?? ''
+      }, startedAtMs,
         smartCube?.phase === 'connected' ? { model: smartCube.model ?? '', name: smartCube.deviceName } : undefined);
     },
   });
@@ -1237,26 +1244,18 @@ export function NetBattleMode({
   };
 
   if (!capability) {
-    return (
-      <section className="battle-mode battle-mode--net" aria-label={copy.battleOnlineTitle}>
-        <TimerTopbar controls={(
-          <TimerPlayersSelect
-            ariaLabel={copy.onePlayer}
-            onlineLabel={copy.online}
-            onChange={changeMode}
-            playerLabel={copy.players}
-            value="net"
-          />
-        )} />
-        <p className="battle-empty">{copy.battleOnlineUnavailable}</p>
-      </section>
-    );
+    return <TimerNetBattlePage language={language} className="battle-mode battle-mode--net" ariaLabel={copy.battleOnlineTitle}
+      video={video} unavailable={copy.battleOnlineUnavailable} topbar={{
+        controls: <TimerPlayersSelect
+          ariaLabel={copy.onePlayer} onlineLabel={copy.online} onChange={changeMode}
+          playerLabel={copy.players} value="net" />
+      }} />;
   }
 
   if (!room || !credentials) {
-    return (
-      <section className="battle-mode battle-mode--net" aria-label={copy.battleOnlineTitle}>
-        <TimerTopbar controls={(
+    return <TimerNetBattlePage language={language} className="battle-mode battle-mode--net" ariaLabel={copy.battleOnlineTitle}
+      topbar={{
+        controls: (
           <TimerPlayersSelect
             ariaLabel={copy.onePlayer}
             disabled={busy}
@@ -1265,18 +1264,23 @@ export function NetBattleMode({
             playerLabel={copy.players}
             value="net"
           />
-        )} />
-        <TimerRoomLobby language={language} code={joinCode} busy={busy} error={error}
-          onCodeChange={setJoinCode} onJoin={joinRoom} onCreate={createRoom}
-          identity={<TimerRoomIdentity language={language} account={accountIdentity ? identity : null}
-            value={selectedPerson} defaultQuery={name} disabled={busy} onQueryChange={setName}
-            onChange={(person) => { setSelectedPerson(person); setName(''); }} />}
-          event={<TimerPuzzlePicker dataNoTimer disabled={busy} groups={eventPickerGroups}
-            onSelect={(selectorId) => { const next = selectorIdToNetEvent(selectorId); if (next) setLobbyEvent(next); }}
-            puzzleLabel={copy.puzzle} selectedEvent={lobbyEvent} />}
-        />
-      </section>
-    );
+        )
+      }} video={video} lobby={{
+        language: language,
+        code: joinCode,
+        busy: busy,
+        error: error,
+        onCodeChange: setJoinCode,
+        onJoin: joinRoom,
+        onExit: () => changeMode(1),
+        onCreate: createRoom,
+        identity: <TimerRoomIdentity language={language} account={accountIdentity ? identity : null}
+          value={selectedPerson} defaultQuery={name} disabled={busy} onQueryChange={setName}
+          onChange={(person) => { setSelectedPerson(person); setName(''); }} />,
+        event: <TimerPuzzlePicker dataNoTimer disabled={busy} groups={eventPickerGroups}
+          onSelect={(selectorId) => { const next = selectorIdToNetEvent(selectorId); if (next) setLobbyEvent(next); }}
+          puzzleLabel={copy.puzzle} selectedEvent={netEventToSelectorId(lobbyEvent)} />
+      }} />;
   }
 
   const currentResult = myResult;
@@ -1288,38 +1292,37 @@ export function NetBattleMode({
     : currentResult
       ? netResultText(currentResult.t, currentResult.p, precision)
       : formatTimerTimingDisplay({
-          displayMs,
-          hideTime,
-          inspectionDisplayMs: timer.machine.phase === 'inspecting'
-            ? Math.max(0, timer.nowMs - (timer.machine.inspectionStartedAtMs ?? timer.nowMs))
-            : 0,
-          inspectionLimitSec: timer.machine.inspectionSec ?? inspectionSec,
-          lastPenalty: null,
-          phase: timer.machine.phase,
-          precision,
-          runningPrecision,
-          timingEnabled: true,
-        });
+        displayMs,
+        hideTime,
+        inspectionDisplayMs: timer.machine.phase === 'inspecting'
+          ? Math.max(0, timer.nowMs - (timer.machine.inspectionStartedAtMs ?? timer.nowMs))
+          : 0,
+        inspectionLimitSec: timer.machine.inspectionSec ?? inspectionSec,
+        lastPenalty: null,
+        phase: timer.machine.phase,
+        precision,
+        runningPrecision,
+        timingEnabled: true,
+      });
   const colorClass = currentResult?.p === 'dnf' ? 'dnf' : timer.machine.phase;
   const amAdmin = isNetAdmin(room, credentials.playerId);
 
-  return (
-    <section className="battle-mode battle-mode--net" aria-label={copy.battleOnlineTitle}>
-      <TimerTopbar
-        controls={(
-          <>
-          <TimerPuzzlePicker
-            dataNoTimer
-            disabled={active || Boolean(currentResult)}
-            groups={eventPickerGroups}
-            onSelect={(selectorId) => {
+  return <TimerNetBattlePage language={language} className="battle-mode battle-mode--net" ariaLabel={copy.battleOnlineTitle}
+    solving={timerPhase === 'running'} topbar={{
+      controls: (
+        <>
+          <TimerNetBattleEvent picker={{
+            dataNoTimer: true,
+            disabled: active || Boolean(currentResult),
+            groups: eventPickerGroups,
+            onSelect: (selectorId) => {
               const next = selectorIdToNetEvent(selectorId);
               if (!next || next === event) return;
               void roomController.execute(() => capability.client.postNetEvent(room.code, credentials, next), { onSuccess: () => timer.reset() });
-            }}
-            puzzleLabel={copy.puzzle}
-            selectedEvent={event}
-          />
+            },
+            puzzleLabel: copy.puzzle,
+            selectedEvent: netEventToSelectorId(event)
+          }} locked={!!currentResult || !inRoundRoster} />
           <TimerPlayersSelect
             ariaLabel={copy.onePlayer}
             disabled={active}
@@ -1328,155 +1331,175 @@ export function NetBattleMode({
             playerLabel={copy.players}
             value="net"
           />
-          </>
-        )}
-      />
-      {showAdmin && amAdmin && <TimerRoomAdmin room={room} currentPlayerId={credentials.playerId}
-        language={language} busy={roomActionTarget !== null} onClose={() => setShowAdmin(false)}
-        onSyncStart={(value) => {
-          setRoomActionTarget('sync');
-          void roomController.execute(() => capability.client.postNetSyncStart(room.code, credentials, value), { onSettled: () => setRoomActionTarget(null) });
-        }}
-        onTransfer={(id) => {
-          setRoomActionTarget(id);
-          void roomController.execute(() => capability.client.postNetAdmin(room.code, credentials, id), { onSuccess: () => setShowAdmin(false), onSettled: () => setRoomActionTarget(null) });
-        }}
-        onKick={(id) => {
-          setRoomActionTarget(id);
-          void roomController.execute(() => capability.client.postNetKick(room.code, credentials, id), { onSettled: () => setRoomActionTarget(null) });
-        }} />}
-      {showHistory && <TimerRoomHistory room={room} currentPlayerId={credentials.playerId}
-        language={language} precision={precision} onClose={() => setShowHistory(false)} />}
-      {renameOpen && <TimerRoomDialog language={language} title={{ en: 'Change name', zh: '改名' }[language]} onClose={() => setRenameOpen(false)}>
-        <TimerRoomIdentity language={language} value={selectedPerson} defaultQuery={name} disabled={busy}
-          onQueryChange={setName} onChange={(person) => { setSelectedPerson(person); setName(''); }} />
-        <div className="timer-room-actions"><button type="button" disabled={busy} onClick={() => {
-          setBusy(true);
-          void roomController.execute(() => capability.client.renameNetPlayer(room.code, credentials, identity), { onSuccess: () => setRenameOpen(false), onSettled: () => setBusy(false) });
-        }}>{copy.save}</button></div>
-      </TimerRoomDialog>}
-      <TimerRoomLayout devices={smartCube && deviceControls} toolbar={<TimerRoomToolbar language={language} code={room.code} round={room.round}
-        syncStart={room.syncStart} copied={copied} copyKind="code" disabled={active}
-        historyOpen={showHistory} adminOpen={showAdmin}
-        onCopy={() => {
-          void writeClipboardText(room.code).then(() => {
+        </>
+      )
+    }} video={video}
+    room={{
+      devices: smartCube && deviceControls,
+      toolbar: {
+        language: language,
+        code: room.code,
+        round: room.round,
+        syncStart: room.syncStart,
+        copied: copied,
+        copyKind: "invite",
+        disabled: active,
+        historyOpen: showHistory,
+        adminOpen: showAdmin,
+        onCopy: () => {
+          void writeClipboardText(`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`).then(() => {
             if (!mountedRef.current) return;
             setCopied(true);
             if (copiedResetRef.current !== null) window.clearTimeout(copiedResetRef.current);
             copiedResetRef.current = window.setTimeout(() => setCopied(false), 1_500);
           }).catch((reason: unknown) => { if (mountedRef.current) fail(reason); });
-        }}
-        onQr={() => setQrOpen(true)}
-        onHistory={() => { setShowHistory(true); setShowAdmin(false); }}
-        onAdmin={amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined}
-        onLeave={() => void leaveRoom()}
-      ><VideoToggle video={video} /></TimerRoomToolbar>}
-        media={<VideoStrip video={video} />}
-        players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
-        language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)}
-        onRename={!accountIdentity ? (name) => {
+        },
+        onQr: () => setQrOpen(true),
+        onHistory: () => { setShowHistory(true); setShowAdmin(false); },
+        onAdmin: amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined,
+        onLeave: () => void leaveRoom()
+      },
+      players: {
+        room: room,
+        currentPlayerId: credentials.playerId,
+        language: language,
+        precision: precision,
+        nowMs: Date.now() + (offsetRef.current ?? 0),
+        onRename: !accountIdentity ? (name) => {
           const player = room.players[credentials.playerId];
           setName(name);
           setSelectedPerson(player?.wcaId ? { id: player.wcaId, name: player.name, country_iso2: player.iso2 ?? '' } : null);
           setRenameOpen(true);
-        } : undefined} />}
-      >
-        <>
-          <TimingSurface
-            layout="net"
-            ariaLabel={copy.timer}
-            colorClass={`${colorClass} tf-${typographySettings.timerFont}`} fontScale={typographySettings.timerFontScale}
-            cornerSlot={scramblePreviewSettings.showCubePreview && scramble ? (
-              <TimerCubePreview
-                ariaLabel={copy.cubeState}
-                event={event}
-                fill
-                scramble={scramble}
-                visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
-              />
-            ) : undefined}
-            digits={<SegmentTime text={timerText} />}
-            interactive={Boolean(scramble && !currentResult && inRoundRoster && (
-              gate.gated || canManuallyStart || timerPhase === 'running'
-            ))}
-            onContextMenu={(event) => event.preventDefault()}
-            onPointerCancel={(pointer) => {
-              if (shouldIgnoreTimerTarget(pointer.target)
-                || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
-              timer.cancelPress();
-            }}
-            onPointerDown={(pointer) => {
-              if (shouldIgnoreTimerTarget(pointer.target)
-                || pointer.button !== 0
-                || currentResult
-                || !inRoundRoster) return;
-              pointer.preventDefault();
-              if (gate.gated) {
-                const phase = gate.ready ? 'idle' : 'ready';
-                void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, phase));
-                return;
-              }
-              if (!canManuallyStart && timerPhase !== 'running') return;
-              pointer.currentTarget.setPointerCapture(pointer.pointerId);
-              timer.pressDown();
-            }}
-            onPointerUp={(pointer) => {
-              if (shouldIgnoreTimerTarget(pointer.target)
-                || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
-              pointer.currentTarget.releasePointerCapture(pointer.pointerId);
-              if (!gate.gated && (canManuallyStart || timerPhase === 'running')) timer.pressUp();
-            }}
-            phase={timer.machine.phase}
-            scrambleSlot={(
-              <TimerScrambleStrip font={typographySettings.scrambleFont} fontScale={typographySettings.scrambleFontScale}
-                copiedLabel={copy.copied}
-                fallback={copy.battleNoScramble}
-                fallbackKind="custom"
-                hint={netSmartCubeHint}
-                match={netSmartCubeMatch}
-                scramble={scramble}
-                verificationLabels={scrambleLabels(copy)}
-              />
-            )}
-            surfaceRef={surfaceRef}
-          >
-            <TimerRoomRoundStatus room={room} currentPlayerId={credentials.playerId} language={language}
-              idle={timerPhase === 'idle' || timerPhase === 'stopped'} countdown={countdownMs !== null}
-              cubeAutoReadySuspended={smartCube?.phase === 'connected'}
-              onReady={() => { void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready')); }}
-              onPenalty={(penalty) => {
-                if (!currentResult) return;
-                const record = netAttemptRef.current.penalty({ code: room.code, playerId: credentials.playerId, round: room.round }, penalty);
-                if (onRecordSolve) {
-                  const identity = { code: room.code, playerId: credentials.playerId, round: room.round };
-                  const context = { ...identity, id: netAttemptSolveId(identity), ts: Date.now(), sessionId: sessionId ?? '', event, scramble };
-                  persistRecording(record ?? { context, solve: { id: context.id, ts: context.ts, event, scramble,
-                    timeMs: currentResult.t, penalty: penalty === 'dnf' ? 'DNF' : penalty } });
-                  return;
+        } : undefined
+      },
+      stage: {
+        scramble: {
+          font: typographySettings.scrambleFont,
+          fontScale: typographySettings.scrambleFontScale,
+          hint: netSmartCubeHint,
+          match: netSmartCubeMatch,
+          scramble: formatScrambleForEvent(event, scramble),
+        },
+        timing: {
+          ariaLabel: copy.timer,
+          colorClass: `${colorClass} tf-${typographySettings.timerFont}`,
+          fontScale: typographySettings.timerFontScale,
+          cornerSlot: scramblePreviewSettings.showCubePreview && scramble ? (
+            <TimerCubePreview
+              ariaLabel={copy.cubeState}
+              event={event}
+              fill
+              scramble={scramble}
+              visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
+            />
+          ) : undefined,
+          digits: <SegmentTime text={timerText} />,
+          interactive: Boolean(scramble && !currentResult && inRoundRoster && (
+            gate.gated || canManuallyStart || timerPhase === 'running'
+          )),
+          onContextMenu: (event) => event.preventDefault(),
+          onPointerCancel: (pointer) => {
+            if (shouldIgnoreTimerTarget(pointer.target)
+              || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
+            timer.cancelPress();
+          },
+          onPointerDown: (pointer) => {
+            if (shouldIgnoreTimerTarget(pointer.target)
+              || pointer.button !== 0
+              || currentResult
+              || !inRoundRoster) return;
+            pointer.preventDefault();
+            if (gate.gated) {
+              const phase = gate.ready ? 'idle' : 'ready';
+              void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, phase));
+              return;
+            }
+            if (!canManuallyStart && timerPhase !== 'running') return;
+            pointer.currentTarget.setPointerCapture(pointer.pointerId);
+            timer.pressDown();
+          },
+          onPointerUp: (pointer) => {
+            if (shouldIgnoreTimerTarget(pointer.target)
+              || !pointer.currentTarget.hasPointerCapture(pointer.pointerId)) return;
+            pointer.currentTarget.releasePointerCapture(pointer.pointerId);
+            if (!gate.gated && (canManuallyStart || timerPhase === 'running')) timer.pressUp();
+          },
+          phase: timer.machine.phase,
+
+          surfaceRef: surfaceRef
+        }, status: {
+          room: room,
+          currentPlayerId: credentials.playerId,
+          language: language,
+          idle: timerPhase === 'idle' || timerPhase === 'stopped',
+          countdown: countdownMs !== null,
+          cubeAutoReadySuspended: smartCube?.phase === 'connected',
+          onReady: () => { void roomController.execute(() => capability.client.postNetStatus(room.code, credentials, gate.ready ? 'idle' : 'ready')); },
+          onPenalty: (penalty) => {
+            if (!currentResult) return;
+            const record = netAttemptRef.current.penalty({ code: room.code, playerId: credentials.playerId, round: room.round }, penalty);
+            if (onRecordSolve) {
+              const identity = { code: room.code, playerId: credentials.playerId, round: room.round };
+              const context = { ...identity, id: netAttemptSolveId(identity), ts: Date.now(), sessionId: sessionId ?? '', event, scramble };
+              persistRecording(record ?? {
+                context, solve: {
+                  id: context.id, ts: context.ts, event, scramble,
+                  timeMs: currentResult.t, penalty: penalty === 'dnf' ? 'DNF' : penalty
                 }
-                void roomController.submitResult(room.round, () => capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty), { t: currentResult.t, p: penalty });
-              }}
-              onNext={advanceRound} />
-          </TimingSurface>
-        </>
-      </TimerRoomLayout>
-      {error && <p aria-live="assertive" className="battle-error">{error}</p>}
-      {qrOpen && (
-        <RoomQrModal
-          code={room.code}
-          labels={{
-            close: copy.close,
-            copied: copy.copied,
-            copyFailed: copy.actionFailed,
-            copyInvite: copy.battleCopyInvite,
-            scanToJoin: copy.battleScanToJoin,
-          }}
-          onClose={() => setQrOpen(false)}
-          url={`https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`}
-          writeClipboardText={writeClipboardText}
-        />
-      )}
-      {recordedSolve && timerPhase !== 'running' && renderRecordedSolve?.(recordedSolve)}
-    </section>
-  );
+              });
+              return;
+            }
+            void roomController.submitResult(room.round, () => capability.client.postNetResult(room.code, credentials, room.round, currentResult.t, penalty), { t: currentResult.t, p: penalty });
+          },
+          onNext: advanceRound
+        }, error
+      },
+      admin: showAdmin && amAdmin && {
+        room: room,
+        currentPlayerId: credentials.playerId,
+        language: language,
+        busy: roomActionTarget !== null,
+        onClose: () => setShowAdmin(false),
+        onSyncStart: (value) => {
+          setRoomActionTarget('sync');
+          void roomController.execute(() => capability.client.postNetSyncStart(room.code, credentials, value), { onSettled: () => setRoomActionTarget(null) });
+        },
+        onTransfer: (id) => {
+          setRoomActionTarget(id);
+          void roomController.execute(() => capability.client.postNetAdmin(room.code, credentials, id), { onSuccess: () => setShowAdmin(false), onSettled: () => setRoomActionTarget(null) });
+        },
+        onKick: (id) => {
+          setRoomActionTarget(id);
+          void roomController.execute(() => capability.client.postNetKick(room.code, credentials, id), { onSettled: () => setRoomActionTarget(null) });
+        }
+      },
+      history: showHistory && {
+        room: room,
+        currentPlayerId: credentials.playerId,
+        language: language,
+        precision: precision,
+        onClose: () => setShowHistory(false)
+      },
+      rename: renameOpen && {
+        identity: <TimerRoomIdentity language={language} value={selectedPerson} defaultQuery={name} disabled={busy}
+          onQueryChange={setName} onChange={(person) => { setSelectedPerson(person); setName(''); }} />, busy, onClose: () => setRenameOpen(false), onSave: () => {
+            setBusy(true);
+            void roomController.execute(() => capability.client.renameNetPlayer(room.code, credentials, identity), { onSuccess: () => setRenameOpen(false), onSettled: () => setBusy(false) });
+          }
+      },
+      qr: qrOpen && {
+        code: room.code,
+        labels: {
+          close: copy.close,
+          copied: copy.copied,
+          copyFailed: copy.actionFailed,
+          copyInvite: copy.battleCopyInvite,
+          scanToJoin: copy.battleScanToJoin,
+        },
+        onClose: () => setQrOpen(false),
+        url: `https://cuberoot.me${language === 'zh' ? '/zh' : ''}/timer?players=net&room=${room.code}`,
+        writeClipboardText: writeClipboardText
+      },
+    }}
+    recap={recordedSolve && timerPhase !== 'running' && renderRecordedSolve?.(recordedSolve)} />;
 }

@@ -1,3 +1,5 @@
+import { EventIcon } from '@cuberoot/event-icon/event';
+import { netEventToSelectorId } from '@cuberoot/shared/timer';
 import type { ReactNode } from 'react';
 import { Eye, ShieldCheck, Trophy } from 'lucide-react';
 import { displayCuberName } from '@cuberoot/shared/cuber-name-display';
@@ -47,7 +49,7 @@ export function TimerRoomPlayers({ room, currentPlayerId, language, precision, n
           : player.ph === 'solving' ? runningTime?.(player.id, elapsed) ?? formatMs(elapsed, 2)
             : player.ph === 'inspecting' ? copy.inspecting : player.ph === 'ready' ? copy.ready : copy.waiting;
       return <li key={player.id} className={`timer-room-player${mine ? ' is-me' : ''}${online ? '' : ' is-offline'}${viewedPlayerId === player.id ? ' is-active' : ''}`}>
-        {mixed && <span className="timer-room-player-icon">{eventIcon?.(player.event || room.event) ?? player.event ?? room.event}</span>}
+        {mixed && <span className="timer-room-player-icon">{eventIcon?.(player.event || room.event) ?? <EventIcon event={netEventToSelectorId(player.event || room.event)} />}</span>}
         {player.id === room.admin && <ShieldCheck size={14} aria-label={copy.host} />}
         {player.iso2 && <Flag iso2={player.iso2} className="timer-room-player-flag" />}
         {mine && onRename ? <button className="timer-room-player-name" type="button" title={copy.rename} onClick={() => onRename(player.name)}>{name} {copy.me}</button>

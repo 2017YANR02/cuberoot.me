@@ -1435,3 +1435,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 验证：共享构建、timer-ui/App/client 类型检查通过；视频生命周期、HTTP capability/取消、迟到媒体清理、原相机/会议 token、码率/canonical 路径、catalog/架构守卫共 8 文件 55 项，App 房间集成 15 项通过。Chrome 安装端 production preview（拦截测试房间/token，未创建真实房间）在 320/390/1280px 的视频入口与拒绝态无横向溢出。独立审查提出的配置晚到重连、迟到授权清轨均已修复并复核。
 - Mobile Web build + Android/iOS sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug `.app` 与 Harmony Web build 通过。Harmony HAP 再次被本机 Hvigor 6.0.1 不支持工程 modelVersion 6.0.2 阻断，ArkTS 改动尚未得到 HAP 编译证据；Windows 原生构建未在本 Mac 执行。
 - 未进行真实多设备音视频、五平台权限拒绝/恢复、前后台及 Stackmat 与通话同时使用麦克风验收；ICE 端口连通、签名/公证、商店摄像头/麦克风资料与发布仍需单独确认。未 push/发布，整体继续 **NOT COMPLETE**。
+
+### 2026-10-06：本地多人和联机完整页面共享（本地）
+
+- 新增 `TimerLocalBattlePage` / `TimerLocalBattlePlayer` 与 `TimerNetBattlePage` / `TimerNetBattleStage` / `TimerNetBattleEvent`，Web 和 App 均接入。共享层维护本地 2～4 人布局、中央工具栏、玩家标签/计时区、设置/历史，以及联机大厅、房间、视频、玩家列表、打乱/回合状态、邀请/管理/改名/历史弹窗。宿主保留状态、存储、输入、路由、账号与系统适配；并非将这些平台职责搬进 shared。
+- App 对齐 Web 玩家标签与 ao5（完整轮次统计），本地下一轮沿用按玩家键继续，取消 App 独有的额外下一局按钮；联机复制改为邀请链接，视频入口放在同一顶栏，交卷/旁观显示静态项目，混合项目使用共享图标，SQ1 展示使用既有格式化而保存/预览保留原始打乱。三盲等项目的内部 ID 统一转换为目录 ID，避免交卷后显示原始代码。Web 改名只在请求成功后关窗，邀请复制失败不再提示成功。
+- App 联机工作区使用扣除宿主导航后的高度；Chrome 隔离上下文验证 Web/App 2、3、4 人在 320/1280px 的玩家标签与页面宽度，联机房间在 320/390/1280px 无横向溢出。房间 API 使用拦截 fixture，未创建真实房间或请求真实媒体。
+- 验证：App/client/timer-ui 类型检查；App 房间/本地设备集成 16 项，Web 状态机 23 项及布局/设置/历史/名单/键盘门禁/QR/catalog/遮罩等 36 项通过。旧状态机 fixture 显式设置随机来源，避免默认 WCA 且 mock 无真题时实际只有一轮却执行第二轮删除。独立审查发现的三盲静态标签问题已修复并加定向回归。
+- Mobile production build + Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS release `.app`/`.dmg` 与 Harmony Web build/sync 通过。本轮未修改原生适配；Windows native 未在本 Mac 运行，Harmony HAP 既有 Hvigor/modelVersion 不匹配未重试。构建不代表签名、公证、安装或五平台实体设备验收。
+- 多人多魔方继续保持隐藏入口，不推进 PK/远端魔方实况；网站 presence/品牌导航、安装端宿主导航继续留在适配层。真实多人音视频、实体设备交互与发布尚未验收，整体继续 **NOT COMPLETE**。本轮仅本地提交，未 push。
