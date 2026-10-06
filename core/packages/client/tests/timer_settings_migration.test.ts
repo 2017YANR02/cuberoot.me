@@ -11,6 +11,7 @@
  * 看得见。所以它得有自己的测试。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 
 const KEY = 'cuberoot-timer.settings.v1';
 
@@ -34,6 +35,29 @@ async function freshSettings() {
   vi.resetModules();
   return import('@/app/[lang]/timer/_lib/settings');
 }
+
+it('does not consume a seed position until it is durably stored', async () => {
+  const mem = installStorage();
+  try {
+    const settings = await freshSettings();
+    settings.updateSettings({ syncSeed: 'quota-regression' });
+    const ticket = timerSeedTicket(settings.getSettings())!;
+    const saved = mem.get(KEY);
+    const write = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('Full', 'QuotaExceededError');
+    });
+    expect(() => settings.commitTimerSeed(ticket)).toThrow('Seed position could not be saved');
+    expect(timerSeedTicket(settings.getSettings())).toEqual(ticket);
+    expect(mem.get(KEY)).toBe(saved);
+    write.mockRestore();
+    settings.commitTimerSeed(ticket);
+    expect(timerSeedTicket(settings.getSettings())?.index).toBe(ticket.index + 1);
+    expect(JSON.parse(mem.get(KEY)!).syncSeedCounter).toBe(ticket.index + 1);
+  } finally {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  }
+});
 
 it('排名范围兼容旧总开关，并在重新加载后保留全部关闭', async () => {
   installStorage({ [KEY]: JSON.stringify({ showRankBadge: false }) });

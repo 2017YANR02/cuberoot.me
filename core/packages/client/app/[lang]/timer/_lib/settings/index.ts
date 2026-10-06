@@ -504,7 +504,7 @@ export function commitTimerSeed(ticket: TimerSeedTicket): void {
   const patch = consumeTimerSeed(current, ticket);
   if (!patch) throw new Error('Seed position changed');
   const next = { ...current, ...patch };
-  localStorage.setItem(KEY, JSON.stringify(next));
+  if (!persistItem(KEY, JSON.stringify(next))) throw new Error('Seed position could not be saved');
   _cache = next;
   for (const listener of _listeners) listener();
 }

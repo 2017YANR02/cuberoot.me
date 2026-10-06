@@ -6,6 +6,7 @@ import { localizeCity } from '@/lib/city-localize';
 const clientRoot = join(__dirname, '..');
 const accountPage = readFileSync(join(clientRoot, 'app/[lang]/account/page.tsx'), 'utf8');
 const countryInput = readFileSync(join(clientRoot, 'components/CountryInput/CountryInput.tsx'), 'utf8');
+const sharedCountryInput = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/country-input')), 'utf8');
 
 describe('账号基本资料 UI 契约', () => {
   it('keeps the settings entry accessible with a visible icon and a 44px touch target', () => {
@@ -34,9 +35,12 @@ describe('账号基本资料 UI 契约', () => {
   });
 
   it('共享国家输入支持表单标签和无障碍名称', () => {
-    expect(countryInput).toContain('id?: string;');
-    expect(countryInput).toContain('ariaLabel?: string;');
-    expect(countryInput).toContain('aria-label={ariaLabel}');
+    expect(countryInput).toContain("from '@cuberoot/timer-ui/country-input'");
+    expect(countryInput).toContain('<SharedCountryInput {...props}');
+    expect(sharedCountryInput).toContain('id?: string;');
+    expect(sharedCountryInput).toContain('ariaLabel?: string;');
+    expect(sharedCountryInput).toContain('id={id}');
+    expect(sharedCountryInput).toContain('aria-label={ariaLabel}');
   });
 });
 
