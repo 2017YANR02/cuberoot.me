@@ -111,14 +111,7 @@
     justify-content: center;
 }
 
-.ao5-display {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: clamp(0.7rem, 2.5vw, 0.9rem);
-    color: var(--faint-foreground);
-    text-align: center;
-    min-height: 1.2em;
-    letter-spacing: 0.02em;
-}
+
 .time-display .colon,
 .ao5-display .colon {
     font-family: 'Roboto Mono', monospace;
