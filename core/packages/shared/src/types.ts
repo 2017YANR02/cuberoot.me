@@ -222,6 +222,8 @@ export interface ReconComment {
   pinned: boolean;
   /** 父评论 id；null 表示顶层评论。回复只支持单层（YouTube 风格） */
   parentId: number | null;
+  likeCount?: number;
+  myVote?: 'like' | 'dislike' | null;
 }
 
 /** 编辑历史条目 */

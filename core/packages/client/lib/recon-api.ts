@@ -197,14 +197,11 @@ export async function listEditHistory(reconId: number): Promise<EditHistoryItem[
 export interface CommentsResponse { comments: ReconComment[] }
 
 export async function listComments(reconId: number): Promise<ReconComment[]> {
-  // detail page used { comments } envelope; submit endpoints return list directly via /comments?reconId=…
-  // Use envelope shape first, then fall back to list.
-  try {
-    const r = await apiGet<CommentsResponse>(`/${reconId}/comments`);
-    return r.comments;
-  } catch {
-    return apiGet<ReconComment[]>('/comments', { reconId: String(reconId) });
-  }
+  return apiGet<ReconComment[]>('/comments', { reconId: String(reconId), v: '3' });
+}
+
+export async function setCommentVote(commentId: number, vote: 'like' | 'dislike' | null): Promise<Pick<ReconComment, 'likeCount' | 'myVote'>> {
+  return apiPut(`/comments/${commentId}/vote`, { vote });
 }
 
 export async function addComment(reconId: number, content: string, parentId: number | null = null): Promise<{ ok: boolean; id: number }> {
