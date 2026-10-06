@@ -50,6 +50,34 @@ describe('cube sticker graph', () => {
     expect(stickerPermutation([])).toEqual(Array.from({ length: 54 }, (_, id) => id));
   });
 
+  it.each([2, 3, 4, 5, 6, 7])('maps R/U/F layers from inner to outer and L/D/B layers in reverse at order %i', order => {
+    const layout = createGraphLayout(order);
+    const faceSize = order * order;
+    for (const [face, move] of (['U', 'R', 'F', 'D', 'L', 'B'] as const).entries()) for (let depth = 1; depth <= order; depth++) {
+      const permutation = stickerPermutation([`${depth}${move}`], order);
+      const adjacent = permutation.map((from, to) => ({ from, to }))
+        .filter(({ from, to }) => from !== to && Math.floor(to / faceSize) % 3 !== face % 3);
+      expect(adjacent).toHaveLength(4 * order);
+      const axis = { R: 0, L: 0, U: 1, D: 1, F: 2, B: 2 }[move]!;
+      const layer = face < 3 ? depth - 1 : order - depth;
+      const ring = layout.rings[axis * order + layer];
+      for (const { from, to } of adjacent) for (const progress of [0, 0.5, 1]) {
+        const p = graphPosition(from, to, progress, undefined, layout);
+        expect(Math.hypot(p.x - ring.x, p.y - ring.y), `${depth}${move}: ${from} → ${to}`)
+          .toBeCloseTo(ring.r, 8);
+      }
+    }
+  });
+
+  it('places the tracked UFR corner next to the three visible face centers', () => {
+    // U9 is the white front-right corner picked in the 3D view.
+    expect(GRAPH_SLOTS[8].y).toBeGreaterThan(GRAPH_SLOTS[4].y);
+    expect(GRAPH_SLOTS[8].x).toBeCloseTo(GRAPH_SLOTS[4].x, 8);
+    expect(GRAPH_SLOTS[8].rings).toEqual([0, 6]);
+    expect(GRAPH_SLOTS[9].rings).toEqual([3, 6]);
+    expect(GRAPH_SLOTS[20].rings).toEqual([0, 3]);
+  });
+
   it('retargets repeated interrupted turns from the displayed positions without jumping', () => {
     let slots = GRAPH_SLOTS.map((_, id) => id);
     let displayed = GRAPH_SLOTS.map(({ x, y }) => ({ x, y }));

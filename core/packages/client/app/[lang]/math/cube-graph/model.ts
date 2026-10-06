@@ -100,7 +100,9 @@ export function createGraphLayout(order: number) {
       [col, 0, end - row], [0, end - row, col], [end - col, end - row, 0]][face];
     const normal = [1, 0, 2, 1, 0, 2][face];
     const axes = [0, 1, 2].filter(axis => axis !== normal);
-    const first = axes[0] * order + xyz[axes[0]], second = axes[1] * order + xyz[axes[1]];
+    // R/U/F are the positive coordinate ends, but their circles are innermost.
+    // Measure depth from those faces so both sticker positions and turn arcs agree.
+    const first = axes[0] * order + end - xyz[axes[0]], second = axes[1] * order + end - xyz[axes[1]];
     const a = rings[first], b = rings[second], third = rings[normal * order];
     const dx = b.x - a.x, dy = b.y - a.y, distance = Math.hypot(dx, dy);
     const along = (a.r * a.r - b.r * b.r + distance * distance) / (2 * distance);
