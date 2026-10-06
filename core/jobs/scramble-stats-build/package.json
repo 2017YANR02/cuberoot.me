@@ -17,6 +17,7 @@
     "build:comp-steps": "tsx src/build_comp_steps.ts",
     "build:recent-scrambles": "tsx src/build_recent_scrambles.ts",
     "build:recent-scrambles-events": "tsx src/build_recent_scrambles_events.ts",
+    "build:no-bar": "tsx src/build_no_bar.ts",
     "build:scramble-steps": "tsx src/build_scramble_steps.ts",
     "build:puzzle-dist": "tsx src/build_puzzle_dist.ts",
     "build:puzzle-metrics": "pnpm --filter @cuberoot/puzzle-solvers build && tsx src/build_puzzle_metrics.mts",

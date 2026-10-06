@@ -34,6 +34,30 @@ pnpm exec tsx ../solver/scripts/generate_and_build_stats.mts
 
 ## 产出 schema
 
+### 无连色（No Bar）
+
+`pnpm --filter @cuberoot/scramble-stats-build build:no-bar` 全量扫描本地
+`wca_scramble/incremental/tsv/Scrambles.tsv`，写入 `stats/scramble/no_bar.json`。
+日常入口在 `stages` 或包含二阶的 `puzzles` 作业之后自动运行；即使阶段 CSV 没有新增，也会运行。
+`--source-csv` 是增量夹具输入，不视为完整 WCA 导出，不触发此报表。产物随既有 static/Git 统计发布流程发布。
+
+判定：六个面上所有共边相邻贴纸均不同色，三阶包含中心与棱块，忽略对角相邻。
+二阶直接复用 `cube222StateFlagsOfScramble().nobar`，三阶复用共享打乱归一化及 NxN 状态模型。
+宽层转动保留实际状态变化，最少步前后缀不剥除。覆盖 `333/333oh/333bf/333mbf/333fm/333ft/333mbo`，
+多盲一颗一条，包含备打；按原始记录计数，不按打乱字符串或状态去重。
+输入无效或 ID 重复即失败，不静默漏算。完整扫描成功后原子替换 JSON。
+
+报表保留导出日期、各项目分母和命中数、全部三阶命中的原始打乱与比赛/轮次/组/序号/备打/多盲颗数。
+二阶命中较多，只保留源文件顺序的前 12 条预览，完整计数不截断。
+`/scramble/stats` 的二阶和三阶类项目显示「无连色」展开区；三阶类合并显示整个家族及逐项目数量。
+导出中无记录的旧多盲单独记为 0，不假定覆盖导出之前所有 WCA 历史打乱。
+
+2026-10-04 导出首次全量：三阶类 1,356,631 条 / 命中 8 条（333=6、333oh=1、333mbf=1）；
+二阶 454,897 条 / 命中 19,053 条。频率是实测值，不代表理论概率。
+数值回放检查：`pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/no_bar.test.ts`。
+
+### 阶段分布
+
 ```jsonc
 {
   "meta": {

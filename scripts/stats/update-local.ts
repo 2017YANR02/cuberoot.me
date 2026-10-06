@@ -285,6 +285,11 @@ async function main(): Promise<void> {
     });
     if (options.jobs.includes('stages')) stageBuildPending = stdChanged || variantChanged || await stageBuildIsStale();
     const buildEnv = { ...process.env, SCRAMBLE_STATS_STAMP: await stamp(), CUBE_TABLE_DIR: tableDir };
+    // Full export scan is independent of stage CSV deltas: new classifiers must also run
+    // when existing solver results are already current. Never treat a fixture CSV as a full export.
+    if (!options.sourceCsv && (options.jobs.includes('stages') || (options.jobs.includes('puzzles') && options.puzzles.includes('222')))) {
+      await step('no-bar', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:no-bar'], coreDir, buildEnv));
+    }
     const refreshRecentEvents = async () => {
       if (options.jobs.includes('stages') || options.jobs.includes('puzzles')) await step('recent-events', () => runPnpm(['--filter', '@cuberoot/scramble-stats-build', 'build:recent-scrambles-events'], coreDir, buildEnv));
     };
