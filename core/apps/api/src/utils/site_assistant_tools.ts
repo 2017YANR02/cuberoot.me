@@ -19,7 +19,7 @@ export const toolCallSchema = z.discriminatedUnion('tool', [
   z.object({ tool: z.literal('records'), event, region: z.string().regex(/^(world|[A-Z]{2})$/).default('world') }).strict(),
   z.object({ tool: z.literal('find_person'), query }).strict(),
   z.object({ tool: z.literal('person_countries'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/) }).strict(),
-  z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), progress: z.boolean().default(false) }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}),
+  z.object({ tool: z.literal('person'), wcaId: z.string().regex(/^\d{4}[A-Z]{4}\d{2}$/), event: z.enum([...WCA_EVENT_ORDER, 'all']).default('333'), progress: z.boolean().default(false), view: z.enum(['records','profile']).optional() }).strict().refine(value=>value.event!=='all' || !value.progress,{path:['event'],message:'Progress charts require one event; use all only for current personal bests.'}),
   z.object({ tool: z.literal('rankings'), event, type: z.enum(['single','average']).default('single'), country: z.string().regex(/^([A-Z]{2}|_Asia|_Europe|_Africa|_North America|_South America|_Oceania)?$/).default(''), year: z.number().int().min(2003).max(2100).optional(), limit: z.number().int().min(1).max(20).default(10) }).strict(),
   z.object({ tool: z.literal('competitions'), query: z.string().max(100).default(''), country: z.string().regex(/^([A-Z]{2})?$/).default(''), upcoming: z.boolean().default(true), from:date.optional(),to:date.optional(), limit: z.number().int().min(1).max(20).default(10) }).strict().refine(value=>!value.from || !value.to || value.from<=value.to,{message:'Date range is reversed'}),
   z.object({ tool: z.literal('scrambles'), compId: competitionId, event, round: z.string().regex(/^[a-z0-9]{1,2}$/).default('f') }).strict(),
@@ -158,6 +158,11 @@ export async function runDataTool(call: Exclude<AssistantToolCall, {tool:'pages'
     const [data, updated] = await Promise.all([read(url(`${api}/wca/person-page`, { wcaId:call.wcaId })), freshness()]);
     const profile = data.profile;
     const title = name(profile.person.name);
+    if (call.view === 'profile') {
+      out.evidence = {updated,wcaId:call.wcaId,name:title,country:profile.person.country_iso2,competitionCount:profile.competition_count,medals:profile.medals,historicalRecordBreaks:profile.records};
+      out.sources.push(source(`person:${call.wcaId}`,title,`/wca/persons/${call.wcaId}`));
+      return out;
+    }
     const eventOrder: readonly string[] = WCA_EVENT_ORDER;
     const personal = Object.entries(profile.personal_records ?? {}).sort(([a],[b])=>eventOrder.indexOf(a)-eventOrder.indexOf(b)).map(([eventId, v]: [string,any]) => ({ event:eventId, single:formatWcaResult(v.single?.best ?? 0,eventId,'single'), average:formatWcaResult(v.average?.best ?? 0,eventId,'average'), singleRank:v.single?.world_rank, averageRank:v.average?.world_rank }));
     const selected = personal.filter(r=>call.event==='all' || r.event===call.event);
