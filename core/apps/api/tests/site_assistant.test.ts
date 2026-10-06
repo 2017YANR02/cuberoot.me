@@ -152,6 +152,40 @@ describe('site assistant grounding', () => {
     const result=await answerSiteQuestion('生成一个训练器','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
     expect(result.actions).toEqual([]);
   });
+  it.each(['我参加过多少场比赛了','我一共参加过几场比赛？','How many competitions have I competed in?'])('answers lifetime participation without a PB table or stale conversation identity: %s',async question=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      const url=String(input);
+      if(url.includes('/meta')) return Response.json({lastImportedAt:'2026-10-01'});
+      expect(url).toBe('https://api.cuberoot.me/v1/wca/person-page?wcaId=2017YANR02');
+      return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:42}});
+    });
+    const result=await answerSiteQuestion(question,'zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'Max Park 的全部 PB'}],'2017YANR02');
+    expect(result.answer).toBe('按已导入的 WCA 官方成绩，颜瑞民共参加过 42 场比赛。 [[person:2017YANR02]]');
+    expect(result.artifacts).toEqual([]);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it('asks for identity instead of inferring personal participation from history',async()=>{
+    const fetcher=vi.fn<typeof fetch>();
+    const result=await answerSiteQuestion('我参加过多少场比赛了','zh',config,AbortSignal.timeout(5000),fetcher,[{role:'user',content:'2012PARK03 的成绩'}]);
+    expect(result.answer).toContain('请提供你的 WCA ID');
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it.each([0,undefined])('distinguishes zero competitions from a missing total: %s',async competition_count=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>Response.json(String(input).includes('/meta')?{}:{profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count}}));
+    const result=await answerSiteQuestion('我参加过多少场比赛了','zh',config,AbortSignal.timeout(5000),fetcher,[],'2017YANR02');
+    expect(result.answer).toContain(competition_count===0?'共参加过 0 场比赛':'暂时无法确认');
+    expect(result.artifacts).toEqual([]);
+  });
+  it('does not overwrite a profile answer with the all-event PB summary',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
+      if(String(input).includes('/meta'))return Response.json({});
+      if(String(input).includes('/person-page'))return Response.json({profile:{person:{name:'Ruimin Yan (颜瑞民)'},competition_count:42,personal_records:{}}});
+      const round=fetcher.mock.calls.filter(([url])=>String(url).includes('/chat/completions')).length;
+      return modelResponse(round===1?{calls:[{tool:'person',wcaId:'2017YANR02',event:'all'}]}:{answer:'颜瑞民参加过 42 场比赛。',sourceIds:['person:2017YANR02']});
+    });
+    const result=await answerSiteQuestion('2017YANR02 的参赛总数是多少？','zh',config,AbortSignal.timeout(5000),withCatalog(fetcher));
+    expect(result.answer).toBe('颜瑞民参加过 42 场比赛。 [[person:2017YANR02]]');
+  });
   it.each(['我去过哪些国家比赛','我参加过哪些国家的比赛','Which countries have I competed in?'])('answers personal countries from the verified viewer instead of the planner or history: %s',async question=>{
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
       const url=String(input);

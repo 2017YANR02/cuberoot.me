@@ -87,7 +87,7 @@ const stepSchema = z.object({
 const TOOL_GUIDE = `Read tools (JSON objects in calls):
 records {event:"333",region:"world" or ISO2}: current single/average record VALUES, all tied holders. This cannot answer record counts, streaks or how long records stood; use statistics for those questions and do not substitute current holders.
 find_person {query:name}: resolve name to WCA IDs. Never guess an ID. Ask which person if ambiguous.
-person {wcaId,event:"333" or "all",progress:false}: profile, selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
+person {wcaId,event:"333" or "all",progress:false,view:"records"|"profile"}: Use view:"profile" for competition totals, medals or profile facts without a PB table. Competition totals are lifetime totals, not counts for a specific year, event or country. Default view:"records" returns selected-event PRs, medals, historical record-breaking counts (NOT currently held records). For all official PBs/PRs across events use event:"all" in ONE call; the table includes every event with results. progress:true requires ONE specific event and generates single AND average PR charts. For comparison call person for each identified person.
 person_countries {wcaId}: complete countries/regions where ONE person has officially competed, grouped by competition host location. Use for personal travel/participation questions, never substitute a global most_visited_countries leaderboard or personal bests.
 rankings {event,type:"single"|"average",country:"" or ISO2 or _Asia/_Europe/_Africa/_North America/_South America/_Oceania,year?:number,limit:1..20}: current or year-end rankings.
 competitions {query:"",country:"" or ISO2,upcoming:true,from?:ISO date,to?:ISO date,limit:1..20}: find competitions and IDs; query matches name/city/id. from/to filter competitions overlapping an inclusive date range. Use English place/name keywords for this index.
@@ -119,9 +119,11 @@ export async function answerSiteQuestion(
   // A signed-in identity is relevant only to an explicit first-person request.
   // Supplying it on every turn can override the person discussed in history.
   await emit?.({type:'status',status:{phase:'planning'}});
-  const asksAboutSelf=/我的|我自己|我本人|我(?:去过|去|参加过|参加|参赛|比过)|\bmy\b|\b(?:have|did) I\b|\bI (?:have|competed|visited)\b/i.test(question);
+  const asksAboutSelf=/我的|我自己|我本人|我(?:一共|总共|总计|已经)?(?:去过|去|参加过|参加|参赛|比过)|\bmy\b|\b(?:have|did) I\b|\bI (?:have|competed|visited)\b/i.test(question);
   const selfWcaId=asksAboutSelf ? viewerWcaId : undefined;
   const asksForPersonalCountries=asksAboutSelf && /国家|地区|\bcountr(?:y|ies)\b|\bregions?\b/i.test(question) && /去过|参加|参赛|比赛|\bcompet(?:e|ed|ing|itions?)\b|\bvisited\b/i.test(question) && !/最多|排名|排行榜|\bmost\b|\brank(?:ing)?\b/i.test(question);
+  // Only an unqualified lifetime total can use the profile count directly.
+  const asksForPersonalCompetitionCount=/^(?:我(?:一共|总共|总计|已经)?(?:参加过|参加|参赛|比过)(?:了)?(?:一共|总共|总计)?(?:多少|几)(?:场|次|个)(?:WCA\s*)?比赛(?:了)?|(?:how many (?:WCA )?competitions have I (?:competed in|attended|participated in)(?: in total)?))[?？。!！\s]*$/i.test(question.trim());
   const requestedLimit=requestedAssistantLimit(question);
   const timeContext=resolveAssistantTime(question,new Date(),timeZone);
   const referenceYear=Number(timeContext.today.slice(0,4));
@@ -176,6 +178,16 @@ export async function answerSiteQuestion(
     await emit?.({type:'status',status:{phase:'querying',tool:'person_countries'}});
     const result=await assistantStage('tool',()=>runDataTool({tool:'person_countries',wcaId:selfWcaId},lang,read),0);
     return {answer:result.factualSummary+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:result.artifacts};
+  }
+  if (asksForPersonalCompetitionCount) {
+    if (!selfWcaId) return {answer:{zh:'请提供你的 WCA ID 或选手姓名，我才能查询你的参赛总数。',en:'Please provide your WCA ID or competitor name so I can look up your competition total.'}[lang],sources:[],artifacts:[]};
+    await emit?.({type:'status',status:{phase:'querying',tool:'person'}});
+    const result=await assistantStage('tool',()=>runDataTool({tool:'person',wcaId:selfWcaId,event:'all',progress:false,view:'profile'},lang,read),0);
+    const profile=result.evidence as {name:string;competitionCount?:number};
+    const answer=typeof profile.competitionCount==='number' && Number.isSafeInteger(profile.competitionCount) && profile.competitionCount>=0
+      ? {zh:`按已导入的 WCA 官方成绩，${profile.name}共参加过 ${profile.competitionCount} 场比赛。`,en:`According to imported official WCA results, ${profile.name} has competed in ${profile.competitionCount} competitions.`}[lang]
+      : {zh:'当前数据未提供参赛总数，暂时无法确认。',en:'The current data does not provide a competition total, so I cannot confirm it.'}[lang];
+    return {answer:answer+result.sources.map(s=>` [[${s.id}]]`).join(''),sources:result.sources,artifacts:[]};
   }
   // Directory discovery should not cost a separate model round. The same
   // published catalog still validates every selected statistics ID in the tool.
@@ -394,7 +406,7 @@ export async function answerSiteQuestion(
           for(const row of result.evidence)if(typeof row?.wcaId==='string')resolvedPeople.add(row.wcaId);
         }
         for (const s of result.sources) sources.set(s.id,s);
-        if(result.factualSummary) for(const s of result.sources) {
+        if(result.factualSummary && (parsed.data.tool!=='person' || asksForAllPersonalRecords)) for(const s of result.sources) {
           const summaries=factualSummaries.get(s.id) ?? new Set<string>();
           summaries.add(result.factualSummary);factualSummaries.set(s.id,summaries);
         }
