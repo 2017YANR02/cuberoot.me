@@ -1607,7 +1607,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerBattlePlayer',
-    import: "import { TimerBattlePlayer, TimerBattleHistory, TimerBattleSettings, TimerBattleKeyBindings, TimerBattleCubeControls, TimerBattleToolbar } from '@cuberoot/timer-ui';",
+    import: "import { TimerBattlePlayer, TimerBattleHistory, TimerBattleSettings, TimerBattleSourceSettings, TimerBattleAppearanceSettings, TimerBattleKeyBindings, TimerBattleCubeControls, TimerBattleToolbar } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与五端 App 的玩家卡片，共用玩家名称、得分、胜者、项目操作区、中央计时内容和底部成绩操作。',
     en: 'Shared player card with player name, score, winner state, event controls, timing content, and result actions for Web and installed apps.',

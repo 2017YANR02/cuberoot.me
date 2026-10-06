@@ -1367,3 +1367,10 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 队列不保存 playerToken。安装端上传时读取原有安全会话；Web 仍使用原来的 sessionStorage 身份。先核对房间/玩家、项目、打乱、轮次及已收成绩，再发送；与服务端整数毫秒口径一致。已失效或未被原轮接受的成绩保留本机，只有用户点击“保留本机成绩”才移除相应失败上传项。浏览器完整关闭导致 sessionStorage 身份丢失时，日志和本机成绩仍在，不能伪造原身份或自动以新人提交旧成绩。
 - 跨窗口交付使用 Web Locks；缺少独占锁时只落日志并显示恢复失败，不执行不安全的并发交付。日志本身写失败时明确提示勿关闭；损坏日志保持原样，不自动覆盖。原分组已删除时不会悄悄转存其他分组，条目继续保留等待处理。上述状态均不能记成成功上传或账号云同步。
 - 当前证据：使用真实 fake-indexeddb 的跨实例恢复、上传挂起期间入队、旧 ACK/new penalty、清理失败重放、缺锁/配额失败、拒收确认与服务端确认回归通过；Web 定向含 catalog/架构守卫 5 文件 39 项、App 页面/仓储 2 文件 50 项通过。shared build、App/client typecheck、Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。真实断网/杀进程/重启及五平台实体设备验收尚未完成；Windows native 未在 Mac 构建，Harmony HAP 既有工具链阻断不变；未发布，整体保持 NOT COMPLETE。
+
+### 2026-10-05：本地多人打乱来源、设置与历史操作统一
+
+- Web 与 App 共用本地多人打乱结果契约、超时/失败规则、设置持久化模型、CSV 导出及来源/外观设置组件。App 补齐 WCA 真题（比赛/日期）、0～3 位精度、8 秒/无限观察、打乱字号、玩家背景和历史 CSV，Mobile/Desktop 消费同一 App 产品层。Web 原本无效的多人语音/阶段控件不再展示。
+- 换项目一次更新全部四个玩家槽位，切换人数重新取题；来源或项目变化使旧请求失效。真题未选定、返回空题或随机引擎错误都显示失败并允许重试，不静默替换随机题。下一轮预取失败保留本轮成绩、来源与罚时操作，重试不清空结算；历史记录冻结真题具体题号，不能按打乱文本反查覆盖。
+- App 删除/清空等待仓储完成，失败不移除界面记录；删除当前轮同时退出其罚时编辑状态，避免重新写回已删除成绩。Web 删除任意历史轮次都重新计算积分。背景图片读取隔离换图、重置和卸载后的迟到回调。
+- 当前证据：Web 定向 7 文件 48 项、App 页面集成 15 项通过；shared build、App/client typecheck、Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Chrome 检查 Web/App 多人设置在窄屏及系统/手动深浅主题下的边界与运行错误。独立源码复核通过。Windows 原生构建未在 Mac 执行，Harmony HAP 既有工具链阻断不变；实体设备、真实多人操作完整验收仍待所有者完成。本轮仅本地，整体保持 NOT COMPLETE。

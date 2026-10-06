@@ -23,6 +23,7 @@ export interface PlayerState {
   timerState?: TimerMachineState;
   timerResult?: SolveResult | null;
   resultScramble?: string;
+  resultScrambleSource?: import('@cuberoot/shared/timer').TimerScrambleSourceSnapshot;
   id: number;
   isReady: boolean;
   canStart: boolean;

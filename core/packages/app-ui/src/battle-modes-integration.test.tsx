@@ -205,12 +205,41 @@ describe('installed app multiplayer modes', () => {
     await act(async () => Promise.resolve());
 
     const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
-    expect(retry.textContent).toContain('Try again');
+    expect(retry.textContent).toContain('Unable to load scramble. Retry');
     await act(async () => retry.click());
     await act(async () => Promise.resolve());
 
     expect(generateTimerScramble).toHaveBeenCalledTimes(2);
     expect(host.querySelector('.scramble-strip')?.textContent).toContain("R U R'");
+  });
+
+  it('cancels an old source and preserves the completed round through failed prefetch, then deletes it without resurrection', async () => {
+    let resolveOld!: (row: { scramble: string }) => void;
+    const oldProvider = () => new Promise<{ scramble: string }>(resolve => { resolveOld = resolve; });
+    const provider = vi.fn().mockResolvedValueOnce({ scramble: 'F' }).mockRejectedValueOnce(new Error('offline')).mockResolvedValue({ scramble: 'U' });
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} scrambleProvider={oldProvider} />));
+    await act(async () => root.render(<LocalBattleMode {...baseProps} playerCount={2} scrambleProvider={provider} />));
+    await act(async () => resolveOld({ scramble: 'R' }));
+    expect(host.querySelector('.scramble-strip')?.textContent).toContain('F');
+    vi.useFakeTimers(); let now = 1000; vi.spyOn(performance, 'now').mockImplementation(() => now);
+    const surfaces = host.querySelectorAll('.timing-surface--local');
+    for (const id of [0, 1]) {
+      await act(async () => { dispatchPointer(surfaces[id], 'pointerdown', id + 1); await vi.advanceTimersByTimeAsync(350); dispatchPointer(surfaces[id], 'pointerup', id + 1); });
+    }
+    for (const id of [0, 1]) { now = 2000 + id * 500; await act(async () => dispatchPointer(surfaces[id], 'pointerdown', id + 1)); }
+    const key = 'cuberoot_local_battle_rounds_v1';
+    const original = JSON.parse(localStorage.getItem(key)!)[0];
+    expect(original.attempts[0].solve.scramble).toBe('F');
+    const retry = host.querySelector<HTMLElement>('.scramble-text[role="button"]')!;
+    await act(async () => retry.click());
+    expect(host.querySelector('.scramble-strip')?.textContent).toContain('U');
+    expect(JSON.parse(localStorage.getItem(key)!)[0].id).toBe(original.id);
+    await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Local battle history"]')!.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-battle-history-list button')!.click());
+    const remove = [...document.querySelectorAll<HTMLButtonElement>('.timer-room-actions button')].find(button => button.textContent === 'Delete round')!;
+    await act(async () => remove.click()); await act(async () => remove.click());
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual([]);
+    expect(host.querySelectorAll('.timer-battle-player-actions button')).toHaveLength(0);
   });
 
   it.each(['create', 'join'])('uses the shared lobby to %s a room and preserves its protected session', async (entry) => {
