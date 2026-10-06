@@ -121,7 +121,7 @@ import {
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
-import { cloudOptimalScramble, firstBadHtmToken } from '@/lib/cloud-optimal-scramble';
+import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthStore } from '@/lib/auth-store';
 import {
   formatScrambleForEvent, canonicalSq1Alg, compactSq1Alg,
@@ -2255,26 +2255,19 @@ export default function PlayerControls({
     }
   }, [is3x3, world, algDraft, settings, onSettingsChange, onSetupChange]);
 
-  // Optimal scramble (cloud): reuses the exact protocol /scramble/solver's cloud
-  // 求打乱(最优) flow uses (cloudOptimalScramble, lib/cloud-optimal-scramble.ts) —
-  // generate a fast random-state scramble (Kociemba), cloud-solve it optimally,
-  // then invert that solution back into the setup box. The fewest-move solution
-  // to a state IS the fewest-move scramble reaching it — a true God's-number-length
-  // scramble, unlike the 🔀 button above (fast, but not move-optimal). 3x3-only;
-  // login-gated server-side.
+  // Optimize the current setup without changing its state or the solution.
+  // The shared protocol inverts the cloud solution into an equivalent scramble.
   const handleOptimalScramble = useCallback(async () => {
     if (!is3x3 || !world || optimalScrambleBusy) return;
+    const raw = (setupElRef.current?.value ?? setupDraft).trim();
+    if (!raw) return;
     if (!authUser) { authLogin(); return; }
     const reqId = ++scrambleReqIdRef.current;
     setOptimalScrambleBusy(true);
-    setOptimalScrambleStatus(t('生成随机状态…', 'Generating a random state…'));
+    setOptimalScrambleStatus(t('云端求最优中…', 'Solving optimally (cloud)…'));
     const ac = new AbortController();
     optimalScrambleAbortRef.current = ac;
     try {
-      const raw = (await tnoodleRandomScramble('333')) ?? '';
-      if (reqId !== scrambleReqIdRef.current) return;
-      if (!raw || firstBadHtmToken(raw)) throw new Error(t('生成打乱失败', 'Failed to generate a scramble'));
-      setOptimalScrambleStatus(t('云端求最优中…', 'Solving optimally (cloud)…'));
       const { scramble, moves } = await cloudOptimalScramble(raw, (p) => {
         if (reqId !== scrambleReqIdRef.current) return;
         setOptimalScrambleStatus(
@@ -2286,20 +2279,12 @@ export default function PlayerControls({
         );
       }, ac.signal);
       if (reqId !== scrambleReqIdRef.current) return;
-      clearFrozen();
-      if (settings.animateScramble) {
-        animatingScrambleRef.current = true;
-        world.cube.twister.setup('');
-        world.cube.twister.push(scramble);
-      } else {
-        animatingScrambleRef.current = true;
-        const tw = world.cube.twister as unknown as {
-          setupAsync?: (e: string) => Promise<void>;
-          setup: (e: string) => void;
-        };
-        if (tw.setupAsync) await tw.setupAsync(scramble);
-        else tw.setup(scramble);
+      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== raw) {
+        setOptimalScrambleStatus(t('打乱已更改，已忽略本次结果。', 'Scramble changed; result discarded.'));
+        return;
       }
+      // Let the setup-sync effect rebuild at the current playback step.
+      // Random-scramble setup would reset the cube and step to the beginning.
       if (setupElRef.current) {
         setupElRef.current.value = scramble;
         autosize(setupElRef.current);
@@ -2314,7 +2299,7 @@ export default function PlayerControls({
       setOptimalScrambleBusy(false);
       optimalScrambleAbortRef.current = null;
     }
-  }, [is3x3, world, clearFrozen, optimalScrambleBusy, authUser, authLogin, settings.animateScramble, onSetupChange]);
+  }, [is3x3, world, setupDraft, optimalScrambleBusy, authUser, authLogin, onSetupChange, t]);
 
   const cancelOptimalScramble = useCallback(() => { optimalScrambleAbortRef.current?.abort(); }, []);
 
@@ -2406,9 +2391,9 @@ export default function PlayerControls({
             type="button"
             className="sim-player-scramble sim-player-scramble-optimal"
             onClick={handleOptimalScramble}
-            disabled={optimalScrambleBusy}
+            disabled={optimalScrambleBusy || !setupDraft.trim()}
             title={authUser
-              ? t('最优打乱(云端):求一个保证最少步数(God\'s number)到达随机状态的打乱', 'Optimal scramble (cloud): a scramble guaranteed to reach a random state in the fewest possible moves (God\'s number)')
+              ? t('优化当前打乱(云端)，保持魔方状态不变', 'Optimize the current scramble (cloud), preserving the cube state')
               : t('最优打乱(云端)需登录(WCA),点击登录', 'Optimal scramble (cloud) requires login (WCA) — click to log in')}
             aria-label={t('最优打乱', 'Optimal scramble')}
           >
