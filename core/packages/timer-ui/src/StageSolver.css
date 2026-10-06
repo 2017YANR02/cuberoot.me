@@ -467,11 +467,10 @@ html[data-theme='dark'] .stsv {
   flex-direction: column;
   gap: 12px;
   align-items: flex-start;
-  width: 300px;
+  width: 100%;
   max-width: 100%;
   margin-top: 8px;
 }
-.stsv-compact .stsv-result { width: 240px; }
 .stsv-sols { width: 100%; min-width: 0; }
 .stsv-sols-count { color: var(--sv-text-mute); font-size: 12px; margin-bottom: 6px; }
 .stsv-empty { color: var(--sv-text-mute); font-size: 13px; padding: 6px 0; }
@@ -502,6 +501,26 @@ html[data-theme='dark'] .stsv {
   --sv-text-mute: var(--muted-foreground);
   --sv-accent: var(--accent);
   --sv-accent-soft: var(--accent-soft);
+}
+/* 每条解法保持单行，菜单按最长公式和步数列的完整宽度布局。 */
+.compact-select-popup.stsv-solution-menu { overflow-x: auto; }
+.stsv-solution-menu .compact-select-options {
+  display: grid;
+  grid-template-columns: max-content;
+  width: max-content;
+  min-width: 100%;
+}
+.stsv-solution-menu .compact-select-option {
+  width: auto;
+  justify-self: stretch;
+}
+.stsv-solution-menu .stsv-sol-option {
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) 3ch;
+}
+.stsv-solution-menu .stsv-sol-option code {
+  white-space: nowrap;
+  overflow: visible;
 }
 .stsv-sol-len { color: var(--sv-text-mute); font-size: 11px; flex: 0 0 3ch; text-align: right; font-variant-numeric: tabular-nums; }
 /* 并列多槽时逐行标注槽位 */
@@ -558,11 +577,14 @@ html[data-theme='dark'] .stsv {
 }
 .stsv-sol-yrot:hover { background: color-mix(in srgb, var(--sv-accent) 20%, transparent); }
 
-/* 共享播放器随上方菜单选择切换。 */
+/* 解法行使用完整可用宽度；仅播放器保留原有尺寸并居中。 */
 .stsv-player {
-  width: 100%;
+  width: 300px;
+  max-width: 100%;
   min-width: 0;
+  margin-inline: auto;
 }
+.stsv-compact .stsv-player { width: 240px; }
 /* 播放器复用 /recon 那一个(.recon-player)。它默认 height:100% 撑满父容器(详情页给的是
    定高左栏);这里高度由内容决定 → 放开高度,改给画布定 1:1,控制条自然接在下面。
    画布盒写成 flex:0 0 auto + width:100%:高度只由宽度和 aspect-ratio 定,不去碰
@@ -573,7 +595,7 @@ html[data-theme='dark'] .stsv {
 
 /* ── 窄屏 ── */
 @media (max-width: 720px) {
-  .stsv-result { width: 320px; }
+  .stsv-player { width: 320px; }
 }
 @media (max-width: 480px) {
   .stsv-controls { gap: 10px; }
