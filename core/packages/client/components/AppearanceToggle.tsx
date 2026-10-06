@@ -32,6 +32,7 @@ import { PALETTES, type PaletteId } from '@/lib/palettes';
 import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 
@@ -62,7 +63,9 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   const ref = useRef<HTMLDivElement>(null);
   const previewingRef = useRef(false);
   const hoverCloseTimerRef = useRef<number | null>(null);
+  const pointerTypeRef = useRef('mouse');
   const eff = useEffectiveTheme();
+  const [petVisible, setPetVisible] = useDeskPetVisible();
 
   const cancelHoverClose = () => {
     if (hoverCloseTimerRef.current === null) return;
@@ -190,9 +193,10 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
           }
         }}
         onPointerLeave={(event) => scheduleHoverClose(event.pointerType)}
+        onPointerDown={(event) => { pointerTypeRef.current = event.pointerType; }}
         onClick={(event) => {
-          // Mouse hover already opens the menu; its following click must keep it open.
-          if (open && event.detail === 0) closeMenu();
+          // Mouse hover already opens the menu; touch and keyboard toggle it.
+          if (open && (event.detail === 0 || pointerTypeRef.current !== 'mouse')) closeMenu();
           else {
             beginAppearancePreview();
             setOpen(true);
@@ -264,11 +268,16 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
               );
             })}
 
-            <div className="appearance-sec-label appearance-sec-div">
+            <div className="appearance-sec-label appearance-sec-div" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <BoolToggle
                 value={contrast === 'soft'}
                 onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
                 label={L.lowContrast}
+              />
+              <BoolToggle
+                value={petVisible}
+                onChange={setPetVisible}
+                label={t('显示桌宠', 'Show desk pet')}
               />
             </div>
           </div>
