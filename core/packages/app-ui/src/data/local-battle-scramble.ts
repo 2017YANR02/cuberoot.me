@@ -1,4 +1,6 @@
-import { generateTimerScramble, timerSupportsRealWcaScrambles, timerWcaCompetitionScrambleSlotIdentity,
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
+const randomClient = createRandomScrambleClient();
+import { timerSupportsRealWcaScrambles, timerWcaCompetitionScrambleSlotIdentity,
   type EventId, type LocalBattleScramble, type TimerWcaSourceSettings } from '@cuberoot/shared/timer';
 import { fetchRealScrambles, realScrambleSourceKey, type RealScramble } from './real-scramble-pool';
 
@@ -22,7 +24,7 @@ export function createInstalledBattleScrambleProvider(source: 'wca' | 'random', 
         wca: { ci: row.competitionId, cn: row.competitionName, e: row.eventId, r: row.roundTypeId,
           g: row.groupId, n: row.scrambleNumber, x: row.isExtra ? 1 : 0 } };
     }
-    const result = await generateTimerScramble({ event });
+    const result = await randomClient.generate({ event }, signal);
     if (!result.ok || result.kind !== 'generated') throw new Error('Scramble generation failed');
     return { scramble: result.scramble, source: { kind: 'random', identity: `random|${event}` } };
   };

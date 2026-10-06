@@ -13,6 +13,7 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./timer/random-scramble-pool": "runtime-neutral",
       "./sq1-metrics": "runtime-neutral",
       "./video-camera": "runtime-neutral",
       "./video": "runtime-neutral",
@@ -202,6 +203,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./timer/random-scramble-pool": { "node": "./dist/timer/random-scramble-pool.js", "default": "./src/timer/random-scramble-pool.ts" },
     "./sq1-metrics": { "types": "./src/sq1-metrics.ts", "node": "./dist/sq1-metrics.js", "default": "./src/sq1-metrics.ts" },
     "./video-camera": {"types":"./src/video-camera.ts","node":"./dist/video-camera.js","default":"./src/video-camera.ts"},
     "./video": {"types":"./src/video.ts","node":"./dist/video.js","default":"./src/video.ts"},
