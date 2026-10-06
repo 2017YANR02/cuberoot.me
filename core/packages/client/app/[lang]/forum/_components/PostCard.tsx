@@ -15,7 +15,7 @@ import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
 import { ReactionBar } from './ReactionBar';
 import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
@@ -84,18 +84,20 @@ export function PostCard({
   return (
     <article className="forum-post" id={`post-${post.id}`}>
       <aside className="forum-post-author">
-        <div className={`forum-post-avatar${avatar.isClawd ? ' is-clawd' : ''}`} aria-hidden="true">
+        <UserContactLink userId={author?.userId} label={name} className={`forum-post-avatar${avatar.isClawd ? ' is-clawd' : ''}`}>
           <img src={avatar.src} alt="" />
-        </div>
+        </UserContactLink>
         <div className="forum-post-author-meta">
-          {author?.wcaId ? (
+          {author?.userId ? (
+            <UserContactLink userId={author.userId} className="forum-post-author-name">{name}</UserContactLink>
+          ) : author?.wcaId ? (
             <PersonLink wcaId={author.wcaId} className="forum-post-author-name">
               {name}
             </PersonLink>
           ) : (
             <span className="forum-post-author-name">{name}</span>
           )}
-          <UserIdLabel userId={author?.userId} />
+          <UserIdLabel contact userId={author?.userId} />
           {onToggleBan && author?.userId && !author.isAdmin && (
             <button type="button" className="forum-post-action is-danger"
               onClick={() => onToggleBan(author.userId!, !author.forumBanned)}>

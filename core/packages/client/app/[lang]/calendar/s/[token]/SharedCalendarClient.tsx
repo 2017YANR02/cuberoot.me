@@ -129,7 +129,7 @@ export default function SharedCalendarClient() {
           <CalendarDays size={20} aria-hidden />
           {pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}
         </h1>
-        <UserIdLabel userId={data?.ownerUserId} />
+        <UserIdLabel contact userId={data?.ownerUserId} />
         {data?.detail === 'busy' && (
           <span className="cal-badge">{tr({ zh: '仅显示忙碌时段', en: 'Busy times only' })}</span>
         )}

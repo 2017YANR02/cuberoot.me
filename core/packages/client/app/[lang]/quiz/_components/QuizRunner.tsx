@@ -335,7 +335,7 @@ export default function QuizRunner({ level, cat, category, community }: Props) {
                   en: `Contributed by ${q.by.authorName || 'a member'}`,
                 })}
               </span>
-              <UserIdLabel userId={q.by.authorUserId} />
+              <UserIdLabel contact userId={q.by.authorUserId} />
               {q.by.onlyLang && (
                 <span className="quiz-by-lang">
                   {q.by.onlyLang === 'zh'

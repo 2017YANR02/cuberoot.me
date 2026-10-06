@@ -132,7 +132,7 @@ export default function ForumReviewPage() {
                   </span>
                   <span className="forum-review-item-author">
                     {ownerDisplayName(item.authorId, item.authorName, zh)}
-                    <UserIdLabel userId={item.authorUserId} />
+                    <UserIdLabel contact userId={item.authorUserId} />
                   </span>
                   <span className="forum-review-item-time">{formatRelativeTime(item.createdAt, lang)}</span>
                   {item.type === 'thread' && (item.forumNameZh || item.forumNameEn) && (
@@ -189,10 +189,10 @@ export default function ForumReviewPage() {
                       </span>
                       <span className="forum-review-item-author">
                         {ownerDisplayName(r.reporterId, r.reporterName, zh)}
-                        <UserIdLabel userId={r.reporterUserId} />
+                        <UserIdLabel contact userId={r.reporterUserId} />
                         {' → '}
                         {ownerDisplayName(r.postAuthorId, r.postAuthorName, zh)}
-                        <UserIdLabel userId={r.postAuthorUserId} />
+                        <UserIdLabel contact userId={r.postAuthorUserId} />
                       </span>
                       <span className="forum-review-item-time">{formatRelativeTime(r.createdAt, lang)}</span>
                       {r.resolvedAt && (

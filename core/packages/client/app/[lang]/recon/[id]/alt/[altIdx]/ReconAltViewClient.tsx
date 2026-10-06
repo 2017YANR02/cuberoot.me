@@ -84,7 +84,7 @@ export default function ReconAltViewClient() {
         <div className="detail-header">
           <h1>
             {ownerDisplayName(alt.addedById, alt.addedBy, isZh)}
-            <UserIdLabel userId={alt.addedByUserId} />
+            <UserIdLabel contact userId={alt.addedByUserId} />
           </h1>
         </div>
       </div>
