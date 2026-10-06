@@ -5,7 +5,10 @@ import { CR_ABBR_CN, enrich, formatCombinedRecords, type RecordEvent } from '@cu
 
 /** Bark's template without the competition suffix, which the copy button adds once. */
 function recordMessage(event: RecordEvent): { zh: string; en: string } {
-  const formatted = formatCombinedRecords([enrich(event)], () => null);
+  // Flag helpers return lowercase ISO2; Bark's country/continent maps use uppercase.
+  const formatted = formatCombinedRecords([enrich({ ...event,
+    person_iso2: event.person_iso2.toUpperCase(), comp_iso2: event.comp_iso2.toUpperCase(),
+  })], () => null);
   return { zh: formatted.cn.replace(/\s*\|\s*$/, ''), en: formatted.en.replace(/\s*\|\s*$/, '') };
 }
 

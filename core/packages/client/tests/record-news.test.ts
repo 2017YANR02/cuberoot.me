@@ -11,6 +11,15 @@ vi.mock('@/components/AppLink', () => ({
 }));
 
 describe('record news presentation', () => {
+  it.each([['CN', '中国', '🇨🇳'], ['HK', '中国香港', '🇭🇰'], ['RU', '俄罗斯', '🇷🇺']])(
+    'localizes national record country %s through the Bark formatter', (region, country, flag) => {
+      const [news] = competitionRecordNews('FutureCompetition2027', [], {
+        '1': { name: 'Test Cuber', region },
+      }, [], [{ ev: { i: '333' }, res: { n: 1 }, roundId: '2', type: 'single', tag: 'NR', value: 274 }]);
+      expect(news.message.zh).toBe(`纪录快讯! 2.74三阶单次${country}纪录${flag}NR Test Cuber`);
+      expect(news.message.en).toBe(`Breaking News! 2.74 3x3${flag}NR Single Test Cuber`);
+    },
+  );
   it('shows Rhys Caskey\'s exact final average NWR without changing his single or other rounds', () => {
     const row = { e: '444', r: 'f', n: 1, b: 2562, a: 2759, sr: '', ar: '' };
     const rows = { '444:f': [row, { ...row, n: 2 }, { ...row, a: 2760 }], '444:d': [{ ...row, r: 'd' }] };
