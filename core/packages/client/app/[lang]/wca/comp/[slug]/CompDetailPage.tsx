@@ -2063,6 +2063,7 @@ export default function CompDetailPage() {
                 </div>
                 <RecentRecordsList
                   isZh={isZh}
+                  showCopy={false}
                   filled={recordNews.map((news, index) => ({
                     id: `${slug}-${index}`,
                     eventId: news.event,
