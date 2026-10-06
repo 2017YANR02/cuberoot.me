@@ -1125,7 +1125,6 @@ export default function PlayerControls({
   // a non-caret action (play / step / reset) moves the timeline.
   const [caretChar, setCaretChar] = useState<number | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  const [derivingScramble, setDerivingScramble] = useState(false);
   const [optimalScrambleBusy, setOptimalScrambleBusy] = useState(false);
   const [optimalScrambleStatus, setOptimalScrambleStatus] = useState<string | null>(null);
   const optimalScrambleAbortRef = useRef<AbortController | null>(null);
@@ -2219,48 +2218,12 @@ export default function PlayerControls({
     tw.setup(engScramble);
   }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, ghostSetupValid, toEngineText]);
 
-  // cubedb-style "反推打乱": invert + re-orient + solve the current solution to
-  // recover the clean rotation-free scramble it solves, drop it into the
-  // scramble box, and flip to forward (Moves) playback so the cube shows the
-  // scramble and the solution plays forward to solve it.
+  // Derive the state solved by the reconstruction, then minimize its scramble.
   const handleDeriveScramble = useCallback(async () => {
-    if (!is3x3 || !world || !algDraft.trim()) return;
-    setDerivingScramble(true);
-    try {
-      const scramble = await deriveScrambleFromSolution(stripHandMarks(algDraft));
-      if (!scramble) return;
-      if (settings.playbackMode !== 'moves') {
-        onSettingsChange({ ...settings, playbackMode: 'moves' });
-      }
-      // Apply the scramble to the cube instantly. animatingScrambleRef tells the
-      // setup-change effect to land on step 0 (cube shows the scramble) instead
-      // of re-running jumpToStep, which would otherwise double-apply.
-      animatingScrambleRef.current = true;
-      const tw = world.cube.twister as unknown as {
-        setupAsync?: (e: string) => Promise<void>;
-        setup: (e: string) => void;
-      };
-      if (tw.setupAsync) await tw.setupAsync(scramble);
-      else tw.setup(scramble);
-      if (setupElRef.current) {
-        setupElRef.current.value = scramble;
-        autosize(setupElRef.current);
-      }
-      setSetupDraft(scramble);
-      onSetupChange(scramble);
-    } catch (err) {
-      console.warn('[sim] derive scramble failed:', err);
-    } finally {
-      setDerivingScramble(false);
-    }
-  }, [is3x3, world, algDraft, settings, onSettingsChange, onSetupChange]);
-
-  // Optimize the current setup without changing its state or the solution.
-  // The shared protocol inverts the cloud solution into an equivalent scramble.
-  const handleOptimalScramble = useCallback(async () => {
     if (!is3x3 || !world || optimalScrambleBusy) return;
-    const raw = (setupElRef.current?.value ?? setupDraft).trim();
-    if (!raw) return;
+    const solution = algDraft;
+    const originalSetup = (setupElRef.current?.value ?? setupDraft).trim();
+    if (!solution.trim()) return;
     if (!authUser) { authLogin(); return; }
     const reqId = ++scrambleReqIdRef.current;
     setOptimalScrambleBusy(true);
@@ -2268,6 +2231,9 @@ export default function PlayerControls({
     const ac = new AbortController();
     optimalScrambleAbortRef.current = ac;
     try {
+      const raw = await deriveScrambleFromSolution(stripHandMarks(solution));
+      if (ac.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (!raw) throw new Error(t('无法从当前解法反推打乱。', 'Could not derive a scramble from the current solution.'));
       const { scramble, moves } = await cloudOptimalScramble(raw, (p) => {
         if (reqId !== scrambleReqIdRef.current) return;
         setOptimalScrambleStatus(
@@ -2279,12 +2245,16 @@ export default function PlayerControls({
         );
       }, ac.signal);
       if (reqId !== scrambleReqIdRef.current) return;
-      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== raw) {
-        setOptimalScrambleStatus(t('打乱已更改，已忽略本次结果。', 'Scramble changed; result discarded.'));
+      if (ac.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== originalSetup
+        || (algElRef.current?.value ?? algDraftRef.current) !== solution) {
+        setOptimalScrambleStatus(t('公式已更改，已忽略本次结果。', 'Algorithm changed; result discarded.'));
         return;
       }
-      // Let the setup-sync effect rebuild at the current playback step.
-      // Random-scramble setup would reset the cube and step to the beginning.
+      if (settings.playbackMode !== 'moves') {
+        onSettingsChange({ ...settings, playbackMode: 'moves' });
+      }
+      // Rebuild the derived setup at the current playback step.
       if (setupElRef.current) {
         setupElRef.current.value = scramble;
         autosize(setupElRef.current);
@@ -2299,7 +2269,7 @@ export default function PlayerControls({
       setOptimalScrambleBusy(false);
       optimalScrambleAbortRef.current = null;
     }
-  }, [is3x3, world, setupDraft, optimalScrambleBusy, authUser, authLogin, onSetupChange, t]);
+  }, [is3x3, world, setupDraft, algDraft, optimalScrambleBusy, authUser, authLogin, settings, onSettingsChange, onSetupChange, t]);
 
   const cancelOptimalScramble = useCallback(() => { optimalScrambleAbortRef.current?.abort(); }, []);
 
@@ -2379,25 +2349,11 @@ export default function PlayerControls({
             type="button"
             className="sim-player-scramble"
             onClick={handleDeriveScramble}
-            disabled={derivingScramble || !algDraft.trim()}
-            title={t('从下方解法反推打乱', 'Derive scramble from the solution below')}
-            aria-label={t('反推打乱', 'Derive scramble')}
+            disabled={optimalScrambleBusy || !algDraft.trim()}
+            title={t('从下方解法反推最优打乱(云端，需登录)', 'Derive an optimal scramble from the solution below (cloud, sign-in required)')}
+            aria-label={t('反推最优打乱', 'Derive optimal scramble')}
           >
-            {derivingScramble ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
-          </button>
-        )}
-        {is3x3 && (
-          <button
-            type="button"
-            className="sim-player-scramble sim-player-scramble-optimal"
-            onClick={handleOptimalScramble}
-            disabled={optimalScrambleBusy || !setupDraft.trim()}
-            title={authUser
-              ? t('优化当前打乱(云端)，保持魔方状态不变', 'Optimize the current scramble (cloud), preserving the cube state')
-              : t('最优打乱(云端)需登录(WCA),点击登录', 'Optimal scramble (cloud) requires login (WCA) — click to log in')}
-            aria-label={t('最优打乱', 'Optimal scramble')}
-          >
-            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : t('最优', 'optimal')}
+            {optimalScrambleBusy ? <Loader2 size={14} className="sim-spin" /> : <Search size={14} />}
           </button>
         )}
         <button
