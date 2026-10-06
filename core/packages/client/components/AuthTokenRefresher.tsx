@@ -102,7 +102,13 @@ export function AdminTools({ centerX = 0.5 }: { centerX?: number }) {
     // Reserve the FULL footprint even while collapsed. Hover must never move
     // the pet/anchor to make room for the expanding background.
     const clamp = () => {
+      // A hidden App iframe has no layout boxes. Moving its anchor cannot
+      // change those zero rectangles and would retrigger our own observer
+      // indefinitely. ResizeObserver runs again when the frame is shown.
+      const visibleRect = toolbar.getBoundingClientRect();
+      if (visibleRect.width <= 0 || visibleRect.height <= 0) return;
       const viewportWidth = document.documentElement.getBoundingClientRect().width;
+      if (viewportWidth <= 0) return;
       toolbar.style.maxWidth = `${viewportWidth - 32}px`;
       const rect = toolbar.getBoundingClientRect();
       const actions = actionsRef.current?.getBoundingClientRect() ?? rect;
