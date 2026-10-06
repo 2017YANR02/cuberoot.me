@@ -833,8 +833,11 @@ jobs:
             "android.permission.BLUETOOTH_ADMIN' maxSdkVersion='30" \
             'android.permission.BLUETOOTH_CONNECT' \
             'android.permission.BLUETOOTH_SCAN' \
+            'android.permission.CAMERA' \
             'android.permission.INTERNET' \
+            'android.permission.MODIFY_AUDIO_SETTINGS' \
             'android.permission.POST_NOTIFICATIONS' \
+            'android.permission.RECORD_AUDIO' \
             'com.android.vending.BILLING' \
             'android.permission.VIBRATE' \
             'com.vivo.notification.permission.BADGE_ICON' \
