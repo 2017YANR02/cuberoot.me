@@ -21,6 +21,7 @@ import AppLink from '@/components/AppLink';
 import { AdminTools } from '@/components/AuthTokenRefresher';
 import { ClearButton } from '@/components/ClearButton';
 import { persistItem } from '@/lib/safe-storage';
+import { mayUseMiniProgramBridge } from '@/lib/miniprogram-bridge';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { subscribeBeat, getMetronomeState } from '@/lib/metronome';
 import { getDeskPetScene, PLAYTIME_SCENES } from '@/lib/deskpet-playtime';
@@ -96,9 +97,20 @@ const PEEK = 0.08;
 const clampAnchor = (right: number, bottom: number, w: number, h: number, fx: number, fy: number) => {
   const cw = vpW(), ch = vpH();
   const mX = -w * PEEK, mY = -h * PEEK;
+  // Native navigation bars cannot receive WebView pointer events. Keep the
+  // entire pet vertically inside the visible WebView, including restored pets.
+  // WeChat is included when iOS has not supplied the mini-program marker yet.
+  const viewport = window.visualViewport;
+  const safe = mayUseMiniProgramBridge();
+  const style = safe ? getComputedStyle(document.documentElement) : null;
+  const top = (viewport?.offsetTop ?? 0) + (parseFloat(style?.getPropertyValue('--sat') ?? '') || 0) + 8;
+  const bottomEdge = Math.min(ch, (viewport?.offsetTop ?? 0) + (viewport?.height ?? ch))
+    - (parseFloat(style?.getPropertyValue('--sab') ?? '') || 0) - 8;
+  const minBottom = safe ? ch - bottomEdge : mY - h * (1 - fy);
+  const maxBottom = safe ? Math.max(minBottom, ch - top - h) : ch - mY - h * (1 - fy);
   return {
     right: Math.min(Math.max(mX - w * (1 - fx), right), cw - mX - w * (1 - fx)),
-    bottom: Math.min(Math.max(mY - h * (1 - fy), bottom), ch - mY - h * (1 - fy)),
+    bottom: Math.min(Math.max(minBottom, bottom), maxBottom),
   };
 };
 
@@ -387,7 +399,8 @@ export default function DeskPet() {
       if (Math.max(pet.right, admin?.right ?? pet.right) <= controls.left ||
           Math.min(pet.left, admin?.left ?? pet.left) >= controls.right || bottom <= top - 12) return;
       const dy = Math.min(bottom - top + 12, Math.max(0, pet.top - 12));
-      root.style.bottom = `${parseFloat(getComputedStyle(root).bottom) + dy}px`;
+      root.style.bottom = `${clampAnchor(vpW() - pet.right,
+        parseFloat(getComputedStyle(root).bottom) + dy, pet.width, pet.height, ...VC[character]).bottom}px`;
     };
     const resize = new ResizeObserver(avoidControls);
     const observeControls = () => {
@@ -488,6 +501,7 @@ export default function DeskPet() {
     // While clinging, a size change must re-pin to the edge, not recenter.
     if (miniRef.current.active) {
       root.style.right = miniRightPx(THEMES[character].mini.offsetRatio, miniRef.current.edge, r.width) + 'px';
+      root.style.bottom = clampAnchor(0, vpH() - r.bottom, r.width, r.height, ...VC[character]).bottom + 'px';
       return;
     }
     const [fx, fy] = VC[character];
@@ -1071,6 +1085,7 @@ export default function DeskPet() {
         root.style.right = '';
         root.style.bottom = '';
         root.style.transition = '';
+        keepInViewport();
         try { localStorage.removeItem(POS_KEY); localStorage.removeItem(MINI_KEY); } catch {}
         if (!dnd) resetIdle();
       },
@@ -1098,6 +1113,17 @@ export default function DeskPet() {
       }
     } catch {}
 
+    const keepInViewport = () => {
+      const r = root.getBoundingClientRect();
+      const c = clampAnchor(vpW() - r.right, vpH() - r.bottom, r.width, r.height, ...VC[character]);
+      root.style.right = (mini ? miniRight(false) : c.right) + 'px';
+      root.style.bottom = c.bottom + 'px';
+    };
+    keepInViewport();
+    window.addEventListener('resize', keepInViewport);
+    window.visualViewport?.addEventListener('resize', keepInViewport);
+    window.visualViewport?.addEventListener('scroll', keepInViewport);
+
     // force: on character switch state is already 'idle', must repaint
     setState(restoredMini ? (dnd ? 'mini-sleep' : 'mini-idle') : 'idle', true);
     if (randomMode) { playRandom(); scheduleRandom(); }
@@ -1122,6 +1148,9 @@ export default function DeskPet() {
       clearTimeout(longPressTimer);
       clearTimeout(miniTimer);
       clearTimeout(randomTimer);
+      window.removeEventListener('resize', keepInViewport);
+      window.visualViewport?.removeEventListener('resize', keepInViewport);
+      window.visualViewport?.removeEventListener('scroll', keepInViewport);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('clawd:state', onExternal as EventListener);
       hit.removeEventListener('click', onClick);
