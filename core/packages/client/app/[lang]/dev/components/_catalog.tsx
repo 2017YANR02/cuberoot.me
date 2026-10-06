@@ -2463,8 +2463,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'RecentRecordsList',
     import: "import { RecentRecordsList } from '@/components/RecentRecords';",
     category: 'more',
-    zh: `近 10 天 WR / CR / NR 纪录列表(无头无滚动条,嵌在 OngoingComps 共享面板里),每行渲染服务端预格式化的纪录文案(国旗 / 纪录徽章 / 洲图标)并可一键复制,配套 useRecentRecords hook。`,
-    en: `Headless last-10-days WR/CR/NR record list (embedded in the OngoingComps shared panel), each row rendering server-preformatted record text (flags, record badges, continent icons) with one-click copy.`,
+    zh: `首页与比赛详情共用的纪录快讯列表，渲染统一格式的文案、国旗、纪录徽标和洲图标，支持逐条复制。首页配套 useRecentRecords，比赛页传入文案及轮次链接。`,
+    en: `Shared record news list for the homepage and competition details, rendering canonical text, flags, record badges and continent icons with per-row copy. Competition reports supply formatted text and round links.`,
     note: { zh: `靠 useRecentRecords 拉 /v1/wca/recent-records(60s 轮询),需真实数据。`, en: `Driven by useRecentRecords fetching /v1/wca/recent-records (60s poll); needs live data.` },
   },
   {

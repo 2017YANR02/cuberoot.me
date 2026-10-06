@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowLeft, X as XIcon, RefreshCw, Info, Copy, Check, Radio, ArrowUp, ArrowDown, Ban, Download, Calculator } from 'lucide-react';
 import { Flag } from '@/components/Flag';
 import { RecordBadge } from '@/components/RecordBadge';
-import { ContinentIcon, RECORD_BADGE_CONTINENT } from '@/components/ContinentIcon';
+import { RecentRecordsList } from '@/components/RecentRecords';
 import { summarizeCompRecords } from '@/lib/comp-records';
 import { SearchInput } from '@/components/SearchInput';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
@@ -2061,29 +2061,17 @@ export default function CompDetailPage() {
                     {newsCopy.copiedKey === slug ? <Check size={14} /> : <Copy size={14} />}
                   </button>
                 </div>
-                <ul className="comp-record-news-list">
-                  {recordNews.map((news, index) => (
-                    <li key={index}>
-                      <Link
-                        className="comp-record-news-link"
-                        href={`/wca/comp/${slug}?view=result&event=${news.event}${news.round ? `&round=${news.round}` : ''}`}
-                        prefetch={false}
-                      >
-                        <EventIcon event={news.event} className="comp-podium-icon" />
-                        <span>
-                          {news.results.map((result, resultIndex) => (
-                            <span className="comp-record-news-result" key={resultIndex}>
-                              {resultIndex > 0 && ' | '}
-                              {tr(result.text)}{' '}
-                              <span className="comp-record-news-tag">{RECORD_BADGE_CONTINENT[result.tag.replace(/^F/, '')] && <ContinentIcon slug={RECORD_BADGE_CONTINENT[result.tag.replace(/^F/, '')]} />}<RecordBadge record={result.tag} />{result.plural && tr({ zh: '', en: 's' })}{result.rank && `/WR${result.rank}`}</span>
-                              {resultIndex === 0 && <> <span className="comp-record-news-person">{displayCuberName(news.person, isZh)} <Flag iso2={news.country} className="comp-flag" /></span></>}
-                            </span>
-                          ))}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+                <RecentRecordsList
+                  isZh={isZh}
+                  filled={recordNews.map((news, index) => ({
+                    id: `${slug}-${index}`,
+                    eventId: news.event,
+                    competitionId: slug,
+                    formattedCn: `${news.message.zh} | ${compNameTitle}${countryFlag(compFlagIso2(slug))}`,
+                    formattedEn: `${news.message.en} | ${compNameTitle}${countryFlag(compFlagIso2(slug))}`,
+                    href: `/wca/comp/${slug}?view=result&event=${news.event}${news.round ? `&round=${news.round}` : ''}`,
+                  }))}
+                />
               </section>
             )}
             {compRecords.length > 0 && (
