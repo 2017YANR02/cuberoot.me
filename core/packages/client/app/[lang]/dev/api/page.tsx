@@ -260,6 +260,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'recon', m: 'GET', p: '/v1/recon/comments', g: 'public', zh: '复盘评论', en: 'Recon comments' },
   { d: 'recon', m: 'POST', p: '/v1/recon/comments', g: 'login', zh: '发评论', en: 'Post comment' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/comments/:id', g: 'login', zh: '改评论', en: 'Edit comment' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon/comments/:id/vote', g: 'login', zh: '设置或取消评论赞踩', en: 'Set or remove a comment vote' },
   { d: 'recon', m: 'DELETE', p: '/v1/recon/comments/:id', g: 'login', zh: '删评论', en: 'Delete comment' },
   { d: 'recon', m: 'PUT', p: '/v1/recon/comments/:id/pin', g: 'admin', zh: '置顶评论', en: 'Pin comment' },
   { d: 'recon', m: 'GET', p: '/v1/recon/edits', g: 'public', zh: '编辑记录', en: 'Edit log' },

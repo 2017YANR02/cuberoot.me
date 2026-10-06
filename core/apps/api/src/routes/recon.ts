@@ -391,13 +391,17 @@ reconRoutes.get('/recon/comments', async (c) => {
     c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     return c.json({ error: 'This reconstruction is private', private: true }, 403);
   }
+  const viewer = await optionalAuth(c);
   const rows = await query<{
     id: number; recon_id: number; author_id: string; author_name: string;
     content: string; created_at: number; updated_at: number | null; pinned: number;
     parent_id: number | null;
+    like_count: number; my_vote: 'like' | 'dislike' | null;
   }>(
-    `SELECT id, recon_id, author_id, author_name, content, created_at, updated_at, pinned, parent_id
-     FROM comments WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [reconId]
+    `SELECT c.*,
+       (SELECT COUNT(*) FROM recon_comment_votes v WHERE v.comment_id = c.id AND v.vote = 'like') AS like_count,
+       (SELECT v.vote FROM recon_comment_votes v WHERE v.comment_id = c.id AND v.user_id = ?) AS my_vote
+     FROM comments c WHERE recon_id = ? ORDER BY pinned DESC, created_at ASC`, [viewer?.uid ?? null, reconId]
   );
   const userIds = await publicUserIdsForOwnerKeys(rows.map((row) => row.author_id));
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -412,7 +416,38 @@ reconRoutes.get('/recon/comments', async (c) => {
     updatedAt: r.updated_at ? Number(r.updated_at) : null,
     pinned: !!r.pinned,
     parentId: r.parent_id != null ? Number(r.parent_id) : null,
+    likeCount: Number(r.like_count),
+    myVote: r.my_vote ?? null,
   })));
+});
+
+// Explicit desired state makes retries idempotent; each account gets one vote.
+reconRoutes.put('/recon/comments/:id/vote', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  checkRateLimit(getIp(c));
+  const user = await requireAuth(c);
+  if (!user.uid) return c.json({ error: 'Please sign in again' }, 401);
+  const commentId = Number(c.req.param('id'));
+  if (!Number.isSafeInteger(commentId) || commentId <= 0) return c.json({ error: 'Invalid comment id' }, 400);
+  const { vote } = await c.req.json<{ vote?: unknown }>();
+  if (vote !== null && vote !== 'like' && vote !== 'dislike') return c.json({ error: 'Invalid vote' }, 400);
+  const rows = await query<{ recon_id: number }>(
+    'SELECT c.recon_id FROM comments c JOIN recons r ON r.id = c.recon_id WHERE c.id = ?', [commentId],
+  );
+  if (!rows.length) return c.json({ error: 'Comment not found' }, 404);
+  if (await privateReconForbidden(c, rows[0].recon_id)) return c.json({ error: 'This reconstruction is private' }, 403);
+  if (vote === null) {
+    await query('DELETE FROM recon_comment_votes WHERE comment_id = ? AND user_id = ?', [commentId, user.uid]);
+  } else {
+    await query(`INSERT INTO recon_comment_votes (comment_id, user_id, vote) VALUES (?, ?, ?)
+      ON CONFLICT (comment_id, user_id) DO UPDATE SET vote = EXCLUDED.vote`, [commentId, user.uid, vote]);
+  }
+  const counts = await query<{ like_count: number; my_vote: 'like' | 'dislike' | null }>(
+    `SELECT COUNT(*) FILTER (WHERE vote = 'like') AS like_count,
+       MAX(vote) FILTER (WHERE user_id = ?) AS my_vote
+     FROM recon_comment_votes WHERE comment_id = ?`, [user.uid, commentId],
+  );
+  return c.json({ likeCount: Number(counts[0].like_count), myVote: counts[0].my_vote ?? null });
 });
 
 // POST /v1/recon/comments
