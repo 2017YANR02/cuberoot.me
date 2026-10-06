@@ -26,6 +26,7 @@ import {
   TIMER_IMPORT_SETTING_FIELD_IDS,
   TIMER_REANALYZE_SETTING_FIELD_IDS,
   TIMER_RANK_SETTING_FIELD_IDS,
+  TIMER_SYNC_SEED_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 import {
@@ -57,6 +58,7 @@ describe('Mobile timer settings parity ledger', () => {
   ...TIMER_IMPORT_SETTING_FIELD_IDS,
   ...TIMER_REANALYZE_SETTING_FIELD_IDS,
   ...TIMER_RANK_SETTING_FIELD_IDS,
+  ...TIMER_SYNC_SEED_SETTING_FIELD_IDS,
     ]);
     expect(MOBILE_TIMER_SETTING_EFFECT_FIELD_IDS).not.toContain(
       'settings.appearance.scramble-click-action',

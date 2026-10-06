@@ -358,3 +358,7 @@ export * from './TimerImportSettings';
 export * from './TimerBackupSettings';
 
 export { TimerRankSettings, TIMER_RANK_SETTING_FIELD_IDS } from './TimerRankSettings';
+
+export { TimerSyncSeedSettings, TIMER_SYNC_SEED_SETTING_FIELD_IDS } from './TimerSyncSeedSettings';
+
+export { TimerTrainerSubsetModal } from './TimerTrainerSubsetModal';

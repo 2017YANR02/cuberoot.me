@@ -1648,6 +1648,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared sound, voice, metronome, tap-tempo and custom inspection cues, backed by one audio-clock scheduler and warning/fallback implementation.',
   },
   {
+    name: 'TimerSyncSeedSettings / TimerTrainerSubsetModal',
+    import: "import { TimerSyncSeedSettings, TimerTrainerSubsetModal } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: 'Web 与安装端共用同步种子的应用、清除、重置计数与 OLL/PLL 子集选择；宿主持久化设置，共享 Worker 绑定历史槽生成，成功显示后消费编号。',
+    en: 'Shared seed apply, clear and reset controls plus OLL/PLL subset selection. Hosts persist settings; a shared worker generates each history slot, which is published after its index is persisted.',
+  },
+  {
     name: 'TimerRankSettings / TimerRankBadge / TimerExportSettings / TimerImportSettings / TimerBackupSettings / TimerReanalyzeSettings / TimerReplayImportModal',
     import: "import { TimerRankSettings, TimerExportSettings, TimerImportSettings, TimerBackupSettings, TimerReanalyzeSettings, TimerReplayImportModal } from '@cuberoot/timer-ui'; import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';",
     category: 'more',
