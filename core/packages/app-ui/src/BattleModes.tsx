@@ -1,3 +1,6 @@
+import { defaultLocalBattlePreferences, readLocalBattlePreferences, saveLocalBattlePreferences, LOCAL_BATTLE_INSPECTIONS, LOCAL_BATTLE_PRECISIONS, type LocalBattlePreferences } from '@cuberoot/shared/timer';
+import { TimerBattleAppearanceSettings } from '@cuberoot/timer-ui';
+import { requestLocalBattleScramble, LOCAL_BATTLE_SCRAMBLE_COPY, type LocalBattleScramble } from '@cuberoot/shared/timer';
 import { NetRoomController, startNetRoomPolling, startNetRoomRestore } from '@cuberoot/shared/timer';
 import { NetBattleAttemptRecorder, netAttemptSolveId, type NetRecordedAttempt, type NetRecordingOutbox } from '@cuberoot/shared/timer';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
@@ -147,7 +150,7 @@ function timerPenalty(player: LocalBattlePlayerState): Penalty | null {
 function playerDisplay(
   player: LocalBattlePlayerState,
   nowMs: number,
-  settings: Pick<BattleModeBaseProps, 'hideTime' | 'inspectionSec' | 'precision' | 'runningPrecision'>,
+  settings: { hideTime: boolean; inspectionSec: number; precision: 0 | 1 | 2 | 3; runningPrecision: 0 | 1 | 2 | 3 },
 ): string {
   const displayMs = player.timer.phase === 'running'
     ? Math.max(0, nowMs - (player.timer.startedAtMs ?? nowMs))
@@ -192,6 +195,10 @@ function nextLocalBattleRoundId(): string {
 }
 
 export interface LocalBattleModeProps extends BattleModeBaseProps {
+  scrambleProvider?(event: EventId, signal: AbortSignal): Promise<LocalBattleScramble>;
+  sourceSettings?(event: EventId): ReactNode;
+  renderSource?(value: LocalBattleScramble): ReactNode;
+  onExportRounds?(rounds: readonly LocalBattleRound[]): Promise<void>;
   onSettingsChange?(patch: Partial<TimerStoreSettings>): void;
   typographySettings?: TimerTypographySettings;
   scramblePreviewSettings?: TimerScramblePreviewSettings;
@@ -212,28 +219,41 @@ export interface BattleSmartCubeHandlers {
  * pointer/keyboard timers and scramble-provider effects.
  */
 export function LocalBattleMode({
+  scrambleProvider, sourceSettings, renderSource, onExportRounds,
+  scramblePreviewSettings, onSettingsChange,
   copy,
   deviceControls,
   inputBlocked = false,
   eventGroups,
-  hideTime,
-  holdMs,
-  inspectionSec,
   language,
   onActivityChange,
   onModeChange,
   onOverlayCloseChange,
   onSmartCubeHandlersChange,
-  onSettingsChange,
   playerCount,
-  precision,
-  runningPrecision,
-  scramblePreviewSettings,
   typographySettings = DEFAULT_TIMER_TYPOGRAPHY,
   smartCube,
 }: LocalBattleModeProps) {
+  const [preferences, setPreferences] = useState(defaultLocalBattlePreferences);
+  const preferencesRef = useRef(preferences); preferencesRef.current = preferences;
+  const { hideTime, holdMs, inspectionSec, precision, layout, flipTopRow, syncStart } = preferences;
+  const runningPrecision = precision;
+  const showPreview = scramblePreviewSettings?.showCubePreview ?? preferences.showImage;
+  const updatePreferences = (patch: Partial<LocalBattlePreferences>) => {
+    const next = { ...preferencesRef.current, ...patch };
+    try { saveLocalBattlePreferences(window.localStorage, next); preferencesRef.current = next; setPreferences(next); setStorageError(''); }
+    catch { setStorageError(copy.actionFailed); }
+  };
+  const setLayout = useCallback((layout: 'side' | 'versus') => setPreferences(current => ({ ...current, layout })), []);
+  useEffect(() => { try { setPreferences(readLocalBattlePreferences(window.localStorage)); } catch { setStorageError(copy.actionFailed); } }, []);
+
   const [state, setState] = useState<LocalBattleState>(() => initialLocalBattleState(playerCount));
-  const [nowMs, setNowMs] = useState(() => performance.now());
+  const [nowMs, setNowMs] = useState(0);
+  const [scrambleRows, setScrambleRows] = useState<Partial<Record<EventId, LocalBattleScramble>>>({});
+  const requestsRef = useRef(new Map<EventId, AbortController>());
+  const sourceInitializedRef = useRef(false);
+  const providerRef = useRef(scrambleProvider); providerRef.current = scrambleProvider;
+  const historyWritesRef = useRef(Promise.resolve());
   const [winners, setWinners] = useState<number[]>([]);
   const [rounds, setRounds] = useState<LocalBattleRound[]>([]);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -247,11 +267,8 @@ export function LocalBattleMode({
   const [storageError, setStorageError] = useState('');
   const [failedScrambleEvents, setFailedScrambleEvents] = useState<Set<EventId>>(() => new Set());
   const [cubeHolder, setCubeHolder] = useState(0);
-  const [layout, setLayout] = useState<'side' | 'versus'>('versus');
   useTimerBattleOrientation(state.playerCount, setLayout);
-  const [syncStart, setSyncStart] = useState(false);
-  useEffect(() => { setSyncStart(window.localStorage.getItem('battle_syncStart') === 'true'); }, []);
-  const [flipTopRow, setFlipTopRow] = useState(true);
+
   const inputBlockedRef = useRef(inputBlocked);
   inputBlockedRef.current = inputBlocked || historyOpen || settingsOpen;
   const stateRef = useRef(state);
@@ -310,32 +327,23 @@ export function LocalBattleMode({
           next.delete(effect.event);
           return next;
         });
-        void generateTimerScramble({ event: effect.event }).then((result) => {
-          if (!result.ok || result.kind !== 'generated') {
-            if (dispatch({
-              type: 'scramble-failed',
-              event: effect.event,
-              revision: effect.revision,
-            })) setFailedScrambleEvents((current) => new Set(current).add(effect.event));
-            return;
+        requestsRef.current.get(effect.event)?.abort();
+        const controller = new AbortController(); requestsRef.current.set(effect.event, controller);
+        setScrambleRows(rows => ({ ...rows, [effect.event]: undefined }));
+        void requestLocalBattleScramble(effect.event, providerRef.current ?? (async event => {
+          const value = await generateTimerScramble({ event });
+          if (!value.ok || value.kind !== 'generated') throw new Error('Scramble unavailable');
+          return { scramble: value.scramble };
+        }), controller.signal).then(row => {
+          if (controller.signal.aborted) return;
+          if (dispatch({ type: 'scramble-ready', event: effect.event, revision: effect.revision, scramble: row.scramble, source: row.source })) {
+            setScrambleRows(rows => ({ ...rows, [effect.event]: row }));
           }
-          if (dispatch({
-            type: 'scramble-ready',
-            event: effect.event,
-            revision: effect.revision,
-            scramble: result.scramble,
-          })) setFailedScrambleEvents((current) => {
-            if (!current.has(effect.event)) return current;
-            const next = new Set(current);
-            next.delete(effect.event);
-            return next;
-          });
         }).catch(() => {
-          if (dispatch({
-            type: 'scramble-failed',
-            event: effect.event,
-            revision: effect.revision,
-          })) setFailedScrambleEvents((current) => new Set(current).add(effect.event));
+          if (controller.signal.aborted) return;
+          if (dispatch({ type: 'scramble-failed', event: effect.event, revision: effect.revision })) {
+            setFailedScrambleEvents(current => new Set(current).add(effect.event));
+          }
         });
         continue;
       }
@@ -353,7 +361,7 @@ export function LocalBattleMode({
             : roundsRef.current.map((round, index) => index === existing ? completed : round);
           roundsRef.current = nextRounds;
           setRounds(nextRounds);
-          void roundStoreRef.current?.save(nextRounds).catch(() => setStorageError(copy.actionFailed));
+          historyWritesRef.current = historyWritesRef.current.then(() => roundStoreRef.current?.save(nextRounds)).then(() => setStorageError('')).catch(() => setStorageError(copy.actionFailed));
           if (existing === -1) for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) {
             dispatch({ type: 'request-next-scramble', event, preserveResults: true });
           }
@@ -381,10 +389,16 @@ export function LocalBattleMode({
   };
 
   useEffect(() => {
-    dispatch({ type: 'request-next-scramble', event: '333' });
-  // The reducer revision gate owns async freshness; initialize once per mount.
+    if (!sourceInitializedRef.current) {
+      sourceInitializedRef.current = true;
+      let event: EventId = '333';
+      try { const stored = window.localStorage.getItem('battle_puzzle') as EventId; if (BATTLE_EVENT_IDS.includes(stored)) event = stored; } catch { setStorageError(copy.actionFailed); }
+      dispatch({ type: 'set-event', event });
+    } else for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) dispatch({ type: 'request-next-scramble', event });
+    return () => { for (const request of requestsRef.current.values()) request.abort(); };
+  // Provider identity changes only with the actual source configuration.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [scrambleProvider]);
 
   useEffect(() => {
     roundStoreRef.current = createLocalBattleRoundStore(window.localStorage);
@@ -404,7 +418,9 @@ export function LocalBattleMode({
   }, []);
 
   useEffect(() => {
-    dispatch({ type: 'set-player-count', playerCount });
+    if (dispatch({ type: 'set-player-count', playerCount })) {
+      for (const event of new Set(stateRef.current.players.slice(0, playerCount).map(player => player.event))) dispatch({ type: 'request-next-scramble', event });
+    }
     if (cubeHolderRef.current >= playerCount) setCubeHolder(0);
   }, [dispatch, playerCount]);
 
@@ -517,9 +533,6 @@ export function LocalBattleMode({
 
   const changeMode = (mode: TimerPlayersValue) => {
     if (active) return;
-    if (typeof mode === 'number' && mode >= 2) {
-      dispatch({ type: 'set-player-count', playerCount: mode });
-    }
     onModeChange(mode);
   };
 
@@ -544,7 +557,7 @@ export function LocalBattleMode({
       sameEventPlayerIds,
     );
     return !scrambleHidden ? (
-      <TimerScrambleStrip font={typographySettings.scrambleFont} fontScale={typographySettings.scrambleFontScale}
+      <TimerScrambleStrip font={typographySettings.scrambleFont} fontScale={preferences.scrambleScale}
         copiedLabel={copy.copied}
         fallback={scrambleFailed ? copy.retry : copy.battleNoScramble}
         fallbackKind="custom"
@@ -562,12 +575,13 @@ export function LocalBattleMode({
           ? smartCube.facelets === smartCubeTargetFacelets(player.scramble)
           : null}
         onActivate={scrambleFailed
-          ? () => dispatch({ type: 'request-next-scramble', event: player.event })
+          ? () => dispatch({ type: 'request-next-scramble', event: player.event, preserveResults: visiblePlayers.every(item => item.result !== null) })
           : undefined}
         scramble={player.scramble}
+        status={scrambleFailed ? { kind: 'error', message: LOCAL_BATTLE_SCRAMBLE_COPY.failed[language] } : !player.scramble ? { kind: 'loading', message: LOCAL_BATTLE_SCRAMBLE_COPY.loading[language] } : undefined}
         title={scrambleFailed ? copy.retry : undefined}
         verificationLabels={scrambleLabels(copy)}
-      />
+      >{scrambleRows[player.event] && renderSource?.(scrambleRows[player.event]!)}</TimerScrambleStrip>
           ) : undefined;
   };
   const sharedScramble = (ids: number[]) => {
@@ -577,9 +591,9 @@ export function LocalBattleMode({
     const strip = renderPlayerScramble(holder ?? player);
     return <>
       {strip}
-      {strip && scramblePreviewSettings?.showCubePreview && player.scramble && <TimerCubePreview
+      {strip && showPreview && player.scramble && <TimerCubePreview
         event={player.event} scramble={player.scramble} height="var(--timer-cube-h)"
-        ariaLabel={copy.cubeState} visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'} />}
+        ariaLabel={copy.cubeState} visualization={scramblePreviewSettings?.prefer3D ? '3D' : '2D'} />}
     </>;
   };
   const summaries = summarizeLocalBattleRounds(rounds, state.playerCount);
@@ -589,6 +603,12 @@ export function LocalBattleMode({
       <TimerStageLayout devices={smartCube && deviceControls}>
       <TimerBattleLayout middle={<TimerBattleToolbar language={language} disabled={active} onHistory={() => setHistoryOpen(true)}
         onSettings={() => setSettingsOpen(true)} onNext={nextRound}
+        eventControl={<TimerPuzzlePicker dataNoTimer disabled={active} groups={pickerGroups} puzzleLabel={copy.puzzle}
+          selectedEvent={visiblePlayers[0].event} onSelect={selectorId => {
+            const event = timerEventIdFromSelector(selectorId);
+            if (!event || !dispatch({ type: 'set-event', event })) return;
+            try { window.localStorage.setItem('battle_puzzle', event); } catch { setStorageError(copy.actionFailed); }
+          }} />}
         startDisabled={visiblePlayers.some((player) => !player.scramble)}
         controls={<TimerPlayersSelect ariaLabel={copy.onePlayer} disabled={active} onlineLabel={copy.online}
           onChange={changeMode} playerLabel={copy.players} value={state.playerCount as 2 | 3 | 4} />}
@@ -612,22 +632,9 @@ export function LocalBattleMode({
           );
           return (
             <TimerBattlePlayer className="battle-player" playerNumber={player.id + 1}
-              language={language} score={summaries.find((summary) => summary.playerId === player.id)?.wins ?? 0}
-              winner={isWinner} controls={
-                <TimerPuzzlePicker
-                  dataNoTimer
-                  disabled={active}
-                  groups={pickerGroups}
-                  onSelect={(selectorId) => {
-                    const event = timerEventIdFromSelector(selectorId);
-                    if (!event) return;
-                    setWinners([]);
-                    dispatch({ type: 'set-player-event', playerId: player.id, event });
-                  }}
-                  puzzleLabel={copy.puzzle}
-                  selectedEvent={player.event}
-                />
-              }
+              language={language} background={{ color: preferences.bgColors[player.id], image: preferences.bgImages[player.id], opacity: preferences.bgOpacity }} score={summaries.find((summary) => summary.playerId === player.id)?.wins ?? 0}
+              winner={isWinner}
+
               actions={result ? <TimerPenaltyActions language={language} value={player.penalty}
                 onChange={(penalty) => dispatch({ type: 'set-penalty', playerId: player.id, penalty })} /> : undefined}
             >
@@ -635,13 +642,13 @@ export function LocalBattleMode({
                 layout="local"
                 ariaLabel={copy.battlePlayer(player.id + 1)}
                 className="battle-player-timer"
-                cornerSlot={!cell.hideScramble && !scrambleHidden && scramblePreviewSettings?.showCubePreview && player.scramble ? (
+                cornerSlot={!cell.hideScramble && !scrambleHidden && showPreview && player.scramble ? (
                   <TimerCubePreview
                     ariaLabel={copy.cubeState}
                     event={player.event}
                     fill
                     scramble={player.scramble}
-                    visualization={scramblePreviewSettings.prefer3D ? '3D' : '2D'}
+                    visualization={scramblePreviewSettings?.prefer3D ? '3D' : '2D'}
                   />
                 ) : undefined}
                 colorClass={`${localPlayerColor(player)} tf-${typographySettings.timerFont}`} fontScale={typographySettings.timerFontScale}
@@ -693,10 +700,19 @@ export function LocalBattleMode({
       <div className="battle-local-tools" data-no-timer>
         {settingsOpen && <TimerBattleSettings layout={{
           playerCount: state.playerCount as 2 | 3 | 4, layout, flipTopRow,
-          onLayoutChange: setLayout, onFlipChange: setFlipTopRow,
+          onLayoutChange: layout => updatePreferences({ layout }), onFlipChange: flipTopRow => updatePreferences({ flipTopRow }),
         }} language={language} onClose={() => setSettingsOpen(false)}
+          onReset={async () => {
+            await historyWritesRef.current;
+            try {
+              await roundStoreRef.current!.clear(); roundsRef.current = []; setRounds([]); setStorageError('');
+              dispatch({ type: 'reset-round' });
+              for (const event of new Set(stateRef.current.players.slice(0, stateRef.current.playerCount).map(player => player.event))) dispatch({ type: 'request-next-scramble', event });
+            } catch (error) { setStorageError(copy.actionFailed); throw error; }
+          }}
+          source={sourceSettings?.(visiblePlayers[0].event)}
           syncStart={{ value: syncStart, onChange: value => {
-            setSyncStart(value); window.localStorage.setItem('battle_syncStart', String(value));
+            updatePreferences({ syncStart: value });
           } }}
           keys={playerKeys.slice(0, state.playerCount)}
           onKeyChange={(playerId, key) => {
@@ -704,26 +720,36 @@ export function LocalBattleMode({
             playerKeysRef.current = next; setPlayerKeys(next);
             void keyStoreRef.current?.save(next).catch(() => setStorageError(copy.actionFailed));
           }}
-          precision={onSettingsChange ? { value: precision, options: [2, 3], onChange: (value) => onSettingsChange({ precision: value as 2 | 3 }) } : undefined}
-          inspection={onSettingsChange ? { value: inspectionSec, onChange: (value) => onSettingsChange({ inspectionSec: value }) } : undefined}
-          hold={onSettingsChange ? { value: holdMs, onChange: (value) => onSettingsChange({ holdMs: value }) } : undefined}
-          preview={onSettingsChange ? { value: scramblePreviewSettings?.showCubePreview ?? false, onChange: (value) => onSettingsChange({ showCubePreview: value }) } : undefined}
-          hideTime={onSettingsChange ? { value: hideTime, onChange: (value) => onSettingsChange({ hideTime: value }) } : undefined}
+          precision={{ value: precision, options: LOCAL_BATTLE_PRECISIONS, onChange: value => updatePreferences({ precision: value as LocalBattlePreferences['precision'] }) }}
+          inspection={{ value: inspectionSec, options: LOCAL_BATTLE_INSPECTIONS, onChange: inspectionSec => updatePreferences({ inspectionSec }) }}
+          hold={{ value: holdMs, onChange: holdMs => updatePreferences({ holdMs }) }}
+          preview={{ value: showPreview, onChange: showImage => { updatePreferences({ showImage }); onSettingsChange?.({ showCubePreview: showImage }); } }}
+          hideTime={{ value: hideTime, onChange: hideTime => updatePreferences({ hideTime }) }}
           devices={smartCube && <TimerBattleCubeControls language={language} mode="shared" holder={cubeHolder}
             onHolderChange={setCubeHolder} deviceControl={() => deviceControls}
             players={visiblePlayers.map((player) => ({ id: player.id, disabled: active || !timerSupportsLocalBattleSmartCube(player.event) || player.result !== null }))} />}
-        />}
+        ><TimerBattleAppearanceSettings language={language} playerCount={state.playerCount} value={preferences} onChange={updatePreferences} />
+        </TimerBattleSettings>}
         {historyOpen && <TimerBattleHistory rounds={rounds} playerCount={state.playerCount} language={language} precision={precision}
           onClose={() => setHistoryOpen(false)} onBackChange={onOverlayCloseChange}
           warning={storageError && <p role="alert">{storageError}</p>}
-          onDelete={(id) => {
-            const next = roundsRef.current.filter((round) => round.id !== id);
-            roundsRef.current = next; setRounds(next);
-            void roundStoreRef.current?.save(next).catch(() => setStorageError(copy.actionFailed));
+          onExport={onExportRounds ? () => { void onExportRounds(roundsRef.current).catch(() => setStorageError(copy.actionFailed)); } : undefined}
+          onDelete={async (id) => {
+            await historyWritesRef.current;
+            const next = roundsRef.current.filter(round => round.id !== id);
+            try {
+              await roundStoreRef.current!.save(next);
+              roundsRef.current = next; setRounds(next); setStorageError('');
+              if (id === roundIdRef.current) dispatch({ type: 'reset-round' });
+            } catch (error) { setStorageError(copy.actionFailed); throw error; }
           }}
-          onClear={() => {
-            roundsRef.current = []; setRounds([]);
-            void roundStoreRef.current?.clear().catch(() => setStorageError(copy.actionFailed));
+          onClear={async () => {
+            await historyWritesRef.current;
+            try {
+              await roundStoreRef.current!.clear();
+              roundsRef.current = []; setRounds([]); setStorageError('');
+              dispatch({ type: 'reset-round' });
+            } catch (error) { setStorageError(copy.actionFailed); throw error; }
           }} />}
       </div>
       {storageError && <p aria-live="assertive" className="battle-error">{storageError}</p>}

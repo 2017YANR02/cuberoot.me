@@ -13,8 +13,8 @@ export interface TimerBattleHistoryProps {
   legacy?: ReactNode;
   onClose(): void;
   onBackChange?(close: (() => void) | null): void;
-  onDelete?(roundId: string): void;
-  onClear?(): void;
+  onDelete?(roundId: string): void | boolean | Promise<void | boolean>;
+  onClear?(): void | boolean | Promise<void | boolean>;
   onExport?(): void;
   roundActions?(round: LocalBattleRound): ReactNode;
 }
@@ -25,6 +25,7 @@ const COPY = {
 
 export function TimerBattleHistory({ rounds, playerCount, language, precision, warning, legacy, onClose, onBackChange, onDelete, onClear, onExport, roundActions }: TimerBattleHistoryProps) {
   const copy = COPY[language];
+  const [busy, setBusy] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
   const detail = rounds.find((round) => round.id === detailId);
@@ -53,17 +54,23 @@ export function TimerBattleHistory({ rounds, playerCount, language, precision, w
       </section>)}
       <div className="timer-room-actions">
         {roundActions?.(detail)}
-        {onDelete && <button type="button" onBlur={() => setConfirm(null)} onClick={() => {
+        {onDelete && <button type="button" onBlur={() => setConfirm(null)} disabled={busy} onClick={async () => {
           if (confirm !== detail.id) { setConfirm(detail.id); return; }
-          onDelete(detail.id); setDetailId(null); setConfirm(null);
+          setBusy(true);
+          try { if (await onDelete(detail.id) !== false) { setDetailId(null); setConfirm(null); } }
+          catch { /* Host retains the record and presents its storage error. */ }
+          finally { setBusy(false); }
         }}>{confirm === detail.id ? copy.confirm : copy.delete}</button>}
       </div>
     </> : <>
       <div className="timer-room-actions">
         {onExport && <button type="button" onClick={onExport}>CSV</button>}
-        {onClear && rounds.length > 0 && <button type="button" onBlur={() => setConfirm(null)} onClick={() => {
+        {onClear && rounds.length > 0 && <button type="button" onBlur={() => setConfirm(null)} disabled={busy} onClick={async () => {
           if (confirm !== 'clear') { setConfirm('clear'); return; }
-          onClear(); setConfirm(null);
+          setBusy(true);
+          try { if (await onClear() !== false) setConfirm(null); }
+          catch { /* Host presents its storage error. */ }
+          finally { setBusy(false); }
         }}>{confirm === 'clear' ? copy.confirm : copy.clear}</button>}
       </div>
       {rounds.length === 0 ? <p>{copy.empty}</p> : <>

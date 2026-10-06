@@ -342,3 +342,5 @@ export { TimerDifficultyHelp } from './TimerDifficultyHelp';
 
 export { createNetOutboxStorage } from './net-outbox-storage';
 export { TimerNetOutboxNotice } from './TimerNetOutboxNotice';
+export * from './TimerBattleSourceSettings';
+export * from './TimerBattleAppearanceSettings';

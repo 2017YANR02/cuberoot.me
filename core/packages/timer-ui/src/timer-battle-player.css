@@ -22,3 +22,18 @@
 .timer-battle-player-controls { display: flex; align-items: center; gap: 6px; }
 .timer-battle-player-winner { color: var(--signal-success); font-weight: 700; }
 .timer-battle-player-actions { flex: 0 0 auto; }
+
+.timer-battle-player { position: relative; isolation: isolate; }
+.timer-battle-player-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+}
+.timer-battle-appearance { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.timer-battle-background-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.timer-battle-background-row input[type="file"] { max-width: 100%; width: 180px; }
+.timer-battle-background-row label { min-width: 0; flex-wrap: wrap; }
+.timer-battle-appearance input[type="range"] { min-width: 0; max-width: 100%; }

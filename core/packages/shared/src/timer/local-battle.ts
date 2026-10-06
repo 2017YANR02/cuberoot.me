@@ -4,6 +4,7 @@ import {
   BATTLE_EVENT_IDS,
   type EventId,
   type Solve,
+  type TimerScrambleSourceSnapshot,
 } from './types';
 import { decodeTimerSolve } from './persistence';
 import {
@@ -40,6 +41,8 @@ export interface LocalBattlePlayerState {
   penalty: LocalBattlePenalty;
   result: SolveResult | null;
   resultScramble?: string;
+  scrambleSource?: TimerScrambleSourceSnapshot;
+  resultScrambleSource?: TimerScrambleSourceSnapshot;
   scramble: string;
   scrambleRevision: number;
   timer: TimerMachineState;
@@ -56,10 +59,11 @@ export interface LocalBattleConfig extends TimerMachineConfig {
 }
 
 export type LocalBattleAction =
+  | { type: 'set-event'; event: EventId }
   | { type: 'set-player-count'; playerCount: number }
   | { type: 'set-player-event'; playerId: number; event: EventId }
   | { type: 'request-next-scramble'; event: EventId; preserveResults?: boolean }
-  | { type: 'scramble-ready'; event: EventId; revision: number; scramble: string }
+  | { type: 'scramble-ready'; event: EventId; revision: number; scramble: string; source?: TimerScrambleSourceSnapshot }
   | { type: 'scramble-failed'; event: EventId; revision: number }
   | { type: 'player-timer'; playerId: number; action: TimerMachineAction }
   | { type: 'start-all'; nowMs: number }
@@ -185,6 +189,7 @@ export function createLocalBattleRound(
       event: player.event,
       penalty: player.penalty === 'dnf' ? 'DNF' : player.penalty,
       scramble: player.resultScramble ?? player.scramble,
+      ...(player.resultScrambleSource ? { scrambleSource: player.resultScrambleSource } : {}),
       timeMs: player.result!.timeMs,
       ts: timestamp,
       ...(player.result!.inspectionMs > 0 ? { inspectionMs: Math.round(player.result!.inspectionMs) } : {}),
@@ -300,6 +305,14 @@ export function transitionLocalBattle(
   const players = visiblePlayers(state);
   const contextLocked = players.some(activeLocalBattlePlayer);
 
+  if (action.type === 'set-event') {
+    if (contextLocked || !isLocalBattleEvent(action.event)) return { state, effects: [], accepted: false };
+    const revision = nextScrambleRevision(state.players);
+    return { accepted: true, state: { ...state, players: state.players.map(player => ({
+      ...player, event: action.event, result: null, penalty: 'ok', timer: initialTimerMachineState(),
+      scramble: '', scrambleSource: undefined, scrambleRevision: revision,
+    })) }, effects: [{ type: 'round-reset' }, { type: 'request-scramble', event: action.event, revision }] };
+  }
   if (action.type === 'set-player-count') {
     if (contextLocked) return { state, effects: [], accepted: false };
     const playerCount = normalizeLocalBattlePlayerCount(action.playerCount);
@@ -415,7 +428,8 @@ export function transitionLocalBattle(
       state: {
         ...state,
         players: state.players.map((player) => targetIds.has(player.id)
-          ? { ...player, scramble: action.type === 'scramble-ready' ? action.scramble : '' }
+          ? { ...player, scramble: action.type === 'scramble-ready' ? action.scramble : '',
+              scrambleSource: action.type === 'scramble-ready' ? action.source : undefined }
           : player),
       },
       effects: [],
@@ -426,6 +440,7 @@ export function transitionLocalBattle(
   if (action.type === 'player-timer' && (action.action.type === 'press-down' || action.action.type === 'arm-from-cube')
     && Number.isInteger(action.playerId) && action.playerId >= 0 && action.playerId < state.playerCount
     && players.every(player => player.result !== null)) {
+    if (players.some(player => !player.scramble)) return { state, effects: [], accepted: false };
     const reset = transitionLocalBattle(state, { type: 'reset-round' }, config);
     const next = transitionLocalBattle(reset.state, action, config);
     return { ...next, accepted: true, effects: [...reset.effects, ...next.effects] };
@@ -495,6 +510,7 @@ export function transitionLocalBattle(
         penalty,
         result: timerTransition.solve ?? candidate.result,
         resultScramble: timerTransition.solve ? candidate.scramble : candidate.resultScramble,
+        resultScrambleSource: timerTransition.solve ? candidate.scrambleSource : candidate.resultScrambleSource,
         timer: timerTransition.state,
       } : candidate),
     };

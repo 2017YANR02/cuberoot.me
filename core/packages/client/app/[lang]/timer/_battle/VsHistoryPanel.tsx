@@ -14,10 +14,8 @@ import {
   timerToBattleEvent,
   filterUnpairedLegacyBattleRecords,
   loadLegacyBattleRecords,
-  type LegacyBattleRecord,
 } from './engine/battle_store';
 import { battleReconIndex, battleReconKey } from '@/app/[lang]/timer/_lib/storage/db';
-import { csvEscape } from '@/app/[lang]/timer/_lib/storage/import_export';
 import ReconstructModal from '@/app/[lang]/timer/_components/ReconstructModal';
 import { eventInfo, type Solve } from '@/app/[lang]/timer/_lib/types';
 import { formatTimePlain } from '@/app/[lang]/timer/_shared/format';
@@ -25,7 +23,7 @@ import { getEffectiveTimeFromEntry } from '@/app/[lang]/timer/_shared/stats-core
 import { EventIcon } from '@/components/EventIcon';
 import { isWcaEvent } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
-import { type LocalBattleRound } from '@cuberoot/shared/timer';
+import { buildLocalBattleCsv, type LocalBattleRound } from '@cuberoot/shared/timer';
 
 // NOTE: yyyy-mm-dd —— 列表用
 function formatDateOnly(isoDate: string): string {
@@ -37,60 +35,7 @@ function formatDateOnly(isoDate: string): string {
   return `${y}-${m}-${day}`;
 }
 
-function roundPlayers(round: LocalBattleRound, width: number): {
-  entries: Array<Solve | undefined>;
-  puzzles: string[];
-} {
-  const attempts = new Map(round.attempts.map((attempt) => [attempt.playerId, attempt.solve]));
-  const entries = Array.from({ length: width }, (_, playerId) => attempts.get(playerId));
-  return {
-    entries,
-    puzzles: entries.map((solve) => (solve ? timerToBattleEvent(solve.event) : '')),
-  };
-}
-
-export function buildLocalBattleCsv(
-  rounds: readonly LocalBattleRound[],
-  legacyRecords: readonly LegacyBattleRecord[],
-  minimumPlayers: number,
-): string {
-  const width = Math.max(
-    minimumPlayers,
-    ...rounds.map((round) => Math.max(...round.attempts.map((attempt) => attempt.playerId)) + 1),
-    ...legacyRecords.map((record) => record.playerId + 1),
-  );
-  const header = ['#', 'Round ID',
-    ...Array.from({ length: width }, (_, i) => [`P${i + 1} Event`, `Player${i + 1}(ms)`, `P${i + 1} Penalty`, `P${i + 1} Scramble`]).flat(),
-    'Date'];
-  const rows: string[][] = [];
-  for (let i = 0; i < rounds.length; i++) {
-    const { entries } = roundPlayers(rounds[i], width);
-    const cols = entries.flatMap((entry) => [
-      entry?.event || '',
-      entry ? String(entry.timeMs) : '',
-      entry?.penalty || '',
-      entry?.scramble || '',
-    ]);
-    const firstEntry = entries.find((entry): entry is Solve => entry !== undefined);
-    rows.push([
-      String(i + 1),
-      rounds[i].id,
-      ...cols,
-      firstEntry ? new Date(firstEntry.ts).toISOString() : '',
-    ]);
-  }
-  for (const record of legacyRecords) {
-    const cols = Array.from({ length: width }, (_, playerId) => (
-      playerId === record.playerId
-        ? [record.event, String(record.entry.time), record.entry.penalty, record.entry.scramble]
-        : ['', '', '', '']
-    )).flat();
-    rows.push(['legacy', '', ...cols, record.entry.date]);
-  }
-  return `\uFEFF${[header, ...rows]
-    .map((row) => row.map((field) => csvEscape(field)).join(','))
-    .join('\r\n')}\r\n`;
-}
+export { buildLocalBattleCsv } from '@cuberoot/shared/timer';
 
 export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
   const store = useBattleStore();
@@ -114,8 +59,8 @@ export default function VsHistoryPanel({ onClose }: { onClose: () => void }) {
       ? tr({ zh: '对战轮次已经保存，但个人统计镜像未能同步；轮次不会丢失，个人统计可能暂时过期。', en: 'Battle rounds were saved, but the individual statistics mirror could not be synchronized. Rounds are safe; personal stats may be temporarily stale.' })
       : tr({ zh: '对战历史未能保存到本机。请保持页面打开并立即导出 CSV；刷新后本次改动可能丢失。', en: 'Battle history could not be saved on this device. Keep this page open and export CSV now; this change may be lost after refresh.' })}</p>;
   return <TimerBattleHistory rounds={rounds} playerCount={store.playerCount} language={isZh ? 'zh' : 'en'}
-    precision={store.timerPrecision as 0 | 1 | 2 | 3} onClose={onClose} onExport={exportCSV} warning={warning}
-    onDelete={(id) => { const index = rounds.findIndex((round) => round.id === id); if (index >= 0) store.deleteVsRound(index); }}
+    precision={store.timerPrecision as 0 | 1 | 2 | 3} onClose={onClose} onClear={() => store.resetAll()} onExport={exportCSV} warning={warning}
+    onDelete={(id) => { const index = rounds.findIndex((round) => round.id === id); if (index >= 0) store.deleteVsRound(index); return !useBattleStore.getState().battleRounds.some(round => round.id === id); }}
     roundActions={(round) => <RoundReplay round={round} isZh={isZh} />}
     legacy={<>
       {legacyHistory.records.length > 0 && <>

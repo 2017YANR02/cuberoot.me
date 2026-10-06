@@ -10,6 +10,7 @@ export interface TimerBattleSettingsProps {
   language: 'en' | 'zh';
   layout?: Omit<ComponentProps<typeof TimerBattleLayoutControls>, 'language' | 'autoOrientation'>;
   onClose(): void;
+  onReset?(): void | Promise<void>;
   keys: readonly string[];
   onKeyChange(playerId: number, key: string): void;
   precision?: Setting<number> & { options?: readonly number[] };
@@ -23,8 +24,8 @@ export interface TimerBattleSettingsProps {
   children?: ReactNode;
 }
 const COPY = {
-  en: { sync: 'Start together', settings: 'Settings', keys: 'Key bindings', player: 'Player', press: 'Press a key…', space: 'Space', precision: 'Precision', inspection: 'Inspection', off: 'Off', hold: 'Hold to start', preview: 'Show scramble preview', hide: 'Hide running time' },
-  zh: { sync: '同时开始', settings: '设置', keys: '按键', player: '玩家', press: '按任意键…', space: '空格', precision: '精度', inspection: '观察', off: '关闭', hold: '按住起表', preview: '显示打乱图', hide: '隐藏计时读数' },
+  en: { sync: 'Start together', settings: 'Settings', reset: 'Reset All', confirm: 'Confirm', keys: 'Key bindings', player: 'Player', press: 'Press a key…', space: 'Space', precision: 'Precision', inspection: 'Inspection', off: 'Off', hold: 'Hold to start', preview: 'Show scramble preview', hide: 'Hide running time' },
+  zh: { sync: '同时开始', settings: '设置', reset: '全部重置', confirm: '确认', keys: '按键', player: '玩家', press: '按任意键…', space: '空格', precision: '精度', inspection: '观察', off: '关闭', hold: '按住起表', preview: '显示打乱图', hide: '隐藏计时读数' },
 };
 export function TimerBattleKeyBindings({ language, keys, onChange }: { language: 'en' | 'zh'; keys: readonly string[]; onChange(playerId: number, key: string): void }) {
   const copy = COPY[language];
@@ -46,8 +47,10 @@ export function TimerBattleKeyBindings({ language, keys, onChange }: { language:
     </button>
   </div>)}</fieldset>;
 }
-export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children }: TimerBattleSettingsProps) {
+export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChange, precision, inspection, hold, preview, hideTime, syncStart, source, devices, children, onReset }: TimerBattleSettingsProps) {
   const copy = COPY[language];
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
   return <TimerRoomDialog className="timer-battle-settings-dialog" title={copy.settings} language={language} onClose={onClose}>
     <div className="timer-battle-settings">
       {layout && <TimerBattleLayoutControls {...layout} language={language} autoOrientation={false} />}
@@ -61,6 +64,12 @@ export function TimerBattleSettings({ language, layout, onClose, keys, onKeyChan
       <TimerBattleKeyBindings language={language} keys={keys} onChange={onKeyChange} />
       {devices}
       {children}
+      {onReset && <button type="button" disabled={resetting} onBlur={() => setConfirmReset(false)} onClick={async () => {
+        if (!confirmReset) { setConfirmReset(true); return; }
+        setResetting(true);
+        try { await onReset(); onClose(); } catch { /* Host reports persistence failure. */ }
+        finally { setResetting(false); }
+      }}>{confirmReset ? copy.confirm : copy.reset}</button>}
     </div>
   </TimerRoomDialog>;
 }
