@@ -200,18 +200,10 @@
   cursor: default;
 }
 
-/* PillToggle 在本组件内的配色覆盖(原组件 on 硬编码蓝 + off 白 overlay,这里走 token)。 */
-.chx .pill-toggle--switch {
+/* 仅调整关闭态；开启态复用全站浅绿色。 */
+.chx .pill-toggle--switch:not(.is-on) {
   background: color-mix(in srgb, var(--foreground) 16%, transparent);
   border-color: color-mix(in srgb, var(--foreground) 16%, transparent);
-}
-.chx .pill-toggle--switch.is-on {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.chx .pill-toggle--switch.is-on:hover {
-  background: color-mix(in srgb, var(--accent) 88%, black);
-  border-color: color-mix(in srgb, var(--accent) 88%, black);
 }
 .chx .pill-toggle.is-disabled {
   opacity: 0.4;
