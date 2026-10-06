@@ -23,7 +23,11 @@ function prepareSecureStorage(): Promise<void> {
 export const nativeMobileSecureStorage: MobileSecureStorage = {
   async getItem(key) {
     await prepareSecureStorage();
-    return SecureStorage.getItem(key);
+    // set() JSON-encodes even strings; getItem() would expose that outer encoding.
+    // Keep the existing format so pending logins and sessions from older builds survive.
+    const value = await SecureStorage.get(key, false, false);
+    if (value === null || typeof value === 'string') return value;
+    throw new Error('Invalid mobile secure-storage value');
   },
   async setItem(key, value) {
     await prepareSecureStorage();

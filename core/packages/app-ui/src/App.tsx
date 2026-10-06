@@ -685,7 +685,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     account: false,
     tools: false,
   });
-  const accountLoginRequestedRef = useRef(false);
   const accountManagementRequestRef = useRef<string | null>(null);
   const accountSyncInFlightRef = useRef<{ requestId: string; token: string } | null>(null);
   const accountSyncTimeoutRef = useRef<number | null>(null);
@@ -2259,7 +2258,6 @@ export function App({ host }: { host: InstalledAppHost }) {
 
       const authRequest = decodeMobileEmbedAuthRequest(event.data);
       if (accountSource && authRequest) {
-        accountLoginRequestedRef.current = true;
         void auth.login(authRequest.provider);
         return;
       }
@@ -2328,8 +2326,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   ]);
 
   useEffect(() => {
-    if (!accountLoginRequestedRef.current || auth.busy) return;
-    accountLoginRequestedRef.current = false;
+    // Browser.open resolves before the login callback. Report later callback failures too.
+    if (auth.busy) return;
     if (auth.error) {
       setWebSurfaceStatus((current) => ({ ...current, account: 'error' }));
       announce(copy.authError);

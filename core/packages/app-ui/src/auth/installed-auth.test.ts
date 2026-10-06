@@ -156,8 +156,17 @@ describe('mobile auth', () => {
 
     await expect(client.finish(
       `me.cuberoot.app://auth/callback?ticket=${TICKET}&state=${'S'.repeat(43)}`,
-    )).resolves.toBeNull();
+    )).rejects.toThrow('mobile auth state mismatch');
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('reports missing pending state without exchanging a ticket', async () => {
+    const { client, fetcher } = setup();
+    await expect(client.finish(
+      `me.cuberoot.app://auth/callback?ticket=${TICKET}&state=${'S'.repeat(43)}`,
+    )).rejects.toThrow('mobile auth request unavailable');
+    expect(fetcher).not.toHaveBeenCalled();
+    await expect(client.finish('https://cuberoot.me/account')).resolves.toBeNull();
   });
 
   it('keeps a valid cached session while offline and clears it on an explicit 401', async () => {
