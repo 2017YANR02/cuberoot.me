@@ -274,5 +274,5 @@ const CSS = `
 .cube-graph-formula{overflow-x:auto;padding:8px 0}
 
 .cube-graph-article a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
-@media(max-width:700px){.cube-graph-views{grid-template-columns:1fr;gap:20px}.cube-graph-cube{height:240px;aspect-ratio:auto}.cube-graph-svg{max-height:350px}.cube-graph-cycle{flex-basis:125px}.cube-graph-playback{gap:4px}.cube-graph-page{padding-top:16px}}
+@media(max-width:700px){.cube-graph-views{grid-template-columns:1fr;gap:20px}.cube-graph-views>figure+figure{border-top:1px solid var(--border-default);padding-top:20px}.cube-graph-cube{height:240px;aspect-ratio:auto}.cube-graph-svg{max-height:350px}.cube-graph-cycle{flex-basis:125px}.cube-graph-playback{gap:4px}.cube-graph-page{padding-top:16px}}
 `;
