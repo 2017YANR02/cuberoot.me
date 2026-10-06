@@ -1425,3 +1425,13 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 设置 effect ledger 62→64：Web 当前 64 个生产字段均有 App 真实消费者，只剩 fake-cube 开发字段不接；effect 不等于五端完整视觉/硬件验收，整体继续 ACTIVE — NOT COMPLETE。
 - 验证：puzzle-solvers/shared build，timer-ui/app-ui/client typecheck；种子 57 项（43 项目、11 二阶类型、状态/提交合并/案例回归）、App 仓储/设置账本 43 项、架构/catalog/遮罩 31 项通过。Chrome 隔离上下文实测 Web/App 应用、重置、重新加载后续号，两条打乱逐字相同且计数 1→2，无 pageerror。附加运行的 mobile-scramble-history.test.ts 有 2 条旧源码断言失败：仍要求 App 内直接 HistoryRow 与旧键盘门禁排列；HEAD 原源码同样不满足，未据此改回已共享的工作区，也未宣称全集通过。
 - Mobile production build、Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS unsigned debug app、Harmony Web build 已做本地构建；具体最后产物以本轮命令记录为准。Windows native 未在本 Mac 运行，Harmony HAP 既有 Hvigor 版本问题未重试；无实体设备、签名、公证、推送或发布证据。
+
+### 2026-10-06：联机视频共享接入（本地）
+
+- Web 与 App 共用 `@cuberoot/shared/video` 的配置、私有 capability 请求和错误契约，以及 `@cuberoot/timer-ui/video/TimerBattleVideo` / `VideoTiles` 的连接控制、画面、麦克风、摄像头、前后镜头、放大与挂断。Web 原路径仅保留兼容入口；Mobile/Desktop/Harmony 直接消费 App 产品层。多人多魔方按用户要求暂不推进，入口保持现状。
+- 进入房间不自动开启视频；更换房间/身份、退出、被踢与后台会释放原媒体。成员代际变化先拆旧房再授权；旧 token/回调不能影响新房，退役视频房等待新的代际，避免反复连接旧房。配置晚到不重启通话；瞬时配置失败仍允许显式尝试；请求可取消，错误允许手动重试。
+- LiveKit 自动采集关闭，首次/重新开麦或摄像头由共享媒体会话管理。退出时立即停止已获取轨道；用户之后才批准权限的迟到轨道立即停止且不发布，不依赖 SDK 的发布等待超时。摄像头切换保留 1080p 约束与原有自拍镜像规则。
+- Android 补 CAMERA 与非必需摄像头声明；iOS/macOS 补摄像头用途、扩展麦克风用途，macOS 补 camera entitlement；桌面 CSP 仅增加实际 RTC HTTPS/WSS origin 与本地媒体 blob。Harmony 补双语媒体用途、系统权限和仅限本地应用 origin 的 ArkWeb 授权适配。
+- 验证：共享构建、timer-ui/App/client 类型检查通过；视频生命周期、HTTP capability/取消、迟到媒体清理、原相机/会议 token、码率/canonical 路径、catalog/架构守卫共 8 文件 55 项，App 房间集成 15 项通过。Chrome 安装端 production preview（拦截测试房间/token，未创建真实房间）在 320/390/1280px 的视频入口与拒绝态无横向溢出。独立审查提出的配置晚到重连、迟到授权清轨均已修复并复核。
+- Mobile Web build + Android/iOS sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug `.app` 与 Harmony Web build 通过。Harmony HAP 再次被本机 Hvigor 6.0.1 不支持工程 modelVersion 6.0.2 阻断，ArkTS 改动尚未得到 HAP 编译证据；Windows 原生构建未在本 Mac 执行。
+- 未进行真实多设备音视频、五平台权限拒绝/恢复、前后台及 Stackmat 与通话同时使用麦克风验收；ICE 端口连通、签名/公证、商店摄像头/麦克风资料与发布仍需单独确认。未 push/发布，整体继续 **NOT COMPLETE**。

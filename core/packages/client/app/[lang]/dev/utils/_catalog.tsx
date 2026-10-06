@@ -72,6 +72,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'createVideoMediaSession',
+    sig: 'createVideoMediaSession(adapter): { enable(kind, enabled): Promise<void>; dispose(): void }',
+    imp: "import { createVideoMediaSession } from '@cuberoot/timer-ui/video/local-media';",
+    category: 'util',
+    zh: '联机视频媒体轨道的生命周期：退出后迟到的授权结果立即停止，发布失败与取消均释放轨道。',
+    en: 'Owns battle media tracks across permission and publication delays; stops late tracks after disposal.',
+  },
+  {
     name: 'useBluetoothTimer',
     sig: 'useBluetoothTimer(createSource, options): BluetoothTimerHandle',
     imp: "import { useBluetoothTimer } from '@cuberoot/timer-ui/external';",
