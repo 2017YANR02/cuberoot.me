@@ -28,6 +28,16 @@ Source integration is not merchant activation, deployment, a signed build, or pu
 
 ## Backend configuration (disabled by default)
 
+### Owner-authorized internal purchase testing — 2026-10-06
+
+Subsequent acceptance: the owner completed a monthly license-test purchase in Play build 1003. Google confirmed ACTIVE / ACKNOWLEDGED / testPurchase, and the API granted membership. Authenticated renewal notifications returned 200 and advanced expiry; restore verify/sync requests returned 200 after signing in again. The owner then confirmed another app restart worked normally. This closes the observed monthly happy path, not yearly purchase, cancellation/expiry, refund/revocation or all failure scenarios. An earlier transient product/restore failure was not conclusively attributed to network or session state. The initial configuration-only notes below describe the earlier phase.
+
+- The owner authorized enabling the existing global purchase gate after readiness checks. Both products have one active base plan in Play Console, and the selected license-test list contains `huizhi0721@gmail.com`.
+- A fresh signed readiness probe from the API host returned HTTP 200 with both expected product IDs. Earlier authenticated RTDN delivery evidence remains as recorded below; no new real purchase notification has been verified.
+- `GOOGLE_IAP_ENABLED=1` and `GOOGLE_IAP_TEST_USER_IDS=70` are now configured on the API host; UID 70 was resolved from the owner's supplied CubeRoot email. This allowlist limits test-purchase grants, not real purchases or the global gate's availability.
+- The previous environment was backed up with owner-only permissions outside Git before updating it. `pm2 reload core-api --update-env` succeeded; health reports `ok` / `db: connected`, and unauthenticated `/v1/membership/google/me` now returns 401 instead of disabled-gate 503.
+- Real purchase, acknowledgement, entitlement, renewal, restore and refund acceptance remain pending. Testers must verify a Google Play test payment instrument before confirming; no purchase was performed by this configuration change. Historical instructions below to keep the gate at 0 describe the earlier setup phase, superseded by this explicit authorization.
+
 ### Configuration evidence — 2026-10-05
 
 - Owner-generated service-account JSON was installed on the existing API host at `/root/.config/cuberoot/google-play-service-account.json`, outside the deployed artifact tree. The private key parses successfully, its project/account identity matches the dedicated billing account, and file permissions are `0600` in a `0700` directory. No key material is committed or logged.
