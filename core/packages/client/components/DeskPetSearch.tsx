@@ -27,13 +27,15 @@ const CSS = `
   background:color-mix(in srgb, var(--background) 88%, transparent);
   backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
 .deskpet-search-box{width:min(720px,100%);will-change:transform,opacity;}
+/* The animated box is a stacking context; raise it with its menu above the toolbar. */
+.deskpet-search-box:has(.landing-search-plus-menu){z-index:1;}
 .deskpet-search-box .landing-search{margin:0;}
 /* Box is anchored to the bottom of the screen, so the results open upward. */
 .deskpet-search-box .landing-search-panel{top:auto;bottom:calc(100% + 0.5rem);}
 
 /* Controls render as a bare row of icons (no per-button card/border) — hover only. */
 .deskpet-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;
-  gap:0;width:min(720px,100%);margin:0;}
+  gap:0;width:min(720px,100%);margin:0;z-index:0;}
 .deskpet-toolbar button:not(.lang-menu *),.deskpet-toolbar a:not(.lang-menu *){display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
   padding:7px;border-radius:9px;text-decoration:none;
   font:13px/1 ui-sans-serif,system-ui,sans-serif;
@@ -102,7 +104,8 @@ const CSS = `
 @media (max-width:768px){
   .deskpet-toolbar>*{flex:0 0 auto;}
   .deskpet-toolbar .sep{display:none;}
-  .deskpet-search-backdrop{padding-bottom:max(6px,var(--sab,0px));}
+  /* Leave room below the search for the plus menu, including above the keyboard. */
+  .deskpet-search-backdrop{padding-bottom:max(64px,var(--sab,0px));}
 }
 
 `;
