@@ -1,3 +1,6 @@
+import { TIMER_BACKUP_KEEP, type TimerLocalBackupEntry } from '@cuberoot/shared/timer/backup-client';
+import { appendTimerImportSessions, type TimerImportPlan } from '@cuberoot/shared/timer/import-timer';
+import { reanalyzeTimerSession } from '@cuberoot/shared/timer';
 import { upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import {
   MAX_TIMER_BACKUP_BYTES,
@@ -28,10 +31,13 @@ import {
 } from '@cuberoot/shared/timer';
 
 export interface TimerStoreDriver {
+  createBackup?(data: TimerStoreData): Promise<void>;
+  listBackups?(): Promise<TimerLocalBackupEntry[]>;
+  readBackup?(key: string): Promise<string | undefined>;
   read(): Promise<unknown | undefined>;
   readRecovery(): Promise<unknown | undefined>;
-  write(data: TimerStoreData): Promise<void>;
-  writeWithRecovery(data: TimerStoreData, recovery: unknown): Promise<void>;
+  write(data: TimerStoreData, canCommit?: () => boolean): Promise<void>;
+  writeWithRecovery(data: TimerStoreData, recovery: unknown, canCommit?: () => boolean): Promise<void>;
 }
 
 /** Functional updates merge nested preferences against the latest queued snapshot. */
@@ -119,11 +125,11 @@ export class TimerRepository {
     return decoded;
   }
 
-  private async writeSessionData(data: TimerStoreData): Promise<TimerStoreData> {
+  private async writeSessionData(data: TimerStoreData, canCommit?: () => boolean): Promise<TimerStoreData> {
     const decoded = decodeTimerStoreData(data);
     if (!decoded) throw new CorruptTimerStoreError();
     try {
-      await this.driver.write(decoded);
+      await this.driver.write(decoded, canCommit);
     } catch (cause) {
       throw new TimerSessionRepositoryError('write-failure', { cause });
     }
@@ -421,6 +427,44 @@ export class TimerRepository {
     });
   }
 
+  importSessions(sessions: TimerImportPlan['sessions'], canCommit: () => boolean = () => true): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const database = appendTimerImportSessions(data.database, sessions, { createId: this.environment.createId, now: this.environment.now, defaultName: timerDefaultSessionName(data.settings.language) });
+      if (!canCommit()) throw new Error('Import cancelled');
+      return this.writeSessionData({ ...data, database }, canCommit);
+    });
+  }
+
+  reanalyze(sessionId: string): Promise<{ data: TimerStoreData; scanned: number; updated: number }> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const byEvent = data.database.dataBySession[sessionId];
+      if (!byEvent) throw new TimerSessionRepositoryError('unknown-session');
+      const result = reanalyzeTimerSession(byEvent);
+      const next = result.updated ? await this.writeSessionData({ ...data, database: { ...data.database,
+        dataBySession: { ...data.database.dataBySession, [sessionId]: result.byEvent },
+      } }) : data;
+      return { data: next, scanned: result.scanned, updated: result.updated };
+    });
+  }
+
+  createBackup(): Promise<void> {
+    return this.run(async () => {
+      if (!this.driver.createBackup) throw new Error('Backup storage unavailable');
+      await this.driver.createBackup(await this.loadUnlocked());
+    });
+  }
+  listBackups(): Promise<TimerLocalBackupEntry[]> {
+    if (!this.driver.listBackups) return Promise.reject(new Error('Backup storage unavailable'));
+    return this.driver.listBackups();
+  }
+  async restoreBackup(key: string, canCommit: () => boolean = () => true): Promise<TimerStoreData> {
+    const text = await this.driver.readBackup?.(key);
+    if (!text) throw new Error('Backup unavailable');
+    return this.importJson(text, canCommit);
+  }
+
   exportJson(): Promise<string> {
     return this.run(async () => serializeTimerStoreData(await this.loadUnlocked()));
   }
@@ -468,13 +512,14 @@ export class TimerRepository {
     });
   }
 
-  importJson(text: string): Promise<TimerStoreData> {
+  importJson(text: string, canCommit: () => boolean = () => true): Promise<TimerStoreData> {
     return this.run(async () => {
       this.assertBackupSize(text);
       const { current, raw } = await this.importContext();
       const parsed = parseTimerStoreJson(text, current.settings, this.migrationEnvironment());
       if (!parsed) throw new CorruptTimerStoreError();
-      await this.driver.writeWithRecovery(parsed, raw);
+      if (!canCommit()) throw new Error('Import cancelled');
+      await this.driver.writeWithRecovery(parsed, raw, canCommit);
       return parsed;
     });
   }
@@ -529,6 +574,28 @@ function openDatabase(): Promise<IDBDatabase> {
 }
 
 export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
+  async createBackup(data: TimerStoreData): Promise<void> {
+    const db = await openDatabase();
+    try {
+      const transaction = db.transaction(STORE_NAME, 'readwrite'); const done = transactionDone(transaction);
+      const store = transaction.objectStore(STORE_NAME);
+      const backups = (await requestResult(store.get('timer-backups')) ?? []) as Array<TimerLocalBackupEntry & { json: string }>;
+      const ts = Date.now(); const json = JSON.stringify(data.database);
+      store.put([{ key: crypto.randomUUID(), ts, size: new TextEncoder().encode(json).byteLength, json }, ...backups].slice(0, TIMER_BACKUP_KEEP), 'timer-backups');
+      await done;
+    } finally { db.close(); }
+  }
+  private async backupEntries(): Promise<Array<TimerLocalBackupEntry & { json: string }>> {
+    const db = await openDatabase();
+    try {
+      const transaction = db.transaction(STORE_NAME, 'readonly'); const done = transactionDone(transaction);
+      const rows = await requestResult(transaction.objectStore(STORE_NAME).get('timer-backups')) ?? [];
+      await done; return rows;
+    } finally { db.close(); }
+  }
+  async listBackups(): Promise<TimerLocalBackupEntry[]> { return (await this.backupEntries()).map(({ json, ...entry }) => entry); }
+  async readBackup(key: string): Promise<string | undefined> { return (await this.backupEntries()).find(entry => entry.key === key)?.json; }
+
   async read(): Promise<unknown | undefined> {
     const database = await openDatabase();
     try {
@@ -542,16 +609,22 @@ export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
     }
   }
 
-  async write(data: TimerStoreData): Promise<void> {
-    const database = await openDatabase();
+  async write(data: TimerStoreData, canCommit?: () => boolean): Promise<void> {
+    const database = await openDatabase(); let shouldBackup = false;
     try {
-      const transaction = database.transaction(STORE_NAME, 'readwrite');
-      const done = transactionDone(transaction);
-      transaction.objectStore(STORE_NAME).put(data, TIMER_KEY);
-      await done;
-    } finally {
-      database.close();
-    }
+      const transaction = database.transaction(STORE_NAME, 'readwrite'); const done = transactionDone(transaction);
+      const store = transaction.objectStore(STORE_NAME);
+      const previous = await requestResult(store.get(TIMER_KEY)) as TimerStoreData | undefined;
+      const previousCount = previous ? summarizeTimerDatabase(previous.database).solveCount : 0;
+      const added = Math.max(0, summarizeTimerDatabase(data.database).solveCount - previousCount);
+      const count = Number(await requestResult(store.get('timer-backup-counter')) ?? 0);
+      if (canCommit && !canCommit()) { await done; throw new Error('Import cancelled'); }
+      const next = count + added;
+      if (added) store.put(next, 'timer-backup-counter');
+      shouldBackup = added > 0 && data.settings.autoBackupEvery > 0 && Math.floor(next / data.settings.autoBackupEvery) > Math.floor(count / data.settings.autoBackupEvery);
+      store.put(data, TIMER_KEY); await done;
+    } finally { database.close(); }
+    if (shouldBackup) await this.createBackup(data).catch(() => undefined);
   }
 
   async readRecovery(): Promise<unknown | undefined> {
@@ -567,9 +640,10 @@ export class IndexedDbTimerStoreDriver implements TimerStoreDriver {
     }
   }
 
-  async writeWithRecovery(data: TimerStoreData, recovery: unknown): Promise<void> {
+  async writeWithRecovery(data: TimerStoreData, recovery: unknown, canCommit?: () => boolean): Promise<void> {
     const database = await openDatabase();
     try {
+      if (canCommit && !canCommit()) throw new Error('Import cancelled');
       const transaction = database.transaction(STORE_NAME, 'readwrite');
       const done = transactionDone(transaction);
       const store = transaction.objectStore(STORE_NAME);

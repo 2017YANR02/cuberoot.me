@@ -1,3 +1,5 @@
+import { normalizeTimerRankScopes, type TimerRankScope } from './settings-contract';
+import { normalizeTimerAutoBackupEvery, DEFAULT_TIMER_AUTO_BACKUP_EVERY } from './backup-client';
 import { normalizeTimerPreScrambleSettings, type TimerPreScrambleSettings } from './pre-scramble';
 import { normalizeTimerSoundSettings, type TimerSoundSettings } from './sound-settings';
 import { normalizeTimerMetronomeSettings, type TimerMetronomeSettings } from './metronome-settings';
@@ -89,6 +91,9 @@ export interface TimerStoreSettings extends
   TimerTimingSettings,
   TimerSmartCubeSettings,
   TimerScramblePreviewSettings {
+  rankScopes: TimerRankScope[];
+  rankCountry: string;
+  autoBackupEvery: number;
   event: EventId;
   keymap: TimerKeymapOverrides;
   cnMode: CnMode;
@@ -486,6 +491,9 @@ function decodeSettings(value: unknown): TimerStoreSettings | null {
   });
   return {
     event: value.event,
+    rankScopes: normalizeTimerRankScopes(value.rankScopes),
+    rankCountry: typeof value.rankCountry === 'string' && /^[a-z]{2}$/i.test(value.rankCountry) ? value.rankCountry.toUpperCase() : '',
+    autoBackupEvery: normalizeTimerAutoBackupEvery(value.autoBackupEvery),
     keymap: normalizeTimerKeymap(value.keymap),
     cnMode: normalizeTimerColorNeutralMode(value.cnMode),
     // Early Mobile builds offered a wider timing range than Web. Normalize at
@@ -691,6 +699,9 @@ export function createTimerStoreSettings(language: 'en' | 'zh' = 'en'): TimerSto
     ...DEFAULT_TIMER_ATTEMPT_SPLIT_SETTINGS,
     manualScrambles: '',
     statsRollingColumns: [...DEFAULT_ROLLING_STAT_COLUMNS],
+    rankScopes: normalizeTimerRankScopes(undefined),
+    rankCountry: '',
+    autoBackupEvery: DEFAULT_TIMER_AUTO_BACKUP_EVERY,
     autoMarkWcaScramble: DEFAULT_TIMER_AUTO_MARK_WCA_SCRAMBLE,
     scrambleClickAction: DEFAULT_TIMER_SCRAMBLE_CLICK_ACTION,
     ...DEFAULT_TIMER_SCRAMBLE_PREVIEW_SETTINGS,
