@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,5 +8,7 @@ export function copyStageSolverAssets(publicDir: string): void {
   const destination = path.join(publicDir, 'tools/solver/rust-cross');
   mkdirSync(destination, { recursive: true });
   for (const name of STAGE_SOLVER_ASSETS) copyFileSync(path.join(source, name), path.join(destination, name));
+  // Same vendored SQ1 solver as Web; never fetch executable code remotely.
+  cpSync(path.resolve(source, '../../cstimer-scramble'), path.join(publicDir, 'tools/cstimer-scramble'), { recursive: true });
   console.log(`[stage-solver] copied ${STAGE_SOLVER_ASSETS.length} executable assets to ${destination}`);
 }

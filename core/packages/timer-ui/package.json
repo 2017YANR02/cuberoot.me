@@ -98,7 +98,11 @@
       "./country-input": "react-dom",
       "./country-input.css": "react-dom",
       "./rank-badge": "react-dom",
-      "./video/local-media": "runtime-neutral"
+      "./video/local-media": "runtime-neutral",
+      "./TimerStepSolve": "react-dom",
+      "./TimerSolverCompareModal": "react-dom",
+      "./TimerSolverHints": "react-dom",
+      "./TimerSolverBody": "react-dom"
     }
   },
   "exports": {
@@ -184,7 +188,11 @@
     "./country-input": "./src/CountryInput.tsx",
     "./country-input.css": "./src/country_input.css",
     "./rank-badge": "./src/TimerRankBadge.tsx",
-    "./video/local-media": "./src/video/local-media.ts"
+    "./video/local-media": "./src/video/local-media.ts",
+    "./TimerStepSolve": "./src/TimerStepSolve.tsx",
+    "./TimerSolverCompareModal": "./src/TimerSolverCompareModal.tsx",
+    "./TimerSolverHints": "./src/TimerSolverHints.tsx",
+    "./TimerSolverBody": "./src/TimerSolverBody.tsx"
   },
   "sideEffects": true,
   "scripts": {
