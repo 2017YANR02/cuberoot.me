@@ -66,6 +66,8 @@ export default function PrivacyPage() {
 
       <p>{t('微信小程序中，只有点击连接外接计时器后才会使用蓝牙；只有点击启动 Stackmat 音频输入后才会申请麦克风权限。有线输入音频在本机实时解码，不上传音频。设备名称、计时状态与读数通过短时内存中继交给网页计时器；断开连接后停止采集，录音中断或达到 10 分钟上限后需重新连接。拒绝权限不影响普通计时。', 'In the WeChat Mini Program, Bluetooth is used only after you choose to connect an external timer; microphone permission is requested only when you start Stackmat audio input. Wired audio is decoded locally and is not uploaded. The device name, timer state, and reading are passed to the web timer through a short-lived in-memory relay. Disconnecting stops capture; reconnect after an interruption or the 10-minute recording limit. Denying permission does not affect ordinary timing.')}</p>
 
+      <p>{t('Android App 的 Stackmat 音频计时功能在你主动连接时申请麦克风权限。该功能的输入音频用于在本机解码计时器信号，不上传音频；断开音频计时器时停止采集并释放音频输入。拒绝麦克风权限不影响触摸普通计时和本地历史记录。', 'The Android app requests microphone permission for Stackmat audio timing when you choose to connect an audio timer. Audio captured by this feature is decoded on your device to read timer signals and is not uploaded. Disconnecting the audio timer stops capture and releases the audio input. Denying microphone permission does not affect ordinary touch timing or local solve history.')}</p>
+
       <h2>{t('App、小程序与账号数据', 'App, Mini Program, and account data')}</h2>
       <ul>
         <li>
