@@ -15,31 +15,10 @@
  */
 
 import type { EventId, Solve } from '../types';
-import type { StageSegments } from '../reconstruct/stage_segments';
-import { STAGE_SEGMENT_EVENTS, stageSegmentsFor } from '../reconstruct/stage_segments';
-import { loadAll, updateSolves } from './db';
 
-function segsEqual(a: StageSegments | undefined, b: StageSegments | null): boolean {
-  if (!a && !b) return true;
-  if (!a || !b) return false;
-  return (
-    a.crossDoneMs === b.crossDoneMs &&
-    a.f2lDoneMs   === b.f2lDoneMs   &&
-    a.ollDoneMs   === b.ollDoneMs   &&
-    a.solvedMs    === b.solvedMs    &&
-    a.crossMs     === b.crossMs     &&
-    a.f2lMs       === b.f2lMs       &&
-    a.ollMs       === b.ollMs       &&
-    a.pllMs       === b.pllMs       &&
-    a.crossHtm    === b.crossHtm    &&
-    a.f2lHtm      === b.f2lHtm      &&
-    a.ollHtm      === b.ollHtm      &&
-    a.pllHtm      === b.pllHtm      &&
-    a.crossSide   === b.crossSide   &&
-    a.ollCase     === b.ollCase     &&
-    a.pllCase     === b.pllCase
-  );
-}
+import { STAGE_SEGMENT_EVENTS } from '../reconstruct/stage_segments';
+import { reanalyzeTimerSolve } from '@cuberoot/shared/timer';
+import { getActiveSessionId, loadSessionData, updateSessionSolves } from './db';
 
 export interface ReanalyzeProgress {
   scanned: number;
@@ -61,7 +40,8 @@ export interface ReanalyzeResult {
 export async function reanalyzeAll(
   onProgress?: (p: ReanalyzeProgress) => void,
 ): Promise<ReanalyzeResult> {
-  const byEvent = loadAll();
+  const sessionId = getActiveSessionId();
+  const byEvent = loadSessionData(sessionId);
   const eventIds = Object.keys(byEvent) as EventId[];
 
   // Total = solves we'll actually attempt to recompute (only those with moves
@@ -93,20 +73,12 @@ export async function reanalyzeAll(
       // recorded one can never disagree — including on which inputs get no
       // segments at all (a broken scramble or stream skips, it doesn't crash
       // the migration).
-      const next = stageSegmentsFor(s);
-
-      if (segsEqual(s.stageSegments, next)) continue;
-
-      // next === null + existing was undefined: handled by segsEqual above.
-      // next === null + existing was something: clear it.
-      const merged: Solve = next === null
-        ? { ...s, stageSegments: undefined }
-        : { ...s, stageSegments: next };
-      dirty.push(merged);
+      const merged = reanalyzeTimerSolve(s);
+      if (merged !== s) dirty.push(merged);
     }
 
     if (dirty.length > 0) {
-      updateSolves(ev, dirty);
+      updateSessionSolves(sessionId, ev, dirty);
       updatedTotal += dirty.length;
       eventsTouched.push(ev);
     }

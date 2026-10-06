@@ -1648,8 +1648,8 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared sound, voice, metronome, tap-tempo and custom inspection cues, backed by one audio-clock scheduler and warning/fallback implementation.',
   },
   {
-    name: 'TimerExportSettings',
-    import: "import { TimerExportSettings } from '@cuberoot/timer-ui';",
+    name: 'TimerRankSettings / TimerRankBadge / TimerExportSettings / TimerImportSettings / TimerBackupSettings / TimerReanalyzeSettings / TimerReplayImportModal',
+    import: "import { TimerRankSettings, TimerExportSettings, TimerImportSettings, TimerBackupSettings, TimerReanalyzeSettings, TimerReplayImportModal } from '@cuberoot/timer-ui'; import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';",
     category: 'more',
     zh: 'Web 与安装端共用四种导出入口：CubeRoot 整库备份、当前分组的 csTimer/CSV、当前项目的 Speedstacks；编码规则由 shared 提供，宿主负责保存文件。',
     en: 'Shared export controls for whole-store CubeRoot backups, current-session csTimer/CSV and current-event Speedstacks. Shared encoders produce files; hosts save them.',
@@ -1704,8 +1704,8 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Basic reconstruction metric cards shared by Web and all five installed clients. QTM/QTPS, first-move delay, longest pause, and pause count are computed only by @cuberoot/shared/timer/reconstruct/solve-metrics; the component receives the computed result so the full Web report does not traverse moves twice. The full move stream, timeline, replay, and feedback remain separate surfaces.',
   },
   {
-    name: 'ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
-    import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report';",
+    name: 'ReconstructModal / ReconstructReport / SolveRecap / PlaybackPanel / SolveTimeline / StepAnalysis / StepMoveList',
+    import: "import ReconstructReport from '@cuberoot/timer-ui/reconstruct-report'; import ReconstructModal from '@cuberoot/timer-ui/reconstruct-modal';",
     category: 'display',
     zh: 'Web 与安装端共用的完整智能魔方复盘：分步动作谱、可定位时间线、三维/陀螺仪回放、方法切换、参考解法、质量和反馈只维护一份。live 模式以同一阶段识别、记号和 StepMoveList 展示进行中的 Cross、F2L 分组、OLL、PLL，Worker 合并连续更新且不做参考解搜索。纯分析来自 shared/recon 与 shared/timer/reconstruct；宿主只注入双语解析、剪贴板、分享 URL 和录姿态设置。按需加载，不能以基础指标卡或网站外跳代替。',
     en: 'The full smart-cube reconstruction shared by Web and installed clients: per-step move score, seekable timeline, 3D/gyro replay, method selection, reference lines, quality and feedback have one implementation. Live mode uses the same recognition, notation and StepMoveList for Cross, F2L pairs, OLL and PLL; the worker coalesces updates without reference searches. Analysis comes from shared/recon and shared/timer/reconstruct; hosts inject localization, clipboard, public share URLs and gyro settings. Load on demand; metric cards and external website links are not substitutes.',
@@ -2023,7 +2023,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'CountryInput',
-    import: "import { CountryInput } from '@/components/CountryInput/CountryInput';",
+    import: "import { CountryInput } from '@cuberoot/timer-ui/country-input';",
     category: 'input',
     zh: `国家搜索 / 选择输入框,单选或多选(multi),带国旗、IME 安全、可限定范围、洲分组与计数,选中显示旗帜或 chip。`,
     en: `Country search/select input, single or multi-select, with flags, IME-safe typing, optional restrictTo, continent grouping and counts.`,

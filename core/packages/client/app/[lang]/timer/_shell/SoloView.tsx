@@ -1,4 +1,8 @@
 'use client';
+import { TimerReplayImportModal } from '@cuberoot/timer-ui';
+import { readTimerReplay } from '@cuberoot/shared/timer/replay-client';
+import { apiUrl as replayApiUrl } from '@/lib/api-base';
+
 import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
@@ -223,7 +227,7 @@ import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useStackmat } from '../_lib/stackmat';
 import HistoryPanel from '../_components/HistoryPanel';
 import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
-import { extractReplayParam } from '../_lib/share/paste_import';
+
 import { fetchServerReplayShare } from '../_lib/share/server';
 import SettingsPanel from '../_components/SettingsPanel';
 import GoalProgress from '../_components/GoalProgress';
@@ -2230,19 +2234,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return () => { cancelled = true; };
   }, [shareId, setShareId]);
 
-  const handlePasteReplay = useCallback(() => {
-    const raw = window.prompt(tr({ zh: '粘贴 replay URL 或 token：', en: 'Paste a replay URL or token:'
-    }), '');
-    if (raw === null) return;
-    const param = extractReplayParam(raw);
-    if (!param) { alert(tr({ zh: '未识别为 replay URL。', en: 'Not a recognizable replay URL.'
-    })); return; }
-    const decoded = decodeReplayParam(param);
-    if (!decoded) { alert(tr({ zh: 'replay 数据无法解码。', en: 'Failed to decode replay payload.'
-    })); return; }
-    const ephemeral = solveFromReplay(decoded, byEvent[decoded.event] ?? []);
-    setReconstructSolve(ephemeral);
-  }, [isZh, byEvent]);
+  const [replayImportOpen, setReplayImportOpen] = useState(false);
+  const handlePasteReplay = useCallback(() => setReplayImportOpen(true), []);
 
   const [settingsOpen, setSettingsOpen] = useState(false);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
@@ -2373,7 +2366,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     trainerSubsetOpen !== null || statsModalOpen || historyOverlayOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
     drillModalOpen || bldHelperOpen || panelFullscreen ||
-    sessionSwitcherOpen || modalSolve !== null || reconstructSolve !== null;
+    sessionSwitcherOpen || modalSolve !== null || reconstructSolve !== null || replayImportOpen;
   // 整屏之后没有「点空白处关掉」了(遮罩全被盖住,已删),所以 Escape 得亲自接住 ——
   // 主键盘处理器见 anyModalOpenRef 那道闸,面板开着时它整个不响应,不会误触 reset()。
   useEffect(() => {
@@ -3293,6 +3286,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         );
       })()}
 
+      {replayImportOpen && <TimerReplayImportModal language={isZh ? 'zh' : 'en'} onClose={() => setReplayImportOpen(false)}
+        load={(input, signal) => readTimerReplay(input, Object.values(byEvent).flat(), { apiUrl: replayApiUrl, fetcher: fetch }, signal)}
+        onOpen={setReconstructSolve} />}
       {reconstructSolve && (
         <ReconstructModal
           key={`recon-${reconstructSolve.id}`}

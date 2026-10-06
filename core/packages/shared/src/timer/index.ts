@@ -83,3 +83,5 @@ export * from './local-battle-settings';
 export * from './wca-record-snapshot';
 export * from './solve-metrics';
 export * from './record-badge';
+
+export * from './reanalyze';

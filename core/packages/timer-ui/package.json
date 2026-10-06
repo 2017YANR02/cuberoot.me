@@ -27,6 +27,7 @@
       "./FaceletsCube": "react-dom",
       "./Spinner": "react-dom",
       "./spinner.css": "react-dom",
+      "./reconstruct-modal": "react-dom",
       "./reconstruct-report": "react-dom",
       "./reconstruct-analysis": "react-dom",
       "./reconstruct-actions": "react-dom",
@@ -86,7 +87,10 @@
       "./statistics-heatmap.css": "asset",
       "./statistics-sessions.css": "asset",
       "./record-badge": "react-dom",
-      "./record-badge.css": "asset"
+      "./record-badge.css": "asset",
+      "./country-input": "react-dom",
+      "./country-input.css": "react-dom",
+      "./rank-badge": "react-dom"
     }
   },
   "exports": {
@@ -103,6 +107,7 @@
     "./FaceletsCube": "./src/FaceletsCube.tsx",
     "./Spinner": "./src/Spinner.tsx",
     "./spinner.css": "./src/spinner.css",
+    "./reconstruct-modal": "./src/reconstruct/ReconstructModal.tsx",
     "./reconstruct-report": "./src/reconstruct/ReconstructReport.tsx",
     "./reconstruct-analysis": "./src/reconstruct/analysis-client.ts",
     "./reconstruct-actions": "./src/reconstruct/ReconstructActions.tsx",
@@ -162,7 +167,10 @@
     "./statistics-heatmap.css": "./src/workspace/charts/practice_heatmap.css",
     "./statistics-sessions.css": "./src/workspace/cross_session.css",
     "./record-badge": "./src/RecordBadge.tsx",
-    "./record-badge.css": "./src/record-badge.css"
+    "./record-badge.css": "./src/record-badge.css",
+    "./country-input": "./src/CountryInput.tsx",
+    "./country-input.css": "./src/country_input.css",
+    "./rank-badge": "./src/TimerRankBadge.tsx"
   },
   "sideEffects": true,
   "scripts": {
