@@ -495,7 +495,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         </div>
 
         {solve.comp && solve.event && solve.round && !sameCompHasRows && !sameSessionHasRows && (
-          <SameRoundNav solve={solve} />
+          <SameRoundNav key={solve.id} solve={solve} />
         )}
 
         {solve.event && solve.personId && (solve.compWcaId || solve.comp) && (
@@ -782,6 +782,8 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   const [pastedAttempts, setPastedAttempts] = useState<(number | null)[] | null>(null);
   const [showPaste, setShowPaste] = useState(false);
   const [pasteRaw, setPasteRaw] = useState('');
+  const [attemptsLoading, setAttemptsLoading] = useState(true);
+  const [attemptsRequest, setAttemptsRequest] = useState(0);
 
   useEffect(() => {
     if (loaded) return;
@@ -795,12 +797,16 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
   }, [solve, loaded]);
 
   useEffect(() => {
-    if (!solve.compWcaId || !solve.personId || !solve.event || !solve.round) return;
+    if (!solve.compWcaId || !solve.personId || !solve.event || !solve.round) {
+      setAttemptsLoading(false);
+      return;
+    }
     let cancelled = false;
+    setAttemptsLoading(true);
     (async () => {
       const wca = await fetchAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
       if (cancelled) return;
-      if (wca) {
+      if (wca?.some(value => value != null)) {
         setWcaAttempts(wca);
       } else {
         const cubing = await fetchCubingAttempts(solve.compWcaId!, solve.event!, solve.round!, solve.personId!);
@@ -809,12 +815,14 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
           setWcaAttempts(cubing);
         }
       }
-      const sc = await fetchScrambles(solve.compWcaId!, solve.event!, solve.round!, solve.groupId);
-      if (cancelled) return;
-      if (sc) setScrambles(sc);
-    })().catch(() => { /* ignore */ });
+    })().catch(() => { /* Keep previously loaded values; expose retry below. */ }).finally(() => {
+      if (!cancelled) setAttemptsLoading(false);
+    });
+    fetchScrambles(solve.compWcaId, solve.event, solve.round, solve.groupId).then(sc => {
+      if (!cancelled && sc) setScrambles(sc);
+    }).catch(() => { /* Scrambles are optional for the add-attempt link. */ });
     return () => { cancelled = true; };
-  }, [solve.compWcaId, solve.personId, solve.event, solve.round, solve.groupId]);
+  }, [solve.compWcaId, solve.personId, solve.event, solve.round, solve.groupId, attemptsRequest]);
 
   const bySolveNum = new Map<number, ReconSolve>();
   for (const s of [...siblings, solve]) {
@@ -864,8 +872,7 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
     return `/recon/submit?${params.toString()}`;
   };
 
-  const hasAnyAttempt = wcaAttempts != null || pastedAttempts != null;
-  const hasMissingSlot = slots.some(n => !bySolveNum.get(n));
+  const hasMissingAttempt = slots.some(n => !bySolveNum.has(n) && attemptFor(n) == null);
 
   return (
     <div className="detail-section">
@@ -897,12 +904,17 @@ function SameRoundNav({ solve }: { solve: ReconSolve }) {
               className="same-round-item same-round-missing"
               title={t('recon.addAttempt', { n })}
             >
-              {att != null ? renderAttempt(att) : ' '}
+              {att != null ? renderAttempt(att) : t(attemptsLoading ? 'common.loading' : 'recon.attemptUnavailable')}
             </Link>
           );
         })}
       </div>
-      {hasMissingSlot && !hasAnyAttempt && (
+      {hasMissingAttempt && !attemptsLoading && (
+        <button type="button" className="same-round-paste-btn" onClick={() => setAttemptsRequest(v => v + 1)}>
+          {t('recon.retryAttempts')}
+        </button>
+      )}
+      {hasMissingAttempt && !attemptsLoading && (
         <button
           type="button"
           className="same-round-paste-btn"

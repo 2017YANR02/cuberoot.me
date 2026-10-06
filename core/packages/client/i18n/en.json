@@ -127,6 +127,8 @@
     "editHistory": "Edit History",
     "unknown": "unknown",
     "sameRound": "Same Round",
+    "attemptUnavailable": "Unavailable",
+    "retryAttempts": "Retry loading round times",
     "sameCompEvent": "Same Competition",
     "sameScramble": "Same Scramble",
     "addAttempt": "Add attempt #{{n}} (carry over round info)",
