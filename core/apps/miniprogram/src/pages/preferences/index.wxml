@@ -1,0 +1,2 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<view class="page"><button class="text-button" hover-class="press-feedback" bindtap="returnToPage">{{label}}</button></view>

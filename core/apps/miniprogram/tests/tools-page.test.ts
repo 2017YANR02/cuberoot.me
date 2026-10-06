@@ -74,7 +74,7 @@ describe('mini program tools page', () => {
     });
   });
 
-  it('destroys the hidden tools WebView to deliver queued settings and reopens it on return', async () => {
+  it('flushes legacy website messages until the immediate protocol has saved a snapshot', async () => {
     const page = await loadPage({ getStorageSync: () => null,
       setNavigationBarTitle: vi.fn(), showShareMenu: vi.fn() });
     page.onLoad({});
@@ -87,3 +87,6 @@ describe('mini program tools page', () => {
     expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
   });
 });
+
+// Route/session tests isolate the appearance URL transport, covered by preferences.test.ts.
+vi.mock('../src/lib/preferences', () => ({ readNativePreferences: () => null, withNativePreferences: (url: string) => url }));

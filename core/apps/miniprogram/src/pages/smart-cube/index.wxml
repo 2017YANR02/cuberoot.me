@@ -1,3 +1,6 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
 <view class="page smart-cube-page">
   <text class="page-title">{{copy.title}}</text>
 
