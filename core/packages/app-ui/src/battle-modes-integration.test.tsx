@@ -294,6 +294,17 @@ describe('installed app multiplayer modes', () => {
       expect(createNetRoom).not.toHaveBeenCalled();
     }
     expect(saved).toEqual({ code: '1234', name: 'Cuber', ...credentials });
+    const fetcher = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ error: 'bandwidth' }), { status: 503 }));
+    try {
+      const videoToggle = host.querySelector<HTMLButtonElement>('[aria-label="Start video"]');
+      expect(videoToggle).not.toBeNull();
+      await act(async () => videoToggle!.click());
+      expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/v1/video/token'), expect.objectContaining({
+        headers: expect.objectContaining({ 'X-Battle-Token': credentials.playerToken }),
+        body: JSON.stringify({ code: '1234', pid: credentials.playerId }),
+      }));
+      expect(host.querySelector('.vs-strip')?.textContent).toContain('Server video capacity is full');
+    } finally { fetcher.mockRestore(); }
     expect(host.textContent).toContain('1234');
     expect(host.querySelectorAll('.timer-room-player')).toHaveLength(1);
     const preview = host.querySelector<HTMLElement>('.timing-surface-cube-frame[data-no-timer]');

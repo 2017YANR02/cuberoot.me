@@ -3,6 +3,14 @@
     {
       "name": "bluetooth_reason",
       "value": "用于连接 GAN 智能魔方"
+    },
+    {
+      "name": "camera_reason",
+      "value": "用于你主动开启的联机对战视频"
+    },
+    {
+      "name": "microphone_reason",
+      "value": "用于联机对战语音通话和读取 Stackmat 计时器信号"
     }
   ]
 }

@@ -1,3 +1,7 @@
+import { createBattleVideoClient } from '@cuberoot/shared/video';
+import VideoStrip, { VideoToggle, useTimerBattleVideo } from '@cuberoot/timer-ui/video/TimerBattleVideo';
+import { mobileApiUrl } from './data/wca-source-adapter';
+const battleVideoClient = createBattleVideoClient({ apiUrl: mobileApiUrl, fetcher: (...args) => fetch(...args) });
 import { defaultLocalBattlePreferences, readLocalBattlePreferences, saveLocalBattlePreferences, LOCAL_BATTLE_INSPECTIONS, LOCAL_BATTLE_PRECISIONS, type LocalBattlePreferences } from '@cuberoot/shared/timer';
 import { TimerBattleAppearanceSettings } from '@cuberoot/timer-ui';
 import { requestLocalBattleScramble, LOCAL_BATTLE_SCRAMBLE_COPY, type LocalBattleScramble } from '@cuberoot/shared/timer';
@@ -810,6 +814,7 @@ export function NetBattleMode({
 }: NetBattleModeProps) {
   const [room, setRoom] = useState<NetRoomState | null>(null);
   const [credentials, setCredentials] = useState<NetBattleCredentials | null>(null);
+  const video = useTimerBattleVideo(battleVideoClient, room?.code ?? null, credentials?.playerId ?? null, credentials?.playerToken ?? null, room?.videoGeneration ?? null, language);
   const [name, setName] = useState('');
   const [selectedPerson, setSelectedPerson] = useState<WcaPersonLite | null>(null);
   const [accountPerson, setAccountPerson] = useState<WcaPersonLite | null>(null);
@@ -1365,7 +1370,8 @@ export function NetBattleMode({
         onHistory={() => { setShowHistory(true); setShowAdmin(false); }}
         onAdmin={amAdmin ? () => { setShowAdmin(true); setShowHistory(false); } : undefined}
         onLeave={() => void leaveRoom()}
-      />}
+      ><VideoToggle video={video} /></TimerRoomToolbar>}
+        media={<VideoStrip video={video} />}
         players={<TimerRoomPlayers room={room} currentPlayerId={credentials.playerId}
         language={language} precision={precision} nowMs={Date.now() + (offsetRef.current ?? 0)}
         onRename={!accountIdentity ? (name) => {

@@ -1599,6 +1599,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'The controlled 2x2 scramble type/style UI shared by the Web, Android, and iOS timers. Its type select, WCA 11-move/Optimal pill, pointer drag, keyboard semantics, and narrow layout live in one implementation. The 11 random and 10 real-WCA types come from @cuberoot/shared/timer; hosts only wire persistence and translated labels.',
   },
   {
+    name: 'VideoStrip / VideoToggle / VideoTiles / useTimerBattleVideo',
+    import: "import VideoStrip, { VideoToggle, useTimerBattleVideo } from '@cuberoot/timer-ui/video/TimerBattleVideo';",
+    category: 'more',
+    zh: 'Web 与安装端共用联机视频授权、房间代际隔离、前后台关闭和画面控制；宿主仅提供 API 地址与系统媒体权限。',
+    en: 'Shared battle video authorization, generation isolation, background cleanup, and media controls. Hosts provide the API origin and native media permissions.',
+  },
+  {
     name: 'TimerRoomPlayers',
     import: "import { TimerRoomPlayers, TimerRoomLayout, TimerRoomToolbar, TimerRoomAdmin, TimerRoomHistory, TimerRoomDialog, TimerRoomLobby, TimerRoomIdentity, TimerRoomRoundStatus } from '@cuberoot/timer-ui';",
     category: 'more',

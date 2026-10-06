@@ -662,3 +662,7 @@ Web/App 共用 replay 输入/解码/短链读取与复盘弹窗，More 12/12 已
 ### 2026-10-06 同步种子收尾
 
 单人种子与计数的真实生成链路已接共享 Worker、持久化和历史槽消费；Web/App 共用高级设置及 OLL/PLL 子集弹窗。种子/重置/重启序列浏览器对照通过，effect ledger 62→64，当前生产设置缺口关闭。五端构建/设备/发布边界与既有测试断言差异见 mobile-app-roadmap.md 同日记录，整体继续 ACTIVE — NOT COMPLETE。
+
+### 2026-10-06 联机视频共享增量
+
+Web 与五端 App 已接同一视频 API 契约、授权生命周期、画面与控制条；权限和网络放行保留在宿主。迟到 token/媒体授权、代际切换、退出和后台清理已有定向回归。源码、本地构建和真实设备缺口见 `mobile-app-roadmap.md` 同日“联机视频共享接入”记录；Harmony HAP 与 Windows native、真实音视频及五平台完整矩阵未验收。多人多魔方按用户要求暂不推进，入口不变；整体继续 **ACTIVE — NOT COMPLETE**。

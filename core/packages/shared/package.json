@@ -13,6 +13,8 @@
       "react-dom": "react-dom"
     },
     "runtime": {
+      "./video-camera": "runtime-neutral",
+      "./video": "runtime-neutral",
       "./timer/seeded/generate": "runtime-neutral",
       "./timer/sync-seed": "runtime-neutral",
       "./timer/seeded/nxnxn": "runtime-neutral",
@@ -199,6 +201,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./video-camera": {"types":"./src/video-camera.ts","node":"./dist/video-camera.js","default":"./src/video-camera.ts"},
+    "./video": {"types":"./src/video.ts","node":"./dist/video.js","default":"./src/video.ts"},
     "./timer/seeded/generate": {"types":"./src/timer/seeded/generate.ts","node":"./dist/timer/seeded/generate.js","default":"./src/timer/seeded/generate.ts"},
     "./timer/sync-seed": {"types":"./src/timer/sync-seed.ts","node":"./dist/timer/sync-seed.js","default":"./src/timer/sync-seed.ts"},
     "./timer/seeded/nxnxn": {"types":"./src/timer/seeded/nxnxn.ts","node":"./dist/timer/seeded/nxnxn.js","default":"./src/timer/seeded/nxnxn.ts"},

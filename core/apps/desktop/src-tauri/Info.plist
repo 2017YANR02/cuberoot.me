@@ -2,8 +2,10 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>NSCameraUsageDescription</key>
+  <string>CubeRoot uses your camera when you enable video in an online battle.</string>
   <key>NSMicrophoneUsageDescription</key>
-  <string>CubeRoot reads Stackmat timer signals from your audio input to record solve times.</string>
+  <string>CubeRoot uses your microphone for online battle audio and to read Stackmat timer signals.</string>
   <key>NSBluetoothAlwaysUsageDescription</key>
   <string>CubeRoot connects to your smart cube or timer for timing and move tracking.</string>
 </dict>

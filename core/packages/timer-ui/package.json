@@ -6,6 +6,8 @@
   "cuberoot": {
     "kind": "library",
     "externalRuntime": {
+      "@livekit/components-react": "react-dom",
+      "livekit-client": "react-dom",
       "cubing": "react-dom",
       "flag-icons": "react-dom",
       "lucide-react": "react-dom",
@@ -14,6 +16,11 @@
       "uqr": "react-dom"
     },
     "runtime": {
+      "./video/video-strip.css": "asset",
+      "./video/video-call.css": "asset",
+      "./video/TimerBattleVideo": "react-dom",
+      "./video/video-call": "react-dom",
+      "./video/VideoTiles": "react-dom",
       "./reset-defaults-button": "react-dom",
       "./reset-defaults-button.css": "react-dom",
       "./metronome": "react-dom",
@@ -90,10 +97,16 @@
       "./record-badge.css": "asset",
       "./country-input": "react-dom",
       "./country-input.css": "react-dom",
-      "./rank-badge": "react-dom"
+      "./rank-badge": "react-dom",
+      "./video/local-media": "runtime-neutral"
     }
   },
   "exports": {
+    "./video/video-strip.css": "./src/video/video-strip.css",
+    "./video/video-call.css": "./src/video/video-call.css",
+    "./video/TimerBattleVideo": "./src/video/TimerBattleVideo.tsx",
+    "./video/video-call": "./src/video/video-call.ts",
+    "./video/VideoTiles": "./src/video/VideoTiles.tsx",
     "./reset-defaults-button": "./src/ResetDefaultsButton.tsx",
     "./reset-defaults-button.css": "./src/reset-defaults-button.css",
     "./metronome": "./src/metronome.ts",
@@ -170,13 +183,16 @@
     "./record-badge.css": "./src/record-badge.css",
     "./country-input": "./src/CountryInput.tsx",
     "./country-input.css": "./src/country_input.css",
-    "./rank-badge": "./src/TimerRankBadge.tsx"
+    "./rank-badge": "./src/TimerRankBadge.tsx",
+    "./video/local-media": "./src/video/local-media.ts"
   },
   "sideEffects": true,
   "scripts": {
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.23",
+    "livekit-client": "^2.21.0",
     "@cuberoot/event-icon": "workspace:*",
     "@cuberoot/puzzle-render-core": "workspace:*",
     "@cuberoot/puzzle-solvers": "workspace:*",

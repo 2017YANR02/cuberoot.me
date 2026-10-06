@@ -1,0 +1,64 @@
+/* VideoStrip — /timer 对战房里的视频通话条。画面宫格本身在 components/video/video-call.css
+   (与 /meet 共用),这里只管**它在计时器页里该多大、开关长什么样**。
+   /timer 是双主题页,全部走 :root token 自动翻 light/dark。 */
+
+.vs-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+}
+
+/* 未连接时这条整个不渲染,只有出错说明会借它落地。 */
+.vs-strip.is-idle {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 主角是计时器,视频只是「看得见对手」的辅助,不能把 TimingSurface 挤下去 —— 所以平铺时
+   压到 520px。想看清楚就点开某一格。 */
+.vs-strip .vc-tiles {
+  max-width: 520px;
+}
+
+/* 放大态放宽到 960:1080p 那层要 <video> 宽到 960 才会被 adaptiveStream 选中,
+   卡在 520 就永远停在 540p —— 放大了却还是糊的,比不给放大更让人困惑。 */
+.vs-strip .vc-tiles.is-spotlight {
+  max-width: min(100%, 960px);
+}
+
+/* 顶栏开关。裸图标:它紧挨着人数下拉,再套边框就成了两个并排的芯片。
+   宽高给足 28px 是为了移动端点得中,视觉上仍然只有一个图标。 */
+.vs-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+
+.vs-toggle:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+/* 通话中 = 开启态,用全站开关的那个绿。 */
+.vs-toggle[aria-pressed='true'] {
+  color: var(--toggle-on);
+}
+
+.vs-toggle:disabled {
+  color: var(--faint-foreground);
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .vs-strip .vc-tiles {
+    max-width: 100%;
+  }
+}
