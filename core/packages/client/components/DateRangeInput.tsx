@@ -11,7 +11,7 @@ import { webDateInputLabels } from '@/components/DateInput';
 
 export interface DateRangeInputProps extends Omit<SharedDateRangeInputProps, 'labels'> {}
 
-function webDateRangeInputLabels(): DateRangeInputLabels {
+export function webDateRangeInputLabels(): DateRangeInputLabels {
   return {
     dateInput: webDateInputLabels(),
     dateRange: tr({ zh: '日期范围', en: 'Date range' }),

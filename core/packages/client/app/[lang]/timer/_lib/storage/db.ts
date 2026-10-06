@@ -648,3 +648,11 @@ export const netRecordingOutbox = new NetRecordingOutbox(record => saveNetSolve(
 netRecordingOutbox.setUploader(record => uploadNetRecordedAttempt(record, netBattleClient, {
   load: async () => { const raw = sessionStorage.getItem('net_battle_session'); return raw ? decodeNetBattleSession(JSON.parse(raw)) : null; },
 }));
+
+export function deleteSessionSolves(sessionId: string, event: EventId, ids: readonly string[]): boolean {
+  const db = loadRaw();
+  const current = db.dataBySession[sessionId];
+  if (!current) return false;
+  const selected = new Set(ids);
+  return saveRaw({...db, dataBySession:{...db.dataBySession,[sessionId]:{...current,[event]:(current[event] ?? []).filter(solve => !selected.has(solve.id))}}});
+}
