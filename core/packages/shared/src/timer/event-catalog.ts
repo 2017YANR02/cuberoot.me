@@ -1,5 +1,30 @@
 import { EVENTS, eventInfo, fromWcaSpelling, isBldEvent, toWcaSpelling, type EventId } from './types';
 
+/**
+ * 3x3 scramble types are choices within one puzzle, not separate puzzles.
+ * `event` preserves the existing generator, session, URL and solve identity:
+ * old training results must not be merged into ordinary 3x3 results.
+ */
+export const TIMER_333_SCRAMBLE_TYPES = [
+  { id: 'wca', event: '333' },
+  { id: 'cross', event: 'cross' },
+  { id: 'f2l', event: 'f2l' },
+  { id: 'll', event: 'll' },
+  { id: 'oll', event: 'oll' },
+  { id: 'pll', event: 'pll' },
+  { id: 'coll', event: 'coll' },
+  { id: 'cmll', event: 'cmll' },
+  { id: 'zbll', event: 'zbll' },
+] as const satisfies readonly { id: string; event: EventId }[];
+
+export type Timer333ScrambleType = (typeof TIMER_333_SCRAMBLE_TYPES)[number]['id'];
+
+/** Project a persisted timer mode into its puzzle and optional scramble type. */
+export function timerPuzzleSelection(event: EventId): { puzzle: EventId; scrambleType: Timer333ScrambleType | null } {
+  const type = TIMER_333_SCRAMBLE_TYPES.find((item) => item.event === event);
+  return type ? { puzzle: '333', scrambleType: type.id } : { puzzle: event, scrambleType: null };
+}
+
 /** The two sections shown by the canonical solo-timer event picker. */
 export type TimerEventPickerGroupId = 'wca' | 'other';
 

@@ -445,6 +445,7 @@ function BattleEventButton({ playerId }: { playerId: number }) {
   return (
     <TimerPuzzlePicker dataNoTimer groups={groups}
       puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })}
+      scrambleTypeLabel={tr({ en: 'Scramble type', zh: '打乱类型' })}
       selectedEvent={timerEventSelectorId(battleToTimerEvent(value))}
       open={isOpen} onOpenChange={open => setOpen(playerId, open)}
       onSelect={id => {

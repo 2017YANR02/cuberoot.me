@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   EVENTS,
   TIMER_EVENT_PICKER_GROUPS,
+  TIMER_333_SCRAMBLE_TYPES,
+  timerPuzzleSelection,
   TIMER_EVENT_PICKER_ITEMS,
   TIMER_WCA_SCRAMBLE_EVENT_MAP,
   eventInfo,
@@ -58,6 +60,18 @@ const EXPECTED_REAL_WCA_EVENTS = {
 } as const satisfies Partial<Record<EventId, string>>;
 
 describe('shared timer event picker catalog', () => {
+  it('separates 3x3 scramble types without changing legacy generator and solve ids', () => {
+    expect(TIMER_333_SCRAMBLE_TYPES.map(type => type.id)).toEqual([
+      'wca', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll',
+    ]);
+    for (const type of TIMER_333_SCRAMBLE_TYPES) {
+      expect(timerPuzzleSelection(type.event)).toEqual({ puzzle: '333', scrambleType: type.id });
+    }
+    for (const { id } of EVENTS) {
+      if (TIMER_333_SCRAMBLE_TYPES.some(type => type.event === id)) continue;
+      expect(timerPuzzleSelection(id)).toEqual({ puzzle: id, scrambleType: null });
+    }
+  });
   it('is a complete, duplicate-free 43-event partition in the website order', () => {
     expect(TIMER_EVENT_PICKER_GROUPS.map((group) => group.id)).toEqual(['wca', 'other']);
     expect(TIMER_EVENT_PICKER_GROUPS[0].items.map((item) => item.id)).toEqual(EXPECTED_WCA);

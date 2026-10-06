@@ -1205,6 +1205,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
         language: isZh ? 'zh' : 'en',
         identity: identityField,
         event: <TimerPuzzlePicker dataNoTimer groups={eventPickerGroups} puzzleLabel={tr({ en: 'Puzzle', zh: '项目' })} selectedEvent={netEventToSelectorId(lobbyEvent)}
+          scrambleTypeLabel={tr({ en: 'Scramble type', zh: '打乱类型' })}
           disabled={busy} onSelect={(id) => { const event = selectorIdToNetEvent(id); if (event) setLobbyEvent(event); }} />,
         code: joinCode,
         busy: busy,
