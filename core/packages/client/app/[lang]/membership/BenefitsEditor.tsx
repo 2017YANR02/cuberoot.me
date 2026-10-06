@@ -1,7 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Pencil, Plus, Save, X } from 'lucide-react';
-import { benefitCopy, validateMembershipBenefits, type MembershipBenefit, type MembershipBenefitGroup, type MembershipBenefits } from '@cuberoot/shared/membership-benefits';
+import { Pencil, Plus, Save, X } from 'lucide-react';
+import { validateMembershipBenefits, type MembershipBenefit, type MembershipBenefitGroup, type MembershipBenefits } from '@cuberoot/shared/membership-benefits';
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import SortableCard from '@/components/SortableCard';
 import BoolToggle from '@/components/BoolToggle';
 import { listMembershipBenefits, saveMembershipBenefits } from '@/lib/membership-perks';
 import { tr } from '@/i18n/tr';
@@ -19,6 +22,11 @@ export default function BenefitsEditor({ onSaved }: { onSaved: (content: Members
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   async function open() {
     setBusy(true); setError(''); setSaved(false);
     try { setDraft(await listMembershipBenefits()); }
@@ -33,16 +41,17 @@ export default function BenefitsEditor({ onSaved }: { onSaved: (content: Members
     setDraft(current => current && ({ ...current, items: [...current.items, { id: `custom_${crypto.randomUUID().replaceAll('-', '')}`, zh: '', en: '', group, enabled: true }] }));
     setError('');
   }
-  function move(id: string, direction: number) {
+  function reorder(group: MembershipBenefitGroup, { active, over }: DragEndEvent) {
+    if (busy || !over || active.id === over.id) return;
     setDraft(current => {
       if (!current) return current;
-      const index = current.items.findIndex(item => item.id === id);
-      const positions = current.items.map((item, i) => item.group === current.items[index].group ? i : -1).filter(i => i >= 0);
-      const target = positions[positions.indexOf(index) + direction];
-      if (target === undefined) return current;
-      const items = [...current.items];
-      [items[index], items[target]] = [items[target], items[index]];
-      return { ...current, items };
+      const groupItems = current.items.filter(item => item.group === group);
+      const from = groupItems.findIndex(item => item.id === active.id);
+      const to = groupItems.findIndex(item => item.id === over.id);
+      if (from < 0 || to < 0) return current;
+      const reordered = arrayMove(groupItems, from, to);
+      let index = 0;
+      return { ...current, items: current.items.map(item => item.group === group ? reordered[index++] : item) };
     });
   }
   async function save() {
@@ -67,12 +76,15 @@ export default function BenefitsEditor({ onSaved }: { onSaved: (content: Members
       <fieldset disabled={busy}>
         {GROUPS.map(group => <section className="mem-benefits-group" key={group.id}>
           <h3>{tr(group.title)}</h3>
-          {draft.items.filter(item => item.group === group.id).map((item, index, list) => <article className="mem-benefit-row" key={item.id}>
-            <div className="mem-benefit-tools"><span>{index + 1}</span><BoolToggle value={item.enabled} onChange={enabled => update(item.id, { enabled })} label={tr({ zh: '显示', en: 'Visible' })} /><button type="button" className="mem-benefit-tool-button" disabled={index === 0} onClick={() => move(item.id, -1)} aria-label={tr({ zh: '上移权益', en: 'Move benefit up' })}><ArrowUp size={16} /></button><button type="button" className="mem-benefit-tool-button" disabled={index === list.length - 1} onClick={() => move(item.id, 1)} aria-label={tr({ zh: '下移权益', en: 'Move benefit down' })}><ArrowDown size={16} /></button></div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={event => reorder(group.id, event)}>
+          <SortableContext items={draft.items.filter(item => item.group === group.id).map(item => item.id)} strategy={verticalListSortingStrategy}>
+          {draft.items.filter(item => item.group === group.id).map((item, index) => <SortableCard className="mem-benefit-row" key={item.id} id={item.id} draggable disabled={busy} stretch={false} dragLabel={tr({ zh: '拖动调整权益顺序', en: 'Drag to reorder benefits' })}>
+            <div className="mem-benefit-tools"><span>{index + 1}</span><BoolToggle value={item.enabled} onChange={enabled => update(item.id, { enabled })} label={tr({ zh: '显示', en: 'Visible' })} /></div>
             <label>{tr({ zh: '中文', en: 'Chinese' })}<textarea className="mem-benefit-textarea" rows={2} maxLength={1000} value={item.zh} onChange={event => update(item.id, { zh: event.target.value, en: '' })} /></label>
             <details><summary>{item.en.trim() ? tr({ zh: '英文（已填写）', en: 'English (provided)' }) : tr({ zh: '英文（选填 · 待补译）', en: 'English (optional · untranslated)' })}</summary><label>{tr({ zh: '英文', en: 'English' })}<textarea className="mem-benefit-textarea" rows={2} maxLength={2000} value={item.en} onChange={event => update(item.id, { en: event.target.value })} /></label></details>
-            <div className="mem-benefit-preview"><span>{tr({ zh: '展示预览', en: 'Preview' })}</span>{tr(benefitCopy(item)) || '—'}</div>
-          </article>)}
+          </SortableCard>)}
+          </SortableContext>
+          </DndContext>
           {group.id !== 'plan' && <button type="button" className="mem-benefits-button" onClick={() => add(group.id)} disabled={draft.items.length >= 100}><Plus size={15} />{tr({ zh: '新增权益', en: 'Add benefit' })}</button>}
         </section>)}
       </fieldset>
