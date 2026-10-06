@@ -155,6 +155,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   mcp_oauth_grants: '管理员 MCP 授权通过 user_id 外键随账号级联删除，不迁移到合并后的账号',
   account_last_devices: '账号最近设备摘要是私有支持数据,随 app_users 级联删',
   record_notification_preferences: '纪录通知偏好是账号私有数据,通过 user_id 外键随 app_users 级联删',
+  recon_comment_votes: '复盘评论赞踩通过 user_id 外键随账号级联删除',
   auth_web_session_tickets: '未确认的微信浏览器票据无账号归属，已确认的跨运行时票据随 app_users 级联删',
   auth_identity_pending: '未确认的 OAuth 尝试无账号归属，15 分钟过期并定时清理；成功确认的身份与凭据原子迁入 auth_identities，随既有解绑/注销策略处理',
   user_friendships: '好友关系的三个账号外键都随 app_users 级联删',

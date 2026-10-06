@@ -25,6 +25,7 @@ import {
   listRecons, deleteAlternative, getSameScramble,
 } from '@/lib/recon-api';
 import { revalidateRecon } from '../revalidate-action';
+import { ReconCommentVotes } from './ReconCommentVotes';
 import {
   formatTime, isBldEvent, hasMethodOnlyReconStats,
   buildExternalLinks, FACE_COLORS, attemptsPerRound, localizeRound,
@@ -111,6 +112,14 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   // still fetched client-side. Falls back to a client fetch if absent.
   const [solve, setSolve] = useState<ReconSolve | null>(initialSolve ?? null);
   const [comments, setComments] = useState<ReconComment[]>([]);
+  const [commentsRevision, setCommentsRevision] = useState(0);
+  const commentViewer = useAuthUser();
+  useEffect(() => {
+    let active = true;
+    setComments([]);
+    if (id) listComments(Number(id)).then(rows => { if (active) setComments(rows); }).catch(() => {});
+    return () => { active = false; };
+  }, [id, commentViewer?.uid, commentsRevision]);
   const [loading, setLoading] = useState(!initialSolve);
   const [error, setError] = useState<string | null>(null);
   // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
@@ -158,7 +167,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     try {
       const solveData = await getRecon(Number(id));
       setSolve(solveData);
-      listComments(Number(id)).then(setComments).catch(() => {});
+      setCommentsRevision(revision => revision + 1);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -170,7 +179,6 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   // load comments. onUpdate (mutations) still calls loadData for a full refresh.
   useEffect(() => {
     if (initialSolve) {
-      if (id) listComments(Number(id)).then(setComments).catch(() => {});
       return;
     }
     loadData();
@@ -1906,13 +1914,14 @@ function CommentsView({
           ) : (
             <>
               <div className="yt-comment-body">{comment.content}</div>
-              {canReply && (
-                <div className="yt-comment-actions">
+              <div className="yt-comment-actions">
+                <ReconCommentVotes key={`${comment.id}:${user?.uid ?? 'guest'}`} comment={comment} />
+                {canReply && (
                   <button type="button" className="yt-reply-btn" onClick={() => startReply(comment)}>
                     {t('recon.reply')}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </>
           )}
         </div>
