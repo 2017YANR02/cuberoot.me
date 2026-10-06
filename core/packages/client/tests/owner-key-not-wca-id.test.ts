@@ -89,7 +89,7 @@ describe('ownerKey is not a WCA id', () => {
       /const renderContributor = [\s\S]*?\n  \);/,
     )?.[0] ?? '';
     expect(renderContributor).toContain('<AuthorName');
-    expect(renderContributor).not.toContain('userId=');
+    expect(renderContributor).toContain('showUserId={false}');
   });
 
   it('wcaPersonUrl is only called where the id is guaranteed to be a real WCA id', () => {

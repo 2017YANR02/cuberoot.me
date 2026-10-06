@@ -82,7 +82,7 @@ export default function ForumIndexPage() {
                                 </Link>
                                 <span className="forum-forum-last-sub">
                                   {displayCuberName(f.lastThread.lastPostAuthorName, zh)}
-                                  <UserIdLabel userId={f.lastThread.lastPostAuthorUserId} />
+                                  <UserIdLabel contact userId={f.lastThread.lastPostAuthorUserId} />
                                   {' '}
                                   {formatRelativeTime(f.lastThread.lastPostAt, lang)}
                                 </span>
@@ -118,7 +118,7 @@ export default function ForumIndexPage() {
                     <dt><T zh="最新成员" en="Newest member" /></dt>
                     <dd>
                       {displayCuberName(data.stats.latestMemberName, zh)}
-                      <UserIdLabel userId={data.stats.latestMemberUserId} />
+                      <UserIdLabel contact userId={data.stats.latestMemberUserId} />
                     </dd>
                   </div>
                 )}
