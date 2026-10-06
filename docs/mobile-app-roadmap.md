@@ -1444,3 +1444,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 验证：App/client/timer-ui 类型检查；App 房间/本地设备集成 16 项，Web 状态机 23 项及布局/设置/历史/名单/键盘门禁/QR/catalog/遮罩等 36 项通过。旧状态机 fixture 显式设置随机来源，避免默认 WCA 且 mock 无真题时实际只有一轮却执行第二轮删除。独立审查发现的三盲静态标签问题已修复并加定向回归。
 - Mobile production build + Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS release `.app`/`.dmg` 与 Harmony Web build/sync 通过。本轮未修改原生适配；Windows native 未在本 Mac 运行，Harmony HAP 既有 Hvigor/modelVersion 不匹配未重试。构建不代表签名、公证、安装或五平台实体设备验收。
 - 多人多魔方继续保持隐藏入口，不推进 PK/远端魔方实况；网站 presence/品牌导航、安装端宿主导航继续留在适配层。真实多人音视频、实体设备交互与发布尚未验收，整体继续 **NOT COMPLETE**。本轮仅本地提交，未 push。
+
+### 2026-10-06：完整解法提示内容共享（本地）
+
+- Web 与五端 App 的解法内容共同消费 `TimerSolverBody`：原有阶段最优面板、六方法分步提示（CFOP/Roux/Petrus/ZZ/EODR/Thistle）、方法对比、阶段/全部步骤播放与偏好。Web `StepSolve/SolverCompareModal/SolverHints` 路径仅兼容导出；安装端不再只有 StageSolver。Web 侧栏/全屏与 App 弹窗的宿主入口继续各自接路由/返回；本条不表示两种外层布局已完全收敛。
+- `TimerSolverHints` 共用已有 222/Pyra/Skewb 控件、SQ1 近最优解与五魔状态统计。SQ1 WCA/斜切/面转步数进入 shared；五魔原状态模型与统计迁入 puzzle-solvers，未改求解数学。六方法保留原有阶段目标和深度限制，CFOP 等方法并不保证完成整枚还原；五魔仍只是状态统计，本轮未新增完整五魔求解器。
+- SQ1 使用同一 vendored sq12phase Worker，Mobile/Desktop/Harmony 的现有构建同步其本地可执行资源；不下载远程运行代码。每次请求独占 Worker，关闭/换题/超时即终止；迟到结果不污染新打乱。Harmony 补 SQ1 和 rust-cross 的本地 `/tools/` 映射并保留 origin/路径穿越校验。
+- 结果以打乱/方法隔离，比较窗口换题后重建，播放器切已缓存方法时重建并清旧播放；阶段点击用真实 button，取消挂起的动画帧。方法偏好在挂载后读取，避免 SSR 读浏览器存储。App Back 与 Escape 优先关闭方法对比、求解器信息/设置，再关闭外层解法。
+- 验证：shared/puzzle-solvers build，timer-ui/App/client 类型检查；共享 UI/取消/动画 5 项、六方法迁移/SQ1 oracle/catalog/遮罩合计 34 项，App 小魔方集成 5 项、架构边界 20 项、Harmony 资源映射/路径拒绝 8 项（共 67 项）通过。Chrome 隔离上下文实测 Web/App 六方法列表、真实 R 打乱阶段解与画布、对比 320/390/1280px、Escape 嵌套关闭，无横向溢出/pageerror；SQ1 `(1,0)` 实际 Worker 返回 `(-1,0)`，五魔抵消打乱返回 100%，两端 320px 一致。
+- Mobile production build + Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍因本机 Hvigor 支持 6.0.1、工程要求 6.0.2 失败，ArkTS 路径适配未取得 HAP 编译/实体设备证据；Windows 原生构建未在本 Mac 执行。未签名、公证、实体设备验收、push 或发布，整体继续 **NOT COMPLETE**。

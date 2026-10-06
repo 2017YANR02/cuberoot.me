@@ -571,6 +571,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const timerContextMutationBusyRef = useRef(false);
   const timerOverlayBlocking = openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
   const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay);
+  const solverDismissRef = useRef<(() => boolean) | null>(null);
+  const registerSolverDismiss = useCallback((dismiss: (() => boolean) | null) => { solverDismissRef.current = dismiss; }, []);
   const wcaMarksOverlayIdentityRef = useRef<string | null>(null);
   const moreOpenRef = useRef(moreOpen);
   const manualEntryOpenRef = useRef(manualEntryOpen);
@@ -2237,6 +2239,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           : 0,
       });
       if (action === 'close-overlay') {
+        if (openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver && solverDismissRef.current?.()) return;
         if (openOverlayRef.current === TIMER_OVERLAY_IDS.smartCubeDevice
           || openOverlayRef.current === TIMER_OVERLAY_IDS.smartTimerDevice
           || openOverlayRef.current === TIMER_OVERLAY_IDS.stackmatDevice) closeDeviceOverlayRef.current();
@@ -4217,7 +4220,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   {({ zh: '解法', en: 'Solve' })[language]}
                 </button>
                 {openOverlay === TIMER_OVERLAY_IDS.stageSolver && <Suspense fallback={null}>
-                  <StageSolverDialog scramble={scramble} language={language}
+                  <StageSolverDialog scramble={scramble} language={language} onDismissChange={registerSolverDismiss}
                     onPrevScramble={previousDisplayedScramble} onNextScramble={nextDisplayedScramble}
                     onClose={() => {
                     openOverlayRef.current = null;

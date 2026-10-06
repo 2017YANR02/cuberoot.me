@@ -2,6 +2,8 @@ import { common } from '@kit.AbilityKit';
 
 const APP_PREFIX = 'https://localhost/app/';
 const CUBING_WORKER_PREFIX = 'https://localhost/cubing-chunks/';
+const SQ1_WORKER_PREFIX = 'https://localhost/tools/cstimer-scramble/';
+const STAGE_WORKER_PREFIX = 'https://localhost/tools/solver/rust-cross/';
 
 function mimeType(path: string): string {
   const extension = path.substring(path.lastIndexOf('.') + 1).toLowerCase();
@@ -28,6 +30,10 @@ function rawfilePath(url: string): string | null {
     path = url.substring(APP_PREFIX.length);
   } else if (url.startsWith(CUBING_WORKER_PREFIX)) {
     path = `cubing-chunks/${url.substring(CUBING_WORKER_PREFIX.length)}`;
+  } else if (url.startsWith(SQ1_WORKER_PREFIX)) {
+    path = `tools/cstimer-scramble/${url.substring(SQ1_WORKER_PREFIX.length)}`;
+  } else if (url.startsWith(STAGE_WORKER_PREFIX)) {
+    path = `tools/solver/rust-cross/${url.substring(STAGE_WORKER_PREFIX.length)}`;
   } else {
     return null;
   }

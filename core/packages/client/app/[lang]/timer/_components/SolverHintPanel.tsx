@@ -32,11 +32,11 @@ import { ChevronRight, Maximize2, Minimize2, X } from 'lucide-react';
 import { Spinner } from '@/components/Spinner/Spinner';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
-import StepSolve from './StepSolve';
+import '@/lib/rust-cross-tables';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
-const StageSolver = dynamic(() => import('@/components/StageSolver'), {
+const TimerSolverBody = dynamic(() => import('@cuberoot/timer-ui/TimerSolverBody'), {
   ssr: false,
   loading: () => (
     <div className="solver-panel-loading">
@@ -120,16 +120,8 @@ function useScrambleSwipe({ onPrevScramble, onNextScramble }: ScrambleNav) {
 }
 
 function SolverBody({ scramble, isZh, compact, settingsSlot, onPrevScramble, onNextScramble }: Props & ScrambleNav & { compact: boolean; settingsSlot?: HTMLElement | null }) {
-  return (
-    <>
-      {/* 打乱原文。手机上这块是全屏浮层,盖住了计时器自己的打乱条;桌面左栏也够窄,
-          转头去主区对照同样麻烦 —— 解法讲的是哪条打乱,就摆在解法旁边。
-          尚未生成打乱(首帧 / 换项目那一刻)时整块不渲染,不留空行。 */}
-      {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
-      <StageSolver scramble={scramble} lang={isZh ? 'zh' : 'en'} compact={compact} settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />
-      <StepSolve scramble={scramble} isZh={isZh} />
-    </>
-  );
+  return <TimerSolverBody scramble={scramble} language={isZh ? 'zh' : 'en'} compact={compact}
+    settingsSlot={settingsSlot} onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} />;
 }
 
 /** Full-screen sheet. Own component so useModalDismiss's Escape + body-scroll-lock

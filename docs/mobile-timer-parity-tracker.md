@@ -1,5 +1,12 @@
 # 五端 `/timer` 完全一致跟踪
 
+
+### 2026-10-06：解法提示内容补齐（本地）
+
+`TimerSolverBody` / `TimerStepSolve` / `TimerSolverCompareModal` / `TimerSolverHints` 已成为 Web/App 同源实现，补齐六方法阶段提示、对比、播放、SQ1 近最优解和五魔状态统计；Web 旧路径只兼容导出。下方历史记录中的 StepSolve、SQ1/Mega 未接入描述由本节覆盖。方法本身原有的阶段目标/限制保持不变，五魔未增加完整求解；Web 侧栏/全屏与 App 外层弹窗仍属宿主接线。
+
+67 项定向检查及 Web/App 浏览器真实求解与窄屏检查通过，Android/iOS/macOS 和 Harmony Web 构建通过。Harmony HAP 工具链版本不匹配、Windows native 与五平台实体设备验收仍未完成；未 push/发布，整体维持 **NOT COMPLETE**。具体证据见 `mobile-app-roadmap.md` 同日“完整解法提示内容共享”。
+
 状态：`ACTIVE — NOT COMPLETE`
 
 最后更新：2026-10-06

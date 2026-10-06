@@ -67,7 +67,9 @@
       "./ssq1": "runtime-neutral",
       "./sq2": "runtime-neutral",
       "./stm": "runtime-neutral",
-      "./stm-cube": "runtime-neutral"
+      "./stm-cube": "runtime-neutral",
+      "./timer-mega-state": "runtime-neutral",
+      "./timer-mega-hints": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -366,6 +368,16 @@
       "types": "./src/stm-cube.ts",
       "node": "./dist/stm-cube.js",
       "default": "./src/stm-cube.ts"
+    },
+    "./timer-mega-state": {
+      "types": "./src/timer-mega-state.ts",
+      "node": "./dist/timer-mega-state.js",
+      "default": "./src/timer-mega-state.ts"
+    },
+    "./timer-mega-hints": {
+      "types": "./src/timer-mega-hints.ts",
+      "node": "./dist/timer-mega-hints.js",
+      "default": "./src/timer-mega-hints.ts"
     }
   },
   "scripts": {

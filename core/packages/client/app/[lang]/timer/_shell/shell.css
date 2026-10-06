@@ -352,16 +352,6 @@
 .solver-panel-body .stsv-result { margin-inline: auto; }
 /* 打乱原文 — 面板/浮层里解法讲的是哪条打乱。同 .scramble-strip 的记号字体,但只做正文
    大小:这里是对照用的参考行,不是要人隔着房间读的主视觉。窄栏放不下就折行。 */
-.solver-panel-scramble {
-  margin: 0 0 10px;
-  font-family: 'LiberationMono', var(--font-mono);
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--foreground);
-  overflow-wrap: anywhere;
-  -webkit-user-select: text;
-  user-select: text;
-}
 .solver-panel-loading {
   display: flex;
   align-items: center;
@@ -378,104 +368,6 @@
 /* 分步解法 sub-section (StepSolve) — sits inside the panel under the StageSolver.
    Method tabs → per-stage breakdown (each row plays that stage on the 3D cube) →
    shared TwistyPlayer. Collapsed by default so its BFS only runs on demand. */
-.stepsolve {
-  width: 100%;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--shell-divider);
-  text-align: left;
-}
-.stepsolve-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 4px 2px;
-  background: none;
-  border: 0;
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.stepsolve-head:hover { color: var(--accent); }
-.stepsolve-chevron { margin-left: auto; opacity: 0.7; transition: transform 120ms ease; }
-.stepsolve-chevron.is-open { transform: rotate(90deg); }
-.stepsolve-body { display: flex; flex-direction: column; gap: 8px; padding: 6px 2px 2px; }
-.stepsolve-tabs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
-.stepsolve-tab {
-  padding: 3px 10px;
-  background: transparent;
-  border: 1px solid var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.stepsolve-tab:hover { color: var(--foreground); }
-.stepsolve-tab.is-active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  border: 1px solid var(--accent);
-  font-weight: 600;
-}
-.stepsolve-compare {
-  margin-left: auto;
-  padding: 3px 10px;
-  background: transparent;
-  border: 1px dashed var(--border-default);
-  border-radius: 999px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  cursor: pointer;
-}
-.stepsolve-compare:hover { color: var(--foreground); }
-.stepsolve-status { color: var(--muted-foreground); font-size: 13px; }
-.stepsolve-stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.stepsolve-row {
-  display: grid;
-  grid-template-columns: auto 28px 1fr auto;
-  gap: 8px;
-  align-items: baseline;
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-.stepsolve-row:hover { background: var(--shell-hover); }
-.stepsolve-row.is-active { background: var(--accent-soft); border-color: var(--accent); }
-.stepsolve-row.is-static { cursor: default; }
-.stepsolve-row.is-static:hover { background: transparent; }
-.stepsolve-label { color: var(--muted-foreground); font-size: 12.5px; white-space: nowrap; }
-.stepsolve-count {
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--muted-foreground);
-  font-size: 12.5px;
-}
-.stepsolve-alg {
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: var(--foreground);
-}
-.stepsolve-play { align-self: center; color: var(--muted-foreground); opacity: 0; transition: opacity 120ms; }
-.stepsolve-row:hover .stepsolve-play,
-.stepsolve-row.is-active .stepsolve-play { opacity: 0.8; color: var(--accent); }
-.stepsolve-total { margin-top: 2px; }
-.stepsolve-total .stepsolve-label,
-.stepsolve-total .stepsolve-count { color: var(--accent); font-weight: 600; }
-.stepsolve-total .stepsolve-alg { color: var(--muted-foreground); font-style: italic; }
-/* Block (not flex) with a centered max-width so the player gets a definite width
-   — a width:100% twisty-player inside a justify-content:center flex parent
-   collapses to 0. */
-.stepsolve-player { width: 100%; max-width: 300px; min-width: 0; margin: 6px auto 0; }
-/* 同 .stsv-player:/recon 的播放器默认 height:100% 撑定高父容器,这里高度由内容决定,
-   所以放开高度、改给画布定 1:1(flex:0 0 auto + width:100%,理由见 StageSolver.css)。 */
-.stepsolve-player .recon-player { height: auto; }
-.stepsolve-player .recon-player-canvas { flex: 0 0 auto; width: 100%; aspect-ratio: 1 / 1; }
-
 /* Config rail wrapper (解法提示, desktop only — SoloView puts the phone form in the
    topbar instead). display:contents keeps it out of the layout on phones, where it
    is empty; desktop turns it into the absolute left column below. */

@@ -406,6 +406,7 @@ const isTooBroad = (v: number | null | undefined): boolean => v === XCR_TOO_BROA
 const isSentinel = (v: number | null | undefined): boolean => v === HTR_NOT_DR || v === HTR2_NOT_HTR || v === FR_NOT_HTR || v === XCR_TOO_BROAD;
 
 interface Props {
+  onDismissChange?(dismiss: (() => boolean) | null): void;
   scramble: string;
   lang: 'zh' | 'en';
   initialMethod?: Method;
@@ -429,7 +430,7 @@ interface Props {
   onNextScramble?: () => void;
 }
 
-export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, settingsSlot, onPrevScramble, onNextScramble }: Props) {
+export default function StageSolver({ scramble, lang, initialMethod = 'std', initialStage = 0, initialFace, onSelectionChange, initialSlot = '', onSlotChange, initialBase = '', onBaseChange, compact = false, settingsSlot, onPrevScramble, onNextScramble, onDismissChange }: Props) {
   const t = (zh: string, en: string) => (lang === 'zh' ? zh : en);
 
   // 视角格 / 解法头的目标描述(块类方法按 method+stage 给语义,其余 = 该面十字)。
@@ -513,6 +514,14 @@ export default function StageSolver({ scramble, lang, initialMethod = 'std', ini
   // 步法限制默认收起(省空间),用户按需展开。受限时头部给个「已限制」提示,收起也可见。
   const [mrOpen, setMrOpen] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => {
+    onDismissChange?.(() => {
+      if (infoOpen) { setInfoOpen(false); return true; }
+      if (settingsOpen) { setSettingsOpen(false); return true; }
+      return false;
+    });
+    return () => onDismissChange?.(null);
+  }, [infoOpen, settingsOpen, onDismissChange]);
   const settingsId = useId();
   const settingsRef = useRef<HTMLDivElement>(null);
   const solutionControlsRef = useRef<HTMLDivElement>(null);
