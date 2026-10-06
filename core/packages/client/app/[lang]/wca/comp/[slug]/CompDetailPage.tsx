@@ -5,7 +5,7 @@ import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-acc
  * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
-import { useEffect, useMemo, useState, useCallback, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef, memo, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
@@ -66,6 +66,7 @@ import { listReconsByComp } from '@/lib/recon-api';
 import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
 import { roundHasAnyEnteredResult } from '@/lib/wca-round-results';
+import { useProgressiveCount } from '@/components/persons/logic/use-progressive-count';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -1313,10 +1314,16 @@ export default function CompDetailPage() {
       }
       if (patch.kind === 'users') {
         const mergedUsers: typeof prev.users = { ...prev.users };
+        let changed = false;
         for (const [k, wsUser] of Object.entries(patch.users)) {
+          const previous = prev.users[k];
+          // Round snapshots repeat unchanged competitors. Keep their identities
+          // so refreshing another round does not invalidate every visible row.
+          if (previous && Object.entries(wsUser).every(([field, value]) => previous[field as keyof User] === value)) continue;
           mergedUsers[k] = { ...prev.users[k], ...wsUser };
+          changed = true;
         }
-        return { ...prev, users: mergedUsers, fetchedAt: Date.now() };
+        return changed ? { ...prev, users: mergedUsers, fetchedAt: Date.now() } : prev;
       }
       return prev;
     });
@@ -1579,11 +1586,13 @@ export default function CompDetailPage() {
     if (items.length > 0) void prefetchRanksForWca(items, data.slug);
   }, [data, currentRound, pbMap]);
 
+  const personalRecords = data?.personalRecords;
+  // Live score patches do not change the fetched pre-competition PR baseline.
+  const pbUsers = personalRecords ? undefined : data?.users;
   useEffect(() => {
-    if (!data) return;
-    if (data.personalRecords) {
+    if (personalRecords) {
       const obj: Record<string, PbByEvent | null> = {};
-      for (const [wcaId, byEvent] of Object.entries(data.personalRecords)) {
+      for (const [wcaId, byEvent] of Object.entries(personalRecords)) {
         const pb: PbByEvent = {};
         for (const [ev, slot] of Object.entries(byEvent)) {
           pb[ev] = {
@@ -1599,7 +1608,8 @@ export default function CompDetailPage() {
     // 服务端没给 personalRecords 时才逐人问 WCA API(一人一请求)。必须走 prefetchPbs 的
     // 限并发队列:大比赛 1000+ 选手直接 Promise.all 会一次性打满浏览器连接池,把同页
     // 其它请求(成绩数据 / 国旗表)全挤到队尾。
-    const ids = Object.values(data.users).map(u => u.wcaid).filter(Boolean);
+    if (!pbUsers) return;
+    const ids = Object.values(pbUsers).map(u => u.wcaid).filter(Boolean);
     if (ids.length === 0) return;
     let cancelled = false;
     prefetchPbs(ids)
@@ -1612,7 +1622,7 @@ export default function CompDetailPage() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [data, pbVer]);
+  }, [personalRecords, pbUsers, pbVer]);
 
   const onChangeRound = (value: string) => {
     const [e, r] = value.split(':');
@@ -2464,6 +2474,16 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
     });
   }, [results, sort, eff]);
 
+  const { count } = useProgressiveCount(
+    // Sorting reuses the rows already mounted; do not delete and rebuild them.
+    displayResults.length, `${compId}|${round?.e}|${round?.i}`, 20, 30,
+  );
+  const handlers = useRef({ onClickCuber, onEdit, onRefresh });
+  useEffect(() => { handlers.current = { onClickCuber, onEdit, onRefresh }; }, [onClickCuber, onEdit, onRefresh]);
+  const handleClickCuber = useCallback((number: number) => handlers.current.onClickCuber(number), []);
+  const handleEdit = useCallback((target: ResultChangeTarget) => handlers.current.onEdit?.(target), []);
+  const handleRefresh = useCallback(() => handlers.current.onRefresh?.(), []);
+
   if (!round) return null;
   const isAverageFormat = isAvgRankedFormat(round.f);
   // 多盲 Bo3 显示非官方 Mo3 平均(WCA 不追踪);Bo1/Bo2 无平均不显示
@@ -2510,188 +2530,32 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
           </tr>
         </thead>
         <tbody>
-          {displayResults.map((r, idx) => {
-            const u = users[String(r.n)];
-            if (!u) return null;
-            const fullCuberName = displayCuberName(u.name, isZh);
-            const cuberName = displayCuberName(u.name, isZh, { compactForeign: compIso2 === 'cn' && isZh });
-            const place = placeByN.get(r.n) ?? null;
-            const pb = pbMap[u.wcaid];
-            const { singleRank, averageRank } = classifyPr(r, pb);
-            const singleBadge = prBadgeFor(singleRank);
-            const averageBadge = prBadgeFor(averageRank);
-            const wcaid = u.wcaid;
-            // 只取 approved:pending 提议绝不进官方值,也不让其 note 漏到官方单元(见 splitChainByStatus)。
-            const { approved: chain } = splitChainByStatus(wcaid ? changeMap?.get(personRoundChangeKey(wcaid, r.e, r.r)) : undefined);
-            // 当前有效值 = live 值叠加变更链最新(行内改某次后即时反映)。
-            const effBest = effectiveFieldValue(chain, 'best', r.b);
-            const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
-            const effAttempts = trimEmptyAttempts(effectiveAttempts(chain, r.v));
-            const calcHref = compId ? calcCompetitionHref({
-              eventId: r.e,
-              attempts: effAttempts,
-              personName: fullCuberName,
-              personNumber: r.n,
-              wcaId: wcaid,
-              competitionId: compId,
-              competitionName: compName,
-              roundTypeId: r.r,
-            }) : null;
-            const calcLabel = tr({
-              zh: `把 ${fullCuberName} 的成绩带到计算器`,
-              en: `Open ${fullCuberName}'s results in calculator`,
-            });
-            const isOdd = idx % 2 === 1;
-            const advanced = advancers?.has(r.n);
-            const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
-            return (
-              <tr
-                key={r.i || `${r.n}:${idx}`}
-                className={`${cls} comp-row-clickable`}
-                onClick={() => onClickCuber(r.n)}
-              >
-                <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>
-                  {place ?? '-'}
-                  {calcHref && (
-                    <Link
-                      href={calcHref}
-                      prefetch={false}
-                      className="comp-calc-link"
-                      aria-label={calcLabel}
-                      title={calcLabel}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <Calculator size={13} strokeWidth={1.8} aria-hidden="true" />
-                    </Link>
-                  )}
-                </td>
-                <td className="td-person">
-                  <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
-                  <Link
-                    href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
-                    prefetch={false}
-                    onClick={e => e.stopPropagation()}
-                    onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
-                    className="cuber-name cuber-link"
-                    title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
-                  >
-                    {cuberName}
-                  </Link>
-                  {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
-                </td>
-                {(() => {
-                  const avgCell = showAvg ? (
-                    <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
-                      <span className="record-num-cell">
-                        <ResultChangeChain oldValues={changeChainOldValues(chain, 'average')} eventId={r.e} kind="average" note={chain?.[chain.length - 1]?.note} />
-                        {formatLive(effAvg, r.e, true)}
-                        <ResultRecordBadge tag={String(r.ar || '')} keatoned={r.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={r.e} isAvg />
-
-                      </span>
-                    </td>
-                  ) : null;
-                  const bestCell = (
-                    <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
-                      <span className="record-num-cell">
-                        <ResultChangeChain oldValues={changeChainOldValues(chain, 'best')} eventId={r.e} kind="single" note={chain?.[chain.length - 1]?.note} />
-                        {formatLive(effBest, r.e, false)}
-                        <ResultRecordBadge tag={r.sr} keatoned={r.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={r.e} isAvg={false} />
-
-                      </span>
-                    </td>
-                  );
-                  return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
-                })()}
-                {Array.from({ length: attemptCount }).map((_, i) => {
-                  const hasSlot = i < effAttempts.length;            // 该轮赛制下这把存在(空位/DNF 也算);超出=空格不可点
-                  const av = effAttempts[i] ?? 0;
-                  const pen = effectiveAttemptPenalties(chain)[i] ?? 0;
-                  const reconId = hasSlot
-                    ? findReconForPersonAttempt(reconMap, compId ?? '', wcaid ?? '', r.e, r.r, i + 1)
-                    : undefined;
-                  // 复盘目标:有复盘→详情(所有人可看);没复盘→/recon/submit 预填身份字段。
-                  const reconHref = reconId
-                    ? `/recon/${reconId}${isZh ? '?lang=zh' : ''}`
-                    : buildReconSubmitHref({
-                        wcaEventId: r.e, roundTypeId: r.r, solveNum: i + 1,
-                        personId: wcaid ?? '', personName: u.name ?? '', personCountry: regionToIso2(u.region),
-                        compId: compId ?? '', compName: compName ?? '', compCountry: compIso2,
-                        rawTimeSec: pen > 0 && av > 0 ? (av - pen) / 100 : undefined,
-                      });
-                  const isOwner = !!meWcaId && meWcaId === wcaid;
-                  return (
-                  <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''} ${reconId ? 'td-attempt-has-recon' : ''}`}>
-                    {hasSlot && (
-                      // 选手页同款统一弹窗:复盘 / 判罚原因 / 编辑提议 / 管理员变更记录(全站一致)。
-                      <AttemptPopover
-                        value={av}
-                        eventId={r.e}
-                        penalty={pen}
-                        penaltyNote={effectiveAttemptPenaltyNote(chain)}
-                        format={(v) => formatLive(v, r.e, false)}
-                        oldValues={attemptOldValues(chain, i)}
-                        showOldBelow={false}
-                        reconHref={reconHref}
-                        hasRecon={!!reconId}
-                        reconId={reconId}
-                        reconClassName="att-trig-recon"
-                        plainClassName="att-trig-plain"
-                        canEdit={loggedIn}
-                        isAdmin={admin}
-                        isOwner={isOwner}
-                        video={{
-                          approved: effectiveAttemptVideos(chain)[i],
-                          pending: pendingAttemptVideos(chain)[i],
-                          onAdd: loggedIn ? (url) =>
-                            recordAttemptVideos({
-                              target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                              currentAttempts: effAttempts,
-                              index: i, videoUrl: url, existingChain: chain, propose: !admin,
-                            }).then(() => onRefresh?.()) : undefined,
-                        }}
-                        onEdit={(newValue, note) =>
-                          recordAttemptEdit({
-                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                            currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, newValue, note,
-                          }).then(() => onRefresh?.())
-                        }
-                        onSetOriginal={(originalValue, note) =>
-                          recordAttemptOriginal({
-                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                            currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
-                            index: i, originalValue, note, existingChain: chain, propose: !admin,
-                          }).then(() => onRefresh?.())
-                        }
-                        onSetPenalty={(penaltyCs, note) =>
-                          recordAttemptPenalty({
-                            target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
-                            currentAttempts: effAttempts,
-                            index: i, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
-                          }).then(() => onRefresh?.())
-                        }
-                        onEditRecord={admin && wcaid ? () => onEdit?.({
-                          wcaId: wcaid,
-                          competitionId: compId ?? '',
-                          eventId: r.e,
-                          roundTypeId: r.r,
-                          resultId: r.i,
-                          currentAttempts: effAttempts,
-                          currentBest: effBest,
-                          currentAverage: effAvg,
-                          currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
-                          currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
-                          personName: u.name ?? null,
-                          compName: compName ?? null,
-                        }) : undefined}
-                      />
-                    )}
-                  </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
+          {displayResults.slice(0, count).map((r, idx) => (
+            <ResultsTableRow
+              key={r.i || `${r.n}:${idx}`}
+              r={r}
+              u={users[String(r.n)]}
+              pb={pbMap[users[String(r.n)]?.wcaid]}
+              changes={changeMap?.get(personRoundChangeKey(users[String(r.n)]?.wcaid ?? '', r.e, r.r))}
+              place={placeByN.get(r.n) ?? null}
+              advanced={advancers?.has(r.n) ?? false}
+              isOdd={idx % 2 === 1}
+              showAvg={showAvg}
+              singleFirst={singleFirst}
+              attemptCount={attemptCount}
+              isZh={isZh}
+              compIso2={compIso2}
+              compId={compId}
+              compName={compName}
+              admin={admin}
+              loggedIn={loggedIn}
+              meWcaId={meWcaId}
+              reconMap={reconMap}
+              onEdit={handleEdit}
+              onRefresh={handleRefresh}
+              onClickCuber={handleClickCuber}
+            />
+          ))}
           {results.length === 0 && (
             <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{tr({ zh: '此轮暂无成绩', en: 'No results yet'
             })}</td></tr>
@@ -2701,6 +2565,206 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
     </div>
   );
 }
+
+// Each row receives its own data, so background metadata and other rounds do not
+// rebuild thousands of attempt buttons. Callbacks stay current via table handlers.
+type ResultsTableRowProps = Pick<ResultsTableProps,
+  'isZh' | 'compIso2' | 'compId' | 'compName' | 'admin' | 'loggedIn' | 'meWcaId' | 'reconMap' | 'onEdit' | 'onRefresh' | 'onClickCuber'> & {
+  r: LiveResult;
+  u: User | undefined;
+  pb: PbByEvent | null | undefined;
+  changes: ResultChange[] | undefined;
+  place: number | null;
+  advanced: boolean;
+  isOdd: boolean;
+  showAvg: boolean;
+  singleFirst: boolean;
+  attemptCount: number;
+};
+
+const ResultsTableRow = memo(function ResultsTableRow({
+  r, u, pb, changes, place, advanced, isOdd, showAvg, singleFirst, attemptCount,
+  isZh, compIso2, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, onClickCuber,
+}: ResultsTableRowProps) {
+  if (!u) return null;
+  const fullCuberName = displayCuberName(u.name, isZh);
+  const cuberName = displayCuberName(u.name, isZh, { compactForeign: compIso2 === 'cn' && isZh });
+  const { singleRank, averageRank } = classifyPr(r, pb ?? null);
+  const singleBadge = prBadgeFor(singleRank);
+  const averageBadge = prBadgeFor(averageRank);
+  const wcaid = u.wcaid;
+  // 只取 approved:pending 提议绝不进官方值,也不让其 note 漏到官方单元(见 splitChainByStatus)。
+  const { approved: chain } = splitChainByStatus(wcaid ? changes : undefined);
+  // 当前有效值 = live 值叠加变更链最新(行内改某次后即时反映)。
+  const effBest = effectiveFieldValue(chain, 'best', r.b);
+  const effAvg = effectiveFieldValue(chain, 'average', effectiveAvg(r));
+  const effAttempts = trimEmptyAttempts(effectiveAttempts(chain, r.v));
+  const penalties = effectiveAttemptPenalties(chain);
+  const penaltyNote = effectiveAttemptPenaltyNote(chain);
+  const approvedVideos = effectiveAttemptVideos(chain);
+  const pendingVideos = pendingAttemptVideos(chain);
+  const calcHref = compId ? calcCompetitionHref({
+    eventId: r.e,
+    attempts: effAttempts,
+    personName: fullCuberName,
+    personNumber: r.n,
+    wcaId: wcaid,
+    competitionId: compId,
+    competitionName: compName,
+    roundTypeId: r.r,
+  }) : null;
+  const calcLabel = tr({
+    zh: `把 ${fullCuberName} 的成绩带到计算器`,
+    en: `Open ${fullCuberName}'s results in calculator`,
+  });
+  const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
+  return (
+    <tr
+      className={`${cls} comp-row-clickable`}
+      onClick={() => onClickCuber(r.n)}
+    >
+      <td className={`td-place${place === 1 ? ' is-gold' : place === 2 ? ' is-silver' : place === 3 ? ' is-bronze' : ''}`}>
+        {place ?? '-'}
+        {calcHref && (
+          <Link
+            href={calcHref}
+            prefetch={false}
+            className="comp-calc-link"
+            aria-label={calcLabel}
+            title={calcLabel}
+            onClick={e => e.stopPropagation()}
+          >
+            <Calculator size={13} strokeWidth={1.8} aria-hidden="true" />
+          </Link>
+        )}
+      </td>
+      <td className="td-person">
+        <Flag iso2={regionToIso2(u.region)} className="comp-flag" />
+        <Link
+          href={compResultHref(compId ?? '', { eventId: r.e, roundId: r.r, number: r.n })}
+          prefetch={false}
+          onClick={e => e.stopPropagation()}
+          onNavigate={e => { e.preventDefault(); onClickCuber(r.n); }}
+          className="cuber-name cuber-link"
+          title={`${fullCuberName}\n${regionDisplay(u.region, isZh)}`}
+        >
+          {cuberName}
+        </Link>
+        {/* 行级编辑铅笔已移除:管理员经点成绩弹窗里的「编辑变更记录…」打开整条变更编辑器。 */}
+      </td>
+      {(() => {
+        const avgCell = showAvg ? (
+          <td key="avg" className={`td-avg${!singleFirst ? ' is-rank-col' : ''}`}>
+            <span className="record-num-cell">
+              <ResultChangeChain oldValues={changeChainOldValues(chain, 'average')} eventId={r.e} kind="average" note={chain?.[chain.length - 1]?.note} />
+              {formatLive(effAvg, r.e, true)}
+              <ResultRecordBadge tag={String(r.ar || '')} keatoned={r.ak} iso2={regionToIso2(u.region)} fallback={averageBadge} eventId={r.e} isAvg />
+
+            </span>
+          </td>
+        ) : null;
+        const bestCell = (
+          <td key="best" className={`td-best${singleFirst ? ' is-rank-col' : ''}`}>
+            <span className="record-num-cell">
+              <ResultChangeChain oldValues={changeChainOldValues(chain, 'best')} eventId={r.e} kind="single" note={chain?.[chain.length - 1]?.note} />
+              {formatLive(effBest, r.e, false)}
+              <ResultRecordBadge tag={r.sr} keatoned={r.sk} iso2={regionToIso2(u.region)} fallback={singleBadge} eventId={r.e} isAvg={false} />
+
+            </span>
+          </td>
+        );
+        return singleFirst ? [bestCell, avgCell] : [avgCell, bestCell];
+      })()}
+      {Array.from({ length: attemptCount }).map((_, i) => {
+        const hasSlot = i < effAttempts.length;            // 该轮赛制下这把存在(空位/DNF 也算);超出=空格不可点
+        const av = effAttempts[i] ?? 0;
+        const pen = penalties[i] ?? 0;
+        const reconId = hasSlot
+          ? findReconForPersonAttempt(reconMap, compId ?? '', wcaid ?? '', r.e, r.r, i + 1)
+          : undefined;
+        // 复盘目标:有复盘→详情(所有人可看);没复盘→/recon/submit 预填身份字段。
+        const reconHref = reconId
+          ? `/recon/${reconId}${isZh ? '?lang=zh' : ''}`
+          : buildReconSubmitHref({
+              wcaEventId: r.e, roundTypeId: r.r, solveNum: i + 1,
+              personId: wcaid ?? '', personName: u.name ?? '', personCountry: regionToIso2(u.region),
+              compId: compId ?? '', compName: compName ?? '', compCountry: compIso2,
+              rawTimeSec: pen > 0 && av > 0 ? (av - pen) / 100 : undefined,
+            });
+        const isOwner = !!meWcaId && meWcaId === wcaid;
+        return (
+        <td key={i} className={`td-attempt ${isAo5Bracketed(effAttempts, i) ? 'td-attempt-trimmed' : ''} ${reconId ? 'td-attempt-has-recon' : ''}`}>
+          {hasSlot && (
+            // 选手页同款统一弹窗:复盘 / 判罚原因 / 编辑提议 / 管理员变更记录(全站一致)。
+            <AttemptPopover
+              value={av}
+              eventId={r.e}
+              penalty={pen}
+              penaltyNote={penaltyNote}
+              format={(v) => formatLive(v, r.e, false)}
+              oldValues={attemptOldValues(chain, i)}
+              showOldBelow={false}
+              reconHref={reconHref}
+              hasRecon={!!reconId}
+              reconId={reconId}
+              reconClassName="att-trig-recon"
+              plainClassName="att-trig-plain"
+              canEdit={loggedIn}
+              isAdmin={admin}
+              isOwner={isOwner}
+              video={{
+                approved: approvedVideos[i],
+                pending: pendingVideos[i],
+                onAdd: loggedIn ? (url) =>
+                  recordAttemptVideos({
+                    target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                    currentAttempts: effAttempts,
+                    index: i, videoUrl: url, existingChain: chain, propose: !admin,
+                  }).then(() => onRefresh?.()) : undefined,
+              }}
+              onEdit={(newValue, note) =>
+                recordAttemptEdit({
+                  target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                  currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                  index: i, newValue, note,
+                }).then(() => onRefresh?.())
+              }
+              onSetOriginal={(originalValue, note) =>
+                recordAttemptOriginal({
+                  target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                  currentAttempts: effAttempts, currentBest: effBest, currentAverage: effAvg,
+                  index: i, originalValue, note, existingChain: chain, propose: !admin,
+                }).then(() => onRefresh?.())
+              }
+              onSetPenalty={(penaltyCs, note) =>
+                recordAttemptPenalty({
+                  target: { wcaId: wcaid, competitionId: compId ?? '', eventId: r.e, roundTypeId: r.r, resultId: r.i },
+                  currentAttempts: effAttempts,
+                  index: i, penaltyCs, note, existingChain: chain, propose: !admin && !isOwner,
+                }).then(() => onRefresh?.())
+              }
+              onEditRecord={admin && wcaid ? () => onEdit?.({
+                wcaId: wcaid,
+                competitionId: compId ?? '',
+                eventId: r.e,
+                roundTypeId: r.r,
+                resultId: r.i,
+                currentAttempts: effAttempts,
+                currentBest: effBest,
+                currentAverage: effAvg,
+                currentSingleRecord: typeof r.sr === 'string' ? r.sr : null,
+                currentAverageRecord: typeof r.ar === 'string' ? r.ar : null,
+                personName: u.name ?? null,
+                compName: compName ?? null,
+              }) : undefined}
+            />
+          )}
+        </td>
+        );
+      })}
+    </tr>
+  );
+});
 
 interface PodiumViewProps {
   groups: PodiumGroup[];
