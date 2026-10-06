@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { randomFaceMoves, scramble333 } from '@cuberoot/shared/timer';
+import { scramble333 as seededScramble333 } from '@cuberoot/shared/timer/seeded/nxnxn';
 import { scramble333 as websiteScramble333 } from '@/app/[lang]/timer/_lib/scramble/nxnxn';
 
 const AXIS: Record<string, number> = {
@@ -31,7 +32,10 @@ function assertValid(scramble: string): void {
 
 describe('shared 3x3 scramble generator', () => {
   it('is the website compatibility export instead of a second implementation', () => {
-    expect(websiteScramble333).toBe(scramble333);
+    expect(websiteScramble333).toBe(seededScramble333);
+    // The barrel resolves to TS and the seeded Node export to dist; function
+    // identity across those modules differs, but both must produce the same moves.
+    expect(websiteScramble333(() => 0)).toBe(scramble333(() => 0));
   });
 
   it('generates a valid sequence with a deterministic RNG', () => {

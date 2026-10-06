@@ -28,8 +28,11 @@ export const THEME_BOOTSTRAP = `(() => {
             'home-background.v1.light': preferences.lightBackground,
             'home-background.v1.dark': preferences.darkBackground };
           Object.keys(values).forEach(function(key) {
-            if (values[key] === null) localStorage.removeItem(key);
-            else localStorage.setItem(key, values[key]);
+            try {
+              if (values[key] === null) localStorage.removeItem(key);
+              // allow-raw-localstorage: standalone pre-hydration script; each write is caught so quota failures cannot stop theme initialization.
+              else localStorage.setItem(key, values[key]);
+            } catch (_) {}
           });
         }
         sessionStorage.setItem('cuberoot.native-preferences.applied', incoming);

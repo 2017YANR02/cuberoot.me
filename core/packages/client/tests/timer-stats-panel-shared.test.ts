@@ -258,18 +258,24 @@ describe('shared TimerRollingStatsPicker interaction and viewport contract', () 
 });
 
 describe('Web statistics adapters', () => {
-  it('stay injection-only over public timer-ui and leave no duplicated CSS', () => {
-    const statsWrapper = readFileSync('app/[lang]/timer/_components/StatsPanel.tsx', 'utf8');
-    const pickerWrapper = readFileSync('app/[lang]/timer/_components/RollingStatsPicker.tsx', 'utf8');
+  it('injects data and settings into the shared statistics workspace without duplicated controls or CSS', () => {
+    const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
+    const timerUiEntry = import.meta.resolve('@cuberoot/timer-ui');
+    const workspace = readFileSync(new URL('./TimerStatisticsWorkspace.tsx', timerUiEntry), 'utf8');
+    const stats = readFileSync(new URL('./TimerStatsPanel.tsx', timerUiEntry), 'utf8');
     const compactWrapper = readFileSync('components/CompactSelect.tsx', 'utf8');
     const timerCss = readFileSync('app/[lang]/timer/timer.css', 'utf8');
-    expect(statsWrapper).toContain("from '@cuberoot/timer-ui'");
-    expect(statsWrapper).toContain('<TimerStatsPanel');
-    expect(statsWrapper).toContain('renderPrBadge=');
-    expect(statsWrapper).not.toContain('bestSingle(');
-    expect(statsWrapper).not.toContain('useState(');
-    expect(pickerWrapper).toContain('<TimerRollingStatsPicker');
-    expect(pickerWrapper).not.toContain('<CompactSelect');
+    expect(solo).toContain("import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui'");
+    expect(solo).toContain('<TimerStatisticsWorkspace');
+    expect(solo).toContain('rollingColumns={settings.statsRollingColumns}');
+    expect(solo).toContain('onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}');
+    expect(solo).not.toContain('<TimerStatsPanel');
+    expect(solo).not.toContain('<TimerRollingStatsPicker');
+    expect(workspace).toContain('<TimerStatsPanel renderPrBadge={() => <RecordBadge record="PR" variant="inline" />} {...stats}');
+    expect(workspace).not.toContain('bestSingle(');
+    expect(stats).toContain("from './TimerRollingStatsPicker'");
+    expect(stats).toContain('<TimerRollingStatsPicker');
+    expect(stats).not.toContain('<CompactSelect');
     expect(compactWrapper).toContain("from '@cuberoot/timer-ui/compact-select'");
     expect(compactWrapper).not.toContain('useLayoutEffect');
     expect(timerCss).not.toContain('.stats-table {');
