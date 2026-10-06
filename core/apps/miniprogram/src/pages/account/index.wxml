@@ -1,12 +1,13 @@
 <page-meta page-style="{{appearanceStyle}}" />
-<view wx:if="{{!isTimelineEntry}}" class="account-scenery" aria-hidden="true"><view class="account-scenery-image" /></view>
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
 <scroll-view class="account-scroll" scroll-y="{{true}}" scroll-x="{{false}}" enhanced="{{true}}" show-scrollbar="{{false}}">
 <view wx:if="{{isTimelineEntry}}" class="page account-entry-page">
   <text class="account-entry-copy" aria-role="status">{{copy.entryCopy}}</text>
 </view>
 
 <view wx:elif="{{loginRequired}}" class="page account-login-page">
-  <text class="eyebrow">ACCOUNT</text>
+  <text class="eyebrow">{{copy.accountEyebrow}}</text>
   <text class="page-title">{{wechatPhoneRequired ? copy.phoneTitle : accountLinkCodeMode ? copy.linkExistingAccountLabel : phoneAccountFound ? copy.phoneFoundTitle : accountLinkRequired ? copy.accountChoiceTitle : copy.pageTitle}}</text>
   <text class="page-intro">{{wechatPhoneRequired ? copy.phoneHint : accountLinkCodeMode ? copy.linkCodeHint : phoneAccountFound ? copy.phoneFoundHint : accountLinkRequired ? copy.accountChoiceNote : loginIntro}}</text>
   <view wx:if="{{requiresAgreement}}" class="account-policy">
@@ -105,10 +106,10 @@
 </view>
 
 <view wx:else class="page account-user-page">
-  <text class="eyebrow">ACCOUNT</text>
+  <text class="eyebrow">{{copy.accountEyebrow}}</text>
   <text class="page-title">{{displayName}}</text>
   <text wx:if="{{uidText}}" class="account-user-meta">CubeRoot ID {{uidText}}</text>
-  <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">请在系统浏览器完成 WCA 授权，返回后页面会刷新</text>
+  <text wx:if="{{wcaLinkPending}}" class="status-text" aria-role="status" aria-live="polite">{{copy.wcaLinkHint}}</text>
   <button
     class="primary-button account-primary-button"
     aria-label="{{copy.accountButtonAria}}"

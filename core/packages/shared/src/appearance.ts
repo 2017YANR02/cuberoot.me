@@ -22,6 +22,7 @@ export interface NativeAppearance {
   scheme: 'light' | 'dark';
   followSystem: boolean;
   colors: NativeAppearanceColors;
+  systemColors?: Record<'light' | 'dark', NativeAppearanceColors>;
   backgrounds?: Record<'light' | 'dark', NativeBackgroundScene | null>;
   softBackground?: boolean;
 }
@@ -39,6 +40,11 @@ export function decodeNativeAppearance(value: unknown): NativeAppearance | null 
     colors[key] = color;
   }
   const appearance: NativeAppearance = { type: 'cuberoot:appearance', scheme: message.scheme, followSystem: message.followSystem, colors };
+  if (message.systemColors) {
+    const light = decodeNativeAppearance({ type: message.type, scheme: 'light', followSystem: false, colors: message.systemColors.light });
+    const dark = decodeNativeAppearance({ type: message.type, scheme: 'dark', followSystem: false, colors: message.systemColors.dark });
+    if (light && dark) appearance.systemColors = { light: light.colors, dark: dark.colors };
+  }
   // Old senders remain compatible; malformed scene metadata cannot become CSS or a URL.
   if (message.backgrounds && typeof message.backgrounds === 'object') {
     appearance.backgrounds = { light: null, dark: null };
@@ -52,4 +58,25 @@ export function decodeNativeAppearance(value: unknown): NativeAppearance | null 
     appearance.softBackground = message.softBackground === true;
   }
   return appearance;
+}
+
+/** Persisted choices, separate from resolved native paint colors. */
+export interface MiniProgramPreferences {
+  locale: 'en' | 'zh';
+  theme: 'system' | 'light' | 'dark';
+  palette: string | null;
+  contrast: 'normal' | 'soft';
+  lightBackground: string;
+  darkBackground: string;
+}
+export const MINI_PROGRAM_PREFERENCES_QUERY = 'mpPreferences';
+export function decodeMiniProgramPreferences(value: unknown): MiniProgramPreferences | null {
+  if (!value || typeof value !== 'object') return null;
+  const p = value as MiniProgramPreferences;
+  const background = (v: unknown) => typeof v === 'string' && /^(auto|none|0[1-9]|10)$/.test(v);
+  if (!['en', 'zh'].includes(p.locale) || !['system', 'light', 'dark'].includes(p.theme)
+    || !(p.palette === null || (typeof p.palette === 'string' && /^[a-z][a-z0-9-]{0,40}$/.test(p.palette)))
+    || !['normal', 'soft'].includes(p.contrast) || !background(p.lightBackground) || !background(p.darkBackground)) return null;
+  return { locale: p.locale, theme: p.theme, palette: p.palette, contrast: p.contrast,
+    lightBackground: p.lightBackground, darkBackground: p.darkBackground };
 }

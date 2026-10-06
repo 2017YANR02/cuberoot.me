@@ -1,3 +1,4 @@
+import { readNativePreferences, withNativePreferences } from './preferences';
 import {
   ApiError,
   clearStoredSession,
@@ -35,6 +36,7 @@ import { decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/
 import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 
 export interface WebViewPageData {
+  appearanceStyle: string;
   canRetry: boolean;
   errorMessage: string;
   errorTitle: string;
@@ -59,6 +61,8 @@ export interface WebViewPageContext {
 
 interface WebViewPageMethods {
   refreshLocale(): void;
+  invalidatePreferences(): void;
+  acceptPreferences(): void;
   handleWebViewError(event: WechatMiniprogram.BaseEvent): void;
   handleWebViewMessage(event: WechatMiniprogram.CustomEvent<{ data?: unknown[] }>): void;
   loginWithMiniProgram(): Promise<void>;
@@ -73,7 +77,9 @@ interface WebViewPageFactoryOptions {
 const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const sharedDestinations = new WeakMap<WebViewPageContext, string>();
 const shareMetadata = new WeakMap<WebViewPageContext, PageShareMessage>();
-const hiddenToolsPages = new WeakSet<WebViewPageContext>();
+const preferencesAtOpen = new WeakMap<WebViewPageContext, string>();
+const hiddenLegacyToolsPages = new WeakSet<WebViewPageContext>();
+const stalePreferencePages = new WeakSet<WebViewPageContext>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const visiblePages = new WeakSet<WebViewPageContext>();
 const pausedRouteResumes = new WeakSet<WebViewPageContext>();
@@ -272,6 +278,7 @@ export function createWebViewPageData(): WebViewPageData {
     ? { en: 'Douyin', zh: '抖音' }
     : { en: 'WeChat', zh: '微信' });
   return {
+    appearanceStyle: '',
     canRetry: false,
     errorMessage: '',
     errorTitle: '',
@@ -313,6 +320,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     return false;
   }
 
+  preferencesAtOpen.set(context, JSON.stringify(readNativePreferences()));
   const attempt = beginRouteAttempt(context);
   updateNavigationTitle(route.title);
   context.setData({
@@ -343,7 +351,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
   if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)
       && (!route.sessionHandoff || !requireMiniProgramSession(context))) {
-      context.setData({ src: route.url });
+      context.setData({ src: withNativePreferences(route.url) });
     }
     return true;
   }
@@ -364,8 +372,8 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
       } else {
         context.setData({
           src: current.session?.token === session.token
-            ? createWebSessionHandoffUrl(route.path, ticket)
-            : route.url,
+            ? withNativePreferences(createWebSessionHandoffUrl(route.path, ticket))
+            : withNativePreferences(route.url),
         });
       }
     }
@@ -388,7 +396,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
           showMiniProgramLoginGate(context);
         }
       } else {
-        context.setData({ src: route.url });
+        context.setData({ src: withNativePreferences(route.url) });
       }
     } else {
       showWebSessionHandoffFailure(context);
@@ -513,9 +521,11 @@ export function retryWebRoute(context: WebViewPageContext): void {
 function refreshWebLocale(context: WebViewPageContext): void {
   const labels = createWebViewPageData();
   if (context.data.loginButtonBusyLabel === labels.loginButtonBusyLabel) return;
+
   context.setData({ loginButtonBusyLabel: labels.loginButtonBusyLabel,
     loginButtonLabel: labels.loginButtonLabel, loginRetryLabel: labels.loginRetryLabel,
     retryLabel: labels.retryLabel,
+    loadingTitle: labels.loadingTitle,
   });
   const route = resolveWebRoute(context.data.routeKey);
   if (route && visiblePages.has(context)) updateNavigationTitle(route.title);
@@ -555,6 +565,8 @@ export function createWebViewPageOptions(
     },
 
     refreshLocale() { refreshWebLocale(this); },
+    invalidatePreferences() { stalePreferencePages.add(this); },
+    acceptPreferences() { preferencesAtOpen.set(this, JSON.stringify(readNativePreferences())); },
 
     onShow() {
       if (disposedPages.has(this)) return;
@@ -563,10 +575,13 @@ export function createWebViewPageOptions(
       visiblePages.add(this);
       refreshWebLocale(this);
       startNetworkRecovery(this);
-      if (hiddenToolsPages.delete(this)) {
+      const changedPreferences = preferencesAtOpen.has(this)
+        && preferencesAtOpen.get(this) !== JSON.stringify(readNativePreferences());
+      if (hiddenLegacyToolsPages.delete(this) || stalePreferencePages.delete(this) || changedPreferences) {
         // Reissue session handoff rather than replaying a consumed ticket URL.
         const metadata = shareMetadata.get(this);
-        if (metadata) sharedDestinations.set(this, localizedWebsitePath(metadata.path));
+        const path = metadata?.path ?? sharedDestinations.get(this);
+        if (path) sharedDestinations.set(this, localizedWebsitePath(path));
         void openWebRoute(this, this.data.routeKey);
         return;
       }
@@ -585,10 +600,10 @@ export function createWebViewPageOptions(
       visiblePages.delete(this);
       if (!this.data.loginRequired) pausePendingRoute(this);
       stopNetworkRecovery(this);
-      // WeChat delivers postMessage only on back/destruction/share, not tab
-      // hiding. Flush the tools tab's appearance without destroying the timer.
-      if (fixedRouteKey === 'home' && this.data.src) {
-        hiddenToolsPages.add(this);
+      // Keep the old website compatible during staggered releases. Once the
+      // immediate protocol has saved a snapshot, tab hiding no longer reloads it.
+      if (fixedRouteKey === 'home' && this.data.src && !readNativePreferences()) {
+        hiddenLegacyToolsPages.add(this);
         this.setData({ src: '' });
       }
     },
@@ -613,8 +628,12 @@ export function createWebViewPageOptions(
     handleWebViewMessage(event) {
       const messages = Array.isArray(event.detail?.data) ? event.detail.data : [];
       for (const message of messages) {
-        receiveNativeAppearance(message);
-        receiveNativeLocale(message);
+        // Once the immediate protocol is active, an old queued WebView message
+        // must not overwrite a newer committed native snapshot.
+        if (!readNativePreferences()) {
+          receiveNativeAppearance(message);
+          receiveNativeLocale(message);
+        }
         const metadata = decodePageShareMessage(message);
         if (metadata) shareMetadata.set(this, metadata);
       }

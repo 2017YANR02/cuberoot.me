@@ -1,3 +1,6 @@
+<page-meta page-style="{{appearanceStyle}}" />
+<import src="../../templates/native-appearance.wxml" />
+<template is="native-scenery" wx:if="{{!isTimelineEntry}}" />
 <view class="page payment-page">
   <text class="page-title">{{labels.title}}</text>
   <text wx:if="orderNumber" class="page-intro">{{orderNumber}}</text>
