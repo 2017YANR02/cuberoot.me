@@ -405,6 +405,7 @@ jobs:
             /stats/scramble/2x2_essential.json
             /stats/scramble/puzzle_distribution.json
             /stats/scramble/recent_scrambles.json
+            /stats/scramble/no_bar.json
             # scramble_exact_dist.test.ts 拿它当「WCA 那套菜单」的真源逐项比对(420KB)。
             /stats/scramble/distribution.json
           filter: blob:none
@@ -527,7 +528,7 @@ jobs:
       - name: Verify stage statistics aggregation and intake
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}
         working-directory: core
-        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts
+        run: pnpm --filter @cuberoot/scramble-stats-build exec vitest run tests/aggregate_variant.test.ts tests/incremental.test.ts tests/no_bar.test.ts
 
       - name: Verify SQ2 sampled builder runtime
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.changes.outputs.scramble_stats == 'true' }}

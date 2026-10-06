@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import DiscreteHistogram, { type HistSeries } from './_components/DiscreteHistogram';
 import PuzzleDistView from './_components/PuzzleDistView';
+import NoBarStats from './_components/NoBarStats';
 import EnumeratedDistView from './_components/EnumeratedDistView';
 import { ENUM_SPECS } from './_components/enumerated-specs';
 import Slide15DistView from './_components/Slide15DistView';
@@ -1281,6 +1282,7 @@ export default function ScrambleStatsPage({ embedded = false }: { embedded?: boo
       {/* SolveTabs 在 dist 模式下只剩 3×3 子标签(最优解 / 分布 / 阶段 / CFOP / DR);项目行由上面那个
           PuzzlePicker 承担,不重复渲染,故非 3×3 时它是空的 —— 直接不挂。 */}
       {!embedded && distPuzzle === '3x3' && <SolveTabs puzzle={distPuzzle} mode="dist" sub="distribution" />}
+      {dataset === 'wca' && ['222', '333', '333oh', '333bf', '333mbf', '333fm', '333ft'].includes(event) && <NoBarStats event={event} isZh={isZh} />}
     </div>
   );
 
