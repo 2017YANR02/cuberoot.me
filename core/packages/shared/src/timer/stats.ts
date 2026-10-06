@@ -26,7 +26,7 @@ function maxDnfsAllowed(n: number): number {
 }
 
 /** Trimmed mean over an array of effective-ms numbers (Infinity = DNF). */
-function trimmedMean(times: number[]): number {
+export function trimmedMean(times: number[]): number {
   const n = times.length;
   if (n < 3) return mean(times);
   const trim = trimCount(n);

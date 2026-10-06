@@ -641,6 +641,26 @@ describe('battle-room player capabilities', () => {
     expect(mocks.query).toHaveBeenCalledOnce();
   });
 
+  it('retains the latest 100 completed rounds for ao100', async () => {
+    const before = {
+      ...roomRow(), round: 101,
+      history: Array.from({ length: 100 }, (_, i) => ({
+        round: i + 1, scrambles: { '333': 'R U' }, playerEvents: { [PLAYER_ID]: '333' },
+        results: { [PLAYER_ID]: { t: 10000, p: 'ok' } }, winners: [PLAYER_ID],
+      })),
+      results: { '101': { [PLAYER_ID]: { t: 12000, p: 'ok' } } },
+    };
+    const after = { ...before, round: 102, results: {} };
+    mocks.query.mockResolvedValueOnce([before]).mockResolvedValueOnce([before]).mockResolvedValueOnce([after]);
+    const response = await post('/v1/battle/rooms/0427/next', { pid: PLAYER_ID, round: 101 }, PLAYER_TOKEN);
+    expect(response.status).toBe(200);
+    const history = mocks.query.mock.calls[2][1][1] as Array<{ round: number; results: Record<string, unknown> }>;
+    expect(history).toHaveLength(100);
+    expect(history[0].round).toBe(2);
+    expect(history[99].round).toBe(101);
+    expect(history[99].results[PLAYER_ID]).toEqual({ t: 12000, p: 'ok' });
+  });
+
   it('settles and archives only the frozen roster, not active-round observers', async () => {
     const observerId = 'observer12';
     const before = {

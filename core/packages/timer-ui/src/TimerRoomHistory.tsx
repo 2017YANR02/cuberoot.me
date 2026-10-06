@@ -29,12 +29,14 @@ export function TimerRoomHistory({ room, currentPlayerId, language, precision, o
   const name = (id: string) => room.players[id] ? timerRoomPlayerName(room.players[id], language) : copy.unknown;
   return <TimerRoomDialog title={copy.title} language={language} onClose={onClose}>
     <div className="timer-room-standings-scroll"><table className="timer-room-standings">
-      <thead><tr><th>{copy.player}</th><th>{copy.wins}</th><th>{copy.best}</th><th>ao5</th><th>{copy.mean}</th></tr></thead>
+      <thead><tr><th>{copy.player}</th><th>{copy.wins}</th><th>{copy.best}</th><th>ao5</th><th>ao12</th><th>ao50</th><th>ao100</th><th>{copy.mean}</th></tr></thead>
       <tbody>{sortedNetPlayers(room.players).map((player) => {
         const stats = playerStats(playerTimeline(room, player.id));
         return <tr key={player.id} className={player.id === currentPlayerId ? 'is-me' : undefined}>
           <td>{player.iso2 && <Flag iso2={player.iso2} className="timer-room-player-flag" />}{name(player.id)} <small>{player.event || room.event}</small></td>
-          <td>{room.scores[player.id] ?? 0}</td><td>{stat(stats.single, precision)}</td><td>{stat(stats.ao5, precision)}</td><td>{stat(stats.mean, precision)} <small>mo{stats.count}</small></td>
+          <td>{room.scores[player.id] ?? 0}</td><td>{stat(stats.single, precision)}</td><td>{stat(stats.ao5, precision)}</td>
+          <td>{stat(stats.ao12, precision)}</td><td>{stat(stats.ao50, precision)}</td><td>{stat(stats.ao100, precision)}</td>
+          <td>{stat(stats.mean, precision)} <small>mo{stats.count}</small></td>
         </tr>;
       })}</tbody>
     </table></div>
