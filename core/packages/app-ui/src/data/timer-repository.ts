@@ -1,3 +1,4 @@
+import { consumeTimerSeed, type TimerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import { TIMER_BACKUP_KEEP, type TimerLocalBackupEntry } from '@cuberoot/shared/timer/backup-client';
 import { appendTimerImportSessions, type TimerImportPlan } from '@cuberoot/shared/timer/import-timer';
 import { reanalyzeTimerSession } from '@cuberoot/shared/timer';
@@ -281,6 +282,18 @@ export class TimerRepository {
           },
         },
       });
+    });
+  }
+
+  commitSeed(ticket: TimerSeedTicket, canCommit: () => boolean): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      if (!canCommit()) throw new Error('Seed request cancelled');
+      const patch = consumeTimerSeed(data.settings, ticket);
+      if (!patch) throw new Error('Seed position changed');
+      const next = { ...data, settings: { ...data.settings, ...patch } };
+      await this.driver.write(next, canCommit);
+      return next;
     });
   }
 

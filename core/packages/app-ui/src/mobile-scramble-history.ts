@@ -1,3 +1,4 @@
+import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
 import type {
   EventId,
   ScrambleHistory,
@@ -40,6 +41,7 @@ export type MobileScrambleFailure =
  * persists (an official WCA occurrence identity once a real row is dispensed).
  */
 export interface MobileScrambleHistoryEntry {
+  readonly seedRequest?: TimerSeedRequest;
   readonly id: number;
   readonly event: EventId;
   readonly source: MobileScrambleSource;
@@ -56,7 +58,7 @@ export interface MobileScrambleHistoryEntry {
 
 export type MobileScrambleHistoryEntryPatch = Partial<Pick<
   MobileScrambleHistoryEntry,
-  'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot' | 'trainerMeta'
+  'seedRequest' | 'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot' | 'trainerMeta'
 >>;
 
 export interface MobileScrambleAttemptSnapshot {

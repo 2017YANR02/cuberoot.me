@@ -506,3 +506,7 @@ Web/App 共用打乱来源契约、失败/重试规则、持久化设置、CSV �
 ### 2026-10-06 更多复盘、数据设置与排名增量
 
 Web/App 共用 replay 输入/解码/短链读取与复盘弹窗，More 12/12 已有真实动作；导入（csTimer/dcTimer/CubeRoot）、本机/云备份、重新分析、停表排名及地区设置接入共享契约与 UI。数据替换在宿主队列及 driver 最后一次异步等待后检查生命周期，关闭设置/换账号后不再迟到覆盖。effect ledger 49→62，仍缺同步种子/计数 2 个生产字段及 fake-cube 开发字段；国家选择器的账号置顶 adapter 和全部真机 parity 也未据此完成。源码、回归/窄屏验证与本地构建证据见 mobile-app-roadmap.md 同日记录；顺序 5 尚有同步生成链路工作，总体仍为 **ACTIVE — NOT COMPLETE**。
+
+### 2026-10-06 同步种子增量
+
+单人计时的种子/计数、42 项目生成及自定义空题、二阶类型、OLL/PLL 子集已共用 shared 引擎与 timer-ui 控件。历史槽保存请求，成功持久化后推进计数；预取、失败、取消和历史回看不额外消费，同 seed 重置也拒绝旧 revision。Web 主线程 solver ready 不再重置种子历史；App 快照竞争只单调合并同 revision 的进度。Chrome Web/App 实测应用、重置与重启后的两条打乱逐字一致。设置 effect 62→64，64 个生产字段均已接入，fake-cube 开发字段仍未接；不等于五端完整 parity。完整验证与既有 2 条过期历史源码断言见 mobile-app-roadmap.md 同日记录。

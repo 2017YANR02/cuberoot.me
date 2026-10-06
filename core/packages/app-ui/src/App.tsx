@@ -1,7 +1,10 @@
 import { createTimerBackupClient } from '@cuberoot/shared/timer/backup-client';
 import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';
 import { timerRankHost, getWcaPerson } from './data/timer-rank';
-import { TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerReplayImportModal } from '@cuberoot/timer-ui';
+import { resetTimerSyncSeed, timerSeedTicket, mergeTimerSeedProgress } from '@cuberoot/shared/timer/sync-seed';
+import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
+import { nextSeededScramble } from './data/sync-seed';
+import { TimerTrainerSubsetModal, TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerReplayImportModal } from '@cuberoot/timer-ui';
 import { readTimerReplay, createTimerReplayShare } from '@cuberoot/shared/timer/replay-client';
 import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { TimerHistoryWorkspace, TimerStatsModal, type TimerHistoryWorkspaceHandle } from '@cuberoot/timer-ui';
@@ -591,6 +594,12 @@ export function App({ host }: { host: InstalledAppHost }) {
     battleSmartCubeHandlersRef.current = handlers;
   }, []);
   const activeEvent = store?.settings.event ?? '333';
+  const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
+  const trainerSubsetOpenRef = useRef(trainerSubsetOpen);
+  trainerSubsetOpenRef.current = trainerSubsetOpen;
+  useEffect(() => {
+    if (view !== 'settings' || settingsCategory !== 'training') setTrainerSubsetOpen(null);
+  }, [view, settingsCategory]);
   const [drillTarget, setDrillTarget] = useState<TimerDrillTarget | null>(null);
   const effectiveDrillTarget = timerEventSupportsDrill(activeEvent) ? drillTarget : null;
   const drillTargetRef = useRef<TimerDrillTarget | null>(effectiveDrillTarget);
@@ -617,7 +626,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const randomDifficultySettings = normalizeTimerRandomDifficultySettings(
     store?.settings ?? DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
   );
-  const randomDifficultySpec = timerMode === 1 && scrambleSource === 'random'
+  const randomDifficultySpec = !store?.settings.syncSeed && timerMode === 1 && scrambleSource === 'random'
     ? trainerSpecOf(activeEvent, randomDifficultySettings)
     : null;
   const randomDifficultySignature = randomDifficultySpec
@@ -628,7 +637,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   // Unmapped retained-Real events (Ivy/Gear) use their local random provider.
   // Keep their by-steps identity in React dependencies too: the WCA source key
   // is intentionally just `unmapped|event`, so it cannot trigger regeneration.
-  const byStepsSourceSignature = timerByStepsIdentity(
+  const byStepsSourceSignature = store?.settings.syncSeed ? '' : timerByStepsIdentity(
     activeEvent,
     scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent)
       ? 'wca'
@@ -645,16 +654,16 @@ export function App({ host }: { host: InstalledAppHost }) {
     activeEvent,
     scrambleSource,
     Boolean(activeAuthSession),
-    null,
+    store?.settings.syncSeed ?? null,
   );
   const randomOptimalRequested = timerMode === 1 && shouldUseRandomOptimal333(
     wcaSourceSettings.wcaUseOptimal,
     activeEvent,
     scrambleSource,
     Boolean(activeAuthSession),
-    null,
+    store?.settings.syncSeed ?? null,
   );
-  const randomOptimalAuthPending = timerMode === 1
+  const randomOptimalAuthPending = !store?.settings.syncSeed && timerMode === 1
     && wcaSourceSettings.wcaUseOptimal
     && activeEvent === '333'
     && scrambleSource === 'random'
@@ -965,7 +974,13 @@ export function App({ host }: { host: InstalledAppHost }) {
   }), []);
 
   const scrambleIdentityFor = useCallback((source: ScrambleSource, event: EventId): string => {
+    const seed = storeRef.current?.settings;
+    if (seed?.syncSeed && event !== 'custom' && source !== 'manual' && (source !== 'wca' || !timerSupportsRealWcaScrambles(event))) {
+      return JSON.stringify(['seed', source, event, seed.syncSeed, seed.syncSeedRevision, seed.cnMode,
+        scramble222ModeRef.current, scramble222TypeRef.current, seed.ollSubset, seed.pllSubset, timerEventSupportsDrill(event) ? drillTargetRef.current : null]);
+    }
     const withGenerationOptions = (identity: string) => {
+      if (event === 'oll' || event === 'pll') identity += JSON.stringify(storeRef.current?.settings[event === 'oll' ? 'ollSubset' : 'pllSubset']);
       const target = source !== 'manual' && timerEventSupportsDrill(event)
         ? drillTargetRef.current
         : null;
@@ -1022,7 +1037,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     sourceIdentity: string,
     patch: Partial<Pick<
       MobileScrambleHistoryEntry,
-      'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot' | 'trainerMeta'
+      'seedRequest' | 'availability' | 'caseId' | 'currentReal' | 'failure' | 'scramble' | 'sourceSnapshot' | 'trainerMeta'
     >>,
   ): boolean => {
     const current = scrambleHistoryRef.current;
@@ -1187,6 +1202,41 @@ export function App({ host }: { host: InstalledAppHost }) {
   ) => {
     const controller = randomScrambleGateRef.current.begin();
     const { event, source: expectedSource } = entry;
+    const ticket = timerSeedTicket(storeRef.current?.settings ?? {});
+    if (ticket && event !== 'custom') {
+      const request: TimerSeedRequest = entry.seedRequest ?? {
+        ticket, event, cnMode: storeRef.current?.settings.cnMode,
+        trainerCaseIds: event === 'oll' ? storeRef.current?.settings.ollSubset : event === 'pll' ? storeRef.current?.settings.pllSubset : undefined,
+        scramble222Mode: scramble222ModeRef.current, scramble222Type: scramble222TypeRef.current,
+        drill: timerEventSupportsDrill(event) ? drillTargetRef.current : null,
+      };
+      replaceScrambleHistoryEntry(entry.id, entry.sourceIdentity, { seedRequest: request });
+      const current = () => !controller.signal.aborted && requestId === scrambleRequestRef.current
+        && activeEventRef.current === event && scrambleSourceRef.current === expectedSource
+        && scrambleIdentityFor(expectedSource, event) === entry.sourceIdentity
+        && scrambleHistoryRef.current.list[scrambleHistoryRef.current.idx]?.id === entry.id;
+      void nextSeededScramble(request, controller.signal).then(async result => {
+        if (!current()) return;
+        if (!beginTimerContextMutation()) throw new Error('Timer busy');
+        const revision = storeSnapshotGateRef.current.beginMutation();
+        try {
+          const data = await repository.commitSeed(request.ticket, current);
+          if (!storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot)) {
+            const latest = storeRef.current;
+            if (latest) applyStoreSnapshot({ ...latest, settings: mergeTimerSeedProgress(latest.settings, data.settings) });
+          }
+          if (current()) replaceScrambleHistoryEntry(entry.id, entry.sourceIdentity, {
+            availability: 'ready', failure: null, currentReal: null,
+            scramble: result.scramble, caseId: result.caseId,
+          });
+        } finally { endTimerContextMutation(); }
+      }).catch(() => {
+        if (current()) replaceScrambleHistoryEntry(entry.id, entry.sourceIdentity, {
+          availability: 'error', failure: { kind: 'generation', code: 'generation-failed', retryable: true },
+        });
+      }).finally(() => randomScrambleGateRef.current.finish(controller));
+      return;
+    }
     const requested222Mode = scramble222ModeRef.current;
     const requested222Type = scramble222TypeRef.current;
     const requestedBySteps = normalizeTimerByStepsSettings(
@@ -1209,6 +1259,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       event,
       scramble222Mode: requested222Mode,
       scramble222Type: requested222Type,
+      trainerCaseIds: event === 'oll' ? storeRef.current?.settings.ollSubset : event === 'pll' ? storeRef.current?.settings.pllSubset : undefined,
       cnMode: use222BySteps || non222ByStepsEvent ? 'none' : storeRef.current?.settings.cnMode,
     } as const;
     const useCstimerNonWcaWorker = eventCapability?.kind === 'shared'
@@ -1301,7 +1352,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     }).finally(() => {
       randomScrambleGateRef.current.finish(controller);
     });
-  }, [replaceScrambleHistoryEntry, scrambleIdentityFor]);
+  }, [replaceScrambleHistoryEntry, scrambleIdentityFor, applyStoreSnapshot, beginTimerContextMutation, endTimerContextMutation]);
 
   const fillScrambleHistoryEntry = useCallback((entry: MobileScrambleHistoryEntry) => {
     const liveEntry = scrambleHistoryRef.current.list.find((candidate) => (
@@ -1332,6 +1383,10 @@ export function App({ host }: { host: InstalledAppHost }) {
         failure: null,
         scramble: taken.scramble,
       });
+      return;
+    }
+    if (storeRef.current?.settings.syncSeed && (source === 'random' || !timerSupportsRealWcaScrambles(event))) {
+      generateRandomScramble(liveEntry, requestId);
       return;
     }
     if (source === 'random' && event === '333' && randomOptimalAuthPending) return;
@@ -2151,6 +2206,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     let removeListener: (() => Promise<void>) | undefined;
     void host.addBackButtonListener(() => {
       const current = viewRef.current;
+      if (trainerSubsetOpenRef.current) { trainerSubsetOpenRef.current = null; setTrainerSubsetOpen(null); return; }
       if (replayBlockingRef.current) { setReplayImportOpen(false); setReplaySolve(null); return; }
       if (statsOpenRef.current) { setStatsOpen(false); return; }
       if (current === 'history' && openOverlayRef.current === null && historyWorkspaceRef.current?.dismiss()) return;
@@ -4602,6 +4658,9 @@ export function App({ host }: { host: InstalledAppHost }) {
             </>}
             {settingsCategory === 'sound' && <TimerSoundSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} voiceAvailable={timerSound.isVoiceAvailable()} onWarmup={timerSound.warmupSound} onPreview={() => timerSound.play('start')} />}
             {settingsCategory === 'sound' && <TimerMetronomeSettings value={store!.settings} bpm={store!.settings.metronomeBpm} onChange={updateSettings} onBpmChange={metronomeBpm => updateSettings({ metronomeBpm })} onTap={metronome.tapTempo} onWarmup={timerSound.warmupSound} onPreviewBeep={timerSound.playInspectionBeep} localize={value => value[language]} />}
+            {settingsCategory === 'training' && (activeEvent === 'oll' || activeEvent === 'pll') && <button type="button" className="hint-btn" disabled={!sourceControlsEnabled} onClick={() => setTrainerSubsetOpen(activeEvent)}>{{ en: 'Pick training subset', zh: '选择训练子集' }[language]}</button>}
+            {trainerSubsetOpen && <TimerTrainerSubsetModal kind={trainerSubsetOpen} language={language} value={store!.settings[trainerSubsetOpen === 'oll' ? 'ollSubset' : 'pllSubset']} onClose={() => setTrainerSubsetOpen(null)} onSave={value => updateSettings(trainerSubsetOpen === 'oll' ? { ollSubset: value } : { pllSubset: value })} />}
+            {settingsCategory === 'advanced' && <TimerSyncSeedSettings value={store!.settings} language={language} disabled={!sourceControlsEnabled} onReset={seed => updateSettings(current => resetTimerSyncSeed(current, seed))} />}
             {settingsCategory === 'advanced' && <TimerKeymapSettings value={store!.settings.keymap} onChange={update => updateSettings(current => ({ keymap: update(current.keymap) }))} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <TimerResetSettings disabled={!sourceControlsEnabled} onReset={resetSettingsToDefaults} confirmReset={message => window.confirm(message)} localize={value => value[language]} />}
             {settingsCategory === 'advanced' && <>

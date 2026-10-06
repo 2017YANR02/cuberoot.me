@@ -1,3 +1,4 @@
+import { resetTimerSyncSeed, timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -70,6 +71,22 @@ function repository(driver = new MemoryDriver()) {
 }
 
 describe('mobile timer repository contract', () => {
+  it('seed retries preserve position across failed, ambiguous and cancelled writes', async () => {
+    const { repo, driver } = repository();
+    await repo.updateSettings(current => resetTimerSyncSeed(current, 'seed'));
+    const ticket = timerSeedTicket((await repo.load()).settings)!;
+    driver.failWrites = true;
+    await expect(repo.commitSeed(ticket, () => true)).rejects.toThrow('disk full');
+    expect((await repo.load()).settings.syncSeedCounter).toBe(0);
+    driver.failWrites = false;
+    await expect(repo.commitSeed(ticket, () => false)).rejects.toThrow('cancelled');
+    driver.commitThenFailOnce = true;
+    await expect(repo.commitSeed(ticket, () => true)).rejects.toThrow('ambiguous');
+    expect((await repo.commitSeed(ticket, () => true)).settings.syncSeedCounter).toBe(1);
+    await repo.updateSettings(current => resetTimerSyncSeed(current));
+    await expect(repo.commitSeed(ticket, () => true)).rejects.toThrow('position changed');
+    expect((await repo.load()).settings.syncSeedCounter).toBe(0);
+  });
   it('checks import ownership inside the repository queue before committing', async () => {
     const { repo, driver } = repository();
     const before = await repo.load();

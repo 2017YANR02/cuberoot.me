@@ -1416,3 +1416,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 设置 effect ledger 从 49 增到 62；相对 Web 当前 65 个 consumer，仍缺同步种子及其计数 2 个生产字段、fake-cube 1 个开发字段。同步种子涉及 Web 同步 registry 与 App 异步 provider 的算法/RNG/消费顺序，尚未迁移；因此顺序 5 和完整设置 parity 均不能记为全部完成。
 - 当前验证：shared build、App/client typecheck；Web replay/import/reanalysis/rank、架构/catalog 定向回归，App 仓储/设备起表/More/设置账本及真实 fake-indexeddb 的取消写入、备份间隔/保留验证通过。Chrome 隔离上下文实测两端粘贴打开复盘、本机备份/列表、排名地区搜索，390/320px 页面及弹窗无横向溢出、无运行异常；未改用户浏览器资料或上传真实云备份。
 - Mobile build 与双平台 Capacitor sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows native 未在本 Mac 执行，Harmony HAP 的既有工具链差异本轮未重试；未做五平台实体设备、真实账号云恢复/升级验收，未签名、未推送、未发布。总体维持 NOT COMPLETE。
+
+### 2026-10-06：单人同步种子与计数接入（本地）
+
+- Web 与五个安装端共用 seeded Worker 引擎、FNV/xorshift RNG、42 个非空项目生成及 custom 空题契约；Web 原 NxN、BLD、SQ1 等路径保留兼容出口。csTimer 项目与二阶专项在每次请求重设引擎种子，重试不依赖上一次 Worker 的随机状态。相同 seed/index/项目/二阶口径、类型、颜色与案例选择生成相同打乱；显式 OLL/PLL 单案例或子集也使用同一 RNG。
+- TimerSyncSeedSettings 的应用/清除/重置计数与提示两端共用；TimerTrainerSubsetModal 同时迁入 timer-ui，App 补齐 OLL/PLL 子集存储、普通生成和种子请求。种子优先于本地按难度/按步数/云端最优生成，手动来源及映射的 WCA 真题继续原来源；本轮范围是单人种子，未给本地多人或联机另加种子策略。
+- 种子请求绑定历史槽，先成功持久化计数再发布打乱；取消/失败不预扣、重试及历史回看不重复计数，同 seed 重置也换 revision。App 在较新设置更新拒绝整份快照时仅单调合并同 revision 的已提交计数；旧设置重置后的回调不能回写。Web 跳过旧主线程求解器 ready 引起的种子历史重置，修复浏览器重启实测多消费一题的问题。
+- 设置 effect ledger 62→64：Web 当前 64 个生产字段均有 App 真实消费者，只剩 fake-cube 开发字段不接；effect 不等于五端完整视觉/硬件验收，整体继续 ACTIVE — NOT COMPLETE。
+- 验证：puzzle-solvers/shared build，timer-ui/app-ui/client typecheck；种子 57 项（43 项目、11 二阶类型、状态/提交合并/案例回归）、App 仓储/设置账本 43 项、架构/catalog/遮罩 31 项通过。Chrome 隔离上下文实测 Web/App 应用、重置、重新加载后续号，两条打乱逐字相同且计数 1→2，无 pageerror。附加运行的 mobile-scramble-history.test.ts 有 2 条旧源码断言失败：仍要求 App 内直接 HistoryRow 与旧键盘门禁排列；HEAD 原源码同样不满足，未据此改回已共享的工作区，也未宣称全集通过。
+- Mobile production build、Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS unsigned debug app、Harmony Web build 已做本地构建；具体最后产物以本轮命令记录为准。Windows native 未在本 Mac 运行，Harmony HAP 既有 Hvigor 版本问题未重试；无实体设备、签名、公证、推送或发布证据。

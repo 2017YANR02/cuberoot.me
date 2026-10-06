@@ -1,5 +1,5 @@
 'use client';
-import { TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { TimerSyncSeedSettings, TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
@@ -10,7 +10,7 @@ import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib
 import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
-import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
+import { resetTimerSyncSeed } from '@cuberoot/shared/timer/sync-seed';
 import { exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups, importNamedSessions, loadAll, pushBackup, restoreBackup } from '../_lib/storage/db';
 
 
@@ -82,10 +82,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
   const [activeCategory, setActiveCategory] = useState<TimerSettingCategoryId>('timer');
-  const [seedTick, setSeedTick] = useState(0);
-  const [seedDraft, setSeedDraft] = useState<string>(() => s.syncSeed ?? '');
   // Keep draft in sync when the active seed changes externally (e.g. settings reset).
-  useEffect(() => { setSeedDraft(s.syncSeed ?? ''); }, [s.syncSeed]);
 
   // WCA 真题沿用各项目既有的同态最优能力；随机状态只接三阶云端最优表。
   // 偏好本身不清空，切回可用来源/项目时自动恢复。
@@ -211,7 +208,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     cloudBusy: false,
     importBusy: false,
     reanalyzeBusy: false,
-    syncSeedDraft: seedDraft,
+    syncSeedDraft: s.syncSeed ?? '',
     activeSyncSeed: s.syncSeed,
   });
   function settingState(id: TimerSettingFieldId) {
@@ -339,64 +336,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '同步种子', en: 'Sync seed'
         })}
         >
-          <SettingRow id="settings.advanced.sync-seed">
-            <input
-              className="settings-row-control-input"
-              type="text"
-              value={seedDraft}
-              placeholder={tr({ zh: '任意字符串', en: 'any string'
-            })}
-              onChange={(e) => setSeedDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const v = (e.target as HTMLInputElement).value;
-                  if (v !== '') {
-                    updateSettings({ syncSeed: v, syncSeedCounter: 0 });
-                    setSeedTick((t) => t + 1);
-                  }
-                }
-              }}
-            />
-            <button
-              className="hint-btn"
-              onClick={() => {
-                if (seedDraft === '') return;
-                updateSettings({ syncSeed: seedDraft, syncSeedCounter: 0 });
-                setSeedTick((t) => t + 1);
-              }}
-              disabled={settingState('settings.advanced.sync-seed').disabled}
-            >
-              {tr({ zh: '应用', en: 'Apply'
-            })}
-            </button>
-            <button
-              className="hint-btn"
-              onClick={() => {
-                updateSettings({ syncSeed: null, syncSeedCounter: 0 });
-                setSeedDraft('');
-                setSeedTick((t) => t + 1);
-              }}
-              disabled={settingState('settings.advanced.sync-seed-counter').disabled}
-            >
-              {tr({ zh: '清除', en: 'Clear' })}
-            </button>
-          </SettingRow>
-          <SettingRow id="settings.advanced.sync-seed-counter">
-            <span className="hint" title={String(seedTick)}>
-              {s.syncSeed === null
-                ? tr({ zh: '未启用', en: 'off'
-                                              })
-                : tr({ zh: `seed=${s.syncSeed}，第 ${getSeedCounter()} 个打乱`, en: `seed=${s.syncSeed}, scramble #${getSeedCounter()}` })}
-            </span>
-            <button
-              className="hint-btn"
-              onClick={() => { resetSeedCounter(); setSeedTick((t) => t + 1); }}
-              disabled={settingState('settings.advanced.sync-seed-counter').disabled}
-            >
-              {tr({ zh: '重置计数', en: 'Reset counter'
-            })}
-            </button>
-          </SettingRow>
+          <TimerSyncSeedSettings value={s} language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} onReset={seed => updateSettings(resetTimerSyncSeed(getSettings(), seed))} />
         </SettingsSection>
 
         {activeCategory === 'data' && <TimerBackupSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} every={s.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
@@ -500,16 +440,6 @@ function renderTimingBooleanControl({
       value={value}
     />
   );
-}
-
-function SettingRow({
-  id,
-  children,
-}: {
-  id: TimerSettingFieldId;
-  children: React.ReactNode;
-}) {
-  return <Row label={settingLabel(id)} settingId={id}>{children}</Row>;
 }
 
 function Row({

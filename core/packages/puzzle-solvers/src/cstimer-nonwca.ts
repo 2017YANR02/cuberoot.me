@@ -41,3 +41,11 @@ export function generateCstimerNonWcaTimerScramble(
   }
   return scramble;
 }
+
+/** Worker-only deterministic call. Reset the engine for every occurrence, including retries. */
+export function generateSeededCstimerScramble(key: string, length: number, seed: string): string {
+  cstimer.setSeed(seed);
+  const result = cstimer.getScramble(key, length);
+  if (typeof result !== 'string' || !result.trim()) throw new Error(`Empty seeded scramble: ${key}`);
+  return result.trim();
+}
