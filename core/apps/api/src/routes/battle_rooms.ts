@@ -80,8 +80,8 @@ export const battleRoomsRoutes = new Hono();
 
 const MAX_PLAYERS = 8;
 const NAME_MAX = 24;
-/** 单轮历史上限:防 jsonb 无界膨胀(超过就丢最旧的)。 */
-const MAX_HISTORY = 50;
+/** 保留足够计算 ao100 的轮次，同时防止 jsonb 无界膨胀。 */
+const MAX_HISTORY = 100;
 /** 当前轮打乱表(scrambles)项目数上限:防恶意 /event 刷不同项目撑爆 jsonb。 */
 const MAX_SCRAMBLE_EVENTS = 16;
 /** 过期房间:24h 无活动惰性清理。 */

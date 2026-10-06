@@ -11,6 +11,7 @@ import {
   timerEventSelectorId,
 } from './event-catalog';
 import type { EventId } from './types';
+import { trimmedMean } from './stats';
 
 export const NET_BATTLE_TOKEN_HEADER = 'X-Battle-Token';
 export const NET_BATTLE_ROOM_CODE_LENGTH = 4;
@@ -592,7 +593,15 @@ export function playerTimeline(state: NetRoomState, playerId: string): NetResult
   return results;
 }
 
-export interface NetStats { count: number; single: number | null; ao5: number | null; mean: number | null }
+export interface NetStats {
+  count: number;
+  single: number | null;
+  ao5: number | null;
+  ao12: number | null;
+  ao50: number | null;
+  ao100: number | null;
+  mean: number | null;
+}
 
 export function playerStats(results: NetResult[]): NetStats {
   const count = results.length;
@@ -605,13 +614,9 @@ export function playerStats(results: NetResult[]): NetStats {
       ? Infinity
       : Math.round(effective.reduce((sum, time) => sum + time, 0) / count);
   }
-  let ao5: number | null = null;
-  if (count >= 5) {
-    const lastFive = effective.slice(-5).sort((a, b) => a - b);
-    const dnfCount = lastFive.filter((time) => !Number.isFinite(time)).length;
-    ao5 = dnfCount >= 2 ? Infinity : Math.round((lastFive[1] + lastFive[2] + lastFive[3]) / 3);
-  }
-  return { count, single, ao5, mean };
+  // Reuse the timer's trimming/DNF rules, preserving online results' ms precision.
+  const average = (n: number) => count < n ? null : Math.round(trimmedMean(effective.slice(-n)));
+  return { count, single, ao5: average(5), ao12: average(12), ao50: average(50), ao100: average(100), mean };
 }
 
 export interface NetRoundView {
