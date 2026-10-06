@@ -259,7 +259,8 @@ export class InstalledAuthClient {
     const callback = decodeMobileAuthCallback(callbackUrl);
     if (!callback) return null;
     const pending = decodePending(await this.runtime.storage.getItem(PENDING_KEY));
-    if (!pending || callback.state !== pending.state) return null;
+    if (!pending) throw new Error('mobile auth request unavailable');
+    if (callback.state !== pending.state) throw new Error('mobile auth state mismatch');
     if (this.runtime.now() - pending.createdAt > PENDING_TTL_MS) {
       await this.runtime.storage.removeItem(PENDING_KEY);
       throw new Error('mobile auth request expired');
