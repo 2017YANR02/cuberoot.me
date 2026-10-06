@@ -195,7 +195,9 @@ type RecordListEntry = RecentRecord | {
 
 // Headless list — rendered inside the OngoingComps shared scroll panel (no own
 // header / max-height; the panel owns the title tab and the scrollbar).
-export function RecentRecordsList({ filled, isZh }: { filled: RecordListEntry[]; isZh: boolean }) {
+export function RecentRecordsList({ filled, isZh, showCopy = true }: {
+  filled: RecordListEntry[]; isZh: boolean; showCopy?: boolean;
+}) {
   const recordCopy = useCopy();
 
   function handleCopy(r: RecordListEntry) {
@@ -211,7 +213,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecordListEntry[];
         const copied = recordCopy.copiedKey === r.id;
         return (
           <li key={r.id} className="recent-records-row">
-            <button
+            {showCopy && <button
               type="button"
               className="recent-records-copy"
               onClick={() => handleCopy(r)}
@@ -220,7 +222,7 @@ export function RecentRecordsList({ filled, isZh }: { filled: RecordListEntry[];
             })}
             >
               {copied ? <Check size={13} strokeWidth={1.75} /> : <Copy size={13} strokeWidth={1.75} />}
-            </button>
+            </button>}
             <Link {...compLinkProps(r.competitionId)} href={'href' in r ? r.href : compRecordHref({ ...r, eventId: toWcaEventId(r.eventId) })} className="recent-records-body">
               <EventIcon event={r.eventId} />{' '}
               {text
