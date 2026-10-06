@@ -1,3 +1,6 @@
+import { createInstalledBattleScrambleProvider } from './data/local-battle-scramble';
+import { buildLocalBattleCsv } from '@cuberoot/shared/timer';
+import { TimerBattleSourceSettings } from '@cuberoot/timer-ui';
 import { NetRecordingOutbox, uploadNetRecordedAttempt } from '@cuberoot/shared/timer';
 import { createNetOutboxStorage, TimerNetOutboxNotice } from '@cuberoot/timer-ui';
 import { BluetoothTimerModal, StackmatModal } from '@cuberoot/timer-ui/external';
@@ -1083,6 +1086,18 @@ export function App({ host }: { host: InstalledAppHost }) {
     manualScrambles,
   ));
   const manualSourceRevisionRef = useRef(manualSourceInitialRevision);
+  const battleSourceSettings = normalizeTimerWcaSourceSettings({
+    wcaScrambleMode: wcaSourceSettings.wcaScrambleMode, wcaComp: wcaSourceSettings.wcaComp,
+    wcaCompName: wcaSourceSettings.wcaCompName, wcaRound: wcaSourceSettings.wcaRound,
+    wcaGroup: wcaSourceSettings.wcaGroup, wcaDateFrom: wcaSourceSettings.wcaDateFrom,
+    wcaDateTo: wcaSourceSettings.wcaDateTo, wcaUseOptimal: wcaSourceSettings.wcaUseOptimal,
+  });
+  const battleSourceKey = JSON.stringify([scrambleSource === 'wca', battleSourceSettings]);
+  const battleScrambleProvider = useMemo(() => createInstalledBattleScrambleProvider(
+    scrambleSource === 'wca' ? 'wca' : 'random', battleSourceSettings,
+  // Only the source specification changes the provider, not unrelated settings or renders.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [battleSourceKey]);
   const wcaSourceSettingsRef = useRef<TimerWcaSourceSettings>(wcaSourceSettings);
   const manualCursorRef = useRef(0);
   const previousScrambleSourceRef = useRef<ScrambleSource>('wca');
@@ -4407,6 +4422,23 @@ export function App({ host }: { host: InstalledAppHost }) {
 
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (
           <LocalBattleMode
+            scrambleProvider={battleScrambleProvider}
+            onExportRounds={rounds => shareOrDownloadBackup(buildLocalBattleCsv(rounds, [], timerMode as number), {
+              filename: `local-battle_${new Date().toISOString().slice(0, 10)}.csv`, mime: 'text/csv;charset=utf-8',
+            })}
+            sourceSettings={event => <TimerBattleSourceSettings language={language}
+              value={scrambleSource === 'wca' ? 'wca' : 'random'} onChange={setScrambleSource}>
+              <TimerWcaSourceConfig adapter={wcaSourceAdapter} labels={wcaSourceLabels}
+                competitionDisplayName={(id, name) => displayMobileWcaCompetitionName(id, name, language)}
+                settings={battleSourceSettings} onChange={patch => updateSettings(patch)}
+                minDate={TIMER_WCA_MIN_DATE} maxDate={toLocalIsoDate()} wcaEventId={timerWcaScrambleEventId(event)}
+                roundLabel={timerWcaRoundShortLabel} renderCountry={country => <Flag iso2={country} />}
+                renderDateRange={props => <DateRangeInput {...props} labels={dateRangeLabels} size="compact" />} />
+            </TimerBattleSourceSettings>}
+            renderSource={row => row.wca && <TimerWcaScrambleSource eventLabel={row.wca.e} title={copy.competition}
+              competitionName={displayMobileWcaCompetitionName(row.wca.ci, row.wca.cn, language)}
+              eventId={row.wca.e} groupId={row.wca.g} roundTypeId={row.wca.r} scrambleNumber={row.wca.n}
+              isExtra={row.wca.x === 1} href={`${SITE_ORIGIN}${language === 'zh' ? '/zh' : ''}/scramble/gen?comp=${encodeURIComponent(row.wca.ci)}`} />}
             onSettingsChange={updateSettings}
             onOverlayCloseChange={onBattleOverlayCloseChange}
             copy={copy}

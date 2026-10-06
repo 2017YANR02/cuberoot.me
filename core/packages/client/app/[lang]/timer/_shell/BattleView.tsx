@@ -1,3 +1,5 @@
+import { LOCAL_BATTLE_SCRAMBLE_COPY } from '@cuberoot/shared/timer';
+import { TimerBattleSourceSettings, TimerBattleAppearanceSettings } from '@cuberoot/timer-ui';
 'use client';
 
 /**
@@ -8,9 +10,9 @@
 import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Settings as SettingsIcon, ClipboardList, RotateCcw, Timer as TimerIcon } from 'lucide-react';
+import { Settings as SettingsIcon, ClipboardList, Timer as TimerIcon } from 'lucide-react';
 import { useBattleStore, battleToTimerEvent, timerToBattleEvent, keyToPlayer, prefetchBattleScrambles, isScrambleHidden } from '@/app/[lang]/timer/_battle/engine/battle_store';
-import { PUZZLES, PENALTY, BG_MAX_BYTES } from '@/app/[lang]/timer/_battle/engine/constants';
+import { PUZZLES, PENALTY } from '@/app/[lang]/timer/_battle/engine/constants';
 import { loadScrambleEngine } from '@/app/[lang]/timer/_battle/engine/engine_loader';
 import { formatTimeHtml as formatTime } from '@/app/[lang]/timer/_shared/format';
 import { computeAo5 } from '@/app/[lang]/timer/_shared/stats-core';
@@ -26,14 +28,12 @@ import { TIMER_EVENT_PICKER_GROUPS, timerEventIdFromSelector, timerEventSelector
 import { eventInfo } from '@/app/[lang]/timer/_lib/types';
 import { useSettings, updateSettings } from '@/app/[lang]/timer/_lib/settings';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
-import { wcaMetaFor } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 
 import '@/app/[lang]/timer/_battle/battle.css';
 import './shell.css';
 import { tr } from '@/i18n/tr';
-import BoolToggle from '@/components/BoolToggle';
 import { battlePresenceMix, type TimerPresenceReport } from '@/app/[lang]/timer/_lib/presence';
 
 function BattlePresenceReporter({
@@ -228,8 +228,8 @@ function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHei
   const scramble = store.scrambles[rep];
   const loading = store.scrambleLoadings[rep];
   const event = battleToTimerEvent(store.puzzleIds[rep]);
-  const failed = scramble?.startsWith('⚠️');
-  const meta = !loading && scramble ? wcaMetaFor(scramble) : null;
+  const failed = store.scrambleErrors[rep];
+  const meta = !loading && scramble ? store.scrambleRows[rep]?.wca ?? null : null;
   const source = useMemo(() => meta ? {
     country: compFlagIso2(meta.ci), name: localizeCompName(meta.ci, meta.cn, isZh),
   } : null, [meta, isZh, flagVer]);
@@ -239,7 +239,7 @@ function ScramblePanel({ ids, imgHeight, part = 'all' }: { ids: number[]; imgHei
       copiedLabel={tr({ en: 'Copied', zh: '已复制' })} fontScale={store.scrambleScale}
       verificationLabels={{ copiedCorrection: tr({ en: 'Copied the scramble', zh: '已复制原打乱' }) }}
       status={loading ? { kind: 'loading', message: tr({ en: 'Generating scramble…', zh: '生成打乱中…' }) }
-        : failed ? { kind: 'error', message: scramble } : undefined}
+        : failed ? { kind: 'error', message: tr(LOCAL_BATTLE_SCRAMBLE_COPY.failed), onRetry: () => store.loadNewScramble(rep), retryLabel: tr({ en: 'Retry', zh: '重试' }) } : undefined}
       fallback={tr({ en: 'No scramble', zh: '暂无打乱' })} fallbackKind="custom">
       {meta && source && <TimerWcaScrambleSource competitionName={source.name} country={source.country}
         eventId={meta.e} eventLabel={isZh ? eventInfo(event).nameZh : eventInfo(event).nameEn}
@@ -371,21 +371,13 @@ export function TimerArea({ playerId, rotated, hideScramble, cellClass }: { play
   const ao5 = computeAo5(player.solveHistory);
   const ao5Text = ao5 === null ? '' : (ao5 === Infinity ? 'ao5: DNF' : 'ao5: ' + formatTime(ao5, store.timerPrecision));
 
-  const bgColor = store.bgColors[playerId];
-  const bgImage = store.bgImages[playerId];
-  const bgStyle: React.CSSProperties = {
-    '--bg-image': bgImage ? `url(${bgImage})` : 'none',
-    '--bg-color': bgColor || '',
-    '--bg-opacity': String(store.bgOpacity),
-  } as React.CSSProperties;
 
   return (
     <div
       className={areaClasses}
       ref={areaRef}
-      style={bgStyle}
     >
-      <TimerBattlePlayer playerNumber={playerId + 1} language={store.locale === 'zh' ? 'zh' : 'en'}
+      <TimerBattlePlayer background={{ color: store.bgColors[playerId], image: store.bgImages[playerId], opacity: store.bgOpacity }} playerNumber={playerId + 1} language={store.locale === 'zh' ? 'zh' : 'en'}
         score={player.points} winner={store.winners.includes(playerId)}
         hideHeader
         actions={player.hasFinished && !player.isTiming && player.time > 0 ? (
@@ -419,7 +411,7 @@ function BattleEventButton({ playerId }: { playerId: number }) {
   const value = useBattleStore(s => s.puzzleIds[playerId]);
   const isOpen = useBattleStore(s => s.eventPickerOpen[playerId]);
   const setOpen = useBattleStore(s => s.setEventPickerOpen);
-  const changePuzzle = useBattleStore(s => s.changePuzzle);
+  const changeAllPuzzles = useBattleStore(s => s.changeAllPuzzles);
   const languageIndex = Number(i18n.language === 'zh');
   const groups = TIMER_EVENT_PICKER_GROUPS.map(group => ({
     id: group.id,
@@ -440,112 +432,12 @@ function BattleEventButton({ playerId }: { playerId: number }) {
       onSelect={id => {
         const event = timerEventIdFromSelector(id);
         if (event) {
-          for (let id = 0; id < 4; id++) changePuzzle(id, timerToBattleEvent(event));
+          changeAllPuzzles(timerToBattleEvent(event));
         }
       }} />
   );
 }
 // ===== BackgroundSettingsGroup 组件 =====
-
-function PlayerBgRow({ playerId, isZh }: { playerId: number; isZh: boolean }) {
-  const store = useBattleStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const onColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    store.setBgColor(playerId, e.target.value);
-  };
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > BG_MAX_BYTES) {
-      setError((isZh
-                  ? `图片太大(${(file.size / 1024 / 1024).toFixed(1)} MB),≤4MB`
-                  : `Image too large (${(file.size / 1024 / 1024).toFixed(1)} MB), ≤4MB`));
-      e.target.value = '';
-      setTimeout(() => setError(null), 3000);
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const url = ev.target?.result;
-      if (typeof url === 'string') {
-        store.setBgImage(playerId, url);
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
-  };
-
-  const colorVal = store.bgColors[playerId] || '#000000';
-  const hasImage = !!store.bgImages[playerId];
-
-  return (
-    <div className="bg-row">
-      <span className="bg-row-label">P{playerId + 1}</span>
-      <div className="bg-controls">
-        <input
-          type="color"
-          className="bg-color-picker"
-          value={colorVal}
-          onChange={onColorChange}
-          title={tr({ zh: '背景色', en: 'Background color' })}
-        />
-        <button
-          type="button"
-          className={`bg-image-btn${hasImage ? ' has-image' : ''}`}
-          onClick={() => fileInputRef.current?.click()}
-          title={tr({ zh: '上传背景图', en: 'Upload image'
-        })}
-        >
-          {(isZh ? (hasImage ? '已上传' : '图片') : (hasImage ? 'Set' : 'Image'))}
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={onFileChange}
-        />
-        <button
-          type="button"
-          className="bg-reset-btn"
-          onClick={() => store.resetBg(playerId)}
-          title={tr({ zh: '重置', en: 'Reset' })}
-        >
-          ✕
-        </button>
-      </div>
-      {error && <div className="bg-error-msg">{error}</div>}
-    </div>
-  );
-}
-
-function BackgroundSettingsGroup({ mode, isZh }: { mode: string; isZh: boolean }) {
-  const store = useBattleStore();
-  const rowCount = mode === '1v1' ? store.playerCount : 1;
-  return (
-    <div className="settings-group">
-      <div className="settings-label">{tr({ zh: '背景', en: 'Background' })}</div>
-      {Array.from({ length: rowCount }, (_, i) => (
-        <PlayerBgRow key={i} playerId={i} isZh={isZh} />
-      ))}
-      <div className="setting-item slider-row">
-        <span>{tr({ zh: '不透明度', en: 'Opacity' })}</span>
-        <span className="delay-value">{store.bgOpacity.toFixed(2)}</span>
-        <input
-          type="range"
-          min="0.1"
-          max="1.0"
-          step="0.05"
-          value={store.bgOpacity}
-          onChange={e => store.setBgOpacity(parseFloat(e.target.value))}
-        />
-      </div>
-    </div>
-  );
-}
 
 // ===== SettingsPanel 组件 =====
 
@@ -558,7 +450,7 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
   return <TimerBattleSettings layout={store.mode === '1v1' ? {
     playerCount: store.playerCount as 2 | 3 | 4, layout: store.layout, flipTopRow: store.flipTopRow,
     onLayoutChange: store.setLayout, onFlipChange: store.setFlipTopRow,
-  } : undefined} language={isZh ? 'zh' : 'en'} onClose={onClose}
+  } : undefined} language={isZh ? 'zh' : 'en'} onClose={onClose} onReset={() => store.resetAll()}
     keys={store.playerKeys.slice(0, store.playerCount)} onKeyChange={store.setPlayerKey}
     precision={{ value: store.timerPrecision, onChange: store.setTimerPrecision }}
     inspection={{ value: store.inspectionTime, onChange: store.setInspectionTime, options: [0, 8, 15, 9999] }}
@@ -566,30 +458,24 @@ function SettingsPanel({ visible, onClose }: { visible: boolean; onClose: () => 
     hold={{ value: store.startDelay, onChange: store.setStartDelay }}
     preview={{ value: store.showImage, onChange: store.setShowImage }}
     hideTime={{ value: !store.showTime, onChange: () => store.toggleShowTime() }}
-    source={<div className="settings-group">
-      <label className="setting-item"><span>{tr({ en: 'Scramble source', zh: '打乱来源' })}</span>
-        <select className="settings-select" value={settings.scrambleSource === 'wca' ? 'wca' : 'random'}
-          onChange={(event) => updateSettings({ scrambleSource: event.target.value as 'random' | 'wca' })}>
-          <option value="wca">{tr({ en: 'WCA real', zh: 'WCA 真题' })}</option>
-          <option value="random">{tr({ en: 'Random', zh: '随机生成' })}</option>
-        </select>
-      </label>
-      {settings.scrambleSource === 'wca' && <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />}
-    </div>}
+    source={<TimerBattleSourceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })}
+      value={settings.scrambleSource === 'wca' ? 'wca' : 'random'} onChange={scrambleSource => updateSettings({ scrambleSource })}>
+      <WcaSourceConfig isZh={isZh} event={battleToTimerEvent(store.puzzleIds[0])} settings={settings} updateSettings={updateSettings} />
+    </TimerBattleSourceSettings>}
     >
-    <BoolToggle value={store.voice} onChange={store.setVoice} label={tr({ en: 'Voice alert', zh: '语音提示' })} />
-    <label className="setting-item"><span>{tr({ en: 'Scramble size', zh: '打乱大小' })}</span>
-      <input type="range" min={0.5} max={2} step={0.1} value={store.scrambleScale} onChange={(event) => store.setScrambleScale(Number(event.target.value))} />
-    </label>
-    <label className="setting-item"><span>{tr({ en: 'Phases', zh: '分段' })}</span>
-      <select value={store.phases} onChange={(event) => store.setPhases(Number(event.target.value))}>
-        <option value={1}>1</option><option value={2}>2 (BLD)</option><option value={4}>4 (CFOP)</option>
-      </select>
-    </label>
-    <BackgroundSettingsGroup mode={store.mode} isZh={isZh} />
-    <button className="settings-action-btn danger" onClick={() => { store.resetAll(); onClose(); }}>
-      <RotateCcw size={16} />{tr({ en: 'Reset All', zh: '全部重置' })}
-    </button>
+    <TimerBattleAppearanceSettings language={tr({ en: 'en' as const, zh: 'zh' as const })} playerCount={store.playerCount}
+      value={{ bgColors: store.bgColors, bgImages: store.bgImages, bgOpacity: store.bgOpacity, scrambleScale: store.scrambleScale }}
+      onChange={patch => {
+        if (patch.scrambleScale !== undefined) store.setScrambleScale(patch.scrambleScale);
+        if (patch.bgOpacity !== undefined) store.setBgOpacity(patch.bgOpacity);
+        for (let id = 0; id < store.playerCount; id++) {
+          if (patch.bgImages?.[id] && patch.bgImages[id] !== store.bgImages[id]) store.setBgImage(id, patch.bgImages[id]);
+          else if (patch.bgColors && (patch.bgColors[id] !== store.bgColors[id] || patch.bgImages?.[id] !== store.bgImages[id])) {
+            if (patch.bgColors[id]) store.setBgColor(id, patch.bgColors[id]); else store.resetBg(id);
+          }
+        }
+      }} />
+
   </TimerBattleSettings>;
 }
 // ===== 主组件 =====
@@ -631,12 +517,8 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   useEffect(() => {
     if (battleUrlInitRef.current || !eventsParam) return;
     battleUrlInitRef.current = true;
-    Array.from({ length: 4 }, (_, i) => i).forEach((i) => {
-      const battleId = timerToBattleEvent(eventsParam.split(',')[0]);
-      if (validBattleIds.has(battleId) && battleId !== useBattleStore.getState().puzzleIds[i]) {
-        useBattleStore.getState().changePuzzle(i, battleId);
-      }
-    });
+    const battleId = timerToBattleEvent(eventsParam.split(',')[0]);
+    if (validBattleIds.has(battleId)) useBattleStore.getState().changeAllPuzzles(battleId);
   }, [eventsParam, playerCount, validBattleIds]);
   useEffect(() => {
     const ids = battleToTimerEvent(store.puzzleIds[0]);
@@ -657,7 +539,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
     defaultedRef.current = true;
     const initial = useBattleStore.getState();
     const event = timerToBattleEvent(eventsParam?.split(',')[0] || battleToTimerEvent(initial.puzzleIds[0]));
-    if (validBattleIds.has(event)) for (let id = 0; id < 4; id++) initial.changePuzzle(id, event);
+    if (validBattleIds.has(event)) initial.changeAllPuzzles(event);
     initial.setCubeMode('own');
     if (useBattleStore.getState().mode === 'solo') {
       useBattleStore.getState().setMode('1v1');
@@ -673,7 +555,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
   // 不计入签名(只看 comp id),避免边搜边换。首挂载跳过(init 已生成首个打乱)。
   const settings = useSettings();
   const wcaSig = settings.scrambleSource === 'wca'
-    ? `wca|${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}`
+    ? `wca|${settings.wcaScrambleMode}|${settings.wcaComp}|${settings.wcaRound}|${settings.wcaGroup}|${settings.wcaDateFrom}|${settings.wcaDateTo}|${settings.wcaUseOptimal}`
     : 'random';
   const wcaSigInitRef = useRef(true);
   useEffect(() => {
