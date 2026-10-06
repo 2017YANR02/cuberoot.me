@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import { Check, Play, RotateCcw, Expand, ImageOff } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
+import BoolToggle from '@/components/BoolToggle';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
 import { HOME_BACKGROUNDS, HOME_BACKGROUND_ASSETS, resolveHomeBackground } from '@/lib/home-backgrounds';
 import {
@@ -37,6 +39,7 @@ const CARDS: Card[] = [
 
 export default function AppearancePage() {
   const effectiveTheme = useEffectiveTheme();
+  const [petVisible, setPetVisible] = useDeskPetVisible();
   const [background, setBackground] = useHomeBackgroundChoice(effectiveTheme);
   const activeScene = resolveHomeBackground(background, effectiveTheme);
   const [current, setCurrent] = useState<string | null>(null);
@@ -70,6 +73,14 @@ export default function AppearancePage() {
         <AppLink href="/appearance#backgrounds">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</AppLink>
         <AppLink href="/appearance#palettes">{tr({ zh: '配色主题', en: 'Color themes' })}</AppLink>
       </nav>
+
+      <div className="ac-background-controls" style={{ display: 'flex', flexDirection: 'column' }}>
+        <BoolToggle
+          value={petVisible}
+          onChange={setPetVisible}
+          label={tr({ zh: '显示桌宠', en: 'Show desk pet' })}
+        />
+      </div>
 
       <section id="backgrounds" className="ac-section" aria-labelledby="ac-background-title">
         <h2 id="ac-background-title" className="ac-h2">{tr({ zh: '全站背景', en: 'Site backgrounds' })}</h2>
