@@ -14,10 +14,9 @@ describe('shared algorithm list settings', () => {
     expect(shared).toContain('export function SettingsPopover');
     expect(shared).toContain('usePanelClamp(open, panelRef)');
     expect(shared).toContain('usePopoverDismiss(open, () => setOpen(false), rootRef, triggerRef)');
-    expect(settings).toContain('value={view}');
-    expect(settings).toContain('onChange={event => onViewChange(event.target.value as AlgViewMode)}');
-    expect(settings).toContain('<option value="cards">');
-    expect(settings).toContain('<option value="full">');
+    expect(settings).toContain("value={view === 'full'}");
+    expect(settings).toContain("onChange={show => onViewChange(show ? 'full' : 'cards')}");
+    expect(settings).toContain("label={tr({ zh: '公式', en: 'Algorithms' })}");
     expect(settings).toContain('<AlgNotationStyleSelect value={notationStyle} onChange={onNotationStyleChange} />');
     expect(settings).toContain("localStorage.getItem(ALG_CASE_NUMBERS_KEY) === 'true'");
     expect(settings).toContain("label={tr({ zh: '数字编号', en: 'Numeric IDs' })}");
