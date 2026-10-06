@@ -371,6 +371,129 @@
   font-style: normal;
 }
 
+.color-stats-table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.color-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.color-stats-table th,
+.color-stats-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-default);
+  white-space: nowrap;
+}
+
+.color-stats-table th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.color-stats-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+.color-stats-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.color-stats-face {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.color-stats-face i {
+  display: block;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 0.3rem;
+  background: var(--color-fill);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--foreground) 20%, transparent);
+}
+
+.color-stats-face span {
+  font-size: 0.82rem;
+}
+
+.color-stats-confirm {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.color-stats-reset,
+.color-stats-cancel {
+  appearance: none;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.color-stats-reset:hover {
+  border-color: var(--destructive);
+  color: var(--destructive);
+}
+
+.color-stats-cancel:hover {
+  border-color: var(--border-strong);
+}
+
+.color-stats-history-row td {
+  padding: 0;
+  border-bottom: none;
+}
+
+.color-stats-details {
+  margin: 8px 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-default);
+}
+
+.color-stats-details summary {
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--muted-foreground);
+}
+
+.color-stats-history {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 200px;
+  overflow: auto;
+}
+
+.color-stats-history li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.75rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.color-stats-history li:last-child {
+  border-bottom: none;
+}
+
+.color-stats-history time {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
 @media (max-width: 520px) {
   .color-quiz-header { margin-top: 1.8rem; }
   .color-quiz-body { margin-top: 1.6rem; }
