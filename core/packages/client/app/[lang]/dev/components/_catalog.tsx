@@ -1691,7 +1691,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerStatsPanel',
-    import: "import { TimerStatsPanel } from '@cuberoot/timer-ui';",
+    import: "import { TimerStatsPanel, TimerStatsModal, TimerStatisticsWorkspace, TimerDailyStatsPanel, TimerCfopCaseStatsPanel, TimerCaseStatsPanel, TimerCrossSessionStats, TimerRecordsOverlay, TimerScatterChart, TimerHistogramChart, TimerHourChart, TimerTrendChart, TimerPracticeHeatmap } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web、Android 与 iOS 计时器共用的紧凑统计面板；当前/最佳、PR 插槽、rolling 列、展开统计与 Sub-X 只维护这一份。统计算法来自 @cuberoot/shared/timer，宿主只注入成绩、双语文案、设置持久化和平台徽章。完整 StatsModal 与五类图表不属于这个紧凑面板。',
     en: 'The compact statistics panel shared by the Web, Android, and iOS timers. Current/best rows, the PR slot, rolling columns, expanded statistics, and Sub-X live in one implementation. Algorithms come from @cuberoot/shared/timer; hosts inject solves, translated copy, settings persistence, and their badge. The full StatsModal and five chart types remain separate product surfaces.',
@@ -1740,7 +1740,7 @@ export const CATALOG: ComponentEntry[] = [
   },
   {
     name: 'TimerHistoryRow / TimerHistoryColumns / TimerHistoryTags',
-    import: "import { TimerHistoryRow, TimerHistoryColumnsHeader, TimerHistoryDayDivider, TimerHistoryRollingCells, TimerHistoryTagBadges } from '@cuberoot/timer-ui';",
+    import: "import { TimerHistoryWorkspace, TimerHistoryRow, TimerHistoryColumnsHeader, TimerHistoryDayDivider, TimerHistoryRollingCells, TimerHistoryTagBadges } from '@cuberoot/timer-ui';",
     category: 'more',
     zh: 'Web 与五个安装端计时器共用的完整成绩行、rolling 列头/逐行值/PB、日期分组、快捷菜单、派生标签和筛选器。算法来自 shared；FMC、MBLD、窄屏换行、触控高度和读屏顺序只维护一份。宿主只注入设置持久化与真实副作用。',
     en: 'The complete solve row, rolling header/values/PBs, day groups, quick menu, derived tags, and filters shared by Web and all five installed clients. Algorithms come from shared; FMC, MBLD, narrow-screen wrapping, touch height, and reading order live in one implementation. Hosts only inject setting persistence and real effects.',

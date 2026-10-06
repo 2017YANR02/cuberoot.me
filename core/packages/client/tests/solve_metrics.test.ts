@@ -134,3 +134,11 @@ describe('按天分组', () => {
     expect(days).toEqual(['2026-08-01', '2026-08-04']);
   });
 });
+
+it('invalidates metrics when an immutable penalty update reuses the same solve id', () => {
+  const original = solve({id:'penalty-refresh',moves:stream(12,100)});
+  expect(solveMetrics(original)?.tps).toBe(4);
+  expect(solveMetrics({...original,penalty:'+2'})?.tps).toBe(2.4);
+  expect(solveMetrics({...original,penalty:'DNF'})).toBeNull();
+  expect(solveMetrics({...original,moves:stream(6,100)})?.stm).toBe(6);
+});

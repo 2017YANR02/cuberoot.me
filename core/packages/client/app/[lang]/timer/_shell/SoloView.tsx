@@ -1,4 +1,6 @@
 'use client';
+import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
+import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
 import { timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
@@ -219,9 +221,6 @@ import {
 import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { useBluetoothTimer } from '../_lib/bluetooth/timer';
 import { useStackmat } from '../_lib/stackmat';
-import StatsPanel from '../_components/StatsPanel';
-import CrossSessionStats from '../_components/CrossSessionStats';
-import CaseStatsPanel from '../_components/CaseStatsPanel';
 import HistoryPanel from '../_components/HistoryPanel';
 import { decodeReplayParam, solveFromReplay } from '../_lib/share/decode';
 import { extractReplayParam } from '../_lib/share/paste_import';
@@ -235,11 +234,6 @@ import SolverHintPanel, { HINTS_PARAM } from '../_components/SolverHintPanel';
 import ScrambleSourceBar from '../_components/ScrambleSourceBar';
 import { OLL_CASES } from '../_lib/scramble/algs/oll_cases';
 import { PLL_CASES } from '../_lib/scramble/algs/pll_cases';
-import HistogramChart from '../_components/charts/HistogramChart';
-import TrendChart from '../_components/charts/TrendChart';
-import ScatterChart from '../_components/charts/ScatterChart';
-import HourChart from '../_components/charts/HourChart';
-import PracticeHeatmap from '../_components/charts/PracticeHeatmap';
 import { CubePreview } from '../_lib/cube';
 import LiveCubeState from '../_components/LiveCubeState';
 import {
@@ -366,7 +360,6 @@ function useMediaQuery(query: string): boolean {
 // 是从它们算出来的数(当前/最佳、σ、阈值占比、完整统计),**图表**是画出来的。
 // 原来成绩那一档从当前/最佳一路铺到阈值占比再到历史,要滚很久才够到自己刚拧的那把。
 type PanelTab = 'times' | 'stats' | 'chart';
-type ChartKind = 'histogram' | 'trend' | 'scatter' | 'hour' | 'heatmap';
 
 interface SoloViewProps {
   /** The players (人数) select node, injected by the shell at the topbar left. */
@@ -435,9 +428,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
+  const [historyOverlayOpen, setHistoryOverlayOpen] = useState(false);
   const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
-  const [chartKind, setChartKind] = useState<ChartKind>('histogram');
   useEffect(() => {
     if (panelTab !== 'times') setSessionSwitcherOpen(false);
   }, [panelTab]);
@@ -2268,7 +2261,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [solverOpen, setSolverOpen] = useState(false);
   const [bulkScrambleOpen, setBulkScrambleOpen] = useState(false);
   const [bldHelperOpen, setBldHelperOpen] = useState(false);
-  const [showCrossSession, setShowCrossSession] = useState(false);
 
   const connectFromBluetoothModal = useCallback(async (pick?: ConnectPickOptions) => {
     if (bluetoothConnectingRef.current) return;
@@ -2378,7 +2370,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const panelFullscreen = panelTab !== null && !isDesktop;
   const otherModalOpen =
     settingsOpen || bluetoothOpen || bluetoothTimerOpen || stackmatOpen ||
-    trainerSubsetOpen !== null || statsModalOpen ||
+    trainerSubsetOpen !== null || statsModalOpen || historyOverlayOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
     drillModalOpen || bldHelperOpen || panelFullscreen ||
     sessionSwitcherOpen || modalSolve !== null || reconstructSolve !== null;
@@ -2694,7 +2686,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             onSessionsChanged={handleSessionsChanged}
           />
           {/* 这一档就是这些把本身:会话切换器 + 那张单子。算出来的数都在「统计」那档。 */}
-          <HistoryPanel
+          <HistoryPanel onBlockingChange={setHistoryOverlayOpen}
             historyContextKey={`${getActiveSessionId()}|${event}`}
             solves={solves}
             isZh={isZh}
@@ -2702,65 +2694,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             onRowClick={(s, idx) => setModalSolve({ s, idx })}
             onQuickPenalty={(id, p) => updateSolve(id, { penalty: p })}
             onQuickDelete={(id) => deleteSolve(id)}
+            onBulkDelete={ids => { if (!deleteSessionSolves(getActiveSessionId(), event, ids)) return false; setByEvent(loadAll()); return true; }}
             onQuickComment={(s, idx) => setModalSolve({ s, idx })}
           />
         </>
       );
     }
-    if (panelTab === 'stats') {
-      return (
-        <>
-          <div className="shell-panel-statgrid">
-            <StatsPanel solves={solves} event={event} />
-            <CaseStatsPanel event={event} solves={solves} isZh={isZh} />
-          </div>
-          <div className="shell-times-actions">
-            <button type="button" className="stats-expand-toggle" onClick={() => setStatsModalOpen(true)}>
-              {tr({ zh: '完整统计', en: 'Full stats'
-            })}
-            </button>
-            <button type="button" className="stats-expand-toggle" onClick={() => setShowCrossSession(v => !v)}>
-              {tr({ zh: '跨分组统计', en: 'Cross-session'
-            })} {showCrossSession ? '▴' : '▾'}
-            </button>
-          </div>
-          {showCrossSession && <CrossSessionStats event={event} isZh={isZh} />}
-        </>
-      );
-    }
-    if (panelTab === 'chart') {
-      return (
-        <div className="shell-chart-tab">
-          <div className="shell-chart-switch">
-            {([
-              ['histogram', tr({ zh: '分布', en: 'Histogram'
-            })],
-              ['trend', tr({ zh: '趋势', en: 'Trend'
-            })],
-              ['scatter', tr({ zh: '散点', en: 'Scatter'
-            })],
-              ['hour', tr({ zh: '时段', en: 'Hour'
-            })],
-              ['heatmap', tr({ zh: '日历', en: 'Heatmap'
-            })],
-            ] as const).map(([k, lbl]) => (
-              <button
-                key={k}
-                type="button"
-                className={`shell-chart-chip${chartKind === k ? ' active' : ''}`}
-                onClick={() => setChartKind(k as ChartKind)}
-              >{lbl}</button>
-            ))}
-          </div>
-          <div className="shell-chart-canvas">
-            {chartKind === 'histogram' && <HistogramChart solves={solves} isZh={isZh} width={300} height={150} />}
-            {chartKind === 'trend' && <TrendChart solves={solves} isZh={isZh} width={300} height={170} />}
-            {chartKind === 'scatter' && <ScatterChart solves={solves} isZh={isZh} width={300} height={170} />}
-            {chartKind === 'hour' && <HourChart solves={solves} isZh={isZh} width={300} height={150} />}
-            {chartKind === 'heatmap' && <PracticeHeatmap solves={solves} isZh={isZh} cellSize={11} />}
-          </div>
-        </div>
-      );
+    if (panelTab === 'stats' || panelTab === 'chart') {
+      return <TimerStatisticsWorkspace view={panelTab} language={isZh ? 'zh' : 'en'} event={event} solves={solves}
+        labels={timerStatsPanelLabels(isZh ? 'zh' : 'en')} rollingColumns={settings.statsRollingColumns}
+        onRollingColumnsChange={statsRollingColumns => updateSettings({statsRollingColumns})}
+        sessionData={loadAllSessionData().map(item => item.session.id === getActiveSessionId() ? {...item, byEvent} : item)} activeSessionId={getActiveSessionId()}
+        onOpenFull={() => setStatsModalOpen(true)} />;
     }
     return null;
   };

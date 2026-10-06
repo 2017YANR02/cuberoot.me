@@ -760,3 +760,21 @@ describe('mobile timer repository contract', () => {
     });
   });
 });
+
+it('bulk deletes atomically from the captured session and preserves data on write failure', async () => {
+  const {repo,driver} = repository();
+  const initial = await repo.load();
+  const sourceId = initial.database.activeSessionId;
+  await repo.addSolve({event:'333',timeMs:1000,penalty:'ok',scramble:'R'});
+  const withSecond = await repo.addSolve({event:'333',timeMs:2000,penalty:'ok',scramble:'U'});
+  const ids = activeTimerSolves(withSecond,'333').map(solve => solve.id);
+  const other = await repo.createSession('Other','333');
+  const targetId = other.database.activeSessionId;
+  driver.failWrites = true;
+  await expect(repo.deleteSolves(sourceId,'333',ids)).rejects.toThrow();
+  expect((driver.data as TimerStoreData).database.dataBySession[sourceId]['333']).toHaveLength(2);
+  driver.failWrites = false;
+  const result = await repo.deleteSolves(sourceId,'333',ids);
+  expect(result.database.activeSessionId).toBe(targetId);
+  expect(result.database.dataBySession[sourceId]['333']).toEqual([]);
+});

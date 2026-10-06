@@ -579,13 +579,13 @@ describe('shared history tag surfaces', () => {
 
 describe('history UI reuse, i18n, theme, and overflow guards', () => {
   it('keeps Web as a thin host and removes its duplicate row/menu/comment/toast implementations', () => {
-    const history = readFileSync('app/[lang]/timer/_components/HistoryPanel.tsx', 'utf8');
+    const history = readFileSync(new URL('./TimerHistoryWorkspace.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
     const detail = readFileSync('app/[lang]/timer/_components/SolveModal.tsx', 'utf8');
     const solo = readFileSync('app/[lang]/timer/_shell/SoloView.tsx', 'utf8');
     const timerCss = readFileSync('app/[lang]/timer/timer.css', 'utf8');
     const shellCss = readFileSync('app/[lang]/timer/_shell/shell.css', 'utf8');
 
-    expect(history).toContain("from '@cuberoot/timer-ui'");
+    expect(history).toContain("from '@cuberoot/shared/timer'");
     expect(history).toContain('<TimerHistoryRow');
     expect(history).toContain('className="history-search-count" role="status"');
     expect(history).toContain('onChangePenalty:');
@@ -855,7 +855,7 @@ describe('shared TimerHistoryCompare UI', () => {
   });
 
   it('keeps Web on one compare component with token-only overflow-safe CSS', () => {
-    const web = readFileSync('app/[lang]/timer/_components/HistoryPanel.tsx', 'utf8');
+    const web = readFileSync(new URL('./TimerHistoryWorkspace.tsx', import.meta.resolve('@cuberoot/timer-ui')), 'utf8');
     const timerUiEntry = new URL(import.meta.resolve('@cuberoot/timer-ui'));
     const css = readFileSync(new URL('./history-compare.css', timerUiEntry), 'utf8');
     expect(web).toContain('<TimerHistoryCompareModal');
@@ -863,5 +863,33 @@ describe('shared TimerHistoryCompare UI', () => {
     expect(css).toContain('@media (max-width: 340px)');
     expect(css).not.toMatch(/#[0-9a-f]{3,8}\b/i);
     expect(css).not.toMatch(/\b(?:rgba?|hsla?|oklch)\(/i);
+  });
+});
+
+describe('history workspace async selection isolation', () => {
+  let host: HTMLDivElement;
+  let root: Root;
+  beforeEach(() => {
+    vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    vi.stubGlobal('matchMedia', () => ({matches:false,addEventListener(){},removeEventListener(){}}));
+    vi.spyOn(window,'confirm').mockReturnValue(true);
+    host=document.createElement('div'); document.body.append(host); root=createRoot(host);
+  });
+  afterEach(async () => { await act(async()=>root.unmount()); host.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+  it('retains failed deletion selection and ignores old A completion after A-B-A', async () => {
+    let finish!: (value:boolean)=>void;
+    const remove=vi.fn(()=>new Promise<boolean>(resolve=>{finish=resolve;}));
+    const solves=[makeSolve({id:'a',penalty:'ok'}),makeSolve({id:'b',penalty:'ok',ts:2})];
+    const render=async(context:string)=>{await act(async()=>root.render(createElement(HistoryPanel,{historyContextKey:context,isZh:false,solves,onRowClick:vi.fn(),onBulkDelete:remove})));};
+    const click=async(text:string)=>{const button=[...host.querySelectorAll<HTMLButtonElement>('button')].find(node=>node.textContent?.trim()===text)!;expect(button).toBeDefined();await act(async()=>button.click());};
+    await render('A'); await click('Select'); await act(async()=>host.querySelector<HTMLButtonElement>('.timer-history-row')!.click()); await click('Delete 1 selected');
+    await act(async()=>finish(false));
+    expect(host.querySelector('[role="alert"]')?.textContent).toContain('Unable to delete');
+    expect(host.querySelector('[data-selected="true"], [aria-pressed="true"]')).not.toBeNull();
+    await click('Delete 1 selected');
+    await render('B'); await render('A'); await click('Select');
+    await act(async()=>host.querySelector<HTMLButtonElement>('.timer-history-row')!.click());
+    await act(async()=>finish(true));
+    expect([...host.querySelectorAll('button')].some(node=>node.textContent?.trim()==='Delete 1 selected')).toBe(true);
   });
 });

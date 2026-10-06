@@ -344,3 +344,10 @@ export { createNetOutboxStorage } from './net-outbox-storage';
 export { TimerNetOutboxNotice } from './TimerNetOutboxNotice';
 export * from './TimerBattleSourceSettings';
 export * from './TimerBattleAppearanceSettings';
+
+export * from './workspace';
+import './workspace/workspace.css';
+
+export { TimerHistoryWorkspace, type TimerHistoryWorkspaceProps, type TimerHistoryWorkspaceHandle } from './TimerHistoryWorkspace';
+export { TimerStatisticsWorkspace, type TimerStatisticsWorkspaceProps } from './TimerStatisticsWorkspace';
+export { timerStatsPanelLabels } from './workspace/stats-labels';

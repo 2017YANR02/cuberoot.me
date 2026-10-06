@@ -81,7 +81,12 @@
       "./stage-solver/rust-cross-pool": "react-dom",
       "./stage-solver/rotate-solution": "react-dom",
       "./StageSolver": "react-dom",
-      "./StageSolver.css": "asset"
+      "./StageSolver.css": "asset",
+      "./statistics-charts.css": "asset",
+      "./statistics-heatmap.css": "asset",
+      "./statistics-sessions.css": "asset",
+      "./record-badge": "react-dom",
+      "./record-badge.css": "asset"
     }
   },
   "exports": {
@@ -152,7 +157,12 @@
     "./stage-solver/rust-cross-pool": "./src/stage-solver/rust-cross-pool.ts",
     "./stage-solver/rotate-solution": "./src/stage-solver/rotate-solution.ts",
     "./StageSolver": "./src/StageSolver.tsx",
-    "./StageSolver.css": "./src/StageSolver.css"
+    "./StageSolver.css": "./src/StageSolver.css",
+    "./statistics-charts.css": "./src/workspace/charts/charts.css",
+    "./statistics-heatmap.css": "./src/workspace/charts/practice_heatmap.css",
+    "./statistics-sessions.css": "./src/workspace/cross_session.css",
+    "./record-badge": "./src/RecordBadge.tsx",
+    "./record-badge.css": "./src/record-badge.css"
   },
   "sideEffects": true,
   "scripts": {

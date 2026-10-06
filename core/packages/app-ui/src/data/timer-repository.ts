@@ -236,6 +236,17 @@ export class TimerRepository {
     });
   }
 
+  deleteSolves(sessionId: string, event: EventId, ids: readonly string[]): Promise<TimerStoreData> {
+    return this.run(async () => {
+      const data = await this.loadUnlocked();
+      const byEvent = data.database.dataBySession[sessionId];
+      if (!byEvent) throw new TimerSessionRepositoryError('unknown-session');
+      const selected = new Set(ids);
+      byEvent[event] = (byEvent[event] ?? []).filter(solve => !selected.has(solve.id));
+      return this.writeSessionData(data);
+    });
+  }
+
   saveNetSolve(sessionId: string, solve: Solve): Promise<TimerStoreData> {
     return this.run(async () => {
       const data = await this.loadUnlocked();
