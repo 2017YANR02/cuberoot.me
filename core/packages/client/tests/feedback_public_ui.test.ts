@@ -18,7 +18,10 @@ describe('public feedback UI contract', () => {
     expect(page).toContain('fetchPublicFeedback(safePage, safeSize)');
     expect(page).toContain("parseAsInteger.withDefault(1).withOptions({ history: 'push' })");
     expect(page).toContain('<FeedbackConversation feedbackId={it.id}');
-    expect(page).toContain('<UserIdLabel userId={it.userId} />');
+    expect(page).toContain('<UserIdLabel contact userId={it.userId} />');
+    const expandButton = page.match(/<button\b[^>]*className="fbm-card-head"[\s\S]*?<\/button>/)?.[0];
+    expect(expandButton).toBeDefined();
+    expect(expandButton).not.toContain('<UserIdLabel');
     expect(page).not.toContain('fetchMyFeedback');
   });
 
