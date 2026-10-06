@@ -1389,3 +1389,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 换项目一次更新全部四个玩家槽位，切换人数重新取题；来源或项目变化使旧请求失效。真题未选定、返回空题或随机引擎错误都显示失败并允许重试，不静默替换随机题。下一轮预取失败保留本轮成绩、来源与罚时操作，重试不清空结算；历史记录冻结真题具体题号，不能按打乱文本反查覆盖。
 - App 删除/清空等待仓储完成，失败不移除界面记录；删除当前轮同时退出其罚时编辑状态，避免重新写回已删除成绩。Web 删除任意历史轮次都重新计算积分。背景图片读取隔离换图、重置和卸载后的迟到回调。
 - 当前证据：Web 定向 7 文件 48 项、App 页面集成 15 项通过；shared build、App/client typecheck、Mobile 双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Chrome 检查 Web/App 多人设置在窄屏及系统/手动深浅主题下的边界与运行错误。独立源码复核通过。Windows 原生构建未在 Mac 执行，Harmony HAP 既有工具链阻断不变；实体设备、真实多人操作完整验收仍待所有者完成。本轮仅本地，整体保持 NOT COMPLETE。
+
+### 2026-10-06：历史与统计工作区统一（顺序 4，本地）
+
+- Web/App 历史筛选、日期分组、滚动列、自动标签、比较和批量选择统一消费 `TimerHistoryWorkspace`；App 移除原有私有列表组合。两端批量删除都先完成真实持久化，失败保留选择并提示；App 仓储固定原分组/项目，界面按代际隔离 A→B→A 后的迟到成功、失败和 finally。
+- 统计与图表共用 `TimerStatisticsWorkspace`，安装端补齐完整统计、时间段、按天、训练/CFOP 案例、跨分组及分布/趋势/散点/时段/日历五类图表。旧 Web 文件保留薄适配出口，图表 CSS 也由共享包维护。统计采用原有 shared 计算；跨分组表改用 event-aware summary，FMC 显示步数，MBLD 最佳按分数排序且不显示无意义的滚动时间平均。
+- PR 徽标复用共享展示与记录格式化，Web 的洲际展开和日掩文案仍由原 adapter 提供。免搜索手感指标迁入 shared，缓存以不可变成绩快照为键，同 ID 修改罚时/动作后重新计算。WCA 纪录栏仅迁移原有日期标注快照，本轮没有刷新纪录数据。
+- 完整统计和比较弹窗都纳入安装端键盘、手势、智能魔方及外部设备起表门禁；Back 优先关闭弹窗和当前可见临时模式。保留外部计时器自身连接面板内的计时行为；切历史/统计/图表清理临时选择。
+- 当前证据：针对删除失败、A→B→A、固定原分组原子写、罚时缓存和统计弹窗阻止设备起表新增回归，既有历史/统计、仓储、Android Back、架构与 catalog 定向检查通过；shared build、App/client typecheck 通过。Chrome 两端同一 14 条成绩 fixture，390/320px、系统/手动深浅主题无页面横向溢出和运行错误；320px 英文统计标签溢出已修。独立源码反例审查完成。
+- Mobile build/双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows native 未在本 Mac 执行，Harmony HAP 既有 Hvigor 版本阻断未改变；本轮没有 OPPO/iOS/Harmony 真机或 Windows/macOS 实体完整操作验收，没有签名、推送或发布。总体继续 NOT COMPLETE。

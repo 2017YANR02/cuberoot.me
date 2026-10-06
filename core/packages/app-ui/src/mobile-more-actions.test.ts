@@ -147,7 +147,7 @@ describe('Mobile timer More effect adapter', () => {
     const css = readFileSync('src/app.css', 'utf8');
     expect(app).toContain('<TimerMoreMenu');
     expect(app).toContain("'more.marks': () => openToolsRoute('/timer/marks')");
-    expect(app).toContain("'more.stats-mobile': () => setView('history')");
+    expect(app).toContain("'more.stats-mobile': () => { setView('history'); setHistoryTab('stats'); }");
     expect(app).toContain("'more.language-mobile': toggleMoreLanguage");
     expect(app).toContain("'more.bld-helper': () => openToolsRoute('/alg/3bld/helper')");
     expect(app).toContain("'more.fullscreen': toggleTimerFullscreen");

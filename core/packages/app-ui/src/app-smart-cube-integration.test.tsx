@@ -466,3 +466,20 @@ it('records one exact Stackmat reading with its starting scramble and keeps the 
   expect(saved()).toHaveLength(1);
   expect(saved()[0]).toMatchObject({timeMs:12345, penalty:'ok', event:'333', scramble:'R'});
 });
+
+it('blocks cube starts in full statistics and Back closes the dialog before history', async () => {
+  await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
+  await act(async () => container.querySelector<HTMLButtonElement>('.shell-stat-rail')!.click());
+  const view = container.querySelector<HTMLSelectElement>('[aria-label="Results view"]')!;
+  await act(async () => { view.value='stats'; view.dispatchEvent(new Event('change',{bubbles:true})); });
+  const full=[...container.querySelectorAll<HTMLButtonElement>('button')].find(button=>button.textContent==='Full stats')!;
+  await act(async () => full.click());
+  expect(document.querySelector('.stats-modal')).not.toBeNull();
+  await act(async () => move('R',1_100));
+  await act(async () => move('U',2_000));
+  expect(phase).not.toBe('running');
+  expect(saved()).toHaveLength(0);
+  await act(async () => backListener?.());
+  expect(document.querySelector('.stats-modal')).toBeNull();
+  expect(container.querySelector('.history-view')).not.toBeNull();
+});
