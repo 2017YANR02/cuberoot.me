@@ -71,6 +71,7 @@ import {
 } from '../_lib/scramble/wca_pool';
 import { takeScramble } from '../_lib/scramble/scramble_pool';
 import { preScrambleFor } from '../_lib/scramble/pre_scramble';
+import { timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
 import { use222Mode, use222Type } from '@/lib/scramble-222-mode';
 import {
@@ -118,6 +119,7 @@ import {
 import type { SmartCubeGuidanceState } from '@cuberoot/shared/smart-cube/scramble-guidance';
 import { SmartCubeSoloTimerController } from '@cuberoot/shared/smart-cube/solo-timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import type { Cube222SpecialType } from '@cuberoot/puzzle-solvers/cube222';
 import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import {
@@ -1202,11 +1204,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (settings.scrambleSource === 'wca') prefetchWca(wcaSpecRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.scrambleSource, wcaSourceSig]);
-  // What the user sees/copies. SQ1 shows compact notation (4/-36/...) site-wide;
-  // the raw canonical form stays in `scramble` for the solver hints / cube preview
-  // (their parsers only accept `(a,b)/`). Other events pass through unchanged.
-  const displayScramble = formatScrambleForEvent(event, scramble);
-
   // WCA mode: source of the current real scramble (comp / event / round / group),
   // shown under the strip the same way the landing page's RecentScrambles does.
   // Flag + comp name need the lazily-loaded comp index; bump flagVer when it lands.
@@ -1454,7 +1451,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     const history = scrambleHistRef.current;
     const entry = competitionRef.current.enabled ? competitionScrambleEntry : history.list[history.idx];
     if (entry) {
-      scrambleAtStartRef.current = entry.scramble;
+      scrambleAtStartRef.current = bluetoothCubeRef.current?.status.connected
+        ? timerSmartCubeAttemptScramble(event, entry.scramble, getSettings().preScrT)
+        : entry.scramble;
       wcaAtStartRef.current = entry.wca;
       scrambleSourceAtStartRef.current = entry.scrambleSource;
       caseIdAtStartRef.current = entry.caseId
@@ -1555,11 +1554,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const timerHandleRef = useRef(timer);
   timerHandleRef.current = timer;
   const liveAnchorRef = useRef<LiveSmartCubeAnchor | null>(null);
+  const trainingOrientation = timerSmartCubeTrainingOrientation(event, settings.preScrT);
+  const previousTrainingOrientationRef = useRef(trainingOrientation);
+  useLayoutEffect(() => {
+    if (previousTrainingOrientationRef.current !== trainingOrientation) {
+      previousTrainingOrientationRef.current = trainingOrientation;
+      timer.cancelArm();
+    }
+  }, [trainingOrientation, timer.cancelArm]);
   const scrambleTarget = useMemo(() => (
     timerSupportsSmartCubeAutoTiming(event) && scramble.trim()
-      ? smartCubeTargetFacelets(scramble)
+      ? smartCubeTargetFacelets(scramble, trainingOrientation)
       : null
-  ), [event, scramble]);
+  ), [event, scramble, trainingOrientation]);
   const [scrambleGuidance, setScrambleGuidance] = useState<SmartCubeGuidanceState>({
     correctionActive: false,
     hint: null,
@@ -1709,6 +1716,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     },
   });
 
+  // Connected smart cubes show outer turns in the selected training grip.
+  const displayScramble = formatScrambleForEvent(event,
+    bluetoothCube.status.connected && timerSupportsSmartCubeAutoTiming(event)
+      ? normalizeWcaScramble(scramble) ?? scramble
+      : scramble);
   const bluetoothCubeRef = useRef<typeof bluetoothCube | null>(null);
   useEffect(() => { bluetoothCubeRef.current = bluetoothCube; }, [bluetoothCube]);
   useEffect(() => {
@@ -1721,7 +1733,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // smart-cube flow (connect → scramble check → auto-stop → live view) a way
   // to be exercised without hardware. No-op in production builds.
   const scrambleForFakeRef = useRef(scramble);
-  scrambleForFakeRef.current = scramble;
+  scrambleForFakeRef.current = timerSmartCubeAttemptScramble(event, scramble, settings.preScrT);
   useEffect(() => { if (!competition.enabled) installFakeCube(() => scrambleForFakeRef.current); }, [competition.enabled]);
 
   // ── Live cube-state mirror ──────────────────────────────────────
@@ -1813,6 +1825,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         facelets={bluetoothCube.facelets}
         moves={[...liveMoves]}
         algAnchored={algAnchored}
+        displayOrientation={trainingOrientation}
         // 陀螺仪只决定这颗魔方**朝哪儿**,不决定它是什么状态 —— 没有姿态流
         // 的魔方照样该用 3D:贴纸一模一样准,而且每拧一手能把那一层转给你看,
         // 展开图做不到。没姿态就用引擎自己的等轴视角,不假装在跟手。
@@ -1837,8 +1850,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       id: currentScrambleEntry.id,
       scramble,
       targetFacelets: scrambleTarget,
+      orientation: trainingOrientation,
     });
-  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController]);
+  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController, trainingOrientation]);
   useLayoutEffect(() => {
     smartCubeSoloController.setConnected(cubeConnected);
     return () => smartCubeSoloController.setConnected(false);
@@ -2994,7 +3008,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               deviceName={bluetoothCube.status.deviceName ?? null}
               onConnect={bluetoothCube.connect}
               onDisconnect={bluetoothCube.disconnect}
-              scramble={scramble}
+              scramble={timerSmartCubeAttemptScramble(event, scramble, settings.preScrT)}
             />
           )}
           </>

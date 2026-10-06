@@ -2,9 +2,9 @@
  * Pre-scramble orientation — csTimer parity (`preScr` / `preScrT`).
  *
  * A fixed cube rotation applied BEFORE the scramble: the orientation you hold
- * the cube in when you start scrambling. It only affects the rendered scramble
- * image — the scramble text stays canonical (same as csTimer, which prepends
- * the prefix inside its image module, see tools/cstimer/js/cstimer.js:244).
+ * the cube in when you start scrambling. The scramble text stays local to
+ * that grip. Training also maps the smart cube's physical target, guidance
+ * and recorded scramble to this grip; raw BLE moves stay in the device frame.
  *
  * The 24 orientations themselves live in `./cube-orientation`
  * (`CUBE_ORIENTATIONS` / `applyOrientationPrefix`) — /predict reads the same
@@ -18,7 +18,8 @@
  * Cube-shaped events only (rotations are NxN notation) — see nxnSizeForEvent.
  */
 import type { EventId } from './types';
-import { timerEventNxnSize as nxnSizeForEvent } from './event-catalog';
+import { timerEventNxnSize as nxnSizeForEvent, timerPuzzleSelection } from './event-catalog';
+import { normalizeWcaScramble } from '../normalize_wca_scramble';
 
 export interface TimerPreScrambleSettings {
   preScr: string;
@@ -39,6 +40,21 @@ const TRAINING_EVENTS = new Set<EventId>([
 
 export function isTrainingEvent(event: EventId): boolean {
   return TRAINING_EVENTS.has(event);
+}
+
+/** Smart 3x3 drills share the preview's training grip; WCA keeps its device frame. */
+export function timerSmartCubeTrainingOrientation(event: EventId, preScrT = 'z2'): string {
+  const selection = timerPuzzleSelection(event);
+  return selection.puzzle === '333' && selection.scrambleType !== 'wca'
+    ? normalizeTimerPreScrambleSettings({ preScrT }).preScrT : '';
+}
+
+/** Snapshot the performed scramble in the same physical frame as recorded BLE moves. */
+export function timerSmartCubeAttemptScramble(event: EventId, scramble: string, preScrT = 'z2'): string {
+  const orientation = timerSmartCubeTrainingOrientation(event, preScrT);
+  const selection = timerPuzzleSelection(event);
+  return selection.puzzle === '333' && selection.scrambleType !== 'wca'
+    ? normalizeWcaScramble(`${orientation} ${scramble}`) ?? scramble : scramble;
 }
 
 /** Which of the two settings applies to this event; '' when not cube-shaped. */

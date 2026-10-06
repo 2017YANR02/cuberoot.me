@@ -1,3 +1,6 @@
+import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
+import { applyMoves, fromFaceletString, toFaceletString } from './reconstruct/state';
+
 type CubeFace = 'U' | 'R' | 'F' | 'D' | 'L' | 'B';
 
 export interface CubeOrientationOption {
@@ -38,6 +41,12 @@ export const CUBE_ORIENTATIONS: readonly CubeOrientationOption[] = [
 /** 把朝向前缀拼到打乱前面(只给渲染用)。 */
 export function applyOrientationPrefix(scramble: string, prefix: string): string {
   return prefix ? `${prefix} ${scramble}` : scramble;
+}
+
+/** Rotate only a display copy; device state and face/color identities stay intact. */
+export function orientCubeFacelets(facelets: string, prefix: string): string {
+  const state = fromFaceletString(facelets);
+  return state && prefix ? toFaceletString(applyMoves(state, 3, parseScramble(prefix))) : facelets;
 }
 
 /** 整体转把「原本在 f 面的贴纸」搬到哪个面。 */

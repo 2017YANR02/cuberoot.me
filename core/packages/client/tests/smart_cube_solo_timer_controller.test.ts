@@ -67,6 +67,34 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
 }
 
 describe('SmartCubeSoloTimerController', () => {
+  it('uses yellow-top physical moves for readiness but records raw device moves at start', () => {
+    const state = harness({ event: 'zbll', id: 1, scramble: 'R U', orientation: 'z2', targetFacelets: target('L D') });
+    expect(state.controller.syncFacelets(target('')).hint?.current).toBe('R');
+    state.controller.move({ facelets: target('L'), move: 'L', timestamp: 100 });
+    expect(state.controller.syncFacelets(target('L')).hint?.current).toBe('U');
+    state.controller.move({ facelets: target('L D'), move: 'D', timestamp: 200 });
+    expect(state.phase()).toBe('ready');
+    state.controller.move({ facelets: target('L'), move: "D'", timestamp: 300 });
+    expect(state.order.slice(-3)).toEqual(['start:300', "record:D'", "deliver:D'"]);
+  });
+
+  it.each(['cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll'] as const)(
+    '%s: training notation arms only after the full scramble, then starts on the next turn',
+    (event) => {
+      const state = harness({ event, id: 1, scramble: "r U2'", targetFacelets: target("r U2'") });
+      // r is physically L plus a regrip; its following U is the device's F.
+      expect(state.controller.move({ facelets: target('L'), move: 'L', timestamp: 100 }).guidanceCompleted).toBe(false);
+      expect(state.controller.move({ facelets: target('L F'), move: 'F', timestamp: 200 }).guidanceCompleted).toBe(false);
+      expect(state.phase()).toBe('idle');
+      expect(state.controller.move({ facelets: target('L F2'), move: 'F', timestamp: 300 }).guidanceCompleted).toBe(true);
+      expect(state.phase()).toBe('ready');
+      expect(state.order.filter((entry) => entry === 'arm')).toHaveLength(1);
+      expect(state.controller.move({ facelets: target("L F2 R'"), move: "R'", timestamp: 400 })).toMatchObject({ started: true, recorded: true });
+      expect(state.phase()).toBe('running');
+      expect(state.order.slice(-3)).toEqual(['start:400', "record:R'", "deliver:R'"]);
+    },
+  );
+
   it('starts an armed attempt before recording and delivering its first turn', () => {
     const state = harness();
     state.setPhase('ready');

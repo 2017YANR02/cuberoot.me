@@ -280,11 +280,12 @@ export const TIMER_SETTING_FIELD_CONTRACTS = [
   { id: 'settings.smart-cube.auto-recap', category: 'smart-cube', copy: { en: 'Open reconstruction after each solve', zh: '结束后自动打开复盘' }, storagePath: 'autoRecap', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-recap' },
   { id: 'settings.smart-cube.auto-solution', category: 'smart-cube', copy: { en: 'Open solution after each solve', zh: '结束后自动打开解法' }, storagePath: 'autoOpenSolution', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-solution' },
 
+  { id: 'settings.scramble.training-pre-orientation', category: 'smart-cube', copy: { en: 'Training orientation', zh: '训练朝向' }, storagePath: 'preScrT', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-pre-scramble-orientation' },
+
   // Scrambles
   { id: 'settings.scramble.optimal', category: 'scramble', copy: { en: 'Optimal scramble', zh: '最优打乱' }, storagePath: 'wcaUseOptimal', value: bool, visibility: 'event-not-222', disabledWhen: 'optimal-unavailable', effect: 'persist-optimal-scramble' },
   { id: 'settings.scramble.auto-mark-wca', category: 'scramble', copy: { en: 'Auto-mark completed real scrambles', zh: '完成真题后自动打卡' }, storagePath: 'autoMarkWcaScramble', value: bool, visibility: 'wca-source', disabledWhen: 'never', effect: 'persist-auto-mark-wca' },
   { id: 'settings.scramble.pre-orientation', category: 'scramble', copy: { en: 'Pre-scramble', zh: '预打乱朝向' }, storagePath: 'preScr', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-pre-scramble-orientation' },
-  { id: 'settings.scramble.training-pre-orientation', category: 'scramble', copy: { en: 'Training pre-scramble', zh: '训练预打乱朝向' }, storagePath: 'preScrT', value: { kind: 'orientation' }, visibility: 'always', disabledWhen: 'never', effect: 'persist-training-pre-scramble-orientation' },
   { id: 'settings.scramble.color-neutral', category: 'scramble', copy: { en: 'Color neutral', zh: '颜色中立' }, storagePath: 'cnMode', value: { kind: 'enum', values: ['none', 'single', 'dual', 'six'] }, visibility: 'color-neutral-event', disabledWhen: 'never', effect: 'persist-color-neutral-mode' },
 
   // Training

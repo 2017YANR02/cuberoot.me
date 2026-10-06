@@ -14,6 +14,7 @@ export interface SmartCubeSoloTimerContext {
   id: string | number;
   scramble: string;
   targetFacelets: string | null;
+  orientation?: string;
 }
 
 export interface SmartCubeSoloMoveMetadata {
@@ -101,6 +102,7 @@ export class SmartCubeSoloTimerController<
       this.context?.event === context?.event
       && this.context?.id === context?.id
       && this.context?.scramble === context?.scramble
+      && this.context?.orientation === context?.orientation
       && this.context?.targetFacelets === context?.targetFacelets
     )) return;
     this.context = context;
@@ -109,6 +111,7 @@ export class SmartCubeSoloTimerController<
       id: context.id,
       scramble: context.scramble,
       targetFacelets: context.targetFacelets,
+      orientation: context.orientation,
     } : null);
   }
 

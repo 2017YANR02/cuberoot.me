@@ -26,12 +26,13 @@ import { TimerExportSettings, type TimerExportFormat } from '@cuberoot/timer-ui'
 import { exportTimerCstimerJson, exportTimerSolvesCsv, exportSpeedstacks } from '@cuberoot/shared/timer';
 import { TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 import { createMetronome } from '@cuberoot/timer-ui/metronome';
-import { applyOrientationPrefix, preScrambleFor } from '@cuberoot/shared/timer';
+import { applyOrientationPrefix, preScrambleFor, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { timerHidesRunningUi } from '@cuberoot/shared/timer';
 import type { TimerSettingsUpdate } from './data/timer-repository';
 import { TimerKeymapSettings, useTimerRound, TimerGoalSettings, TimerRoundSettings, TimerGoalProgress, TimerRoundPanel, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 import { normalizeTimerTrainingSettings } from '@cuberoot/shared/timer';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
   createTimerDeviceRegistry,
@@ -2478,6 +2479,12 @@ export function App({ host }: { host: InstalledAppHost }) {
         || entry.source !== scrambleSourceRef.current
         || entry.sourceIdentity !== scrambleIdentityFor(entry.source, entry.event)) return;
       attemptRef.current = mobileScrambleAttemptSnapshot(entry);
+      if (connectedSmartCubeRef.current) {
+        attemptRef.current = {
+          ...attemptRef.current,
+          scramble: timerSmartCubeAttemptScramble(entry.event, entry.scramble, storeRef.current?.settings.preScrT),
+        };
+      }
       attemptStartedAtRef.current = startedAtMs;
       attemptSplitRecorder.begin({
         bldMemo: (storeRef.current?.settings.bldMemo ?? true) && isBldEvent(entry.event),
@@ -2561,11 +2568,19 @@ export function App({ host }: { host: InstalledAppHost }) {
     return () => document.removeEventListener('pointerdown', onDocumentPointerDown);
   }, [timer.pressDown]);
 
+  const trainingOrientation = timerSmartCubeTrainingOrientation(activeEvent, store?.settings.preScrT);
+  const previousTrainingOrientationRef = useRef(trainingOrientation);
+  useLayoutEffect(() => {
+    if (previousTrainingOrientationRef.current !== trainingOrientation) {
+      previousTrainingOrientationRef.current = trainingOrientation;
+      timer.cancelArm();
+    }
+  }, [trainingOrientation, timer.cancelArm]);
   const smartCubeTarget = useMemo(() => (
     timerSupportsSmartCubeAutoTiming(activeEvent) && scramble.length > 0
-      ? smartCubeTargetFacelets(scramble)
+      ? smartCubeTargetFacelets(scramble, trainingOrientation)
       : null
-  ), [activeEvent, scramble]);
+  ), [activeEvent, scramble, trainingOrientation]);
   const [smartCubeAnchor, setSmartCubeAnchor] = useState<LiveSmartCubeAnchorSnapshot>({ moves: [], algAnchored: false });
   const [smartCubeAnchorController] = useState(() => new LiveSmartCubeAnchor({
     solve: solveMobileSmartCubeAnchor,
@@ -2673,9 +2688,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           id: currentScrambleEntry.id,
           scramble,
           targetFacelets: smartCubeTarget,
+          orientation: trainingOrientation,
         }
       : null);
-  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode]);
+  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode, trainingOrientation]);
 
   useLayoutEffect(() => {
     const connected = smartCube.phase === 'connected';
@@ -2859,7 +2875,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     ? ''
     : activeEvent === 'custom' && scramble.length === 0
       ? '—'
-      : scramble;
+      : smartCube.phase === 'connected' && timerSupportsSmartCubeAutoTiming(activeEvent)
+        ? normalizeWcaScramble(scramble) ?? scramble
+        : scramble;
 
   const invalidateCurrentScramble = useCallback(() => {
     randomScrambleGateRef.current.cancel();
@@ -4033,6 +4051,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   <div className="timer-live-cube">
                     <LiveCubeState
                       algAnchored={smartCubeAnchor.algAnchored}
+                      displayOrientation={trainingOrientation}
                       calibrateToken={smartCubeCalibration}
                       facelets={smartCube.facelets || null}
                       language={language}
@@ -4556,6 +4575,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                 )}
                 value={store!.settings}
               />
+              <TimerPreScrambleSettings only="training" value={store!.settings} onChange={updateSettings} localize={value => value[language]} />
             </section>
 
             </>}
@@ -4633,7 +4653,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </section>
             )}
 
-            {settingsCategory === 'scramble' && <TimerPreScrambleSettings value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
+            {settingsCategory === 'scramble' && <TimerPreScrambleSettings only="normal" value={store!.settings} onChange={updateSettings} localize={value => value[language]} />}
             {settingsCategory === 'scramble' && <TimerColorNeutralSetting event={activeEvent} value={store!.settings.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={value => value[language]} />}
             {settingsCategory === 'training' && <TimerRoundSettings value={store!.settings} onChange={patch => updateSettings(current => ({ round: { ...current.round, ...patch } }))} localize={value => value[language]} />}
 

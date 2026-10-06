@@ -79,6 +79,7 @@ import { useAutoReady } from '../_lib/bluetooth/auto_ready';
 import { installFakeCube } from '../_lib/bluetooth/fake_cube';
 import { mirrorForBrand, sensorBasisForBrand, type Quat } from '../_lib/bluetooth/orientation';
 import { hintScramble, type ScrambleHint } from '../_lib/bluetooth/scramble_hint';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { applyScramble, facesEqual, type CubeFaces } from '../_lib/cube/state';
 import { useNetBattleLiveCube, type NetBattleLiveCubePlayer } from '../_lib/net-battle-live';
 import type { TimerPresenceReport } from '../_lib/presence';
@@ -964,7 +965,9 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     if (!timerSupportsNetBattleSmartCube(myEvent)) return null;
     const s = myScr ?? '';
     if (!s.trim()) return null;
-    try { return applyScramble(3, s); } catch { return null; }
+    const normalized = normalizeWcaScramble(s);
+    if (normalized === null) return null;
+    try { return applyScramble(3, normalized); } catch { return null; }
   }, [myEvent, myScr]);
   const [scrambleMatch, setScrambleMatch] = useState<boolean | null>(null);
   const [scrambleHint, setScrambleHint] = useState<ScrambleHint | null>(null);
@@ -1220,7 +1223,10 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
   }
   const curResults = room.results[String(room.round)] ?? {};
   const serverNowEst = Date.now() + (offsetRef.current ?? 0);
-  const displayScramble = myScr ? formatScrambleForEvent(myEvent, myScr) : '';
+  const displayScramble = myScr ? formatScrambleForEvent(myEvent,
+    cubeConnected && timerSupportsNetBattleSmartCube(myEvent)
+      ? normalizeWcaScramble(myScr) ?? myScr
+      : myScr) : '';
   const renderRemoteCubeSlot = (
     playerId: string,
     live: NetBattleLiveCubePlayer,

@@ -34,6 +34,11 @@ import {
   TIMER_METRONOME_SETTING_FIELD_IDS,
   TIMER_RESET_SETTING_FIELD_IDS,
   TIMER_EXPORT_SETTING_FIELD_IDS,
+  TIMER_SYNC_SEED_SETTING_FIELD_IDS,
+  TIMER_RANK_SETTING_FIELD_IDS,
+  TIMER_BACKUP_SETTING_FIELD_IDS,
+  TIMER_IMPORT_SETTING_FIELD_IDS,
+  TIMER_REANALYZE_SETTING_FIELD_IDS,
 } from '@cuberoot/timer-ui';
 
 const EXPECTED_FIELDS_BY_CATEGORY = {
@@ -55,12 +60,12 @@ const EXPECTED_FIELDS_BY_CATEGORY = {
     'settings.smart-cube.record-orientation',
     'settings.smart-cube.auto-recap',
     'settings.smart-cube.auto-solution',
+    'settings.scramble.training-pre-orientation',
   ],
   scramble: [
     'settings.scramble.optimal',
     'settings.scramble.auto-mark-wca',
     'settings.scramble.pre-orientation',
-    'settings.scramble.training-pre-orientation',
     'settings.scramble.color-neutral',
   ],
   training: [
@@ -320,6 +325,11 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
       ...TIMER_METRONOME_SETTING_FIELD_IDS,
       ...TIMER_RESET_SETTING_FIELD_IDS,
       ...TIMER_EXPORT_SETTING_FIELD_IDS,
+      ...TIMER_SYNC_SEED_SETTING_FIELD_IDS,
+      ...TIMER_RANK_SETTING_FIELD_IDS,
+      ...TIMER_BACKUP_SETTING_FIELD_IDS,
+      ...TIMER_IMPORT_SETTING_FIELD_IDS,
+      ...TIMER_REANALYZE_SETTING_FIELD_IDS,
     ];
     expect(directPanelIds.filter((id) => sharedFieldIds.includes(id))).toEqual([]);
     const panelIds = [...directPanelIds];
@@ -338,12 +348,8 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
   it('keeps direct layout-only rows on a fixed whitelist instead of hiding new fields outside the manifest', () => {
     const directLabels = [...panel.matchAll(/<Row label=\{tr\(\{ zh: '([^']+)', en: '([^']+)'/g)]
       .map((match) => [match[1], match[2]]);
-    expect(directLabels).toEqual([
-      ['操作', 'Actions'],
-      ['登录', 'Sign in'],
-      ['操作', 'Actions'],
-      ['导入', 'Import'],
-    ]);
+    // Backup/import/ranking/seed rows now belong to shared settings controls.
+    expect(directLabels).toEqual([]);
     expect(panel).not.toContain('<BooleanRow');
     expect(panel).toContain('<TimerExportSettings');
   });
@@ -383,7 +389,7 @@ describe('Web SettingsPanel is a checked shared-contract consumer', () => {
     const directMutationRoots = [...panel.matchAll(/updateSettings\(\{\s*([A-Za-z][A-Za-z0-9]*)/g)]
       .map((match) => match[1]!);
     // Typography and training mutations now live in the checked shared field group.
-    expect(directMutationRoots.length).toBe(12);
+    expect(directMutationRoots.length).toBe(10);
     expect(directMutationRoots.filter((key) => !registeredRoots.has(key))).toEqual([]);
   });
 });

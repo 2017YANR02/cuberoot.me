@@ -17,7 +17,7 @@ export interface TimerSmartCubeSettingsFieldsProps {
 }
 
 const FIELDS = TIMER_SETTING_FIELD_CONTRACTS.filter((field) => (
-  field.category === 'smart-cube' && field.id !== 'settings.smart-cube.fake-cube'
+  field.category === 'smart-cube' && field.id !== 'settings.smart-cube.fake-cube' && field.storagePath !== 'preScrT'
 ));
 export const TIMER_SMART_CUBE_SETTING_FIELD_IDS = FIELDS.map((field) => field.id);
 const field = (path: keyof TimerSmartCubeSettings) => FIELDS.find((candidate) => candidate.storagePath === path)!;
