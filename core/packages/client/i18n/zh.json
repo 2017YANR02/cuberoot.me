@@ -127,6 +127,8 @@
     "editHistory": "编辑历史",
     "unknown": "未知",
     "sameRound": "同轮次还原",
+    "attemptUnavailable": "未取得成绩",
+    "retryAttempts": "重新获取轮次成绩",
     "sameCompEvent": "同场比赛还原",
     "sameScramble": "相同打乱",
     "addAttempt": "添加第 {{n}} 把（沿用本轮信息）",

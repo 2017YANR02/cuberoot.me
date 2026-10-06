@@ -69,6 +69,19 @@ describe('cubing.com migration consumers', () => {
     expect(vi.mocked(fetch).mock.calls.length).toBe(calls * 2);
     expect(await fetchCubingAttempts(comp.alias, 'clock', 'c', '2023LIUY04')).toEqual([2.81, -1, 4, 3.58, 3.48]);
   });
+  it('identifies the API client so public round requests do not receive the Node-UA HTML challenge', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (url: string, options?: RequestInit) => {
+      if (new Headers(options?.headers).get('user-agent') !== 'cuberoot.me-server/1.0 (+https://cuberoot.me)') {
+        return new Response('<html><script>verification</script></html>');
+      }
+      const path = new URL(url).pathname;
+      if (path.endsWith('/live/rounds')) return Response.json(fixture.rounds);
+      if (path.endsWith('/live/results/clock/3')) return Response.json(fixture.results['clock:3']);
+      return Response.json(fixture.competition);
+    }));
+    expect(await fetchCubingAttempts('Identified-Client', 'clock', 'f', '2023LIUY04'))
+      .toEqual([2.81, -1, 4, 3.58, 3.48]);
+  });
   it('preserves record deduplication IDs and independent watched-person PRs', async () => {
     mockResults(true);
     const events = await scanComp(comp, new Set(['刘烨宁']));
