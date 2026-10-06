@@ -62,7 +62,7 @@ export async function fetchCubingCompetitions(): Promise<CubingCompetition[]> {
   let total = 0;
   for (let attempt = 0; attempt < 2; attempt++) {
     const response = await fetch(`https://api.cubing.com/competitions?skip=0&take=${take}`, {
-      headers: { accept: 'application/json' }, signal: AbortSignal.timeout(15_000),
+      headers: { accept: 'application/json', 'User-Agent': 'cuberoot.me-server/1.0 (+https://cuberoot.me)' }, signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) throw new Error(`cubing.com competitions: HTTP ${response.status}`);
     const page = await response.json() as { data: CubingCompetition[]; total: number; skip: number; take: number };
@@ -97,7 +97,9 @@ export async function fetchCubingCompetitors(slug: string) {
 
 export async function fetchCubingJson<T>(slug: string, path = '', signal?: AbortSignal): Promise<T> {
   const response = await fetch(`https://api.cubing.com/competitions/${encodeURIComponent(slug)}${path}`, {
-    headers: { accept: 'application/json' },
+    // The public API challenges Node's default UA with HTML, even with HTTP 200.
+    // Identify our client consistently with the other server-side WCA readers.
+    headers: { accept: 'application/json', 'User-Agent': 'cuberoot.me-server/1.0 (+https://cuberoot.me)' },
     signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(15_000)]) : AbortSignal.timeout(15_000),
   });
   if (!response.ok) throw Object.assign(new Error(`cubing.com ${path || 'competition'}: HTTP ${response.status}`), { status: response.status });
