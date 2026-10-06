@@ -70,7 +70,7 @@ describe('Mobile timer settings parity ledger', () => {
     expect(TIMER_SETTING_FIELD_IDS).toHaveLength(66);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
       TIMER_SETTING_FIELD_CONTRACTS.filter((field) => field.category === category).length
-    ))).toEqual([8, 7, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 8, 4, 9, 11, 6, 15, 5]);
 
     const parity = new Set<string>(MOBILE_TIMER_SETTING_PARITY_FIELD_IDS);
     expect(TIMER_SETTING_CATEGORY_IDS.map((category) => (
@@ -79,7 +79,7 @@ describe('Mobile timer settings parity ledger', () => {
         && field.visibility !== 'development-only'
         && !parity.has(field.id)
       )).length
-    ))).toEqual([8, 6, 5, 9, 11, 6, 15, 5]);
+    ))).toEqual([8, 7, 4, 9, 11, 6, 15, 5]);
   });
 
   it('renders the shared settings UI and keeps its runtime effects wired', () => {

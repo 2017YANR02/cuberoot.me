@@ -20,6 +20,8 @@ export interface SmartCubeGuidanceContext {
   id: string | number;
   scramble: string;
   targetFacelets: string;
+  /** Display-to-device frame; raw device states and solver paths stay physical. */
+  orientation?: string;
 }
 
 const EMPTY_STATE: SmartCubeGuidanceState = {
@@ -94,6 +96,7 @@ export function createSmartCubeGuidanceController(deps: {
         targetFacelets,
         currentFacelets,
         correction,
+        context.orientation,
       );
       wanted = verification.needsFixup;
       if (!verification.correctionActive) correction = null;
@@ -127,6 +130,7 @@ export function createSmartCubeGuidanceController(deps: {
       context.targetFacelets,
       facelets,
       correction,
+      context.orientation,
     );
     wanted = verification.needsFixup;
     if (verification.match) {
@@ -173,6 +177,7 @@ export function createSmartCubeGuidanceController(deps: {
       if (disposed
         || (context?.id === next?.id
           && context?.scramble === next?.scramble
+          && context?.orientation === next?.orientation
           && context?.targetFacelets === next?.targetFacelets)) return;
       context = next;
       generation++;

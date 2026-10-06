@@ -99,10 +99,11 @@ describe('scramble hinting', () => {
     expect(h.current).toBe('R');
   });
 
-  it('refuses scrambles with moves a smart cube cannot report', () => {
-    expect(parseHintableScramble("R Rw U")).toBeNull();   // wide
-    expect(parseHintableScramble("R M U")).toBeNull();    // slice
-    expect(parseHintableScramble("R x U")).toBeNull();    // rotation
+  it('maps training notation to physical turns and refuses unsupported input', () => {
+    expect(parseHintableScramble("R Rw U")).toHaveLength(3);
+    expect(parseHintableScramble("R M U")).toHaveLength(4);
+    expect(parseHintableScramble("R x U")).toHaveLength(2);
+    expect(parseHintableScramble('R potato U')).toBeNull();
     expect(parseHintableScramble('')).toBeNull();
     expect(parseHintableScramble("R U2 F'")).toHaveLength(3);
   });

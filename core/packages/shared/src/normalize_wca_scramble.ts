@@ -35,19 +35,29 @@ function rotate(cur: Record<Face, Face>, token: string): Record<Face, Face> {
   return next;
 }
 
-/** Reduce 3x3 wide turns and cube rotations to face turns in a fixed frame. */
+/** Reduce 3x3 wide/slice turns and rotations to outer turns in a fixed frame. */
 export function normalizeWcaScramble(scramble: string): string | null {
   const out: string[] = [];
   let cur: Record<Face, Face> = { U: 'U', D: 'D', F: 'F', B: 'B', R: 'R', L: 'L' };
   const { moves, junk } = tokenizeMoves(flattenAlg(scramble));
   if (junk.length) return null;
   for (const move of moves) {
-    if (move.layer) return null;
+    // WCA's explicit two-layer spelling is equivalent to Rw/r on a 3x3.
+    if (move.layer && !(move.layer === '2' && /^(?:[URFDLB]w|[urfdlb])$/.test(move.family))) return null;
     const quarter = ((move.amount % 4) + 4) % 4;
     if (!quarter) continue;
     const suffix = quarter === 2 ? '2' : quarter === 3 ? "'" : '';
     const token = `${move.family}${suffix}`;
     if (ROT_FACE_PERM[token]) { cur = rotate(cur, token); continue; }
+    if (move.kind === 'slice') {
+      // M = R L' x', E = U D' y', S = B F' z.
+      const slice = { M: ['R', 'L', "x'"], E: ['U', 'D', "y'"], S: ['B', 'F', 'z'] }[move.family.toUpperCase()];
+      if (!slice) return null;
+      out.push(cur[slice[0] as Face] + suffix);
+      out.push(cur[slice[1] as Face] + (quarter === 2 ? '2' : quarter === 1 ? "'" : ''));
+      for (let i = 0; i < quarter; i++) cur = rotate(cur, slice[2]);
+      continue;
+    }
     const wide = WIDE_DECOMP[token];
     if (wide) {
       out.push(cur[wide[0][0] as Face] + wide[0].slice(1));

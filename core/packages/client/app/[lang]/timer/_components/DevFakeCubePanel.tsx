@@ -29,6 +29,7 @@
  */
 
 import { useEffect, useRef, useState, type JSX } from 'react';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
@@ -200,7 +201,7 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
       </div>
 
       <div className="devcube-row">
-        <button type="button" className="devcube-btn" onClick={() => run(() => api()!.apply(scramble))}>
+        <button type="button" className="devcube-btn" onClick={() => run(() => api()!.apply(normalizeWcaScramble(scramble) ?? scramble))}>
           {tr({ zh: '按打乱拧', en: 'Apply scramble' })}
         </button>
         <button type="button" className="devcube-btn" onClick={() => run(() => api()!.apply(randomScramble()))}>
