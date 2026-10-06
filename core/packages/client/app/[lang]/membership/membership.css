@@ -226,8 +226,10 @@
 }
 .mem-store-actions .mem-store-secondary { flex: 1 1 200px; }
 .mem-store-secondary:hover:not(:disabled) { background: var(--muted); }
-.mem-store button:disabled { opacity: 0.55; cursor: not-allowed; }
-.mem-store button:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.mem-store .mem-plan-cta:disabled,
+.mem-store .mem-store-secondary:disabled { opacity: 0.55; cursor: not-allowed; }
+.mem-store .mem-plan-cta:focus-visible,
+.mem-store .mem-store-secondary:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .mem-store-message {
   margin: 16px 0 0;
   padding: 12px 14px;
