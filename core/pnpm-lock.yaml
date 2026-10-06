@@ -512,6 +512,9 @@ importers:
       cubing:
         specifier: ^0.63.3
         version: 0.63.3(patch_hash=026724bd89e53a602c720d772bbd4c11ebe3c4040d840ba0c7df469b5244c9f6)
+      fake-indexeddb:
+        specifier: ^6.2.5
+        version: 6.2.5
       lucide-react:
         specifier: 1.8.0
         version: 1.8.0(react@19.2.4)
@@ -972,6 +975,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      sql.js:
+        specifier: ^1.14.2
+        version: 1.14.2
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -979,6 +985,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.14)
+      '@types/sql.js':
+        specifier: ^1.4.11
+        version: 1.4.11
       opencc-js:
         specifier: ^1.0.5
         version: 1.0.5

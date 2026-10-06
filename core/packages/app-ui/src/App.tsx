@@ -1,3 +1,8 @@
+import { createTimerBackupClient } from '@cuberoot/shared/timer/backup-client';
+import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';
+import { timerRankHost, getWcaPerson } from './data/timer-rank';
+import { TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerReplayImportModal } from '@cuberoot/timer-ui';
+import { readTimerReplay, createTimerReplayShare } from '@cuberoot/shared/timer/replay-client';
 import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { TimerHistoryWorkspace, TimerStatsModal, type TimerHistoryWorkspaceHandle } from '@cuberoot/timer-ui';
 import { createInstalledBattleScrambleProvider } from './data/local-battle-scramble';
@@ -332,6 +337,7 @@ import {
 } from './smart-cube/fixup';
 
 const SITE_ORIGIN = 'https://cuberoot.me';
+const ReconstructModal = lazy(() => import('@cuberoot/timer-ui/reconstruct-modal'));
 const ReconstructReport = lazy(() => import('@cuberoot/timer-ui/reconstruct-report'));
 const StageSolverDialog = lazy(() => import('./StageSolverDialog'));
 const SolveRecap = lazy(() => import('@cuberoot/timer-ui/solve-recap'));
@@ -515,6 +521,10 @@ export function App({ host }: { host: InstalledAppHost }) {
   const historyWorkspaceRef = useRef<TimerHistoryWorkspaceHandle>(null);
   const [historyTab, setHistoryTab] = useState<'history' | 'stats' | 'chart'>('history');
   const [statsOpen, setStatsOpen] = useState(false);
+  const [replayImportOpen, setReplayImportOpen] = useState(false);
+  const [replaySolve, setReplaySolve] = useState<Solve | null>(null);
+  const replayBlocking = replayImportOpen || replaySolve !== null;
+  const replayBlockingRef = useRef(false); replayBlockingRef.current = replayBlocking;
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const historyModalOpenRef = useRef(false); historyModalOpenRef.current = historyModalOpen;
   const statsOpenRef = useRef(false); statsOpenRef.current = statsOpen;
@@ -556,7 +566,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const timerPhaseRef = useRef<TimerPhase>('idle');
   const cancelTimerArmRef = useRef<() => boolean>(() => false);
   const timerContextMutationBusyRef = useRef(false);
-  const timerOverlayBlocking = openOverlay !== null || statsOpen || historyModalOpen;
+  const timerOverlayBlocking = openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
   const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay);
   const wcaMarksOverlayIdentityRef = useRef<string | null>(null);
   const moreOpenRef = useRef(moreOpen);
@@ -2141,6 +2151,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     let removeListener: (() => Promise<void>) | undefined;
     void host.addBackButtonListener(() => {
       const current = viewRef.current;
+      if (replayBlockingRef.current) { setReplayImportOpen(false); setReplaySolve(null); return; }
       if (statsOpenRef.current) { setStatsOpen(false); return; }
       if (current === 'history' && openOverlayRef.current === null && historyWorkspaceRef.current?.dismiss()) return;
       if (current === 'timer' && timerModeRef.current !== 1 && openOverlayRef.current === null) {
@@ -2436,7 +2447,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       return;
     }
     const canReceiveStart = timerMode === 1 && timerVisible && view !== 'settings'
-      && !timerContextMutationBusy && !statsOpen && !historyModalOpen && attemptCanStartRef.current;
+      && !timerContextMutationBusy && !statsOpen && !historyModalOpen && !replayBlocking && attemptCanStartRef.current;
     if (canReceiveStart && !externalAttemptRef.current
       && (event.state === 'HANDS_ON' || event.state === 'GET_SET' || event.state === 'INSPECTION' || event.state === 'RUNNING')) {
       const sessionId = storeRef.current?.database.activeSessionId;
@@ -3023,10 +3034,42 @@ export function App({ host }: { host: InstalledAppHost }) {
     setView('timer');
   }, [announce, applyScrambleHistory, closeHistorySolveDetail, copy.finishAttemptFirst, scrambleIdentityFor, timer.cancelArm, timerContextMutationBusy]);
 
+  const rankWcaId = activeAuthSession?.user.wcaId?.trim().toUpperCase() ?? '';
+  const [rankPersonCountry, setRankPersonCountry] = useState<{ id: string; country: string } | null>(null);
+  useEffect(() => {
+    let live = true;
+    if (rankWcaId) void getWcaPerson(rankWcaId).then(person => { if (live) setRankPersonCountry({ id: rankWcaId, country: person?.country_iso2 ?? '' }); });
+    return () => { live = false; };
+  }, [rankWcaId]);
+  const rankAccountCountry = (rankPersonCountry?.id === rankWcaId ? rankPersonCountry.country : '') || '';
+  const rankCountry = rankAccountCountry || store?.settings.rankCountry || '';
+  const rankMs = timer.machine.lastMs;
+  const rankVisible = store?.settings.timingEnabled && (timer.machine.phase === 'stopped' || (timer.machine.phase === 'holding' && timer.machine.inspectionStartedAtMs === null));
+  const rankCentis = rankVisible && rankMs !== null && lastPenalty !== 'DNF' && lastPenalty !== 'DNS' ? Math.round((rankMs + (lastPenalty === '+2' ? 2000 : 0)) / 10) : null;
+  const backupTokenRef = useRef(activeAuthSession?.token); backupTokenRef.current = activeAuthSession?.token;
+  const backupClient = createTimerBackupClient({ apiUrl: mobileApiUrl, fetcher: fetch,
+    headers: () => ({ 'Content-Type': 'application/json', Authorization: 'Bearer ' + activeAuthSession?.token }),
+  });
+  const canCommitSettingsData = () => viewRef.current === 'settings' && timerCanSwitchScramble(timerPhaseRef.current);
+  const restoreDatabaseBackup = async (load: () => Promise<TimerStoreData>) => {
+    if (!canCommitSettingsData() || !beginTimerContextMutation()) throw new Error('Timer busy');
+    timer.cancelArm();
+    const revision = storeSnapshotGateRef.current.beginMutation();
+    try {
+      const data = await load();
+      commitImportedStore(revision, data);
+      setCanUndoImport(await repository.hasImportRecovery());
+    } finally { endTimerContextMutation(); }
+  };
+
   const reconstructionHost = {
     localize: <T,>(text: { en: T; zh: T }) => text[language],
     writeClipboardText: host.writeClipboardText,
-    replayUrl: (solve: Solve) => encodeReplayUrl(solve, `${SITE_ORIGIN}${language === 'zh' ? '/zh' : ''}/timer`),
+    replayUrl: async (solve: Solve) => {
+      const base = SITE_ORIGIN + (language === 'zh' ? '/zh' : '') + '/timer';
+      const id = await createTimerReplayShare(solve, activeAuthSession?.token, { apiUrl: mobileApiUrl, fetcher: fetch });
+      return id ? base + '?share=' + id : encodeReplayUrl(solve, base);
+    },
     recordGyro: store?.settings.recordGyro ?? true,
     onEnableGyro: () => updateSettings({ recordGyro: true }),
   };
@@ -3360,6 +3403,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     'more.bld-helper': () => openToolsRoute('/alg/3bld/helper'),
     'more.fullscreen': toggleTimerFullscreen,
     'more.manual-entry': openManualEntry,
+    'more.replay': () => setReplayImportOpen(true),
     'more.solver': () => openToolsRoute('/scramble/solver?event=333'),
     'more.bulk': () => openToolsRoute('/scramble/gen?mode=batch'),
     'more.print': () => printControllerRef.current?.print(),
@@ -3382,7 +3426,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       viewRef.current === 'settings'
       || !timerVisibleRef.current
       || openOverlayRef.current !== null
-      || statsOpenRef.current || historyModalOpenRef.current
+      || statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current
       || moreOpenRef.current
       || manualEntryOpenRef.current
         ? 'blocking' as const
@@ -3920,6 +3964,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               devices={smartCubeDeviceCenter}
             >
               <TimingSurface
+                digitsCorner={solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />}
                 className={targetFeedbackClass}
                 ariaLabel={copy.timer}
                 colorClass={`${timerColorClass} tf-${store!.settings.timerFont}`}
@@ -4422,6 +4467,7 @@ export function App({ host }: { host: InstalledAppHost }) {
               </label>
             </div>
 
+            <TimerRankSettings language={language} scopes={store!.settings.rankScopes} country={store!.settings.rankCountry} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} login={!activeAuthSession ? () => void auth.login() : undefined} />
             <TimerTypographySettings value={store!.settings} language={language} onChange={updateSettings} />
 
             </>}
@@ -4615,14 +4661,47 @@ export function App({ host }: { host: InstalledAppHost }) {
               <h2>{copy.data}</h2>
               <p>{solves.length} {copy.dataCount}</p>
               <div className="action-row">
-                <label className="secondary-action">
-                  {copy.importData}
-                  <input accept="application/json,.json" hidden onChange={importData} type="file" />
-                </label>
                 {canUndoImport && (
                   <button className="secondary-action" onClick={undoImport} type="button">{copy.undoImport}</button>
                 )}
               </div>
+              <TimerBackupSettings language={language} every={store!.settings.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
+                disabled={!sourceControlsEnabled} owner={activeAuthSession?.token ?? null} login={() => void auth.login()}
+                local={{ create: () => repository.createBackup(), list: () => repository.listBackups(), restore: (key, canCommit) => restoreDatabaseBackup(() => repository.restoreBackup(key, () => canCommit() && canCommitSettingsData())) }}
+                cloud={{ meta: () => backupClient.meta(), upload: async () => {
+                  const token = activeAuthSession?.token;
+                  const data = await repository.load();
+                  if (!token || token !== backupTokenRef.current) throw new Error('Account changed');
+                  return backupClient.upload(JSON.stringify(data.database));
+                }, restore: async canCommit => {
+                  const token = activeAuthSession?.token;
+                  const data = await backupClient.download();
+                  if (!token || token !== backupTokenRef.current) throw new Error('Account changed');
+                  if (!data) return false;
+                  await restoreDatabaseBackup(() => repository.importJson(data.blob, () => canCommit() && canCommitSettingsData() && token === backupTokenRef.current));
+                  return true;
+                } }} />
+              <TimerImportSettings language={language} disabled={!sourceControlsEnabled} importSessions={async (sessions, canCommit) => {
+                await commitSessionMutation(() => repository.importSessions(sessions, () => canCommit() && canCommitSettingsData()));
+              }} importBackup={async (text, canCommit) => {
+                const preview = await repository.previewImport(text);
+                if (!window.confirm(copy.importConfirm(preview.incoming.solveCount, preview.current.solveCount))) return false;
+                if (!beginTimerContextMutation()) throw new Error('Timer busy');
+                timer.cancelArm();
+                const revision = storeSnapshotGateRef.current.beginMutation();
+                try {
+                  const data = await repository.importJson(text, () => canCommit() && canCommitSettingsData());
+                  commitImportedStore(revision, data);
+                  setCanUndoImport(await repository.hasImportRecovery());
+                  return true;
+                } finally { endTimerContextMutation(); }
+              }} />
+              <TimerReanalyzeSettings language={language} disabled={!sourceControlsEnabled} run={async () => {
+                const revision = storeSnapshotGateRef.current.beginMutation();
+                const result = await repository.reanalyze(store!.database.activeSessionId);
+                storeSnapshotGateRef.current.commitIfLatest(revision, result.data, applyStoreSnapshot);
+                return result;
+              }} />
               <TimerExportSettings onExport={exportFormat} localize={value => value[language]} />
             </div>
 
@@ -4648,6 +4727,12 @@ export function App({ host }: { host: InstalledAppHost }) {
         )}
       </TimerWorkspace>
 
+      {replayImportOpen && <TimerReplayImportModal language={language} onClose={() => setReplayImportOpen(false)}
+        load={(input, signal) => readTimerReplay(input, Object.values(store!.database.dataBySession[store!.database.activeSessionId] ?? {}).flat(), { apiUrl: mobileApiUrl, fetcher: fetch }, signal)}
+        onOpen={setReplaySolve} />}
+      {replaySolve && <Suspense fallback={null}><ReconstructModal solve={replaySolve} history={store!.database.dataBySession[store!.database.activeSessionId]?.[replaySolve.event] ?? []}
+        host={reconstructionHost} isZh={language === 'zh'} onUseScramble={useReconstructionScramble}
+        onReconFeedback={reconOk => setReplaySolve(current => current ? { ...current, reconOk } : null)} onClose={() => setReplaySolve(null)} /></Suspense>}
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
           availableDevices={smartCube.availableDevices}

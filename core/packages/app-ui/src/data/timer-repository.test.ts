@@ -70,6 +70,29 @@ function repository(driver = new MemoryDriver()) {
 }
 
 describe('mobile timer repository contract', () => {
+  it('checks import ownership inside the repository queue before committing', async () => {
+    const { repo, driver } = repository();
+    const before = await repo.load();
+    const text = await repo.exportJson();
+    const count = driver.writeCount;
+    await expect(repo.importJson(text, () => false)).rejects.toThrow('Import cancelled');
+    expect(await repo.load()).toEqual(before);
+    expect(driver.writeCount).toBe(count);
+  });
+  it('appends imported groups atomically, keeps empty groups and leaves the original group active', async () => {
+    const { repo, driver } = repository(); const before = await repo.load();
+    const imported = [{ name: 'Imported', event: '222' as const, solves: [{ id:'incoming', event:'333' as const, timeMs: 1000, penalty:'ok' as const, ts: 10, scramble:'R' }] }, { name: 'Empty', solves: [] }];
+    driver.failWrites = true;
+    await expect(repo.importSessions(imported)).rejects.toThrow();
+    expect(await repo.load()).toEqual(before);
+    driver.failWrites = false;
+    const after = await repo.importSessions(imported);
+    expect(after.database.activeSessionId).toBe(before.database.activeSessionId);
+    expect(after.database.sessions.map(session => session.name)).toEqual(['Default','Imported','Empty']);
+    expect(after.database.dataBySession[after.database.sessions[1].id]['222']?.[0].event).toBe('222');
+    expect(after.database.dataBySession[after.database.sessions[2].id]).toEqual({});
+  });
+
   it('saves a recorded online attempt in its original session and only updates its penalty on retry', async () => {
     const { repo } = repository();
     const original = (await repo.load()).database.activeSessionId;

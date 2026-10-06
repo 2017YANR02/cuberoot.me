@@ -1398,3 +1398,13 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 完整统计和比较弹窗都纳入安装端键盘、手势、智能魔方及外部设备起表门禁；Back 优先关闭弹窗和当前可见临时模式。保留外部计时器自身连接面板内的计时行为；切历史/统计/图表清理临时选择。
 - 当前证据：针对删除失败、A→B→A、固定原分组原子写、罚时缓存和统计弹窗阻止设备起表新增回归，既有历史/统计、仓储、Android Back、架构与 catalog 定向检查通过；shared build、App/client typecheck 通过。Chrome 两端同一 14 条成绩 fixture，390/320px、系统/手动深浅主题无页面横向溢出和运行错误；320px 英文统计标签溢出已修。独立源码反例审查完成。
 - Mobile build/双平台 sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows native 未在本 Mac 执行，Harmony HAP 既有 Hvigor 版本阻断未改变；本轮没有 OPPO/iOS/Harmony 真机或 Windows/macOS 实体完整操作验收，没有签名、推送或发布。总体继续 NOT COMPLETE。
+
+### 2026-10-06：更多复盘、数据设置与停表排名（顺序 5，本地增量）
+
+- Web/App 的 replay URL/token/短链读取、载荷校验、动作与姿态恢复共用 shared；粘贴弹窗和完整复盘窗口共用 timer-ui。安装端补齐 More 的最后一个 replay 动作，当前 12/12 个入口都有真实 effect；支持使用该打乱和临时反馈，打开外来回放不自动保存成绩，关闭后迟到请求不能重开窗口。登录分享复用既有服务端短链，匿名分享仍用内嵌载荷。
+- csTimer JSON 与 dcTimer SQLite 的解析、分组/项目匹配及追加计划进入 shared，Web/App 共用导入映射 UI；保留原分组与空组，未识别项目必须完成映射。CubeRoot 备份覆盖前确认，App 保留恢复点；追加导入只在一次真实持久化成功后刷新。重新分析固定启动时分组，共用动作分析和阶段比较，避免切组后写入其他分组。
+- 本机自动备份间隔、最近 10 份备份、手动创建/恢复与账号云备份使用共享设置 UI、HTTP 契约。云备份只传既有数据库形态，不包含 App 设置，不等同自动多设备同步。卸载设置、切换账号或计时起表后，仓储排队和 IndexedDB 打开后的迟到恢复都在 put 前再次检查；手动备份失败不再提示成功。
+- 停表 PR/NR/CR/WR 显示、查询缓存、国家映射/搜索和国家输入框已共享。App 接入范围/地区持久化与实际排名；排除 DNF/DNS、FMC/多盲时长和未计时练习，+2 按生效成绩比较；切项目/成绩/国家时不保留旧响应。Web 国家置顶仍由原账号 adapter 注入，App 本轮接地区选择，未增加国家置顶偏好适配。
+- 设置 effect ledger 从 49 增到 62；相对 Web 当前 65 个 consumer，仍缺同步种子及其计数 2 个生产字段、fake-cube 1 个开发字段。同步种子涉及 Web 同步 registry 与 App 异步 provider 的算法/RNG/消费顺序，尚未迁移；因此顺序 5 和完整设置 parity 均不能记为全部完成。
+- 当前验证：shared build、App/client typecheck；Web replay/import/reanalysis/rank、架构/catalog 定向回归，App 仓储/设备起表/More/设置账本及真实 fake-indexeddb 的取消写入、备份间隔/保留验证通过。Chrome 隔离上下文实测两端粘贴打开复盘、本机备份/列表、排名地区搜索，390/320px 页面及弹窗无横向溢出、无运行异常；未改用户浏览器资料或上传真实云备份。
+- Mobile build 与双平台 Capacitor sync、Android debug APK、iOS Simulator unsigned build、macOS unsigned debug app、Harmony Web build 通过。Windows native 未在本 Mac 执行，Harmony HAP 的既有工具链差异本轮未重试；未做五平台实体设备、真实账号云恢复/升级验收，未签名、未推送、未发布。总体维持 NOT COMPLETE。

@@ -232,77 +232,8 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-/* csTimer per-session import list */
-.cstimer-import-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-.cstimer-import-list:has(.pp-popup) {
-  max-height: none;
-  overflow: visible;
-}
-/* Keep menus in the scrollable dialog's flow so all choices remain reachable. */
-.cstimer-target-picker .pp,
-.bulk-controls .pp {
-  flex-direction: column;
-  align-items: flex-start;
-}
-.cstimer-target-picker .pp-popup,
-.bulk-controls .pp-popup {
-  position: relative;
-  top: auto;
-  margin-top: 6px;
-}
-.cstimer-import-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px;
-  background: var(--popover);
-  border: 1px solid var(--shell-divider);
-  border-radius: 4px;
-}
-.cstimer-import-info {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  flex: 1;
-}
-.cstimer-import-name {
-  color: var(--foreground);
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.cstimer-target-picker {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-}
-.cstimer-target-select {
-  width: fit-content;
-  min-height: 34px;
-  padding: 4px 8px;
-  border: 1px solid var(--input);
-  border-radius: 4px;
-  background: var(--background);
-  color: var(--foreground);
-  font: inherit;
-}
-.cstimer-import-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.bulk-controls .pp { flex-direction: column; align-items: flex-start; }
+.bulk-controls .pp-popup { position: relative; inset: auto; margin-top: 6px; }
 /* wca-source.css gives borders to `input[type="number"]` and the select, but
    not to text inputs — so 目标时间 / 观察提示音 / 同步种子 / 轮次时限 all render
    as bare text with no box, which reads as a label rather than something you
@@ -316,63 +247,8 @@
   padding: 4px 8px;
   font-size: 13px;
 }
-.rank-scope-options {
-  display: inline-flex;
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.settings-modal .settings-row-control .rank-scope-option {
-  justify-content: center;
-  border: 0;
-  border-radius: 0;
-  outline-offset: -2px;
-}
-.settings-modal .settings-row-control .rank-scope-option + .rank-scope-option {
-  border-left: 1px solid var(--border-default);
-}
-.settings-modal .settings-row-control .rank-scope-option[aria-pressed="true"] {
-  background: var(--accent);
-  color: var(--accent-foreground);
-}
-.settings-backup-list {
-  margin: 8px 0 0 calc(190px + 22px);
-  border-top: 1px solid var(--border-default);
-}
-.settings-backup-list > p {
-  margin: 12px 0 0;
-  color: var(--muted-foreground);
-  font-size: 12px;
-}
-.settings-backup-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border-default);
-}
-.settings-backup-row > span { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.settings-backup-row strong { font-size: 12px; font-weight: 550; }
-.settings-backup-row small { color: var(--muted-foreground); font-size: 11px; }
-.settings-backup-row .hint-btn {
-  min-height: 34px;
-  padding: 5px 10px;
-  border: 1px solid var(--border-default);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-
 @media (max-width: 540px) {
   .more-menu-item { min-height: 44px; padding-block: 10px; }
-  .settings-backup-list { margin-left: 0; }
-  .settings-backup-row .hint-btn { min-height: 44px; }
-  .settings-modal .cstimer-import-row { align-items: flex-start; flex-direction: column; }
-  .settings-modal .cstimer-target-picker { align-items: flex-start; flex-direction: column; }
-  .settings-modal .cstimer-target-select { min-height: 44px; }
-  .settings-modal .cstimer-import-actions { width: 100%; }
-  .settings-modal .cstimer-import-actions .hint-btn { flex: 1; min-height: 44px; }
 }
 
 /* ── Shortcut (keymap) editor ─────────────────────────────

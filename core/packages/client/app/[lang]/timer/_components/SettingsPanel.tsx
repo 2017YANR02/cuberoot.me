@@ -1,45 +1,29 @@
 'use client';
-import { TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
+import { TimerRankSettings, TimerBackupSettings, TimerImportSettings, TimerReanalyzeSettings, TimerDisplaySettings, TimerSoundSettings, TimerMetronomeSettings } from '@cuberoot/timer-ui';
 
 /**
  * Settings panel — modal launched from the topbar gear button.
  */
 
 import { useEffect, useId, useRef, useState } from 'react';
-import {
-  CloudDownload,
-  CloudUpload,
-  LogIn,
-  RefreshCw,
-
-} from 'lucide-react';
 import { getSettings, resetSettings, updateSettings, useSettings } from '../_lib/settings';
 import { TimerKeymapSettings, TimerGoalSettings, TimerRoundSettings, TimerSettingsPanel, TimerTypographySettings } from '@cuberoot/timer-ui';
 import { warmupSound, play, playInspectionBeep } from '../_lib/sound';
 import { isVoiceAvailable } from '../_lib/sound/voice';
 import { getSeedCounter, resetSeedCounter } from '../_lib/scramble';
-import {
-  exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups,
-  importNamedSessions, loadAll, pushBackup, restoreBackup,
-  type BackupEntry,
-} from '../_lib/storage/db';
-import { parseCstimerExport } from '../_lib/storage/import_cstimer';
-import { isDctimerDatabase, parseDctimerExport } from '../_lib/storage/import_dctimer';
-import {
-  planTimerImport,
-  type TimerImportSession,
-  type TimerImportSource,
-} from '../_lib/storage/import_timer';
+import { exportJson, exportSpeedstacks, importJson, inspectImportJson, listBackups, importNamedSessions, loadAll, pushBackup, restoreBackup } from '../_lib/storage/db';
+
+
+
 import { exportCstimerJson } from '../_lib/storage/export_cstimer';
 import { exportSolvesCsv } from '../_lib/storage/export_csv';
-import { uploadBackup, restoreFromCloud, fetchBackupMeta, formatSyncTime, type CloudBackupMeta } from '../_lib/storage/cloud';
-import { useAuthStore } from '@/lib/auth-store';
+import { uploadBackup, restoreFromCloud, fetchBackupMeta } from '../_lib/storage/cloud';
+import { getSessionToken, useAuthStore } from '@/lib/auth-store';
 import { useRankCountry } from '../_shared/use-rank-country';
 import { reanalyzeAll } from '../_lib/storage/reanalyze';
-import { eventInfo, type EventId } from '../_lib/types';
-import { TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/shared/timer';
+import { type EventId } from '../_lib/types';
+
 import {
-  TIMER_RANK_SCOPES,
   timerSettingFieldContract,
   timerSettingFieldStates,
   timerWcaScrambleEventId,
@@ -47,15 +31,7 @@ import {
   type TimerSettingCategoryId,
   type TimerSettingFieldId,
 } from '@cuberoot/shared/timer';
-import {
-  TimerAttemptSplitSettings,
-  TimerPuzzlePicker,
-  TimerScramblePreviewSettings,
-  TimerBooleanSettingRow,
-  TimerTimingSettingsSections,
-  TimerSmartCubeSettingsFields,
-  type TimerBooleanControlProps,
-} from '@cuberoot/timer-ui';
+import { TimerAttemptSplitSettings, TimerScramblePreviewSettings, TimerBooleanSettingRow, TimerTimingSettingsSections, TimerSmartCubeSettingsFields, type TimerBooleanControlProps } from '@cuberoot/timer-ui';
 import { canUseRandomOptimal333 } from '../_lib/scramble/optimal333_pool';
 import { TimerPreScrambleSettings, TimerColorNeutralSetting } from '@cuberoot/timer-ui';
 import { useMetronome, setMetronome, tapTempo } from '@/lib/metronome';
@@ -118,104 +94,17 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
   const optimalAvailable = s.scrambleSource === 'wca'
     ? hasOptimal
     : canUseRandomOptimal333(event, s.scrambleSource, !!optimalUser, s.syncSeed);
-  // ── External timer import state ──
-  const timerFileRef = useRef<HTMLInputElement | null>(null);
-  const [timerImportSource, setTimerImportSource] = useState<TimerImportSource | null>(null);
-  const [timerImportSessions, setTimerImportSessions] = useState<TimerImportSession[] | null>(null);
-  const [timerImportTargets, setTimerImportTargets] = useState<Record<string, EventId>>({});
-  const [timerBulkImported, setTimerBulkImported] = useState(false);
-  const [timerImportBusy, setTimerImportBusy] = useState(false);
-
-  const timerImportPlan = timerImportSessions
-    ? planTimerImport(timerImportSessions, timerImportTargets)
-    : null;
-  const timerImportSolveCount = timerImportPlan?.solveCount ?? 0;
-  const timerImportUnresolvedCount = timerImportPlan?.unresolvedSessionIds.length ?? 0;
-
   // ── Import / export status ──
   const [ioMsg, setIoMsg] = useState<string | null>(null);
   const ioMsgTimerRef = useRef<number | null>(null);
-  const [backupEntries, setBackupEntries] = useState<BackupEntry[] | null>(null);
 
   // ── Cloud backup state ──
   const user = useAuthStore((st) => st.user);
   const { accountCountry: rankAccountCountry } = useRankCountry();
   const login = useAuthStore((st) => st.login);
-  const [cloudMsg, setCloudMsg] = useState<string | null>(null);
-  const cloudMsgTimerRef = useRef<number | null>(null);
-  const [cloudBusy, setCloudBusy] = useState(false);
-  const [cloudMeta, setCloudMeta] = useState<CloudBackupMeta | null>(null);
-
-  // Read the cloud snapshot metadata once when logged in (lightweight, no blob).
-  useEffect(() => {
-    if (!user) { setCloudMeta(null); return; }
-    let alive = true;
-    fetchBackupMeta()
-      .then((m) => { if (alive) setCloudMeta(m); })
-      .catch(() => { if (alive) setCloudMeta({ exists: false }); });
-    return () => { alive = false; };
-  }, [user]);
-
-  function flashCloudMsg(msg: string): void {
-    setCloudMsg(msg);
-    if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
-    cloudMsgTimerRef.current = window.setTimeout(() => {
-      setCloudMsg(null);
-      cloudMsgTimerRef.current = null;
-    }, 2500);
-  }
-
-  async function onCloudUpload(): Promise<void> {
-    setCloudBusy(true);
-    try {
-      const { updatedAt, solveCount, byteSize } = await uploadBackup();
-      setCloudMeta({ exists: true, solveCount, updatedAt, byteSize });
-      flashCloudMsg(tr({ zh: `已上传 ${solveCount} 条到云端`, en: `Uploaded ${solveCount} solves` }));
-    } catch {
-      flashCloudMsg(tr({ zh: '上传失败,请重试', en: 'Upload failed, try again'
-    }));
-    } finally {
-      setCloudBusy(false);
-    }
-  }
-
-  async function onCloudRestore(): Promise<void> {
-    const ok = window.confirm(tr({ zh: '将用云端备份覆盖本地全部成绩,本地未上传的成绩会丢失。确定继续?', en: 'This replaces ALL local solves with the cloud backup. Unsynced local solves will be lost. Continue?'
-    }));
-    if (!ok) return;
-    setCloudBusy(true);
-    try {
-      const result = await restoreFromCloud();
-      if (result === 'ok') {
-        onDataReplaced?.();
-        flashCloudMsg(tr({ zh: '已从云端恢复', en: 'Restored from cloud'
-        }));
-      } else if (result === 'invalid') {
-        flashCloudMsg(tr({ zh: '云端备份损坏,无法恢复', en: 'Cloud backup is corrupt'
-        }));
-      } else {
-        flashCloudMsg(tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
-        }));
-      }
-    } catch {
-      flashCloudMsg(tr({ zh: '恢复失败,请重试', en: 'Restore failed, try again'
-    }));
-    } finally {
-      setCloudBusy(false);
-    }
-  }
-
-  // ── Reanalyze stage data state ──
-  const [reanalyzeBusy, setReanalyzeBusy] = useState(false);
-  const [reanalyzeProgress, setReanalyzeProgress] = useState<{ scanned: number; total: number } | null>(null);
-  const [reanalyzeMsg, setReanalyzeMsg] = useState<string | null>(null);
-  const reanalyzeMsgTimerRef = useRef<number | null>(null);
-
   useEffect(() => {
     return () => {
       if (ioMsgTimerRef.current !== null) window.clearTimeout(ioMsgTimerRef.current);
-      if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
-      if (cloudMsgTimerRef.current !== null) window.clearTimeout(cloudMsgTimerRef.current);
     };
   }, []);
 
@@ -226,34 +115,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
       setIoMsg(null);
       ioMsgTimerRef.current = null;
     }, 2000);
-  }
-
-  async function onReanalyze(): Promise<void> {
-    if (reanalyzeBusy) return;
-    setReanalyzeBusy(true);
-    setReanalyzeMsg(null);
-    setReanalyzeProgress({ scanned: 0, total: 0 });
-    try {
-      const result = await reanalyzeAll(p => {
-        setReanalyzeProgress({ scanned: p.scanned, total: p.total });
-      });
-      const msg = tr({
-        zh: `已更新 ${result.updated} 条成绩，涉及 ${result.eventsTouched.length} 个项目`,
-        en: `Updated ${result.updated} solves across ${result.eventsTouched.length} events`,
-      });
-      setReanalyzeMsg(msg);
-      if (reanalyzeMsgTimerRef.current !== null) window.clearTimeout(reanalyzeMsgTimerRef.current);
-      reanalyzeMsgTimerRef.current = window.setTimeout(() => {
-        setReanalyzeMsg(null);
-        reanalyzeMsgTimerRef.current = null;
-      }, 2000);
-    } catch {
-      setReanalyzeMsg(tr({ zh: '重算失败', en: 'Reanalyze failed'
-    }));
-    } finally {
-      setReanalyzeBusy(false);
-      setReanalyzeProgress(null);
-    }
   }
 
   function downloadText(contents: string, mime: string, fileName: string): void {
@@ -331,137 +192,6 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     }));
   }
 
-  function importTimerSessionsAsNew(
-    sessions: readonly TimerImportSession[],
-    targets: Readonly<Record<string, EventId>>,
-  ): boolean {
-    const plan = planTimerImport(sessions, targets);
-    if (plan.unresolvedSessionIds.length > 0) {
-      alert(tr({
-        zh: `请先为 ${plan.unresolvedSessionIds.length} 个未识别的分组选择项目。`,
-        en: `Choose an event for ${plan.unresolvedSessionIds.length} unrecognized groups first.`,
-      }));
-      return false;
-    }
-
-    const result = importNamedSessions(plan.sessions);
-    if (!result) {
-      alert(tr({ zh: '整体导入失败，请检查存储空间后重试。', en: 'Bulk import failed. Check storage space and try again.' }));
-      return false;
-    }
-
-    setTimerBulkImported(true);
-    onDataReplaced?.();
-    flashIoMsg(tr({
-      zh: `已新建 ${result.sessionCount} 个会话并导入 ${result.solveCount} 条成绩`,
-      en: `Created ${result.sessionCount} sessions and imported ${result.solveCount} solves`,
-    }));
-    return true;
-  }
-
-  function stageOrImportTimerSessions(
-    source: TimerImportSource,
-    sessions: TimerImportSession[],
-  ): void {
-    setTimerImportSource(source);
-    setTimerImportSessions(sessions);
-    setTimerImportTargets({});
-    setTimerBulkImported(false);
-
-    const plan = planTimerImport(sessions);
-    if (plan.unresolvedSessionIds.length > 0) {
-      flashIoMsg(tr({
-        zh: `已读取 ${sessions.length} 个分组，请为 ${plan.unresolvedSessionIds.length} 个未识别分组选择项目`,
-        en: `Read ${sessions.length} groups; choose events for ${plan.unresolvedSessionIds.length} unrecognized groups`,
-      }));
-      return;
-    }
-    importTimerSessionsAsNew(sessions, {});
-  }
-
-  async function onTimerImportFile(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file
-    if (!file) return;
-    setTimerImportBusy(true);
-    setTimerImportSource(null);
-    setTimerImportSessions(null);
-    setTimerImportTargets({});
-    setTimerBulkImported(false);
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      if (isDctimerDatabase(bytes)) {
-        const sessions = await parseDctimerExport(bytes);
-        if (sessions.length === 0) {
-          alert(tr({
-            zh: '这个 SQLite 文件不是可识别的 dcTimer 数据库。',
-            en: 'This SQLite file is not a recognized dcTimer database.',
-          }));
-          return;
-        }
-        stageOrImportTimerSessions('dcTimer', sessions);
-        return;
-      }
-
-      const text = new TextDecoder().decode(bytes);
-      const nativePreview = inspectImportJson(text);
-      if (nativePreview) {
-        const shouldReplace = confirm(tr({
-          zh: `这个备份包含 ${nativePreview.sessionCount} 个会话、${nativePreview.solveCount} 条成绩。导入会覆盖当前全部成绩，是否继续？`,
-          en: `This backup contains ${nativePreview.sessionCount} sessions and ${nativePreview.solveCount} solves. Importing replaces all current solves. Continue?`,
-        }));
-        if (!shouldReplace) return;
-        if (!importJson(text)) {
-          alert(tr({ zh: '导入失败，请重试。', en: 'Import failed. Try again.' }));
-          return;
-        }
-        setTimerImportSource(null);
-        setTimerImportSessions(null);
-        setTimerImportTargets({});
-        setTimerBulkImported(false);
-        onDataReplaced?.();
-        flashIoMsg(tr({ zh: 'CubeRoot 备份已导入', en: 'CubeRoot backup imported' }));
-        return;
-      }
-      const sessions = parseCstimerExport(text);
-      if (sessions.length === 0) {
-        alert(tr({ zh: '未识别为 CubeRoot 备份、csTimer 或 dcTimer 导出文件。', en: 'Not a recognized CubeRoot backup, csTimer export, or dcTimer export.'
-        }));
-        return;
-      }
-      stageOrImportTimerSessions('csTimer', sessions);
-    } catch {
-      alert(tr({ zh: '读取文件失败。', en: 'Failed to read file.'
-      }));
-    } finally {
-      setTimerImportBusy(false);
-    }
-  }
-
-  function importAllTimerSessions(): void {
-    if (!timerImportSessions || timerImportSessions.length === 0) return;
-    importTimerSessionsAsNew(timerImportSessions, timerImportTargets);
-  }
-
-  async function showBackupPicker(): Promise<void> {
-    if (backupEntries !== null) {
-      setBackupEntries(null);
-      return;
-    }
-    setBackupEntries(await listBackups());
-  }
-
-  async function restoreLocalBackup(target: BackupEntry): Promise<void> {
-    if (!confirm(tr({
-      zh: `确认用 ${new Date(target.ts).toLocaleString()} 的备份覆盖当前数据？`,
-      en: `Restore backup from ${new Date(target.ts).toLocaleString()} (overwrites current data)?`,
-    }))) return;
-    const ok = await restoreBackup(target.key);
-    if (ok) onDataReplaced?.();
-    flashIoMsg(ok ? tr({ zh: '已恢复本机备份', en: 'Local backup restored' }) : tr({ zh: '恢复失败', en: 'Restore failed' }));
-    if (ok) setBackupEntries(null);
-  }
-
   const settingStates = timerSettingFieldStates({
     event,
     source: s.scrambleSource,
@@ -475,12 +205,12 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
     soundsEnabled: s.soundsEnabled,
     voiceAvailable: isVoiceAvailable(),
     metronomeEnabled: s.metronomeOn,
-    localBackupsExpanded: backupEntries !== null,
-    stagedImport: !!timerImportSessions && timerImportSessions.length > 0 && !timerBulkImported,
-    importUnresolved: timerImportUnresolvedCount > 0,
-    cloudBusy,
-    importBusy: timerImportBusy,
-    reanalyzeBusy,
+    localBackupsExpanded: false,
+    stagedImport: false,
+    importUnresolved: false,
+    cloudBusy: false,
+    importBusy: false,
+    reanalyzeBusy: false,
     syncSeedDraft: seedDraft,
     activeSyncSeed: s.syncSeed,
   });
@@ -669,118 +399,15 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           </SettingRow>
         </SettingsSection>
 
-        <SettingsSection
-          category="data"
-          activeCategory={activeCategory}
-          title={tr({ zh: '本机自动备份', en: 'Local auto-backup'
-        })}
-        >
-          <SettingRow id="settings.data.auto-backup-frequency">
-            <input
-              className="settings-row-control-input"
-              type="number" min={0} max={30} step={1}
-              value={s.autoBackupEvery}
-              onChange={(e) => updateSettings({ autoBackupEvery: Math.max(0, Math.min(30, Number(e.target.value) | 0)) })}
-            />
-            <span className="hint">{s.autoBackupEvery === 0
-              ? tr({ zh: '已禁用', en: 'disabled' })
-              : tr({ zh: '保留最近 10 份', en: 'keeps last 10' })}</span>
-          </SettingRow>
-          <Row label={tr({ zh: '操作', en: 'Actions' })}>
-            <button data-setting-id="settings.data.local-backup-create" className="hint-btn" onClick={() => { void pushBackup().then(async () => {
-              flashIoMsg(tr({ zh: '已写入本机备份', en: 'Local backup created' }));
-              if (backupEntries !== null) setBackupEntries(await listBackups());
-            }); }}>
-              {settingLabel('settings.data.local-backup-create')}
-            </button>
-            <button data-setting-id="settings.data.local-backup-list" className="hint-btn" onClick={() => { void showBackupPicker(); }}>
-              {backupEntries === null
-                ? settingLabel('settings.data.local-backup-list')
-                : tr({ zh: '收起备份', en: 'Hide backups' })}
-            </button>
-          </Row>
-          {backupEntries !== null && (
-            <div className="settings-backup-list">
-              {backupEntries.length === 0 ? (
-                <p>{tr({ zh: '还没有本机备份', en: 'No local backups yet' })}</p>
-              ) : backupEntries.map((entry) => (
-                <div key={entry.key} className="settings-backup-row">
-                  <span>
-                    <strong>{new Date(entry.ts).toLocaleString()}</strong>
-                    <small>{(entry.size / 1024).toFixed(1)} KB</small>
-                  </span>
-                  <button type="button" data-setting-id="settings.data.local-backup-restore" className="hint-btn" onClick={() => { void restoreLocalBackup(entry); }}>
-                    {settingLabel('settings.data.local-backup-restore')}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </SettingsSection>
-
-        <SettingsSection
-          category="data"
-          activeCategory={activeCategory}
-          title={tr({ zh: '云备份', en: 'Cloud backup'
-        })}
-        >
-          {!user ? (
-            <Row label={tr({ zh: '登录', en: 'Sign in'
-            })}>
-              <button data-setting-id="settings.data.cloud-sign-in" className="hint-btn" onClick={() => login()}>
-                <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                {settingLabel('settings.data.cloud-sign-in')}
-              </button>
-            </Row>
-          ) : (
-            <>
-              <Row label={tr({ zh: '操作', en: 'Actions' })}>
-                <button
-                  data-setting-id="settings.data.cloud-upload"
-                  className="hint-btn"
-                  disabled={settingState('settings.data.cloud-upload').disabled}
-                  onClick={() => { void onCloudUpload(); }}
-                  title={tr({ zh: '把本地全部成绩上传到云端(覆盖云端旧备份)', en: 'Upload all local solves to the cloud (replaces the cloud copy)'
-                })}
-                >
-                  <CloudUpload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {settingLabel('settings.data.cloud-upload')}
-                </button>
-                <button
-                  data-setting-id="settings.data.cloud-restore"
-                  className="hint-btn"
-                  disabled={settingState('settings.data.cloud-restore').disabled}
-                  onClick={() => { void onCloudRestore(); }}
-                  title={tr({ zh: '用云端备份覆盖本地全部成绩', en: 'Replace all local solves with the cloud backup'
-                })}
-                >
-                  <CloudDownload size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                  {settingLabel('settings.data.cloud-restore')}
-                </button>
-              </Row>
-              <Row label="">
-                <span className="hint" role="status" aria-live="polite">{
-                  cloudMsg !== null
-                    ? cloudMsg
-                    : cloudMeta === null
-                      ? tr({ zh: '正在读取云端状态…', en: 'Checking cloud…'
-                                                                  })
-                      : cloudMeta.exists
-                        ? tr({
-                            zh: `云端 ${cloudMeta.solveCount ?? 0} 条，上次同步 ${formatSyncTime(cloudMeta.updatedAt ?? 0, true)}`,
-                            en: `Cloud: ${cloudMeta.solveCount ?? 0} solves, synced ${formatSyncTime(cloudMeta.updatedAt ?? 0, false)}`,
-                          })
-                        : tr({ zh: '云端暂无备份', en: 'No cloud backup yet'
-                                                                          })
-                }</span>
-              </Row>
-              <Row label="">
-                <span className="hint">{tr({ zh: '恢复会用云端整库覆盖本地(含所有会话);计时器设置项不在备份内。', en: 'Restore replaces ALL local sessions with the cloud copy; timer settings are not included.'
-                })}</span>
-              </Row>
-            </>
-          )}
-        </SettingsSection>
+        {activeCategory === 'data' && <TimerBackupSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} every={s.autoBackupEvery} onEveryChange={autoBackupEvery => updateSettings({ autoBackupEvery })}
+          owner={getSessionToken()} login={login} local={{ create: pushBackup, list: listBackups, restore: async (key, canCommit) => {
+            if (!await restoreBackup(key, canCommit)) throw new Error('Restore failed'); onDataReplaced?.();
+          } }} cloud={{ meta: fetchBackupMeta, upload: uploadBackup, restore: async canCommit => {
+            const result = await restoreFromCloud(canCommit);
+            if (result === 'invalid') throw new Error('Invalid backup');
+            if (result === 'ok') onDataReplaced?.();
+            return result === 'ok';
+          } }} />}
 
         <SettingsSection
           category="data"
@@ -788,32 +415,17 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           title={tr({ zh: '导入与导出', en: 'Import and export'
         })}
         >
-          <Row label={tr({ zh: '导入', en: 'Import'
-        })}>
-            <input
-              className="settings-row-control-input"
-              ref={timerFileRef}
-              type="file"
-              accept=".json,.txt,.db,.sqlite,application/json,application/vnd.sqlite3,application/x-sqlite3"
-              style={{ display: 'none' }}
-              onChange={(event) => { void onTimerImportFile(event); }}
-            />
-            <button
-              data-setting-id="settings.data.import-file"
-              className="hint-btn"
-              disabled={settingState('settings.data.import-file').disabled}
-              onClick={() => timerFileRef.current?.click()}
-              aria-busy={timerImportBusy}
-            >
-              {timerImportBusy
-                ? tr({ zh: '正在导入…', en: 'Importing…' })
-                : settingLabel('settings.data.import-file')}
-            </button>
-            <span className="hint">{tr({
-              zh: '选择 csTimer 或 dcTimer 文件后自动按原分组新增会话，不覆盖现有数据；CubeRoot 备份覆盖前会确认',
-              en: 'Selecting a csTimer or dcTimer file automatically creates sessions from its groups without replacing existing data; CubeRoot backups ask before replacing data',
-            })}</span>
-          </Row>
+          <TimerImportSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} importSessions={async sessions => {
+            if (!importNamedSessions(sessions)) throw new Error('Import failed');
+            onDataReplaced?.();
+          }} importBackup={async text => {
+            const preview = inspectImportJson(text);
+            if (!preview) throw new Error('Invalid backup');
+            if (!confirm(tr({ en: 'Importing replaces all current solves. Continue?', zh: '导入会覆盖当前全部成绩，是否继续？' }))) return false;
+            if (!importJson(text)) throw new Error('Import failed');
+            onDataReplaced?.();
+            return true;
+          }} />
           <TimerExportSettings localize={tr} onExport={format => {
             if (format === 'cuberoot') onCubeRootExport();
             else if (format === 'cstimer') void onCstimerExport();
@@ -823,90 +435,11 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
           {ioMsg !== null && (
             <Row label=""><span className="hint" role="status" aria-live="polite">{ioMsg}</span></Row>
           )}
-          {timerImportSessions && timerImportSessions.length > 0 && timerBulkImported && (
-            <Row label="">
-              <span className="hint" role="status">{tr({
-                zh: `${timerImportSource}：已导入 ${timerImportSessions.length} 个分组、${timerImportSolveCount} 条成绩`,
-                en: `${timerImportSource}: imported ${timerImportSessions.length} groups and ${timerImportSolveCount} solves`,
-              })}</span>
-            </Row>
-          )}
-          {timerImportSessions && timerImportSessions.length > 0 && !timerBulkImported && (
-            <>
-              <Row label="">
-                <button
-                  data-setting-id="settings.data.import-complete"
-                  className="hint-btn"
-                  disabled={settingState('settings.data.import-complete').disabled}
-                  onClick={importAllTimerSessions}
-                  title={timerImportUnresolvedCount > 0
-                    ? tr({ zh: `还有 ${timerImportUnresolvedCount} 个分组需要选择项目`, en: `${timerImportUnresolvedCount} groups still need an event` })
-                    : tr({ zh: '保留全部分组名和顺序，分别建立新会话', en: 'Keep every group name and order as separate new sessions' })}
-                >
-                  {settingLabel('settings.data.import-complete')}
-                </button>
-                <span className="hint">{tr({
-                  zh: `${timerImportSource}：已读取 ${timerImportSessions.length} 个分组、${timerImportSolveCount} 条成绩；为未识别分组选择项目后完成导入`,
-                  en: `${timerImportSource}: read ${timerImportSessions.length} groups and ${timerImportSolveCount} solves; choose events for unrecognized groups to finish`,
-                })}</span>
-              </Row>
-              <div className="cstimer-import-list">
-                {timerImportSessions.map(sess => {
-                  const ev = eventInfo(sess.event);
-                  const evLabel = tr({ zh: ev.nameZh, en: ev.nameEn });
-                  const selectedTarget = timerImportTargets[sess.sessionId];
-                  return (
-                    <div key={sess.sessionId} className="cstimer-import-row">
-                      <div className="cstimer-import-info">
-                        <span className="cstimer-import-name">{sess.name}</span>
-                        {sess.matched ? (
-                          <span className="hint">{tr({ zh: `${sess.solves.length} 条 → ${evLabel}`, en: `${sess.solves.length} solves → ${evLabel}` })}</span>
-                        ) : sess.solves.length === 0 ? (
-                          <span className="hint">{tr({ zh: '空分组', en: 'Empty group' })}</span>
-                        ) : (
-                          <div className="cstimer-target-picker" data-setting-id="settings.data.import-session-mapping">
-                            <span>{tr({ zh: `${sess.solves.length} 条，选择项目`, en: `${sess.solves.length} solves, choose event` })}</span>
-                            <TimerPuzzlePicker
-                              selectedEvent={selectedTarget ?? ''}
-                              puzzleLabel={settingLabel('settings.data.import-session-mapping')}
-                              onSelect={id => setTimerImportTargets(current => ({ ...current, [sess.sessionId]: id as EventId }))}
-                              dataNoTimer
-                              groups={TIMER_EVENT_PICKER_GROUPS.map(group => ({
-                                id: group.id, label: tr({ zh: group.nameZh, en: group.nameEn }),
-                                items: group.items.map(item => ({
-                                  id: item.id, label: tr({ zh: item.nameZh, en: item.nameEn }), iconClass: item.iconClass, textLabel: item.textLabel,
-                                })),
-                              }))}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          )}
-          <SettingRow id="settings.data.reanalyze">
-            <button
-              className="hint-btn"
-              onClick={() => { void onReanalyze(); }}
-              disabled={settingState('settings.data.reanalyze').disabled}
-              title={tr({ zh: '给旧成绩补上分阶段拆分。新拧的会自动带上，这里用当前识别器重算所有有动作记录的成绩', en: 'Backfill stage splits for older solves. New solves carry them automatically; this reruns the current recognizer over every solve that has recorded moves'
-            })}
-            >
-              <RefreshCw size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-              {reanalyzeBusy
-                ? (reanalyzeProgress && reanalyzeProgress.total > 0
-                    ? tr({ zh: `处理中… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}`, en: `Working… ${reanalyzeProgress.scanned}/${reanalyzeProgress.total}` })
-                    : tr({ zh: '处理中…', en: 'Working…'
-                                                      }))
-                : tr({ zh: '重新分析', en: 'Reanalyze' })}
-            </button>
-            {reanalyzeMsg !== null && (
-              <span className="hint" role="status" aria-live="polite">{reanalyzeMsg}</span>
-            )}
-          </SettingRow>
+          <TimerReanalyzeSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} run={async () => {
+            const result = await reanalyzeAll();
+            onDataReplaced?.();
+            return result;
+          }} />
         </SettingsSection>
 
         <SettingsSection
@@ -931,42 +464,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
             value={s}
           />
           </TimerDisplaySettings>
-          <SettingRow id="settings.appearance.rank-scopes">
-            <span className="rank-scope-options">
-              {TIMER_RANK_SCOPES.map((scope) => (
-                <button
-                  key={scope}
-                  type="button"
-                  className="hint-btn rank-scope-option"
-                  aria-pressed={s.rankScopes.includes(scope)}
-                  onClick={() => updateSettings({
-                    rankScopes: s.rankScopes.includes(scope) ? s.rankScopes.filter((value) => value !== scope) : [...s.rankScopes, scope],
-                  })}
-                >
-                  {scope}
-                </button>
-              ))}
-            </span>
-          </SettingRow>
-          {/* 有有效账号国家时沿用账号信息；否则允许手选。 */}
-          {settingState('settings.appearance.ranking-region').visible && (
-            <SettingRow id="settings.appearance.ranking-region">
-              {/* placeholder 显式给空:组件默认会兜底成「搜国家名」,这里靠左侧 Row 标签说明即可。 */}
-              <CountryInput
-                value={(s.rankCountry ?? '').toLowerCase()}
-                onChange={(iso2) => updateSettings({ rankCountry: iso2.toUpperCase() })}
-                placeholder=""
-              />
-              {!user && <button
-                className="hint-btn"
-                onClick={() => login()}
-                title={tr({ zh: '登录 WCA 自动带入账号国家', en: 'Sign in with WCA to auto-fill your country' })}
-              >
-                <LogIn size={14} style={{ verticalAlign: '-2px', marginRight: 4 }} />
-                {tr({ zh: '登录', en: 'Sign in' })}
-              </button>}
-            </SettingRow>
-          )}
+          <TimerRankSettings language={tr({ en: 'en', zh: 'zh' }) as 'en' | 'zh'} scopes={s.rankScopes} country={s.rankCountry ?? ''} accountCountry={rankAccountCountry} onScopes={rankScopes => updateSettings({ rankScopes })} onCountry={rankCountry => updateSettings({ rankCountry })} renderCountry={() => <CountryInput value={(s.rankCountry ?? '').toLowerCase()} onChange={iso2 => updateSettings({ rankCountry: iso2.toUpperCase() })} placeholder="" />} login={!user ? login : undefined} />
         </SettingsSection>
 
         {activeCategory === 'training' && <TimerRoundSettings value={s} onChange={patch => updateSettings({ round: { ...getSettings().round, ...patch } })} localize={tr} />}
