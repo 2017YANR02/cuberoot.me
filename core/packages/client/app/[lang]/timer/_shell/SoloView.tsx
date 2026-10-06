@@ -2694,6 +2694,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
   // 用 state 而非 ref:portal 的目标必须在子组件渲染时已存在,ref.current 那一帧还是 null。
   const [diffSlot, setDiffSlot] = useState<HTMLSpanElement | null>(null);
+  const [mergeSlot, setMergeSlot] = useState<HTMLDivElement | null>(null);
 
   const distractionFree = timer.phase === 'running' && !prefersReducedMotion;
   // Opt-in, and stronger than `distractionFree`: that one only fades
@@ -3009,7 +3010,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       <TimerStageLayout
         className="shell-main timer-workspace-main"
         fullscreen={fullscreen}
-        source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} />}
+        source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} />}
         statistics={
           <TimerStatRail
             ariaExpanded={panelTab != null}
@@ -3345,7 +3346,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         />
       )}
 
-      {settingsOpen && <SettingsPanel event={event} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
+      {settingsOpen && <SettingsPanel event={event} mergeSlotRef={setMergeSlot} onClose={closeSettings} onDataReplaced={() => { trainingRound.reset(); setByEvent(loadAll()); }} />}
 
       {infoToast && (
         <TimerInfoToast

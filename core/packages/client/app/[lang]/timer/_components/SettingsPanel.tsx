@@ -50,6 +50,7 @@ interface Props {
   onClose: () => void;
   /** Current event — target-time setting applies to this event. */
   event: EventId;
+  mergeSlotRef: (element: HTMLDivElement | null) => void;
   /** Called after the local DB is wholesale-replaced (cloud restore) so the host can refresh. */
   onDataReplaced?: () => void;
 }
@@ -77,7 +78,7 @@ function SettingsSection({ category, activeCategory, title, children, headerCont
   );
 }
 
-export default function SettingsPanel({ onClose, event, onDataReplaced }: Props) {
+export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataReplaced }: Props) {
   const s = useSettings();
   const optimalUser = useAuthStore((st) => st.user);
   const metro = useMetronome();
@@ -305,6 +306,7 @@ export default function SettingsPanel({ onClose, event, onDataReplaced }: Props)
               onChange={(v) => updateSettings({ autoMarkWcaScramble: v })}
             />
           )}
+          <div ref={mergeSlotRef} />
         </SettingsSection>
 
         <SettingsSection category="scramble" activeCategory={activeCategory}>
