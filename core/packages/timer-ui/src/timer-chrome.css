@@ -54,6 +54,38 @@
   background: transparent;
 }
 
+/* One text line and control height keep native selects, SVGs and button labels
+   centered on the same toolbar axis, independent of component stylesheet order. */
+.shell-topbar .shell-topbar-left .shell-players-select,
+.shell-topbar .shell-topbar-left .pp-trigger,
+.shell-topbar .shell-topbar-left .compact-select-trigger,
+.shell-topbar .shell-topbar-left .devcube-pill {
+  height: 32px;
+  padding-block: 0;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.shell-topbar .shell-topbar-left .settings-row-tight-group {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.shell-topbar .shell-topbar-left .pp-trigger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.shell-topbar .shell-topbar-left .devcube-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+}
+
 .shell-players-select:focus-visible {
   border-color: var(--accent);
 }
