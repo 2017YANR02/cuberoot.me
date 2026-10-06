@@ -102,7 +102,8 @@
       "./TimerStepSolve": "react-dom",
       "./TimerSolverCompareModal": "react-dom",
       "./TimerSolverHints": "react-dom",
-      "./TimerSolverBody": "react-dom"
+      "./TimerSolverBody": "react-dom",
+      "./random-scramble": "react-dom"
     }
   },
   "exports": {
@@ -192,7 +193,8 @@
     "./TimerStepSolve": "./src/TimerStepSolve.tsx",
     "./TimerSolverCompareModal": "./src/TimerSolverCompareModal.tsx",
     "./TimerSolverHints": "./src/TimerSolverHints.tsx",
-    "./TimerSolverBody": "./src/TimerSolverBody.tsx"
+    "./TimerSolverBody": "./src/TimerSolverBody.tsx",
+    "./random-scramble": "./src/random-scramble.ts"
   },
   "sideEffects": true,
   "scripts": {

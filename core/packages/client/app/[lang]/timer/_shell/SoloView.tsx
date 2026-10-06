@@ -50,7 +50,8 @@ import {
 import MoreMenu, { type MoreMenuItem } from '../_components/MoreMenu';
 import { syncLangToUrl } from '@/i18n/i18n-client';
 
-import { generateScramble, registerScramble } from '../_lib/scramble';
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
+import type { TimerScrambleRequest } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
   peekWcaRow,
@@ -163,7 +164,7 @@ import {
   type ScrambleMark,
 } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
-import { warmup333, randomState333, randomState333Sync } from '../_lib/scramble/kociemba/random_state';
+import { randomState333 } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_shared/useTimer';
 import { inspectionPenalty } from '../_shared/inspection';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
@@ -187,11 +188,6 @@ import {
   timerRealScrambleReady,
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
-import {
-  isNonWcaEvent,
-  nextNonWcaScramble,
-  prefetchNonWca,
-} from '../_lib/scramble/nonwca';
 import {
   nextCube222SpecialScramble,
   prefetchCube222SpecialScramble,
@@ -325,6 +321,7 @@ const TPS_WINDOW_MOVES = 12;
 
 interface TimerScrambleHistoryEntry {
   seedRequest?: TimerSeedRequest;
+  randomRequest?: TimerScrambleRequest;
   id: number;
   scramble: string;
   /** Stable occurrence provenance; separate official slots may share text. */
@@ -518,21 +515,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     return listSessions().find((session) => session.id === activeSessionId)?.name;
   }, [byEvent]);
 
-  // ── Kociemba warmup (3x3 random-state) ─────────────────────────
-  const [kociembaReady, setKociembaReady] = useState(false);
-  useEffect(() => {
-    let cancelled = false;
-    warmup333().then(() => {
-      if (cancelled) return;
-      registerScramble('333', () => randomState333Sync());
-      registerScramble('333oh', () => randomState333Sync());
-      registerScramble('333fm', () => randomState333Sync());
-      setKociembaReady(true);
-    }).catch(err => {
-      console.error('[timer] kociemba warmup failed:', err);
-    });
-    return () => { cancelled = true; };
-  }, []);
+  const [ordinaryRandom] = useState(createRandomScrambleClient);
+  useEffect(() => () => ordinaryRandom.reset(), [ordinaryRandom]);
 
   // ── Drill mode ──────────────────────────────────────────────────
   const [drillTarget, setDrillTarget] = useState<TimerDrillTarget | null>(null);
@@ -813,12 +797,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (byStepsScr) return timerScrambleHistoryEntry(
       takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble),
     );
-    // 其余非 WCA puzzle:打乱在 csTimer Worker 里算,nonwca.ts 自带队列。别再套一层
-    // scramble_pool —— 那会把「还在生成」的 '' 也缓存进 buffer。'' 由下面的 effect 补。
-    if (isNonWcaEvent(event)) return timerScrambleHistoryEntry(generateScramble(event));
-    return timerScrambleHistoryEntry(
-      takeScramble(`${event}|${s.cnMode}|${event === '222' ? mode222 : ''}`, () => generateScramble(event), canGenScramble),
-    );
+    // Only the async shared client generates ordinary random slots. Never run
+    // a synchronous solver during render or a timer input handler.
+    return { ...timerScrambleHistoryEntry(''), randomRequest: {
+      event, cnMode: s.cnMode, scramble222Mode: mode222, scramble222Type: 'full',
+      trainerCaseIds: event === 'oll' ? s.ollSubset : event === 'pll' ? s.pllSubset : undefined,
+    } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedOptionsSignature, drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey, non222ByStepsEvent]);
 
@@ -867,6 +851,28 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     applyScrambleHist({ list, idx: current.idx });
     return true;
   }, [applyScrambleHist]);
+  const randomRequest = currentScrambleEntry.randomRequest;
+  const [ordinaryFailedId, setOrdinaryFailedId] = useState<number | null>(null);
+  const [ordinaryRetry, setOrdinaryRetry] = useState(0);
+  const ordinaryFailed = ordinaryFailedId === currentScrambleEntryId;
+  const ordinaryLoading = Boolean(randomRequest && event !== 'custom' && !scramble && !ordinaryFailed);
+  useEffect(() => {
+    if (!randomRequest || scramble || competition.enabled) return;
+    const controller = new AbortController();
+    const entryId = currentScrambleEntryId;
+    setOrdinaryFailedId(null);
+    void ordinaryRandom.next(randomRequest, controller.signal).then(result => {
+      if (controller.signal.aborted || !isCurrentEmptyScrambleEntry(entryId)
+        || scrambleGeneratorAtHistoryResetRef.current !== genScramble) return;
+      if (!result.ok) { setOrdinaryFailedId(entryId); return; }
+      fillCurrentEmptyScrambleEntry(entryId, result.scramble, null, null,
+        result.kind === 'generated' ? result.metadata?.caseId ?? null : null);
+    });
+    return () => controller.abort();
+  }, [randomRequest, scramble, competition.enabled, currentScrambleEntryId, ordinaryRetry,
+    ordinaryRandom, genScramble, isCurrentEmptyScrambleEntry, fillCurrentEmptyScrambleEntry]);
+  // Leaving random for a manual/official/specialist source releases its buffer.
+  useEffect(() => { if (!randomRequest) ordinaryRandom.reset(); }, [randomRequest, ordinaryRandom]);
   const seedRequest = currentScrambleEntry.seedRequest;
   const [seedFailedId, setSeedFailedId] = useState<number | null>(null);
   const [seedRetry, setSeedRetry] = useState(0);
@@ -1089,22 +1095,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // 枫叶/齿轮启用精确难度后由完整图生成，不再启动 csTimer Worker 补位；尤其 0 步的
     // 恒等打乱也不能被当成「Worker 尚未返回」。
     const special = special222TypeRef.current;
-    if (settings.syncSeed || (!special && !isNonWcaEvent(event)) || settings.scrambleSource === 'manual' || genStepsSig) {
+    if (settings.syncSeed || !special || settings.scrambleSource === 'manual' || genStepsSig) {
       setCstimerLoading(false);
       setCstimerFailed(false);
       return;
     }
-    if (special) prefetchCube222SpecialScramble(special);
-    else prefetchNonWca(event);
+    prefetchCube222SpecialScramble(special);
     if (scramble !== '') { setCstimerLoading(false); setCstimerFailed(false); return; }
     const entryId = currentScrambleEntryId;
     let cancelled = false;
     const waiter = new AbortController();
     setCstimerLoading(true);
     setCstimerFailed(false);
-    const pending = special
-      ? nextCube222SpecialScramble(special, waiter.signal)
-      : nextNonWcaScramble(event, waiter.signal);
+    const pending = nextCube222SpecialScramble(special, waiter.signal);
     void pending.then((real) => {
       if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       setCstimerLoading(false);
@@ -1180,10 +1183,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ]);
 
   const attemptCanStart = competition.enabled ? competition.authorized && Boolean(competition.attempt) : timerCanStartAttempt({
-    availability: seedLoading || randomOptimalLoading || scrambleLoading || cstimerLoading
+    availability: ordinaryLoading || seedLoading || randomOptimalLoading || scrambleLoading || cstimerLoading
       || trainerLoading || byStepsLoading
       ? 'loading'
-      : seedFailed || randomOptimalFailed || byStepsFailed || cstimerFailed || trainerMiss !== null
+      : ordinaryFailed || seedFailed || randomOptimalFailed || byStepsFailed || cstimerFailed || trainerMiss !== null
         || wcaSourceEmpty || wcaSourceFailed
         ? 'unavailable'
         : 'ready',
@@ -1340,7 +1343,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     scrambleGeneratorAtHistoryResetRef.current = genScramble;
     applyScrambleHist({ list: [genScramble()], idx: 0 });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genScramble, kociembaReady]);
+  }, [genScramble]);
 
   // ── Solve recording ─────────────────────────────────────────────
   const [lastPenalty, setLastPenalty] = useState<Penalty | null>(null);
@@ -2790,6 +2793,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   ) : null;
 
   const retryDisplayedScramble = () => {
+    if (ordinaryFailed) { setOrdinaryRetry(value => value + 1); return; }
     if (seedFailed) { setSeedRetry(value => value + 1); return; }
     if (byStepsFailed) {
       setByStepsRetry((value) => value + 1);
@@ -2819,7 +2823,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     if (cstimerFailed) { setCstimerRetry((value) => value + 1); return; }
     if (wcaSourceFailed) setWcaRetry((value) => value + 1);
   };
-  const scrambleStatusReason = seedFailed ? 'error-generated' : seedLoading ? 'loading-generated' : randomOptimalLoading
+  const scrambleStatusReason = ordinaryFailed ? 'error-generated' : ordinaryLoading ? 'loading-generated' : seedFailed ? 'error-generated' : seedLoading ? 'loading-generated' : randomOptimalLoading
     ? 'loading-optimal'
     : scrambleLoading
       ? 'loading-real'

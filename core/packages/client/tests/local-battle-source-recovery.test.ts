@@ -4,6 +4,7 @@ import { initialLocalBattleState, transitionLocalBattle, createLocalBattleRound,
   normalizeTimerWcaSourceSettings, defaultLocalBattlePreferences, readLocalBattlePreferences, saveLocalBattlePreferences } from '@cuberoot/shared/timer';
 const source = vi.hoisted(() => ({ kind: 'wca', available: true, random: 'R', next: null as (() => Promise<unknown>) | null }));
 vi.mock('@/app/[lang]/timer/_lib/settings', () => ({ getSettings: () => ({ ...normalizeTimerWcaSourceSettings({}), scrambleSource: source.kind }) }));
+vi.mock('@cuberoot/timer-ui/random-scramble', () => ({ createRandomScrambleClient: () => ({ generate: async ({ event }: { event: string }) => ({ ok: true, kind: 'generated', event, scramble: source.random }) }) }));
 vi.mock('@/app/[lang]/timer/_battle/engine/engine_loader', () => ({ isScrambleEngineReady: () => true, loadScrambleEngine: async () => {} }));
 vi.mock('@/app/[lang]/timer/_battle/engine/scramble_engine', () => ({ generateScramble: () => source.random, generateScrambleImageUrl: () => null }));
 vi.mock('@/app/[lang]/timer/_lib/scramble/wca_pool', () => ({
@@ -35,7 +36,7 @@ it('ignores a late WCA occurrence after changing all four slots to a new event',
   expect(useBattleStore.getState().puzzleIds).toEqual(['222', '222', '222', '222']);
   expect(useBattleStore.getState().scrambles.slice(0, 2)).toEqual(['F', 'F']);
   useBattleStore.getState().setPlayerCount(4);
-  expect(useBattleStore.getState().scrambles).toEqual(['F', 'F', 'F', 'F']);
+  await vi.waitFor(() => expect(useBattleStore.getState().scrambles).toEqual(['F', 'F', 'F', 'F']));
 });
 it('retains completed source and penalty editing while the next scramble fails', () => {
   let state = initialLocalBattleState(2);

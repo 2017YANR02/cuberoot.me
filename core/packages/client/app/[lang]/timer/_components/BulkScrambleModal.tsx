@@ -6,9 +6,10 @@ import { EVENTS } from '../_lib/types';
 import { TIMER_EVENT_PICKER_GROUPS } from '@cuberoot/shared/timer';
 import { TimerPuzzlePicker } from '@cuberoot/timer-ui';
 import { useModalBackdrop } from '@/hooks/useModalDismiss';
-import { generateScramble } from '../_lib/scramble';
-import { warmup333 } from '../_lib/scramble/kociemba/random_state';
-import { isNonWcaEvent, nextNonWcaScramble } from '../_lib/scramble/nonwca';
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
+import { timerScrambleStatus } from '@cuberoot/shared/timer';
+import { getSettings } from '../_lib/settings';
+import { get222Mode } from '@/lib/scramble-222-mode';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { tr } from '@/i18n/tr';
 
@@ -23,6 +24,15 @@ export default function BulkScrambleModal({ defaultEvent, onClose }: Props) {
   const [count, setCount] = useState(12);
   const [scrambles, setScrambles] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [randomClient] = useState(createRandomScrambleClient);
+  const requestRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    requestRef.current?.abort();
+    randomClient.reset();
+    setGenerating(false); setFailed(false); setScrambles([]);
+    return () => { requestRef.current?.abort(); randomClient.reset(); };
+  }, [event, count, randomClient]);
   const [copied, setCopied] = useState(false);
   const titleId = useId();
   const firstSelectRef = useRef<HTMLDivElement | null>(null);
@@ -48,32 +58,24 @@ export default function BulkScrambleModal({ defaultEvent, onClose }: Props) {
   }, []);
 
   const handleGenerate = async () => {
-    setGenerating(true);
-    setCopied(false);
+    if (requestRef.current && !requestRef.current.signal.aborted) return;
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setGenerating(true); setFailed(false); setCopied(false);
     try {
-      if (['333', '333oh', '333fm'].includes(event)) {
-        await warmup333();
-      }
-      // Non-WCA puzzles are generated off-thread. Consume the real async
-      // provider results directly; never copy a temporary loading '' into a
-      // bulk sheet and never build a second host-owned queue.
-      if (isNonWcaEvent(event)) {
-        const out: string[] = [];
-        for (let i = 0; i < count; i++) {
-          const scramble = await nextNonWcaScramble(event);
-          if (!scramble) throw new Error(`scramble provider failed: ${event}`);
-          out.push(scramble);
-        }
-        setScrambles(out);
-        return;
-      }
+      const request = { event, cnMode: getSettings().cnMode, scramble222Mode: get222Mode() };
       const out: string[] = [];
       for (let i = 0; i < count; i++) {
-        out.push(generateScramble(event));
+        const result = await randomClient.generate(request, controller.signal);
+        if (controller.signal.aborted) return;
+        if (!result.ok || result.kind !== 'generated') throw new Error('Scramble generation failed');
+        out.push(result.scramble);
       }
       setScrambles(out);
+    } catch {
+      if (!controller.signal.aborted) setFailed(true);
     } finally {
-      setGenerating(false);
+      if (requestRef.current === controller) { requestRef.current = null; setGenerating(false); }
     }
   };
 
@@ -182,6 +184,7 @@ export default function BulkScrambleModal({ defaultEvent, onClose }: Props) {
           </button>
         </div>
 
+        {failed && <p role="alert">{tr(timerScrambleStatus('error-generated').message)}</p>}
         {scrambles.length > 0 && (
           <div className="modal-section">
             <div className="bulk-list" style={listStyle}>

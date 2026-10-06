@@ -1,3 +1,4 @@
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
@@ -23,7 +24,6 @@ import {
   defaultLocalBattlePreferences,
   formatMs,
   formatTimerTimingDisplay,
-  generateTimerScramble,
   initialLocalBattleState,
   isLocalBattleScrambleHidden,
   isNetAdmin,
@@ -253,6 +253,8 @@ export function LocalBattleMode({
   const setLayout = useCallback((layout: 'side' | 'versus') => setPreferences(current => ({ ...current, layout })), []);
   useEffect(() => { try { setPreferences(readLocalBattlePreferences(window.localStorage)); } catch { setStorageError(copy.actionFailed); } }, []);
 
+  const [randomClient] = useState(createRandomScrambleClient);
+  useEffect(() => () => randomClient.reset(), [randomClient]);
   const [state, setState] = useState<LocalBattleState>(() => initialLocalBattleState(playerCount));
   const [nowMs, setNowMs] = useState(0);
   const [scrambleRows, setScrambleRows] = useState<Partial<Record<EventId, LocalBattleScramble>>>({});
@@ -336,8 +338,8 @@ export function LocalBattleMode({
         requestsRef.current.get(effect.event)?.abort();
         const controller = new AbortController(); requestsRef.current.set(effect.event, controller);
         setScrambleRows(rows => ({ ...rows, [effect.event]: undefined }));
-        void requestLocalBattleScramble(effect.event, providerRef.current ?? (async event => {
-          const value = await generateTimerScramble({ event });
+        void requestLocalBattleScramble(effect.event, providerRef.current ?? (async (event, signal) => {
+          const value = await randomClient.generate({ event }, signal);
           if (!value.ok || value.kind !== 'generated') throw new Error('Scramble unavailable');
           return { scramble: value.scramble };
         }), controller.signal).then(row => {

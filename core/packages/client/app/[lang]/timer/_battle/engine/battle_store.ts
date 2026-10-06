@@ -10,8 +10,9 @@ import { create } from 'zustand';
 import type { PlayerState, SolveEntry, Session, BattleMode, BattleLayout, TabName } from './types';
 import { PENALTY, LS_PREFIX, MIN_SOLVE_TIME, DEFAULT_PLAYER_KEYS } from './constants';
 import type { PenaltyType } from './constants';
-import { generateScramble, generateScrambleImageUrl } from './scramble_engine';
-import { isScrambleEngineReady, loadScrambleEngine } from './engine_loader';
+import { generateScrambleImageUrl } from './scramble_engine';
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
+const randomClient = createRandomScrambleClient();
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
 import { getSettings } from '@/app/[lang]/timer/_lib/settings';
 import { peekWcaRow, nextWcaRow, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
@@ -775,9 +776,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     const drawInto = (idxs: number[], puzzleId: string) => {
       const spec = useWca ? wcaSpecFor(puzzleId) : null;
       const event = battleToTimerEvent(puzzleId);
-      const random = () => ({ scramble: generateScramble(puzzleId), source: { kind: 'random' as const, identity: `random|${event}` } });
-      if ((!spec || !timerSupportsRealWcaScrambles(event)) && isScrambleEngineReady()) { commit(idxs, random()); return; }
-      void requestLocalBattleScramble(event, async () => {
+      void requestLocalBattleScramble(event, async (_event, signal) => {
         if (spec && timerSupportsRealWcaScrambles(event)) {
           if (!hasWcaSource(spec)) throw new Error('WCA source is incomplete');
           const row = peekWcaRow(spec) ?? await nextWcaRow(spec);
@@ -785,7 +784,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
           return { scramble: row.scramble, wca: row.meta ?? undefined,
             source: { kind: 'wca', identity: JSON.stringify(spec) + '|' + row.slot } };
         }
-        await loadScrambleEngine(); return random();
+        const result = await randomClient.generate({ event }, signal);
+        if (!result.ok || result.kind !== 'generated') throw new Error('Scramble generation failed');
+        return { scramble: result.scramble, source: { kind: 'random', identity: `random|${event}` } };
       }).then(row => commit(idxs, row), () => commit(idxs, null));
     };
 

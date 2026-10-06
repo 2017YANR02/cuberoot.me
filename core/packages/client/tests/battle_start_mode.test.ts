@@ -14,6 +14,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { updateSettings } from '@/app/[lang]/timer/_lib/settings';
 
+vi.mock('@cuberoot/timer-ui/random-scramble', () => ({
+  createRandomScrambleClient: () => ({ generate: async ({ event }: { event: string }) => ({
+    ok: true, kind: 'generated', event, scramble: "R U R' U'",
+  }) }),
+}));
 vi.mock('@/app/[lang]/timer/_battle/engine/engine_loader', () => ({
   isScrambleEngineReady: () => true,
   loadScrambleEngine: () => Promise.resolve(),
@@ -194,12 +199,14 @@ describe('各自开始(默认)', () => {
     ]);
   });
 
-  it('cannot mutate an earlier round after the latest round is deleted from history', () => {
+  it('cannot mutate an earlier round after the latest round is deleted from history', async () => {
     startSolve(0);
     startSolve(1);
     stopSolve(0, 3_000);
     stopSolve(1, 2_000);
     useBattleStore.getState().resetForNextRound();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(useBattleStore.getState().scrambleLoadings.slice(0, 2)).toEqual([false, false]);
     startSolve(0);
     startSolve(1);
     stopSolve(0, 4_000);

@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { transpileModule, ScriptTarget } from 'typescript';
+import { workspaceFixturePath } from './workspace-fixture-path';
 
-const source = readFileSync(new URL('../../../apps/harmony/entry/src/main/ets/web/RawfileResponder.ets', import.meta.url), 'utf8');
+const source = readFileSync(workspaceFixturePath('@cuberoot/harmony', 'entry', 'src', 'main', 'ets', 'web', 'RawfileResponder.ets'), 'utf8');
 const functions = source.slice(source.indexOf('const APP_PREFIX'), source.indexOf('function finishError'));
 const js = transpileModule(functions, { compilerOptions: { target: ScriptTarget.ES2022 } }).outputText;
 const rawfilePath = new Function(`${js}; return rawfilePath;`)() as (url: string) => string | null;
