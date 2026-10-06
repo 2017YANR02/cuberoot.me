@@ -19,6 +19,8 @@
 
 ## 1. 当前可直接复用的应用事实
 
+2026-10-06 内测构建增量（覆盖下方历史 1000 快照，不代表正式上架资料已完成）：候选包为 `0.1.0 (1003)`，包名/minSdk 26/targetSdk 36 不变。包含浏览器登录回跳的安全存储读取修复，以及近期已提交的计时器/设备功能。相对 1001，最终 APK 新增 `RECORD_AUDIO` / `MODIFY_AUDIO_SETTINGS` 用于 Stackmat 本机音频输入，并显式将麦克风硬件声明为可选；其他权限未新增。正式发行前须复核 Android Stackmat 权限拒绝、音频生命周期及隐私说明，不能沿用旧版“不请求麦克风”的描述。商店发布状态和真机验收仍分别记录于路线图。
+
 2026-10-04 Google Play 增量：Android 已接入 Billing Library 9.1.0 源码与独立交易归属/权益账本，新增 `com.android.vending.BILLING` 普通权限；购买记录、随机混淆账号标识、Google 订阅状态与退款处理须纳入最终 Data safety。商家、商品、服务账号、RTDN、签名包和真实内测以 [配置清单](google-play-billing-setup.md) 及路线图的分层证据为准，当前仍不代表内购已开通。商店图标/头图/两张截图与初始表单已在 Console 保存；截图来自 iPhone，最终 Android 包仍需实机核对。
 
 | 字段 | 当前值 | 状态 |

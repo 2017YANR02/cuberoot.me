@@ -1,5 +1,13 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-06：Google Play 内测 1003 已发布（真机待验）
+
+- Play 内部轨道 `4701471578963469404` / release `3` 于 00:23 PDT 确认「有效」，最新版本 `0.1.0 (1003) - Login handoff fix`，已面向内部测试人员发布；未提交正式审核。1002 曾上传但未发布，因麦克风被隐式要求而减少 12 款设备，从草稿移出后以 1003 替换，制品库仍保留 1002。
+- 构建来自隔离干净工作区 `271e7c4e64e87df7b2c7d58a1a2c605ce04e1154` 加可选麦克风声明修复 `b0241b9950db072fb60bed43fb4625a2a009e179`（主工作区对应 `43de58d4aa`）；没有带入其他任务未提交的计时器改动。包含下节登录修复及此前已提交的计时器/设备更新。Android 的 `RECORD_AUDIO` / `MODIFY_AUDIO_SETTINGS` 用于 Stackmat，麦克风硬件声明为可选。Play 最终预览确认相对 1001 无设备减少。
+- shared/VisualCube build、Mobile Web build + Android sync、JDK 21 正式签名 AAB/APK 构建、APK 签名与 ZIP 16 KB 对齐、AAB JAR 验签通过；上传证书与 1001 相同。Manifest 兼容性改动通过登录文档指纹及 5 项文档检查，独立发布审计通过。控制台仅剩去混淆文件与原生调试符号两项提示。
+- AAB SHA-256 `084d9183c7f3705fcf0190b358a6bc12cb39961752ab19fd9d26507e2bde3886`；APK `c6e20882d1e3fc05c356fa20cec3736bdce6acd38c1a11864f44c6e1a4ff6560`。产物和控制台截图存维护者桌面 `CubeRoot-Google-Play`，密钥不入库。
+- 待用户从 Play 覆盖升级验证：保留本地记录、浏览器已有登录态回跳、账号 iframe 会话同步、重启恢复。未用上传证书 APK 覆盖 Play 签名安装，未卸载或清数据；未发布 iOS/其他端，未推送仓库或部署网站/API，未变更内购开关，不代表真实购买验收。
+
 ### 2026-10-06：Android/iOS 登录安全存储修复（本地，未发布）
 
 - Play 内测 1001 真机失败证据：浏览器已有会话，确认打开 App 后仍显示登录表单；无线 ADB 确认系统将回调送达 MainActivity。实际 secure-storage 8.0.0 的 `set` 会 JSON 编码字符串，旧适配用 `getItem` 读取原始编码，导致 pending 登录信息解析后仍是字符串，无法发起换票。
