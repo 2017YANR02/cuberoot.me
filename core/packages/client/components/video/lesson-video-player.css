@@ -44,7 +44,8 @@
 .lesson-video-capture { border: 0; background: transparent; font-size: 10px !important; padding: 10px 3px; }
 .lesson-video-autoplay { position: relative; display: flex; padding: 10px 6px; }
 .lesson-video-player .bool-toggle { gap: 0; position: relative; }
-.lesson-video-player .pill-toggle--switch { width: 34px; height: 20px; border: 0; background: color-mix(in srgb, var(--player-ink) 25%, transparent); }
+.lesson-video-player .pill-toggle--switch { width: 34px; height: 20px; border: 0; }
+.lesson-video-player .pill-toggle--switch:not(.is-on) { background: color-mix(in srgb, var(--player-ink) 25%, transparent); }
 .lesson-video-player .pill-toggle-dot { background: var(--player-ink); width: 16px; height: 16px; }
 .lesson-video-player .pill-toggle.is-on .pill-toggle-dot { left: calc(100% - 18px); }
 .lesson-video-autoplay .bool-toggle-label { position: absolute; inset: 2px auto 2px 2px; padding: 0; width: 16px; height: 16px; pointer-events: none; display: grid; place-items: center; color: var(--player-base); }
