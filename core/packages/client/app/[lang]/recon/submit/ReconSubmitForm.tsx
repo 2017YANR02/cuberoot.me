@@ -55,7 +55,7 @@ import {
 import { computeAllStats } from '@/lib/recon-stats';
 import { normalizeIsoDate, toLocalIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchCubingLiveResultInfo, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
@@ -1190,20 +1190,28 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             setRecordAutoSource(null);
             return;
           }
+          // The person-results adapter deliberately clears live regional tags.
+          // Restore the adjudicated markers through the same helper as person-page badges.
+          const liveInfo = liveRow.live ? await fetchCubingLiveResultInfo(
+            form.compWcaId!, form.event!, form.round!, form.personId!, liveRow.best, liveRow.average,
+          ) : null;
+          if (cancelled) return;
           const rf = computePrRank(personMerged!.results, personMerged!.comps).get(wcaResultRowKey(liveRow));
           const prTag = (rank: number | null | undefined): string =>
             rank == null ? '' : (rank <= 1 ? 'PR' : `PR${rank}`);
           let avgFilled: string | null = null;
           let singleFilled: string | null = null;
           if (!averageRecordUserTouched) {
-            const v = liveRow.regional_average_record || prTag(rf?.averageRank);
+            const v = (liveInfo?.averageTag ?? liveRow.regional_average_record) || prTag(liveInfo?.pA ?? rf?.averageRank);
             setField('regionalAverageRecord', v);
             if (v) avgFilled = v;
           }
           if (!singleRecordUserTouched) {
             const idx = form.solveNum != null ? form.solveNum - 1 : -1;
             const attRank = idx >= 0 ? rf?.attemptRanks?.[idx] : rf?.singleRank;
-            const v = liveRow.regional_single_record || prTag(attRank);
+            const isBestSolve = liveRow.best > 0 && (idx < 0 || liveRow.attempts[idx] === liveRow.best);
+            const regionalTag = liveInfo?.singleTag ?? liveRow.regional_single_record;
+            const v = (isBestSolve && regionalTag) || prTag(attRank);
             setField('regionalSingleRecord', v);
             if (v) singleFilled = v;
           }
