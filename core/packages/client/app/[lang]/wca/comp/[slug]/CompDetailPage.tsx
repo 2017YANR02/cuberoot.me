@@ -2264,10 +2264,10 @@ function CompInfoPanel({
   const cityStr = [info.city ? localizeCity(info.city, isZh, info.country_iso2) : '', country].filter(Boolean).join((i18n.language.startsWith('zh') ? ',' : ', '));
   const todayIso = toIsoDate(new Date());
   const isPast = (iso: string) => !!iso && iso.slice(0, 10) < todayIso;
-  const rows: { label: string; value: React.ReactNode; past?: boolean }[] = [];
+  const rows: { label: string; value: React.ReactNode; past?: boolean; hideLabel?: boolean }[] = [];
   if (dateStr) {
     const wd = weekdayRangeLabel(info.start_date, info.end_date, isZh);
-    rows.push({ label: tr({ zh: '日期', en: 'Date' }), value: wd ? `${dateStr} ${wd}` : dateStr });
+    rows.push({ label: tr({ zh: '日期', en: 'Date' }), hideLabel: true, value: wd ? `${dateStr} ${wd}` : dateStr });
   }
   if (info.competitor_limit) {
     rows.push({ label: tr({ zh: '上限', en: 'Limit' }), value: info.competitor_limit });
@@ -2309,7 +2309,7 @@ function CompInfoPanel({
     rows.push({ label: tr({ zh: '城市', en: 'City' }), value: cityStr });
   }
   if (isZh && cubingZh?.location) {
-    rows.push({ label: tr({ zh: '地点', en: 'Location' }), value: cubingZh.location });
+    rows.push({ label: tr({ zh: '地点', en: 'Location' }), hideLabel: true, value: cubingZh.location });
   } else {
     if (info.venue_address) rows.push({ label: tr({ zh: '地址', en: 'Address' }), value: renderWcaText(info.venue_address) });
     if (info.venue_details) rows.push({ label: tr({ zh: '详情', en: 'Details'
@@ -2326,7 +2326,7 @@ function CompInfoPanel({
 function CompInfoRows({
   activeRows, pastRows, isZh,
 }: {
-  activeRows: { label: string; value: React.ReactNode }[];
+  activeRows: { label: string; value: React.ReactNode; hideLabel?: boolean }[];
   pastRows: { label: string; value: React.ReactNode }[];
   isZh: boolean;
 }) {
@@ -2334,7 +2334,7 @@ function CompInfoRows({
     <dl className={`comp-info-panel${isZh ? ' comp-info-panel--zh' : ''}`}>
       {activeRows.map((r, i) => (
         <div key={r.label} className="comp-info-row">
-          <dt className="comp-info-label">{r.label}</dt>
+          {!r.hideLabel && <dt className="comp-info-label">{r.label}</dt>}
           <dd className="comp-info-value">
             {r.value}
             {i === 0 && pastRows.length > 0 && (
