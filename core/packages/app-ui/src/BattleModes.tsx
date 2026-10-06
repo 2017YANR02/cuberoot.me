@@ -1,5 +1,6 @@
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
+import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { hintSmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
@@ -577,7 +578,9 @@ export function LocalBattleMode({
         onActivate={scrambleFailed
           ? () => dispatch({ type: 'request-next-scramble', event: player.event, preserveResults: visiblePlayers.every(item => item.result !== null) })
           : undefined}
-        scramble={player.scramble}
+        scramble={smartCube?.phase === 'connected' && player.id === cubeHolder && timerSupportsLocalBattleSmartCube(player.event)
+          ? normalizeWcaScramble(player.scramble) ?? player.scramble
+          : player.scramble}
         status={scrambleFailed ? { kind: 'error', message: LOCAL_BATTLE_SCRAMBLE_COPY.failed[language] } : !player.scramble ? { kind: 'loading', message: LOCAL_BATTLE_SCRAMBLE_COPY.loading[language] } : undefined}
         title={scrambleFailed ? copy.retry : undefined}
         verificationLabels={scrambleLabels(copy)}
@@ -1381,7 +1384,10 @@ export function NetBattleMode({
           fontScale: typographySettings.scrambleFontScale,
           hint: netSmartCubeHint,
           match: netSmartCubeMatch,
-          scramble: formatScrambleForEvent(event, scramble),
+          scramble: formatScrambleForEvent(event,
+            smartCube?.phase === 'connected' && timerSupportsNetBattleSmartCube(event)
+              ? normalizeWcaScramble(scramble) ?? scramble
+              : scramble),
         },
         timing: {
           ariaLabel: copy.timer,

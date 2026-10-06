@@ -11,6 +11,8 @@ import {
 } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 import { cubieStateFromFacelets, type CubieState } from './cubie';
+import { normalizeWcaScramble } from '../normalize_wca_scramble';
+import { invertAlg } from '../alg_transform';
 
 export interface SmartCubeScrambleHint {
   done: string[];
@@ -23,13 +25,18 @@ interface FaceTurn {
   face: string;
   quarters: 1 | 2 | 3;
   token: string;
+  displayToken: string;
 }
 
-export function parseHintableSmartCubeScramble(scramble: string): FaceTurn[] | null {
-  const tokens = scramble.trim().split(/\s+/).filter(Boolean);
+export function parseHintableSmartCubeScramble(scramble: string, orientation = ''): FaceTurn[] | null {
+  const normalizedScramble = normalizeWcaScramble(scramble);
+  if (normalizedScramble === null) return null;
+  const tokens = normalizedScramble.trim().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return null;
+  const physicalTokens = normalizeWcaScramble(`${orientation} ${normalizedScramble}`)?.trim().split(/\s+/);
+  if (!physicalTokens || physicalTokens.length !== tokens.length) return null;
   const turns: FaceTurn[] = [];
-  for (const token of tokens) {
+  for (const [index, token] of physicalTokens.entries()) {
     const parsed = faceTurnToken(token);
     if (!parsed) return null;
     const normalized = parsed.trim();
@@ -37,6 +44,7 @@ export function parseHintableSmartCubeScramble(scramble: string): FaceTurn[] | n
       face: normalized[0],
       quarters: normalized.endsWith('2') ? 2 : normalized.endsWith("'") ? 3 : 1,
       token: normalized,
+      displayToken: tokens[index],
     });
   }
   return turns;
@@ -51,8 +59,9 @@ export function hintSmartCubeScramble(
   scramble: string,
   facelets: string,
   fromFacelets: string = SOLVED_3X3,
+  orientation = '',
 ): SmartCubeScrambleHint | null {
-  const turns = parseHintableSmartCubeScramble(scramble);
+  const turns = parseHintableSmartCubeScramble(scramble, orientation);
   if (!turns
     || !cubieStateFromFacelets(facelets)
     || !cubieStateFromFacelets(fromFacelets)) return null;
@@ -71,9 +80,9 @@ export function hintSmartCubeScramble(
   }
   if (next < 0) return null;
   return {
-    done: turns.slice(0, next).map((turn) => turn.token),
-    current: next < turns.length ? turns[next].token : null,
-    pending: turns.slice(next + 1).map((turn) => turn.token),
+    done: turns.slice(0, next).map((turn) => turn.displayToken),
+    current: next < turns.length ? turns[next].displayToken : null,
+    pending: turns.slice(next + 1).map((turn) => turn.displayToken),
     complete: next >= turns.length,
   };
 }
@@ -96,19 +105,21 @@ export function verifySmartCubeScramble(
   targetFacelets: string,
   currentFacelets: string,
   fixup: SmartCubeFixupPath | null,
+  orientation = '',
 ): SmartCubeScrambleVerification {
   const match = currentFacelets === targetFacelets;
   if (fixup) {
     const correction = hintSmartCubeScramble(
-      fixup.scramble,
+      normalizeWcaScramble(`${invertAlg(orientation)} ${fixup.scramble}`) ?? fixup.scramble,
       currentFacelets,
       fixup.fromFacelets,
+      orientation,
     );
     if (correction && !correction.complete) {
       return { correctionActive: true, hint: correction, match, needsFixup: false };
     }
   }
-  const hint = hintSmartCubeScramble(scramble, currentFacelets);
+  const hint = hintSmartCubeScramble(scramble, currentFacelets, SOLVED_3X3, orientation);
   return {
     correctionActive: false,
     hint,

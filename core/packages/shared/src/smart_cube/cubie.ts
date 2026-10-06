@@ -26,6 +26,7 @@
 /** Kociemba/csTimer sticker tables in URFDLB face order. */
 export { CORNER_FACELET, EDGE_FACELET } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { CORNER_FACELET, EDGE_FACELET } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { normalizeWcaScramble } from '../normalize_wca_scramble';
 
 /**
  * Which facelets belong to which piece, and in what orientation order.
@@ -272,9 +273,10 @@ export function applyCubieAlg(state: CubieState, alg: string): CubieState {
 }
 
 /** One canonical scramble-to-facelets target for solo and multiplayer auto timing. */
-export function smartCubeTargetFacelets(scramble: string): string | null {
+export function smartCubeTargetFacelets(scramble: string, orientation = ''): string | null {
   try {
-    return cubieToFacelets(applyCubieAlg(solvedCubie(), scramble));
+    const normalized = normalizeWcaScramble(`${orientation} ${scramble}`);
+    return normalized === null ? null : cubieToFacelets(applyCubieAlg(solvedCubie(), normalized));
   } catch {
     return null;
   }

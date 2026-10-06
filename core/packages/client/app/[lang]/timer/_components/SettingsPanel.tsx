@@ -257,6 +257,7 @@ export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataRepl
             />
           )}
           <TimerSmartCubeSettingsFields value={s} localize={tr} onChange={updateSettings} renderBooleanControl={renderTimingBooleanControl} />
+          <TimerPreScrambleSettings only="training" value={s} onChange={updateSettings} localize={tr} />
         </SettingsSection>
 
         <SettingsSection
@@ -310,7 +311,7 @@ export default function SettingsPanel({ onClose, event, mergeSlotRef, onDataRepl
         </SettingsSection>
 
         <SettingsSection category="scramble" activeCategory={activeCategory}>
-          <TimerPreScrambleSettings value={s} onChange={updateSettings} localize={tr} />
+          <TimerPreScrambleSettings only="normal" value={s} onChange={updateSettings} localize={tr} />
           <TimerColorNeutralSetting event={event} value={s.cnMode} onChange={cnMode => updateSettings({ cnMode })} localize={tr} />
         </SettingsSection>
 
