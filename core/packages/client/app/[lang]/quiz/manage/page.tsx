@@ -118,9 +118,9 @@ export default function QuizManagePage() {
                 </p>
                 <div className="quiz-mine-meta">
                   <span>{tr({ zh: `出题人 ${r.authorName}`, en: `by ${r.authorName}` })}</span>
-                  <UserIdLabel userId={r.authorUserId} />
+                  <UserIdLabel contact userId={r.authorUserId} />
                   <span>{tr({ zh: `举报人 ${r.reporterName}`, en: `reported by ${r.reporterName}` })}</span>
-                  <UserIdLabel userId={r.reporterUserId} />
+                  <UserIdLabel contact userId={r.reporterUserId} />
                   {r.questionStatus === 'hidden' && (
                     <span className="quiz-mine-flag">{tr({ zh: '题已下架', en: 'already down' })}</span>
                   )}
@@ -152,7 +152,7 @@ export default function QuizManagePage() {
                   <div className="quiz-mine-q">{zh ? (q.qZh || q.qEn) : (q.qEn || q.qZh)}</div>
                   <div className="quiz-mine-meta">
                     <span>{q.authorName}</span>
-                    <UserIdLabel userId={q.authorUserId} />
+                    <UserIdLabel contact userId={q.authorUserId} />
                     <span>{q.cat}</span>
                     <span>{q.level}</span>
                     {(needsZh || needsEn) && (

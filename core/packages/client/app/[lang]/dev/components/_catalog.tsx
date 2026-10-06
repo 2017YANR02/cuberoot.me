@@ -898,6 +898,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '需要有效会员数据与保存回调，无法独立演示。', en: 'Requires an active membership object and a save callback, so it has no standalone demo.' },
   },
   {
+    name: 'UserContactLink',
+    import: "import { UserContactLink } from '@/components/UserIdLabel';",
+    category: 'more',
+    zh: '站内用户的统一联系入口：按用户 ID 进入现有好友搜索，复用加好友与发消息操作；本人进入账号页，无有效 ID 时显示普通内容。',
+    en: 'Shared site-user contact link: opens existing friend search by user ID, reusing friend and chat actions; self links open the account page and missing IDs remain plain content.',
+  },
+  {
     name: 'UserIdLabel',
     import: "import { UserIdLabel } from '@/components/UserIdLabel';",
     category: 'badge',
@@ -2415,8 +2422,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'DiscussionComposer',
     import: "import { DiscussionComposer } from '@/components/Discussion';",
     category: 'more',
-    zh: `评论 / 另解共用的 UI 原子集,导出 YouTube 风格提交框 DiscussionComposer、编辑框 DiscussionEditBox、作者名 AuthorName、作者元信息条 UserHeadline、三点菜单 ItemMenu、头像 fallback UserAvatarFallback。AuthorName 是全站「归属键 ownerKey → 要不要出 WCA 外链」的唯一判定点(合成 u<uid> 账号没有 WCA 档案页)。`,
-    en: `Shared comment/alt-solution UI atoms: exports the YouTube-style composer DiscussionComposer, edit box DiscussionEditBox, author name AuthorName, author meta line UserHeadline, kebab menu ItemMenu, and avatar fallback UserAvatarFallback. AuthorName is the single place deciding whether an ownerKey earns an outbound WCA link (synthetic u<uid> accounts have no WCA profile).`,
+    zh: `评论 / 另解共用的 UI 原子集,导出 YouTube 风格提交框 DiscussionComposer、编辑框 DiscussionEditBox、作者名 AuthorName、作者元信息条 UserHeadline、三点菜单 ItemMenu、头像 fallback UserAvatarFallback。AuthorName 优先以站内用户 ID 打开好友入口，只有缺少站内 ID 的真实 WCA 选手才使用 WCA 外链；头像复用 UserContactLink。`,
+    en: `Shared comment/alt-solution UI atoms: exports the YouTube-style composer DiscussionComposer, edit box DiscussionEditBox, author name AuthorName, author meta line UserHeadline, kebab menu ItemMenu, and avatar fallback UserAvatarFallback. AuthorName opens the shared contact entry for site users and keeps WCA links only when no site user ID is known. Avatars reuse UserContactLink.`,
     note: { zh: `多组件原子集(无默认导出),按需具名引入;Composer / UserHeadline 依赖 auth store。`, en: `A multi-component atom set (no default export); import members by name. Composer/UserHeadline depend on the auth store.` },
   },
   {

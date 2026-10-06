@@ -163,7 +163,6 @@ export default function FeedbackPage() {
                 <button type="button" className="fbm-card-head" onClick={() => toggle(it.id)} aria-expanded={expanded}>
                   <span className="fbm-kind"><Icon size={14} /></span>
                   <span className="fbm-author">{author}</span>
-                  <UserIdLabel userId={it.userId} />
                   <span className="fbm-when">{String(it.createdAt).slice(0, 10)}</span>
                   <span className={`fbm-badge fbm-badge-${it.status}`}>
                     {it.status === 'new' ? t('新', 'New') : it.status === 'triaged' ? t('处理中', 'In progress') : t('已完成', 'Done')}
@@ -173,6 +172,7 @@ export default function FeedbackPage() {
                   )}
                   <ChevronDown size={16} className={`fbm-chev${expanded ? ' is-open' : ''}`} />
                 </button>
+                <UserIdLabel contact userId={it.userId} />
                 <AppLink
                   href={`/feedback?id=${it.id}`}
                   prefetch={false}

@@ -1,19 +1,36 @@
 'use client';
 
 import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import AppLink from '@/components/AppLink';
+import { useAuthStore } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import './user-id-label.css';
+
+/** Reuse the existing friend search and relationship actions for site identities. */
+export function UserContactLink({ userId, children, className, label }: {
+  userId?: number | null;
+  children: ReactNode;
+  className?: string;
+  label?: string;
+}) {
+  const ownId = useAuthStore(state => state.user?.uid);
+  if (!Number.isSafeInteger(userId) || (userId ?? 0) <= 0) return <span className={className}>{children}</span>;
+  return <AppLink href={userId === ownId ? '/account' : `/friends?q=${userId}`}
+    className={className} aria-label={label} prefetch={false}>{children}</AppLink>;
+}
 
 export function UserIdLabel({
   userId,
   full = false,
   copyable = false,
+  contact = false,
   className,
 }: {
   userId: number | null | undefined;
   full?: boolean;
   copyable?: boolean;
+  contact?: boolean;
   className?: string;
 }) {
   const [copied, setCopied] = useState(false);
@@ -21,7 +38,9 @@ export function UserIdLabel({
 
   const text = `${full ? 'CubeRoot ID' : 'ID'} ${userId}`;
   const classes = `user-id-label${className ? ` ${className}` : ''}`;
-  if (!copyable) return <span className={classes}>{text}</span>;
+  if (!copyable) return contact
+    ? <UserContactLink userId={userId} className={classes}>{text}</UserContactLink>
+    : <span className={classes}>{text}</span>;
 
   const copy = async () => {
     try {
