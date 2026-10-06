@@ -1,3 +1,4 @@
+import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import { createTimerBackupClient } from '@cuberoot/shared/timer/backup-client';
 import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';
 import { timerRankHost, getWcaPerson } from './data/timer-rank';
@@ -132,7 +133,6 @@ import {
   canTrainerDifficulty,
   trainerSig,
   trainerSpecOf,
-  timerScrambleCapability,
   timerScrambleAllowsEmptySlot,
   timerScrambleClickEffect,
   timerScrambleStatus,
@@ -291,7 +291,6 @@ import {
 } from './data/latest-snapshot-gate';
 import { nextMobileCube222SpecialScramble } from './data/cube222-special-pool';
 import { nextMobileCube222ByStepsScramble } from './data/cube222-steps-pool';
-import { nextMobileCstimerNonWcaScramble } from './data/cstimer-nonwca-pool';
 import { nextMobileNon222ByStepsScramble } from './data/non222-steps-pool';
 import {
   awaitMobileRandomDifficulty,
@@ -498,6 +497,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   });
   const scrambleHistoryRef = useRef(scrambleHistory);
   const scrambleRequestRef = useRef(0);
+  const [ordinaryRandom] = useState(createRandomScrambleClient);
+  useEffect(() => () => ordinaryRandom.reset(), [ordinaryRandom]);
   const randomScrambleGateRef = useRef(new MobileVisibleScrambleRequestGate());
   const [toast, setToast] = useState('');
   const [pendingSolves, setPendingSolves] = useState<Array<{
@@ -1256,7 +1257,6 @@ export function App({ host }: { host: InstalledAppHost }) {
       && stepPuzzle !== '222'
       ? stepPuzzle
       : null;
-    const eventCapability = timerScrambleCapability(event);
     const request = {
       event,
       scramble222Mode: requested222Mode,
@@ -1264,11 +1264,9 @@ export function App({ host }: { host: InstalledAppHost }) {
       trainerCaseIds: event === 'oll' ? storeRef.current?.settings.ollSubset : event === 'pll' ? storeRef.current?.settings.pllSubset : undefined,
       cnMode: use222BySteps || non222ByStepsEvent ? 'none' : storeRef.current?.settings.cnMode,
     } as const;
-    const useCstimerNonWcaWorker = eventCapability?.kind === 'shared'
-      && eventCapability.provider === 'cstimer-nonwca';
     const specialistDependencies = (event === '222' && (requested222Type !== 'full' || use222BySteps))
       || non222ByStepsEvent !== null
-      || useCstimerNonWcaWorker
+
       ? {
           generateCubingScramble: non222ByStepsEvent
             ? (_cubingEventId: string, requestedEvent: EventId): Promise<string> => {
@@ -1296,9 +1294,6 @@ export function App({ host }: { host: InstalledAppHost }) {
                 controller.signal,
               );
             }
-            if (provider === 'cstimer-nonwca') {
-              return nextMobileCstimerNonWcaScramble(requestedEvent, controller.signal);
-            }
             if (provider !== 'wca-pocket' || requestedEvent !== '222') {
               return Promise.reject(new Error('invalid 2x2 specialist provider request'));
             }
@@ -1308,7 +1303,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           },
         }
       : undefined;
-    void generateTimerScramble(request, specialistDependencies).then((result) => {
+    const pending = specialistDependencies
+      ? generateTimerScramble(request, specialistDependencies)
+      : ordinaryRandom.next(request, controller.signal);
+    void pending.then((result) => {
       if (controller.signal.aborted
         || requestId !== scrambleRequestRef.current
         || activeEventRef.current !== event
@@ -1354,7 +1352,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     }).finally(() => {
       randomScrambleGateRef.current.finish(controller);
     });
-  }, [replaceScrambleHistoryEntry, scrambleIdentityFor, applyStoreSnapshot, beginTimerContextMutation, endTimerContextMutation]);
+  }, [ordinaryRandom, replaceScrambleHistoryEntry, scrambleIdentityFor, applyStoreSnapshot, beginTimerContextMutation, endTimerContextMutation]);
 
   const fillScrambleHistoryEntry = useCallback((entry: MobileScrambleHistoryEntry) => {
     const liveEntry = scrambleHistoryRef.current.list.find((candidate) => (
@@ -1637,6 +1635,7 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => {
     if (!storeLoaded) return;
+    ordinaryRandom.reset();
     const activeRealSourceKey = realScrambleSourceKey(realSpecFor(activeEvent));
     for (const [sourceKey, request] of realRequestsRef.current) {
       if (scrambleSource === 'wca' && sourceKey === activeRealSourceKey) continue;
@@ -1656,6 +1655,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [
     activeEvent,
     activeScrambleIdentity,
+    ordinaryRandom,
     byStepsSourceSignature,
     manualScrambles,
     nextScramble,

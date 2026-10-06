@@ -1475,3 +1475,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 结果以打乱/方法隔离，比较窗口换题后重建，播放器切已缓存方法时重建并清旧播放；阶段点击用真实 button，取消挂起的动画帧。方法偏好在挂载后读取，避免 SSR 读浏览器存储。App Back 与 Escape 优先关闭方法对比、求解器信息/设置，再关闭外层解法。
 - 验证：shared/puzzle-solvers build，timer-ui/App/client 类型检查；共享 UI/取消/动画 5 项、六方法迁移/SQ1 oracle/catalog/遮罩合计 34 项，App 小魔方集成 5 项、架构边界 20 项、Harmony 资源映射/路径拒绝 8 项（共 67 项）通过。Chrome 隔离上下文实测 Web/App 六方法列表、真实 R 打乱阶段解与画布、对比 320/390/1280px、Escape 嵌套关闭，无横向溢出/pageerror；SQ1 `(1,0)` 实际 Worker 返回 `(-1,0)`，五魔抵消打乱返回 100%，两端 320px 一致。
 - Mobile production build + Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator build、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍因本机 Hvigor 支持 6.0.1、工程要求 6.0.2 失败，ArkTS 路径适配未取得 HAP 编译/实体设备证据；Windows 原生构建未在本 Mac 执行。未签名、公证、实体设备验收、push 或发布，整体继续 **NOT COMPLETE**。
+
+### 2026-10-06：普通随机生成链路同源（本地）
+
+- Web 单人移除普通随机的同步 registry/主线程预热与同步缓冲消费，和五端 App 共同使用 `timer-ui/random-scramble` → shared `generateTimerScramble`。42 个生成项目均由已有 exhaustive capability 表分流；`custom` 为 ready 空槽，不伪造三阶。三阶族、FMC、FTO、Redi 等统一使用 shared 已有 cubing provider；二阶完整状态、Kilominx/Master Pyraminx、Gear/Ivy 由同一 Worker adapter 调既有 package 引擎。未修改上游或新增求解算法。
+- shared `createTimerRandomScramblePool` 为单人提供最多两条在途/缓存的同一策略，按 event/CN/二阶口径与类型/案例子集隔离。结果携带 case metadata；Web 历史槽记录本次请求，回看不再生成，切来源/配置清池，取消的等待者不吞当前结果；空返回/超时可原位重试。普通预取不读取或推进同步种子计数。种子、专项、精确步数、随机难度与云最优继续各自现有链路，本轮不宣称这些编排全部同源。
+- Web/App 本地多人普通 provider 和 Web 批量打乱也接入该 client。独立任务各持有 RPC，成功、失败或取消后释放，避免一个玩家超时终止另一项目请求；批量切项目/数量/关闭拒绝迟到结果并复用已有失败文案。cubing 自有 search Worker 仍由 cubing 管理，取消只拒收对应结果，不声称终止全部底层计算。多人多魔方隐藏入口未开放。
+- 验证：shared build、timer-ui/App/client typecheck 通过。生成契约/同步种子/缓冲 92 项、架构边界 20 项、既有 Harmony 路径回归 8 项、独立 transport 2 项、Web 多人来源/轮次/历史 34 项、App 来源/多人/预朝向 44 项，共 200 项定向检查通过。修正已过时的来源源码断言，并把上一批 Harmony 资源 fixture 改走已有 workspace 解析器，未增加生产跨包依赖。
+- Chrome 实际逐个生成全部 43 项：42 个 generated、custom manual 空槽，无 pageerror；两端真实单人随机→下一题→上一题返回原文→手动空队列，在 320/390px 无横向溢出。Mobile production preview 实测三阶及二阶 Worker 生成，320px 无溢出。独立复核提出的来源离开清理、多人取消连带问题均修复；自动化不替代五平台触摸、后台与长时间计时验收。
+- 最终 Mobile production build、Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 Hvigor 00303028：本机仅支持 modelVersion 6.0.1、工程为 6.0.2；未降级配置。Windows native、安装/签名/公证、真机和发布未验；仅本地提交，未 push，整体继续 **NOT COMPLETE**。

@@ -123,8 +123,9 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('keeps Kilominx and Master Pyraminx on one package provider and shared pool policy', () => {
-    expect(app).toContain('nextMobileCstimerNonWcaScramble');
-    expect(app).toContain("provider === 'cstimer-nonwca'");
+    expect(app).toContain("from '@cuberoot/timer-ui/random-scramble'");
+    expect(app).toContain('ordinaryRandom.next(request, controller.signal)');
+    expect(app).toContain('ordinaryRandom.reset();');
     expect(cstimerNonWcaWorker).toContain(
       "from '@cuberoot/puzzle-solvers/cstimer-nonwca'",
     );
@@ -150,7 +151,7 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('keeps every non-2x2 metric in one package engine behind the shared Worker host', () => {
-    expect(app).toContain('const byStepsSourceSignature = timerByStepsIdentity(');
+    expect(app).toContain("const byStepsSourceSignature = store?.settings.syncSeed ? '' : timerByStepsIdentity(");
     expect(app).toMatch(
       /activeEvent,[\s\S]*?activeScrambleIdentity,[\s\S]*?byStepsSourceSignature,[\s\S]*?nextScramble,[\s\S]*?wcaSourceSignature/,
     );
@@ -258,7 +259,7 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain('canUseRandomOptimal333(');
     expect(app).toContain('shouldUseRandomOptimal333(');
     expect(app).toContain('const randomOptimalRequested = timerMode === 1 && shouldUseRandomOptimal333(');
-    expect(app).toContain('const randomOptimalAuthPending = timerMode === 1');
+    expect(app).toContain('const randomOptimalAuthPending = !store?.settings.syncSeed && timerMode === 1');
     expect(app).toContain("return `${drillIdentity}|optimal:auth-pending`");
     expect(app).toContain("if (source === 'random' && event === '333' && randomOptimalAuthPending) return;");
     expect(app).toContain('randomOptimalRequested || randomOptimalAuthPending');
@@ -350,10 +351,10 @@ describe('mobile scramble-source parity contract', () => {
     expect(app).toContain("const dockHistory = wideLayout && view === 'history' && timerMode === 1;");
     expect(app).toContain("const timerVisible = view === 'timer' || view === 'settings' || dockHistory;");
     expect(app).toMatch(
-      /canStart: attemptCanStart,[\s\S]*?enabled: view !== 'settings' && timerVisible\s+&& timerMode === 1\s+&& timingEnabled\s+&& !moreOpen\s+&& !manualEntryOpen\s+&& openOverlay === null\s+&& !timerContextMutationBusy/,
+      /canStart: attemptCanStart,[\s\S]*?enabled: view !== 'settings' && timerVisible\s+&& timerMode === 1\s+&& timingEnabled\s+&& !moreOpen\s+&& !manualEntryOpen\s+&& !timerOverlayBlocking\s+&& !timerContextMutationBusy/,
     );
     expect(app).toContain('&& !manualEntryOpen');
-    expect(app).toContain('&& openOverlay === null');
+    expect(app).toContain('&& !timerOverlayBlocking');
     expect(app).toMatch(
       /const sourceControlsEnabled = timer\.machine\.phase !== 'running'[\s\S]*?&& !timerContextMutationBusy/,
     );
