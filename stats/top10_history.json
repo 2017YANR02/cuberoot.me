@@ -6354,6 +6354,11 @@
       "country": "USA",
       "iso2": "US"
     },
+    "2023DIXO02": {
+      "name": "Harry Dixon",
+      "country": "United Kingdom",
+      "iso2": "GB"
+    },
     "2005KURI01": {
       "name": "Ryo Kurihara (栗原涼)",
       "country": "Japan",
@@ -27630,6 +27635,9 @@
     "HancockCountyNxNs2026": {
       "name": "Hancock County NxNs 2026"
     },
+    "CubingforYuvalIsrael2026": {
+      "name": "Cubing for Yuval Israel 2026"
+    },
     "DanishCubeDay2008": {
       "name": "Danish Cube Day 2008"
     },
@@ -38703,6 +38711,12 @@
     "DuallinginMilford2026": {
       "name": "Dualling in Milford 2026"
     },
+    "BalamCubesBekasiComeback2026": {
+      "name": "Balam Cubes Bekasi Comeback 2026"
+    },
+    "ZottegemOpen2026": {
+      "name": "Zottegem Open 2026"
+    },
     "ColombiaMetodoGenius2011": {
       "name": "Colombia MetodoGenius 2011"
     },
@@ -39813,6 +39827,9 @@
     "KantoWinter2026": {
       "name": "Kanto Winter 2026"
     },
+    "GACubersBananaScramble2026": {
+      "name": "GA Cubers Banana Scramble 2026"
+    },
     "CarnegieMellonSpring2009": {
       "name": "Carnegie Mellon Spring 2009"
     },
@@ -40434,6 +40451,9 @@
     "WinterWarmupCO2025": {
       "name": "Winter Warmup CO 2025"
     },
+    "ChichesterJanuary2025": {
+      "name": "Chichester January 2025"
+    },
     "DIAEHCubeforChangeDubaiB2025": {
       "name": " DIA EH Cube for Change B 2025"
     },
@@ -40533,6 +40553,9 @@
     "LagunaSpeedcubingOpenVII2025": {
       "name": "Laguna Speedcubing Open VII 2025"
     },
+    "WiltshireWinter2025": {
+      "name": "Wiltshire Winter 2025"
+    },
     "NapervilleGraySkies2026": {
       "name": "Naperville Gray Skies 2026"
     },
@@ -40589,6 +40612,9 @@
     },
     "TakeYourTimeBrisbane2026": {
       "name": "Take Your Time Brisbane 2026"
+    },
+    "PooleAutumn2026": {
+      "name": "Poole Autumn 2026"
     },
     "TallinnOpen2012": {
       "name": "Tallinn Open 2012"
@@ -40973,6 +40999,9 @@
     },
     "CentralWashingtonFall2026": {
       "name": "Central Washington Fall 2026"
+    },
+    "TorontoWeeknightsI2026": {
+      "name": "Toronto Weeknights I 2026"
     },
     "Morelia2016": {
       "name": "Argetlam 2016"
@@ -41414,9 +41443,6 @@
     },
     "TaoyuanAirportCubeDay2025": {
       "name": "Taoyuan Airport Cube Day 2025"
-    },
-    "WiltshireWinter2025": {
-      "name": "Wiltshire Winter 2025"
     },
     "TokaiBigCubes2025": {
       "name": "Tokai Big Cubes 2025"
@@ -42111,6 +42137,9 @@
     "JenraCubingSummer2026": {
       "name": "Jenra Cubing Summer 2026"
     },
+    "JakartaCubeFeast2026": {
+      "name": "Jakarta Cube Feast 2026"
+    },
     "LongjumOpen2026": {
       "name": "Longjum'Open 2026"
     },
@@ -42494,6 +42523,9 @@
     },
     "SingaporeAugEven2026": {
       "name": "Singapore Aug Even 2026"
+    },
+    "TimesUpElmsford2026": {
+      "name": "Time's Up Elmsford 2026"
     },
     "MPEIOpen2014": {
       "name": "MPEI Open 2014"
@@ -43001,9 +43033,6 @@
     },
     "WinnipegSpring2026": {
       "name": "Winnipeg Spring 2026"
-    },
-    "JakartaCubeFeast2026": {
-      "name": "Jakarta Cube Feast 2026"
     },
     "HessenOpen2026": {
       "name": "Hessen Open 2026"
@@ -48468,6 +48497,9 @@
     "IowaChampionship2026": {
       "name": "Iowa Championship 2026"
     },
+    "DublinAutumnSolving2026": {
+      "name": "Dublin Autumn Solving 2026"
+    },
     "FredericiaOpen2011": {
       "name": "Fredericia Open 2011"
     },
@@ -50267,9 +50299,6 @@
     },
     "BuenosAiresFindeAno2024": {
       "name": "Buenos Aires Fin de Año 2024"
-    },
-    "ChichesterJanuary2025": {
-      "name": "Chichester January 2025"
     },
     "StartingVina2025": {
       "name": "Starting Viña 2025"
@@ -52238,6 +52267,9 @@
     },
     "PutnamLake2026": {
       "name": "Putnam Lake 2026"
+    },
+    "BalticSkewbFestGdansk2026": {
+      "name": "Baltic Skewb Fest Gdańsk 2026"
     },
     "SidenBlindNoveMesto2025": {
       "name": "Side n' Blind Nové Mesto 2025"

@@ -199,24 +199,24 @@
       null
     ],
     [
-      43,
-      "[Anders Berggren](https://www.worldcubeassociation.org/persons/2011BERG02)",
-      "Sweden",
-      "[Swedish Championship 2012](https://www.worldcubeassociation.org/competitions/SwedishChampionship2012)",
-      null
-    ],
-    [
-      43,
+      44,
       "[Ben Timmons](https://www.worldcubeassociation.org/persons/2017TIMM01)",
       "Ireland",
       "[Dublin Summer Solving 2024](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2024)",
       null
     ],
     [
-      43,
+      44,
       "[Andro Gvaramadze](https://www.worldcubeassociation.org/persons/2018GVAR01)",
       "Georgia",
       "[Georgia Open 2018](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2018)",
+      null
+    ],
+    [
+      43,
+      "[Anders Berggren](https://www.worldcubeassociation.org/persons/2011BERG02)",
+      "Sweden",
+      "[Swedish Championship 2012](https://www.worldcubeassociation.org/competitions/SwedishChampionship2012)",
       null
     ],
     [
@@ -276,17 +276,17 @@
       null
     ],
     [
-      37,
-      "[Tim McMahon](https://www.worldcubeassociation.org/persons/2009MCMA01)",
-      "Australia",
-      "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010)",
+      38,
+      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
+      "Ireland",
+      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
       null
     ],
     [
       37,
-      "[Kevin Timmons](https://www.worldcubeassociation.org/persons/2019TIMM01)",
-      "Ireland",
-      "[Dublin Winter Solving 2025](https://www.worldcubeassociation.org/competitions/DublinWinterSolving2025)",
+      "[Tim McMahon](https://www.worldcubeassociation.org/persons/2009MCMA01)",
+      "Australia",
+      "[Melbourne Summer Open 2010](https://www.worldcubeassociation.org/competitions/MelbourneSummerOpen2010)",
       null
     ],
     [
@@ -360,6 +360,13 @@
       null
     ],
     [
+      33,
+      "[Christian Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR51)",
+      "Costa Rica",
+      "[Bekubes Costa Rica 2017](https://www.worldcubeassociation.org/competitions/BekubesCostaRica2017)",
+      null
+    ],
+    [
       32,
       "[Kacper Paweł Dworak](https://www.worldcubeassociation.org/persons/2020DWOR01)",
       "Poland",
@@ -392,13 +399,6 @@
       "[Oscar Alberto Ceballos Contreras](https://www.worldcubeassociation.org/persons/2013CONT01)",
       "Venezuela",
       "[Venezuela Open 2013](https://www.worldcubeassociation.org/competitions/VenezuelaOpen2013)",
-      null
-    ],
-    [
-      32,
-      "[Christian Rodríguez](https://www.worldcubeassociation.org/persons/2017RODR51)",
-      "Costa Rica",
-      "[Bekubes Costa Rica 2017](https://www.worldcubeassociation.org/competitions/BekubesCostaRica2017)",
       null
     ],
     [
@@ -522,6 +522,13 @@
     ],
     [
       28,
+      "[Lucas Patrick Dowling](https://www.worldcubeassociation.org/persons/2023DOWL01)",
+      "Ireland",
+      "[Dublin Summer Solving 2025](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2025)",
+      null
+    ],
+    [
+      28,
       "[Ana Marchilashvili (ანა მარჩილაშვილი)](https://www.worldcubeassociation.org/persons/2022MARC10)",
       "Georgia",
       "[Georgia Open 2022](https://www.worldcubeassociation.org/competitions/GeorgiaOpen2022)",
@@ -595,13 +602,6 @@
       "[Dante Navarro Vera](https://www.worldcubeassociation.org/persons/2022VERA02)",
       "Chile",
       "[Stgo Cubikz Challenge Skewb 2024](https://www.worldcubeassociation.org/competitions/SantiagoCubikzChallengeSkewb2024)",
-      null
-    ],
-    [
-      27,
-      "[Lucas Patrick Dowling](https://www.worldcubeassociation.org/persons/2023DOWL01)",
-      "Ireland",
-      "[Dublin Summer Solving 2025](https://www.worldcubeassociation.org/competitions/DublinSummerSolving2025)",
       null
     ],
     [

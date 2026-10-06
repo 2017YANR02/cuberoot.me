@@ -59,18 +59,18 @@
       null
     ],
     [
+      102,
+      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
+      "3x3x3 Cube",
+      "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
+      null
+    ],
+    [
       101,
       "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
       "4x4x4 Cube",
       "[SacCubing II 2017](https://www.worldcubeassociation.org/competitions/SacCubingII2017)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
-    ],
-    [
-      101,
-      "[Caio Hideaki Sato](https://www.worldcubeassociation.org/persons/2016SATO01)",
-      "3x3x3 Cube",
-      "[Schoolmark Open 2019](https://www.worldcubeassociation.org/competitions/SchoolmarkOpen2019)",
-      null
     ],
     [
       95,
@@ -157,7 +157,7 @@
       null
     ],
     [
-      68,
+      69,
       "[Lim Hung (林弘)](https://www.worldcubeassociation.org/persons/2016HUNG08)",
       "7x7x7 Cube",
       "[YJ Malaysia Cube Open 2022](https://www.worldcubeassociation.org/competitions/YJMalaysiaCubeOpen2022)",
@@ -214,6 +214,13 @@
     ],
     [
       60,
+      "[Alexis Rodrigo Cazu Mendoza](https://www.worldcubeassociation.org/persons/2014MEND02)",
+      "7x7x7 Cube",
+      "[Fénix 2014](https://www.worldcubeassociation.org/competitions/Fenix2014)",
+      null
+    ],
+    [
+      60,
       "[Xuanyi Geng (耿暄一)](https://www.worldcubeassociation.org/persons/2023GENG02)",
       "3x3x3 Cube",
       "[Luoyang Spring 2024](https://www.worldcubeassociation.org/competitions/LuoyangSpring2024)",
@@ -225,13 +232,6 @@
       "Pyraminx",
       "[OGU Open 2006](https://www.worldcubeassociation.org/competitions/OGU2006)",
       "[WCA Asian Championship 2018](https://www.worldcubeassociation.org/competitions/AsianChampionship2018)"
-    ],
-    [
-      59,
-      "[Alexis Rodrigo Cazu Mendoza](https://www.worldcubeassociation.org/persons/2014MEND02)",
-      "7x7x7 Cube",
-      "[Fénix 2014](https://www.worldcubeassociation.org/competitions/Fenix2014)",
-      null
     ],
     [
       58,
@@ -682,6 +682,13 @@
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)"
     ],
     [
+      40,
+      "[Manuel Francisco Beltrán](https://www.worldcubeassociation.org/persons/2023BELT07)",
+      "Pyraminx",
+      "[Edén Bogotá 2025](https://www.worldcubeassociation.org/competitions/EdenBogota2025)",
+      null
+    ],
+    [
       39,
       "[Alexander Olleta del Molino](https://www.worldcubeassociation.org/persons/2008OLLE01)",
       "3x3x3 With Feet",
@@ -728,13 +735,6 @@
       "[Juan de Dios Noriega Sánchez](https://www.worldcubeassociation.org/persons/2017SANC24)",
       "4x4x4 Cube",
       "[Fénix México 2022](https://www.worldcubeassociation.org/competitions/FenixMexico2022)",
-      null
-    ],
-    [
-      39,
-      "[Manuel Francisco Beltrán](https://www.worldcubeassociation.org/persons/2023BELT07)",
-      "Pyraminx",
-      "[Edén Bogotá 2025](https://www.worldcubeassociation.org/competitions/EdenBogota2025)",
       null
     ]
   ]
