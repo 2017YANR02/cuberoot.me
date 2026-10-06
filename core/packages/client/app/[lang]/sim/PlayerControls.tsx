@@ -2227,13 +2227,34 @@ export default function PlayerControls({
     if (!authUser) { authLogin(); return; }
     const reqId = ++scrambleReqIdRef.current;
     setOptimalScrambleBusy(true);
-    setOptimalScrambleStatus(t('云端求最优中…', 'Solving optimally (cloud)…'));
+    setOptimalScrambleStatus(t('正在反推打乱…', 'Deriving scramble…'));
     const ac = new AbortController();
     optimalScrambleAbortRef.current = ac;
+    const applyScramble = (scramble: string) => {
+      if (setupElRef.current) {
+        setupElRef.current.value = scramble;
+        autosize(setupElRef.current);
+      }
+      setSetupDraft(scramble);
+      onSetupChange(scramble);
+      setupDraftRef.current = scramble;
+    };
     try {
       const raw = await deriveScrambleFromSolution(stripHandMarks(solution));
       if (ac.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+      if (reqId !== scrambleReqIdRef.current) return;
       if (!raw) throw new Error(t('无法从当前解法反推打乱。', 'Could not derive a scramble from the current solution.'));
+      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== originalSetup
+        || (algElRef.current?.value ?? algDraftRef.current) !== solution) {
+        setOptimalScrambleStatus(t('公式已更改，已忽略本次结果。', 'Algorithm changed; result discarded.'));
+        return;
+      }
+      if (settings.playbackMode !== 'moves') {
+        onSettingsChange({ ...settings, playbackMode: 'moves' });
+      }
+      // Publish the fast local result before waiting for the cloud solver.
+      applyScramble(raw);
+      setOptimalScrambleStatus(t('已生成打乱，继续求最优中…', 'Scramble ready; optimizing…'));
       const { scramble, moves } = await cloudOptimalScramble(raw, (p) => {
         if (reqId !== scrambleReqIdRef.current) return;
         setOptimalScrambleStatus(
@@ -2246,21 +2267,13 @@ export default function PlayerControls({
       }, ac.signal);
       if (reqId !== scrambleReqIdRef.current) return;
       if (ac.signal.aborted) throw new DOMException('Aborted', 'AbortError');
-      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== originalSetup
+      if ((setupElRef.current?.value ?? setupDraftRef.current).trim() !== raw
         || (algElRef.current?.value ?? algDraftRef.current) !== solution) {
         setOptimalScrambleStatus(t('公式已更改，已忽略本次结果。', 'Algorithm changed; result discarded.'));
         return;
       }
-      if (settings.playbackMode !== 'moves') {
-        onSettingsChange({ ...settings, playbackMode: 'moves' });
-      }
       // Rebuild the derived setup at the current playback step.
-      if (setupElRef.current) {
-        setupElRef.current.value = scramble;
-        autosize(setupElRef.current);
-      }
-      setSetupDraft(scramble);
-      onSetupChange(scramble);
+      applyScramble(scramble);
       setOptimalScrambleStatus(t(`已求出 ${moves} 步最优打乱。`, `Optimal scramble: ${moves} moves.`));
     } catch (err) {
       if (ac.signal.aborted) setOptimalScrambleStatus(t('已取消。', 'Cancelled.'));
