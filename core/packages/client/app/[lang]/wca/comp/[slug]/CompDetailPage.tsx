@@ -1904,16 +1904,6 @@ export default function CompDetailPage() {
         {compInfo && <CompInfoPanel info={compInfo} isZh={isZh} cubingZh={cubingZh} />}
 
         <div className="comp-view-tabs">
-          {hasMyResults && (
-            <button
-              type="button"
-              className={`comp-view-tab${modal?.kind === 'mine' ? ' is-active' : ''}`}
-              onClick={() => setModal({ kind: 'mine' })}
-              aria-haspopup="dialog"
-            >
-              {tr({ zh: '我的成绩', en: 'My results' })}
-            </button>
-          )}
           {hasPodiumTab && (
             <button
               type="button"
@@ -2110,9 +2100,9 @@ export default function CompDetailPage() {
           </>
         ) : !isPsych ? (
           <>
-            {!isWca && (
+            {(!isWca || hasMyResults) && (
               <div className="comp-selectors">
-                <select
+                {!isWca && <select
                   className="comp-select comp-filter-select"
                   value={filterParam}
                   onChange={e => onChangeFilter(e.target.value)}
@@ -2120,7 +2110,18 @@ export default function CompDetailPage() {
                   {filterOptions.map(f => (
                     <option key={f.value} value={f.value}>{(isZh ? f.labelZh : f.labelEn)}</option>
                   ))}
-                </select>
+                </select>}
+                {hasMyResults && (
+                  <button
+                    type="button"
+                    className="comp-select"
+                    onClick={() => setModal({ kind: 'mine' })}
+                    aria-haspopup="dialog"
+                    aria-label={tr({ zh: '我的成绩', en: 'My results' })}
+                  >
+                    {tr({ zh: '我', en: 'Me' })}
+                  </button>
+                )}
               </div>
             )}
 
