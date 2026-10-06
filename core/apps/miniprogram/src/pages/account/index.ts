@@ -39,6 +39,8 @@ function createAccountCopy() {
     ? { en: 'Douyin', zh: '抖音' }
     : { en: 'WeChat', zh: '微信' });
   return {
+    accountEyebrow: tr({ en: 'ACCOUNT', zh: '账号' }),
+    wcaLinkHint: tr({ en: 'Complete WCA authorization in your system browser. This page refreshes when you return.', zh: '请在系统浏览器完成 WCA 授权，返回后页面会刷新' }),
     agreementLabel: tr({
       en: 'I have read and agree to the terms above',
       zh: '我已阅读并同意以上内容',
@@ -636,7 +638,8 @@ Page<AccountPageData, WechatMiniprogram.Page.CustomOption>({
       loginIntro: ACCOUNT_COPY.loginIntro, loginNote: ACCOUNT_COPY.loginNote,
       release: getMiniProgramReleaseView(getMiniProgramLocale()),
     });
-    setNormalNavigationTitle();
+    const pages = typeof getCurrentPages === 'function' ? getCurrentPages() : [this];
+    if (pages[pages.length - 1] === this) setNormalNavigationTitle();
   },
 
   onShow() {

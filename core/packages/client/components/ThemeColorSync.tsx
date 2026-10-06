@@ -22,6 +22,8 @@ export default function ThemeColorSync() {
   const pathname = usePathname();
   useEffect(() => {
     const publish = () => { void syncMiniProgramAppearance(); };
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    media.addEventListener('change', publish);
     i18n.on('languageChanged', publish);
     const observer = new MutationObserver(publish);
     observer.observe(document.documentElement, { attributes: true,
@@ -34,6 +36,7 @@ export default function ThemeColorSync() {
     window.addEventListener('storage', onBackgroundStorage);
     publish();
     return () => {
+      media.removeEventListener('change', publish);
       i18n.off('languageChanged', publish);
       observer.disconnect();
       window.removeEventListener(HOME_BACKGROUND_CHANGE_EVENT, publish);

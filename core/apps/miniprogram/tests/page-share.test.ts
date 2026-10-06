@@ -132,3 +132,6 @@ it('uses the latest query and anchor even when no title message has arrived', ()
     expect(share.path).toBe(`/pages/web/index?key=home&path=${encodeURIComponent(path)}`);
   }
 });
+
+// Route/session tests isolate the appearance URL transport, covered by preferences.test.ts.
+vi.mock('../src/lib/preferences', () => ({ readNativePreferences: () => null, withNativePreferences: (url: string) => url }));

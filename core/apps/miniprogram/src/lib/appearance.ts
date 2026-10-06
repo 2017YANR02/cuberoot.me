@@ -22,10 +22,17 @@ function systemIsDark(): boolean {
   } catch { return false; }
 }
 
+function appearanceColors(appearance: NativeAppearance | null) {
+  if (!appearance) return null;
+  if (!appearance.followSystem) return appearance.colors;
+  return appearance.systemColors?.[systemIsDark() ? 'dark' : 'light'] ?? null;
+}
+
 export function nativeAppearanceStyle(): string {
   const appearance = readAppearance();
-  const styles = appearance && !appearance.followSystem
-    ? Object.entries(appearance.colors).map(([key, value]) => `${key}:${value}`)
+  const colors = appearanceColors(appearance);
+  const styles = colors
+    ? Object.entries(colors).map(([key, value]) => `${key}:${value}`)
     : [];
   if (appearance?.backgrounds) {
     const scheme = appearance.followSystem ? (systemIsDark() ? 'dark' : 'light') : appearance.scheme;
@@ -44,7 +51,7 @@ export function applyNativeAppearance(): void {
   const systemDark = systemIsDark();
   const dark = appearance && !appearance.followSystem ? appearance.scheme === 'dark' : systemDark;
   const defaults = dark ? themes.dark : themes.light;
-  const colors = appearance && !appearance.followSystem ? appearance.colors : null;
+  const colors = appearanceColors(appearance);
   const backgroundColor = colors?.['--cr-bg'] ?? defaults.backgroundColor;
   // Existing pages (including the visible native account page) update when the
   // hidden tools WebView finally delivers its queued appearance message.

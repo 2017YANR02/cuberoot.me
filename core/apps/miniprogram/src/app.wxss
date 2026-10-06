@@ -167,3 +167,34 @@ button::after {
 .retry-button {
   margin-top: 28rpx;
 }
+
+/* Match SiteBackground's fixed landscape and token-based readability overlay. */
+.native-scenery {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.native-scenery-image {
+  position: absolute;
+  inset: 0;
+  background-image: var(--cr-scene-image, none);
+  background-size: cover;
+  background-position: var(--cr-scene-position, 50%) top;
+  filter: var(--cr-scene-filter, none);
+}
+
+.native-scenery::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+    color-mix(in srgb, var(--cr-bg) 72%, transparent),
+    color-mix(in srgb, var(--cr-bg) 16%, transparent) 18%,
+    color-mix(in srgb, var(--cr-bg) 48%, transparent) 42%,
+    color-mix(in srgb, var(--cr-bg) 48%, transparent) 100%);
+}
+
+.page { position: relative; z-index: 1; }

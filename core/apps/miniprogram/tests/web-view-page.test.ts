@@ -60,6 +60,7 @@ describe('shared web-view page state', () => {
 
     await expect(openWebRoute(context, 'timer')).resolves.toBe(true);
     expect(context.data).toEqual({
+      appearanceStyle: '',
       canRetry: false,
       errorMessage: '',
       errorTitle: '',
@@ -988,3 +989,6 @@ describe('shared web-view page state', () => {
     expect(setNavigationBarTitle).toHaveBeenCalledWith({ title: '计时' });
   });
 });
+
+// Route/session tests isolate the appearance URL transport, covered by preferences.test.ts.
+vi.mock('../src/lib/preferences', () => ({ readNativePreferences: () => null, withNativePreferences: (url: string) => url }));

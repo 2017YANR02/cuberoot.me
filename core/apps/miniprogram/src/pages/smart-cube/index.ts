@@ -1,3 +1,4 @@
+import { applyNativeAppearance } from '../../lib/appearance';
 import {
   smartCubeSession,
   type SmartCubeSessionSnapshot,
@@ -11,13 +12,14 @@ const SIMULATOR_MOVES = ['U', "U'", 'R', "R'", 'F', "F'", 'D', "D'", 'L', "L'", 
 const RETURN_UNLOCK_MS = 1200;
 
 interface SmartCubePageData extends SmartCubeSessionSnapshot {
+  appearanceStyle: string;
   busy: boolean;
-  copy: typeof SMART_CUBE_COPY;
+  copy: ReturnType<typeof createSmartCubeCopy>;
   simulator: boolean;
   simulatorMoves: string[];
 }
 
-const SMART_CUBE_COPY = {
+function createSmartCubeCopy() { return {
   battery: tr({ en: 'Battery', zh: '电量' }),
   connected: tr({ en: 'Connected to', zh: '已连接' }),
   connecting: tr({ en: 'Connecting to', zh: '正在连接' }),
@@ -34,7 +36,7 @@ const SMART_CUBE_COPY = {
   smartCube: tr({ en: 'smart cube', zh: '智能魔方' }),
   title: tr({ en: 'Connect Smart Cube', zh: '连接智能魔方' }),
   wakeCube: tr({ en: 'Turn the cube to wake it up', zh: '请转动魔方将它唤醒' }),
-};
+}; }
 
 interface SmartCubePageInstance {
   active?: boolean;
@@ -95,7 +97,7 @@ async function startConnection(page: SmartCubePageInstance): Promise<void> {
     if (!page.active || page.connectionAttempt !== attempt) return;
     page.setData({
       phase: 'error',
-      error: error instanceof Error ? error.message : SMART_CUBE_COPY.failed,
+      error: error instanceof Error ? error.message : createSmartCubeCopy().failed,
     });
   }
 }
@@ -121,7 +123,7 @@ async function connectSelectedDevice(page: SmartCubePageInstance, deviceId: stri
     if (!page.active || page.connectionAttempt !== attempt) return;
     page.setData({
       phase: 'error',
-      error: error instanceof Error ? error.message : SMART_CUBE_COPY.failed,
+      error: error instanceof Error ? error.message : createSmartCubeCopy().failed,
       busy: false,
     });
   }
@@ -137,7 +139,8 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     error: '',
     lastMove: '',
     busy: false,
-    copy: SMART_CUBE_COPY,
+    copy: createSmartCubeCopy(),
+    appearanceStyle: '',
     simulator: false,
     simulatorMoves: SIMULATOR_MOVES,
   },
@@ -162,7 +165,7 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     page.returningToTimer = false;
     page.token = options.token ?? '';
     try {
-      miniProgramApi().setNavigationBarTitle({ title: SMART_CUBE_COPY.title });
+      miniProgramApi().setNavigationBarTitle({ title: createSmartCubeCopy().title });
     } catch {
       // The platform title is cosmetic and may be unavailable in test runtimes.
     }
@@ -180,6 +183,16 @@ Page<SmartCubePageData, WechatMiniprogram.Page.CustomOption>({
     }
     page.setData({ simulator: page.simulator });
     void startConnection(page);
+  },
+
+  refreshLocale() {
+    const copy = createSmartCubeCopy();
+    this.setData({ copy });
+  },
+  onShow() {
+    this.refreshLocale();
+    applyNativeAppearance();
+    miniProgramApi().setNavigationBarTitle({ title: this.data.copy.title });
   },
 
   onUnload() {

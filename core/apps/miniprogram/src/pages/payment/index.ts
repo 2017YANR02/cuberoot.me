@@ -1,3 +1,4 @@
+import { applyNativeAppearance } from '../../lib/appearance';
 import { ApiError, getStoredSession, miniProgramLoginCode, requestJson } from '../../lib/auth';
 import { tr } from '../../lib/i18n';
 import { isDouyinMiniProgram, miniProgramApi } from '../../lib/platform';
@@ -27,14 +28,17 @@ function errorMessage(error: unknown): string {
   return tr({ en: 'Unable to confirm payment. Refresh the order or try again later.', zh: '暂时无法确认支付，请刷新订单或稍后重试。' });
 }
 
-Page({
-  data: {
-    labels: {
+function createLabels() { return {
       title: tr({ en: 'Competition entry', zh: '赛事报名支付' }),
       pay: tr({ en: 'Pay with WeChat', zh: '微信支付' }),
       refresh: tr({ en: 'Refresh status', zh: '刷新支付状态' }),
       return: tr({ en: 'Return to order', zh: '返回订单' }),
-    },
+}; }
+
+Page({
+  data: {
+    appearanceStyle: '',
+    labels: createLabels(),
     amount: '', orderNumber: '', message: '', error: '', canPay: false, hasOrder: false, busy: false,
   },
   onLoad(options: Record<string, string | undefined>) {
@@ -55,7 +59,11 @@ Page({
     states.set(this, { orderId, token: session.token, visible: true, polls: 0, timer: null });
     this.setData({ hasOrder: true, message: tr({ en: 'Loading order…', zh: '正在读取订单…' }) });
   },
+  refreshLocale() { this.setData({ labels: createLabels() }); },
   onShow() {
+    this.refreshLocale();
+    applyNativeAppearance();
+    miniProgramApi().setNavigationBarTitle({ title: this.data.labels.title });
     const state = states.get(this);
     if (!state) return;
     state.visible = true;

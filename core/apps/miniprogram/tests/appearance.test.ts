@@ -84,3 +84,13 @@ describe('native background inheritance', () => {
     expect(native.nativeAppearanceStyle()).not.toContain('.webp');
   });
 });
+
+it.each(['light', 'dark'] as const)('restores both system color snapshots after a cold launch: %s', async scheme => {
+  const colors = appearance().colors;
+  const saved = { ...appearance(), followSystem: true, systemColors: {
+    light: { ...colors, '--cr-bg': '#fafafa' }, dark: { ...colors, '--cr-bg': '#171717' },
+  } };
+  vi.stubGlobal('wx', { getStorageSync: () => saved, getAppBaseInfo: () => ({ theme: scheme }) });
+  const { nativeAppearanceStyle } = await import('../src/lib/appearance');
+  expect(nativeAppearanceStyle()).toContain(`--cr-bg:${saved.systemColors[scheme]['--cr-bg']}`);
+});

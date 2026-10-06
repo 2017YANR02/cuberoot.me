@@ -1,7 +1,7 @@
 /** Shareable page addresses; recipients still need their own access permissions. */
 const AUTH_ROUTE = /^\/(?:zh\/)?auth(?:\/|$)/i;
 // Shares can cross containers, so strip both hosts' markers regardless of the sender.
-const INTERNAL_PARAM = /^(?:(?:wechat|douyin)_redirect|ticket|token|access_token|refresh_token|id_token|auth_code|code_verifier|code_challenge|next|redirect|redirect_uri|returnTo)$/i;
+const INTERNAL_PARAM = /^(?:(?:wechat|douyin)_redirect|mpPreferences|ticket|token|access_token|refresh_token|id_token|auth_code|code_verifier|code_challenge|next|redirect|redirect_uri|returnTo)$/i;
 
 function cleanParameters(value: string): string | null {
   const kept: string[] = [];

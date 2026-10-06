@@ -87,6 +87,8 @@ export function receiveNativeLocale(value: unknown): void {
   applyLocalizedTabBar();
   // Tools messages can arrive after the destination page's onShow.
   if (typeof getCurrentPages === 'function') {
-    for (const page of getCurrentPages()) page.refreshLocale?.();
+    // Hidden pages refresh onShow; only the foreground page may set its title.
+    const pages = getCurrentPages();
+    pages[pages.length - 1]?.refreshLocale?.();
   }
 }

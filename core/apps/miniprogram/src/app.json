@@ -6,7 +6,8 @@
     "pages/tools/index",
     "pages/account/index",
     "pages/web/index",
-    "pages/payment/index"
+    "pages/payment/index",
+    "pages/preferences/index"
   ],
   "lazyCodeLoading": "requiredComponents",
   "darkmode": true,

@@ -24,7 +24,8 @@ body {
   touch-action: manipulation;
 }
 
-:root {
+:root,
+.native-appearance-scope {
   color-scheme: light dark;
   --site-color-scheme: light;
 
@@ -171,7 +172,8 @@ html:root:not([data-palette-scheme=dark]):has(.comp-sim-live) {
   --input: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
-html[data-theme=dark] {
+html[data-theme=dark],
+.native-appearance-scope[data-theme=dark] {
   --site-color-scheme: dark;
   --background: #171717;
   --foreground: #ededed;
