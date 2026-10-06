@@ -52,3 +52,15 @@
 .recon-player-controls {
   padding: 8px 10px;
 }
+
+/* Fullscreen plus five transport buttons must share one row, including when
+   the 260px playback bar is narrower than their combined preferred widths. */
+.recon-player-controls .playback-bar-controls {
+  flex-wrap: nowrap;
+}
+
+.recon-player-controls .playback-bar-btn {
+  flex: 0 1 38px;
+  min-width: 0;
+  padding-inline: 0;
+}
