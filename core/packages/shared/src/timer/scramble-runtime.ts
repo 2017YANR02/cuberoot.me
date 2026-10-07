@@ -42,6 +42,7 @@ export type TimerCubingScrambleEventId =
 export type TimerSharedScrambleProviderId =
   | 'wca-pocket'
   | 'trainer-case'
+  | 'training-state'
   | 'small-puzzle-random-state'
   | 'cstimer-nonwca';
 
@@ -125,6 +126,15 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   zbll: { kind: 'shared', provider: 'trainer-case' },
   eg1: { kind: 'shared', provider: 'trainer-case' },
   eg2: { kind: 'shared', provider: 'trainer-case' },
+  'cll': { kind: 'shared', provider: 'training-state' },
+  'ell': { kind: 'shared', provider: 'training-state' },
+  'eocp': { kind: 'shared', provider: 'training-state' },
+  '2gll': { kind: 'shared', provider: 'training-state' },
+  'ollcp': { kind: 'shared', provider: 'training-state' },
+  'zzll': { kind: 'shared', provider: 'training-state' },
+  'zbls': { kind: 'shared', provider: 'training-state' },
+  'lse': { kind: 'shared', provider: 'training-state' },
+  'l10p': { kind: 'shared', provider: 'training-state' },
   custom: { kind: 'manual' },
 } as const satisfies Readonly<Record<EventId, TimerScrambleCapability>>);
 
@@ -182,6 +192,7 @@ export type TimerSharedScrambleValue = string | {
 
 /** Providers whose platform worker may be injected without replacing shared business logic. */
 export type TimerHostSharedScrambleProviderId =
+  | 'training-state'
   | 'wca-pocket'
   | 'cstimer-nonwca'
   | 'small-puzzle-random-state';
@@ -267,6 +278,12 @@ async function defaultSharedScrambleGenerator(
       return (request.scramble222Mode ?? DEFAULT_SCRAMBLE_222_MODE) === 'optimal'
         ? optimalPocketScramble()
         : wcaPocketScramble();
+    }
+    case 'training-state': {
+      const { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } = await import('./training-state-scramble');
+      const { generateCstimerScramble } = await import('@cuberoot/puzzle-solvers/cstimer-nonwca');
+      if (!isTimerTrainingStateEvent(requestedEvent)) throw new Error('Unknown training state event');
+      return generateTimerTrainingStateScramble(requestedEvent, generateCstimerScramble);
     }
     case 'trainer-case': {
       const {
@@ -414,7 +431,8 @@ export async function generateTimerScramble(
             capability.cubingEventId,
             request.event,
           )
-        : capability.provider === 'wca-pocket'
+        : capability.provider === 'training-state'
+            || capability.provider === 'wca-pocket'
             || capability.provider === 'cstimer-nonwca'
             || capability.provider === 'small-puzzle-random-state'
           ? dependencies.generateSharedScramble

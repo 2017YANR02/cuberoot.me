@@ -36,6 +36,7 @@ export function normalizeTimerPreScrambleSettings(value: Partial<Record<keyof Ti
 const TRAINING_EVENTS = new Set<EventId>([
   'cross', 'f2l', 'll', 'oll', 'pll',
   'coll', 'cmll', 'zbll', 'eg1', 'eg2',
+  'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
 ]);
 
 export function isTrainingEvent(event: EventId): boolean {

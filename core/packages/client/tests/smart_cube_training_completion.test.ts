@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
-import { CUBE_ORIENTATIONS, timerSmartCubeTrainingComplete, type EventId } from '@cuberoot/shared/timer';
+import { smartCubeTargetFacelets, solvedCubie, cubieToFacelets, applyCubieAlg } from '@cuberoot/shared/smart-cube/cubie';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
+import { CUBE_ORIENTATIONS, orientCubeFacelets, timerSmartCubeTrainingComplete, type EventId } from '@cuberoot/shared/timer';
 
 const state = (alg: string, orientation = '') => smartCubeTargetFacelets(alg, orientation)!;
 const ua = "R U' R U R U R U' R' U' R2";
@@ -9,6 +10,33 @@ const tPerm = "R U R' U' R' F R2 U' R' U' R U R' F'";
 
 describe('fixed-frame smart cube training completion', () => {
   for (const { value: orientation } of CUBE_ORIENTATIONS) {
+    it(`distinguishes CLL/EOCP/OLLCP/ZBLS goals and AUF in ${orientation || 'UF'}`, () => {
+      const twisted = solvedCubie();
+      twisted.ca[0] |= 8;
+      twisted.ca[1] |= 16;
+      const flipped = solvedCubie();
+      flipped.ea[0] |= 1;
+      flipped.ea[1] |= 1;
+      const permuted = solvedCubie();
+      permuted.ca.splice(0, 3, 1, 2, 0);
+      for (const auf of ['', 'U', 'U2', "U'"]) {
+        const physical = (cube: ReturnType<typeof solvedCubie>) => orientCubeFacelets(
+          cubieToFacelets(applyCubieAlg(cube, auf)), invertAlg(orientation));
+        const complete = (event: EventId, cube: ReturnType<typeof solvedCubie>) => timerSmartCubeTrainingComplete(event, physical(cube), orientation);
+        expect(complete('eocp', twisted)).toBe(true);
+        expect(complete('cll', twisted)).toBe(false);
+        expect(complete('ollcp', twisted)).toBe(false);
+        expect(complete('zbls', twisted)).toBe(true);
+        expect(complete('cll', flipped)).toBe(true);
+        expect(complete('eocp', flipped)).toBe(false);
+        expect(complete('ollcp', flipped)).toBe(false);
+        expect(complete('zbls', flipped)).toBe(false);
+        expect(complete('eocp', permuted)).toBe(false);
+        expect(complete('ollcp', permuted)).toBe(false);
+        expect(complete('cll', permuted)).toBe(false);
+        expect(complete('zbls', permuted)).toBe(true);
+      }
+    });
     it(`preserves each finish line and AUF in grip ${orientation || 'UF'}`, () => {
       const complete = (event: EventId, alg: string) => timerSmartCubeTrainingComplete(event, state(alg, orientation), orientation);
       for (const auf of ['', 'U', 'U2', "U'"]) {

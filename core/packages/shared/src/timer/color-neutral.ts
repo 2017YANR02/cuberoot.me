@@ -26,6 +26,7 @@ const SIX_ROTATIONS = ['', 'x', "x'", 'x2', 'z', "z'"] as const;
 const DUAL_ROTATIONS = ['', 'x2'] as const;
 
 const CN_3X3_EVENTS = new Set<EventId>([
+  // State-based training uses its fixed preScrT goal frame, with no extra random rotation.
   '333', '333oh', '333fm',
   'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2',
   'cross', 'f2l', 'll',

@@ -35,6 +35,7 @@ function stepLabel(step: CubeStep): string {
     case 'cross': return tr({ zh: '十字完成', en: 'the cross' });
     case 'fb': return tr({ zh: '第一块完成', en: 'the first block' });
     case 'sb': return tr({ zh: '第二块完成', en: 'the second block' });
+    case 'cll': return tr({ zh: 'CLL 完成', en: 'CLL' });
     case 'cmll': return tr({ zh: 'CMLL 完成', en: 'CMLL' });
   }
 }

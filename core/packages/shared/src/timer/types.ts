@@ -34,6 +34,7 @@ export type EventId =
   | 'cross' | 'f2l' | 'll' | 'oll' | 'pll'
   // LL training subsets
   | 'coll' | 'cmll' | 'zbll' | 'eg1' | 'eg2'
+  | 'cll' | 'ell' | 'eocp' | '2gll' | 'ollcp' | 'zzll' | 'zbls' | 'lse' | 'l10p'
   // Free-form (user types own scramble)
   | 'custom';
 
@@ -244,6 +245,16 @@ export const EVENTS: EventInfo[] = [
   { id: 'zbll',   nameEn: 'ZBLL',        nameZh: 'ZBLL',       group: 'll' },
   { id: 'eg1',    nameEn: 'EG-1',        nameZh: 'EG-1',       group: 'll' },
   { id: 'eg2',    nameEn: 'EG-2',        nameZh: 'EG-2',       group: 'll' },
+
+  { id: 'cll', nameEn: 'CLL', nameZh: 'CLL', group: 'll' },
+  { id: 'ell', nameEn: 'ELL', nameZh: 'ELL', group: 'll' },
+  { id: 'eocp', nameEn: 'EOCP', nameZh: 'EOCP', group: 'll' },
+  { id: '2gll', nameEn: '2GLL', nameZh: '2GLL', group: 'll' },
+  { id: 'ollcp', nameEn: 'OLLCP', nameZh: 'OLLCP', group: 'll' },
+  { id: 'zzll', nameEn: 'ZZLL', nameZh: 'ZZLL', group: 'll' },
+  { id: 'zbls', nameEn: 'ZBLS', nameZh: 'ZBLS', group: 'll' },
+  { id: 'lse', nameEn: 'LSE', nameZh: 'LSE', group: 'll' },
+  { id: 'l10p', nameEn: 'L10P', nameZh: 'L10P', group: 'll' },
 
   // Misc
   { id: 'custom', nameEn: 'Custom',      nameZh: '自定义',     group: 'misc'

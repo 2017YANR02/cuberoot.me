@@ -9,6 +9,9 @@
 import type { EventId, Solve } from './types';
 import { EVENTS, eventInfo } from './types';
 
+/** Upstream has no dedicated generator for these goals; retain our identity separately. */
+export const CSTIMER_TRAINING_FALLBACKS = { eocp: 'll', ollcp: 'll', l10p: 'cmll' } as const;
+
 /** csTimer stores DNS as DNF with a recoverable comment marker. */
 export function encodeDnsComment(comment: string | undefined): string {
   const rest = (comment ?? '').trim();
@@ -60,6 +63,15 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   ll: 'll',
   oll: 'ollt',
   pll: 'pllt',
+  'cll': 'cll',
+  'ell': 'ell',
+  'eocp': CSTIMER_TRAINING_FALLBACKS.eocp,
+  '2gll': '2gll',
+  'ollcp': CSTIMER_TRAINING_FALLBACKS.ollcp,
+  'zzll': 'zzll',
+  'zbls': 'zbls',
+  'lse': 'lse',
+  'l10p': CSTIMER_TRAINING_FALLBACKS.l10p,
   coll: 'collt',
   cmll: 'cmll',
   zbll: 'zbllt',
@@ -122,7 +134,7 @@ export function exportTimerCstimerJson(byEvent: Partial<Record<EventId, Solve[]>
   }
 
   const outer: Record<string, unknown> = {};
-  const sessionData: Record<string, { name: string; opt: { scrType: string }; rank: number }> = {};
+  const sessionData: Record<string, { name: string; opt: { scrType: string }; rank: number; cuberootEvent?: EventId }> = {};
 
   let totalSolves = 0;
   sessionsToEmit.forEach((entry, idx) => {
@@ -134,6 +146,7 @@ export function exportTimerCstimerJson(byEvent: Partial<Record<EventId, Solve[]>
       name: info.nameEn,
       opt: { scrType: EVENT_TO_CSTIMER_SCRTYPE[entry.event] },
       rank: idx + 1,
+      ...(Object.prototype.hasOwnProperty.call(CSTIMER_TRAINING_FALLBACKS, entry.event) ? { cuberootEvent: entry.event } : {}),
     };
     totalSolves += entry.solves.length;
   });

@@ -21,6 +21,13 @@ import {
 } from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
 export * from '@cuberoot/puzzle-solvers/cstimer-nonwca-events';
 
+/** Worker-only access to the existing upstream state generators. */
+export function generateCstimerScramble(key: string): string {
+  const result = cstimer.getScramble(key, 0);
+  if (typeof result !== 'string' || !result.trim()) throw new Error(`Empty scramble: ${key}`);
+  return result.trim();
+}
+
 /**
  * Generate one real random-state scramble with csTimer's canonical provider.
  *

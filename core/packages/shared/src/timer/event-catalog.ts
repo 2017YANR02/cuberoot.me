@@ -15,6 +15,15 @@ export const TIMER_333_SCRAMBLE_TYPES = [
   { id: 'coll', event: 'coll' },
   { id: 'cmll', event: 'cmll' },
   { id: 'zbll', event: 'zbll' },
+  { id: 'cll', event: 'cll' },
+  { id: 'ell', event: 'ell' },
+  { id: 'eocp', event: 'eocp' },
+  { id: '2gll', event: '2gll' },
+  { id: 'ollcp', event: 'ollcp' },
+  { id: 'zzll', event: 'zzll' },
+  { id: 'zbls', event: 'zbls' },
+  { id: 'lse', event: 'lse' },
+  { id: 'l10p', event: 'l10p' },
 ] as const satisfies readonly { id: string; event: EventId }[];
 
 export type Timer333ScrambleType = (typeof TIMER_333_SCRAMBLE_TYPES)[number]['id'];
@@ -60,7 +69,7 @@ interface TimerEventPickerLayoutItem {
  * Canonical solo-timer picker order and grouping.
  *
  * Names come from `EVENTS`; WCA icon keys come through `toWcaSpelling`; the
- * layout contains internal EventIds only. Keeping the 43 entries here means a
+ * layout contains internal EventIds only. Keeping the 52 entries here means a
  * Web or App picker cannot silently drift into a different product catalog.
  */
 const TIMER_EVENT_PICKER_LAYOUT = [
@@ -101,6 +110,15 @@ const TIMER_EVENT_PICKER_LAYOUT = [
   { id: 'coll', group: 'other', textLabel: 'COLL' },
   { id: 'cmll', group: 'other', textLabel: 'CMLL' },
   { id: 'zbll', group: 'other', textLabel: 'ZBLL' },
+  { id: 'cll', group: 'other', textLabel: 'CLL' },
+  { id: 'ell', group: 'other', textLabel: 'ELL' },
+  { id: 'eocp', group: 'other', textLabel: 'EOCP' },
+  { id: '2gll', group: 'other', textLabel: '2GLL' },
+  { id: 'ollcp', group: 'other', textLabel: 'OLLCP' },
+  { id: 'zzll', group: 'other', textLabel: 'ZZLL' },
+  { id: 'zbls', group: 'other', textLabel: 'ZBLS' },
+  { id: 'lse', group: 'other', textLabel: 'LSE' },
+  { id: 'l10p', group: 'other', textLabel: 'L10P' },
   { id: 'eg1', group: 'other', textLabel: 'EG-1' },
   { id: 'eg2', group: 'other', textLabel: 'EG-2' },
   { id: 'custom', group: 'other', textLabel: 'Custom' },
@@ -213,6 +231,7 @@ const PICKER_ITEM_BY_EVENT = new Map(
 const THREE_BY_THREE_PREVIEW_EVENTS = new Set<EventId>([
   '333', '333oh', '333bld', '333ni', '333fm', '333mr',
   'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll',
+  'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p',
 ]);
 
 /** Look up a picker item without making each app rebuild its own event map. */
