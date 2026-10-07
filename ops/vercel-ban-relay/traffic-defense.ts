@@ -85,7 +85,9 @@ export async function run(mode: string, apply: boolean) {
       ledger.cursor = Date.now();
       atomic(file, JSON.stringify(ledger));
     }
-    if (enabled) command('systemctl', ['start', ...timers]);
+    // In open mode the relay only keeps the existing token-expiry reminder;
+    // it cannot ingest events or write bans while MODE is zero.
+    command('systemctl', ['start', ...(enabled ? timers : ['cuberoot-vercel-bans.timer'])]);
     console.log(JSON.stringify({ ...summary(), vercelEnabled: after.firewallEnabled,
       vercelVersion: after.version, applied: true, propagationSeconds: 5 }));
   } catch (error) {

@@ -12,7 +12,7 @@ ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts protect --apply'
 
 省略 `--apply` 只读取当前状态与计划。写入由服务器 `flock` 串行执行；Vercel 专用令牌继续留在原 root-only 配置，不写入 Mac 快捷指令、网页或日志。该令牌目前有到期时间，切换若失败必须按错误处理，不能把点击当成功。
 
-开放模式：Vercel `firewallEnabled=false`，保留完整规则；nginx 原 `/etc/nginx/cuberoot-comp-verification-state.conf` 统一设为 `default 0;`，关闭全站验证码、计算器拒绝、事件限流/并发预算、扫描与未验证请求封禁及自动维护。既有封禁账本保留，开放时不参与拦截。暂停两个写状态的 timer，脚本本身也检查该开关，后续部署重新启用 timer 仍不会恢复限制。API 读取同一运行期文件；Next 从不受维护和扫描封禁影响的 nginx 只读 `/v1/traffic-defense` 获取模式，进程内缓存 5 秒、合并并发请求，不需要每次切换重新构建。
+开放模式：Vercel `firewallEnabled=false`，保留完整规则；nginx 原 `/etc/nginx/cuberoot-comp-verification-state.conf` 统一设为 `default 0;`，关闭全站验证码、计算器拒绝、事件限流/并发预算、扫描与未验证请求封禁及自动维护。既有封禁账本保留，开放时不参与拦截。切换时先停止两个 timer 和正在执行的任务；开放后仅保留封禁同步器的原有令牌到期提醒，其采集与写名单步骤跳过，自动停站 timer 停止。脚本本身检查开关，后续部署重新启用 timer 也不会恢复限制。API 读取同一运行期文件；Next 从不受维护和扫描封禁影响的 nginx 只读 `/v1/traffic-defense` 获取模式，进程内缓存 5 秒、合并并发请求，不需要每次切换重新构建。
 
 防护模式：恢复 Vercel 保存的规则及 nginx 原阈值、CN 豁免、验证码与自动封禁/停站；清除旧维护状态后启动 timers，遇到新异常可再次停站。历史账本的绝对到期时间保留，重新启动采集游标避免把开放期间的间隔当同步故障。此次开关不自动开启有时限的 Attack Mode，不改变 DNS、项目暂停、账号认证、业务写入限流、预算暂停或 Analytics 收集设置。
 
