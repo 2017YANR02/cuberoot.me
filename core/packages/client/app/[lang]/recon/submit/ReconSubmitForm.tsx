@@ -1,4 +1,6 @@
 'use client';
+
+import { normalizeReconVideoUrls } from '@/lib/recon-video-url';
 /**
  * /recon/submit — submit/edit a reconstruction.
  *
@@ -1533,6 +1535,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
       const data: Partial<ReconSolve> = {
         ...form,
+        videoUrl: normalizeReconVideoUrls(form.videoUrl || ''),
         person,
         recordType: timingOnly ? 'timing' : 'reconstruction',
         solution,
@@ -2387,7 +2390,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                     value={form.videoUrl || ''}
                     onChange={e => setField('videoUrl', e.target.value)}
                     onBlur={async () => {
-                      const cur = form.videoUrl || '';
+                      const cur = normalizeReconVideoUrls(form.videoUrl || '');
+                      if (cur !== (form.videoUrl || '')) setField('videoUrl', cur);
                       if (!/b23\.tv/i.test(cur)) return;
                       const lines = cur.split('\n');
                       let changed = false;
@@ -2399,12 +2403,16 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                           const res = await resolveShortUrl(m[0]);
                           if (res.url) {
                             changed = true;
-                            return line.replace(m[0], res.url.split('?')[0]);
+                            return normalizeReconVideoUrls(line.replace(m[0], res.url));
                           }
                         } catch { /* keep short link on failure */ }
                         return line;
                       }));
-                      if (changed) setField('videoUrl', resolved.join('\n'));
+                      if (changed) {
+                        // Do not overwrite edits made while a short link is resolving.
+                        setForm(prev => prev.videoUrl === cur ? { ...prev, videoUrl: resolved.join('\n') } : prev);
+                        pruneReused('videoUrl');
+                      }
                     }}
                     rows={2}
                   />
