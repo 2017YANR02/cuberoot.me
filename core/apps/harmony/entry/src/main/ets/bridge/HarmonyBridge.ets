@@ -1,3 +1,5 @@
+import { util } from '@kit.ArkTS';
+import { picker, fileIo } from '@kit.CoreFileKit';
 import { abilityAccessCtrl, common, type Permissions } from '@kit.AbilityKit';
 import { window } from '@kit.ArkUI';
 
@@ -67,6 +69,28 @@ export class HarmonyBridge {
 
   async takeLaunchUrls(): Promise<string> {
     return successValue(DeepLinkInbox.shared().takeAll());
+  }
+
+  async exportFile(text: string, filename: string): Promise<string> {
+    if (!this.context || !filename || filename === '.' || filename === '..' || filename.includes('/') || filename.includes('\\')) return failure();
+    try {
+      const options = new picker.DocumentSaveOptions();
+      options.newFileNames = [filename];
+      const uris = await new picker.DocumentViewPicker(this.context).save(options);
+      if (uris.length === 0) return successValue(false);
+      const file = await fileIo.open(uris[0], fileIo.OpenMode.READ_WRITE | fileIo.OpenMode.TRUNC);
+      try {
+        const bytes = new util.TextEncoder().encodeInto(text);
+        let written = 0;
+        while (written < bytes.length) {
+          const count = await fileIo.write(file.fd, bytes.slice(written).buffer);
+          if (count <= 0) throw new Error('File write did not advance');
+          written += count;
+        }
+      }
+      finally { await fileIo.close(file); }
+      return successValue(true);
+    } catch (_) { return failure(); }
   }
 
   async openExternal(url: string): Promise<string> {

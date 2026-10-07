@@ -749,7 +749,7 @@ export function LocalBattleMode({
       onClose: () => setHistoryOpen(false),
       onBackChange: onOverlayCloseChange,
       warning: storageError && <p role="alert">{storageError}</p>,
-      onExport: onExportRounds ? () => { void onExportRounds(roundsRef.current).catch(() => setStorageError(copy.actionFailed)); } : undefined,
+      onExport: onExportRounds ? () => { void onExportRounds(roundsRef.current).catch(error => { if (!(error instanceof DOMException && error.name === 'AbortError')) setStorageError(copy.actionFailed); }); } : undefined,
       onDelete: async (id) => {
         await historyWritesRef.current;
         const next = roundsRef.current.filter(round => round.id !== id);

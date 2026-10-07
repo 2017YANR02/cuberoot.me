@@ -149,6 +149,7 @@ struct Index {
             'secureRemove',
             'takeLaunchUrls',
             'openExternal',
+            'exportFile',
             'exitApp',
             'getNetworkStatus',
             'setBackHandlerReady',

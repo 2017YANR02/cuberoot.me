@@ -74,6 +74,9 @@ export const desktopHost: InstalledAppHost = {
   netBattle: desktopNetBattle,
   openExternal: openUrl,
   print: browserPrintTransport,
+  async exportFile(text, filename) {
+    if (!await invoke<boolean>('export_file', { text, filename })) throw new DOMException('Export cancelled', 'AbortError');
+  },
   writeClipboardText: browserClipboardTransport,
   useAuth: (language) => useInstalledAuth(language, desktopAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new TauriBleTransport(), options),

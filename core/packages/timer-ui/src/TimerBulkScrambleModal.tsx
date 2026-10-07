@@ -70,7 +70,7 @@ export default function TimerBulkScrambleModal({ defaultEvent, language, onClose
       if (copy) await transport.copy(formatted);
       else await transport.download(formatted, `cuberoot-scrambles-${event}-${count}.txt`);
       if (revision === exportRevision.current && copy) setCopied(true);
-    } catch { if (revision === exportRevision.current) setExportFailed(true); }
+    } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError') && revision === exportRevision.current) setExportFailed(true); }
   };
   return <TimerRoomDialog title={tr({ zh: '批量打乱', en: 'Bulk scrambles' })} className="timer-tool-dialog bulk-scramble-modal" language={language} onClose={dismiss}>
     <div className="timer-tool-controls">

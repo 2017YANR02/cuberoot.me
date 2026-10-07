@@ -1,3 +1,4 @@
+import { exportNativeFile } from './native-export';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { NativeBleTransport } from './bluetooth/native-ble-transport';
 import { handleAppleMembership } from './apple-membership';
@@ -40,6 +41,7 @@ export const capacitorHost: InstalledAppHost = {
   },
   openExternal: async (url) => Browser.open({ url }),
   print: printTimerDocument,
+  exportFile: exportNativeFile,
   writeClipboardText: (text) => Clipboard.write({ string: text }),
   useAuth: useMobileAuth,
   useSmartCube,

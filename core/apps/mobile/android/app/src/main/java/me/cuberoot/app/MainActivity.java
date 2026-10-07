@@ -18,6 +18,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         SplashScreen.installSplashScreen(this);
         registerPlugin(TimerPrintPlugin.class);
+        registerPlugin(NativeFilesPlugin.class);
         registerPlugin(RecordPushPlugin.class);
         registerPlugin(SmartCubePickerPlugin.class);
         registerPlugin(GoogleMembershipPlugin.class);
