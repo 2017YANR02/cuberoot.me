@@ -23,7 +23,6 @@
     "pinyin-pro": "^3.26.0"
   },
   "devDependencies": {
-    "@types/adm-zip": "^0.5.5",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^25.5.0",
     "tsx": "^4.23.15",
