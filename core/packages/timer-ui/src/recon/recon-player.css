@@ -50,6 +50,8 @@
 /* Thin padded wrapper around the shared <PlaybackBar> (buttons + scrubber styling
    live in PlaybackBar.css — same bar /sim renders). */
 .recon-player-controls {
+  display: flex;
+  justify-content: center;
   padding: 8px 10px;
 }
 
