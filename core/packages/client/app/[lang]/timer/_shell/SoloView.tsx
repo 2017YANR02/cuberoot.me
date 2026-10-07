@@ -10,7 +10,7 @@ import { apiUrl as replayApiUrl } from '@/lib/api-base';
 import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
-import { TIMER_333_SCRAMBLE_TYPES, timerPuzzleSelection, timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
+import { SCRAMBLE_222_TYPE_CATALOG, isScramble222Type, TIMER_333_SCRAMBLE_TYPES, timerPuzzleSelection, timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
 import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
@@ -566,7 +566,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 2x2 口径(WCA 11 步 ↔ 最优/Q|H):与 /scramble/gen 同一个全站设置(Scramble222ModePicker)。
   // 真题:optimal → 服务端 God's-number 最优等态(复用 optimal_scramble);随机状态 → 见 scramble222。
   const [mode222] = use222Mode();
-  const [type222] = use222Type();
+  const [type222, setType222] = use222Type();
   const wca222Type = event === '222' && settings.scrambleSource === 'wca'
     && isCube222StateType(type222) ? type222 : undefined;
   const wca222TypeSig = wca222Type ?? '';
@@ -2712,7 +2712,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const trainingEvents: readonly string[] = selectedPuzzle === '333'
     ? TIMER_333_SCRAMBLE_TYPES.filter((type) => type.event !== '333').map((type) => type.event)
     : selectedPuzzle === '222' ? ['eg1', 'eg2'] : [];
-  const trainingItems = trainingEvents.flatMap((id) => {
+  const trainingItems = selectedPuzzle === '222'
+    ? SCRAMBLE_222_TYPE_CATALOG.filter((item) => item.id !== 'full').map((item) => ({ value: item.id, label: tr(item.label) }))
+    : trainingEvents.flatMap((id) => {
     const item = eventPickerGroups.flatMap((group) => group.items).find((item) => item.id === id);
     return item ? [{ value: id, label: item.label }] : [];
   });
@@ -3003,14 +3005,21 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             }}
             value={settings.scrambleSource}
             trainingItems={trainingItems}
-            trainingValue={trainingEvents.includes(event) ? event : undefined}
+            trainingValue={trainingEvents.includes(event) ? event : event === '222' && type222 !== 'full' ? type222 : undefined}
             onTrainingChange={(id) => {
+              if (selectedPuzzle === '222' && isScramble222Type(id)) {
+                setType222(id === 'eg1' || id === 'eg2' ? 'full' : id);
+                updateSettings({ scrambleSource: 'random' });
+                selectEvent(id === 'eg1' || id === 'eg2' ? id : '222');
+                return;
+              }
               const nextEvent = timerEventIdFromSelector(id);
               if (!nextEvent) return;
               updateSettings({ scrambleSource: 'random' });
               selectEvent(nextEvent);
             }}
             onChange={(scrambleSource) => {
+              if (selectedPuzzle === '222') setType222('full');
               selectEvent(selectedPuzzle);
               updateSettings({ scrambleSource });
             }}
