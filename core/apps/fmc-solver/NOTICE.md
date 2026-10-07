@@ -10,3 +10,8 @@ generates the pruning tables once at startup, then serves
 
 Build (nightly + avx2, set via this workspace's rust-toolchain.toml + .cargo/config.toml):
   cargo build --release -p cubelib-server
+
+Dependencies are resolved by the workspace-root `Cargo.lock`, including when
+Cargo is invoked from either member directory. The retained member-level
+`cubelib/Cargo.lock` and `cubelib-server/Cargo.lock` are mirrors of that file
+for repository dependency scanners; refresh both after changing the root lock.
