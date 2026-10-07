@@ -338,41 +338,51 @@
   background: color-mix(in srgb, var(--destructive) 12%, transparent) !important;
 }
 
-/* --- 外部链接 --- */
-.recon-external-links {
+/* Navigation stays text-based; clipboard actions are separate outlined buttons. */
+.recon-external-links,
+.recon-navigation-links,
+.recon-copy-actions {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.recon-external-links {
   margin-bottom: 12px;
   font-size: 0.92rem;
 }
 
-.recon-external-links a {
+.recon-navigation-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--accent);
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.recon-external-links a:hover {
-  color: var(--foreground);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-/* 复制整段复盘(STM 摘要 + 打乱 + 带注释解法):紧跟在 caption 之后(不推到行右端) */
-.recon-copy-full {
+.recon-navigation-links a:hover {
+  color: var(--foreground);
+}
+
+.recon-copy-action {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   appearance: none;
-  background: none;
-  border: none;
-  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: 6px;
+  padding: 6px 9px;
   font: inherit;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   cursor: pointer;
-  transition: color 0.15s;
 }
 
-.recon-copy-full:hover {
+.recon-copy-action:hover {
+  border-color: var(--accent);
   color: var(--accent);
 }
 
