@@ -164,8 +164,8 @@ describe('shared timer event picker catalog', () => {
       coll: 3,
       cmll: 3,
       zbll: 3,
-      eg1: 3,
-      eg2: 3,
+      eg1: 2,
+      eg2: 2,
     };
 
     for (const { id } of EVENTS) {
