@@ -3,7 +3,7 @@
 import { toIsoDate } from '@/lib/wca-date';
 import type { Lang } from '@/i18n/tr';
 
-/** "刚刚 / 5 分钟前 / 3 小时前 / 6 天前 / 2026-05-01" — XenForo-style relative stamps. */
+/** Relative elapsed time; long durations use approximate 30-day months and 365-day years. */
 export function formatRelativeTime(iso: string, lang: Lang): string {
   const t = new Date(iso).getTime();
   if (!Number.isFinite(t)) return '';
@@ -16,7 +16,12 @@ export function formatRelativeTime(iso: string, lang: Lang): string {
   if (hours < 24) return zh ? `${hours} 小时前` : `${hours}h ago`;
   const days = Math.floor(hours / 24);
   if (days < 30) return zh ? `${days} 天前` : `${days}d ago`;
-  return toIsoDate(new Date(t));
+  if (days < 365) {
+    const months = Math.floor(days / 30);
+    return zh ? `${months} 个月前` : `${months}mo ago`;
+  }
+  const years = Math.floor(days / 365);
+  return zh ? `${years} 年前` : `${years}y ago`;
 }
 
 /** 1234 → 1.2k (en) / 1234 (zh keeps digits below 10k, 万 above). */
