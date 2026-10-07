@@ -75,8 +75,19 @@ export async function run(mode: string, apply: boolean) {
     atomic(MODE, `default ${enabled ? 1 : 0};\n`);
     localChanged = true;
     await reload();
-    const response = await fetch('https://api.cuberoot.me/v1/traffic-defense', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
-    if (!response.ok || (await response.json()).enabled !== Number(enabled)) throw new Error('Public mode readback mismatch');
+    // A new worker PID does not mean every old keep-alive connection has drained.
+    // Confirm the public result on fresh connections during the reload window.
+    let confirmed = false;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        const response = await fetch('https://api.cuberoot.me/v1/traffic-defense', {
+          cache: 'no-store', headers: { Connection: 'close' }, signal: AbortSignal.timeout(3000),
+        });
+        if (response.ok && (await response.json()).enabled === Number(enabled)) { confirmed = true; break; }
+      } catch { /* A short reload interruption is retryable; a persistent failure rolls back. */ }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    if (!confirmed) throw new Error('Public mode readback mismatch after reload window');
     // Old source events are outside retention after a long open interval. Start
     // ingestion now; preserve the existing 30-day ledger and absolute expiries.
     if (enabled && previous.trim() === 'default 0;') {
