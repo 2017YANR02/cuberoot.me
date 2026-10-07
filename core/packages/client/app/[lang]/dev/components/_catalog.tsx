@@ -2539,7 +2539,7 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: `首页「今日复盘」面板:展示 /recon 最新录入那天的复盘,复用 ReconCard 排成宽屏四卡网格(成绩 / 选手 / 比赛,不出打乱图,有视频才带封面),超高走滚动面板,点卡进 /recon/[id] 回放。`,
     en: `Landing Recon of the Day panel: shows recons from the latest day entered in /recon as a four-up ReconCard grid (no scramble thumbnail — only video covers), scrolling once it overflows, each card linking into /recon/[id].`,
-    note: { zh: `靠 getTodayRecons 拉后端,无数据返回 null。`, en: `Driven by getTodayRecons from the backend; returns null when empty.` },
+    note: { zh: `同时复用为首页计时器入口上方的多条置顶复盘区；仅管理员显示置顶/取消按钮，状态由首页统一管理并保存到后端。无数据返回 null。`, en: `Also renders multiple pinned recons above the homepage timer entry. Admin-only pin controls share homepage state persisted to the backend. Returns null when empty.` },
   },
   {
     name: 'BarRaceChart',

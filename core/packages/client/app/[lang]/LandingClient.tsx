@@ -61,6 +61,8 @@ import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
 import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
+import type { ReconSolve } from '@cuberoot/shared';
+import { getPinnedRecons, setReconHomePin } from '@/lib/recon-api';
 import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 
 const ABOUT_FOOTER_ENTRY = FOOTER_ENTRIES.find((entry) => entry.id === 'about')!;
@@ -165,6 +167,32 @@ export default function LandingPage() {
   // 是 hydration-safe(SSG 首帧按未登录渲染,挂载后才切到已登录),避免 SSG/CSR 错配。
   const user = useAuthUser();
   const isAdmin = Boolean(user?.isAdmin || isAdminWcaId(user?.wcaId));
+  const [pinnedRecons, setPinnedRecons] = useState<ReconSolve[] | null>(null);
+  const [savingPins, setSavingPins] = useState<Set<number>>(new Set());
+  const [pinError, setPinError] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    getPinnedRecons().then(rows => { if (active) setPinnedRecons(rows); }).catch(() => {
+      if (active) setPinError(tr({ zh: '置顶复盘加载失败，请刷新重试。', en: 'Could not load pinned recons. Please refresh to retry.' }));
+    });
+    return () => { active = false; };
+  }, []);
+  const onPin = async (solve: ReconSolve, pinned: boolean) => {
+    if (!isAdmin || savingPins.has(solve.id)) return;
+    setSavingPins(prev => new Set(prev).add(solve.id));
+    setPinError(null);
+    try {
+      await setReconHomePin(solve.id, pinned);
+      setPinnedRecons(prev => pinned
+        ? [solve, ...(prev ?? []).filter(item => item.id !== solve.id)]
+        : (prev ?? []).filter(item => item.id !== solve.id));
+    } catch {
+      setPinError(tr({ zh: '置顶设置未保存，请重试。', en: 'Could not save the pin. Please try again.' }));
+    } finally {
+      setSavingPins(prev => { const next = new Set(prev); next.delete(solve.id); return next; });
+    }
+  };
+  const reconProps = { lang, pinnedRecons, isAdmin, savingPins, pinError, onPin };
   const [cardOrders, setCardOrders] = useState<Record<string, string[]>>({});
   const [cardLocks, setCardLocks] = useState<Record<string, boolean>>({});
   const [locksLoaded, setLocksLoaded] = useState(false);
@@ -428,6 +456,8 @@ export default function LandingPage() {
             );
       })()}
 
+      {!!pinnedRecons?.length && <TodayRecon {...reconProps} pinnedOnly />}
+
       {/* 两行 hero 的共同外壳。桌面是 5 + 4 两个独立网格;手机端外壳自己变成 3 列网格、
           两个子网格 display:contents,9 张卡直接排成 3 行 3 个(见 landing.css)。 */}
       <div className="hero-grids">
@@ -442,7 +472,7 @@ export default function LandingPage() {
         <RecentScrambles lang={lang} />
       </LazyVisible>
       <LazyVisible minHeight={HOME_WIDGET_HEIGHT.todayRecon} rootMargin="120px 0px" unwrapWhenVisible>
-        <TodayRecon lang={lang} />
+        <TodayRecon {...reconProps} />
       </LazyVisible>
 
       <LazyVisible minHeight={HOME_WIDGET_HEIGHT.ongoingComps} rootMargin="120px 0px" unwrapWhenVisible>

@@ -109,6 +109,14 @@ export async function getTodayRecons(): Promise<ReconSolve[]> {
   return latest ? [latest] : [];
 }
 
+export async function getPinnedRecons(): Promise<ReconSolve[]> {
+  return apiGet<ReconSolve[]>('/pinned');
+}
+
+export async function setReconHomePin(id: number, pinned: boolean): Promise<{ ok: boolean }> {
+  return apiPut<{ ok: boolean }>(`/${id}/home-pin`, { pinned });
+}
+
 export async function addRecon(solve: Partial<ReconSolve>): Promise<ReconSolve> {
   return apiPost<ReconSolve>('', solve);
 }

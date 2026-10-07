@@ -162,6 +162,40 @@ const TODAY_COLUMNS = LIST_COLUMNS + ', wca_scramble, created_at';
 // + video_url/caption 给「复用以前的填写」选择器做视频缩略图 + 标题(个人页忽略多余列)。
 const PERSON_COLUMNS = LIST_COLUMNS + ', added_by, added_by_id, video_url, caption';
 
+// Homepage pins are public for every viewer; never expose private/unlisted records here.
+reconRoutes.get('/recon/pinned', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  const rows = await query<Record<string, unknown>>(
+    `SELECT ${TODAY_COLUMNS} FROM recons
+     WHERE visibility = 'public' AND record_type IS DISTINCT FROM 'timing'
+       AND id IN (SELECT recon_id FROM recon_home_pins)
+     ORDER BY (SELECT pinned_at FROM recon_home_pins WHERE recon_id = recons.id) DESC, id DESC`,
+  );
+  return c.json(await reconRowsToJson(rows));
+});
+
+reconRoutes.put('/recon/:id/home-pin', async (c) => {
+  c.header('Cache-Control', 'no-store');
+  await requireAdmin(c);
+  const id = Number(c.req.param('id'));
+  const body = await c.req.json<{ pinned?: boolean }>();
+  if (!Number.isSafeInteger(id) || id <= 0 || typeof body?.pinned !== 'boolean') {
+    return c.json({ error: 'Invalid pin request' }, 400);
+  }
+  if (body.pinned) {
+    const rows = await query(
+      `INSERT INTO recon_home_pins (recon_id)
+       SELECT id FROM recons WHERE id = ? AND visibility = 'public' AND record_type IS DISTINCT FROM 'timing'
+       ON CONFLICT (recon_id) DO UPDATE SET recon_id = EXCLUDED.recon_id
+       RETURNING recon_id`, [id],
+    );
+    if (!rows.length) return c.json({ error: 'Public reconstruction not found' }, 404);
+  } else {
+    await query('DELETE FROM recon_home_pins WHERE recon_id = ?', [id]);
+  }
+  return c.json({ ok: true });
+});
+
 reconRoutes.get('/recon/list', async (c) => {
   c.header('Cache-Control', 'no-cache, no-store, must-revalidate');
   const wcaId = c.req.query('wcaId');
