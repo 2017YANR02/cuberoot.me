@@ -51,7 +51,7 @@ export const SITE_DIRECTORY_TEXTS = {
   wiki: { en: 'Wiki', zh: 'Wiki' },
   notation: { en: 'Notation', zh: '记号' },
   quiz: { en: 'Quiz', zh: '问答' },
-  sitesDirectory: { en: 'Web', zh: '网站' },
+  sitesDirectory: { en: 'Web Directory', zh: '网站导航' },
   mosaic: { en: 'Mosaic', zh: '马赛克' },
   worldBests: { en: 'World Bests', zh: '非官方纪录' },
   blog: { en: 'Blog', zh: '博客' },
