@@ -1,5 +1,11 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-07：九个智能魔方专项与连续训练 P1（本地，设备待验）
+
+- 共享目录新增 CLL/ELL/EOCP/2GLL/OLLCP/ZZLL/ZBLS/LSE/L10P，Web 与 App 共用随机/种子生成、固定朝向与专项停表；csTimer 兼容导出保留原专项供回导恢复。
+- shared build、Web/App typecheck、专项生成/种子/完成条件/控制器/导入导出回归及四条 confirmed 复盘基准通过。真实 App 组件的九专项停表与连续训练共 10 项通过：从上一题未还原状态引导到下一目标，再预备、计时、保存；修正 Worker 传输在测试中替换。
+- 既有来源矩阵两条源码断言及两个非训练 App 场景的 Worker 环境失败另记，不宣称全集通过。仅本地提交，未 push/部署、未重建原生包或 BLE 真机验收；五端整体仍为 NOT COMPLETE。详细规则与边界见 `docs/timer-smartcube-plan.md`。
+
 ### 2026-10-07：智能魔方专项停表 P0（本地，设备待验）
 
 - Web/五端共享产品层现有 Solo 接线共同消费 shared 专项完成规则和控制器；Cross/F2L/OLL/COLL/CMLL 在固定训练朝向下按阶段停表，COLL/CMLL 允许 AUF，PLL/LL/ZBLL 仍需最终 AUF。末手先记录后保存，运行中项目/朝向变更不改本次目标，状态同步不制造停表。

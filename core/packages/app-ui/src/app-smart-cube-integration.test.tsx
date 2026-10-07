@@ -13,7 +13,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InstalledAppHost, InstalledAppSmartCube, InstalledAppSmartCubeOptions } from './platform';
 import { writeRealScrambleCache } from './data/real-scramble-pool';
 
-const memory = vi.hoisted(() => ({ data: undefined as unknown }));
+const memory = vi.hoisted(() => ({ data: undefined as unknown,
+  fixup: vi.fn<(from: string, to: string) => Promise<string | null>>(),
+}));
+vi.mock('./smart-cube/fixup', async (original) => ({
+  ...await original<typeof import('./smart-cube/fixup')>(),
+  solveMobileSmartCubeFixup: (from: string, to: string) => memory.fixup(from, to),
+}));
 vi.mock('./data/timer-repository', async (original) => ({
   ...await original<typeof import('./data/timer-repository')>(),
   IndexedDbTimerStoreDriver: class {
@@ -92,6 +98,7 @@ const move = (token: string, at: number) => {
 const settle = async () => { await act(async () => { await new Promise((done) => setTimeout(done, 30)); }); };
 
 beforeEach(async () => {
+  memory.fixup.mockReset().mockResolvedValue(null);
   stackmatListening = false;
   now = 1_000;
   backListener = null;
@@ -133,7 +140,49 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
-  it.each(['cross', 'f2l', 'oll', 'coll', 'cmll'] as const)('persists %s at its shared partial finish line in the selected grip', async (event) => {
+  it('continues from an unfinished cube into the next training target without a reset', async () => {
+    await act(async () => root.unmount());
+    const data = createTimerStoreData(Date.now(), 'continuous-session', 'en');
+    data.settings = { ...data.settings, event: 'oll', language: 'en', preScrT: 'z2',
+      manualScrambles: 'U R2\nF R2', bluetoothAutoReady: 'scrambled', inspectionSec: 0,
+      showCubePreview: false, autoRecap: false };
+    memory.data = data;
+    const firstEnd = cubeMove(SOLVED_3X3, 'D');
+    const secondTarget = cubeMove(cubeMove(SOLVED_3X3, 'F'), 'L2');
+    // Replace only Worker transport; the controller verifies and displays this physical path.
+    memory.fixup.mockImplementation(async (from, to) => from === firstEnd && to === secondTarget ? "D' F L2" : null);
+    root = createRoot(container);
+    await act(async () => root.render(<App host={host} />));
+    await settle();
+    await act(async () => container.querySelector<HTMLButtonElement>('.timer-scramble-source-trigger')!.click());
+    await act(async () => [...document.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-option')]
+      .find(button => button.textContent?.includes('Manual'))!.click());
+    await settle();
+    await act(async () => setRadio({ ...radio, phase: 'connected', deviceName: 'GAN16ui', facelets: SOLVED_3X3 }));
+    for (const [token, timestamp] of [['D', 2000], ['L2', 2100], ['L', 3000], ['L', 3250]] as const) {
+      await act(async () => move(token, timestamp));
+    }
+    expect(phase).toBe('stopped');
+    expect(radio.facelets).toBe(firstEnd);
+    await settle();
+    expect(memory.fixup).toHaveBeenCalledWith(firstEnd, secondTarget);
+    expect(container.querySelector('[data-hint="current"]')?.textContent).toBe("U'");
+    for (const [token, timestamp] of [["D'", 4000], ['F', 4100], ['L2', 4200]] as const) {
+      await act(async () => move(token, timestamp));
+    }
+    expect(phase).toBe('ready');
+    for (const [token, timestamp] of [['L', 5000], ['L', 5250], ["F'", 5500]] as const) {
+      await act(async () => move(token, timestamp));
+    }
+    expect(phase).toBe('stopped');
+    await settle();
+    const solves = activeTimerSolves(memory.data as TimerStoreData, 'oll');
+    expect(solves).toHaveLength(2);
+    expect(solves[1]).toMatchObject({ timeMs: 500, scramble: 'F L2',
+      moves: [{ m: 'L', ts: 0 }, { m: 'L', ts: 250 }, { m: "F'", ts: 500 }] });
+  });
+
+  it.each(['cross', 'f2l', 'oll', 'coll', 'cmll', 'cll', 'ollcp', 'eocp', 'zbls'] as const)('persists %s at its shared partial finish line in the selected grip', async (event) => {
     await act(async () => root.unmount());
     const data = createTimerStoreData(Date.now(), 'training-session', 'en');
     data.settings = { ...data.settings, event, language: 'en', preScrT: 'z2',
