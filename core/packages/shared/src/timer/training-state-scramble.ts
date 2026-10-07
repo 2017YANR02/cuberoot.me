@@ -2,10 +2,10 @@ import { smartCubeTargetFacelets } from '../smart_cube/cubie';
 import { stepSolvedInFrame } from './reconstruct/steps';
 import { timerSmartCubeTrainingComplete } from './smart-cube-training';
 
-/** Reuse the installed csTimer engine; all filtering is shared by random and seeded workers. */
+/** Candidate provider keys; filtering is shared by random and seeded workers. */
 export const TIMER_TRAINING_STATE_KEYS = {
   cll: 'll', ell: 'ell', eocp: 'll', '2gll': '2gll',
-  ollcp: 'll', zzll: 'zzll', zbls: 'zbls', lse: 'lse', l10p: 'cmll',
+  ollcp: 'll', zzll: 'zzll', zbls: 'zbls', lse: 'roux-lse', l10p: 'roux-l10p',
 } as const;
 export type TimerTrainingStateEvent = keyof typeof TIMER_TRAINING_STATE_KEYS;
 export function isTimerTrainingStateEvent(event: string): event is TimerTrainingStateEvent {
@@ -17,10 +17,9 @@ export function generateTimerTrainingStateScramble(
   generate: (key: string, attempt: number) => string,
 ): string {
   for (let attempt = 0; attempt < 64; attempt++) {
-    // Roux's trailing x rotation restores the blocks to the selected grip.
-    // Keep it: conjugating by its inverse changes the blocks' actual colors.
     const scramble = generate(TIMER_TRAINING_STATE_KEYS[event], attempt);
-    if (!scramble) throw new Error(`Invalid training notation: ${event}`);
+    // A random state may be solved; redraw instead of surfacing an empty scramble.
+    if (!scramble.trim()) continue;
     const facelets = smartCubeTargetFacelets(scramble);
     if (!facelets) throw new Error(`Invalid training scramble: ${event}`);
     if (stepSolvedInFrame('solved', facelets) || timerSmartCubeTrainingComplete(event, facelets, '')) continue;

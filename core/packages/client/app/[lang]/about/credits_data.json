@@ -804,6 +804,12 @@
     "long_en": "Lucas Garron's cubing.js — Pyraminx / Skewb / Megaminx canvases in `/sim` embed `TwistyPlayer` to mirror the alpha.twizzle.net/edit demo; the `Alg` parser, `randomScrambleForEvent`, and several `PuzzleID` utilities are reused across alg/recon/training pages"
   },
   {
+    "name": "huizhiLLL/DCTimer-BLE",
+    "url": "https://github.com/huizhiLLL/DCTimer-BLE",
+    "zh": "智能魔方专项训练规则参考；LSE/L10P 固定朝向随机状态约束参考其 Scrambler 实现，复用本站两阶段求解器生成打乱",
+    "en": "Reference for smart-cube training rules and fixed-grip LSE/L10P random-state constraints; scrambles use CubeRoot's existing two-phase solver"
+  },
+  {
     "name": "MeigenChou/DCTimer-Android",
     "url": "https://github.com/MeigenChou/DCTimer-Android",
     "zh": "BLE / 协议参考;对战计时器设计灵感",
