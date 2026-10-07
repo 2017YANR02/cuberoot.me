@@ -33,7 +33,7 @@ const EXACT = new Set([
   'packages/client/components/CountryPinButton.tsx', 'packages/client/hooks/usePinnedCountries.ts',
   'packages/client/lib/pinned-countries.ts', 'packages/client/lib/ip-country.ts',
   'packages/client/lib/page-access-api.ts',
-  'packages/client/lib/competition-gate.ts', 'packages/shared/src/competition-access.ts',
+  'packages/client/lib/competition-gate.ts', 'packages/client/lib/traffic-defense.ts', 'packages/shared/src/competition-access.ts',
   'packages/client/app/v1/competition-access/check/route.ts',
   'packages/client/app/v1/competition-access/verify/route.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',

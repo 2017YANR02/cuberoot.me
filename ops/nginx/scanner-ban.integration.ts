@@ -42,6 +42,7 @@ http {
   real_ip_header X-Test-Client-IP;
   geo $remote_addr $cuberoot_cn_exempt { default 0; 113.250.213.167 1; }
   map $uri $cuberoot_comp_check { default 0; /v1/comp/test 1; }
+  map $http_x_test_open $cuberoot_comp_verification_enabled { default 1; 1 0; }
   ${policy}
   server {
     listen 127.0.0.1:${port};
@@ -79,6 +80,8 @@ try {
     try { await get('/ready', '127.0.0.1'); ready = true; break; } catch { await delay(50); }
   }
   assert(ready, `isolated nginx did not start; see ${dir}/error.log`);
+  await expectStatus('/.env', '198.51.100.249', 200, 'cuberoot.me', { 'x-test-open': '1' });
+  await expectStatus('/healthy', '198.51.100.249', 200);
   // Owner allowlist must override a persisted ban and never accumulate a new one.
   for (let i = 0; i < 12; i++) await expectStatus("/wca/comp/unverified", "154.44.14.212", 307);
   await expectStatus("/.env", "154.44.14.212", 200);
