@@ -8,8 +8,8 @@ vi.mock('@/lib/wca-results-api', () => ({
   fetchWcaScrambles: fetchWcaScramblesMock,
 }));
 vi.mock('@/lib/api-base', () => ({ apiUrl: (path: string) => `http://test${path}` }));
-vi.mock('@/app/[lang]/timer/_lib/scramble/non222-steps-pool', () => ({
-  filterWebNon222BySteps: filterNon222Mock,
+vi.mock('@cuberoot/timer-ui/scramble/non222-steps', () => ({
+  filterNon222BySteps: filterNon222Mock,
 }));
 
 function compSpec(event: 'pyra' | 'skewb', metric: string): WcaSourceSpec {

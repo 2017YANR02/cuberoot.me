@@ -156,7 +156,6 @@ import {
   timerSupportsStageSplits,
   timerSupportsSmartCubeAutoTiming,
   TimerAttemptSplitRecorder,
-  TimerWcaFinitePoolProgressTracker,
   timerTracksTrainerCase,
   type EventId,
   type Penalty,
@@ -184,7 +183,6 @@ import {
   type TimerWcaSourceSettings,
   type TimerWcaScrambleMarkKey,
   type TimerWcaScrambleMarksResponse,
-  type TimerRealScrambleRetryOutcome,
 } from '@cuberoot/shared/timer';
 import {
   DateRangeInput,
@@ -271,16 +269,15 @@ import {
   TimerSessionRepositoryError,
 } from './data/timer-repository';
 import {
-  mergeRealScramblePool,
+  createMobileWcaPool,
+  realSpecToWcaSource,
+  wcaRowToReal,
   isAllTimeRealScrambleDateSource,
   normalizeRealScrambleSourceSpec,
-  readRealScrambleCache,
   realScrambleSourceKey,
-  writeRealScrambleCache,
   type RealScramble,
   type RealScrambleSourceSpec,
 } from './data/real-scramble-pool';
-import { startRealScrambleFetchRetry } from './data/real-scramble-retry';
 import {
   autoMarkSavedWcaSolve,
   wcaAutoMarkLiveSession,
@@ -355,10 +352,6 @@ type AppView = 'timer' | 'tools' | 'account' | 'history' | 'settings';
 type PrimaryView = Extract<AppView, 'timer' | 'tools' | 'account'>;
 type ConnectionState = 'checking' | 'offline' | 'online';
 type WebSurfaceStatus = 'loading' | 'ready' | 'error';
-interface RealPoolRequest {
-  cancel(): void;
-  promise: Promise<TimerRealScrambleRetryOutcome<RealScramble[]>>;
-}
 
 function siteUrl(language: SupportedLanguage): string {
   return language === 'zh' ? `${SITE_ORIGIN}/zh` : `${SITE_ORIGIN}/`;
@@ -482,11 +475,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [wcaDifficultyCoverage, setWcaDifficultyCoverage] = useState<TimerWcaDifficultyCoverage>('idle');
   const [wcaTopControlsSlot, setWcaTopControlsSlot] = useState<HTMLSpanElement | null>(null);
   const [wcaDifficultyToggleSlot, setWcaDifficultyToggleSlot] = useState<HTMLSpanElement | null>(null);
-  const realPoolsRef = useRef(new Map<string, RealScramble[]>());
-  const realCurrentBySourceRef = useRef(new Map<string, RealScramble>());
-  const realRequestsRef = useRef(new Map<string, RealPoolRequest>());
-  const hydratedRealSourcesRef = useRef(new Set<string>());
-  const realProgressTrackerRef = useRef(new TimerWcaFinitePoolProgressTracker());
+  const [mobileWcaPool] = useState(createMobileWcaPool);
+  const activeRealWaiterRef = useRef<{ cancel(): void } | null>(null);
   const [, refreshRealProgress] = useState(0);
   const wcaMarksCacheRef = useRef(new Map<string, TimerWcaScrambleMarksResponse>());
   const wcaMarksRequestsRef = useRef(new Map<string, Promise<TimerWcaScrambleMarksResponse>>());
@@ -1084,7 +1074,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     && scrambleSource === 'wca'
     && currentScrambleEntry?.sourceIdentity === `wca|${activeRealSourceKey}`
     && isAllTimeRealScrambleDateSource(activeRealSourceSpec)
-    ? realProgressTrackerRef.current.get(activeRealSourceKey)
+    ? mobileWcaPool.wcaPoolProgress(realSpecToWcaSource(activeRealSourceSpec))
     : null;
 
   const loadWcaMarks = useCallback(async (
@@ -1140,66 +1130,6 @@ export function App({ host }: { host: InstalledAppHost }) {
     }).catch(() => undefined);
     return () => { active = false; };
   }, [currentReal?.competitionId, wcaSourceAdapter]);
-
-  const realPoolFor = useCallback((input: RealScrambleSourceSpec): RealScramble[] => {
-    const spec = normalizeRealScrambleSourceSpec(input);
-    const sourceKey = realScrambleSourceKey(spec);
-    if (!hydratedRealSourcesRef.current.has(sourceKey)) {
-      hydratedRealSourcesRef.current.add(sourceKey);
-      realPoolsRef.current.set(sourceKey, readRealScrambleCache(spec));
-    }
-    const existing = realPoolsRef.current.get(sourceKey);
-    if (existing) return existing;
-    const created: RealScramble[] = [];
-    realPoolsRef.current.set(sourceKey, created);
-    return created;
-  }, []);
-
-  const refillRealPool = useCallback((
-    input: RealScrambleSourceSpec,
-  ): Promise<TimerRealScrambleRetryOutcome<RealScramble[]>> => {
-    const spec = normalizeRealScrambleSourceSpec(input);
-    const sourceKey = realScrambleSourceKey(spec);
-    const inFlight = realRequestsRef.current.get(sourceKey);
-    if (inFlight) return inFlight.promise;
-    const run = startRealScrambleFetchRetry(spec, {
-      onClosedSet: isAllTimeRealScrambleDateSource(spec)
-        ? (scrambles) => {
-            if (!realProgressTrackerRef.current.registerClosedSet(sourceKey, scrambles)) return;
-            const current = realCurrentBySourceRef.current.get(sourceKey);
-            if (current) realProgressTrackerRef.current.noteServed(sourceKey, current);
-            refreshRealProgress((revision) => revision + 1);
-          }
-        : undefined,
-    });
-    let request!: Promise<TimerRealScrambleRetryOutcome<RealScramble[]>>;
-    request = run.result.then((outcome) => {
-      if (outcome.kind !== 'ready') return outcome;
-      const incoming = outcome.value;
-      const pool = realPoolFor(spec);
-      const current = realCurrentBySourceRef.current.get(sourceKey);
-      const merged = mergeRealScramblePool(
-        pool,
-        incoming,
-        current,
-        spec.wcaScrambleMode === 'comp' && Boolean(spec.wcaComp),
-      );
-      realPoolsRef.current.set(sourceKey, merged);
-      writeRealScrambleCache(
-        spec,
-        current ? [current, ...merged] : merged,
-        localStorage,
-        Date.now(),
-      );
-      return outcome;
-    }).finally(() => {
-      if (realRequestsRef.current.get(sourceKey)?.promise === request) {
-        realRequestsRef.current.delete(sourceKey);
-      }
-    });
-    realRequestsRef.current.set(sourceKey, { cancel: run.cancel, promise: request });
-    return request;
-  }, [realPoolFor]);
 
   const generateRandomScramble = useCallback((
     entry: MobileScrambleHistoryEntry,
@@ -1357,6 +1287,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   }, [ordinaryRandom, replaceScrambleHistoryEntry, scrambleIdentityFor, applyStoreSnapshot, beginTimerContextMutation, endTimerContextMutation]);
 
   const fillScrambleHistoryEntry = useCallback((entry: MobileScrambleHistoryEntry) => {
+    activeRealWaiterRef.current?.cancel();
     const liveEntry = scrambleHistoryRef.current.list.find((candidate) => (
       candidate.id === entry.id && candidate.sourceIdentity === entry.sourceIdentity
     ));
@@ -1542,14 +1473,9 @@ export function App({ host }: { host: InstalledAppHost }) {
     const realSpec = normalizeRealScrambleSourceSpec(realSpecFor(event));
     const sourceKey = realScrambleSourceKey(realSpec);
     const requestedIdentity = sourceIdentity;
-    const pool = realPoolFor(realSpec);
+    const poolSpec = realSpecToWcaSource(realSpec);
     const activate = (next: RealScramble) => {
-      realCurrentBySourceRef.current.set(sourceKey, next);
-      if (isAllTimeRealScrambleDateSource(realSpec)
-        && realProgressTrackerRef.current.get(sourceKey)
-        && realProgressTrackerRef.current.noteServed(sourceKey, next)) {
-        refreshRealProgress((revision) => revision + 1);
-      }
+      refreshRealProgress((revision) => revision + 1);
       replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
         availability: 'ready',
         caseId: null,
@@ -1561,16 +1487,13 @@ export function App({ host }: { host: InstalledAppHost }) {
           identity: timerWcaCompetitionScrambleSlotIdentity(next),
         },
       });
-      writeRealScrambleCache(realSpec, [next, ...realPoolFor(realSpec)]);
     };
-    const next = pool.shift();
-    if (next) {
-      activate(next);
-      if (pool.length <= 8) void refillRealPool(realSpec).catch(() => undefined);
-      return;
-    }
-
-    void refillRealPool(realSpec).then((outcome) => {
+    const next = mobileWcaPool.peekWcaRow(poolSpec);
+    if (next) { activate(wcaRowToReal(next)); return; }
+    const retry = mobileWcaPool.startNext(poolSpec);
+    activeRealWaiterRef.current?.cancel();
+    activeRealWaiterRef.current = retry;
+    void retry.result.then((outcome) => {
       if (requestId !== scrambleRequestRef.current
         || activeEventRef.current !== event
         || scrambleSourceRef.current !== 'wca'
@@ -1590,15 +1513,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         });
         return;
       }
-      const loaded = realPoolFor(realSpec).shift();
-      if (!loaded) {
-        replaceScrambleHistoryEntry(liveEntry.id, requestedIdentity, {
-          availability: 'error',
-          failure: { kind: 'real-exhausted' },
-        });
-        return;
-      }
-      activate(loaded);
+      activate(wcaRowToReal(outcome.value));
     }).catch(() => {
       if (requestId === scrambleRequestRef.current
         && activeEventRef.current === event
@@ -1612,9 +1527,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     });
   }, [
     generateRandomScramble,
-    realPoolFor,
     realSpecFor,
-    refillRealPool,
     replaceScrambleHistoryEntry,
     randomOptimalAuthPending,
     scrambleIdentityFor,
@@ -1638,12 +1551,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   useEffect(() => {
     if (!storeLoaded) return;
     ordinaryRandom.reset();
-    const activeRealSourceKey = realScrambleSourceKey(realSpecFor(activeEvent));
-    for (const [sourceKey, request] of realRequestsRef.current) {
-      if (scrambleSource === 'wca' && sourceKey === activeRealSourceKey) continue;
-      request.cancel();
-      realRequestsRef.current.delete(sourceKey);
-    }
+    activeRealWaiterRef.current?.cancel();
+    mobileWcaPool.cancelSource();
     if (scrambleSource === 'manual'
       && (previousScrambleSourceRef.current !== 'manual'
         || previousScrambleEventRef.current !== activeEvent
@@ -1679,8 +1588,8 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   useEffect(() => () => {
     randomScrambleGateRef.current.cancel();
-    for (const request of realRequestsRef.current.values()) request.cancel();
-    realRequestsRef.current.clear();
+    activeRealWaiterRef.current?.cancel();
+    mobileWcaPool.cancelSource();
   }, []);
 
   const canSwitchScramble = useCallback(() => {
@@ -2925,9 +2834,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     const revision = storeSnapshotGateRef.current.beginMutation();
     wcaSourceSettingsRef.current = next;
     if (identityChanged) {
-      const request = realRequestsRef.current.get(currentSourceKey);
-      request?.cancel();
-      realRequestsRef.current.delete(currentSourceKey);
+      activeRealWaiterRef.current?.cancel();
+      mobileWcaPool.cancelSource(realSpecToWcaSource(currentSpec));
       invalidateCurrentScramble();
     }
     setStore((value) => value ? {

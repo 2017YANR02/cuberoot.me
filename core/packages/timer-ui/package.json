@@ -113,7 +113,8 @@
       "./scramble/sync-seed": "browser",
       "./scramble/sync-seed.worker": "browser",
       "./scramble/trainer": "browser",
-      "./scramble/trainer.worker": "browser"
+      "./scramble/trainer.worker": "browser",
+      "./wca-scramble-pool": "browser"
     }
   },
   "exports": {
@@ -214,7 +215,8 @@
     "./scramble/sync-seed": "./src/scramble/sync-seed.ts",
     "./scramble/sync-seed.worker": "./src/scramble/sync-seed.worker.ts",
     "./scramble/trainer": "./src/scramble/trainer.ts",
-    "./scramble/trainer.worker": "./src/scramble/trainer.worker.ts"
+    "./scramble/trainer.worker": "./src/scramble/trainer.worker.ts",
+    "./wca-scramble-pool": "./src/wca-scramble-pool.ts"
   },
   "sideEffects": true,
   "scripts": {

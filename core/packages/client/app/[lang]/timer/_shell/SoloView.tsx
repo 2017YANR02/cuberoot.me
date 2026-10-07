@@ -56,10 +56,10 @@ import type { TimerScrambleRequest } from '@cuberoot/shared/timer';
 import { LiveSmartCubeAnchor, type LiveSmartCubeAnchorSnapshot } from '@cuberoot/shared/smart-cube/anchor';
 import {
   peekWcaRow,
-  nextWcaRow,
+  startWcaScrambleRetry,
+  cancelWcaSource,
   prefetchWca,
   hasWcaSource,
-  isWcaSourceEmpty,
   isWcaCompUnindexed,
   probeCompCoverage,
   getCompCoverage,
@@ -182,12 +182,8 @@ import {
   parseManualScrambleQueue,
   takeManualScramble,
   TIMER_EVENT_PICKER_GROUPS,
-  TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY,
-  TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR,
   SmartCubeAttemptProducer,
-  startTimerRealScrambleRetry,
   timerEventIdFromSelector,
-  timerRealScrambleReady,
 } from '@cuberoot/shared/timer';
 import { AutoRecapDismissGesture, shouldAutoRecap } from '../_lib/reconstruct/recap';
 import {
@@ -975,6 +971,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // no competition source and wouldn't match the chosen difficulty (the exact
   // confusing symptom users hit). If the source is *confirmed* empty (difficulty
   // with no matches / comp lacking the event), show a notice instead.
+  useEffect(() => {
+    const source = wcaSpecRef.current;
+    return () => cancelWcaSource(source);
+  }, [wcaSourceSig, settings.scrambleSource]);
   const [scrambleLoading, setScrambleLoading] = useState(false);
   const [wcaSourceEmpty, setWcaSourceEmpty] = useState(false);
   const [wcaSourceFailed, setWcaSourceFailed] = useState(false);
@@ -994,13 +994,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // network) with backoff while staying in the loading state — only a *confirmed*
     // empty source (404) shows the notice, and we never substitute a generated one.
     const sourceSpec = wcaSpecRef.current;
-    const retryRun = startTimerRealScrambleRetry(async () => {
-      const real = await nextWcaRow(sourceSpec);
-      if (real) return timerRealScrambleReady(real);
-      return isWcaSourceEmpty(sourceSpec)
-        ? TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY
-        : TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR;
-    });
+    const retryRun = startWcaScrambleRetry(sourceSpec);
     void retryRun.result.then((outcome) => {
       if (outcome.kind === 'cancelled' || !isCurrentEmptyScrambleEntry(entryId)) return;
       setScrambleLoading(false);

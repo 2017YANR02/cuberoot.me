@@ -210,7 +210,7 @@ describe('WCA competition pool persistence', () => {
     );
     expect(source).toContain('wca: WcaDispensedScramble | null;');
     expect(source).toContain('const row = peekWcaRow(wcaSpecRef.current);');
-    expect(source).toContain('const real = await nextWcaRow(sourceSpec);');
+    expect(source).toContain('startWcaScrambleRetry(sourceSpec);');
     expect(source).toContain('wcaMetaFor(currentScrambleEntry.wca ?? scramble)');
   });
 
