@@ -1,0 +1,3887 @@
+{
+  "cubes": [
+    {
+      "id": "magic-cube-1977",
+      "brand": "Rubik's",
+      "name": {
+        "zh": "匈牙利 Magic Cube（Bűvös Kocka）",
+        "en": "Hungarian Magic Cube (Bűvös Kocka)"
+      },
+      "year": 1977,
+      "release": {
+        "date": "1977",
+        "precision": "year",
+        "basis": "official",
+        "note": {
+          "zh": "WCA 官方史记载 1977 年底开始商业销售；1974 年是发明年份。",
+          "en": "WCA history places commercial availability in late 1977; 1974 is the invention year."
+        },
+        "sourceIds": [
+          "hist-wca"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "最初在匈牙利销售的三阶，是商业化起点。",
+          "en": "The original Hungarian commercial 3×3."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "历史意义在于把可转动的三维结构变成大众能够购买的产品。",
+          "en": "Its importance is the transition from a working mechanism to a commercial product."
+        },
+        "tradeoffs": {
+          "zh": "原版存世商品的年代、配色和修复状态须逐件鉴别；无可靠统一首发价。",
+          "en": "Surviving examples differ in date, color scheme and restoration; no verified uniform launch price."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-wca",
+          "hist-rubiks"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-wca",
+        "hist-rubiks"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "classic"
+    },
+    {
+      "id": "rubiks-ideal-1980",
+      "brand": "Rubik's",
+      "name": {
+        "zh": "Ideal Rubik's Cube（全球版）",
+        "en": "Ideal Rubik's Cube (international)"
+      },
+      "year": 1980,
+      "release": {
+        "date": "1980",
+        "precision": "year",
+        "basis": "official",
+        "note": {
+          "zh": "Rubik's 官方历史明确记载更名并在 1980 年全球推出。",
+          "en": "The official brand history dates renaming and global launch to 1980."
+        },
+        "sourceIds": [
+          "hist-rubiks"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "Rubik's Cube 名称随国际发行传播。",
+          "en": "International release established the Rubik's Cube name."
+        },
+        {
+          "zh": "同期资料描述弹簧螺丝维持结构张力并补偿磨损。",
+          "en": "Contemporary documentation describes spring-loaded screws maintaining tension as parts wear."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "建立了三阶魔方的经典外观与大众认知，是后续速拧硬件的历史参照。",
+          "en": "The international reference point for the familiar cube and later speedcubing hardware."
+        },
+        "tradeoffs": {
+          "zh": "批次、生产地和四十余年磨损差异很大，不能用一颗旧魔方代表当年全部产品。",
+          "en": "Factories, batches and decades of wear make one surviving cube an unreliable proxy for every original."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-rubiks",
+          "hist-circular"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-rubiks",
+        "hist-circular"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "classic"
+    },
+    {
+      "id": "alpha-i",
+      "brand": "Alpha",
+      "name": {
+        "zh": "国甲一代（Old Type A）",
+        "en": "Alpha I / Old Type A"
+      },
+      "year": 2008,
+      "release": {
+        "date": "2008",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2008 年玩家购买和调螺丝记录可证其已存在；并非首发年份。",
+          "en": "A 2008 first-hand purchase and tensioning report proves availability, not the launch year."
+        },
+        "sourceIds": [
+          "hist-alpha-old"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "adjustable"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "早期 DIY 与调节文化的实物代表。",
+          "en": "An example of the early DIY and tension-adjustment era."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "当年买家报告调螺丝后转动轻松、控制感好；属于个人体验。",
+          "en": "A contemporary buyer reported easy, controllable turning after screw adjustment; this is one owner's experience."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-alpha-old"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-alpha-old"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "alpha-ii",
+      "brand": "Alpha",
+      "name": {
+        "zh": "国甲二代（Type A II）",
+        "en": "Alpha II / Type A II"
+      },
+      "year": 2008,
+      "release": {
+        "date": "2008",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2008 年的玩家主力魔方讨论已列出该型号，首发日期待核。",
+          "en": "Listed in a 2008 discussion of players' mains; launch date unverified."
+        },
+        "sourceIds": [
+          "hist-alpha-main"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "早期国甲多代产品线的一环。",
+          "en": "Part of Alpha's early multi-generation lineup."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "有玩家把它作为日常主力，也有批评；缺少可量化的统一性能测试。",
+          "en": "Some owners used it as their main, with mixed opinions and no controlled performance measurements."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-alpha-main"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-alpha-main"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "alpha-iii",
+      "brand": "Alpha",
+      "name": {
+        "zh": "国甲三代（Type A III）",
+        "en": "Alpha III / Type A III"
+      },
+      "year": 2008,
+      "release": {
+        "date": "2008",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "当年主力魔方讨论出现 Type A 3rd model；不同新旧模具名称仍须辨别。",
+          "en": "The contemporary thread mentions a Type A third model; old and new molds require identification."
+        },
+        "sourceIds": [
+          "hist-alpha-main"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "玩家已有更换其他型号轴心的混装实践。",
+          "en": "Owners were already experimenting with cores from other models."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "有记录讨论三代配其他轴心；混装表现不能当作原厂整机性能。",
+          "en": "The source discusses a third model with another core; hybrid behavior is not factory-cube performance."
+        },
+        "tradeoffs": {
+          "zh": "旧版、新版及改装件在二手市场易混淆。",
+          "en": "Old molds, newer molds and modified parts are easily confused."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-alpha-main"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-alpha-main"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "alpha-v",
+      "brand": "Alpha",
+      "name": {
+        "zh": "国甲五代（Alpha V）",
+        "en": "Alpha V"
+      },
+      "year": 2009,
+      "release": {
+        "date": "2009",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2009-12-23 玩家持有记录；旧商店仅标 Before June 2013，均不是精确首发。",
+          "en": "An owner lists it on 23 December 2009; the legacy store only says Before June 2013, not an exact launch."
+        },
+        "sourceIds": [
+          "hist-2009",
+          "hist-alpha-v"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "adjustable"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "保留螺丝、弹簧、垫片及完整散件套装。",
+          "en": "Available as assembled cubes and kits with screws, springs and washers."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "零售商将其手感描述为清脆、速度快，能体现当时速拧硬件的取向。",
+          "en": "The retailer describes a fast, crunchy feel, characteristic of its era."
+        },
+        "tradeoffs": {
+          "zh": "旧页 $0.00 是缺失或停售占位，未计作真实售价。",
+          "en": "The old page's $0.00 is not treated as a genuine selling price."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-alpha-v",
+          "hist-2009"
+        ]
+      },
+      "variants": [
+        "Assembled / DIY kit"
+      ],
+      "sourceIds": [
+        "hist-alpha-v",
+        "hist-2009"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "alpha-v-feng",
+      "brand": "Alpha",
+      "name": {
+        "zh": "国甲 封五（Alpha V Feng）",
+        "en": "Alpha V Feng"
+      },
+      "year": 2010,
+      "release": {
+        "date": "2010",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2010 年玩家比较记录证明已存在，不代表首发日期。",
+          "en": "A 2010 owner comparison documents availability, not launch."
+        },
+        "sourceIds": [
+          "hist-alpha-vf"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "对 Alpha V 的轻量化改型。",
+          "en": "A lighter variant of the Alpha V line."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "当年玩家称比 Alpha V 更轻更快；未找到可信净重或统一实测。",
+          "en": "An owner described it as lighter and faster than Alpha V; verified item weight and controlled testing were not found."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-alpha-vf"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-alpha-vf"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "type-c-original",
+      "brand": "WitEden",
+      "name": {
+        "zh": "早期国丙（Type C）",
+        "en": "Original Type C"
+      },
+      "year": 2009,
+      "release": {
+        "date": "2009",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2009 年当事玩家记载持有 Type C；早期具体模具身份与首发待核。",
+          "en": "A 2009 owner reports having a Type C; precise mold identity and launch are unverified."
+        },
+        "sourceIds": [
+          "hist-c4u"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "国甲、国丙、国丁、国恩等字母代号曾被海外玩家广泛使用。",
+          "en": "Letter-based model names were used in contemporary overseas discussions."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "作为早期国产 DIY 型号索引保留，具体参数待旧包装或厂家目录佐证。",
+          "en": "Retained as an early Chinese DIY entry; specifications need packaging or manufacturer records."
+        },
+        "tradeoffs": {
+          "zh": "不能仅凭 Type C 代号判断所有批次的生产者和内部结构。",
+          "en": "A Type C label alone does not establish every batch's maker or internal mechanism."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-c4u"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-c4u"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "type-c-ii",
+      "brand": "WitEden",
+      "name": {
+        "zh": "国丙二代（Type C II）",
+        "en": "Type C II"
+      },
+      "year": 2009,
+      "release": {
+        "date": "2009",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2009-12-23 当年玩家的持有清单已出现该型号。",
+          "en": "Documented in an owner's collection on 23 December 2009."
+        },
+        "sourceIds": [
+          "hist-2009"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "与当年的 A-V、F-II 同处一个市场阶段。",
+          "en": "Contemporary with A-V and F-II."
+        },
+        {
+          "zh": "当年有人讨论替换 C4Y 轴心。",
+          "en": "Owners discussed fitting a C4Y core."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "有玩家推荐，但无法从个人改装评价推出原厂整机排名。",
+          "en": "Some owners recommended it; modified-cube opinions cannot establish a factory-model ranking."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-2009"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-2009"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "witeden-witlong",
+      "brand": "WitEden",
+      "name": {
+        "zh": "智胜 WitLong（Type C IV）",
+        "en": "WitEden WitLong / Type C IV"
+      },
+      "year": 2013,
+      "release": {
+        "date": "2013",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "存档套装页标 Before June 2013；这里只能确定不晚于该时间。",
+          "en": "The archived bundle says Before June 2013, establishing an upper bound only."
+        },
+        "sourceIds": [
+          "hist-wit-bundle"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 11.99,
+          "sourceId": "hist-witlong",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "中心件球状延伸结构用于限制棱块脱出。",
+          "en": "Ball-like center extensions retain edges."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "从零售结构描述看，设计着重防飞棱；商家描述手感清脆、启动轻快。",
+          "en": "The documented mechanism emphasizes edge retention; the seller describes light, crunchy turning."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-witlong",
+          "hist-wit-bundle"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-witlong",
+        "hist-wit-bundle"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "witeden-wityou",
+      "brand": "WitEden",
+      "name": {
+        "zh": "智胜 WitYou（Type C V）",
+        "en": "WitEden WitYou / Type C V"
+      },
+      "year": 2013,
+      "release": {
+        "date": "2013",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "旧套装页仅证明 2013 年 6 月前已经收录，首发待核。",
+          "en": "The legacy bundle establishes availability before June 2013, not an exact launch."
+        },
+        "sourceIds": [
+          "hist-wit-bundle"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 13.99,
+          "sourceId": "hist-wityou",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "智胜 Type C 后续型号。",
+          "en": "A later model in WitEden's Type C sequence."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "停产目录仍保存型号与售价；缺乏足够可靠的性能描述。",
+          "en": "Discontinued catalogs preserve its identity and price, but reliable performance detail is limited."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-wit-bundle",
+          "hist-wityou"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-wit-bundle",
+        "hist-wityou"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "witeden-wityou-v2",
+      "brand": "WitEden",
+      "name": {
+        "zh": "智胜 WitYou V2（Type C V V2）",
+        "en": "WitEden WitYou V2"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "未找到可交叉核验的首发时间；不使用商店迁移日期代替。",
+          "en": "No corroborated launch date; a store migration date is not treated as a release."
+        },
+        "sourceIds": []
+      },
+      "prices": [
+        {
+          "amount": 13.99,
+          "sourceId": "hist-wityou",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "WitYou 后续修订版，单独留存为型号。",
+          "en": "A separately cataloged revision of WitYou."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "可确认型号存在，尚不能把店铺迁移时间写成发布年份。",
+          "en": "The model is documented, but a store migration date cannot establish its release year."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-wityou"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-wityou"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "shengen-f-i",
+      "brand": "ShengEn",
+      "name": {
+        "zh": "圣恩 F-I（Type F）",
+        "en": "ShengEn F-I / Type F"
+      },
+      "year": 2009,
+      "release": {
+        "date": "2009",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2009 年 5 月已有当事玩家体验；只表示该年已存在。",
+          "en": "First-hand reports from May 2009 establish existence by then."
+        },
+        "sourceIds": [
+          "hist-type-f"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "早期海外讨论常称 Type F。",
+          "en": "Known in contemporary discussions as Type F."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "有玩家称其是自己当时最喜欢的主力；只是个体偏好。",
+          "en": "Some contemporary owners called it their favorite main; these are individual preferences."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-type-f"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-type-f"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "shengen-f-ii",
+      "brand": "ShengEn",
+      "name": {
+        "zh": "圣恩 F-II（Type F II）",
+        "en": "ShengEn F-II / Type F II"
+      },
+      "year": 2009,
+      "release": {
+        "date": "2009",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2009-12-23 当年玩家持有及体验记录。",
+          "en": "Documented by owners on 23 December 2009."
+        },
+        "sourceIds": [
+          "hist-2009"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "与 Alpha V 并列出现在磁力普及前的主力讨论中。",
+          "en": "Discussed alongside Alpha V before magnetic cubes became common."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "该帖有人肯定流畅度，也有人觉得太快、容易过冲，显示手法匹配的重要性。",
+          "en": "Owners praised fluidity but also reported overshooting, illustrating differences in turning style."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-2009"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-2009"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "cube4you-3x3",
+      "brand": "Cube4You",
+      "name": {
+        "zh": "Cube4You 三阶（C4Y）",
+        "en": "Cube4You 3×3 / C4Y"
+      },
+      "year": 2009,
+      "release": {
+        "date": "2009",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2009 年玩家明确记载已拥有 C4Y 整机；非精确首发。",
+          "en": "A 2009 owner explicitly reports owning a C4Y cube; not an exact release date."
+        },
+        "sourceIds": [
+          "hist-c4u"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "与跨型号更换轴心的 DIY 文化相连。",
+          "en": "Associated with the era of interchangeable cores and DIY experimentation."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "当年玩家评价不一；具体模具、调整和润滑会影响比较。",
+          "en": "Contemporary preferences varied; molds, tuning and lubrication complicate comparisons."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-c4u"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-c4u"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "fangshi-shuangren",
+      "brand": "FangShi",
+      "name": {
+        "zh": "方是 霜刃",
+        "en": "FangShi ShuangRen"
+      },
+      "year": 2013,
+      "release": {
+        "date": "2013",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "设计者于 2013-01-31 预告并计划 3 月量产；当年已有 V2 样品，原版准确开售日待核。",
+          "en": "The designers announced it on 31 January 2013 with March production planned; V2 samples existed that year. Exact first sale remains unverified."
+        },
+        "sourceIds": [
+          "hist-fangshi-founder",
+          "hist-fangshi-sample"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "sourceId": "hist-fangshi-sr",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "Funs Puzzle 设计，零售介绍强调宽容错与轻松转动。",
+          "en": "Designed by Funs Puzzle; the retailer emphasizes forgiving corner cutting and easy turning."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "代表大雁、魔域之外的一条早期性能竞争路线。",
+          "en": "Represents an alternative performance-focused line alongside DaYan and MoYu."
+        },
+        "tradeoffs": {
+          "zh": "不把商家宣传的容错优势当成同条件实测结论。",
+          "en": "Advertised corner cutting is not a controlled benchmark."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-fangshi-sr",
+          "hist-fangshi-sample"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-fangshi-sr",
+        "hist-fangshi-sample",
+        "hist-fangshi-founder"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "fangshi-shuangren-v2",
+      "brand": "FangShi",
+      "name": {
+        "zh": "方是 霜刃 V2",
+        "en": "FangShi ShuangRen V2"
+      },
+      "year": 2013,
+      "release": {
+        "date": "2013-07-31",
+        "precision": "day",
+        "basis": "documented",
+        "note": {
+          "zh": "零售商当日收到厂家样品，这是样品存在证据，未证明当日正式开卖。",
+          "en": "A retailer received a manufacturer sample that day; this is sample evidence, not proof of a retail launch."
+        },
+        "sourceIds": [
+          "hist-fangshi-sample"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "sourceId": "hist-fangshi-v2",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "作为霜刃的后续修订型号独立销售。",
+          "en": "A separately sold revision of ShuangRen."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "有可追溯的 2013 年样品与后续商品记录，适合比较同一品牌的迭代。",
+          "en": "Traceable 2013 samples and later listings support studying the line's revision history."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-fangshi-v2",
+          "hist-fangshi-sample"
+        ]
+      },
+      "variants": [
+        "Black",
+        "White",
+        "Primary",
+        "Primary with black caps"
+      ],
+      "sourceIds": [
+        "hist-fangshi-v2",
+        "hist-fangshi-sample"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "fangshi-shuangren-mini",
+      "brand": "FangShi",
+      "name": {
+        "zh": "方是 迷你霜刃 54.6mm",
+        "en": "FangShi Mini ShuangRen 54.6mm"
+      },
+      "year": 2013,
+      "release": {
+        "date": "2013-06-27",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "CCS 于 2013-06-24 公告预计 6 月 27 日到货；属于当年零售到货预告。",
+          "en": "CCS announced on 24 June that stock was expected on 27 June; retailer arrival notice, not a global launch."
+        },
+        "sourceIds": [
+          "hist-fangshi-mini"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 13.99,
+          "sourceId": "hist-fangshi-catalog",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "54.6 mm",
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "把霜刃系列做成较小握持尺寸。",
+          "en": "A smaller grip size in the ShuangRen line."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "较小尺寸给单手及偏好小魔方的玩家增加选择，具体舒适度依手型而定。",
+          "en": "The smaller body offers another option for one-handed users and players who prefer small cubes."
+        },
+        "tradeoffs": {
+          "zh": "小尺寸不自动意味着更快；未核查可靠净重。",
+          "en": "Smaller does not automatically mean faster; verified net weight is missing."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-fangshi-mini",
+          "hist-fangshi-catalog"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-fangshi-mini",
+        "hist-fangshi-catalog"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "mini"
+    },
+    {
+      "id": "fangshi-guangying",
+      "brand": "FangShi",
+      "name": {
+        "zh": "方是 光影",
+        "en": "FangShi GuangYing"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "未找到可交叉核验的首发时间；不使用商店迁移日期代替。",
+          "en": "No corroborated launch date; a store migration date is not treated as a release."
+        },
+        "sourceIds": []
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "sourceId": "hist-fangshi-guang",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "沿用霜刃类拼装思路，但修改内部块形。",
+          "en": "Related to ShuangRen's assembly with revised piece shapes."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "可用于观察同一设计路线对内部接触面的继续探索。",
+          "en": "Useful for studying further revisions to internal contact geometry."
+        },
+        "tradeoffs": {
+          "zh": "彩色及透明款曾配未贴好的散装贴纸，收藏时须确认配件。",
+          "en": "Some colored and transparent versions were supplied with separate stickers."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-fangshi-guang"
+        ]
+      },
+      "variants": [
+        "Black",
+        "White",
+        "Primary",
+        "Blue",
+        "Pink",
+        "Transparent blue",
+        "Transparent pink"
+      ],
+      "sourceIds": [
+        "hist-fangshi-guang"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "fangshi-jieyun",
+      "brand": "FangShi",
+      "name": {
+        "zh": "方是 JieYun",
+        "en": "FangShi JieYun"
+      },
+      "year": 2015,
+      "release": {
+        "date": "2015-08-17",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-fangshi-jie"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "sourceId": "hist-fangshi-jie",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "贴纸区域带细微凹槽，内部结构继续修订。",
+          "en": "Revised internal pieces and shallow recesses around sticker areas."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "2015 年用户评价同时出现调整后稳定流畅和出厂过紧的反馈。",
+          "en": "Dated 2015 owner reports mention stability after setup and very tight factory settings."
+        },
+        "tradeoffs": {
+          "zh": "个体调校差异明显，评论中的容错角度不作为统一参数。",
+          "en": "Setup varies; corner-cutting angles in individual reviews are not treated as standardized specifications."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-fangshi-jie"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-fangshi-jie"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "fangshi-jieyun-mini",
+      "brand": "FangShi",
+      "name": {
+        "zh": "方是 迷你 JieYun 54.6mm",
+        "en": "FangShi Mini JieYun 54.6mm"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "未找到可交叉核验的首发时间；不使用商店迁移日期代替。",
+          "en": "No corroborated launch date; a store migration date is not treated as a release."
+        },
+        "sourceIds": []
+      },
+      "prices": [
+        {
+          "amount": 13.99,
+          "sourceId": "hist-fangshi-jie-mini",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "54.6 mm",
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "小尺寸 JieYun，取消 57mm 版的贴纸凹槽。",
+          "en": "Smaller JieYun without the 57mm version's sticker recesses."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "属于可握持尺寸和外部细节都有变化的独立产品。",
+          "en": "A distinct product with changes to both grip size and exterior detail."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-fangshi-jie-mini"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-fangshi-jie-mini"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "mini"
+    },
+    {
+      "id": "cyclone-feiwu",
+      "brand": "Cyclone Boys",
+      "name": {
+        "zh": "旋风小子 飞舞 56mm",
+        "en": "Cyclone Boys FeiWu 56mm"
+      },
+      "year": 2013,
+      "release": {
+        "date": "2013-12-18",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-feiwu"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 6.99,
+          "sourceId": "hist-feiwu",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "76 g",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "低价六色拼接入门三阶。",
+          "en": "An inexpensive stickerless entry-level 3×3."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "旧目录 $6.99 的定位体现国产低价速拧产品的扩展。",
+          "en": "The retained $6.99 price illustrates the expansion of budget speed cubes."
+        },
+        "tradeoffs": {
+          "zh": "不把价格优势等同于当代旗舰的性能。",
+          "en": "Budget positioning does not imply current flagship performance."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-feiwu",
+          "hist-feiwu-spec"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "hist-feiwu",
+        "hist-feiwu-spec"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "cyclone-feijue-m",
+      "brand": "Cyclone Boys",
+      "name": {
+        "zh": "旋风小子 FeiJue M",
+        "en": "Cyclone Boys FeiJue M"
+      },
+      "year": 2018,
+      "release": {
+        "date": "2018-01-25",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-feijue"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 12.99,
+          "sourceId": "hist-feijue",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "89.9 g",
+        "mechanism": [
+          "magnet"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "棱角块磁力槽和较圆润的内部块形。",
+          "en": "Magnet slots in edges and corners with rounded pieces."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "展示磁定位下沉到较低价格带的过程。",
+          "en": "Documents magnetic alignment reaching a lower price tier."
+        },
+        "tradeoffs": {
+          "zh": "没有可靠的磁力可调档位信息。",
+          "en": "Reliable magnetic-adjustment settings were not found."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-feijue"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-feijue"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "cyclone-feiku",
+      "brand": "Cyclone Boys",
+      "name": {
+        "zh": "旋风小子 FeiKu 贴片版",
+        "en": "Cyclone Boys FeiKu (tiled)"
+      },
+      "year": 2018,
+      "release": {
+        "date": "2018-03-01",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-feiku"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 6.99,
+          "sourceId": "hist-feiku",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "87.6 g",
+        "mechanism": [
+          "tiled"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "使用嵌入式色片代替普通贴纸。",
+          "en": "Uses fitted colored tiles instead of ordinary stickers."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "贴片外观与速拧内部结构结合，商家描述转动较顺滑。",
+          "en": "Combines tiled styling with a speed-oriented mechanism; the retailer describes smooth turning."
+        },
+        "tradeoffs": {
+          "zh": "外观相似不表示与其他贴片三阶共用模具。",
+          "en": "A similar tiled appearance does not establish shared tooling with other models."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-feiku"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-feiku"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "cyclone-metallic-m",
+      "brand": "Cyclone Boys",
+      "name": {
+        "zh": "旋风小子 电镀磁力三阶",
+        "en": "Cyclone Boys Metallic 3×3 M"
+      },
+      "year": 2021,
+      "release": {
+        "date": "2021-09-29",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-metallic"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 17.99,
+          "sourceId": "hist-metallic",
+          "kind": "current",
+          "variant": "Standard",
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": "2026-10-07",
+          "note": {
+            "zh": "查阅时页面标价；以具体版本与结算页为准。",
+            "en": "Displayed page price at consultation; version and checkout may differ."
+          }
+        },
+        {
+          "amount": 18.99,
+          "sourceId": "hist-metallic",
+          "kind": "current",
+          "variant": "Macaron / Gradient",
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": "2026-10-07",
+          "note": {
+            "zh": "查阅时页面标价；以具体版本与结算页为准。",
+            "en": "Displayed page price at consultation; version and checkout may differ."
+          }
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": "93 g",
+        "mechanism": [
+          "magnet",
+          "metallic-finish"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "镜面金属效果的塑料表面，并非全金属魔方。",
+          "en": "Metallic mirror-effect plastic surfaces, not an all-metal cube."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "重点是外观和磁定位组合，适合展示不同的表面工艺路线。",
+          "en": "Its distinguishing feature is the combination of reflective finishing and magnetic alignment."
+        },
+        "tradeoffs": {
+          "zh": "反光会改变识色体验，未作竞赛适用性判断。",
+          "en": "Reflections may change color recognition; competition suitability is not assessed here."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-metallic"
+        ]
+      },
+      "variants": [
+        "Standard",
+        "Macaron",
+        "Gradient"
+      ],
+      "sourceIds": [
+        "hist-metallic"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "cyclone-mini-40",
+      "brand": "Cyclone Boys",
+      "name": {
+        "zh": "旋风小子 迷你三阶 40mm",
+        "en": "Cyclone Boys Mini 3×3 40mm"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "未找到可交叉核验的首发时间；不使用商店迁移日期代替。",
+          "en": "No corroborated launch date; a store migration date is not treated as a release."
+        },
+        "sourceIds": []
+      },
+      "prices": [
+        {
+          "amount": 3.99,
+          "sourceId": "hist-cyclone-catalog",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "40 mm",
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "40mm 小体积三阶。",
+          "en": "A compact 40mm 3×3."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "按独立尺寸型号收录；已在停产目录中出现。",
+          "en": "Included as a distinct size model documented in the discontinued catalog."
+        },
+        "tradeoffs": {
+          "zh": "缺乏同条件实测，不能据此给出跨时代速度排名。",
+          "en": "No controlled comparison is available; no cross-era speed ranking is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-cyclone-catalog"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-cyclone-catalog"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "mini"
+    },
+    {
+      "id": "giiker-i3",
+      "brand": "GiiKER",
+      "name": {
+        "zh": "计客 超级魔方 i3",
+        "en": "GiiKER SUPERCUBE i3"
+      },
+      "year": 2018,
+      "release": {
+        "date": "2018",
+        "precision": "year",
+        "basis": "official",
+        "note": {
+          "zh": "品牌公司史记载 2018 年小米平台众筹；该平台名称不应直接当作生产品牌。",
+          "en": "GiiKER's company history records Xiaomi-platform crowdfunding in 2018; the platform name is not the maker."
+        },
+        "sourceIds": [
+          "hist-giiker-history"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 41.99,
+          "sourceId": "hist-giiker-i3",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "56.5 mm",
+        "weight": "102.8 g",
+        "mechanism": [
+          "magnet",
+          "bluetooth"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "蓝牙记录转动，配合 App 教学和游戏。",
+          "en": "Bluetooth turn tracking with app-based learning and games."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "为国内面向消费者的智能三阶提供了早期实例。",
+          "en": "An early documented consumer smart 3×3 from a Chinese company."
+        },
+        "tradeoffs": {
+          "zh": "未用商家的“全球第一”宣传作确定历史结论；App 兼容需另行实测。",
+          "en": "The retailer's world-first claim is not adopted as a verified historical conclusion; app compatibility needs testing."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-giiker-history",
+          "hist-giiker-i3"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-giiker-history",
+        "hist-giiker-i3"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "smart"
+    },
+    {
+      "id": "giiker-i3s",
+      "brand": "GiiKER",
+      "name": {
+        "zh": "计客 超级魔方 i3S",
+        "en": "GiiKER SUPERCUBE i3S"
+      },
+      "year": 2018,
+      "release": {
+        "date": "2018-10-30",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-giiker-i3s-shop"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 39.99,
+          "sourceId": "hist-giiker-i3s",
+          "kind": "current",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": "2026-10-07",
+          "note": {
+            "zh": "查阅时页面标价；以具体版本与结算页为准。",
+            "en": "Displayed page price at consultation; version and checkout may differ."
+          }
+        },
+        {
+          "amount": 49.99,
+          "sourceId": "hist-giiker-i3s-shop",
+          "kind": "historical",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": null,
+          "note": {
+            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
+            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
+          }
+        }
+      ],
+      "specs": {
+        "size": "56.5 mm",
+        "weight": "104.6 g",
+        "mechanism": [
+          "magnet",
+          "bluetooth"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "更新软件、蓝牙 4.0 与亮色贴纸。",
+          "en": "Updated software, Bluetooth 4.0 and brighter stickers."
+        },
+        {
+          "zh": "官方功能包括跟踪、教学、统计和联网对战。",
+          "en": "Official features include tracking, tutorials, statistics and online play."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "用户评价对机械手感较积极，但蓝牙同步体验存在分歧。",
+          "en": "Owner reports praise the mechanical feel but differ on Bluetooth synchronization."
+        },
+        "tradeoffs": {
+          "zh": "官网显示缺货；$39.99 是留存页面标价，不保证可购买。",
+          "en": "The official store shows sold out; $39.99 is a displayed price, not guaranteed availability."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-giiker-i3s-shop"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-giiker-i3s",
+        "hist-giiker-i3s-shop"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "smart"
+    },
+    {
+      "id": "gocube-edge",
+      "brand": "Particula",
+      "name": {
+        "zh": "GoCube / GoCube Edge",
+        "en": "GoCube / GoCube Edge"
+      },
+      "year": 2019,
+      "release": {
+        "date": "2019",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2019-07-07 众筹支持者已收到实物并发表体验；2018 众筹不等于交付。",
+          "en": "A backer reported receiving and testing the product on 7 July 2019; 2018 crowdfunding is not delivery."
+        },
+        "sourceIds": [
+          "hist-gocube-2019"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 79.95,
+          "sourceId": "hist-gocube-prices",
+          "kind": "current",
+          "variant": "Edge Full Pack",
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": "2026-10-07",
+          "note": {
+            "zh": "查阅时页面标价；以具体版本与结算页为准。",
+            "en": "Displayed page price at consultation; version and checkout may differ."
+          }
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "magnet",
+          "bluetooth",
+          "gyroscope"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "转动和空间方向追踪，结合灯光与 App。",
+          "en": "Turn and spatial-orientation tracking, lights and an app."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "当年的实物体验认为连接和动作映射出色；软件统计解读仍有改进空间。",
+          "en": "A contemporary hands-on report praised connectivity and motion mapping while questioning parts of the software analysis."
+        },
+        "tradeoffs": {
+          "zh": "圆鼓外形与传统三阶不同，价格为套装；不与裸魔方直接比价。",
+          "en": "The pillowed shape differs from a standard cube, and the quoted bundle is not a bare-cube price."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "hist-gocube-2019"
+        ]
+      },
+      "variants": [
+        "GoCube",
+        "GoCube Edge / Full Pack"
+      ],
+      "sourceIds": [
+        "hist-gocube-2019",
+        "hist-gocube-prices"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "smart"
+    },
+    {
+      "id": "rubiks-connected",
+      "brand": "Rubik's",
+      "name": {
+        "zh": "Rubik's Connected 智能三阶",
+        "en": "Rubik's Connected"
+      },
+      "year": 2020,
+      "release": {
+        "date": "2020-08-12",
+        "precision": "day",
+        "basis": "official",
+        "note": {
+          "zh": "Rubik's Brand Ltd 当日正式发布新品新闻稿，介绍红牛线上赛事用途。",
+          "en": "Rubik's Brand Ltd issued its product announcement that day for the online Red Bull event."
+        },
+        "sourceIds": [
+          "hist-connected"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 49.95,
+          "sourceId": "hist-gocube-prices",
+          "kind": "current",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": "2026-10-07",
+          "note": {
+            "zh": "查阅时页面标价；以具体版本与结算页为准。",
+            "en": "Displayed page price at consultation; version and checkout may differ."
+          }
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "bluetooth",
+          "magnet"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "沿用 GoCube 平台，支持在线赛事连接。",
+          "en": "Uses the GoCube platform for online competition."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "显示智能硬件从教学玩具向线上比赛工具扩展。",
+          "en": "Illustrates smart hardware expanding into online competition."
+        },
+        "tradeoffs": {
+          "zh": "平台赛事能力不等于 WCA 实体赛的器材许可。",
+          "en": "An online tournament feature is not a statement of WCA equipment eligibility."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-connected",
+          "hist-gocube-prices"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-connected",
+        "hist-gocube-prices"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "smart"
+    },
+    {
+      "id": "rubiks-magnetic-2024",
+      "brand": "Rubik's",
+      "name": {
+        "zh": "Rubik's Magnetic Speed Cube（2024 商家记录）",
+        "en": "Rubik's Magnetic Speed Cube (2024 listing)"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-08-27",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "零售商标注的 Release Date 或上架日；全球官方首发待核。",
+          "en": "Retailer Release Date or listing date; the official global launch remains unverified."
+        },
+        "sourceIds": [
+          "hist-rubiks-magnetic"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 18.99,
+          "sourceId": "hist-rubiks-catalog",
+          "kind": "current",
+          "variant": null,
+          "currency": "USD",
+          "region": "US / international",
+          "asOf": "2026-10-07",
+          "note": {
+            "zh": "查阅时页面标价；以具体版本与结算页为准。",
+            "en": "Displayed page price at consultation; version and checkout may differ."
+          }
+        }
+      ],
+      "specs": {
+        "size": "55 mm",
+        "weight": "86 g",
+        "mechanism": [
+          "magnet",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "可调轴距与弹力；具体档位未核实。",
+          "en": "Adjustable tension and compression; exact settings unverified."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "原品牌产品加入磁定位及双重调节。",
+          "en": "The original brand incorporates magnetic alignment and two adjustments."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "证明磁定位已进入 Rubik's 品牌本身的速拧线。",
+          "en": "Documents magnetic alignment in Rubik's own speed-cube line."
+        },
+        "tradeoffs": {
+          "zh": "2024-08-27 仅是该商家记录，不能推出该年是 Rubik's 首次做磁力三阶。",
+          "en": "27 August 2024 is this store's listing date, not proof of Rubik's first magnetic cube."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-rubiks-magnetic",
+          "hist-rubiks-catalog"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-rubiks-magnetic",
+        "hist-rubiks-catalog"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "rubiks-sensory",
+      "brand": "Rubik's",
+      "name": {
+        "zh": "Rubik's 触觉三阶（Sensory Cube）",
+        "en": "Rubik's Sensory Cube"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024",
+        "precision": "year",
+        "basis": "official",
+        "note": {
+          "zh": "品牌 50 周年官方介绍项目及合作背景。",
+          "en": "The brand's 50th-anniversary account documents the product and collaboration."
+        },
+        "sourceIds": [
+          "hist-rubiks-sensory"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "tactile"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "与美国盲人联合会合作，用不同触觉形状辨认六面。",
+          "en": "Developed with the National Federation of the Blind, using distinct tactile shapes for faces."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "三阶的发展还包括无障碍设计，速拧速度不是唯一性能维度。",
+          "en": "Accessibility is another dimension of 3×3 development beyond speed."
+        },
+        "tradeoffs": {
+          "zh": "触觉识别产品不按普通速拧旗舰的评分方式比较。",
+          "en": "A tactile-learning design requires different evaluation criteria from a speed flagship."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "hist-rubiks-sensory"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "hist-rubiks-sensory"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "educational"
+    },
+    {
+      "id": "historical-type-d",
+      "brand": "Type D",
+      "name": {
+        "zh": "Type D 三阶（历史商品称谓）",
+        "en": "Type D 3x3 (historical trade designation)"
+      },
+      "year": 2008,
+      "release": {
+        "date": "2008-06-27",
+        "precision": "day",
+        "basis": "documented",
+        "note": {
+          "zh": "当天买家记录收到从 Cube4You 购买的黑、白 Type D，证明此前已销售；不是官方首发日。",
+          "en": "A buyer recorded receiving black and white Type D cubes from Cube4You that day, establishing prior commercial availability, not an official launch."
+        },
+        "sourceIds": [
+          "early-type-d-receipt"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "同期玩家把 Type D 块体与 Type A 轴心组合，体现早期混合改装文化。",
+          "en": "Contemporary users combined Type D pieces with Type A cores, illustrating early hybrid modification."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "论坛记录可证实它作为独立商品销售；用户对换轴后的手感评价积极。",
+          "en": "The forum establishes a separately sold product; users described positive experiences after core swaps."
+        },
+        "tradeoffs": {
+          "zh": "评价主要针对改装组合；现有证据不足以确认所有 Type D 的制造商、标准尺寸或首发价。",
+          "en": "Most praise concerns modified hybrids; the evidence does not identify the manufacturer of every Type D, standard dimensions or launch price."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "early-type-d-receipt"
+        ]
+      },
+      "variants": [
+        "Black",
+        "White"
+      ],
+      "sourceIds": [
+        "early-type-d-receipt"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "haiyan-memory",
+      "brand": "HaiYan",
+      "name": {
+        "zh": "海燕 Memory（甲五打磨版）",
+        "en": "Haiyan’s Cube Memory"
+      },
+      "year": 2010,
+      "release": {
+        "date": "2010-05-20",
+        "precision": "day",
+        "basis": "documented",
+        "note": {
+          "zh": "2010-05-20 买家已在意大利网店下单，06-04 记录收到；这是可证实的销售时间上限，不是官方首发日。",
+          "en": "A buyer had ordered it from an Italian shop by 2010-05-20 and recorded receipt on 06-04; this establishes availability by that date, not the official launch."
+        },
+        "sourceIds": [
+          "early-haiyan-norway-receipt"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 25,
+          "currency": "USD",
+          "region": "Global",
+          "kind": "historical",
+          "asOf": "2010-09-17",
+          "variant": null,
+          "note": {
+            "zh": "2010-09-17 原创评测记录海燕网店售价 25 美元，含当时全球邮寄；不是现价。",
+            "en": "The 2010-09-17 original review reports USD 25 at Haiyan’s shop including worldwide shipping at the time; not a current offer."
+          },
+          "sourceId": "early-haiyan-memory-review"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "screw-tension",
+          "sanded-internals"
+        ],
+        "adjustment": {
+          "zh": "打开中心盖后用螺丝调节松紧。",
+          "en": "Tension is adjusted by screws beneath removable center caps."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "以 Alpha V / 国甲甲五为基础，由海燕打磨棱块内侧倒角、组装并润滑。",
+          "en": "Based on Alpha V, with internal edge corners rounded through sanding, followed by assembly and lubrication by Haiyan."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "2010 年原创上手评测认为转动顺滑、容错优于作者的 Ghost Hand；属于单个非竞速专家的比较。",
+          "en": "A 2010 hands-on reviewer found smoother turning and better corner-cutting than his Ghost Hand; this was one non-expert speedsolver’s comparison."
+        },
+        "tradeoffs": {
+          "zh": "该评测未量测飞棱率；手工打磨与原厂独立模具应在历史分类中区分。",
+          "en": "The review did not measure pop frequency; hand-modified production should be distinguished from a wholly independent mold."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "early-haiyan-memory-review"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "early-haiyan-memory-review",
+        "early-haiyan-norway-receipt",
+        "early-haiyan-collector-catalog"
+      ],
+      "tags": [
+        "screw-tension",
+        "sanded-internals"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "haiyan-original-cube",
+      "brand": "HaiYan",
+      "name": {
+        "zh": "海燕三阶 / Haiyan’s Cube",
+        "en": "Haiyan’s Cube / Alpha HaiYan"
+      },
+      "year": 2010,
+      "release": {
+        "date": "2010-06-04",
+        "precision": "day",
+        "basis": "documented",
+        "note": {
+          "zh": "当天买家同时收到 Memory 和 Haiyan’s Cube，并明确两者内构不同；证明该型号此前已商业销售，不是官方首发日。",
+          "en": "A buyer received both Memory and Haiyan’s Cube that day and explicitly distinguished their mechanisms, establishing prior commercial availability rather than an official launch."
+        },
+        "sourceIds": [
+          "early-haiyan-norway-receipt"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 10.5,
+          "currency": "USD",
+          "region": "Global",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "White DIY kit",
+          "note": {
+            "zh": "缺货历史商品页展示价 10.50 美元，原划线价 13.65 美元；无原始快照日期，非现货报价。",
+            "en": "An out-of-stock historical listing displays USD 10.50, reduced from USD 13.65; original snapshot date unknown, not a live-stock offer."
+          },
+          "sourceId": "early-haiyan-cubezz"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "screw-tension"
+        ],
+        "adjustment": {
+          "zh": "DIY 套件包含轴心、螺丝、弹簧和贴纸。",
+          "en": "The DIY kit includes a core, screws, springs and stickers."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "与 Memory 分开销售；零售商名称为 Alpha (Type A) HaiYan。",
+          "en": "Sold separately from Memory; the retailer names it Alpha (Type A) HaiYan."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "2010 年收货者形容其转动轻快、省力，与 Memory 手感和结构不同。",
+          "en": "The 2010 buyer described light, low-effort turning and a mechanism and feel distinct from Memory."
+        },
+        "tradeoffs": {
+          "zh": "同一买家认为较方正的块体可能更容易卡顿；规格页只给包装重量，因此净重留空。",
+          "en": "The same buyer thought squarer pieces could catch more easily; the listing provides only packaged weight, so net weight is omitted."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "early-haiyan-norway-receipt"
+        ]
+      },
+      "variants": [
+        "White DIY kit",
+        "Assembled historical listings"
+      ],
+      "sourceIds": [
+        "early-haiyan-cubezz",
+        "early-haiyan-norway-receipt",
+        "early-haiyan-collector-catalog"
+      ],
+      "tags": [
+        "spring",
+        "screw-tension"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "moretry-tianma-x3",
+      "brand": "MoreTry",
+      "name": {
+        "zh": "天马 X3",
+        "en": "Tianma X3"
+      },
+      "year": 2022,
+      "release": {
+        "date": "2022-03-14",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "V1–V4 同日商家建档；初期页面预计 3 月底至 4 月初出货，不能把建档日当实际全球开售日。",
+          "en": "V1–V4 share this retailer listing date; early pages expected late-March/early-April shipping, so listing is not a verified worldwide on-sale date."
+        },
+        "sourceIds": [
+          "supp-mt-x3-v1"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "V1 Standard",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-mt-x3-v1"
+        },
+        {
+          "amount": 21.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "V2 Enhanced",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-mt-x3-v2"
+        },
+        {
+          "amount": 27.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "V3 Snap",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-mt-x3-v3"
+        },
+        {
+          "amount": 32.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "V4 MagLev",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-mt-x3-v4"
+        },
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "V3 red limited edition",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-mt-catalog"
+        }
+      ],
+      "specs": {
+        "size": "55.5 mm (TheCubicle)",
+        "weight": "75 g (V1); 79 g (V3)",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "maglev",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "螺丝轴距与弹力/磁悬浮压缩调节；具体机构依 V1–V4 配置。",
+          "en": "Screw tension and spring/MagLev compression adjustment, depending on V1–V4 configuration."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "V1 为角棱磁力；V2 增加角底与棱脚磁力，V3 增加中心排斥磁力辅助归位。",
+          "en": "V1 uses corner-edge magnets; V2 adds corner-base/edge magnets, and V3 adds center repulsion for alignment."
+        },
+        {
+          "zh": "V4 使用六磁环悬浮机构；V1–V4 是同代配置阶梯。",
+          "en": "V4 uses a six-ring MagLev system; V1–V4 are configuration tiers within one generation."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "通过块脚与中心磁力探索不同于常见球轴的回正手感。",
+          "en": "Explores alignment through piece-foot and center magnets, distinct from conventional ball-core layouts."
+        },
+        "tradeoffs": {
+          "zh": "各版磁力系统不同；高配的多段磁力反馈未必适合偏好均匀轻转的玩家。",
+          "en": "Magnetic systems differ by tier; the more segmented feedback of higher versions may not suit those who prefer uniform, light turning."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "supp-mt-x3-v1",
+          "supp-mt-x3-v2",
+          "supp-mt-x3-v3",
+          "supp-mt-x3-v4",
+          "supp-mt-catalog"
+        ]
+      },
+      "variants": [
+        "V1 Standard / single magnetic",
+        "V2 Enhanced / dual magnetic",
+        "V3 Snap / triple magnetic",
+        "V4 Super MagLev",
+        "V3 red limited edition"
+      ],
+      "sourceIds": [
+        "supp-mt-x3-v1",
+        "supp-mt-x3-v2",
+        "supp-mt-x3-v3",
+        "supp-mt-x3-v4",
+        "supp-mt-catalog"
+      ],
+      "tags": [
+        "magnet",
+        "maglev",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "moretry-tianma-x3-plus",
+      "brand": "MoreTry",
+      "name": {
+        "zh": "天马 X3+",
+        "en": "Tianma X3+"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-09-09",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "日期为 V3 版本商家建档；V2、V4 UV 于 2025-01-03 建档，Full-Magnetic 于 2025-12-09，SAOCube 32 磁轴版于 2026-05-21。",
+          "en": "Date is the V3 retailer listing; V2 and V4 UV were listed January 3, 2025, Full-Magnetic December 9, 2025, and SAOCube 32-magnet-core May 21, 2026."
+        },
+        "sourceIds": [
+          "supp-mt-x3p-v3"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "V3",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-x3p-v3"
+        },
+        {
+          "amount": 21.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "V2 Enhanced",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-mt-x3p-v2"
+        },
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "V3 UV",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-catalog"
+        },
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "V4 MagLev",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-catalog"
+        },
+        {
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "V4 MagLev + UV",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-x3p-v4uv"
+        },
+        {
+          "amount": 9.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "ZCube Standard",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-catalog"
+        },
+        {
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "ZCube Enhanced / core-magnetic",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-x3p-zcube"
+        },
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Full-Magnetic",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-catalog"
+        },
+        {
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "SAOCube 8-magnet core + MagLev",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-x3p-sao"
+        },
+        {
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "SAOCube 8-magnet core + MagLev + UV",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-x3p-sao"
+        },
+        {
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "SAOCube 32-magnet core + MagLev",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-mt-x3p-sao"
+        }
+      ],
+      "specs": {
+        "size": "55 mm (V2/V4/ZCube, TheCubicle)",
+        "weight": "74 g (V2); 84 g (V4 UV); 75 g (ZCube Enhanced)",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "maglev",
+          "core-magnets",
+          "uv",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "保留轴距与弹力调节；普通版、全磁版与 ZCube/SAOCube 联名的磁力系统不同。",
+          "en": "Retains tension and compression tuning; regular, Full-Magnetic and ZCube/SAOCube editions use different magnetic systems."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "改良模具与磁座安装，商家描述声音和转动更柔和。",
+          "en": "Revised molds and easier magnet-capsule installation; retailer describes quieter, more refined turning."
+        },
+        {
+          "zh": "后续 Full-Magnetic 标注 118 磁；ZCube 和 SAOCube 提供 8/32 磁轴等独立配置。",
+          "en": "Later Full-Magnetic is listed with 118 magnets; ZCube and SAOCube offer separate 8/32-core-magnet configurations."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "一套基础设计衍生出普通、磁悬浮、磁轴与联名改装方案。",
+          "en": "One base design develops into conventional, MagLev, magnetic-core and collaboration configurations."
+        },
+        "tradeoffs": {
+          "zh": "不同命名体系交叠，不能将旧 V3 的块脚磁力、118 磁全磁版与 32 磁轴联名当作同一规格。",
+          "en": "Naming systems overlap; original V3 piece-foot magnets, the 118-magnet Full-Magnetic and the 32-core-magnet collaboration are distinct specifications."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "supp-mt-x3p-v3",
+          "supp-mt-x3p-v2",
+          "supp-mt-x3p-v4uv",
+          "supp-mt-x3p-zcube",
+          "supp-mt-x3p-full",
+          "supp-mt-x3p-sao",
+          "supp-mt-catalog",
+          "supp-mt-zcube-champion"
+        ]
+      },
+      "variants": [
+        "V2 Enhanced (2025-01 retailer listing)",
+        "V3",
+        "V3 UV",
+        "V4 MagLev",
+        "V4 MagLev + UV",
+        "Single / Double / Triple Magnetic",
+        "Full-Magnetic (2025-12 retailer listing)",
+        "ZCube Standard",
+        "ZCube Enhanced / Core-Magnetic",
+        "SAOCube 8-magnet core + spring/UV",
+        "SAOCube 8-magnet core + MagLev",
+        "SAOCube 8-magnet core + MagLev + UV",
+        "SAOCube 32-magnet core + MagLev (2026-05 retailer listing)",
+        "SAOCube Year of the Horse finish"
+      ],
+      "sourceIds": [
+        "supp-mt-x3p-v3",
+        "supp-mt-x3p-v2",
+        "supp-mt-x3p-v4uv",
+        "supp-mt-x3p-zcube",
+        "supp-mt-x3p-full",
+        "supp-mt-x3p-sao",
+        "supp-mt-catalog",
+        "supp-mt-zcube-champion"
+      ],
+      "tags": [
+        "magnet",
+        "maglev",
+        "core-magnets",
+        "uv",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "vin3-nova",
+      "brand": "VIN",
+      "name": {
+        "zh": "VIN3 Nova 旗舰版",
+        "en": "VIN3 Nova Flagship"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-01-17",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "日期为零售商建档或其标注的发售日期，不等同于全球首发。",
+          "en": "Retailer listing or retailer-labeled release date; not a confirmed worldwide launch."
+        },
+        "sourceIds": [
+          "supp-vin-nova-tc"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 41.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Nova / MagLev + magnetic core + UV",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-vin-nova-tc"
+        }
+      ],
+      "specs": {
+        "size": "55 mm (ZiiCube/Cuboss); 55.5 mm (UK listing)",
+        "weight": "81 g (ZiiCube/Cuboss); ~75 g (UK listing)",
+        "mechanism": [
+          "magnet",
+          "maglev",
+          "core-magnets",
+          "uv",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "轴距与压缩可调；TheCubicle 分别标注 8 档，另有 CFRS 调整机构。",
+          "en": "Adjustable tension and compression; TheCubicle lists eight settings for each, alongside the CFRS system."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "88 磁配置结合核心磁力、磁悬浮和 UV 表面。",
+          "en": "An 88-magnet configuration combines core magnets, MagLev and a UV finish."
+        },
+        {
+          "zh": "VIN 首款三阶产品线中的旗舰，早于 Racer 与 Lite 在该店上架。",
+          "en": "The flagship of VIN’s debut 3x3 line, listed by this retailer before Racer and Lite."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "店内用户反馈有好控、润滑后转动出色的评价，手感很受调校影响。",
+          "en": "Retailer user feedback includes good control and strong turning after lubrication; setup affects the feel substantially."
+        },
+        "tradeoffs": {
+          "zh": "多条用户反馈提到开箱干涩、中心或磁环损坏；这是样本体验，不能推算总体故障率。不同商家尺寸重量也有分歧。",
+          "en": "Several users report dry initial feel and center or magnetic-ring damage; these samples do not establish a failure rate. Retailer size and weight figures also disagree."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "supp-vin-nova-tc",
+          "supp-vin-nova-zii",
+          "supp-vin-nova-cuboss",
+          "supp-vin-compare-uk"
+        ]
+      },
+      "variants": [
+        "Nova UV / flagship"
+      ],
+      "sourceIds": [
+        "supp-vin-nova-tc",
+        "supp-vin-nova-zii",
+        "supp-vin-nova-cuboss",
+        "supp-vin-compare-uk"
+      ],
+      "tags": [
+        "magnet",
+        "maglev",
+        "core-magnets",
+        "uv",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "vin3-racer",
+      "brand": "VIN",
+      "name": {
+        "zh": "VIN3 Racer 竞速版",
+        "en": "VIN3 Racer Speed Edition"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-04-03",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "日期为零售商建档或其标注的发售日期，不等同于全球首发。",
+          "en": "Retailer listing or retailer-labeled release date; not a confirmed worldwide launch."
+        },
+        "sourceIds": [
+          "supp-vin-racer-tc"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 31.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Racer / spring + magnetic core + UV",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-vin-racer-tc"
+        }
+      ],
+      "specs": {
+        "size": "55 mm (Halcube); 55.5 mm (UK listing)",
+        "weight": "74.6 g (Halcube); 72 g (UK listing)",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "core-magnets",
+          "uv",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "CFRS 轴距与弹力调节；来源对组合数口径不一，不给统一总数。",
+          "en": "CFRS tension and elasticity adjustment; sources count combinations differently, so no common total is asserted."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "64 磁配置，保留磁轴与 UV，采用弹簧中心机构。",
+          "en": "A 64-magnet configuration retains a magnetic core and UV finish with spring centers."
+        },
+        {
+          "zh": "在 Lite 和 Nova 之间提供独立竞速配置。",
+          "en": "Provides a distinct speed configuration between Lite and Nova."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "核心磁力与弹簧的组合提供不同于 Nova 磁悬浮版的调校路线。",
+          "en": "Core magnetism with springs provides a different tuning approach from the Nova’s MagLev system."
+        },
+        "tradeoffs": {
+          "zh": "TheCubicle 上市页仍缺详细机构说明；不同商家净重、尺寸与档位组合说法并不一致。",
+          "en": "TheCubicle’s listing still lacks a full mechanism description; retailer weight, dimensions and setting counts disagree."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "supp-vin-racer-tc",
+          "supp-vin-compare-uk",
+          "supp-vin-racer-halcube"
+        ]
+      },
+      "variants": [
+        "Racer UV / speed edition"
+      ],
+      "sourceIds": [
+        "supp-vin-racer-tc",
+        "supp-vin-compare-uk",
+        "supp-vin-racer-halcube"
+      ],
+      "tags": [
+        "magnet",
+        "spring",
+        "core-magnets",
+        "uv",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "vin3-lite",
+      "brand": "VIN",
+      "name": {
+        "zh": "VIN3 Lite 标准版",
+        "en": "VIN3 Lite Standard Edition"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-04-03",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "日期为零售商建档或其标注的发售日期，不等同于全球首发。",
+          "en": "Retailer listing or retailer-labeled release date; not a confirmed worldwide launch."
+        },
+        "sourceIds": [
+          "supp-vin-lite-tc"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Lite / standard; sale listing",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-vin-nova-tc"
+        }
+      ],
+      "specs": {
+        "size": "55.5 mm (UK retailer)",
+        "weight": "70 g (UK retailer)",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "商家标注 CFRS 轴距/弹力双调；具体档位组合数待进一步核实。",
+          "en": "Retailer lists CFRS tension/compression adjustment; the exact combination count remains to be confirmed."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "48 颗块间磁铁、磨砂表面，省去 Nova 的磁悬浮与磁轴配置。",
+          "en": "Uses 48 piece magnets and a frosted finish, with a simpler configuration than the Nova."
+        },
+        {
+          "zh": "以更低定价提供同产品线的基础转动与调节框架。",
+          "en": "Provides the line’s basic turning and adjustment framework at a lower price."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "适合比较磁轴升级价值的标准版参照。",
+          "en": "A standard-version reference for assessing the value of magnetic-core upgrades."
+        },
+        "tradeoffs": {
+          "zh": "主要性能信息来自商家规格，缺少可交叉验证的详细独立实测。",
+          "en": "Most performance information is retailer specification; detailed independent measurements remain limited."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "supp-vin-lite-tc",
+          "supp-vin-compare-uk",
+          "supp-vin-nova-tc"
+        ]
+      },
+      "variants": [
+        "Lite / frosted standard edition"
+      ],
+      "sourceIds": [
+        "supp-vin-lite-tc",
+        "supp-vin-compare-uk",
+        "supp-vin-nova-tc"
+      ],
+      "tags": [
+        "magnet",
+        "spring",
+        "adjustable",
+        "budget"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "haitun-waverider-v1-standard",
+      "brand": "HaiTun",
+      "name": {
+        "zh": "斩浪 V1 标准版",
+        "en": "Waverider V1 Standard"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-01-17",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "日期为零售商建档或其标注的发售日期，不等同于全球首发。",
+          "en": "Retailer listing or retailer-labeled release date; not a confirmed worldwide launch."
+        },
+        "sourceIds": [
+          "supp-haitun-v1-standard"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "Standard",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-haitun-v1-standard"
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "81 g",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "8 档轴距 × 8 档弹力，6 档块间磁力。",
+          "en": "Eight tension settings, eight elasticity settings and six piece-magnet strengths."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "心形内部接触纹路，设计目的为储存和分布润滑剂。",
+          "en": "Heart-patterned internal contact surfaces are designed to retain and distribute lubricant."
+        },
+        {
+          "zh": "同代入门配置仍具独立轴距、弹力和磁力调节。",
+          "en": "The generation’s entry configuration retains separate tension, elasticity and magnet adjustments."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "丰富调节配合传统角棱磁力，提供新品牌的基础竞速方案。",
+          "en": "Extensive adjustment with conventional corner-edge magnets provides this newer brand’s baseline speedcube."
+        },
+        "tradeoffs": {
+          "zh": "没有旗舰版的块脚动态磁力；多处调节需要保持各面设置一致。",
+          "en": "It omits the flagship’s dynamic piece-foot magnets; multiple adjustments require consistent settings across faces."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "supp-haitun-v1-standard",
+          "supp-haitun-v1-flagship"
+        ]
+      },
+      "variants": [
+        "Stickerless",
+        "Black body"
+      ],
+      "sourceIds": [
+        "supp-haitun-v1-standard",
+        "supp-haitun-v1-flagship"
+      ],
+      "tags": [
+        "magnet",
+        "spring",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "haitun-waverider-v1-flagship",
+      "brand": "HaiTun",
+      "name": {
+        "zh": "斩浪 V1 旗舰版",
+        "en": "Waverider V1 Flagship"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-01-17",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "与标准版同日商家建档；因额外块脚动态磁力系统而单列商业型号，非后续一代。",
+          "en": "Listed on the same day as Standard; separated as a commercial model for its additional dynamic piece-foot magnet system, not a later generation."
+        },
+        "sourceIds": [
+          "supp-haitun-v1-flagship"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "Flagship",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-haitun-v1-flagship"
+        },
+        {
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "historical",
+          "asOf": null,
+          "variant": "Limited edition",
+          "note": {
+            "zh": "停产或归档页面保留标价；非首发价，也不代表当前库存。",
+            "en": "Retained discontinued or archived price; not launch MSRP or confirmation of current stock."
+          },
+          "sourceId": "supp-haitun-v1-limited"
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "82 g",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "8 档轴距、8 档弹力与 6 档块间磁力；另有块脚动态定位磁铁。",
+          "en": "Eight tension, eight elasticity and six piece-magnet settings, plus dynamic piece-foot positioning magnets."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "在传统角棱磁力外，把额外磁铁嵌入块脚以改变转动过程中的定位反馈。",
+          "en": "Additional magnets in piece feet change positioning feedback throughout the turn."
+        },
+        {
+          "zh": "2024-05-02 建档的限定外观版标注限量 200 个，内部仍为 V1 旗舰。",
+          "en": "A cosmetic limited edition listed May 2, 2024 is advertised as 200 units, retaining the V1 flagship mechanism."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "店内用户多有润滑调校后顺滑的反馈；特色在块脚动态磁力。",
+          "en": "Retailer users often describe smooth turning after lubrication and setup; dynamic foot magnetism is its distinguishing feature."
+        },
+        "tradeoffs": {
+          "zh": "开箱手感存在分歧；这种块脚方案不能直接按球轴磁铁数量比较性能。",
+          "en": "Initial feel receives mixed comments; this foot-magnet design cannot be ranked by ball-core magnet counts."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "supp-haitun-v1-flagship"
+        ]
+      },
+      "variants": [
+        "Stickerless",
+        "Black body",
+        "Limited edition (same flagship mechanism, retailer listing 2024-05-02)"
+      ],
+      "sourceIds": [
+        "supp-haitun-v1-flagship",
+        "supp-haitun-v1-standard",
+        "supp-haitun-v1-limited"
+      ],
+      "tags": [
+        "magnet",
+        "spring",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    },
+    {
+      "id": "haitun-waverider-v2",
+      "brand": "HaiTun",
+      "name": {
+        "zh": "斩浪 V2",
+        "en": "Waverider V2"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-02-03",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "日期为标准/旗舰版商家建档；中国经销商将后续至尊版标注为 2026 年 3 月上旬，版本不可混为同一开售日。",
+          "en": "Date is the Standard/Flagship retailer listing; a Chinese dealer dates the later Ultimate to early March 2026, so variants do not share one asserted launch day."
+        },
+        "sourceIds": [
+          "supp-haitun-v2-tc"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Standard (sale)",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-haitun-v2-tc"
+        },
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Flagship",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-haitun-v2-tc"
+        },
+        {
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Pioneer (sale)",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-haitun-v2-tc"
+        },
+        {
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Ultimate",
+          "note": {
+            "zh": "2026-10-07 检索时美国商家标价；税费运费另计，不是中国首发价。",
+            "en": "US retailer asking price observed on October 7, 2026; tax and shipping excluded, not Chinese launch MSRP."
+          },
+          "sourceId": "supp-haitun-v2-tc"
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "71 g (Standard); 72 g (Flagship); 73 g (Pioneer); 74 g (Ultimate), SpeedCubeShop",
+        "mechanism": [
+          "magnet",
+          "spring",
+          "core-magnets",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "8 档轴距 × 8 档弹力，共 64 组机械设置；磁力配置随版本变化。",
+          "en": "Eight tension × eight elasticity levels give 64 mechanical settings; magnetic configurations vary by version."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "重新设计核心磁力布局；至尊版资料给出 20 核心磁铁与 6 磁环、总计 94 磁。",
+          "en": "Redesigned core magnet layout; Ultimate is specified with 20 core magnets and six rings, totaling 94 magnets."
+        },
+        {
+          "zh": "保留心形储油纹路和 56 mm 机身，推出四个配置档。",
+          "en": "Retains heart-patterned lubricant surfaces and a 56 mm body across four configuration tiers."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "以数字化双调和更多核心磁力布局延续海豚系列。",
+          "en": "Continues the HaiTun line with numbered dual adjustment and expanded core magnetic layouts."
+        },
+        "tradeoffs": {
+          "zh": "零售商对标准、旗舰、先锋版的磁铁总数和核心数有矛盾，本条不替这些版本断言统一数量；弹力机构仍按商家列为弹簧。",
+          "en": "Retailer magnet totals and core counts conflict for Standard, Flagship and Pioneer, so no common count is asserted for them; elasticity is still listed as spring-based."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "supp-haitun-v2-tc",
+          "supp-haitun-v2-scs",
+          "supp-haitun-v2-ultimate",
+          "supp-haitun-v2-champion"
+        ]
+      },
+      "variants": [
+        "Standard",
+        "Flagship",
+        "Pioneer",
+        "Ultimate (early March 2026 dealer record)"
+      ],
+      "sourceIds": [
+        "supp-haitun-v2-tc",
+        "supp-haitun-v2-scs",
+        "supp-haitun-v2-ultimate",
+        "supp-haitun-v2-champion"
+      ],
+      "tags": [
+        "magnet",
+        "spring",
+        "core-magnets",
+        "adjustable"
+      ],
+      "status": "released",
+      "category": "speed"
+    }
+  ],
+  "sources": [
+    {
+      "id": "hist-rubiks",
+      "title": "Rubik's: History",
+      "url": "https://rubiks.com/history",
+      "publisher": "Rubik's",
+      "kind": "official"
+    },
+    {
+      "id": "hist-wca",
+      "title": "History of the Speedcubing Community & WCA",
+      "url": "https://www.worldcubeassociation.org/speedcubing-history",
+      "publisher": "World Cube Association",
+      "kind": "official"
+    },
+    {
+      "id": "hist-circular",
+      "title": "Cubic Circular, issue 1 (1981)",
+      "url": "https://www.jaapsch.net/puzzles/cubic1.htm",
+      "publisher": "David Singmaster / Jaap Scherphuis archive",
+      "kind": "archive"
+    },
+    {
+      "id": "hist-alpha-old",
+      "title": "Cube4you White Cubes: contemporary owner reports (2008)",
+      "url": "https://www.speedsolving.com/threads/cube4you-white-cubes.3216/",
+      "publisher": "SpeedSolving forum contributors",
+      "kind": "review"
+    },
+    {
+      "id": "hist-alpha-main",
+      "title": "What is your main cube? (2008–2009)",
+      "url": "https://www.speedsolving.com/threads/what-is-your-main-cube.6551/",
+      "publisher": "SpeedSolving forum contributors",
+      "kind": "review"
+    },
+    {
+      "id": "hist-2009",
+      "title": "Cubes....: contemporary collections and owner reports, 23 December 2009",
+      "url": "https://www.speedsolving.com/threads/cubes.17891/",
+      "publisher": "SpeedSolving forum contributors",
+      "kind": "review"
+    },
+    {
+      "id": "hist-alpha-v",
+      "title": "Alpha V DIY kit: archived retailer listing",
+      "url": "https://legacy.thecubicle.us/alpha-p-64.html",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-alpha-vf",
+      "title": "Should I get another AV? (2010): owner comparison",
+      "url": "https://www.speedsolving.com/threads/should-i-get-another-av.25615/",
+      "publisher": "SpeedSolving forum contributors",
+      "kind": "review"
+    },
+    {
+      "id": "hist-type-f",
+      "title": "The Best 3x3 Cube...: May 2009 owner reports",
+      "url": "https://www.speedsolving.com/threads/the-best-3x3-cube.12090/",
+      "publisher": "SpeedSolving forum contributors",
+      "kind": "review"
+    },
+    {
+      "id": "hist-c4u",
+      "title": "Cube 4 You Order Help: contemporary owner reports (2009)",
+      "url": "https://www.speedsolving.com/threads/cube-4-you-order-help.14637/",
+      "publisher": "SpeedSolving forum contributors",
+      "kind": "review"
+    },
+    {
+      "id": "hist-wit-bundle",
+      "title": "WitEden 2x2, 3x3, 4x4 Bundle: archived catalog",
+      "url": "https://legacy.thecubicle.us/witeden-bundle-p-165.html",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-witlong",
+      "title": "Type C IV WitLong",
+      "url": "https://www.thecubicle.com/products/type-c-iv-witlong",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-wityou",
+      "title": "Type C catalog: archived discontinued models",
+      "url": "https://www.thecubicle.com/collections/all?id=13215191400521&page=95",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-sr",
+      "title": "FangShi ShuangRen",
+      "url": "https://www.thecubicle.com/products/fangshi-shuangren",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-v2",
+      "title": "FangShi ShuangRen V2",
+      "url": "https://www.thecubicle.com/products/fangshi-shuangren-v2",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-sample",
+      "title": "Fangshi Shuangren v2 sample received, 31 July 2013",
+      "url": "https://www.championscubestore.com/blog/category/speedcubes",
+      "publisher": "ChampionsCubeStore",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-mini",
+      "title": "Mini Fangshi Shuangren preview, 24 June 2013",
+      "url": "https://www.championscubestore.com/blog/previews/mini-fangshi-shuangren-preview",
+      "publisher": "ChampionsCubeStore",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-catalog",
+      "title": "FangShi archived manufacturer catalog",
+      "url": "https://legacy.thecubicle.us/fangshi-m-22.html",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-guang",
+      "title": "FangShi GuangYing",
+      "url": "https://www.thecubicle.com/en-nl/products/fangshi-guangying",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-jie",
+      "title": "FangShi JieYun: archived listing and dated owner reviews",
+      "url": "https://legacy.thecubicle.us/fangshi-jieyun-p-4686.html",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-jie-mini",
+      "title": "Mini FangShi JieYun (54.6mm)",
+      "url": "https://www.thecubicle.com/products/mini-fangshi-jieyun-54-6mm",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-feiwu",
+      "title": "Cyclone Boys FeiWu (56mm): archived listing",
+      "url": "https://legacy.thecubicle.us/cyclone-boys-feiwu-56mm-p-1896.html",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-feiwu-spec",
+      "title": "Cyclone Boys FeiWu (56mm): dimensions and item weight",
+      "url": "https://www.thecubicle.com/products/cyclone-boys-3x3-feiwu-56mm",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-feijue",
+      "title": "Cyclone Boys FeiJue 3x3 M: archived listing",
+      "url": "https://legacy.thecubicle.us/cyclone-boys-feijue-p-10259.html?page=2",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-feiku",
+      "title": "Cyclone Boys FeiKu 3x3 (Tiled): archived listing",
+      "url": "https://legacy.thecubicle.us/cyclone-boys-feiku-tiled-p-10392.html",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-metallic",
+      "title": "Cyclone Boys Metallic 3x3 M",
+      "url": "https://www.thecubicle.com/products/cyclone-boys-metallic-3x3-m",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-cyclone-catalog",
+      "title": "Cyclone Boys catalog",
+      "url": "https://www.thecubicle.com/collections/all/manufacturer_cyclone-boys",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-giiker-history",
+      "title": "GiiKER: company history",
+      "url": "https://www.giiker.com/pages/new-about-us",
+      "publisher": "GiiKER",
+      "kind": "official"
+    },
+    {
+      "id": "hist-giiker-i3",
+      "title": "XiaoMi Giiker Cube: original smart cube retailer listing",
+      "url": "https://www.thecubicle.com/products/xiaomi-giiker-cube",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-giiker-i3s",
+      "title": "SUPERCUBE i3S official product",
+      "url": "https://www.giiker.com/products/supercube-electronic-bluetooth-speed-cube-3x3",
+      "publisher": "GiiKER",
+      "kind": "official"
+    },
+    {
+      "id": "hist-giiker-i3s-shop",
+      "title": "Giiker Super Cube i3S: specifications and owner reports",
+      "url": "https://www.thecubicle.com/collections/discontinued/products/giiker-super-cube-i3s",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-gocube-2019",
+      "title": "GoCube unboxing and first-hand review, 7 July 2019",
+      "url": "https://adventuresincubing.com/2019/07/07/gocube-unboxing/",
+      "publisher": "Adventures in Cubing",
+      "kind": "review"
+    },
+    {
+      "id": "hist-gocube-prices",
+      "title": "GoCube and Rubik's Connected: official catalog prices",
+      "url": "https://particula-tech.com/pages/gocube-for-kids",
+      "publisher": "Particula",
+      "kind": "official"
+    },
+    {
+      "id": "hist-connected",
+      "title": "Rubik's debuts digital Connected Cube at Red Bull World Cup, 12 August 2020",
+      "url": "https://www.prnewswire.com/news-releases/rubiks-debuts-digital-connected-cube-at-red-bull-world-cup-301110781.html",
+      "publisher": "Rubik's Brand Ltd via PR Newswire",
+      "kind": "official"
+    },
+    {
+      "id": "hist-rubiks-magnetic",
+      "title": "Rubik's Magnetic Speed Cube 3x3",
+      "url": "https://www.thecubicle.com/products/rubiks-magnetic-speed-cube-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-rubiks-catalog",
+      "title": "Rubik's current catalog",
+      "url": "https://www.thecubicle.com/en-gb/collections/rubiks",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-rubiks-sensory",
+      "title": "Rubik's Sensory Cube: official project story",
+      "url": "https://www.rubiks.com/rubiks-sensory-cube",
+      "publisher": "Rubik's / National Federation of the Blind",
+      "kind": "official"
+    },
+    {
+      "id": "hist-rubiks-next",
+      "title": "Rubik's Official 3x3 (Next-Gen)",
+      "url": "https://www.thecubicle.com/en-sk/products/rubiks-official-3x3-next-gen?f=similar",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "hist-fangshi-founder",
+      "title": "Funs Puzzle founder's product announcement, 31 January 2013",
+      "url": "https://www.speedsolving.com/threads/funs-puzzle-%E6%96%B9%E6%98%AF-fangshi-new-3x3.40333/",
+      "publisher": "Funs Puzzle designers via SpeedSolving",
+      "kind": "official"
+    },
+    {
+      "id": "early-type-d-receipt",
+      "title": "Type D Cube4You purchase and core-swap discussion, 2008",
+      "url": "https://www.speedsolving.com/threads/what-to-do-with-these-new-cubes.4858/",
+      "publisher": "Speedsolving forum participants",
+      "kind": "archive"
+    },
+    {
+      "id": "early-haiyan-norway-receipt",
+      "title": "Haiyan Memory and Haiyan Cube purchase reports, May–June 2010",
+      "url": "https://www.diskusjon.no/topic/919302-den-lille-rubiks-kube-tr%C3%A5den/page/15/",
+      "publisher": "toker5 on Diskusjon.no",
+      "kind": "review"
+    },
+    {
+      "id": "early-haiyan-memory-review",
+      "title": "Haiyan’s Cube – Memory: hands-on review, 2010-09-17",
+      "url": "https://mypuzzlecollection.blogspot.com/2010/09/haiyans-cube-memory.html",
+      "publisher": "Gabriel Fernandes",
+      "kind": "review"
+    },
+    {
+      "id": "early-haiyan-cubezz",
+      "title": "Alpha (Type A) HaiYan DIY Kit White, SKU 28302",
+      "url": "https://cubezz.com/goods.php?id=4221",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "early-haiyan-collector-catalog",
+      "title": "Rob’s Puzzle Page: Memory and Haiyan separate entries",
+      "url": "https://www.robspuzzlepage.com/rearrangement.htm",
+      "publisher": "Rob’s Puzzle Page",
+      "kind": "archive"
+    },
+    {
+      "id": "supp-mt-x3-v1",
+      "title": "MoreTry Tianma X3 V1 — standard configuration and original listing",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v1-3x3-standard",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3-v2",
+      "title": "MoreTry Tianma X3 V2 — enhanced configuration and listing date",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v2-3x3-enhanced",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3-v3",
+      "title": "MoreTry Tianma X3 V3 Snap — corner-base and center-repulsion layout",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v3-3x3-snap",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3-v4",
+      "title": "MoreTry Tianma X3 V4 — six-ring MagLev system",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v4-3x3-maglev",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3p-v3",
+      "title": "MoreTry Tianma X3+ V3 — September 9, 2024 listing and revised molds",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v3-plus-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3p-v2",
+      "title": "MoreTry Tianma X3+ V2 Enhanced — January 2025 configuration",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v2-3x3-enhanced-1",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3p-v4uv",
+      "title": "MoreTry Tianma X3+ V4 MagLev UV — item weight and configuration",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-v4-3x3-maglev-uv",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3p-zcube",
+      "title": "MoreTry Tianma X3+ ZCube Enhanced — core magnets and reduced packaging",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-zcube-edition-3x3-enhanced",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3p-full",
+      "title": "MoreTry Tianma X3+ Full-Magnetic — four magnet systems",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-3x3-full-magnetic-uv",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-x3p-sao",
+      "title": "MoreTry Tianma X3+ SAOCube 32-core-magnet MagLev edition",
+      "url": "https://www.thecubicle.com/products/moretry-tianma-x3-3x3-32-magnet-ball-core-saocube-se",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-catalog",
+      "title": "MoreTry catalog — configuration and edition prices",
+      "url": "https://www.thecubicle.com/collections/all/manufacturer_moretry",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-nova-tc",
+      "title": "VIN3 Nova flagship — January 2026 listing, mechanism and user feedback",
+      "url": "https://www.thecubicle.com/products/vin-3x3-nova-flagship",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-racer-tc",
+      "title": "VIN3 Racer speed edition — April 2026 listing and price",
+      "url": "https://www.thecubicle.com/products/vin3-3x3-racer-speed-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-lite-tc",
+      "title": "VIN3 Lite standard edition — April 2026 listing and price",
+      "url": "https://www.thecubicle.com/products/vin3-3x3-lite-standard",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v1-standard",
+      "title": "HaiTun Waverider V1 Standard — mechanism, date and net weight",
+      "url": "https://www.thecubicle.com/products/haitun-cube-3x3-standard",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v1-flagship",
+      "title": "HaiTun Waverider V1 Flagship — additional piece-foot magnets",
+      "url": "https://www.thecubicle.com/products/haitun-cube-3x3-flagship",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v1-limited",
+      "title": "HaiTun Waverider V1 limited edition — 200-unit cosmetic edition",
+      "url": "https://www.thecubicle.com/products/haitun-waverider-v1-3x3-limited-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v2-tc",
+      "title": "HaiTun Waverider V2 — February 2026 listing and version prices",
+      "url": "https://www.thecubicle.com/products/haitun-waverider-3x3-v2-flagship",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-compare-uk",
+      "title": "VIN Lite, Racer and Nova — retailer comparison of mechanisms",
+      "url": "https://speedcubing.org/collections/newest-products/products/vin-3x3-nova-lite",
+      "publisher": "speedcubing.org",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-nova-zii",
+      "title": "VIN3 Nova — net 81 g, 55 mm specifications",
+      "url": "https://www.ziicube.com/Vin-333",
+      "publisher": "ZiiCube",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-nova-cuboss",
+      "title": "VIN3 Nova — separately stated net and packaged dimensions",
+      "url": "https://cuboss.com/shop/vin-cube-3x3-nova-maglev-ball-core-uv/",
+      "publisher": "Cuboss",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-vin-racer-halcube",
+      "title": "VIN3 Racer — separately measured product and package weight",
+      "url": "https://halcube.pl/Vin-3x3-Racer-Ball-Core-UV",
+      "publisher": "Halcube",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v2-scs",
+      "title": "HaiTun Waverider V2 — finish, version weights and tuning",
+      "url": "https://speedcubeshop.com/products/waverider-v2-3x3-standard-magnetic-20-magnet-ball-core",
+      "publisher": "SpeedCubeShop",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v2-ultimate",
+      "title": "HaiTun Waverider V2 Ultimate — 94-magnet top configuration",
+      "url": "https://speedcubeshop.com/products/waverider-v2-3x3-ultimate-magnetic-20-magnet-ball-core",
+      "publisher": "SpeedCubeShop",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-haitun-v2-champion",
+      "title": "HaiTun 斩浪 V2 Ultimate — Chinese name and later variant listing",
+      "url": "https://www.championscubestore.com/index.php?cPath=437&main_page=product_info&products_id=6377",
+      "publisher": "Champion's Cube Store",
+      "kind": "retailer"
+    },
+    {
+      "id": "supp-mt-zcube-champion",
+      "title": "梦图 × ZCube Tianma X3+ — February 2025 Chinese dealer listing",
+      "url": "https://www.championscubestore.com/index.php?cPath=437&main_page=product_info&products_id=6263",
+      "publisher": "Champion's Cube Store",
+      "kind": "retailer"
+    }
+  ],
+  "coverageNotes": [
+    "重点补充 1977/1980 起源、2008–2013 DIY 世代、方是与旋风小子、早期智能三阶；原型在发展节点叙述。",
+    "1980–2000 年代不同地区原版批次、国甲全部模具、国丙全部小尺寸、海燕/国恩/Ghost Hand、QJ/蓝蓝/乐方等仍未完整覆盖。",
+    "只把一般三阶和尺寸变体纳入型号；联名印刷、透明/限定色通常归入版本。异常形变、齿轮、镜面异形不在本表核心范围。",
+    "短补查仅新增三个有商业记录的条目；Type D 保留历史交易称谓，未将其全部归为永骏。 This short supplement adds only three commercially documented entries; Type D remains a historical trade designation and is not universally attributed to YJ.",
+    "海燕 Memory 是甲五手工打磨商品，Haiyan’s Cube 是同期单独销售的另一结构；应避免和现有 Alpha V 数据重复统计纯颜色 SKU。 Memory is a commercially sold hand-modified Alpha V; Haiyan’s Cube is a separate contemporary mechanism. Avoid counting color SKUs as additional models.",
+    "未找到足够可核实资料确认 Memory II 或海燕 Mini 独立商业型号，因此未添加。 Insufficient verifiable evidence was found for separate Memory II or Haiyan Mini commercial models, so they were not added.",
+    "所有日级日期均为同期商业流通证据，而非厂商首发公告；具体性质在 release.note 中注明。 All day-level dates establish contemporary commercial availability rather than manufacturer launch announcements, as stated in release.note.",
+    "补充 8 个商业型号，覆盖 MoreTry 梦图、VIN、HaiTun 海豚；按机械世代合并统计时，VIN3 三配置和斩浪 V1 双配置可进一步合并。 / Eight commercial models cover MoreTry, VIN and HaiTun; a strict mechanical-generation count may further combine the three VIN3 tiers and two Waverider V1 tiers.",
+    "天马 X3 的 V1/V2/V3/V4 为同代配置，不是连续四代；X3+ 的普通、全磁、ZCube、SAOCube 及 UV 外观版都放在变体中。 / Tianma X3 V1/V2/V3/V4 are same-generation configurations; X3+ regular, Full-Magnetic, ZCube, SAOCube and UV editions are grouped as variants.",
+    "所有日期均为零售商记录，未发现足够可靠的官方首发和中国官方首发价。 / All dates are retailer records; reliable official launch dates and Chinese official launch prices were not established.",
+    "价格采样截止 2026-10-07；停产留档价标 historical，不声称当年首发价或仍有现货。 / Prices were sampled through October 7, 2026; discontinued listing prices are historical, not asserted original MSRP or confirmation of stock.",
+    "VIN3 的净重和边长在商家间存在冲突，已并列注明；没有把包装毛重写成产品重量。 / Retailers disagree on VIN3 net weight and dimensions; the differences are stated, and packaged gross weight is excluded.",
+    "海豚斩浪 V2 零售资料把不同版本的磁铁总数/核心磁数交叉套用，本补充只在证据一致的至尊版标记 94 磁，对其余版本不伪造统一磁数。 / Waverider V2 retail descriptions mix magnet totals and core counts across versions; this supplement states 94 magnets only for the consistently documented Ultimate and avoids invented uniform counts.",
+    "海豚 V2 的核心磁环宣传不等于用磁悬浮取代中心弹簧；商家规格仍说明弹簧压缩，本条 mechanism 不标 MagLev。 / Waverider V2 core-ring marketing does not establish replacement of center springs with MagLev; retailer specifications retain spring compression, so MagLev is not tagged.",
+    "评测型评价为公开购买者的一手体验概括，样本不能推出总体故障率；编辑评价不冒充实测。 / Review assessments summarize firsthand purchaser experiences, which do not establish population failure rates; editorial judgments are not presented as measurements."
+  ]
+}
