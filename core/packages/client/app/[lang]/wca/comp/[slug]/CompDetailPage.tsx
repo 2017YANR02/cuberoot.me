@@ -3720,13 +3720,12 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
               );
               return (
               <div key={g.ev.i} className="comp-modal-group">
-                <h3 className="comp-modal-group-title" aria-label={eventDisplayName(g.ev.i, isZh)}>
-                  <EventIcon event={g.ev.i} title={eventDisplayName(g.ev.i, isZh)} />
-                </h3>
-                <table className="comp-modal-table">
+                <table className="comp-modal-table" aria-label={eventDisplayName(g.ev.i, isZh)}>
                   <thead>
                     <tr>
-                      <th>{tr({ zh: '轮', en: 'Round' })}</th>
+                      <th aria-label={tr({ zh: '轮次', en: 'Round' })}>
+                        <EventIcon event={g.ev.i} title={eventDisplayName(g.ev.i, isZh)} />
+                      </th>
                       <th aria-label={tr({ zh: '名次', en: 'Place' })}>#</th>
                       <th>{tr({ zh: '单次', en: 'Best'
                     })}</th>
