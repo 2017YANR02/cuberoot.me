@@ -62,7 +62,7 @@ const GROUP_COLOR: Record<GroupId, string> = {
 };
 
 const TEXTS = {
-  title:       { en: 'Web Directory', zh: '魔方导航' },
+  title:       { en: 'Web Directory', zh: '网站导航' },
   topics:      { en: 'Topics',        zh: '话题' },
   projects:    { en: 'Events',        zh: '项目' },
   algSets:     { en: 'Algorithm sets', zh: '公式集' },
