@@ -1,8 +1,6 @@
 import { smartCubeTargetFacelets } from '../smart_cube/cubie';
 import { stepSolvedInFrame } from './reconstruct/steps';
 import { timerSmartCubeTrainingComplete } from './smart-cube-training';
-import { invertAlg } from '../alg_transform';
-import { normalizeWcaScramble } from '../normalize_wca_scramble';
 
 /** Reuse the installed csTimer engine; all filtering is shared by random and seeded workers. */
 export const TIMER_TRAINING_STATE_KEYS = {
@@ -19,11 +17,9 @@ export function generateTimerTrainingStateScramble(
   generate: (key: string, attempt: number) => string,
 ): string {
   for (let attempt = 0; attempt < 64; attempt++) {
-    const raw = generate(TIMER_TRAINING_STATE_KEYS[event], attempt);
-    // Upstream Roux providers finish with x/x2/x' to return their blocks to D.
-    // Conjugate that regrip into outer turns so the fixed training grip still owns the goal.
-    const endingRotation = (event === 'lse' || event === 'l10p') ? raw.match(/(?:^|\s)(x(?:2|')?)\s*$/)?.[1] : undefined;
-    const scramble = endingRotation ? normalizeWcaScramble(`${invertAlg(endingRotation)} ${raw}`) : raw;
+    // Roux's trailing x rotation restores the blocks to the selected grip.
+    // Keep it: conjugating by its inverse changes the blocks' actual colors.
+    const scramble = generate(TIMER_TRAINING_STATE_KEYS[event], attempt);
     if (!scramble) throw new Error(`Invalid training notation: ${event}`);
     const facelets = smartCubeTargetFacelets(scramble);
     if (!facelets) throw new Error(`Invalid training scramble: ${event}`);

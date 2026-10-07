@@ -31,8 +31,12 @@ function deterministicTrainingNotation(scramble: string): string {
   const state = applySequence(solvedCubie(), parseMoves(normalized));
   // Upstream may choose different equivalent text as its search caches warm.
   // Take the first bounded solution, without wall-clock-dependent optimization.
-  return formatMoves(scrambleFromState(state, trainingTables.move, trainingTables.prune,
+  const moves = formatMoves(scrambleFromState(state, trainingTables.move, trainingTables.prune,
     { maxTotalLen: 30, targetLen: 30 }));
+  // These upstream providers use outer turns followed by an optional x regrip.
+  // Normalization preserves the device-frame state but drops that display grip.
+  const regrip = scramble.match(/(?:^|\s)(x(?:2|')?)\s*$/)?.[1];
+  return regrip ? `${moves} ${regrip}` : moves;
 }
 
 export interface TimerSeedRequest extends TimerScrambleRequest {
