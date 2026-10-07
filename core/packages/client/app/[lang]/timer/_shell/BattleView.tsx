@@ -34,7 +34,8 @@ import { MilestoneToast } from '@/app/[lang]/timer/_battle/AdvancedFeatures';
 import { useBattleHistoryProps } from '@/app/[lang]/timer/_battle/VsHistoryPanel';
 import { updateSettings, useSettings } from '@/app/[lang]/timer/_lib/settings';
 import { eventInfo } from '@/app/[lang]/timer/_lib/types';
-import CubeRootLogo from '@/components/CubeRootLogo';
+import HomeLink from '@/components/HomeLink';
+import { ArrowLeft } from 'lucide-react';
 import WcaSourceConfig from '@/components/WcaSourceConfig';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -651,7 +652,7 @@ export default function BattleView({ playerCount, playersControl, presenceContro
       onSettings: handleSettingsClick,
       onHistory: () => setVsHistoryOpen(true),
       controls: <>{playersControl}{presenceControl}</>,
-      brand: <CubeRootLogo className="middle-logo" />
+      brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>
     }} layout={{
       playerCount: playerCount as 2 | 3 | 4,
       layout: store.layout,
