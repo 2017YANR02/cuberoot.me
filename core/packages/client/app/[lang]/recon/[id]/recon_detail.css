@@ -1197,11 +1197,24 @@
   color: var(--faint-foreground);
   margin-bottom: 2px;
 }
+.yt-comment-pinned-badge > svg {
+  transform: rotate(35deg);
+}
 
 /* ── 回复(单层嵌套) ────────────────────────────────────── */
 .yt-comment-thread {
+  position: relative;
   display: flex;
   flex-direction: column;
+}
+.yt-comment-thread.is-expanded::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 40px;
+  bottom: 14px;
+  border-left: 1px solid var(--border-strong);
+  pointer-events: none;
 }
 
 /* 评论下方的"回复"按钮(YouTube 风格 pill) */
@@ -1305,7 +1318,26 @@
   background: color-mix(in srgb, var(--signal-info) 10%, transparent);
 }
 .yt-reply-item {
+  position: relative;
   display: flex;
+}
+.yt-comment-thread.is-expanded .yt-replies-toggle {
+  position: relative;
+  order: 1;
+}
+.yt-comment-thread.is-expanded .yt-reply-item::before,
+.yt-comment-thread.is-expanded .yt-reply-composer::before,
+.yt-comment-thread.is-expanded .yt-replies-toggle::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: -12px;
+  width: 20px;
+  height: 24px;
+  border-left: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  border-bottom-left-radius: 16px;
+  pointer-events: none;
 }
 /* 回复使用更小的 avatar 与 YT 一致 */
 .yt-reply-item .yt-comment-avatar {
@@ -1318,6 +1350,7 @@
 
 /* 回复输入框 */
 .yt-reply-composer {
+  position: relative;
   display: flex;
   gap: 12px;
   align-items: flex-start;

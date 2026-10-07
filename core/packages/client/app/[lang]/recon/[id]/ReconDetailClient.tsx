@@ -2023,7 +2023,7 @@ function CommentsView({
           const replies = repliesByParent.get(comment.id) ?? [];
           const expanded = expandedReplies.has(comment.id);
           return (
-            <div key={comment.id} className="yt-comment-thread">
+            <div key={comment.id} className={`yt-comment-thread${expanded || replyingToId === comment.id ? ' is-expanded' : ''}`}>
               {renderCommentItem(comment, false)}
               {(replies.length > 0 || replyingToId === comment.id) && (
                 <div className="yt-replies">
