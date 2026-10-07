@@ -1571,3 +1571,10 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 - macOS 通过 WKWebView / NSPrintOperation 打开系统打印面板，主线程等待面板结束才释放打印报告；并发互斥，原生异常直接报告，不回退到固定 30 秒浏览器超时。Windows 保留 WebView2 打印路径。
 - 原生完成/取消、错误和非 macOS 回退的路由测试以及 macOS unsigned app 构建通过，独立复核无阻断。真实系统预览、取消与保存 PDF 尚未验收；仅本地提交，未 push 或发布。
+
+### 2026-10-07：优先级 6——原生计时防休眠（本地）
+
+- Android 使用 Activity FLAG_KEEP_SCREEN_ON，iOS 使用 idleTimerDisabled 并在失活时释放、恢复活跃时按请求恢复；Windows 在同一主线程设置/清除 ES_CONTINUOUS + ES_DISPLAY_REQUIRED + ES_SYSTEM_REQUIRED；macOS 使用 IOKit display idle assertion，窗口销毁时清理。
+- Mobile、Desktop、Harmony 共用 app-ui 计时阶段与 visibility 生命周期；观察/运行时持有，隐藏/停止/卸载时释放。原生调用串行化并按所有者管理，旧阶段迟到释放不关掉新阶段的保活。Harmony 保留已有原生 window adapter，Web 仍使用标准 Wake Lock。
+- 10 项定向生命周期/竞态测试、78 项账号文档检查、app-ui typecheck 与架构边界检查通过；Mobile build/sync、Android debug APK、iOS unsigned Simulator、macOS unsigned app、Harmony Web build/sync 通过。macOS 实际 IOKit 调用验证持有期间存在本进程断言，释放后消失、重复开启/释放成功。独立审查发现的 Windows 系统空闲锁遗漏已修复，最终复核无阻断。
+- Windows 原生构建与实机休眠未验；Harmony HAP 仍受本机 Hvigor 6.0.1 / 工程 modelVersion 6.0.2 不匹配限制。各端实体设备长计时、前后台与电源策略仍需验收。仅本地提交，未 push/部署/发布，五端总体继续 NOT COMPLETE。

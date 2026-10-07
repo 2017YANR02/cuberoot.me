@@ -90,6 +90,7 @@ final class CubeRootBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(TimerPrintPlugin())
         bridge?.registerPluginInstance(NativeFilesPlugin())
+        bridge?.registerPluginInstance(ScreenAwakePlugin())
         bridge?.registerPluginInstance(AppleMembershipPlugin())
         bridge?.registerPluginInstance(RecordPushPlugin())
     }
@@ -122,5 +123,34 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
         SceneDelegateProxy.shared.scene(scene, continue: userActivity)
+    }
+}
+
+// Keep ownership while inactive, but never prevent idle sleep in the background.
+@objc(ScreenAwakePlugin)
+final class ScreenAwakePlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "ScreenAwakePlugin"
+    let jsName = "ScreenAwake"
+    let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "setKeepAwake", returnType: CAPPluginReturnPromise)]
+    private var requested = false
+
+    override func load() {
+        NotificationCenter.default.addObserver(self, selector: #selector(refresh), name: UIApplication.didBecomeActiveNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(suspend), name: UIApplication.willResignActiveNotification, object: nil)
+    }
+    @objc private func refresh() {
+        UIApplication.shared.isIdleTimerDisabled = requested && UIApplication.shared.applicationState == .active
+    }
+    @objc private func suspend() { UIApplication.shared.isIdleTimerDisabled = false }
+    @objc func setKeepAwake(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.requested = call.getBool("enabled") ?? false
+            self.refresh()
+            call.resolve()
+        }
+    }
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        DispatchQueue.main.async { UIApplication.shared.isIdleTimerDisabled = false }
     }
 }

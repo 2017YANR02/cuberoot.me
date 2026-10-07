@@ -27,6 +27,7 @@ export type {
 } from './smart-cube/transport';
 export { useInstalledSmartCube } from './smart-cube/use-smart-cube';
 export {
+  createNativeScreenWakeLock,
   startTimerScreenWakeLock,
   timerHapticCue,
   timerNeedsScreenAwake,
