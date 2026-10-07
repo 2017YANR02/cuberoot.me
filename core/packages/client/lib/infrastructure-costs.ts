@@ -229,6 +229,16 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
         href: 'https://www.mi.com/monitor34',
       },
       {
+        name: { zh: 'Studio Display XDR', en: 'Studio Display XDR' },
+        detail: {
+          zh: '纳米纹理玻璃面板；可调倾斜度及高度的支架；教育优惠版',
+          en: 'Nano-texture glass; tilt- and height-adjustable stand; education pricing',
+        },
+        amount: 26229,
+        imageSrc: '/images/dev/infrastructure/studio-display-xdr-height-stand.webp',
+        href: 'https://www.apple.com.cn/studio-display-xdr/',
+      },
+      {
         name: { zh: '狼蛛 S98 无线三模机械键盘', en: 'AULA S98 tri-mode wireless mechanical keyboard' },
         detail: { zh: '银白三模、红轴（静音线性手感）', en: 'Silver-white, red switches (quiet linear feel)' },
         amount: 159,
