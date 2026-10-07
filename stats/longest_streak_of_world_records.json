@@ -84,7 +84,7 @@
       "[Western Championship 2018](https://www.worldcubeassociation.org/competitions/WesternChampionship2018)"
     ],
     [
-      "7.44",
+      "7.45",
       8,
       "4x4x4 Blindfolded",
       "Single",
@@ -625,21 +625,21 @@
     ],
     [
       "2.02",
-      2,
-      "5x5x5 Blindfolded",
-      "Average",
-      "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
-      "[Beijing Open 2017](https://www.worldcubeassociation.org/competitions/BeijingOpen2017)",
-      "[Warm Up Canberra 2019](https://www.worldcubeassociation.org/competitions/WarmUpCanberra2019)"
-    ],
-    [
-      "2.02",
       3,
       "5x5x5 Cube",
       "Single",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[DuPage Fall 2024](https://www.worldcubeassociation.org/competitions/DuPageFall2024)",
       "Still active"
+    ],
+    [
+      "2.02",
+      2,
+      "5x5x5 Blindfolded",
+      "Average",
+      "[Kaijun Lin (林恺俊)](https://www.worldcubeassociation.org/persons/2013LINK01)",
+      "[Beijing Open 2017](https://www.worldcubeassociation.org/competitions/BeijingOpen2017)",
+      "[Warm Up Canberra 2019](https://www.worldcubeassociation.org/competitions/WarmUpCanberra2019)"
     ],
     [
       "2.01",
@@ -750,7 +750,7 @@
       "[US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016)"
     ],
     [
-      "1.73",
+      "1.74",
       2,
       "Square-1",
       "Average",
@@ -1089,7 +1089,7 @@
       "Average",
       "[Tymon Kolasiński](https://www.worldcubeassociation.org/persons/2016KOLA02)",
       "[WCA World Championship 2025](https://www.worldcubeassociation.org/competitions/WC2025)",
-      "Still active"
+      "[Guangzhou Grand Open 2026](https://www.worldcubeassociation.org/competitions/GuangzhouGrandOpen2026)"
     ],
     [
       "1.23",
@@ -1380,7 +1380,7 @@
       "[Malaysia Cube Open 2017](https://www.worldcubeassociation.org/competitions/MalaysiaCubeOpen2017)"
     ],
     [
-      "0.83",
+      "0.84",
       2,
       "Megaminx",
       "Average",
@@ -1416,7 +1416,7 @@
       "[Schwandorf Open 2016](https://www.worldcubeassociation.org/competitions/SchwandorfOpen2016)"
     ],
     [
-      "0.81",
+      "0.82",
       2,
       "2x2x2 Cube",
       "Average",
@@ -1903,15 +1903,6 @@
     ],
     [
       "0.37",
-      2,
-      "7x7x7 Cube",
-      "Single",
-      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
-      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
-      "Still active"
-    ],
-    [
-      "0.37",
       3,
       "Megaminx",
       "Single",
@@ -1927,6 +1918,15 @@
       "[Juan Pablo Huanqui](https://www.worldcubeassociation.org/persons/2013HUAN30)",
       "[US Nationals 2016](https://www.worldcubeassociation.org/competitions/USNationals2016)",
       "[Busan Winter 2016](https://www.worldcubeassociation.org/competitions/BusanWinter2016)"
+    ],
+    [
+      "0.36",
+      2,
+      "7x7x7 Cube",
+      "Single",
+      "[Max Park](https://www.worldcubeassociation.org/persons/2012PARK03)",
+      "[Western Championship 2026](https://www.worldcubeassociation.org/competitions/WesternChampionship2026)",
+      "[Beijing Autumn Rivalry 2026](https://www.worldcubeassociation.org/competitions/BeijingAutumnRivalry2026)"
     ],
     [
       "0.34",
@@ -2028,6 +2028,15 @@
       "[Cube4fun Lublin on WEII 2024](https://www.worldcubeassociation.org/competitions/Cube4funLublinonWEII2024)"
     ],
     [
+      "0.13",
+      2,
+      "6x6x6 Cube",
+      "Average",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "[Kuala Lumpur CC 2026](https://www.worldcubeassociation.org/competitions/KualaLumpurCC2026)",
+      "Still active"
+    ],
+    [
       "0.12",
       2,
       "7x7x7 Cube",
@@ -2071,6 +2080,15 @@
       "[Eryk Kasperek](https://www.worldcubeassociation.org/persons/2021KASP01)",
       "[Cube4fun Lublin on WEII 2024](https://www.worldcubeassociation.org/competitions/Cube4funLublinonWEII2024)",
       "[Chicago Area Twist Spring A 2024](https://www.worldcubeassociation.org/competitions/ChicagoAreaTwistSpringA2024)"
+    ],
+    [
+      "0.03",
+      2,
+      "7x7x7 Cube",
+      "Average",
+      "[Timofei Tarasenko](https://www.worldcubeassociation.org/persons/2019TARA09)",
+      "[Hanoi Big Cubes 2026](https://www.worldcubeassociation.org/competitions/HanoiBigCubes2026)",
+      "Still active"
     ]
   ]
 }
