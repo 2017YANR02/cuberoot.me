@@ -59,7 +59,7 @@ describe('installed website surfaces', () => {
     expect(app).toContain('aria-hidden={showState}');
     expect(app).toContain('tabIndex={showState ? -1 : undefined}');
     expect(app).toContain("if (previous === 'online' || connection !== 'online') return");
-    expect(app).toMatch(/onLoad=\{\(\) => \{\s*webBridgeReadyRef\.current\[surface\] = false;\s*if \(connection === 'offline'\) \{\s*webSurfaceLoadedRef\.current\[surface\] = false;/);
+    expect(app).toMatch(/onLoad=\{\(\) => \{\s*if \(surface === 'tools'\) void revokeToolsBle\(\);\s*webBridgeReadyRef\.current\[surface\] = false;\s*if \(connection === 'offline'\) \{\s*webSurfaceLoadedRef\.current\[surface\] = false;/);
     expect(app).toMatch(/} else if \(connection !== 'online'\) \{\s*clearWebSurfaceHandshake\(surface\);\s*webBridgeReadyRef\.current\[surface\] = false;/);
     expect(app).toContain('webBridgeReadyRef.current[current] ? webDepthRef.current[current] : 0');
     expect(app).not.toContain('{showFrame && (');
