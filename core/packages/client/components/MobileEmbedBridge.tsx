@@ -24,6 +24,7 @@ import { tr } from '@/i18n/tr';
 import { installedContentUnavailable } from '@cuberoot/shared/installed-content';
 import { setAppleMembershipBridge, receiveAppleMembershipResult } from '@/lib/apple-membership-bridge';
 import { setStoreMembershipBridge } from '@/lib/store-membership-bridge';
+import { setInstalledBleBridge } from '@/lib/installed-ble-bridge';
 
 const MOBILE_PARENT_ORIGINS = new Set([
   'capacitor://localhost',
@@ -159,6 +160,7 @@ export default function MobileEmbedBridge() {
       if (init?.surface === surface) {
         parentOrigin = event.origin;
         capabilities = init;
+        setInstalledBleBridge(surface === 'tools' && init.bluetooth === true ? event.origin : null);
         setAppleMembershipBridge(init.appleMembership === true, postToParent);
         setStoreMembershipBridge('google', init.googleMembership === true, postToParent);
         postNavigation();
@@ -225,6 +227,7 @@ export default function MobileEmbedBridge() {
     window.addEventListener('message', onMessage);
     return () => {
       active = false;
+      setInstalledBleBridge(null);
       setAppleMembershipBridge(false);
       setStoreMembershipBridge('google', false);
       invalidateWebSession();

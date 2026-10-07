@@ -63,6 +63,7 @@ import { applyHijack, makeHijack, type StateHijack } from './state_hijack';
 import { toFaceletString, fromFaceletString } from '../cube/state';
 import { stepSolved, type CubeStep } from '../cube/steps';
 import { watchAdvertisementsMac, savedMac, saveMac, clearMac, parseMacFromName, normalizeMac } from './mac';
+import { installedBleAvailable, installedBleDeviceMac, requestInstalledBleDevice } from '@/lib/installed-ble-bridge';
 import { BluetoothConnectError, atStage, describeError, isNoDeviceSelected } from './connect_error';
 import type { BluetoothCubeStatus, CubeBrand } from './types';
 import {
@@ -384,6 +385,7 @@ export function pickerOptions(acceptAllDevices: boolean, nameOnly = false): Requ
 export async function requestBluetoothDevice(
   optionsForEnvironment: (nameOnly: boolean) => RequestDeviceOptions,
 ): Promise<BluetoothDevice | null> {
+  if (installedBleAvailable()) return requestInstalledBleDevice(optionsForEnvironment(false));
   if (typeof navigator === 'undefined' || !navigator.bluetooth) {
     const err = new Error('NO_WEB_BLUETOOTH') as Error & { kind?: string };
     err.kind = 'no-web-bluetooth';
@@ -1035,12 +1037,12 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // cache entry. Other brands retain advertisement/name-based discovery.
     let mac: string | null = null;
     if (driver.needsMac) {
-      mac = driver.brand === 'moyu32' ? savedMac(device.name) : normalizeMac(advMac)
+      mac = installedBleDeviceMac(device) ?? (driver.brand === 'moyu32' ? savedMac(device.name) : normalizeMac(advMac)
         ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
         // Brand-specific name fallback, never used for MY32.
         ?? driver.defaultMac?.(device)
-        ?? null;
+        ?? null);
       if (!mac && onNeedMacRef.current) {
         try { mac = normalizeMac(await onNeedMacRef.current(device.name ?? '')); }
         catch { mac = null; }
@@ -1222,8 +1224,9 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     // wait. The handshake's key-error path clears a stale value and asks the
     // user again if the cube identity or key ever changes.
     const nameDriver = pickDriver(device);
+    const nativeMac = installedBleDeviceMac(device);
     const reusableMac = nameDriver?.needsMac
-      ? savedMac(device.name)
+      ? nativeMac ?? savedMac(device.name)
         ?? parseMacFromName(device.name)
         ?? nameDriver.defaultMac?.(device)
         ?? null
@@ -1243,7 +1246,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           handshakeMs: null,
         }
       : null);
-    const advMac = shouldWatchMac
+    const advMac = nativeMac ?? (shouldWatchMac
       ? await watchAdvertisementsMac(device, {
           onAdvertisement: (observation) => {
             if (connectionGenerationRef.current === generation) {
@@ -1257,7 +1260,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
             }
           },
         }).catch((err: unknown) => { throw atStage('advertisement', err); })
-      : null;
+      : null);
     if (connectionGenerationRef.current !== generation) return;
     const advertisementMs = Math.max(0, Math.round(performance.now() - connectionStartedAt));
     setAdvertisementDiagnostic((current) => current

@@ -106,7 +106,7 @@ struct Index {
   private async requestMedia(request: PermissionRequest): Promise<void> {
     const epoch = this.mediaEpoch;
     const resources = request.getAccessibleResource();
-    if (request.getOrigin() !== 'https://localhost' || resources.length === 0 ||
+    if (!['https://localhost', 'https://cuberoot.me'].includes(request.getOrigin()) || resources.length === 0 ||
       resources.some((resource: string) => resource !== 'TYPE_VIDEO_CAPTURE' && resource !== 'TYPE_AUDIO_CAPTURE')) {
       request.deny();
       return;

@@ -15,7 +15,8 @@ import {
   createTimerDeviceRegistry,
   SMART_CUBE_TIMER_DEVICE_REGISTRATIONS,
 } from '@cuberoot/shared/timer/device-contract';
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { installedBleAvailable, subscribeInstalledBleBridge } from '@/lib/installed-ble-bridge';
 import {
   BluetoothConnectError,
   clientEnvironmentLabel,
@@ -116,6 +117,7 @@ function ConnectFailure() {
 }
 
 export default function BluetoothModal({ isZh, cube, onClose, onConnect, connectAttempt, macPrompt, onSubmitMac, onCancelMac, onResetGyro }: Props) {
+  useSyncExternalStore(subscribeInstalledBleBridge, installedBleAvailable, () => false);
   const [connecting, setConnecting] = useState(Boolean(connectAttempt) && !cube.status.connected);
   const [connectError, setConnectError] = useState<{ stage: ConnectStage | null; detail: string } | null>(null);
 

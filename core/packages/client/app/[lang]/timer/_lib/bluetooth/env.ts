@@ -8,6 +8,8 @@
  * permission, picker and GATT after the user clicks connect.
  */
 
+import { installedBleAvailable } from '@/lib/installed-ble-bridge';
+
 export type ClientOS =
   | 'android'
   | 'ios'
@@ -182,6 +184,7 @@ export function isBluefy(): boolean {
 export function detectBluetoothEnv(
   snapshot: ClientNavigatorSnapshot | null = navigatorSnapshot(),
 ): BluetoothEnv {
+  if (installedBleAvailable()) return 'available';
   const client = detectClientEnvironment(snapshot);
 
   // iOS browser names do not imply capability: Bluefy is the supported native

@@ -1537,3 +1537,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - Chrome 实测 Web 与 App：真实 3×3 批量生成、通用求解并把输出应用回目标状态确认复原、BLD 高级配置、Escape 先内后外及留在计时页。批量窗口在 320/390/768/1280px × 系统浅/深与强制浅/深下无页面/窗口横向溢出；既有解法侧栏/全屏键盘、URL 历史和同一视口/主题矩阵通过，无 pageerror。额外检查宽屏历史与主区、解法侧栏互不遮挡，全屏隐藏顶栏/来源/辅助区/底栏并释放左侧 padding。
 - Mobile production build、Capacitor Android/iOS sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 `00303028`：工程 modelVersion 6.0.2，本机 Hvigor 只支持 6.0.1。Windows 原生构建、OPPO/五平台实体设备、签名/公证与发布未验；App 文件输出沿用现有 Web Share/Blob 下载 adapter，不将浏览器成功当作原生文件导出已验收。
 - 仅本地提交，未 push/部署。保留其他任务的训练工作与原有 3000 开发服务；移除本任务临时 Next include，并关闭自建 1431/3003 服务。多人多魔方继续隐藏，总体 **NOT COMPLETE**。
+
+### 2026-10-07：优先级 1——工具页原生 BLE 与媒体接入（本地）
+
+- Tools iframe 通过共享 MessageChannel 契约消费宿主已有 BLE transport，Web 保留原有智能魔方/计时器协议驱动；未复制原生协议或修改 navigator。仅当前 Tools 窗口与 canonical origin 可取得通道，Account 不获蓝牙 capability。设备选择复用共享选择窗口，必须由用户选中，不自动连接信号最强设备。
+- GATT 服务、读写、通知、MAC 广播解析与物理/主动断开后重连已接线。切栏、导航、撤权与过期请求关闭通道并清理资源；Tools 与计时栏交接等待迟到扫描启动及停止完成，避免旧扫描清理关闭新扫描。系统返回先关闭设备选择窗口。独立审查提出的自动选设备、重连、迟到连接和扫描竞态均已修复并复核。
+- Tools iframe 增加 camera/microphone 权限委派；Harmony 媒体请求允许 canonical 网站来源并保留本地顶层/生命周期校验。登录、PKCE、换票、绑定、合并、退出与注销行为未改，账号生命周期说明完成源码复核。
+- 验证：shared build、app-ui/client typecheck、架构边界检查通过。App BLE host/picker/共享选择窗口/智能魔方扫描与清理 26 项通过；Web bridge/嵌入认证/蓝牙环境/魔方重连与写入 50 项、计时器与设备选择/账号文档 134 项通过；最终账号文档两文件 78 项复验通过。跨域 Chrome 使用真实桥代码与模拟 native transport 验证读写、通知、两种断开重连、撤权及模拟音视频流，无 pageerror；此证据不代表实体蓝牙或摄像头/麦克风验收。
+- 最终 Mobile production build 与 Android/iOS sync、Android debug APK、iOS unsigned Simulator build、macOS unsigned release app、Harmony Web build/sync 通过。iOS 使用隔离 DerivedData 绕过本机旧缓存缺失 xcframework 元数据；未删除旧缓存。Harmony HAP 实际尝试报 Hvigor 00303028（工程 modelVersion 6.0.2，本机只支持 6.0.1），未降级工程。Windows native、各宿主实体设备权限/蓝牙/媒体、签名公证及商店发布未验。
+- 仅本地提交，未 push、部署或发布；本轮不处理其余审计优先级，总体继续 **NOT COMPLETE**。

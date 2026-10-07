@@ -33,6 +33,7 @@ import { createMiniProgramTimerSource } from './miniprogram';
  */
 
 import { requestBluetoothDevice } from '../index';
+import { installedBleDeviceMac } from '@/lib/installed-ble-bridge';
 import type { BluetoothTimerDriver } from './driver';
 import { ganTimerDriver } from './gan_timer';
 import { QIYI_MAC_ADV, normalizeMac, watchAdvertisementsMac } from '../mac';
@@ -329,7 +330,7 @@ export function createBluetoothTimerSource(
     let resolvedMac: string | null = null;
     try {
       if (picker.needsMac) {
-        const advertisedMac = normalizeMac(
+        const advertisedMac = installedBleDeviceMac(picked) ?? normalizeMac(
           await watchAdvertisementsMac(picked, { specs: [QIYI_MAC_ADV] }),
         );
         if (setupGeneration !== generation) return;
