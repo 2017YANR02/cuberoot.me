@@ -154,11 +154,11 @@ describe('Mobile timer More effect adapter', () => {
     expect(app).toContain("'more.marks': () => openToolsRoute('/timer/marks')");
     expect(app).toContain("'more.stats-mobile': () => { setView('history'); setHistoryTab('stats'); }");
     expect(app).toContain("'more.language-mobile': toggleMoreLanguage");
-    expect(app).toContain("'more.bld-helper': () => openToolsRoute('/alg/3bld/helper')");
+    expect(app).toContain("'more.bld-helper': () => setOpenOverlay(TIMER_OVERLAY_IDS.bldTool)");
     expect(app).toContain("'more.fullscreen': toggleTimerFullscreen");
     expect(app).toContain("'more.manual-entry': openManualEntry");
-    expect(app).toContain("'more.solver': () => openToolsRoute('/scramble/solver?event=333')");
-    expect(app).toContain("'more.bulk': () => openToolsRoute('/scramble/gen?mode=batch')");
+    expect(app).toContain("'more.solver': () => setOpenOverlay(TIMER_OVERLAY_IDS.solverTool)");
+    expect(app).toContain("'more.bulk': () => setOpenOverlay(TIMER_OVERLAY_IDS.bulkTool)");
     expect(app).toContain("'more.print': () => printControllerRef.current?.print()");
     expect(app).toContain("'more.clear-event': clearCurrentEvent");
     expect(app).toContain('repository.clearSessionEvent(sessionId, activeEvent)');

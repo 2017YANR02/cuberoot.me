@@ -35,6 +35,10 @@ vi.mock('@cuberoot/timer-ui/SimCubeView', () => ({
   ),
 }));
 
+// Worker execution is covered by solver tests and browser checks; this suite
+// exercises App/device/history lifecycles, including a mounted desktop rail.
+vi.mock('@cuberoot/timer-ui/TimerSolverBody', () => ({ default: () => <div data-solver-body-fixture /> }));
+
 import { App } from './App';
 
 let options: InstalledAppSmartCubeOptions;
@@ -562,4 +566,22 @@ it('blocks cube starts in full statistics and Back closes the dialog before hist
   await act(async () => backListener?.());
   expect(document.querySelector('.stats-modal')).toBeNull();
   expect(container.querySelector('.history-view')).not.toBeNull();
+});
+
+it('keeps a More tool in Solo, blocks cube starts, and routes Back through its nested picker', async () => {
+  await act(async () => container.querySelector<HTMLButtonElement>('.more-menu-btn')!.click());
+  await act(async () => [...document.querySelectorAll<HTMLButtonElement>('.more-menu-item')].find(button => button.textContent === 'Bulk scrambles')!.click());
+  await vi.waitFor(async () => { await settle(); expect(document.querySelector('.bulk-scramble-modal')).not.toBeNull(); });
+  expect(container.querySelector('.timer-solo-main')).not.toBeNull();
+  expect(container.querySelector('.primary-nav [aria-current="page"]')?.textContent).toContain('Timer');
+  await act(async () => move('R', 1_100));
+  await act(async () => move('U', 2_000));
+  expect(phase).not.toBe('running');
+  await act(async () => document.querySelector<HTMLButtonElement>('.bulk-scramble-modal .pp-trigger')!.click());
+  await act(async () => backListener?.());
+  expect(document.querySelector('.bulk-scramble-modal [role="menu"]')).toBeNull();
+  expect(document.querySelector('.bulk-scramble-modal')).not.toBeNull();
+  await act(async () => backListener?.());
+  expect(document.querySelector('.bulk-scramble-modal')).toBeNull();
+  expect(container.querySelector('.timer-solo-main')).not.toBeNull();
 });

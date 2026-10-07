@@ -61,6 +61,7 @@ export function iconFor(e: UtilEntry): LucideIcon {
 }
 
 export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
+
   { id: 'hook', zh: 'React Hooks', en: 'React Hooks' },
   { id: 'i18n', zh: '国际化 / 文案', en: 'i18n / Text' },
   { id: 'api', zh: 'API 地址', en: 'API URLs' },
@@ -71,6 +72,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 ];
 
 export const CATALOG: UtilEntry[] = [
+  {
+    name: 'useTimerSoloCompactLayout / timerSoloModalState / useBldConfigStore / useBldConfigHydrated',
+    sig: 'useTimerSoloCompactLayout(): boolean; timerSoloModalState(blocking: boolean, solverSheet: boolean)',
+    imp: "import { useTimerSoloCompactLayout, timerSoloModalState } from '@cuberoot/timer-ui/TimerSoloPage'; import { useBldConfigStore, useBldConfigHydrated } from '@cuberoot/timer-ui/bld-config-store';",
+    category: 'util',
+    zh: '单人计时器的紧凑菜单判定、弹层输入门禁和与盲拧训练共用的持久配置。',
+    en: 'Shared Solo compact menus, modal input gating, and persisted BLD configuration used by the trainer and timer.',
+  },
   {
     name: 'createVideoMediaSession',
     sig: 'createVideoMediaSession(adapter): { enable(kind, enabled): Promise<void>; dispose(): void }',

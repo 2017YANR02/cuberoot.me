@@ -232,8 +232,6 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
-.bulk-controls .pp { flex-direction: column; align-items: flex-start; }
-.bulk-controls .pp-popup { position: relative; inset: auto; margin-top: 6px; }
 /* wca-source.css gives borders to `input[type="number"]` and the select, but
    not to text inputs — so 目标时间 / 观察提示音 / 同步种子 / 轮次时限 all render
    as bare text with no box, which reads as a label rather than something you
@@ -410,74 +408,6 @@
 .manual-radio .manual-radio-input { cursor: inherit; }
 
 .manual-entry-modal { max-width: 480px; }
-
-/* --- Solver --- */
-.solver-modal { max-width: 520px; }
-.solver-radios {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-}
-.solver-input { font-family: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', monospace; }
-.solver-loading {
-  text-align: center;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  font-style: italic;
-}
-.solver-rev { margin-top: 10px; }
-.solver-rev-lbl { color: var(--muted-foreground); font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
-
-/* --- Bulk scramble --- */
-.bulk-scramble-modal { max-width: 640px; }
-.bulk-controls {
-  display: flex;
-  gap: 12px;
-  align-items: end;
-  flex-wrap: wrap;
-}
-.bulk-controls .bulk-controls-select,
-.bulk-controls input[type="number"] {
-  background: var(--background);
-  color: var(--foreground);
-  border: 1px solid var(--shell-divider);
-  border-radius: 4px;
-  padding: 6px 8px;
-  font-size: 13px;
-}
-.bulk-controls input[type="number"] { width: 80px; }
-.bulk-controls .primary {
-  background: color-mix(in srgb, var(--signal-info) 14%, transparent);
-  border: 1px solid color-mix(in srgb, var(--signal-info) 45%, transparent);
-  color: var(--foreground);
-  border-radius: 6px;
-  padding: 7px 14px;
-  font-size: 13px;
-  cursor: pointer;
-}
-.bulk-controls .primary:hover { background: color-mix(in srgb, var(--signal-info) 22%, transparent); }
-.bulk-controls .primary:disabled { opacity: 0.5; cursor: not-allowed; }
-.bulk-list {
-  max-height: 50dvh;
-  overflow-y: auto;
-  background: var(--background);
-  border: 1px solid var(--shell-divider);
-  border-radius: 4px;
-  padding: 8px 10px;
-  font-family: 'LiberationMono', ui-monospace, 'Courier New', monospace;
-  font-size: 12px;
-}
-.bulk-row {
-  display: grid;
-  grid-template-columns: 36px 1fr;
-  gap: 6px;
-  padding: 3px 0;
-  border-bottom: 1px dashed var(--shell-divider);
-  align-items: baseline;
-}
-.bulk-row:last-child { border-bottom: 0; }
-.bulk-idx { color: var(--faint-foreground); text-align: right; }
-.bulk-scramble { color: var(--foreground); word-break: break-word; }
 
 /* PB single in history list is marked by the "PB" badge only (no star / gold). */
 

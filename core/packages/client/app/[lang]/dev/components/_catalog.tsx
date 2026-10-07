@@ -1606,6 +1606,13 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared battle video authorization, generation isolation, background cleanup, and media controls. Hosts provide the API origin and native media permissions.',
   },
   {
+    name: 'TimerSoloPage / TimerTools / TimerBulkScrambleModal / TimerBldHelperModal / TimerGeneralSolverModal',
+    import: "import { TimerSoloPage } from '@cuberoot/timer-ui/TimerSoloPage'; import { TimerTools } from '@cuberoot/timer-ui/TimerTools';",
+    category: 'more',
+    zh: 'Web 与安装端共用单人顶栏、来源、计时主体、解法响应式落点、历史插槽及工具窗口；批量打乱、盲拧助手、通用求解器留在计时器内，宿主注入状态、存储、复制与文件输出。',
+    en: 'Shared Solo topbar, source, timing, responsive solver placement, history slots and in-timer tools. Hosts inject state, persistence, clipboard and file output.',
+  },
+  {
     name: 'TimerSolverPanel / TimerSolverBody / TimerStepSolve / TimerSolverCompareModal / TimerSolverHints',
     import: "import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel'; import TimerSolverBody from '@cuberoot/timer-ui/TimerSolverBody'; import TimerStepSolve from '@cuberoot/timer-ui/TimerStepSolve'; import TimerSolverCompareModal from '@cuberoot/timer-ui/TimerSolverCompareModal'; import TimerSolverHints from '@cuberoot/timer-ui/TimerSolverHints';",
     category: 'more',

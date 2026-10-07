@@ -1,0 +1,2 @@
+.timer-solo-main { display: flex; flex-direction: column; position: relative; }
+.shell-topbar.timer-solo-topbar--fullscreen { display: none; }

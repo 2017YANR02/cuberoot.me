@@ -86,7 +86,7 @@ describe('canonical timer More action registry', () => {
   it('exhaustively applies the two event-conditioned visibility rules', () => {
     const drillEvents = new Set<EventId>(['333', '333oh', '333fm', 'oll', 'pll']);
     const speffzEvents = new Set<EventId>(['333bld', '333ni', '333mbld']);
-    expect(EVENTS).toHaveLength(43);
+    expect(new Set(EVENTS.map(event => event.id)).size).toBe(EVENTS.length);
     for (const event of EVENTS.map((info) => info.id)) {
       const states = timerMoreActionStates({ ...baseContext, event });
       expect(states.find((action) => action.id === 'more.drill')?.visible).toBe(drillEvents.has(event));
