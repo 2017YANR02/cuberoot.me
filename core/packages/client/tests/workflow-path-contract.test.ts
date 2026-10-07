@@ -277,6 +277,7 @@ const TEST_PATHS = [
 
 const DESKTOP_PATHS = [
   repoPath('.node-version'),
+  repoPath('.github', 'workflows', 'test.yml'),
   corePath('package.json'),
   corePath('pnpm-lock.yaml'),
   corePath('pnpm-workspace.yaml'),
@@ -587,7 +588,7 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
-  it('runs desktop UI checks only when its dependency closure changes', () => {
+  it('runs desktop UI checks when its dependency closure or workflow changes', () => {
     const workflow = readWorkflow('test.yml');
     const desktopPaths = readStepFilterPaths('test.yml', 'Detect affected inputs', 'desktop');
     expect(desktopPaths).toEqual(DESKTOP_PATHS);
@@ -606,7 +607,7 @@ describe('deployment workflow path contracts', () => {
       [packagePath('puzzle-render-core', 'src', 'index.ts'), true],
       [packagePath('stack-kernel', 'src', 'lib.rs'), true],
       [corePath('pnpm-lock.yaml'), true],
-      [repoPath('.github', 'workflows', 'test.yml'), false],
+      [repoPath('.github', 'workflows', 'test.yml'), true],
       [packagePath('client', 'app', '[lang]', 'page.tsx'), false],
       [appPath('api', 'src', 'index.ts'), false],
       [appPath('mobile', 'src', 'App.tsx'), false],
@@ -724,6 +725,28 @@ describe('deployment workflow path contracts', () => {
     expect(clientDepBuilds).toContain(solverBuild);
     expect(coreBuilds).toContain(renderBuild);
     expect(coreBuilds).toContain(solverBuild);
+  });
+
+  it('checks out all installed solver assets in every host build job', () => {
+    const workflow = readWorkflow('test.yml');
+    for (const job of ['mobile', 'desktop-ui', 'desktop']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      expect(start, job).toBeGreaterThan(-1);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      for (const asset of [
+        '/tools/cstimer-scramble/',
+        '/tools/solver/rust-cross/cross-solver-worker.js',
+        '/tools/solver/rust-cross/xcross-table-worker.js',
+        '/tools/solver/rust-cross/cross_solver.js',
+        '/tools/solver/rust-cross/cross_solver_bg.wasm',
+      ]) expect(block, `${job}: ${asset}`).toContain(asset);
+    }
+    for (const domain of ['mobile', 'desktop']) {
+      expect(workflowTriggers(readStepFilterPaths('test.yml', 'Detect affected inputs', domain), [
+        repoPath('.github', 'workflows', 'test.yml'),
+      ]), domain).toBe(true);
+    }
   });
 
   it('prepares dist-only dependencies through the canonical desktop entrypoints', () => {
