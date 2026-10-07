@@ -31,7 +31,9 @@ describe('reconstruction entry points', () => {
     const submit = submitForm.slice(submitForm.indexOf('const handleSubmit ='), submitForm.indexOf('// Hand off the current scramble'));
     expect(submit).toContain("const person = form.person?.trim() ?? '';");
     expect(submit).toMatch(/if \(!person\) \{\s+setSubmitError/);
-    expect(submit).toMatch(/const data: Partial<ReconSolve> = \{\s+\.\.\.form,\s+person,/);
+    const payload = submit.match(/const data: Partial<ReconSolve> = \{([\s\S]*?)\n\s*\};/)?.[1];
+    // Other normalized fields may precede person; the trimmed name must still override form.person.
+    expect(payload).toMatch(/\.\.\.form,[\s\S]*?\n\s+person,/);
     expect(submit).not.toMatch(/\balert\(/);
     expect(submitForm).toMatch(/submitError\?\.field === field && \([\s\S]*?role="alert"[\s\S]*?\{submitError.message\}/);
     expect(submitForm).toMatch(/renderSubmitError\('person'\)\}\s*<\/div>/);
