@@ -14,15 +14,25 @@ import { reconPathSeg } from '@/lib/recon-seo';
 import './today_recon.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
+import { Pin, PinOff } from 'lucide-react';
 
-interface Props { lang: 'zh' | 'en' }
+interface Props {
+  lang: 'zh' | 'en';
+  pinnedRecons: ReconSolve[] | null;
+  pinnedOnly?: boolean;
+  isAdmin: boolean;
+  savingPins: ReadonlySet<number>;
+  pinError: string | null;
+  onPin: (solve: ReconSolve, pinned: boolean) => Promise<void>;
+}
 
-export default function TodayRecon({ lang }: Props) {
+export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isAdmin, savingPins, pinError, onPin }: Props) {
   const isZh = lang === 'zh';
   const [recons, setRecons] = useState<ReconSolve[] | null>(null);
 
   // idle-defer fetch(同 RecentScrambles / OngoingComps,不阻塞首屏)
   useEffect(() => {
+    if (pinnedOnly) return;
     let on = true;
     const kick = () => {
       if (!on) return;
@@ -41,23 +51,38 @@ export default function TodayRecon({ lang }: Props) {
       if (idleId !== null) w.cancelIdleCallback?.(idleId);
       if (timeoutId !== null) clearTimeout(timeoutId);
     };
-  }, []);
+  }, [pinnedOnly]);
 
-  if (recons === null) return <div className="today-recon today-recon--loading" aria-hidden="true" />;
-  if (recons.length === 0) return null;
+  const visibleRecons = pinnedOnly ? pinnedRecons : recons;
+  if (pinnedOnly && !visibleRecons?.length) return null;
+  if (visibleRecons === null) return <div className="today-recon today-recon--loading" aria-hidden="true" />;
+  if (visibleRecons.length === 0) return null;
 
   return (
     <div className="today-recon">
       <div className="tr-head">
-        <span className="tr-title">{tr({ zh: '今日复盘', en: 'Recon of the Day'
-        })}</span>
+        <span className="tr-title">{pinnedOnly ? tr({ zh: '置顶复盘', en: 'Pinned recons' }) : tr({ zh: '今日复盘', en: 'Recon of the Day' })}</span>
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>
       </div>
 
+      {isAdmin && pinError && <p role="alert">{pinError}</p>}
       <div className="tr-cards scroll-panel scroll-panel--hover-lift">
-        {recons.map((s) => (
-          <ReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false} />
-        ))}
+        {visibleRecons.map((s) => {
+          const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;
+          const label = pinned ? tr({ zh: '取消置顶', en: 'Unpin from homepage' }) : tr({ zh: '置顶到主页', en: 'Pin to homepage' });
+          return (
+            <div key={s.id} className={isAdmin ? 'tr-card-item tr-card-item--admin' : 'tr-card-item'}>
+              <ReconCard solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false} />
+              {isAdmin && (
+                <button type="button" className="tr-pin" aria-label={label} title={label}
+                  aria-pressed={pinned} disabled={pinnedRecons === null || savingPins.has(s.id)}
+                  onClick={() => void onPin(s, !pinned)}>
+                  {pinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

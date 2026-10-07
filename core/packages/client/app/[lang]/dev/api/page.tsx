@@ -241,6 +241,8 @@ const ENDPOINTS: Ep[] = [
   // ---- recon ----
   { d: 'recon', m: 'GET', p: '/v1/recon/list', g: 'public', c: 'cdn', zh: '复盘列表', en: 'Recon list' },
   { d: 'recon', m: 'GET', p: '/v1/recon/latest', g: 'public', zh: '最新复盘', en: 'Latest recons' },
+  { d: 'recon', m: 'GET', p: '/v1/recon/pinned', g: 'public', zh: '首页置顶复盘', en: 'Pinned homepage recons' },
+  { d: 'recon', m: 'PUT', p: '/v1/recon/:id/home-pin', g: 'admin', zh: '置顶或取消置顶复盘', en: 'Pin or unpin a homepage recon' },
   { d: 'recon', m: 'GET', p: '/v1/recon/today', g: 'public', zh: '今日复盘', en: "Today's recons" },
   { d: 'recon', m: 'GET', p: '/v1/recon/list-persons', g: 'public', zh: '复盘作者列表', en: 'Recon authors' },
   { d: 'recon', m: 'GET', p: '/v1/recon/search-solvers', g: 'public', zh: '按作者搜索', en: 'Search solvers' },

@@ -1,0 +1,4 @@
+CREATE TABLE recon_home_pins (
+  recon_id INTEGER PRIMARY KEY REFERENCES recons(id) ON DELETE CASCADE,
+  pinned_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
