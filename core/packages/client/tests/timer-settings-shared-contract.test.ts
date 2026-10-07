@@ -263,7 +263,7 @@ describe('canonical timer settings surface manifest', () => {
       .find((field) => field.id === 'settings.smart-cube.fake-cube')?.visible).toBe(false);
     const stageEvents = new Set(['222', '333', '444', '555', '666', '777', '333oh', '333fm']);
     const bldEvents = new Set(['333bld', '333mbld', '333ni', '444bld', '555bld', '666bld', '777bld']);
-    const colorNeutralEvents = new Set(['333', '333oh', '333fm', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'cross', 'f2l', 'll']);
+    const colorNeutralEvents = new Set(['333', '333oh', '333fm', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'cross', 'll']);
     for (const event of EVENTS.map((entry) => entry.id)) {
       const states = timerSettingFieldStates({ ...BASE_CONTEXT, event });
       const visible = (id: TimerSettingFieldId) => states.find((field) => field.id === id)?.visible;

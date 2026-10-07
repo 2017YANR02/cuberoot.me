@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const app = readFileSync(new URL('./App.tsx', import.meta.url), 'utf8');
+const solo = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
 const battleModes = readFileSync(new URL('./BattleModes.tsx', import.meta.url), 'utf8');
 const copy = readFileSync(new URL('./copy.ts', import.meta.url), 'utf8');
 
@@ -42,8 +43,10 @@ describe('Mobile capability surface guard', () => {
   });
 
   it('keeps the installed timer surface aligned with the shared Web layout contract', () => {
-    expect(app).toContain('<TimingSurface');
-    expect(app).toContain('layout="solo"');
+    expect(app).toContain('<TimerSoloPage');
+    expect(app).toContain('timing={{');
+    expect(solo).toContain('<TimingSurface {...timing}');
+    expect(solo).toContain('layout="solo"');
     expect(app).toContain('<TimerScrambleStrip');
     expect(app).toContain('<LiveCubeState');
     expect(app).toContain('<TimerSmartCubeDeviceModal');

@@ -267,7 +267,9 @@ describe('移动端复盘不再挤压计时区', () => {
   it('桌面实时解法与最终复盘共用右栏，内容随整页展开', () => {
     expect(src).toContain('recap={liveSolutionPanel ?? solveRecap}');
     expect(src).toContain('panelOpen={Boolean(panelTab) && !liveSolutionPanel}');
-    expect(src).toContain('{!isDesktop && liveSolutionPanel}');
+    expect(src).toContain('narrowRecap={liveSolutionPanel}');
+    const soloPage = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')));
+    expect(soloPage).toContain('{!wide && narrowRecap}');
     expect(src).toMatch(/className="shell-recap-body">\s*<LiveReconstructReport/);
     const workspaceCss = read(fileURLToPath(import.meta.resolve('@cuberoot/timer-ui/timer-workspace.css')));
     expect(workspaceCss).toMatch(/\.shell-recap-rail > \.shell-recap\s*\{[^}]*height:\s*100%/);

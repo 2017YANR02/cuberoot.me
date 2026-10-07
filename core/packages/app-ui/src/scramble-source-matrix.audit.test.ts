@@ -167,14 +167,16 @@ describe('adversarial 52 × 3 Mobile scramble-source matrix', () => {
     expect(appSource).toContain('activeEventRef.current !== event');
     expect(appSource).toContain('scrambleSourceRef.current !== expectedSource');
     expect(appSource).toContain("scrambleSourceRef.current !== 'wca'");
-    expect(appSource).toContain('new Map<string, RealPoolRequest>()');
-    expect(appSource).toContain('new Map<string, RealScramble[]>()');
+    expect(appSource).toContain('const retry = mobileWcaPool.startNext(poolSpec)');
+    expect(appSource).toContain('activeRealWaiterRef.current?.cancel()');
+    expect(appSource).toContain("if (outcome.kind === 'cancelled') return");
+    expect(appSource).toContain('realScrambleSourceKey(realSpecFor(activeEventRef.current)) !== sourceKey');
     expect(appSource).toContain('realScrambleSourceKey(realSpec)');
   });
 
   it('turns a mapped cold-network failure into an error without local fallback', () => {
-    const coldRealStart = appSource.indexOf('void refillRealPool(realSpec).then((outcome) => {');
-    const coldRealEnd = appSource.indexOf('\n\n  useEffect(() => {', coldRealStart);
+    const coldRealStart = appSource.indexOf('void retry.result.then((outcome) => {');
+    const coldRealEnd = appSource.indexOf('\n  }, [', coldRealStart);
     const coldRealBranch = appSource.slice(coldRealStart, coldRealEnd);
     expect(coldRealStart).toBeGreaterThan(-1);
     expect(coldRealEnd).toBeGreaterThan(coldRealStart);
