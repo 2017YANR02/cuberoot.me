@@ -5,7 +5,7 @@ import { competitionFetch, ensureCompetitionAccess } from '@/lib/competition-acc
  * /wca/comp/[slug] — full port of packages/client-vite/src/pages/comp/CompDetailPage.tsx.
  * Live WS (cubing.com + WCA Live) + Psych Sheet + record badges + round/cuber modals.
  */
-import { useEffect, useMemo, useState, useCallback, useRef, memo, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef, memo, startTransition, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Link from '@/components/AppLink';
 import { usePathname, useRouter } from 'next/navigation';
@@ -2457,6 +2457,8 @@ interface ResultsTableProps {
   sortable?: boolean;
 }
 
+const RESULT_WINDOW_SIZE = 8;
+
 function ResultsTable({ results, search = '', users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, sortable }: ResultsTableProps) {
   // 排序:点列头(平均/单次/第 N 把)升→降→取消;无效成绩(DNF/DNS/空)恒垫底,默认 null=按名次序。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
@@ -2496,10 +2498,16 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
     if (!table || !windowed) return;
     const columns = Array.from(table.querySelectorAll('col'));
     let widths: number[] = [];
-    const observer = new ResizeObserver(() => {
+    let tableWidth = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      // Row windows change table height on every mount. Only remeasure columns
+      // when the width changes, and finish all reads before writing any styles.
+      const nextWidth = entry.borderBoxSize[0]?.inlineSize ?? entry.contentRect.width;
+      if (Math.abs(nextWidth - tableWidth) < 0.5) return;
+      tableWidth = nextWidth;
       const cells = Array.from(table.tHead?.rows[0]?.cells ?? []);
-      cells.forEach((cell, i) => {
-        const width = cell.getBoundingClientRect().width;
+      const measured = cells.map(cell => cell.getBoundingClientRect().width);
+      measured.forEach((width, i) => {
         if (width > (widths[i] ?? 0) + 0.5 && columns[i]) {
           widths[i] = width;
           columns[i].style.width = `${width}px`;
@@ -2508,12 +2516,21 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
     });
     const reset = () => {
       widths = [];
+      tableWidth = 0;
       columns.forEach(col => { col.style.width = ''; });
+    };
+    let viewportWidth = window.innerWidth;
+    const onResize = () => {
+      // iPhone Safari resizes the viewport as its toolbar slides away. A height
+      // change must not discard column widths and reflow the table mid-scroll.
+      if (window.innerWidth === viewportWidth) return;
+      viewportWidth = window.innerWidth;
+      reset();
     };
     reset();
     observer.observe(table);
-    window.addEventListener('resize', reset);
-    return () => { observer.disconnect(); window.removeEventListener('resize', reset); reset(); };
+    window.addEventListener('resize', onResize);
+    return () => { observer.disconnect(); window.removeEventListener('resize', onResize); reset(); };
   }, [windowed, round?.e, round?.i]);
   const handlers = useRef({ onClickCuber, onEdit, onRefresh });
   useEffect(() => { handlers.current = { onClickCuber, onEdit, onRefresh }; }, [onClickCuber, onEdit, onRefresh]);
@@ -2599,14 +2616,14 @@ function ResultsTable({ results, search = '', users, round, isZh, pbMap, advance
               : attemptNumHeaders(attemptCount)}
           </tr>
         </thead>
-        {windowed ? Array.from({ length: Math.ceil(displayResults.length / 20) }, (_, group) => {
-          const start = group * 20;
+        {windowed ? Array.from({ length: Math.ceil(displayResults.length / RESULT_WINDOW_SIZE) }, (_, group) => {
+          const start = group * RESULT_WINDOW_SIZE;
           return <ResultsTableWindow
             key={`${compId}|${round.e}|${round.i}|${search}|${sort.key}|${sort.dir}|${group}`}
-            count={Math.min(20, displayResults.length - start)}
+            count={Math.min(RESULT_WINDOW_SIZE, displayResults.length - start)}
             columns={columnCount}
             initial={group === 0}
-            renderRows={() => renderRows(start, start + 20)}
+            renderRows={() => renderRows(start, start + RESULT_WINDOW_SIZE)}
           />;
         }) : <tbody>
           {renderRows(0, displayResults.length)}
@@ -2629,20 +2646,27 @@ function ResultsTableWindow({ count, columns, initial, renderRows }: {
 }) {
   const ref = useRef<HTMLTableSectionElement>(null);
   const [visible, setVisible] = useState(initial);
-  const [height, setHeight] = useState<number>();
+  const height = useRef<number | undefined>(undefined);
   const [retained, setRetained] = useState(false);
   const mounted = visible || retained;
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { rootMargin: '600px 0px' });
+    // Rendering is interruptible so a new touch/scroll need not wait for a whole
+    // window. The overscan gives this work time to finish before it is visible.
+    const observer = new IntersectionObserver(([entry]) => {
+      startTransition(() => setVisible(entry.isIntersecting));
+    }, { rootMargin: '600px 0px' });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
     const element = ref.current;
     if (!element || !mounted) return;
-    const observer = new ResizeObserver(() => setHeight(element.getBoundingClientRect().height));
+    const observer = new ResizeObserver(([entry]) => {
+      // Cache the browser's measurement without another render or forced layout.
+      height.current = entry.borderBoxSize[0]?.blockSize ?? entry.contentRect.height;
+    });
     observer.observe(element);
     return () => observer.disconnect();
   }, [mounted]);
@@ -2654,7 +2678,7 @@ function ResultsTableWindow({ count, columns, initial, renderRows }: {
   >
     {mounted ? renderRows() : <tr aria-hidden="true">
       <td className="comp-result-spacer" colSpan={columns}
-        style={{ height: height ?? `calc(var(--comp-result-row-height) * ${count})` }} />
+        style={{ height: height.current ?? `calc(var(--comp-result-row-height) * ${count})` }} />
     </tr>}
   </tbody>;
 }
