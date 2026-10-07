@@ -18,6 +18,7 @@ export default function CompetitionVerifyPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [needsRefresh, setNeedsRefresh] = useState(false);
+  const [verificationRequired, setVerificationRequired] = useState(false);
   function blockedMessage(response: Response) {
     const seconds = Number(response.headers.get('retry-after'));
     if (Number.isFinite(seconds) && seconds > 0) {
@@ -29,6 +30,16 @@ export default function CompetitionVerifyPage() {
   async function refresh() {
     setBusy(true); setError(''); setChallenge(null); setAnswer(''); setNeedsRefresh(false);
     try {
+      // Old links and tabs can still land here after the operator reopens access.
+      // Use the same access decision as protected data before requesting an image.
+      const check = await fetch(apiUrl('/v1/competition-access/check'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
+      if (check.ok) {
+        setVerificationRequired(false);
+        window.location.replace(safeCompetitionReturn(returnTo));
+        return;
+      }
+      if (check.status !== 403) throw new Error(t('暂时无法确认访问状态，请重试。', 'Could not check access. Please retry.'));
+      setVerificationRequired(true);
       const response = await fetch(apiUrl('/v1/competition-access/challenge'), { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(15_000) });
       if (response.status === 403) throw new Error(blockedMessage(response));
       if (!response.ok) throw new Error(response.status === 429 ? t('操作太频繁，请一分钟后重试。', 'Too many attempts. Try again in one minute.') : t('验证码暂时无法加载，请重试。', 'Could not load the image. Please retry.'));
@@ -36,7 +47,7 @@ export default function CompetitionVerifyPage() {
     } catch (e) { setError(e instanceof Error ? e.message : t('加载失败，请重试。', 'Loading failed. Please retry.')); }
     finally { setBusy(false); }
   }
-  useEffect(() => { void refresh(); }, []); // A fresh image on each visit; no automatic submission.
+  useEffect(() => { void refresh(); }, []); // Check access first; never automatically submit a challenge.
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!challenge || busy || needsRefresh) return;
@@ -78,6 +89,11 @@ export default function CompetitionVerifyPage() {
   return <main className="competition-verification">
     <header><span>CubeRoot</span><HeaderToggles /></header>
     <section data-site-surface="panel">
+      {!verificationRequired ? <>
+        <h1>{t('正在确认访问状态…', 'Checking access…')}</h1>
+        <p role="status">{error || t('请稍候，正在返回原页面。', 'Please wait while we return to your page.')}</p>
+        {error && <button className="competition-verification-action" type="button" onClick={() => void refresh()} disabled={busy}>{t('重试', 'Retry')}</button>}
+      </> : <>
       <h1>{t('输入验证码', 'Enter the image code')}</h1>
       <p>{t('未完成验证时，同一 IP 每分钟请求网站页面或受保护接口超过 10 次，将被封禁 1 小时。', 'Without verification, more than 10 protected page or API requests per minute from one IP will trigger a 1-hour ban.')}</p>
       <form onSubmit={submit}>
@@ -89,6 +105,7 @@ export default function CompetitionVerifyPage() {
         <button className="competition-verification-action competition-verification-submit" type="submit" disabled={busy || !challenge || needsRefresh || answer.trim().length !== 6}>{busy ? t('请稍候…', 'Please wait…') : t('验证并继续', 'Verify and continue')}</button>
       </form>
       <p className="competition-verification-note">{t('验证通过后可访问 7 天。中国大陆 IP 继续豁免。', 'Verification lasts 7 days. Mainland China IP addresses remain exempt.')}</p>
+      </>}
     </section>
   </main>;
 }

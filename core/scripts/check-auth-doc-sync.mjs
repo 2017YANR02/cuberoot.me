@@ -35,6 +35,7 @@ const EXACT = new Set([
   'packages/client/lib/page-access-api.ts',
   'packages/client/lib/competition-gate.ts', 'packages/client/lib/traffic-defense.ts', 'packages/shared/src/competition-access.ts',
   'packages/client/app/v1/competition-access/check/route.ts',
+  'packages/client/app/[lang]/competition-verify/page.tsx',
   'packages/client/app/v1/competition-access/verify/route.ts',
   'packages/app-ui/src/App.tsx', 'apps/mobile/src/capacitor-host.ts',
   'apps/mobile/src/native/secure-storage.ts', 'apps/desktop/src/tauri-host.ts',
