@@ -1,5 +1,11 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-07：智能魔方专项停表 P0（本地，设备待验）
+
+- Web/五端共享产品层现有 Solo 接线共同消费 shared 专项完成规则和控制器；Cross/F2L/OLL/COLL/CMLL 在固定训练朝向下按阶段停表，COLL/CMLL 允许 AUF，PLL/LL/ZBLL 仍需最终 AUF。末手先记录后保存，运行中项目/朝向变更不改本次目标，状态同步不制造停表。
+- shared build、App typecheck、共享规则/控制器/打乱引导/记录回归及全部四条 confirmed 复盘基准通过；真实 App 组件测试覆盖五专项黄顶绿前打乱、自动预备、转动起停、250ms 成绩及两步完整持久化。独立源码审查无阻断问题。Web typecheck 被另一任务 `TimerSolverPanel.tsx` 的 `spinner`/`Spinner` 导入大小写冲突阻断，未改该文件。
+- 未 push、未重建或发布原生安装包，未做五端 BLE 真机验收；新专项及完整连续训练验收留在 P1，整体 parity 仍为 NOT COMPLETE。详细边界见 `docs/timer-smartcube-plan.md` 同日记录。
+
 ### 2026-10-06：Google Play 1003 已提交审核
 
 - 所有者明确确认“确定 送审吧”后，在发布概览提交全部 10 项更改并确认最终送审弹窗。Console 随后显示“正在审核中的更改”，包含 `0.1.0 (1003) - Initial release`、146 个国家/地区、商品详情与内容声明。

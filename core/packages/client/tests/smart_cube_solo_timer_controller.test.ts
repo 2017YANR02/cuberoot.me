@@ -67,6 +67,54 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
 }
 
 describe('SmartCubeSoloTimerController', () => {
+  it.each(['cross', 'f2l', 'oll', 'coll', 'cmll'] as const)('%s records the finishing move before stopping with the cube still unsolved', (event) => {
+    const state = harness({ event, id: 1, scramble: 'U R', orientation: '', targetFacelets: target('U R') });
+    state.controller.syncFacelets(target('U R'));
+    state.setPhase('ready');
+    state.controller.move({ facelets: target('U'), move: "R'", timestamp: 500 });
+    expect(state.phase()).toBe('stopped');
+    expect(state.order).toEqual(['start:500', "record:R'", 'stop:500', "deliver:R'"]);
+    expect(state.controller.solved(500)).toBe(false);
+    expect(state.order.filter((entry) => entry.startsWith('stop:'))).toHaveLength(1);
+  });
+
+  it('pins the training goal and orientation at start, and does not finish on a state snapshot', () => {
+    const state = harness({ event: 'oll', id: 1, scramble: 'U R', orientation: 'z2', targetFacelets: target('D L') });
+    state.controller.syncFacelets(target('D L'));
+    state.setPhase('running');
+    state.controller.setRunning(true);
+    state.controller.setContext({ event: '333', id: 2, scramble: 'R', targetFacelets: target('R'), orientation: '' });
+    state.controller.syncFacelets(target('D'));
+    expect(state.phase()).toBe('running');
+    expect(state.controller.solved(100)).toBe(false);
+    state.controller.move({ facelets: target('D L'), move: 'L', timestamp: 200 });
+    state.controller.move({ facelets: target('D'), move: "L'", timestamp: 300 });
+    expect(state.phase()).toBe('stopped');
+    expect(state.order).toEqual(['record:L', 'deliver:L', "record:L'", 'stop:300', "deliver:L'"]);
+  });
+
+  it('does not stop a training attempt already complete before its first turn', () => {
+    const state = harness({ event: 'oll', id: 1, scramble: 'U', targetFacelets: target('U') });
+    state.controller.syncFacelets(target('U'));
+    state.setPhase('ready');
+    state.controller.move({ facelets: target('U2'), move: 'U', timestamp: 100 });
+    expect(state.phase()).toBe('running');
+    state.controller.move({ facelets: target('U2 R'), move: 'R', timestamp: 200 });
+    state.controller.move({ facelets: target('U2'), move: "R'", timestamp: 300, metadata: { futureHistory: true } });
+    expect(state.phase()).toBe('stopped');
+    expect(state.order.slice(-2)).toEqual(["record:R'", 'stop:300']);
+  });
+
+  it.each(['pll', 'll', 'zbll'] as const)('%s still waits for the final AUF and the transport solved edge', (event) => {
+    const state = harness({ event, id: 1, scramble: 'U R', targetFacelets: target('U R') });
+    state.setPhase('ready');
+    state.controller.move({ facelets: target('U'), move: "R'", timestamp: 100 });
+    expect(state.phase()).toBe('running');
+    state.controller.move({ facelets: target(''), move: "U'", timestamp: 200 });
+    expect(state.controller.solved(200)).toBe(true);
+    expect(state.order.slice(-3)).toEqual(["record:U'", "deliver:U'", 'stop:200']);
+  });
+
   it('uses yellow-top physical moves for readiness but records raw device moves at start', () => {
     const state = harness({ event: 'zbll', id: 1, scramble: 'R U', orientation: 'z2', targetFacelets: target('L D') });
     expect(state.controller.syncFacelets(target('')).hint?.current).toBe('R');
