@@ -1102,17 +1102,18 @@
   align-items: baseline;
   gap: 8px;
   margin-bottom: 2px;
+  font-size: 0.85rem;
 }
 
 .yt-comment-author {
   color: var(--foreground);
-  font-size: 0.95rem;
+  font-size: inherit;
   font-weight: 600;
 }
 
 .yt-comment-time {
   color: var(--faint-foreground);
-  font-size: 0.85rem;
+  font-size: inherit;
 }
 
 .yt-comment-body {
@@ -1313,12 +1314,6 @@
 }
 .yt-reply-item .yt-comment-avatar-fallback {
   font-size: 0.75rem;
-}
-.yt-reply-item .yt-comment-author {
-  font-size: 0.82rem;
-}
-.yt-reply-item .yt-comment-body {
-  font-size: 0.9rem;
 }
 
 /* 回复输入框 */
