@@ -5,6 +5,7 @@ import { CUBE_ORIENTATIONS, timerSmartCubeTrainingComplete, type EventId } from 
 const state = (alg: string, orientation = '') => smartCubeTargetFacelets(alg, orientation)!;
 const ua = "R U' R U R U R U' R' U' R2";
 const sune = "R U R' U R U2 R'";
+const tPerm = "R U R' U' R' F R2 U' R' U' R U R' F'";
 
 describe('fixed-frame smart cube training completion', () => {
   for (const { value: orientation } of CUBE_ORIENTATIONS) {
@@ -22,14 +23,16 @@ describe('fixed-frame smart cube training completion', () => {
       }
       expect(complete('cmll', 'M2')).toBe(true);
       expect(complete('coll', 'M2')).toBe(false);
+      expect(complete('cmll', 'S2')).toBe(false);
+      expect(complete('oll', tPerm)).toBe(true);
+      expect(complete('coll', tPerm)).toBe(false);
+      expect(complete('cmll', tPerm)).toBe(false);
       for (const event of ['cross', 'f2l', 'oll', 'coll', 'cmll'] as const) {
         expect(complete(event, 'R')).toBe(false);
       }
-      // U-layer-only work leaves the opposite cross/F2L intact, never the selected one.
-      const wrongBottom = state(`${sune}`, orientation === '' ? 'z2' : '');
-      if (orientation === '') {
-        expect(timerSmartCubeTrainingComplete('f2l', wrongBottom, orientation)).toBe(false);
-      }
+      // The opposite cross/F2L remains complete, but the selected bottom is misaligned.
+      expect(complete('cross', 'D')).toBe(false);
+      expect(complete('f2l', 'D')).toBe(false);
     });
   }
 

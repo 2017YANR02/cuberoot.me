@@ -4,6 +4,7 @@ import {
 } from '../timer/event-catalog';
 import type { TimerPhase } from '../timer/machine';
 import type { EventId } from '../timer/types';
+import { timerSmartCubeTrainingComplete, timerSmartCubeTrainingStep } from '../timer/smart-cube-training';
 import {
   createSmartCubeGuidanceController,
   type SmartCubeGuidanceState,
@@ -78,6 +79,9 @@ export class SmartCubeSoloTimerController<
   private disposed = false;
   private running = false;
   private runningEvent: EventId | null = null;
+  private runningOrientation = '';
+  private lastFacelets: string | null = null;
+  private trainingComplete: boolean | null = null;
   private readonly guidance: ReturnType<typeof createSmartCubeGuidanceController>;
 
   constructor(private readonly options: SmartCubeSoloTimerControllerOptions<Metadata>) {
@@ -94,6 +98,7 @@ export class SmartCubeSoloTimerController<
   setConnected(connected: boolean): void {
     if (this.disposed || this.connected === connected) return;
     this.connected = connected;
+    if (!connected) this.lastFacelets = null;
     this.guidance.setConnected(connected);
   }
 
@@ -117,14 +122,20 @@ export class SmartCubeSoloTimerController<
 
   setRunning(running: boolean): void {
     if (this.disposed || this.running === running) return;
-    this.running = running;
-    if (running) this.runningEvent = this.context?.event ?? this.runningEvent;
-    else this.runningEvent = null;
+    if (running) {
+      this.enterRunning(this.context);
+      return;
+    }
+    this.running = false;
+    this.runningEvent = null;
+    this.trainingComplete = null;
     this.guidance.setRunning(running);
   }
 
   /** Refresh visible guidance from authoritative state without creating a completion edge. */
   syncFacelets(facelets: string): SmartCubeGuidanceState {
+    this.lastFacelets = facelets;
+    if (this.running) this.trainingComplete = this.isTrainingComplete(facelets);
     return this.guidance.syncFacelets(facelets);
   }
 
@@ -137,9 +148,10 @@ export class SmartCubeSoloTimerController<
     const contextRevision = this.contextRevision;
     try {
       if (this.running || this.options.getPhase() === 'running') {
-        this.enterRunning(context?.event ?? null);
+        this.enterRunning(context);
         this.options.recordMove(event);
         outcome.recorded = true;
+        this.observeTrainingFinish(event);
         return outcome;
       }
       if (outcome.futureHistory) return outcome;
@@ -151,10 +163,11 @@ export class SmartCubeSoloTimerController<
         && this.options.isTimingEnabled()
         && this.options.canStartAttempt()
         && this.options.startFromCube(event.timestamp)) {
-        this.enterRunning(context.event);
+        this.enterRunning(context);
         this.options.recordMove(event);
         outcome.recorded = true;
         outcome.started = true;
+        this.observeTrainingFinish(event);
         return outcome;
       }
 
@@ -175,6 +188,7 @@ export class SmartCubeSoloTimerController<
       }
       return outcome;
     } finally {
+      if (event.facelets) this.lastFacelets = event.facelets;
       if (!outcome.futureHistory && this.connected && !this.disposed) {
         this.options.onMove?.(event);
         outcome.delivered = true;
@@ -187,6 +201,12 @@ export class SmartCubeSoloTimerController<
     const running = this.running || this.options.getPhase() === 'running';
     const event = this.runningEvent ?? this.context?.event ?? null;
     if (!running || !event || !timerSupportsSmartCubeAutoTiming(event)) return false;
+    // Partial goals are judged from moves in the pinned training frame, never a transport's solved flag.
+    if (timerSmartCubeTrainingStep(event)) return false;
+    return this.finish(timestamp);
+  }
+
+  private finish(timestamp?: number): boolean {
     const stopped = this.options.stopFromCube(timestamp);
     if (stopped) this.setRunning(false);
     return stopped;
@@ -199,15 +219,33 @@ export class SmartCubeSoloTimerController<
     this.context = null;
     this.running = false;
     this.runningEvent = null;
+    this.lastFacelets = null;
+    this.trainingComplete = null;
     this.contextRevision++;
     this.guidance.dispose();
   }
 
-  private enterRunning(event: EventId | null): void {
+  private enterRunning(context: SmartCubeSoloTimerContext | null): void {
     if (!this.running) {
       this.running = true;
-      this.runningEvent = event ?? this.runningEvent;
+      this.runningEvent = context?.event ?? null;
+      this.runningOrientation = context?.orientation ?? '';
+      this.trainingComplete = this.isTrainingComplete(this.lastFacelets ?? context?.targetFacelets ?? null);
     }
     this.guidance.setRunning(true);
+  }
+
+  private isTrainingComplete(facelets: string | null): boolean | null {
+    return facelets && this.runningEvent && timerSmartCubeTrainingStep(this.runningEvent)
+      ? timerSmartCubeTrainingComplete(this.runningEvent, facelets, this.runningOrientation)
+      : null;
+  }
+
+  private observeTrainingFinish(event: SmartCubeSoloMove<Metadata>): void {
+    const complete = this.isTrainingComplete(event.facelets);
+    if (complete === null) return;
+    const becameComplete = this.trainingComplete === false && complete;
+    this.trainingComplete = complete;
+    if (becameComplete) this.finish(event.timestamp);
   }
 }

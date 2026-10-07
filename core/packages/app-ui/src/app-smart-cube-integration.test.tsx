@@ -133,6 +133,37 @@ afterEach(async () => {
 });
 
 describe('installed App GAN lifecycle integration', () => {
+  it.each(['cross', 'f2l', 'oll', 'coll', 'cmll'] as const)('persists %s at its shared partial finish line in the selected grip', async (event) => {
+    await act(async () => root.unmount());
+    const data = createTimerStoreData(Date.now(), 'training-session', 'en');
+    data.settings = { ...data.settings, event, language: 'en', preScrT: 'z2',
+      manualScrambles: 'U R2', bluetoothAutoReady: 'scrambled', inspectionSec: 0,
+      showCubePreview: false, autoRecap: false };
+    memory.data = data;
+    root = createRoot(container);
+    await act(async () => root.render(<App host={host} />));
+    await settle();
+    await act(async () => container.querySelector<HTMLButtonElement>('.timer-scramble-source-trigger')!.click());
+    const manual = [...document.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-option')]
+      .find(button => button.textContent?.includes('Manual'))!;
+    await act(async () => manual.click());
+    await settle();
+    await act(async () => setRadio({ ...radio, phase: 'connected', deviceName: 'GAN16ui', facelets: SOLVED_3X3 }));
+    await act(async () => move('D', 2_000));
+    await act(async () => move('L2', 2_100));
+    expect(phase).toBe('ready');
+    await act(async () => move('L', 3_000));
+    expect(phase).toBe('running');
+    await act(async () => move('L', 3_250));
+    expect(phase).toBe('stopped');
+    expect(radio.facelets).toBe(cubeMove(SOLVED_3X3, 'D'));
+    await settle();
+    const solves = activeTimerSolves(memory.data as TimerStoreData, event);
+    expect(solves).toHaveLength(1);
+    expect(solves[0]).toMatchObject({ event, timeMs: 250, penalty: 'ok',
+      scramble: 'D L2', moves: [{ m: 'L', ts: 0 }, { m: 'L', ts: 250 }] });
+  });
+
   it('keeps the timer mounted beside wide history and switches to a full page on narrow screens', async () => {
     await act(async () => { wideViewport = true; mediaListeners.forEach(fn => fn()); });
     const timerNode = container.querySelector('.timing-surface');
