@@ -406,16 +406,19 @@ feedbackRoutes.get('/feedback/public', async (c) => {
   const page = Number.isSafeInteger(parsedPage) ? Math.max(1, Math.min(1_000_000, parsedPage)) : 1;
   const size = Number.isFinite(parsedSize) ? Math.max(1, Math.min(100, parsedSize)) : 20;
   const offset = (page - 1) * size;
+  const status = c.req.query('status');
+  const where = status && STATUSES.has(status) ? 'WHERE status = ?' : '';
+  const params = where ? [status] : [];
 
   const [totals, rows] = await Promise.all([
-    query<{ n: number | string }>('SELECT COUNT(*) AS n FROM feedback'),
+    query<{ n: number | string }>(`SELECT COUNT(*) AS n FROM feedback ${where}`, params),
     query<PublicFeedbackRow>(
       `SELECT id, kind, body, wca_id, wca_name, status, created_at, updated_at,
               last_reply_at, last_reply_role
-       FROM feedback
+       FROM feedback ${where}
        ORDER BY COALESCE(last_reply_at, created_at) DESC, id DESC
        LIMIT ? OFFSET ?`,
-      [size, offset],
+      [...params, size, offset],
     ),
   ]);
   const ids = rows.map((r) => Number(r.id));
