@@ -44,13 +44,20 @@ export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
   }
   const q = normalizeSearch(filters.q.trim());
   if (!q) return true;
+  const brand = BRANDS[cube.brand];
+  const chineseBrand = brand?.zh.replace(/[^\u4e00-\u9fff]/g, '') ?? '';
   const corpus = [
     cube.id, cube.brand, BRANDS[cube.brand]?.zh ?? '', BRANDS[cube.brand]?.en ?? '', cube.name.zh, cube.name.en,
+    chineseBrand + cube.name.zh, cube.brand + cube.name.en,
     ...cube.variants, ...cube.tags, ...cube.specs.mechanism,
     ...cube.highlights.flatMap(item => [item.zh, item.en]),
     cube.assessment.summary.zh, cube.assessment.summary.en,
   ].join(' ');
-  return normalizeSearch(corpus).includes(q);
+  const searchable = normalizeSearch(corpus);
+  if (searchable.includes(q)) return true;
+  // A brand, model and mechanism need not be adjacent in the source text.
+  const terms = filters.q.normalize('NFKC').trim().split(/\s+/).map(normalizeSearch).filter(Boolean);
+  return terms.every(term => searchable.includes(term));
 }
 
 export function sortCubes(cubes: readonly Cube[], order: string): Cube[] {
