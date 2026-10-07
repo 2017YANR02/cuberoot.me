@@ -693,6 +693,7 @@ html[data-appearance-preview] body {
   min-width: 184px;
   max-height: min(70vh, 460px);
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .appearance-sec-label {
   padding: 6px 10px 3px;
