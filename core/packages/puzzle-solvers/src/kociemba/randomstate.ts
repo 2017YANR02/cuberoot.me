@@ -13,7 +13,7 @@
  * states (the /12 accounts for the 3 sub-constraints: CO sum, EO sum, parity).
  */
 
-import { type CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { solvedCubie, type CubieCube } from '@cuberoot/puzzle-solvers/kociemba/cube';
 
 function fisherYates(n: number, rng: () => number): number[] {
   const a = new Array<number>(n);
@@ -68,4 +68,28 @@ export function randomCubie(rng: () => number = Math.random): CubieCube {
   eo[11] = eoSum;
 
   return { cp, co, ep, eo };
+}
+
+/** Fixed-grip Roux states, following DCTimer-BLE's smart-training domains.
+ * LSE keeps every corner solved; L10P also randomizes the four upper corners.
+ * Only UR/UF/UL/UB/DF/DB edges vary. Centers and both lower blocks stay fixed.
+ */
+export function randomRouxCubie(corners: boolean, rng: () => number = Math.random): CubieCube {
+  const state = solvedCubie();
+  if (corners) {
+    state.cp.splice(0, 4, ...fisherYates(4, rng));
+    let sum = 0;
+    for (let i = 0; i < 3; i++) { state.co[i] = Math.floor(rng() * 3); sum += state.co[i]; }
+    state.co[3] = (3 - sum % 3) % 3;
+  }
+  const slots = [0, 1, 2, 3, 5, 7];
+  const perm = fisherYates(6, rng);
+  if (permParity(perm) !== permParity(state.cp)) [perm[0], perm[1]] = [perm[1], perm[0]];
+  let flip = 0;
+  for (let i = 0; i < slots.length; i++) {
+    state.ep[slots[i]] = slots[perm[i]];
+    state.eo[slots[i]] = i === slots.length - 1 ? flip : Math.floor(rng() * 2);
+    flip ^= state.eo[slots[i]];
+  }
+  return state;
 }

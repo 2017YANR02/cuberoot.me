@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { generateCstimerScramble, generateSeededCstimerScramble } from '@cuberoot/puzzle-solvers/cstimer-nonwca';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { generateTimerScramble, generateTimerTrainingStateScramble, TIMER_TRAINING_STATE_KEYS,
   timerSmartCubeTrainingComplete, type TimerTrainingStateEvent } from '@cuberoot/shared/timer';
@@ -14,24 +13,29 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 const displayed = (scramble: string) => toFaceletString(applyMoves(solved(3), 3, parseScramble(scramble)));
 
 describe('shared training state generators', () => {
-  it.each(['lse', 'l10p'] as const)('%s keeps block colors in all 24 training grips, including seeded output', (event) => {
+  it.each(['lse', 'l10p'] as const)('%s needs no regrip and keeps block colors in all 24 training grips', async (event) => {
     const blockMask = '------------RRRRRR---F-FF-FD-DD-DD-D---LLLLLL---B-BB-B';
-    const endings = new Set<string>();
     for (let index = 0; index < 32; index++) {
-      const raw = generateTimerTrainingStateScramble(event, (key, attempt) =>
-        generateSeededCstimerScramble(key, 0, `grip/${event}/${index}/${attempt}`));
-      endings.add(raw.match(/(?:^|\s)(x(?:2|')?)\s*$/)?.[1] ?? '');
+      const result = await generateTimerScramble({ event });
+      if (!result.ok) throw new Error(JSON.stringify(result));
+      const raw = result.scramble;
       const seeded = generateSeededTimerScramble({ event, ticket: { seed: 'grip', index, revision: 0 } }).scramble;
       for (const scramble of [raw, seeded]) {
+        expect(scramble).toMatch(/^[URFDLB](?:2|')?(?: [URFDLB](?:2|')?)*$/);
         for (const { value: grip } of CUBE_ORIENTATIONS) {
           const expected = displayed(grip);
           const actual = displayed(`${grip} ${scramble}`);
           const blocks = (state: string) => [...blockMask].map((mark, i) => mark === '-' ? '-' : state[i]).join('');
           expect(blocks(actual), `${event}: ${grip} / ${scramble}`).toBe(blocks(expected));
+          for (const i of [4, 13, 22, 31, 40, 49]) expect(actual[i]).toBe(expected[i]);
+          if (event === 'lse') {
+            for (const face of [0, 9, 18, 27, 36, 45]) {
+              for (const corner of [0, 2, 6, 8]) expect(actual[face + corner]).toBe(expected[face + corner]);
+            }
+          }
         }
       }
     }
-    expect([...endings].sort()).toEqual(['', 'x', "x'", 'x2'].sort());
   }, 60_000);
   it.each([['eocp', 'll'], ['ollcp', 'll'], ['l10p', 'cmll']] as const)('exports %s through a supported csTimer type and restores its original identity', (event, key) => {
     const exported = exportTimerCstimerJson({ [event]: [{ id: 'test', event, ts: 1000, timeMs: 500, scramble: 'R U', penalty: 'ok' }] });
@@ -44,10 +48,10 @@ describe('shared training state generators', () => {
     it(`${event}: real random and seeded outputs preserve the training domain`, async () => {
       const random = await generateTimerScramble({ event });
       expect(random).toMatchObject({ ok: true, event, provider: 'training-state' });
-      const scrambles = [generateTimerTrainingStateScramble(event, generateCstimerScramble)];
+      const scrambles: string[] = [];
       if (random.ok) scrambles.push(random.scramble);
-      for (let seed = 0; seed < 8; seed++) scrambles.push(generateTimerTrainingStateScramble(event,
-        (key, attempt) => generateSeededCstimerScramble(key, 0, `${event}/${seed}/${attempt}`)));
+      for (let seed = 0; seed < 8; seed++) scrambles.push(generateSeededTimerScramble({ event,
+        ticket: { seed: event, index: seed, revision: 0 } }).scramble);
       for (const scramble of scrambles) {
         const facelets = smartCubeTargetFacelets(scramble)!;
         expect(facelets).toHaveLength(54);

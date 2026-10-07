@@ -14,29 +14,17 @@ import type { TimerScrambleRequest } from '../scramble-runtime';
 import type { TimerSeedTicket } from '../sync-seed';
 import type { EventId } from '../types';
 import { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } from '../training-state-scramble';
-import { applySequence, formatMoves, parseMoves, solvedCubie } from '@cuberoot/puzzle-solvers/kociemba/cube';
-import { buildMoveTables } from '@cuberoot/puzzle-solvers/kociemba/movetables';
-import { buildPruneTables } from '@cuberoot/puzzle-solvers/kociemba/prune';
-import { scrambleFromState } from '@cuberoot/puzzle-solvers/kociemba/search';
+import { applySequence, parseMoves, solvedCubie } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { generateRouxTrainingCandidate, trainingScrambleFromState } from '../training-state-engine';
 import { normalizeWcaScramble } from '../../normalize_wca_scramble';
 
-let trainingTables: { move: ReturnType<typeof buildMoveTables>; prune: ReturnType<typeof buildPruneTables> } | null = null;
 function deterministicTrainingNotation(scramble: string): string {
-  if (!trainingTables) {
-    const move = buildMoveTables();
-    trainingTables = { move, prune: buildPruneTables(move) };
-  }
   const normalized = normalizeWcaScramble(scramble);
   if (!normalized) throw new Error('Invalid seeded training notation');
   const state = applySequence(solvedCubie(), parseMoves(normalized));
   // Upstream may choose different equivalent text as its search caches warm.
   // Take the first bounded solution, without wall-clock-dependent optimization.
-  const moves = formatMoves(scrambleFromState(state, trainingTables.move, trainingTables.prune,
-    { maxTotalLen: 30, targetLen: 30 }));
-  // These upstream providers use outer turns followed by an optional x regrip.
-  // Normalization preserves the device-frame state but drops that display grip.
-  const regrip = scramble.match(/(?:^|\s)(x(?:2|')?)\s*$/)?.[1];
-  return regrip ? `${moves} ${regrip}` : moves;
+  return trainingScrambleFromState(state);
 }
 
 export interface TimerSeedRequest extends TimerScrambleRequest {
@@ -51,6 +39,8 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
   const cstimer = (key: string, length = 0) => generateSeededCstimerScramble(key, length,
     JSON.stringify([ticket.seed, ticket.index, key]));
   const generate = (id: EventId): string => {
+    if (id === 'lse' || id === 'l10p') return generateTimerTrainingStateScramble(id, () =>
+      generateRouxTrainingCandidate(id === 'lse' ? 'roux-lse' : 'roux-l10p', random));
     if (isTimerTrainingStateEvent(id)) return deterministicTrainingNotation(generateTimerTrainingStateScramble(id, (key, attempt) =>
       generateSeededCstimerScramble(key, 0, JSON.stringify([ticket.seed, ticket.index, id, attempt]))));
     if (isTimerTrainerEvent(id)) {

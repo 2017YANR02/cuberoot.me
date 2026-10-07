@@ -283,6 +283,11 @@ async function defaultSharedScrambleGenerator(
       const { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } = await import('./training-state-scramble');
       const { generateCstimerScramble } = await import('@cuberoot/puzzle-solvers/cstimer-nonwca');
       if (!isTimerTrainingStateEvent(requestedEvent)) throw new Error('Unknown training state event');
+      if (requestedEvent === 'lse' || requestedEvent === 'l10p') {
+        const { generateRouxTrainingCandidate } = await import('./training-state-engine');
+        return generateTimerTrainingStateScramble(requestedEvent, () => generateRouxTrainingCandidate(
+          requestedEvent === 'lse' ? 'roux-lse' : 'roux-l10p'));
+      }
       return generateTimerTrainingStateScramble(requestedEvent, generateCstimerScramble);
     }
     case 'trainer-case': {
