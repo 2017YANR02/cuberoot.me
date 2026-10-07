@@ -3,16 +3,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 describe('Mini Program web-view bridge', () => {
   it.each(['MicroMessenger miniProgram', 'MicroMessenger'])('returns to the native Tools tab from %s', async (userAgent) => {
     const switchTab = vi.fn();
+    const navigateTo = vi.fn((options: { success(): void }) => options.success());
     vi.stubGlobal('window', {
       clearTimeout, setTimeout, navigator: { userAgent },
       wx: { miniProgram: {
-        navigateTo: vi.fn(), switchTab,
+        navigateTo, switchTab,
         getEnv: (callback: (env: object) => void) => callback({ miniprogram: true }),
       } },
     });
     const { openMiniProgramHome } = await import('@/lib/miniprogram-bridge');
     await expect(openMiniProgramHome()).resolves.toBe(true);
-    expect(switchTab).toHaveBeenCalledWith({ url: '/pages/tools/index' });
+    expect(navigateTo).toHaveBeenCalledWith(expect.objectContaining({ url: '/pages/web/index?nativeTab=tools&path=%2F' }));
+    await expect(openMiniProgramHome('account')).resolves.toBe(true);
+    expect(navigateTo).toHaveBeenLastCalledWith(expect.objectContaining({ url: '/pages/web/index?nativeTab=account' }));
   });
 
   it('keeps ordinary WeChat browser home navigation on the website', async () => {

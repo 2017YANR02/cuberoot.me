@@ -1,3 +1,4 @@
+import { SITE_ORIGIN } from './runtime-config';
 import { readNativePreferences, withNativePreferences } from './preferences';
 import {
   ApiError,
@@ -32,7 +33,7 @@ import {
 } from './required-session';
 import { decodeMiniProgramSessionMessage } from './web-session-contract';
 import { applyLocalizedTabBar, localizedWebsitePath, receiveNativeLocale, tr } from './i18n';
-import { decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
+import { publicPageSharePath, decodePageShareMessage, type PageShareMessage } from '@cuberoot/shared/page-share';
 import { applyNativeAppearance, receiveNativeAppearance } from './appearance';
 
 export interface WebViewPageData {
@@ -78,7 +79,9 @@ const routeAttempts = new WeakMap<WebViewPageContext, number>();
 const sharedDestinations = new WeakMap<WebViewPageContext, string>();
 const shareMetadata = new WeakMap<WebViewPageContext, PageShareMessage>();
 const preferencesAtOpen = new WeakMap<WebViewPageContext, string>();
-const hiddenLegacyToolsPages = new WeakSet<WebViewPageContext>();
+const nativeTabs = new WeakMap<WebViewPageContext, 'tools' | 'timer' | 'web'>();
+const sessionsAtOpen = new WeakMap<WebViewPageContext, string | null>();
+const pendingTabPaths: Partial<Record<'home' | 'timer', string>> = {};
 const stalePreferencePages = new WeakSet<WebViewPageContext>();
 const disposedPages = new WeakSet<WebViewPageContext>();
 const visiblePages = new WeakSet<WebViewPageContext>();
@@ -348,10 +351,14 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
     return true;
   }
   const session = stored.session;
+  const signedOut = !session && Boolean(sessionsAtOpen.get(context));
+  sessionsAtOpen.set(context, session?.token ?? null);
   if (!session || !route.sessionHandoff) {
     if (isCurrentAttempt(context, attempt)
       && (!route.sessionHandoff || !requireMiniProgramSession(context))) {
-      context.setData({ src: withNativePreferences(route.url) });
+      context.setData({ src: withNativePreferences(signedOut
+        ? `${SITE_ORIGIN}/auth/miniprogram#action=logout&next=${encodeURIComponent(route.path)}`
+        : route.url, nativeTabs.get(context)) });
     }
     return true;
   }
@@ -372,8 +379,8 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
       } else {
         context.setData({
           src: current.session?.token === session.token
-            ? withNativePreferences(createWebSessionHandoffUrl(route.path, ticket))
-            : withNativePreferences(route.url),
+            ? withNativePreferences(createWebSessionHandoffUrl(route.path, ticket), nativeTabs.get(context))
+            : withNativePreferences(route.url, nativeTabs.get(context)),
         });
       }
     }
@@ -396,7 +403,7 @@ export async function openWebRoute(context: WebViewPageContext, key: unknown): P
           showMiniProgramLoginGate(context);
         }
       } else {
-        context.setData({ src: withNativePreferences(route.url) });
+        context.setData({ src: withNativePreferences(route.url, nativeTabs.get(context)) });
       }
     } else {
       showWebSessionHandoffFailure(context);
@@ -543,6 +550,22 @@ export function createWebViewPageOptions(
     data: createWebViewPageData(),
 
     onLoad(options) {
+      if (!fixedRouteKey && ['tools', 'timer', 'account'].includes(options.nativeTab ?? '')) {
+        if (options.nativeTab === 'tools') {
+          let path = options.path ?? '/';
+          try { if (!path.startsWith('/')) path = decodeURIComponent(path); } catch { path = '/'; }
+          pendingTabPaths.home = publicPageSharePath(path) ?? '/';
+        } else if (options.nativeTab === 'timer' && options.path) {
+          let path = options.path;
+          try { if (!path.startsWith('/')) path = decodeURIComponent(path); } catch { path = ''; }
+          const safe = publicPageSharePath(path);
+          // A plain tab switch keeps the existing timer; explicit scramble options are applied.
+          if (safe && /^\/(?:zh\/|en\/)?timer\/?[?#]/.test(safe)) pendingTabPaths.timer = safe;
+        }
+        miniProgramApi().switchTab({ url: `/pages/${options.nativeTab}/index` });
+        return;
+      }
+      nativeTabs.set(this, fixedRouteKey === 'home' ? 'tools' : fixedRouteKey === 'timer' ? 'timer' : 'web');
       cancelScheduledRetry(this);
       pausedRouteResumes.delete(this);
       disposedPages.delete(this);
@@ -561,6 +584,10 @@ export function createWebViewPageOptions(
       } else {
         sessionRequiredPages.delete(this);
       }
+      if ((fixedRouteKey === 'home' || fixedRouteKey === 'timer') && pendingTabPaths[fixedRouteKey] !== undefined) {
+        sharedDestinations.set(this, localizedWebsitePath(pendingTabPaths[fixedRouteKey]!));
+        delete pendingTabPaths[fixedRouteKey];
+      }
       void openWebRoute(this, fixedRouteKey ?? options.key);
     },
 
@@ -575,9 +602,19 @@ export function createWebViewPageOptions(
       visiblePages.add(this);
       refreshWebLocale(this);
       startNetworkRecovery(this);
+      if ((fixedRouteKey === 'home' || fixedRouteKey === 'timer') && pendingTabPaths[fixedRouteKey] !== undefined) {
+        sharedDestinations.set(this, localizedWebsitePath(pendingTabPaths[fixedRouteKey]!));
+        delete pendingTabPaths[fixedRouteKey];
+        void openWebRoute(this, fixedRouteKey);
+        return;
+      }
+      const stored = getStoredSessionSnapshot();
+      const changedSession = sessionsAtOpen.has(this)
+        && (stored.status === 'unavailable' || sessionsAtOpen.get(this) !== (stored.session?.token ?? null));
       const changedPreferences = preferencesAtOpen.has(this)
         && preferencesAtOpen.get(this) !== JSON.stringify(readNativePreferences());
-      if (hiddenLegacyToolsPages.delete(this) || stalePreferencePages.delete(this) || changedPreferences) {
+      const stalePreferences = stalePreferencePages.delete(this);
+      if (changedSession || stalePreferences || changedPreferences) {
         // Reissue session handoff rather than replaying a consumed ticket URL.
         const metadata = shareMetadata.get(this);
         const path = metadata?.path ?? sharedDestinations.get(this);
@@ -600,12 +637,8 @@ export function createWebViewPageOptions(
       visiblePages.delete(this);
       if (!this.data.loginRequired) pausePendingRoute(this);
       stopNetworkRecovery(this);
-      // Keep the old website compatible during staggered releases. Once the
-      // immediate protocol has saved a snapshot, tab hiding no longer reloads it.
-      if (fixedRouteKey === 'home' && this.data.src && !readNativePreferences()) {
-        hiddenLegacyToolsPages.add(this);
-        this.setData({ src: '' });
-      }
+      // Preserve the WebView document, its scroll position and consumed handoff.
+      // onShow reopens only when the session or preferences actually changed.
     },
 
     onUnload() {

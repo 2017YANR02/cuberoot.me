@@ -74,17 +74,18 @@ describe('mini program tools page', () => {
     });
   });
 
-  it('flushes legacy website messages until the immediate protocol has saved a snapshot', async () => {
+  it('keeps the document and scroll state alive across tab switches even before preferences arrive', async () => {
     const page = await loadPage({ getStorageSync: () => null,
       setNavigationBarTitle: vi.fn(), showShareMenu: vi.fn() });
     page.onLoad({});
     await Promise.resolve();
     expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
     page.onHide();
-    expect(page.data.src).toBe('');
+    expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
     page.onShow();
     await Promise.resolve();
     expect(page.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
+    expect(page.data.viewAttempt).toBe(1);
   });
 });
 

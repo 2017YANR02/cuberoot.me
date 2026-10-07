@@ -876,9 +876,9 @@ export default function AccountPage() {
             <span>{t('账号设置', 'Account settings')}</span>
           </AppLink>
         ) : (
-          <HomeLink className="account-back">
+          <HomeLink className="account-back" miniProgramTarget="account">
             <ChevronLeft size={16} />
-            <span>{t('首页', 'Home')}</span>
+            <span>{t('返回', 'Back')}</span>
           </HomeLink>
         )}
         {mode === 'me' && view === 'main' && (
