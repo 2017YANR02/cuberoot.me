@@ -35,6 +35,44 @@ async function requestScreenWakeLock(): Promise<WakeLockSentinel | null> {
   }
 }
 
+// Serialize native mutations and retain ownership across overlapping effect cleanup.
+// A late release from inspection must not disable a newly running timer.
+export function createNativeScreenWakeLock(
+  setKeepAwake: (enabled: boolean) => Promise<void>,
+): () => Promise<TimerWakeLockSentinel | null> {
+  const owners = new Set<symbol>();
+  let tail: Promise<void> = Promise.resolve();
+  const sync = () => {
+    const next = tail.then(() => setKeepAwake(owners.size > 0));
+    tail = next.catch(() => undefined);
+    return next;
+  };
+  return async () => {
+    const owner = Symbol();
+    owners.add(owner);
+    try { await sync(); }
+    catch {
+      owners.delete(owner);
+      await sync().catch(() => undefined);
+      return null;
+    }
+    let released = false;
+    const listeners = new Set<() => void>();
+    return {
+      get released() { return released; },
+      addEventListener(_type, listener) { listeners.add(listener); },
+      async release() {
+        if (released) return;
+        released = true;
+        owners.delete(owner);
+        await sync().catch(() => undefined);
+        for (const listener of listeners) listener();
+        listeners.clear();
+      },
+    };
+  };
+}
+
 export function startTimerScreenWakeLock(
   request: () => Promise<TimerWakeLockSentinel | null> = requestScreenWakeLock,
   page: TimerWakeLockPage = document,
@@ -48,7 +86,7 @@ export function startTimerScreenWakeLock(
     if (disposed || acquiring || page.visibilityState !== 'visible' || (activeLock && !activeLock.released)) return;
     activeLock = null;
     acquiring = true;
-    const requested = await request();
+    const requested = await request().catch(() => null);
     acquiring = false;
     const shouldReacquire = reacquireAfterPending;
     reacquireAfterPending = false;
@@ -93,6 +131,7 @@ export function startTimerScreenWakeLock(
 export function useInstalledTimerEffects(
   phase: TimerPhase,
   playHaptic?: (cue: TimerHapticCue) => Promise<void>,
+  requestWakeLock?: () => Promise<TimerWakeLockSentinel | null>,
 ): void {
   const previousPhase = useRef(phase);
 
@@ -104,6 +143,6 @@ export function useInstalledTimerEffects(
 
   useEffect(() => {
     if (!timerNeedsScreenAwake(phase)) return undefined;
-    return startTimerScreenWakeLock();
-  }, [phase]);
+    return startTimerScreenWakeLock(requestWakeLock);
+  }, [phase, requestWakeLock]);
 }

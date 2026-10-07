@@ -1,5 +1,7 @@
+import { registerPlugin } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import {
+  createNativeScreenWakeLock,
   startTimerScreenWakeLock,
   timerHapticCue,
   timerNeedsScreenAwake,
@@ -26,3 +28,8 @@ export async function playTimerHaptic(cue: TimerHapticCue): Promise<void> {
     // Timing remains fully usable when a device has no haptic engine.
   }
 }
+
+const screenAwake = registerPlugin<{ setKeepAwake(options: { enabled: boolean }): Promise<void> }>('ScreenAwake');
+export const requestNativeScreenWakeLock = createNativeScreenWakeLock(
+  (enabled) => screenAwake.setKeepAwake({ enabled }),
+);

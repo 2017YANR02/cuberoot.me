@@ -1,6 +1,7 @@
 import {
   InstalledAuthClient,
-  timerNeedsScreenAwake,
+  createNativeScreenWakeLock,
+  useInstalledTimerEffects,
   useInstalledAuth,
   useInstalledSmartCube,
   type InstalledAppHost,
@@ -8,7 +9,6 @@ import {
 } from '@cuberoot/app-ui';
 import type { TimerPhase } from '@cuberoot/shared/timer';
 import { browserClipboardTransport, browserPrintTransport } from '@cuberoot/timer-ui';
-import { useEffect } from 'react';
 
 import packageInfo from '../package.json';
 import {
@@ -53,14 +53,11 @@ const harmonyAuthPort: InstalledAuthPort = {
   },
 };
 
+const requestHarmonyScreenWakeLock = createNativeScreenWakeLock(
+  (enabled) => bridgeCall<void>(nativeBridge().setKeepScreenOn(String(enabled))),
+);
 function useHarmonyTimerEffects(phase: TimerPhase): void {
-  useEffect(() => {
-    const enabled = timerNeedsScreenAwake(phase);
-    void bridgeCall<void>(nativeBridge().setKeepScreenOn(String(enabled))).catch(() => undefined);
-    return () => {
-      if (enabled) void bridgeCall<void>(nativeBridge().setKeepScreenOn('false')).catch(() => undefined);
-    };
-  }, [phase]);
+  useInstalledTimerEffects(phase, undefined, requestHarmonyScreenWakeLock);
 }
 
 export const harmonyHost: InstalledAppHost = {

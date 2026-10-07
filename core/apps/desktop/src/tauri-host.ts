@@ -5,6 +5,7 @@ import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import {
   InstalledAuthClient,
+  createNativeScreenWakeLock,
   mobileApiUrl,
   useInstalledSmartCube,
   useInstalledAuth,
@@ -56,6 +57,10 @@ const desktopNetBattle = {
   sessions: createNetBattleSessionStore(desktopSecureStorage),
 };
 
+const requestDesktopScreenWakeLock = createNativeScreenWakeLock(
+  (enabled) => invoke<void>('set_keep_awake', { enabled }),
+);
+
 export const desktopHost: InstalledAppHost = {
   createBleTransport: () => new TauriBleTransport(),
   createStackmatSource: createStackmatMicSource,
@@ -81,6 +86,6 @@ export const desktopHost: InstalledAppHost = {
   writeClipboardText: browserClipboardTransport,
   useAuth: (language) => useInstalledAuth(language, desktopAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new TauriBleTransport(), options),
-  useTimerEffects: useInstalledTimerEffects,
+  useTimerEffects: (phase) => useInstalledTimerEffects(phase, undefined, requestDesktopScreenWakeLock),
   version: packageInfo.version,
 };
