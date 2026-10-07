@@ -212,7 +212,7 @@ const PICKER_ITEM_BY_EVENT = new Map(
 
 const THREE_BY_THREE_PREVIEW_EVENTS = new Set<EventId>([
   '333', '333oh', '333bld', '333ni', '333fm', '333mr',
-  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2',
+  'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll',
 ]);
 
 /** Look up a picker item without making each app rebuild its own event map. */
@@ -244,7 +244,7 @@ export function timerEventIdFromSelector(id: string): EventId | null {
 
 /** NxN renderer size for timer modes whose scramble can be shown as one cube. */
 export function timerEventNxnSize(id: EventId): number | null {
-  if (id === '222') return 2;
+  if (id === '222' || id === 'eg1' || id === 'eg2') return 2;
   if (id === '444' || id === '444bld') return 4;
   if (id === '555' || id === '555bld') return 5;
   if (id === '666' || id === '666bld') return 6;
