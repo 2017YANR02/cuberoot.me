@@ -38,9 +38,10 @@ import { useQueryState, parseAsBoolean, parseAsString, parseAsStringEnum } from 
 import {
   Settings as SettingsIcon,
   AlertTriangle,
+  ArrowLeft,
   X,
 } from 'lucide-react';
-import CubeRootLogo from '@/components/CubeRootLogo';
+import HomeLink from '@/components/HomeLink';
 import { petReact } from '@/lib/deskpet';
 import {
   parseTrainingAssignmentDestination,
@@ -2959,7 +2960,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
       {/* ── Topbar ──────────────────────────────────────────── */}
       <TimerTopbar
-        brand={<CubeRootLogo className="shell-topbar-brand" />}
+        brand={<HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>}
         controls={(
           <>
           {playersControl}
