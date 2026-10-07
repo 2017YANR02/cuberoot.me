@@ -1507,3 +1507,14 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 验证：Web 33 项、App 122 项定向测试通过，覆盖超时/取消/缓存续取/过滤/来源切换/智能魔方与本地多人集成；client、app-ui、timer-ui typecheck 和架构边界检查通过。Chrome 实测 Web/App 使用真实 API 返回题目，下一题、返回历史、切换手动来源拒绝迟到结果均通过；390px 无页面横向溢出或页面异常。App 本地 Vite 预览的 API 跨域限制由测试代理读取真实响应处理，此证据不代表原生设备网络验收。
 - 最终 Mobile production build 与双平台 sync、Android debug APK、iOS 未签名 Simulator build、macOS release app/DMG、Harmony Web build 通过。Harmony HAP 实际尝试仍被 Hvigor `00303028` 阻断：本机支持 modelVersion 6.0.1，工程要求 6.0.2，未降级配置。Windows native、五平台实体设备交互、签名/公证与发布尚未验证。
 - 仅本地提交，未 push 或部署；测试专用 1431/3003 服务已关闭，原有 3000 服务保留。下一步为解法外壳统一，完整 Solo 编排仍待推进；隐藏的多人多魔方不在范围内，五端整体继续 **NOT COMPLETE**。
+
+### 2026-10-07：解法外层界面同源（本地）
+
+- Web 与五端 App 共用 `timer-ui/TimerSolverPanel` 和 `timer-solver-panel.css`，原 Web `SolverHintPanel` 只适配 nuqs push/back/深链 replace，App `StageSolverDialog` 只适配共享面板与表资源位置。App 不再维护独立的紧凑房间弹窗；窄屏入口移入顶栏，宽屏与 Web 使用同一左栏占位规则，计时全屏释放该占位。
+- 同源维护 1024px 侧栏断点、560px 紧凑内容、折叠与全屏偏好、齿轮/前后题/布局操作、内部滚动和横划换题。侧栏与全屏只挂载一个求解内容实例；桌面关闭全屏或浏览器返回清除全屏偏好，不被自动恢复效应重新打开。保留原 Web 偏好键，首次渲染不读存储。
+- App 接入解法独占时的 `hints-only` 键盘策略、智能魔方 ready 自动收起及持久化成绩成功后的 `autoOpenSolution` 展栏请求；手机自动请求不弹全屏，沿用 Web 的手动入口。内部设置、信息和方法比较的阻塞状态传到两端键盘及设备起表门禁，Android Back 先关内部窗口再关解法。阻塞期间清除横划起点，关闭内部窗口后不会接续旧拖动。
+- 关闭恢复触发器焦点，全屏 Tab 圈定焦点并允许内部 portal 窗口获取焦点；修复原入口先 blur 导致无法恢复的问题。全屏使用现有主题变量及宿主缺少 shell token 时的回退，没有另造平台色值。内部求解算法、六方法目标、SQ1/五魔提示内容不变。
+- 验证：Web 6 文件 64 项（含新增 5 项面板交互/取消回归）、App 提示与视口 12 项通过；client/app-ui/timer-ui typecheck 与架构边界检查通过。旧源码守卫改为读取 canonical 共享面板。独立只读审查提出的嵌套窗口横划穿透已修复并复核。
+- Chrome 实测两端侧栏不遮挡中央计时区、全屏只有一个求解实例、手动 R/U/F 队列的前后题、设置打开时拒绝方向键换题、Escape 先内后外；Web 深链关闭与浏览器返回不重开。320/390/768/1280px × system-light/system-dark/forced-light/forced-dark 检查无页面或内容横向溢出，关闭按钮可见，无 pageerror。此处验证外层交互，不替代实体设备触摸/读屏与完整求解验收。
+- 最终 Mobile production build 与 Android/iOS sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG 和 Harmony Web build/sync 通过；Mobile CSS 产物保留传统 max-width/min-width 媒体查询。Harmony HAP 实际尝试仍报 `00303028`，本机 Hvigor 只支持 modelVersion 6.0.1，而工程为 6.0.2。Windows 原生、五平台实体设备、签名/公证与发布未验。
+- 仅本地提交，未 push/部署；关闭本任务 1431/3003 服务并还原临时 Next include，保留原有 3000 服务及其他任务的并行源码。下一步继续完整 Solo 页面编排；隐藏的多人多魔方不推进，总体继续 **NOT COMPLETE**。

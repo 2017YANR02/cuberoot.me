@@ -432,6 +432,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // ── Side panel (desktop rail / 非桌面整屏) ──────────────────────
   const [panelTab, setPanelTab] = useState<PanelTab | null>(null);
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
+  const [solverBlocking, setSolverBlocking] = useState(false);
   const [historyOverlayOpen, setHistoryOverlayOpen] = useState(false);
   const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
@@ -2406,7 +2407,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 成绩 / 图表面板在非桌面宽度下是整屏的(桌面是右侧常驻栏,不挡计时器),所以只有
   // 整屏那一形态要算进「有东西盖住计时器」—— 否则空格会穿到后面预备计时。
   const panelFullscreen = panelTab !== null && !isDesktop;
-  const otherModalOpen =
+  const otherModalOpen = solverBlocking ||
     settingsOpen || bluetoothOpen || bluetoothTimerOpen || stackmatOpen ||
     trainerSubsetOpen !== null || statsModalOpen || historyOverlayOpen ||
     manualEntryOpen || solverOpen || bulkScrambleOpen ||
@@ -2769,6 +2770,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           isZh={isZh}
           autoCollapseOnReady={timer.phase === 'ready' && bluetoothCube.status.connected}
           autoOpenOnSolve={solverOpenRequest}
+          onBlockingChange={setSolverBlocking}
           resultsPanelOpen={!isDesktop && panelTab !== null}
           onOpen={isDesktop ? undefined : closeResultsPanel}
           onPrevScramble={sheetPrevScramble}
@@ -3048,7 +3050,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
       {/* ── Main column ─────────────────────────────────────── */}
       <TimerStageLayout
-        className="shell-main timer-workspace-main"
+        className="shell-main timer-workspace-main timer-solver-stage"
         fullscreen={fullscreen}
         source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} />}
         statistics={
@@ -3274,7 +3276,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区左侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
             打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
-        <div className="shell-rail" data-no-timer>
+        <div className="shell-rail timer-solver-rail" data-no-timer>
           {isDesktop && solverHintPanel}
         </div>
 
