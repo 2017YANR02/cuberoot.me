@@ -1589,6 +1589,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
 
   useEffect(() => {
     if (!containerRef.current) return;
+    // v6 bundlers must explicitly locate the same-version ESM worker.
+    maplibregl.setWorkerUrl(`/maplibre/${maplibregl.getVersion()}/maplibre-gl-worker.mjs`);
     ensureZhTileProtocol();
 
     const initialTheme = themeRef.current;
