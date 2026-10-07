@@ -226,4 +226,22 @@ describe('shared timer puzzle picker', () => {
     expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3BLD');
     expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
   });
+  it('keeps EG and 3x3 training identities under their puzzles in the combined source menu', () => {
+    const groups = TIMER_EVENT_PICKER_GROUPS.map((group) => ({
+      id: group.id, label: group.nameEn,
+      items: group.items.map((item) => ({ id: item.id, label: item.nameEn })),
+    }));
+    for (const [selectedEvent, puzzle] of [['eg1', '2×2'], ['eg2', '2×2'], ['cross', '3×3'], ['ll', '3×3']]) {
+      act(() => root.render(createElement(TimerPuzzlePicker, {
+        groups, selectedEvent, onSelect: vi.fn(), puzzleLabel: 'Puzzle',
+        scrambleTypeLabel: 'Scramble type', combineScrambleTypes: true,
+      })));
+      expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe(puzzle);
+      expect(host.querySelector('[aria-label="Scramble type"]')).toBeNull();
+      act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')!.click());
+      expect(host.querySelectorAll('.pp-item')).toHaveLength(33);
+      act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    }
+  });
+
 });

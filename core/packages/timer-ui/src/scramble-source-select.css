@@ -72,6 +72,8 @@
   max-width: min(86vw, 280px);
   max-height: calc(100dvh - 16px);
   overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 4px;
   border: 1px solid var(--border-default);
   border-radius: 10px;
