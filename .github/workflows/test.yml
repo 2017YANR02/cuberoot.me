@@ -153,6 +153,7 @@ jobs:
               - '.github/workflows/update_upcoming.yml'
             mobile:
               - '.node-version'
+              - '.github/workflows/test.yml'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
               - 'core/pnpm-workspace.yaml'
@@ -175,6 +176,7 @@ jobs:
               - 'docs/platform-capability-manifest.json'
             desktop:
               - '.node-version'
+              - '.github/workflows/test.yml'
               - 'core/package.json'
               - 'core/pnpm-lock.yaml'
               - 'core/pnpm-workspace.yaml'
@@ -699,6 +701,7 @@ jobs:
             /.node-version
             /core/
             /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/cstimer-scramble/
             /tools/solver/rust-cross/xcross-table-worker.js
             /tools/solver/rust-cross/cross_solver.js
             /tools/solver/rust-cross/cross_solver_bg.wasm
@@ -871,6 +874,7 @@ jobs:
             /.node-version
             /core/
             /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/cstimer-scramble/
             /tools/solver/rust-cross/xcross-table-worker.js
             /tools/solver/rust-cross/cross_solver.js
             /tools/solver/rust-cross/cross_solver_bg.wasm
@@ -912,6 +916,7 @@ jobs:
             /.node-version
             /core/
             /tools/solver/rust-cross/cross-solver-worker.js
+            /tools/cstimer-scramble/
             /tools/solver/rust-cross/xcross-table-worker.js
             /tools/solver/rust-cross/cross_solver.js
             /tools/solver/rust-cross/cross_solver_bg.wasm
