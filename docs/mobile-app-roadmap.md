@@ -1566,3 +1566,8 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 备份 JSON、csTimer/CSV/文本成绩、批量打乱和本地多人轮次统一走 InstalledAppHost.exportFile。Android 使用 ACTION_CREATE_DOCUMENT 及用户选择 URI；iOS 使用系统分享面板（包含存储到文件）；Windows/macOS 使用 Tauri 原生保存对话框并写 UTF-8；Harmony 使用 DocumentViewPicker 与文件 API。不申请全盘读写权限，原生取消/失败不回退浏览器下载；取消不报导出成功或失败。
 - 4 项无损内容/等待完成/取消路由测试、85 项工具与账号文档检查、app-ui/client/宿主类型及架构边界检查通过；Mobile build/sync、Android APK、iOS unsigned Simulator、macOS unsigned app、Harmony Web build/sync 通过。Harmony HAP 仍被本机 Hvigor 6.0.1 与工程 modelVersion 6.0.2 不匹配阻断；Windows 原生构建未验。
 - 独立审查未发现阻断。各系统文件面板、用户取消、导出后重读与实体设备验收仍待完成；仅本地提交，未 push/部署/商店发布，总体 NOT COMPLETE。
+
+### 2026-10-07：优先级 5——macOS 原生打印（本地）
+
+- macOS 通过 WKWebView / NSPrintOperation 打开系统打印面板，主线程等待面板结束才释放打印报告；并发互斥，原生异常直接报告，不回退到固定 30 秒浏览器超时。Windows 保留 WebView2 打印路径。
+- 原生完成/取消、错误和非 macOS 回退的路由测试以及 macOS unsigned app 构建通过，独立复核无阻断。真实系统预览、取消与保存 PDF 尚未验收；仅本地提交，未 push 或发布。

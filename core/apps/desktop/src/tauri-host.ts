@@ -1,3 +1,4 @@
+import { printDesktopDocument } from './native-print';
 import { createStackmatMicSource } from '@cuberoot/timer-ui/external';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrent, onOpenUrl } from '@tauri-apps/plugin-deep-link';
@@ -15,7 +16,7 @@ import {
   createNetBattleClient,
   createNetBattleSessionStore,
 } from '@cuberoot/shared/timer';
-import { browserClipboardTransport, browserPrintTransport } from '@cuberoot/timer-ui';
+import { browserClipboardTransport } from '@cuberoot/timer-ui';
 
 import packageInfo from '../package.json';
 import { TauriBleTransport } from './tauri-ble-transport';
@@ -73,7 +74,7 @@ export const desktopHost: InstalledAppHost = {
   isInstalled: () => true,
   netBattle: desktopNetBattle,
   openExternal: openUrl,
-  print: browserPrintTransport,
+  print: printDesktopDocument,
   async exportFile(text, filename) {
     if (!await invoke<boolean>('export_file', { text, filename })) throw new DOMException('Export cancelled', 'AbortError');
   },
