@@ -70,7 +70,7 @@ import {
   type WcaDispensedScramble,
   type WcaSourceSpec,
 } from '../_lib/scramble/wca_pool';
-import { takeScramble } from '../_lib/scramble/scramble_pool';
+import { nextCube222ByStepsScramble } from '@cuberoot/timer-ui/scramble/cube222-steps';
 import { preScrambleFor } from '../_lib/scramble/pre_scramble';
 import { timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { applyOrientationPrefix } from '@/lib/cube-orientation';
@@ -122,7 +122,7 @@ import { SmartCubeSoloTimerController } from '@cuberoot/shared/smart-cube/solo-t
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import type { Cube222SpecialType } from '@cuberoot/puzzle-solvers/cube222';
-import { genByStepsScramble, genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
+import { genByStepsSig, wcaStepFilter } from '../_lib/scramble/gen-by-steps';
 import {
   nextWebNon222ByStepsScramble,
   takeWebNon222ByStepsScramble,
@@ -167,7 +167,6 @@ import {
   type ScrambleMark,
 } from '../_lib/marks';
 import { getLastPickedCase, type TrainerKind } from '../_lib/scramble/training';
-import { randomState333 } from '../_lib/scramble/kociemba/random_state';
 import { useTimer, type TimerPhase } from '../_shared/useTimer';
 import { inspectionPenalty } from '../_shared/inspection';
 import { formatMs, bestSingle, bestAverageOfN, bestMbldSolve, compareMbld, summarize } from '../_lib/stats';
@@ -667,7 +666,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const randomOptimalSource: Optimal333Source | null = randomOptimalRequested
     ? {
         key: randomOptimalKey,
-        generateBase: async () => {
+        generateBase: async (signal) => {
           if (drillTarget && drillAllowed) {
             const drill = generateTimerDrillScramble(drillTarget);
             if (drill) return drill.scramble;
@@ -687,7 +686,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             }
             throw new Error('trainer state became idle');
           }
-          return randomState333();
+          const generated = await ordinaryRandom.generate({ event }, signal);
+          if (!generated.ok || generated.kind === 'manual') throw new Error('could not generate optimal base state');
+          return generated.scramble;
         },
         optimize: async (base, signal) => (await cloudOptimalScramble(base, undefined, signal)).scramble,
       }
@@ -709,17 +710,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 同一次提交里先跑,保证重置历史时 genScramble() 取到的是 queue[0]。
   useEffect(() => { manualCursorRef.current = 0; }, [manualSig]);
 
-  // Live timer phase (written through after useTimer below) — read by the scramble
-  // buffer's safety gate so background generation never blocks a running solve.
   const phaseRef = useRef<TimerPhase>('idle');
-  // Background scramble generation is only safe in non-timing phases: useTimer
-  // captures start/stop with performance.now() inside the keypress handler, so a
-  // slow random-state generation (4x4 / sq1) mid-solve would corrupt the time.
-  // Also off in seeded-sync mode (must not advance the shared counter ahead).
-  const canGenScramble = useCallback(() => {
-    const p = phaseRef.current;
-    return (p === 'idle' || p === 'stopped' || p === 'inspecting') && !getSettings().syncSeed;
-  }, []);
 
   const seedOptionsSignature = JSON.stringify([settings.syncSeed, settings.syncSeedRevision, settings.cnMode, mode222, type222, settings.ollSubset, settings.pllSubset]);
   const genScramble = useCallback((): TimerScrambleHistoryEntry => {
@@ -778,7 +769,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     // 因此它优先于普通难度 / 按步数链；空串只表示 worker 尚未返回,由下方 effect 补位。
     const special = special222TypeRef.current;
     if (special) return timerScrambleHistoryEntry(takeCube222SpecialScramble(special));
-    // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再由 min2phase 转成打乱 ——
+    // 「按难度生成」(3×3 族):状态在 worker 里按阶段最优步数采样,再在同一 Worker 转成打乱 ——
     // 同样是异步的,队列干了就先出 '',由下面的 effect 补上(期间转圈)。
     if (trainerSpecRef.current) {
       const result = peekTrainerResult(trainerSpecRef.current);
@@ -792,14 +783,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }
     // 「按步数生成」(2×2 / 金字塔 / 斜转 / 枫叶 / 齿轮):从完整状态空间均匀采样、
     // 按所选度量最优步数生成(非案例库)。必须先于 non-WCA worker 分支,否则后两项会绕过难度。
-    // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在后台 idle 生成,不阻塞计时。
+    // 度量+区间进 pool key,改设置即换 buffer;拒绝采样 + IDA* 在 Worker 生成,不阻塞计时。
     if (non222ByStepsEvent) {
       return timerScrambleHistoryEntry(takeWebNon222ByStepsScramble(non222ByStepsEvent, s));
     }
-    const byStepsScr = genByStepsScramble(event, s, mode222);
-    if (byStepsScr) return timerScrambleHistoryEntry(
-      takeScramble(byStepsScr.key, byStepsScr.gen, canGenScramble),
-    );
+    if (event === '222' && genStepsSig) return timerScrambleHistoryEntry('');
     // Only the async shared client generates ordinary random slots. Never run
     // a synchronous solver during render or a timer input handler.
     return { ...timerScrambleHistoryEntry(''), randomRequest: {
@@ -807,7 +795,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       trainerCaseIds: event === 'oll' ? s.ollSubset : event === 'pll' ? s.pllSubset : undefined,
     } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seedOptionsSignature, drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, canGenScramble, mode222, randomOptimalRequested, randomOptimalKey, non222ByStepsEvent]);
+  }, [seedOptionsSignature, drillTarget, drillAllowed, event, settings.scrambleSource, wcaSourceSig, special222Sig, genStepsSig, trainerSigVal, manualSig, mode222, randomOptimalRequested, randomOptimalKey, non222ByStepsEvent]);
 
   const [scrambleHist, setScrambleHist] = useState<{ list: TimerScrambleHistoryEntry[]; idx: number }>(
     () => ({ list: [genScramble()], idx: 0 }),
@@ -1037,14 +1025,14 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     wcaSourceSig,
   ]);
 
-  // Exact non-2x2 move-count generation is Worker-only. The history slot owns
+  // Exact move-count generation is Worker-only. The history slot owns
   // only the current semantic identity; an A→B→A switch cancels the stale A
   // waiter while the shared per-identity queue may still satisfy the new A.
   const [byStepsLoading, setByStepsLoading] = useState(false);
   const [byStepsFailed, setByStepsFailed] = useState(false);
   const [byStepsRetry, setByStepsRetry] = useState(0);
   useEffect(() => {
-    const requestEvent = non222ByStepsEvent;
+    const requestEvent = non222ByStepsEvent ?? (event === '222' && genStepsSig ? '222' : null);
     if (!requestEvent || scramble !== '') {
       setByStepsLoading(false);
       setByStepsFailed(false);
@@ -1058,7 +1046,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     let cancelled = false;
     setByStepsLoading(true);
     setByStepsFailed(false);
-    void nextWebNon222ByStepsScramble(requestEvent, requestSettings, controller.signal).then((generated) => {
+    const pending = requestEvent === '222'
+      ? nextCube222ByStepsScramble(requestSettings, mode222, controller.signal)
+      : nextWebNon222ByStepsScramble(requestEvent, requestSettings, controller.signal);
+    void pending.then((generated) => {
       if (cancelled || !isCurrentEmptyScrambleEntry(entryId)) return;
       setByStepsLoading(false);
       if (!generated) {
@@ -1067,6 +1058,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       }
       if (genByStepsSig(event, getSettings(), mode222) !== requestSignature) return;
       fillCurrentEmptyScrambleEntry(entryId, generated);
+    }).catch(() => {
+      if (!cancelled && isCurrentEmptyScrambleEntry(entryId)) {
+        setByStepsLoading(false);
+        setByStepsFailed(true);
+      }
     });
     return () => {
       cancelled = true;
