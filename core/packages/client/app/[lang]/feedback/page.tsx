@@ -148,7 +148,7 @@ export default function FeedbackPage() {
       {safeSelectedId == null && (
         <CompactSelect
           ariaLabel={t('反馈状态', 'Feedback status')}
-          label={t('状态', 'Status')}
+          label={status === 'new' ? t('新', 'New') : status === 'triaged' ? t('处理中', 'In progress') : status === 'done' ? t('已完成', 'Done') : t('全部状态', 'All statuses')}
           value={status}
           items={[
             { value: 'all', label: t('全部', 'All') },
