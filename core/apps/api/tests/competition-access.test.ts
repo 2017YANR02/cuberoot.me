@@ -2,6 +2,8 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { Hono } from 'hono';
 import { createCompetitionProof, COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 import { requireCompetitionAccess, checkCompetitionAccess } from '../src/utils/competition_access';
+import { readFileSync } from 'node:fs';
+vi.mock('node:fs', () => ({ readFileSync: vi.fn(() => 'default 1;') }));
 
 const secret = 'test-only-secret-with-more-than-32-characters';
 const app = new Hono();
@@ -9,7 +11,18 @@ app.get('/v1/competition-access/check', checkCompetitionAccess);
 app.use('/v1/cubing-live/*', requireCompetitionAccess);
 app.get('/v1/cubing-live/:slug', c => c.json({ ok: true }));
 const env = (address: string) => ({ incoming: { socket: { remoteAddress: address } } });
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => { vi.unstubAllEnvs(); vi.mocked(readFileSync).mockReturnValue('default 1;'); });
+
+it('opens public reads at runtime and restores verification without trusting visitor headers', async () => {
+  vi.stubEnv('COMPETITION_ACCESS_ENFORCE', '1');
+  vi.mocked(readFileSync).mockReturnValue('default 0;');
+  expect((await app.request('/v1/cubing-live/A')).status).toBe(200);
+  expect((await app.request('/v1/competition-access/check')).status).toBe(204);
+  vi.mocked(readFileSync).mockReturnValue('default 1;');
+  expect((await app.request('/v1/cubing-live/A', { headers: { 'x-traffic-defense': '0' } })).status).toBe(403);
+  vi.mocked(readFileSync).mockImplementation(() => { throw new Error('unreadable'); });
+  expect((await app.request('/v1/competition-access/check')).status).toBe(403);
+});
 
 it('checks browser and service proofs, preserving only nginx-attested CN exemptions', async () => {
   vi.stubEnv('COMPETITION_ACCESS_ENFORCE', '1'); vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);
