@@ -48,6 +48,15 @@ const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId
 
 const SHARED_EVENTS: Readonly<Partial<Record<EventId, TimerSharedScrambleProviderId>>> = {
   '222': 'wca-pocket',
+  'cll': 'training-state',
+  'ell': 'training-state',
+  'eocp': 'training-state',
+  '2gll': 'training-state',
+  'ollcp': 'training-state',
+  'zzll': 'training-state',
+  'zbls': 'training-state',
+  'lse': 'training-state',
+  'l10p': 'training-state',
   ll: 'trainer-case',
   oll: 'trainer-case',
   pll: 'trainer-case',

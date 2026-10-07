@@ -67,7 +67,7 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
 }
 
 describe('SmartCubeSoloTimerController', () => {
-  it.each(['cross', 'f2l', 'oll', 'coll', 'cmll'] as const)('%s records the finishing move before stopping with the cube still unsolved', (event) => {
+  it.each(['cross', 'f2l', 'oll', 'coll', 'cmll', 'cll', 'ollcp', 'eocp', 'zbls'] as const)('%s records the finishing move before stopping with the cube still unsolved', (event) => {
     const state = harness({ event, id: 1, scramble: 'U R', orientation: '', targetFacelets: target('U R') });
     state.controller.syncFacelets(target('U R'));
     state.setPhase('ready');
@@ -105,7 +105,7 @@ describe('SmartCubeSoloTimerController', () => {
     expect(state.order.slice(-2)).toEqual(["record:R'", 'stop:300']);
   });
 
-  it.each(['pll', 'll', 'zbll'] as const)('%s still waits for the final AUF and the transport solved edge', (event) => {
+  it.each(['pll', 'll', 'zbll', 'ell', '2gll', 'zzll', 'lse', 'l10p'] as const)('%s still waits for the final AUF and the transport solved edge', (event) => {
     const state = harness({ event, id: 1, scramble: 'U R', targetFacelets: target('U R') });
     state.setPhase('ready');
     state.controller.move({ facelets: target('U'), move: "R'", timestamp: 100 });

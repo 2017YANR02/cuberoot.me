@@ -13,6 +13,27 @@ import { SCRAMBLE_222_TYPE_CATALOG } from '../scramble-222';
 import type { TimerScrambleRequest } from '../scramble-runtime';
 import type { TimerSeedTicket } from '../sync-seed';
 import type { EventId } from '../types';
+import { generateTimerTrainingStateScramble, isTimerTrainingStateEvent } from '../training-state-scramble';
+import { applySequence, formatMoves, parseMoves, solvedCubie } from '@cuberoot/puzzle-solvers/kociemba/cube';
+import { buildMoveTables } from '@cuberoot/puzzle-solvers/kociemba/movetables';
+import { buildPruneTables } from '@cuberoot/puzzle-solvers/kociemba/prune';
+import { scrambleFromState } from '@cuberoot/puzzle-solvers/kociemba/search';
+import { normalizeWcaScramble } from '../../normalize_wca_scramble';
+
+let trainingTables: { move: ReturnType<typeof buildMoveTables>; prune: ReturnType<typeof buildPruneTables> } | null = null;
+function deterministicTrainingNotation(scramble: string): string {
+  if (!trainingTables) {
+    const move = buildMoveTables();
+    trainingTables = { move, prune: buildPruneTables(move) };
+  }
+  const normalized = normalizeWcaScramble(scramble);
+  if (!normalized) throw new Error('Invalid seeded training notation');
+  const state = applySequence(solvedCubie(), parseMoves(normalized));
+  // Upstream may choose different equivalent text as its search caches warm.
+  // Take the first bounded solution, without wall-clock-dependent optimization.
+  return formatMoves(scrambleFromState(state, trainingTables.move, trainingTables.prune,
+    { maxTotalLen: 30, targetLen: 30 }));
+}
 
 export interface TimerSeedRequest extends TimerScrambleRequest {
   ticket: TimerSeedTicket;
@@ -26,6 +47,8 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
   const cstimer = (key: string, length = 0) => generateSeededCstimerScramble(key, length,
     JSON.stringify([ticket.seed, ticket.index, key]));
   const generate = (id: EventId): string => {
+    if (isTimerTrainingStateEvent(id)) return deterministicTrainingNotation(generateTimerTrainingStateScramble(id, (key, attempt) =>
+      generateSeededCstimerScramble(key, 0, JSON.stringify([ticket.seed, ticket.index, id, attempt]))));
     if (isTimerTrainerEvent(id)) {
       const result = generateTimerTrainerScramble(id, { random, caseIds: request.trainerCaseIds });
       caseId = result.caseId;

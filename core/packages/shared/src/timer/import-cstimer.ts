@@ -11,11 +11,13 @@
  */
 
 import type { EventId, Solve } from './types';
+import { CSTIMER_TRAINING_FALLBACKS } from './export-cstimer';
 const newId = () => globalThis.crypto.randomUUID();
 import type { TimerImportSession } from './import-timer';
 
 interface CstimerSessionMeta {
   name?: string;
+  cuberootEvent?: string;
   opt?: { scrType?: string };
   rank?: number;
   scrType?: string; // older schemas
@@ -53,6 +55,15 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   'pll': 'pll', 'pllt': 'pll',
   'oll': 'oll', 'ollt': 'oll',
   'coll': 'coll', 'collt': 'coll',
+  'cll': 'cll',
+  'ell': 'ell',
+  'eocp': 'eocp',
+  '2gll': '2gll',
+  'ollcp': 'ollcp',
+  'zzll': 'zzll',
+  'zbls': 'zbls',
+  'lse': 'lse',
+  'l10p': 'l10p',
   'cmll': 'cmll',
   'zbll': 'zbll', 'zbllt': 'zbll',
   'eg1': 'eg1',
@@ -187,6 +198,12 @@ export function parseCstimerExport(jsonText: string): CstimerSessionParsed[] {
     const meta = sessionMeta[sid];
     const scrType = meta?.opt?.scrType ?? meta?.scrType;
     let { event, matched } = normalizeEventKey(scrType);
+    const original = meta?.cuberootEvent;
+    if (typeof original === 'string' && Object.prototype.hasOwnProperty.call(CSTIMER_TRAINING_FALLBACKS, original)
+      && CSTIMER_TRAINING_FALLBACKS[original as keyof typeof CSTIMER_TRAINING_FALLBACKS] === scrType) {
+      event = original as keyof typeof CSTIMER_TRAINING_FALLBACKS;
+      matched = true;
+    }
     if (!matched) {
       const fromName = nameToEvent(meta?.name);
       if (fromName.matched) { event = fromName.event; matched = true; }

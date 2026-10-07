@@ -49,6 +49,7 @@ export type { StageSegments } from './stage-segments';
 export const STAGE_SEGMENT_EVENTS: ReadonlySet<EventId> = new Set<EventId>([
   '333', '333oh', '333fm', '333mr', 'cross', 'f2l', 'll', 'oll', 'pll',
   'coll', 'cmll', 'zbll', 'eg1', 'eg2', 'custom',
+  'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls',
 ]);
 
 const ROTATION_FAMILIES = new Set(['x', 'y', 'z', 'X', 'Y', 'Z']);
