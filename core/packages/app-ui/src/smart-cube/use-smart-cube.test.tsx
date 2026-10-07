@@ -220,6 +220,27 @@ describe('useInstalledSmartCube', () => {
     expect(cube.availableDevices).toEqual([]);
   });
 
+  it('drains a late scan startup before releasing the native adapter to Tools', async () => {
+    let finishScan!: (stop: () => Promise<void>) => void;
+    let finishStop!: () => void;
+    const stop = vi.fn(() => new Promise<void>(resolve => { finishStop = resolve; }));
+    transport.scanDevices = vi.fn(() => new Promise<() => Promise<void>>(resolve => { finishScan = resolve; }));
+    await act(async () => { await cube.disconnect(); });
+    let scanning!: Promise<void>;
+    await act(async () => { scanning = cube.scanDevices!(); });
+    expect(transport.scanDevices).toHaveBeenCalledOnce();
+    let drained = false;
+    let disconnecting!: Promise<void>;
+    await act(async () => { disconnecting = cube.disconnect().then(() => { drained = true; }); });
+    expect(drained).toBe(false);
+    await act(async () => { finishScan(stop); });
+    expect(stop).toHaveBeenCalledOnce();
+    expect(drained).toBe(false);
+    await act(async () => { finishStop(); await scanning; await disconnecting; });
+    expect(drained).toBe(true);
+    expect(cube.scanning).toBe(false);
+  });
+
   it('never reports connected for a silent protocol and times out with an actionable error', async () => {
     await act(async () => { await cube.disconnect(); });
     state.publishState = false;

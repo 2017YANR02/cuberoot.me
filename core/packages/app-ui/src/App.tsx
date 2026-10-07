@@ -1,4 +1,6 @@
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
+import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
+import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import { createTimerBackupClient } from '@cuberoot/shared/timer/backup-client';
 import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';
@@ -399,6 +401,23 @@ async function shareOrDownloadBackup(text: string, fileSpec = {
 
 
 export function App({ host }: { host: InstalledAppHost }) {
+  const [toolsBlePicker, setToolsBlePicker] = useState<InstalledBlePicker | null>(null);
+  const toolsBlePickerRef = useRef(toolsBlePicker);
+  toolsBlePickerRef.current = toolsBlePicker;
+  const toolsBleRef = useRef<{ owner: InstalledBleHost; port: MessagePort } | null>(null);
+  const toolsBleDrainRef = useRef<Promise<void>>(Promise.resolve());
+  const toolsBleEpochRef = useRef(0);
+  const revokeToolsBle = useCallback(() => {
+    toolsBleEpochRef.current++;
+    const current = toolsBleRef.current;
+    toolsBleRef.current = null;
+    if (current) {
+      const draining = current.owner.dispose();
+      current.port.close();
+      toolsBleDrainRef.current = Promise.all([toolsBleDrainRef.current, draining]).then(() => {});
+    }
+    return toolsBleDrainRef.current;
+  }, []);
   useEffect(() => {
     if (!host.netBattle) return;
     const { client, sessions } = host.netBattle;
@@ -1762,7 +1781,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     clearWebSurfaceHandshake(surface);
     if (connection !== 'online') return;
     const postInit = () => webFrameRefs.current[surface]?.contentWindow?.postMessage(
-      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership) }),
+      mobileEmbedInitMessage(surface, { authProviders: MOBILE_AUTH_PROVIDERS, accountManagement: true, appleMembership: Boolean(host.appleMembership), googleMembership: Boolean(host.googleMembership), bluetooth: surface === 'tools' && Boolean(host.createBleTransport) }),
       SITE_ORIGIN,
     );
     webHandshakeRetryRef.current[surface] = startWebSurfaceHandshake(
@@ -2133,6 +2152,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     let active = true;
     let removeListener: (() => Promise<void>) | undefined;
     void host.addBackButtonListener(() => {
+      if (toolsBlePickerRef.current) { toolsBlePickerRef.current.cancel(); return; }
       const current = viewRef.current;
       if (trainerSubsetOpenRef.current) { trainerSubsetOpenRef.current = null; setTrainerSubsetOpen(null); return; }
       if (replayBlockingRef.current) { setReplayImportOpen(false); setReplaySolve(null); return; }
@@ -2666,6 +2686,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   const connectSmartCube = useCallback(async (deviceId?: string) => {
     const token = ++externalOperationRef.current;
     try {
+      await revokeToolsBle();
+      if (token !== externalOperationRef.current) return;
       await external.timer.disconnect();
       if (token !== externalOperationRef.current) return;
       external.stackmat.stop();
@@ -2677,6 +2699,54 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
   }, [announce, copy, smartCube, external.timer, external.stackmat]);
 
+  useEffect(() => {
+    if (view !== 'tools') void revokeToolsBle();
+  }, [view, revokeToolsBle]);
+
+  const prepareToolsBleRef = useRef(async () => {});
+  prepareToolsBleRef.current = async () => {
+    externalOperationRef.current++;
+    await smartCube.disconnect();
+    await external.timer.disconnect();
+    external.stackmat.stop();
+  };
+  useEffect(() => {
+    const onOpen = (event: MessageEvent) => {
+      const port = installedBleRequestPort(event, webFrameRefs.current.tools?.contentWindow, SITE_ORIGIN);
+      if (!port) return;
+      const reject = () => { port.postMessage({ event: 'closed' }); port.close(); };
+      if (viewRef.current !== 'tools' || !host.createBleTransport) { reject(); return; }
+      const drain = revokeToolsBle();
+      const epoch = toolsBleEpochRef.current;
+      let abandoned = false;
+      const queue: unknown[] = [];
+      port.onmessage = event => {
+        if (event.data?.dispose) abandoned = true;
+        else if (queue.length < 32) queue.push(event.data);
+      };
+      const preparation = drain.then(async () => {
+        if (!abandoned && epoch === toolsBleEpochRef.current && viewRef.current === 'tools') await prepareToolsBleRef.current();
+      });
+      toolsBleDrainRef.current = preparation.catch(() => {});
+      void (async () => {
+        await preparation;
+        if (abandoned || epoch !== toolsBleEpochRef.current || viewRef.current !== 'tools') { reject(); return; }
+        const owner = new InstalledBleHost(host.createBleTransport!(), message => port.postMessage(message),
+          (transport, options, signal) => pickInstalledBleDevice(transport, options, signal, setToolsBlePicker));
+        toolsBleRef.current = { owner, port };
+        port.onmessage = event => {
+          if (toolsBleRef.current?.owner !== owner) return;
+          if (event.data?.dispose) { void revokeToolsBle(); return; }
+          if (viewRef.current !== 'tools') { void revokeToolsBle(); return; }
+          owner.receive(event.data);
+        };
+        queue.forEach(value => owner.receive(value));
+      })().catch(reject);
+    };
+    window.addEventListener('message', onOpen);
+    return () => { window.removeEventListener('message', onOpen); void revokeToolsBle(); };
+  }, [host, revokeToolsBle]);
+
   closeDeviceOverlayRef.current = () => {
     externalOperationRef.current++;
     external.resolveMac(null);
@@ -2687,13 +2757,16 @@ export function App({ host }: { host: InstalledAppHost }) {
   };
 
   const scanSmartCubes = useCallback(async () => {
+    const token = ++externalOperationRef.current;
     try {
+      await revokeToolsBle();
+      if (token !== externalOperationRef.current || viewRef.current === 'tools' || viewRef.current === 'account') return;
       await smartCube.scanDevices?.();
     } catch (error) {
       announce(copy.smartCubeError);
       throw error;
     }
-  }, [announce, copy.smartCubeError, smartCube]);
+  }, [announce, copy.smartCubeError, smartCube, revokeToolsBle]);
 
   const disconnectSmartCube = useCallback(async () => {
     await smartCube.disconnect();
@@ -3619,6 +3692,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   );
   const connectExternalTimer = async () => {
     const token = ++externalOperationRef.current;
+    await revokeToolsBle();
+    if (token !== externalOperationRef.current) return;
     await smartCube.disconnect();
     if (token !== externalOperationRef.current) return;
     external.stackmat.stop();
@@ -3626,6 +3701,8 @@ export function App({ host }: { host: InstalledAppHost }) {
   };
   const startStackmat = async (deviceId?: string) => {
     const token = ++externalOperationRef.current;
+    await revokeToolsBle();
+    if (token !== externalOperationRef.current) return;
     await smartCube.disconnect();
     await external.timer.disconnect();
     if (token !== externalOperationRef.current) return;
@@ -4318,11 +4395,12 @@ children: <>
                 </div>
               )}
               <iframe
-                allow="clipboard-write; fullscreen"
+                allow={surface === 'tools' ? 'clipboard-write; fullscreen; camera; microphone' : 'clipboard-write; fullscreen'}
                 aria-hidden={showState}
                 key={`${surface}-${webSurfaceRevision[surface]}`}
                 name={MOBILE_EMBED_FRAME_NAMES[surface]}
                 onLoad={() => {
+                  if (surface === 'tools') void revokeToolsBle();
                   webBridgeReadyRef.current[surface] = false;
                   if (connection === 'offline') {
                     webSurfaceLoadedRef.current[surface] = false;
@@ -4750,6 +4828,14 @@ children: <>
       {replaySolve && <Suspense fallback={null}><ReconstructModal solve={replaySolve} history={store!.database.dataBySession[store!.database.activeSessionId]?.[replaySolve.event] ?? []}
         host={reconstructionHost} isZh={language === 'zh'} onUseScramble={useReconstructionScramble}
         onReconFeedback={reconOk => setReplaySolve(current => current ? { ...current, reconOk } : null)} onClose={() => setReplaySolve(null)} /></Suspense>}
+      {toolsBlePicker && <TimerSmartCubeDeviceModal
+        language={language}
+        availableDevices={toolsBlePicker.devices}
+        snapshot={{ phase: 'idle' }}
+        onScan={toolsBlePicker.scan}
+        onConnect={toolsBlePicker.select}
+        onClose={toolsBlePicker.cancel}
+      />}
       {openOverlay === TIMER_OVERLAY_IDS.smartCubeDevice && (
         <TimerSmartCubeDeviceModal
           availableDevices={smartCube.availableDevices}

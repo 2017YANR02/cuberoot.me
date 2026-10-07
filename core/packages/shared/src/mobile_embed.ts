@@ -4,6 +4,8 @@ import {
   type MobileAuthProvider,
 } from './auth/web_session';
 
+export * from './installed_ble';
+
 export const MOBILE_EMBED_FRAME_NAMES = {
   account: 'cuberoot-mobile-account',
   tools: 'cuberoot-mobile-tools',
@@ -18,6 +20,7 @@ export interface MobileEmbedInitMessage {
   accountManagement?: boolean;
   appleMembership?: boolean;
   googleMembership?: boolean;
+  bluetooth?: boolean;
 }
 
 export interface MobileEmbedAccountManageMessage {
@@ -104,7 +107,7 @@ export function mobileEmbedBackMessage(surface: MobileEmbedSurface): MobileEmbed
 
 export function mobileEmbedInitMessage(
   surface: MobileEmbedSurface,
-  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership'>,
+  capabilities?: Pick<MobileEmbedInitMessage, 'authProviders' | 'accountManagement' | 'appleMembership' | 'googleMembership' | 'bluetooth'>,
 ): MobileEmbedInitMessage {
   return { surface, type: 'cuberoot:mobile:init', ...capabilities };
 }
@@ -195,6 +198,7 @@ export function decodeMobileEmbedInit(value: unknown): MobileEmbedInitMessage | 
       || new Set(candidate.authProviders).size !== candidate.authProviders.length))
     || (candidate.appleMembership !== undefined && typeof candidate.appleMembership !== 'boolean')
     || (candidate.googleMembership !== undefined && typeof candidate.googleMembership !== 'boolean')
+    || (candidate.bluetooth !== undefined && typeof candidate.bluetooth !== 'boolean')
     || (candidate.accountManagement !== undefined && typeof candidate.accountManagement !== 'boolean')) {
     return null;
   }

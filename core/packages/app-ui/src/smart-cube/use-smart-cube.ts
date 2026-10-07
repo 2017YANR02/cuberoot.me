@@ -103,6 +103,8 @@ export function useInstalledSmartCube(
   const scanGenerationRef = useRef(0);
   const scanStopRef = useRef<(() => Promise<void>) | null>(null);
   const scanTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scanStartupRef = useRef<Promise<void>>(Promise.resolve());
+  const scanCleanupRef = useRef<Promise<void>>(Promise.resolve());
   const onMoveRef = useRef(onMove);
   const onSolvedRef = useRef(onSolved);
   const onGyroRef = useRef(onGyro);
@@ -176,7 +178,10 @@ export function useInstalledSmartCube(
     const stop = scanStopRef.current;
     scanStopRef.current = null;
     setScanning(false);
-    await stop?.().catch(() => undefined);
+    const cleanup = Promise.all([scanCleanupRef.current, scanStartupRef.current, stop?.().catch(() => undefined)])
+      .then(() => undefined);
+    scanCleanupRef.current = cleanup;
+    await cleanup;
   }, []);
 
   const disconnect = useCallback(async () => {
@@ -199,44 +204,51 @@ export function useInstalledSmartCube(
   const scanDevices = useCallback(async () => {
     const transport = transportRef.current!;
     if (!transport.scanDevices || connectionRef.current || busyRef.current) return;
-    await stopScan();
-    const generation = ++scanGenerationRef.current;
+    const cleanup = stopScan();
+    const generation = scanGenerationRef.current;
     const current = () => scanGenerationRef.current === generation;
+    await cleanup;
+    if (!current()) return;
     scannedDevicesRef.current = new Map();
     setAvailableDevices([]);
     setScanning(true);
     setPhase((value) => value === 'error' ? 'idle' : value);
-    try {
-      await transport.initialize();
-      if (!current()) return;
-      const stop = await transport.scanDevices(
-        requestOptions(language, Boolean(transport.getServices)),
-        (devices) => {
-          if (!current()) return;
-          scannedDevicesRef.current = new Map(devices.map((device) => [device.id, device]));
-          setAvailableDevices(devices);
-        },
-      );
-      if (!current()) {
-        await stop().catch(() => undefined);
-        return;
-      }
-      scanStopRef.current = stop;
-      scanTimerRef.current = globalThis.setTimeout(() => {
+    const startup = (async () => {
+      try {
+        await transport.initialize();
         if (!current()) return;
-        const finish = scanStopRef.current;
-        scanStopRef.current = null;
-        scanTimerRef.current = null;
-        setScanning(false);
-        void finish?.().catch(() => undefined);
-      }, SMART_CUBE_SCAN_TIMEOUT_MS);
-    } catch (error) {
-      if (current()) {
-        setScanning(false);
-        setPhase('error');
+        const stop = await transport.scanDevices!(
+          requestOptions(language, Boolean(transport.getServices)),
+          (devices) => {
+            if (!current()) return;
+            scannedDevicesRef.current = new Map(devices.map((device) => [device.id, device]));
+            setAvailableDevices(devices);
+          },
+        );
+        if (!current()) {
+          await stop().catch(() => undefined);
+          return;
+        }
+        scanStopRef.current = stop;
+        scanTimerRef.current = globalThis.setTimeout(() => {
+          if (!current()) return;
+          const finish = scanStopRef.current;
+          scanStopRef.current = null;
+          scanTimerRef.current = null;
+          setScanning(false);
+          scanCleanupRef.current = Promise.all([scanCleanupRef.current, finish?.().catch(() => undefined)])
+            .then(() => undefined);
+        }, SMART_CUBE_SCAN_TIMEOUT_MS);
+      } catch (error) {
+        if (current()) {
+          setScanning(false);
+          setPhase('error');
+        }
+        throw error;
       }
-      throw error;
-    }
+    })();
+    scanStartupRef.current = startup.catch(() => undefined);
+    await startup;
   }, [language, stopScan]);
 
   const connect = useCallback(async (deviceId?: string): Promise<string> => {
