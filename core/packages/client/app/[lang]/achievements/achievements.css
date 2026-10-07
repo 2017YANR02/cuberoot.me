@@ -47,7 +47,7 @@
 .achievements-hero h1 {
   max-width: 940px;
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: clamp(3rem, 7.8vw, 6.6rem);
   font-weight: 400;
   letter-spacing: -0.045em;
@@ -91,11 +91,13 @@
 .achievements-proof-index {
   grid-row: span 2;
   color: var(--accent);
-  font: 600 0.7rem/1.2 ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.2;
 }
 
 .achievements-proof-step strong {
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: 1.05rem;
   font-weight: 500;
   line-height: 1;
@@ -131,7 +133,9 @@
 .featured-system-label span {
   padding-top: 0.25rem;
   color: var(--muted-foreground);
-  font: 600 0.7rem/1.3 ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
   letter-spacing: 0.08em;
 }
 
@@ -152,7 +156,7 @@
 
 .featured-system-metric strong {
   color: var(--accent);
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: clamp(3.4rem, 7vw, 5.8rem);
   font-weight: 400;
   letter-spacing: -0.05em;
@@ -170,7 +174,7 @@
 .featured-system-summary h2 {
   max-width: 720px;
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: clamp(2rem, 4.4vw, 3.5rem);
   font-weight: 400;
   letter-spacing: -0.035em;
@@ -210,11 +214,13 @@
   display: block;
   margin-bottom: 0.8rem;
   color: var(--accent);
-  font: 600 0.68rem/1 ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .featured-engine-step strong {
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: 1.08rem;
   font-weight: 500;
 }
@@ -240,7 +246,7 @@
 
 .featured-work-group h3 {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: 1.12rem;
   font-weight: 500;
 }
@@ -318,14 +324,16 @@
 .achievement-row-heading span {
   padding-top: 0.25rem;
   color: var(--muted-foreground);
-  font: 600 0.7rem/1.3 ui-monospace, 'Cascadia Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.3;
   letter-spacing: 0.08em;
 }
 
 .achievement-row-content h3 {
   max-width: 680px;
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: clamp(1.65rem, 3.6vw, 2.55rem);
   font-weight: 400;
   letter-spacing: -0.025em;
@@ -392,14 +400,14 @@
 .achievements-closing > p {
   margin: -0.2em 0 0;
   color: var(--accent);
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: clamp(4rem, 9vw, 7rem);
   line-height: 1;
 }
 
 .achievements-closing h2 {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: inherit;
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 400;
   letter-spacing: -0.03em;
