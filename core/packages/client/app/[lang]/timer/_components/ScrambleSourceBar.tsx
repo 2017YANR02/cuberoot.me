@@ -72,7 +72,7 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
       )}
 
       {/* 二阶专项打乱有自己的精确目标条件,不再叠加「按步数」状态筛选。 */}
-      {uses222SpecialType && (
+      {uses222SpecialType && src === 'wca' && (
         <div className="wca-src-config">
           <div className="settings-row wca-src-toprow">
             <Scramble222ModePicker
@@ -80,7 +80,6 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
               disabled={disabled}
               showLabel={false}
               showModeWithSpecialType={src === 'wca'}
-              showSpecialTypes
               typeOptions={type222Options ?? undefined}
             />
           </div>
@@ -102,7 +101,6 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
                 active222
                 disabled={disabled}
                 showLabel={false}
-                showSpecialTypes={show222SpecialTypes}
                 typeOptions={type222Options ?? undefined}
               />
             : undefined}
