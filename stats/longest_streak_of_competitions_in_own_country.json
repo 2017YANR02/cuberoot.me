@@ -52,14 +52,14 @@
       null
     ],
     [
-      79,
+      80,
       "[Bence Barát](https://www.worldcubeassociation.org/persons/2008BARA01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
       null
     ],
     [
-      79,
+      80,
       "[Dániel Varga](https://www.worldcubeassociation.org/persons/2008VARG01)",
       "Hungary",
       "[Hungarian Open 2008](https://www.worldcubeassociation.org/competitions/HungarianOpen2008)",
@@ -80,7 +80,7 @@
       null
     ],
     [
-      68,
+      69,
       "[Szabolcs Szántai](https://www.worldcubeassociation.org/persons/2016SZAN01)",
       "Hungary",
       "[Hungarian Nationals 2016](https://www.worldcubeassociation.org/competitions/HungarianNationals2016)",
@@ -179,6 +179,13 @@
     ],
     [
       45,
+      "[Maksim Zemtšihhin](https://www.worldcubeassociation.org/persons/2018ZEMT01)",
+      "Estonia",
+      "[Tallinn Open 2019](https://www.worldcubeassociation.org/competitions/TallinnOpen2019)",
+      null
+    ],
+    [
+      45,
       "[Jernej Omulec](https://www.worldcubeassociation.org/persons/2010OMUL01)",
       "Slovenia",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
@@ -189,13 +196,6 @@
       "[Matic Omulec](https://www.worldcubeassociation.org/persons/2010OMUL02)",
       "Slovenia",
       "[Slovenian Open 2010](https://www.worldcubeassociation.org/competitions/SlovenianOpen2010)",
-      null
-    ],
-    [
-      44,
-      "[Maksim Zemtšihhin](https://www.worldcubeassociation.org/persons/2018ZEMT01)",
-      "Estonia",
-      "[Tallinn Open 2019](https://www.worldcubeassociation.org/competitions/TallinnOpen2019)",
       null
     ],
     [
@@ -326,6 +326,13 @@
     ],
     [
       34,
+      "[Mike Vidrik Rätsep](https://www.worldcubeassociation.org/persons/2019RATS05)",
+      "Estonia",
+      "[Tartu Open 2022](https://www.worldcubeassociation.org/competitions/TartuOpen2022)",
+      null
+    ],
+    [
+      34,
       "[Dušan Zakelšek](https://www.worldcubeassociation.org/persons/2012ZAKE02)",
       "Slovenia",
       "[Slovenian Open 2012](https://www.worldcubeassociation.org/competitions/SlovenianOpen2012)",
@@ -333,16 +340,16 @@
     ],
     [
       33,
-      "[Francisco Javier Lemes Sáez](https://www.worldcubeassociation.org/persons/2009SAEZ01)",
-      "Chile",
-      "[Invierno 2010](https://www.worldcubeassociation.org/competitions/CampeonatoInvierno2010)",
+      "[Carmen Teo Bin Jie (张斌婕)](https://www.worldcubeassociation.org/persons/2012JIET01)",
+      "Singapore",
+      "[Singapore Megaland July 2025](https://www.worldcubeassociation.org/competitions/SingaporeMegalandJuly2025)",
       null
     ],
     [
       33,
-      "[Mike Vidrik Rätsep](https://www.worldcubeassociation.org/persons/2019RATS05)",
-      "Estonia",
-      "[Tartu Open 2022](https://www.worldcubeassociation.org/competitions/TartuOpen2022)",
+      "[Francisco Javier Lemes Sáez](https://www.worldcubeassociation.org/persons/2009SAEZ01)",
+      "Chile",
+      "[Invierno 2010](https://www.worldcubeassociation.org/competitions/CampeonatoInvierno2010)",
       null
     ],
     [
@@ -378,13 +385,6 @@
       "[Natthaphat Mahtani (ณัฐภัทร จี มาทานี)](https://www.worldcubeassociation.org/persons/2011MAHT02)",
       "Thailand",
       "[TCA Championship 2011](https://www.worldcubeassociation.org/competitions/TCAChampionship2011)",
-      null
-    ],
-    [
-      32,
-      "[Carmen Teo Bin Jie (张斌婕)](https://www.worldcubeassociation.org/persons/2012JIET01)",
-      "Singapore",
-      "[Singapore Megaland July 2025](https://www.worldcubeassociation.org/competitions/SingaporeMegalandJuly2025)",
       null
     ],
     [
@@ -690,6 +690,13 @@
     ],
     [
       24,
+      "[Márton Pap](https://www.worldcubeassociation.org/persons/2023PAPM01)",
+      "Hungary",
+      "[Hungarian All-Rounder 8 2025](https://www.worldcubeassociation.org/competitions/HungarianAllRounder82025)",
+      null
+    ],
+    [
+      24,
       "[Erik Akkersdijk](https://www.worldcubeassociation.org/persons/2005AKKE01)",
       "Netherlands",
       "[Netherlands 2005](https://www.worldcubeassociation.org/competitions/Netherlands2005)",
@@ -728,13 +735,6 @@
       "[DaYeong Kim (김다영)](https://www.worldcubeassociation.org/persons/2016KIMD05)",
       "Republic of Korea",
       "[Daegu Autumn Open 2019](https://www.worldcubeassociation.org/competitions/DaeguAutumnOpen2019)",
-      null
-    ],
-    [
-      24,
-      "[Timothy Kong Wing Sum (江永琛)](https://www.worldcubeassociation.org/persons/2015SUMT01)",
-      "Hong Kong, China",
-      "[Hong Kong Spring Cube Day 2015](https://www.worldcubeassociation.org/competitions/HongKongSpring2015)",
       null
     ]
   ]
