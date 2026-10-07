@@ -1,5 +1,11 @@
 # CubeRoot 五端 App 完整路线图
 
+### 2026-10-07：Capacitor 与宿主构建依赖安全升级（构建通过，安装包未发布）
+
+- Android/iOS 的 Capacitor core、CLI 和两平台运行时统一从 8.5.0 升至 8.5.3，包含 GHSA-rvm3-566m-v7fv 的内部 HTTP 代理导航修复；Android Gradle 引用、iOS SPM 配置及解析锁同步到相同版本。
+- Mobile/Desktop/Harmony 的 Vite 从 8.0.1 升至 8.0.16；Mobile/Desktop 的 Vitest 最低版本升至 4.1.11。保留既有宿主边界、插件、App 标识、版本号与 WebView 103 构建目标。
+- 本机 Mobile Web build、Android/iOS Capacitor sync、JDK 21 Android debug APK 和 iOS unsigned Simulator build 通过。未安装到设备、未签名发布、未上传或提交应用商店；已经安装或审核中的旧包不会因 Git push 自动取得此修复，仍需后续发布新版客户端。此次依赖修复不代表五端整体验收完成。
+
 ### 2026-10-07：九个智能魔方专项与连续训练 P1（本地，设备待验）
 
 - 共享目录新增 CLL/ELL/EOCP/2GLL/OLLCP/ZZLL/ZBLS/LSE/L10P，Web 与 App 共用随机/种子生成、固定朝向与专项停表；csTimer 兼容导出保留原专项供回导恢复。
