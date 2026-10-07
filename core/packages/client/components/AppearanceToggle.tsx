@@ -296,7 +296,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             className="appearance-extra"
             onPointerEnter={endPreview}
             onFocus={endPreview}
-          ><SiteBackgroundControl onDiagnosticsOpen={closeMenu} />{menuContent}</div>}
+          ><SiteBackgroundControl />{menuContent}</div>}
         </div>
       )}
     </div>
