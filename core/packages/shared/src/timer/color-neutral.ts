@@ -29,7 +29,7 @@ const CN_3X3_EVENTS = new Set<EventId>([
   // State-based training uses its fixed preScrT goal frame, with no extra random rotation.
   '333', '333oh', '333fm',
   'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2',
-  'cross', 'f2l', 'll',
+  'cross', 'll',
 ]);
 
 export function isCnEligible(event: EventId): boolean {
