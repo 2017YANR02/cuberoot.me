@@ -128,6 +128,7 @@ core/packages/client/.private/
 
 # Build-generated public assistant content, regenerated with the website.
 core/packages/client/public/assistant/pages.json
+core/packages/client/public/maplibre/
 
 # Installed-host stage solver assets, copied from tools by the shared worker builder.
 /core/apps/*/public/tools/solver/rust-cross/

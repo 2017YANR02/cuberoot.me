@@ -7,6 +7,32 @@
   },
   "artifacts": [
     {
+      "id": "client.maplibre-worker",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Installed maplibre-gl package, at the version in the pnpm lockfile",
+        "paths": [
+          "core/packages/client/package.json",
+          "core/pnpm-lock.yaml"
+        ]
+      },
+      "license": {
+        "spdx": "BSD-3-Clause",
+        "evidence": "LICENSE.txt copied from maplibre-gl alongside the worker"
+      },
+      "owner": "core/scripts/copy-maplibre-assets.mts",
+      "workingDirectory": "core",
+      "command": "node scripts/copy-maplibre-assets.mts",
+      "transientOutputs": [
+        "core/packages/client/public/maplibre/**"
+      ],
+      "verification": [
+        "Production GET /maplibre/<installed-version>/maplibre-gl-worker.mjs and maplibre-gl-shared.mjs return JavaScript",
+        "Open the competition globe and confirm its worker loads"
+      ],
+      "driftPolicy": "Copied before client dev/build; versioned URLs keep the worker and main module aligned. Do not edit generated copies."
+    },
+    {
       "id": "client.assistant-public-content",
       "kind": "build-generated",
       "source": {
