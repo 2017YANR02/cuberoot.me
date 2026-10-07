@@ -264,6 +264,12 @@ function maskHolds(facelets: string, groups: readonly number[][], orientation: r
   return true;
 }
 
+/** Judge the displayed training frame only, without accepting another cross face or Roux axis. */
+export function stepSolvedInFrame(step: CubeStep, facelets: string): boolean {
+  return facelets.length === 54 && EQUIVALENCES[step].every((group) =>
+    group.every((index) => facelets[index] === facelets[group[0]]));
+}
+
 /**
  * Is `step` complete in this state, holding the cube any way you like?
  *

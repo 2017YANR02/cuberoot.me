@@ -64,6 +64,7 @@ export * from './goals';
 export * from './display-settings';
 export * from './cube-orientation';
 export * from './pre-scramble';
+export * from './smart-cube-training';
 export * from './color-neutral';
 export * from './sound-settings';
 export * from './metronome-settings';
