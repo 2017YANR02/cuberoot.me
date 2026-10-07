@@ -3667,7 +3667,6 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
       <div ref={cardRef} className="comp-modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true">
         <header className="comp-modal-header comp-cuber-modal-header">
           <div className="comp-modal-title">
-            {personal && <span>{tr({ zh: '我的成绩', en: 'My results' })}</span>}
             {u && <Flag iso2={regionToIso2(u.region)} className="comp-flag" />}
             {u?.wcaid ? (
               <Link
@@ -3685,7 +3684,6 @@ function CuberModal({ number, data, isZh, pbMap, changeMap, personal = false, lo
             <SearchInput
               value={search}
               onChange={setSearch}
-              autoFocus
               type="search"
               placeholder={tr({ zh: '搜索成绩', en: 'Search results' })}
             />
