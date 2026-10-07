@@ -126,7 +126,8 @@ describe('progress routes', () => {
 
     expect(response.status).toBe(413);
     expect(await response.json()).toEqual({ error: 'Payload too large' });
-    expect(requireAuthMock).toHaveBeenCalledOnce();
+    // Hono checks bodies without Content-Length before invoking the route too.
+    expect(requireAuthMock).not.toHaveBeenCalled();
     expect(queryMock).not.toHaveBeenCalled();
   });
 
