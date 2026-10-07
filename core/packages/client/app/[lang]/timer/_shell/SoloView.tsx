@@ -10,7 +10,7 @@ import { apiUrl as replayApiUrl } from '@/lib/api-base';
 import { TimerStatisticsWorkspace, timerStatsPanelLabels } from '@cuberoot/timer-ui';
 import { loadAllSessionData, deleteSessionSolves } from '../_lib/storage/db';
 import { TIMER_DEVICE_CENTER_LABELS } from '@cuberoot/timer-ui';
-import { timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
+import { TIMER_333_SCRAMBLE_TYPES, timerPuzzleSelection, timerHidesRunningUi, upsertNetRecordedSolve } from '@cuberoot/shared/timer';
 import { useTimerRound, TimerTargetTime, useTimerTargetFeedback } from '@cuberoot/timer-ui';
 
 import { TimerWorkspace, useTimerWideLayout } from '@cuberoot/timer-ui';
@@ -2708,6 +2708,15 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
     }))
   ), [isZh]);
 
+  const selectedPuzzle = event === 'eg1' || event === 'eg2' ? '222' : timerPuzzleSelection(event).puzzle;
+  const trainingEvents: readonly string[] = selectedPuzzle === '333'
+    ? TIMER_333_SCRAMBLE_TYPES.filter((type) => type.event !== '333').map((type) => type.event)
+    : selectedPuzzle === '222' ? ['eg1', 'eg2'] : [];
+  const trainingItems = trainingEvents.flatMap((id) => {
+    const item = eventPickerGroups.flatMap((group) => group.items).find((item) => item.id === id);
+    return item ? [{ value: id, label: item.label }] : [];
+  });
+
   // 「难度」开关的挂点。开关的可用性归打乱来源那两个配置组件(只有它们知道当前项目 / 当前
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
   // 用 state 而非 ref:portal 的目标必须在子组件渲染时已存在,ref.current 那一帧还是 null。
@@ -2974,6 +2983,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             }}
             puzzleLabel={tr({ zh: '项目', en: 'Puzzle' })}
             scrambleTypeLabel={tr({ zh: '打乱类型', en: 'Scramble type' })}
+            combineScrambleTypes
             dataNoTimer
           />
           {/* 收起态用短名称,菜单保留完整名称。放在项目选择器右侧,和「人数」下拉同一组。 */}
@@ -2983,7 +2993,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             triggerClassName="shell-players-select"
             popupClassName="shell-scramble-source-popup"
             labels={{
-              ariaLabel: tr({ zh: '打乱来源', en: 'Scramble source' }),
+              ariaLabel: tr({ zh: '打乱类型', en: 'Scramble type' }),
               real: tr({ zh: '真题', en: 'Real' }),
               realOption: tr({ zh: 'WCA 真题', en: 'WCA real' }),
               random: tr({ zh: '随机', en: 'Random' }),
@@ -2992,7 +3002,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               manualOption: tr({ zh: '手动输入', en: 'Manual input' }),
             }}
             value={settings.scrambleSource}
-            onChange={(scrambleSource) => updateSettings({ scrambleSource })}
+            trainingItems={trainingItems}
+            trainingValue={trainingEvents.includes(event) ? event : undefined}
+            onTrainingChange={(id) => {
+              const nextEvent = timerEventIdFromSelector(id);
+              if (!nextEvent) return;
+              updateSettings({ scrambleSource: 'random' });
+              selectEvent(nextEvent);
+            }}
+            onChange={(scrambleSource) => {
+              selectEvent(selectedPuzzle);
+              updateSettings({ scrambleSource });
+            }}
             realValue="wca"
           />
           {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。

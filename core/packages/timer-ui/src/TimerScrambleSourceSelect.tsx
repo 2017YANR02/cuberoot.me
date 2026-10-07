@@ -35,6 +35,9 @@ export interface TimerScrambleSourceLabels {
 export interface TimerScrambleSourceSelectProps<
   TReal extends TimerScrambleSourceRealValue = TimerScrambleSourceRealValue,
 > extends TimerOverlayControlProps {
+  trainingItems?: readonly { value: string; label: ReactNode }[];
+  trainingValue?: string;
+  onTrainingChange?: (value: string) => void;
   className?: string;
   disabled?: boolean;
   labels: TimerScrambleSourceLabels;
@@ -59,6 +62,9 @@ const POPUP_GAP_PX = 6;
 export function TimerScrambleSourceSelect<
   TReal extends TimerScrambleSourceRealValue,
 >({
+  trainingItems = [],
+  trainingValue,
+  onTrainingChange,
   className,
   disabled = false,
   labels,
@@ -92,7 +98,7 @@ export function TimerScrambleSourceSelect<
     { value: 'random', label: labels.randomOption },
     { value: 'manual', label: labels.manualOption },
   ];
-  const currentLabel = {
+  const currentLabel = trainingItems.find((item) => item.value === trainingValue)?.label ?? {
     real: labels.real,
     random: labels.random,
     manual: labels.manual,
@@ -101,6 +107,15 @@ export function TimerScrambleSourceSelect<
   useEffect(() => {
     if (disabled && open) close('disabled');
   }, [close, disabled, open]);
+
+  useEffect(() => {
+    if (!open || disabled) return;
+    // Contain even a short menu: an unscrollable popup cannot consume touch
+    // overscroll itself, so lock the document for the popup's lifetime.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [disabled, open]);
 
   useEffect(() => {
     const wasOpen = previousOpenRef.current;
@@ -204,10 +219,12 @@ export function TimerScrambleSourceSelect<
           id={popupId}
           ref={panelRef}
           role="listbox"
+          onTouchMove={(event) => event.stopPropagation()}
+          onWheel={(event) => event.stopPropagation()}
         >
           <div className="timer-scramble-source-options">
             {items.map((item) => {
-              const active = item.value === canonicalValue;
+              const active = !trainingValue && item.value === canonicalValue;
               return (
                 <button
                   aria-selected={active}
@@ -226,6 +243,16 @@ export function TimerScrambleSourceSelect<
                 </button>
               );
             })}
+            {trainingItems.map((item) => (
+              <button
+                aria-selected={item.value === trainingValue}
+                className={`timer-scramble-source-option${item.value === trainingValue ? ' active' : ''}`}
+                key={item.value}
+                onClick={() => { onTrainingChange?.(item.value); close('select', true); }}
+                role="option"
+                type="button"
+              >{item.label}</button>
+            ))}
           </div>
         </div>,
         document.body,

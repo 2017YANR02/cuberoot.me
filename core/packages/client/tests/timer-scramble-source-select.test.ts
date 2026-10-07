@@ -331,4 +331,27 @@ describe('shared timer scramble-source select', () => {
     expect(popup?.style.top).toBe('534px');
     expect(popup?.style.visibility).toBe('visible');
   });
+  it('orders training after sources, selects exactly one option, and restores document scrolling', () => {
+    const onTrainingChange = vi.fn();
+    const onChange = vi.fn();
+    document.body.style.overflow = 'auto';
+    act(() => root.render(createElement(TimerScrambleSourceSelect<'wca'>, {
+      labels: LABELS, onChange, realValue: 'wca', value: 'random',
+      trainingItems: [{ value: 'cross', label: 'Cross' }, { value: 'f2l', label: 'F2L' }],
+      trainingValue: 'cross', onTrainingChange,
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.timer-scramble-source-trigger')!;
+    expect(trigger.textContent).toBe('Cross');
+    act(() => trigger.click());
+    const options = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+    expect(options.map((item) => item.textContent)).toEqual(['WCA real', 'Random state', 'Manual input', 'Cross', 'F2L']);
+    expect(options.map((item) => item.getAttribute('aria-selected'))).toEqual(['false', 'false', 'false', 'true', 'false']);
+    expect(document.body.style.overflow).toBe('hidden');
+    act(() => options[4].click());
+    expect(onTrainingChange).toHaveBeenCalledWith('f2l');
+    expect(onChange).not.toHaveBeenCalled();
+    expect(document.body.style.overflow).toBe('auto');
+    document.body.style.overflow = '';
+  });
+
 });

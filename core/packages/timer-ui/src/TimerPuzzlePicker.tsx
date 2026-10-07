@@ -33,6 +33,8 @@ export interface TimerPuzzlePickerProps extends TimerOverlayControlProps {
   dataNoTimer?: boolean;
   /** Enable the puzzle/type split on timer controls; data import may keep raw modes. */
   scrambleTypeLabel?: string;
+  /** The host renders training choices in its combined source menu. */
+  combineScrambleTypes?: boolean;
 }
 
 const VIEWPORT_MARGIN_PX = 8;
@@ -52,18 +54,20 @@ export function TimerPuzzlePicker({
   puzzleLabel,
   selectedEvent,
   scrambleTypeLabel,
+  combineScrambleTypes = false,
 }: TimerPuzzlePickerProps) {
   const availableItems = suppliedGroups.flatMap((group) => group.items);
   const separateTypes = Boolean(scrambleTypeLabel && availableItems.some((item) => item.id === '333'));
   const storedEvent = timerEventIdFromSelector(selectedEvent);
   const selection = storedEvent ? timerPuzzleSelection(storedEvent) : null;
   // Non-training selectors may use WCA spellings such as 333bf; keep their UI identity.
-  const selectedPuzzle = separateTypes && selection?.puzzle === '333' ? '333' : selectedEvent;
+  const selectedPuzzle = combineScrambleTypes && (selectedEvent === 'eg1' || selectedEvent === 'eg2')
+    ? '222' : separateTypes && selection?.puzzle === '333' ? '333' : selectedEvent;
   const groups = suppliedGroups.map((group) => ({
     ...group,
-    items: group.items.filter((item) => !separateTypes || !TIMER_333_SCRAMBLE_TYPES.some(
+    items: group.items.filter((item) => !(combineScrambleTypes && (item.id === 'eg1' || item.id === 'eg2')) && (!separateTypes || !TIMER_333_SCRAMBLE_TYPES.some(
       (type) => type.event !== '333' && type.event === item.id,
-    )),
+    ))),
   })).filter((group) => group.items.length > 0);
   const scrambleTypes = TIMER_333_SCRAMBLE_TYPES.filter((type) => availableItems.some((item) => item.id === type.event));
   const [activeMenu, setActiveMenu] = useState<'puzzle' | 'type'>('puzzle');
@@ -209,7 +213,7 @@ export function TimerPuzzlePicker({
         </div>
       )}
     </div>
-    {separateTypes && selectedPuzzle === '333' && scrambleTypes.length > 1 && (
+    {!combineScrambleTypes && separateTypes && selectedPuzzle === '333' && scrambleTypes.length > 1 && (
       <CompactSelect
         variant="plain"
         className="timer-scramble-type-select"
