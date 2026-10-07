@@ -10,6 +10,7 @@ import { Check, Lock, LockOpen, ArrowLeft, ArrowRight, Pencil, Trash2, RotateCcw
 import type { DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
+import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
 import HomeLink from '@/components/HomeLink';
 import LandingSearch from '@/components/LandingSearch';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -72,6 +73,8 @@ const CSS = `
 .deskpet-character-settings,.deskpet-character-gallery{margin-top:4px;padding-top:4px;border-top:1px solid var(--border-default);}
 .deskpet-character-settings{display:flex;flex-direction:column;gap:2px;}
 .deskpet-character-setting{display:flex;align-items:center;gap:12px;padding:6px 10px;font-size:13px;}
+.deskpet-character-settings .bool-toggle{width:100%;justify-content:space-between;}
+.deskpet-character-hint{margin:0;padding:0 10px 6px;font-size:12px;line-height:1.5;color:var(--muted-foreground);}
 .deskpet-character-sizes{display:flex;gap:2px;}
 .deskpet-character-menu .deskpet-character-size{width:auto;padding:6px 10px;white-space:nowrap;}
 .deskpet-character-random .pill-toggle{flex:none;}
@@ -148,6 +151,7 @@ export default function DeskPetSearch({
   onToggleMetronome: () => void;
   onOpenPetHome: () => void;
 }) {
+  const [petVisible, setPetVisible] = useDeskPetVisible();
   const searchCards = SEARCH_CARDS.filter((card) => isLandingSearchCardVisible(card, isAdmin()));
   const backdropRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -377,6 +381,10 @@ export default function DeskPetSearch({
                 </button>
               </div>
               <div className="deskpet-character-settings">
+                <BoolToggle className="deskpet-character-setting"
+                  value={petVisible} onChange={setPetVisible}
+                  label={tr({ zh: '显示桌宠', en: 'Show desk pet' })} />
+                <p className="deskpet-character-hint">{tr({ zh: '关闭后可在顶部的外观-显示桌宠再次开启', en: 'After hiding your pet, turn it back on from Appearance → Show desk pet at the top.' })}</p>
                 <div className="deskpet-character-setting">
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Maximize2 size={18} /></span>
