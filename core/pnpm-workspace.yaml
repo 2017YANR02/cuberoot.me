@@ -22,3 +22,8 @@ packageExtensions:
   'three-mesh-bvh@0.9.10':
     dependencies:
       '@types/three': '0.183.1'
+minimumReleaseAgeExclude:
+  - '@capacitor/android@8.5.3'
+  - '@capacitor/cli@8.5.3'
+  - '@capacitor/core@8.5.3'
+  - '@capacitor/ios@8.5.3'

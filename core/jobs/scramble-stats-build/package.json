@@ -37,8 +37,8 @@
   "devDependencies": {
     "@types/node": "^25.5.0",
     "cheerio": "^1.2.0",
-    "tsx": "^4.19.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   }
 }
