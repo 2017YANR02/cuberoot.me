@@ -7,6 +7,7 @@
  */
 import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
+import { copyPageLink } from '@/lib/page-share';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,7 +16,7 @@ import {
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   ChevronDown, ChevronUp,
   ArrowLeft, Copy, Check, Maximize2, Minimize2,
-  Lock, Link2, LogIn,
+  Lock, Link2, LogIn, ExternalLink,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
@@ -65,7 +66,7 @@ import { canonicalSq1Alg, formatScrambleForEvent, compactSq1Solution } from '@cu
 import {
   buildNormalizedSolution, findCrossLineIndex, hasNormalizableCrossMove,
 } from '@/lib/recon-norm-cross-extract';
-import { computeAllStats, buildCaption, buildCaptionHeader } from '@/lib/recon-stats';
+import { computeAllStats, buildCaptionHeader } from '@/lib/recon-stats';
 import {
   DiscussionComposer, DiscussionEditBox, UserHeadline, AuthorName, ItemMenu, UserAvatarFallback,
 } from '@/components/Discussion';
@@ -347,10 +348,6 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
     [isSq1, rawDisplayText],
   );
   const crossLineIdx = useMemo(() => findCrossLineIndex(displayText), [displayText]);
-  const caption = useMemo(
-    () => buildCaption(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event),
-    [solutionText, solve.event, solve.execTime, solve.rawTime],
-  );
   const captionHeader = useMemo(
     () => solutionText ? buildCaptionHeader(solutionText, (isBldEvent(solve.event) ? solve.execTime : solve.rawTime) ?? 0, solve.event) : '',
     [solutionText, solve.event, solve.execTime, solve.rawTime],
@@ -410,7 +407,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       }
       <div className="detail-content-pane">
         {solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} caption={caption} copyText={fullCopyText} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} />
         )}
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
@@ -522,62 +519,61 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ExternalLinks({ event, scramble, alg, solveId, caption, copyText }: {
-  event: string; scramble: string; alg: string; solveId: number; caption: string; copyText: string;
+function ExternalLinks({ event, scramble, alg, solveId, copyText }: {
+  event: string; scramble: string; alg: string; solveId: number; copyText: string;
 }) {
   const { t } = useTranslation();
-  // 外站出链(alg.cubing.net / cubedb.net)只给管理员——普通读者用不上,且
-  // 参数是给上游站排查复盘数据用的。useIsAdmin 是 hydration-safe 版,不能裸读 store。
+  // Preserve the existing admin-only external debugging links.
   const isAdminUser = useIsAdmin();
   const playerAlg = event === 'fto' ? cleanFtoReconAlgForPlayer(alg) : cleanForPlayer(alg);
   const { algUrl, algSiteName, cubedbUrl } = buildExternalLinks(event, scramble, playerAlg);
   const simPuzzle = simPuzzleForReconEvent(event);
   const simHref = simPuzzle ? `/sim?${buildSimQuery(simPuzzle, scramble, alg)}` : null;
-  const shareUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/recon/${solveId}`
-    : `/recon/${solveId}`;
-  const [copiedFull, setCopiedFull] = useState(false);
+  const [copyResult, setCopyResult] = useState<{ target: 'link' | 'recon'; success: boolean } | null>(null);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (copyResetRef.current) clearTimeout(copyResetRef.current); }, []);
 
-  const copyTo = (text: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    const btn = e.currentTarget as HTMLElement;
-    const orig = btn.textContent;
-    navigator.clipboard.writeText(text).then(() => {
-      btn.textContent = t('recon.copied');
-      setTimeout(() => { btn.textContent = orig; }, 1500);
-    });
+  const copy = async (target: 'link' | 'recon') => {
+    const text = target === 'link' ? `${window.location.origin}/recon/${solveId}` : copyText;
+    const success = await copyPageLink(text);
+    if (copyResetRef.current) clearTimeout(copyResetRef.current);
+    setCopyResult({ target, success });
+    copyResetRef.current = setTimeout(() => setCopyResult(null), 2000);
   };
-
-  const copyFull = () => {
-    if (!copyText) return;
-    navigator.clipboard.writeText(copyText).then(() => {
-      setCopiedFull(true);
-      setTimeout(() => setCopiedFull(false), 1500);
-    });
+  const copyLabel = (target: 'link' | 'recon') => {
+    if (copyResult?.target === target) {
+      return copyResult.success ? t('recon.copied') : tr({ zh: '复制失败，请重试', en: 'Copy failed, retry' });
+    }
+    return target === 'link'
+      ? tr({ zh: '复制链接', en: 'Copy link' })
+      : tr({ zh: '复制复盘', en: 'Copy reconstruction' });
   };
 
   return (
     <div className="recon-external-links">
-      {isAdminUser && (
-        <>
-          <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}</a>
-          {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net</a>}
-        </>
+      {(isAdminUser || simHref) && (
+        <div className="recon-navigation-links">
+          {isAdminUser && (
+            <>
+              <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}<ExternalLink size={13} aria-hidden="true" /></a>
+              {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net<ExternalLink size={13} aria-hidden="true" /></a>}
+            </>
+          )}
+          {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'Simulator' })}</Link>}
+        </div>
       )}
-      {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'simulator' })}</Link>}
-      <a href="#" onClick={copyTo(shareUrl)}>{t('recon.link')}</a>
-      {caption && <a href="#" onClick={copyTo(caption)}>{t('recon.caption')}</a>}
-      {copyText && (
-        <button
-          type="button"
-          className="recon-copy-full"
-          onClick={copyFull}
-          title={t('recon.copy')}
-          aria-label={t('recon.copy')}
-        >
-          {copiedFull ? <Check size={15} /> : <Copy size={15} />}
+      <div className="recon-copy-actions">
+        <button type="button" className="recon-copy-action" onClick={() => { void copy('link'); }}>
+          {copyResult?.target === 'link' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
+          <span aria-live="polite">{copyLabel('link')}</span>
         </button>
-      )}
+        {copyText && (
+          <button type="button" className="recon-copy-action" onClick={() => { void copy('recon'); }}>
+            {copyResult?.target === 'recon' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+            <span aria-live="polite">{copyLabel('recon')}</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
