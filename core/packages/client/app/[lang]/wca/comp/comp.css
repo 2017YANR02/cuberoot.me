@@ -1014,6 +1014,7 @@ td.is-pr {
   padding: 6px 8px;
   text-align: left;
   font-weight: 600;
+  white-space: nowrap;
 }
 .comp-modal-table tbody td {
   padding: 5px 8px;
