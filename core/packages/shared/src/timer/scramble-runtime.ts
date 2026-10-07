@@ -117,7 +117,7 @@ export const TIMER_SCRAMBLE_CAPABILITIES = Object.freeze({
   r4: { kind: 'compound', provider: 'timer-compound' },
   r5: { kind: 'compound', provider: 'timer-compound' },
   cross: { kind: 'cubing', cubingEventId: '333' },
-  f2l: { kind: 'cubing', cubingEventId: '333' },
+  f2l: { kind: 'shared', provider: 'training-state' },
   ll: { kind: 'shared', provider: 'trainer-case' },
   oll: { kind: 'shared', provider: 'trainer-case' },
   pll: { kind: 'shared', provider: 'trainer-case' },

@@ -2,6 +2,8 @@
 
 ## 2026-10-07：新增专项与连续训练 P1（本地）
 
+F2L 起始态补齐：原普通入口映射到 cubing.js 整颗三阶，种子入口也复用普通三阶随机步，因此十字未固定。对照 DCTimer-BLE `Tools.randomCrossSolved()` 与已有 csTimer `getF2LScramble()`，两者均固定 D 层四棱位置与方向、随机剩余块，现直接复用 csTimer f2l 并接入共享 training-state 普通/种子入口，过滤 F2L 已完成状态。F2L 保持训练朝向，不再叠加全局色中性随机转体。新增真实生成回归覆盖普通与种子路径在全部 24 朝向下的十字配色、未完成 F2L 和无转体输出；既有手动打乱不改写。
+
 共享项目目录新增 CLL、ELL、EOCP、2GLL、OLLCP、ZZLL、ZBLS、LSE、L10P；Web/App 共用随机与同步种子生成、固定训练朝向、预览和记录契约。非 Roux 新专项复用现有 csTimer 引擎并过滤已完成题目；种子结果经已有两阶段求解器确定化，避免缓存预热导致等价状态输出不同文本。
 
 同日朝向修正：此前补反向前缀会改变左右块配色；随后保留上游末尾转体仍要求用户转体。最终对照 DCTimer-BLE `Scrambler.randomRouxLSEState/randomRouxCMLLState` 改为固定中心与左右块的随机状态：LSE 固定所有角块，只随机 UR/UF/UL/UB/DF/DB 六棱；L10P 另外随机顶层四角，保持翻棱、扭角与排列奇偶约束。复用已有随机排列与两阶段求解器，只输出外层转动，不再生成末尾转体。普通与种子路径共用状态生成和求解；两项目各 32 组覆盖 24 个训练朝向，检查左右块、中心和 LSE 全部角块实际配色。puzzle-solvers/shared build 和 81 项生成/种子检查通过，未做本次真机验收。参考仓库固定为 `huizhiLLL/DCTimer-BLE` 的 `35264de`，已登记站点致谢。

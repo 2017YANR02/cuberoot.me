@@ -4,6 +4,7 @@ import { timerSmartCubeTrainingComplete } from './smart-cube-training';
 
 /** Candidate provider keys; filtering is shared by random and seeded workers. */
 export const TIMER_TRAINING_STATE_KEYS = {
+  f2l: 'f2l',
   cll: 'll', ell: 'ell', eocp: 'll', '2gll': '2gll',
   ollcp: 'll', zzll: 'zzll', zbls: 'zbls', lse: 'roux-lse', l10p: 'roux-l10p',
 } as const;

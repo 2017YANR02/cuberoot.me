@@ -13,6 +13,25 @@ import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 const displayed = (scramble: string) => toFaceletString(applyMoves(solved(3), 3, parseScramble(scramble)));
 
 describe('shared training state generators', () => {
+  it('F2L starts with the selected cross solved in random and seeded modes', async () => {
+    const crossMask = '----U--------R--R-----F--F--D-DDD-D-----L--L-----B--B-';
+    for (let index = 0; index < 16; index++) {
+      const request = { event: 'f2l' as const, cnMode: 'six' as const };
+      const result = await generateTimerScramble(request);
+      if (!result.ok) throw new Error(JSON.stringify(result));
+      const seeded = generateSeededTimerScramble({ ...request, ticket: { seed: 'f2l-cross', index, revision: 0 } });
+      for (const scramble of [result.scramble, seeded.scramble]) {
+        expect(scramble).toMatch(/^[URFDLB](?:2|')?(?: [URFDLB](?:2|')?)*$/);
+        expect(stepSolvedInFrame('f2l', displayed(scramble))).toBe(false);
+        for (const { value: grip } of CUBE_ORIENTATIONS) {
+          const actual = displayed(`${grip} ${scramble}`);
+          const expected = displayed(grip);
+          const cross = (state: string) => [...crossMask].map((mark, i) => mark === '-' ? '-' : state[i]).join('');
+          expect(cross(actual), `${grip}: ${scramble}`).toBe(cross(expected));
+        }
+      }
+    }
+  }, 60_000);
   it.each(['lse', 'l10p'] as const)('%s needs no regrip and keeps block colors in all 24 training grips', async (event) => {
     const blockMask = '------------RRRRRR---F-FF-FD-DD-DD-D---LLLLLL---B-BB-B';
     for (let index = 0; index < 32; index++) {
@@ -60,7 +79,7 @@ describe('shared training state generators', () => {
         if (event === 'lse' || event === 'l10p') {
           expect(stepSolvedInFrame('sb', displayed(scramble)), scramble).toBe(true);
           if (event === 'lse') expect(stepSolvedInFrame('cmll', displayed(scramble)), scramble).toBe(true);
-        } else if (event === 'zbls') {
+        } else if (event === 'zbls' || event === 'f2l') {
           expect(stepSolvedInFrame('cross', facelets)).toBe(true);
         } else {
           expect(stepSolvedInFrame('f2l', facelets), scramble).toBe(true);
