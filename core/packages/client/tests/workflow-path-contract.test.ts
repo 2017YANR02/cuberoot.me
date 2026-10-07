@@ -749,6 +749,22 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('bypasses path enumeration for full manual and scheduled runs', () => {
+    const { lines } = readStepLines('test.yml', 'Detect affected inputs');
+    expect(lines.join('\n')).toContain(
+      "if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}",
+    );
+    // Every downstream job must still run with absent filter outputs.
+    const workflow = readWorkflow('test.yml');
+    for (const job of ['test', 'client-tests', 'mobile', 'desktop-ui', 'desktop', 'analyzer-worker']) {
+      const start = workflow.indexOf(`\n  ${job}:\n`);
+      expect(start).toBeGreaterThan(-1);
+      const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+      const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+      expect(block).toContain("github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'");
+    }
+  });
+
   it('checks out ancestor Git ignore rules for native Cargo fingerprinting', () => {
     const workflow = readWorkflow('test.yml');
     const start = workflow.indexOf('\n  desktop:\n');

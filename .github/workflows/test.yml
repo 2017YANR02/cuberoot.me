@@ -101,6 +101,8 @@ jobs:
           filter: blob:none
 
       - name: Detect affected inputs
+        # Full runs already select every job; avoid exporting a repository-sized file list.
+        if: ${{ github.event_name != 'workflow_dispatch' && github.event_name != 'schedule' }}
         id: filter
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         with:
