@@ -118,10 +118,13 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   const [solve, setSolve] = useState<ReconSolve | null>(initialSolve ?? null);
   const [comments, setComments] = useState<ReconComment[]>([]);
   const [commentsRevision, setCommentsRevision] = useState(0);
+  const refreshComments = useCallback(() => setCommentsRevision(revision => revision + 1), []);
   const commentViewer = useAuthUser();
   useEffect(() => {
-    let active = true;
     setComments([]);
+  }, [id, commentViewer?.uid]);
+  useEffect(() => {
+    let active = true;
     if (id) listComments(Number(id)).then(rows => { if (active) setComments(rows); }).catch(() => {});
     return () => { active = false; };
   }, [id, commentViewer?.uid, commentsRevision]);
@@ -174,7 +177,6 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
     try {
       const solveData = await getRecon(Number(id));
       setSolve(solveData);
-      setCommentsRevision(revision => revision + 1);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -183,7 +185,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   }, [id]);
 
   // When the server already handed us the recon, skip the solve refetch and just
-  // load comments. onUpdate (mutations) still calls loadData for a full refresh.
+  // load comments. Comment mutations refresh only the comment list in place.
   useEffect(() => {
     if (initialSolve) {
       return;
@@ -317,7 +319,7 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
         solutionText={solutionText}
         solve={solve}
         comments={comments}
-        onUpdate={loadData}
+        onUpdate={refreshComments}
         initialSameScramble={initialSameScramble}
         fullscreenButton={fullscreenButton}
         shareOpen={shareOpen}
