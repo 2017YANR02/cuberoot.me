@@ -15,7 +15,7 @@ import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 const randomClient = createRandomScrambleClient();
 import { getEffectiveTimeFromEntry, computeAo5, computeAverage } from '@/app/[lang]/timer/_shared/stats-core';
 import { getSettings } from '@/app/[lang]/timer/_lib/settings';
-import { peekWcaRow, nextWcaRow, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
+import { nextWcaRow, prefetchWca, hasWcaSource, type WcaSourceSpec } from '@/app/[lang]/timer/_lib/scramble/wca_pool';
 import { fromWcaSpelling, toWcaSpelling, type EventId } from '@/app/[lang]/timer/_lib/types';
 import { persistItem } from '@/lib/safe-storage';
 import {
@@ -779,7 +779,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       void requestLocalBattleScramble(event, async (_event, signal) => {
         if (spec && timerSupportsRealWcaScrambles(event)) {
           if (!hasWcaSource(spec)) throw new Error('WCA source is incomplete');
-          const row = peekWcaRow(spec) ?? await nextWcaRow(spec);
+          const row = await nextWcaRow(spec, signal);
           if (!row) throw new Error('No WCA scramble');
           return { scramble: row.scramble, wca: row.meta ?? undefined,
             source: { kind: 'wca', identity: JSON.stringify(spec) + '|' + row.slot } };

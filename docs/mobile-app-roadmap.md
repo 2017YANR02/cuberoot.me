@@ -1491,3 +1491,13 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 118 项定向检查（92 项既有核心契约、2 项取消/队列回归、24 项 App 来源契约）、4 条 confirmed 复盘 ground truth、client/app-ui/timer-ui typecheck 与 architecture boundary guard 通过。独立只读复核确认 seed 协议不变、零步非空、Worker 公开入口、生成/答案/修正取消隔离。Chrome 实测两种二阶口径的零步/三步、全部 9 种专项、相同 ticket 重复生成和 Cross 三步状态及答案；生成/答案实测约 667ms，无页面错误。Web（独立 3003 开发端口）与 App（1431）页面按步数开关、连续换题及切换手动空队列均通过，迟到结果未覆盖手动来源。
 - Mobile build + Android/iOS Capacitor sync、Android `assembleDebug`、iOS 未签名模拟器 build、macOS Tauri release `.app`/`.dmg` 和 Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 `00303028`：本机 Hvigor 支持 modelVersion 6.0.1，项目为 6.0.2，未降级项目配置。Windows native build、各平台设备安装与完整交互、签名/公证和发布尚未验证。
 - 本轮只本地提交，不 push、不部署、不更新商店包。WCA 真题池编排、解法外壳和完整 Solo 编排仍未整体共享；隐藏的多人多魔方按用户指示不做。五端总体继续 NOT COMPLETE。
+
+### 2026-10-07：WCA 真题池编排同源（本地）
+
+- Web 与五端 App 单人及本地多人共用 `timer-ui/wca-scramble-pool` factory，统一日期/比赛来源队列、预取、缓存、重试、有限题池循环及来源 metadata。Web 旧路径只注入 API/数据 adapter；App 删除页面与本地多人各自维护的队列，保留原有二阶筛选 Worker。共享层仍使用已有难度与步数引擎，未改变求解算法。
+- 官方槽位标识用于去重与进度，相同打乱文本的不同官方题号仍分别保留。比赛持久化缓存最多 50 条，消费后从最后缓存槽位继续读取未缓存尾部，再循环；日期采样不足 50 条只有满足无日期边界、无本地筛选的条件才记为闭合池。预计算样本不抢占新返回的真实题目，保留三阶族实际来源项目。
+- `200 + []` 统一为暂态、404 为已确认空池，不回退成随机题。请求及静态样本加载有硬超时；单个等待者取消不吞掉其他等待者的题，来源切换拒绝迟到回写。样本加载失败可重试；来源键只依赖请求设置，比赛覆盖查询从未知变成未收录不会重建题池或重复首题。独立复核提出的挂起样本、重复迁移与覆盖查询键漂移均已修复并加入回归。
+- App 旧 v6 缓存 helper 仅留作兼容与一次性迁移，新缓存只持久化待消费题目；迁移标记跨实例保留，消费完或缓存淘汰后不重新导入旧题。App 实例和本地多人实例分别持有生命周期，避免共享取消影响其他消费者。
+- 验证：Web 33 项、App 122 项定向测试通过，覆盖超时/取消/缓存续取/过滤/来源切换/智能魔方与本地多人集成；client、app-ui、timer-ui typecheck 和架构边界检查通过。Chrome 实测 Web/App 使用真实 API 返回题目，下一题、返回历史、切换手动来源拒绝迟到结果均通过；390px 无页面横向溢出或页面异常。App 本地 Vite 预览的 API 跨域限制由测试代理读取真实响应处理，此证据不代表原生设备网络验收。
+- 最终 Mobile production build 与双平台 sync、Android debug APK、iOS 未签名 Simulator build、macOS release app/DMG、Harmony Web build 通过。Harmony HAP 实际尝试仍被 Hvigor `00303028` 阻断：本机支持 modelVersion 6.0.1，工程要求 6.0.2，未降级配置。Windows native、五平台实体设备交互、签名/公证与发布尚未验证。
+- 仅本地提交，未 push 或部署；测试专用 1431/3003 服务已关闭，原有 3000 服务保留。下一步为解法外壳统一，完整 Solo 编排仍待推进；隐藏的多人多魔方不在范围内，五端整体继续 **NOT COMPLETE**。

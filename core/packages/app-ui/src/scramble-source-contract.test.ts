@@ -85,12 +85,11 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('isolates real pools by complete source spec and never falls back to 333', () => {
-    expect(app).toContain('startRealScrambleFetchRetry(spec, {');
-    expect(app).toContain('readRealScrambleCache(spec)');
-    expect(app).toContain('writeRealScrambleCache(realSpec, [next, ...realPoolFor(realSpec)])');
-    expect(app).toContain('realScrambleSourceKey(spec)');
-    expect(app).toContain('new Map<string, RealScramble[]>()');
-    expect(app).toContain('new Map<string, RealPoolRequest>()');
+    expect(app).toContain('mobileWcaPool.startNext(poolSpec)');
+    expect(app).toContain('mobileWcaPool.peekWcaRow(poolSpec)');
+    expect(app).toContain('mobileWcaPool.cancelSource(');
+    expect(app).not.toContain('realPoolsRef');
+    expect(app).not.toContain('realRequestsRef');
     expect(app).not.toContain("if (event !== '333')");
     expect(app).not.toContain('scramble333');
   });
@@ -280,10 +279,10 @@ describe('mobile scramble-source parity contract', () => {
   });
 
   it('reuses shared occurrence progress and marks only after a persisted solve succeeds', () => {
-    expect(app).toContain('new TimerWcaFinitePoolProgressTracker()');
-    expect(app).toContain('isAllTimeRealScrambleDateSource(spec)');
-    expect(app).toContain('registerClosedSet(sourceKey, scrambles)');
-    expect(app).toContain('noteServed(sourceKey, next)');
+    expect(app).toContain('mobileWcaPool.wcaPoolProgress(realSpecToWcaSource(activeRealSourceSpec))');
+    const pool = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/wca-scramble-pool')), 'utf8');
+    expect(pool).toContain('finitePoolProgress.registerClosedSet(key, closed.map((row) => row.slot))');
+    expect(pool).toContain('finitePoolProgress.noteServed(key, slot)');
     expect(app).toContain('<TimerWcaScrambleProgress');
     expect(app).toContain("key={currentWcaMarkIdentity ?? 'wca-source-progress'}");
     expect(app).toContain('timerWcaScrambleProgressLabels(language)');
