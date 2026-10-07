@@ -16,6 +16,7 @@
     "{packages/client,apps/web}": {
       "entry": [
         "postcss.config.{js,mjs}",
+        "components/ScrollDiagnostics.tsx",
         "app/**/{page,layout,template,loading,error,not-found,route,default,global-error,sitemap,robots,manifest,opengraph-image,twitter-image,icon,apple-icon}.{ts,tsx}",
         "scripts/**/*.{mjs,cjs,mts,ts}",
         "tests/**/*.{ts,tsx,cjs,mjs}",

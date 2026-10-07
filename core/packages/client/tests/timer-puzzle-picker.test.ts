@@ -130,7 +130,7 @@ describe('shared timer puzzle picker', () => {
     expect(host.querySelector('.pp')?.classList.contains('pp--compact')).toBe(false);
   });
 
-  it('renders all 43 canonical events with a real SVG or an explicit text badge', () => {
+  it('renders all 52 canonical events with a real SVG or an explicit text badge', () => {
     const groups = TIMER_EVENT_PICKER_GROUPS.map((group) => ({
       id: group.id,
       label: group.nameEn,
@@ -152,9 +152,9 @@ describe('shared timer puzzle picker', () => {
 
     act(() => host.querySelector<HTMLButtonElement>('.pp-trigger')?.click());
     const items = [...host.querySelectorAll<HTMLElement>('.pp-item')];
-    expect(items).toHaveLength(43);
+    expect(items).toHaveLength(52);
     expect(items.filter((item) => item.querySelector('.cubing-icon'))).toHaveLength(27);
-    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(16);
+    expect(items.filter((item) => item.querySelector('.pp-item-tag'))).toHaveLength(25);
     for (const item of items) {
       const icon = item.querySelector<HTMLElement>('.cubing-icon');
       const tag = item.querySelector<HTMLElement>('.pp-item-tag');
@@ -174,7 +174,7 @@ describe('shared timer puzzle picker', () => {
       groups, selectedEvent, onSelect, disabled, dataNoTimer: true,
       puzzleLabel: 'Puzzle', scrambleTypeLabel: 'Scramble type',
     })));
-    const typeIds = ['333', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll'];
+    const typeIds = ['333', 'cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cmll', 'zbll', 'cll', 'ell', 'eocp', '2gll', 'ollcp', 'zzll', 'zbls', 'lse', 'l10p'];
     for (const selectedEvent of typeIds) {
       render(selectedEvent);
       expect(host.querySelector('.pp-trigger')?.getAttribute('aria-label')).toBe('3×3');

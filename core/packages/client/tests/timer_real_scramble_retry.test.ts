@@ -143,9 +143,13 @@ describe('shared real-scramble retry policy', () => {
       '../app/[lang]/timer/_shell/SoloView.tsx',
       import.meta.url,
     ), 'utf8');
-    expect(source).toContain('startTimerRealScrambleRetry');
-    expect(source).toContain('TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY');
-    expect(source).toContain('TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR');
-    expect(source).not.toMatch(/Math\.min\(\s*1000\s*\+\s*n\s*\*\s*1500/);
+    expect(source).toContain('startWcaScrambleRetry(sourceSpec)');
+    const adapter = readFileSync(new URL('../app/[lang]/timer/_lib/scramble/wca_pool.ts', import.meta.url), 'utf8');
+    expect(adapter).toContain('startNext: startWcaScrambleRetry');
+    const pool = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/wca-scramble-pool')), 'utf8');
+    expect(pool).toContain('startTimerRealScrambleRetry');
+    expect(pool).toContain('TIMER_REAL_SCRAMBLE_CONFIRMED_EMPTY');
+    expect(pool).toContain('TIMER_REAL_SCRAMBLE_TRANSIENT_ERROR');
+    expect(source + pool).not.toMatch(/Math\.min\(\s*1000\s*\+\s*n\s*\*\s*1500/);
   });
 });
