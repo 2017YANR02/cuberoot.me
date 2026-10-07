@@ -1,3 +1,4 @@
+import { shareOrDownloadBackup } from './file-export';
 import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { InstalledBleHost, installedBleRequestPort } from './installed-ble-host';
 import { pickInstalledBleDevice, type InstalledBlePicker } from './installed-ble-picker';
@@ -375,28 +376,6 @@ function applyPreferences(settings: TimerStoreSettings): void {
   if (settings.theme === 'system') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = settings.theme;
   document.documentElement.lang = settings.language === 'zh' ? 'zh-Hans' : 'en';
-}
-
-function downloadBackup(text: string, filename: string, mime: string): void {
-  const blobUrl = URL.createObjectURL(new Blob([text], { type: mime }));
-  const anchor = document.createElement('a');
-  anchor.href = blobUrl;
-  anchor.download = filename;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
-}
-
-async function shareOrDownloadBackup(text: string, fileSpec = {
-  filename: `cuberoot-timer-${new Date().toISOString().slice(0, 10)}.json`, mime: 'application/json',
-}): Promise<void> {
-  const { filename, mime } = fileSpec;
-  const file = new File([text], filename, { type: mime });
-  const shareData: ShareData = { files: [file], title: 'CubeRoot timer backup' };
-  if (navigator.share && navigator.canShare?.(shareData)) {
-    await navigator.share(shareData);
-    return;
-  }
-  downloadBackup(text, filename, mime);
 }
 
 
@@ -3271,13 +3250,13 @@ export function App({ host }: { host: InstalledAppHost }) {
 
   const exportData = useCallback(() => {
     void repository.exportJson()
-      .then(shareOrDownloadBackup)
+      .then(text => shareOrDownloadBackup(host, text))
       .then(() => announce(copy.exportSuccess))
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         announce(copy.actionFailed);
       });
-  }, [announce, copy.actionFailed, copy.exportSuccess]);
+  }, [announce, copy.actionFailed, copy.exportSuccess, host]);
 
   const exportFormat = useCallback((format: TimerExportFormat) => {
     if (format === 'cuberoot') { exportData(); return; }
@@ -3299,13 +3278,13 @@ export function App({ host }: { host: InstalledAppHost }) {
         announce({ zh: '当前没有可导出的成绩。', en: 'No solves to export.' }[language]);
         return;
       }
-      await shareOrDownloadBackup(text, { filename: `cuberoot-${format}-${date}.${extension}`, mime });
+      await shareOrDownloadBackup(host, text, { filename: `cuberoot-${format}-${date}.${extension}`, mime });
       announce(copy.exportSuccess);
     }).catch((error: unknown) => {
       if (error instanceof DOMException && error.name === 'AbortError') return;
       announce(copy.actionFailed);
     });
-  }, [announce, copy.actionFailed, copy.exportSuccess, exportData, language]);
+  }, [announce, copy.actionFailed, copy.exportSuccess, exportData, host, language]);
 
   const commitImportedStore = useCallback((
     revision: SnapshotRevision,
@@ -3827,7 +3806,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           scramble: scramble,
           language: language,
           randomOptions: { cnMode: store!.settings.cnMode, scramble222Mode },
-          transport: { copy: text => host.writeClipboardText(text), download: (text, filename) => shareOrDownloadBackup(text, { filename, mime: 'text/plain' }) },
+          transport: { copy: text => host.writeClipboardText(text), download: (text, filename) => shareOrDownloadBackup(host, text, { filename, mime: 'text/plain' }) },
           onClose: () => setOpenOverlay(null),
           onDismissChange: registerToolDismiss
         }} title={copy.timer}
@@ -4272,7 +4251,7 @@ children: <>
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (
           <LocalBattleMode
             scrambleProvider={battleScrambleProvider}
-            onExportRounds={rounds => shareOrDownloadBackup(buildLocalBattleCsv(rounds, [], timerMode as number), {
+            onExportRounds={rounds => shareOrDownloadBackup(host, buildLocalBattleCsv(rounds, [], timerMode as number), {
               filename: `local-battle_${new Date().toISOString().slice(0, 10)}.csv`, mime: 'text/csv;charset=utf-8',
             })}
             sourceSettings={event => <TimerBattleSourceSettings language={language}

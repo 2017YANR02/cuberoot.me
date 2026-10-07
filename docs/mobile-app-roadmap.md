@@ -1560,3 +1560,9 @@ CubeRoot 应以这些证据证明不是简单套壳：
 
 - 区分原生错误与应用取消/超时；取消不再清掉 requested 后跳过 stop。保留停止中的回调直至原生终止，迟到 onStart 补停，旧帧不再进入计时；新会话等待停止确认，等待超时不抢占录音器。原生权限拒绝仍按终止错误处理。
 - 7 项外接计时器/录音生命周期回归、miniprogram typecheck 与微信 build 通过。仅本地提交，未上传/发布；实际微信麦克风权限、系统中断与硬件音频仍待真机验收。
+
+### 2026-10-07：优先级 4——原生文件导出（本地）
+
+- 备份 JSON、csTimer/CSV/文本成绩、批量打乱和本地多人轮次统一走 InstalledAppHost.exportFile。Android 使用 ACTION_CREATE_DOCUMENT 及用户选择 URI；iOS 使用系统分享面板（包含存储到文件）；Windows/macOS 使用 Tauri 原生保存对话框并写 UTF-8；Harmony 使用 DocumentViewPicker 与文件 API。不申请全盘读写权限，原生取消/失败不回退浏览器下载；取消不报导出成功或失败。
+- 4 项无损内容/等待完成/取消路由测试、85 项工具与账号文档检查、app-ui/client/宿主类型及架构边界检查通过；Mobile build/sync、Android APK、iOS unsigned Simulator、macOS unsigned app、Harmony Web build/sync 通过。Harmony HAP 仍被本机 Hvigor 6.0.1 与工程 modelVersion 6.0.2 不匹配阻断；Windows 原生构建未验。
+- 独立审查未发现阻断。各系统文件面板、用户取消、导出后重读与实体设备验收仍待完成；仅本地提交，未 push/部署/商店发布，总体 NOT COMPLETE。

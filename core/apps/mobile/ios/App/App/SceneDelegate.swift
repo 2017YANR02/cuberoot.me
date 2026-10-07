@@ -52,9 +52,44 @@ final class TimerPrintPlugin: CAPPlugin, CAPBridgedPlugin {
     }
 }
 
+@objc(NativeFilesPlugin)
+final class NativeFilesPlugin: CAPPlugin, CAPBridgedPlugin {
+    let identifier = "NativeFilesPlugin"
+    let jsName = "NativeFiles"
+    let pluginMethods: [CAPPluginMethod] = [CAPPluginMethod(name: "exportFile", returnType: CAPPluginReturnPromise)]
+    private var busy = false
+    @objc func exportFile(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard !self.busy, let presenter = self.bridge?.viewController, presenter.presentedViewController == nil else { call.reject("File export unavailable"); return }
+            let name = call.getString("filename") ?? ""
+            guard !name.isEmpty, name != ".", name != "..", !name.contains("/"), !name.contains("\\") else { call.reject("Invalid filename"); return }
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let file = folder.appendingPathComponent(name)
+                try Data((call.getString("text") ?? "").utf8).write(to: file, options: .atomic)
+                let controller = UIActivityViewController(activityItems: [file], applicationActivities: nil)
+                self.busy = true
+                controller.completionWithItemsHandler = { _, completed, _, error in
+                    self.busy = false
+                    try? FileManager.default.removeItem(at: folder)
+                    if let error { call.reject(error.localizedDescription) }
+                    else { call.resolve(["completed": completed]) }
+                }
+                if let popover = controller.popoverPresentationController {
+                    popover.sourceView = presenter.view
+                    popover.sourceRect = presenter.view.bounds
+                }
+                presenter.present(controller, animated: true)
+            } catch { try? FileManager.default.removeItem(at: folder); call.reject(error.localizedDescription) }
+        }
+    }
+}
+
 final class CubeRootBridgeViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(TimerPrintPlugin())
+        bridge?.registerPluginInstance(NativeFilesPlugin())
         bridge?.registerPluginInstance(AppleMembershipPlugin())
         bridge?.registerPluginInstance(RecordPushPlugin())
     }

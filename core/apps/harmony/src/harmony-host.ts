@@ -87,6 +87,9 @@ export const harmonyHost: InstalledAppHost = {
   },
   openExternal: (url) => bridgeCall<void>(nativeBridge().openExternal(url)),
   print: browserPrintTransport,
+  async exportFile(text, filename) {
+    if (!await bridgeCall<boolean>(nativeBridge().exportFile(text, filename))) throw new DOMException('Export cancelled', 'AbortError');
+  },
   writeClipboardText: browserClipboardTransport,
   useAuth: (language) => useInstalledAuth(language, harmonyAuthPort),
   useSmartCube: (options) => useInstalledSmartCube(() => new HarmonyBleTransport(), options),
