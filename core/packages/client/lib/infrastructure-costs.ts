@@ -225,7 +225,7 @@ export const EQUIPMENT_GROUPS: readonly EquipmentGroup[] = [
         name: { zh: '小米曲面显示器 34 英寸', en: 'Mi Curved Gaming Monitor 34"' },
         detail: { zh: '黑色；WQHD 带鱼屏、144Hz；实付款', en: 'Black; WQHD ultrawide display, 144Hz; amount paid' },
         amount: 2190,
-        imageSrc: '/images/dev/infrastructure/xiaomi-curved-monitor-34.webp',
+        imageSrc: '/images/dev/infrastructure/xiaomi-curved-monitor-34-clean.webp',
         href: 'https://www.mi.com/monitor34',
       },
       {
