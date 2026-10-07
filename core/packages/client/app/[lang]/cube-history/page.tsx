@@ -114,7 +114,7 @@ function ModelCard({ cube, selected, full, onToggle, onOpen }: {
   const leadPrice = cube.prices.find(price => price.currency === 'CNY') ?? cube.prices[0];
   return <article className="ch-model" data-site-surface="panel">
     <div className="ch-model-kicker"><span>{brandName(cube.brand)}</span><span className={`ch-status ch-status--${cube.status}`}>{tr(STATUS_LABELS[cube.status])}</span></div>
-    <h3><button type="button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}<ArrowUpRight size={18} /></button></h3>
+    <h3><button type="button" className="ch-model-title-button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}<ArrowUpRight size={18} /></button></h3>
     <p className="ch-model-date"><time>{dateText(cube)}</time><span className="ch-badge">{tr(RELEASE_LABELS[cube.release.basis])}</span><ReferenceLinks ids={cube.release.sourceIds} /></p>
     <p className="ch-model-summary">{tr(cube.highlights[0] ?? cube.assessment.summary)}</p>
     <dl className="ch-model-specs"><div><dt>{tr({ zh: '尺寸', en: 'Size' })}</dt><dd>{specText(cube.specs.size)}</dd></div><div><dt>{tr({ zh: '净重', en: 'Net weight' })}</dt><dd>{specText(cube.specs.weight)}</dd></div></dl>
@@ -298,7 +298,7 @@ function Explorer() {
   const setFilter = (key: keyof typeof EMPTY_FILTERS, value: string) => { void setFilters({ [key]: value }); };
 
   return <div id="ch-explorer" className="ch-explorer">
-    <nav className="ch-tabs" aria-label={tr({ zh: '档案视图', en: 'Archive view' })}>{VIEW_OPTIONS.map(({ id, label, Icon }) => <button type="button" key={id} aria-pressed={view === id} className={view === id ? 'is-active' : ''} onClick={() => navigateView(id)}><Icon size={17} />{tr(label)}</button>)}</nav>
+    <nav className="ch-tabs" aria-label={tr({ zh: '档案视图', en: 'Archive view' })}>{VIEW_OPTIONS.map(({ id, label, Icon }) => <button type="button" key={id} aria-pressed={view === id} className={`ch-tab-button${view === id ? ' is-active' : ''}`} onClick={() => navigateView(id)}><Icon size={17} />{tr(label)}</button>)}</nav>
     {activeCube && <CubeDetails cube={activeCube} selected={chosenIds.includes(activeCube.id)} full={full} onToggle={toggleCompare} onClose={closeModel} />}
     {model && !activeCube && <div role="status" className="ch-empty" data-site-surface="panel"><p>{tr({ zh: '该型号链接未匹配到当前资料。', en: 'This model link does not match the current archive.' })}</p><button type="button" className="ch-button" onClick={closeModel}>{tr({ zh: '关闭', en: 'Close' })}</button></div>}
     {view === 'timeline' && <Timeline onOpen={openModel} onPeriod={selectPeriod} />}
