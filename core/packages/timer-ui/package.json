@@ -114,7 +114,9 @@
       "./scramble/sync-seed.worker": "browser",
       "./scramble/trainer": "browser",
       "./scramble/trainer.worker": "browser",
-      "./wca-scramble-pool": "browser"
+      "./wca-scramble-pool": "browser",
+      "./TimerSolverPanel": "react-dom",
+      "./timer-solver-panel.css": "asset"
     }
   },
   "exports": {
@@ -216,7 +218,9 @@
     "./scramble/sync-seed.worker": "./src/scramble/sync-seed.worker.ts",
     "./scramble/trainer": "./src/scramble/trainer.ts",
     "./scramble/trainer.worker": "./src/scramble/trainer.worker.ts",
-    "./wca-scramble-pool": "./src/wca-scramble-pool.ts"
+    "./wca-scramble-pool": "./src/wca-scramble-pool.ts",
+    "./TimerSolverPanel": "./src/TimerSolverPanel.tsx",
+    "./timer-solver-panel.css": "./src/timer-solver-panel.css"
   },
   "sideEffects": true,
   "scripts": {

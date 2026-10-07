@@ -15,7 +15,7 @@ export function TimerStageLayout({
   children, className, devices, fullscreen = false, source, statistics,
 }: TimerStageLayoutProps) {
   return (
-    <div className={`timer-stage-layout${className ? ` ${className}` : ''}`}>
+    <div className={`timer-stage-layout${className ? ` ${className}` : ''}`} data-stage-fullscreen={fullscreen}>
       {source && <div className="timer-stage-source surface-chrome" hidden={fullscreen}>{source}</div>}
       {children}
       {(statistics || devices) && (

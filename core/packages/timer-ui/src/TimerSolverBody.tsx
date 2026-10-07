@@ -1,12 +1,19 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import StageSolver from './StageSolver';
 import TimerStepSolve from './TimerStepSolve';
 
-export default function TimerSolverBody({ scramble, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange }: {
+export default function TimerSolverBody({ scramble, language, compact, settingsSlot, onPrevScramble, onNextScramble, onDismissChange, onBlockingChange }: {
   scramble: string; language: 'en' | 'zh'; compact: boolean; settingsSlot?: HTMLElement | null;
   onPrevScramble?(): void; onNextScramble?(): void;
+  onBlockingChange?(blocked: boolean): void;
   onDismissChange?(dismiss: (() => boolean) | null): void;
 }) {
+  const [stageBlocking, setStageBlocking] = useState(false);
+  const [compareBlocking, setCompareBlocking] = useState(false);
+  useEffect(() => {
+    onBlockingChange?.(stageBlocking || compareBlocking);
+    return () => onBlockingChange?.(false);
+  }, [stageBlocking, compareBlocking, onBlockingChange]);
   const compareDismiss = useRef<(() => boolean) | null>(null);
   const stageDismiss = useRef<(() => boolean) | null>(null);
   const registerCompare = useCallback((dismiss: (() => boolean) | null) => { compareDismiss.current = dismiss; }, []);
@@ -20,7 +27,7 @@ export default function TimerSolverBody({ scramble, language, compact, settingsS
   }}>
     {scramble.trim() && <p className="solver-panel-scramble">{scramble}</p>}
     <StageSolver scramble={scramble} lang={language} compact={compact} settingsSlot={settingsSlot}
-      onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} />
-    <TimerStepSolve scramble={scramble} isZh={language === 'zh'} onDismissChange={registerCompare} />
+      onPrevScramble={onPrevScramble} onNextScramble={onNextScramble} onDismissChange={registerStage} onBlockingChange={setStageBlocking} />
+    <TimerStepSolve scramble={scramble} isZh={language === 'zh'} onDismissChange={registerCompare} onBlockingChange={setCompareBlocking} />
   </div>;
 }

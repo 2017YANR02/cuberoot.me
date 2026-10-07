@@ -561,8 +561,22 @@ export function App({ host }: { host: InstalledAppHost }) {
   const timerPhaseRef = useRef<TimerPhase>('idle');
   const cancelTimerArmRef = useRef<() => boolean>(() => false);
   const timerContextMutationBusyRef = useRef(false);
-  const timerOverlayBlocking = openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
+  const [solverBlocking, setSolverBlocking] = useState(false);
+  const solverBlockingRef = useRef(false); solverBlockingRef.current = solverBlocking;
+  const timerOverlayBlocking = solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking;
   const openOverlayRef = useRef<TimerOverlayId | null>(openOverlay);
+  const [solverOpenRequest, setSolverOpenRequest] = useState(0);
+  const changeSolverSheet = useCallback((open: boolean) => {
+    if (open) {
+      if ((openOverlayRef.current !== null && openOverlayRef.current !== TIMER_OVERLAY_IDS.stageSolver)
+        || timerContextMutationBusyRef.current) return;
+      openOverlayRef.current = TIMER_OVERLAY_IDS.stageSolver;
+      setOpenOverlay(TIMER_OVERLAY_IDS.stageSolver);
+    } else if (openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver) {
+      openOverlayRef.current = null;
+      setOpenOverlay(null);
+    }
+  }, []);
   const solverDismissRef = useRef<(() => boolean) | null>(null);
   const registerSolverDismiss = useCallback((dismiss: (() => boolean) | null) => { solverDismissRef.current = dismiss; }, []);
   const wcaMarksOverlayIdentityRef = useRef<string | null>(null);
@@ -2142,7 +2156,7 @@ export function App({ host }: { host: InstalledAppHost }) {
         manualEntryOpen: manualEntryOpenRef.current,
         moreOpen: moreOpenRef.current,
         mutationBusy: timerContextMutationBusyRef.current,
-        overlayOpen: openOverlayRef.current !== null,
+        overlayOpen: openOverlayRef.current !== null || solverBlockingRef.current,
         phase: timerPhaseRef.current,
         view: current,
         webDepth: current === 'tools' || current === 'account'
@@ -2150,7 +2164,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           : 0,
       });
       if (action === 'close-overlay') {
-        if (openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver && solverDismissRef.current?.()) return;
+        if ((openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver || solverBlockingRef.current) && solverDismissRef.current?.()) return;
         if (openOverlayRef.current === TIMER_OVERLAY_IDS.smartCubeDevice
           || openOverlayRef.current === TIMER_OVERLAY_IDS.smartTimerDevice
           || openOverlayRef.current === TIMER_OVERLAY_IDS.stackmatDevice) closeDeviceOverlayRef.current();
@@ -2321,6 +2335,12 @@ export function App({ host }: { host: InstalledAppHost }) {
     void repository.addSolve(solve, sessionId).then((data) => {
       storeSnapshotGateRef.current.commitIfLatest(revision, data, applyStoreSnapshot);
       markSavedWcaSolve(solve, ownerAtSaveStart);
+      if (recapRevision === recapAttemptRevisionRef.current
+        && storeRef.current?.database.activeSessionId === sessionId
+        && activeEventRef.current === solve.event && viewRef.current === 'timer'
+        && storeRef.current?.settings.autoOpenSolution && solve.device && solve.moves?.length) {
+        setSolverOpenRequest(value => value + 1);
+      }
       if (recapRevision === recapAttemptRevisionRef.current
         && storeRef.current?.database.activeSessionId === sessionId
         && shouldAutoRecap(solve, storeRef.current?.settings ?? {})) {
@@ -3411,12 +3431,12 @@ export function App({ host }: { host: InstalledAppHost }) {
     const modalState = () => (
       viewRef.current === 'settings'
       || !timerVisibleRef.current
-      || openOverlayRef.current !== null
-      || statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current
+      || (openOverlayRef.current !== null && openOverlayRef.current !== TIMER_OVERLAY_IDS.stageSolver)
+      || solverBlockingRef.current || statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current
       || moreOpenRef.current
       || manualEntryOpenRef.current
         ? 'blocking' as const
-        : 'none' as const
+        : openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver ? 'hints-only' as const : 'none' as const
     );
     const execute = (
       decision: ReturnType<typeof timerKeyDownDecision>,
@@ -3672,6 +3692,14 @@ export function App({ host }: { host: InstalledAppHost }) {
     </header>
   );
 
+  const solverHintPanel = activeEvent === '333' ? <Suspense fallback={null}>
+    <StageSolverDialog scramble={scramble} language={language}
+      sheetOpen={openOverlay === TIMER_OVERLAY_IDS.stageSolver} onSheetOpenChange={changeSolverSheet}
+      onDismissChange={registerSolverDismiss} onBlockingChange={setSolverBlocking} autoOpenOnSolve={solverOpenRequest}
+      autoCollapseOnReady={timer.machine.phase === 'ready' && smartCube.phase === 'connected'}
+      onPrevScramble={previousDisplayedScramble} onNextScramble={nextDisplayedScramble} />
+  </Suspense> : null;
+
   return (
     <main
       className={`app-shell app-shell--${dockHistory || view === 'settings' ? 'timer' : view}${shellViewport.classNameSuffix}${fullscreen ? ' app-shell--timer-fullscreen' : ''}${timer.machine.phase === 'running' ? ' is-solving' : ''}`}
@@ -3794,11 +3822,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                     data-no-timer
                     ref={setWcaDifficultyToggleSlot}
                   />
+                  {!wideLayout && solverHintPanel}
                 </>
               )}
             />
             <TimerStageLayout
-              className="mobile-timer-stage"
+              className="mobile-timer-stage timer-solver-stage"
               fullscreen={fullscreen}
               source={<>
                 {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
@@ -4139,24 +4168,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onPick={(target) => setDrillTarget(target)}
                 />
               )}
-              {activeEvent === '333' && <div className="mobile-solution-hints surface-chrome" data-no-timer>
-                <button type="button" className="timer-small-hints-trigger"
-                  disabled={timer.machine.phase === 'running' || timer.machine.phase === 'inspecting'}
-                  onClick={() => {
-                    openOverlayRef.current = TIMER_OVERLAY_IDS.stageSolver;
-                    setOpenOverlay(TIMER_OVERLAY_IDS.stageSolver);
-                  }}>
-                  {({ zh: '解法', en: 'Solve' })[language]}
-                </button>
-                {openOverlay === TIMER_OVERLAY_IDS.stageSolver && <Suspense fallback={null}>
-                  <StageSolverDialog scramble={scramble} language={language} onDismissChange={registerSolverDismiss}
-                    onPrevScramble={previousDisplayedScramble} onNextScramble={nextDisplayedScramble}
-                    onClose={() => {
-                    openOverlayRef.current = null;
-                    setOpenOverlay(null);
-                  }} />
-                </Suspense>}
-              </div>}
+              <div className="shell-rail timer-solver-rail" data-no-timer>{wideLayout && solverHintPanel}</div>
               <MobileSmallPuzzleHints
                 event={activeEvent}
                 language={language}

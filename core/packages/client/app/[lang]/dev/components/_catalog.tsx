@@ -1606,11 +1606,11 @@ export const CATALOG: ComponentEntry[] = [
     en: 'Shared battle video authorization, generation isolation, background cleanup, and media controls. Hosts provide the API origin and native media permissions.',
   },
   {
-    name: 'TimerSolverBody / TimerStepSolve / TimerSolverCompareModal / TimerSolverHints',
-    import: "import TimerSolverBody from '@cuberoot/timer-ui/TimerSolverBody'; import TimerStepSolve from '@cuberoot/timer-ui/TimerStepSolve'; import TimerSolverCompareModal from '@cuberoot/timer-ui/TimerSolverCompareModal'; import TimerSolverHints from '@cuberoot/timer-ui/TimerSolverHints';",
+    name: 'TimerSolverPanel / TimerSolverBody / TimerStepSolve / TimerSolverCompareModal / TimerSolverHints',
+    import: "import TimerSolverPanel from '@cuberoot/timer-ui/TimerSolverPanel'; import TimerSolverBody from '@cuberoot/timer-ui/TimerSolverBody'; import TimerStepSolve from '@cuberoot/timer-ui/TimerStepSolve'; import TimerSolverCompareModal from '@cuberoot/timer-ui/TimerSolverCompareModal'; import TimerSolverHints from '@cuberoot/timer-ui/TimerSolverHints';",
     category: 'more',
-    zh: 'Web 与安装端共用解法内容：阶段最优、六方法分步与对比、阶段/整套播放、小魔方提示、SQ1 近最优解及五魔状态统计；原生宿主打包同一份 SQ1 Worker。',
-    en: 'Shared solution content: optimal stages, six step methods and comparisons, stage/full playback, small puzzle hints, near-optimal SQ1 solutions, and Megaminx state statistics. Installed hosts bundle the same SQ1 worker.',
+    zh: 'Web 与安装端共用响应式侧栏/全屏、折叠偏好、换题手势与嵌套关闭，以及解法内容：阶段最优、六方法分步与对比、阶段/整套播放、小魔方提示、SQ1 近最优解及五魔状态统计；原生宿主打包同一份 SQ1 Worker。',
+    en: 'Shared responsive rail/fullscreen, collapse preferences, scramble gestures, nested dismissal, and solution content: optimal stages, six step methods and comparisons, stage/full playback, small puzzle hints, near-optimal SQ1 solutions, and Megaminx state statistics. Installed hosts bundle the same SQ1 worker.',
   },
   {
     name: 'TimerLocalBattlePage / TimerLocalBattlePlayer / TimerNetBattlePage / TimerNetBattleStage / TimerNetBattleEvent',

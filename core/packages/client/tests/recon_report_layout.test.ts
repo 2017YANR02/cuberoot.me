@@ -157,7 +157,7 @@ describe('回放进度条匀速走', () => {
 });
 
 describe('移动端自动打开的解法浮层可手动关闭', () => {
-  const panel = read(join(ROOT, 'app', '[lang]', 'timer', '_components', 'SolverHintPanel.tsx'));
+  const panel = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSolverPanel')), 'utf8');
 
   it('每个自动打开请求只消费一次,关闭后不会被同一个请求重新打开', () => {
     expect(panel).toMatch(/openedSolveRequestRef\.current === autoOpenOnSolve/);

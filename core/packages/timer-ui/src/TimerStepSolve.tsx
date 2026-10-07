@@ -43,10 +43,11 @@ const EMPTY: Record<MethodId, SolveResult | null> = {
 interface Props {
   scramble: string;
   isZh: boolean;
+  onBlockingChange?(blocked: boolean): void;
   onDismissChange?(dismiss: (() => boolean) | null): void;
 }
 
-export default function TimerStepSolve({ scramble, isZh, onDismissChange }: Props) {
+export default function TimerStepSolve({ scramble, isZh, onDismissChange, onBlockingChange }: Props) {
   const tr = (text: { en: string; zh: string }) => text[isZh ? 'zh' : 'en'];
   const [open, setOpen] = useState(false);
   const [methodId, setMethodId] = useState<MethodId>('cfop');
@@ -55,6 +56,7 @@ export default function TimerStepSolve({ scramble, isZh, onDismissChange }: Prop
   const [computing, setComputing] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [compareOpen, setCompareOpen] = useState(false);
+  useEffect(() => { onBlockingChange?.(compareOpen); return () => onBlockingChange?.(false); }, [compareOpen, onBlockingChange]);
   const [selection, setSelection] = useState({ key: '', index: -1, revision: 0 });
   const selectionKey = `${methodId}\u0000${scramble}`;
   const selStage = selection.key === selectionKey ? selection.index : -1; // -1 = 完整解法,否则单阶段索引
