@@ -65,16 +65,16 @@ export async function collectEvents(state: Ledger, now: number, read: (start: nu
   }
 }
 export async function run() {
+  const root = process.env.CUBEROOT_BAN_STATE_DIR || '/var/lib/cuberoot-vercel-bans';
+  const config = JSON.parse(readFileSync(process.env.CUBEROOT_BAN_CONFIG || '/etc/cuberoot-vercel-bans.json', 'utf8'));
+  const now = Date.now();
+  if (Number.isFinite(config.expiresAt) && config.expiresAt - now < 7 * DAY) await alertOnce('token-expiry', '专用令牌将在 ' + new Date(config.expiresAt).toISOString().slice(0, 10) + ' 到期，请更新令牌。到期后无法新增或解除 Vercel 的 30 天封禁。');
   try {
     if (readFileSync('/etc/nginx/cuberoot-comp-verification-state.conf', 'utf8').trim() === 'default 0;') {
       console.log(JSON.stringify({ mode: 'open', applied: false }));
       return;
     }
   } catch { /* Existing installations retain protection until configured. */ }
-  const root = process.env.CUBEROOT_BAN_STATE_DIR || '/var/lib/cuberoot-vercel-bans';
-  const config = JSON.parse(readFileSync(process.env.CUBEROOT_BAN_CONFIG || '/etc/cuberoot-vercel-bans.json', 'utf8'));
-  const now = Date.now();
-  if (Number.isFinite(config.expiresAt) && config.expiresAt - now < 7 * DAY) await alertOnce('token-expiry', '专用令牌将在 ' + new Date(config.expiresAt).toISOString().slice(0, 10) + ' 到期，请更新令牌。到期后无法新增或解除 Vercel 的 30 天封禁。');
   mkdirSync(root, { recursive: true, mode: 0o700 });
   let state: Ledger;
   try { state = JSON.parse(readFileSync(`${root}/state.json`, 'utf8')); }
