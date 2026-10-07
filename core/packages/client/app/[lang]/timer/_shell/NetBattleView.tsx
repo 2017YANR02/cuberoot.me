@@ -44,7 +44,8 @@ import { useQueryState } from 'nuqs';
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 
 
-import CubeRootLogo from '@/components/CubeRootLogo';
+import HomeLink from '@/components/HomeLink';
+import { ArrowLeft } from 'lucide-react';
 import { EventIcon } from '@/components/EventIcon';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr } from '@/i18n/tr';
@@ -1184,7 +1185,7 @@ export default function NetBattleView({ playersControl, presenceControl, onPrese
     })),
   }));
   const topbar = {
-    brand: <CubeRootLogo className="shell-topbar-brand" />,
+    brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
     controls: <>
       {room && <TimerNetBattleEvent picker={{
         dataNoTimer: true,
