@@ -114,6 +114,10 @@ async function trip(reasons: string[], message: string): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if ((await readFile('/etc/nginx/cuberoot-comp-verification-state.conf', 'utf8').catch(() => '')).trim() === 'default 0;') {
+    console.log(JSON.stringify({ mode: 'open', applied: false }));
+    return;
+  }
   const now = Date.now();
   const samples: RequestSample[] = [];
   for (const [source, file] of Object.entries(LOGS) as Array<[keyof typeof LOGS, string]>) {

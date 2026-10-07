@@ -1,6 +1,14 @@
 import type { Context, MiddlewareHandler } from 'hono';
+import { readFileSync } from 'node:fs';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import { COMPETITION_SERVICE_HEADER, competitionCookie, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
+
+export function competitionAccessEnforced(): boolean {
+  if (process.env.COMPETITION_ACCESS_ENFORCE !== '1') return false;
+  try {
+    return readFileSync('/etc/nginx/cuberoot-comp-verification-state.conf', 'utf8').trim() !== 'default 0;';
+  } catch { return true; }
+}
 
 function fromLocalNginx(c: Context) {
   try {
@@ -24,7 +32,7 @@ export function competitionAccessDenied(c: Context) {
   return c.json({ code: 'competition_verification_required', error: 'Browser verification required' }, 403);
 }
 export const requireCompetitionAccess: MiddlewareHandler = async (c, next) => {
-  if (c.req.method === 'OPTIONS' || process.env.COMPETITION_ACCESS_ENFORCE !== '1') return next();
+  if (c.req.method === 'OPTIONS' || !competitionAccessEnforced()) return next();
   if (!await hasCompetitionAccess(c)) return competitionAccessDenied(c);
   return next();
 };
@@ -32,7 +40,7 @@ export const requireCompetitionAccess: MiddlewareHandler = async (c, next) => {
 /** Used by browsers and nginx auth_request, before a cached response is served. */
 export async function checkCompetitionAccess(c: Context) {
   c.header('Cache-Control', 'private, no-store');
-  if (process.env.COMPETITION_ACCESS_ENFORCE !== '1') return c.body(null, 204);
+  if (!competitionAccessEnforced()) return c.body(null, 204);
   // Only the internal nginx auth subrequest can nominate an original path.
   const original = fromLocalNginx(c) ? c.req.header('x-cuberoot-original-uri') : undefined;
   if (!await hasCompetitionAccess(c, original)) return competitionAccessDenied(c);

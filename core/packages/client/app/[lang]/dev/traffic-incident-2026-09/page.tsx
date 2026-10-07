@@ -65,6 +65,8 @@ export default function TrafficIncidentPage() {
 
           <nav className="incident-toc" aria-label={t('文章目录', 'Article contents')}>{toc.map(([id, label], index) => <a key={id} href={`#${id}`}><span>0{index + 1}</span>{label}<ArrowDown size={14} aria-hidden="true" /></a>)}</nav>
 
+          <div className="incident-snapshot-note"><ShieldCheck size={17} aria-hidden="true" /><p>{t('2026-10-06：事件防护新增统一开关。开放模式关闭这次事件的验证码、计算器封页、限流、历史 IP 拦截和自动停站；防护模式恢复保存的规则。账号权限与费用保护继续独立生效。下文是历史处置记录，不代表当前开关状态。', 'October 6, 2026: incident defenses now share one switch. Open mode disables the incident CAPTCHA, calculator block, rate limits, historical IP blocks and automatic shutdown. Protected mode restores the saved rules. Account permissions and spending protection remain independent. The following is a historical record, not a live mode indicator.')}</p></div>
+
           <section id="story" className="incident-section">
             <div className="incident-section-heading"><span>01 / {t('经过', 'THE STORY')}</span><h2>{t('事件经过与访问影响', 'What happened and who was affected')}</h2></div>
             <div className="incident-prose"><p>{t('9 月 22 日，成绩计算器访问量突增。抽查日志发现，请求反复更换比赛、选手和轮次参数，其中一条声明使用 Lightpanda 无头浏览器。无头浏览器可以由程序控制，自动打开网页。', 'On September 22, calculator traffic spiked. Sampled requests repeatedly changed competition, competitor and round parameters. One declared Lightpanda, a headless browser that programs can use to open pages.')}</p><p>{t('9 月 24—25 日，我们限制了计算器和比赛数据请求，暂停过主站，随后恢复访问。期间，正常用户也会遇到验证页面、计算器拒绝访问和维护提示。', 'On September 24–25, we restricted calculator and competition-data requests, paused the main site and later reopened it. Legitimate users also encountered challenges, a blocked calculator and maintenance pages.')}</p></div>

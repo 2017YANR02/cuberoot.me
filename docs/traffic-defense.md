@@ -1,5 +1,25 @@
 # 网络异常流量防护与费用止损
 
+## 2026-10-06 统一开放 / 防护开关
+
+运行入口：服务器 `/opt/cuberoot-vercel-bans/traffic-defense.ts`，源码 `ops/vercel-ban-relay/traffic-defense.ts`。本轮先发布实现，再执行开放并记录实测；下面旧事件记录不是实时配置。
+
+```bash
+ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts status'
+ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts open --apply'
+ssh cuberoot 'node /opt/cuberoot-vercel-bans/traffic-defense.ts protect --apply'
+```
+
+省略 `--apply` 只读取当前状态与计划。写入由服务器 `flock` 串行执行；Vercel 专用令牌继续留在原 root-only 配置，不写入 Mac 快捷指令、网页或日志。该令牌目前有到期时间，切换若失败必须按错误处理，不能把点击当成功。
+
+开放模式：Vercel `firewallEnabled=false`，保留完整规则；nginx 原 `/etc/nginx/cuberoot-comp-verification-state.conf` 统一设为 `default 0;`，关闭全站验证码、计算器拒绝、事件限流/并发预算、扫描与未验证请求封禁及自动维护。既有封禁账本保留，开放时不参与拦截。暂停两个写状态的 timer，脚本本身也检查该开关，后续部署重新启用 timer 仍不会恢复限制。API 读取同一运行期文件；Next 从不受维护和扫描封禁影响的 nginx 只读 `/v1/traffic-defense` 获取模式，进程内缓存 5 秒、合并并发请求，不需要每次切换重新构建。
+
+防护模式：恢复 Vercel 保存的规则及 nginx 原阈值、CN 豁免、验证码与自动封禁/停站；清除旧维护状态后启动 timers，遇到新异常可再次停站。历史账本的绝对到期时间保留，重新启动采集游标避免把开放期间的间隔当同步故障。此次开关不自动开启有时限的 Attack Mode，不改变 DNS、项目暂停、账号认证、业务写入限流、预算暂停或 Analytics 收集设置。
+
+每次操作先保存 root-only 快照，读回 Vercel 与 nginx 状态并核对规则未被改写；nginx reload 必须有新 worker。中途失败返回非零并保留快照与实际本地状态，可重试同一目标。公网状态不可读取时 Next 默认启用访问验证，因此状态服务故障可能影响非 CN 匿名访问。恢复开放后仍需核对两个页面线路与独立 API；平台基础 DDoS 保护与原有账号权限不属于本次事件开关。
+
+Mac 点击入口调用上述正式命令，不复制策略。本机快捷指令与 SSH 配置不进入仓库，换电脑需重新安装。
+
 ## 2026-10-05 App 内嵌验证码 Cookie（本地，未发布）
 
 安装端工具页在本地 App origin 下用 iframe 加载网站。验证码答案正确后原 `SameSite=Lax` Cookie 无法在跨站 iframe 中回传，页面因此显示“浏览器未保存验证凭证”。验证码页现在随提交报告是否嵌入；API 仅在 `embedded === true` 时签发 `SameSite=None; Partitioned`，普通网页保留 Lax。Domain、HttpOnly、Secure、7 天期限、来源检查、一次性验证码、UA 绑定和所有入口验签保持原有规则；该标记不授予豁免。成功提交已消耗图片，即使后续 Cookie 检查失败也要求换图，避免重复提交已核销的 challenge。

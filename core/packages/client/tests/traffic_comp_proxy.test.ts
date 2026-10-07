@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 import { GET } from '@/app/api/comp/[slug]/route';
+import { trafficDefenseEnabled } from '@/lib/traffic-defense';
+vi.mock('@/lib/traffic-defense', () => ({ trafficDefenseEnabled: vi.fn(async () => true) }));
 
-beforeEach(() => vi.stubEnv('COMPETITION_ACCESS_SECRET', 's'.repeat(32)));
+beforeEach(() => { vi.stubEnv('COMPETITION_ACCESS_SECRET', 's'.repeat(32)); vi.mocked(trafficDefenseEnabled).mockResolvedValue(true); });
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 
 const request = (query = '') => GET(
@@ -11,6 +13,13 @@ const request = (query = '') => GET(
 );
 
 describe('competition proxy query budget', () => {
+  it('allows anonymous development proxy requests in open mode', async () => {
+    vi.stubEnv('COMPETITION_ACCESS_SECRET', '');
+    vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
+    const upstream = vi.fn(async () => Response.json({ events: [] })); vi.stubGlobal('fetch', upstream);
+    expect((await request()).status).toBe(200);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
   it('rejects cache-busting variants before contacting the origin', async () => {
     const upstream = vi.fn();
     vi.stubGlobal('fetch', upstream);

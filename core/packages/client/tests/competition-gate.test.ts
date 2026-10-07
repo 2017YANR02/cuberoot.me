@@ -2,10 +2,21 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { NextRequest } from 'next/server';
 import { competitionGate, SITE_VERIFICATION_PATH } from '@/lib/competition-gate';
+import { trafficDefenseEnabled } from '@/lib/traffic-defense';
+vi.mock('@/lib/traffic-defense', () => ({ trafficDefenseEnabled: vi.fn(async () => true) }));
 import { safeCompetitionReturn } from '@/lib/competition-return';
 import { COMPETITION_ACCESS_COOKIE, COMPETITION_SERVICE_HEADER, createCompetitionProof, verifyCompetitionProof } from '@cuberoot/shared/competition-access';
 const secret = 'test-only-secret-with-more-than-32-characters';
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => { vi.unstubAllEnvs(); vi.mocked(trafficDefenseEnabled).mockResolvedValue(true); });
+it('opens pages and cached competition proxies without a browser proof when incident protection is off', async () => {
+  vi.stubEnv('COMPETITION_ACCESS_SECRET', secret); vi.stubEnv('VERCEL', '1');
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(false);
+  for (const path of ['/', '/zh/calc', '/zh/timer', '/api/comp/A', '/tools/cstimer/']) {
+    expect(await competitionGate(new NextRequest('https://cuberoot.me' + path))).toBeNull();
+  }
+  vi.mocked(trafficDefenseEnabled).mockResolvedValue(true);
+  expect((await competitionGate(new NextRequest('https://cuberoot.me/zh/timer')))?.status).toBe(307);
+});
 it('exempts actual loopback development pages and API requests even with a signing secret', async () => {
   vi.stubEnv('NODE_ENV', 'development');
   vi.stubEnv('COMPETITION_ACCESS_SECRET', secret);

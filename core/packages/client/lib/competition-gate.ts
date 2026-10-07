@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
+import { trafficDefenseEnabled } from './traffic-defense';
 import { competitionCookie, verifyCompetitionProof, COMPETITION_SERVICE_HEADER } from '@cuberoot/shared/competition-access';
 
 // Explicit delivery endpoints and known asset trees stay reachable. A file-like
@@ -27,6 +28,7 @@ export async function competitionGate(req: NextRequest) {
     ? req.headers.get('x-vercel-ip-country') === 'CN'
     : req.headers.get('x-cuberoot-cn-exempt') === '1';
   if (cn) return null;
+  if (!await trafficDefenseEnabled()) return null;
   // A server-only proof is valid for one exact path/query and at most 60 seconds.
   // It clears the traffic challenge only; it grants no account/private-data access.
   if (await verifyCompetitionProof(process.env.COMPETITION_ACCESS_SECRET ?? '', req.headers.get(COMPETITION_SERVICE_HEADER) ?? '', 'service', path + req.nextUrl.search)) return null;

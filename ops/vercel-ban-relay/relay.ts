@@ -65,6 +65,12 @@ export async function collectEvents(state: Ledger, now: number, read: (start: nu
   }
 }
 export async function run() {
+  try {
+    if (readFileSync('/etc/nginx/cuberoot-comp-verification-state.conf', 'utf8').trim() === 'default 0;') {
+      console.log(JSON.stringify({ mode: 'open', applied: false }));
+      return;
+    }
+  } catch { /* Existing installations retain protection until configured. */ }
   const root = process.env.CUBEROOT_BAN_STATE_DIR || '/var/lib/cuberoot-vercel-bans';
   const config = JSON.parse(readFileSync(process.env.CUBEROOT_BAN_CONFIG || '/etc/cuberoot-vercel-bans.json', 'utf8'));
   const now = Date.now();
