@@ -46,8 +46,8 @@ function getRecorder() {
   if (!recorderInstance) {
     recorderInstance = miniProgramApi().getRecorderManager();
     recorderInstance.onStart(() => recorderCallbacks?.start());
-    recorderInstance.onStop(() => { const stop = recorderCallbacks?.stop; finishStopping?.(); finishStopping = undefined; recorderStopping = undefined; stop?.(); });
-    recorderInstance.onError(error => { finishStopping?.(); finishStopping = undefined; recorderStopping = undefined; recorderCallbacks?.error(error); });
+    recorderInstance.onStop(() => { const stop = recorderCallbacks?.stop; recorderCallbacks = undefined; finishStopping?.(); finishStopping = undefined; recorderStopping = undefined; stop?.(); });
+    recorderInstance.onError(error => { const onError = recorderCallbacks?.error; recorderCallbacks = undefined; finishStopping?.(); finishStopping = undefined; recorderStopping = undefined; onError?.(error); });
     recorderInstance.onPause(() => recorderCallbacks?.stop(true));
     recorderInstance.onInterruptionBegin(() => recorderCallbacks?.stop(true));
     recorderInstance.onFrameRecorded(result => recorderCallbacks?.frame(result));
@@ -61,7 +61,12 @@ export async function connectNativeStackmat(options: {
   onDisconnect(): void;
 }): Promise<{ deviceName: string; disconnect(): Promise<void> }> {
   if (isDouyinMiniProgram()) throw new Error(tr({ en: 'Stackmat PCM input is currently available in WeChat only.', zh: 'Stackmat PCM 输入目前仅适配微信小程序' }));
-  if (recorderStopping) await Promise.race([recorderStopping, new Promise<never>((_, reject) => setTimeout(() => reject(new Error('RECORDER_STILL_STOPPING')), 2000))]);
+  if (recorderStopping) {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try { await Promise.race([recorderStopping, new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('RECORDER_STILL_STOPPING')), 2000); })]); }
+    finally { clearTimeout(timer); }
+  }
+  if (recorderCallbacks) throw new Error('RECORDER_ALREADY_ACTIVE');
   if (options.signal?.aborted) throw new Error('TIMER_CONNECTION_CANCELLED');
   const recorder = getRecorder();
   let offAbort = () => {};
@@ -78,7 +83,7 @@ export async function connectNativeStackmat(options: {
     closed = true;
     clearTimeout(timeout);
     offAbort();
-    recorderCallbacks = undefined;
+    if (!requested) recorderCallbacks = undefined;
     if (requested) {
       recorderStopping = new Promise<void>(resolve => { finishStopping = resolve; });
       recorder.stop();
@@ -97,13 +102,19 @@ export async function connectNativeStackmat(options: {
     onStop();
   };
   let resolveStart: () => void = () => {};
-  const onStart = (): void => { if (!closed) { started = true; resolveStart(); } };
-  const timeout = setTimeout(() => onError({ errMsg: tr({ en: 'Microphone start timed out.', zh: '麦克风启动超时' }) }), 10000);
+  const onStart = (): void => { if (closed) { recorder.stop(); return; } started = true; resolveStart(); };
+  const cancel = (message: string): void => {
+    if (closed) return;
+    rejectStart(new Error(message));
+    void disconnect();
+    options.onDisconnect();
+  };
+  const timeout = setTimeout(() => cancel(tr({ en: 'Microphone start timed out.', zh: '麦克风启动超时' })), 10000);
   try {
     await new Promise<void>((resolve, reject) => {
       resolveStart = resolve; rejectStart = reject;
       recorderCallbacks = { start: onStart, stop: onStop, error: onError, frame: onFrame };
-      offAbort = options.signal?.onAbort(() => onError({ errMsg: 'TIMER_CONNECTION_CANCELLED' })) ?? offAbort;
+      offAbort = options.signal?.onAbort(() => cancel('TIMER_CONNECTION_CANCELLED')) ?? offAbort;
       if (closed) return;
       requested = true;
       recorder.start({ format: 'PCM', sampleRate: 44100, numberOfChannels: 1, frameSize: 1, duration: 600000, audioSource: 'auto' });

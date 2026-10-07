@@ -134,3 +134,31 @@ describe('Stackmat recorder lifecycle', () => {
     } finally { vi.unstubAllGlobals(); }
   });
 });
+
+describe('Stackmat pending native start cleanup', () => {
+  it.each(['abort', 'timeout'])('stops on %s, stops a late start and quarantines the recorder until native stop', async (mode) => {
+    vi.resetModules(); vi.useFakeTimers();
+    const callbacks: Record<string, (...args: any[]) => void> = {};
+    const start = vi.fn(); const stop = vi.fn(); let abort = () => {};
+    const recorder: Record<string, unknown> = { start, stop };
+    for (const name of ['Start', 'Stop', 'Error', 'Pause', 'InterruptionBegin', 'FrameRecorded'])
+      recorder['on' + name] = (callback: (...args: any[]) => void) => { callbacks[name] = callback; };
+    vi.stubGlobal('wx', { getRecorderManager: () => recorder });
+    try {
+      const { connectNativeStackmat } = await import('../src/lib/external-timer/stackmat');
+      const options = { onEvent: vi.fn(), onDisconnect: vi.fn(), signal: { aborted: false, onAbort(f: () => void) { abort = f; return () => {}; } } };
+      const pending = connectNativeStackmat(options);
+      const rejected = expect(pending).rejects.toThrow(mode === 'abort' ? 'CANCELLED' : '超时');
+      if (mode === 'abort') abort(); else await vi.advanceTimersByTimeAsync(10000);
+      await rejected; expect(stop).toHaveBeenCalledTimes(1);
+      callbacks.Start(); expect(stop).toHaveBeenCalledTimes(2);
+      callbacks.FrameRecorded({ frameBuffer: new ArrayBuffer(1024) });
+      expect(options.onEvent).not.toHaveBeenCalled();
+      const next = connectNativeStackmat({ onEvent: vi.fn(), onDisconnect: vi.fn() });
+      expect(start).toHaveBeenCalledTimes(1);
+      callbacks.Stop(); await vi.advanceTimersByTimeAsync(0);
+      expect(start).toHaveBeenCalledTimes(2); callbacks.Start();
+      const connection = await next; await connection.disconnect(); callbacks.Stop();
+    } finally { vi.useRealTimers(); vi.unstubAllGlobals(); }
+  });
+});
