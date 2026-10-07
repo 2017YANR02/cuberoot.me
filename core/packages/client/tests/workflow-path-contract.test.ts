@@ -749,6 +749,18 @@ describe('deployment workflow path contracts', () => {
     }
   });
 
+  it('checks out ancestor Git ignore rules for native Cargo fingerprinting', () => {
+    const workflow = readWorkflow('test.yml');
+    const start = workflow.indexOf('\n  desktop:\n');
+    expect(start).toBeGreaterThan(-1);
+    const next = workflow.slice(start + 1).search(/\n  [a-z][a-z-]*:\n/);
+    const block = workflow.slice(start, next < 0 ? undefined : start + 1 + next);
+    // Partial clones omit the root blob unless selected. Cargo cannot lazily
+    // fetch it when its Git reader computes the package source fingerprint.
+    expect(block).toMatch(/sparse-checkout: \|[\s\S]*?^\s+\/\.gitignore\s*$/m);
+    expect(block).toMatch(/^\s+\/core\/\s*$/m);
+  });
+
   it('prepares dist-only dependencies through the canonical desktop entrypoints', () => {
     const desktop = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'package.json')), 'utf8'));
     const tauri = JSON.parse(readFileSync(join(REPO_ROOT, appPath('desktop', 'src-tauri', 'tauri.conf.json')), 'utf8'));

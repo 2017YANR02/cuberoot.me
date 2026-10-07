@@ -913,6 +913,8 @@ jobs:
         with:
           sparse-checkout-cone-mode: false
           sparse-checkout: |
+            # Cargo reads ancestor ignore rules even outside the sparse worktree.
+            /.gitignore
             /.node-version
             /core/
             /tools/solver/rust-cross/cross-solver-worker.js
