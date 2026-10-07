@@ -66,7 +66,6 @@ import { listReconsByComp } from '@/lib/recon-api';
 import { buildReconPersonAttemptMap, findReconForPersonAttempt, buildReconSubmitHref } from '@/lib/recon-attempt-lookup';
 import { roundLabel, ROUND_HINT_ZH, ROUND_HINT_EN } from '@/lib/wca-round-meta';
 import { roundHasAnyEnteredResult } from '@/lib/wca-round-results';
-import { useProgressiveCount } from '@/components/persons/logic/use-progressive-count';
 import { useCompRowChangeMap } from '@/components/persons/logic/use-row-change-map';
 import { ResultChangeChain } from '@/components/persons/sections/results/ChangedResultValue';
 import type { ResultChangeTarget } from '@/components/persons/sections/results/ResultChangeEditor';
@@ -836,6 +835,7 @@ export default function CompDetailPage() {
     'filter',
     parseAsString.withDefault('all').withOptions({ history: 'replace', scroll: false }),
   );
+  const [resultSearch, setResultSearch] = useQueryState('q', parseAsString.withDefault(''));
   const [layoutParam, setLayoutParam] = useQueryState(
     'layout',
     parseAsStringEnum<'calendar' | 'table' | 'poster'>(['calendar', 'table', 'poster']).withOptions({ history: 'replace', scroll: false }),
@@ -2110,8 +2110,14 @@ export default function CompDetailPage() {
           </>
         ) : !isPsych ? (
           <>
-            {(!isWca || hasMyResults) && (
+            {(!isWca || hasMyResults || !showCombined) && (
               <div className="comp-selectors">
+                {!showCombined && <SearchInput
+                  value={resultSearch}
+                  onChange={value => void setResultSearch(value)}
+                  placeholder={tr({ zh: '搜索选手 / WCA ID', en: 'Search person / WCA ID' })}
+                  ariaLabel={tr({ zh: '搜索选手 / WCA ID', en: 'Search person / WCA ID' })}
+                />}
                 {!isWca && <select
                   className="comp-select comp-filter-select"
                   value={filterParam}
@@ -2150,6 +2156,7 @@ export default function CompDetailPage() {
             ) : (
               <ResultsTable
                 results={filteredResults}
+                search={resultSearch}
                 users={data.users}
                 round={currentRound?.rd}
                 isZh={isZh}
@@ -2427,6 +2434,7 @@ function CompSortBtn({ active, dir, onClick, children }: { active: boolean; dir:
 
 interface ResultsTableProps {
   results: LiveResult[];
+  search?: string;
   users: Record<string, User>;
   round: RoundMeta | undefined;
   isZh: boolean;
@@ -2449,7 +2457,7 @@ interface ResultsTableProps {
   sortable?: boolean;
 }
 
-function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, sortable }: ResultsTableProps) {
+function ResultsTable({ results, search = '', users, round, isZh, pbMap, advancers, onClickCuber, compIso2, changeMap, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, sortable }: ResultsTableProps) {
   // 排序:点列头(平均/单次/第 N 把)升→降→取消;无效成绩(DNF/DNS/空)恒垫底,默认 null=按名次序。
   const [sort, setSort] = useState<{ key: string | null; dir: 'asc' | 'desc' }>({ key: null, dir: 'asc' });
   const toggleSort = useCallback((key: string) => {
@@ -2460,11 +2468,16 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
   // 成绩变更覆盖层感知的有效值(订正后的 best/average),供名次 + 列头排序按订正值排。
   const eff = useMemo(() => makeEffRank(users, changeMap), [users, changeMap]);
   const displayResults = useMemo(() => {
-    if (!sort.key) return results;
+    const query = search.trim().toLowerCase();
+    const matching = query ? results.filter(r => {
+      const user = users[String(r.n)];
+      return `${user?.name ?? ''} ${user?.wcaid ?? ''} ${r.n}`.toLowerCase().includes(query);
+    }) : results;
+    if (!sort.key) return matching;
     const k = sort.key, dir = sort.dir;
     const valOf = (r: LiveResult): number =>
       k === 'average' ? eff(r).a : k === 'single' ? eff(r).b : (r.v[Number(k.slice(3))] ?? 0);
-    return results.slice().sort((a, b) => {
+    return matching.slice().sort((a, b) => {
       const va = valOf(a), vb = valOf(b);
       const ia = !(va > 0), ib = !(vb > 0);   // DNF/DNS/空 = 无效
       if (ia && ib) return 0;
@@ -2472,12 +2485,36 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
       if (ib) return -1;
       return dir === 'asc' ? va - vb : vb - va;
     });
-  }, [results, sort, eff]);
+  }, [results, search, users, sort, eff]);
 
-  const { count } = useProgressiveCount(
-    // Sorting reuses the rows already mounted; do not delete and rebuild them.
-    displayResults.length, `${compId}|${round?.e}|${round?.i}`, 20, 30,
-  );
+  const tableRef = useRef<HTMLTableElement>(null);
+  const windowed = displayResults.length > 80;
+  // Auto-sized table columns must not shrink when their widest visible row leaves.
+  // Retain measured widths within this round, but allow wider values to grow them.
+  useEffect(() => {
+    const table = tableRef.current;
+    if (!table || !windowed) return;
+    const columns = Array.from(table.querySelectorAll('col'));
+    let widths: number[] = [];
+    const observer = new ResizeObserver(() => {
+      const cells = Array.from(table.tHead?.rows[0]?.cells ?? []);
+      cells.forEach((cell, i) => {
+        const width = cell.getBoundingClientRect().width;
+        if (width > (widths[i] ?? 0) + 0.5 && columns[i]) {
+          widths[i] = width;
+          columns[i].style.width = `${width}px`;
+        }
+      });
+    });
+    const reset = () => {
+      widths = [];
+      columns.forEach(col => { col.style.width = ''; });
+    };
+    reset();
+    observer.observe(table);
+    window.addEventListener('resize', reset);
+    return () => { observer.disconnect(); window.removeEventListener('resize', reset); reset(); };
+  }, [windowed, round?.e, round?.i]);
   const handlers = useRef({ onClickCuber, onEdit, onRefresh });
   useEffect(() => { handlers.current = { onClickCuber, onEdit, onRefresh }; }, [onClickCuber, onEdit, onRefresh]);
   const handleClickCuber = useCallback((number: number) => handlers.current.onClickCuber(number), []);
@@ -2505,9 +2542,42 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
     <CompSortBtn active={sort.key === key} dir={sort.dir} onClick={() => toggleSort(key)}>{label}</CompSortBtn>
   );
 
+  const columnCount = (showAvg ? 4 : 3) + attemptCount;
+  const renderRows = (start: number, end: number) => displayResults.slice(start, end).map((r, offset) => {
+    const idx = start + offset;
+    return (
+      <ResultsTableRow
+        key={r.i || `${r.n}:${idx}`}
+        rowIndex={idx + 2}
+        r={r}
+        u={users[String(r.n)]}
+        pb={pbMap[users[String(r.n)]?.wcaid]}
+        changes={changeMap?.get(personRoundChangeKey(users[String(r.n)]?.wcaid ?? '', r.e, r.r))}
+        place={placeByN.get(r.n) ?? null}
+        advanced={advancers?.has(r.n) ?? false}
+        isOdd={idx % 2 === 1}
+        showAvg={showAvg}
+        singleFirst={singleFirst}
+        attemptCount={attemptCount}
+        isZh={isZh}
+        compIso2={compIso2}
+        compId={compId}
+        compName={compName}
+        admin={admin}
+        loggedIn={loggedIn}
+        meWcaId={meWcaId}
+        reconMap={reconMap}
+        onEdit={handleEdit}
+        onRefresh={handleRefresh}
+        onClickCuber={handleClickCuber}
+      />
+    );
+  });
+
   return (
     <div className="comp-table-wrap sticky-scroll-mobile">
-      <table className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+      <table ref={tableRef} aria-rowcount={displayResults.length + 1} className={`comp-table${compIso2 === 'cn' && isZh ? ' comp-table-cn' : ''}`}>
+        {windowed && <colgroup>{Array.from({ length: columnCount }, (_, i) => <col key={i} />)}</colgroup>}
         <thead>
           <tr>
             <th className="th-place">{tr({ zh: '名次', en: 'Place' })}</th>
@@ -2529,41 +2599,64 @@ function ResultsTable({ results, users, round, isZh, pbMap, advancers, onClickCu
               : attemptNumHeaders(attemptCount)}
           </tr>
         </thead>
-        <tbody>
-          {displayResults.slice(0, count).map((r, idx) => (
-            <ResultsTableRow
-              key={r.i || `${r.n}:${idx}`}
-              r={r}
-              u={users[String(r.n)]}
-              pb={pbMap[users[String(r.n)]?.wcaid]}
-              changes={changeMap?.get(personRoundChangeKey(users[String(r.n)]?.wcaid ?? '', r.e, r.r))}
-              place={placeByN.get(r.n) ?? null}
-              advanced={advancers?.has(r.n) ?? false}
-              isOdd={idx % 2 === 1}
-              showAvg={showAvg}
-              singleFirst={singleFirst}
-              attemptCount={attemptCount}
-              isZh={isZh}
-              compIso2={compIso2}
-              compId={compId}
-              compName={compName}
-              admin={admin}
-              loggedIn={loggedIn}
-              meWcaId={meWcaId}
-              reconMap={reconMap}
-              onEdit={handleEdit}
-              onRefresh={handleRefresh}
-              onClickCuber={handleClickCuber}
-            />
-          ))}
-          {results.length === 0 && (
-            <tr><td colSpan={(showAvg ? 4 : 3) + attemptCount} className="comp-empty">{tr({ zh: '此轮暂无成绩', en: 'No results yet'
-            })}</td></tr>
+        {windowed ? Array.from({ length: Math.ceil(displayResults.length / 20) }, (_, group) => {
+          const start = group * 20;
+          return <ResultsTableWindow
+            key={`${compId}|${round.e}|${round.i}|${search}|${sort.key}|${sort.dir}|${group}`}
+            count={Math.min(20, displayResults.length - start)}
+            columns={columnCount}
+            initial={group === 0}
+            renderRows={() => renderRows(start, start + 20)}
+          />;
+        }) : <tbody>
+          {renderRows(0, displayResults.length)}
+          {displayResults.length === 0 && (
+            <tr><td colSpan={columnCount} className="comp-empty">{search.trim()
+              ? tr({ zh: '没有匹配的选手', en: 'No matching competitors' })
+              : tr({ zh: '此轮暂无成绩', en: 'No results yet' })}</td></tr>
           )}
-        </tbody>
+        </tbody>}
       </table>
     </div>
   );
+}
+
+// Table-specific viewport windows: keep native table layout and measured row
+// heights (change histories can make a row taller). Visibility updates one window
+// instead of reconciling the full table on every scroll event.
+function ResultsTableWindow({ count, columns, initial, renderRows }: {
+  count: number; columns: number; initial: boolean; renderRows: () => ReactNode;
+}) {
+  const ref = useRef<HTMLTableSectionElement>(null);
+  const [visible, setVisible] = useState(initial);
+  const [height, setHeight] = useState<number>();
+  const [retained, setRetained] = useState(false);
+  const mounted = visible || retained;
+  useEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { rootMargin: '600px 0px' });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || !mounted) return;
+    const observer = new ResizeObserver(() => setHeight(element.getBoundingClientRect().height));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mounted]);
+  return <tbody ref={ref}
+    // Preserve focused controls and portals owned by a row after interaction,
+    // including touch devices where pressing a button does not focus it.
+    onFocusCapture={() => setRetained(true)}
+    onClickCapture={() => setRetained(true)}
+  >
+    {mounted ? renderRows() : <tr aria-hidden="true">
+      <td className="comp-result-spacer" colSpan={columns}
+        style={{ height: height ?? `calc(var(--comp-result-row-height) * ${count})` }} />
+    </tr>}
+  </tbody>;
 }
 
 // Each row receives its own data, so background metadata and other rounds do not
@@ -2580,10 +2673,11 @@ type ResultsTableRowProps = Pick<ResultsTableProps,
   showAvg: boolean;
   singleFirst: boolean;
   attemptCount: number;
+  rowIndex: number;
 };
 
 const ResultsTableRow = memo(function ResultsTableRow({
-  r, u, pb, changes, place, advanced, isOdd, showAvg, singleFirst, attemptCount,
+  r, u, pb, changes, place, advanced, isOdd, showAvg, singleFirst, attemptCount, rowIndex,
   isZh, compIso2, compId, compName, admin, loggedIn, meWcaId, reconMap, onEdit, onRefresh, onClickCuber,
 }: ResultsTableRowProps) {
   if (!u) return null;
@@ -2620,6 +2714,7 @@ const ResultsTableRow = memo(function ResultsTableRow({
   const cls = [advanced ? 'row-advanced' : '', isOdd ? 'row-odd' : ''].filter(Boolean).join(' ');
   return (
     <tr
+      aria-rowindex={rowIndex}
       className={`${cls} comp-row-clickable`}
       onClick={() => onClickCuber(r.n)}
     >

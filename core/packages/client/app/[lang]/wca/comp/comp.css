@@ -580,6 +580,7 @@
   border: 1px solid var(--border-default);
 }
 .comp-table {
+  --comp-result-row-height: 38px;
   width: auto;
   border-collapse: collapse;
   font-size: 0.9rem;
@@ -600,6 +601,7 @@
   padding: 7px 10px;
   white-space: nowrap;
 }
+.comp-table tbody td.comp-result-spacer { padding: 0; border: 0; }
 .comp-table tbody tr:last-child td { border-bottom: none; }
 .comp-table tbody tr.row-odd { background: color-mix(in srgb, var(--foreground) 2.5%, transparent); }
 .comp-table tbody tr.row-advanced { background: color-mix(in srgb, var(--signal-success) 16%, transparent); }
@@ -1469,6 +1471,7 @@ td.is-pr {
   .comp-input-row { flex-direction: column; }
   .comp-go-btn { justify-content: center; }
   .comp-table-wrap { font-size: 0.82rem; }
+  .comp-table { --comp-result-row-height: 36px; }
   .comp-table thead th,
   .comp-table tbody td { padding: 6px 7px; }
   .td-attempt { padding-right: 10px !important; }
