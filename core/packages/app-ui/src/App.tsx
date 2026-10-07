@@ -706,7 +706,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           }
           throw new Error('random difficulty base state became idle');
         }
-        const generated = await generateTimerScramble({ event: activeEvent });
+        const generated = await ordinaryRandom.generate({ event: activeEvent }, signal);
         if (signal.aborted) throw new Error('optimal 3x3 generation aborted');
         if (!generated.ok || generated.kind === 'manual') {
           throw new Error('could not generate optimal 3x3 base state');
@@ -738,6 +738,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     };
   }, [
     activeEvent,
+    ordinaryRandom,
     effectiveDrillTarget,
     randomDifficultySignature,
     randomOptimalKey,

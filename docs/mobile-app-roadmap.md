@@ -1484,3 +1484,10 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 验证：shared build、timer-ui/App/client typecheck 通过。生成契约/同步种子/缓冲 92 项、架构边界 20 项、既有 Harmony 路径回归 8 项、独立 transport 2 项、Web 多人来源/轮次/历史 34 项、App 来源/多人/预朝向 44 项，共 200 项定向检查通过。修正已过时的来源源码断言，并把上一批 Harmony 资源 fixture 改走已有 workspace 解析器，未增加生产跨包依赖。
 - Chrome 实际逐个生成全部 43 项：42 个 generated、custom manual 空槽，无 pageerror；两端真实单人随机→下一题→上一题返回原文→手动空队列，在 320/390px 无横向溢出。Mobile production preview 实测三阶及二阶 Worker 生成，320px 无溢出。独立复核提出的来源离开清理、多人取消连带问题均修复；自动化不替代五平台触摸、后台与长时间计时验收。
 - 最终 Mobile production build、Android/iOS Capacitor sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 Hvigor 00303028：本机仅支持 modelVersion 6.0.1、工程为 6.0.2；未降级配置。Windows native、安装/签名/公证、真机和发布未验；仅本地提交，未 push，整体继续 **NOT COMPLETE**。
+
+### 2026-10-07：专项生成调度同源（本地）
+
+- `timer-ui/scramble/*` 为 Web/五端 App 共用的二阶按步数、二阶专项、非二阶步数、同步种子、随机难度 Worker 调度入口；宿主保留持久化和页面适配。Web 二阶同步路径退场；随机难度状态转打乱采用已有 Worker 内两阶段求解器，采样和答案规则不变。普通云最优基础题统一调用普通随机客户端，云端 API 与付费链路未修改。
+- 118 项定向检查（92 项既有核心契约、2 项取消/队列回归、24 项 App 来源契约）、4 条 confirmed 复盘 ground truth、client/app-ui/timer-ui typecheck 与 architecture boundary guard 通过。独立只读复核确认 seed 协议不变、零步非空、Worker 公开入口、生成/答案/修正取消隔离。Chrome 实测两种二阶口径的零步/三步、全部 9 种专项、相同 ticket 重复生成和 Cross 三步状态及答案；生成/答案实测约 667ms，无页面错误。Web（独立 3003 开发端口）与 App（1431）页面按步数开关、连续换题及切换手动空队列均通过，迟到结果未覆盖手动来源。
+- Mobile build + Android/iOS Capacitor sync、Android `assembleDebug`、iOS 未签名模拟器 build、macOS Tauri release `.app`/`.dmg` 和 Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 `00303028`：本机 Hvigor 支持 modelVersion 6.0.1，项目为 6.0.2，未降级项目配置。Windows native build、各平台设备安装与完整交互、签名/公证和发布尚未验证。
+- 本轮只本地提交，不 push、不部署、不更新商店包。WCA 真题池编排、解法外壳和完整 Solo 编排仍未整体共享；隐藏的多人多魔方按用户指示不做。五端总体继续 NOT COMPLETE。

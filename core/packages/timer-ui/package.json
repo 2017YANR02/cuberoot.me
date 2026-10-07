@@ -103,7 +103,17 @@
       "./TimerSolverCompareModal": "react-dom",
       "./TimerSolverHints": "react-dom",
       "./TimerSolverBody": "react-dom",
-      "./random-scramble": "react-dom"
+      "./random-scramble": "react-dom",
+      "./scramble/cube222-steps": "browser",
+      "./scramble/cube222-steps.worker": "browser",
+      "./scramble/cube222-special": "browser",
+      "./scramble/cube222-special.worker": "browser",
+      "./scramble/non222-steps": "browser",
+      "./scramble/non222-steps.worker": "browser",
+      "./scramble/sync-seed": "browser",
+      "./scramble/sync-seed.worker": "browser",
+      "./scramble/trainer": "browser",
+      "./scramble/trainer.worker": "browser"
     }
   },
   "exports": {
@@ -194,7 +204,17 @@
     "./TimerSolverCompareModal": "./src/TimerSolverCompareModal.tsx",
     "./TimerSolverHints": "./src/TimerSolverHints.tsx",
     "./TimerSolverBody": "./src/TimerSolverBody.tsx",
-    "./random-scramble": "./src/random-scramble.ts"
+    "./random-scramble": "./src/random-scramble.ts",
+    "./scramble/cube222-steps": "./src/scramble/cube222-steps.ts",
+    "./scramble/cube222-steps.worker": "./src/scramble/cube222-steps.worker.ts",
+    "./scramble/cube222-special": "./src/scramble/cube222-special.ts",
+    "./scramble/cube222-special.worker": "./src/scramble/cube222-special.worker.ts",
+    "./scramble/non222-steps": "./src/scramble/non222-steps.ts",
+    "./scramble/non222-steps.worker": "./src/scramble/non222-steps.worker.ts",
+    "./scramble/sync-seed": "./src/scramble/sync-seed.ts",
+    "./scramble/sync-seed.worker": "./src/scramble/sync-seed.worker.ts",
+    "./scramble/trainer": "./src/scramble/trainer.ts",
+    "./scramble/trainer.worker": "./src/scramble/trainer.worker.ts"
   },
   "sideEffects": true,
   "scripts": {

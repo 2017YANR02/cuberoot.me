@@ -117,8 +117,9 @@ describe('2x2 single-source consumers', () => {
 
   it('generates random-source special types through the shared provider worker', () => {
     const solo = source('app/[lang]/timer/_shell/SoloView.tsx');
-    const worker = source('app/[lang]/timer/_lib/scramble/cube222-special.worker.ts');
-    const pool = source('app/[lang]/timer/_lib/scramble/cube222-special-pool.ts');
+    const worker = readFileSync(`${CORE_ROOT}packages/timer-ui/src/scramble/cube222-special.worker.ts`, 'utf8');
+    const pool = readFileSync(`${CORE_ROOT}packages/timer-ui/src/scramble/cube222-special.ts`, 'utf8');
+    expect(source('app/[lang]/timer/_lib/scramble/cube222-special-pool.ts')).toContain('@cuberoot/timer-ui/scramble/cube222-special');
 
     expect(solo).toContain('takeCube222SpecialScramble(special)');
     expect(solo).toContain('const waiter = new AbortController()');

@@ -15,11 +15,11 @@ const scrambleHistory = readFileSync(
   'utf8',
 );
 const cube222Pool = readFileSync(
-  new URL('./data/cube222-special-pool.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-special')),
   'utf8',
 );
 const cube222Worker = readFileSync(
-  new URL('./data/cube222-special.worker.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-special.worker')),
   'utf8',
 );
 const cstimerNonWcaPool = readFileSync(
@@ -31,25 +31,22 @@ const cstimerNonWcaWorker = readFileSync(
   'utf8',
 );
 const cube222StepsPool = readFileSync(
-  new URL('./data/cube222-steps-pool.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-steps')),
   'utf8',
 );
 const cube222StepsWorker = readFileSync(
-  new URL('./data/cube222-steps.worker.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/cube222-steps.worker')),
   'utf8',
 );
 const non222StepsPool = readFileSync(
-  new URL('./data/non222-steps-pool.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/non222-steps')),
   'utf8',
 );
 const non222StepsWorker = readFileSync(
-  new URL('./data/non222-steps.worker.ts', import.meta.url),
+  new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/non222-steps.worker')),
   'utf8',
 );
-const mobile333WorkerHost = readFileSync(
-  new URL('./smart-cube/fixup.ts', import.meta.url),
-  'utf8',
-);
+const mobile333WorkerHost = readFileSync(new URL('./smart-cube/fixup.ts', import.meta.url), 'utf8') + readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/scramble/trainer')), 'utf8');
 
 describe('mobile scramble-source parity contract', () => {
   it('uses the shared opaque manual queue and wraps in source order', () => {
@@ -208,8 +205,8 @@ describe('mobile scramble-source parity contract', () => {
 
   it('isolates random-difficulty generation, answers, and smart-cube fixup transports', () => {
     expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile smart-cube worker')");
-    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile trainer generation worker')");
-    expect(mobile333WorkerHost).toContain("createMobile333Rpc('mobile trainer solution worker')");
+    expect(mobile333WorkerHost).toContain("createRpc('trainer generation worker')");
+    expect(mobile333WorkerHost).toContain("createRpc('trainer solution worker')");
     expect(mobile333WorkerHost).not.toMatch(/const trainerRpc\s*=/);
   });
 
