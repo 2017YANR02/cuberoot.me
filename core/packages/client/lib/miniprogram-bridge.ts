@@ -87,16 +87,35 @@ export function getInstalledMiniProgramNavigationApi(): MiniProgramNavigationApi
     .find(supportsMiniProgramNavigation)?.miniProgram ?? null;
 }
 
-/** Leave the standalone WebView so the native Tools tab and tab bar return. */
-export async function openMiniProgramHome(): Promise<boolean> {
+/** Route through a native adapter so returning within the active tab also works. */
+export async function openMiniProgramHome(tab: 'tools' | 'account' = 'tools'): Promise<boolean> {
+  return openMiniProgramTab(tab, tab === 'tools' ? '/' : undefined);
+}
+
+export async function openMiniProgramTab(tab: 'tools' | 'timer' | 'account', path?: string): Promise<boolean> {
   if (!mayUseMiniProgramBridge()) return false;
   const miniProgram = await loadMiniProgramNavigationApi();
-  // A known Mini Program must not fall through to a tab-bar-less website home
-  // if the bridge is temporarily unavailable; leave this page available to retry.
-  if (!miniProgram) return isMiniProgramWebView();
-  if (!await confirmMiniProgramEnvironment(miniProgram)) return false;
-  miniProgram.switchTab?.({ url: '/pages/tools/index' });
-  return true;
+  if (!miniProgram || !await confirmMiniProgramEnvironment(miniProgram)) return false;
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (handled: boolean) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      resolve(handled);
+    };
+    const timeout = window.setTimeout(() => finish(false), SDK_LOAD_TIMEOUT_MS);
+    try {
+      miniProgram.navigateTo({
+        url: `/pages/web/index?nativeTab=${tab}${path ? `&path=${encodeURIComponent(path)}` : ''}`,
+        success: () => finish(true), fail: () => finish(false),
+      });
+    } catch { finish(false); }
+  });
+}
+
+export function miniProgramTab(): string | null {
+  try { return sessionStorage.getItem('cuberoot.native-tab'); } catch { return null; }
 }
 
 async function loadDouyinJsSdk(): Promise<MiniProgramWebViewSdk | null> {

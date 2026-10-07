@@ -27,11 +27,11 @@ export function receiveNativePreferences(value: unknown, source?: object): boole
   return true;
 }
 /** Each opened document gets an explicit snapshot, even if WebView storage is isolated. */
-export function withNativePreferences(url: string): string {
+export function withNativePreferences(url: string, tab?: 'tools' | 'timer' | 'web'): string {
   const index = url.indexOf('#');
   const base = (index < 0 ? url : url.slice(0, index)).replace(/([?&])lang=[^&]*&?/g, '$1').replace(/[?&]$/, '');
   const hash = index < 0 ? '' : url.slice(index);
   const preferences = readNativePreferences();
-  const payload = encodeURIComponent(JSON.stringify({ preferences, nonce: Date.now() }));
+  const payload = encodeURIComponent(JSON.stringify({ preferences, tab, nonce: Date.now() }));
   return `${base}${base.includes('?') ? '&' : '?'}lang=${preferences?.locale ?? getMiniProgramLocale()}&${MINI_PROGRAM_PREFERENCES_QUERY}=${payload}${hash}`;
 }

@@ -55,6 +55,57 @@ describe('shared web-view page state', () => {
     vi.unstubAllGlobals();
   });
 
+  it('transfers a tool route to the tools tab and resets home even when that tab is already loaded', () => {
+    const switchTab = vi.fn();
+    Object.assign(wx, { switchTab });
+    const makePage = (key?: 'home' | 'timer') => {
+      const options = createWebViewPageOptions(key) as any;
+      return { ...options, ...createContext() };
+    };
+    const tools = makePage('home');
+    const timer = makePage('timer');
+    tools.onLoad({});
+    timer.onLoad({});
+    const timerSrc = timer.data.src;
+    const adapter = makePage();
+    adapter.onLoad({ nativeTab: 'tools', path: encodeURIComponent('/zh/contact') });
+    expect(switchTab).toHaveBeenCalledWith({ url: '/pages/tools/index' });
+    tools.onShow();
+    expect(tools.data.src).toBe('https://cuberoot.me/zh/contact#wechat_redirect');
+    expect(timer.data.src).toBe(timerSrc);
+    adapter.onLoad({ nativeTab: 'timer', path: encodeURIComponent('/zh/timer?event=222&scramble=R') });
+    timer.onShow();
+    expect(timer.data.src).toBe('https://cuberoot.me/zh/timer?event=222&scramble=R#wechat_redirect');
+    const explicitTimerSrc = timer.data.src;
+    adapter.onLoad({ nativeTab: 'timer', path: '/zh/timer' });
+    timer.onShow();
+    expect(timer.data.src).toBe(explicitTimerSrc);
+    adapter.onLoad({ nativeTab: 'tools', path: '%2F' });
+    tools.onShow();
+    expect(tools.data.src).toBe('https://cuberoot.me/zh#wechat_redirect');
+    adapter.onLoad({ nativeTab: 'account' });
+    expect(switchTab).toHaveBeenLastCalledWith({ url: '/pages/account/index' });
+  });
+
+  it('retains a synchronized document until native sign-out, then clears the website session', async () => {
+    let session: unknown = { token: 't'.repeat(20), user: { name: 'CubeRoot', wcaId: null } };
+    const request = vi.fn((options: { success(value: unknown): void }) => options.success({ statusCode: 200, data: { ticket: 'A'.repeat(43), expiresIn: 90 } }));
+    Object.assign(wx, { getStorageSync: (key: string) => key === 'cuberoot:session' ? session : null, request });
+    const options = createWebViewPageOptions('timer') as any;
+    const page = { ...options, ...createContext() };
+    page.onLoad({});
+    await vi.waitFor(() => expect(page.data.src).toContain('ticket='));
+    const src = page.data.src;
+    page.onHide();
+    page.onShow();
+    expect(page.data.src).toBe(src);
+    expect(request).toHaveBeenCalledTimes(1);
+    session = null;
+    page.onHide();
+    page.onShow();
+    expect(page.data.src).toBe('https://cuberoot.me/auth/miniprogram#action=logout&next=%2Fzh%2Ftimer');
+  });
+
   it('opens an allowlisted route and updates its title', async () => {
     const context = createContext();
 

@@ -20,6 +20,7 @@ export const THEME_BOOTSTRAP = `(() => {
       sessionStorage.setItem('cuberoot.native-preferences', '2');
       if (sessionStorage.getItem('cuberoot.native-preferences.applied') !== incoming) {
         var snapshot = JSON.parse(incoming);
+        if (['tools', 'timer', 'web'].includes(snapshot.tab)) sessionStorage.setItem('cuberoot.native-tab', snapshot.tab);
         var preferences = (${decodeMiniProgramPreferences.toString()})(snapshot.preferences);
         if (preferences) {
           document.cookie = 'lang=' + preferences.locale + '; max-age=31536000; path=/; samesite=lax';
