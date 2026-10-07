@@ -1,0 +1,21 @@
+@import './timer-room.css';
+@import './timer-bld-helper.css';
+.timer-room-dialog.timer-tool-dialog { width: min(640px, 100%); min-width: 0; gap: 14px; }
+.timer-room-dialog.solver-modal { max-width: 520px; }
+.timer-tool-dialog .timer-tool-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.timer-tool-dialog .timer-tool-field { position: relative; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.timer-tool-dialog textarea, .timer-tool-dialog input { min-width: 0; max-width: 100%; box-sizing: border-box; background: var(--input); color: var(--foreground); border: 1px solid var(--border-default); border-radius: 6px; padding: 8px; }
+.timer-tool-dialog textarea { width: 100%; resize: vertical; padding-right: 30px; font-family: var(--font-mono); }
+.timer-tool-dialog input[type='number'] { width: 80px; }
+.timer-tool-dialog .timer-tool-actions, .timer-tool-dialog .modal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.timer-tool-dialog button { cursor: pointer; }
+.timer-tool-dialog .timer-tool-actions button, .timer-tool-dialog .modal-actions button, .timer-tool-dialog .timer-tool-controls > button { background: var(--muted); color: var(--foreground); border: 1px solid var(--border-default); border-radius: 6px; padding: 8px 12px; }
+.timer-tool-dialog button:disabled { opacity: .5; cursor: not-allowed; }
+.timer-tool-list { max-height: 50vh; overflow: auto; min-width: 0; font-family: var(--font-mono); }
+.timer-tool-row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--border-default); overflow-wrap: anywhere; }
+.timer-tool-notation { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.timer-tool-dialog [role='alert'] { color: var(--destructive); }
+@media (max-width: 480px) {
+  .timer-tool-dialog .timer-tool-controls { flex-direction: column; align-items: stretch; }
+  .timer-tool-dialog .timer-tool-actions button { min-height: 44px; flex: 1 1 auto; }
+}

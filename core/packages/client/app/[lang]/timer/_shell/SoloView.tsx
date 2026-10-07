@@ -1,4 +1,7 @@
 'use client';
+import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
+import { get222Mode } from '@/lib/scramble-222-mode';
+import { browserTimerToolTransport, type TimerTool } from '@cuberoot/timer-ui/TimerTools';
 import { timerSeedTicket } from '@cuberoot/shared/timer/sync-seed';
 import type { TimerSeedRequest } from '@cuberoot/shared/timer/seeded/generate';
 import { nextSeededScramble } from '../_lib/scramble/sync-seed';
@@ -251,8 +254,6 @@ import {
   TimerWcaScrambleSource,
   TimerScrambleSourceSelect,
   TimerStatRail,
-  TimerStageLayout,
-  TimerTopbar,
   TimingSurface,
   browserPrintTransport,
   useGestureWheel,
@@ -281,7 +282,6 @@ import '../_components/charts/practice_heatmap.css';
 // 静态 import 会把这些弹层连同各自的 CSS 一起焊进计时器首屏那个 chunk,而绝大多数
 // 用户一次也不会打开它们。ssr:false —— 本文件已经在一个 ssr:false 的动态边界里(page.tsx
 // 只在客户端拉 TimerShell),弹层再声明一次只是显式表态,不新增行为。
-const BldHelperModal = dynamic(() => import('../_components/BldHelperModal'), { ssr: false });
 const SolveModal = dynamic(() => import('../_components/SolveModal'), { ssr: false });
 const ReconstructModal = dynamic(() => import('../_components/ReconstructModal'), { ssr: false });
 const BluetoothModal = dynamic(() => import('../_components/BluetoothModal'), { ssr: false });
@@ -295,8 +295,6 @@ const WEB_TIMER_DEVICE_REGISTRY = createTimerDeviceRegistry({
 const TrainerSubsetModal = dynamic(() => import('../_components/TrainerSubsetModal'), { ssr: false });
 const StatsModal = dynamic(() => import('../_components/StatsModal'), { ssr: false });
 const ManualEntryModal = dynamic(() => import('../_components/ManualEntryModal'), { ssr: false });
-const SolverModal = dynamic(() => import('../_components/SolverModal'), { ssr: false });
-const BulkScrambleModal = dynamic(() => import('../_components/BulkScrambleModal'), { ssr: false });
 const DrillModal = dynamic(() => import('../_components/DrillModal'), { ssr: false });
 /** 停表后就地摊开的复盘(见 SolveRecap 头注)。和上面那些弹层一样留在自己的 chunk
  *  里,但它不是「用户可能会打开的东西」而是「拧完就会出现的东西」—— 所以魔方一连上
@@ -413,7 +411,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const competitionSolvedRef = useRef(false);
   const { country: rankCountry } = useRankCountry();
 
-  const isMobile = useMediaQuery('(max-width: 480px)');
+  const isMobile = useTimerSoloCompactLayout();
   const isDesktop = useTimerWideLayout();
   const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
@@ -2297,9 +2295,11 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [trainerSubsetOpen, setTrainerSubsetOpen] = useState<'oll' | 'pll' | null>(null);
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [manualEntryOpen, setManualEntryOpen] = useState(false);
-  const [solverOpen, setSolverOpen] = useState(false);
-  const [bulkScrambleOpen, setBulkScrambleOpen] = useState(false);
-  const [bldHelperOpen, setBldHelperOpen] = useState(false);
+  const [tool, setTool] = useState<TimerTool | null>(null);
+  const solverOpen = tool === 'solver';
+  const bulkScrambleOpen = tool === 'bulk';
+  const bldHelperOpen = tool === 'bld-helper';
+
 
   const connectFromBluetoothModal = useCallback(async (pick?: ConnectPickOptions) => {
     if (bluetoothConnectingRef.current) return;
@@ -2537,9 +2537,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
     const onKeyDown = (e: KeyboardEvent) => {
       if (competitionRef.current.enabled) return;
-      const modal: TimerKeyboardModalState = !anyModalOpenRef.current
-        ? 'none'
-        : hintsOnlyRef.current ? 'hints-only' : 'blocking';
+      const modal: TimerKeyboardModalState = timerSoloModalState(anyModalOpenRef.current && !hintsOnlyRef.current, hintsOnlyRef.current);
       executeKeyboardDecision(timerKeyDownDecision({
         input: e,
         target: timerKeyboardTargetContext(e.target),
@@ -2612,7 +2610,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       case 'more.drill':
         return { ...base, onSelect: () => setDrillModalOpen(true) };
       case 'more.bld-helper':
-        return { ...base, onSelect: () => setBldHelperOpen(true) };
+        return { ...base, onSelect: () => setTool('bld-helper') };
       case 'more.fullscreen':
         return { ...base, onSelect: toggleFullscreen };
       case 'more.manual-entry':
@@ -2620,9 +2618,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       case 'more.replay':
         return { ...base, onSelect: handlePasteReplay };
       case 'more.solver':
-        return { ...base, onSelect: () => setSolverOpen(true) };
+        return { ...base, onSelect: () => setTool('solver') };
       case 'more.bulk':
-        return { ...base, onSelect: () => setBulkScrambleOpen(true) };
+        return { ...base, onSelect: () => setTool('bulk') };
       case 'more.print':
         return { ...base, onSelect: () => printControllerRef.current?.print() };
       case 'more.clear-event':
@@ -2962,9 +2960,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       />
 
       {/* ── Topbar ──────────────────────────────────────────── */}
-      <TimerTopbar
-        brand={<HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>}
-        controls={(
+      <TimerSoloPage tools={{
+          tool: tool,
+          event: event,
+          scramble: scramble,
+          language: timerLanguage,
+          randomOptions: { cnMode: settings.cnMode, scramble222Mode: get222Mode() },
+          transport: browserTimerToolTransport,
+          onClose: () => setTool(null)
+        }}
+        topbar={{
+          brand: <HomeLink className="tb-btn shell-topbar-home" data-no-timer aria-label={tr({ zh: '返回首页', en: 'Back to home' })}><ArrowLeft size={18} /></HomeLink>,
+          controls: (
           <>
           {playersControl}
           <TimerPuzzlePicker
@@ -3023,7 +3030,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <span className="shell-topbar-diff" data-no-timer ref={setDiffSlot} />
           {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
-          {!isDesktop && solverHintPanel}
+
           {/* 假魔方是 dev 调试入口,跟当前打乱相关,放在常驻计时控件末尾。 */}
           {DEV_PANEL && settings.showDevFakeCube && (
             <DevFakeCubePanel
@@ -3035,8 +3042,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             />
           )}
           </>
-        )}
-        actions={(
+        ),
+          actions: (
           <>
           {presenceControl}
           <MoreMenu items={moreItems} />
@@ -3045,24 +3052,18 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             <SettingsIcon size={14} />
           </button>
           </>
-        )}
-      />
-
-      {/* ── Main column ─────────────────────────────────────── */}
-      <TimerStageLayout
-        className="shell-main timer-workspace-main timer-solver-stage"
-        fullscreen={fullscreen}
-        source={<ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} />}
-        statistics={
-          <TimerStatRail
+        )}}
+        stage={{
+          className: "shell-main",
+          fullscreen: fullscreen,
+          source: <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} />,
+          statistics: <TimerStatRail
             ariaExpanded={panelTab != null}
             language={timerLanguage}
             summary={stats}
             onClick={() => setPanelTab(t => (t ? null : 'times'))}
-          />
-        }
-        devices={
-          <TimerDeviceCenter
+          />,
+          devices: <TimerDeviceCenter
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
             items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
               ? {
@@ -3098,22 +3099,19 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                   })}
             menuLabel={tr(TIMER_DEVICE_CENTER_LABELS['menu'])}
             triggerLabel={tr(TIMER_DEVICE_CENTER_LABELS['trigger'])}
-          />
-        }
-      >
-        <TimingSurface
-          layout="solo"
-          phase={timer.phase}
-          colorClass={`${colorClass} tf-${settings.timerFont}`.trim()}
-          fontScale={settings.timerFontScale}
-          digits={<SegmentTime text={digitsText} />}
-          digitsRef={digitsRef}
-          surfaceRef={surfaceRef}
-          className={targetFeedbackClass}
-          onMouseDown={onCenterMouseDown}
-          onMouseUp={onCenterMouseUp}
-          scrambleSlot={
-            <TimerScrambleStrip
+          />}}
+        solver={solverHintPanel}
+        timing={{
+phase: timer.phase,
+colorClass: `${colorClass} tf-${settings.timerFont}`.trim(),
+fontScale: settings.timerFontScale,
+digits: <SegmentTime text={digitsText} />,
+digitsRef: digitsRef,
+surfaceRef: surfaceRef,
+className: targetFeedbackClass,
+onMouseDown: onCenterMouseDown,
+onMouseUp: onCenterMouseUp,
+scrambleSlot: <TimerScrambleStrip
               compact={settings.compactScramble}
               copiedLabel={tr({ zh: '已复制', en: 'Copied' })}
               correctionActive={scrambleGuidance.correctionActive}
@@ -3206,13 +3204,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                 />
                 </TimerWcaScrambleSource>
               )}
-            </TimerScrambleStrip>
-          }
-          cornerSlot={centerCubeSlot}
-          digitsCorner={settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
+            </TimerScrambleStrip>,
+cornerSlot: centerCubeSlot,
+digitsCorner: settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
             <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
-          ) : undefined}
-        >
+          ) : undefined,
+children: <>
           {/* sub-content under the digits */}
           {timer.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={timer.displayMs} localize={tr} />}
           {timer.phase === 'inspecting' && inspectionIllegalCount > 0 && (
@@ -3242,9 +3239,12 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               state={attemptSplitState}
             />
           )}
-        </TimingSurface>
+        </>
+}}
+        narrowRecap={liveSolutionPanel}
+        afterTiming={<>
 
-        {!isDesktop && liveSolutionPanel}
+
 
         {/* Goal pill + trainer subset + solver hints (chrome, fade while solving) */}
         <div className="shell-undersurface surface-chrome">
@@ -3276,16 +3276,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {/* 左侧配置栏:解法提示(仅 333,逐阶段最优 + 分步解法)常驻可折叠面板 ——
             桌面收成主区左侧竖栏。手机上这颗 pill 挂在顶栏(见上),不再落在打乱图下方。
             打乱来源已移到计时读数上方(见 ScrambleSourceBar)。 */}
-        <div className="shell-rail timer-solver-rail" data-no-timer>
-          {isDesktop && solverHintPanel}
-        </div>
 
-      </TimerStageLayout>
 
-      {/* ── Side panel: desktop dock / 非桌面整屏 ───────────────
-          入口是左下角那块统计(见上);底部导航条已撤掉,工具在顶栏 MoreMenu。
-          非桌面宽度整屏铺开,关闭走右上角 × 或 Escape。 */}
-      {panelTab && !liveSolutionPanel && (
+      </>}
+        history={panelTab && !liveSolutionPanel && (
         <aside className={`timer-workspace-panel shell-panel${isDesktop ? ' shell-panel--rail' : ' shell-panel--sheet'}`}>
           <div className="shell-panel-tabs">
             <button type="button" className={`shell-panel-tab${panelTab === 'times' ? ' active' : ''}`} onClick={() => setPanelTab('times')}>{tr({ zh: '成绩', en: 'Times'
@@ -3300,7 +3294,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           <div className="shell-panel-body timer-workspace-panel-body">{renderPanelBody()}</div>
         </aside>
       )}
-
+      />
       {/* ── Radial gesture wheel (touch press-and-drag, idle/stopped) ── */}
       <GestureWheel
         ref={gestureWheelRef}
@@ -3432,6 +3426,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
 
       {statsModalOpen && <StatsModal event={event} solves={solves} isZh={isZh} onClose={() => setStatsModalOpen(false)} />}
 
+
       {manualEntryOpen && (
         <ManualEntryModal
           event={event}
@@ -3445,9 +3440,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         />
       )}
 
-      {solverOpen && <SolverModal isZh={isZh} onClose={() => setSolverOpen(false)} />}
-      {bulkScrambleOpen && <BulkScrambleModal defaultEvent={event} isZh={isZh} onClose={() => setBulkScrambleOpen(false)} />}
-      {bldHelperOpen && <BldHelperModal scramble={scramble} event={event} isZh={isZh} onClose={() => setBldHelperOpen(false)} />}
 
       {drillModalOpen && (
         <DrillModal

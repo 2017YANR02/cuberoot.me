@@ -1,3 +1,4 @@
+import { TimerSoloPage, timerSoloModalState, useTimerSoloCompactLayout } from '@cuberoot/timer-ui/TimerSoloPage';
 import { createRandomScrambleClient } from '@cuberoot/timer-ui/random-scramble';
 import { createTimerBackupClient } from '@cuberoot/shared/timer/backup-client';
 import { TimerRankBadge } from '@cuberoot/timer-ui/rank-badge';
@@ -215,20 +216,17 @@ import {
   TimerSessionSwitcher,
   timerSessionSwitcherLabels,
   TimerStatRail,
-  TimerStageLayout,
   TimerBooleanSettingRow,
   TimerWorkspace,
   useTimerWideLayout,
   TimerTypographySettings,
   TimerSettingsPanel,
   TimerTimingSettingsSections,
-  TimerTopbar,
   TimerWcaSourceConfig,
   TimerWcaDifficultyConfig,
   TimerRandomDifficultyConfig,
   TimerRandomDifficultyCaseBar,
   TIMER_OVERLAY_IDS,
-  TimingSurface,
   shouldIgnoreTimerTarget,
   timerKeyboardTargetContext,
   useGestureWheel,
@@ -445,6 +443,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   const [settingsCategory, setSettingsCategory] = useState<TimerSettingCategoryId>('timer');
   const [timerMode, setTimerMode] = useState<TimerPlayersValue>(1);
   const wideLayout = useTimerWideLayout();
+  const compactSoloLayout = useTimerSoloCompactLayout();
   const dockHistory = wideLayout && view === 'history' && timerMode === 1;
   const timerVisible = view === 'timer' || view === 'settings' || dockHistory;
   const timerVisibleRef = useRef(timerVisible);
@@ -577,6 +576,8 @@ export function App({ host }: { host: InstalledAppHost }) {
       setOpenOverlay(null);
     }
   }, []);
+  const toolDismissRef = useRef<(() => boolean) | null>(null);
+  const registerToolDismiss = useCallback((dismiss: (() => boolean) | null) => { toolDismissRef.current = dismiss; }, []);
   const solverDismissRef = useRef<(() => boolean) | null>(null);
   const registerSolverDismiss = useCallback((dismiss: (() => boolean) | null) => { solverDismissRef.current = dismiss; }, []);
   const wcaMarksOverlayIdentityRef = useRef<string | null>(null);
@@ -2164,6 +2165,7 @@ export function App({ host }: { host: InstalledAppHost }) {
           : 0,
       });
       if (action === 'close-overlay') {
+        if (toolDismissRef.current?.()) return;
         if ((openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver || solverBlockingRef.current) && solverDismissRef.current?.()) return;
         if (openOverlayRef.current === TIMER_OVERLAY_IDS.smartCubeDevice
           || openOverlayRef.current === TIMER_OVERLAY_IDS.smartTimerDevice
@@ -3393,7 +3395,7 @@ export function App({ host }: { host: InstalledAppHost }) {
   ]);
 
   const moreItems = useMemo(() => mobileTimerMoreMenuItems({
-    compactViewport: true,
+    compactViewport: compactSoloLayout,
     drillActive: effectiveDrillTarget !== null,
     event: activeEvent,
     fullscreen,
@@ -3406,15 +3408,16 @@ export function App({ host }: { host: InstalledAppHost }) {
       openOverlayRef.current = TIMER_OVERLAY_IDS.drillPicker;
       setOpenOverlay(TIMER_OVERLAY_IDS.drillPicker);
     },
-    'more.bld-helper': () => openToolsRoute('/alg/3bld/helper'),
+    'more.bld-helper': () => setOpenOverlay(TIMER_OVERLAY_IDS.bldTool),
     'more.fullscreen': toggleTimerFullscreen,
     'more.manual-entry': openManualEntry,
     'more.replay': () => setReplayImportOpen(true),
-    'more.solver': () => openToolsRoute('/scramble/solver?event=333'),
-    'more.bulk': () => openToolsRoute('/scramble/gen?mode=batch'),
+    'more.solver': () => setOpenOverlay(TIMER_OVERLAY_IDS.solverTool),
+    'more.bulk': () => setOpenOverlay(TIMER_OVERLAY_IDS.bulkTool),
     'more.print': () => printControllerRef.current?.print(),
     'more.clear-event': clearCurrentEvent,
   }), [
+    compactSoloLayout,
     activeEvent,
     clearCurrentEvent,
     effectiveDrillTarget,
@@ -3428,15 +3431,14 @@ export function App({ host }: { host: InstalledAppHost }) {
   ]);
 
   useEffect(() => {
-    const modalState = () => (
+    const modalState = () => timerSoloModalState(
       viewRef.current === 'settings'
       || !timerVisibleRef.current
       || (openOverlayRef.current !== null && openOverlayRef.current !== TIMER_OVERLAY_IDS.stageSolver)
       || solverBlockingRef.current || statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current
       || moreOpenRef.current
-      || manualEntryOpenRef.current
-        ? 'blocking' as const
-        : openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver ? 'hints-only' as const : 'none' as const
+      || manualEntryOpenRef.current,
+      openOverlayRef.current === TIMER_OVERLAY_IDS.stageSolver
     );
     const execute = (
       decision: ReturnType<typeof timerKeyDownDecision>,
@@ -3738,12 +3740,22 @@ export function App({ host }: { host: InstalledAppHost }) {
         viewHeader
       )}
 
+
+
       <TimerWorkspace className="view-container" active={timerMode === 1 && timerVisible} panelOpen={dockHistory} recap={solveRecap}>
         {timerVisible && timerMode === 1 && (
-          <section className="timer-view timer-workspace-main timer-workspace-main--with-toolbar" aria-labelledby="timer-title">
-            <h1 className="sr-only" id="timer-title">{copy.timer}</h1>
-            <TimerTopbar
-              actions={(
+          <TimerSoloPage tools={{
+          tool: openOverlay === TIMER_OVERLAY_IDS.bulkTool ? 'bulk' : openOverlay === TIMER_OVERLAY_IDS.bldTool ? 'bld-helper' : openOverlay === TIMER_OVERLAY_IDS.solverTool ? 'solver' : null,
+          event: activeEvent,
+          scramble: scramble,
+          language: language,
+          randomOptions: { cnMode: store!.settings.cnMode, scramble222Mode },
+          transport: { copy: text => host.writeClipboardText(text), download: (text, filename) => shareOrDownloadBackup(text, { filename, mime: 'text/plain' }) },
+          onClose: () => setOpenOverlay(null),
+          onDismissChange: registerToolDismiss
+        }} title={copy.timer}
+        topbar={{
+          actions: (
                 <>
                   <TimerMoreMenu
                     items={moreItems}
@@ -3763,8 +3775,8 @@ export function App({ host }: { host: InstalledAppHost }) {
                     type="button"
                   ><SettingsIcon aria-hidden="true" size={17} /></button>
                 </>
-              )}
-              controls={(
+              ),
+          controls: (
                 <>
                   <TimerPlayersSelect
                     ariaLabel={copy.onePlayer}
@@ -3822,14 +3834,13 @@ export function App({ host }: { host: InstalledAppHost }) {
                     data-no-timer
                     ref={setWcaDifficultyToggleSlot}
                   />
-                  {!wideLayout && solverHintPanel}
+
                 </>
-              )}
-            />
-            <TimerStageLayout
-              className="mobile-timer-stage timer-solver-stage"
-              fullscreen={fullscreen}
-              source={<>
+              )}}
+        stage={{
+          className: "mobile-timer-stage timer-view",
+          fullscreen: fullscreen,
+          source: <>
                 {scrambleSource === 'wca' && timerSupportsRealWcaScrambles(activeEvent) && (
                   <fieldset
                     className="mobile-scramble-source-config mobile-wca-source-config"
@@ -3968,24 +3979,22 @@ export function App({ host }: { host: InstalledAppHost }) {
                     />
                   </fieldset>
                 )}
-                  </>}
-              statistics={
-                <TimerStatRail
+                  </>,
+          statistics: <TimerStatRail
                   disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                   language={language}
                   summary={stats}
                   onClick={() => setView('history')}
-                />
-              }
-              devices={smartCubeDeviceCenter}
-            >
-              <TimingSurface
-                digitsCorner={solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />}
-                className={targetFeedbackClass}
-                ariaLabel={copy.timer}
-                colorClass={`${timerColorClass} tf-${store!.settings.timerFont}`}
-                fontScale={store!.settings.timerFontScale}
-                cornerSlot={smartCube.phase === 'connected' ? (
+                />,
+          devices: smartCubeDeviceCenter}}
+        solver={solverHintPanel}
+        timing={{
+digitsCorner: solves.length > 0 && <TimerRankBadge eventId={activeEvent} centis={rankCentis} type="single" country={rankCountry} isZh={language === 'zh'} scopes={store!.settings.rankScopes} wcaId={rankWcaId} host={timerRankHost} />,
+className: targetFeedbackClass,
+ariaLabel: copy.timer,
+colorClass: `${timerColorClass} tf-${store!.settings.timerFont}`,
+fontScale: store!.settings.timerFontScale,
+cornerSlot: smartCube.phase === 'connected' ? (
                   <div className="timer-live-cube">
                     <LiveCubeState
                       algAnchored={smartCubeAnchor.algAnchored}
@@ -4008,13 +4017,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                     scramble={applyOrientationPrefix(scramble, preScrambleFor(activeEvent, store!.settings.preScr, store!.settings.preScrT))}
                     visualization={store!.settings.prefer3D ? '3D' : '2D'}
                   />
-                ) : undefined}
-                digits={<SegmentTime text={timerText} />}
-                layout="solo"
-                interactive={scrambleReady}
-                onContextMenu={(event) => event.preventDefault()}
-                phase={timer.machine.phase}
-                scrambleSlot={(
+                ) : undefined,
+digits: <SegmentTime text={timerText} />,
+interactive: scrambleReady,
+onContextMenu: (event) => event.preventDefault(),
+phase: timer.machine.phase,
+scrambleSlot: (
                   <TimerScrambleStrip compact={store!.settings.compactScramble}
                     font={store!.settings.scrambleFont}
                     fontScale={store!.settings.scrambleFontScale}
@@ -4132,9 +4140,9 @@ export function App({ host }: { host: InstalledAppHost }) {
                       </TimerWcaScrambleSource>
                     )}
                   </TimerScrambleStrip>
-                )}
-                surfaceRef={surfaceRef}
-              >
+                ),
+surfaceRef: surfaceRef,
+children: <>
                 <span aria-live="polite" className="sr-only">{timerInstruction}</span>
                 {timer.machine.phase === 'running' && <TimerTargetTime targetMs={targetMs} displayMs={displayMs} localize={value => value[language]} />}
                 {timer.machine.phase === 'running' && (multiStageActive || bldMemoActive) && (
@@ -4148,12 +4156,15 @@ export function App({ host }: { host: InstalledAppHost }) {
                     state={attemptSplitState}
                   />
                 )}
-              </TimingSurface>
+              </>
+}}
+        narrowRecap={solveRecap}
+        afterTiming={<>
               <div className="surface-chrome">
                 <TimerGoalProgress solves={allSessionSolves} goal={trainingSettings.dailySolveGoal} localize={value => value[language]} />
                 <TimerRoundPanel solves={trainingRound.solves} config={trainingSettings.round} targetMs={targetMs} event={activeEvent} precision={resultPrecision} onReset={trainingRound.start} localize={value => value[language]} />
               </div>
-              {!wideLayout && solveRecap}
+
 
               {openOverlay === TIMER_OVERLAY_IDS.drillPicker && (
                 <TimerDrillPicker
@@ -4168,15 +4179,17 @@ export function App({ host }: { host: InstalledAppHost }) {
                   onPick={(target) => setDrillTarget(target)}
                 />
               )}
-              <div className="shell-rail timer-solver-rail" data-no-timer>{wideLayout && solverHintPanel}</div>
+
               <MobileSmallPuzzleHints
                 event={activeEvent}
                 language={language}
                 phase={timer.machine.phase}
                 scramble={scramble}
               />
-            </TimerStageLayout>
-          </section>
+            </>}
+
+      />
+
         )}
 
         {view === 'timer' && typeof timerMode === 'number' && timerMode >= 2 && (

@@ -248,19 +248,6 @@ button {
   background: var(--background);
 }
 
-.timer-view {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-  min-height: 100%;
-  flex-direction: column;
-  margin: 0 auto;
-}
-
-.timer-view > .shell-topbar {
-  flex: 0 0 auto;
-}
-
 .timer-toolbar-control {
   display: inline-flex;
   min-height: 32px;
@@ -762,7 +749,6 @@ button {
   grid-template-rows: minmax(0, 1fr);
 }
 
-.app-shell--timer-fullscreen .timer-view > .shell-topbar,
 .app-shell--timer-fullscreen .timer-view > .mobile-scramble-source-config,
 .app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail,
 .app-shell--timer-fullscreen .mobile-timer-stage > .mobile-solution-hints,

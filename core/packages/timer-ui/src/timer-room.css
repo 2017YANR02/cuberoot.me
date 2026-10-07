@@ -54,7 +54,7 @@
 .timer-room-actions button:disabled { opacity: 0.5; cursor: default; }
 .timer-room-copy-status:empty { display: none; }
 .timer-room-overlay { position: fixed; inset: 0; z-index: 70; display: flex; align-items: center; justify-content: center; padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); background: var(--modal-overlay, color-mix(in srgb, var(--foreground) 70%, transparent)); }
-.timer-room-dialog { width: min(100%, 720px); max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow: auto; overscroll-behavior: contain; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--card); color: var(--foreground); font-size: 14px; }
+.timer-room-dialog { width: min(100%, 720px); max-height: calc(100vh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); max-height: calc(100dvh - 48px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow: auto; overscroll-behavior: contain; padding: 16px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--card); color: var(--foreground); font-size: 14px; }
 .timer-room-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 16px; }
 .timer-room-dialog-head h2 { margin: 0; font-size: 18px; }
 .timer-room-dialog-head button { display: grid; place-items: center; flex: 0 0 44px; min-height: 44px; border: 0; border-radius: 6px; background: transparent; color: inherit; cursor: pointer; }

@@ -239,8 +239,8 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('histForward(scrambleHistoryRef.current)');
     expect(app).toContain('const { wheelRef: gestureWheelRef } = useGestureWheel({');
     expect(app).toMatch(/active: storeLoaded\s+&& view !== 'settings'\s+&& timerVisible\s+&& !timerOverlayBlocking\s+&& !moreOpen\s+&& !manualEntryOpen/);
-    expect(app).toContain('const timerOverlayBlocking = openOverlay !== null || statsOpen || historyModalOpen || replayBlocking');
-    expect(app).toMatch(/const modalState = \(\) => \(\s+viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
+    expect(app).toContain('const timerOverlayBlocking = solverBlocking || openOverlay !== null || statsOpen || historyModalOpen || replayBlocking');
+    expect(app).toMatch(/const modalState = \(\) => timerSoloModalState\(\s+viewRef\.current === 'settings'\s+\|\| !timerVisibleRef\.current/);
     expect(app).toContain('|| statsOpenRef.current || historyModalOpenRef.current || replayBlockingRef.current');
     expect(app).toContain('<GestureWheel ref={gestureWheelRef}');
     for (const actionId of TIMER_GESTURE_ACTION_IDS) {
@@ -278,19 +278,18 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain("fullscreen ? ' app-shell--timer-fullscreen' : ''");
     expect(app).toContain('if (fullscreenRef.current) {');
     expect(app).toContain('document.exitFullscreen()');
-    expect(css).toContain('.app-shell--timer-fullscreen .timer-view > .shell-topbar');
+    expect(readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/timer-solo-page.css')), 'utf8')).toContain('.shell-topbar.timer-solo-topbar--fullscreen');
     expect(css).toContain('.app-shell--timer-fullscreen > .primary-nav');
     expect(css).toContain('.app-shell--timer-fullscreen .mobile-timer-stage > .shell-stat-rail');
     expect(css).toContain('.app-shell--timer-fullscreen > .shell-device-actions');
   });
 
   it('uses the shared stage footer without changing timer gestures', () => {
-    const stage = app.indexOf('<TimerStageLayout');
-    const footer = app.indexOf('devices={smartCubeDeviceCenter}', stage);
-    const stageEnd = app.indexOf('</TimerStageLayout>', stage);
-    expect(stage).toBeGreaterThan(-1);
-    expect(footer).toBeGreaterThan(stage);
-    expect(footer).toBeLessThan(stageEnd);
+    expect(app).toContain('<TimerSoloPage');
+    expect(app).toContain('devices: smartCubeDeviceCenter');
+    const page = readFileSync(new URL(import.meta.resolve('@cuberoot/timer-ui/TimerSoloPage')), 'utf8');
+    expect(page).toContain('<TimerStageLayout');
+    expect(page).toContain('<TimingSurface {...timing} layout="solo" />');
     expect(app.match(/<TimerDeviceCenter/g)).toHaveLength(1);
     expect(app).not.toContain('app-shell--device-footer');
     expect(css).not.toContain('touch-action: pan-y');
@@ -336,10 +335,10 @@ describe('mobile displayed-scramble history', () => {
     expect(app).toContain('<TimerHistoryWorkspace');
     expect(app).toContain('<TimerSolveDetailModal');
     expect(app).toContain('<TimerCubePreview');
-    expect(app).toContain("cornerSlot={smartCube.phase === 'connected'");
+    expect(app).toContain("cornerSlot: smartCube.phase === 'connected'");
     expect(app).toContain(') : store!.settings.showCubePreview && scrambleReady');
     expect(app).toContain('<LiveCubeState');
-    expect(app).toContain('layout="solo"'); // Shared TimingSurface owns the input-safe preview frame.
+    expect(app).toContain('<TimerSoloPage'); // Shared TimingSurface owns the input-safe preview frame.
     const stripStart = app.indexOf('<TimerScrambleStrip');
     const stripEnd = app.indexOf('</TimerScrambleStrip>', stripStart);
     const preview = app.indexOf('<TimerCubePreview');

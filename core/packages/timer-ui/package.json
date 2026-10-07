@@ -116,7 +116,17 @@
       "./scramble/trainer.worker": "browser",
       "./wca-scramble-pool": "browser",
       "./TimerSolverPanel": "react-dom",
-      "./timer-solver-panel.css": "asset"
+      "./timer-solver-panel.css": "asset",
+      "./TimerBldHelperModal": "react-dom",
+      "./TimerBulkScrambleModal": "react-dom",
+      "./TimerTools": "react-dom",
+      "./TimerGeneralSolverModal": "react-dom",
+      "./bld-config-store": "react-dom",
+      "./scramble/general-solver": "browser",
+      "./timer-tools.css": "react-dom",
+      "./timer-bld-helper.css": "react-dom",
+      "./TimerSoloPage": "react-dom",
+      "./timer-solo-page.css": "react-dom"
     }
   },
   "exports": {
@@ -220,7 +230,17 @@
     "./scramble/trainer.worker": "./src/scramble/trainer.worker.ts",
     "./wca-scramble-pool": "./src/wca-scramble-pool.ts",
     "./TimerSolverPanel": "./src/TimerSolverPanel.tsx",
-    "./timer-solver-panel.css": "./src/timer-solver-panel.css"
+    "./timer-solver-panel.css": "./src/timer-solver-panel.css",
+    "./TimerBldHelperModal": "./src/TimerBldHelperModal.tsx",
+    "./TimerBulkScrambleModal": "./src/TimerBulkScrambleModal.tsx",
+    "./TimerTools": "./src/TimerTools.tsx",
+    "./TimerGeneralSolverModal": "./src/TimerGeneralSolverModal.tsx",
+    "./bld-config-store": "./src/bld-config-store.ts",
+    "./scramble/general-solver": "./src/scramble/general-solver.ts",
+    "./timer-tools.css": "./src/timer-tools.css",
+    "./timer-bld-helper.css": "./src/timer-bld-helper.css",
+    "./TimerSoloPage": "./src/TimerSoloPage.tsx",
+    "./timer-solo-page.css": "./src/timer-solo-page.css"
   },
   "sideEffects": true,
   "scripts": {

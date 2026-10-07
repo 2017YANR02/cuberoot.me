@@ -1524,3 +1524,16 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - Chrome 实测两端侧栏不遮挡中央计时区、全屏只有一个求解实例、手动 R/U/F 队列的前后题、设置打开时拒绝方向键换题、Escape 先内后外；Web 深链关闭与浏览器返回不重开。320/390/768/1280px × system-light/system-dark/forced-light/forced-dark 检查无页面或内容横向溢出，关闭按钮可见，无 pageerror。此处验证外层交互，不替代实体设备触摸/读屏与完整求解验收。
 - 最终 Mobile production build 与 Android/iOS sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG 和 Harmony Web build/sync 通过；Mobile CSS 产物保留传统 max-width/min-width 媒体查询。Harmony HAP 实际尝试仍报 `00303028`，本机 Hvigor 只支持 modelVersion 6.0.1，而工程为 6.0.2。Windows 原生、五平台实体设备、签名/公证与发布未验。
 - 仅本地提交，未 push/部署；关闭本任务 1431/3003 服务并还原临时 Next include，保留原有 3000 服务及其他任务的并行源码。下一步继续完整 Solo 页面编排；隐藏的多人多魔方不推进，总体继续 **NOT COMPLETE**。
+
+
+### 2026-10-07：更多工具与单人页面编排同源（本地）
+
+- 对应原剩余清单第 4 项（更多工具）和第 5 项（Solo 页面）。`TimerSoloPage` 成为 Web `SoloView` 与五端 `App` 的共同视图组合：顶栏、来源、统一 `TimingSurface`、辅助内容、窄屏复盘、解法侧栏/顶栏落点、统计/设备底栏、历史插槽和 `TimerTools`。1024px 解法/历史布局、480px 更多菜单判定、全屏隐藏及 `blocking/hints-only/none` 输入分类同源；宿主保留 Web nuqs、安装端导航、状态机接线、仓储及系统能力。未声称所有宿主业务状态都已合并成一个 hook。
+- `TimerTools` 共用三种现有 Timer 工具窗口。共享房间弹窗保留 `vh` 高度回退后渐进使用 `dvh`，兼容安装端 WebView 103 的滚动边界。App 的批量打乱、盲拧助手、通用求解器留在当前计时页；底部工具栏继续按三栏合同浏览 canonical 网站，不改其职责。批量沿用独立 random client 和 1..100 数量范围，修改项目/数量/口径或关闭时取消，失败不显示半批，复制/下载只输出完整当前批次。
+- BLD 读码、字母/状态模型与类型从 Web 原文迁到 `shared/bld/*`，旧路径兼容导出；Web 训练页与两端 Timer 共用 `bld-config-store`，保留 `bld-config` 既有持久化 envelope、默认配置、多盲逐魔方选择和高级配置。没有第二份引擎或原生 BLD 页面。
+- 通用求解器复用已有 trainer Worker 的 `solve-state` 路径，以独立 RPC 提供有界请求、取消与错误；该 Worker 返回从复原态生成目标状态的序列，窗口必须取逆后展示“解”，此前 Web 直接展示原序列的语义错误已修正。失败后可重试，修改输入/关闭后迟到解不回写。复制失败与求解失败分开提示。
+- 三个工具共用 `TimerRoomDialog` 的遮罩拖出保护、焦点与 Tab 约束。`TimerTools` 捕获 Escape 并与系统 Back 共用内部优先 dismiss，避免忙碌按钮禁用使焦点落 body 后关不掉；Bulk 先关项目菜单再关工具。独立反例审查发现旧复制/导出 Promise 会污染新内容的反馈，已用 export revision 隔离并补回归。
+- 验证：`@cuberoot/shared build`、client/app-ui/timer-ui typecheck 与 `audit:boundaries` 通过。Web BLD golden、More 目录全项目遍历、catalog、CSS 定位守卫及新增工具/单人布局检查通过；新增 7 项覆盖取消、失败重试、导出内容、嵌套返回、BLD 逐魔方、响应式单实例、求解取逆、body Escape 与迟到复制。App More/history 接线、25 项智能魔方/历史生命周期回归及新增工具内禁止起表/两级 Back 集成检查通过。旧源码断言按共享入口更新；More 全目录遍历不再把并行训练扩展后的目录锁死为 43 项。
+- Chrome 实测 Web 与 App：真实 3×3 批量生成、通用求解并把输出应用回目标状态确认复原、BLD 高级配置、Escape 先内后外及留在计时页。批量窗口在 320/390/768/1280px × 系统浅/深与强制浅/深下无页面/窗口横向溢出；既有解法侧栏/全屏键盘、URL 历史和同一视口/主题矩阵通过，无 pageerror。额外检查宽屏历史与主区、解法侧栏互不遮挡，全屏隐藏顶栏/来源/辅助区/底栏并释放左侧 padding。
+- Mobile production build、Capacitor Android/iOS sync、Android debug APK、iOS unsigned Simulator、macOS release app/DMG、Harmony Web build/sync 通过。Harmony HAP 实际尝试仍报 `00303028`：工程 modelVersion 6.0.2，本机 Hvigor 只支持 6.0.1。Windows 原生构建、OPPO/五平台实体设备、签名/公证与发布未验；App 文件输出沿用现有 Web Share/Blob 下载 adapter，不将浏览器成功当作原生文件导出已验收。
+- 仅本地提交，未 push/部署。保留其他任务的训练工作与原有 3000 开发服务；移除本任务临时 Next include，并关闭自建 1431/3003 服务。多人多魔方继续隐藏，总体 **NOT COMPLETE**。
