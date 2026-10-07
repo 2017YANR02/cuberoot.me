@@ -72,6 +72,38 @@ function stubMiniProgram(navigateTo: MiniProgramNavigateTo = () => {}): void {
 }
 
 describe('mini-program smart-cube bridge', () => {
+  it('correlates calibration ACKs, surfaces failures and cancels on relay loss without replay', async () => {
+    stubMiniProgram();
+    const onState = vi.fn(); const onMove = vi.fn();
+    const pending = connectMiniProgramCubeBridge({ onBattery: vi.fn(), onGyro: vi.fn(), onMove, onState, onStatus: vi.fn() });
+    await vi.waitFor(() => expect(FakeWebSocket.instance).not.toBeNull());
+    const socket = FakeWebSocket.instance!; socket.emitOpen();
+    socket.emitMessage({ type: 'ready', role: 'sink', lastMoveSeq: 0 });
+    socket.emitMessage({ type: 'status', phase: 'connected', canResetDevice: true });
+    const bridge = await pending; bridge.activate();
+    let confirmed = false;
+    const reset = bridge.resetDeviceState!().then(() => { confirmed = true; });
+    const command = JSON.parse(socket.sent.at(-1)!);
+    socket.emitMessage({ type: 'command-result', requestId: 'wrongrequest000000', ok: true });
+    await Promise.resolve(); expect(confirmed).toBe(false);
+    socket.emitMessage({ type: 'command-result', requestId: command.requestId, ok: true });
+    await reset;
+    socket.emitMessage({ type: 'state', facelets: 'U'.repeat(54), calibration: true, relaySeq: 1 });
+    socket.emitMessage({ type: 'move', move: 'R', relaySeq: 2 });
+    expect(onState).toHaveBeenCalledWith('U'.repeat(54), true);
+    expect(onMove).toHaveBeenCalledOnce();
+    const failure = expect(bridge.resetDeviceState!()).rejects.toThrow('hardware failure');
+    const next = JSON.parse(socket.sent.at(-1)!);
+    socket.emitMessage({ type: 'command-result', requestId: next.requestId, ok: false, error: 'hardware failure' });
+    await failure;
+    vi.useFakeTimers();
+    const timedOut = expect(bridge.resetDeviceState!()).rejects.toThrow('timed out');
+    await vi.advanceTimersByTimeAsync(8000); await timedOut;
+    vi.useRealTimers();
+    const lost = expect(bridge.resetDeviceState!()).rejects.toThrow('disconnected');
+    socket.emitClose(); await lost; bridge.disconnect();
+  });
+
   it('updates native Stackmat readings without starting or recording a solve twice', async () => {
     stubMiniProgram();
     const source = createMiniProgramStackmatSource(); const listener = vi.fn(); source.subscribe(listener);

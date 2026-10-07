@@ -1,3 +1,4 @@
+import { crc16Modbus } from '@cuberoot/shared/timer/external/crc';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
@@ -160,6 +161,67 @@ function createApi(options: {
 }
 
 describe('encrypted smart-cube mini program transport', () => {
+  it('calibrates MoYu32 only after its ACK, then preserves post-reset turns', async () => {
+    const cipher = createMoyu32Cipher(Uint8Array.from([1, 2, 3, 4, 5, 6]));
+    const states: string[] = []; const moves: string[] = []; let resets = 0;
+    const rig = createApi({ serviceUuid: MOYU32_SERVICE_UUID,
+      notifyCharacteristicUuid: MOYU32_NOTIFY_CHARACTERISTIC_UUID,
+      writeCharacteristicUuid: MOYU32_WRITE_CHARACTERISTIC_UUID,
+      onWrite(write, emit) {
+        const request = cipher.decrypt(write.value);
+        if (request[0] === 0xa3) emit(cipher.encrypt(solvedMoyu32StateFrame(5)));
+        if (request[0] === 0xa2) resets++;
+      },
+    });
+    const cube = await connectMoyu32({ api: rig.api,
+      device: { deviceId: 'ios-device-uuid', name: 'WCU_MY32_1234', advertisData: Uint8Array.from([0, 1, 6, 5, 4, 3, 2, 1]).buffer },
+      onState: s => states.push(s), onMove: m => moves.push(m),
+    });
+    states.length = 0;
+    let done = false; const reset = cube.resetDeviceState().then(() => { done = true; });
+    await vi.waitFor(() => expect(resets).toBe(1)); expect(done).toBe(false);
+    rig.emit(cipher.encrypt(solvedMoyu32StateFrame(10)));
+    const move = new Uint8Array(20); move[0] = 0xa5;
+    writeBits(move, 88, 8, 11); writeBits(move, 96, 5, 0);
+    rig.emit(cipher.encrypt(move)); await reset;
+    expect(states).toEqual(['UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB']);
+    expect(moves).toEqual(['F']);
+    const lost = expect(cube.resetDeviceState()).rejects.toThrow('disconnected');
+    await cube.disconnect(); await lost;
+  });
+
+  it('calibrates QiYi on SYNC confirmation, ignores gyro buffer pressure and retains newer moves', async () => {
+    const cipher = createQiyiCipher(); let resets = 0; const moves: string[] = []; const states: string[] = [];
+    const rig = createApi({ serviceUuid: QIYI_SERVICE_UUID,
+      notifyCharacteristicUuid: QIYI_CHARACTERISTIC_UUID,
+      writeCharacteristicUuid: QIYI_CHARACTERISTIC_UUID,
+      characteristics: [{ uuid: QIYI_CHARACTERISTIC_UUID, properties: { notify: true, write: true } }],
+      onWrite(write, emit) {
+        const request = cipher.decrypt(write.value);
+        if (request[2] === 0) emit(cipher.encrypt(qiyiStateFrame(0, 0)));
+        if (request[2] === 4) resets++;
+      },
+    });
+    const cube = await connectQiyi({ api: rig.api, device: { deviceId: 'ios-device-uuid', name: 'QY-QYSC-2-A1B2' },
+      onState: s => states.push(s), onMove: m => moves.push(m),
+    });
+    states.length = 0;
+    let done = false; const reset = cube.resetDeviceState().then(() => { done = true; });
+    await vi.waitFor(() => expect(resets).toBe(1)); expect(done).toBe(false);
+    const gyro = new Uint8Array(16); gyro.set([0xcc, 0x10]);
+    new DataView(gyro.buffer).setInt16(12, 1000);
+    const crc = crc16Modbus(gyro.subarray(0, 14)); gyro[14] = crc & 255; gyro[15] = crc >>> 8;
+    for (let i = 0; i < 140; i++) rig.emit(cipher.encrypt(gyro));
+    const raw = qiyiStateFrame(160, 0); const content = Array.from(raw.subarray(2, raw[1] - 2)); content[0] = 4;
+    rig.emit(cipher.encrypt(buildQiyiPacket(content)));
+    rig.emit(cipher.encrypt(qiyiStateFrame(320, 4)));
+    await reset;
+    expect(states[0]).toBe('UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB');
+    expect(moves).toEqual(["R"]);
+    const lost = expect(cube.resetDeviceState()).rejects.toThrow('disconnected');
+    await cube.disconnect(); await lost;
+  });
+
   it('uses the advertised MoYu32 MAC so state seeds the move counter', async () => {
     const mac = Uint8Array.from([0xcf, 0x30, 0x16, 0x00, 0x12, 0x34]);
     const cipher = createMoyu32Cipher(mac);

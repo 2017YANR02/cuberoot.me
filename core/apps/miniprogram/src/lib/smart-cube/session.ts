@@ -66,6 +66,7 @@ interface CubeConnectionLike {
   readonly deviceName?: string;
   disconnect(): Promise<void>;
   requestBattery(): Promise<number | null>;
+  resetDeviceState?(): Promise<void>;
 }
 
 const INITIAL_SNAPSHOT: SmartCubeSessionSnapshot = {
@@ -267,7 +268,9 @@ export class SmartCubeSession {
         }
         if (isSmartCubeRelayPayload(payload)
           && payload.type === 'command'
-          && payload.command === 'disconnect') {
+          && payload.command === 'reset-device') {
+          void this.resetDevice(payload.requestId);
+        } else if (isSmartCubeRelayPayload(payload) && payload.type === 'command' && payload.command === 'disconnect') {
           void this.disconnect(tr({ en: 'The timer disconnected the smart cube', zh: '计时器已断开智能魔方' }));
         }
       });
@@ -498,12 +501,15 @@ export class SmartCubeSession {
         return;
       }
       this.connection = connection;
+      this.resetRequests.clear();
+      this.calibrating = false;
       const connectedName = connection.deviceName ?? deviceName;
       await this.publishConnectedStatus({
         type: 'status',
         phase: 'connected',
         brand: kind,
         deviceName: connectedName,
+        canResetDevice: !!connection.resetDeviceState,
         hasGyro: supportsGyro(kind),
       });
       void connection.requestBattery()
@@ -560,6 +566,7 @@ export class SmartCubeSession {
   }
 
   private async disconnectHardware(): Promise<void> {
+    this.calibrating = false;
     const cancellation = this.pendingConnection;
     this.pendingConnection = null;
     cancellation?.cancel();
@@ -616,6 +623,43 @@ export class SmartCubeSession {
     });
   }
 
+  private calibrating = false;
+  private resetRequests = new Set<string>();
+  private async resetDevice(requestId: string): Promise<void> {
+    // Never replay a destructive command, including while its first write is pending.
+    if (this.resetRequests.has(requestId)) return;
+    if (this.resetRequests.size >= 128) return;
+    this.resetRequests.add(requestId);
+    if (this.calibrating) {
+      this.send({ type: 'command-result', requestId, ok: false, error: 'Device calibration already in progress' });
+      return;
+    }
+    const generation = this.connectionGeneration;
+    const connection = this.connection;
+    const status = (calibrating: boolean): SmartCubeRelayEvent => ({
+      type: 'status', phase: 'connected', brand: this.snapshot.brand,
+      deviceName: this.snapshot.deviceName, hasGyro: supportsGyro(this.snapshot.brand as SmartCubeDriverKind),
+      canResetDevice: !!connection?.resetDeviceState, calibrating,
+    });
+    try {
+      if (!connection?.resetDeviceState) throw new Error('Device calibration unavailable');
+      this.calibrating = true;
+      await this.sendConfirmed(status(true));
+      if (generation !== this.connectionGeneration || connection !== this.connection) return;
+      await connection.resetDeviceState();
+      if (generation === this.connectionGeneration && connection === this.connection)
+        this.send({ type: 'command-result', requestId, ok: true });
+    } catch (error) {
+      if (generation === this.connectionGeneration && connection === this.connection)
+        this.send({ type: 'command-result', requestId, ok: false, error: errorMessage(error).slice(0, 256) });
+    } finally {
+      if (generation === this.connectionGeneration && connection === this.connection) {
+        this.calibrating = false;
+        if (connection?.resetDeviceState) this.send(status(false));
+      }
+    }
+  }
+
   private async publishConnectedStatus(
     status: Extract<SmartCubeRelayEvent, { type: 'status' }> & { phase: 'connected' },
   ): Promise<void> {
@@ -629,7 +673,9 @@ export class SmartCubeSession {
   }
 
   private publishFor(generation: number, event: SmartCubeRelayEvent): void {
-    if (generation === this.connectionGeneration) this.send(event);
+    if (generation === this.connectionGeneration) this.send(
+      this.calibrating && (event.type === 'state' || event.type === 'move') ? { ...event, calibration: true } : event,
+    );
   }
 
   private send(payload: SmartCubeRelayEvent): boolean {
