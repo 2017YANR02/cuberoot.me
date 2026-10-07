@@ -173,8 +173,9 @@ export function feedbackMediaUrl(id: number): string {
 
 // ── 对话(GitHub issue 式来回) ──────────────────────────────────────────────────
 /** 公开反馈流。 */
-export async function fetchPublicFeedback(page = 1, size = 20): Promise<PublicFeedbackPage> {
+export async function fetchPublicFeedback(page = 1, size = 20, status?: FeedbackStatus): Promise<PublicFeedbackPage> {
   const qs = new URLSearchParams({ page: String(page), size: String(size) });
+  if (status) qs.set('status', status);
   const r = await fetch(apiUrl(`/v1/feedback/public?${qs}`), { headers: authHeaders(false), cache: 'no-store' });
   return handle<PublicFeedbackPage>(r);
 }

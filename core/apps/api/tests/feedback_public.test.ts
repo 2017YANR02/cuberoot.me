@@ -100,6 +100,25 @@ describe('public feedback', () => {
     expect(mocks.query).toHaveBeenCalledTimes(2);
   });
 
+  it.each(['new', 'triaged', 'done'])('filters both rows and pagination totals by %s', async (status) => {
+    mocks.query.mockResolvedValueOnce([{ n: '12' }]).mockResolvedValueOnce([]);
+    const response = await feedbackRoutes.request(`/feedback/public?status=${status}&page=2&size=10`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ total: 12, page: 2, size: 10 });
+    expect(mocks.query.mock.calls[0]).toEqual(['SELECT COUNT(*) AS n FROM feedback WHERE status = ?', [status]]);
+    expect(mocks.query.mock.calls[1][0]).toContain('FROM feedback WHERE status = ?');
+    expect(mocks.query.mock.calls[1][1]).toEqual([status, 10, 10]);
+  });
+
+  it('ignores unrecognized status values without interpolating them into SQL', async () => {
+    mocks.query.mockResolvedValueOnce([{ n: '0' }]).mockResolvedValueOnce([]);
+    const response = await feedbackRoutes.request('/feedback/public?status=invalid');
+    expect(response.status).toBe(200);
+    expect(mocks.query.mock.calls[0][1]).toEqual([]);
+    expect(mocks.query.mock.calls[1][0]).not.toContain('WHERE');
+    expect(mocks.query.mock.calls[1][1]).toEqual([20, 0]);
+  });
+
   it('lets an anonymous reader open the full public conversation safely', async () => {
     mocks.query
       .mockResolvedValueOnce([{ wca_id: '2017OWNER01', status: 'new' }])
