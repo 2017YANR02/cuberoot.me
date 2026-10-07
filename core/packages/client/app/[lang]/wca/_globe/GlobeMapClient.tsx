@@ -17,7 +17,7 @@ import BoolToggle from '@/components/BoolToggle';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { RotateCw, Play, Pause, X, Moon, Sun, Satellite, Plus, Minus, Compass, Ruler, Undo2, Search, ArrowLeft, ChevronLeft, ChevronRight, Layers, Flame, Globe, Map as MapIcon, Globe2, HelpCircle, Download, LocateFixed } from 'lucide-react';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import type { GeoJSONSource, MapMouseEvent, MapGeoJSONFeature } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as OpenCC from 'opencc-js';
@@ -2235,9 +2235,9 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
 
-    const safeSetPaint = (id: string, prop: string, val: unknown) => {
+    const safeSetPaint = <K extends keyof maplibregl.AllPaintProperties,>(id: string, prop: K, val: unknown) => {
       if (!map.getLayer(id)) return;
-      try { map.setPaintProperty(id, prop, val as string); } catch { /* */ }
+      try { map.setPaintProperty(id, prop, val as maplibregl.AllPaintProperties[K]); } catch { /* */ }
     };
     const safeSetVis = (id: string, visible: boolean) => {
       if (!map.getLayer(id)) return;
