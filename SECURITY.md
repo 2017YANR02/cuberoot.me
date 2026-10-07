@@ -2,12 +2,14 @@
 
 ## Reporting a vulnerability / 报告安全漏洞
 
-Please email [ruiminyan@cuberoot.me](mailto:ruiminyan@cuberoot.me) with the
+Please use [GitHub private vulnerability reporting](https://github.com/2017YANR02/cuberoot.me/security/advisories/new)
+or email [ruiminyan@cuberoot.me](mailto:ruiminyan@cuberoot.me) with the
 subject `CubeRoot security report`. Reports in English or Simplified Chinese
 are welcome. Do not disclose vulnerability details, credentials, or personal
 data in public issues, discussions, or forum posts.
 
-发现安全漏洞，请发邮件至 [ruiminyan@cuberoot.me](mailto:ruiminyan@cuberoot.me)，
+发现安全漏洞，请使用 [GitHub 私密漏洞报告](https://github.com/2017YANR02/cuberoot.me/security/advisories/new)，
+或发邮件至 [ruiminyan@cuberoot.me](mailto:ruiminyan@cuberoot.me)，
 标题注明「CubeRoot 安全漏洞报告」。支持中文和英文。请勿在公开 Issue、Discussion
 或论坛中披露漏洞细节、凭据或个人数据。
 
