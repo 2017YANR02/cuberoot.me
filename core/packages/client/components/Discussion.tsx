@@ -14,7 +14,8 @@ import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';
 import { Flag } from '@/components/Flag';
 import { wcaPersonUrl } from '@/lib/recon-utils';
 import { personFlagIso2 } from '@/lib/country-flags';
-import { toIsoDate } from '@/lib/wca-date';
+import { formatRelativeTime } from '@/lib/forum-format';
+import { useLang } from '@/i18n/tr';
 import { isWcaIdFormat } from '@cuberoot/shared/account';
 
 /** textarea 高度跟随内容——空时 1 行,粘贴长解法时自动撑开 */
@@ -177,7 +178,7 @@ export function DiscussionEditBox({
  * 站内用户优先进入好友页；缺少站内 ID 时，只有真 WCA id 才出外链。
  * 国旗同理:查不到国籍时不渲染(空 iso2 会渲染成一个空白占位方块)。
  */
-export function AuthorName({ id, name, userId, className, showUserId = true }: {
+export function AuthorName({ id, name, userId, className, showUserId = false }: {
   id: string | undefined | null;
   name: string | undefined | null;
   userId?: number | null;
@@ -212,13 +213,22 @@ export function UserHeadline({
   /** 时间戳后追加文本(如 "(已编辑)") */
   suffix?: ReactNode;
 }) {
+  const lang = useLang();
+  const timestamp = new Date(createdAt * 1000).toISOString();
+  const [relativeTime, setRelativeTime] = useState('');
+  useEffect(() => {
+    const update = () => setRelativeTime(formatRelativeTime(timestamp, lang));
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, [timestamp, lang]);
   return (
     <div className="yt-comment-meta">
       <AuthorName id={authorId} name={authorName} userId={authorUserId} className="yt-comment-author" />
-      <span className="yt-comment-time">
-        {toIsoDate(new Date(createdAt * 1000))}
+      <time className="yt-comment-time" dateTime={timestamp} title={timestamp}>
+        {relativeTime || timestamp.slice(0, 10)}
         {suffix}
-      </span>
+      </time>
     </div>
   );
 }

@@ -15,7 +15,7 @@ import type { ForumPost, PostAuthor, ReactionKind } from '@/lib/forum-api';
 import { formatRelativeTime, formatJoinedDate, formatCount } from '@/lib/forum-format';
 import { ReactionBar } from './ReactionBar';
 import { ForumVideoPlayer } from '@/components/forum/ForumVideoPlayer';
-import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 
 export function PostCard({
   post, author, myKind, permalink, canEdit, canDelete, canQuote, canReport,
@@ -97,7 +97,6 @@ export function PostCard({
           ) : (
             <span className="forum-post-author-name">{name}</span>
           )}
-          <UserIdLabel contact userId={author?.userId} />
           {onToggleBan && author?.userId && !author.isAdmin && (
             <button type="button" className="forum-post-action is-danger"
               onClick={() => onToggleBan(author.userId!, !author.forumBanned)}>

@@ -2,15 +2,16 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import { UserContactLink, UserIdLabel } from '@/components/UserIdLabel';
+import { useAuthUser } from '@/lib/auth-store';
 import { AuthorName, UserAvatarFallback } from '@/components/Discussion';
 
 vi.mock('next/navigation', () => ({ useParams: () => ({ lang: 'zh' }) }));
 vi.mock('@/lib/auth-store', () => ({
-  useAuthStore: (select: (state: { user: { uid: number } }) => unknown) => select({ user: { uid: 66 } }),
+  useAuthUser: vi.fn(() => null),
 }));
 
 describe('UserIdLabel', () => {
-  it('renders the compact public ID beside authored content', () => {
+  it('renders the compact ID for explicit account and management use', () => {
     expect(renderToStaticMarkup(createElement(UserIdLabel, { userId: 66 }))).toContain('ID 66');
   });
 
@@ -26,12 +27,17 @@ describe('UserIdLabel', () => {
     expect(author).toContain('href="/zh/friends?q=547"');
     expect(avatar).toContain('href="/zh/friends?q=547"');
     expect(author).not.toContain('/persons/u547');
+    expect(author).not.toContain('ID 547');
   });
 
-  it('keeps controls non-interactive by default, and routes self to the account', () => {
+  it('keeps the initial contact link stable before account hydration', () => {
     expect(renderToStaticMarkup(createElement(UserIdLabel, { userId: 547 }))).not.toContain('<a');
     expect(renderToStaticMarkup(createElement(UserIdLabel, { userId: 547, contact: true }))).toContain('/zh/friends?q=547');
-    expect(renderToStaticMarkup(createElement(UserContactLink, { userId: 66, children: 'Me' }))).toContain('href="/zh/account"');
+    expect(renderToStaticMarkup(createElement(UserContactLink, { userId: 66, children: 'Me' }))).toContain('href="/zh/friends?q=66"');
     expect(renderToStaticMarkup(createElement(UserContactLink, { userId: null, children: 'Unknown' }))).not.toContain('<a');
+  });
+  it('routes self to the account after hydration', () => {
+    vi.mocked(useAuthUser).mockReturnValueOnce({ uid: 66 } as NonNullable<ReturnType<typeof useAuthUser>>);
+    expect(renderToStaticMarkup(createElement(UserContactLink, { userId: 66, children: 'Me' }))).toContain('href="/zh/account"');
   });
 });

@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import { Flag } from '@/components/Flag';
-import { UserIdLabel } from '@/components/UserIdLabel';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { useT } from '@/hooks/useT';
 import { useLang } from '@/i18n/tr';
@@ -62,10 +61,9 @@ function UserIdentity({ user }: { user: FriendUser }) {
       </span>
       <span className="friends-identity-text">
         <strong>{name}</strong>
-        <span className="friends-identifiers">
-          <UserIdLabel userId={user.userId} />
-          {user.wcaId && <span>{user.wcaId}</span>}
-        </span>
+        {user.wcaId && <span className="friends-identifiers">
+          <span>{user.wcaId}</span>
+        </span>}
       </span>
     </>
   );
