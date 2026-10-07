@@ -3,7 +3,7 @@
 import { Check, Copy } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import AppLink from '@/components/AppLink';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthUser } from '@/lib/auth-store';
 import { tr } from '@/i18n/tr';
 import './user-id-label.css';
 
@@ -14,7 +14,7 @@ export function UserContactLink({ userId, children, className, label }: {
   className?: string;
   label?: string;
 }) {
-  const ownId = useAuthStore(state => state.user?.uid);
+  const ownId = useAuthUser()?.uid;
   if (!Number.isSafeInteger(userId) || (userId ?? 0) <= 0) return <span className={className}>{children}</span>;
   return <AppLink href={userId === ownId ? '/account' : `/friends?q=${userId}`}
     className={className} aria-label={label} prefetch={false}>{children}</AppLink>;

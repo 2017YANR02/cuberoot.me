@@ -7,6 +7,10 @@
  */
 import { useEffect, useState, useCallback, useMemo, useRef, Fragment, type ReactNode } from 'react';
 import Link from '@/components/AppLink';
+import { createPortal } from 'react-dom';
+import { ClearButton } from '@/components/ClearButton';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
+import '@/components/wechat-pc-share-modal.css';
 import { copyPageLink } from '@/lib/page-share';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +20,7 @@ import {
   Pencil, Trash2, Pin, PinOff, Plus, Key,
   ChevronDown, ChevronUp,
   ArrowLeft, Copy, Check, Maximize2, Minimize2,
-  Lock, Link2, LogIn, ExternalLink,
+  Lock, Link2, LogIn, ExternalLink, Share2,
 } from 'lucide-react';
 import type { ReconSolve, ReconComment, ReconAlternative } from '@cuberoot/shared';
 import { cleanFtoReconAlgForPlayer, getReconScramble } from '@cuberoot/shared/recon-completion';
@@ -125,6 +129,8 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
   const [error, setError] = useState<string | null>(null);
   // 全屏(隐藏头部/统计栏,player 铺满整页,与 /sim 的「全屏魔方」同款)。
   const [fullscreen, setFullscreen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const closeShare = useCallback(() => setShareOpen(false), []);
   const fullscreenButton = (
     <button
       type="button"
@@ -264,6 +270,11 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
               </Fragment>
             ))}
             {' '}
+            {solutionText && <button type="button" className="recon-btn detail-title-edit" aria-haspopup="dialog" onClick={() => setShareOpen(true)}>
+              <Share2 size={15} aria-hidden="true" />
+              {tr({ zh: '分享', en: 'Share' })}
+            </button>}
+            {' '}
             <Link href={`/recon/submit/${solve.id}`} className="recon-btn recon-btn-edit detail-title-edit" title={t('recon.edit')} aria-label={t('recon.edit')}>
               <Pencil size={14} />
             </Link>
@@ -309,12 +320,14 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
         onUpdate={loadData}
         initialSameScramble={initialSameScramble}
         fullscreenButton={fullscreenButton}
+        shareOpen={shareOpen}
+        onShareClose={closeShare}
       />
     </div>
   );
 }
 
-function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton }: {
+function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, initialSameScramble, fullscreenButton, shareOpen, onShareClose }: {
   scramble: string;
   solutionText: string;
   solve: ReconSolve;
@@ -322,6 +335,8 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   onUpdate: () => void;
   initialSameScramble?: ReconSolve[];
   fullscreenButton?: ReactNode;
+  shareOpen: boolean;
+  onShareClose: () => void;
 }) {
   const [sameCompHasRows, setSameCompHasRows] = useState(false);
   const [sameSessionHasRows, setSameSessionHasRows] = useState(false);
@@ -407,7 +422,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
       }
       <div className="detail-content-pane">
         {solutionText && (
-          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} />
+          <ExternalLinks event={solve.event} scramble={playerScramble} alg={solutionText} solveId={solve.id} copyText={fullCopyText} shareOpen={shareOpen} onClose={onShareClose} />
         )}
 
         {solve.recordType !== 'timing' && (scramble || solutionText) && (
@@ -437,7 +452,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
           </div>
         )}
 
-        <SameScrambleNav key={solve.id} solve={solve} initial={initialSameScramble} />
+        <SameScrambleNav key={`same-scramble-${solve.id}`} solve={solve} initial={initialSameScramble} />
 
         <StatsGrid solve={solve} />
 
@@ -492,7 +507,7 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
         </div>
 
         {solve.comp && solve.event && solve.round && !sameCompHasRows && !sameSessionHasRows && (
-          <SameRoundNav key={solve.id} solve={solve} />
+          <SameRoundNav key={`same-round-${solve.id}`} solve={solve} />
         )}
 
         {solve.event && solve.personId && (solve.compWcaId || solve.comp) && (
@@ -519,8 +534,9 @@ function ReconDetailBody({ scramble, solutionText, solve, comments, onUpdate, in
   );
 }
 
-function ExternalLinks({ event, scramble, alg, solveId, copyText }: {
+function ExternalLinks({ event, scramble, alg, solveId, copyText, shareOpen, onClose }: {
   event: string; scramble: string; alg: string; solveId: number; copyText: string;
+  shareOpen: boolean; onClose: () => void;
 }) {
   const { t } = useTranslation();
   // Preserve the existing admin-only external debugging links.
@@ -549,32 +565,62 @@ function ExternalLinks({ event, scramble, alg, solveId, copyText }: {
       : tr({ zh: '复制复盘', en: 'Copy reconstruction' });
   };
 
-  return (
-    <div className="recon-external-links">
-      {(isAdminUser || simHref) && (
-        <div className="recon-navigation-links">
-          {isAdminUser && (
-            <>
-              <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}<ExternalLink size={13} aria-hidden="true" /></a>
-              {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net<ExternalLink size={13} aria-hidden="true" /></a>}
-            </>
-          )}
-          {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'Simulator' })}</Link>}
-        </div>
-      )}
-      <div className="recon-copy-actions">
-        <button type="button" className="recon-copy-action" onClick={() => { void copy('link'); }}>
-          {copyResult?.target === 'link' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
-          <span aria-live="polite">{copyLabel('link')}</span>
-        </button>
-        {copyText && (
-          <button type="button" className="recon-copy-action" onClick={() => { void copy('recon'); }}>
-            {copyResult?.target === 'recon' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-            <span aria-live="polite">{copyLabel('recon')}</span>
-          </button>
+  return shareOpen ? (
+      <ReconShareDialog onClose={onClose}>
+        {(isAdminUser || simHref) && (
+          <div className="recon-navigation-links">
+            {simHref && <Link href={simHref} prefetch={false}>{tr({ zh: '模拟器', en: 'Simulator' })}</Link>}
+            {isAdminUser && (
+              <>
+                <a href={algUrl} target="_blank" rel="noopener noreferrer">{algSiteName}<ExternalLink size={13} aria-hidden="true" /></a>
+                {cubedbUrl && <a href={cubedbUrl} target="_blank" rel="noopener noreferrer">cubedb.net<ExternalLink size={13} aria-hidden="true" /></a>}
+              </>
+            )}
+          </div>
         )}
+        <div className="recon-copy-actions">
+          <button type="button" className="recon-copy-action" onClick={() => { void copy('link'); }}>
+            {copyResult?.target === 'link' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Link2 size={15} aria-hidden="true" />}
+            <span aria-live="polite">{copyLabel('link')}</span>
+          </button>
+          {copyText && (
+            <button type="button" className="recon-copy-action" onClick={() => { void copy('recon'); }}>
+              {copyResult?.target === 'recon' && copyResult.success ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+              <span aria-live="polite">{copyLabel('recon')}</span>
+            </button>
+          )}
+        </div>
+      </ReconShareDialog>
+  ) : null;
+}
+
+function ReconShareDialog({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+  const backdropProps = useModalDismiss(onClose);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    dialogRef.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    return () => { if (previous instanceof HTMLElement && previous.isConnected) previous.focus(); };
+  }, []);
+  return createPortal(
+    <div className="wechat-pc-share-backdrop" {...backdropProps}>
+      <div className="wechat-pc-share-modal" data-site-surface="panel" role="dialog" aria-modal="true"
+        aria-label={tr({ zh: '分享', en: 'Share' })} ref={dialogRef}
+        onKeyDown={event => {
+          if (event.key !== 'Tab') return;
+          const items = dialogRef.current?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])');
+          if (!items?.length) return;
+          const first = items[0];
+          const last = items[items.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }}>
+        <ClearButton variant="standalone" className="wechat-pc-share-close" onClick={onClose}
+          ariaLabel={tr({ zh: '关闭', en: 'Close' })} />
+        <h2>{tr({ zh: '分享', en: 'Share' })}</h2>
+        <div style={{ display: 'grid', gap: 16, marginTop: 20 }}>{children}</div>
       </div>
-    </div>
+    </div>, document.body,
   );
 }
 

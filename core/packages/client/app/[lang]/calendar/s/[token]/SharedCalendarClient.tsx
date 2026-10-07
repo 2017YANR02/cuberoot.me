@@ -12,7 +12,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Link2, Check, Copy } from 'luc
 import BackHome from '@/components/BackHome';
 import HeaderToggles from '@/components/HeaderToggles';
 import { ListSelect } from '@/components/ListSelect';
-import { UserIdLabel } from '@/components/UserIdLabel';
+import { UserContactLink } from '@/components/UserIdLabel';
 import { useCopy } from '@/hooks/useCopy';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { tr, useLang } from '@/i18n/tr';
@@ -127,9 +127,8 @@ export default function SharedCalendarClient() {
         <BackHome />
         <h1 className="cal-brand">
           <CalendarDays size={20} aria-hidden />
-          {pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}
+          <UserContactLink userId={data?.ownerUserId}>{pageTitle || tr({ zh: '共享日历', en: 'Shared calendar' })}</UserContactLink>
         </h1>
-        <UserIdLabel contact userId={data?.ownerUserId} />
         {data?.detail === 'busy' && (
           <span className="cal-badge">{tr({ zh: '仅显示忙碌时段', en: 'Busy times only' })}</span>
         )}
