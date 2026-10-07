@@ -101,6 +101,10 @@ describe('cube history exploration', () => {
     expect(matchesCube(byId('gan12'), { ...EMPTY_FILTERS, q: 'ＧＡＮ １２' })).toBe(true);
     expect(matchesCube(byId('moyu-rs3m-2020'), { ...EMPTY_FILTERS, q: '魔域' })).toBe(true);
     expect(matchesCube(byId('dayan-guhong-v1'), { ...EMPTY_FILTERS, q: 'Gu Hong' })).toBe(true);
+    expect(matchesCube(byId('dayan-guhong-v1'), { ...EMPTY_FILTERS, q: '大雁 孤鸿' })).toBe(true);
+    expect(matchesCube(byId('moyu-weilong-v11'), { ...EMPTY_FILTERS, q: '魔域威龙' })).toBe(true);
+    expect(matchesCube(byId('gan12'), { ...EMPTY_FILTERS, q: 'GAN12 MagLev' })).toBe(true);
+    expect(matchesCube(byId('gan12'), { ...EMPTY_FILTERS, q: 'GAN12 nonexistent' })).toBe(false);
   });
 
   it('does not mistake non-magnetic tokens or carbon cores for magnetic mechanisms', () => {
