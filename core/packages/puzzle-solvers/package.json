@@ -387,7 +387,7 @@
   },
   "devDependencies": {
     "typescript": "^5",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "cstimer_module": "^0.1.5"

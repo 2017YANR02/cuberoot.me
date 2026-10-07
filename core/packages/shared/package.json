@@ -416,7 +416,7 @@
   "dependencies": {
     "sql.js": "^1.14.2",
     "@cuberoot/puzzle-solvers": "workspace:*",
-    "axios": "^1.13.6",
+    "axios": "^1.20.0",
     "cubing": "^0.63.3"
   }
 }

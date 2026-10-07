@@ -20,14 +20,14 @@
   },
   "dependencies": {
     "@cuberoot/shared": "workspace:*",
-    "mysql2": "^3.11.0",
+    "mysql2": "^3.24.5",
     "yaml": "^2.6.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "@typescript/native-preview": "7.0.0-dev.20260517.1",
-    "tsx": "^4.19.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.8.0",
-    "vitest": "^4.1.6"
+    "vitest": "^4.1.11"
   }
 }
