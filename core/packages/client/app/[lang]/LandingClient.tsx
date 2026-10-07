@@ -61,7 +61,6 @@ import { colorFor, iconFor } from '@/lib/page-notice-visuals';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { listPublicMembers, type PublicMember } from '@/lib/membership-api';
 import { getHomeCardLocks, getHomeCardOrders, reorderHomeCards, setHomeCardLock } from '@/lib/home-card-order-api';
-import type { ReconSolve } from '@cuberoot/shared';
 import { getPinnedRecons, setReconHomePin } from '@/lib/recon-api';
 import { HOME_MEMBER_SECTION_IDS } from '@cuberoot/shared/site-directory';
 
@@ -101,6 +100,8 @@ function LandingCardContent({ label, Icon, iconImg }: LandingCardContentProps) {
     </>
   );
 }
+
+type ReconSolve = Awaited<ReturnType<typeof getPinnedRecons>>[number];
 
 export default function LandingPage() {
   // Title is owned by page.tsx's generateMetadata (lib/page-meta.ts, key '').
