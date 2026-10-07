@@ -382,3 +382,18 @@
     font-size: 13px;
   }
 }
+
+/* Keep the home affordance in the first column at every viewport width. */
+.shell-topbar:has(.shell-topbar-home) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+.shell-topbar .shell-topbar-home {
+  grid-column: 1;
+  justify-self: start;
+}
+.shell-topbar:has(.shell-topbar-home) .shell-topbar-left {
+  grid-column: 2;
+}
+.shell-topbar:has(.shell-topbar-home) .shell-topbar-right {
+  grid-column: 3;
+}
