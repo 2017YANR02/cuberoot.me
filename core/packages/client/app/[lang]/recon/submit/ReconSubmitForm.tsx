@@ -407,6 +407,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     getRecon(Number(editId)).then(solve => {
       const normalized = {
         ...solve,
+        videoUrl: normalizeReconVideoUrls(solve.videoUrl || ''),
         date: normalizeIsoDate(solve.date),
         reconDate: normalizeIsoDate(solve.reconDate),
         wcaScramble: normalizeReconScrambleSpacing(solve.event, solve.wcaScramble || ''),
@@ -467,7 +468,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
         reconDate: normalizeIsoDate(src.reconDate),
         solveNum: targetSolveNum ?? prev.solveNum,
         cube: src.cube,
-        videoUrl: src.videoUrl,
+        videoUrl: normalizeReconVideoUrls(src.videoUrl || ''),
       }));
       const fromBaseKey = `${src.personId ?? ''}|${src.event ?? ''}|${src.comp ?? ''}|${src.compWcaId ?? ''}|${src.round ?? ''}`;
       loadedAvgKeySnapshot.current = fromBaseKey;
@@ -570,7 +571,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       reconer: authUser?.name ?? prev.reconer,
       reconerId: authUser?.wcaId ?? prev.reconerId,
       // 成绩弹窗里填好的比赛视频链接(多行)→ 预填视频字段。
-      videoUrl: searchParams?.get('video') || prev.videoUrl,
+      videoUrl: normalizeReconVideoUrls(searchParams?.get('video') || prev.videoUrl || ''),
     }));
     // 原始成绩(罚时前的 base,秒):仅当链接带 rawTime 才覆盖「原始成绩」并锁住,
     // 防下面的自动获取把它改回含罚时的官方值;「单次」仍交给自动获取取官方值。
