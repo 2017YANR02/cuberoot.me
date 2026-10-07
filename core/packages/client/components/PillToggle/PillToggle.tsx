@@ -20,7 +20,7 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
   const isSwitch = !onLabel && !offLabel;
   const ref = useRef<HTMLButtonElement>(null);
   // startX 记起手点;moved=true 表示这次是拖动(松手时不再当 tap 翻转)。
-  const drag = useRef<{ startX: number; moved: boolean } | null>(null);
+  const drag = useRef<{ startX: number; moved: boolean; next?: boolean } | null>(null);
 
   // 指针 X 落在容器哪半边 → 目标值(右半 = on)。
   const valueFromX = (clientX: number): boolean => {
@@ -39,16 +39,16 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
     if (!d) return;
     if (!d.moved && Math.abs(e.clientX - d.startX) > 3) d.moved = true;
     if (d.moved) {
-      const next = valueFromX(e.clientX);
-      if (next !== value) onChange(next);
+      d.next = valueFromX(e.clientX);
     }
   };
   const onPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
-    const d = drag.current;
+    try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+    // 保留手势到 click 再提交，避免关闭浮层后兼容 click 落到下层链接。
+  };
+  const onPointerCancel = (e: React.PointerEvent<HTMLButtonElement>) => {
     drag.current = null;
     try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
-    // 未拖动 = 普通点击/触摸 → 翻转;拖动过的值已在 move 里实时设好,这里不再动。
-    if (d && !d.moved) onChange(!value);
   };
 
   return (
@@ -63,10 +63,13 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerCancel={onPointerCancel}
       onClick={(e) => {
-        // 鼠标/触摸的 click 已由 pointerup 处理;只接键盘(Enter/Space)触发的 click(detail===0)。
-        if (e.detail === 0) onChange(!value);
+        const d = drag.current;
+        drag.current = null;
+        if (e.detail !== 0 && !d) return;
+        const next = e.detail !== 0 && d?.moved ? d.next ?? value : !value;
+        if (next !== value) onChange(next);
       }}
     >
       {!isSwitch && (
