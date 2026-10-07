@@ -28,7 +28,6 @@ import { countryName } from '@/lib/country-name';
 import { localizeCompName, resolveCompName, stripCompYear } from '@/lib/comp-localize';
 import { nameToCubingSlug, wcaIdToCubingSlug } from '@cuberoot/shared/cubing-slug';
 import { fetchRankForWca, getCachedRankForWca, prefetchRanksForWca, type RankResult } from '@/lib/rank-client';
-import { adjustRankWithLiveComp, applyDayRankDelta, type LiveCompEntry } from '@/lib/comp-live-rank';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { apiUrl } from '@/lib/api-base';
 import { statsUrl } from '@/lib/stats-base';
@@ -303,39 +302,6 @@ function effectiveAvg(r: LiveResult): number {
 }
 
 function roundKey(e: string, r: string): string { return `${e}:${r}`; }
-
-// 收集本场某项目某口径(single/average)下每位选手的最快有效成绩 + 国别 + 赛前官方 PB,
-// 喂给 adjustRankWithLiveComp 把实时成绩并进官方名次(修掉官方 dump 滞后造成的假名次)。
-function buildLiveCompEntries(
-  data: CompData,
-  pbMap: Record<string, PbByEvent | null>,
-  eventId: string,
-  type: 'single' | 'average',
-): LiveCompEntry[] {
-  const ev = data.events.find(e => e.i === eventId);
-  if (!ev) return [];
-  const best = new Map<number, number>();
-  for (const rd of ev.rs) {
-    for (const r of data.resultsByRound[roundKey(eventId, rd.i)] || []) {
-      const v = type === 'single' ? r.b : effectiveAvg(r);
-      if (!(v > 0)) continue;
-      const prev = best.get(r.n);
-      if (prev === undefined || v < prev) best.set(r.n, v);
-    }
-  }
-  const out: LiveCompEntry[] = [];
-  for (const [num, compBest] of best) {
-    const u = data.users[String(num)];
-    if (!u) continue;
-    out.push({
-      number: num,
-      iso2: regionToIso2(u.region).toUpperCase(),
-      compBest,
-      officialBest: u.wcaid ? pbMap[u.wcaid]?.[eventId]?.[type]?.best : undefined,
-    });
-  }
-  return out;
-}
 
 interface PodiumGroup { ev: EventMeta; rd: RoundMeta; rows: LiveResult[]; }
 
@@ -1582,8 +1548,8 @@ export default function CompDetailPage() {
       const avgVal = effectiveAvg(r);
       if ((averageRank === 1 || r.ar) && isAvgFmt && avgVal > 0) items.push({ event: r.e, type: 'average', value: avgVal, country });
     }
-    // excludeComp=本场:服务端 overlay 排除本场,避免与客户端同场订正重复计数。
-    if (items.length > 0) void prefetchRanksForWca(items, data.slug);
+    // 服务端统一合并官方快照与近期比赛,按选手去重;赛前 PB 仅用于 PR 判断。
+    if (items.length > 0) void prefetchRanksForWca(items);
   }, [data, currentRound, pbMap]);
 
   const personalRecords = data?.personalRecords;
@@ -3897,14 +3863,13 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
     // PR(rank 1)或带地区纪录标签(sr/ar)都要世界名次:前者显示 PR/WRn,后者显示 记录/WRn。
     const wantSingle = (singleRank === 1 || !!result.sr) && result.b > 0;
     const wantAvg = (averageRank === 1 || !!result.ar) && isAvgFmt && avgVal > 0;
-    // 只在缓存未命中(undefined)时才单查;命中(含确定无名次的 null)直接跳过。excludeComp=本场:
-    // 服务端 overlay 排除本场(客户端已就本场实时成绩自订正,避免重复计数)。
+    // 只在缓存未命中(undefined)时才单查;本场与跨场新成绩均由服务端统一去重。
     const tasks: Promise<unknown>[] = [];
-    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country, data.slug) === undefined) {
-      tasks.push(fetchRankForWca(result.e, result.b, 'single', country, data.slug));
+    if (wantSingle && getCachedRankForWca(result.e, result.b, 'single', country) === undefined) {
+      tasks.push(fetchRankForWca(result.e, result.b, 'single', country));
     }
-    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country, data.slug) === undefined) {
-      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country, data.slug));
+    if (wantAvg && getCachedRankForWca(result.e, avgVal, 'average', country) === undefined) {
+      tasks.push(fetchRankForWca(result.e, avgVal, 'average', country));
     }
     if (tasks.length === 0) return;
     let cancelled = false;
@@ -3945,24 +3910,10 @@ function RoundResultModal({ number, eventId, roundId, data, compName, compStartD
 
   // 渲染期同步读名次缓存(命中则秒出;未命中=undefined,上面的 effect 会单查后 bump 重渲染)。
   const country = iso2.toUpperCase();
-  const singleRankBase = getCachedRankForWca(result.e, result.b, 'single', country, data.slug);
-  const avgRankBase = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country, data.slug);
-  // 把本场实时成绩并进官方名次,修掉「官方 dump 滞后 → 假全国/世界第几」(同场更快成绩官方未计入)。
-  // 再叠一层同日跨场的:被「日掩」的成绩,掩它的那几条也不在官方 dump 里,不加就会出现
-  // 「badge 已标明当天有人更快,名次却还是 WR1」。
-  const singleKeatonedBy = judgeRecordTag(result.b, result.e, false, u, data.currentRecords).keatonedBy;
-  const avgKeatonedBy = judgeRecordTag(effectiveAvg(result), result.e, true, u, data.currentRecords).keatonedBy;
-  const self = { person: u.name, comp: data.slug };
-  const singleRankInfo = singleRankBase
-    ? applyDayRankDelta(
-        adjustRankWithLiveComp(singleRankBase, buildLiveCompEntries(data, pbMap, result.e, 'single'), result.b, number, country),
-        singleKeatonedBy, country, self)
-    : singleRankBase;
-  const avgRankInfo = avgRankBase
-    ? applyDayRankDelta(
-        adjustRankWithLiveComp(avgRankBase, buildLiveCompEntries(data, pbMap, result.e, 'average'), effectiveAvg(result), number, country),
-        avgKeatonedBy, country, self)
-    : avgRankBase;
+  // 当前排名由服务端合并官方快照与近期成绩后按选手去重。
+  // pbMap 是赛前 PB,不能据此再次补人数:已入库的新 PB 会被重复计入。
+  const singleRankInfo = getCachedRankForWca(result.e, result.b, 'single', country);
+  const avgRankInfo = getCachedRankForWca(result.e, effectiveAvg(result), 'average', country);
 
   // 破 PR:把 PR 框 + NR/WR 名次拼成一个右上角标组「PR/NR3/WR3」(只 PR 带框,名次纯文本,/ 分割).
   const renderPrMark = (info: RankResult | null | undefined) => (
