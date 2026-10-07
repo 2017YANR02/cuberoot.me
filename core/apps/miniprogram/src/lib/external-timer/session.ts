@@ -62,7 +62,7 @@ export async function startExternalTimer(token: string, kind: NativeTimerKind): 
         try { message = JSON.parse(data); } catch { return; }
         if (isSmartCubeRelayReady(message) && message.role === 'source') {
           ready = true; for (const event of pending.splice(0)) send(event); resolve();
-        } else if (isSmartCubeRelayPayload(message) && message.type === 'command') { void owner.disconnect(); }
+        } else if (isSmartCubeRelayPayload(message) && message.type === 'command' && message.command === 'disconnect') { void owner.disconnect(); }
       });
       socket.onError(() => { reject(new Error('TIMER_BRIDGE_UNAVAILABLE')); void owner.disconnect(); });
       socket.onClose(() => { reject(new Error('TIMER_BRIDGE_CLOSED')); void owner.disconnect(); });

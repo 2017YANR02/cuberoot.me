@@ -1,3 +1,4 @@
+import { createDeviceStateReset } from '@cuberoot/shared/smart-cube/device-reset';
 import { miniProgramApi } from '../platform';
 import { tr } from '../i18n';
 import {
@@ -5,6 +6,7 @@ import {
   GAN_V4_SERVICE_UUID,
   GAN_V4_WRITE_CHARACTERISTIC_UUID,
   createGanV4BatteryCommand,
+  createGanV4ResetCommand,
   createGanV4Cipher,
   createGanV4FaceletsCommand,
   createGanV4HardwareInfoCommand,
@@ -19,6 +21,7 @@ import {
   GAN_V2_SERVICE_UUID,
   GAN_V2_WRITE_CHARACTERISTIC_UUID,
   createGanV2BatteryCommand,
+  createGanV2ResetCommand,
   createGanV2Cipher,
   createGanV2DecodeState,
   createGanV2FaceletsCommand,
@@ -31,6 +34,7 @@ import {
   GAN_V3_SERVICE_UUID,
   GAN_V3_WRITE_CHARACTERISTIC_UUID,
   createGanV3BatteryCommand,
+  createGanV3ResetCommand,
   createGanV3Cipher,
   createGanV3DecodeState,
   createGanV3FaceletsCommand,
@@ -73,6 +77,7 @@ export interface GanV4BleConnection {
   readonly deviceName: string;
   disconnect(): Promise<void>;
   requestBattery(): Promise<number | null>;
+  resetDeviceState(): Promise<void>;
 }
 
 export interface ConnectGanV4Options {
@@ -291,6 +296,7 @@ export async function connectGanV4(
   let closing = false;
   const writeQueue = createBleNativeOperationQueue(lease);
   let lastBattery: number | null = null;
+  let calibration: ReturnType<typeof createDeviceStateReset> | null = null;
   let protocolCleanup = (): void => {};
   const batteryWaiters = new Set<(level: number | null) => void>();
 
@@ -301,6 +307,7 @@ export async function connectGanV4(
       closing = true;
       active = false;
       const pendingWrites = writeQueue.drain();
+      calibration?.dispose();
       protocolCleanup();
       for (const resolve of batteryWaiters) resolve(lastBattery);
       batteryWaiters.clear();
@@ -465,11 +472,12 @@ export async function connectGanV4(
       : protocol.family === 'v3'
         ? createGanV3Cipher(discovery.mac)
         : createGanV2Cipher(discovery.mac, deviceName);
-    const sendCommand = (command: Uint8Array): Promise<void> => {
+    const sendCommand = (command: Uint8Array, begin?: () => boolean): Promise<void> => {
       return writeQueue.enqueue(() => {
         if (closing || !connectedDeviceId || !serviceId || !writeCharacteristicId) {
           throw new GanV4BleError('connection-failed', tr({ en: 'GAN smart cube disconnected', zh: 'GAN 智能魔方连接已断开' }));
         }
+        if (begin && !begin()) throw new Error('Device calibration cancelled');
         const encrypted = cipher.encrypt(command);
         return invokeBleForLease(lease, (callbacks) => api.writeBLECharacteristicValue({
           ...callbacks,
@@ -481,9 +489,10 @@ export async function connectGanV4(
       }, options.signal);
     };
 
-    const publishState = (facelets: string): void => safeBleCallback(
-      options.onState ? () => options.onState?.(facelets) : undefined,
-    );
+    const publishState = (facelets: string): void => {
+      calibration?.observe(facelets);
+      safeBleCallback(options.onState ? () => options.onState?.(facelets) : undefined);
+    };
     const publishMove = (move: string, deviceTs?: number): void => safeBleCallback(
       options.onMove ? () => options.onMove?.(move, deviceTs) : undefined,
     );
@@ -519,6 +528,11 @@ export async function connectGanV4(
       badFrameCount = () => decodeState.badFrames;
       recordDecodeFailure = () => { decodeState.badFrames++; };
       readProtocolBattery = () => decodeState.battery;
+      calibration = createDeviceStateReset({
+        sendReset: begin => sendCommand(createGanV4ResetCommand(), begin),
+        prepareSnapshot: () => { decodeState.sync.reset(); },
+        requestSnapshot: () => sendCommand(createGanV4FaceletsCommand()),
+      });
       batteryCommand = createGanV4BatteryCommand;
       initialCommands = [
         createGanV4HardwareInfoCommand(),
@@ -560,6 +574,11 @@ export async function connectGanV4(
       badFrameCount = () => decodeState.badFrames;
       recordDecodeFailure = () => { decodeState.badFrames++; };
       readProtocolBattery = () => decodeState.battery;
+      calibration = createDeviceStateReset({
+        sendReset: begin => sendCommand(createGanV3ResetCommand(), begin),
+        prepareSnapshot: () => { decodeState.sync.reset(); },
+        requestSnapshot: () => sendCommand(createGanV3FaceletsCommand()),
+      });
       batteryCommand = createGanV3BatteryCommand;
       initialCommands = [
         createGanV3HardwareInfoCommand(),
@@ -568,13 +587,18 @@ export async function connectGanV4(
       ];
       protocolCleanup = clearIdleStateChecks;
     } else {
-      const decodeState = createGanV2DecodeState();
+      const decodeState = createGanV2DecodeState({ onState: publishState });
       decodeNotification = (frame): void => {
         for (const move of decodeGanV2Frame(frame, decodeState, publishGyro)) publishMove(move);
       };
       badFrameCount = () => decodeState.badFrames;
       recordDecodeFailure = () => { decodeState.badFrames++; };
       readProtocolBattery = () => decodeState.battery;
+      calibration = createDeviceStateReset({
+        sendReset: begin => sendCommand(createGanV2ResetCommand(), begin),
+        prepareSnapshot: () => { decodeState.prevMoveCnt = -1; decodeState.prevMoves = []; },
+        requestSnapshot: () => sendCommand(createGanV2FaceletsCommand()),
+      });
       batteryCommand = createGanV2BatteryCommand;
       initialCommands = [
         createGanV2HardwareInfoCommand(),
@@ -626,6 +650,7 @@ export async function connectGanV4(
       deviceId: discovery.device.deviceId,
       deviceName,
       disconnect,
+      resetDeviceState: () => calibration!.run(),
       async requestBattery(): Promise<number | null> {
         let finish: (level: number | null) => void = () => {};
         const response = new Promise<number | null>((resolve) => {

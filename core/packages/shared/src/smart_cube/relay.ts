@@ -26,6 +26,7 @@ export type SmartCubeRelayStatusPhase =
   | 'error';
 
 export type SmartCubeRelayEvent =
+  | { type: 'command-result'; requestId: string; ok: boolean; error?: string }
   | { type: 'timer'; event: ExternalTimerEvent; relaySeq?: number }
   | {
       type: 'status';
@@ -33,6 +34,8 @@ export type SmartCubeRelayEvent =
       brand?: string;
       deviceName?: string;
       hasGyro?: boolean;
+      canResetDevice?: boolean;
+      calibrating?: boolean;
       error?: string;
     }
   | {
@@ -40,9 +43,10 @@ export type SmartCubeRelayEvent =
       move: string;
       deviceTs?: number;
       futureHistory?: boolean;
+      calibration?: boolean;
       relaySeq?: number;
     }
-  | { type: 'state'; facelets: string }
+  | { type: 'state'; facelets: string; calibration?: boolean; relaySeq?: number }
   | { type: 'battery'; level: number }
   | {
       type: 'gyro';
@@ -51,7 +55,8 @@ export type SmartCubeRelayEvent =
     };
 
 export type SmartCubeRelayCommand =
-  | { type: 'command'; command: 'disconnect' };
+  | { type: 'command'; command: 'disconnect' }
+  | { type: 'command'; command: 'reset-device'; requestId: string };
 
 export type SmartCubeRelayPayload = SmartCubeRelayEvent | SmartCubeRelayCommand;
 
@@ -80,7 +85,11 @@ export function isSmartCubeRelayReady(value: unknown): value is SmartCubeRelayRe
 
 export function isSmartCubeRelayPayload(value: unknown): value is SmartCubeRelayPayload {
   if (!isRecord(value) || typeof value.type !== 'string') return false;
-  if (value.type === 'command') return value.command === 'disconnect';
+  const validId = (id: unknown) => typeof id === 'string' && /^[A-Za-z0-9_-]{16,80}$/.test(id);
+  if (value.type === 'command') return value.command === 'disconnect'
+    || (value.command === 'reset-device' && validId(value.requestId));
+  if (value.type === 'command-result') return validId(value.requestId) && typeof value.ok === 'boolean'
+    && (value.error === undefined || (typeof value.error === 'string' && value.error.length <= 256));
   if (value.type === 'timer') {
     const event = value.event;
     return isRecord(event) && typeof event.state === 'string'
@@ -95,12 +104,15 @@ export function isSmartCubeRelayPayload(value: unknown): value is SmartCubeRelay
       && /^[URFDLB](?:2|')?$/.test(value.move)
       && (value.deviceTs === undefined
         || (typeof value.deviceTs === 'number' && Number.isFinite(value.deviceTs)))
+      && (value.calibration === undefined || typeof value.calibration === 'boolean')
       && (value.futureHistory === undefined || typeof value.futureHistory === 'boolean')
       && (value.relaySeq === undefined
         || (Number.isSafeInteger(value.relaySeq) && Number(value.relaySeq) > 0));
   }
   if (value.type === 'state') {
-    return typeof value.facelets === 'string' && /^[URFDLB]{54}$/.test(value.facelets);
+    return typeof value.facelets === 'string' && /^[URFDLB]{54}$/.test(value.facelets)
+      && (value.calibration === undefined || typeof value.calibration === 'boolean')
+      && (value.relaySeq === undefined || (value.calibration === true && Number.isSafeInteger(value.relaySeq) && Number(value.relaySeq) > 0));
   }
   if (value.type === 'battery') {
     return Number.isInteger(value.level) && Number(value.level) >= 0 && Number(value.level) <= 100;
@@ -109,6 +121,8 @@ export function isSmartCubeRelayPayload(value: unknown): value is SmartCubeRelay
     return ['scanning', 'connecting', 'connected', 'disconnected', 'error'].includes(String(value.phase))
       && (value.brand === undefined || typeof value.brand === 'string')
       && (value.deviceName === undefined || typeof value.deviceName === 'string')
+      && (value.calibrating === undefined || typeof value.calibrating === 'boolean')
+      && (value.canResetDevice === undefined || typeof value.canResetDevice === 'boolean')
       && (value.hasGyro === undefined || typeof value.hasGyro === 'boolean')
       && (value.error === undefined || typeof value.error === 'string');
   }

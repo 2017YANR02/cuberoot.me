@@ -37,6 +37,7 @@ export interface EncryptedBleConnection {
   readonly deviceName?: string;
   disconnect(): Promise<void>;
   requestBattery(): Promise<number | null>;
+  write(value: Uint8Array, begin?: () => boolean): Promise<void>;
 }
 
 export interface ResolvedBleMac {
@@ -73,6 +74,7 @@ export interface EncryptedBleOptions {
   ): number | null | void;
   isReadyFrame?(frame: Uint8Array): boolean;
   initialFrames?: Uint8Array[] | ((mac: Uint8Array) => Uint8Array[]);
+  onDispose?(): void;
   onBattery?(level: number): void;
   onDisconnect?(message: string): void;
   onMove?(move: string, timestamp?: number): void;
@@ -157,6 +159,7 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       const release = beginBleResourceCleanup(lease);
       closing = true;
       active = false;
+      options.onDispose?.();
       const pendingWrites = writeQueue.drain();
       if (listener) api.offBLECharacteristicValueChange(listener);
       listener = null;
@@ -272,8 +275,9 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       writeType,
     });
     const cipher = options.createCipher?.(parseMac(mac)) ?? { encrypt: (frame: Uint8Array) => frame, decrypt: (frame: Uint8Array) => frame };
-    const write = (value: Uint8Array): Promise<void> => writeQueue.enqueue(() => {
+    const write = (value: Uint8Array, begin?: () => boolean): Promise<void> => writeQueue.enqueue(() => {
       if (closing || !active || !connectedDeviceId || !serviceId || !characteristicId) throw new Error(tr({ en: 'Smart cube disconnected', zh: '智能魔方连接已断开' }));
+      if (begin && !begin()) throw new Error('Device calibration cancelled');
       const encrypted = cipher.encrypt(value);
       const sequence = ++writeCount;
       diagnostic.info('write-start', {
@@ -378,6 +382,7 @@ export async function connectEncryptedBle(options: EncryptedBleOptions): Promise
       deviceName: device.name ?? device.localName,
       disconnect,
       requestBattery: async () => lastBattery,
+      write,
     };
   } catch (error) {
     diagnostic.error('connect-failed', {

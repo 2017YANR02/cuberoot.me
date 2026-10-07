@@ -618,6 +618,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
   const lastMoveMetadataRef = useRef<CubeMoveMetadata | undefined>(undefined);
   const resetDeviceRef = useRef<(() => Promise<void>) | null>(null);
   const calibratingRef = useRef(false);
+  const relayCalibratingRef = useRef(false);
   const setGyroRef = useRef<((enabled: boolean) => Promise<void>) | null>(null);
   const disconnectListenerRef = useRef<((ev: Event) => void) | null>(null);
   /**
@@ -674,11 +675,11 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
           saveMac(pendingMac.name, pendingMac.mac);
           pendingSaveMacRef.current = null;
         }
-        if (calibratingRef.current) return;
+        if (calibratingRef.current || relayCalibratingRef.current) return;
         onMoveRef.current?.(move, timestamp, facelets, metadata);
       },
       onSolved: (timestamp) => {
-        if (!calibratingRef.current) onSolvedRef.current?.(timestamp);
+        if (!calibratingRef.current && !relayCalibratingRef.current) onSolvedRef.current?.(timestamp);
       },
     });
   }
@@ -888,6 +889,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
     setGyroRef.current = null;
     resetDeviceRef.current = null;
     calibratingRef.current = false;
+    relayCalibratingRef.current = false;
     const dev = deviceRef.current;
     if (dev) {
       if (disconnectListenerRef.current) {
@@ -922,8 +924,8 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
 
   const resetDeviceState = useCallback(async () => {
     const reset = resetDeviceRef.current;
-    if (!reset || !deviceRef.current?.gatt?.connected) throw new Error('Device calibration unavailable');
-    if (calibratingRef.current) throw new Error('Device calibration already in progress');
+    if (!reset || !cleanupRef.current) throw new Error('Device calibration unavailable');
+    if (calibratingRef.current || relayCalibratingRef.current) throw new Error('Device calibration already in progress');
     const generation = connectionGenerationRef.current;
     calibratingRef.current = true;
     // Reset is one user operation: update the local model before sending the
@@ -1327,12 +1329,18 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       cleanupRef.current?.();
       cleanupRef.current = null;
 
+      const applyBridgeEvent = (calibration: boolean | undefined, apply: () => void): void => {
+        if (!isCurrentBridgeSession()) return;
+        const previous = relayCalibratingRef.current;
+        if (calibration) relayCalibratingRef.current = true;
+        try { apply(); } finally { relayCalibratingRef.current = previous; }
+      };
       const bridge = await connectMiniProgramCubeBridge({
-        onMove: (move, deviceTs, metadata) => {
-          if (isCurrentBridgeSession()) session!.move(move, deviceTs, metadata);
+        onMove: (move, deviceTs, metadata, calibration) => {
+          applyBridgeEvent(calibration, () => session!.move(move, deviceTs, metadata));
         },
-        onState: (facelets) => {
-          if (isCurrentBridgeSession()) adoptCubeState(session!, facelets);
+        onState: (facelets, calibration) => {
+          applyBridgeEvent(calibration, () => adoptCubeState(session!, facelets));
         },
         onBattery: (level) => {
           if (isCurrentBridgeSession()) {
@@ -1344,6 +1352,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
         },
         onStatus: (next) => {
           if (!isCurrentBridgeSession()) return;
+          if (next.phase === 'connected') relayCalibratingRef.current = next.calibrating === true;
           if ((next.phase === 'disconnected' || next.phase === 'error')
             && cleanupRef.current) {
             connectionGenerationRef.current += 1;
@@ -1361,6 +1370,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       setHijacked(false);
       session = sessionController.open();
       cleanupRef.current = bridge.disconnect;
+      resetDeviceRef.current = bridge.resetDeviceState ?? null;
       setStatus({
         connected: true,
         brand: normalizeMiniProgramCubeBrand(bridge.brand),
@@ -1428,6 +1438,7 @@ export function useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCube
       setGyroRef.current = null;
       resetDeviceRef.current = null;
       calibratingRef.current = false;
+      relayCalibratingRef.current = false;
       const dev = deviceRef.current;
       if (dev) {
         if (disconnectListenerRef.current) {

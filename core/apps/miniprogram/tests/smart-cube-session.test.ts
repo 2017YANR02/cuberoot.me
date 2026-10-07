@@ -165,6 +165,24 @@ describe('SmartCubeSession', () => {
     expect(started).toBe(true);
   });
 
+  it('advertises calibration, deduplicates commands and waits for hardware confirmation', async () => {
+    let confirm!: () => void;
+    const resetDeviceState = vi.fn(() => new Promise<void>(resolve => { confirm = resolve; }));
+    driverMocks.connectGanV4.mockResolvedValue({ disconnect: async () => {}, requestBattery: async () => null, resetDeviceState });
+    const session = new SmartCubeSession(); await startSession(session); await session.connect('gan-v4');
+    expect(socket.sent.map(x => JSON.parse(x))).toContainEqual(expect.objectContaining({ phase: 'connected', canResetDevice: true }));
+    const command = { type: 'command', command: 'reset-device', requestId: 'a'.repeat(32) };
+    socket.message(command); socket.message(command);
+    await vi.waitFor(() => expect(resetDeviceState).toHaveBeenCalledOnce());
+    expect(socket.sent.map(x => JSON.parse(x)).filter(x => x.type === 'command-result')).toEqual([]);
+    confirm();
+    await vi.waitFor(() => expect(socket.sent.map(x => JSON.parse(x))).toContainEqual({ type: 'command-result', requestId: command.requestId, ok: true }));
+    socket.message({ ...command, requestId: 'b'.repeat(32) });
+    await vi.waitFor(() => expect(resetDeviceState).toHaveBeenCalledTimes(2));
+    await session.disconnect(); confirm(); await Promise.resolve();
+    expect(socket.sent.map(x => JSON.parse(x)).filter(x => x.type === 'command-result')).toHaveLength(1);
+  });
+
   it('relays Giiker moves, state and battery without claiming gyro support', async () => {
     const session = new SmartCubeSession();
     await startSession(session, 'i'.repeat(32));

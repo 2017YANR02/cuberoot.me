@@ -1546,3 +1546,12 @@ CubeRoot 应以这些证据证明不是简单套壳：
 - 验证：shared build、app-ui/client typecheck、架构边界检查通过。App BLE host/picker/共享选择窗口/智能魔方扫描与清理 26 项通过；Web bridge/嵌入认证/蓝牙环境/魔方重连与写入 50 项、计时器与设备选择/账号文档 134 项通过；最终账号文档两文件 78 项复验通过。跨域 Chrome 使用真实桥代码与模拟 native transport 验证读写、通知、两种断开重连、撤权及模拟音视频流，无 pageerror；此证据不代表实体蓝牙或摄像头/麦克风验收。
 - 最终 Mobile production build 与 Android/iOS sync、Android debug APK、iOS unsigned Simulator build、macOS unsigned release app、Harmony Web build/sync 通过。iOS 使用隔离 DerivedData 绕过本机旧缓存缺失 xcframework 元数据；未删除旧缓存。Harmony HAP 实际尝试报 Hvigor 00303028（工程 modelVersion 6.0.2，本机只支持 6.0.1），未降级工程。Windows native、各宿主实体设备权限/蓝牙/媒体、签名公证及商店发布未验。
 - 仅本地提交，未 push、部署或发布；本轮不处理其余审计优先级，总体继续 **NOT COMPLETE**。
+
+### 2026-10-07：优先级 2——微信小程序设备校准（本地）
+
+- 补齐 Web → 中继 → 小程序原生驱动的设备校准链路：GAN v2/v3/v4、奇艺与魔域 32 使用现有共享 reset 指令、协议解析和 createDeviceStateReset 确认器。写入完成不等于成功，必须收到设备复原状态；校准超时、写入失败或断线返回失败。GAN v2 同时补回原本遗漏的状态帧回调。
+- connected 状态声明 canResetDevice；网页通过桥调用 resetDeviceState，无需 Web GATT 对象。请求使用独立随机 ID，原生去重并拒绝并发，网页只接受匹配结果；断网时结束待确认请求，不自动重发硬件校准。未声明能力的旧小程序和无校准协议设备仍保留原有“重置状态”本地操作，不能算硬件校准。
+- 校准期间通知所有连接网页，分开本地请求与远端校准状态，避免另一网页或并发请求被拒后误触发解完。校准状态及转动带语义标记；校准状态纳入有序中继回放，断网恢复先应用复原基线、再应用后续转动。后续转动清除旧状态快照，不用过期基线覆盖已经追平的网页。
+- 奇艺 SYNC 确认和魔域 32 状态确认沿用既有协议语义，保留确认后排队的转动；陀螺帧实时发布，不挤占校准缓冲。外接计时器仅忽略新增魔方校准命令，优先级 3 的 Stackmat 启动取消问题本轮未处理。
+- 验证：shared build、client/server typecheck、架构边界守卫通过；小程序 check:all 的 typecheck、38 文件 866 项测试以及微信/抖音构建通过（抖音转换仍提示既有 page-meta 不支持）。Web 桥、真实 hook 与蓝牙重连 46 项、服务端中继 22 项通过，账号文档复核 78 项通过。覆盖 GAN 三代校准/超时/断线、奇艺与魔域校准后转动、并发拒绝、双网页、回放顺序与禁止 source 自定序号；独立复核未发现剩余阻断。
+- 仅本地实现与提交，未 push、部署、上传或发布。上线需配套更新 API/Web 与小程序；尚无本轮微信实体魔方校准验收，构建和模拟测试不代表真机通过。五端总体继续 **NOT COMPLETE**。
