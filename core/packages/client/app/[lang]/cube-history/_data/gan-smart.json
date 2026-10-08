@@ -1,0 +1,3243 @@
+{
+  "cubes": [
+    {
+      "id": "gan356-i",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i",
+        "en": "GAN356 i"
+      },
+      "year": 2019,
+      "release": {
+        "date": "2019-07-22",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "78 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "gyroscope"
+        ],
+        "adjustment": {
+          "zh": "机械松紧调试与智能转动记录。",
+          "en": "Mechanical tension adjustment and smart move recording."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "GAN 首代智能三阶，与 CubeStation 软件形成产品组合。",
+          "en": "GAN's first smart 3x3, paired with the CubeStation platform."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "让产品发展从机械结构扩展到传感器与训练数据。",
+          "en": "Extends product development from mechanics into sensors and training data."
+        },
+        "tradeoffs": {
+          "zh": "电池、充电和软件连接成为新的维护项目。",
+          "en": "Battery, charging and software connectivity become additional maintenance factors."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i",
+          "gan-i-price-catalog",
+          "gan-brand-story"
+        ]
+      },
+      "variants": [
+        "Standard"
+      ],
+      "sourceIds": [
+        "gan-i",
+        "gan-i-price-catalog",
+        "gan-brand-story"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "gyroscope",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/products/V1DE2BA1N6ni1.jpg?v=1581458195",
+        "sourceId": "gan-i",
+        "alt": {
+          "zh": "GAN356 i 商品图",
+          "en": "GAN356 i product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-play",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Play",
+        "en": "GAN356 i Play"
+      },
+      "year": 2020,
+      "release": {
+        "date": "2020-01-13",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i-play"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "76 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth"
+        ],
+        "adjustment": {
+          "zh": "机械调试；无陀螺仪。",
+          "en": "Mechanical adjustment; no gyroscope."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "保留蓝牙转动记录，去掉整颗姿态追踪以降低价格。",
+          "en": "Retains Bluetooth move tracking while omitting whole-cube orientation tracking to lower cost."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "早期智能产品的功能分层。",
+          "en": "An early example of feature segmentation within smart cubes."
+        },
+        "tradeoffs": {
+          "zh": "可记录转层不代表能感知整颗魔方姿态。",
+          "en": "Recording face turns does not imply tracking whole-cube orientation."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-play",
+          "gan-i-price-catalog"
+        ]
+      },
+      "variants": [
+        "Standard"
+      ],
+      "sourceIds": [
+        "gan-i-play",
+        "gan-i-price-catalog"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/products/gan356iplaystickerless.jpg?v=1581458395",
+        "sourceId": "gan-i-play",
+        "alt": {
+          "zh": "GAN356 i Play 商品图",
+          "en": "GAN356 i Play product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i2",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i2",
+        "en": "GAN356 i2"
+      },
+      "year": 2020,
+      "release": {
+        "date": "2020-06-01",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i2"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "72 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "gyroscope"
+        ],
+        "adjustment": {
+          "zh": "机械调试；内部陀螺仪与转动记录。",
+          "en": "Mechanical adjustment with internal gyroscope and move tracking."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "商品资料标称 2 小时充电、60 天待机，并增加存储。",
+          "en": "The product documentation specifies two-hour charging, 60-day standby and more storage."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "在首代智能方上改善电源和记录体验。",
+          "en": "Refines power and recording features from the first smart model."
+        },
+        "tradeoffs": {
+          "zh": "待机时间不等于连续使用时间。",
+          "en": "Standby time is not continuous-use battery life."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i2",
+          "gan-i2-price"
+        ]
+      },
+      "variants": [
+        "Standard"
+      ],
+      "sourceIds": [
+        "gan-i2",
+        "gan-i2-price"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "gyroscope",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/products/s7Tz8xvZTFmSq.jpg?v=1614696170",
+        "sourceId": "gan-i2",
+        "alt": {
+          "zh": "GAN356 i2 商品图",
+          "en": "GAN356 i2 product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry",
+        "en": "GAN356 i Carry"
+      },
+      "year": 2021,
+      "release": {
+        "date": "2021-03-15",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i-carry"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "77–77.5 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery"
+        ],
+        "adjustment": {
+          "zh": "附备用弹簧和调节螺母；无陀螺仪。",
+          "en": "Spare springs and tension nuts supplied; no gyroscope."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "更换纽扣电池，商品资料标称约 280 小时使用。",
+          "en": "Uses replaceable coin cells, with around 280 hours of use claimed by the retailer."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "降低智能三阶的价格与日常充电负担。",
+          "en": "Lowers smart-cube pricing and removes routine charging."
+        },
+        "tradeoffs": {
+          "zh": "电池仍需更换；不提供整颗姿态追踪。",
+          "en": "Batteries still require replacement, and whole-cube orientation is not tracked."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-carry",
+          "gan-old-catalog"
+        ]
+      },
+      "variants": [
+        "Frosted"
+      ],
+      "sourceIds": [
+        "gan-i-carry",
+        "gan-old-catalog"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/products/ganicarry1.jpg?v=1627503616",
+        "sourceId": "gan-i-carry",
+        "alt": {
+          "zh": "GAN356 i Carry 商品图",
+          "en": "GAN356 i Carry product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i3",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i3 / GAN356 i3",
+        "en": "GAN i3 / GAN356 i3"
+      },
+      "year": 2021,
+      "release": {
+        "date": "2021-09-28",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i3"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "88 g; later UV 90 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "adjustable",
+          "gyroscope"
+        ],
+        "adjustment": {
+          "zh": "磁力强度可调；连接 CubeStation。",
+          "en": "Adjustable magnetic strength with CubeStation connectivity."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "智能主线增加磁力手感调节。",
+          "en": "Adds magnetic-strength tuning to the main smart line."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "把机械可调性与联网训练结合。",
+          "en": "Combines mechanical customization with connected training."
+        },
+        "tradeoffs": {
+          "zh": "88 g 比同年代轻量竞速方更重，不能只比较传感器功能。",
+          "en": "At 88 g it is heavier than contemporary lightweight speedcubes; sensor features are only part of the comparison."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i3",
+          "gan-i3-uv",
+          "gan-old-catalog"
+        ]
+      },
+      "variants": [
+        "Original",
+        "UV Coated (retailer Added 2024-09-20)"
+      ],
+      "sourceIds": [
+        "gan-i3",
+        "gan-i3-uv",
+        "gan-old-catalog"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "adjustable",
+        "gyroscope",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/products/gani3_b3d17a24-05cd-4aa8-a560-f5d8d58fabc3.jpg?v=1642628607",
+        "sourceId": "gan-i3",
+        "alt": {
+          "zh": "GAN i3 / GAN356 i3 商品图",
+          "en": "GAN i3 / GAN356 i3 product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i3-v2",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i3 V2",
+        "en": "GAN356 i3 V2"
+      },
+      "year": 2025,
+      "release": {
+        "date": "2025-08-28",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i3v2"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "gyroscope",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "7 档磁力、9 档松紧；新版中心盖适配 Arthur 机器人。",
+          "en": "Seven magnetic and nine tension settings; revised caps support the Arthur robot."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "商品资料标称单次充电 15 小时使用、365 天待机。",
+          "en": "The retailer claims 15 hours of use and 365 days of standby per charge."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "保留 i3 的陀螺仪与可调磁力，补充新生态配件兼容。",
+          "en": "Retains i3's gyroscope and adjustable magnets while updating accessory compatibility."
+        },
+        "tradeoffs": {
+          "zh": "续航为商品标称，不是本站实测。",
+          "en": "Battery figures are product claims, not measurements made for this page."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i3v2",
+          "gan-i2-price"
+        ]
+      },
+      "variants": [
+        "V2"
+      ],
+      "sourceIds": [
+        "gan-i3v2",
+        "gan-i2-price"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i3_20V2.png?v=1756411745",
+        "sourceId": "gan-i3v2",
+        "alt": {
+          "zh": "GAN356 i3 V2 商品图",
+          "en": "GAN356 i3 V2 product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      },
+      "familyId": "gan-i3"
+    },
+    {
+      "id": "gan356-i-carry-s",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry S",
+        "en": "GAN356 i Carry S"
+      },
+      "year": 2023,
+      "release": {
+        "date": "2023-07-06",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i-carry-s"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "81 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery"
+        ],
+        "adjustment": {
+          "zh": "纽扣电池，基础机械松紧调试。",
+          "en": "Coin-cell power with basic mechanical tension adjustment."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "标称使用时长提高到约 330 小时。",
+          "en": "Claimed use rises to around 330 hours."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "续航是 i Carry 分支的主要更新方向之一。",
+          "en": "Battery life is a principal direction of development for the i Carry branch."
+        },
+        "tradeoffs": {
+          "zh": "较初代变重；该时长受使用方式影响。",
+          "en": "Heavier than the original; battery life depends on actual use."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-carry-s",
+          "gan-i-carry"
+        ]
+      },
+      "variants": [
+        "Frosted"
+      ],
+      "sourceIds": [
+        "gan-i-carry-s",
+        "gan-i-carry"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356-i-Carry-S-3x3.jpg?v=1688667199",
+        "sourceId": "gan-i-carry-s",
+        "alt": {
+          "zh": "GAN356 i Carry S 商品图",
+          "en": "GAN356 i Carry S product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry2",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry 2",
+        "en": "GAN356 i Carry 2"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-01-12",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i-carry2"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "88 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges"
+        ],
+        "adjustment": {
+          "zh": "GES Pro+ 弹力调节。",
+          "en": "GES Pro+ spring adjustment."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "继续提高纽扣电池智能线的续航与调试规格。",
+          "en": "Further develops battery endurance and tuning in the coin-cell smart line."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "偏向长期训练和降低充电频率。",
+          "en": "Targets sustained practice without frequent charging."
+        },
+        "tradeoffs": {
+          "zh": "TheCubicle 称自 2026-03-12 起供应的中心盖仅兼容第二代 Arthur，旧机器人需辨别批次。",
+          "en": "TheCubicle says caps supplied from 2026-03-12 support only second-generation Arthur; robot compatibility is batch-dependent."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-carry2",
+          "gan-i-carry-e"
+        ]
+      },
+      "variants": [
+        "Frosted",
+        "UV",
+        "10th Anniversary",
+        "Arthur-compatible cap revision"
+      ],
+      "sourceIds": [
+        "gan-i-carry2",
+        "gan-i-carry-e"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20356_20i_20Carry_202.jpg?v=1705091892",
+        "sourceId": "gan-i-carry2",
+        "alt": {
+          "zh": "GAN356 i Carry 2 商品图",
+          "en": "GAN356 i Carry 2 product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry-e",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry E",
+        "en": "GAN356 i Carry E"
+      },
+      "year": 2025,
+      "release": {
+        "date": "2025-05-01",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i-carry-e"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "85 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery"
+        ],
+        "adjustment": {
+          "zh": "固定磁力、机械调试；不含陀螺仪。",
+          "en": "Fixed magnets and mechanical adjustment; no gyroscope."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "使用两枚 LR43 电池，标称约 150 小时。",
+          "en": "Uses two LR43 cells, with approximately 150 hours claimed."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "以基础转动记录满足较低预算智能训练。",
+          "en": "Provides basic move tracking for a lower smart-cube budget."
+        },
+        "tradeoffs": {
+          "zh": "续航低于某些 i Carry 旧款，代号更新不代表所有参数提升。",
+          "en": "Battery life is lower than some earlier i Carry models; a newer name does not improve every specification."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-carry-e",
+          "gan-356-official-catalog"
+        ]
+      },
+      "variants": [
+        "Frosted",
+        "UV"
+      ],
+      "sourceIds": [
+        "gan-i-carry-e",
+        "gan-356-official-catalog"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i_20Carry_20E_203x3_01430285-065f-499d-b7c9-f30019cd01d6.jpg?v=1746125818",
+        "sourceId": "gan-i-carry-e",
+        "alt": {
+          "zh": "GAN356 i Carry E 商品图",
+          "en": "GAN356 i Carry E product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i-carry4",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i carry 4",
+        "en": "GAN i carry 4"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-01-30",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-i-carry4"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "71.2 g",
+        "mechanism": [
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges"
+        ],
+        "adjustment": {
+          "zh": "GES Pro+，6 档轴距×12 档弹力；48 磁。",
+          "en": "GES Pro+, six travel by twelve tension settings; 48 magnets."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "低功耗智能路线进一步减重，标称约 150 小时使用。",
+          "en": "Reduces weight in the low-power smart line, with about 150 hours claimed."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "更接近普通竞速方重量，同时保留可换电池。",
+          "en": "Moves closer to ordinary speedcube weight while retaining replaceable batteries."
+        },
+        "tradeoffs": {
+          "zh": "150 小时属于厂商标称；本次未得到陀螺仪及全部传感器规格的明确验证。",
+          "en": "The 150-hour figure is a manufacturer claim; full sensor and gyroscope specifications were not verified in this research."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-carry4",
+          "gan-i-carry4-official"
+        ]
+      },
+      "variants": [
+        "Matte",
+        "UV SSL limited",
+        "Year of the Horse",
+        "Minions"
+      ],
+      "sourceIds": [
+        "gan-i-carry4",
+        "gan-i-carry4-official"
+      ],
+      "tags": [
+        "china",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i_20Carry_20V4.png?v=1769814980",
+        "sourceId": "gan-i-carry4",
+        "alt": {
+          "zh": "GAN i carry 4 商品图",
+          "en": "GAN i carry 4 product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i4",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i4 Leap 雾面",
+        "en": "GAN i4 Leap Frosted"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-03-07",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Leap 版 Added 为 2026-03-07；官方产品页另写 2 月 27 日首批活动，未把本日当全球首发。",
+          "en": "TheCubicle lists the Leap edition on 2026-03-07; GAN separately mentions a February 27 first-batch promotion, so this is not presented as the global launch."
+        },
+        "sourceIds": [
+          "gan-i4"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "74 g (retailer)",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "6 档轴距×12 档弹力；MagLev 版 76 磁。",
+          "en": "Six travel by twelve tension settings; 76 magnets in the MagLev version."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "霍尔转动传感、陀螺仪；官方标称完整姿态模式约 30 小时。",
+          "en": "Hall-effect turn sensing and a gyroscope, with around 30 hours claimed in full orientation mode."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "本条为弹簧版 i4 Leap；MagLev 雾面、UV 和小黄人版各有独立记录。",
+          "en": "This is the spring-based i4 Leap. MagLev matte, UV and Minions variants have their own records."
+        },
+        "tradeoffs": {
+          "zh": "Leap/磁悬浮及续航模式的功能不同；超长续航模式并非完整记录模式。",
+          "en": "Leap/MagLev and battery modes have different functions; the longest endurance mode is not full recording mode."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i4",
+          "gan-i4-official",
+          "gan-catalog"
+        ]
+      },
+      "variants": [
+        "Leap / Frosted"
+      ],
+      "sourceIds": [
+        "gan-i4",
+        "gan-i4-official",
+        "gan-catalog"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20i4_20Leap_20Frosted.png?v=1772873775",
+        "sourceId": "gan-i4",
+        "alt": {
+          "zh": "GAN i4 Leap 雾面 商品图",
+          "en": "GAN i4 Leap Frosted product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan12-ui-freeplay",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN12 ui Free Play",
+        "en": "GAN12 ui Free Play"
+      },
+      "year": 2023,
+      "release": {
+        "date": "2023-08-02",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-12-freeplay"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "adjustable",
+          "uv"
+        ],
+        "adjustment": {
+          "zh": "GAN12 式调节、角块核磁；弹簧版本。",
+          "en": "GAN12-style tuning and corner-core magnets, using springs."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "把 GAN12 旗舰平台与智能记录结合。",
+          "en": "Combines the GAN12 flagship platform with smart recording."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "旗舰机械结构与联网训练开始整合。",
+          "en": "Integrates a flagship mechanical platform with connected practice."
+        },
+        "tradeoffs": {
+          "zh": "Free Play 不等同于后续 ui MagLev；充电底座/PowerPod 套装要分别识别。",
+          "en": "Free Play is distinct from the later ui MagLev; charging-stand and PowerPod bundles also differ."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-12-freeplay",
+          "gan-12-ui"
+        ]
+      },
+      "variants": [
+        "Standard charging stand",
+        "PowerPod bundle"
+      ],
+      "sourceIds": [
+        "gan-12-freeplay",
+        "gan-12-ui"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "adjustable",
+        "uv",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "flagship",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN12uiFreePlay.jpg?v=1690921321",
+        "sourceId": "gan-12-freeplay",
+        "alt": {
+          "zh": "GAN12 ui Free Play 商品图",
+          "en": "GAN12 ui Free Play product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan12-ui-maglev",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN12 ui MagLev",
+        "en": "GAN12 ui MagLev"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-08-01",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-12-ui"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "69.4 ±1 g (official manual)",
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "adjustable",
+          "uv",
+          "gyroscope"
+        ],
+        "adjustment": {
+          "zh": "磁悬浮、核磁、可调磁力与轴距/弹力。",
+          "en": "MagLev, core magnets, adjustable magnet strength and travel/tension."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "在 ui 平台上用对斥磁环替换弹簧。",
+          "en": "Replaces springs with repelling magnetic rings in the ui platform."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "机械性能配置向普通旗舰靠近。",
+          "en": "Brings the smart cube's mechanical specification closer to the conventional flagship."
+        },
+        "tradeoffs": {
+          "zh": "商品页存在 2026 套装更新；该日期不代表整个 ui MagLev 始于 2026。",
+          "en": "A 2026 bundle revision does not mean the whole ui MagLev model originated in 2026."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-12-ui",
+          "gan-12-ui-official",
+          "gan-12-ui-2026",
+          "gan-12-ui-manual"
+        ]
+      },
+      "variants": [
+        "PowerPod bundle",
+        "10th Anniversary",
+        "2026 PowerPod edition"
+      ],
+      "sourceIds": [
+        "gan-12-ui",
+        "gan-12-ui-official",
+        "gan-12-ui-2026",
+        "gan-12-ui-manual"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "adjustable",
+        "uv",
+        "smart",
+        "gyroscope"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "flagship",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN12_20ui_20MagLev_20_with_20PowerPod.jpg?v=1722536503",
+        "sourceId": "gan-12-ui",
+        "alt": {
+          "zh": "GAN12 ui MagLev 商品图",
+          "en": "GAN12 ui MagLev product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan12-ui-sp",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN12 ui SP",
+        "en": "GAN12 ui SP"
+      },
+      "year": 2025,
+      "release": {
+        "date": "2025-08-07",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-12-sp"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "69.2 ±1 g (official manual)",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "adjustable",
+          "uv",
+          "gyroscope"
+        ],
+        "adjustment": {
+          "zh": "GES Pro+ 调试；霍尔传感器记录转动。",
+          "en": "GES Pro+ tuning and Hall-effect turn sensing."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "ui 产品线增加不同配置与充电盒选项。",
+          "en": "Adds another configuration and charging-box options to the ui line."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "作为 ui MagLev 之外的弹簧配置选择。",
+          "en": "Provides a spring-based configuration alongside ui MagLev."
+        },
+        "tradeoffs": {
+          "zh": "标准盒含电源功能与基础充电盒不能按同价格比较。",
+          "en": "The powered standard box and basic charging box should not be compared as identical bundles."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-12-sp",
+          "gan-12-sp-official",
+          "gan-12-sp-manual"
+        ]
+      },
+      "variants": [
+        "Basic PowerPod",
+        "Standard PowerPod"
+      ],
+      "sourceIds": [
+        "gan-12-sp",
+        "gan-12-sp-official",
+        "gan-12-sp-manual"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "adjustable",
+        "uv",
+        "smart",
+        "gyroscope"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN12_ui_SP-basic.png?v=1754687755",
+        "sourceId": "gan-12-sp",
+        "alt": {
+          "zh": "GAN12 ui SP 商品图",
+          "en": "GAN12 ui SP product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan16-ui",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN16 ui MagLev MAX",
+        "en": "GAN16 ui MagLev MAX"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-07-03",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-16-ui"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "71 g",
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable",
+          "uv"
+        ],
+        "adjustment": {
+          "zh": "6 档轴距×12 档弹力；124 磁。",
+          "en": "Six travel by twelve tension settings; 124 magnets."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "标称魔方自身 15 小时，GanPod 再补充约 30 小时。",
+          "en": "Claims 15 hours in the cube, with about 30 additional hours from GanPod."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "把 GAN16 的磁力支撑设计延伸为智能旗舰。",
+          "en": "Extends the GAN16 magnetic-support approach into a smart flagship."
+        },
+        "tradeoffs": {
+          "zh": "45 小时是魔方加充电盒合计，不是单次魔方电池时长。",
+          "en": "The 45-hour figure combines cube and case capacity; it is not a single cube charge."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-16-ui",
+          "gan-16-ui-official",
+          "gan-16-ui-manual"
+        ]
+      },
+      "variants": [
+        "UV",
+        "Minions"
+      ],
+      "sourceIds": [
+        "gan-16-ui",
+        "gan-16-ui-official",
+        "gan-16-ui-manual"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "uv",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "flagship",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN16_ui.png?v=1782842762",
+        "sourceId": "gan-16-ui",
+        "alt": {
+          "zh": "GAN16 ui MagLev MAX 商品图",
+          "en": "GAN16 ui MagLev MAX product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "monstergo-ai",
+      "brand": "Monster Go",
+      "name": {
+        "zh": "Monster Go AI 智能三阶",
+        "en": "Monster Go AI"
+      },
+      "year": 2021,
+      "release": {
+        "date": "2021-08-11",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 的 Added（加入商品目录）日期，可能晚于国内上市；不是官方首发日。",
+          "en": "TheCubicle's Added date records catalog entry and may follow the Chinese launch; it is not an official launch date."
+        },
+        "sourceIds": [
+          "gan-monstergo-ai"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "81 g",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery"
+        ],
+        "adjustment": {
+          "zh": "基础机械调节；连接 CubeStation。",
+          "en": "Basic mechanical adjustment and CubeStation connectivity."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "以入门教学和训练为导向的智能三阶。",
+          "en": "A smart 3×3 focused on introductory learning and training."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "智能功能进入教学品牌的产品线。",
+          "en": "Brings smart functions into the educational brand's range."
+        },
+        "tradeoffs": {
+          "zh": "AI 名称本身不说明机器学习模型能力；实际功能以应用支持为准。",
+          "en": "The AI name does not itself establish machine-learning capabilities; functions depend on app support."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-monstergo-ai",
+          "gan-monster-catalog",
+          "gan-coin-cell"
+        ]
+      },
+      "variants": [
+        "Standard"
+      ],
+      "sourceIds": [
+        "gan-monstergo-ai",
+        "gan-monster-catalog",
+        "gan-coin-cell",
+        "gan-r3-monster-official",
+        "gan-r3-official-cn-aliases"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "smart",
+        "萌刻",
+        "MonsterGo",
+        "MG3 AI",
+        "MG3 智能魔方"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/products/monstergoai.jpg?v=1629920731",
+        "sourceId": "gan-monstergo-ai",
+        "alt": {
+          "zh": "Monster Go AI 智能三阶 商品图",
+          "en": "Monster Go AI product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i3-uv",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i3 UV 智能三阶",
+        "en": "GAN i3 UV"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-09-20",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-i3-uv"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "90 g (retailer item-weight label)",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "adjustable",
+          "gyroscope",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "独立销售的表面处理版本，价格和图片按此版本记录。",
+          "en": "An independently sold finish option; its price and image are recorded separately."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "独立销售的表面处理版本，价格和图片按此版本记录。",
+          "en": "An independently sold finish option; its price and image are recorded separately."
+        },
+        "tradeoffs": {
+          "zh": "涂层改变表面触感，不能据此直接推断转动速度或成绩提升；此处没有独立上手评分。",
+          "en": "A finish changes the surface feel, but does not alone establish better turning speed or solve times. No independent hands-on score is asserted."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i3-uv"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-i3-uv"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "adjustable",
+        "gyroscope",
+        "uv",
+        "coating",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i3",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20i3_203x3_20_UV_20Coated.jpg?v=1726861973",
+        "sourceId": "gan-i3-uv",
+        "alt": {
+          "zh": "GAN i3 UV 智能三阶 商品图",
+          "en": "GAN i3 UV product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry2-uv",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry 2 UV",
+        "en": "GAN356 i Carry 2 UV"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-03-13",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan-356-i-carry-2-uv-coated"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "88 g (retailer item-weight label)",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "独立销售的表面处理版本，价格和图片按此版本记录。",
+          "en": "An independently sold finish option; its price and image are recorded separately."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "独立销售的表面处理版本，价格和图片按此版本记录。",
+          "en": "An independently sold finish option; its price and image are recorded separately."
+        },
+        "tradeoffs": {
+          "zh": "涂层改变表面触感，不能据此直接推断转动速度或成绩提升；此处没有独立上手评分。",
+          "en": "A finish changes the surface feel, but does not alone establish better turning speed or solve times. No independent hands-on score is asserted."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan-356-i-carry-2-uv-coated"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan-356-i-carry-2-uv-coated"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "uv",
+        "coating",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan356-i-carry2",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20356_20i_20Carry_202_20_UV_20Coated.jpg?v=1710361752",
+        "sourceId": "gan-audit-gan-356-i-carry-2-uv-coated",
+        "alt": {
+          "zh": "GAN356 i Carry 2 UV 商品图",
+          "en": "GAN356 i Carry 2 UV product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i4-maglev-uv",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i4 MagLev UV",
+        "en": "GAN i4 MagLev UV"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-03-07",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan-i4-maglev-uv-3x3"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable",
+          "uv"
+        ],
+        "adjustment": {
+          "zh": "采用 GES 弹力调节；随附组件及数量以此版本商品页为准。",
+          "en": "Uses GES adjustment; included component sets follow this version’s listing."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "i4 的磁悬浮 UV 配置，弹力结构不同于 i4 Leap；保留智能感应和转体追踪。",
+          "en": "The MagLev UV configuration of i4 uses different suspension from Leap while retaining smart sensing and rotation tracking."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "i4 的磁悬浮 UV 配置，弹力结构不同于 i4 Leap；保留智能感应和转体追踪。",
+          "en": "The MagLev UV configuration of i4 uses different suspension from Leap while retaining smart sensing and rotation tracking."
+        },
+        "tradeoffs": {
+          "zh": "比较时需区分原厂配置、包装和上市地区；未确认的参数和首发日保留未知。",
+          "en": "Compare the exact factory configuration, package and market. Unverified specifications and launch dates remain unknown."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan-i4-maglev-uv-3x3"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan-i4-maglev-uv-3x3"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "uv",
+        "variant",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i4",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20i4_20MagLev_20UV.png?v=1772872883",
+        "sourceId": "gan-audit-gan-i4-maglev-uv-3x3",
+        "alt": {
+          "zh": "GAN i4 MagLev UV 商品图",
+          "en": "GAN i4 MagLev UV product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i4-maglev-frosted",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i4 MagLev 雾面",
+        "en": "GAN i4 MagLev Frosted"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-06-23",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube-1"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "采用 GES 弹力调节；随附组件及数量以此版本商品页为准。",
+          "en": "Uses GES adjustment; included component sets follow this version’s listing."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "磁悬浮机构搭配雾面外壳；与 UV 版及弹簧 Leap 版单独列出。",
+          "en": "MagLev suspension with a frosted shell, indexed separately from UV and spring-based Leap."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "磁悬浮机构搭配雾面外壳；与 UV 版及弹簧 Leap 版单独列出。",
+          "en": "MagLev suspension with a frosted shell, indexed separately from UV and spring-based Leap."
+        },
+        "tradeoffs": {
+          "zh": "比较时需区分原厂配置、包装和上市地区；未确认的参数和首发日保留未知。",
+          "en": "Compare the exact factory configuration, package and market. Unverified specifications and launch dates remain unknown."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube-1"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube-1"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "variant",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i4",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20i4_20MagLev_20Frosted.png?v=1782272394",
+        "sourceId": "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube-1",
+        "alt": {
+          "zh": "GAN i4 MagLev 雾面 商品图",
+          "en": "GAN i4 MagLev Frosted product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-mini-ui-freeplay",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN Mini ui Free Play 53 mm",
+        "en": "GAN Mini ui Free Play 53 mm"
+      },
+      "year": 2023,
+      "release": {
+        "date": "2023-08-02",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan-mini-ui-free-play"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "53 mm",
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "adjustable"
+        ],
+        "adjustment": {
+          "zh": "商品正文确认磁力可调；未独立核实全部档位数量。",
+          "en": "The description confirms adjustable magnets; the full setting count was not independently verified."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "53 mm 小尺寸智能三阶，带可调磁力、角轴磁定位及约 15 小时标称续航。",
+          "en": "A 53 mm smart 3x3 with adjustable magnets, corner-to-core alignment and a claimed battery life of about 15 hours."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "53 mm 小尺寸智能三阶，带可调磁力、角轴磁定位及约 15 小时标称续航。",
+          "en": "A 53 mm smart 3x3 with adjustable magnets, corner-to-core alignment and a claimed battery life of about 15 hours."
+        },
+        "tradeoffs": {
+          "zh": "充电接口和适配器需按 Mini ui 型号匹配；不能把 56 mm GAN12 ui 的尺寸或附件直接套用。",
+          "en": "Charging interfaces and adapters must match Mini ui; 56 mm GAN12 ui dimensions and accessories must not be assumed."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan-mini-ui-free-play"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan-mini-ui-free-play"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "adjustable",
+        "variant",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan12-ui-freeplay",
+      "tier": "specialty",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GANMiniuiFreePlay.jpg?v=1690921304",
+        "sourceId": "gan-audit-gan-mini-ui-free-play",
+        "alt": {
+          "zh": "GAN Mini ui Free Play 53 mm 商品图",
+          "en": "GAN Mini ui Free Play 53 mm product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry-brainstorm",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry Brainstorm Voyage",
+        "en": "GAN356 i Carry Brainstorm Voyage"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-05-09",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-2-brainstorm-voyage-edition"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm",
+        "weight": "79 g (retailer item-weight label)",
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-2-brainstorm-voyage-edition"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan356-i-carry-2-brainstorm-voyage-edition"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan356-i-carry",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i_20Carry_202_20_Brainstorm_20Voyage_20Edition.jpg?v=1715286546",
+        "sourceId": "gan-audit-gan356-i-carry-2-brainstorm-voyage-edition",
+        "alt": {
+          "zh": "GAN356 i Carry Brainstorm Voyage 商品图",
+          "en": "GAN356 i Carry Brainstorm Voyage product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry2-10th",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry 2 UV 十周年版",
+        "en": "GAN356 i Carry 2 UV 10th Anniversary"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-10-16",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-2-uv-3x3-10th-anniversary-edition"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges"
+        ],
+        "adjustment": {
+          "zh": "采用 GES 弹力调节；随附组件及数量以此版本商品页为准。",
+          "en": "Uses GES adjustment; included component sets follow this version’s listing."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-2-uv-3x3-10th-anniversary-edition"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan356-i-carry-2-uv-3x3-10th-anniversary-edition"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan356-i-carry2",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i_20Carry_202_20UV_203x3_20_10th_20Anniversary_20Edition.jpg?v=1729116585",
+        "sourceId": "gan-audit-gan356-i-carry-2-uv-3x3-10th-anniversary-edition",
+        "alt": {
+          "zh": "GAN356 i Carry 2 UV 十周年版 商品图",
+          "en": "GAN356 i Carry 2 UV 10th Anniversary product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan12-ui-maglev-10th",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN12 ui MagLev 十周年版",
+        "en": "GAN12 ui MagLev 10th Anniversary"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-10-16",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan12-ui-maglev-3x3-10th-anniversary-edition"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "adjustable",
+          "gyroscope"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan12-ui-maglev-3x3-10th-anniversary-edition"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan12-ui-maglev-3x3-10th-anniversary-edition"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "adjustable",
+        "gyroscope",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan12-ui-maglev",
+      "tier": "flagship",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN12_20ui_20MagLev_203x3_20_10th_20Anniversary_20Edition.jpg?v=1729116650",
+        "sourceId": "gan-audit-gan12-ui-maglev-3x3-10th-anniversary-edition",
+        "alt": {
+          "zh": "GAN12 ui MagLev 十周年版 商品图",
+          "en": "GAN12 ui MagLev 10th Anniversary product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i-carry4-horse",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i Carry 4 2026 马年版",
+        "en": "GAN i Carry 4 Year of the Horse"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-01-30",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-4-3x3-frosted-2026-year-of-the-horse-edition"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-4-3x3-frosted-2026-year-of-the-horse-edition"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan356-i-carry-4-3x3-frosted-2026-year-of-the-horse-edition"
+      ],
+      "tags": [
+        "china",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i-carry4",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i_20Carry_204_20LNY.png?v=1769815575",
+        "sourceId": "gan-audit-gan356-i-carry-4-3x3-frosted-2026-year-of-the-horse-edition",
+        "alt": {
+          "zh": "GAN i Carry 4 2026 马年版 商品图",
+          "en": "GAN i Carry 4 Year of the Horse product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i-carry4-ssl",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i Carry 4 SSL UV 限定",
+        "en": "GAN i Carry 4 SSL UV Limited"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-04-21",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-4-3x3-ssl-le"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-4-3x3-ssl-le"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan356-i-carry-4-3x3-ssl-le"
+      ],
+      "tags": [
+        "china",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "uv",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i-carry4",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20i_20carry_20SSL_20Edition.png?v=1776760016",
+        "sourceId": "gan-audit-gan356-i-carry-4-3x3-ssl-le",
+        "alt": {
+          "zh": "GAN i Carry 4 SSL UV 限定 商品图",
+          "en": "GAN i Carry 4 SSL UV Limited product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i-carry4-minions",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i Carry 4 小黄人版",
+        "en": "GAN i Carry 4 Minions"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-06-05",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-4-3x3-minions-edition"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "ges"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan356-i-carry-4-3x3-minions-edition"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan356-i-carry-4-3x3-minions-edition"
+      ],
+      "tags": [
+        "china",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "ges",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i-carry4",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN356_20i_20Carry_204_20-_20Minions.png?v=1780694189",
+        "sourceId": "gan-audit-gan356-i-carry-4-3x3-minions-edition",
+        "alt": {
+          "zh": "GAN i Carry 4 小黄人版 商品图",
+          "en": "GAN i Carry 4 Minions product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan-i4-maglev-minions",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN i4 MagLev UV 小黄人版",
+        "en": "GAN i4 MagLev UV Minions"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-06-11",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "uv",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan-i4",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN_20i4_20Minions.png?v=1781233914",
+        "sourceId": "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube",
+        "alt": {
+          "zh": "GAN i4 MagLev UV 小黄人版 商品图",
+          "en": "GAN i4 MagLev UV Minions product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan16-ui-max-minions",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN16 ui MAX UV 小黄人版",
+        "en": "GAN16 ui MAX UV Minions"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-07-11",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "TheCubicle 页面明确显示的 Added（收录）日期；不是官方首发日，可能晚于国内上市。",
+          "en": "The Added date explicitly displayed on TheCubicle’s product page; a catalog-entry date rather than a confirmed official or Chinese launch."
+        },
+        "sourceIds": [
+          "gan-audit-gan16-ui-maglev-max-uv-3x3-minions-edition-smart-cube"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "原厂独立命名的限定版本，商品档案和配色图片可单独核对。",
+          "en": "A separately named factory limited edition with its own product record and color imagery."
+        },
+        "tradeoffs": {
+          "zh": "收藏配色或随附物不构成统一条件下的性能提升证据；当前档案可能为停售页面。",
+          "en": "Collector colors or included items do not establish a performance improvement under controlled conditions; the listing may be discontinued."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-gan16-ui-maglev-max-uv-3x3-minions-edition-smart-cube"
+        ]
+      },
+      "variants": [
+        "Transparent Stickerless"
+      ],
+      "sourceIds": [
+        "gan-audit-gan16-ui-maglev-max-uv-3x3-minions-edition-smart-cube"
+      ],
+      "tags": [
+        "china",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "uv",
+        "limited",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan16-ui",
+      "tier": "flagship",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0035/5205/1273/files/GAN16_20ui_20Minions.png?v=1783783915",
+        "sourceId": "gan-audit-gan16-ui-maglev-max-uv-3x3-minions-edition-smart-cube",
+        "alt": {
+          "zh": "GAN16 ui MAX UV 小黄人版 商品图",
+          "en": "GAN16 ui MAX UV Minions product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-carry-e-uv",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN356 i Carry E UV",
+        "en": "GAN356 i Carry E UV"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "官方商店确认有 UV 选项，但未找到 UV 版独立首发日期。",
+          "en": "The official store confirms a UV option but no independent UV release date was found."
+        },
+        "sourceIds": [
+          "gan-audit-official-gancube-gan356-i-carry-e-smart-cube"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "spring",
+          "magnet",
+          "bluetooth",
+          "replaceable-battery",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "独立销售的表面处理版本，价格和图片按此版本记录。",
+          "en": "An independently sold finish option; its price and image are recorded separately."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "独立销售的表面处理版本，价格和图片按此版本记录。",
+          "en": "An independently sold finish option; its price and image are recorded separately."
+        },
+        "tradeoffs": {
+          "zh": "涂层改变表面触感，不能据此直接推断转动速度或成绩提升；此处没有独立上手评分。",
+          "en": "A finish changes the surface feel, but does not alone establish better turning speed or solve times. No independent hands-on score is asserted."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-i-carry-e"
+        ]
+      },
+      "variants": [
+        "UV Coated"
+      ],
+      "sourceIds": [
+        "gan-i-carry-e",
+        "gan-audit-official-gancube-gan356-i-carry-e-smart-cube"
+      ],
+      "tags": [
+        "china",
+        "spring",
+        "magnet",
+        "bluetooth",
+        "replaceable-battery",
+        "uv",
+        "coating",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "familyId": "gan356-i-carry-e",
+      "tier": "budget",
+      "image": {
+        "url": "https://cdn.shopify.com/s/files/1/0703/2389/6537/files/GAN356iCarryE.webp?v=1772420428",
+        "sourceId": "gan-audit-official-gancube-gan356-i-carry-e-smart-cube",
+        "alt": {
+          "zh": "GAN356 i Carry E UV 商品图",
+          "en": "GAN356 i Carry E UV product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "来自对应商品页的原始图片；展示该型号/版本，包装和配色以来源说明为准。",
+          "en": "Original image from the matching product listing. Packaging and color options follow the source description."
+        }
+      }
+    },
+    {
+      "id": "gan12-ui-maglev-v2",
+      "brand": "GAN",
+      "name": {
+        "zh": "GAN12 ui MagLev V2 UV（2026 商家命名）",
+        "en": "GAN12 ui MagLev V2 UV (retailer 2026 designation)"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026",
+        "precision": "year",
+        "basis": "retailer",
+        "note": {
+          "zh": "两家商家将此选项明确标为 V2 / 2026；未找到官方单独首发日，也未把套餐更新当全系始发。",
+          "en": "Two retailers explicitly label this listing V2 / 2026. No separate official launch day was found, and a package revision is not treated as the whole family’s origin."
+        },
+        "sourceIds": [
+          "gan-audit-ui-maglev-v2-master",
+          "gan-audit-ui-maglev-v2-nl"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": "56 mm (retailer)",
+        "weight": "69 g (retailer net weight)",
+        "mechanism": [
+          "maglev",
+          "magnet",
+          "core-magnets",
+          "bluetooth",
+          "gyroscope",
+          "adjustable",
+          "uv"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "按可单独检索的 V2 / 2026 商家名称单列，EAN 6970697966849；页面给出 216 组调节、约 15 小时本体续航。",
+          "en": "Separately indexed under the searchable V2 / 2026 retail designation, EAN 6970697966849. The listing specifies 216 settings and around 15 hours of cube battery life."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "按可单独检索的 V2 / 2026 商家名称单列，EAN 6970697966849；页面给出 216 组调节、约 15 小时本体续航。",
+          "en": "Separately indexed under the searchable V2 / 2026 retail designation, EAN 6970697966849. The listing specifies 216 settings and around 15 hours of cube battery life."
+        },
+        "tradeoffs": {
+          "zh": "官方主商品仍名 GAN12 ui MagLev，且早版已使用 GES V2 和 Smart Core 2.0；未证明 V2 名称对应新的整颗机械结构，可能涉及批次或包装命名，不应当作性能升级结论。",
+          "en": "GAN’s main listing remains GAN12 ui MagLev, and the earlier cube already used GES V2 and Smart Core 2.0. A new whole-cube mechanism is not established; V2 may reflect a batch or package designation and does not prove a performance upgrade."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-audit-ui-maglev-v2-master",
+          "gan-audit-ui-maglev-v2-nl",
+          "gan-12-ui-official",
+          "gan-12-ui-2026"
+        ]
+      },
+      "variants": [
+        "V2 / UV / PowerPod Charger",
+        "EAN 6970697966849"
+      ],
+      "sourceIds": [
+        "gan-audit-ui-maglev-v2-master",
+        "gan-audit-ui-maglev-v2-nl",
+        "gan-12-ui-official",
+        "gan-12-ui-2026"
+      ],
+      "tags": [
+        "china",
+        "limited",
+        "maglev",
+        "magnet",
+        "core-magnets",
+        "bluetooth",
+        "gyroscope",
+        "adjustable",
+        "uv",
+        "smart"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "flagship",
+      "familyId": "gan12-ui-maglev",
+      "image": {
+        "url": "https://mastercubestore.de/16526-large_default/gan-12-ui-maglev-v2-3x3-bluetooth-smart-cube-uv-coated-stickerless-powerpod-charger.jpg",
+        "sourceId": "gan-audit-ui-maglev-v2-master",
+        "alt": {
+          "zh": "GAN12 ui MagLev V2 UV（2026 商家命名） 实物商品图",
+          "en": "GAN12 ui MagLev V2 UV (retailer 2026 designation) product image"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应版本来源中的原始实物商品图；未用其他型号替代。",
+          "en": "Original product imagery from the matching edition’s source; no other model has been substituted."
+        }
+      }
+    },
+    {
+      "id": "gan356-i-5th-white",
+      "brand": "GAN",
+      "familyId": "gan356-i",
+      "name": {
+        "zh": "GAN356 i 五周年白色限定版",
+        "en": "GAN356 i White 5th Anniversary"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "型号与独立销售记录已确认，未找到可靠的首发日期；不沿用母型号上市时间。",
+          "en": "The model and separate retail listing are confirmed, but a reliable launch date was not found; the parent model’s date is not reused."
+        },
+        "sourceIds": [
+          "gan-r3-i5th-wizzon"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "magnet",
+          "bluetooth"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "商家明确说明功能与普通 GAN356 i 相同，白色周年外观有独立 SKU。",
+          "en": "The merchant explicitly states the same functionality as the ordinary GAN356 i, with a separately sold white anniversary SKU."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "独立命名的白色五周年智能三阶，不包含配套机器人。",
+          "en": "A separately named white fifth-anniversary smart cube; the robot is not included."
+        },
+        "tradeoffs": {
+          "zh": "未找到版本专属净重和受控性能测评；联名或限定外观不等于机械性能升级。",
+          "en": "Edition-specific net weight and controlled performance testing were not verified; a limited appearance does not establish improved mechanics."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "gan-r3-i5th-wizzon"
+        ]
+      },
+      "variants": [
+        "White 5th Anniversary — cube only"
+      ],
+      "sourceIds": [
+        "gan-r3-i5th-wizzon",
+        "gan-photo-i5th-wizzon-archive"
+      ],
+      "tags": [
+        "china",
+        "magnet",
+        "bluetooth",
+        "limited",
+        "五周年",
+        "5th Anniversary",
+        "White"
+      ],
+      "status": "released",
+      "category": "smart",
+      "tier": "specialty",
+      "image": {
+        "url": "https://wizzon.com/wp-content/uploads/TYPZ02058.jpg",
+        "sourceId": "gan-photo-i5th-wizzon-archive",
+        "match": "exact",
+        "alt": {
+          "zh": "WizZon 五周年白色 GAN356 i 商品页主图，展示白色正面与蓝色内件",
+          "en": "Main image from WizZon’s white fifth-anniversary GAN356 i listing, showing a white face and blue internal pieces"
+        },
+        "note": {
+          "zh": "来自白色五周年版独立商品页的主图；标题、SKU TYPZ02058、主图标签与 Product JSON-LD 对应一致。原站图片受限，本地照片从公开网页存档取回，未经修改。",
+          "en": "Main image from the separate white fifth-anniversary listing. Its title, SKU TYPZ02058, main-image tag and Product JSON-LD agree. The original host is restricted; this unchanged copy was recovered from the public web archive."
+        },
+        "assetPath": "/_assets/cube-history/gan356-i-5th-white-056a5726.jpg"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "gan-i",
+      "title": "GAN356 i 商品档案",
+      "url": "https://www.thecubicle.com/en-fr/products/gan-356i",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-play",
+      "title": "GAN356 i Play 商品档案",
+      "url": "https://www.thecubicle.com/collections/discontinued/products/gan356-i-play",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i2",
+      "title": "GAN356 i2 商品档案",
+      "url": "https://www.thecubicle.com/en-gr/products/gan356-i2",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-carry",
+      "title": "GAN356 i Carry 商品档案",
+      "url": "https://www.thecubicle.com/products/gan-356-i-carry",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i3",
+      "title": "GAN i3 商品档案",
+      "url": "https://www.thecubicle.com/en-global/products/gan-i3-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i3v2",
+      "title": "GAN356 i3 V2 商品档案",
+      "url": "https://www.thecubicle.com/products/gan356-i3-v2-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-carry-s",
+      "title": "GAN356 i Carry S 商品档案",
+      "url": "https://www.thecubicle.com/collections/smart-cubes-and-bluetooth/products/gan356-i-carry-s-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-carry2",
+      "title": "GAN356 i Carry 2 商品档案",
+      "url": "https://www.thecubicle.com/products/gan-356-i-carry-2",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-carry-e",
+      "title": "GAN356 i Carry E 商品档案",
+      "url": "https://www.thecubicle.com/products/gan356-i-carry-e-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-carry4",
+      "title": "GAN356 i Carry 4 商品档案",
+      "url": "https://www.thecubicle.com/en-ie/collections/3x3-speed-cubes/products/gan356-i-carry-4-3x3-frosted",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-carry4-official",
+      "title": "GAN i carry 4 官方产品页",
+      "url": "https://www.gancube.com/products/gan-i-carry-4-smart-cube",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-i4",
+      "title": "GAN i4 Leap 商品档案",
+      "url": "https://www.thecubicle.com/en-kr/products/gan-i4-leap-frosted-3x3-smart-cube",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i4-official",
+      "title": "GAN i4 官方产品及规格",
+      "url": "https://www.gancube.com/products/gan-i4-smart-cube",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-12-freeplay",
+      "title": "GAN12 ui Free Play 商品档案",
+      "url": "https://www.thecubicle.com/en-br/products/gan12-ui-free-play",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-12-ui",
+      "title": "GAN12 ui MagLev 商品档案",
+      "url": "https://www.thecubicle.com/en-oceania/products/gan12-ui-maglev-with-powerpod",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-12-ui-official",
+      "title": "GAN12 ui MagLev 官方产品页",
+      "url": "https://www.gancube.com/products/gan12-ui-maglev-3x3-magnetic-smart-cube",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-12-ui-2026",
+      "title": "GAN12 ui MagLev 2026版商品档案",
+      "url": "https://www.thecubicle.com/products/gan12-ui-maglev-3x3-powerpod-2026-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-12-sp",
+      "title": "GAN12 ui SP 商品档案",
+      "url": "https://www.thecubicle.com/en-dk/collections/smart-cubes-and-bluetooth/products/gan12-ui-sp-3x3-with-basic-powerpod",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-12-sp-official",
+      "title": "GAN12 ui SP 官方产品页",
+      "url": "https://www.gancube.com/products/gan12-ui-sp-3x3-smart-speed-cube",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-16-ui",
+      "title": "GAN16 ui MagLev MAX 商品档案",
+      "url": "https://www.thecubicle.com/en-ca/products/gan16-ui-maglev-max-uv-3x3-smart-cube",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-16-ui-official",
+      "title": "GAN16 ui MagLev MAX 官方产品页",
+      "url": "https://www.gancube.com/products/gan16-ui-maglev-max",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-monstergo-ai",
+      "title": "MonsterGO AI 智能三阶商品档案",
+      "url": "https://www.thecubicle.com/products/monstergo-ai-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i-price-catalog",
+      "title": "GAN 初代智能三阶价格档案",
+      "url": "https://www.thecubicle.com/collections/all?id=15571789512777&page=30",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-brand-story",
+      "title": "GAN 品牌历史",
+      "url": "https://www.gancube.com/pages/about-us",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-i3-uv",
+      "title": "GAN i3 后续 UV 版商品档案",
+      "url": "https://www.thecubicle.com/en-global/products/gan-i3-3x3-uv-coated",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-i2-price",
+      "title": "GAN i2 / i3 V2 商品价格集合",
+      "url": "https://www.thecubicle.com/collections/all?id=13215221219401&page=34",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-coin-cell",
+      "title": "GAN i Carry / MonsterGO AI 使用的电池",
+      "url": "https://www.thecubicle.com/en-it/products/cr1632-battery-for-gan-356-i-carry",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-12-sp-manual",
+      "title": "GAN12 ui SP 官方使用说明书",
+      "url": "https://cdn.shopify.com/s/files/1/0703/2389/6537/files/GAN12_ui_SP_Smart_Cube_User_Manual.pdf?v=1788429051",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-12-ui-manual",
+      "title": "GAN12 ui MagLev 官方使用说明书",
+      "url": "https://cdn.shopify.com/s/files/1/0703/2389/6537/files/GAN12_ui_Maglev_User_Manual.pdf?v=1788428865",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-16-ui-manual",
+      "title": "GAN16 ui MagLev MAX 官方使用说明书",
+      "url": "https://cdn.shopify.com/s/files/1/0703/2389/6537/files/GAN16_ui_Maglev_MAX_User_Manual.pdf?v=1788169898",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-audit-gan-356-i-carry-2-uv-coated",
+      "title": "GAN356 i Carry 2 (UV Coated) 3x3 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan-356-i-carry-2-uv-coated",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan-i4-maglev-uv-3x3",
+      "title": "GAN i4 MagLev UV 3x3 (Smart Cube) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan-i4-maglev-uv-3x3",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube-1",
+      "title": "GAN i4 MagLev Frosted 3x3 (Smart Cube) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan-i4-maglev-frosted-3x3-smart-cube-1",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan-mini-ui-free-play",
+      "title": "GAN Mini ui Free Play 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan-mini-ui-free-play",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan356-i-carry-2-brainstorm-voyage-edition",
+      "title": "GAN356 i Carry 3x3 (Brainstorm Voyage Edition) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan356-i-carry-2-brainstorm-voyage-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan356-i-carry-2-uv-3x3-10th-anniversary-edition",
+      "title": "GAN356 i Carry 2 UV 3x3 (10th Anniversary Edition) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan356-i-carry-2-uv-3x3-10th-anniversary-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan12-ui-maglev-3x3-10th-anniversary-edition",
+      "title": "GAN12 ui MagLev 3x3 (10th Anniversary Edition) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan12-ui-maglev-3x3-10th-anniversary-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan356-i-carry-4-3x3-frosted-2026-year-of-the-horse-edition",
+      "title": "GAN356 i Carry 4 3x3 (Frosted, 2026 Year of the Horse Edition) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan356-i-carry-4-3x3-frosted-2026-year-of-the-horse-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan356-i-carry-4-3x3-ssl-le",
+      "title": "GAN356 i Carry 4 3x3 (UV Coated, SSL LE) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan356-i-carry-4-3x3-ssl-le",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan356-i-carry-4-3x3-minions-edition",
+      "title": "GAN356 i Carry 4 3x3 (Minions Edition) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan356-i-carry-4-3x3-minions-edition",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan-i4-maglev-frosted-3x3-smart-cube",
+      "title": "GAN i4 MagLev UV 3x3 (Minions Edition, Smart Cube) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan-i4-maglev-frosted-3x3-smart-cube",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-gan16-ui-maglev-max-uv-3x3-minions-edition-smart-cube",
+      "title": "GAN16 ui MagLev MAX UV 3x3 (Minions Edition, Smart Cube) 商品与图片档案",
+      "url": "https://www.thecubicle.com/products/gan16-ui-maglev-max-uv-3x3-minions-edition-smart-cube",
+      "publisher": "TheCubicle",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-official-gancube-gan356-i-carry-e-smart-cube",
+      "title": "GAN356 i carry E 商品与图片档案",
+      "url": "https://www.gancube.com/products/gancube-gan356-i-carry-e-smart-cube",
+      "publisher": "GANCUBE",
+      "kind": "official"
+    },
+    {
+      "id": "gan-audit-ui-maglev-v2-master",
+      "title": "GAN12 ui MagLev V2 UV：2026 型号、EAN 与规格",
+      "url": "https://mastercubestore.de/smart-cubes/4414-gan-12-ui-maglev-v2-3x3-bluetooth-smart-cube-uv-coated-stickerless-powerpod-charger-6970697966849.html",
+      "publisher": "MasterCubeStore",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-audit-ui-maglev-v2-nl",
+      "title": "GAN12 ui MagLev V2 UV (2026) 独立商品页",
+      "url": "https://www.speedcube.nl/en/speedcube/gan-12-ui-maglev-v2-uv-2026/",
+      "publisher": "Speedcube.nl",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-r3-i5th-wizzon",
+      "title": "GAN356 i White 5th Anniversary, separate cube-only SKU TYPZ02058",
+      "url": "https://wizzon.com/product/gan-356-i-gan356i-white-5th-anniversary-limited-edition/",
+      "publisher": "WizZon",
+      "kind": "retailer"
+    },
+    {
+      "id": "gan-photo-i5th-wizzon-archive",
+      "title": "Archived WizZon white fifth-anniversary product page (2024-06-21)",
+      "url": "https://web.archive.org/web/20240621224815id_/https://wizzon.com/product/gan-356-i-gan356i-white-5th-anniversary-limited-edition/",
+      "publisher": "WizZon via Internet Archive",
+      "kind": "archive"
+    }
+  ],
+  "coverageNotes": [
+    "GAN and related smart 3×3 products are partitioned here for maintainability. IDs and cross-dataset family/source links remain unchanged.",
+    "2026-10-07（America/Los_Angeles）图片补查：GAN356 i 五周年白色版通过 WizZon 精确 SKU TYPZ02058 的 2024-06-21 商品页存档恢复主图；主图标签与 Product JSON-LD 一致。图片实际由 2026-10-04 网页存档回放取回，保存原始 JPEG，周年名称依据商品页而非图片内文字。 / Recovered the white fifth-anniversary GAN356 i main image from the exact WizZon SKU TYPZ02058 archive: its image tag and Product JSON-LD agree. The unchanged JPEG came from the 2026-10-04 archive replay; the anniversary attribution comes from the listing, not wording inside the artwork.",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
+  ]
+}
