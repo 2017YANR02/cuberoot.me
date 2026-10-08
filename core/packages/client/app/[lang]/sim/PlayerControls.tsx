@@ -113,6 +113,10 @@ function randomIvyScramble(): string {
   return out.join(' ');
 }
 import { invertAlg, simplifyAlg, simplifyTwistyAlg, mirrorAlg } from '@/lib/cube3';
+import {
+  classifyDuoTokens, duoMovesToString, generatePyraminxDuoScramble,
+  invertDuoMoves, parseDuoMoves, reduceDuoAlg, type DuoMove,
+} from '@cuberoot/puzzle-solvers/pyraminx-duo';
 import { get_shortened_rotation } from '@/lib/roux/RotationHelp';
 import {
   cleanForPlayer, extractAlgFromText, findTokenPositions, findWhitespaceTokenPositions,
@@ -338,6 +342,7 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'sq4',      iconClass: 'unofficial-sq4', labelZh: 'SQ4', labelEn: 'SQ4' },
   { value: 'ivy',      iconClass: 'unofficial-ivy', labelZh: '枫叶', labelEn: 'Ivy' },
   { value: 'pyraminx', iconClass: 'event-pyram', labelZh: eventDisplayName('pyram', true), labelEn: eventDisplayName('pyram', false) },
+  { value: 'pyraminx_duo', iconClass: 'unofficial-pyraminx_duo', labelZh: '二重奏魔方', labelEn: 'Pyraminx Duo' },
   { value: 'skewb',    iconClass: 'event-skewb', labelZh: eventDisplayName('skewb', true), labelEn: eventDisplayName('skewb', false) },
   { value: 'megaminx', iconClass: 'event-minx',  labelZh: eventDisplayName('minx', true), labelEn: eventDisplayName('minx', false) },
   { value: 'clock',    iconClass: 'event-clock', labelZh: eventDisplayName('clock', true), labelEn: eventDisplayName('clock', false) },
@@ -426,7 +431,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
 
 interface SquarePlaybackCube {
   twister: {
@@ -573,9 +578,13 @@ function reduceSkewbAlg(s: string): string {
 // here + one line in `cornerKind` below (mirrors the engine/cornerTurnGesture adapters).
 // 「corner」是历史名字,准确说是"离散整步、逐招重放"的引擎拼图 —— 魔表(转的是表盘,一步
 // 30° 的倍数)与它们形状完全一致,所以也走这张表,而不是再开一条 isClock 分支链。
-type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'clock';
+type CornerKind = 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'clock';
 
 interface CornerSpec {
+  /** Optional per-token validation for both editable text tracks. */
+  classify?(s: string): Array<{ text: string; bad: boolean }>;
+  /** Opt out when the generic six-face M/S mirror grammar does not apply. */
+  cubeMirrors?: boolean;
   /** Parse alg / scramble text → the puzzle's move list. */
   parse(s: string): unknown[];
   /** Optional notation-token groups for moves that expand to multiple physical turns. */
@@ -610,6 +619,7 @@ interface CornerCube {
 
 const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
   ghost: {
+    cubeMirrors: false,
     parse: parseGhostMoves,
     toString: (m) => ghostMovesToString(m as GhostMove[]),
     invert: (m) => invertGhostMoves(m as GhostMove[]),
@@ -665,6 +675,15 @@ const CORNER_SPECS: Record<CornerKind, CornerSpec> = {
     invert: (m) => invertPyraMoves(m as PyraMove[]),
     reduce: reducePyraAlg,
     scramble: () => pyraMovesToString(randomPyraScramble(10)),
+  },
+  pyraminx_duo: {
+    classify: classifyDuoTokens,
+    cubeMirrors: false,
+    parse: parseDuoMoves,
+    toString: (m) => duoMovesToString(m as DuoMove[]),
+    invert: (m) => invertDuoMoves(m as DuoMove[]),
+    reduce: reduceDuoAlg,
+    scramble: generatePyraminxDuoScramble,
   },
   megaminx: {
     parse: parseMegaMoves,
@@ -1049,6 +1068,7 @@ export default function PlayerControls({
           : puzzleKind === 'heli' ? 'heli'
           : puzzleKind === 'gear' ? 'gear'
           : puzzleKind === 'ghost' ? 'ghost'
+          : puzzleKind === 'pyraminx_duo' ? 'pyraminx_duo'
             : isSkewbEngine ? 'skewb'
               : isPyraEngine ? 'pyraminx'
                 : isMegaEngine ? 'megaminx'
@@ -1085,7 +1105,7 @@ export default function PlayerControls({
   // ("UFR"/"UF"/"BL" …) that auto-spacing would split mid-token. Gear's tokens are
   // single-letter too, but the WCA rules misfire on its grammar (UD/FB glue exemption,
   // suffix digits 3-6) — it gets the 'simple' variant instead of the full WCA one.
-  const algAutoSpaceSafe = !corner || cornerKind === 'redi' || cornerKind === 'pyraminx';
+  const algAutoSpaceSafe = !corner || cornerKind === 'redi' || cornerKind === 'pyraminx' || cornerKind === 'pyraminx_duo';
   const algAutoSpace: boolean | 'simple' =
     algAutoSpaceSafe ? true : cornerKind === 'gear' ? 'simple' : false;
   // "Derive scramble from solution" (cubedb-style) is 3x3-only — the solver is.
@@ -1345,9 +1365,13 @@ export default function PlayerControls({
       return ghostSequenceValid(`${setupDraft} ${inverse} ${algDraft}`);
     } catch { return false; }
   }, [puzzleKind, ghostSetupValid, setupDraft, algDraft, settings.playbackMode]);
-  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans ?? (!ghostSetupValid ? [{ text: setupDraft, bad: true }] : null);
-  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans ?? (!ghostCanPlay ? [{ text: algDraft, bad: true }] : null);
-  useEffect(() => { if (!ghostCanPlay) setPlaying(false); }, [ghostCanPlay]);
+  const cornerSetupSpans = useMemo(() => corner?.classify?.(setupDraft) ?? null, [corner, setupDraft]);
+  const cornerAlgSpans = useMemo(() => corner?.classify?.(algDraft) ?? null, [corner, algDraft]);
+  const cornerSetupValid = ghostSetupValid && !cornerSetupSpans?.some(span => span.bad);
+  const cornerCanPlay = ghostCanPlay && cornerSetupValid && !cornerAlgSpans?.some(span => span.bad);
+  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans ?? cornerSetupSpans ?? (!cornerSetupValid ? [{ text: setupDraft, bad: true }] : null);
+  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans ?? cornerAlgSpans ?? (!cornerCanPlay ? [{ text: algDraft, bad: true }] : null);
+  useEffect(() => { if (!cornerCanPlay) setPlaying(false); }, [cornerCanPlay]);
 
   // One move list for whichever corner-turn engine puzzle is active (empty otherwise).
   // algDraft 是**正在打字**的文本 → 随时可能停在半个 token 上,解析器严格会抛;兜住当空
@@ -1425,7 +1449,7 @@ export default function PlayerControls({
     : isIvy
       ? (ivyCanPlay ? ivyActions.length : 0)
       : corner
-        ? (ghostCanPlay ? cornerActions.length : 0)
+        ? (cornerCanPlay ? cornerActions.length : 0)
         : nxnItems.length;
 
   const jumpToStep = useCallback(async (n: number) => {
@@ -1476,7 +1500,7 @@ export default function PlayerControls({
       // move functions (via `corner`) differ. setup() lays the scramble (or the
       // inverted solution, in Algorithm mode) as the base state, then the first
       // `target` solution moves are applied instantly on top.
-      if (!ghostCanPlay) { setStep(0); return; }
+      if (!cornerCanPlay) { setStep(0); return; }
       const cube = world.cube as unknown as CornerCube;
       cube.twister.finish();
       const effSetup = settings.playbackMode === 'algorithm'
@@ -1532,7 +1556,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, ghostCanPlay, settings.playbackMode]);
+  }, [world, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, cornerCanPlay, settings.playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1580,7 +1604,7 @@ export default function PlayerControls({
         // 的先例保持瞬切。
         if (
           settings.animatePlayback !== false && settings.playbackMode !== 'algorithm'
-          && !isSquarePuzzle && !isIvy && ghostCanPlay && world
+          && !isSquarePuzzle && !isIvy && cornerCanPlay && world
           && n === actions.length && stepRef.current === n - 1
           && algDraft.startsWith(prevText)
         ) {
@@ -2156,7 +2180,7 @@ export default function PlayerControls({
   // alg track and jumpToStart + play.
   const handlePlayScramble = useCallback(async () => {
     const scramble = setupDraft.trim();
-    if (!scramble || !squareFamilySetupValid || !ghostSetupValid) return;
+    if (!scramble || !squareFamilySetupValid || !cornerSetupValid) return;
     if (isTwistyMode) {
       if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
       setSetupDraft('');
@@ -2199,7 +2223,7 @@ export default function PlayerControls({
     clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, squareFamilySetupValid, ghostSetupValid, isTwistyMode, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
+  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, isTwistyMode, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
@@ -2209,14 +2233,14 @@ export default function PlayerControls({
     const tw = (world.cube as unknown as CornerCube).twister;
     const scr = setupDraft.trim();
     const hasPendingAnimation = corner?.parseGroups ? tw?.busy : (tw?.length ?? 0) > 0;
-    if (!tw || !hasPendingAnimation || !scr || !squareFamilySetupValid || !ghostSetupValid) return;
+    if (!tw || !hasPendingAnimation || !scr || !squareFamilySetupValid || !cornerSetupValid) return;
     const engScramble = toEngineText(scr);
     if (corner?.parseGroups && tw.setupMoves) {
       try { tw.setupMoves(parseCornerGroups(corner, engScramble).flat(), engScramble); } catch { /* keep last legal state */ }
       return;
     }
     tw.setup(engScramble);
-  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, ghostSetupValid, toEngineText]);
+  }, [world, isTwistyMode, corner, setupDraft, squareFamilySetupValid, cornerSetupValid, toEngineText]);
 
   // Derive the state solved by the reconstruction, then minimize its scramble.
   const handleDeriveScramble = useCallback(async () => {
@@ -2373,13 +2397,18 @@ export default function PlayerControls({
           type="button"
           className="sim-player-scramble"
           onClick={handlePlayScramble}
-          disabled={!setupDraft.trim() || !squareFamilySetupValid || !ghostSetupValid}
+          disabled={!setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid}
           title={t('动画展示打乱', 'Animate scramble')}
           aria-label={t('动画展示打乱', 'Animate scramble')}
         >
           <Play size={14} />
         </button>
       </div>
+      {puzzleKind === 'pyraminx_duo' && (
+        <div className="sim-player-status">
+          {tr('使用 U、L、R、B 及其逆转（加撇号），每次转动 120°。', 'Use U, L, R, B and their inverses (with a prime); each turn is 120°.')}
+        </div>
+      )}
       {puzzleKind === 'ghost' && (
         <div className="sim-player-status">
           <button type="button" className="sim-player-scramble" onClick={() => {
@@ -2389,7 +2418,7 @@ export default function PlayerControls({
             const text = ghostMovesToString(ghostAlignmentMoves(world.cube.pose));
             if (text) { world.cube.twister.push(text); appendUserMove(text); }
           }}>{tr('对齐切层', 'Align layers')}</button>
-          <span>{ghostCanPlay
+          <span>{cornerCanPlay
             ? tr('先对齐再转侧层；字母表示内部转轴。', 'Align before side turns; letters refer to internal axes.')
             : tr('记号无效或切层未对齐。还原态先输入 U29° D35°。', 'Invalid notation or misaligned layers. From solved, start with U29° D35°.')}</span>
         </div>
@@ -2606,8 +2635,8 @@ export default function PlayerControls({
             onChange={setLiveReduce}
           />
         )}
-        {!isSquarePuzzle && !isTwistyMode && puzzleKind !== 'ghost' && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
-        {!isSquarePuzzle && !isTwistyMode && puzzleKind !== 'ghost' && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
+        {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'M'))} title={t('Mirror M (L↔R)', 'Mirror M (L↔R)')} aria-label="Mirror M"><FlipHorizontal2 size={13} /></button>}
+        {!isSquarePuzzle && !isTwistyMode && corner?.cubeMirrors !== false && <button onClick={tool((s) => mirrorAlg(s, 'S'))} title={t('Mirror S (F↔B)', 'Mirror S (F↔B)')} aria-label="Mirror S"><FlipVertical2 size={13} /></button>}
         {!isSquarePuzzle && !isIvy && !corner && !isTwistyMode && (
           <button
             onClick={tool(flattenAlg)}
@@ -3844,7 +3873,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'pyraminx_duo' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}

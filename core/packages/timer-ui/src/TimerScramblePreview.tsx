@@ -4,9 +4,8 @@
  * Shared scramble preview component used by /timer.
  *
  * Renders a 2D scramble preview using cubing.js TwistyPlayer for most events.
- * Square-1 and Megaminx use our tnoodle-port SVG renderers (cubing.js 2D for
- * those is incomplete/inaccurate for unfolded views). Bypasses the
- * scramble-display npm package so we don't add an extra dep.
+ * Square-1, Megaminx and Pyraminx Duo use our shared SVG renderers.
+ * Bypasses the scramble-display npm package so we don't add an extra dep.
  *
  * Accepts both timer-side EventIds (mega/pyra/333bld/...) and battle/WCA-style
  * ids (minx/pyram/333bf/...).
@@ -15,6 +14,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@cuberoot/puzzle-render-core/sq1-svg';
+import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 
 export interface TimerScramblePreviewProps {
   /** Either a timer EventId or a WCA-style id (e.g. 'minx', 'pyram'). */
@@ -30,7 +30,7 @@ export interface TimerScramblePreviewProps {
   height?: number | string;
   className?: string;
   /** TwistyPlayer visualization mode. Defaults to '2D'. Inline-SVG puzzles
-   *  (sq1 / mega) ignore this and always render 2D. */
+   *  (sq1 / mega / pyraminx_duo) ignore this and always render 2D. */
   visualization?: '2D' | '3D';
   ariaLabel?: string;
   /** Fill a host-owned responsive box instead of setting puzzle pixel dimensions. */
@@ -60,7 +60,7 @@ interface PuzzleSpec {
   /** cubing.js puzzle id (only used when we go through TwistyPlayer). */
   cubingPuzzle: string | null;
   /** Inline SVG renderer; overrides TwistyPlayer when present. */
-  inlineSvg?: 'sq1' | 'mega';
+  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo';
   /** Unit multipliers for width/height (units of `size`). */
   w: number;
   h: number;
@@ -90,6 +90,7 @@ function planFor(event: string): PuzzleSpec | null {
     // mega unfolded view differs from tnoodle).
     case 'sq1':                                  return { cubingPuzzle: null, inlineSvg: 'sq1',  w: 7,  h: 14 };
     case 'mega': case 'minx':                    return { cubingPuzzle: null, inlineSvg: 'mega', w: 17, h: 8 };
+    case 'pyraminx_duo':                         return { cubingPuzzle: null, inlineSvg: 'pyraminx_duo', w: 10 * DUO_SVG_ASPECT, h: 10 };
     // Relays / custom / unknown — hide.
     case 'r3': case 'r4': case 'r5': case 'custom':
     default:                                     return null;
@@ -112,12 +113,13 @@ export function TimerScramblePreview({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const playerRef = useRef<any>(null);
 
-  // Inline-SVG renderers — sq1/mega bypass cubing.js entirely.
+  // Inline-SVG renderers bypass cubing.js entirely.
   const portedSvg = useMemo(() => {
     if (!plan?.inlineSvg) return null;
     try {
       if (plan.inlineSvg === 'sq1')  return renderSq1ScrambleSvg(scramble ?? '', DEFAULT_SQ1_COLORS);
       if (plan.inlineSvg === 'mega') return renderMegaScrambleSvg(scramble ?? '', DEFAULT_MEGA_COLORS);
+      if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
     } catch (err) {
       console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
     }
@@ -200,10 +202,11 @@ export function TimerScramblePreview({
     : { width: plan.w * size, height: plan.h * size, display: 'block' };
 
   if (portedSvg) {
+    // A preceding invalid Twisty alg may have hidden this reused host.
     return (
       <div
         className={className}
-        style={boxStyle}
+        style={{ ...boxStyle, visibility: 'visible' }}
         role="img"
         aria-label={ariaLabel ?? `${event} scramble preview`}
         dangerouslySetInnerHTML={{ __html: portedSvg }}

@@ -84,6 +84,7 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   },
   skewb: { engine: 'engineMode', carve: 'corner' },
   pyraminx: { engine: 'engineMode', carve: 'corner' },
+  pyraminx_duo: { engine: 'always', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
   fto: { engine: 'engineMode', carve: 'face' },
   ghost: { engine: 'always', carve: 'face', faceColors: true },

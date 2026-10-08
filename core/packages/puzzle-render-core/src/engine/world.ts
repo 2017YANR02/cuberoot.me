@@ -11,6 +11,7 @@ import Sq1Cube from "@cuberoot/puzzle-render-core/engine/sq1/Sq1Cube";
 import SquareFamilyCube from "@cuberoot/puzzle-render-core/engine/squareFamily/SquareFamilyCube";
 import IvyCube from "./ivy/IvyCube";
 import DinoCube from "./dino/DinoCube";
+import DuoCube from "./duo/DuoCube";
 import RediCube from "./redi/RediCube";
 import RexCube from "./rex/RexCube";
 import HeliCube from "./heli/HeliCube";
@@ -40,7 +41,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  mesh-less Group; the picture comes from the DOM overlay `SimClockBoard`. It still
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
-export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'clock';
+export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'clock';
 
 export default class World<HandsRig extends WorldHands = WorldHands> {
   public width = 1;
@@ -52,7 +53,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   /** Polymorphic cube. NxN puzzles use Cube; SQ1 uses Sq1Cube; Ivy uses IvyCube;
    *  Dino uses DinoCube. Consumers that reach into NxN-specific fields
    *  (instancedRenderer, table, locks) must first check `world.puzzleKind` is a number. */
-  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | GhostCube | ClockBoard;
+  public cube!: Cube | Sq1Cube | SquareFamilyCube | IvyCube | DinoCube | DuoCube | RediCube | RexCube | HeliCube | GearCube | SkewbCube | PyraCube | MegaminxCube | FtoCube | GhostCube | ClockBoard;
 
   public ambient: THREE.AmbientLight;
   public directional: THREE.DirectionalLight;
@@ -71,6 +72,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   private gearCube: GearCube | null = null;
   private skewbCube: SkewbCube | null = null;
   private pyraCube: PyraCube | null = null;
+  private duoCube: DuoCube | null = null;
   private megaCube: MegaminxCube | null = null;
   private ftoCube: FtoCube | null = null;
   private ghostCube: GhostCube | null = null;
@@ -210,7 +212,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       // SQ2/SQ4 instances are cached. Settle their global tween before taking the
       // cube off-scene so it cannot keep mutating invisibly and reappear polluted.
       if (this.cube instanceof SquareFamilyCube) this.cube.finishAnimations();
-      if (this.cube instanceof GhostCube) this.cube.twister.finish();
+      if (this.cube instanceof GhostCube || this.cube instanceof DuoCube) this.cube.twister.finish();
       this.scene.remove(this.cube);
     }
     if (kind === 'sq1') {
@@ -320,6 +322,14 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       // registry). Reuse the SQ1 rim-light rig (14 wedge pieces, many oblique facets).
       if (this.controller) this.controller.disable = true;
       this._ensureSq1Lights();
+    } else if (kind === 'pyraminx_duo') {
+      if (this.duoCube == null) {
+        this.duoCube = new DuoCube();
+        this.duoCube.callbacks.push(this.callback);
+      }
+      this.cube = this.duoCube;
+      if (this.controller) this.controller.disable = true;
+      this._ensureSq1Lights();
     } else if (kind === 'megaminx') {
       if (this.megaCube == null) {
         this.megaCube = new MegaminxCube();
@@ -407,6 +417,11 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   disposeGhostCube(): void {
     this.ghostCube?.dispose();
     this.ghostCube = null;
+  }
+
+  disposeDuoCube(): void {
+    this.duoCube?.dispose();
+    this.duoCube = null;
   }
 
   /** Legacy property — kept for back-compat. Number kinds only. */

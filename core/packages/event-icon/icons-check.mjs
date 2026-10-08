@@ -26,11 +26,13 @@ const UPSTREAM_BLOB = 'https://github.com/cubing/icons/blob/main/src/svg';
 
 // Site-own icons that intentionally have no upstream counterpart — never drift.
 // (222_mirror_blocks: upstream only ships the 3x3 mirror-blocks glyph; the 2x2 variant
-//  was drawn here in the same style for the /sim puzzle picker. sq4 is CubeRoot-owned.)
+//  was drawn here in the same style for the /sim puzzle picker. sq4 and pyraminx_duo
+//  are CubeRoot-owned; Duo uses the approved same-facing 0.4 centre triangle.)
 const LOCAL_ONLY = new Set([
   'unofficial/rex.svg',
   'unofficial/222_mirror_blocks.svg',
   'unofficial/sq4.svg',
+  'unofficial/pyraminx_duo.svg',
 ]);
 
 const args = process.argv.slice(2);

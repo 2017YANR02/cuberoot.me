@@ -2,6 +2,7 @@
 import { generateSeededCstimerScramble } from '@cuberoot/puzzle-solvers/cstimer-nonwca';
 import { generateGearTimerScramble } from '@cuberoot/puzzle-solvers/gear';
 import { generateIvyTimerScramble } from '@cuberoot/puzzle-solvers/ivy';
+import { generatePyraminxDuoScramble } from '@cuberoot/puzzle-solvers/pyraminx-duo';
 import { rngFor } from './seeded_rng';
 import * as nx from './nxnxn';
 import * as other from './others';
@@ -71,6 +72,7 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
       case 'clock': return other.scrambleClock(random);
       case 'gear': return generateGearTimerScramble(random);
       case 'ivy': return generateIvyTimerScramble(random);
+      case 'pyraminx_duo': return generatePyraminxDuoScramble(random);
       case 'fto': return cstimer('ftoso');
       case 'redi': return cstimer('redim', 8);
       case 'kilominx': return cstimer('klmso');
