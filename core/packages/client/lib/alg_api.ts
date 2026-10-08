@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { duplicateAware } from './alg_duplicates';
 /**
  * Alg submissions API client — ported from packages/client-vite/src/utils/alg_api.ts.
@@ -11,7 +12,7 @@ const API_BASE = API_ORIGIN + '/v1/alg';
 
 /** List every user-submitted alg for one set (puzzle + set slug). */
 export async function listSubmissions(puzzle: string, setSlug: string): Promise<AlgSubmission[]> {
-  const resp = await fetch(`${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}/submissions`, {
+  const resp = await sessionFetch(`${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}/submissions`, {
     headers: authHeaders(false),
   });
   return handleApi<AlgSubmission[]>(resp);
@@ -27,7 +28,7 @@ export async function addSubmission(
   tags: readonly AlgTag[] = [],
 ): Promise<AlgSubmission> {
   const path = `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(setSlug)}/${encodeURIComponent(caseName)}/submit`;
-  const resp = await fetch(path, {
+  const resp = await sessionFetch(path, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ alg, notes, tags }),
@@ -40,7 +41,7 @@ export async function updateSubmission(
   id: number,
   fields: { alg: string; notes?: string; caseName?: string; tags?: readonly AlgTag[] },
 ): Promise<AlgSubmission> {
-  const resp = await fetch(`${API_BASE}/submissions/${id}`, {
+  const resp = await sessionFetch(`${API_BASE}/submissions/${id}`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(fields),
@@ -50,7 +51,7 @@ export async function updateSubmission(
 
 /** Delete your own submission (admins can delete anyone's). */
 export async function deleteSubmission(id: number): Promise<{ ok: boolean }> {
-  const resp = await fetch(`${API_BASE}/submissions/${id}`, {
+  const resp = await sessionFetch(`${API_BASE}/submissions/${id}`, {
     method: 'DELETE',
     headers: authHeaders(false),
   });
@@ -61,7 +62,7 @@ export async function deleteSubmission(id: number): Promise<{ ok: boolean }> {
 
 /** Admin: count of submissions newer than this admin's read watermark (excludes own). */
 export async function fetchAdminUnreadSubmissions(): Promise<number> {
-  const resp = await fetch(`${API_BASE}/submissions/admin/unread`, {
+  const resp = await sessionFetch(`${API_BASE}/submissions/admin/unread`, {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -71,7 +72,7 @@ export async function fetchAdminUnreadSubmissions(): Promise<number> {
 
 /** Admin: most recent submissions across all sets (for the notification dropdown). */
 export async function fetchRecentSubmissions(limit = 30): Promise<AlgSubmission[]> {
-  const resp = await fetch(`${API_BASE}/submissions/admin/recent?limit=${limit}`, {
+  const resp = await sessionFetch(`${API_BASE}/submissions/admin/recent?limit=${limit}`, {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -80,7 +81,7 @@ export async function fetchRecentSubmissions(limit = 30): Promise<AlgSubmission[
 
 /** Admin: mark all current submissions as seen (clears the badge). Best-effort. */
 export async function markSubmissionsSeen(): Promise<void> {
-  await fetch(`${API_BASE}/submissions/admin/seen`, {
+  await sessionFetch(`${API_BASE}/submissions/admin/seen`, {
     method: 'POST',
     headers: authHeaders(),
   }).catch(() => {});

@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 
@@ -68,7 +69,7 @@ function dimension(value: unknown): QrPromptDimension | null {
 }
 
 export async function getQrPromptLibrary(signal?: AbortSignal): Promise<QrPromptLibrary> {
-  const response = await fetch(apiUrl('/v1/platform/admin/qr/prompts'), {
+  const response = await sessionFetch(apiUrl('/v1/platform/admin/qr/prompts'), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,

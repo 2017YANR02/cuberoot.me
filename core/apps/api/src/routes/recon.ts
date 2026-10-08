@@ -11,7 +11,7 @@ import path from 'node:path';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import {
-  rowToJson, jsonToRow, validateRow,
+  rowToJson, jsonToRow, validateRow, assertReconTextLengths,
   requireAuth, requireAdmin, optionalAuth, checkRateLimit,
   visibilityDiscoverFilter, visibilityOwnerFilter,
   buildInsert, buildUpdate, buildDuplicateQuery, buildSameScrambleQuery, DUP_REASONS,
@@ -675,6 +675,7 @@ reconRoutes.post('/recon/save-edit', async (c) => {
 
   const now = Math.floor(Date.now() / 1000);
   const normalizedFields = { ...(fields ?? {}) };
+  assertReconTextLengths(normalizedFields);
   normalizeReconSolutionRow(normalizedFields);
   const current = await query<Record<string, unknown>>('SELECT * FROM recons WHERE id = ?', [solveId]);
   if (!current.length) return c.json({ error: 'Not found' }, 404);
@@ -1208,6 +1209,7 @@ reconRoutes.post('/recon', async (c) => {
   delete body.id;
 
   const row = jsonToRow(body);
+  assertReconTextLengths(row);
   normalizeReconScrambleRow(row);
   normalizeReconSolutionRow(row);
   const errors = validateRow(row);
@@ -1270,6 +1272,7 @@ reconRoutes.put('/recon/:id', async (c) => {
   }
 
   const row = jsonToRow(body);
+  assertReconTextLengths(row);
   normalizeReconScrambleRow(row, existing[0].event);
   normalizeReconSolutionRow(row);
   if (Object.keys(row).length === 0) {
@@ -1384,6 +1387,7 @@ reconRoutes.post('/recon/:id/alternatives', async (c) => {
   const authUser = await requireAuth(c);
   const id = c.req.param('id');
   const body = await c.req.json<{ solution?: string }>();
+  assertReconTextLengths(body);
   const solution = normalizeReconSolution(body.solution ?? '').trim();
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);
@@ -1426,6 +1430,7 @@ reconRoutes.put('/recon/:id/alternatives/:idx', async (c) => {
   const id = c.req.param('id');
   const idx = Number(c.req.param('idx'));
   const body = await c.req.json<{ solution?: string }>();
+  assertReconTextLengths(body);
   const solution = normalizeReconSolution(body.solution ?? '').trim();
   if (!solution) return c.json({ error: 'solution required' }, 400);
   if (Buffer.byteLength(solution, 'utf8') > 65535) return c.json({ error: 'solution too long' }, 400);

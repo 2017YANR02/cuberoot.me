@@ -19,7 +19,21 @@ const loginState = 'nonce.apple.login.9999999999.signature';
 const linkState = 'nonce.apple.link.9999999999.signature';
 const codeVerifier = 'v'.repeat(43);
 
-beforeEach(() => {
+
+const identityHandle = 'h'.repeat(43);
+const secondIdentityHandle = 'i'.repeat(43);
+function stubIdentityRequests(fallback = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('{}'))) {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/identity-choice') {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.operation === 'store') return new Response(JSON.stringify({ handle: body.ticket.startsWith('b') ? secondIdentityHandle : identityHandle }));
+      if (body.operation === 'clear') return new Response('{}');
+    }
+    return fallback(input, init);
+  });
+}
+beforeEach(async () => {
+  stubIdentityRequests();
   vi.resetModules();
   vi.clearAllMocks();
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
@@ -66,8 +80,8 @@ describe('Apple uses the canonical callback and session', () => {
 
   it('returns a known second identity to explicit UID confirmation, not the app handoff', async () => {
     const { AccountChoiceRequired, getIdentityChoice, rememberIdentityChoice, updateIdentityChoice } = await import('@/lib/identity-choice');
-    rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/account?auth=mobile&next=original');
-    updateIdentityChoice('a'.repeat(43), { stage: 'authenticate' });
+    await rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/account?auth=mobile&next=original');
+    updateIdentityChoice(identityHandle, { stage: 'authenticate' });
     sessionStorage.setItem('social_oauth_return', '/account');
     mocks.loginSocial.mockResolvedValue({ token: 'known', user: { uid: 42 }, isNew: false });
     await callback(loginState, loginState);
@@ -80,7 +94,7 @@ describe('Apple uses the canonical callback and session', () => {
     sessionStorage.setItem('social_oauth_return', '/account?auth=mobile&provider=apple');
     await callback(loginState, loginState);
     expect(mocks.loginSocial).toHaveBeenCalledExactlyOnceWith('apple', 'short-code', loginState, codeVerifier, expect.any(AbortSignal));
-    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('session-in-body-only', { uid: 1, wcaId: null });
+    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('session-in-body-only', { uid: 1, wcaId: null }, expect.any(Function));
     expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account?auth=mobile&provider=apple');
     expect(mocks.markWcaLinkPrompt).toHaveBeenCalledOnce();
     expect(sessionStorage.getItem('apple_oauth_state')).toBeNull();

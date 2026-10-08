@@ -12,7 +12,21 @@ vi.mock('@/lib/auth-store', () => ({ applySession: mocks.applySession, getRolePr
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 vi.mock('@/i18n/tr', () => ({ tr: ({ en }: { en: string }) => en }));
 let root: Root; let host: HTMLDivElement;
-beforeEach(() => {
+
+const identityHandle = 'h'.repeat(43);
+const secondIdentityHandle = 'i'.repeat(43);
+function stubIdentityRequests(fallback = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('{}'))) {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/identity-choice') {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.operation === 'store') return new Response(JSON.stringify({ handle: body.ticket.startsWith('b') ? secondIdentityHandle : identityHandle }));
+      if (body.operation === 'clear') return new Response('{}');
+    }
+    return fallback(input, init);
+  });
+}
+beforeEach(async () => {
+  stubIdentityRequests();
   vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
   sessionStorage.clear(); localStorage.clear(); clearIdentityChoice();
   window.history.replaceState({}, '', '/auth/callback#access_token=wca-assertion&state=csrf');
@@ -33,7 +47,7 @@ describe('WCA canonical-only first identity callback', () => {
   it('exchanges once before applying the canonical session and returns safely', async () => {
     await render();
     expect(mocks.loginWca).toHaveBeenCalledExactlyOnceWith('wca-assertion', expect.any(AbortSignal));
-    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('canonical', { uid: 42, wcaId: '2017YANR02' });
+    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('canonical', { uid: 42, wcaId: '2017YANR02' }, expect.any(Function));
     expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account?auth=mobile&next=original');
     expect(localStorage.getItem('wca_access_token')).toBeNull();
   });
@@ -51,8 +65,8 @@ describe('WCA canonical-only first identity callback', () => {
     expect(mocks.replace).not.toHaveBeenCalled(); expect(host.textContent).toContain('Login failed');
   });
   it('authenticates an existing account but leaves identity linking for explicit confirmation', async () => {
-    rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'apple', expiresInSeconds: 900 }), '/original');
-    updateIdentityChoice('a'.repeat(43), { stage: 'authenticate' });
+    await rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'a'.repeat(43), provider: 'apple', expiresInSeconds: 900 }), '/original');
+    updateIdentityChoice(identityHandle, { stage: 'authenticate' });
     await render();
     expect(getIdentityChoice()).toMatchObject({ provider: 'apple', expectedUid: 42, stage: 'confirm', returnPath: '/original' });
     expect(mocks.replace).toHaveBeenCalledExactlyOnceWith('/account');

@@ -223,7 +223,17 @@ export function stripGripMarks(s: string): string {
 
 /** FTN 注解块 `[R2:@C>Q]`(紧贴招式) */
 export function stripFtnBlocks(s: string): string {
-  return s.replace(/\[[^\]]*\]/g, '');
+  let out = '';
+  let cursor = 0;
+  while (cursor < s.length) {
+    const open = s.indexOf('[', cursor);
+    if (open < 0) break;
+    const close = s.indexOf(']', open + 1);
+    if (close < 0) break;
+    out += s.slice(cursor, open);
+    cursor = close + 1;
+  }
+  return out + s.slice(cursor);
 }
 
 /** 推法糖:紧跟招式的尾缀 `p`(`U'p`) */

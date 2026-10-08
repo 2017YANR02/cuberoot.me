@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // /quiz 社区题的 API 封装。端点见 server/src/routes/quiz.ts。
 //
 // 出题人写的题直接上线(无前置审核),所以「公开列表」和「我出的题」是两个端点:
@@ -45,20 +46,20 @@ export interface QuizReportRow {
 
 /** 某一档的全部已发布社区题。没登录也能拉 —— 社区题对所有人可见。 */
 export async function fetchCommunityQuestions(level: string): Promise<CommunityQuestionRow[]> {
-  const r = await fetch(apiUrl(`/v1/quiz/questions?level=${encodeURIComponent(level)}`));
+  const r = await sessionFetch(apiUrl(`/v1/quiz/questions?level=${encodeURIComponent(level)}`));
   const data = await handleApi<{ questions: CommunityQuestionRow[] }>(r);
   return data.questions;
 }
 
 /** 我出的题(含被下架的)。 */
 export async function fetchMyQuestions(): Promise<CommunityQuestionRow[]> {
-  const r = await fetch(apiUrl('/v1/quiz/mine'), { headers: authHeaders(false) });
+  const r = await sessionFetch(apiUrl('/v1/quiz/mine'), { headers: authHeaders(false) });
   const data = await handleApi<{ questions: CommunityQuestionRow[] }>(r);
   return data.questions;
 }
 
 export async function createQuestion(draft: QuizDraft): Promise<CommunityQuestionRow> {
-  const r = await fetch(apiUrl('/v1/quiz/questions'), {
+  const r = await sessionFetch(apiUrl('/v1/quiz/questions'), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(draft),
   });
   const data = await handleApi<{ question: CommunityQuestionRow }>(r);
@@ -70,7 +71,7 @@ export async function updateQuestion(
   id: number,
   draft: QuizDraft & { status?: string; hiddenNote?: string },
 ): Promise<CommunityQuestionRow> {
-  const r = await fetch(apiUrl(`/v1/quiz/questions/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/quiz/questions/${id}`), {
     method: 'PATCH', headers: authHeaders(), body: JSON.stringify(draft),
   });
   const data = await handleApi<{ question: CommunityQuestionRow }>(r);
@@ -78,14 +79,14 @@ export async function updateQuestion(
 }
 
 export async function deleteQuestion(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/quiz/questions/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/quiz/questions/${id}`), {
     method: 'DELETE', headers: authHeaders(false),
   });
   await handleApi<{ ok: boolean }>(r);
 }
 
 export async function reportQuestion(id: number, reason: string): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/quiz/questions/${id}/report`), {
+  const r = await sessionFetch(apiUrl(`/v1/quiz/questions/${id}/report`), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ reason }),
   });
   await handleApi<{ ok: boolean }>(r);
@@ -93,14 +94,14 @@ export async function reportQuestion(id: number, reason: string): Promise<void> 
 
 /** 管理员:全部社区题(含已下架)。 */
 export async function fetchAllQuestions(): Promise<CommunityQuestionRow[]> {
-  const r = await fetch(apiUrl('/v1/quiz/admin/questions'), { headers: authHeaders(false) });
+  const r = await sessionFetch(apiUrl('/v1/quiz/admin/questions'), { headers: authHeaders(false) });
   const data = await handleApi<{ questions: CommunityQuestionRow[] }>(r);
   return data.questions;
 }
 
 /** 管理员:举报列表(默认只看待处理)。 */
 export async function fetchQuizReports(all = false): Promise<QuizReportRow[]> {
-  const r = await fetch(apiUrl(`/v1/quiz/admin/reports${all ? '?all=1' : ''}`), {
+  const r = await sessionFetch(apiUrl(`/v1/quiz/admin/reports${all ? '?all=1' : ''}`), {
     headers: authHeaders(false),
   });
   const data = await handleApi<{ reports: QuizReportRow[] }>(r);
@@ -108,7 +109,7 @@ export async function fetchQuizReports(all = false): Promise<QuizReportRow[]> {
 }
 
 export async function resolveQuizReport(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/quiz/admin/reports/${id}/resolve`), {
+  const r = await sessionFetch(apiUrl(`/v1/quiz/admin/reports/${id}/resolve`), {
     method: 'POST', headers: authHeaders(false),
   });
   await handleApi<{ ok: boolean }>(r);

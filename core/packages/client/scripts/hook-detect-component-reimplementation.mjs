@@ -24,7 +24,7 @@ const CROSS = /<X\b|[×✕]/;
 const CLOSE_OR_CLEAR =
   /(?:aria-label|ariaLabel|title|className|class)\s*=\s*[\s\S]{0,260}?(?:关闭|清除|close|clear|dismiss)|\bonClose\b/i;
 const BACK_HOME_TAG = /<BackHome\b([^>]*)\/>/gi;
-const BACK_HOME_DIRECT_ROOT = /<(?:div|main|section)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>\s*(?:\{\/\*[\s\S]*?\*\/\}\s*)*<BackHome\b([^>]*)\/>/gi;
+const BACK_HOME_DIRECT_ROOT = /<(?:div|main|section)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
 const PAGE_ROOT_CLASS = /(?:^|[-_\s])(?:root|page|app)(?:$|[-_\s])/i;
 const SAFE_BACK_HOME_CONTAINER = /(?:^|[-_\s])(?:header|topbar|head|wrap|container|hero|sidebar|back-row)(?:$|[-_\s])/i;
 const OPEN_LAYOUT_CONTAINER = /<(?:div|main|section|header|nav|aside)\b[^>]*className\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
@@ -261,6 +261,18 @@ export function scanComponentReimplementations(source) {
   // add a semantic className or a reasoned exemption.
   BACK_HOME_DIRECT_ROOT.lastIndex = 0;
   while ((match = BACK_HOME_DIRECT_ROOT.exec(source))) {
+    let cursor = BACK_HOME_DIRECT_ROOT.lastIndex;
+    while (cursor < source.length) {
+      while (/\s/.test(source[cursor] ?? '')) cursor++;
+      if (!source.startsWith('{/*', cursor)) break;
+      const end = source.indexOf('*/}', cursor + 3);
+      if (end < 0) break;
+      cursor = end + 3;
+    }
+    const child = /^<BackHome\b([^>]*)\/>/i.exec(source.slice(cursor));
+    if (!child) continue;
+    match[0] = source.slice(match.index, cursor + child[0].length);
+    match[2] = child[1];
     if (SAFE_BACK_HOME_CONTAINER.test(match[1])) continue;
     if (!PAGE_ROOT_CLASS.test(match[1])) continue;
     if (backHomeHasOwnLayout(match[2])) continue;

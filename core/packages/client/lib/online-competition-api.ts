@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from './admin-api';
 import { apiUrl } from './api-base';
 
@@ -84,7 +85,7 @@ const path = (id: string) => `${base}/${encodeURIComponent(id)}`;
 
 // Reuse the account session and response handling used by platform commerce.
 async function request<T>(url: string, method = 'GET', body?: unknown): Promise<T> {
-  return handleApi<T>(await fetch(apiUrl(url), {
+  return handleApi<T>(await sessionFetch(apiUrl(url), {
     method, headers: { ...authHeaders(body !== undefined), ...(method === 'GET' ? {} : { 'Idempotency-Key': crypto.randomUUID() }) }, cache: 'no-store',
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   }));
@@ -137,10 +138,10 @@ export const refreshCompetitionOrderRefund = (id: string) => request<Competition
 export const rejectCompetitionOrderRefund = (id: string, reasonCode: string) => request<CompetitionRefund>(`/v1/admin/refunds/${encodeURIComponent(id)}/reject`, 'POST', { reasonCode });
 export const listCompetitionEvidence = (id: string) => request<{ evidence: CompetitionEvidence[] }>(`${registrationPath(id)}/evidence`);
 export async function uploadCompetitionEvidence(id: string, file: File) {
-  return handleApi(await fetch(apiUrl(`${registrationPath(id)}/evidence`), { method: 'POST', headers: { ...authHeaders(), 'Content-Type': file.type }, body: file }));
+  return handleApi(await sessionFetch(apiUrl(`${registrationPath(id)}/evidence`), { method: 'POST', headers: { ...authHeaders(), 'Content-Type': file.type }, body: file }));
 }
 export async function downloadCompetitionEvidence(id: string) {
-  const response = await fetch(apiUrl(`${base}/evidence/${encodeURIComponent(id)}/content`), { headers: authHeaders(), cache: 'no-store' });
+  const response = await sessionFetch(apiUrl(`${base}/evidence/${encodeURIComponent(id)}/content`), { headers: authHeaders(), cache: 'no-store' });
   if (!response.ok) { await handleApi(response); throw new Error('Download failed'); }
   return response.blob();
 }

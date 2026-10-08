@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 
@@ -398,7 +399,7 @@ export function qrCodeSvgUrl(code: string): string {
 }
 
 export async function getPlatformQrCard(id: string, signal?: AbortSignal): Promise<PlatformQrCardResponse> {
-  const response = await fetch(apiUrl(`/v1/platform/admin/qr/${encodeURIComponent(id)}/card`), {
+  const response = await sessionFetch(apiUrl(`/v1/platform/admin/qr/${encodeURIComponent(id)}/card`), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -408,7 +409,7 @@ export async function getPlatformQrCard(id: string, signal?: AbortSignal): Promi
 }
 
 export async function savePlatformQrCard(id: string, card: PlatformQrCard): Promise<PlatformQrCardResponse> {
-  const response = await fetch(apiUrl(`/v1/platform/admin/qr/${encodeURIComponent(id)}/card`), {
+  const response = await sessionFetch(apiUrl(`/v1/platform/admin/qr/${encodeURIComponent(id)}/card`), {
     method: 'PATCH',
     headers: {
       ...authHeaders(),

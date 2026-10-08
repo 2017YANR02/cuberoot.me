@@ -1,5 +1,6 @@
 'use client';
 
+import { getWebAccessToken } from '@/lib/web-session';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { AlignCenter, AlignLeft, AlignRight, Bold, CheckSquare, ChevronLeft, ClipboardPaste, Copy, Download, FileDown, Grid2x2, Italic, Link2, Merge, PaintBucket, Palette, Plus, Printer, Redo2, Scissors, Search, Share2, Strikethrough, Trash2, Undo2, WrapText } from 'lucide-react';
@@ -814,9 +815,10 @@ export default function SpreadsheetEditorPage() {
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
     if (!id || !details || !user) return;
+    const sessionToken = getSessionToken() || getWcaToken();
     const ydoc = new Y.Doc();
     const provider = new HocuspocusProvider({
-      url: websocketApiUrl('/v1/documents/realtime'), name: `document.${id}`, document: ydoc, token: getSessionToken() || getWcaToken(),
+      url: websocketApiUrl('/v1/documents/realtime'), name: `document.${id}`, document: ydoc, token: () => getWebAccessToken(sessionToken),
       onStatus: ({ status: next }) => setStatus(next),
       onSynced: ({ state }) => {
         if (state && details.document.role !== 'viewer') repairSpreadsheetSheets(ydoc);

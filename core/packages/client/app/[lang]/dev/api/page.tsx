@@ -107,6 +107,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/login', g: 'public', zh: '跳转 WCA OAuth 授权页', en: 'Redirect to WCA OAuth' },
   { d: 'auth', m: 'GET', p: '/v1/auth/callback', g: 'public', zh: 'OAuth 回调,建立登录态', en: 'OAuth callback, establish session' },
   { d: 'auth', m: 'POST', p: '/v1/auth/exchange', g: 'public', zh: '用授权码换取 JWT', en: 'Exchange auth code for JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/browser-access', g: 'login', c: 'no-store', zh: '由长期会话换取最长 15 分钟浏览器访问令牌；保留原验证时间，短令牌不能再次换取或续签长期会话', en: 'Exchange a durable session for at most 15 minutes of browser access; preserve authentication time and prohibit short-token renewal of durable sessions' },
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
   { d: 'auth', m: 'POST', p: '/v1/auth/role-preview', g: 'admin', zh: '超级管理员创建 30 分钟独立角色测试会话', en: 'Superadmin starts a separate 30-minute role-test session' },

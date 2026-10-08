@@ -1,17 +1,34 @@
 const CJK_REGEX = /[一-鿿]/;
-const PAREN_ZH_REGEX = /\(([^)]*[一-鿿][^)]*)\)\s*$/;
+// Find the final parenthesis group without retrying every opening parenthesis.
+function trailingNameGroup(text: string): string | null {
+  const end = text.trimEnd();
+  if (!end.endsWith(')')) return null;
+  const open = end.indexOf('(', end.lastIndexOf(')', end.length - 2) + 1);
+  return open < 0 ? null : end.slice(open + 1, -1);
+}
 
 export interface DisplayCuberNameOptions {
   compactForeign?: boolean;
 }
 
 export function extractChineseName(text: string): string | null {
-  const match = PAREN_ZH_REGEX.exec(text);
-  return match && CJK_REGEX.test(match[1]) ? match[1] : null;
+  const name = trailingNameGroup(text);
+  return name && CJK_REGEX.test(name) ? name : null;
 }
 
 export function stripChineseParens(text: string): string {
-  return text.replace(/\s*\([^)]*\)\s*/g, ' ').trim();
+  let out = '';
+  let cursor = 0;
+  while (cursor < text.length) {
+    const open = text.indexOf('(', cursor);
+    if (open < 0) break;
+    const close = text.indexOf(')', open + 1);
+    if (close < 0) break;
+    out += text.slice(cursor, open).trimEnd() + ' ';
+    cursor = close + 1;
+    while (cursor < text.length && /\s/.test(text[cursor])) cursor++;
+  }
+  return (out + text.slice(cursor)).trim();
 }
 
 function compactForeignName(name: string): string {

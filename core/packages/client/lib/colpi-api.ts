@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /memo/colpi backend API client. All word data lives in PG (colpi_words / colpi_votes).
  * Ported from packages/client-vite/src/utils/colpi_api.ts.
@@ -39,11 +40,11 @@ export interface ColpiWord {
 }
 
 export async function fetchWords(lang: string = 'all'): Promise<Record<string, ColpiWord[]>> {
-  return handleApi(await fetch(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: authHeaders(false) }));
+  return handleApi(await sessionFetch(`${BASE}/words?lang=${encodeURIComponent(lang)}`, { headers: authHeaders(false) }));
 }
 
 export async function fetchRecent(limit = 20): Promise<ColpiWord[]> {
-  return handleApi(await fetch(`${BASE}/recent?limit=${limit}`, { headers: authHeaders(false) }));
+  return handleApi(await sessionFetch(`${BASE}/recent?limit=${limit}`, { headers: authHeaders(false) }));
 }
 
 export interface SubmitInput {
@@ -56,7 +57,7 @@ export interface SubmitInput {
 }
 
 export async function submitWord(body: SubmitInput): Promise<ColpiWord> {
-  return handleApi(await fetch(`${BASE}/words`, {
+  return handleApi(await sessionFetch(`${BASE}/words`, {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
@@ -70,23 +71,23 @@ export interface PatchInput {
 }
 
 export async function patchWord(id: number, body: PatchInput): Promise<ColpiWord> {
-  return handleApi(await fetch(`${BASE}/words/${id}`, {
+  return handleApi(await sessionFetch(`${BASE}/words/${id}`, {
     method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
 export async function deleteWord(id: number): Promise<void> {
-  await handleApi<unknown>(await fetch(`${BASE}/words/${id}`, { method: 'DELETE', headers: authHeaders(false) }));
+  await handleApi<unknown>(await sessionFetch(`${BASE}/words/${id}`, { method: 'DELETE', headers: authHeaders(false) }));
 }
 
 export async function setVote(id: number, dir: 1 | -1): Promise<{ score: number; myVote: 1 | -1 }> {
-  return handleApi(await fetch(`${BASE}/words/${id}/vote`, {
+  return handleApi(await sessionFetch(`${BASE}/words/${id}/vote`, {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify({ dir }),
   }));
 }
 
 export async function clearVote(id: number): Promise<{ score: number; myVote: null }> {
-  return handleApi(await fetch(`${BASE}/words/${id}/vote`, {
+  return handleApi(await sessionFetch(`${BASE}/words/${id}/vote`, {
     method: 'DELETE', headers: authHeaders(false),
   }));
 }

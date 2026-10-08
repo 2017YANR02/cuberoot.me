@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 // 公式训练器 per-case 学习标记(不熟/已掌握)。
 // 未登录:localStorage 本地存;登录:本地 + 云端(/v1/alg/marks)双写,
 // 进页时拉云端做单条 last-write-wins 合并(本地较新的差异回传),之后写操作
@@ -149,7 +150,7 @@ let pending = new Map<string, { p: string; s: string; item: PutItem }>();
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function putItems(puzzle: string, set: string, items: PutItem[]): Promise<void> {
-  await handleApi(await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${set}`), {
+  await handleApi(await sessionFetch(apiUrl(`/v1/alg/marks/${puzzle}/${set}`), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ items }),
@@ -255,7 +256,7 @@ let loadToken = 0;
 async function fetchSetMarks(puzzle: string, setSlug: string): Promise<CaseMarks | null> {
   try {
     const data = await handleApi<{ marks: CaseMarks }>(
-      await fetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}?v=2`), { headers: authHeaders(false) }),
+      await sessionFetch(apiUrl(`/v1/alg/marks/${puzzle}/${setSlug}?v=2`), { headers: authHeaders(false) }),
     );
     // 云端可能还留着老版本设备写上去的退役字段——同样洗掉,并把清除回传
     const { marks, cleaned } = dropRetiredMarkData(data.marks, Date.now());
@@ -445,7 +446,7 @@ export function scanLocalOverview(): MarkOverview {
 /** 拉云端跨 set 聚合(需登录)。 */
 async function fetchCloudOverview(): Promise<MarkOverview> {
   const data = await handleApi<{ sets: Array<{ puzzle: string; set: string } & SetMarkSummary> }>(
-    await fetch(apiUrl('/v1/alg/marks?v=2'), { headers: authHeaders(false) }),
+    await sessionFetch(apiUrl('/v1/alg/marks?v=2'), { headers: authHeaders(false) }),
   );
   const out: MarkOverview = {};
   for (const s of data.sets) {

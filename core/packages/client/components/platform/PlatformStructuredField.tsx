@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useState } from 'react';
 import { PlatformReferenceField } from './PlatformReferenceField';
 import BoolToggle from '@/components/BoolToggle';
@@ -31,7 +32,7 @@ function Fields({columns,row,onChange}:{columns:Column[];row:Entry;onChange:(row
 
 function PathItem({row,onChange,courses}:{row:Entry;onChange:(row:Entry)=>void;courses:Entry[]}) {
   const t=useT();const [lessons,setLessons]=useState<Entry[]>([]);const [error,setError]=useState('');
-  useEffect(()=>{if(!row.courseId){setLessons([]);return;}const controller=new AbortController();void fetch(apiUrl(`/v1/platform/admin/courses/${encodeURIComponent(String(row.courseId))}`),{headers:authHeaders(false),signal:controller.signal}).then(response=>handleApi<{course:Entry}>(response)).then(result=>{setLessons(Array.isArray(result.course.lessons)?result.course.lessons.map(commerceRecord):[]);setError('');}).catch(reason=>{if(!controller.signal.aborted)setError(String(reason));});return()=>controller.abort();},[row.courseId]);
+  useEffect(()=>{if(!row.courseId){setLessons([]);return;}const controller=new AbortController();void sessionFetch(apiUrl(`/v1/platform/admin/courses/${encodeURIComponent(String(row.courseId))}`),{headers:authHeaders(false),signal:controller.signal}).then(response=>handleApi<{course:Entry}>(response)).then(result=>{setLessons(Array.isArray(result.course.lessons)?result.course.lessons.map(commerceRecord):[]);setError('');}).catch(reason=>{if(!controller.signal.aborted)setError(String(reason));});return()=>controller.abort();},[row.courseId]);
   return <div className="platform-structured-fields"><label><span>{t('课程','Course')}</span><select className="platform-field-control" required value={String(row.courseId??'')} onChange={event=>onChange({...row,courseId:event.target.value,lessonId:null})}><option value="">{t('选择课程','Choose a course')}</option>{courses.map(course=><option key={String(course.id)} value={String(course.id)}>{commerceText(course,'title',t)}</option>)}</select></label><label><span>{t('课时','Lesson')}</span><select className="platform-field-control" value={String(row.lessonId??'')} onChange={event=>onChange({...row,lessonId:event.target.value||null})}><option value="">{t('整门课程','Whole course')}</option>{lessons.map(lesson=><option key={String(lesson.id)} value={String(lesson.id)}>{commerceText(lesson,'title',t)}</option>)}</select></label>{error?<p role="alert">{error}</p>:null}</div>;
 }
 
@@ -46,7 +47,7 @@ export function PlatformStructuredField({fieldKey,label,value,onChange,routeId}:
   const t=useT();let parsed:unknown;try{parsed=JSON.parse(value||(['venue','presentation','eligibility'].includes(fieldKey)?'{}':'[]'));}catch{parsed={};}
   const rows=Array.isArray(parsed)?parsed.map(commerceRecord):[];const object=commerceRecord(parsed);
   const [courses,setCourses]=useState<Entry[]>([]);const [loadError,setLoadError]=useState('');
-  useEffect(()=>{if(fieldKey!=='items')return;const controller=new AbortController();void(async()=>{try{const loaded:Entry[]=[];for(let page=1;page<=100;page++){const response=await fetch(apiUrl(`/v1/platform/admin/courses?page=${page}&pageSize=100`),{headers:authHeaders(false),signal:controller.signal});const result=await handleApi<{courses:Entry[];total?:number}>(response);loaded.push(...result.courses);if(result.courses.length<100||(result.total!=null&&loaded.length>=result.total))break;}setCourses(loaded);setLoadError('');}catch(reason){if(!controller.signal.aborted)setLoadError(String(reason));}})();return()=>controller.abort();},[fieldKey]);
+  useEffect(()=>{if(fieldKey!=='items')return;const controller=new AbortController();void(async()=>{try{const loaded:Entry[]=[];for(let page=1;page<=100;page++){const response=await sessionFetch(apiUrl(`/v1/platform/admin/courses?page=${page}&pageSize=100`),{headers:authHeaders(false),signal:controller.signal});const result=await handleApi<{courses:Entry[];total?:number}>(response);loaded.push(...result.courses);if(result.courses.length<100||(result.total!=null&&loaded.length>=result.total))break;}setCourses(loaded);setLoadError('');}catch(reason){if(!controller.signal.aborted)setLoadError(String(reason));}})();return()=>controller.abort();},[fieldKey]);
   const save=(next:unknown)=>onChange(JSON.stringify(next));
   const update=(index:number,next:Entry)=>save(rows.map((row,i)=>i===index?next:row));
   const objectColumns=fieldKey==='venue'?venueFields:fieldKey==='presentation'?(routeId.includes('product')?productPresentation:coursePresentation):null;

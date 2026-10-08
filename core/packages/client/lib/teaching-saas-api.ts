@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   TEACHING_ATTENDANCE_STATUSES,
   TEACHING_AUDIT_OUTCOMES,
@@ -1725,7 +1726,7 @@ async function request(path: string, init: RequestInit = {}): Promise<unknown> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch(apiUrl(path), {
+    const response = await sessionFetch(apiUrl(path), {
       ...init,
       cache: 'no-store',
       signal: controller.signal,

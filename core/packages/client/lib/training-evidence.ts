@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   TEACHING_ERROR_CODES,
   parseTrainingEvidenceV1,
@@ -441,7 +442,7 @@ async function performFlush(options: FlushOptions): Promise<TrainingEvidenceFlus
     return summary;
   }
 
-  const fetcher = options.fetch ?? fetch;
+  const fetcher = options.fetch ?? sessionFetch;
   for (const { storageKey, item } of due) {
     let response: Response | undefined;
     let error: TrainingEvidenceOutboxError;

@@ -69,7 +69,7 @@ export default function SocialCallbackPage() {
       } else {
         const r = await loginSocial(provider, code, state, codeVerifier ?? undefined, signal);
         if (!mounted.current || signal.aborted) return;
-        if (!applySession(r.token, r.user)) throw new Error(tr({ zh: '无法保存登录状态', en: 'Could not save your session' }));
+        if (!(await applySession(r.token, r.user, () => mounted.current && !signal.aborted))) throw new Error(tr({ zh: '无法保存登录状态', en: 'Could not save your session' }));
         const pending = getIdentityChoice();
         if (pending?.stage === 'authenticate' && r.user.uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: r.user.uid, otherIdentityRejected: false });
         // 刚注册出来的新账号,回到 /account 时补上「你有 WCA ID 吗」那步(表单那条路是在
@@ -79,7 +79,7 @@ export default function SocialCallbackPage() {
     } catch (e) {
       if (!mounted.current || signal.aborted) return;
       if (e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, target); router.replace(identityChoiceEntryPath()); }
+        try { await rememberIdentityChoice(e, target); router.replace(identityChoiceEntryPath()); }
         catch { setErrorMsg(tr({ zh: '无法保存登录步骤，请允许浏览器使用存储后重试。', en: 'Could not save the sign-in step. Allow browser storage and retry.' })); }
         return;
       }

@@ -4,6 +4,7 @@
  * NOTE: 1:1 移植自 PHP db.php + index.php 的工具函数
  */
 import type { Context } from 'hono';
+import { HTTPException } from 'hono/http-exception';
 import jwt from 'jsonwebtoken';
 import { validateReconTiming } from '@cuberoot/shared/recon-completion';
 import { ADMIN_WCA_IDS, BANNED_WCA_IDS, isAdminWcaId } from '@cuberoot/shared/admin';
@@ -637,4 +638,16 @@ export function buildDuplicateQuery(
   }
   sql += ' LIMIT 1';
   return { sql, params };
+}
+
+/** Match the existing alternative-solution byte budget, before any parsing. */
+export function assertReconTextLengths(fields: Record<string, unknown>): void {
+  for (const key of ['solution', 'scramble', 'wcaScramble', 'optimalScramble', 'wca_scramble', 'optimal_scramble']) {
+    const value = fields[key];
+    if (typeof value === 'string' && Buffer.byteLength(value, 'utf8') > 65535) {
+      throw new HTTPException(400, {
+        message: 'Validation failed: Reconstruction text must not exceed 65,535 UTF-8 bytes. 校验失败：复盘文本不能超过 65,535 个 UTF-8 字节。',
+      });
+    }
+  }
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Check, Copy, Download, KeyRound, Loader2, Lock, Plus, Save, Trash2, UserPlus, X } from 'lucide-react';
 import BackHome from '@/components/BackHome';
@@ -73,7 +74,7 @@ export default function VaultPage() {
     if (!user) return;
     let cancelled = false;
     setError(null);
-    void fetch(apiUrl('/v1/vault'), { headers: authHeaders(false) })
+    void sessionFetch(apiUrl('/v1/vault'), { headers: authHeaders(false) })
       .then((response) => handleApi<VaultPayload>(response))
       .then((data) => { if (!cancelled) setPayload(data); })
       .catch(() => { if (!cancelled) setError(tr({ zh: '资料库加载失败，请稍后重试。', en: 'Could not load the vault. Try again later.' })); });
@@ -125,7 +126,7 @@ export default function VaultPage() {
     try {
       const created = await createVaultKeyProfile(passphrase);
       const keyProfile = { publicKey: created.publicKey, encryptedPrivateKey: created.encryptedPrivateKey };
-      await handleApi(await fetch(apiUrl('/v1/vault/key'), { method: 'PUT', headers: authHeaders(), body: JSON.stringify(keyProfile) }));
+      await handleApi(await sessionFetch(apiUrl('/v1/vault/key'), { method: 'PUT', headers: authHeaders(), body: JSON.stringify(keyProfile) }));
       const next = { ...payload, keyProfile };
       setPayload(next);
       await openVault(await unlockVaultPrivateKey(passphrase, keyProfile.encryptedPrivateKey), next);
@@ -168,7 +169,7 @@ export default function VaultPage() {
     try {
       const recovered = await recoverVaultPrivateKey(recoveryCode, passphrase, payload.keyProfile.encryptedPrivateKey);
       const keyProfile = { ...payload.keyProfile, encryptedPrivateKey: recovered.encryptedPrivateKey };
-      await handleApi(await fetch(apiUrl('/v1/vault/key'), { method: 'PUT', headers: authHeaders(), body: JSON.stringify(keyProfile) }));
+      await handleApi(await sessionFetch(apiUrl('/v1/vault/key'), { method: 'PUT', headers: authHeaders(), body: JSON.stringify(keyProfile) }));
       const next = { ...payload, keyProfile };
       setPayload(next);
       setRecoveryMode(false);
@@ -249,7 +250,7 @@ export default function VaultPage() {
         { userId: payload.userId, publicKey: payload.keyProfile.publicKey },
         ...draft.shares.map(({ userId, publicKey }) => ({ userId, publicKey })),
       ]);
-      const response = await handleApi<{ id?: string; version: number; updatedAt: string }>(await fetch(
+      const response = await handleApi<{ id?: string; version: number; updatedAt: string }>(await sessionFetch(
         apiUrl(draft.serverId ? `/v1/vault/items/${draft.serverId}` : '/v1/vault/items'),
         {
           method: draft.serverId ? 'PUT' : 'POST',
@@ -280,7 +281,7 @@ export default function VaultPage() {
     setBusy(true);
     setError(null);
     try {
-      if (draft.serverId) await handleApi(await fetch(apiUrl(`/v1/vault/items/${draft.serverId}`), { method: 'DELETE', headers: authHeaders(false) }));
+      if (draft.serverId) await handleApi(await sessionFetch(apiUrl(`/v1/vault/items/${draft.serverId}`), { method: 'DELETE', headers: authHeaders(false) }));
       const next = items.filter((item) => item.localId !== draft.localId);
       setItems(next);
       setDraft(next[0] ? cloneItem(next[0]) : null);
@@ -300,7 +301,7 @@ export default function VaultPage() {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setSearchingUsers(true);
-      void fetch(apiUrl(`/v1/vault/users?q=${encodeURIComponent(query)}`), {
+      void sessionFetch(apiUrl(`/v1/vault/users?q=${encodeURIComponent(query)}`), {
         headers: authHeaders(false), signal: controller.signal,
       })
         .then((response) => handleApi<{ users: UserResult[] }>(response))

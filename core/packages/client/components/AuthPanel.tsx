@@ -275,18 +275,18 @@ function CodeFlow({ channel, mode, onDone }: { channel: Channel; mode: 'login' |
       } else if (mode === 'reset') {
         const r = await verifyPhonePasswordResetCode(target, code, controller.signal);
         if (controller.signal.aborted) return;
-        if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+        if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
         onDone();
       } else {
         const r = channel === 'email' ? await verifyEmailCode(target, code, { signal: controller.signal }) : await verifyPhoneCode(target, code, { signal: controller.signal });
         if (controller.signal.aborted) return;
-        if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+        if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
         onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
       }
     } catch (e) {
       if (controller.signal.aborted) return;
       if (mode === 'login' && e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, window.location.href); }
+        try { await rememberIdentityChoice(e, window.location.href); }
         catch (storageError) { setError(authErrorText(String(storageError), t)); }
         return;
       }
@@ -390,12 +390,12 @@ function EmailCodeFlow({ email, setEmail, onDone, toPassword, reset }: {
     try {
       const r = await verifyEmailCode(email, code, { existingOnly: reset, signal: controller.signal });
       if (controller.signal.aborted) return;
-      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       if (controller.signal.aborted) return;
       if (!reset && e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, window.location.href); }
+        try { await rememberIdentityChoice(e, window.location.href); }
         catch (storageError) { setError(authErrorText(String(storageError), t)); }
         return;
       }
@@ -474,7 +474,7 @@ function EmailPasswordFlow({ email, setEmail, onDone, toCode, onForgot }: {
     setBusy(true);
     try {
       const r = await loginPassword(email, pw);
-      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
       onDone();
     } catch (e) {
       setError(authErrorText(e instanceof Error ? e.message : String(e), t));
@@ -780,7 +780,7 @@ export function IdentityChoicePanel({ pending, firstPartyOnly = false, onDone, o
       if (action === 'link' && (useAuthStore.getState().user?.uid !== expectedUid || result.user.uid !== expectedUid)) {
         throw new Error(t('当前账号已更改，请重新确认。', 'Your account changed. Confirm the account again.'));
       }
-      if (!applySession(result.token, result.user)) throw new Error(t('无法保存登录状态，请检查浏览器存储后重试。', 'Could not save your session. Check browser storage and retry.'));
+      if (!(await applySession(result.token, result.user))) throw new Error(t('无法保存登录状态，请检查浏览器存储后重试。', 'Could not save your session. Check browser storage and retry.'));
       clearIdentityChoice(pending.ticket);
       onDone({ isNew: result.isNew, hasWca: !!result.user.wcaId }, pending.returnPath);
     } catch (cause) {
@@ -856,12 +856,12 @@ function LoginFormFields({
       if (!googleMounted.current) return;
       const r = await loginGoogle(assertion);
       if (!googleMounted.current) return;
-      if (!applySession(r.token, r.user)) throw new Error('session storage failed');
+      if (!(await applySession(r.token, r.user))) throw new Error('session storage failed');
       onDone({ isNew: r.isNew, hasWca: !!r.user.wcaId });
     } catch (e) {
       if (!googleMounted.current) return;
       if (e instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(e, window.location.href); }
+        try { await rememberIdentityChoice(e, window.location.href); }
         catch (storageError) { setGError(authErrorText(String(storageError), t)); }
         return;
       }
@@ -1238,7 +1238,7 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
     try {
       const result = await mergeAccount(mergeCode.trim(), currentUid);
       if (!mounted.current || useAuthStore.getState().user?.uid !== currentUid) return;
-      if (!applySession(result.token, result.user)) throw new Error('session storage failed');
+      if (!(await applySession(result.token, result.user))) throw new Error('session storage failed');
       setConfirmMerge(false);
       setMergeMode(null);
       setMergeCode('');

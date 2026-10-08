@@ -1,5 +1,7 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
+
 import { useEffect, useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import AppLink from '@/components/AppLink';
@@ -27,7 +29,7 @@ export default function McpAccountPage() {
   useEffect(() => {
     if (!admin) return;
     let active = true;
-    fetch(apiUrl('/v1/mcp/oauth/connections'), { headers: authHeaders(false) })
+    sessionFetch(apiUrl('/v1/mcp/oauth/connections'), { headers: authHeaders(false) })
       .then(handleApi<{ connections: Connection[] }>).then(data => { if (active) setConnections(data.connections); })
       .catch(() => { if (active) setError(true); });
     return () => { active = false; };
@@ -36,7 +38,7 @@ export default function McpAccountPage() {
     setBusy(true); setError(false);
     try {
       const params = Object.fromEntries(new URLSearchParams(window.location.search));
-      const result = await handleApi<{ redirect: string }>(await fetch(apiUrl('/v1/mcp/oauth/consent'), {
+      const result = await handleApi<{ redirect: string }>(await sessionFetch(apiUrl('/v1/mcp/oauth/consent'), {
         method: 'POST', headers: authHeaders(), body: JSON.stringify({ ...params, approve }),
       }));
       // OAuth handoff follows a successfully submitted consent; not an internal navigation control.
@@ -48,7 +50,7 @@ export default function McpAccountPage() {
   async function revoke(id: string) {
     setBusy(true); setError(false);
     try {
-      await handleApi(await fetch(apiUrl('/v1/mcp/oauth/connections/revoke'), {
+      await handleApi(await sessionFetch(apiUrl('/v1/mcp/oauth/connections/revoke'), {
         method: 'POST', headers: authHeaders(), body: JSON.stringify({ id }),
       }));
       setConnections(items => items.filter(item => item.id !== id));

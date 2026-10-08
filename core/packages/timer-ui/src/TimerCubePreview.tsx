@@ -72,8 +72,14 @@ function NoPreview({ ariaLabel, fill, size = 14, className }: { ariaLabel?: stri
 function firstNxnScramble(s: string): string {
   const lines = s.split(/\r?\n/);
   for (const line of lines) {
-    const m = line.match(/^\s*3x3\s*[:.-]?\s*(.+)$/i);
-    if (m) return m[1];
+    const prefix = /^\s*3x3/i.exec(line);
+    if (!prefix) continue;
+    const tail = line.slice(prefix[0].length);
+    const rest = tail.trimStart().replace(/^[:.-]/, '').trimStart();
+    if (rest && !/[\r\n\u2028\u2029]/.test(rest)) return rest;
+    // Greedy whitespace/separator parsing must leave the same final character
+    // as the former (.+) capture when the line contains no move text.
+    if (!tail.trim().replace(/^[:.-]/, '') && tail && !/[\r\n\u2028\u2029]/.test(tail.at(-1)!)) return tail.at(-1)!;
   }
   return s;
 }

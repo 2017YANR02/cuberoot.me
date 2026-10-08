@@ -105,7 +105,7 @@ function AvatarEditor() {
     setError(null);
     try {
       const session = await updateAvatar(choice);
-      if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+      if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
     } catch {
       setError(t('头像保存失败，请稍后重试。', 'Could not save the avatar. Try again later.'));
     } finally {
@@ -121,7 +121,7 @@ function AvatarEditor() {
       const prepared = await prepareImageUpload(file, 512);
       const image = await uploadImageBlob(prepared.dataB64, prepared.mime);
       const session = await updateAvatar({ kind: 'upload', imageId: image.id });
-      if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+      if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
     } catch (uploadError) {
       setError((uploadError as Error).message === 'unsupported_image_type'
         ? t('请选择 PNG、JPEG 或 WebP 图片。', 'Choose a PNG, JPEG, or WebP image.')
@@ -324,7 +324,7 @@ function DisplayNameEditor() {
   if (!user) return null;
   const save = async (name: string) => {
     const session = await updateDisplayName(name);
-    if (!applySession(session.token, session.user)) throw new Error('session persistence failed');
+    if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
   };
   return (
     <div className="account-profile-editor">
