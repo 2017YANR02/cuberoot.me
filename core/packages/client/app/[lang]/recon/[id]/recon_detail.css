@@ -1203,6 +1203,8 @@
 
 /* ── 回复(单层嵌套) ────────────────────────────────────── */
 .yt-comment-thread {
+  /* Opaque blend keeps intersecting strokes the same color in every theme. */
+  --recon-thread-line: color-mix(in srgb, var(--foreground) 20%, var(--background));
   position: relative;
   display: flex;
   flex-direction: column;
@@ -1216,7 +1218,7 @@
   left: 16px;
   top: 40px;
   bottom: 4px;
-  border-left: 1px solid var(--border-strong);
+  border-left: 1px solid var(--recon-thread-line);
   pointer-events: none;
 }
 
@@ -1336,7 +1338,7 @@
   left: -28px;
   top: -4px; /* Branch bottom (12px) minus its 16px corner radius. */
   bottom: 0;
-  border-left: 1px solid var(--border-strong);
+  border-left: 1px solid var(--recon-thread-line);
   pointer-events: none;
 }
 .yt-comment-thread.is-expanded .yt-reply-item::before,
@@ -1348,8 +1350,8 @@
   top: -12px;
   width: 20px;
   height: 24px;
-  border-left: 1px solid var(--border-strong);
-  border-bottom: 1px solid var(--border-strong);
+  border-left: 1px solid var(--recon-thread-line);
+  border-bottom: 1px solid var(--recon-thread-line);
   border-bottom-left-radius: 16px;
   pointer-events: none;
 }
