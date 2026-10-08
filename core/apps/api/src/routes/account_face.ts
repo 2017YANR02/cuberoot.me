@@ -55,7 +55,7 @@ accountFaceRoutes.use("/auth/face", async (c, next) => {
 accountFaceRoutes.onError((error, c) => {
   // Never expose provider messages, identity details or database errors.
   const code = error instanceof FaceVerificationError ? error.status : 503;
-  return c.json({ error: "FACE_UNAVAILABLE", retryable: code >= 500 }, code as 400 | 401 | 403 | 409 | 429 | 503);
+  return c.json({ error: error instanceof FaceVerificationError ? error.code : "FACE_UNAVAILABLE", retryable: code >= 500 }, code as 400 | 401 | 403 | 409 | 429 | 503);
 });
 accountFaceRoutes.get("/auth/face", async c => {
   const { uid } = await actor(c);
@@ -80,11 +80,15 @@ accountFaceRoutes.post("/auth/face", async c => {
       if (!user) throw new FaceVerificationError("Account unavailable.", 403);
       const [used] = await run("SELECT id FROM account_face_attempts WHERE status = 'passed' AND (user_id = ? OR identity_digest = ?) LIMIT 1", [uid, identityDigest]);
       if (used) throw new FaceVerificationError("Identity already verified.", 409);
-      const [quota] = await run<{ total: number; own: number; pending: number }>(`SELECT COUNT(*)::int AS total,
+      const [quota] = await run<{ total: number; own: number; pending: number; recent: number }>(`SELECT COUNT(*)::int AS total,
         COUNT(*) FILTER (WHERE user_id = ?)::int AS own,
-        COUNT(*) FILTER (WHERE user_id = ? AND ((status IN ('initializing','pending') AND expires_at > NOW()) OR created_at > NOW() - INTERVAL '1 minute'))::int AS pending
-        FROM account_face_attempts WHERE created_at > NOW() - INTERVAL '24 hours'`, [uid, uid]);
-      if (quota.total >= 100 || quota.own >= 3 || quota.pending > 0) throw new FaceVerificationError("Attempt limit reached.", 429);
+        COUNT(*) FILTER (WHERE user_id = ? AND status IN ('initializing','pending') AND expires_at > NOW())::int AS pending,
+        COUNT(*) FILTER (WHERE user_id = ? AND created_at > NOW() - INTERVAL '1 minute')::int AS recent
+        FROM account_face_attempts WHERE created_at > NOW() - INTERVAL '24 hours'`, [uid, uid, uid]);
+      if (quota.pending > 0) throw new FaceVerificationError("An attempt is pending.", 429, "FACE_PENDING");
+      if (quota.own >= 3) throw new FaceVerificationError("Daily attempt limit reached.", 429, "FACE_DAILY_LIMIT");
+      if (quota.total >= 100) throw new FaceVerificationError("Site attempt limit reached.", 429, "FACE_SITE_LIMIT");
+      if (quota.recent > 0) throw new FaceVerificationError("Retry after one minute.", 429, "FACE_RETRY_SOON");
       await run(`INSERT INTO account_face_attempts (id,user_id,session_hash,identity_digest,id_last4,scene_id,status,consent_version,expires_at)
         VALUES (?,?,?,?,?,?,'initializing',?,NOW() + INTERVAL '30 minutes')`, [id, uid, sessionHash, identityDigest, values.idCard.slice(-4), config.sceneId, CONSENT_VERSION]);
     });
@@ -93,8 +97,9 @@ accountFaceRoutes.post("/auth/face", async c => {
       const updated = await query("UPDATE account_face_attempts SET certify_id = ?, status = 'pending' WHERE id = ? AND status = 'initializing' AND expires_at > NOW() RETURNING id", [result.certifyId, id]);
       if (!updated.length) throw new FaceVerificationError("Attempt expired.", 409);
       return c.json({ certifyUrl: result.certifyUrl });
-    } catch {
+    } catch (error) {
       await query("UPDATE account_face_attempts SET status = 'failed' WHERE id = ? AND status = 'initializing'", [id]);
+      if (error instanceof FaceVerificationError) throw error;
       throw new FaceVerificationError("Provider unavailable.", 503);
     }
   }
