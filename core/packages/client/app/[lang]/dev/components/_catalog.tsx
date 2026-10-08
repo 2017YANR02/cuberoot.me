@@ -22,7 +22,6 @@ import {
   Palette, Disc, MousePointerClick, Image as ImageIcon, type LucideIcon,
 } from 'lucide-react';
 import { tr } from '@/i18n/tr';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import TrainingNavButton from '@/components/TrainingNavButton';
 import TrainingSettings from '@/components/TrainingSettings';
@@ -177,15 +176,14 @@ function useIsZh() {
 
 /* ── demos (self-contained, render on a neutral stage) ──────────────────── */
 
-function PillToggleDemo() {
-  // 二选一:主/默认项放 onLabel → 默认绿(滑钮在右)。单次=主项 → 默认绿。
-  const [b, setB] = useState(true);
+function NativeSelectDemo() {
+  const [value, setValue] = useState('single');
   return (
-    <div className="cg-row">
-      <PillToggle value={b} onChange={setB}
-        onLabel={tr({ zh: '单次', en: 'Single' })}
-        offLabel={tr({ zh: '平均', en: 'Average' })} />
-    </div>
+    <select className="native-select" value={value} onChange={event => setValue(event.currentTarget.value)}
+      aria-label={tr({ zh: '成绩类型', en: 'Result type' })}>
+      <option value="single">{tr({ zh: '单次', en: 'Single' })}</option>
+      <option value="average">{tr({ zh: '平均', en: 'Average' })}</option>
+    </select>
   );
 }
 
@@ -1055,16 +1053,6 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: '页面按选手与项目各调用一次 useWcaTeachers，再把 directory 传给各行，避免逐行请求。', en: 'Call useWcaTeachers once per page with cubers and events, then pass its directory to rows to avoid per-row requests.' },
   },
   {
-    name: 'PillToggle',
-    import: "import PillToggle from '@/components/PillToggle/PillToggle';",
-    category: 'toggle',
-    zh: 'iOS 风格二选一开关(本项目主力用法):传 onLabel/offLabel = 两个互斥选项的标签(如 单次/平均、截至/当期),文字内嵌、只显示并高亮当前选中那个。约定:把「主/默认」那个选项放 onLabel —— 默认态即绿色(滑钮在右),另一项为灰(滑钮在左)。可点击,也能拖动滑钮横滑过中线切换。「开/关单个东西」的布尔场景(显示废止项 / 只看未登领奖台…)不要用它,用 BoolToggle(文字在左、滑钮在右)。',
-    en: 'iOS-style two-choice toggle (the primary use in this project): pass onLabel/offLabel as the two mutually-exclusive option labels (e.g. Single/Average, Cumulative/Period) — text is inside, only the selected one shows, highlighted. Convention: put the primary/default option as onLabel, so the default state reads green (knob right) and the other is grey (knob left). Click it, or drag the knob past the midline. For boolean on/off of a single thing, use BoolToggle (label left, switch right) — not this.',
-    usage: '<PillToggle value={type === "single"} onChange={v => setType(v ? "single" : "average")} onLabel="单次" offLabel="平均" />',
-    Demo: PillToggleDemo,
-    note: { zh: '默认就贴合文字、并自动按较长标签预留宽度(切换 on/off 不跳变),无需再 page-scope 覆盖 min-width。当过滤器跟 select 同行时给它跟 select 同高(看 /wca/results 的 .wse-filter pill,34px 上下居中)。锁:tests/pilltoggle-default-fit.test.ts。', en: 'Hugs the text by default and auto-reserves the longer label’s width (no jump on toggle) — no page-scope min-width override needed. When used as a filter alongside selects, match the select height (see /wca/results .wse-filter pill — 34px, vertically centered). Locked by tests/pilltoggle-default-fit.test.ts.' },
-  },
-  {
     name: 'TimerFontPicker',
     import: "import TimerFontPicker from '@/components/TimerFontPicker';",
     category: 'input',
@@ -1077,8 +1065,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'BoolToggle',
     import: "import BoolToggle from '@/components/BoolToggle';",
     category: 'toggle',
-    zh: '布尔开关:左边文字标签 + 右边 iOS 风滑钮(文字也可点)。用于「开/关单个东西」(显示废止项 / 只看未登领奖台 / 开启动画…)。全站复选框(☑)一律换成它。二选一(A/B 各有含义)请用 PillToggle 的文字内嵌形态,别用本组件。',
-    en: 'Boolean switch: a label on the left + an iOS-style switch on the right (the label is clickable too). For toggling a single thing on/off (show cancelled events / only un-podiumed / enable animation…). Replace all checkboxes (☑) site-wide with it. For a genuine two-choice (A/B each meaningful), use PillToggle’s inline-label form instead.',
+    zh: '布尔开关:左边文字标签 + 右边 iOS 风滑钮(文字也可点)。用于「开/关单个东西」(显示废止项 / 只看未登领奖台 / 开启动画…)。全站复选框(☑)一律换成它。二选一(A/B 各有含义)使用浏览器原生 select 菜单。',
+    en: 'Boolean switch: a label on the left + an iOS-style switch on the right (the label is clickable too). For toggling a single thing on/off (show cancelled events / only un-podiumed / enable animation…). Replace all checkboxes (☑) site-wide with it. For a genuine two-choice (A/B each meaningful), use a native select menu.',
     usage: '<BoolToggle value={on} onChange={setOn} label="废止项" />',
     Demo: BoolToggleDemo,
   },
@@ -1112,8 +1100,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'AlgViewModeToggle',
     import: "import AlgViewModeToggle, { useAlgViewMode } from '@/components/AlgViewModeToggle';",
     category: 'toggle',
-    zh: '/alg 下所有 case 列表页的「图 / 公式」视图开关(PillToggle 的一层语义封装)。图 = 只看缩略图的密排画廊(默认,点卡进详情看公式),公式 = 公式内联。配套 useAlgViewMode() 读写唯一的 localStorage key `alg-list-view` —— 跨页显示偏好、不进 URL,用户切一次全站的 case 列表都生效。新做 case 列表页直接用这一对,别再各写各的开关和 key。',
-    en: 'The images / algs view switch shared by every case-list page under /alg (a semantic wrapper over PillToggle). Images = a dense thumbnail gallery (the default — click a card for the algs), Algs = algorithms inlined. The paired useAlgViewMode() hook reads and writes the single localStorage key `alg-list-view`: a cross-page display preference, deliberately not in the URL, so flipping it once applies to every case list site-wide. Use this pair on any new case-list page instead of rolling another toggle and key.',
+    zh: '/alg 下所有 case 列表页的「图 / 公式」视图下拉菜单(浏览器原生 select)。图 = 只看缩略图的密排画廊(默认,点卡进详情看公式),公式 = 公式内联。配套 useAlgViewMode() 读写唯一的 localStorage key `alg-list-view` —— 跨页显示偏好、不进 URL,用户切一次全站的 case 列表都生效。新做 case 列表页直接用这一对,别再各写各的开关和 key。',
+    en: 'The images / algs native select shared by every case-list page under /alg. Images = a dense thumbnail gallery (the default — click a card for the algs), Algs = algorithms inlined. The paired useAlgViewMode() hook reads and writes the single localStorage key `alg-list-view`: a cross-page display preference, deliberately not in the URL, so flipping it once applies to every case list site-wide. Use this pair on any new case-list page instead of rolling another toggle and key.',
     usage: 'const [view, changeView] = useAlgViewMode();\n<AlgViewModeToggle value={view} onChange={changeView} className="alg-view-toggle" />',
     Demo: AlgViewModeToggleDemo,
     note: { zh: '演示用的是本地 state;真页面必须走 useAlgViewMode(),否则偏好不跨页。className 由页面给(定位用),组件自身不带页面样式。', en: 'The demo uses local state; real pages must go through useAlgViewMode() or the preference won’t carry across pages. className is supplied by the page (for positioning) — the component ships no page-level styling.' },
@@ -1198,11 +1186,20 @@ export const CATALOG: ComponentEntry[] = [
     Demo: ListSelectDemo,
   },
   {
+    name: 'Native select',
+    import: "import '@cuberoot/timer-ui/compact-select.css';",
+    category: 'input',
+    zh: '二选一使用浏览器原生 select 菜单，展开与键盘交互由浏览器和系统提供。普通布尔开关继续使用 BoolToggle。',
+    en: 'Use native select menus for two-choice controls. The browser and operating system provide the menu and keyboard behavior. Keep BoolToggle for boolean switches.',
+    usage: '<select className="native-select" value={type} onChange={event => setType(event.currentTarget.value)} aria-label="Result type"><option value="single">Single</option><option value="average">Average</option></select>',
+    Demo: NativeSelectDemo,
+  },
+  {
     name: 'CompactSelect',
     import: "import { CompactSelect } from '@/components/CompactSelect';",
     category: 'input',
-    zh: '紧凑单选菜单，支持药丸或无框触发器、禁用项、自定义页脚，并通过 body portal 自动避让视口。',
-    en: 'Compact single-choice menu with pill or plain triggers, disabled items, a custom footer, and viewport-aware body portal positioning.',
+    zh: '紧凑单选菜单，支持药丸或无框触发器、禁用项、自定义页脚、菜单内编辑面板，并通过 body portal 自动避让视口。',
+    en: 'Compact single-choice menu with pill or plain triggers, disabled items, a custom footer, an inline editor panel, and viewport-aware body portal positioning.',
     usage: '<CompactSelect label={label} items={items} value={value} onChange={setValue} ariaLabel="Metric" />',
     Demo: CompactSelectDemo,
   },
@@ -1588,8 +1585,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerDeviceCenter',
     import: "import { TimerDeviceCenter } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与五端 App 共用的设备中心触发器和能力列表；只显示宿主真实 adapter 注册的设备。已连接智能魔方时，点击入口直接打开操作窗口；未连接时显示设备列表。统一活动态、设备详情、键盘 Escape、点外关闭和焦点恢复。连接、权限和协议动作仍由宿主注入。',
-    en: 'The device-center trigger and capability list shared by Web and all five installed clients. It only shows devices registered by a real host adapter. When a smart cube is connected, the trigger opens its controls directly; otherwise it shows the device list. Active state, device detail, Escape/outside dismissal, and focus return are shared. Hosts still inject connection, permission, and protocol actions.',
+    zh: 'Web 与五端 App 共用的设备中心；宿主注入真实设备及可选辅助入口。Web 开发环境的假魔方排在麦克风下方，面板锚定同一入口。无辅助入口且智能魔方已连接时直接打开设备操作；否则显示菜单。统一活动态、设备详情、Escape、点外关闭和焦点恢复。',
+    en: 'Shared device center for Web and installed clients, with host-provided devices and optional utility actions. The Web development fake cube follows the microphone and anchors its panel to the same trigger. Connected cubes open directly when no utility needs menu access; otherwise the menu remains available. Active state, details, Escape/outside dismissal and focus return are shared.',
   },
   {
     name: 'TimerScramble222Config',
@@ -1925,14 +1922,6 @@ export const CATALOG: ComponentEntry[] = [
     usage: '<SimCaptureGroup simBridge={simBridge} />',
   },
   {
-    name: 'MaskCatalogGrid',
-    import: "import MaskCatalogGrid from '@/components/puzzle-image/MaskCatalogGrid';",
-    category: 'more',
-    zh: 'stage mask 速查网格(~147 张卡,数据来自 lib/puzzle-image/masks 的 STAGE_SECTIONS)。hrefFor 决定点卡片去哪(/sim/stages 传的是「打开模拟器并选中该阶段」),href 必须自带语言前缀。卡片一律 prefetch={false} —— 147 张的视口预取会打爆 Edge Requests。',
-    en: 'The stage-mask cheat-sheet grid (~147 cards, data from STAGE_SECTIONS in lib/puzzle-image/masks). hrefFor decides where a card goes (/sim/stages sends it to the simulator with that stage selected); the href must carry the lang prefix. Cards are prefetch={false} — viewport-prefetching 147 links would blow the Edge Request budget.',
-    usage: '<MaskCatalogGrid hrefFor={(n, mask) => `/${lang}/sim?puzzle=${n}&stickering=${mask}`} />',
-  },
-  {
     name: 'StackedBar',
     import: "import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';",
     category: 'display',
@@ -2016,26 +2005,11 @@ export const CATALOG: ComponentEntry[] = [
     en: `Thin Web persistence adapter for 2x2: localStorage and cross-tab synchronization stay in the client, while all visible UI delegates to TimerScramble222Config and the type/style contract comes from @cuberoot/shared/timer.`,
   },
   {
-    name: 'Scramble333ModePicker',
-    import: "import Scramble333ModePicker from '@/components/Scramble333ModePicker';",
+    name: 'ScrambleRediModePicker',
+    import: "import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';",
     category: 'toggle',
-    zh: `3x3 打乱引擎切换(WCA cubing.js 与 min2phase-rust),仅当选中 3x3 时显示,选择持久化到 localStorage。`,
-    en: `3x3 scramble-engine toggle (WCA cubing.js vs min2phase-rust), shown only when 3x3 is selected, with the choice persisted to localStorage.`,
-  },
-  {
-    name: 'Scramble555ModePicker',
-    import: "import Scramble555ModePicker from '@/components/Scramble555ModePicker';",
-    category: 'toggle',
-    zh: `5x5 打乱模式切换(随机状态与随机转动),仅当选中 5x5 时显示,带说明帮助链接,选择持久化到 localStorage。`,
-    en: `5x5 scramble-mode toggle (random-state vs random-move), shown only when 5x5 is selected, with an about/help link, persisting the choice to localStorage.`,
-  },
-  {
-    name: 'ScrambleModePickerRow',
-    import: "import ScrambleModePickerRow from '@/components/ScrambleModePickerRow';",
-    category: 'toggle',
-    zh: `打乱引擎 / 模式切换的共享行布局,标签 + PillToggle + 可选帮助问号;被各项目专用 picker 包装复用。`,
-    en: `Shared row layout for scramble engine/mode toggles, pairing a label with a PillToggle and optional help icon; wrapped by the per-event pickers.`,
-    note: { zh: `底层复用 PillToggle,按需传 helpHref。`, en: `Built on PillToggle; pass helpHref to add a help link.` },
+    zh: 'Redi「转体」BoolToggle，默认关闭并使用计时器同款打乱；开启生成有转体打乱，持久化选择并同步比赛模式缓存。',
+    en: 'Redi Rotations BoolToggle, off by default for timer-style scrambles; persists the rotation preference and invalidates the competition cache.',
   },
 
   // ── 按钮 ────────────────────────────────────────────────────────────────
@@ -2532,6 +2506,13 @@ export const CATALOG: ComponentEntry[] = [
     zh: `首页「近期打乱」面板:顶部项目选择器,333 提供 变体 / 类型 / 底色 / 步数 富控件并显示该难度出现概率,其余项目按打乱长度(222 / 金字塔 / 斜转另有整解难度模式),每条带 2D 展开图与比赛来源。`,
     en: `Landing Recent Scrambles panel: an event picker where 333 offers a rich variant/type/bottom-color/move widget with difficulty probability, while other events bucket by scramble length (222/pyraminx/skewb also have a whole-solve difficulty mode).`,
     note: { zh: `靠 stats/scramble/*.json 数据,无可展示项目时返回 null。`, en: `Driven by stats/scramble/*.json; returns null when no event has data.` },
+  },
+  {
+    name: 'CuratedReconCard',
+    import: "import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';",
+    category: 'more',
+    zh: `复用 ReconCard，管理员图钉控制首页置顶、星标控制复盘页精选；按钮与卡片链接为同级元素。`,
+    en: `ReconCard with optional admin pin and featured controls, rendered as siblings of the card link.`,
   },
   {
     name: 'TodayRecon',

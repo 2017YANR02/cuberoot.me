@@ -14,14 +14,14 @@ import { Hono } from 'hono';
 import { getIp } from '../utils/analytics_helpers.js';
 import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
+import { CUSTOM_TREATMENTS, SIM_MASK_SIDS_RE, parsePaintedMask } from '@cuberoot/shared/sim-mask-paint';
 
 export const simMasksRoutes = new Hono();
 
 /** 下拉里的阶段名(引擎阶段 / visualcube mask id)或自建遮罩 key(前缀 `preset:`)。 */
 const KEY_RE = /^[A-Za-z0-9_:.-]{1,80}$/;
 /** mask-core 贴纸清单:`U:0,2;F:3-5`(面序 U R F D L B),与 /sim ?stickeringMask= 同一份。 */
-const SIDS_RE = /^(?:[URFDLB]:\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)(?:;[URFDLB]:\d+(?:-\d+)?(?:,\d+(?:-\d+)?)*)*$/;
-const TREATMENTS = new Set(['regular', 'dim', 'ignored', 'outline']);
+const TREATMENTS = new Set<string>(CUSTOM_TREATMENTS);
 const KINDS = new Set(['builtin', 'custom']);
 const LABEL_MAX = 60;
 const SIZE_MIN = 2;
@@ -86,7 +86,7 @@ function normalize(b: MaskInput): { error: string } | { value: Normalized } {
     if (((b[k] as string) ?? '').length > LABEL_MAX) return { error: `${k} too long (max ${LABEL_MAX})` };
   }
   const sids = typeof b.sids === 'string' ? b.sids.trim() : '';
-  if (sids && !SIDS_RE.test(sids)) return { error: 'sids malformed' };
+  if (sids && !SIM_MASK_SIDS_RE.test(sids) && !parsePaintedMask(sids)) return { error: 'sids malformed' };
   // 自建遮罩没有贴纸清单 = 一枚都不亮,存了就是个死选项 —— 入口拦掉
   if (kind === 'custom' && !sids) return { error: 'sids required for custom masks' };
   const pick = typeof b.pick === 'string' && TREATMENTS.has(b.pick) ? b.pick : 'regular';

@@ -25,7 +25,8 @@ import { Flag } from '@/components/Flag';
 import { localizeCompName } from '@/lib/comp-localize';
 import { reconPathSeg } from '@/lib/recon-seo';
 import { RecordBadge } from '@/components/RecordBadge';
-import { ReconCard } from '@/components/ReconCard/ReconCard';
+import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
+import { getPinnedRecons, setReconHomePin, getFeaturedRecons, setReconFeatured } from '@/lib/recon-api';
 import WcaAuth from '@/components/WcaAuth';
 import BackHome from '@/components/BackHome';
 import { EventSelect } from '@/components/EventSelect';
@@ -205,6 +206,44 @@ export default function ReconListPage() {
   const { t, i18n } = useTranslation();
   const isZh = i18n.language === 'zh';
   const isAdmin = useIsAdmin();
+  const [pinnedRecons, setPinnedRecons] = useState<ReconSolve[] | null>(null);
+  const [featuredRecons, setFeaturedRecons] = useState<ReconSolve[] | null>(null);
+  const [curationError, setCurationError] = useState<string | null>(null);
+  const [savingCuration, setSavingCuration] = useState<Set<string>>(new Set());
+  const pendingCuration = useRef(new Set<string>());
+  useEffect(() => {
+    let active = true;
+    const failed = () => { if (active) setCurationError(tr({ zh: '精选或置顶状态加载失败，请刷新重试。', en: 'Could not load featured or pinned solves. Please refresh to retry.' })); };
+    getFeaturedRecons().then(rows => { if (active) setFeaturedRecons(rows); }).catch(failed);
+    if (isAdmin) getPinnedRecons().then(rows => { if (active) setPinnedRecons(rows); }).catch(failed);
+    return () => { active = false; };
+  }, [isAdmin]);
+  const pinnedIds = useMemo(() => new Set(pinnedRecons?.map(s => s.id)), [pinnedRecons]);
+  const featuredIds = useMemo(() => new Set(featuredRecons?.map(s => s.id)), [featuredRecons]);
+  const toggleCuration = async (solve: ReconSolve, kind: 'pin' | 'featured', selected: boolean) => {
+    const key = kind + ':' + solve.id;
+    if (!isAdmin || pendingCuration.current.has(key)) return;
+    pendingCuration.current.add(key);
+    setSavingCuration(new Set(pendingCuration.current));
+    setCurationError(null);
+    try {
+      await (kind === 'pin' ? setReconHomePin(solve.id, selected) : setReconFeatured(solve.id, selected));
+      const update = kind === 'pin' ? setPinnedRecons : setFeaturedRecons;
+      update(prev => selected ? [solve, ...(prev ?? []).filter(s => s.id !== solve.id)] : (prev ?? []).filter(s => s.id !== solve.id));
+    } catch {
+      setCurationError(tr({ zh: '设置未保存，请重试。', en: 'Could not save this change. Please try again.' }));
+    } finally {
+      pendingCuration.current.delete(key);
+      setSavingCuration(new Set(pendingCuration.current));
+    }
+  };
+  const curationActions = (solve: ReconSolve) => {
+    if (!isAdmin || (solve.visibility && solve.visibility !== 'public') || solve.recordType === 'timing') return {};
+    return {
+      pin: { active: pinnedIds.has(solve.id), disabled: pinnedRecons === null || savingCuration.has('pin:' + solve.id), onToggle: () => void toggleCuration(solve, 'pin', !pinnedIds.has(solve.id)) },
+      featured: { active: featuredIds.has(solve.id), disabled: featuredRecons === null || savingCuration.has('featured:' + solve.id), onToggle: () => void toggleCuration(solve, 'featured', !featuredIds.has(solve.id)) },
+    };
+  };
 
   // ── 列表 / 卡片视图切换（进 URL，后退可返回）──
   // 显式写视图：grid / list 都挂 ?view=（clearOnDefault:false 关掉默认省略），
@@ -850,6 +889,18 @@ export default function ReconListPage() {
         </div>
       </div>
 
+      {curationError && <p role="alert">{curationError}</p>}
+      {(isAdmin || !!featuredRecons?.length) && (
+        <section className="recon-featured" aria-labelledby="recon-featured-title">
+          <h2 id="recon-featured-title">{tr({ zh: '精选复盘', en: 'Featured solves' })}</h2>
+          <div className="recon-grid">
+            {featuredRecons?.map(solve => <CuratedReconCard key={solve.id} solve={solve} isZh={isZh}
+              href={getDetailUrl(solve)} {...curationActions(solve)} />)}
+          </div>
+          {featuredRecons?.length === 0 && isAdmin && <p>{tr({ zh: '点击复盘卡片上的星标，将精彩复盘加入精选。', en: 'Use the star on a solve card to add it to featured solves.' })}</p>}
+        </section>
+      )}
+
       {/* 工具栏：WCA toggle + 计数 + 登录；filter 全在表头 popover */}
       <div className="recon-toolbar">
         <div className="recon-type-toggle">
@@ -1024,7 +1075,7 @@ export default function ReconListPage() {
                       const needsTip = col.className?.includes('col-solver') || col.className?.includes('col-comp');
                       const tipText = col.key === 'person'
                         ? [solve.person, ...(solve.coPersons?.map(c => c.name) ?? [])].filter(Boolean).join(' & ')
-                        : col.key === 'comp' ? (solve.comp || '') : '';
+                        : col.key === 'comp' ? localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh, { date: solve.date }) : '';
                       return (
                         <td
                           key={col.key || col.labelKey}
@@ -1057,11 +1108,12 @@ export default function ReconListPage() {
           {viewMode === 'grid' && (
             <div className="recon-grid">
               {displayed.map((solve) => (
-                <ReconCard
+                <CuratedReconCard
                   key={solve.id}
                   solve={solve}
                   isZh={isZh}
                   href={getDetailUrl(solve)}
+                  {...curationActions(solve)}
                 />
               ))}
             </div>

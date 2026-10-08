@@ -3,10 +3,10 @@ import { TimerSettingRow } from './TimerTimingSettingsSections';
 
 export const TIMER_COLOR_NEUTRAL_SETTING_FIELD_IDS = ['settings.scramble.color-neutral'] as const;
 const OPTIONS: readonly { value: CnMode; copy: TimerSettingCopy }[] = [
-  { value: 'none', copy: { zh: '固定白底', en: 'None (white)' } },
-  { value: 'single', copy: { zh: '单面随机', en: 'Single (random)' } },
-  { value: 'dual', copy: { zh: '双面（白黄）', en: 'Dual (white/yellow)' } },
-  { value: 'six', copy: { zh: '六面', en: 'Six-sided' } },
+  { value: 'none', copy: { zh: '禁用', en: 'Disabled' } },
+  { value: 'single', copy: { zh: '单色', en: 'Single color' } },
+  { value: 'dual', copy: { zh: '双色', en: 'Dual color' } },
+  { value: 'six', copy: { zh: '六色', en: 'Six colors' } },
 ];
 
 export function TimerColorNeutralSetting({ event, value, onChange, localize }: {

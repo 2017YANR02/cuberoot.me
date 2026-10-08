@@ -229,6 +229,16 @@ export const SKEWB_3D_SHAPES = [
   "m24.44,67.32l15.22,8.8l0,-17.6",
 ];
 
+/** Bottom face from the supplied reference SVG, aligned to the existing
+ * lower-left edge (9.21,58.52) → (39.66,76.12). Keep the shared vertices exact. */
+export const SKEWB_BOTTOM_SHAPES = [
+  'M9.21 58.52 24.435 67.32 9.21 76.11Z',
+  'M24.435 67.32 39.66 76.12 39.66 93.71Z',
+  'M9.21 76.11 24.435 102.5 9.21 93.7Z',
+  'M39.66 93.71 39.66 111.3 24.435 102.5Z',
+  'M24.435 67.32 39.66 93.71 24.435 102.5 9.21 76.11Z',
+];
+
 export type SkewbSideLine = {
   d: string;
   transform: string;

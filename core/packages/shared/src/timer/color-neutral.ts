@@ -1,20 +1,12 @@
 /**
- * Color-neutral scramble wrapper.
- *
- * Standard 333 scrambles assume a fixed (white-top) starting orientation. To
- * simulate color-neutral solving without breaking the random-state property
- * of the underlying generator, we prepend a random cube rotation. The cube
- * state is the same; only the user's perceived cross color changes.
- *
- *   - none   : identity (white cross)
- *   - dual   : white / yellow (50% identity, 50% x2)
- *   - single : random one of 6 orientations
- *   - six    : same as single
- *
- * Only meaningful for 3x3-shaped events. Other events return the scramble
- * unchanged.
+ * Training color neutrality: keep one bottom (4 orientations), either of two
+ * opposite bottoms (8), or any bottom (24), matching csTimer's scrNeut groups.
+ * Rewrite moves in the fixed center frame instead of adding a regrip prefix.
  */
 import type { EventId } from './types';
+import { CUBE_ORIENTATIONS } from './cube-orientation';
+import { isTrainingEvent } from './pre-scramble';
+import { normalizeWcaScramble } from '../normalize_wca_scramble';
 
 export type CnMode = 'none' | 'single' | 'dual' | 'six';
 
@@ -22,18 +14,20 @@ export function normalizeTimerColorNeutralMode(value: unknown): CnMode {
   return value === 'single' || value === 'dual' || value === 'six' ? value : 'none';
 }
 
-const SIX_ROTATIONS = ['', 'x', "x'", 'x2', 'z', "z'"] as const;
-const DUAL_ROTATIONS = ['', 'x2'] as const;
+const ROTATIONS = {
+  none: [''],
+  single: CUBE_ORIENTATIONS.slice(0, 4).map(({ value }) => value),
+  dual: CUBE_ORIENTATIONS.slice(0, 8).map(({ value }) => value),
+  six: CUBE_ORIENTATIONS.map(({ value }) => value),
+} satisfies Record<CnMode, readonly string[]>;
 
-const CN_3X3_EVENTS = new Set<EventId>([
-  // State-based training uses its fixed preScrT goal frame, with no extra random rotation.
-  '333', '333oh', '333fm',
-  'oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2',
-  'cross', 'll',
-]);
+export function timerColorNeutralOrientations(mode: CnMode): readonly string[] {
+  return ROTATIONS[mode];
+}
 
 export function isCnEligible(event: EventId): boolean {
-  return CN_3X3_EVENTS.has(event);
+  // csTimer's Roux state generators do not support scrNeut either.
+  return isTrainingEvent(event) && event !== 'lse' && event !== 'l10p';
 }
 
 export function applyColorNeutral(
@@ -42,8 +36,9 @@ export function applyColorNeutral(
   rng: () => number = Math.random,
 ): string {
   if (mode === 'none') return scramble;
-  const pool = mode === 'dual' ? DUAL_ROTATIONS : SIX_ROTATIONS;
+  const pool = timerColorNeutralOrientations(mode);
   const pick = pool[Math.floor(rng() * pool.length)] ?? '';
-  if (!pick) return scramble;
-  return `${pick} ${scramble}`;
+  const transformed = normalizeWcaScramble(`${pick} ${scramble}`);
+  if (transformed === null) throw new Error('Invalid color-neutral training scramble');
+  return transformed;
 }

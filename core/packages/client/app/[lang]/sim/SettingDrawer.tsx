@@ -12,7 +12,7 @@ import { GHOST_DEFAULT_FACE_COLORS, GHOST_FACE_LABELS } from '@cuberoot/puzzle-r
 import { persistItem } from '@/lib/safe-storage';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import World from './engine/world';
-import { puzzleCaps, type IsolateKind } from './simCaps';
+import { puzzleCaps, resolveCaps, type IsolateKind } from './simCaps';
 import { timing } from './engine/tweenTiming';
 import { SIM_DEFAULT_TPS, simSpeedToTicks, simTpsToSpeed } from '@/lib/sim_timing';
 import Cubelet from './engine/nxn/cubelet';
@@ -403,11 +403,12 @@ export function mapFrames(v: number): number { return simSpeedToTicks(v); }
 const ENGINE_BODY_PUZZLES = new Set<string>(['sq1', 'sq2', 'sq4', 'ivy', 'dino', 'redi', 'rex', 'heli', 'gear', 'skewb', 'pyraminx', 'pyraminx_duo', 'megaminx', 'fto', 'ghost']);
 
 export function applySettings(world: World, s: SimSettings, prev?: SimSettings): void {
+  const supports = resolveCaps(world.puzzleKind, 'engine').supports;
   // 手指(指法演示):意愿写进 world,实际显隐由 world.syncHands 按拼图门控
   // (仅 3x3);内部已含 resize,所以放最前,后面的 resize 拿到的取景已是最终值。
   // 手模资产先于开关:切资产要销毁重建 rig,先设好再 syncHands 免得建完又拆。
-  world.setHandsWanted(s.hands === true);
-  world.setHandsFullBody(s.hands === true && s.fullBody === true);
+  world.setHandsWanted(supports.hands && s.hands === true);
+  world.setHandsFullBody(supports.hands && s.hands === true && s.fullBody === true);
   world.setHandsAvatar(s.bodyAvatar, (s.bodyAvatarX - 50) / 100, (s.bodyAvatarY - 50) / 100, 2 ** ((s.bodyAvatarZoom - 50) / 50));
   world.hands?.setSkeletonVisible(s.handsSkeleton === true);
   world.hands?.setNailsVisible(s.showNails !== false);
@@ -415,7 +416,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   world.hands?.setNailPolish(
     s.nailColor ? { color: s.nailColor, tip: s.nailColorTip || '', shade: s.nailShade ?? 50 } : null,
   );
-  world.setSmplxBodyVisible(s.showSmplxBody === true);
+  world.setSmplxBodyVisible(supports.hands && s.showSmplxBody === true);
   world.controller.sensitivity = mapSensitivity(s.sensitivity);
   world.controller.dragEmpty = s.dragEmpty;
   world.controller.holdPartial = s.holdPartialTurn;
@@ -455,25 +456,26 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
   if (!ENGINE_BODY_PUZZLES.has(world.puzzleKind as string)) {
     // NxN: sticker thickness / hollow / hint / face colors live on the InstancedRenderer.
     const cube = world.cube as import('./engine/nxn/cube').default;
-    const roomsActive = roomCubeActive(world.puzzleKind, s.roomTheme);
-    const pictureActive = typeof world.puzzleKind === 'number'
+    const roomsActive = supports.roomCube && roomCubeActive(world.puzzleKind, s.roomTheme);
+    const pictureActive = supports.pictureCube
       && !roomsActive
       && s.pictureCube === true
       && countPictureFaces(s.pictureFaces) > 0;
-    cube.arrow = s.arrow && !pictureActive && !roomsActive;
+    cube.arrow = !cube.isSphere && s.arrow && !pictureActive && !roomsActive;
     // 「动画」关 → 撤销/重做也瞬切(手动转/拖/单击各自路径已 fast)。
     cube.twister.instantTurns = !s.animatePlayback;
-    cube.instancedRenderer.thickness = s.thickness;
-    cube.instancedRenderer.hollow = s.hollow;
-    cube.instancedRenderer.hint = s.hint && !roomsActive;
+    cube.instancedRenderer.thickness = supports.thickness && s.thickness;
+    cube.instancedRenderer.hollow = supports.hollow && s.hollow;
+    cube.instancedRenderer.hint = supports.hint && s.hint && !roomsActive;
     if (hintBg) cube.instancedRenderer.setHintBackdrop(hintBg);
     // 内核色: frame (CORE + CORE_BASIC,前者 Phong 后者 Basic) + 内层 slice 填充板共享
-    Cubelet.CORE.color.set(s.coreColor);
-    Cubelet.CORE_BASIC.color.set(s.coreColor);
-    Cubelet._PANEL_MAT.color.set(s.coreColor);
+    const coreColor = supports.coreColor ? s.coreColor : DEFAULT_SETTINGS.coreColor;
+    Cubelet.CORE.color.set(coreColor);
+    Cubelet.CORE_BASIC.color.set(coreColor);
+    Cubelet._PANEL_MAT.color.set(coreColor);
     // 贴纸不透明度 + 黑边(缝宽):InstancedRenderer 特性,仅 NxN。
-    cube.instancedRenderer.stickerOpacity = Math.min(1, Math.max(0, s.stickerOpacity / 100));
-    cube.instancedRenderer.stickerGap = Math.min(0.9, Math.max(0, s.stickerGap / 100));
+    cube.instancedRenderer.stickerOpacity = supports.coreFinish ? Math.min(1, Math.max(0, s.stickerOpacity / 100)) : 1;
+    cube.instancedRenderer.stickerGap = supports.coreFinish ? Math.min(0.9, Math.max(0, s.stickerGap / 100)) : STICKER_GAP_DEFAULT;
     // Mirror Cube colours: 'single' = one raw-body colour (solve by shape), 'six' =
     // standard sticker scheme. Kept separate from the NxN coreStyle/faceColors so
     // switching back to a normal cube restores the user's NxN scheme.
@@ -484,7 +486,9 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     // re-sets frame/inner materials every call (the `hollow` setter writes
     // unconditionally), so applying here captures the fresh base + restores it
     // correctly. No-op when off.
-    applyDebugStructureColors(world.cube, s.debugStructureColor);
+    // Sphere's coloured shell is the raw shader material itself. Never replace it
+    // with a debug material, including when an older NxN setting is still enabled.
+    if (supports.structureColor) applyDebugStructureColors(world.cube, s.debugStructureColor);
     // 原核 (raw/stickerless body). Applied LAST so it overrides the frame/inner material
     // that hollow + structure-color just set (raw wins when on). Off-state restores the
     // hollow-appropriate material. Super-order cubes no-op inside setRawCore.
@@ -495,17 +499,22 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
     //          the faceless centre cubie falls back to the mirror colour too.
     // Single mode is always raw; 原核 also switches six-colour mode to a seamless raw body.
     const mirrorRaw = cube.isMirror && s.coreStyle === 'raw';
-    const rawOn = cube.isMirror ? (mirrorSingle || s.coreStyle === 'raw') : (s.coreStyle === 'raw');
-    const rawBorder = cube.isMirror && s.coreStyle === 'normal';
-    const rawCoreColor = mirrorRaw ? (s.mirrorColor ?? MIRROR_DEFAULT_COLOR) : s.coreColor;
+    const rawOn = cube.isSphere || (cube.isMirror ? (mirrorSingle || s.coreStyle === 'raw') : (s.coreStyle === 'raw'));
+    const rawBorder = !cube.isSphere && cube.isMirror && s.coreStyle === 'normal';
+    const rawCoreColor = mirrorRaw ? (s.mirrorColor ?? MIRROR_DEFAULT_COLOR) : coreColor;
     cube.instancedRenderer.setRawCore(rawOn, faces, rawCoreColor, rawBorder);
+    if (!supports.stickering) {
+      cube.instancedRenderer.setStickering(null);
+      cube.instancedRenderer.setFaceColorOverride(null);
+      cube.instancedRenderer.setStickerPreview(null);
+    }
     if (!prev
       || prev.pictureBaseColors !== s.pictureBaseColors
       || prev.coreColor !== s.coreColor) {
-      cube.instancedRenderer.setPictureBaseColors(s.pictureBaseColors, s.coreColor);
+      cube.instancedRenderer.setPictureBaseColors(supports.pictureCube && s.pictureBaseColors, coreColor);
     }
     // 顶面 U 中心 logo(仅 NxN 奇数阶有正中心块;偶数阶在 setLogo 内部隐藏)。
-    if (!prev
+    if (!supports.pictureCube || !prev
       || prev.pictureCube !== s.pictureCube
       || prev.roomTheme !== s.roomTheme
       || prev.pictureFaces !== s.pictureFaces) {
@@ -514,7 +523,7 @@ export function applySettings(world: World, s: SimSettings, prev?: SimSettings):
         () => { world.dirty = true; },
       );
     }
-    const logoTex = pictureActive || roomsActive ? null : s.logo === 'site'
+    const logoTex = !supports.logo || pictureActive || roomsActive ? null : s.logo === 'site'
       ? loadLogoTexture(SITE_LOGO_SRC, () => { world.dirty = true; })
       : (s.logo === 'custom' && s.customLogo)
         ? loadLogoTexture(s.customLogo, () => { world.dirty = true; })

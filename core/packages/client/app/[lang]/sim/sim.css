@@ -172,21 +172,6 @@
   height: 100% !important;
 }
 
-/* 图像面板末尾的去处(阶段遮罩速查)。纯文字,不套框。 */
-.sim-image-links {
-  display: flex;
-  gap: 14px;
-  padding: 0 2px;
-  font-size: 13px;
-}
-.sim-image-links a {
-  color: var(--accent);
-  text-decoration: none;
-}
-.sim-image-links a:hover {
-  text-decoration: underline;
-}
-
 /* 两个浮层共用的「窗框」:同尺寸(--sim-float-size)+ 同一圈黑白双环。
    双环而不是单色边框:画布背景是 art-directed 的固定五档(纯白 / 深灰 / 两种棋盘),
    与明暗主题无关,任何单色描边都会在其中某一档上隐身 —— 内圈浅、外圈深,总有一环

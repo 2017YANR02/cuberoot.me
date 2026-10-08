@@ -106,11 +106,14 @@ describe('shared Timer Timing settings UI', () => {
       ]);
 
     const enabled = host.querySelector<HTMLElement>('[data-setting-id="settings.timer.enabled"]')!;
-    expect(enabled.matches('.settings-row')).toBe(false);
-    expect(enabled.parentElement?.className).toBe('settings-section-head');
+    expect(enabled.matches('.settings-row-boolean')).toBe(true);
+    expect(enabled.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('true');
+    expect(host.querySelector('.settings-section-note')).toBeNull();
+    expect(enabled.parentElement?.className).toBe('settings-section');
     expect(enabled.querySelector('.bool-toggle > .pill-toggle.pill-toggle--switch')).not.toBeNull();
 
     const expectedBooleanRows = [
+      'settings.timer.enabled',
       'settings.timer.inspection',
       'settings.timer.auto-session-for-event',
       'settings.timer.auto-event-for-session',
@@ -156,7 +159,8 @@ describe('shared Timer Timing settings UI', () => {
     expect([...host.querySelectorAll<HTMLElement>('.settings-section-head h4')]
       .map((heading) => heading.textContent)).toEqual(['项目与分组', '计时显示', '成绩精度']);
     for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => entry.category === 'timer')) {
-      expect(host.querySelector(`[data-setting-id="${field.id}"]`)?.textContent).toContain(field.copy.zh);
+      expect(host.querySelector(`[data-setting-id="${field.id}"]`)?.textContent)
+        .toContain(field.copy.zh);
     }
   });
 
@@ -213,5 +217,13 @@ describe('shared Timer Timing settings UI', () => {
     await render({ active: false });
     expect(host.childElementCount).toBe(0);
     expect(host.querySelector('[data-setting-id]')).toBeNull();
+  });
+
+  it('shows timing mode as off when timing is disabled and can restore timing', async () => {
+    const onChange = await render({ value: { ...DEFAULT_TIMER_TIMING_SETTINGS, timingEnabled: false } });
+    const control = host.querySelector<HTMLButtonElement>('[aria-label="Timing mode"][role="switch"]')!;
+    expect(control.getAttribute('aria-checked')).toBe('false');
+    await act(async () => control.click());
+    expect(onChange).toHaveBeenCalledWith({ timingEnabled: true });
   });
 });

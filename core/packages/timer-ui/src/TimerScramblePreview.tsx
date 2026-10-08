@@ -15,6 +15,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { renderMegaScrambleSvg, DEFAULT_MEGA_COLORS } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@cuberoot/puzzle-render-core/sq1-svg';
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { rediScrambleForCubing } from '@cuberoot/shared/timer';
 
 export interface TimerScramblePreviewProps {
   /** Either a timer EventId or a WCA-style id (e.g. 'minx', 'pyram'). */
@@ -49,7 +50,7 @@ function applyScramble(
 ): void {
   host.style.visibility = 'hidden';
   try {
-    player.experimentalSetupAlg = scramble;
+    player.experimentalSetupAlg = puzzle === 'redi_cube' ? rediScrambleForCubing(scramble) : scramble;
     host.style.visibility = '';
   } catch (err) {
     console.warn(`[TimerScramblePreview] scramble render failed for ${puzzle}`, err);
@@ -85,6 +86,7 @@ function planFor(event: string): PuzzleSpec | null {
     case 'pyra': case 'pyram':                   return { cubingPuzzle: 'pyraminx',  w: 12, h: 10 };
     case 'skewb':                                return { cubingPuzzle: 'skewb',     w: 12, h: 9 };
     case 'fto':                                  return { cubingPuzzle: 'fto',       w: 16, h: 12 };
+    case 'redi': case 'redi_cube':               return { cubingPuzzle: 'redi_cube', w: 16, h: 12 };
     case 'kilominx':                             return { cubingPuzzle: 'kilominx',  w: 18, h: 14 };
     // sq1 / mega — use our inline renderers (cubing.js 2D for sq1 is broken;
     // mega unfolded view differs from tnoodle).

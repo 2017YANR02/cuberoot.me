@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import {
   Suspense,
@@ -52,7 +53,6 @@ import AppLink from '@/components/AppLink';
 import BackHome from '@/components/BackHome';
 import { ClearButton } from '@/components/ClearButton';
 import HeaderToggles from '@/components/HeaderToggles';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { SearchInput } from '@/components/SearchInput';
 import { useCopy } from '@/hooks/useCopy';
 import { useModalBackdrop, useModalDismiss } from '@/hooks/useModalDismiss';
@@ -149,14 +149,16 @@ function DriveShareDialog({ node, url, busy, onVisibilityChange, onClose }: Driv
         <div className="drive-share-body">
           <div className="drive-share-mode">
             <span>{t('访问权限', 'Access')}</span>
-            <PillToggle
-              value={folder ? node.memberShared === true : node.shared}
-              onChange={onVisibilityChange}
-              onLabel={folder ? t('网盘成员', 'Drive members') : t('任何获得链接的人', 'Anyone with the link')}
-              offLabel={folder ? t('不单独共享', 'No direct sharing') : t('关闭公开链接', 'Public link off')}
-              ariaLabel={folder ? t('文件夹共享权限', 'Folder sharing access') : t('文件分享权限', 'File sharing access')}
+            <select
               disabled={busy}
-            />
+              value={String(folder ? node.memberShared === true : node.shared)}
+              onChange={event => onVisibilityChange(event.currentTarget.value === 'true')}
+              aria-label={folder ? t('文件夹共享权限', 'Folder sharing access') : t('文件分享权限', 'File sharing access')}
+              className="native-select"
+            >
+              <option value="true">{folder ? t('网盘成员', 'Drive members') : t('任何获得链接的人', 'Anyone with the link')}</option>
+              <option value="false">{folder ? t('不单独共享', 'No direct sharing') : t('关闭公开链接', 'Public link off')}</option>
+            </select>
           </div>
           <p>
             {folder
@@ -252,9 +254,16 @@ function DriveCompressionDialog({ node, onQueued, onClose }: {
         <div className="drive-share-body">
           <div className="drive-share-mode">
             <span>{t('分辨率', 'Resolution')}</span>
-            <PillToggle value={resolution === 'original'} onChange={(original) => setResolution(original ? 'original' : '1080p')}
-              onLabel={t('保持原分辨率', 'Keep original resolution')} offLabel={t('压缩到 1080P', 'Limit to 1080p')}
-              ariaLabel={t('保持原分辨率，关闭则压缩到 1080P', 'Keep original resolution; turn off to limit to 1080p')} disabled={busy} />
+            <select
+              disabled={busy}
+              value={String(resolution === 'original')}
+              onChange={event => { const original = event.currentTarget.value === 'true'; setResolution(original ? 'original' : '1080p'); }}
+              aria-label={t('保持原分辨率，关闭则压缩到 1080P', 'Keep original resolution; turn off to limit to 1080p')}
+              className="native-select"
+            >
+              <option value="true">{t('保持原分辨率', 'Keep original resolution')}</option>
+              <option value="false">{t('压缩到 1080P', 'Limit to 1080p')}</option>
+            </select>
           </div>
           <p>{resolution === 'original'
             ? t('保留原分辨率和原帧率，压缩完成后另存一份视频。', 'Keep the original resolution and frame timing, and save a separate compressed video.')

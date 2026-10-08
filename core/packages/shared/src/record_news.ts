@@ -480,7 +480,7 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
       const prTypeCn = prEv.rec_type === 'single' ? '单次' : '平均';
       const npTypeCn = npEv.rec_type === 'single' ? '单次' : '平均';
       const cn = `成绩快讯! ${prTime}${cnEvent}${prTypeCn}PR${prSuffix} ${cnName}${personFlag} | ${npTime}${npTypeCn}PR${npRank} | ${cnCompLabel}`;
-      const en = `Result News! ${prTime} ${enEvent} ${typeEn(eventId, prEv.rec_type)} PR${prSuffix} ${enName}${personFlag} | ${npTime} ${typeEn(eventId, npEv.rec_type)} PR${npRank} | ${enCompLabel}`;
+      const en = `Result News! ${prTime} ${enEvent} PR${prSuffix} ${typeEn(eventId, prEv.rec_type)} ${enName}${personFlag} | ${npTime} PR${npRank} ${typeEn(eventId, npEv.rec_type)} | ${enCompLabel}`;
       return { cn, en, url: single.url };
     }
     const rsS = sRank > 1 ? `PR${sRank}` : 'PR';
@@ -523,7 +523,7 @@ function combineSameTag(eventsIn: RecordEvent[], getRank: RankFn): FormattedReco
   const tagFlag = tag === 'NR' ? personFlag : '';
   const nameFlag = tag === 'NR' ? '' : personFlag;
   const cn = `${cnPrefix} ${tS}单次${rsS}, ${tA}平均${rsA}${cnEvent}双${typeCnLabel}${tagFlag}${displayTag} ${cnName}${nameFlag} | ${cnCompLabel}`;
-  const en = `${enPrefix} ${tS} Single${rsSEn}, ${tA} ${avgEn}${rsAEn} ${enEvent}${tagFlag || ' '}Double ${typeEnLabel} ${enName}${nameFlag} | ${enCompLabel}`;
+  const en = `${enPrefix} ${tS}${rsSEn} Single, ${tA}${rsAEn} ${avgEn} ${enEvent}${tagFlag || ' '}Double ${typeEnLabel} ${enName}${nameFlag} | ${enCompLabel}`;
   return { cn, en, url: single.url };
 }
 

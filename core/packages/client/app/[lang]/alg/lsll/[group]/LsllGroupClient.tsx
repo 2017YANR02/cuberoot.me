@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /alg/lsll/[group] — 大类内浏览。
@@ -20,7 +21,6 @@ import { tr, T } from '@/i18n/tr';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import {
   categoryBySlug, enumerateCategory, unpackState, classify, caseFacelets, keyToString, displayState,
 } from '@/lib/lsll/model';
@@ -147,14 +147,15 @@ export default function LsllGroupClient() {
             {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
           </span></span>
         </h1>
-        <PillToggle
-          className="alg-view-toggle"
-          value={twoLook}
-          onChange={(v) => setCls(v ? '3' : '2')}
-          offLabel={tr({ zh: '一步', en: 'One-look' })}
-          onLabel={tr({ zh: '两步', en: 'Two-look' })}
-          ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
-        />
+        <select
+          value={String(twoLook)}
+          onChange={event => { const v = event.currentTarget.value === 'true'; setCls(v ? '3' : '2'); }}
+          aria-label={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
+          className={['native-select', "alg-view-toggle"].filter(Boolean).join(' ')}
+        >
+          <option value="true">{tr({ zh: '两步', en: 'Two-look' })}</option>
+          <option value="false">{tr({ zh: '一步', en: 'One-look' })}</option>
+        </select>
         {!twoLook && (
           <AlgListSettings
             view={view}

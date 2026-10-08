@@ -1,4 +1,5 @@
 'use client';
+import '../compact-select.css';
 
 /**
  * DailyStatsPanel —— 一天练下来是什么样,和上一次练比怎么样。
@@ -27,7 +28,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
-import { TimerPillToggle as PillToggle } from '../TimerPillToggle';
 import { useWorkspaceText } from './localization';
 
 import { averageSolveMetrics } from '@cuberoot/shared/timer';
@@ -169,13 +169,15 @@ export default function DailyStatsPanel({ solves, event }: Props) {
             {tr({ zh: `全部 ${days.length} 天`, en: `All ${days.length} days` })}
           </span>
         )}
-        <PillToggle
-          value={wholeDay}
-          onChange={setWholeDay}
-          onLabel={tr({ zh: '日', en: 'Day' })}
-          offLabel={tr({ zh: '总', en: 'All' })}
-          ariaLabel={tr({ zh: '按天看还是看全部', en: 'Per day or all-time' })}
-        />
+        <select
+          value={String(wholeDay)}
+          onChange={event => setWholeDay(event.currentTarget.value === 'true')}
+          aria-label={tr({ zh: '按天看还是看全部', en: 'Per day or all-time' })}
+          className="native-select"
+        >
+          <option value="true">{tr({ zh: '日', en: 'Day' })}</option>
+          <option value="false">{tr({ zh: '总', en: 'All' })}</option>
+        </select>
       </div>
 
       {/* 「总」那一档没有「上一次」可比,第三列整个不发 —— 留一列空的在那儿只是

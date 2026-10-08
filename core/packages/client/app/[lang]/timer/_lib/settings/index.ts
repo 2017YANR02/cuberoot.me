@@ -65,7 +65,7 @@ export interface TimerSettings extends
   /** 0..1 master volume. */
   volume: number;
 
-  /** Show the development-only fake-cube controls in the timer topbar. */
+  /** Show the development-only fake-cube entry in the device menu. */
   showDevFakeCube: boolean;
 
   /** Scale factor for the big timer display (0.5..2). */

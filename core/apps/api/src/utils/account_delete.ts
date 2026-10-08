@@ -148,6 +148,7 @@ export const NOT_USER_OWNED: Readonly<Record<string, string>> = {
   wca_pr_streaks: 'WCA 官方成绩派生的公开统计，不属于站内账号私有数据',
   apple_membership_accounts: 'Apple 交易归属凭证：注销时外键置空，保留交易对账且禁止收据转绑其他账号',
   google_membership_accounts: 'Google Play 购买归属：注销时外键置空，保留对账证据并禁止购买转绑其他账号',
+  account_face_attempts: '实名认证记录通过 user_id 外键随账号级联删除，不随账号合并迁移',
   app_users: '账号本体,最后整行删',
   role_preview_profiles: '专用测试身份映射随账号级联删除',
   role_preview_sessions: '角色测试审计保留，实际操作者与测试账号删除时外键置空',

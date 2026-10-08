@@ -34,7 +34,7 @@ process.stdin.on('end', () => {
   if (CHECKBOX.test(text) && !/allow-checkbox/.test(text)) {
     deny(
       '裸 <input type="checkbox">(☑)被禁止:布尔开关一律用 <BoolToggle>(左文字 + 右滑钮,' +
-        "import BoolToggle from '@/components/BoolToggle')。二选一用 PillToggle 的 onLabel/offLabel。" +
+        "import BoolToggle from '@/components/BoolToggle')。二选一用 浏览器原生 select 下拉菜单。" +
         '确属多选网格/列表的特例:在该处加行内注释 allow-checkbox: <理由>。详见 /dev/components。',
     );
   }

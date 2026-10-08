@@ -262,7 +262,7 @@ export function timerScrambleClickEffect(
 /** Exact SettingsPanel order within each of the eight categories. */
 export const TIMER_SETTING_FIELD_CONTRACTS = [
   // Timing
-  { id: 'settings.timer.enabled', category: 'timer', copy: { en: 'Timing', zh: '计时' }, storagePath: 'timingEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-timing-enabled' },
+  { id: 'settings.timer.enabled', category: 'timer', copy: { en: 'Timing mode', zh: '计时模式' }, storagePath: 'timingEnabled', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-timing-enabled' },
   { id: 'settings.timer.inspection', category: 'timer', copy: { en: 'WCA inspection', zh: 'WCA 观察' }, storagePath: 'inspectionSec', value: { kind: 'enum', values: [0, 15] }, visibility: 'always', disabledWhen: 'never', effect: 'persist-inspection-seconds' },
   { id: 'settings.timer.hold-threshold', category: 'timer', copy: { en: 'Hold threshold (ms)', zh: '按住阈值（毫秒）' }, storagePath: 'holdMs', value: { kind: 'integer', min: 100, max: 2000, step: 50 }, visibility: 'always', disabledWhen: 'never', effect: 'persist-hold-threshold' },
   { id: 'settings.timer.auto-session-for-event', category: 'timer', copy: { en: 'Match session when changing event', zh: '切换项目时匹配分组' }, storagePath: 'autoSessionForEvent', value: bool, visibility: 'always', disabledWhen: 'never', effect: 'persist-auto-session-for-event' },

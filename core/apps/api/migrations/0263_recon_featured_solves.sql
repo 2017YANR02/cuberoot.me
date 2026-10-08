@@ -1,0 +1,4 @@
+CREATE TABLE recon_featured_solves (
+  recon_id INTEGER PRIMARY KEY REFERENCES recons(id) ON DELETE CASCADE,
+  featured_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

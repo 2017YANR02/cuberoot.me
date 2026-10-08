@@ -118,12 +118,12 @@ export const CATALOG: UtilEntry[] = [
     en: 'Shared membership and BP benefit copy with stable SSR, optional English and post-save updates.',
   },
   {
-    name: 'pickedSids / customMaskFn',
-    sig: 'pickedSids(cube: Cube, positionIndex: number, worldFace: number, grain: PickGrain): StickerId[]; customMaskFn(order: number, mask: string, pick?: CustomTreatment, rest?: CustomTreatment): StickeringMaskFn | null',
-    imp: "import { pickedSids, customMaskFn } from '@/components/sim-embed/customStickering';",
+    name: 'pickedSids / customMaskFn / paintSids / CustomMaskHistory',
+    sig: 'pickedSids(cube, positionIndex, worldFace, grain): StickerId[]; customMaskFn(order, mask, pick?: CustomBrush, rest?): StickeringMaskFn | null; paintSids(mask, sids, brush, legacyPick?): string; new CustomMaskHistory(snapshot)',
+    imp: "import { pickedSids, customMaskFn, paintSids, CustomMaskHistory } from '@/components/sim-embed/customStickering';",
     category: 'cube',
-    zh: '将三维命中位置转换为原始贴纸身份，并生成随块移动的高亮遮罩；模拟器和图论页共用。',
-    en: 'Resolve 3D hits to original sticker identities and build piece-following highlight masks, shared by the simulator and graph page.',
+    zh: '将三维命中位置转换为原始贴纸身份，支持逐格画笔、橡皮擦及独立撤销／重做，生成随块移动的遮罩。',
+    en: 'Resolve 3D hits to original sticker identities, apply per-sticker brushes or erasing, and track separate undo/redo history for piece-following masks.',
   },
   {
     name: 'useTrainingStats',
@@ -523,6 +523,14 @@ export const CATALOG: UtilEntry[] = [
     category: 'wca',
     zh: '比赛名:去 WCA 前缀 + 中文名回退(走 cubing.com)。opts.date = 页面上已经显示的该场日期/年份,传了就剥掉名字里重复的年号(单一实现 stripCompYear);页面没显示年份就别传。',
     en: 'Competition name: strip the WCA prefix and fall back to the Chinese name. opts.date is the comp date/year already shown on the page — pass it and the duplicated year is stripped from the name (single implementation: stripCompYear); omit it where no year is shown.',
+  },
+  {
+    name: 'createCompNameEnResolver',
+    sig: 'createCompNameEnResolver(names: Readonly<Record<string, string>>): (name: string) => string',
+    imp: "import { createCompNameEnResolver } from '@cuberoot/shared/comp-localize';",
+    category: 'wca',
+    zh: '从比赛名称映射反查英文，兼容完整中文名与展示简称，保留年份以区分不同届比赛。',
+    en: 'Resolve English competition names from official or shortened Chinese names, retaining years to distinguish editions.',
   },
   {
     name: 'unofficialAoN',

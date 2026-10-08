@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 顶尖选手近期比赛追踪页 — 日历视图
@@ -63,7 +64,6 @@ import { CompCuberPicker } from '@/components/CompCuberPicker';
 import { CompCardWithRounds, wcaRoundsSeed } from '@/components/CompCardWithRounds';
 import OnThisDayModal from './_components/OnThisDayModal';
 import MonthGrid from '@/components/MonthGrid';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { useCompFollows } from '@/components/CompFollow';
 import { useAuthStore, useOwnerKey } from '@/lib/auth-store';
@@ -93,7 +93,6 @@ function decodeEntities(s: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&amp;/g, '&');
 }
-
 
 // ── 类型定义 ──────────────────────────────────────────────────────────────
 
@@ -630,7 +629,7 @@ type ViewMode = 'calendar' | 'card' | 'list' | 'globe';
 const VIEW_MODES: ViewMode[] = ['calendar', 'card', 'list', 'globe'];
 
 // 日历视图的两种排布:'comp' = 每场比赛一条 event-bar(原 calendar);'country' = 同国当天聚成一面国旗(原 compact)。
-// 由 month-bar 的 PillToggle 切换,取代原先独立的「紧凑」视图图标。
+// 由 month-bar 的原生下拉菜单切换,取代原先独立的「紧凑」视图图标。
 type CalLayout = 'comp' | 'country';
 const CAL_LAYOUTS: CalLayout[] = ['comp', 'country'];
 
@@ -2227,14 +2226,15 @@ function CalendarPageInner() {
           </button>
         </div>
         {viewMode === 'calendar' && (
-          <PillToggle
-            className="cal-layout-toggle"
-            value={calLayout === 'country'}
-            onChange={(v) => setCalLayout(v ? 'country' : 'comp')}
-            offLabel={tr({ zh: '比赛', en: 'Comps' })}
-            onLabel={tr({ zh: '国家', en: 'Countries' })}
-            ariaLabel={tr({ zh: '日历布局:按比赛或按国家', en: 'Calendar layout: by competition or by country' })}
-          />
+          <select
+            value={String(calLayout === 'country')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setCalLayout(v ? 'country' : 'comp'); }}
+            aria-label={tr({ zh: '日历布局:按比赛或按国家', en: 'Calendar layout: by competition or by country' })}
+            className={['native-select', "cal-layout-toggle"].filter(Boolean).join(' ')}
+          >
+            <option value="true">{tr({ zh: '国家', en: 'Countries' })}</option>
+            <option value="false">{tr({ zh: '比赛', en: 'Comps' })}</option>
+          </select>
         )}
         {(viewMode === 'calendar' || viewMode === 'card') && (
           <div className="month-nav">
@@ -2504,7 +2504,6 @@ function CalendarPageInner() {
       {allError && mode === 'all' && (
         <div className="mode-status is-error">{allError}</div>
       )}
-
 
       {viewMode === 'list' && (
         <CompList

@@ -71,7 +71,11 @@ describe('shared training settings and persisted runtime', () => {
     expect(snapshot.targetMsByEvent['333']).toBe(62_500);
     expect(input.value).toBe('1:02.50');
     expect(container.querySelector('[data-setting-id="settings.training.round-format"]')).toBeNull();
-    await act(async () => container.querySelector<HTMLButtonElement>('[data-setting-id="settings.training.round-enabled"] button')!.click());
+    await act(async () => {
+      const select = container.querySelector<HTMLSelectElement>('[data-setting-id="settings.training.round-enabled"] select')!;
+      select.value = 'true';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     expect(snapshot.round.on).toBe(true);
     expect(container.querySelectorAll('[data-setting-id^="settings.training.round-"]')).toHaveLength(5);
     expect(parseTargetTime('')).toBeNull();
@@ -89,7 +93,7 @@ describe('shared training settings and persisted runtime', () => {
     expect(container.querySelector('.timer-target-indicator')?.classList.contains('overshot')).toBe(true);
   });
 
-  it('merges blur then toggle on the latest queued round despite delayed persistence', async () => {
+  it('merges blur then selection on the latest queued round despite delayed persistence', async () => {
     let release!: () => void;
     const barrier = new Promise<void>(resolve => { release = resolve; });
     class DelayedDriver extends Driver {
@@ -115,7 +119,9 @@ describe('shared training settings and persisted runtime', () => {
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(input, '12.5');
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
-      container.querySelector<HTMLButtonElement>('[data-setting-id="settings.training.round-cumulative"] button')!.click();
+      const select = container.querySelector<HTMLSelectElement>('[data-setting-id="settings.training.round-cumulative"] select')!;
+      select.value = 'true';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
     });
     expect(pending).toHaveLength(2);
     const limit = container.querySelector<HTMLInputElement>('[data-setting-id="settings.training.round-time-limit"] input')!;

@@ -411,8 +411,8 @@
     gap: 0.75rem;
     margin: 0.5rem 0 0.75rem;
 }
-/* 比赛/国家 布局切换 PillToggle:宽度走 base 默认(贴合文字),这里只把高度对齐工具栏图标行 */
-.calendar-page .cal-layout-toggle {
+/* 比赛/国家布局使用统一下拉菜单，与工具栏高度对齐。 */
+.calendar-page .native-select.cal-layout-toggle {
     height: 30px;
 }
 .calendar-page .month-nav {

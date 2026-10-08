@@ -111,8 +111,6 @@ export default function PuzzleDrawWorkspace({
             />
           </label>
         )}
-        <p>{t('先选颜色，再点贴纸上色。透明色可删除填色。',
-          'Choose a colour, then tap stickers to paint. Use transparent to erase.')}</p>
       </div>
 
       <div className="sim-draw-panel" hidden={current !== 'cube'}>

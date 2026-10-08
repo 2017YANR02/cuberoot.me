@@ -23,18 +23,28 @@ const LEGACY_SIM_PUZZLES = [
 ] as const;
 
 describe('sim puzzle registry membership', () => {
-  it('keeps all 16 legacy puzzles in order and adds SQ2, SQ4, Duo and Ghost', () => {
+  it('keeps all 16 legacy puzzles in order and adds SQ2, SQ4, Duo, Ghost and Sphere', () => {
     const actual = SIM_FIXED_PUZZLE_OPTIONS.map((option) => option.value);
     const legacy = new Set<string>(LEGACY_SIM_PUZZLES);
 
     expect(new Set(actual).size).toBe(actual.length);
     expect(actual.filter((puzzle) => legacy.has(puzzle))).toEqual(LEGACY_SIM_PUZZLES);
-    expect(actual.filter((puzzle) => !legacy.has(puzzle))).toEqual(['sq2', 'sq4', 'pyraminx_duo', 'ghost']);
-    expect(actual).toHaveLength(LEGACY_SIM_PUZZLES.length + 4);
+    expect(actual.filter((puzzle) => !legacy.has(puzzle))).toEqual(['sq2', 'sq4', 'pyraminx_duo', 'ghost', 'sphere']);
+    expect(actual).toHaveLength(LEGACY_SIM_PUZZLES.length + 5);
   });
 
-  it.each(['sq2', 'sq4', 'pyraminx_duo', 'ghost'] as const)('%s uses the active simulator engine', (puzzle) => {
+  it.each(['sq2', 'sq4', 'pyraminx_duo', 'ghost', 'sphere'] as const)('%s uses the active simulator engine', (puzzle) => {
     expect(resolveCaps(puzzle, 'group').engineActive).toBe(true);
+  });
+
+  it('keeps sphere on ordinary 3x3 reconstruction rules and gates unsupported surface controls', () => {
+    expect(reconEventForSim('sphere')).toBe('3x3');
+    expect(resolveCaps('sphere', 'group').supports).toMatchObject({
+      faceColors: true, scale: true, sensitivity: true, holdPartialTurn: true,
+      thickness: false, hollow: false, hint: false, coreColor: false, coreFinish: false,
+      logo: false, arrow: false, pictureCube: false, roomCube: false, hands: false,
+      structureColor: false, stickering: false,
+    });
   });
 
   it.each(['sq2', 'sq4', 'pyraminx_duo', 'ghost'] as const)('%s has no reconstruction event', (puzzle) => {

@@ -12,6 +12,27 @@ const drawCanvasCss = readFileSync(
 );
 
 describe('renderDrawSvg', () => {
+  it('shows inactive shape toggles only in the editor and exports selected shapes at full opacity', () => {
+    const options = {
+      viewBox: '0 0 20 10', width: 200, height: 100,
+      elements: [
+        { key: 'off', d: 'M0 0H10V10Z', toggle: { selected: false, label: 'Left' } },
+        { key: 'on', d: 'M10 0H20V10Z', toggle: { selected: true, label: 'Right' } },
+      ],
+      colors: { on: '#ff0000' },
+    };
+    const preview = renderDrawSvg({ ...options, interactive: true });
+    expect(preview).toContain('aria-label="Left" aria-pressed="false" opacity="0.22"');
+    expect(preview).toContain('aria-label="Right" aria-pressed="true"');
+    expect(preview).toContain('role="button" tabindex="0"');
+    const exported = renderDrawSvg(options);
+    expect(exported).not.toContain('data-draw-key="off"');
+    expect(exported).toContain('data-draw-key="on"');
+    expect(exported).toContain('fill="#ff0000"');
+    expect(exported).not.toContain('opacity=');
+    expect(exported).not.toContain('data-draw-toggle');
+  });
+
   it('emits the same paint document used by preview and export', () => {
     const svg = renderDrawSvg({
       viewBox: '0 0 20 10',

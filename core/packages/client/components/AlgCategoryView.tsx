@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * AlgCategoryView — full port of packages/client-vite/src/pages/alg/AlgCategoryPage.tsx.
@@ -46,7 +47,6 @@ import SortableAlgRow from '@/components/SortableAlgRow';
 import SortableCard from '@/components/SortableCard';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import AlgListSettings, { useAlgCaseNumberVisibility } from '@/components/AlgListSettings';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
 import { useCopy } from '@/hooks/useCopy';
@@ -291,7 +291,6 @@ function AlgRow({ entry, puzzle, set, invalid, notationStyle, viewAngle, ohHand,
     </div>
   );
 }
-
 
 /**
  * umbrella set 的落地页(`/alg/<p>/<set>`)。
@@ -1454,13 +1453,15 @@ export default function AlgCategoryView({ puzzleParam, set, subgroupParam, initi
       {data && !showSubgroupPicker && !showSubSubgroupPicker && isSq1Ep && (
         <div className="alg-ep-options">
           <div className="alg-ep-toggle-row">
-            <PillToggle
-              value={sq1EpNumericNames}
-              onChange={setSq1EpNumericNames}
-              offLabel={tr({ zh: '英文命名', en: 'English names' })}
-              onLabel={tr({ zh: '数字命名', en: 'Numeric names' })}
-              ariaLabel={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
-            />
+            <select
+              value={String(sq1EpNumericNames)}
+              onChange={event => setSq1EpNumericNames(event.currentTarget.value === 'true')}
+              aria-label={tr({ zh: '切换 SQ1 EP 命名方式', en: 'Switch SQ1 EP naming system' })}
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: '数字命名', en: 'Numeric names' })}</option>
+              <option value="false">{tr({ zh: '英文命名', en: 'English names' })}</option>
+            </select>
             <InfoTooltip
               icon={HelpCircle}
               iconSize={16}

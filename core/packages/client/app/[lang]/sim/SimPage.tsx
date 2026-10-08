@@ -46,6 +46,7 @@ import { exportSimSvgSchematic, hasSchematicFacelets } from './sim_svg_export_sc
 import { renderCubeNetSvg } from '@/lib/cube-net-svg';
 import { exportSimPlanSvg } from './sim_plan_export';
 import type Cube from './engine/nxn/cube';
+import { engineHomeSid } from './engine/nxn/netIndex';
 import {
   countPictureFaces, renderPictureCubeNetSvg,
 } from './engine/nxn/pictureCube';
@@ -109,7 +110,8 @@ import GroupTheoryPanel, { type SimWorldView } from './GroupTheoryPanel';
 import { nxnHasPgKernel } from './engine/nxn/nxnPgBridge';
 import { stickeringMaskFn, type StickeringMaskFn } from './engine/nxn/stickering';
 import {
-  CUSTOM_STICKERING, CUSTOM_TREATMENTS, customMaskFn, pickedSids, toggleSids, type PickGrain,
+  CUSTOM_STICKERING, CUSTOM_TREATMENTS, CUSTOM_BRUSHES, customMaskFn, pickedSids, paintSids, CustomMaskHistory,
+  type CustomMaskSnapshot, type PickGrain,
 } from '@/components/sim-embed/customStickering';
 import { resolveStageMaskFn, visualcubeMaskForStickering } from './engine/nxn/vcStageMask';
 import { isPresetMask, presetMaskFn } from './engine/nxn/maskConfig';
@@ -208,14 +210,14 @@ const SR_ANGLE_BASE: Partial<Record<PuzzleType, {
 
 /** Engine puzzle kinds that have a PG group-theory binding (kept in sync with the
  *  pgBindings registry + GroupTheoryPanel.PG_BOUND). Gates the `renderer='group'` panel. */
-const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2']);
+const PG_BOUND_KINDS = new Set<string>(['pyraminx', 'skewb', 'dino', 'heli', 'megaminx', 'fto', 'redi', 'ivy', 'rex', 'mirror', 'mirror2', 'sphere']);
 
 /** Narrow `world.cube` to the NxN Cube type. Returns null for every non-NxN engine puzzle.
- *  正向判断(NxN = 数字阶数 或 镜面),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
+ *  正向判断(NxN = 数字阶数、镜面、球形),不再用排除法枚举 —— 旧写法漏了 'pyraminx',
  *  stickering effect 对 PyraCube 取 instancedRenderer 直接崩整页(?puzzle=pyraminx 白屏)。 */
 function asNxN(world: World): Cube | null {
   const k = world.puzzleKind;
-  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2') ? (world.cube as Cube) : null;
+  return (typeof k === 'number' || k === 'mirror' || k === 'mirror2' || k === 'sphere') ? (world.cube as Cube) : null;
 }
 
 /** 3x3 sticker click rules. See Vite original for the geometry derivation. */
@@ -303,12 +305,11 @@ export default function SimPage() {
       // 阶段配色朝向(整体转前缀,lib/cube-orientation 的 24 档):遮罩位置不变,
       // 只重贴六面颜色。默认 ''(UF,恒等)省略;仅 NxN 引擎遮罩消费。
       stickeringRot: parseAsString.withDefault(''),
-      // 自定义阶段(stickering=custom)选中的贴纸清单,mask-core 的 `U:0,2;F:3-5`
-      // DSL,写在还原帧 → 可分享。选取粒度/编辑开关是临时的作图状态,不进 URL。
+      // 自定义阶段的本位贴纸样式，可分享。旧链接 U:0,2;F:3-5 使用 stickeringPick；
+      // 新画笔 regular=U:0,2|dim=F:3-5 将各格样式单独保存。
       stickeringMask: parseAsString.withDefault(''),
-      // 自定义阶段的画法:选中的 / 其余的各自保原色(regular)、压暗(dim)还是置灰
-      // (ignored)。默认「选中原色 + 其余灰」;换成「其余暗」就是 CLL 那类预设的层次。
-      stickeringPick: parseAsStringEnum([...CUSTOM_TREATMENTS]).withDefault('regular'),
+      // 当前画笔(同时兼容旧链接的统一样式)与未设置贴纸的默认样式。
+      stickeringPick: parseAsStringEnum([...CUSTOM_BRUSHES]).withDefault('regular'),
       stickeringRest: parseAsStringEnum([...CUSTOM_TREATMENTS]).withDefault('ignored'),
     },
     { history: 'replace', scroll: false },
@@ -335,7 +336,7 @@ export default function SimPage() {
     if (raw === 'fto') return 'fto';
     if (raw === 'ghost') return 'ghost';
     if (raw === 'custom') return 'custom';
-    if (raw === 'mirror' || raw === 'mirror2') return raw;
+    if (raw === 'mirror' || raw === 'mirror2' || raw === 'sphere') return raw;
     if (raw === 'clock') return 'clock';
     if (isPgPuzzleId(raw)) return raw as SimPuzzle;
     const n = parseInt(raw, 10);
@@ -452,7 +453,10 @@ export default function SimPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const twistyPlayerRef = useRef<any>(null);
 
-  const [order, setOrder] = useState<number>(3);
+  const [orderState, setOrder] = useState<number>(3);
+  // Pin the UI's logical order during the render that changes the URL too, before
+  // the world-sync effect runs (e.g. selecting sphere while a 2×2 is active).
+  const order = puzzleParam === 'sphere' ? 3 : orderState;
   const puzzleKind = puzzleParam;
   const [fullscreen, setFullscreen] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -481,6 +485,9 @@ export default function SimPage() {
   }, [fullscreen]);
 
   const [worldTick, setWorldTick] = useState(0);
+  // Publish only after setPuzzle + settings have completed. The URL changes before
+  // that parent effect; children must not replay the new puzzle on the old cube.
+  const [activeCube, setActiveCube] = useState<World['cube'] | null>(null);
   const [settings, setSettings] = useState<SimSettings>(() => {
     const saved = loadSettings();
     if (!query.anchor) return saved;
@@ -550,10 +557,38 @@ export default function SimPage() {
   const settingsRef = useRef(settings);
   useEffect(() => { settingsRef.current = settings; }, [settings]);
 
-  // 自定义阶段的作图状态:编辑开关 + 选取粒度。都是临时的「怎么解释点击」,不进 URL
+  // 自定义阶段的选取粒度是临时的「怎么解释点击」,不进 URL
   // (进 URL 的只有选中清单 stickeringMask —— 那才是可分享的内容)。
-  const [customEditing, setCustomEditing] = useState(true);
   const [customGrain, setCustomGrain] = useState<PickGrain>('sticker');
+  const paintSnapshot = useMemo<CustomMaskSnapshot>(() => ({
+    mask: paintSids(query.stickeringMask, [], query.stickeringPick, query.stickeringPick),
+    rest: query.stickeringRest,
+  }), [query.stickeringMask, query.stickeringPick, query.stickeringRest]);
+  const maskHistory = useRef({ puzzle: puzzleParam, history: new CustomMaskHistory(paintSnapshot) });
+  const [, refreshMaskHistory] = useState(0);
+  // Navigation and puzzle changes start a new history; local writes already set current.
+  useEffect(() => {
+    const state = maskHistory.current;
+    if (state.puzzle !== puzzleParam || !state.history.matches(paintSnapshot)) {
+      maskHistory.current = { puzzle: puzzleParam, history: new CustomMaskHistory(paintSnapshot) };
+      refreshMaskHistory(n => n + 1);
+    }
+  }, [puzzleParam, paintSnapshot]);
+  const writeCustomMask = useCallback((next: CustomMaskSnapshot) => {
+    setQuery({ stickeringMask: next.mask || null, stickeringRest: next.rest });
+    refreshMaskHistory(n => n + 1);
+  }, [setQuery]);
+  const recordCustomMask = useCallback((next: CustomMaskSnapshot) => {
+    if (maskHistory.current.history.record(next)) writeCustomMask(next);
+  }, [writeCustomMask]);
+  const undoCustomMask = useCallback(() => {
+    const next = maskHistory.current.history.undo();
+    if (next) writeCustomMask(next);
+  }, [writeCustomMask]);
+  const redoCustomMask = useCallback(() => {
+    const next = maskHistory.current.history.redo();
+    if (next) writeCustomMask(next);
+  }, [writeCustomMask]);
   // 点击处理装在 world 初始化的闭包里(只注册一次),要读最新状态只能过 ref。
   const customPickRef = useRef<((idx: number, face: FACE) => void) | null>(null);
 
@@ -611,9 +646,9 @@ export default function SimPage() {
   // full puzzle before the first engine frame arrives.
   const stickeringAffectsView = query.stickering !== 'full'
     && resolveCaps(puzzleParam, query.renderer).supports.stickering;
-  const staticFallbackExact = !stickeringAffectsView
+  const staticFallbackExact = puzzleParam !== 'sphere' && (!stickeringAffectsView
     || (typeof puzzleParam === 'number'
-      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== '');
+      && visualcubeMaskForStickering(puzzleParam, query.stickering) !== ''));
 
   // trans(X 光)不是单纯换张伴图,而是接管内核外观的预设:选中时内核色 / 内核不透明度
   // 由 TRANS_CORE 顶掉,3D 与伴图同吃这一份 —— 否则会出现「大魔方实心、小图半透明」。
@@ -1304,6 +1339,7 @@ export default function SimPage() {
         world.disposeSquareFamilyCubes();
         world.disposeGhostCube();
         world.disposeDuoCube();
+        world.disposeSphereCube();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);
@@ -1347,17 +1383,20 @@ export default function SimPage() {
 
   const applyPuzzle = useCallback((kind: SimPuzzle) => {
     if (typeof kind === 'number') setOrder(kind);
-    // A Mirror Cube is an NxN under the hood — pin `order` to its logical order so the
+    // Shape variants are NxN under the hood — pin `order` to their logical order so the
     // NxN scramble/play path (which reads `order`) drives a standard 3x3 / 2x2.
-    else if (kind === 'mirror') setOrder(3);
+    else if (kind === 'mirror' || kind === 'sphere') setOrder(3);
     else if (kind === 'mirror2') setOrder(2);
     const world = worldRef.current;
     const wk = kind as PuzzleKind; // narrowed at runtime: number / sq1 / … / heli / 'skewb'
-    if (!world || world.puzzleKind === wk) return;
-    world.setPuzzle(wk);
-    wasCompleteRef.current = true;
-    ensureCubeCallback();
-    applySettings(world, renderSettingsRef.current);
+    if (!world) return;
+    if (world.puzzleKind !== wk) {
+      world.setPuzzle(wk);
+      wasCompleteRef.current = true;
+      ensureCubeCallback();
+      applySettings(world, renderSettingsRef.current);
+    }
+    setActiveCube(world.cube);
   }, [ensureCubeCallback]);
 
   // URL is the sole puzzle-state entry point. Keeping user requests separate from
@@ -1418,19 +1457,19 @@ export default function SimPage() {
     if (!cube) return;
     cube.instancedRenderer.setStickering(stickeringMaskFor(cube));
     cube.instancedRenderer.setFaceColorOverride(
-      query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
+      typeof puzzleParam === 'number' && query.stickeringRot && query.stickering !== 'full' && query.stickering !== CUSTOM_STICKERING
         ? orientedCubeFaceColors(query.stickeringRot, settings.faceColors)
         : null,
     );
-  }, [twisty, worldTick, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
+  }, [twisty, worldTick, puzzleParam, stickeringMaskFor, query.stickering, query.stickeringRot, settings.faceColors]);
 
-  // 自定义阶段编辑态:点击 = 选贴纸,且拖拽一律转视角(paintMode)——不然点歪一点
-  // 就当成拖层把魔方拧了。关掉编辑后立刻还原成正常的点击转层。
+  // 自定义阶段直接使用画笔，拖拽转视角(paintMode)，避免点歪时拧动魔方。
+  // 切换其他阶段后恢复正常转层。
   useEffect(() => {
     const world = worldRef.current;
     if (!world) return;
     const active = !twisty && typeof puzzleParam === 'number'
-      && query.stickering === CUSTOM_STICKERING && customEditing;
+      && query.stickering === CUSTOM_STICKERING;
     if (!active) {
       customPickRef.current = null;
       world.controller.paintMode = false;
@@ -1443,14 +1482,62 @@ export default function SimPage() {
       const sids = pickedSids(cube, idx, face, customGrain);
       if (sids.length === 0) return;
       // 清空后写 null,让默认值把参数从 URL 里摘掉。
-      setQuery({ stickeringMask: toggleSids(query.stickeringMask, sids) || null });
+      const current = maskHistory.current.history.current;
+      recordCustomMask({ ...current, mask: paintSids(current.mask, sids, query.stickeringPick) });
     };
     return () => {
       customPickRef.current = null;
       world.controller.paintMode = false;
     };
   }, [twisty, worldTick, puzzleParam, query.stickering, query.stickeringMask,
-    customEditing, customGrain, setQuery]);
+    query.stickeringPick, customGrain, recordCustomMask]);
+
+  useEffect(() => {
+    const world = worldRef.current;
+    const canvas = rendererRef.current?.domElement;
+    const cube = world && asNxN(world);
+    if (!world || !canvas || !cube || twisty || typeof puzzleParam !== 'number'
+      || query.stickering !== CUSTOM_STICKERING) return;
+    let lastTarget = '';
+    const clear = () => {
+      if (!lastTarget) return;
+      lastTarget = '';
+      cube.instancedRenderer.setStickerPreview(null);
+      world.dirty = true;
+    };
+    const hover = (event: PointerEvent) => {
+      if (event.pointerType === 'touch' || event.buttons || world.controller.disable
+        || world.controller.dragging || world.controller.rotating || world.controller.orbiting) { clear(); return; }
+      const rect = canvas.getBoundingClientRect();
+      const point = world.controller.move.clone().set(
+        (event.clientX - rect.left) * world.width / rect.width,
+        (event.clientY - rect.top) * world.height / rect.height,
+      );
+      const hit = world.controller.hitTest(point);
+      const sids = hit ? pickedSids(cube, hit.index, hit.face, customGrain) : [];
+      const target = sids.join(',');
+      if (target === lastTarget) return;
+      lastTarget = target;
+      const ids = new Set(sids);
+      cube.instancedRenderer.setStickerPreview(ids.size ? (initial, face) => ids.has(engineHomeSid(initial, face, cube.order)) : null);
+      world.dirty = true;
+    };
+    canvas.addEventListener('pointermove', hover);
+    canvas.addEventListener('pointerdown', clear);
+    canvas.addEventListener('pointerleave', clear);
+    canvas.addEventListener('pointercancel', clear);
+    canvas.addEventListener('wheel', clear);
+    window.addEventListener('keydown', clear);
+    return () => {
+      clear();
+      canvas.removeEventListener('pointermove', hover);
+      canvas.removeEventListener('pointerdown', clear);
+      canvas.removeEventListener('pointerleave', clear);
+      canvas.removeEventListener('pointercancel', clear);
+      canvas.removeEventListener('wheel', clear);
+      window.removeEventListener('keydown', clear);
+    };
+  }, [twisty, worldTick, puzzleParam, query.stickering, customGrain]);
 
   const prevSettingsRef = useRef<SimSettings | null>(null);
   useEffect(() => {
@@ -1498,16 +1585,18 @@ export default function SimPage() {
   }, [renderSettings]);
 
   const handleUndo = useCallback(() => {
+    if (query.stickering === CUSTOM_STICKERING && typeof puzzleParam === 'number') { undoCustomMask(); return; }
     const world = worldRef.current;
     if (!world) return;
     world.cube.twister.undo();
-  }, []);
+  }, [query.stickering, puzzleParam, undoCustomMask]);
 
   const handleRedo = useCallback(() => {
+    if (query.stickering === CUSTOM_STICKERING && typeof puzzleParam === 'number') { redoCustomMask(); return; }
     const world = worldRef.current;
     if (!world) return;
     world.cube.twister.redo();
-  }, []);
+  }, [query.stickering, puzzleParam, redoCustomMask]);
 
   // Swap the main view with the back-view mini window: spin the camera 180°
   // about the vertical axis so the face that was behind comes to the front
@@ -1568,6 +1657,8 @@ export default function SimPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
+      // 菜单内编辑与键盘拖拽只操作菜单，不能同时转动魔方。
+      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
       if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyZ')) {
         e.preventDefault();
@@ -1634,10 +1725,10 @@ export default function SimPage() {
   }, [algParam, query.stickering, setQuery, setupParam]);
 
   useEffect(() => {
-    if (query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
+    if (typeof puzzleParam === 'number' && query.stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) {
       setQuery({ setup: DAISY_SETUP });
     }
-  }, [algParam, query.stickering, setQuery, setupParam]);
+  }, [algParam, puzzleParam, query.stickering, setQuery, setupParam]);
 
   const onAlgPick = useCallback((setup: string, alg: string) => {
     const world = worldRef.current;
@@ -1919,6 +2010,13 @@ export default function SimPage() {
         if (sig === exportedSig) return;
         exportedSig = sig;
         try {
+          // The spherical shell uses raw shader colours; the painter exporter
+          // reconstructs those colours on its real curved triangles. A flat NxN
+          // schematic or spec fallback would change the shape.
+          if (world.puzzleKind === 'sphere') {
+            setEngineSvg(exportSimSvg({ world, renderer: rendererRef.current, maxTriangles: MAX_TRIS }));
+            return;
+          }
           // 拼图带示意小面(userData.schematicPoly)→ SR 范式示意导出器:每个小面
           // 独立多边形 + 黑描边,共享棱逐比特重合;其余拼图走实模 BSP 投影。
           if (hasSchematicFacelets(world.scene)) {
@@ -2230,6 +2328,7 @@ export default function SimPage() {
           )}
           <PlayerControls
             world={worldRef.current}
+            activeCube={activeCube}
             clearFrozen={clearPartialFreeze}
             alg={algParam}
             setup={setupParam}
@@ -2304,15 +2403,20 @@ export default function SimPage() {
             stickeringRot={query.stickeringRot}
             onStickeringRotChange={(v) => setQuery({ stickeringRot: v === '' ? null : v })}
             stickeringMask={query.stickeringMask}
-            onStickeringMaskClear={() => setQuery({ stickeringMask: null })}
-            customEditing={customEditing}
-            onCustomEditingChange={setCustomEditing}
+            onStickeringMaskClear={() => recordCustomMask({ ...maskHistory.current.history.current, mask: '' })}
+            onCustomUndo={undoCustomMask}
+            onCustomRedo={redoCustomMask}
+            canCustomUndo={maskHistory.current.history.past.length > 0}
+            canCustomRedo={maskHistory.current.history.future.length > 0}
             customGrain={customGrain}
             onCustomGrainChange={setCustomGrain}
             customPick={query.stickeringPick}
-            onCustomPickChange={(v) => setQuery({ stickeringPick: v })}
+            onCustomPickChange={(v) => setQuery({
+              stickeringMask: paintSids(query.stickeringMask, [], query.stickeringPick, query.stickeringPick) || null,
+              stickeringPick: v,
+            })}
             customRest={query.stickeringRest}
-            onCustomRestChange={(v) => setQuery({ stickeringRest: v })}
+            onCustomRestChange={(v) => recordCustomMask({ ...maskHistory.current.history.current, rest: v })}
           />
           {/* 图像:不再套折叠区。图本身已经浮在画布左上角,侧栏这一段只剩控件 + 导出,
               一个「图像」标题栏既没东西可折叠也没图可指。显隐归浮层自己的 × 和播放条
@@ -2327,14 +2431,6 @@ export default function SimPage() {
             engineOnly={pictureImageStudioEngineOnly}
             compare={imgEngineMode === 'both' && !pictureCubeActive && !roomsActive}
           />
-          {/* 阶段速查整本都是 NxN,只对 cube 露出。 */}
-          {imgPuzzle.puzzleType === 'cube' && (
-            <div className="sim-image-links">
-              <AppLink href="/sim/stages" prefetch={false}>
-                {t('阶段遮罩速查', 'Stage masks')}
-              </AppLink>
-            </div>
-          )}
           {/* Group-theory panel = the visible half of the non-cubing.js view. Shows for any
               PG-bound puzzle that isn't on cubing.js. Pure-engine PG puzzles (dino/heli/NxN)
               have no cubing.js option at all → the panel is always on for them. */}

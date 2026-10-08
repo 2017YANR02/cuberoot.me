@@ -69,6 +69,18 @@
 
 .vc-exports { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 18px; }
 
+.vc-export-menu { position: relative; width: fit-content; align-self: flex-start; }
+.vc-export-formats {
+  /* anchored-panel: clamped — ImageExportMenu uses usePanelClamp. */
+  position: absolute; top: 100%; left: 0; z-index: 20;
+  display: flex; flex-direction: column; width: max-content;
+  max-width: calc(100vw - 16px); padding: 4px;
+  border: 1px solid var(--border-default); border-radius: 4px;
+  background: var(--popover);
+}
+.vc-export-formats .vc-btn { background: transparent; }
+.vc-export-formats .vc-btn:hover { background: var(--vc-hover); }
+
 .vc-controls { display: flex; flex-direction: column; }
 .vc-row {
   display: flex; gap: 14px; align-items: center; padding: 10px 0;

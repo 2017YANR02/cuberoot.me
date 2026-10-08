@@ -95,6 +95,9 @@ import {
   formatMs,
   formatTimerTimingDisplay,
   generateTimerDrillScramble,
+  isCnEligible,
+  TIMER_333_TRAINING_GROUPS,
+  timerPuzzleSelection,
   generateTimerScramble,
   histBack,
   histForward,
@@ -677,7 +680,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     && (auth.loading || auth.busy);
   const randomOptimalKey = randomOptimalRequested
     ? `${randomOptimalOwner}|${effectiveDrillTarget
-      ? `drill:${effectiveDrillTarget.type}:${effectiveDrillTarget.id}`
+      ? `drill:${effectiveDrillTarget.type}:${effectiveDrillTarget.id}|cn:${store?.settings.cnMode ?? 'none'}`
       : randomDifficultySignature
         ? `difficulty:${randomDifficultySignature}`
         : 'normal'}`
@@ -689,7 +692,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       key: randomOptimalKey,
       generateBase: async (signal) => {
         if (target) {
-          const generated = generateTimerDrillScramble(target);
+          const generated = generateTimerDrillScramble(target, Math.random, storeRef.current?.settings.cnMode);
           if (generated) return generated.scramble;
           throw new Error('could not generate optimal drill base state');
         }
@@ -995,6 +998,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       const difficultyIdentity = timerModeRef.current === 1 && source === 'random' && !target
         ? trainerSig(event, randomDifficultySettingsRef.current)
         : '';
+      if (target || (isCnEligible(event) && !difficultyIdentity)) identity += `|cn:${seed?.cnMode ?? 'none'}`;
       const drillIdentity = target
         ? `${identity}|drill:${target.type}:${target.id}`
         : difficultyIdentity
@@ -1407,7 +1411,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
     const target = timerEventSupportsDrill(event) ? drillTargetRef.current : null;
     if (target) {
-      const generated = generateTimerDrillScramble(target);
+      const generated = generateTimerDrillScramble(target, Math.random, storeRef.current?.settings.cnMode);
       replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, generated ? {
         availability: 'ready',
         caseId: event === target.type ? generated.targetCase : null,
@@ -2620,9 +2624,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           scramble,
           targetFacelets: smartCubeTarget,
           orientation: trainingOrientation,
+          cnMode: store?.settings.cnMode,
         }
       : null);
-  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode, trainingOrientation]);
+  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode, trainingOrientation, store?.settings.cnMode]);
 
   useLayoutEffect(() => {
     const connected = smartCube.phase === 'connected';
@@ -3847,6 +3852,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     value={1}
                   />
                   <TimerPuzzlePicker
+                    combineScrambleTypes={timerPuzzleSelection(activeEvent).puzzle === '333'}
                     dataNoTimer
                     disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                     groups={eventPickerGroups}
@@ -3858,6 +3864,19 @@ export function App({ host }: { host: InstalledAppHost }) {
                     selectedEvent={activeEvent}
                   />
                   <TimerScrambleSourceSelect
+                    language={language}
+                    trainingItems={timerPuzzleSelection(activeEvent).puzzle === '333'
+                      ? eventPickerGroups.flatMap(group => group.items)
+                        .filter(item => TIMER_333_TRAINING_GROUPS.some(group => (group.events as readonly string[]).includes(item.id)))
+                        .map(item => ({ value: item.id, label: item.label }))
+                      : []}
+                    trainingValue={timerPuzzleSelection(activeEvent).puzzle === '333' && activeEvent !== '333' ? activeEvent : undefined}
+                    onTrainingChange={id => {
+                      if (!sourceControlsEnabled) return;
+                      invalidateCurrentScramble();
+                      setScrambleSource('random');
+                      selectTimerEvent(id);
+                    }}
                     className="shell-scramble-source-select"
                     disabled={!sourceControlsEnabled}
                     labels={{
@@ -3874,9 +3893,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                         announce(copy.finishAttemptFirst);
                         return;
                       }
-                      if (source === scrambleSourceRef.current) return;
+                      const selection = timerPuzzleSelection(activeEvent);
+                      const leavingTraining = source !== 'manual' && selection.puzzle === '333' && activeEvent !== '333';
+                      if (source === scrambleSourceRef.current && !leavingTraining) return;
                       invalidateCurrentScramble();
                       setScrambleSource(source);
+                      if (leavingTraining) selectTimerEvent('333');
                     }}
                     onOpenChange={handleTimerOverlayOpenChange}
                     open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}

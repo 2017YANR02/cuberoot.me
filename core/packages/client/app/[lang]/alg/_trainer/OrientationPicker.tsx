@@ -190,12 +190,6 @@ export default function OrientationPicker({
               );
             })}
           </div>
-          <div className="trainer-opts-hint">
-            {tr({
-              zh: '点一格 = 这个形状只按那个朝向出题,再点一下放开;可以多选。分组按形状算,所以在 ZBLL 里固定的朝向,练 COLL / OLL 碰到同一个形状也跟着固定',
-              en: 'Tap a tile to serve that shape only in that orientation; tap again to release, and multi-select works. Groups are keyed by the shape itself, so an orientation pinned in ZBLL stays pinned for the same shape in COLL / OLL',
-            })}
-          </div>
         </>
       )}
     </>

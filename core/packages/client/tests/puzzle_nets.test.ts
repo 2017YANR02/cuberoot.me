@@ -6,6 +6,9 @@ import { BABY_FTO } from '@/app/[lang]/scramble/gen/_svg/_nets/baby_fto';
 import { MASTER_TETRAMINX } from '@/app/[lang]/scramble/gen/_svg/_nets/master_tetraminx';
 import { KILOMINX } from '@/app/[lang]/scramble/gen/_svg/_nets/kilominx';
 import { REDI_CUBE } from '@/app/[lang]/scramble/gen/_svg/_nets/redi_cube';
+import { puzzles } from 'cubing/puzzles';
+import { rediScrambleForCubing } from '@cuberoot/shared/timer';
+import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
 
 /**
  * Group-theoretic net regression for the 5 non-WCA puzzles whose scramble preview
@@ -22,6 +25,35 @@ function fills(def: PuzzleNetDef, scramble: string): string[] {
 }
 const tally = (a: string[]): Map<string, number> =>
   a.reduce((m, x) => m.set(x, (m.get(x) ?? 0) + 1), new Map<string, number>());
+
+describe('Redi generator notation and preview', () => {
+  const screenshot = "L' R' L' R L x R L' R L R' x L' R L' R x R L' R' L' x R' L' R' L' R' x R L R' L x L R' L R' x L R' L R L'";
+
+  it.each([
+    ['x', 'x'],
+    ['R x', 'F x'],
+    ["L' x", "UL' x"],
+    ['R x R x R x R x', 'F x F x F x F x'],
+    [screenshot, screenshot.split(' ').map(t => t.replace(/^R/, 'F').replace(/^L/, 'UL')).join(' ')],
+    ["UR D F L R' D F L D UR F' UL UR F' UL' UR F", "UR D F L R' D F L D UR F' UL UR F' UL' UR F"],
+  ])('matches cubing.js for every sticker: %s', async (scramble, canonical) => {
+    expect(rediScrambleForCubing(scramble)).toBe(canonical);
+    const kp = await puzzles.redi_cube.kpuzzle();
+    const expected = kp.defaultPattern().applyAlg(canonical).patternData;
+    const state = applyScramble(REDI_CUBE.group, canonical);
+    for (const [ours, theirs] of [['corners', 'CORNERS'], ['edges', 'EDGES']]) {
+      expect(state[ours].pieces).toEqual(expected[theirs].pieces);
+      expect(state[ours].orient).toEqual(expected[theirs].orientation);
+    }
+    const expectedFills = REDI_CUBE.net.facelets.map(f => {
+      const orbit = expected[f.orbit.toUpperCase()];
+      const n = REDI_CUBE.group.orbits[f.orbit].ori;
+      return REDI_CUBE.net.solvedColor[f.orbit][orbit.pieces[f.piece]][(f.orient - orbit.orientation[f.piece] + n) % n];
+    });
+    const svg = renderScramblePreviewSvg({ event: 'redi_cube', scramble })!;
+    expect([...svg.matchAll(/fill="([^"]+)"/g)].map(m => m[1])).toEqual(expectedFills);
+  });
+});
 
 /** Inverse of a single scramble token, matching the engine's resolveToken rules. */
 function invertToken(t: string): string {

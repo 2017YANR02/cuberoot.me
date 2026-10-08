@@ -472,7 +472,6 @@ export default function AchievementsPage() {
           groups={SIMULATOR_GROUPS}
           actions={[
             { href: '/sim', label: { zh: '打开交互模拟器', en: 'Open the interactive simulator' } },
-            { href: '/sim/stages', label: { zh: '查看阶段与遮罩演示', en: 'Explore stages and masks' } },
           ]}
         />
       </div>

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -13,7 +14,6 @@ import PersonLink from '@/components/PersonLink';
 import WcaEventSelector from '@/components/WcaEventSelector';
 import { WcaPersonPicker } from '@/components/WcaPersonPicker';
 import { CountryInput } from '@/components/CountryInput/CountryInput';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useAuthUser } from '@/lib/auth-store';
 import { getMyMembership } from '@/lib/membership-api';
 import {
@@ -1571,13 +1571,15 @@ export function WcaTeacherCell({ studentWcaId, eventIds, editableEventIds = even
                     : tr({ zh: '填写老师', en: 'Set teacher' })}
               </h2>
               {canChooseLearningSource && (
-                <PillToggle
-                  value={!isSelfTaught}
-                  onChange={(hasTeacher) => setIsSelfTaught(!hasTeacher)}
-                  onLabel={tr({ zh: '有老师', en: 'Teacher' })}
-                  offLabel={tr({ zh: '自学', en: 'Self-taught' })}
-                  ariaLabel={tr({ zh: '选择学习方式', en: 'Select learning source' })}
-                />
+                <select
+                  value={String(!isSelfTaught)}
+                  onChange={event => { const hasTeacher = event.currentTarget.value === 'true'; setIsSelfTaught(!hasTeacher); }}
+                  aria-label={tr({ zh: '选择学习方式', en: 'Select learning source' })}
+                  className="native-select"
+                >
+                  <option value="true">{tr({ zh: '有老师', en: 'Teacher' })}</option>
+                  <option value="false">{tr({ zh: '自学', en: 'Self-taught' })}</option>
+                </select>
               )}
             </div>
             {canChooseLearningSource && !isSelfTaught && (

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 排名 — /wca/results
@@ -38,7 +39,6 @@ import { countryName } from '@/lib/country-name';
 import { EventIcon } from '@/components/EventIcon';
 import { eventDisplayName } from '@/lib/wca-events';
 import { SortArrow } from '@/components/SortArrow';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import { WcaStatView } from '@/components/wca-stats/WcaStatView';
 import { WR_METRICS, RANK_TYPE_IDS, DEFAULT_METRIC_ID } from '@/lib/wr-metrics';
@@ -512,7 +512,6 @@ function AllResultsPageInner() {
     });
   }, []);
 
-
   // 顶层「类型」下拉(单次 / 平均 = 排名口径;其余派生指标 = 嵌入 wr_metric 对应指标视图)。
   // 同时是 排名 ↔ 指标 的切换入口,故各模式(单项 / 名次和 / 空态 / 指标视图)都渲染一份,保证哪都能切。
   // 各模式互斥 → 同时只挂一份,id 不重复。单项里放在「显示」右侧,其余模式作首个控件。
@@ -620,13 +619,15 @@ function AllResultsPageInner() {
         {mode === 'single' && (<>
           <div className="wse-filter wse-filter-show">
             <label>{tr({ zh: '显示', en: 'Show' })}</label>
-            <PillToggle
-              className="wse-pill"
-              value={show === 'persons'}
-              onChange={(v) => handleShowChange(v ? 'persons' : 'results')}
-              onLabel={tr({ zh: '选手', en: 'Persons' })}
-              offLabel={tr({ zh: '成绩', en: 'Results' })}
-            />
+            <select
+              value={String(show === 'persons')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; handleShowChange(v ? 'persons' : 'results'); }}
+              aria-label={tr({ zh: '选手', en: 'Persons' }) + ' / ' + tr({ zh: '成绩', en: 'Results' })}
+              className={['native-select', "wse-pill"].filter(Boolean).join(' ')}
+            >
+              <option value="true">{tr({ zh: '选手', en: 'Persons' })}</option>
+              <option value="false">{tr({ zh: '成绩', en: 'Results' })}</option>
+            </select>
           </div>
           {renderTypeSelect()}
           <RegionCountrySelect countries={countries} value={country} isZh={isZh} onChange={v => update('country', v)} />
@@ -634,14 +635,16 @@ function AllResultsPageInner() {
           <div className="wse-filter wse-filter-show"
             title={mbfAvgPeriodOnly ? tr({ zh: '多盲非官方平均仅支持「当期」口径', en: 'Multi-Blind unofficial average supports the period basis only' }) : undefined}>
             <label>{tr({ zh: '口径', en: 'Basis' })}</label>
-            <PillToggle
-              className="wse-pill"
-              value={basis === 'cumulative'}
-              onChange={(v) => handleBasisChange(v ? 'cumulative' : 'period')}
-              onLabel={tr({ zh: '截至', en: 'Cumulative' })}
-              offLabel={tr({ zh: '当期', en: 'Period' })}
+            <select
               disabled={mbfAvgPeriodOnly}
-            />
+              value={String(basis === 'cumulative')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; handleBasisChange(v ? 'cumulative' : 'period'); }}
+              aria-label={tr({ zh: '截至', en: 'Cumulative' }) + ' / ' + tr({ zh: '当期', en: 'Period' })}
+              className={['native-select', "wse-pill"].filter(Boolean).join(' ')}
+            >
+              <option value="true">{tr({ zh: '截至', en: 'Cumulative' })}</option>
+              <option value="false">{tr({ zh: '当期', en: 'Period' })}</option>
+            </select>
           </div>
           <div className="wse-filter">
             <label>{tr({ zh: '年份', en: 'Year' })}</label>
