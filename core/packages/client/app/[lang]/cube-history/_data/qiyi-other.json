@@ -1429,21 +1429,7 @@
           "shengshou-lustrous-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "shengshou-lustrous-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "94.0 g",
@@ -1504,7 +1490,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -1536,21 +1522,7 @@
           "qo-product-dayan-guhong-pro-m-3x3-54mm-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-54mm-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54.0 mm",
         "weight": "74.0 g",
@@ -1652,21 +1624,7 @@
           "qo-product-dayan-zhanchi-v5-m-3x3-fancy"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-zhanchi-v5-m-3x3-fancy"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1765,21 +1723,7 @@
           "qo-product-yuxin-black-kirin-3x3-cutout"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-black-kirin-3x3-cutout"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "50.0 g",
@@ -1853,21 +1797,7 @@
           "dayan-guhong-pro-plus-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "dayan-guhong-pro-plus-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -1967,21 +1897,7 @@
           "dayan-zhanchi-pro-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 35.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "dayan-current-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "77.0 g",
@@ -2084,21 +2000,7 @@
           "qo-product-diansheng-big-3x3-m-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-big-3x3-m-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "80.0 mm",
         "weight": "250.0 g",
@@ -2280,21 +2182,7 @@
           "qo-product-shengshou-lustrous-cube-3x3-jelly"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-lustrous-cube-3x3-jelly"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -2372,21 +2260,7 @@
           "diansheng-solar-s3m-2022-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-solar-s3m-2022-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "70.4 g",
@@ -2485,21 +2359,7 @@
           "yuxin-black-kirin-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "yuxin-current-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "70.3 g",
@@ -2589,21 +2449,7 @@
           "qo-product-dayan-taiyan"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Primary / Grey",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-taiyan"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -2694,21 +2540,7 @@
           "yuxin-huanglong-nonmag"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-huanglong-3x3-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "76.0 g",
@@ -2803,21 +2635,7 @@
           "qo-product-diansheng-big-3x3-m-7cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-big-3x3-m-7cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "70.0 mm",
         "weight": "188.0 g",
@@ -2873,7 +2691,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 7,
         "asOf": "2026-10-07",
@@ -2905,21 +2723,7 @@
           "yuxin-little-magic-v3-maglev-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "yuxin-little-magic-v3-maglev-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "70.0 g",
@@ -2985,7 +2789,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -3017,21 +2821,7 @@
           "yuxin-kylin-v2-ziicube"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black / Transparent",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "yuxin-kylin-v2-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "82.4 g",
@@ -3126,21 +2916,7 @@
           "qo-product-yuxin-pillowed-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-pillowed-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "71.6 g",
@@ -3226,21 +3002,7 @@
           "qo-product-dayan-guhong-pro-m-3x3-56mm-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-56mm-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "78.0 g",
@@ -3343,21 +3105,7 @@
           "qo-fangyuan-firsthand"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.5,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-fangyuan-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "89.1 g",
@@ -3453,34 +3201,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / white",
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-panshi-retail"
-        },
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-panshi-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -3571,21 +3292,7 @@
           "qo-product-yuxin-super-hero-cube-3x3-mini-3-5cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Silver / Gold",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-super-hero-cube-3x3-mini-3-5cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "35 mm",
         "weight": null,
@@ -3640,7 +3347,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -3672,21 +3379,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-xiangyun-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "79.8 g",
@@ -3747,7 +3440,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 9,
         "asOf": "2026-10-07",
@@ -3779,21 +3472,7 @@
           "qo-product-dayan-zhanchi-v5-m-3x3-premium"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-zhanchi-v5-m-3x3-premium"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -3892,21 +3571,7 @@
           "qo-product-shengshou-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-shengshou-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "86.2 g",
@@ -3993,21 +3658,7 @@
           "diansheng-ms3r-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 31.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Primary Internals / Stickerless / Black Internals",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "diansheng-ms3r-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "70.0 g",
@@ -4072,7 +3723,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -4104,34 +3755,7 @@
           "qo-zhanchi-50-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mini-dayan-zhanchi-50mm"
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mini-dayan-zhanchi-50mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "50.0 mm",
         "weight": null,
@@ -4229,21 +3853,7 @@
           "qo-product-diansheng-super-big-3x3-13cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 20.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-super-big-3x3-13cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "130.0 mm",
         "weight": null,
@@ -4329,21 +3939,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-lunhui-2017"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "95.4 g",
@@ -4401,7 +3997,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -4433,21 +4029,7 @@
           "qo-product-shengshou-metal-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-metal-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "171.0 g",
@@ -4503,7 +4085,7 @@
         }
       },
       "rating": {
-        "value": 2.0,
+        "value": 2,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -4535,21 +4117,7 @@
           "dayan-guhong-v3-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-guhong-v3-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54.0 mm",
         "weight": "77.3 g",
@@ -4645,21 +4213,7 @@
           "dayan-guhong-pro-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "dayan-guhong-pro-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "70.0 g",
@@ -4765,21 +4319,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-guhong-v1-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -4876,21 +4416,7 @@
           "qo-product-dayan-guhong-pro-m-3x3-55mm-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-55mm-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "76.0 g",
@@ -4992,21 +4518,7 @@
           "qo-product-shengshou-mini-keychain-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 2.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-mini-keychain-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30.0 mm",
         "weight": "23.0 g",
@@ -5095,21 +4607,7 @@
           "shengshou-legend-s-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "shengshou-legend-s-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5189,21 +4687,7 @@
           "qo-product-shengshou-mr-m-v2-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-shengshou-mr-m-v2-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "75.0 g",
@@ -5296,21 +4780,7 @@
           "shengshou-yufeng-v2-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-discontinued-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "80.0 g",
@@ -5407,21 +4877,7 @@
           "qo-product-diansheng-solar-s3m-2022-3x3-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-solar-s3m-2022-3x3-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "78.0 g",
@@ -5515,21 +4971,7 @@
           "shengshou-tank-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-tank-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "87.2 g",
@@ -5616,21 +5058,7 @@
           "shengshou-mr-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-mr-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "97.3 g",
@@ -5688,7 +5116,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 33,
         "asOf": "2026-10-07",
@@ -5720,21 +5148,7 @@
           "diansheng-original-3x3-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "diansheng-original-3x3-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": null,
@@ -5821,21 +5235,7 @@
           "qo-product-diansheng-googol-3x3-14-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Stickerless (Pastel)",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-googol-3x3-14-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "148.0 mm",
         "weight": "782.0 g",
@@ -5890,7 +5290,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -5922,21 +5322,7 @@
           "shengshou-wind-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-current-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -6026,21 +5412,7 @@
           "qo-product-yuxin-super-hero-cube-3x3-5-6cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Silver / Gold",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-super-hero-cube-3x3-5-6cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6095,7 +5467,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -6127,21 +5499,7 @@
           "qo-product-diansheng-big-3x3-m-10cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-big-3x3-m-10cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "100.0 mm",
         "weight": "418.0 g",
@@ -6197,7 +5555,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -6229,21 +5587,7 @@
           "diansheng-mscube-ms3l-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "diansheng-mscube-ms3l-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "75.0 g",
@@ -6305,7 +5649,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -6337,21 +5681,7 @@
           "dayan-guhong-pro-plus-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "dayan-guhong-pro-plus-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6456,21 +5786,7 @@
           "qo-product-diansheng-3x3-55mm"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-3x3-55mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": null,
@@ -6556,21 +5872,7 @@
           "yuxin-little-magic-v3-maglev-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-little-magic-3x3-v3-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "70.0 g",
@@ -6670,21 +5972,7 @@
           "yuxin-little-magic-launch"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "yuxin-little-magic-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "71.8 g",
@@ -6779,21 +6067,7 @@
           "qiyi-2015-comparison"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "yuxin-original-kylin-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -6887,34 +6161,7 @@
           "qo-zhanchi-55-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mini-dayan-zhanchi-55mm"
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mini-dayan-zhanchi-55mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": null,
@@ -7012,21 +6259,7 @@
           "qo-product-dayan-guhong-pro-m-3x3-54mm-standard"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-54mm-standard"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54.0 mm",
         "weight": "67.0 g",
@@ -7128,21 +6361,7 @@
           "dayan-tengyun-v3-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "dayan-current-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "79.0 g",
@@ -7242,34 +6461,7 @@
           "qo-product-chinese-mahjong-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-chinese-mahjong-cube-3x3"
-        },
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Transparent",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-chinese-mahjong-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": null,
@@ -7326,7 +6518,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -7358,21 +6550,7 @@
           "dayan-tengyun-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "dayan-current-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "77.3 g",
@@ -7477,21 +6655,7 @@
           "dayan-guhong-v4-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-guhong-v4-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "65.5 g",
@@ -7587,21 +6751,7 @@
           "yuxin-little-magic-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-little-magic-3x3-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "78.0 g",
@@ -7696,21 +6846,7 @@
           "qo-product-shengshou-pearl-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-shengshou-pearl-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "83.9 g",
@@ -7886,21 +7022,7 @@
           "qo-product-dayan-guhong-pro-m-3x3-56mm-standard"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-56mm-standard"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0 g",
@@ -8002,21 +7124,7 @@
           "qo-product-shengshou-legend-3x3-m-metallic"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-legend-3x3-m-metallic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "99.0 g",
@@ -8105,21 +7213,7 @@
           "qo-product-diansheng-super-giant-3x3-34-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 149.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-super-giant-3x3-34-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "348.0 mm",
         "weight": "3210.0 g",
@@ -8173,7 +7267,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -8205,47 +7299,7 @@
           "dayan-zhanchi-launch-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.49,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "dayan-zhanchi-retail"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "dayan-zhanchi-retail"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Primary / Purple / Blue / Green / Orange / Red / Yellow",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "dayan-zhanchi-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -8350,21 +7404,7 @@
           "qo-product-shengshou-big-legend-3x3-7-0cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-shengshou-big-legend-3x3-7-0cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "70.0 mm",
         "weight": "125.2 g",
@@ -8419,7 +7459,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 8,
         "asOf": "2026-10-07",
@@ -8451,21 +7491,7 @@
           "diansheng-solar-s3m-plus-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "diansheng-solar-s3m-plus-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "84.0 g",
@@ -8561,21 +7587,7 @@
           "qo-product-yuxin-3x3-treasure-box"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-3x3-treasure-box"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "66.0 mm",
         "weight": "114.6 g",
@@ -8664,21 +7676,7 @@
           "qo-zhanchi-42-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark) / Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mini-dayan-zhanchi-42mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "42.0 mm",
         "weight": "38.0 g",
@@ -8776,21 +7774,7 @@
           "shengshou-mr-m-s-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-mr-m-s-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "75.0 g",
@@ -8847,7 +7831,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -8879,21 +7863,7 @@
           "qo-product-dayan-guhong-pro-3x3-56mm-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-3x3-56mm-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -8993,21 +7963,7 @@
           "qo-product-diansheng-giant-3x3-18-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-giant-3x3-18-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "188.0 mm",
         "weight": "940.0 g",
@@ -9061,7 +8017,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -9093,21 +8049,7 @@
           "qo-product-shengshou-mini-pillowed-keychain-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 2.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-mini-pillowed-keychain-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "22.0 g",
@@ -9161,7 +8103,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -9281,21 +8223,7 @@
           "shengshou-yufeng-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-discontinued-catalog"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.2 g",
@@ -9393,21 +8321,7 @@
           "qo-legend-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black / White",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "shengshou-legend-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": null,
@@ -9500,21 +8414,7 @@
           "dayan-tengyun-v2-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "dayan-tengyun-v2-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "83.0 g",
@@ -9615,21 +8515,7 @@
           "qo-product-yuxin-black-kirin-3x3-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black / Transparent",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-black-kirin-3x3-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "75.5 g",
@@ -9721,21 +8607,7 @@
           "diansheng-m-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "diansheng-m-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -9813,21 +8685,7 @@
           "qo-product-shengshou-fangyuan-v2-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-shengshou-fangyuan-v2-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "79.0 g",
@@ -9915,21 +8773,7 @@
           "dayan-zhanchi-v5-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-zhanchi-v5-m-3x3-standard"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10018,21 +8862,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-guhong-v2-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -10230,21 +9060,7 @@
           "qo-product-shengshou-legend-3x3-metallic"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-legend-3x3-metallic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "87.0 g",
@@ -10299,7 +9115,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -10331,21 +9147,7 @@
           "qo-product-yuxin-little-magic-3x3-v2-m-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-little-magic-3x3-v2-m-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "77.0 g",
@@ -10438,21 +9240,7 @@
           "qo-product-yuxin-lustrous-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-lustrous-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "96.0 g",
@@ -10527,21 +9315,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-zhanchi-2018-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "79.3 g",
@@ -10637,21 +9411,7 @@
           "qo-product-yuxin-kylin-3x3-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-kylin-3x3-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm (description)",
         "weight": null,
@@ -10727,21 +9487,7 @@
           "yuxin-huanglong-v2-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 27.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "yuxin-huanglong-v2-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "73.0 g",
@@ -10831,21 +9577,7 @@
           "shengshou-gem-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-gem-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10900,7 +9632,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 33,
         "asOf": "2026-10-07",
@@ -10932,21 +9664,7 @@
           "qo-product-shengshou-lustrous-cube-3x3-magnetic"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-lustrous-cube-3x3-magnetic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "99.0 g",
@@ -11037,21 +9755,7 @@
           "qo-product-shengshou-3x3-mini-46mm"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black / White",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-3x3-mini-46mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "46.0 mm",
         "weight": "54.0 g",
@@ -11140,21 +9844,7 @@
           "diansheng-ms3x-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 31.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "diansheng-ms3x-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "75.0 g",
@@ -11252,21 +9942,7 @@
           "qo-product-ms-cube-ms3-v1-m-3x3-enhanced"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Primary Internals / Stickerless / Black Internals / Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-ms-cube-ms3-v1-m-3x3-enhanced"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "74.0 g",
@@ -11360,21 +10036,7 @@
           "qo-product-diansheng-mini-3x3-30mm"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-mini-3x3-30mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30.0 mm",
         "weight": null,
@@ -11428,7 +10090,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -11460,21 +10122,7 @@
           "qo-product-diansheng-ms3r-3x3-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Primary Internals / Stickerless / Black Internals",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-ms3r-3x3-uv-coated"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "71.0 g",
@@ -11569,21 +10217,7 @@
           "qo-product-shengshou-legend-plus-3x3-18cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 37.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-legend-plus-3x3-18cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "180.0 mm",
         "weight": "927.0 g",
@@ -11657,21 +10291,7 @@
           "yuxin-fire-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "yuxin-fire-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": null,
@@ -11761,21 +10381,7 @@
           "qo-product-yuxin-super-big-3x3-8-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-super-big-3x3-8-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "88.0 mm",
         "weight": "276.0 g",
@@ -11831,7 +10437,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 11,
         "asOf": "2026-10-07",
@@ -11863,21 +10469,7 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "dayan-zhanchi-2017-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "81.7 g",
@@ -11970,21 +10562,7 @@
           "qo-product-shengshou-lustrous-cube-3x3-jelly-magnetic"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-shengshou-lustrous-cube-3x3-jelly-magnetic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12063,21 +10641,7 @@
           "qo-product-diansheng-big-3x3-m-9cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-diansheng-big-3x3-m-9cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "90.0 mm",
         "weight": "300.0 g",
@@ -12165,21 +10729,7 @@
           "qo-product-dayan-guhong-pro-3x3-55mm-magnetic"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-3x3-55mm-magnetic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -12247,7 +10797,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -12279,21 +10829,7 @@
           "qo-product-yuxin-huanglong-3x3-v2-m-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-huanglong-3x3-v2-m-uv-coated"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "74.0 g",
@@ -12352,7 +10888,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -12384,21 +10920,7 @@
           "diansheng-3x3-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "diansheng-3x3-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "68.0 g",
@@ -12490,21 +11012,7 @@
           "qo-product-dayan-guhong-pro-3x3-54mm-magnetic"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-3x3-54mm-magnetic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54 mm",
         "weight": null,
@@ -12604,21 +11112,7 @@
           "yuxin-little-magic-m-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "yuxin-little-magic-m-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "78.0 g",
@@ -12711,21 +11205,7 @@
           "qo-product-diansheng-3x3-metal-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-diansheng-3x3-metal-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -12810,21 +11290,7 @@
           "qo-product-dayan-guhong-pro-3x3-54mm-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-dayan-guhong-pro-3x3-54mm-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54 mm",
         "weight": null,
@@ -12924,21 +11390,7 @@
           "qo-product-yuxin-mini-3x3-keychain-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.5,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-mini-3x3-keychain-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "35.0 mm",
         "weight": "28.5 g",
@@ -13024,21 +11476,7 @@
           "yuxin-little-magic-v2-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-yuxin-little-magic-3x3-v2-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "78.0 g",
@@ -13133,21 +11571,7 @@
           "shengshou-aurora-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "shengshou-aurora-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "84.0 g",
@@ -13239,21 +11663,7 @@
           "diansheng-mscube-ms3-v1-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Stickerless / Black Internals / Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "diansheng-mscube-ms3-v1-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "79.0 g",
@@ -13346,21 +11756,7 @@
           "qo-product-yuxin-led-lamp-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Transparent",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-led-lamp-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "89.0 mm",
         "weight": "274.7 g",
@@ -13450,21 +11846,7 @@
           "qo-product-yuxin-huanglong-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-yuxin-huanglong-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "70.0 g",
@@ -13552,21 +11934,7 @@
           "qo-product-mscube-ms3l-3x3-enhanced"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mscube-ms3l-3x3-enhanced"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.0 g",
@@ -13659,21 +12027,7 @@
           "qo-rainbow-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark) / Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-shengshou-rainbow-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.2 mm",
         "weight": null,
@@ -13837,21 +12191,7 @@
           "qo-sengso-pillowed-added"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.19,
-          "currency": "EUR",
-          "region": "ES",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "西班牙商家含税查询标价，未含运费；不是首发价。",
-            "en": "Observed Spanish retailer tax-inclusive price, excluding shipping; not a launch price."
-          },
-          "sourceId": "qo-sengso-pillowed"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "82 g",
@@ -13931,21 +12271,7 @@
           "r3-atout-ss-unicorn"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.9,
-          "currency": "EUR",
-          "region": "FR",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "法国页面含税标价；当前缺货，不能视为可下单现价或首发价。",
-            "en": "Tax-inclusive French page price; currently out of stock, not an available-stock or launch-price guarantee."
-          },
-          "sourceId": "r3-atout-ss-unicorn"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14021,21 +12347,7 @@
           "r3-strefa-ss-concavoconvex"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "PLN",
-          "region": "PL",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-strefa-ss-concavoconvex"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "76 g",
@@ -14112,21 +12424,7 @@
         },
         "sourceIds": []
       },
-      "prices": [
-        {
-          "amount": 799,
-          "currency": "INR",
-          "region": "IN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-cuberkart-ss-sandwich"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14206,34 +12504,7 @@
           "r3-cubenation-ds-solar3e"
         ]
       },
-      "prices": [
-        {
-          "amount": 2.15,
-          "currency": "USD",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-cubezz-ds-solar3e"
-        },
-        {
-          "amount": 4.95,
-          "currency": "GBP",
-          "region": "GB",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-speedcubing-ds-solar3e"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "65 g",
@@ -14315,21 +12586,7 @@
         },
         "sourceIds": []
       },
-      "prices": [
-        {
-          "amount": 3.55,
-          "currency": "USD",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-cubezz-ds-solarme"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": "65 g",
@@ -14409,21 +12666,7 @@
           "r3-cubezz-ds-luminous"
         ]
       },
-      "prices": [
-        {
-          "amount": 2.99,
-          "currency": "USD",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-cubezz-ds-luminous"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "75 g",
@@ -14503,6 +12746,7 @@
     "本轮确证新增8条：圣手Unicorn、Sandwich、Concavoconvex；奇艺Bubble普通六色版与Sandwich教学版；点盛Solar 3E、Solar ME、Luminous夜光三阶。每条具有对应真实原图，全部GET返回图像。Bubble六种配色合并为两个复原约束不同的产品，未人为拆成六条；纯配色、礼包、商家调校不作为新机械型号。",
     "保留的边界与待核：ShengShou Birds为Fisher类移轴结构而排除；Cubezz的Circular、FTO、TORI、Axis、Fisher、Windmill不按普通三阶计入。本轮未证明QiYi MS存在独立2024年三阶改款，未凭关键词新增MS 2024。ShengShou SuJie可能是现存早期57mm圣手三阶的命名别称，尚未完成跨店原图核同，不重复新增。",
     "日期区分：Solar 3E的2024-06-11为CubeNation具体商品Added日；Solar ME首发未证实而留空；Luminous在2023年的年份只是2023-04-05买家评论证明的最晚存在界限。Bubble的2026-09-03来自包含六色与Sandwich变体的共享Ziicube商品页Added日，不能证明每种配色同时首发。",
-    "旧档案保留：65条原记录的补丁只替换明确列出的字段；全部原tags、评分rating与模糊配置官网familyPrices不删除。61条增加风二/三/四代、孤鸿/孤鴻、腾云/騰雲、展翅、小魔法搜索别名；另3条黑曼巴正名及1条Legend S日期修正。"
+    "旧档案保留：65条原记录的补丁只替换明确列出的字段；全部原tags、评分rating与模糊配置官网familyPrices不删除。61条增加风二/三/四代、孤鸿/孤鴻、腾云/騰雲、展翅、小魔法搜索别名；另3条黑曼巴正名及1条Legend S日期修正。",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
   ]
 }

@@ -4,22 +4,21 @@ Native CubeRoot route: `/cube-history` (English), `/zh/cube-history` (Simplified
 
 ## Research snapshot
 
-Cutoff: **2026-10-07**. Prices and review pools describe that research snapshot.
+Evidence cutoff: **2026-10-07**. On 2026-10-08, the user narrowed the price scope to verified mainland-China launch prices; merchant review pools retain their original snapshot dates.
 
 | Measure | Current archive |
 | --- | ---: |
 | Individually addressable model / configuration / named-edition records | 973 |
 | Brand / line labels, including historical trade names | 68 |
-| Unique source URLs | 1335 |
+| Unique source URLs | 1337 |
 | Records with source-linked real product photographs | 968 |
 | Exact-model photographs / explicitly shared source photographs | 961 / 7 |
 | Product-page user ratings with review counts and dates | 578 |
-| Price observations retaining currency, region and version | 1336 |
-| Records containing an original CNY quotation | 5 |
-| Additional official family quotes with unspecified configuration | 7 |
+| Verified mainland-China launch-price observations | 3 |
+| Records with a verified mainland-China launch price | 3 |
 | Records with an official date, including announcements | 31 |
 | Records without a verified sorting year | 188 |
-| Records without a verified price / identifiable item weight | 31 / 321 |
+| Records without a verified China launch price / identifiable item weight | 970 / 321 |
 
 The first edition had 249 entries. Original shared links remain usable. A manufacturer-confirmed duplicate, GuanLong 2021 / GuanLong V4, now resolves through an evidence-linked alias to one canonical record. Heterogeneous family records now name a specific configuration and link their separately documented siblings through `familyId`. This record count includes distinct coatings and named commercial editions; it is not a count of unique mechanical designs or proof that every worldwide SKU has been recovered.
 
@@ -64,7 +63,7 @@ The ordinary GAN12 Leap retains its spring configuration; GAN13 FX retains fixed
 | `_data/moyu-yj-variants.json` | 109 individually documented family configurations and named editions |
 | `_data/qiyi-other.json` | 124 records: DaYan, YuXin, ShengShou, DianSheng and MsCube |
 | `_data/qiyi-xman.json` | 97 records: QiYi and X-Man Design |
-| `../../../tests/cube-history.test.ts` | Dates, currencies, sources, photos, ratings, family relationships and query behavior |
+| `../../../tests/cube-history.test.ts` | Dates, China launch-price scope, sources, photos, ratings, family relationships and query behavior |
 
 Outside the route and its dedicated tests, changes are limited to `lib/page-meta.ts` and attributed product photographs under `public/_assets/cube-history/`. The existing metadata-driven homepage search and sitemap discover the route. The implementation uses the site's TypeScript/Next.js architecture, existing shared controls and nuqs URL state; it adds no backend, dependency or standalone HTML application.
 
@@ -72,7 +71,11 @@ Outside the route and its dedicated tests, changes are limited to `lib/page-meta
 
 The default view is the photo catalog. Brand, calendar year, era, family, positioning, category, technology and evidence filters intersect. GAN, MoYu, QiYi and YJ lead both the image shortcuts and brand dropdown. Search is the primary entry; brand, family, year and position remain immediately visible, with secondary facets under More filters and individual active-filter removal. Search examines every record and defaults to model-name relevance; explicit chronological and natural model-name sorting remain available. Compact, full-width and bilingual queries retain generation-number boundaries and configuration names. The result bar distinguishes the complete match count from the currently rendered page, with Show all and Back to search actions below the results. Cards, the table, details and comparisons all display the source-linked product photo.
 
-After selecting a brand, the annual-lineup section shows every year from that brand's earliest documented year through the cutoff, with columns for flagships, other positions and unclassified records. Empty years remain visible as evidence gaps. They do not establish that the manufacturer released nothing that year. Clicking a year retains the brand and clears the other filters.
+The prominent **Flagships only** switch below the search examples uses the existing `tier=flagship` URL state. It stays synchronized with the positioning dropdown and active-filter removal, preserves the other filters when toggled, and can be shared or reopened directly. It uses each record's own source-supported editorial positioning, including historical flagships and flagships whose year remains unknown; it does not inherit a parent model's positioning.
+
+Photo credits show the linked publisher name without repeating the “Photo source” prefix beneath every image.
+
+After selecting a brand, the annual-lineup section shows every year from that brand's earliest documented year through the cutoff, with columns for flagships, other positions and unclassified records. It remains a complete brand overview, independent of the catalog filters. Empty years remain visible as evidence gaps. They do not establish that the manufacturer released nothing that year. Clicking a year changes only the calendar-year filter, preserving the flagship selection, brand, search and other conditions.
 
 Each record has a shareable `model` query parameter. Related versions can be selected inside the record. Up to four independently addressable models can be compared, and filtered data plus all referenced sources can be exported as JSON. The source view reports per-brand photo and date coverage.
 
@@ -80,7 +83,7 @@ Each record has a shareable `model` query parameter. Related versions can be sel
 
 1. Keep date precision and `release.basis` together. A retailer Added date, contemporary purchase report and manufacturer launch announcement establish different things. A day-level value is not automatically a worldwide launch date.
 2. Concentrated old-store re-entry dates, including widely repeated 2018-09-11 and several older GAN listings on 2018-11-07, cannot replace independently documented earlier availability. The latter pattern does not establish a global migration rule for unrelated new products.
-3. Every price retains currency, market, quote type, version, date and source. A retained shop price can be a clearance or unavailable offer. USD is not converted into a supposed historical Chinese MSRP. Official quotations whose configuration is unspecified are retained separately in `familyPrices`, shown as family context and excluded from exact-model price filters and direct price comparison.
+3. Record only verifiable mainland-China launch prices for the exact configuration, retaining CNY, CN, launch kind, date, variant and source. Official new-product preorder and introductory offers must be qualified in the note. Other markets, currency conversions, later retail/wholesale prices and configuration-unspecified family quotes are excluded from the data as well as the UI and exports. A missing price stays an empty array and is shown as “Launch price unverified”.
 4. Net weight is never filled from gross/package weight or Shopify shipping grams. Conflicting measurements retain version and source qualifications.
 5. Distinct spring, MagLev, ball-core, adjustable-magnet, coating, size and named-edition products receive separate records when evidence supports the distinction. Ordinary colors and packaging quantities remain variants unless independently significant. Child models do not inherit their parent's date, price, dimensions or performance claims.
 6. Each photograph uses a URL observed in its own public product metadata, original page or identified historical source. `image.match` distinguishes exact matches from photography shared by the source. Shared images are labeled in the interface. Missing or failed images have explicit text, never a generated or lookalike substitute. The decorative hero remains labeled a schematic.
@@ -136,6 +139,22 @@ A fresh GET check of all **962 previously recorded unique source-image URLs** re
 
 For the remaining gaps, the early Gans photographs still lack a reliable GAN1/GAN2 numbering link; ordinary GAN354 M pictures were excluded from the INFINITY record. Alpha V Feng now links to the [original MechaAkuma review](https://www.youtube.com/watch?v=CB5AxcdcMB8), whose description identifies Lightake SKU33524. The original [PestVic Gas Assisted review](https://www.youtube.com/watch?v=uhl_2Ljp3Lg) remains linked. Their observed thumbnail URLs returned HTML rather than inspectable images; final Lightake archive requests returned 503/429, so these candidates remain unassigned. Brand handover notes document the searches and exclusions.
 
+## China launch-price scope
+
+The 2026-10-08 price revision removes 1,335 nonqualifying price observations and seven configuration-unspecified family quotes. It retains the independently verified GAN17 mainland-China launch quote and adds two documented GAN15 introductory prices. All 973 model records, their release-date evidence, photographs, specifications and merchant review pools remain present. Price availability now covers **3 of 973 records**; the remaining **970** explicitly show “首发价待核实 / Launch price unverified”. Neither a later domestic selling price nor a converted overseas quote fills that gap.
+
+| Exact record | China launch price | Price announcement date | Evidence |
+| --- | ---: | --- | --- |
+| GAN17 MagDrive | ¥439 | 2026-08-10 | [Official GAN launch announcement](https://www.sina.cn/news/detail/5330425766748694.html), explicitly identifying the launch price |
+| GAN15 NewBlack UV | ¥399 | 2025-02-27 | [Official new-product preorder announcement archive](https://peachring.com/u/2191436202-GANCUBE/5138722586102604) and its [original preorder poster](https://wx2.sinaimg.cn/large/829ea9aagy1hyz4uelvhkj20xc8h1npn.jpg); UV configuration cross-checked against the [dedicated official product page](https://www.gancube.com/products/gancube-gan15-newblack-uv-coated) |
+| GAN15 MagLev Zenith / 峰芒 winter edition | ¥449 | 2024-11-29 | [Official launch announcement archive](https://peachring.com/u/2191436202-GANCUBE/5106107678199756); the price is in the post text, while the attached poster confirms the named edition |
+
+NewBlack is explicitly qualified as an official new-product **preorder** price. The quotation date is distinct from the model's existing retailer catalog-entry date; this price-only revision does not rewrite either model's release-date evidence. The Zenith announcement describes a Double 12 launch, and its price date records when that announcement was published.
+
+The GAN price follow-up traversed 47 publicly exposed official-Weibo archive pages and checked original posters. Parallel MoYu/YJ and QiYi/other-brand reviews did not recover an additional exact-configuration domestic launch price with adequate evidence. Later official catalog prices, shop promotions, competition prizes, configuration-unspecified starting prices and aggregation-only claims were excluded. This bounded search documents the present evidence gap; it does not establish that no other launch prices were published.
+
+Cards, details, timeline prose, comparison, the price-evidence filter and JSON export all use this single price scope. Sources that still substantiate product specifications, date evidence, photographs or ratings are retained even when a price from the same page has been removed.
+
 ## Maintenance and verification
 
 Add evidence-backed records and sources to the appropriate JSON file. Reuse the existing source ID for the same URL. When adding a brand, mechanism or public term, supply both language labels. Change a milestone only when its source supports the historical claim. Advance the cutoff only after revisiting time-sensitive fields.
@@ -148,7 +167,7 @@ pnpm --filter @cuberoot/client typecheck
 pnpm --filter @cuberoot/client exec vitest run tests/cube-history.test.ts tests/page-metadata-coverage.test.ts tests/component-reuse-guard.test.ts tests/site-material-guard.test.ts tests/url-state-no-raw-history.test.ts
 ```
 
-PR CI checks the wider client suite and repository contracts; Vercel builds the preview for the exact branch commit. Research validation also checks photo HTTP status and content type, source resolution, valid date precision, positive currency-qualified prices, merchant-rating sample bounds, original links through stable IDs or documented aliases, every full Chinese/English model name matching itself, precise MAX-L queries, natural numeric ordering and explicit independent GAN11–16 versions.
+PR CI checks the wider client suite and repository contracts; Vercel builds the preview for the exact branch commit. Research validation also checks photo HTTP status and content type, source resolution, valid date precision, positive CNY/CN launch prices, merchant-rating sample bounds, original links through stable IDs or documented aliases, every full Chinese/English model name matching itself, precise MAX-L queries, natural numeric ordering and explicit independent GAN11–16 versions.
 
 The revision has been served through the local Next.js route in Chinese and English, including a direct GAN12 model/family URL. Browser transport was unavailable during this revision, so desktop/mobile screenshots, real touch interaction and the four theme combinations still require review in the linked preview. Automated checks and HTTP responses do not substitute for that visual inspection.
 

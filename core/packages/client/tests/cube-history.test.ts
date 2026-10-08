@@ -68,28 +68,27 @@ describe('cube history research contract', () => {
     expect(byId('moyu-aolong-v6').prices).toEqual([]);
   });
 
-  it('keeps currency, market, version, evidence and time attached to each quote', () => {
-    for (const cube of CUBES) for (const price of [...cube.prices, ...(cube.familyPrices ?? [])]) {
-      expect(Number.isFinite(price.amount) && price.amount > 0, cube.id).toBe(true);
-      expect(price.currency, cube.id).toMatch(/^[A-Z]{3}$/);
-      expect(price.region.trim(), cube.id).not.toBe('');
-      expect(['launch', 'current', 'historical']).toContain(price.kind);
-      expect(sourceIds.has(price.sourceId), cube.id).toBe(true);
-      if (price.asOf !== null) expect(price.asOf <= SNAPSHOT_DATE, cube.id).toBe(true);
-      expectLocalized(price.note);
+  it('records only verified mainland-China launch prices for exact configurations', () => {
+    for (const cube of CUBES) {
+      expect('familyPrices' in cube, cube.id).toBe(false);
+      for (const price of cube.prices) {
+        expect(Number.isFinite(price.amount) && price.amount > 0, cube.id).toBe(true);
+        expect(price.currency, cube.id).toBe('CNY');
+        expect(price.region, cube.id).toBe('CN');
+        expect(price.kind, cube.id).toBe('launch');
+        expect(sourceIds.has(price.sourceId), cube.id).toBe(true);
+        if (price.asOf !== null) expect(price.asOf <= SNAPSHOT_DATE, cube.id).toBe(true);
+        expectLocalized(price.note);
+      }
     }
     const latest = byId('gan17');
     expect(latest.prices).toEqual(expect.arrayContaining([
       expect.objectContaining({ amount: 439, currency: 'CNY', kind: 'launch', asOf: '2026-08-10' }),
-      expect.objectContaining({ amount: 84.99, currency: 'USD', kind: 'current', asOf: SNAPSHOT_DATE }),
     ]));
     expect(byId('gan2').prices).toEqual([]);
-    // A manufacturer family quote with no configuration cannot become an exact base-SKU price.
+    // A current manufacturer catalog quote cannot become an exact launch price.
     const mPro = byId('qiyi-m-pro');
-    expect(mPro.familyPrices).toEqual(expect.arrayContaining([
-      expect.objectContaining({ amount: 56.8, currency: 'CNY', sourceId: 'qiyi-m-pro-official' }),
-    ]));
-    expect(matchesCube(mPro, { ...EMPTY_FILTERS, evidence: 'cny' })).toBe(false);
+    expect(mPro.prices.some(price => price.sourceId === 'qiyi-m-pro-official')).toBe(false);
   });
 
   it('provides both public languages and a readable label for every mechanism', () => {
@@ -272,12 +271,14 @@ describe('cube history exploration', () => {
     expect(matchesCube(byId('gan11-m-pro'), { ...EMPTY_FILTERS, technology: 'core' })).toBe(true);
   });
 
-  it('intersects filters and keeps CNY quotes separate from USD prices', () => {
+  it('intersects brand and era with verified China launch-price availability', () => {
     const filter = { ...EMPTY_FILTERS, brand: 'GAN', period: 'recent', evidence: 'cny' };
     const matches = CUBES.filter(cube => matchesCube(cube, filter));
     expect(matches.map(cube => cube.id)).toContain('gan17');
-    expect(matches.every(cube => cube.brand === 'GAN' && cube.year! >= 2024 && cube.prices.some(price => price.currency === 'CNY'))).toBe(true);
-    expect(matchesCube(byId('gan12'), { ...EMPTY_FILTERS, evidence: 'cny' })).toBe(false);
+    expect(matches.every(cube => cube.brand === 'GAN' && cube.year! >= 2024 && cube.prices.length > 0)).toBe(true);
+    const unpriced: Cube = { ...byId('gan12'), prices: [] };
+    expect(matchesCube(unpriced, { ...EMPTY_FILTERS, evidence: 'cny' })).toBe(false);
+    expect(matchesCube(unpriced, { ...EMPTY_FILTERS, evidence: 'missing-price' })).toBe(true);
   });
 
   it('places missing years last in both date directions without mutating input', () => {

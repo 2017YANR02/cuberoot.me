@@ -1513,34 +1513,7 @@
           "moyu-pb-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-pbcube-wr-3x3-20-magnet-ball-core-maglev-uv"
-        },
-        {
-          "amount": 89.95,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20-magnet Ball-Core + MagLev + UV",
-          "note": {
-            "zh": "2026-10-07 检索到的美国商家标价；库存、税费和运费以商家为准，不是中国首发价。",
-            "en": "US retailer asking price observed on October 7, 2026; availability, shipping and tax depend on the seller, and this is not a Chinese launch price."
-          },
-          "sourceId": "moyu-pb-scs"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "~72 g",
@@ -1650,34 +1623,7 @@
           "moyu-aolong-v5-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-aolong-v5-3x3-magnetic"
-        },
-        {
-          "amount": 8.06,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Magnetic",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-my-3x3-aolong-v5"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "64 g",
@@ -1755,7 +1701,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -1787,34 +1733,7 @@
           "moyu-tgv2-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-tg-v2-3x3-8-magnet-ball-core"
-        },
-        {
-          "amount": 32.45,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "8M-BallCore UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-tgv2-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "72 g",
@@ -1909,21 +1828,7 @@
           "moyu-rs32021-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-rs32021-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "92.0 g",
@@ -2016,34 +1921,7 @@
           "moyu-ai2021-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 67.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-ai-3x3"
-        },
-        {
-          "amount": 45.4,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "moyu-ai2021-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "80.0 g",
@@ -2142,21 +2020,7 @@
           "moyu-wrm2021-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-wrm2021-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "78.0 g",
@@ -2264,21 +2128,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mfjs-meilong-mini-3x3-keychain-cube-3-0cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "带钥匙扣的30.0 mm 迷你三阶；该尺寸有独立商品与机身重量。",
@@ -2329,7 +2179,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -2370,21 +2220,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc-repulsion-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "以相斥磁体参与转层定位；盒内附额外磁体和两组弹簧，55.5 mm、88 g。",
@@ -2468,34 +2304,7 @@
           "yj-zhilong-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-zhilong-m-3x3"
-        },
-        {
-          "amount": 2.17,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "中国跨境商家美元页面显示价，不是国内首发价；运费另计。",
-            "en": "USD asking price from a China-based export dealer, not Chinese launch MSRP; shipping extra."
-          },
-          "sourceId": "yj-zhilong-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "50.0 mm",
         "weight": "57.5 g",
@@ -2598,21 +2407,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mfjs-meilong-3x3-macaron"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "梅龙三阶的马卡龙浅色塑料外观，55.5 mm、65 g；非磁力配置。",
@@ -2695,34 +2490,7 @@
           "moyu-wrm2020-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-wrm2020-tc"
-        },
-        {
-          "amount": 37.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-wrm2020-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "75 g (ZiiCube)",
@@ -2829,21 +2597,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-blind-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "每一面采用不同凸纹，可通过触摸区分面色；商品标重 90 g。",
@@ -2920,34 +2674,7 @@
           "moyu-rs32020-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-rs32020-tc"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-rs32020-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "86.0 g",
@@ -3043,34 +2770,7 @@
           "mfjs-meilong3m-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-meilong3m-tc"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-meilong3m-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "72.0 g",
@@ -3164,34 +2864,7 @@
           "yj-mgcelite-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgcelite-tc"
-        },
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgcelite-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "87.0 g",
@@ -3296,21 +2969,7 @@
           "mfjs-meilong3c-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-meilong3c-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "64.0 g",
@@ -3410,21 +3069,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mfjs-meilong-3x3-timer-cube"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "一枚角块集成数字计时器与按钮，附两枚小电池；55.5 mm、58 g。",
@@ -3508,21 +3153,7 @@
           "guoguan-yuexiao-edm-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-edm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -3619,21 +3250,7 @@
           "mfjs-meilong3-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-meilong3-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "64.2 g",
@@ -3724,34 +3341,7 @@
           "yj-yulong2-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong2-tc"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong2-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "88.9 g",
@@ -3845,47 +3435,7 @@
           "moyu-wrm-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wr-m"
-        },
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wr-m"
-        },
-        {
-          "amount": 8.17,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Clearance listing",
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "moyu-wrm-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "90.0 g",
@@ -3988,47 +3538,7 @@
           "mfjs-mf3rs3-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs3-tc"
-        },
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs3-tc"
-        },
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs3-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.0 g",
@@ -4131,21 +3641,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-jinjiao-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "六面呈轻微凹面，采用柔和配色；商品净重 68.2 g。",
@@ -4228,34 +3724,7 @@
           "yj-mgc2-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgc2-tc"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgc2-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "78.6 g",
@@ -4349,21 +3818,7 @@
           "yj-ruilong-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-ruilong-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.2 g",
@@ -4454,86 +3909,7 @@
           "moyu-hualong-legacy"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-hualong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-hualong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-hualong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-hualong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-hualong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "旧商店归档标价。",
-            "en": "Archived shop asking price."
-          },
-          "sourceId": "moyu-hualong-legacy"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "87.0 g (Tribox, stickered)",
@@ -4631,125 +4007,7 @@
           "yj-yulong-champion"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Bright)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Phantom)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless Pink (Phantom)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong-tc"
-        },
-        {
-          "amount": 20,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless; 1+ unit",
-          "note": {
-            "zh": "国内经销商保留询价页面：1个¥20、5个起¥15、10个起¥13；非首发价。",
-            "en": "Retained Chinese dealer inquiry listing: ¥20 at 1+, ¥15 at 5+, ¥13 at 10+; not launch MSRP."
-          },
-          "sourceId": "yj-yulong-cny"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm (original dealer)",
         "weight": "82.0 g",
@@ -4853,73 +4111,7 @@
           "yj-sulong-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-sulong"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-sulong"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-sulong"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-sulong"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Glow In The Dark",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-sulong"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "83 g",
@@ -5010,47 +4202,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-spade-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-spade-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-spade-cube"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "块面内嵌黑桃形装饰；商家描述其内构接近御龙，净重 93 g。",
@@ -5117,21 +4269,7 @@
           "yj-mini45-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mini45-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "45.0 mm",
         "weight": "39.1 g",
@@ -5214,34 +4352,7 @@
           "yj-official-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgc-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgc-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "85.8 g",
@@ -5343,47 +4454,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-love-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-love-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-love-cube"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "方体块面内嵌心形饰片，61.3 mm、98 g；商家称内构接近御龙。",
@@ -5456,34 +4527,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-linggan"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-linggan"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "透明塑料配合圆形面片，商家描述内构接近速龙。",
@@ -5549,60 +4593,7 @@
           "yj-guanlong-legacy"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlong-tc"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlong-tc"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlong-tc"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlong-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "68.0 g",
@@ -5706,47 +4697,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-diamond-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-diamond-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-diamond-cube"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "方体表面采用宝石形饰片，61.5 mm、94 g；商家称采用御龙式内构。",
@@ -5813,47 +4764,7 @@
           "yj-chilong-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-chilong-tc"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-chilong-tc"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-chilong-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5952,21 +4863,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-3x3-ball-cube"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "外部由圆珠状块面组成，60 mm、70.5 g，内部仍是常规三阶转层。",
@@ -6051,47 +4948,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-s-3x3"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-s-3x3"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-s-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "重新设计中心块，并采用 SWP 钢琴线弹簧；TheCubicle 标注 56.5 mm。",
@@ -6174,99 +5031,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary With Black Caps",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-senhuan-mars-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "森幻首款三阶；小内圆和三片式角块，56 mm、90 g。",
@@ -6345,86 +5110,7 @@
           "moyu-aolong-2014-review"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-v2-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-v2-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-v2-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-v2-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-v2-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-v2-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "94 g (Tribox, stickered)",
@@ -6523,21 +5209,7 @@
           "moyu-gts3-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 30.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.0 g",
@@ -6623,47 +5295,7 @@
           "moyu-gts2-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2"
-        },
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2"
-        },
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "80.2 g",
@@ -6748,138 +5380,7 @@
           "moyu-gts-legacy"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary With Black Caps",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Grey",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Brown",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产或归档页面保留标价；不是首发价，亦不代表仍有现货。",
-            "en": "Retained discontinued or archived listing price; not launch MSRP or confirmation of stock."
-          },
-          "sourceId": "moyu-gts-legacy"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "83.1 g",
@@ -6968,138 +5469,7 @@
           "moyu-weilong-diy"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Green",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Red",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Purple",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Silver",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Gold",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-weilong-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88 g (Tribox)",
@@ -7202,125 +5572,7 @@
           "moyu-tanglong-review"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Grey",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Brown",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-tanglong"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Unstickered",
-          "note": {
-            "zh": "无贴纸版本的归档标价。",
-            "en": "Archived asking price for the unstickered version."
-          },
-          "sourceId": "moyu-tanglong-legacy"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "~93 g (Tribox)",
@@ -7411,60 +5663,7 @@
           "moyu-liying-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-liying-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-liying-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-liying-tc"
-        },
-        {
-          "amount": 1.18,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Clearance listing",
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "moyu-liying-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "82 g",
@@ -7559,34 +5758,7 @@
           "moyu-huanying-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-huanying-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-huanying-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "77 g",
@@ -7680,86 +5852,7 @@
           "moyu-dianma-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-dianma"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-dianma"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-dianma"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-dianma"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-dianma"
-        },
-        {
-          "amount": 2.82,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "moyu-dianma-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "95 g",
@@ -7852,34 +5945,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-crystal-3x3-ring"
-        },
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black Crystal Circle",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2545"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "透明机身配环形面片，56 mm、86.6 g；保留标准三阶转层。",
@@ -7950,112 +6016,7 @@
           "moyu-aolong-2014-review"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v2-tc"
-        },
-        {
-          "amount": 75,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless; 1–4 units",
-          "note": {
-            "zh": "国内批发商保留页面的 1–4 个单价；10 个以上 ¥45。页面需询价，非首发价或现货承诺。",
-            "en": "Retained Chinese dealer price for 1–4 units; ¥45 each at 10+ units. Inquiry required; neither launch MSRP nor confirmed current stock."
-          },
-          "sourceId": "moyu-aolongv2-cny"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -8155,112 +6116,7 @@
           "moyu-aolong-gt-legacy"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Grey",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Brown",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-gt-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "~102.3 g (Tribox)",
@@ -8361,47 +6217,7 @@
           "moyu-aolong-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-tc"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-tc"
-        },
-        {
-          "amount": 1.18,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Clearance listing",
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "moyu-aolong-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "94 g (ZiiCube)",
@@ -8505,60 +6321,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mojue-m3"
-        },
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mojue-m3"
-        },
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mojue-m3"
-        },
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mojue-m3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "魔爵首款三阶，56 mm、75.2 g；型号中的 M3 并不表示磁力。",
@@ -8642,60 +6405,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mohuan-shousu-chufeng-3x3"
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mohuan-shousu-chufeng-3x3"
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mohuan-shousu-chufeng-3x3"
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mohuan-shousu-chufeng-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "张海旭参与设计的楚风三阶，56 mm、82 g；商家描述转动带颗粒感。",
@@ -8778,21 +6488,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 2.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-keychain-cube-4-0cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "带钥匙扣的40.0 mm 迷你三阶；该尺寸有独立商品与机身重量。",
@@ -8871,21 +6567,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-keychain-cube-3-5cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "带钥匙扣的35.0 mm 迷你三阶；该尺寸有独立商品与机身重量。",
@@ -8976,21 +6658,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 2.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-keychain-cube-3-0cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "带钥匙扣的30.0 mm 迷你三阶；该尺寸有独立商品与机身重量。",
@@ -9069,47 +6737,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-5-0cm"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-5-0cm"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-5-0cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "50.0 mm 迷你三阶；该尺寸有独立商品与机身重量。",
@@ -9190,21 +6818,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mini-3x3-4-5cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "45.0 mm 迷你三阶；该尺寸有独立商品与机身重量。",
@@ -9275,34 +6889,7 @@
           "mfjs-mf3s-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3s"
-        },
-        {
-          "amount": 1.12,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "mfjs-mf3s-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "77.0 g",
@@ -9383,47 +6970,7 @@
           "mfjs-mf3rs2-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs2-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs2-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs2-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "80.9 g",
@@ -9518,73 +7065,7 @@
           "mfjs-mf3rs-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3rs"
-        },
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3rs"
-        },
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3rs"
-        },
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3rs"
-        },
-        {
-          "amount": 0.35,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Clearance listing",
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "mfjs-mf3rs-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.6 g",
@@ -9668,47 +7149,7 @@
           "mfjs-mf3-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3-3x3"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-mf3-3x3"
-        },
-        {
-          "amount": 0.95,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "mfjs-mf3-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "79.7 g",
@@ -9808,21 +7249,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mofang-jiaoshi-dice-cube"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "每块印有彩色骰点，56 mm、75.8 g；结构按普通三阶工作。",
@@ -9888,47 +7315,7 @@
           "guoguan-yuexiao-pro-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-pro"
-        },
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-pro"
-        },
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-pro"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "83.7 g",
@@ -10013,151 +7400,7 @@
           "guoguan-yuexiao-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Grey",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Brown",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao"
-        },
-        {
-          "amount": 7.66,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "归档、停产或清仓页面保留报价；仅作历史资料，不是当年首发价，也不表示现货。",
-            "en": "Retained archived, discontinued or clearance asking price; historical documentation, not original launch MSRP or confirmed stock."
-          },
-          "sourceId": "guoguan-yuexiao-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "86.0 g",
@@ -10255,34 +7498,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-yueying"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-yueying"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "丛氏首款三阶，56 mm；沿厉影思路改进棱块轨道，角块周边保留较大缺口。",
@@ -10365,86 +7581,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-meiying"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-meiying"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-meiying"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-meiying"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-meiying"
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-congs-design-meiying"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "56 mm，三片式角块与较多内部切削空隙，针对容错与轻快转动设计。",
@@ -10529,21 +7666,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-big-3x3-16-8cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "16.8 cm 大尺寸可转动三阶，彩色塑料外壳。",
@@ -10608,34 +7731,7 @@
           "moyu-superaolongai-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 134.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-superaolongai-tc"
-        },
-        {
-          "amount": 111.26,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Super AoLong AI",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-superaolongai-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "77 g",
@@ -10744,34 +7840,7 @@
           "moyu-super-aolong-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 69.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-aolong-3x3-20-magnet-ball-core-maglev"
-        },
-        {
-          "amount": 54.31,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20MCore MagLev",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-super-aolong-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "69 g",
@@ -10881,34 +7950,7 @@
           "yj-meta3-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-meta3-tc"
-        },
-        {
-          "amount": 14.72,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Wing Magnetic",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "yj-meta3-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "77 g",
@@ -10990,7 +8032,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -11022,34 +8064,7 @@
           "moyu-v11ai-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 115.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-ai-3x3-maglev-uv"
-        },
-        {
-          "amount": 80.86,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Colours",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-v11ai-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "73.0 g",
@@ -11132,7 +8147,7 @@
         }
       },
       "rating": {
-        "value": 2.0,
+        "value": 2,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -11170,21 +8185,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-fitness-cube-3x3-18cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "18 cm 可转动大三阶，商品标注净重 839 g。",
@@ -11262,34 +8263,7 @@
           "moyu-v11-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-v11-base-tc"
-        },
-        {
-          "amount": 10.91,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-v11"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "60.0 g",
@@ -11366,7 +8340,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -11398,21 +8372,7 @@
           "yj-pocket-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-pocket-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "50.0 mm",
         "weight": "57.0 g",
@@ -11473,7 +8433,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 8,
         "asOf": "2026-10-07",
@@ -11505,21 +8465,7 @@
           "yj-yulong3-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong3-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm (Clicky)",
         "weight": "67 g (Clicky)",
@@ -11616,34 +8562,7 @@
           "yj-beta-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc3-beta"
-        },
-        {
-          "amount": 8.67,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Magnetic",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "yj-beta-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "71.0 g",
@@ -11716,7 +8635,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -11748,34 +8667,7 @@
           "moyu-superv2ai-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 144.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-v2-ai-8-magnet-ball-core-maglev-uv"
-        },
-        {
-          "amount": 100.58,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Ai",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-superv2ai-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "77 g",
@@ -11884,34 +8776,7 @@
           "moyu-super-wlv2-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 81.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-v2-20-magnet-ball-core-maglev-uv"
-        },
-        {
-          "amount": 54.44,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Colours",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-super-wlv2-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "70 g",
@@ -12021,34 +8886,7 @@
           "moyu-tg-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-tg-tc"
-        },
-        {
-          "amount": 24.81,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-tg-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "79.0 g",
@@ -12124,7 +8962,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -12166,21 +9004,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 27.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc-est-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm、70 g；棱块采用明显减料开口，并提供独立的中心调节系统。",
@@ -12265,21 +9089,7 @@
           "myj-tc-moyu-weilong-v10-ai-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 57.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v10-ai-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "74.0 g",
@@ -12376,21 +9186,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 249.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-cube-chair-3x3-40cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "40 cm 可转动三阶，商品重量字段为 10,100 g；以魔方凳造型出售。",
@@ -12435,7 +9231,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -12479,21 +9275,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-appari-3x3-speed-micro-bearing"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "中心垫圈包含微型滚珠轴承；块间与角轴磁力定位，6 档弹簧压缩。",
@@ -12548,7 +9330,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 6,
         "asOf": "2026-10-07",
@@ -12580,34 +9362,7 @@
           "moyu-wrmv10-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-wrmv10-tc"
-        },
-        {
-          "amount": 6.79,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-wrm-v10"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "64.0 g",
@@ -12711,47 +9466,7 @@
           "mfjs-meilong3mv2-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-meilong3mv2-tc"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-meilong3mv2-tc"
-        },
-        {
-          "amount": 2.4,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Colours",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-meilong-3m-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "65.0 g",
@@ -12858,21 +9573,7 @@
           "moyu-super-wl-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 76.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-super-wl-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "73.0 g",
@@ -12980,21 +9681,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mfjs-meilong-big-3x3-9-0cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "9 cm 梅龙大三阶，232 g，彩色塑料块面。",
@@ -13071,34 +9758,7 @@
           "moyu-rs3v5-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-rs3v5-tc"
-        },
-        {
-          "amount": 4.01,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Magnetic",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-moyu-rs3m-v5"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "65.0 g (TheCubicle); 69 g (ZiiCube)",
@@ -13213,21 +9873,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-ai-smart-cube-3x3-magnetic"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "与 2023 年非磁 AI 三阶并列销售，增加工厂块间磁力定位和应用连接。",
@@ -13321,21 +9967,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-ai-smart-cube-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "2023 年目录所见的非磁力 MoYu AI 智能三阶，连接配套应用记录与训练。",
@@ -13419,21 +10051,7 @@
           "moyu-superrs3v2-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-superrs3v2-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -13535,21 +10153,7 @@
           "moyu-wrmv9-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-wrmv9-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "68.0 g",
@@ -13610,7 +10214,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 14,
         "asOf": "2026-10-07",
@@ -13642,21 +10246,7 @@
           "yj-evo2-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-evo2-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "70.0 g",
@@ -13724,7 +10314,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -13756,34 +10346,7 @@
           "moyu-ys3m-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-ys3m-tc"
-        },
-        {
-          "amount": 6.57,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-ys3m-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "76.0 g",
@@ -13891,21 +10454,7 @@
           "moyu-superrs3-tc"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-superrs3-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "77.0 g",
@@ -14007,34 +10556,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-guanlong-v4-3x3"
-        },
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-guanlong-v4-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "56.5 mm、64 g，采用固定松紧中心；价格低，非磁力配置。",
@@ -14128,34 +10650,7 @@
           "yj-evo-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-evo-tc"
-        },
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Side",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-evo-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "79.0 g",
@@ -14340,34 +10835,7 @@
           "myj-aolong-v5-ai-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 32.95,
-          "currency": "GBP",
-          "region": "UK",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "本独立英国商品页检索价，保留英镑；不是中国首发价。",
-            "en": "Observed price of this separate UK listing, in GBP; not a Chinese launch price."
-          },
-          "sourceId": "myj-uk-moyu-aolong-v5-ai-3x3-magnetic"
-        },
-        {
-          "amount": 28.43,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Magnetic",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-aolong-v5-ai-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "71 g",
@@ -14461,21 +10929,7 @@
           "myj-tc-yj-qianji-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "截至 2026-10-07 对应商品选项的网页标价；运费、税及库存另核。",
-            "en": "Listed price for the corresponding option observed by October 7, 2026; shipping, tax and availability vary."
-          },
-          "sourceId": "myj-tc-yj-qianji-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "58.0 g",
@@ -14530,7 +10984,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -14562,34 +11016,7 @@
           "myj-tc-moyu-3x3-magic-bead-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "截至 2026-10-07 对应商品选项的网页标价；运费、税及库存另核。",
-            "en": "Listed price for the corresponding option observed by October 7, 2026; shipping, tax and availability vary."
-          },
-          "sourceId": "myj-tc-moyu-3x3-magic-bead-cube"
-        },
-        {
-          "amount": 6.24,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "3x3 Bead",
-          "note": {
-            "zh": "截至 2026-10-07 对应商品选项的网页标价；运费、税及库存另核。",
-            "en": "Listed price for the corresponding option observed by October 7, 2026; shipping, tax and availability vary."
-          },
-          "sourceId": "myj-zii-magic-bead"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "76 mm",
         "weight": "190 g",
@@ -14666,21 +11093,7 @@
           "myj-zii-splash-gold"
         ]
       },
-      "prices": [
-        {
-          "amount": 0.37,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Colours",
-          "note": {
-            "zh": "截至 2026-10-07 对应商品选项的网页标价；运费、税及库存另核。",
-            "en": "Listed price for the corresponding option observed by October 7, 2026; shipping, tax and availability vary."
-          },
-          "sourceId": "myj-zii-splash-gold"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "80 g",
@@ -14749,21 +11162,7 @@
           "myj-stellar-mackee"
         ]
       },
-      "prices": [
-        {
-          "amount": 15,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Core",
-          "note": {
-            "zh": "同页可单买的 Core 选项美元标价；没有把整页 15–30 美元价格范围当成每款价格。",
-            "en": "USD price of the separately purchasable Core option; the page-wide $15–30 range is not assigned to each model."
-          },
-          "sourceId": "myj-stellar-globalcube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14774,8 +11173,8 @@
       },
       "highlights": [
         {
-          "zh": "有独立 Core 包装、产品图和 15 美元销售选项；基础配置与 Ultra 分开记录。",
-          "en": "Has separate Core packaging, product photo and a $15 commercial option, recorded separately from Ultra."
+          "zh": "有独立 Core 包装、产品图和可单独购买的销售选项；基础配置与 Ultra 分开记录。",
+          "en": "Has separate Core packaging, a product photo and an independently purchasable option, recorded separately from Ultra."
         },
         {
           "zh": "包装可见“星耀”名称；零售网站同时归类 Stellar Cube 和 YongJun，但没有以此证明其与 YJ 的公司或代工关系。",
@@ -14855,47 +11254,7 @@
           "r3-myj-cubezz-7181"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "International retailer",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "MF8942 / Black / OPP packing",
-          "note": {
-            "zh": "商家目录报价，未核实为首发价；运费及税费以结算为准。",
-            "en": "Retailer listing quote, not a verified launch price; shipping and taxes depend on checkout."
-          },
-          "sourceId": "r3-myj-cubezz-7181"
-        },
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black Crystal Heart",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2548"
-        },
-        {
-          "amount": 5.55,
-          "currency": "USD",
-          "region": "International",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Crystal Heart",
-          "note": {
-            "zh": "目录列售透明机身外观款；不复制黑色版的净重或尺寸。",
-            "en": "Catalog quote for the transparent-body appearance variant; black-version weight and dimensions are not copied."
-          },
-          "sourceId": "r3-myj-cubezz-category-23"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "85 g (Cubezz)",
@@ -14964,21 +11323,7 @@
           "r3-myj-tribox-2584"
         ]
       },
-      "prices": [
-        {
-          "amount": 500,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2584"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~56.1 mm (Tribox)",
         "weight": "~65.2 g (Tribox)",
@@ -15053,21 +11398,7 @@
           "r3-myj-tribox-2940"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2940"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~55.6 mm (Tribox)",
         "weight": "~64.8 g (Tribox)",
@@ -15142,21 +11473,7 @@
           "r3-myj-cubezz-category-25"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "International",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "商家目录此具体商品显示的现价；库存和产品规格未由详情页复核。",
-            "en": "Current price displayed for this exact catalog listing; stock and specifications could not be verified on the detail page."
-          },
-          "sourceId": "r3-myj-cubezz-category-25"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -15229,6 +11546,7 @@
     "Additional official catalog ambiguity remains: an English Guanlong V3 page uses item YJ8393 at 56.5 mm, while the independently verified Plus V3/2018 page uses YJ8358 at 56 mm. No explicit manufacturer identity bridge or distinct release evidence was found, so this has not been silently relabeled or counted as another generation. Verify the exact item number with the manufacturer before merging or adding it.",
     "Unknown first-release dates remain unknown; image folder timestamps, site migrations and undated current availability are not launch evidence. The GTS2 M 2019 page explicitly dates its color/packaging refresh to 2019 and its later matte panels to around March 2020; its embedded 2017/2018 reviews are not treated as an independent 2019-version test.",
     "Checked all current records in this brand group for the misspellings 关龙 and 玉龙: none found. Official Chinese labels are 冠龙 and 御龙. Unverified Chinese transliterations such as YiLong remain in documented English rather than being invented.",
-    "Black Crystal Diamond/Clover/Apple use the verified MoFangJiaoShi Black Crystal Heart / LOVE U record mfjs-love-u-mf8942 as their family root. Tribox identifies all four as Cubing Classroom Black Crystal series; the separately retained MoYu-labelled Crystal Ring record is not used as a cross-brand family root."
+    "Black Crystal Diamond/Clover/Apple use the verified MoFangJiaoShi Black Crystal Heart / LOVE U record mfjs-love-u-mf8942 as their family root. Tribox identifies all four as Cubing Classroom Black Crystal series; the separately retained MoYu-labelled Crystal Ring record is not used as a cross-brand family root.",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
   ]
 }

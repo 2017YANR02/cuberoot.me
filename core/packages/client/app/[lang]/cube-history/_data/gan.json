@@ -1273,6 +1273,20 @@
       "url": "https://www.gancube.cn/ganinfinity356x/",
       "publisher": "GAN",
       "kind": "official"
+    },
+    {
+      "id": "gan-cnlaunch-newblack-20250227",
+      "title": "GANCUBE：GAN15 NewBlack 新品预售海报（2025-02-27，微博存档）",
+      "url": "https://peachring.com/u/2191436202-GANCUBE/5138722586102604",
+      "publisher": "GANCUBE official Weibo, archived by Peachring",
+      "kind": "archive"
+    },
+    {
+      "id": "gan-cnlaunch-zenith-20241129",
+      "title": "GANCUBE：GAN15 Maglev 冬季限定「峰芒」¥449 上市公告（2024-11-29，微博存档）",
+      "url": "https://peachring.com/u/2191436202-GANCUBE/5106107678199756",
+      "publisher": "GANCUBE official Weibo, archived by Peachring",
+      "kind": "archive"
     }
   ],
   "cubes": [
@@ -1365,60 +1379,7 @@
           "gan-tension-cn"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "sourceId": "gan-iii",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-iii",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "sourceId": "gan-iii",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "sourceId": "gan-iii",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -1507,21 +1468,7 @@
           "gan-357-archive"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Unstickered",
-          "sourceId": "gan-357-archive",
-          "note": {
-            "zh": "历史页面或当年资料的显示报价；未将其冒充已确认首发价。",
-            "en": "Price displayed in historical material; not asserted to be a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": null,
@@ -1610,60 +1557,7 @@
           "gan-356-archive"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gans-356s",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "sourceId": "gan-audit-gans-356s",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "sourceId": "gan-audit-gans-356s",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 30.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "sourceId": "gan-audit-gans-356s",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -1753,47 +1647,7 @@
           "gan-356sv2-archive"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gans-356s-v2-advanced",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "sourceId": "gan-audit-gans-356s-v2-advanced",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "sourceId": "gan-audit-gans-356s-v2-advanced",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "87.9 g",
@@ -1877,47 +1731,7 @@
           "gan-air-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan-356-air-advanced",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "sourceId": "gan-audit-gan-356-air-advanced",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "sourceId": "gan-audit-gan-356-air-advanced",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "≈73 g",
@@ -2005,21 +1819,7 @@
           "gan-maxpark-archive"
         ]
       },
-      "prices": [
-        {
-          "amount": 41.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Ultimate",
-          "sourceId": "gan-maxpark-archive",
-          "note": {
-            "zh": "历史页面或当年资料的显示报价；未将其冒充已确认首发价。",
-            "en": "Price displayed in historical material; not asserted to be a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "68.3 g",
@@ -2107,21 +1907,7 @@
           "gan-magnetic-cn"
         ]
       },
-      "prices": [
-        {
-          "amount": 47.37,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-air-um",
-          "note": {
-            "zh": "停售档案保留的页面标价，不代表当前有货或中国售价。",
-            "en": "Page price retained in a discontinued listing; not evidence of current stock or a Chinese retail price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "75.7 g",
@@ -2208,21 +1994,7 @@
           "gan-air-s-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 28.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Standard",
-          "sourceId": "gan-oldair-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "≈68 g (official); 69.3 g (retailer)",
@@ -2312,21 +2084,7 @@
           "gan-air-sm-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Standard",
-          "sourceId": "gan-oldair-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "≈76 g; 2019 edition 75 g",
@@ -2418,21 +2176,7 @@
           "gan-records"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Standard",
-          "sourceId": "gan-354",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54 mm",
         "weight": "79.4 g",
@@ -2522,21 +2266,7 @@
           "gan-r"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-old-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -2623,34 +2353,7 @@
           "gan-magnetic-cn"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-x",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-x",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "77–80 g",
@@ -2745,21 +2448,7 @@
           "gan-air-pro"
         ]
       },
-      "prices": [
-        {
-          "amount": 33.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-oldair-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "69.1 g",
@@ -2938,21 +2627,7 @@
           "gan-rs"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-rs",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "72 g",
@@ -3036,21 +2711,7 @@
           "gan-354v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Standard",
-          "sourceId": "gan-354v2",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54 mm",
         "weight": "77 g",
@@ -3137,21 +2798,7 @@
           "gan-xv2"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-old-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "80 g",
@@ -3241,21 +2888,7 @@
           "gan-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Standard",
-          "sourceId": "gan-m",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "74 g",
@@ -3342,21 +2975,7 @@
           "gan-air-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-air-m",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "68 g",
@@ -3441,21 +3060,7 @@
           "gan-11-pro"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Primary Internals",
-          "sourceId": "gan-11-pro",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "63 g (Frosted)",
@@ -3561,21 +3166,7 @@
           "gan-11-duo"
         ]
       },
-      "prices": [
-        {
-          "amount": 36.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-old-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "59 g (official); 60 g (retailer)",
@@ -3666,21 +3257,7 @@
           "gan-11-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-old-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "56 g",
@@ -3769,21 +3346,7 @@
           "gan-11-air"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-11-official",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "50 g",
@@ -3870,21 +3433,7 @@
           "gan-mini"
         ]
       },
-      "prices": [
-        {
-          "amount": 41.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-mini",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "53 mm",
         "weight": "54 g; UV 57 g",
@@ -3975,21 +3524,7 @@
           "gan-12"
         ]
       },
-      "prices": [
-        {
-          "amount": 58.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-12",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "66 g",
@@ -4097,21 +3632,7 @@
           "gan-13"
         ]
       },
-      "prices": [
-        {
-          "amount": 58.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-13",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g",
@@ -4215,21 +3736,7 @@
           "gan-14"
         ]
       },
-      "prices": [
-        {
-          "amount": 55.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-14",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "70–71 g",
@@ -4331,21 +3838,7 @@
           "gan-14-pro"
         ]
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-14-pro",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g",
@@ -4436,21 +3929,7 @@
           "gan-15"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-15",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "≈58.6 g",
@@ -4556,17 +4035,17 @@
       },
       "prices": [
         {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "Global",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "UV",
-          "sourceId": "gan-15-black-official",
+          "amount": 399,
+          "currency": "CNY",
+          "region": "CN",
+          "kind": "launch",
+          "asOf": "2025-02-27",
+          "variant": "GAN15 NewBlack UV",
           "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
+            "zh": "官方新品预售海报公布预售价 ¥399；黑核 UV 配置由同型号官方产品页交叉核对。日期为预售报价公告日。",
+            "en": "The official new-product preorder poster states a ¥399 preorder price. The black-core UV configuration is cross-checked with its separate official product page. The date is the preorder price announcement date."
+          },
+          "sourceId": "gan-cnlaunch-newblack-20250227"
         }
       ],
       "specs": {
@@ -4609,7 +4088,8 @@
       ],
       "sourceIds": [
         "gan-15-black",
-        "gan-15-black-official"
+        "gan-15-black-official",
+        "gan-cnlaunch-newblack-20250227"
       ],
       "tags": [
         "china",
@@ -4657,21 +4137,7 @@
           "gan-16"
         ]
       },
-      "prices": [
-        {
-          "amount": 84.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-16",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "64 g (MAX)",
@@ -4784,7 +4250,7 @@
         {
           "amount": 439,
           "currency": "CNY",
-          "region": "China",
+          "region": "CN",
           "kind": "launch",
           "asOf": "2026-08-10",
           "variant": "Standard",
@@ -4792,19 +4258,6 @@
           "note": {
             "zh": "GANCUBE 官方微博宣布的中国首发价；不代表后续成交价。",
             "en": "Chinese launch price announced by GAN's official Weibo; not a later transaction price."
-          }
-        },
-        {
-          "amount": 84.99,
-          "currency": "USD",
-          "region": "Global",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "UV",
-          "sourceId": "gan-17-official",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
           }
         }
       ],
@@ -4903,21 +4356,7 @@
           "gan-me"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-me",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -5005,21 +4444,7 @@
           "gan-mev2"
         ]
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-mev2",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5104,21 +4529,7 @@
           "gan-356-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-356-maglev",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "81 g; UV 82 g",
@@ -5212,21 +4623,7 @@
           "gan-rs2"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-rs2",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "70 g",
@@ -5312,21 +4709,7 @@
           "gan-v100"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "sourceId": "gan-v100",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": "64 g",
@@ -5418,21 +4801,7 @@
           "gan-330"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Standard",
-          "sourceId": "gan-accessory-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm",
         "weight": "25.5 g",
@@ -5513,21 +4882,7 @@
           "gan-328"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Keychain case",
-          "sourceId": "gan-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "28 mm",
         "weight": "15 g",
@@ -5607,21 +4962,7 @@
           "gan-monstergo"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-monstergo",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "85 g",
@@ -5716,34 +5057,7 @@
           "gan-swift"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-swift-catalog",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "Global",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-swift-355-official",
-          "note": {
-            "zh": "检索时页面标价；停售档案也可能保留标价，不含运税且不代表中国售价。",
-            "en": "Page-listed price at research time; discontinued archives may retain prices. Excludes shipping/taxes and is not a Chinese price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -5829,21 +5143,7 @@
           "gan-swift-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-swift-maglev",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5931,21 +5231,7 @@
           "gan-rsc"
         ]
       },
-      "prices": [
-        {
-          "amount": 20.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-rsc",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm (RSC)",
         "weight": "84.6 g (RSC)",
@@ -6047,73 +5333,7 @@
           "gan-iii-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "sourceId": "gan-iii-v2",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-iii-v2",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "sourceId": "gan-iii-v2",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "sourceId": "gan-iii-v2",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "sourceId": "gan-iii-v2",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -6195,21 +5415,7 @@
           "gan-audit-gan-357-ultimate"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan-357-ultimate",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "90.8 g (retailer item-weight label)",
@@ -6294,21 +5500,7 @@
           "gan-core-cn"
         ]
       },
-      "prices": [
-        {
-          "amount": 38.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Purple",
-          "sourceId": "gan-audit-gans-356-master-unstickered",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "94.2 g (retailer item-weight label)",
@@ -6391,34 +5583,7 @@
           "gan-audit-gan356-x-ipg-v5"
         ]
       },
-      "prices": [
-        {
-          "amount": 46.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-x-ipg-v5",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 46.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan356-x-ipg-v5",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "81.1 g (retailer item-weight label)",
@@ -6507,34 +5672,7 @@
           "gan-xs"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-xs",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-xs",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "68 g (retailer item-weight label)",
@@ -6623,21 +5761,7 @@
           "gan-audit-gan-356-xs-3x3-special-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Primary Internals",
-          "sourceId": "gan-audit-gan-356-xs-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "69 g (retailer item-weight label)",
@@ -6722,21 +5846,7 @@
           "gan-11-pro"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "sourceId": "gan-11-pro",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6841,21 +5951,7 @@
           "gan-11-pro"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-11-pro",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6959,21 +6055,7 @@
           "gan-audit-gan-11-m-pro-3x3-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 45.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-uv-coated",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "63 g (retailer item-weight label)",
@@ -7062,21 +6144,7 @@
           "gan-audit-gan-11-m-pro-3x3-soft-texture-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-soft-texture-coated",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "63 g (retailer item-weight label)",
@@ -7166,21 +6234,7 @@
           "gan-audit-gan-11-m-pro-3x3-ambition-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Pink",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-ambition-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -7267,21 +6321,7 @@
           "gan-audit-gan-11-m-pro-3x3-glimmer-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Pink",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-glimmer-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -7368,21 +6408,7 @@
           "gan-audit-gan-11-m-pro-3x3-chaser-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Pink",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-chaser-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -7469,21 +6495,7 @@
           "gan-audit-gan-11-m-pro-3x3-zenith-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Yellow",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-zenith-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -7570,21 +6582,7 @@
           "gan-audit-gan-11-m-pro-3x3-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Purple",
-          "sourceId": "gan-audit-gan-11-m-pro-3x3-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "64 g (retailer item-weight label)",
@@ -7671,21 +6669,7 @@
           "gan-mini-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 47.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-mini-uv",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "53 mm",
         "weight": "57 g (retailer item-weight label)",
@@ -7777,21 +6761,7 @@
           "gan-audit-gan12-m-maglev-matte-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 51.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan12-m-maglev-matte-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -7880,21 +6850,7 @@
           "gan-audit-gan12-m-maglev-matte-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 51.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan12-m-maglev-matte-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -7983,21 +6939,7 @@
           "gan-12-leap"
         ]
       },
-      "prices": [
-        {
-          "amount": 45.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-12-leap",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "61 g (retailer item-weight label)",
@@ -8085,21 +7027,7 @@
           "gan-audit-gan13-m-maglev-uv-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 62.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan13-m-maglev-uv-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8189,21 +7117,7 @@
           "gan-13fx"
         ]
       },
-      "prices": [
-        {
-          "amount": 51.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-13fx",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "65 g (retailer item-weight label)",
@@ -8291,21 +7205,7 @@
           "gan-audit-gan14-m-maglev-matte-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan14-m-maglev-matte-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8390,21 +7290,7 @@
           "gan-audit-gan14-maglev-pro-uv-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 65.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan14-maglev-pro-uv-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8491,21 +7377,7 @@
           "gan-audit-gan15-maglev-3x3-frosted"
         ]
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan15-maglev-3x3-frosted",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "60 g (retailer item-weight label)",
@@ -8593,21 +7465,7 @@
           "gan-audit-gan16-maglev-uv-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 69.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan16-maglev-uv-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8696,21 +7554,7 @@
           "gan-audit-gan16-maglev-maxl-uv-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 84.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan16-maglev-maxl-uv-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm (retailer)",
         "weight": "≈68.3 g (tribox)",
@@ -8801,21 +7645,7 @@
           "gan-audit-gan16-maglev-max-uv-3x3-dual-wr-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 84.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan16-maglev-max-uv-3x3-dual-wr-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8902,21 +7732,7 @@
           "gan-audit-gan-12-m-maglev-3x3-peacock-emerald-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Green",
-          "sourceId": "gan-audit-gan-12-m-maglev-3x3-peacock-emerald-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -9004,21 +7820,7 @@
           "gan-audit-gan12-m-maglev-3x3-chan-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Green",
-          "sourceId": "gan-audit-gan12-m-maglev-3x3-chan-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -9104,21 +7906,7 @@
           "gan-audit-gan12-m-maglev-3x3-chan-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Red",
-          "sourceId": "gan-audit-gan12-m-maglev-3x3-chan-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -9204,21 +7992,7 @@
           "gan-audit-gan13-m-maglev-kunlun-limited-edition-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Gold",
-          "sourceId": "gan-audit-gan13-m-maglev-kunlun-limited-edition-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -9303,21 +8077,7 @@
           "gan-audit-gan13-m-maglev-colore-limited-edition-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 94.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Blue",
-          "sourceId": "gan-audit-gan13-m-maglev-colore-limited-edition-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -9402,21 +8162,7 @@
           "gan-audit-gan14-m-maglev-galaxy-limited-edition-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 94.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-audit-gan14-m-maglev-galaxy-limited-edition-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -9501,21 +8247,7 @@
           "gan-audit-gan14-maglev-pro-aurora-3x3-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-audit-gan14-maglev-pro-aurora-3x3-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -9602,17 +8334,17 @@
       },
       "prices": [
         {
-          "amount": 74.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-audit-gan15-maglev-zenith-3x3-limited-edition",
+          "amount": 449,
+          "currency": "CNY",
+          "region": "CN",
+          "kind": "launch",
+          "asOf": "2024-11-29",
+          "variant": "GAN15 MagLev Zenith / 峰芒 冬季限定",
           "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
+            "zh": "官方上市预告公布冬季限定「峰芒」定价 ¥449，并预告双12上市；此处日期为报价公告日。",
+            "en": "The official launch announcement states a ¥449 price for the Zenith winter edition and announces a Double 12 launch. The date shown is the price announcement date."
+          },
+          "sourceId": "gan-cnlaunch-zenith-20241129"
         }
       ],
       "specs": {
@@ -9650,7 +8382,8 @@
         "Default Title"
       ],
       "sourceIds": [
-        "gan-audit-gan15-maglev-zenith-3x3-limited-edition"
+        "gan-audit-gan15-maglev-zenith-3x3-limited-edition",
+        "gan-cnlaunch-zenith-20241129"
       ],
       "tags": [
         "china",
@@ -9699,21 +8432,7 @@
           "gan-audit-gan15-maglev-emeraldox-3x3-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-audit-gan15-maglev-emeraldox-3x3-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9798,21 +8517,7 @@
           "gan-audit-gan16-maglev-max-3x3-amyth-le"
         ]
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-audit-gan16-maglev-max-3x3-amyth-le",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9897,21 +8602,7 @@
           "gan-audit-gan16-maglev-max-3x3-aqualis-summer-le"
         ]
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "sourceId": "gan-audit-gan16-maglev-max-3x3-aqualis-summer-le",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9996,21 +8687,7 @@
           "gan-audit-gan356-m-3x3-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-m-3x3-uv-coated",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -10098,21 +8775,7 @@
           "gan-audit-gan356-m-lite"
         ]
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-m-lite",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "74 g (retailer item-weight label)",
@@ -10198,21 +8861,7 @@
           "gan-audit-gan-356-m-niu-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan-356-m-niu-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "74 g (retailer item-weight label)",
@@ -10295,21 +8944,7 @@
           "gan-me-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-me-uv",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -10394,21 +9029,7 @@
           "gan-audit-gan356-me-v2-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-me-v2-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "77.5 g (retailer item-weight label)",
@@ -10491,21 +9112,7 @@
           "gan-356-maglev-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-356-maglev-uv",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "82 g (retailer item-weight label)",
@@ -10592,21 +9199,7 @@
           "gan-audit-gan-v100-maglev-3x3-frosted"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "sourceId": "gan-audit-gan-v100-maglev-3x3-frosted",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10691,21 +9284,7 @@
           "gan-audit-gan-v100-leap-3x3-frosted"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "sourceId": "gan-audit-gan-v100-leap-3x3-frosted",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10793,21 +9372,7 @@
           "gan-audit-gan15-maglev-uv-3x3-10th-anniversary-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 84.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan15-maglev-uv-3x3-10th-anniversary-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10895,21 +9460,7 @@
           "gan-audit-gan356-me-uv-3x3-10th-anniversary-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-me-uv-3x3-10th-anniversary-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10992,21 +9543,7 @@
           "gan-audit-gan-356-m-e-lunar-new-year-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan-356-m-e-lunar-new-year-limited-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "77 g (retailer item-weight label)",
@@ -11089,21 +9626,7 @@
           "gan-audit-gan356-me-3x3-2025-lunar-new-year-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-me-3x3-2025-lunar-new-year-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11186,21 +9709,7 @@
           "gan-audit-gan356-me-christmas-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-me-christmas-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11286,21 +9795,7 @@
           "gan-audit-gan356-me-brainstorm-voyage-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-me-brainstorm-voyage-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "78 g (retailer item-weight label)",
@@ -11383,21 +9878,7 @@
           "gan-audit-gan356-me-3x3-minions-edition-frosted"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan356-me-3x3-minions-edition-frosted",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11480,21 +9961,7 @@
           "gan-audit-gan-v100-leap-3x3-2026-year-of-the-horse-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan-v100-leap-3x3-2026-year-of-the-horse-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11582,21 +10049,7 @@
           "gan-audit-gan-v100-maglev-uv-3x3-minions-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan-v100-maglev-uv-3x3-minions-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11683,21 +10136,7 @@
           "gan-audit-gan330-keychain-cube-3x3-10th-anniversary-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-10th-anniversary-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11776,86 +10215,7 @@
           "gan-audit-gan330-keychain-cube-3x3-special-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Red",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Mint",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Purple",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Brown",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Yellow",
-          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm",
         "weight": "20 g (retailer item-weight label)",
@@ -11944,21 +10304,7 @@
           "gan-audit-monstergo-3x3-traditional"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-monstergo-3x3-traditional",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -12048,34 +10394,7 @@
           "gan-audit-monstergo-3x3-cloud"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "sourceId": "gan-audit-monstergo-3x3-cloud",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "sourceId": "gan-audit-monstergo-3x3-cloud",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -12163,21 +10482,7 @@
           "gan-monstergo-ut"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-monstergo-ut",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -12263,21 +10568,7 @@
           "gan-audit-monstergo-3x3-rainbow"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-monstergo-3x3-rainbow",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -12364,21 +10655,7 @@
           "gan-audit-monstergo-3x3-m-edu"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-monstergo-3x3-m-edu",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "91 g (retailer item-weight label)",
@@ -12463,21 +10740,7 @@
           "gan-audit-monstergo-352m-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-monstergo-352m-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "52 mm (product description; retailer dimension tag conflicts)",
         "weight": "52 g (retailer item-weight label)",
@@ -12562,34 +10825,7 @@
           "gan-audit-monstergo-spelling-mosaic-cubes-3x3-pack-of-9"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Green",
-          "sourceId": "gan-audit-monstergo-spelling-mosaic-cubes-3x3-pack-of-9",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Purple",
-          "sourceId": "gan-audit-monstergo-spelling-mosaic-cubes-3x3-pack-of-9",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12673,21 +10909,7 @@
           "gan-audit-swift-block-3x3-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-swift-block-3x3-maglev",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": "92 g (retailer item-weight label)",
@@ -12775,21 +10997,7 @@
           "gan-swift-frosted"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-swift-frosted",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12872,21 +11080,7 @@
           "gan-gsc-review"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan-speed-cube-3x3",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -12971,21 +11165,7 @@
           "gan-audit-gan-356-air-sm-2019-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan-356-air-sm-2019-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "75 g (retailer item-weight label)",
@@ -13071,21 +11251,7 @@
           "gan-audit-gan-356-air-master-2019-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 20.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan-356-air-master-2019-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "74 g (retailer item-weight label)",
@@ -13171,60 +11337,7 @@
           "gan-audit-gans-356-air-grand-master"
         ]
       },
-      "prices": [
-        {
-          "amount": 36.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "sourceId": "gan-audit-gans-356-air-grand-master",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 36.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "sourceId": "gan-audit-gans-356-air-grand-master",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 36.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "sourceId": "gan-audit-gans-356-air-grand-master",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        },
-        {
-          "amount": 36.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Macaron Purple",
-          "sourceId": "gan-audit-gans-356-air-grand-master",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "73 g (retailer item-weight label)",
@@ -13313,21 +11426,7 @@
           "gan-audit-gan-356-air-um-max-park-signature-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 46.39,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "sourceId": "gan-audit-gan-356-air-um-max-park-signature-edition",
-          "note": {
-            "zh": "检索时该选项的页面标价；停售档案也可能保留标价，不含运税，不代表人民币或首发售价。",
-            "en": "Listing price for this option at research time; discontinued records can retain prices. Excludes shipping/tax and is neither CNY nor a confirmed launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm",
         "weight": "75.7 g (retailer item-weight label)",
@@ -13988,21 +12087,7 @@
           "gan-audit-cubein-pokemon-gan-356me-pikachu-sprigatito"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.15,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pikachu",
-          "sourceId": "gan-audit-cubein-pokemon-gan-356me-pikachu-sprigatito",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm (retailer)",
         "weight": null,
@@ -14088,21 +12173,7 @@
           "gan-audit-cubein-pokemon-gan-356me-pikachu-sprigatito"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.82,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Sprigatito",
-          "sourceId": "gan-audit-cubein-pokemon-gan-356me-pikachu-sprigatito",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56 mm (retailer)",
         "weight": null,
@@ -14188,21 +12259,7 @@
           "gan-audit-cubein-gan-356me-pokemon-charmander-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.82,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pokémon Charmander",
-          "sourceId": "gan-audit-cubein-gan-356me-pokemon-charmander-edition",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14285,21 +12342,7 @@
           "gan-audit-pokemon-oct2025"
         ]
       },
-      "prices": [
-        {
-          "amount": 43.36,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Gengar",
-          "sourceId": "gan-audit-cubein-pokemon-gan-v100-maglev-gengar-edition",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm (retailer)",
         "weight": "64 g (retailer cube weight)",
@@ -14388,21 +12431,7 @@
           "gan-audit-pokemon-oct2025"
         ]
       },
-      "prices": [
-        {
-          "amount": 55.53,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Greninja",
-          "sourceId": "gan-audit-cubein-gan12-maglev-greninja",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "66 g (retailer cube weight)",
@@ -14489,21 +12518,7 @@
           "gan-audit-cubein-pokemon-gan-swift-3x3-umbreon-edition-speed-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.73,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "sourceId": "gan-audit-cubein-pokemon-gan-swift-3x3-umbreon-edition-speed-cube",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14588,21 +12603,7 @@
           "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.06,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "GAN330 Pikachu",
-          "sourceId": "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm (retailer)",
         "weight": null,
@@ -14685,21 +12686,7 @@
           "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.06,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "GAN330 Squirtle",
-          "sourceId": "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm (retailer)",
         "weight": null,
@@ -14782,21 +12769,7 @@
           "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.06,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "GAN330 Charmander",
-          "sourceId": "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm (retailer)",
         "weight": null,
@@ -14879,21 +12852,7 @@
           "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.06,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "GAN330 Bulbasaur",
-          "sourceId": "gan-audit-cubein-pokemon-gan330-keychain-series-mini-3x3",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm (retailer)",
         "weight": null,
@@ -14976,21 +12935,7 @@
           "gan-audit-cubein-pokemon-pikachu-3x3-magnetic-speed-cube-gan"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.06,
-          "currency": "USD",
-          "region": "Global / China-channel edition",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pikachu",
-          "sourceId": "gan-audit-cubein-pokemon-pikachu-3x3-magnetic-speed-cube-gan",
-          "note": {
-            "zh": "CubeIn 美元商店在检索时返回的具体选项售价；按地区或汇率可能浮动，不是人民币首发价，不含运税。",
-            "en": "Exact option price returned by CubeIn’s USD storefront at research time; regional/currency settings may vary it. Not a CNY launch price; shipping/tax excluded."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm (retailer)",
         "weight": null,
@@ -15247,21 +13192,7 @@
           "gan-r3-swift-horse-cubein"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.13,
-          "currency": "USD",
-          "region": "CN export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Horse Year",
-          "note": {
-            "zh": "该独立选项的检索标价；不含运税，不是人民币首发价。",
-            "en": "Observed price for the Horse Year option; excludes shipping/tax and is not a CNY launch price."
-          },
-          "sourceId": "gan-r3-swift-horse-cubein"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -15548,21 +13479,7 @@
           "gan-r3-pink-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 88.8,
-          "currency": "BND",
-          "region": "BN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Air S Love Pink",
-          "sourceId": "gan-r3-airs-pink-wizzon",
-          "note": {
-            "zh": "文莱商家当前保留的对应 SKU 标价；停售页仍可显示报价，不含运税，不是首发价。",
-            "en": "Retained listing price for the exact SKU from the Brunei merchant; sold-out pages can retain prices. Excludes shipping/tax and is not a launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -15642,21 +13559,7 @@
           "gan-r3-shanhe-expo"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.9,
-          "currency": "BND",
-          "region": "BN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Mystery box — one of five colors",
-          "sourceId": "gan-r3-shanhe-wizzon",
-          "note": {
-            "zh": "文莱商家当前保留的对应 SKU 标价；停售页仍可显示报价，不含运税，不是首发价。",
-            "en": "Retained listing price for the exact SKU from the Brunei merchant; sold-out pages can retain prices. Excludes shipping/tax and is not a launch price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -15744,6 +13647,8 @@
     "新增图片 2 张 exact（马年、山河社稷图）、1 张官方 family 共用图（真爱粉 S/SM）、3 条缺图（两款 INFINITY、五周年白色智能版）。可用图均检查实际响应类型并看过原图；无人工智能生成或普通版代图。五周年版和 Air S 真爱粉首发日期仍未知，不继承母型号日期。 / New images: two exact, one explicitly shared official family image, and three gaps. Loadable originals were checked visually and by content type. Launch dates remain unknown for the white fifth-anniversary smart cube and Air S Love Pink.",
     "未贸然新增的候选：WizZon/Cutcorner 的 GAN357 V2 尚未证实与既有透明轴心修订是否同款；MG3 AI Lite 仅见商家命名，未证实独立硬件；ZiiCube GAN356 iPlay V2 与既有 iPlay 的关系待核；收藏文章所称 GAN356 X Watermelon Red 尚缺足够原厂/同期来源。国色330与已有六种特别配色一致，补官方名称和别名而不重复增条；山河社稷图的五色盲盒仅设一条联名发行。 / Unresolved candidates include GAN357 V2, MG3 AI Lite, the retailer-named iPlay V2 and the collector-reported GAN356 X Watermelon Red. The six-color Antique Rhyme series is added as a name/alias of the existing special-color record, not a duplicate.",
     "搜索补充正式中英文名称：萌刻/MonsterGo 与 MG3 各教学型号、花木蓝（保留旧译青花蓝）、真爱粉（保留旧译恋爱粉）、国色/Antique Rhyme、GAN Cheering。所有别名都关联本轮官方来源；未将未经核实的 V2/Lite 叫法当作确定型号别名。 / Search enrichment includes official Chinese and English naming, while preserving former translations as aliases; uncertain retailer V2/Lite labels are not promoted to confirmed aliases.",
-    "2026-10-07（America/Los_Angeles；UTC 2026-10-08）定向补图：按淘宝/天猫旧称和中英文型号检索，并复核原厂页、同期评测与旧商品存档；GAN356 X INFINITY 恢复官方独立产品图并保存原始副本。GAN1/2 的现存早期实物图缺少明确编号，GAN354 M INFINITY 的已确认评测缩略图未返回图像，继续保留具体缺口。 / Targeted photo recovery on 2026-10-07 America/Los_Angeles: searched Taobao/Tmall historical and bilingual names and checked official pages, contemporary reviews and archived listings. Recovered an unchanged official GAN356 X INFINITY photograph. Early Gans photographs lack a verified numbered-model identity; no inspectable exact GAN354 M INFINITY image was recovered."
+    "2026-10-07（America/Los_Angeles；UTC 2026-10-08）定向补图：按淘宝/天猫旧称和中英文型号检索，并复核原厂页、同期评测与旧商品存档；GAN356 X INFINITY 恢复官方独立产品图并保存原始副本。GAN1/2 的现存早期实物图缺少明确编号，GAN354 M INFINITY 的已确认评测缩略图未返回图像，继续保留具体缺口。 / Targeted photo recovery on 2026-10-07 America/Los_Angeles: searched Taobao/Tmall historical and bilingual names and checked official pages, contemporary reviews and archived listings. Recovered an unchanged official GAN356 X INFINITY photograph. Early Gans photographs lack a verified numbered-model identity; no inspectable exact GAN354 M INFINITY image was recovered.",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope.",
+    "2026-10-08 中国首发价补查：复核 47 页 GANCUBE 官方微博公开存档及原始海报，新增 GAN15 NewBlack 黑核 UV 的官方新品预售价 399 元（2025-02-27 公告）与 GAN15 MagLev「峰芒」冬季限定上市定价 449 元（2024-11-29 公告）；日期为报价公告日期，保留原有型号的日期依据。NewBlack 的 UV 配置由同型号官方独立产品页交叉核对。未采纳配置不明确的起价、老款促销及无法核对原文的聚合报价。 / Reviewed 47 public archive pages of GAN official Weibo and original posters. Added the official new-product preorder price of CNY 399 for GAN15 NewBlack UV (announced 2025-02-27) and launch-announcement price of CNY 449 for the GAN15 MagLev Zenith winter edition (2024-11-29). These are price announcement dates; existing model release-date evidence is unchanged. NewBlack UV is cross-checked against its separate official product page. Unspecified starting prices, later promotions and aggregation-only quotes were excluded."
   ]
 }

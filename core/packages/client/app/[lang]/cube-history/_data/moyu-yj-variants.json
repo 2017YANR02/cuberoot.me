@@ -891,21 +891,7 @@
           "en": "6 compression × 5 travel levels, for 30 center settings."
         }
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc3-beta-3x3-aero-maglev-uv"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "Aero 采用中空减料内构，72 g，磁悬浮与 UV；保留传统轴心，未使用球轴磁力。",
@@ -992,34 +978,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 125.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-ai-3x3-smart-cube-guided-recovery-edition"
-        },
-        {
-          "amount": 92.38,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Guided Edition",
-          "note": {
-            "zh": "截至 2026-10-07 对应商品选项的网页标价；运费、税及库存另核。",
-            "en": "Listed price for the corresponding option observed by October 7, 2026; shipping, tax and availability vary."
-          },
-          "sourceId": "myj-zii-v11-guided"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "透明六色机身内含 8 颗引导灯，以机身灯光提示下一步；弹力采用磁悬浮，配合 WCU 应用记录。",
@@ -1113,34 +1072,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 159.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-aolong-ai-3x3-19th-anniversary-edition-smart-cube"
-        },
-        {
-          "amount": 120.05,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Super AoLong AI 19th Anniv.",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-superaolongai-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "8 磁球轴的联网旗舰，并推出 19 周年透明内核版本。",
@@ -1248,34 +1180,7 @@
           "en": "Digital tension, elasticity and magnet adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-aolong-3x3-19th-anniversary-edition"
-        },
-        {
-          "amount": 70.7,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20MCore MagLev UV 19th Anniv.",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-super-aolong-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "20 磁球轴定位 3.0 与磁悬浮，采用防转角几何。",
@@ -1346,7 +1251,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -1394,34 +1299,7 @@
           "en": "8 tension × 8 elasticity settings, 64 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-aolong-v5-tc"
-        },
-        {
-          "amount": 26.0,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20M-BallCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-my-3x3-aolong-v5"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "碳纤维轴心与直角防转角外形；8 × 8 中心双调。",
@@ -1530,34 +1408,7 @@
           "en": "8 tension × 8 elasticity settings, 64 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 37.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-aolong-v5-8-magnet-ball-core-maglev-uv"
-        },
-        {
-          "amount": 21.02,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "8M-BallCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-my-3x3-aolong-v5"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "碳纤维轴心与直角防转角外形；8 × 8 中心双调。",
@@ -1666,34 +1517,7 @@
           "en": "8 tension × 8 elasticity settings, 64 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-aolong-v5-3x3-magnetic-uv"
-        },
-        {
-          "amount": 12.29,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Magnetic UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-my-3x3-aolong-v5"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "碳纤维轴心与直角防转角外形；8 × 8 中心双调。",
@@ -1754,7 +1578,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -1798,21 +1622,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 27.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-2020-3x3-uv-picube-core-magnetic"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "工厂块间磁力与独立弹簧压缩调节进入低价位。",
@@ -1905,34 +1715,7 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Green Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-edge-repulsion-uv-picube-se"
-        },
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Purple Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-edge-repulsion-uv-picube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -2026,21 +1809,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Transparent Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-8-m-ball-core-transparent-core-uv-saocube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -2098,7 +1867,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 10,
         "asOf": "2026-10-07",
@@ -2142,34 +1911,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-tgv2-tc"
-        },
-        {
-          "amount": 41.09,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20M-BallCore UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-tgv2-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "UV 表面；8 磁与 20 磁球轴分别作为独立商品配置。",
@@ -2275,21 +2017,7 @@
           "en": "Adjustable piece magnets plus tension/compression adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-wrm2021-maglev-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55 mm 机身，块间磁力与轴距、弹力可以分开设置。",
@@ -2388,21 +2116,7 @@
           "en": "Adjustable piece magnets plus tension/compression adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wr-m-2021-lite-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55 mm 机身，块间磁力与轴距、弹力可以分开设置。",
@@ -2501,21 +2215,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 28.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2-m-wca-record-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 机身与可拼接三色角块；本记录区分工厂非磁与工厂磁力配置。",
@@ -2608,21 +2308,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-e"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "机身重量降至商家标注约 74 g。",
@@ -2673,7 +2359,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -2718,34 +2404,7 @@
           "en": "Independent tension and spring-compression adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wr"
-        },
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wr"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "沿用 GTS3 路线并去掉外部凸棱，更新双调机构。",
@@ -2798,7 +2457,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -2840,34 +2499,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs3m-tc"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "mfjs-mf3rs3m-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "第三代 MF3RS，区分非磁款与工厂磁化 M 款。",
@@ -2965,34 +2597,7 @@
           "en": "Separate screw tension and geared spring compression."
         }
       },
-      "prices": [
-        {
-          "amount": 38.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Sky Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts3-m-le"
-        },
-        {
-          "amount": 38.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts3-m-le"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "外表防滑凸棱；螺丝轴距和齿轮弹簧压缩分别调节。",
@@ -3049,7 +2654,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -3095,21 +2700,7 @@
           "en": "Separate screw tension and geared spring compression."
         }
       },
-      "prices": [
-        {
-          "amount": 35.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts3-lm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "外表防滑凸棱；螺丝轴距和齿轮弹簧压缩分别调节。",
@@ -3162,7 +2753,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -3201,21 +2792,7 @@
         "mechanism": [],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mini-pillowed-3x3-keychain-cube-2-0cm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "外表呈枕形，体积小且便于随身携带。",
@@ -3300,21 +2877,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-guanlong-v3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "官方货号 YJ8358，56 mm；ZiiCube 称冠龙 Plus V3，与本条为同一型号。",
@@ -3390,47 +2953,7 @@
           "myj-zii-guanlong-plus-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlongplus-tc"
-        },
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlongplus-tc"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-guanlongplus-tc"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "75.2 g",
@@ -3546,21 +3069,7 @@
           "en": "Separate screw tension and geared spring compression."
         }
       },
-      "prices": [
-        {
-          "amount": 35.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-gts3-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "外表防滑凸棱；螺丝轴距和齿轮弹簧压缩分别调节。",
@@ -3656,47 +3165,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Sky Blue",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2-m-le"
-        },
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Emerald Green",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2-m-le"
-        },
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Sakura Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-gts2-m-le"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 机身与可拼接三色角块；本记录区分工厂非磁与工厂磁力配置。",
@@ -3785,34 +3254,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-gts2m-tc"
-        },
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-gts2m-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 机身与可拼接三色角块；本记录区分工厂非磁与工厂磁力配置。",
@@ -3907,21 +3349,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Green",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-aolong-v2-le"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "减少角块圆润程度、扩大角块凹槽以降低意外转角。",
@@ -4005,73 +3433,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-weilong-v2-54-5mm"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-weilong-v2-54-5mm"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-weilong-v2-54-5mm"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-weilong-v2-54-5mm"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-weilong-v2-54-5mm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "分块拼装改动使六色免贴纸版本成为可能。",
@@ -4156,60 +3518,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-aolong-54-5mm"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-aolong-54-5mm"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-aolong-54-5mm"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mini-moyu-aolong-54-5mm"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "圆润角棱结构强调顺畅容错。",
@@ -4294,34 +3603,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-pro-m"
-        },
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-guoguan-yuexiao-pro-m"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "后续增加工厂磁力 Pro M 版本。",
@@ -4410,21 +3692,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 54.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-8-magnet-ball-core-maglev-edge-repulsion-uv-picube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -4482,7 +3750,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -4529,21 +3797,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-8-magnet-ball-core-spring-edge-repulsion-uv-picube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -4601,7 +3855,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -4648,21 +3902,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-8-magnet-ball-core-maglev-uv-picube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -4720,7 +3960,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -4767,21 +4007,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-8-magnet-ball-core-spring-uv-picube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -4839,7 +4065,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -4885,21 +4111,7 @@
           "en": "8 travel and 8 spring-compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 54.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-ferrocorev2-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "基于威龙 V11；采用可柔性形变的轴心、较强磁力及定制弹簧，由 MoYu、CubeHead 和 TheCubicle 合作。",
@@ -5007,21 +4219,7 @@
           "en": "8 travel and 8 spring-compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-ferrocore-v2-3x3-uv-coated"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "基于威龙 V11；采用可柔性形变的轴心、较强磁力及定制弹簧，由 MoYu、CubeHead 和 TheCubicle 合作。",
@@ -5130,21 +4328,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-spring-tension-ball-core-uv-saocube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -5248,21 +4432,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-spring-tension-ball-core-matte-saocube-se"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -5319,7 +4489,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 6,
         "asOf": "2026-10-07",
@@ -5361,21 +4531,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc-sigma-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "永骏与 TheCubicle 合作的 Beta 改版：更大的轴磁、较轻的块间磁力，以及更尖的角帽。",
@@ -5472,34 +4628,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-2020-3x3-picube-core-magnetic"
-        },
-        {
-          "amount": 27.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Side",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-2020-3x3-picube-core-magnetic"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "工厂块间磁力与独立弹簧压缩调节进入低价位。",
@@ -5557,7 +4686,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 6,
         "asOf": "2026-10-07",
@@ -5605,34 +4734,7 @@
           "en": "Digital tension, elasticity and magnet adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-aolong-3x3-20-magnet-ball-core-maglev-uv"
-        },
-        {
-          "amount": 62.51,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20MCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-super-aolong-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "20 磁球轴定位 3.0 与磁悬浮，采用防转角几何。",
@@ -5740,21 +4842,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 27.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-se-3x3-8-magnet-ball-core-maglev-uv"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -5859,21 +4947,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-se-3x3-20-magnet-ball-core-maglev-uv"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -5976,21 +5050,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-se-3x3-magnetic-spring-tension"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -6076,21 +5136,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-se-magnetic"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -6191,21 +5237,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-se-3x3-magnetic"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -6308,21 +5340,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-picube-uv-special-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -6430,21 +5448,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-picube-special-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -6550,34 +5554,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 119.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-ai-3x3-8-magnet-ball-core-maglev-18th-anniversary-edition"
-        },
-        {
-          "amount": 87.57,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "18th Anniv.",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-v11ai-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "陀螺仪、联网 PK 与后续灯光指示版。",
@@ -6689,34 +5666,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-20-magnet-ball-core-maglev-18th-anniversary-edition"
-        },
-        {
-          "amount": 36.09,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "18th Anniv.",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-v11"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -6829,34 +5779,7 @@
           "en": "9 spring-compression levels with screw-based travel adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-meta3-wing-tc"
-        },
-        {
-          "amount": 21.72,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "WingM+CoreMag UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "yj-meta3-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "中心裙边配合棱块缺口，角帽尖端结构针对转角问题。",
@@ -6972,34 +5895,7 @@
           "en": "9 spring-compression levels with screw-based travel adjustment."
         }
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-meta3-3x3-8-magnet-ball-core-uv"
-        },
-        {
-          "amount": 19.98,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Core Magnetic UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "yj-meta3-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "中心裙边配合棱块缺口，角帽尖端结构针对转角问题。",
@@ -7066,7 +5962,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -7110,21 +6006,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-ferrocore-uv-3x3-special-edition-wrm-v10"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "基于威龙 WRM V10；金属零件连接轴心与中心，定制磁体及弹簧，灰色内构。",
@@ -7233,21 +6115,7 @@
           "en": "6 tension × 9 compression × 5 edge-magnet × 6 corner/core-magnet settings: 1,620 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-tg-3x3-spirit-pearl-limited-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "6 轴距 × 9 弹力 × 5 棱磁 × 6 角轴磁力，共 1620 种组合。",
@@ -7309,7 +6177,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -7357,34 +6225,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-v11-tc"
-        },
-        {
-          "amount": 29.87,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20M-BallCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-v11"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -7493,34 +6334,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 41.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-8-magnet-ball-core-uv"
-        },
-        {
-          "amount": 24.96,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "8M-BallCore Spring UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-v11"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -7632,34 +6446,7 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v11-3x3-magnetic-uv"
-        },
-        {
-          "amount": 14.56,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-v11"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -7768,34 +6555,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 159.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-v2-ai-20-magnet-ball-core-maglev-18th-anniversary-edition"
-        },
-        {
-          "amount": 109.37,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Ai 18th Anniv.",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-superv2ai-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "智能版使用 8 磁球轴，通过 WCU Cube 接入训练与对战。",
@@ -7907,34 +6667,7 @@
           "en": "Simultaneously adjusts the magnets within each corner."
         }
       },
-      "prices": [
-        {
-          "amount": 98.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-v2-20-magnet-ball-core-maglev-18th-anniversary-edition"
-        },
-        {
-          "amount": 63.12,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "18th Anniv.",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-super-wlv2-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "单个角块中的磁力设置可以同步调节，提高重复调校效率。",
@@ -8045,21 +6778,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-yulong3-click-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "低价工厂磁力三阶；TheCubicle 称 V3 M，另一商家称 V2 2025。",
@@ -8156,47 +6875,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Green",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc3-beta-limited-edition"
-        },
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Pink",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc3-beta-limited-edition"
-        },
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "International retailer",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Lime Green / YJ8124TG",
-          "note": {
-            "zh": "商家目录报价，未核实为首发价；运费及税费以结算为准。",
-            "en": "Retailer listing quote, not a verified launch price; shipping and taxes depend on checkout."
-          },
-          "sourceId": "r3-myj-cubezz-8124"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "全新 Beta 结构平台，采用不同的块间/球轴和弹力组合。",
@@ -8262,7 +6941,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 9,
         "asOf": "2026-10-07",
@@ -8305,21 +6984,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-yulong-3x3-v3-m-uv-coated"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "低价工厂磁力三阶；TheCubicle 称 V3 M，另一商家称 V2 2025。",
@@ -8420,21 +7085,7 @@
           "en": "Simultaneously adjusts the magnets within each corner."
         }
       },
-      "prices": [
-        {
-          "amount": 63.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-super-wlv2-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "单个角块中的磁力设置可以同步调节，提高重复调校效率。",
@@ -8533,34 +7184,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-beta-tc"
-        },
-        {
-          "amount": 14.17,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "M-Core UV Maglev",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "yj-beta-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "全新 Beta 结构平台，采用不同的块间/球轴和弹力组合。",
@@ -8668,34 +7292,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc3-beta-8-magnet-ball-core-uv-coated"
-        },
-        {
-          "amount": 12.38,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "M-Core UV Spring",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "yj-beta-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "全新 Beta 结构平台，采用不同的块间/球轴和弹力组合。",
@@ -8802,21 +7399,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-ferrocore-3x3-custom-wr-m-v10"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "基于威龙 WRM V10；金属零件连接轴心与中心，定制磁体及弹簧，灰色内构。",
@@ -8925,34 +7508,7 @@
           "en": "6 tension × 9 compression × 5 edge-magnet × 6 corner/core-magnet settings: 1,620 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 64.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-tg-3x3-maglev-ball-core-uv"
-        },
-        {
-          "amount": 40.02,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-tg-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "6 轴距 × 9 弹力 × 5 棱磁 × 6 角轴磁力，共 1620 种组合。",
@@ -9060,34 +7616,7 @@
           "en": "6 tension × 9 compression × 5 edge-magnet × 6 corner/core-magnet settings: 1,620 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 53.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-tg-maglev-tc"
-        },
-        {
-          "amount": 33.11,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "MagLev",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-tg-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "6 轴距 × 9 弹力 × 5 棱磁 × 6 角轴磁力，共 1620 种组合。",
@@ -9147,7 +7676,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -9195,34 +7724,7 @@
           "en": "6 tension × 9 compression × 5 edge-magnet × 6 corner/core-magnet settings: 1,620 combinations."
         }
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-tg-3x3-ball-core-uv"
-        },
-        {
-          "amount": 28.09,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-tg-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "6 轴距 × 9 弹力 × 5 棱磁 × 6 角轴磁力，共 1620 种组合。",
@@ -9332,21 +7834,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 78.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-ai-3x3-uv-wcu-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "棱块排斥辅助归位；支持训练数据和线上对战。",
@@ -9436,34 +7924,7 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Green Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-uv-special-edition"
-        },
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Purple Internals",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-uv-special-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -9565,21 +8026,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-v10-ai-3x3-lite"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm、72 g；带块间磁力与蓝牙连接，Lite 商品不附充电盒。",
@@ -9636,7 +8083,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9682,21 +8129,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-v10ai-maglev-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "棱块排斥辅助归位；支持训练数据和线上对战。",
@@ -9799,21 +8232,7 @@
           "en": "Hand-adjustable elasticity and tool-adjustable magnets."
         }
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc-evo-ii-3x3-uv-coated"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "徒手调弹力，使用工具调磁；中心盖只有两个正确装入方向。",
@@ -9867,7 +8286,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9913,21 +8332,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 76.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-v10ai-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "棱块排斥辅助归位；支持训练数据和线上对战。",
@@ -9983,7 +8388,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10031,34 +8436,7 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-20-core-magnetic-maglev-ball-core-uv"
-        },
-        {
-          "amount": 24.59,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20M-BallCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-wrm-v10"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -10171,34 +8549,7 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-20-core-magnetic-ball-core-uv"
-        },
-        {
-          "amount": 19.41,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20M-BallCore Spring UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-wrm-v10"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -10310,34 +8661,7 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-uv"
-        },
-        {
-          "amount": 10.53,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Spring UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-weilong-wrm-v10"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -10443,34 +8767,7 @@
           "en": "Conventional screw tension; no independent compression dial verified."
         }
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mfjs-meilong-3m-v2-uv-coated"
-        },
-        {
-          "amount": 4.31,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Colours UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-meilong-3m-v2"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 磁力入门三阶，普通版为磨砂外表。",
@@ -10582,34 +8879,7 @@
           "en": "Conventional screw tension; no independent compression dial verified."
         }
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-mfjs-meilong-3m-v2-lite"
-        },
-        {
-          "amount": 2.18,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Colours Lite",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-meilong-3m-v2"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 磁力入门三阶，普通版为磨砂外表。",
@@ -10723,34 +8993,7 @@
           "en": "Dual tension/compression adjustment; higher trims add ball-core positioning."
         }
       },
-      "prices": [
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-ys3-m-20-core-magnetic-maglev-ball-core-uv"
-        },
-        {
-          "amount": 24.54,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "20M-BallCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-ys3m-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "杜宇生合作设计/背书，内表面采用龙鳞纹；轴距与弹力双调。",
@@ -10859,21 +9102,7 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [
-        {
-          "amount": 74.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-lite-20-core-magnetic-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -10932,7 +9161,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -10980,21 +9209,7 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [
-        {
-          "amount": 61.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-lite-8-core-magnetic-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -11089,21 +9304,7 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [
-        {
-          "amount": 53.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-lite-8-core-magnetic-spring-tension"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -11194,21 +9395,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 47.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-20-core-magnetic-maglev-ball-core-uv"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -11310,21 +9497,7 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [
-        {
-          "amount": 89.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-20-core-magnetic-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -11427,21 +9600,7 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [
-        {
-          "amount": 68.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-weilong-3x3-8-core-magnetic-spring-tension"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -11496,7 +9655,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -11543,34 +9702,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-ball-core-uv-robot-cube-stand"
-        },
-        {
-          "amount": 13.87,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "M-BallCore UV (+RobotBox)",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-moyu-rs3m-v5"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -11680,34 +9812,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-maglev-robot-cube-stand"
-        },
-        {
-          "amount": 7.78,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "MagLev (+RobotBox)",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-zii-moyu-rs3m-v5"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -11816,21 +9921,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-spring-tension-robot-cube-stand"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -11929,21 +10020,7 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-rs3v5-dual-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -12039,21 +10116,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-rs3-m-2020-3x3-uv-coated"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "工厂块间磁力与独立弹簧压缩调节进入低价位。",
@@ -12150,21 +10213,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 43.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-ball-core-uv-special-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -12264,21 +10313,7 @@
           "en": "9 compression settings with separate screw-based travel."
         }
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "moyu-superrs3v2-maglev-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 机身与 UV 表面，内部接触面不再采用明显纹理。",
@@ -12381,21 +10416,7 @@
           "en": "9 compression settings with separate screw-based travel."
         }
       },
-      "prices": [
-        {
-          "amount": 47.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-rs3-m-v2-ball-core-uv-3x3"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55.5 mm 机身与 UV 表面，内部接触面不再采用明显纹理。",
@@ -12503,21 +10524,7 @@
           "en": "Hand-adjustable elasticity and tool-adjustable magnets."
         }
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-yj-mgc-evo-ii-3x3-enhanced-core-positioning-edition"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "徒手调弹力，使用工具调磁；中心盖只有两个正确装入方向。",
@@ -12603,21 +10610,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-ball-core-uv"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -12713,21 +10706,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -12827,34 +10806,7 @@
           "en": "Dual tension/compression adjustment; higher trims add ball-core positioning."
         }
       },
-      "prices": [
-        {
-          "amount": 36.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-ys3m-3x3-ball-core-uv-magnetic-core-maglev"
-        },
-        {
-          "amount": 20.95,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "8M-BallCore MagLev UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-ys3m-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "杜宇生合作设计/背书，内表面采用龙鳞纹；轴距与弹力双调。",
@@ -12970,21 +10922,7 @@
           "en": "Dual tension/compression adjustment; higher trims add ball-core positioning."
         }
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-ys3m-3x3-ball-core-magnetic-core-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "杜宇生合作设计/背书，内表面采用龙鳞纹；轴距与弹力双调。",
@@ -13084,34 +11022,7 @@
           "en": "Dual tension/compression adjustment; higher trims add ball-core positioning."
         }
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-huameng-ys3m-3x3-maglev"
-        },
-        {
-          "amount": 10.31,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "MagLev",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "moyu-ys3m-zii"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "杜宇生合作设计/背书，内表面采用龙鳞纹；轴距与弹力双调。",
@@ -13217,21 +11128,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-rs3-m-2022-3x3-ball-core-magnetic-core-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "RS 产品线分成普通弹簧、磁悬浮及球轴磁悬浮配置。",
@@ -13326,21 +11223,7 @@
         ],
         "adjustment": null
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "myj-tc-moyu-super-rs3-m-2022-3x3-maglev"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "RS 产品线分成普通弹簧、磁悬浮及球轴磁悬浮配置。",
@@ -13438,21 +11321,7 @@
           "en": "Separate magnet strength, compression and conventional screw tension."
         }
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "2026-10-07 检索的本具体版本美国页面标价；库存另核，税运费另计，不是中国首发价。",
-            "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
-          },
-          "sourceId": "yj-mgcelitev2-tc"
-        }
-      ],
+      "prices": [],
       "highlights": [
         {
           "zh": "块间磁力与中心弹力可调，另有后续磨砂 V2 表面版。",
@@ -13509,7 +11378,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -13541,34 +11410,7 @@
           "myj-aolong-v5-ai-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 37.95,
-          "currency": "GBP",
-          "region": "UK",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "本独立英国商品页检索价，保留英镑；不是中国首发价。",
-            "en": "Observed price of this separate UK listing, in GBP; not a Chinese launch price."
-          },
-          "sourceId": "myj-uk-moyu-aolong-v5-ai-3x3-uv-magnetic"
-        },
-        {
-          "amount": 31.71,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Magnetic UV",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-aolong-v5-ai-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "72 g",
@@ -13665,34 +11507,7 @@
           "myj-aolong-v5-ai-zii"
         ]
       },
-      "prices": [
-        {
-          "amount": 54.95,
-          "currency": "GBP",
-          "region": "UK",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "本独立英国商品页检索价，保留英镑；不是中国首发价。",
-            "en": "Observed price of this separate UK listing, in GBP; not a Chinese launch price."
-          },
-          "sourceId": "myj-uk-moyu-aolong-v5-ai-3x3-8-magnet-ball-core-maglev-uv"
-        },
-        {
-          "amount": 47.32,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "MagLev UV (gyroscope)",
-          "note": {
-            "zh": "中国出口商网页美元标价，按本版本下拉选项核对；运费与税另计，不是国内人民币建议价。",
-            "en": "USD listing from a China-based exporter, checked against this exact option; shipping and tax extra, not Chinese CNY MSRP."
-          },
-          "sourceId": "myj-aolong-v5-ai-zii"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "77 g",
@@ -13793,21 +11608,7 @@
           "myj-yj-official-3-5cm-bread-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.95,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "3.5 cm / Stickerless",
-          "note": {
-            "zh": "美国商家独立 35 mm 商品页报价，不是首发价；税运费另计。",
-            "en": "US retailer quote for the individual 35 mm product, not a launch price; tax and shipping are extra."
-          },
-          "sourceId": "r3-myj-scs-mini-35mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "35 mm (nominal); ~35.3 mm (Tribox)",
         "weight": "~21.3 g (Tribox)",
@@ -13888,21 +11689,7 @@
           "myj-yj-official-mini-bead-cube-3x3-with-key-chain"
         ]
       },
-      "prices": [
-        {
-          "amount": 2.25,
-          "currency": "USD",
-          "region": "International retailer",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "YJ8396C / stickerless",
-          "note": {
-            "zh": "商家目录报价，未核实为首发价；运费及税费以结算为准。",
-            "en": "Retailer listing quote, not a verified launch price; shipping and taxes depend on checkout."
-          },
-          "sourceId": "r3-myj-cubezz-7268"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "35 mm",
         "weight": "25 g (Cubezz)",
@@ -13923,8 +11710,8 @@
           "en": "Shrinks YJ’s beaded appearance into a portable keychain."
         },
         "tradeoffs": {
-          "zh": "吊环和圆珠块面影响握持；Cubezz 列产品重量 25 g、报价 2.25 美元，原始首发日期和首发价仍未核实。",
-          "en": "The attachment and beaded faces affect grip. Cubezz specifies a 25 g item weight and quotes USD 2.25; original launch timing and launch price remain unverified."
+          "zh": "吊环和圆珠块面影响握持；Cubezz 列产品重量 25 g，原始首发日期和中国首发价仍未核实。",
+          "en": "The attachment and beaded faces affect grip. Cubezz specifies a 25 g item weight; original launch timing and the China launch price remain unverified."
         },
         "basis": "editorial",
         "sourceIds": [
@@ -13979,21 +11766,7 @@
           "myj-stellar-mackee"
         ]
       },
-      "prices": [
-        {
-          "amount": 30,
-          "currency": "USD",
-          "region": "CN / export",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Ultra",
-          "note": {
-            "zh": "同页可单买的 Ultra 选项美元标价；没有把整页 15–30 美元价格范围当成每款价格。",
-            "en": "USD price of the separately purchasable Ultra option; the page-wide $15–30 range is not assigned to each model."
-          },
-          "sourceId": "myj-stellar-globalcube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14084,21 +11857,7 @@
           "r3-myj-tribox-2547"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2547"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~56.2 mm (Tribox)",
         "weight": "~84 g (Tribox)",
@@ -14174,34 +11933,7 @@
           "r3-myj-tribox-2546"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2546"
-        },
-        {
-          "amount": 3.25,
-          "currency": "USD",
-          "region": "International",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Crystal Clover",
-          "note": {
-            "zh": "目录列售透明机身外观款；不复制黑色版的净重或尺寸。",
-            "en": "Catalog quote for the transparent-body appearance variant; black-version weight and dimensions are not copied."
-          },
-          "sourceId": "r3-myj-cubezz-category-24"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~56.2 mm (Tribox)",
         "weight": "~84 g (Tribox)",
@@ -14279,21 +12011,7 @@
           "r3-myj-tribox-2544"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2544"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~56.2 mm (Tribox)",
         "weight": "~84 g (Tribox)",
@@ -14369,21 +12087,7 @@
           "r3-myj-tribox-2754"
         ]
       },
-      "prices": [
-        {
-          "amount": 3300,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2754"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~55.5 mm (Tribox)",
         "weight": "~86.1 g (Tribox)",
@@ -14464,21 +12168,7 @@
           "r3-myj-tribox-2941"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2941"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~55.6 mm (Tribox)",
         "weight": "~64.8 g (Tribox)",
@@ -14554,21 +12244,7 @@
           "r3-myj-tribox-2942"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2942"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~55.6 mm (Tribox)",
         "weight": "~64.8 g (Tribox)",
@@ -14644,21 +12320,7 @@
           "r3-myj-tribox-2943"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2943"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~55.6 mm (Tribox)",
         "weight": "~64.8 g (Tribox)",
@@ -14734,21 +12396,7 @@
           "r3-myj-tribox-2944"
         ]
       },
-      "prices": [
-        {
-          "amount": 700,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
-            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
-          },
-          "sourceId": "r3-myj-tribox-2944"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "~55.6 mm (Tribox)",
         "weight": "~64.8 g (Tribox)",
@@ -14824,21 +12472,7 @@
           "r3-myj-cubezz-category-22"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.65,
-          "currency": "USD",
-          "region": "International",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "商家目录此具体商品显示的现价；库存和产品规格未由详情页复核。",
-            "en": "Current price displayed for this exact catalog listing; stock and specifications could not be verified on the detail page."
-          },
-          "sourceId": "r3-myj-cubezz-category-22"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14893,6 +12527,7 @@
     }
   ],
   "coverageNotes": [
-    "Companion to moyu-yj.json; retain the combined source index and stable model IDs."
+    "Companion to moyu-yj.json; retain the combined source index and stable model IDs.",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
   ]
 }
