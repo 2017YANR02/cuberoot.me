@@ -1328,13 +1328,13 @@
   position: relative;
   order: 1;
 }
-/* Continue the trunk only through rows with another branch below them. */
+/* Start at the curve's tangent; its straight lead-in already draws the trunk above. */
 .yt-comment-thread.is-expanded .yt-reply-item::after,
 .yt-comment-thread.is-expanded .yt-replies:has(> .yt-replies-toggle) > .yt-reply-composer::after {
   content: '';
   position: absolute;
   left: -28px;
-  top: -12px;
+  top: -4px; /* Branch bottom (12px) minus its 16px corner radius. */
   bottom: 0;
   border-left: 1px solid var(--border-strong);
   pointer-events: none;
@@ -1356,9 +1356,6 @@
 .yt-comment-thread.is-expanded .yt-reply-composer::before {
   top: -16px; /* Include the composer's extra 4px top margin. */
   height: 28px;
-}
-.yt-comment-thread.is-expanded .yt-replies:has(> .yt-replies-toggle) > .yt-reply-composer::after {
-  top: -16px;
 }
 /* 回复使用更小的 avatar 与 YT 一致 */
 .yt-reply-item .yt-comment-avatar {
