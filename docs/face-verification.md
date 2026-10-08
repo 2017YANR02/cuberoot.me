@@ -2,7 +2,7 @@
 
 ## 2026-10-08 接入
 
-独立于 Mira 的阿里云账号 `1964361522100427`（ruiminyan），场景 `1000021659`，名称「CubeRoot网站实名认证」。OSS 留存、降级认证和设备增强检测未启用。专用 RAM 用户为 `cuberoot-face-verification`；负责人已确认创建长期凭据并授予发起/查询两项权限，目前等待控制台账号安全验证。凭据必须保存在仓库外受限文件与服务器环境中，不得放入前端或 Git。
+独立于 Mira 的阿里云账号 `1964361522100427`（ruiminyan），场景 `1000021659`，名称「CubeRoot网站实名认证」。OSS 留存、降级认证和设备增强检测未启用。专用 RAM 用户为 `cuberoot-face-verification`；负责人已确认创建长期凭据并授予发起/查询两项权限，账号安全验证、凭据保存及两项权限绑定已完成。凭据必须保存在仓库外受限文件与服务器环境中，不得放入前端或 Git。
 
 网站入口 `/account/verify`（中文 `/zh/account/verify`），从「我的 → 实名认证」进入。仅本人有效签名会话可操作，拒绝角色预览和代看；不接受外部用户 ID 或 CertifyId。姓名、身份证号只通过 POST 提交阿里云，不在站内保存明文或写入 URL。独立同意后才加载官方设备信息脚本；原始人脸由阿里云处理，站内不保存照片/视频。
 
@@ -19,3 +19,5 @@ RAM 自定义策略仅允许 `antcloudauth:InitFaceVerify`、`antcloudauth:Descr
 官方接入依据：[H5 集成](https://help.aliyun.com/zh/id-verification/financial-grade-id-verification/integration-by-using-pc-or-mobile-h5-pages)、[服务端集成](https://help.aliyun.com/zh/id-verification/financial-grade-id-verification/server-side-integration-2)。
 
 2026-10-08 发布：529cd3e699 的 Deploy Core（37794743420）、Deploy Next（37794743415）及 Vercel 均成功；正式 API 版本和网站入口 200 已确认。负责人截图确认 CubeRootFaceVerificationInvoke 已绑定专用账号，1 项成功、0 项失败；随后开启生产开关并重新加载 API。真实本人刷脸未验收。自动 CI 发现卡片排序清单、CSS 选择器和开发文档遗漏，随收尾修正发布；不追加本地测试。
+
+收尾发布：4b4c99d747 的 Deploy Core 37796950499、Deploy Next 37796950464 和 Vercel 均成功；API 当前版本已切换到 4b4c99d747，数据库健康正常，生产开关已开启。前一版自动 CI 的 4 项集成遗漏已修正；随后出现的卡片拖动测试固定索引已在 98af4cba15 改为按目标卡片定位，该测试修正不修改生产功能，后续自动 CI 状态待返回。未新增本地测试或真人身份调用。此发布状态回填仅作本地记录，不为文档再次发布。
