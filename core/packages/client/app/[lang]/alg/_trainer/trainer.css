@@ -1509,12 +1509,18 @@
     background: var(--glass-popover-bg);
   }
 }
-.trainer-device-center {
-  position: static;
+.shell-device-center.trainer-device-center {
+  position: relative;
+  inset: auto;
   flex: 0 0 auto;
 }
 
 .trainer-device-center .shell-device-center-menu {
+  /* anchored-panel: clamped (TimerDeviceCenter uses usePanelClamp). */
+  left: 0;
+  right: auto;
   top: calc(100% + 8px);
   bottom: auto;
+  width: max-content;
+  min-width: 0;
 }
