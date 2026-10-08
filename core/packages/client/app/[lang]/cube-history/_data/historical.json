@@ -1182,6 +1182,132 @@
       "url": "https://legacy.thecubicle.us/ghost-hand-phoenix-p-9385.html",
       "publisher": "TheCubicle legacy catalog",
       "kind": "archive"
+    },
+    {
+      "id": "r3-c4y-basic",
+      "title": "Cube4You 3x3x3 — dimensions, item weight and product photograph",
+      "url": "https://store.tribox.com/products/detail.php?product_id=719",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-c4y-tile-matte",
+      "title": "Cube4You Tile Matte — product and dated 2011 buyer reviews",
+      "url": "https://store.tribox.com/products/detail.php?product_id=313",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-c4y-tile-gloss",
+      "title": "Cube4You Tile Glossy — separate finish listing",
+      "url": "https://store.tribox.com/products/detail.php?product_id=850",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-c4y-maze",
+      "title": "Cube4You Maze Cube — white maze and colored maze configurations",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1482",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-c4y-gas-review",
+      "title": "Cube4you Gas Assisted Cube Review — published 2010-05-28",
+      "url": "https://www.youtube.com/watch?v=uhl_2Ljp3Lg",
+      "publisher": "PestVic",
+      "kind": "review"
+    },
+    {
+      "id": "r3-c4y-gas-owner",
+      "title": "Cube4You Gas Assisted Cube: recessed edge pieces — owner report, 2010-12-25",
+      "url": "https://www.speedsolving.com/threads/cube4you-gas-assisted-cube-recessed-edge-pieces.26337/",
+      "publisher": "Speedsolving.com community",
+      "kind": "review"
+    },
+    {
+      "id": "r3-c4y-portfolio",
+      "title": "Cube4You brand archive — 14 listings, including different puzzle structures",
+      "url": "https://store.tribox.com/products/list.php?category_id=306",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-v3-flat",
+      "title": "V-CUBE 3 — official flat model specification and archived shop quote",
+      "url": "https://www.v-cubes.com/products/v-cube-store/v-cube-3x3x3-puzzle-cube-toy/v-cube-3",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-pillow",
+      "title": "V-CUBE 3b — official pillowed specification",
+      "url": "https://www.v-cubes.com/products/v-cube-store/v-cube-3b",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-2012",
+      "title": "V-Cube 3 First Impressions / Review — owner report, 2012-02-01",
+      "url": "https://www.speedsolving.com/threads/v-cube-3-first-impressions-review.35166/",
+      "publisher": "Speedsolving.com community",
+      "kind": "review"
+    },
+    {
+      "id": "r3-v3b-2012",
+      "title": "Cubing / Speed Cubing — a V-Cube 3b owner, November 2012",
+      "url": "https://forums.yoyoexpert.com/t/cubing-speed-cubing/45519",
+      "publisher": "YoYoExpert community",
+      "kind": "review"
+    },
+    {
+      "id": "r3-v3-key-flat",
+      "title": "V-Keychain 3x3 Flat — official product",
+      "url": "https://www.v-cubes.com/products/v-cube-store/v-keychain-3x3-flat",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-key-pillow",
+      "title": "V-Keychain 3x3 Pillow — official product",
+      "url": "https://www.v-cubes.com/products/v-cube-store/keychain-v-cube-3x3/v-keychain-3x3-pillow",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-key-catalog",
+      "title": "V-CUBE 3 keychains in the Lojume games catalog",
+      "url": "https://www.lojume.es/pdf/juegos-de-mesa-2021.pdf",
+      "publisher": "Lojume",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-v3-magnetic",
+      "title": "V-CUBE 3 Magnetic — official product; conflicting legacy specification grid",
+      "url": "https://www.v-cubes.com/products/v-cube-store/v-cube-3-magnetic",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-catalog-2025",
+      "title": "V-CUBE 2025 catalog — V-CUBE 3 Magnetic advertisement",
+      "url": "https://catalog.v-cubes.com/V-Cube-Catalog_2025.pdf",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-catalog-2026",
+      "title": "V-CUBE 2026 catalog — Magnetic 75 g and suggested retail prices",
+      "url": "https://catalog.v-cubes.com/V-CUBE%20CATALOGUE%202026.pdf",
+      "publisher": "V-CUBE",
+      "kind": "official"
+    },
+    {
+      "id": "r3-v3-line",
+      "title": "V-CUBE 3 family — flat, pillowed, magnetic, colors and bundles",
+      "url": "https://www.v-cubes.com/products/v-cube-store/v-classics-cubes-puzzle-cube-games/v-cube-3x3x3-puzzle-cube-toy",
+      "publisher": "V-CUBE",
+      "kind": "official"
     }
   ],
   "cubes": [
@@ -13429,10 +13555,24 @@
           "hist-c4u"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 1500,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
+            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
+          },
+          "sourceId": "r3-c4y-basic"
+        }
+      ],
       "specs": {
-        "size": null,
-        "weight": null,
+        "size": "57 mm",
+        "weight": "~100 g",
         "mechanism": [],
         "adjustment": null
       },
@@ -13456,19 +13596,40 @@
           "hist-c4u"
         ]
       },
-      "variants": [],
+      "variants": [
+        "Black",
+        "White",
+        "Primary",
+        "Purple",
+        "Blue",
+        "Green",
+        "Yellow",
+        "Orange",
+        "Red",
+        "Pink"
+      ],
       "sourceIds": [
-        "hist-c4u"
+        "hist-c4u",
+        "r3-c4y-basic",
+        "r3-c4y-portfolio"
       ],
       "tags": [],
       "status": "released",
       "category": "speed",
-      "image": null,
-      "tier": "unknown",
-      "imageNote": {
-        "zh": "正在反查该历史型号的原始实物照片；目前未找到能独立确认型号与年代的图片。",
-        "en": "An identifiable original photograph is still being researched; no image has been independently matched to this exact historical model and period."
-      }
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/06031220_51ac0b9412e9a.png",
+        "sourceId": "r3-c4y-basic",
+        "alt": {
+          "zh": "Cube4You 普通三阶的 C4Y 标志实物图",
+          "en": "Cube4You standard 3×3 showing the C4Y logo"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应普通三阶商品页；照片不能确定为 2009 年首批出货。",
+          "en": "Identifies the standard product, without establishing that this is the first 2009 production batch."
+        }
+      },
+      "tier": "unknown"
     },
     {
       "id": "historical-type-d",
@@ -13932,6 +14093,891 @@
           "en": "From the dedicated i3S Lite / Light page and its product image metadata; the original image was visually inspected. Image rights remain with the source."
         }
       }
+    },
+    {
+      "id": "cube4you-tile-matte",
+      "brand": "Cube4You",
+      "name": {
+        "zh": "Cube4You 哑光色片版",
+        "en": "Cube4You Tile Matte"
+      },
+      "year": 2011,
+      "release": {
+        "date": "2011",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "该独立哑光商品页有 2011-09-11 用户评价，证明当时已流通；不是已核实首发日。",
+          "en": "A buyer review on this matte listing dated 2011-09-11 establishes availability, not a verified launch date."
+        },
+        "sourceIds": [
+          "r3-c4y-tile-matte"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 1350,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
+            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
+          },
+          "sourceId": "r3-c4y-tile-matte"
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": "102 g",
+        "mechanism": [
+          "tiles"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "色片无需粘胶，可拆装替换。",
+          "en": "The tiles can be removed and replaced without adhesive."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "可替换的卡扣式塑料色片，是早期三阶外观工艺的一条独立产品线。",
+          "en": "Replaceable clip-in plastic tiles document a distinct early exterior construction."
+        },
+        "tradeoffs": {
+          "zh": "商家认为稳定性有限；未找到同条件速度与容错测试。",
+          "en": "The retailer reports limited stability; controlled speed and corner-cutting tests were not found."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-c4y-tile-matte"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-c4y-tile-matte"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed",
+      "tier": "unknown",
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/06031746_51ac57d9af534.png",
+        "sourceId": "r3-c4y-tile-matte",
+        "alt": {
+          "zh": "Cube4You 哑光色片版实物图",
+          "en": "Cube4You Tile Matte product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "该表面版本的独立商品图。",
+          "en": "Photograph from the listing for this specific finish."
+        }
+      }
+    },
+    {
+      "id": "cube4you-tile-glossy",
+      "brand": "Cube4You",
+      "name": {
+        "zh": "Cube4You 亮光色片版",
+        "en": "Cube4You Tile Glossy"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "产品资料可确认型号，但尚未找到可靠首发时间。",
+          "en": "Product evidence identifies the model; a reliable first-release date remains unknown."
+        },
+        "sourceIds": [
+          "r3-c4y-tile-gloss"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 1350,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
+            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
+          },
+          "sourceId": "r3-c4y-tile-gloss"
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": "102 g",
+        "mechanism": [
+          "tiles"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "色片无需粘胶，可拆装替换。",
+          "en": "The tiles can be removed and replaced without adhesive."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "可替换的卡扣式塑料色片，是早期三阶外观工艺的一条独立产品线。",
+          "en": "Replaceable clip-in plastic tiles document a distinct early exterior construction."
+        },
+        "tradeoffs": {
+          "zh": "商家认为稳定性有限；未找到同条件速度与容错测试。",
+          "en": "The retailer reports limited stability; controlled speed and corner-cutting tests were not found."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-c4y-tile-gloss"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-c4y-tile-gloss"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed",
+      "tier": "unknown",
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/06031743_51ac57471a061.png",
+        "sourceId": "r3-c4y-tile-gloss",
+        "alt": {
+          "zh": "Cube4You 亮光色片版实物图",
+          "en": "Cube4You Tile Glossy product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "该表面版本的独立商品图。",
+          "en": "Photograph from the listing for this specific finish."
+        }
+      },
+      "familyId": "cube4you-tile-matte"
+    },
+    {
+      "id": "cube4you-maze-white-tiles",
+      "brand": "Cube4You",
+      "name": {
+        "zh": "Cube4You 黑底白色迷宫版",
+        "en": "Cube4You Maze — Black Body / White Tiles"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "产品资料可确认型号，但尚未找到可靠首发时间。",
+          "en": "Product evidence identifies the model; a reliable first-release date remains unknown."
+        },
+        "sourceIds": [
+          "r3-c4y-maze"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 1500,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": "Maze — Black Body / White Tiles",
+          "note": {
+            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
+            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
+          },
+          "sourceId": "r3-c4y-maze"
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": "102 g",
+        "mechanism": [
+          "tiles"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "各面使用白色迷宫图案，主要根据线条连接辨认位置。",
+          "en": "White maze patterns require recognition of connected lines."
+        },
+        {
+          "zh": "商品页明确以 Cube4You Tile 为本体，迷宫设计与 Oliver’s Stickers Maze Cube 相同。",
+          "en": "The listing identifies a Cube4You Tile base and the same maze design as the Oliver’s Stickers Maze Cube."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "普通六面转动的三阶图案版本，两种配置使用不同的辨认线索。",
+          "en": "A six-face-turning 3×3 with two different visual recognition configurations."
+        },
+        "tradeoffs": {
+          "zh": "卡扣色片可能松脱或磨损；商品页未提供独立首发时间。",
+          "en": "Clip-in tiles can detach or wear; an independent release date is unavailable."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-c4y-maze"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-c4y-maze"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "collectible",
+      "tier": "specialty",
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/11211955_546f1a1a18d14.png",
+        "sourceId": "r3-c4y-maze",
+        "alt": {
+          "zh": "Cube4You 黑底白色迷宫版实物图",
+          "en": "Cube4You Maze — Black Body / White Tiles product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "同一商品页分别展示的对应图案配置。",
+          "en": "The corresponding pattern configuration is shown separately on the shared listing."
+        }
+      },
+      "familyId": "cube4you-tile-matte"
+    },
+    {
+      "id": "cube4you-maze-colored-tiles",
+      "brand": "Cube4You",
+      "name": {
+        "zh": "Cube4You 白底彩色迷宫版",
+        "en": "Cube4You Maze — White Body / Colored Tiles"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "产品资料可确认型号，但尚未找到可靠首发时间。",
+          "en": "Product evidence identifies the model; a reliable first-release date remains unknown."
+        },
+        "sourceIds": [
+          "r3-c4y-maze"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 1500,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": "Maze — White Body / Colored Tiles",
+          "note": {
+            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
+            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
+          },
+          "sourceId": "r3-c4y-maze"
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": "102 g",
+        "mechanism": [
+          "tiles"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "保留六面色彩线索，另有需要对齐的迷宫图案。",
+          "en": "Face colors remain as recognition cues alongside maze alignment."
+        },
+        {
+          "zh": "商品页明确以 Cube4You Tile 为本体，迷宫设计与 Oliver’s Stickers Maze Cube 相同。",
+          "en": "The listing identifies a Cube4You Tile base and the same maze design as the Oliver’s Stickers Maze Cube."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "普通六面转动的三阶图案版本，两种配置使用不同的辨认线索。",
+          "en": "A six-face-turning 3×3 with two different visual recognition configurations."
+        },
+        "tradeoffs": {
+          "zh": "卡扣色片可能松脱或磨损；商品页未提供独立首发时间。",
+          "en": "Clip-in tiles can detach or wear; an independent release date is unavailable."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-c4y-maze"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-c4y-maze"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "collectible",
+      "tier": "specialty",
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/11211958_546f1ab8d5bf0.png",
+        "sourceId": "r3-c4y-maze",
+        "alt": {
+          "zh": "Cube4You 白底彩色迷宫版实物图",
+          "en": "Cube4You Maze — White Body / Colored Tiles product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "同一商品页分别展示的对应图案配置。",
+          "en": "The corresponding pattern configuration is shown separately on the shared listing."
+        }
+      },
+      "familyId": "cube4you-tile-matte"
+    },
+    {
+      "id": "cube4you-gas-assisted",
+      "brand": "Cube4You",
+      "name": {
+        "zh": "Cube4You Gas Assisted 三阶",
+        "en": "Cube4You Gas Assisted 3×3"
+      },
+      "year": 2010,
+      "release": {
+        "date": "2010-05-28",
+        "precision": "day",
+        "basis": "documented",
+        "note": {
+          "zh": "2010-05-28 的实物评测证明该型号当时已存在；日期为评测发布日。",
+          "en": "A hands-on review published 2010-05-28 establishes existence by that date; it is the review date."
+        },
+        "sourceIds": [
+          "r3-c4y-gas-review",
+          "r3-c4y-gas-owner"
+        ]
+      },
+      "prices": [],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "以 Gas Assisted 为独立商品名称流通，不能与普通 C4Y 或 Tile 色片版合并。",
+          "en": "Documented under its own Gas Assisted product name, distinct from the standard C4Y and Tile models."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "早期 C4Y 产品线中的独立型号，保留当年的评测与购买者记录。",
+          "en": "A separate early C4Y model supported by a contemporary review and owner report."
+        },
+        "tradeoffs": {
+          "zh": "一位购买者报告棱块形状问题，不能据此推断整体故障率；尺寸、净重和价格待核。",
+          "en": "One owner reported an edge-piece issue; this does not establish a general defect rate. Size, weight and price remain unknown."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-c4y-gas-review",
+          "r3-c4y-gas-owner"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-c4y-gas-review",
+        "r3-c4y-gas-owner"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed",
+      "tier": "unknown",
+      "image": null,
+      "imageNote": {
+        "zh": "已确认具体型号，尚未恢复可独立核对的实物照片。",
+        "en": "The model is documented, but an independently identifiable product photograph has not been recovered."
+      }
+    },
+    {
+      "id": "v-cube-3",
+      "brand": "V-CUBE",
+      "name": {
+        "zh": "V-CUBE 3 平面三阶",
+        "en": "V-CUBE 3 Flat"
+      },
+      "year": 2012,
+      "release": {
+        "date": "2012",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2012-02-01 玩家已收到产品并发布实测帖；未将这一天当作全球首发日。",
+          "en": "A buyer had received the cube and posted impressions on 2012-02-01; this is not a worldwide launch date."
+        },
+        "sourceIds": [
+          "r3-v3-flat",
+          "r3-v3-2012",
+          "r3-v3-line"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 9.99,
+          "currency": "EUR",
+          "region": "EU",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
+            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
+          },
+          "sourceId": "r3-v3-flat"
+        }
+      ],
+      "specs": {
+        "size": "57 mm",
+        "weight": "98 g",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "品牌三阶系列的平面外形版本，官网单独列明 57 mm 与 98 g。",
+          "en": "The flat version of the brand’s 3×3, independently specified at 57 mm and 98 g."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "补入 2012 年前后国际三阶产品的平面分支，便于与同时代中国型号对照。",
+          "en": "Documents an international flat 3×3 branch from around 2012 for comparison with contemporary Chinese models."
+        },
+        "tradeoffs": {
+          "zh": "官网“顺滑”属于厂商描述；不同批次外观有变化，不提供跨时代速度分数。",
+          "en": "Smooth-turning claims are manufacturer descriptions; exterior batches vary and no cross-era speed score is assigned."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-v3-flat",
+          "r3-v3-2012",
+          "r3-v3-line"
+        ]
+      },
+      "variants": [
+        "White body / printed colors",
+        "Black body"
+      ],
+      "sourceIds": [
+        "r3-v3-flat",
+        "r3-v3-2012",
+        "r3-v3-line"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "classic",
+      "tier": "unknown",
+      "image": {
+        "url": "https://www.v-cubes.com/components/com_opencart/image/cache/catalog/Store-2014/V-CLASSICS/V3-F-477x477.jpg",
+        "sourceId": "r3-v3-flat",
+        "alt": {
+          "zh": "V-CUBE 3 平面版与包装",
+          "en": "V-CUBE 3 flat version and packaging"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "官方网站对应型号的实际商品图，含包装。",
+          "en": "Actual official product photograph for this model, including packaging."
+        }
+      }
+    },
+    {
+      "id": "v-cube-3b",
+      "brand": "V-CUBE",
+      "name": {
+        "zh": "V-CUBE 3b 凸面三阶",
+        "en": "V-CUBE 3b Pillowed"
+      },
+      "year": 2012,
+      "release": {
+        "date": "2012",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "2012 年 11 月讨论中已有使用者明确提及 V-Cube 3b；首发月日待核。",
+          "en": "A November 2012 discussion identifies an owner using the V-Cube 3b; the launch date remains unknown."
+        },
+        "sourceIds": [
+          "r3-v3-pillow",
+          "r3-v3b-2012",
+          "r3-v3-line"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "EUR",
+          "region": "EU",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
+            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
+          },
+          "sourceId": "r3-v3-pillow"
+        }
+      ],
+      "specs": {
+        "size": "64 mm",
+        "weight": "98 g",
+        "mechanism": [
+          "pillowed"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "官网称与平面版采用同一内部机制，但凸面版外廓单独标为 64 mm。",
+          "en": "The official family page describes a shared internal mechanism; the pillowed model is independently listed at 64 mm."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "标志性的凸面外形是与平面三阶的主要区别。",
+          "en": "Its characteristic pillowed exterior distinguishes it from the flat model."
+        },
+        "tradeoffs": {
+          "zh": "较大的凸面外廓会改变握持；没有采用平面版的 57 mm 尺寸。",
+          "en": "The larger pillowed exterior changes the grip; the flat model’s 57 mm specification does not apply."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-v3-pillow",
+          "r3-v3b-2012",
+          "r3-v3-line"
+        ]
+      },
+      "variants": [
+        "White body / printed colors",
+        "Black body"
+      ],
+      "sourceIds": [
+        "r3-v3-pillow",
+        "r3-v3b-2012",
+        "r3-v3-line"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "classic",
+      "tier": "unknown",
+      "image": {
+        "url": "https://www.v-cubes.com/components/com_opencart/image/cache/catalog/Store-2014/V-CLASSICS/V3-P-375x375.jpg",
+        "sourceId": "r3-v3-pillow",
+        "alt": {
+          "zh": "V-CUBE 3b 凸面版与包装",
+          "en": "V-CUBE 3b pillowed version and packaging"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "官方网站对应型号的实际商品图，含包装。",
+          "en": "Actual official product photograph for this model, including packaging."
+        }
+      },
+      "familyId": "v-cube-3"
+    },
+    {
+      "id": "v-cube-keychain-flat",
+      "brand": "V-CUBE",
+      "name": {
+        "zh": "V-CUBE 平面钥匙扣三阶",
+        "en": "V-Keychain 3×3 Flat"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "产品资料可确认型号，但尚未找到可靠首发时间。",
+          "en": "Product evidence identifies the model; a reliable first-release date remains unknown."
+        },
+        "sourceIds": [
+          "r3-v3-key-flat",
+          "r3-v3-key-catalog"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 8,
+          "currency": "EUR",
+          "region": "EU",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
+            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
+          },
+          "sourceId": "r3-v3-key-flat"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "可独立转动六个面的迷你三阶，采用彩色塑料并连接钥匙链。",
+          "en": "A colored-plastic mini 3×3 with six independently turning faces and a keychain."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "便携附件与可复原三阶结合的产品线。",
+          "en": "A portable accessory that remains a functional 3×3."
+        },
+        "tradeoffs": {
+          "zh": "官网所述不超过 30 g 包含连接链，不能作为裸方净重；尺寸与首发时间待核。",
+          "en": "The official weight of no more than 30 g includes the chain, not cube-only net weight. Size and launch date are unverified."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-v3-key-flat",
+          "r3-v3-key-catalog"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-v3-key-flat",
+        "r3-v3-key-catalog"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "mini",
+      "tier": "specialty",
+      "image": {
+        "url": "https://www.v-cubes.com/components/com_opencart/image/cache/catalog/Store-2014/keychain/flat2-k-375x375.jpg",
+        "sourceId": "r3-v3-key-flat",
+        "alt": {
+          "zh": "V-CUBE 平面钥匙扣三阶商品图",
+          "en": "V-Keychain 3×3 Flat product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "官方对应外形版本的商品图，展示连接链。",
+          "en": "The official photograph for this shape shows the attached chain."
+        }
+      }
+    },
+    {
+      "id": "v-cube-keychain-pillow",
+      "brand": "V-CUBE",
+      "name": {
+        "zh": "V-CUBE 凸面钥匙扣三阶",
+        "en": "V-Keychain 3×3 Pillow"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "产品资料可确认型号，但尚未找到可靠首发时间。",
+          "en": "Product evidence identifies the model; a reliable first-release date remains unknown."
+        },
+        "sourceIds": [
+          "r3-v3-key-pillow",
+          "r3-v3-key-catalog"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 8,
+          "currency": "EUR",
+          "region": "EU",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
+            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
+          },
+          "sourceId": "r3-v3-key-pillow"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "pillowed"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "可独立转动六个面的迷你三阶，采用彩色塑料并连接钥匙链。",
+          "en": "A colored-plastic mini 3×3 with six independently turning faces and a keychain."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "便携附件与可复原三阶结合的产品线。",
+          "en": "A portable accessory that remains a functional 3×3."
+        },
+        "tradeoffs": {
+          "zh": "官网所述不超过 30 g 包含连接链，不能作为裸方净重；尺寸与首发时间待核。",
+          "en": "The official weight of no more than 30 g includes the chain, not cube-only net weight. Size and launch date are unverified."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-v3-key-pillow",
+          "r3-v3-key-catalog"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-v3-key-pillow",
+        "r3-v3-key-catalog"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "mini",
+      "tier": "specialty",
+      "image": {
+        "url": "https://www.v-cubes.com/components/com_opencart/image/cache/catalog/Store-2014/keychain/pillow2-k-375x375.jpg",
+        "sourceId": "r3-v3-key-pillow",
+        "alt": {
+          "zh": "V-CUBE 凸面钥匙扣三阶商品图",
+          "en": "V-Keychain 3×3 Pillow product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "官方对应外形版本的商品图，展示连接链。",
+          "en": "The official photograph for this shape shows the attached chain."
+        }
+      },
+      "familyId": "v-cube-keychain-flat"
+    },
+    {
+      "id": "v-cube-3-magnetic",
+      "brand": "V-CUBE",
+      "name": {
+        "zh": "V-CUBE 3 Magnetic 磁力三阶",
+        "en": "V-CUBE 3 Magnetic"
+      },
+      "year": 2025,
+      "release": {
+        "date": "2025",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "官方 2025 年目录已刊登该磁力型号广告，因此不能把 2026 年目录再次出现当作首发；首售月日待核。",
+          "en": "The model is advertised in the official 2025 catalog; its appearance in the 2026 catalog is not a new launch. The first-sale date is unverified."
+        },
+        "sourceIds": [
+          "r3-v3-magnetic",
+          "r3-v3-catalog-2025",
+          "r3-v3-catalog-2026",
+          "r3-v3-line"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "currency": "EUR",
+          "region": "EU",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "2026 官方目录建议零售价，非已核实成交价或首发价。",
+            "en": "Suggested retail price in the 2026 official catalog, not a verified transaction or launch price."
+          },
+          "sourceId": "r3-v3-catalog-2026"
+        },
+        {
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "Global",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "2026 官方目录美元建议零售价，未换算为人民币。",
+            "en": "USD suggested retail price from the 2026 catalog; not converted to CNY."
+          },
+          "sourceId": "r3-v3-catalog-2026"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": "75 g",
+        "mechanism": [
+          "magnet"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "加入磁力定位，2026 官方目录列出彩色塑料、75 g 和 EAN 5206457003396。",
+          "en": "Magnetic positioning; the 2026 official catalog identifies colored plastic, 75 g and EAN 5206457003396."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "品牌经典三阶系列新增的磁力分支，具有独立包装与规格证据。",
+          "en": "A magnetic branch of the classic 3×3 family with separately documented packaging and specifications."
+        },
+        "tradeoffs": {
+          "zh": "官网正文与旧规格表存在冲突：正文及新目录为 75 g，旧表仍写 98 g / 57 mm，因此未沿用旧表尺寸。",
+          "en": "Official prose and the new catalog specify 75 g, but a legacy grid says 98 g / 57 mm; its dimensions are therefore not adopted."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-v3-magnetic",
+          "r3-v3-catalog-2025",
+          "r3-v3-catalog-2026",
+          "r3-v3-line"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-v3-magnetic",
+        "r3-v3-catalog-2025",
+        "r3-v3-catalog-2026",
+        "r3-v3-line"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed",
+      "tier": "mainstream",
+      "image": {
+        "url": "https://www.v-cubes.com/components/com_opencart/image/cache/catalog/V-Cube%203%20Magnetic%20-100-375x375.jpg",
+        "sourceId": "r3-v3-magnetic",
+        "alt": {
+          "zh": "V-CUBE 3 Magnetic 三阶及标有 MAGNETIC 的包装",
+          "en": "V-CUBE 3 Magnetic and packaging marked MAGNETIC"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "官方网站对应型号的实际商品图，含包装。",
+          "en": "Actual official product photograph for this model, including packaging."
+        }
+      },
+      "familyId": "v-cube-3"
     }
   ],
   "coverageNotes": [
@@ -13945,6 +14991,10 @@
     "Historical regional Rubik’s batches, unlabelled OEM molds, missing contemporary Chinese prices and unrecoverable early photos remain open research gaps; a blank annual row does not mean the maker released no product.",
     "53 个五品牌商品逐条基于已缓存商品文案和结构化 Item Weight 修正；没有新增网络查询。消除 Maru 不可调磁误判、ES3 8磁页套用20磁/UV、MoreTry V2 文案误称V4、HaiTun V2家族最高配置混用、HuDong遗漏角轴磁力等问题。 / Corrected 53 products using existing cached descriptions and structured item-weight evidence, without new network research.",
     "The Tingman, Olor and Tingboy setup products retain stock MoYu mechanisms and only specify shop lubrication/tensioning/accessories. They are excluded consistently with other pure setup services; Tingman Picture Cube and independently magnetized Cuber’s Home hardware remain recorded.",
-    "This research dataset is partitioned across historical.json, historical-brands.json, historical-collectibles.json. Source IDs and family relationships resolve across the combined catalog."
+    "This research dataset is partitioned across historical.json, historical-brands.json, historical-collectibles.json. Source IDs and family relationships resolve across the combined catalog.",
+    "Round 3: checked all 14 Cube4You Tribox brand entries. Added Tile Matte/Glossy, two Maze recognition configurations and the independently documented 2010 Gas Assisted model. Recovered the standard C4Y product photograph and item dimensions/weight. Ordinary body colors, transparent sticker options, stands, bundles and other orders were not counted as independent new mechanisms.",
+    "Cube4You Chromium and Clear (Tribox 2363/2364) are Helicopter-derived edge-turning products, not standard six-face 3×3 cubes; excluded. C4Y Gas Assisted and Alpha V Feng YouTube oEmbed identify real historical reviews, but the exposed thumbnail endpoints returned HTML rather than images; those image gaps remain explicit.",
+    "V-CUBE: added the main 3×3 flat, 3b pillow, both keychain shapes and Magnetic. Official category body-color and DUO bundle entries are variants/bundles. This is international historical context, not an exhaustive inventory of regional V-Collections picture/licensed editions.",
+    "V-CUBE Magnetic is already advertised in the 2025 official catalog. Its 2026 catalog appearance does not prove a 2026 launch. Current official product-route failures and copied legacy specification-grid conflicts are recorded rather than silently combining different model facts. Keychain net weights remain null because the official quoted mass includes the chain."
   ]
 }

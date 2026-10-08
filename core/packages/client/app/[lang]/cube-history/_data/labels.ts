@@ -66,6 +66,7 @@ export const BRANDS: Record<string, LocalizedText> = {
   FangShi: { zh: '方是 FangShi', en: 'FangShi / Funs Puzzle' },
   'Cyclone Boys': { zh: '旋风小子 Cyclone Boys', en: 'Cyclone Boys' },
   Cube4You: { zh: 'Cube4You', en: 'Cube4You' },
+  'V-CUBE': { zh: 'V-CUBE', en: 'V-CUBE' },
   GiiKER: { zh: '计客 GiiKER', en: 'GiiKER' },
   Particula: { zh: 'Particula / GoCube', en: 'Particula / GoCube' },
   "Rubik's": { zh: "Rubik's 鲁比克", en: "Rubik's" },
@@ -219,6 +220,7 @@ export const EVIDENCE_LABELS: Record<string, LocalizedText> = {
 };
 
 export const SORT_LABELS: Record<string, LocalizedText> = {
+  relevance: { zh: '相关度优先', en: 'Most relevant' },
   "newest": {
     "zh": "由新到旧",
     "en": "Newest first"

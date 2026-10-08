@@ -1,5 +1,14 @@
 import type { Cube } from './types';
-import { BRANDS, PERIODS, TECHNOLOGIES } from './labels';
+import { BRANDS, CATEGORIES, MECHANISMS, PERIODS, TECHNOLOGIES, TIERS } from './labels';
+
+export const PRIORITY_BRANDS = ['GAN', 'MoYu', 'QiYi', 'YJ'] as const;
+
+export function sortBrandKeys(brands: readonly string[]): string[] {
+  const priority = new Map<string, number>(PRIORITY_BRANDS.map((brand, index) => [brand, index]));
+  return [...new Set(brands)].sort((a, b) =>
+    (priority.get(a) ?? PRIORITY_BRANDS.length) - (priority.get(b) ?? PRIORITY_BRANDS.length)
+    || a.localeCompare(b, 'en'));
+}
 
 export interface CubeFilters {
   q: string;
@@ -18,7 +27,106 @@ export const EMPTY_FILTERS: CubeFilters = {
 };
 
 export function normalizeSearch(value: string): string {
-  return value.normalize('NFKC').toLowerCase().replace(/×/g, 'x').replace(/[\s_·\-]/g, '');
+  return value.normalize('NFKC').toLowerCase().replace(/×/g, 'x').replace(/[\p{White_Space}\p{Punctuation}]/gu, '');
+}
+
+interface SearchText { compact: string; words: Set<string>; primaryWords: Set<string>; modelPairs: Set<string>; length: number }
+interface SearchFields { names: SearchText[]; identity: SearchText; all: SearchText }
+interface SearchQuery { compact: string; terms: string[]; exactTerms: string[]; modelPairs: string[] }
+// Cube objects are immutable within a loaded snapshot. Normalize their bilingual
+// text once, instead of rebuilding the archive corpus on every keystroke.
+const searchFields = new WeakMap<Cube, SearchFields>();
+
+function wordsFor(value: string): string[] {
+  // Keep decimal sizes and adjacent numbers distinct: 54.6 is neither 546 nor
+  // 54.7, and “Carry 4 2026” must retain both 4 and 2026.
+  return value.normalize('NFKC').toLowerCase().replace(/×/g, 'x')
+    .match(/\d+(?:\.\d+)?|[a-z]+|\p{Script=Han}+|[\p{L}\p{M}]+/gu) ?? [];
+}
+
+function joinedCompounds(value: string): string {
+  // MAX-L / MAXL is one configuration; its L must not match the L in MagLev.
+  // Only join letter-to-letter hyphens, never numeric separators or decimals.
+  return value.normalize('NFKC').replace(/[a-z]+(?:\p{Dash_Punctuation}[a-z]+)+/giu,
+    compound => compound.replace(/\p{Dash_Punctuation}/gu, ''));
+}
+
+function textFor(values: string[]): SearchText {
+  const wordLists = values.map(value => wordsFor(joinedCompounds(value)));
+  const words = wordLists.flat();
+  const originalWords = values.map(wordsFor);
+  return {
+    compact: values.map(normalizeSearch).join(' '),
+    // Retain the separate words too: “X Man” should still find “X-Man”.
+    words: new Set([...words, ...originalWords.flat()]),
+    primaryWords: new Set(words),
+    modelPairs: new Set([...wordLists, ...originalWords].flatMap(list => list.flatMap((word, index) =>
+      /^[a-z]+$/.test(word) && /^\d+(?:\.\d+)?$/.test(list[index + 1] ?? '') ? [word + ':' + list[index + 1]] : []))),
+    length: words.length,
+  };
+}
+
+function fieldsFor(cube: Cube): SearchFields {
+  const cached = searchFields.get(cube);
+  if (cached) return cached;
+  const brand = BRANDS[cube.brand];
+  const chineseBrand = brand?.zh.replace(/[^\u4e00-\u9fff]/g, '') ?? '';
+  const names = [cube.name.zh, cube.name.en, chineseBrand + cube.name.zh, cube.brand + cube.name.en];
+  const identity = [...names, cube.id, cube.brand, brand?.zh ?? '', brand?.en ?? '', ...cube.variants, ...cube.tags];
+  const terms = [...cube.specs.mechanism.flatMap(key => [key, MECHANISMS[key]?.zh ?? '', MECHANISMS[key]?.en ?? '']),
+    CATEGORIES[cube.category]?.zh ?? '', CATEGORIES[cube.category]?.en ?? '',
+    TIERS[cube.tier ?? 'unknown']?.zh ?? '', TIERS[cube.tier ?? 'unknown']?.en ?? '',
+    '3x3', '三阶', ...cube.highlights.flatMap(item => [item.zh, item.en]),
+    cube.assessment.summary.zh, cube.assessment.summary.en];
+  const result = { names: names.map(name => textFor([name])), identity: textFor(identity), all: textFor([...identity, ...terms]) };
+  searchFields.set(cube, result);
+  return result;
+}
+
+function queryFor(value: string): SearchQuery {
+  const joined = joinedCompounds(value).toLowerCase();
+  const terms = [...new Set(wordsFor(joined))];
+  return {
+    compact: normalizeSearch(value.trim()), terms,
+    exactTerms: terms.filter(term => /^\d+(?:\.\d+)?$|^[a-z]$/.test(term)),
+    // In compact model input, keep GAN3 together. A GAN356 i3 must not qualify
+    // merely because its name contains GAN and a separate 3.
+    modelPairs: [...joined.matchAll(/([a-z]+)(\d+(?:\.\d+)?)/g)].map(match => match[1] + ':' + match[2]),
+  };
+}
+
+function hasTerm(text: SearchText, term: string): boolean {
+  if (text.words.has(term)) return true;
+  // Generation numbers and standalone model letters require actual words.
+  if (/^\d+(?:\.\d+)?$|^[a-z]$/.test(term)) return false;
+  return [...text.words].some(word => word.includes(term));
+}
+
+function matchesText(text: SearchText, query: SearchQuery): boolean {
+  if (!query.terms.length || query.exactTerms.some(term => !text.words.has(term))) return false;
+  if (query.modelPairs.some(pair => !text.modelPairs.has(pair))) return false;
+  return text.compact.includes(query.compact) || query.terms.every(term => hasTerm(text, term));
+}
+
+function matchesSearch(cube: Cube, value: string): boolean {
+  const query = queryFor(value);
+  return !query.compact || matchesText(fieldsFor(cube).all, query);
+}
+
+function searchRank(cube: Cube, query: string): number {
+  const fields = fieldsFor(cube);
+  const q = queryFor(query);
+  const nameRanks = fields.names.map(name => {
+    if (!matchesText(name, q)) return 0;
+    if (name.compact === q.compact) return 1000;
+    // Exact configuration words outrank prefixes (MAX before MAX-L for a MAX
+    // query). Within that tier, a base model precedes longer edition names.
+    const extraWords = Math.min(50, Math.max(0, name.length - q.terms.length));
+    if (q.terms.every(term => name.primaryWords.has(term))) return 900 - extraWords;
+    if (name.compact.includes(q.compact)) return 800 - extraWords;
+    return 650 - extraWords;
+  });
+  return Math.max(...nameRanks, matchesText(fields.identity, q) ? 450 : 100);
 }
 
 export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
@@ -52,27 +160,18 @@ export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
           : /maglev/.test(tokens);
     if (!match) return false;
   }
-  const q = normalizeSearch(filters.q.trim());
-  if (!q) return true;
-  const brand = BRANDS[cube.brand];
-  const chineseBrand = brand?.zh.replace(/[^\u4e00-\u9fff]/g, '') ?? '';
-  const corpus = [
-    cube.id, cube.brand, BRANDS[cube.brand]?.zh ?? '', BRANDS[cube.brand]?.en ?? '', cube.name.zh, cube.name.en,
-    chineseBrand + cube.name.zh, cube.brand + cube.name.en,
-    ...cube.variants, ...cube.tags, ...cube.specs.mechanism,
-    ...cube.highlights.flatMap(item => [item.zh, item.en]),
-    cube.assessment.summary.zh, cube.assessment.summary.en,
-  ].join(' ');
-  const searchable = normalizeSearch(corpus);
-  if (searchable.includes(q)) return true;
-  // A brand, model and mechanism need not be adjacent in the source text.
-  const terms = filters.q.normalize('NFKC').trim().split(/\s+/).map(normalizeSearch).filter(Boolean);
-  return terms.every(term => searchable.includes(term));
+  return matchesSearch(cube, filters.q);
 }
 
-export function sortCubes(cubes: readonly Cube[], order: string): Cube[] {
+export function sortCubes(cubes: readonly Cube[], order: string, query = ''): Cube[] {
+  const ranks = order === 'relevance' && query.trim()
+    ? new Map(cubes.map(cube => [cube.id, searchRank(cube, query)])) : null;
   return [...cubes].sort((a, b) => {
-    if (order === 'name') return a.name.en.localeCompare(b.name.en, 'en') || a.id.localeCompare(b.id, 'en');
+    if (ranks) {
+      const difference = (ranks.get(b.id) ?? 0) - (ranks.get(a.id) ?? 0);
+      if (difference) return difference;
+    }
+    if (order === 'name') return a.name.en.localeCompare(b.name.en, 'en', { numeric: true }) || a.id.localeCompare(b.id, 'en');
     // Missing dates always stay at the end, in either direction.
     if (a.year === null && b.year !== null) return 1;
     if (b.year === null && a.year !== null) return -1;

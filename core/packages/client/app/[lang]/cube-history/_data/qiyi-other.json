@@ -1294,6 +1294,118 @@
       "url": "https://www.thecubicle.com/products/yuxin-love-treasure-box-3x3",
       "publisher": "TheCubicle",
       "kind": "retailer"
+    },
+    {
+      "id": "r3-atout-ss-unicorn",
+      "title": "Shengshou Unicorn 3x3 — posted 16 December 2020",
+      "url": "https://www.atoutcubes.com/en/shengshou/38455-shengshou-unicorn-3x3.html",
+      "publisher": "Atoutcubes",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-maru-dayan-guhong-name",
+      "title": "大雁孤鴻：原代商品档案",
+      "url": "https://store.maru.tw/index.php?product_id=268&route=product%2Fproduct&search=%E5%A4%A7%E9%9B%81+%E5%AD%A4%E9%B4%BB",
+      "publisher": "Maru Cube",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-maru-dayan-tengyun-name",
+      "title": "大雁騰雲三代 v3M",
+      "url": "https://store.maru.tw/index.php?order=ASC&page=155&product_id=2655&route=product%2Fproduct&sort=p.price&tag=",
+      "publisher": "Maru Cube",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-maru-dayan-zhanchi-name",
+      "title": "大雁展翅三階 — 拆解与实测介绍",
+      "url": "https://maru.tw/dayan-3x3-zhanchi/",
+      "publisher": "Maru Cube",
+      "kind": "review"
+    },
+    {
+      "id": "r3-maru-yuxin-littlemagic-name",
+      "title": "裕鑫小魔法三階V3磁懸浮絨面VT",
+      "url": "https://store.maru.tw/new-comer?product_id=3020",
+      "publisher": "Maru Cube",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-strefa-ss-concavoconvex",
+      "title": "SengSo Concavoconvex 3x3 — 2020, 56 mm, 76 g",
+      "url": "https://strefa-kostek.pl/sengso-concavoconvex-3x3-5379.html",
+      "publisher": "StrefaKostek",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cuberkart-ss-sandwich",
+      "title": "ShengShou Sandwich 3x3 Cube Stickerless",
+      "url": "https://cuberkart.com/products/shengshou-sandwich-3x3-cube-stickerless",
+      "publisher": "Cuberkart",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cubemania-ss-sandwich",
+      "title": "Kostka 3x3x3 Sandwich ShengShou",
+      "url": "https://www.cubemania.cz/p/kostka-3x3x3-sandwich-shengshou",
+      "publisher": "CubeMania",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cubenation-ds-solar3e",
+      "title": "DianSheng Solar 3E 3x3 — Added June 11, 2024",
+      "url": "https://www.cubenationshop.com/product/diansheng-solar-3e-3x3-stickerless",
+      "publisher": "CubeNation",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cubezz-ds-solar3e",
+      "title": "DianSheng Solar 3E — DST3EC, specifications and buyer review",
+      "url": "https://cubezz.com/goods.php?id=7696",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-speedcubing-ds-solar3e",
+      "title": "DianSheng Solar S3E non-magnetic budget 3x3",
+      "url": "https://speedcubing.org/products/diansheng-solar-s3e",
+      "publisher": "Speedcubing.org",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cubezz-ds-solarme",
+      "title": "DianSheng Solar ME magnetic 3x3 — DSS8909",
+      "url": "https://cubezz.com/goods.php?id=7745",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cubezz-ds-luminous",
+      "title": "DianSheng Luminous 3x3 — 56 mm, 75 g, buyer archive",
+      "url": "https://cubezz.com/goods.php?id=6881",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-h2-legend-s-history",
+      "title": "Top 8 Rubik giá rẻ thị trường 2020 — Legend S introduced in late 2019",
+      "url": "https://rubikonline.vn/top-8-rubik-gia-re-thong-tri-thi-truong-2020",
+      "publisher": "H2 Rubik Shop",
+      "kind": "review"
+    },
+    {
+      "id": "r3-cubenation-legend-s",
+      "title": "SengSo Legend S Macaron — Added November 25, 2023",
+      "url": "https://www.cubenationshop.com/product/sengso-legend-s-3x3-macaron",
+      "publisher": "CubeNation",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-scs-legend-s",
+      "title": "ShengShou Legend S 3x3 — Released January 23, 2024",
+      "url": "https://ca.speedcubeshop.com/products/shengshou-legend-s-3x3?variant=40513733623921",
+      "publisher": "SpeedCubeShop",
+      "kind": "retailer"
     }
   ],
   "cubes": [
@@ -1479,11 +1591,16 @@
       ],
       "sourceIds": [
         "qo-product-dayan-guhong-pro-m-3x3-54mm-maglev",
-        "qo-guhong-pro-core"
+        "qo-guhong-pro-core",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -1588,11 +1705,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-dayan-zhanchi-v5-m-3x3-fancy"
+        "qo-product-dayan-zhanchi-v5-m-3x3-fancy",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -1785,11 +1906,16 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "dayan-guhong-pro-plus-maglev"
+        "dayan-guhong-pro-plus-maglev",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -1898,12 +2024,16 @@
       "sourceIds": [
         "dayan-zhanchi-pro-m-retail",
         "dayan-current-catalog",
-        "qo-product-dayan-zhanchi-pro-m-3x3"
+        "qo-product-dayan-zhanchi-pro-m-3x3",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "spring",
         "magnet",
-        "adjustable"
+        "adjustable",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -2828,11 +2958,14 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "yuxin-little-magic-v3-maglev-retail"
+        "yuxin-little-magic-v3-maglev-retail",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -3148,11 +3281,16 @@
       ],
       "sourceIds": [
         "qo-product-dayan-guhong-pro-m-3x3-56mm-maglev",
-        "qo-guhong-pro-core"
+        "qo-guhong-pro-core",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -3694,11 +3832,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-dayan-zhanchi-v5-m-3x3-premium"
+        "qo-product-dayan-zhanchi-v5-m-3x3-premium",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -4027,11 +4169,15 @@
       ],
       "sourceIds": [
         "qo-product-mini-dayan-zhanchi-50mm",
-        "qo-zhanchi-50-zii"
+        "qo-zhanchi-50-zii",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "mini",
@@ -4439,11 +4585,16 @@
       ],
       "sourceIds": [
         "dayan-guhong-v3-m-retail",
-        "qo-product-dayan-guhong-v3-m"
+        "qo-product-dayan-guhong-v3-m",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "spring",
-        "magnet"
+        "magnet",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -4551,14 +4702,19 @@
         "dayan-guhong-pro-m-retail",
         "dayan-guhong-pro-maglev",
         "dayan-guhong-pro-review",
-        "qo-guhong-pro-core"
+        "qo-guhong-pro-core",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "magnet",
         "spring",
         "maglev-optional",
         "maglev",
-        "adjustable"
+        "adjustable",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -4661,10 +4817,15 @@
       "sourceIds": [
         "dayan-guhong-v1-retail",
         "dayan-historical-guide",
-        "qo-product-dayan-guhong"
+        "qo-product-dayan-guhong",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
-        "spring"
+        "spring",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -4770,11 +4931,16 @@
       ],
       "sourceIds": [
         "qo-product-dayan-guhong-pro-m-3x3-55mm-maglev",
-        "qo-guhong-pro-core"
+        "qo-guhong-pro-core",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -4913,16 +5079,19 @@
         "zh": "Legend S 三阶",
         "en": "Legend S"
       },
-      "year": 2026,
+      "year": 2019,
       "release": {
-        "date": "2026-09-30",
-        "precision": "day",
+        "date": "2019",
+        "precision": "year",
         "basis": "retailer",
         "note": {
-          "zh": "商家页面的上架/发行日期；不等同于全球统一首发日。",
-          "en": "Retailer listing/release date; not necessarily the worldwide launch."
+          "zh": "H2商家的2020入门比较文章正文说Legend S于2019年底推出，未给月日。CubeNation马卡龙版上架2023-11-25、SCS登记2024-01-23、TheCubicle上架2026-09-30均是后续地区/配色目录节点，不能当成全型号2026首发；早期批次是否同模具未确认。",
+          "en": "H2’s 2020 beginner comparison says Legend S was introduced in late 2019, without a month/day. CubeNation’s Macaron listing (2023-11-25), SCS’s date (2024-01-23), and TheCubicle’s listing (2026-09-30) are later regional/color catalog milestones, not a worldwide 2026 launch. Mold continuity across early batches is unverified."
         },
         "sourceIds": [
+          "r3-h2-legend-s-history",
+          "r3-cubenation-legend-s",
+          "r3-scs-legend-s",
           "shengshou-legend-s-retail"
         ]
       },
@@ -4974,9 +5143,15 @@
       ],
       "sourceIds": [
         "shengshou-legend-s-retail",
-        "qo-product-shengshou-legend-s-3x3"
+        "qo-product-shengshou-legend-s-3x3",
+        "r3-h2-legend-s-history",
+        "r3-cubenation-legend-s",
+        "r3-scs-legend-s"
       ],
-      "tags": [],
+      "tags": [
+        "Legend S",
+        "传奇S"
+      ],
       "status": "released",
       "category": "speed",
       "tier": "unknown",
@@ -6217,7 +6392,8 @@
       "sourceIds": [
         "dayan-guhong-pro-plus-retail",
         "dayan-guhong-pro-plus-maglev",
-        "dayan-guhong-pro-plus-review"
+        "dayan-guhong-pro-plus-review",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "magnet",
@@ -6225,7 +6401,11 @@
         "spring",
         "maglev-optional",
         "maglev",
-        "adjustable"
+        "adjustable",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -6429,14 +6609,17 @@
       ],
       "sourceIds": [
         "yuxin-little-magic-v3-maglev-retail",
-        "qo-product-yuxin-little-magic-3x3-v3-maglev"
+        "qo-product-yuxin-little-magic-3x3-v3-maglev",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
         "magnet",
         "maglev",
         "adjustable",
         "uv-optional",
-        "uv"
+        "uv",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -6539,10 +6722,13 @@
       "sourceIds": [
         "yuxin-little-magic-retail",
         "yuxin-little-magic-launch",
-        "qo-product-yuxin-little-magic-3x3"
+        "qo-product-yuxin-little-magic-3x3",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
-        "spring"
+        "spring",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -6766,11 +6952,15 @@
       ],
       "sourceIds": [
         "qo-product-mini-dayan-zhanchi-55mm",
-        "qo-zhanchi-55-zii"
+        "qo-zhanchi-55-zii",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "mini",
@@ -6877,11 +7067,16 @@
       ],
       "sourceIds": [
         "qo-product-dayan-guhong-pro-m-3x3-54mm-standard",
-        "qo-guhong-pro-core"
+        "qo-guhong-pro-core",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -6986,12 +7181,17 @@
       "sourceIds": [
         "dayan-tengyun-v3-m-retail",
         "dayan-current-catalog",
-        "qo-product-dayan-tengyun-v3-m-3x3"
+        "qo-product-dayan-tengyun-v3-m-3x3",
+        "r3-maru-dayan-tengyun-name"
       ],
       "tags": [
         "spring",
         "magnet",
-        "adjustable"
+        "adjustable",
+        "腾云",
+        "騰雲",
+        "TengYun",
+        "Teng Yun"
       ],
       "status": "released",
       "category": "speed",
@@ -7217,11 +7417,16 @@
         "dayan-current-catalog",
         "dayan-tengyun-firsthand",
         "qo-product-dayan-tengyun-m-3x3",
-        "qo-product-phil-s-tengyun-m-3x3"
+        "qo-product-phil-s-tengyun-m-3x3",
+        "r3-maru-dayan-tengyun-name"
       ],
       "tags": [
         "spring",
-        "magnet"
+        "magnet",
+        "腾云",
+        "騰雲",
+        "TengYun",
+        "Teng Yun"
       ],
       "status": "released",
       "category": "speed",
@@ -7322,11 +7527,16 @@
       ],
       "sourceIds": [
         "dayan-guhong-v4-m-retail",
-        "qo-product-dayan-guhong-3x3-v4-m"
+        "qo-product-dayan-guhong-3x3-v4-m",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "spring",
-        "magnet"
+        "magnet",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -7426,13 +7636,16 @@
       "sourceIds": [
         "yuxin-little-magic-m-retail",
         "yuxin-little-magic-m-uv",
-        "qo-product-yuxin-little-magic-3x3-m"
+        "qo-product-yuxin-little-magic-3x3-m",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
         "spring",
         "magnet",
         "uv-optional",
-        "uv"
+        "uv",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -7728,11 +7941,16 @@
       ],
       "sourceIds": [
         "qo-product-dayan-guhong-pro-m-3x3-56mm-standard",
-        "qo-guhong-pro-core"
+        "qo-guhong-pro-core",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -8073,11 +8291,15 @@
       "sourceIds": [
         "dayan-zhanchi-retail",
         "dayan-zhanchi-launch-history",
-        "dayan-zhanchi-hands-on"
+        "dayan-zhanchi-hands-on",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "spring",
-        "anti-pop"
+        "anti-pop",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -8494,11 +8716,15 @@
       ],
       "sourceIds": [
         "qo-product-mini-dayan-zhanchi-42mm",
-        "qo-zhanchi-42-zii"
+        "qo-zhanchi-42-zii",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "mini",
@@ -8706,11 +8932,16 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-dayan-guhong-pro-3x3-56mm-maglev"
+        "qo-product-dayan-guhong-pro-3x3-56mm-maglev",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -9323,12 +9554,17 @@
       ],
       "sourceIds": [
         "dayan-tengyun-v2-m-retail",
-        "qo-product-dayan-tengyun-v2-m-3x3"
+        "qo-product-dayan-tengyun-v2-m-3x3",
+        "r3-maru-dayan-tengyun-name"
       ],
       "tags": [
         "spring",
         "magnet",
-        "adjustable"
+        "adjustable",
+        "腾云",
+        "騰雲",
+        "TengYun",
+        "Teng Yun"
       ],
       "status": "released",
       "category": "speed",
@@ -9733,13 +9969,17 @@
       ],
       "sourceIds": [
         "dayan-zhanchi-v5-m-retail",
-        "qo-product-dayan-zhanchi-v5-m-3x3-standard"
+        "qo-product-dayan-zhanchi-v5-m-3x3-standard",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
         "spring",
         "magnet",
         "core-magnets",
-        "adjustable"
+        "adjustable",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -9837,11 +10077,16 @@
       "sourceIds": [
         "dayan-guhong-v2-retail",
         "dayan-historical-guide",
-        "qo-product-dayan-guhong-v2"
+        "qo-product-dayan-guhong-v2",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "spring",
-        "anti-pop"
+        "anti-pop",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -10134,11 +10379,14 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-yuxin-little-magic-3x3-v2-m-uv"
+        "qo-product-yuxin-little-magic-3x3-v2-m-uv",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -10331,10 +10579,14 @@
       "sourceIds": [
         "dayan-zhanchi-2018-retail",
         "dayan-historical-guide",
-        "qo-product-dayan-zhanchi-2018"
+        "qo-product-dayan-zhanchi-2018",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
-        "spring"
+        "spring",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -11660,10 +11912,14 @@
       ],
       "sourceIds": [
         "dayan-zhanchi-2017-retail",
-        "dayan-historical-guide"
+        "dayan-historical-guide",
+        "r3-maru-dayan-zhanchi-name"
       ],
       "tags": [
-        "spring"
+        "spring",
+        "展翅",
+        "ZhanChi",
+        "Zhan Chi"
       ],
       "status": "released",
       "category": "speed",
@@ -11962,11 +12218,16 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-dayan-guhong-pro-3x3-55mm-magnetic"
+        "qo-product-dayan-guhong-pro-3x3-55mm-magnetic",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -12282,11 +12543,16 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-dayan-guhong-pro-3x3-54mm-magnetic"
+        "qo-product-dayan-guhong-pro-3x3-54mm-magnetic",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -12386,11 +12652,14 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "yuxin-little-magic-m-uv"
+        "yuxin-little-magic-m-uv",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -12594,11 +12863,16 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-dayan-guhong-pro-3x3-54mm-maglev"
+        "qo-product-dayan-guhong-pro-3x3-54mm-maglev",
+        "r3-maru-dayan-guhong-name"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "孤鸿",
+        "孤鴻",
+        "GuHong",
+        "Gu Hong"
       ],
       "status": "released",
       "category": "speed",
@@ -12799,13 +13073,16 @@
       "sourceIds": [
         "yuxin-little-magic-v2-m-retail",
         "yuxin-current-catalog",
-        "qo-product-yuxin-little-magic-3x3-v2-m"
+        "qo-product-yuxin-little-magic-3x3-v2-m",
+        "r3-maru-yuxin-littlemagic-name"
       ],
       "tags": [
         "spring",
         "magnet",
         "uv-optional",
-        "uv"
+        "uv",
+        "小魔法",
+        "Little Magic"
       ],
       "status": "released",
       "category": "speed",
@@ -13633,6 +13910,573 @@
           "en": "The actual img src used by CubeNation’s matching product page, served by its own image service; no guessed URL or forged Referer. Model visually verified and GET returned 200 / image/webp."
         }
       }
+    },
+    {
+      "id": "shengshou-unicorn-3x3",
+      "brand": "ShengShou",
+      "name": {
+        "zh": "圣手 Unicorn 教学三阶",
+        "en": "ShengShou Unicorn 3x3"
+      },
+      "year": 2020,
+      "release": {
+        "date": "2020-12-16",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "对应商家明确列出的上架日期；不能等同于全球首发日。",
+          "en": "Explicit retailer listing date, not a worldwide launch date."
+        },
+        "sourceIds": [
+          "r3-atout-ss-unicorn"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 5.9,
+          "currency": "EUR",
+          "region": "FR",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "法国页面含税标价；当前缺货，不能视为可下单现价或首发价。",
+            "en": "Tax-inclusive French page price; currently out of stock, not an available-stock or launch-price guarantee."
+          },
+          "sourceId": "r3-atout-ss-unicorn"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "原图呈现蓝、黄、红简化配色与重点角块；商家将它归入教学系列。",
+          "en": "The product photograph shows a simplified blue, yellow and red scheme with an emphasized corner; the retailer classifies it as a learning cube."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "通过减少配色约束，集中练习三阶复原的部分步骤。它保留标准三阶分层结构。",
+          "en": "Reduced color constraints focus practice on selected solving steps while retaining a standard 3x3 layer structure."
+        },
+        "tradeoffs": {
+          "zh": "该款不是普通六色竞速配置。页面没有可靠净重与尺寸表；结构化物流重量156 g未作为魔方净重。",
+          "en": "This is not an ordinary six-color speed configuration. Reliable dimensions and net weight are unavailable; 156 g in shipping metadata is not treated as cube weight."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-atout-ss-unicorn"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "r3-atout-ss-unicorn"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "Unicorn",
+        "教学三阶"
+      ],
+      "status": "released",
+      "category": "educational",
+      "tier": "specialty",
+      "image": {
+        "url": "https://www.atoutcubes.com/38465-large_default/shengshou-unicorn-3x3.jpg",
+        "sourceId": "r3-atout-ss-unicorn",
+        "alt": {
+          "zh": "圣手 Unicorn 教学三阶原商品图",
+          "en": "ShengShou Unicorn teaching 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
+    },
+    {
+      "id": "shengshou-concavoconvex-3x3",
+      "brand": "ShengShou",
+      "name": {
+        "zh": "圣手 Concavoconvex 凹凸配色教学三阶",
+        "en": "ShengShou Concavoconvex 3x3"
+      },
+      "year": 2020,
+      "release": {
+        "date": "2020",
+        "precision": "year",
+        "basis": "retailer",
+        "note": {
+          "zh": "StrefaKostek产品表明确列发行年份2020，月日未列。",
+          "en": "StrefaKostek explicitly lists release year 2020; month and day are unspecified."
+        },
+        "sourceIds": [
+          "r3-strefa-ss-concavoconvex"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 9.99,
+          "currency": "PLN",
+          "region": "PL",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-strefa-ss-concavoconvex"
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "76 g",
+        "mechanism": [],
+        "adjustment": {
+          "zh": "螺丝调节松紧。",
+          "en": "Screw tension adjustment."
+        }
+      },
+      "highlights": [
+        {
+          "zh": "标准三阶分块配合简化配色，突出一层的块位辨认；商家列螺丝调节。",
+          "en": "Standard 3x3 segmentation with a simplified color scheme emphasizes identifying pieces in one layer; screw adjustment is listed."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "用于分步骤练习，凹凸指配色呈现，不是改变转轴的异形结构。",
+          "en": "Designed for focused solving practice; concave/convex refers to the color arrangement rather than shifted turning axes."
+        },
+        "tradeoffs": {
+          "zh": "商家提供2020发行年份，但没有月日或独立竞速测试。该页提到MG356 Standard的转感类比，品牌关系未证实，未沿用这一说法。",
+          "en": "Retailer supplies a 2020 release year but no month/day or independent speed tests. Its MG356 Standard feel comparison does not establish a brand or design relationship and is not adopted."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-strefa-ss-concavoconvex"
+        ]
+      },
+      "variants": [
+        "Stickerless Bright"
+      ],
+      "sourceIds": [
+        "r3-strefa-ss-concavoconvex"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "教学三阶",
+        "Concave Convex"
+      ],
+      "status": "released",
+      "category": "educational",
+      "tier": "specialty",
+      "image": {
+        "url": "https://strefa-kostek.pl/27247-large_default/sengso-concavoconvex-3x3.jpg",
+        "sourceId": "r3-strefa-ss-concavoconvex",
+        "alt": {
+          "zh": "圣手 Concavoconvex 凹凸配色教学三阶",
+          "en": "ShengShou Concavoconvex teaching 3x3"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
+    },
+    {
+      "id": "shengshou-sandwich-3x3",
+      "brand": "ShengShou",
+      "name": {
+        "zh": "圣手 Sandwich 三明治教学三阶",
+        "en": "ShengShou Sandwich 3x3"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "已证实独立商品存在，但未找到可靠的首发或首次上架日期。",
+          "en": "Independently sold product confirmed; reliable launch or initial listing date not established."
+        },
+        "sourceIds": []
+      },
+      "prices": [
+        {
+          "amount": 799,
+          "currency": "INR",
+          "region": "IN",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-cuberkart-ss-sandwich"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [
+          "non-magnetic"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "红、黄、蓝三层简化配色；独立售卖的圣手教学型号，不与奇艺同名产品合并。",
+          "en": "A simplified red/yellow/blue layer scheme; an independently sold ShengShou teaching model, distinct from QiYi’s similarly named product."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "CubeMania说明其用于练习第一、第二层的基础步骤；减少六色配对约束。",
+          "en": "CubeMania describes it as a tool for first- and second-layer practice with fewer color-matching constraints."
+        },
+        "tradeoffs": {
+          "zh": "不是普通六色竞速配置；本轮未查到可靠首发日期、净重与尺寸，不能借用同系列其他教学款。",
+          "en": "Not an ordinary six-color speed configuration. Reliable release date, net weight and size remain unverified and are not borrowed from adjacent teaching models."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-cuberkart-ss-sandwich",
+          "r3-cubemania-ss-sandwich"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "r3-cuberkart-ss-sandwich",
+        "r3-cubemania-ss-sandwich"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "三明治",
+        "教学三阶"
+      ],
+      "status": "released",
+      "category": "educational",
+      "tier": "specialty",
+      "image": {
+        "url": "https://cuberkart.com/cdn/shop/files/1_f959888b-b526-4983-8e5b-56e4739edeed_large.jpg?v=1783999795",
+        "sourceId": "r3-cuberkart-ss-sandwich",
+        "alt": {
+          "zh": "圣手 Sandwich 三明治教学三阶原商品图",
+          "en": "ShengShou Sandwich teaching 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
+    },
+    {
+      "id": "diansheng-solar-3e",
+      "brand": "DianSheng",
+      "name": {
+        "zh": "点盛 太阳系 Solar 3E / S3E 无磁三阶",
+        "en": "DianSheng Solar 3E / S3E"
+      },
+      "year": 2024,
+      "release": {
+        "date": "2024-06-11",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "对应商家明确列出的上架日期；不能等同于全球首发日。",
+          "en": "Explicit retailer listing date, not a worldwide launch date."
+        },
+        "sourceIds": [
+          "r3-cubenation-ds-solar3e"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 2.15,
+          "currency": "USD",
+          "region": "CN",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-cubezz-ds-solar3e"
+        },
+        {
+          "amount": 4.95,
+          "currency": "GBP",
+          "region": "GB",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-speedcubing-ds-solar3e"
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "65 g",
+        "mechanism": [
+          "non-magnetic"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "太阳系的低价无磁入门型号；彩色塑料外壳，没有沿用3M UV版涂层。",
+          "en": "Low-price non-magnetic Solar entry model; stickerless plastic without the 3M UV edition’s coating."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "Cubezz一位2025-03-02买家认为转动轻快而可控、结构较扎实，适合送给初学者；仅为单一样本。",
+          "en": "One Cubezz buyer on 2025-03-02 described controlled free turning and a sturdy feel for beginner use; this is a single sample."
+        },
+        "tradeoffs": {
+          "zh": "该买家称未附说明纸。没有独立测速或耐久实测；不要与磁力Solar ME或S3M旗舰系列混淆。",
+          "en": "That buyer reported no instruction sheet. Independent speed or endurance tests are unavailable; distinguish this from magnetic Solar ME and S3M models."
+        },
+        "basis": "review",
+        "sourceIds": [
+          "r3-cubenation-ds-solar3e",
+          "r3-cubezz-ds-solar3e",
+          "r3-speedcubing-ds-solar3e"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "r3-cubenation-ds-solar3e",
+        "r3-cubezz-ds-solar3e",
+        "r3-speedcubing-ds-solar3e"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "太阳系",
+        "太陽系",
+        "Solar 3E",
+        "Solar S3E"
+      ],
+      "status": "released",
+      "category": "speed",
+      "tier": "budget",
+      "image": {
+        "url": "https://cubezz.com/images/202404/source_img/7696_G_1712720922393.jpg",
+        "sourceId": "r3-cubezz-ds-solar3e",
+        "alt": {
+          "zh": "点盛 Solar 3E 无磁三阶商品图",
+          "en": "DianSheng Solar 3E non-magnetic 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
+    },
+    {
+      "id": "diansheng-solar-me",
+      "brand": "DianSheng",
+      "name": {
+        "zh": "点盛 Solar ME 磁力三阶",
+        "en": "DianSheng Solar ME 3x3"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "已证实独立商品存在，但未找到可靠的首发或首次上架日期。",
+          "en": "Independently sold product confirmed; reliable launch or initial listing date not established."
+        },
+        "sourceIds": []
+      },
+      "prices": [
+        {
+          "amount": 3.55,
+          "currency": "USD",
+          "region": "CN",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-cubezz-ds-solarme"
+        }
+      ],
+      "specs": {
+        "size": "55 mm",
+        "weight": "65 g",
+        "mechanism": [
+          "magnet"
+        ],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "Cubezz以DSS8909独立SKU销售的低价磁力Solar ME；原商品图展示角棱磁铁与三片拼接结构。",
+          "en": "Budget magnetic Solar ME sold separately as Cubezz SKU DSS8909; original diagrams show corner-edge magnets and a three-part piece assembly."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "面向入门的磁力定位配置；同商家把它与Solar 3E、Solar M UV分开上架。",
+          "en": "An entry magnetic-alignment configuration; the retailer lists it separately from Solar 3E and Solar M UV."
+        },
+        "tradeoffs": {
+          "zh": "首发日期未确认；未把图片上传年月当成发布日期。商品页零条评论，默认五星不计入用户评价。",
+          "en": "Launch date is unverified; image-upload timestamps are not treated as release dates. The page has zero reviews, so its default five-star graphic is not a customer rating."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-cubezz-ds-solarme"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "r3-cubezz-ds-solarme"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "太阳系",
+        "太陽系",
+        "Solar ME",
+        "DSS8909"
+      ],
+      "status": "released",
+      "category": "speed",
+      "tier": "budget",
+      "image": {
+        "url": "https://cubezz.com/images/202406/source_img/7745_G_1718417008104.jpg",
+        "sourceId": "r3-cubezz-ds-solarme",
+        "alt": {
+          "zh": "点盛 Solar ME 磁力三阶商品图",
+          "en": "DianSheng Solar ME magnetic 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
+    },
+    {
+      "id": "diansheng-luminous-3x3",
+      "brand": "DianSheng",
+      "name": {
+        "zh": "点盛 Luminous 夜光三阶",
+        "en": "DianSheng Luminous 3x3"
+      },
+      "year": 2023,
+      "release": {
+        "date": "2023",
+        "precision": "year",
+        "basis": "documented",
+        "note": {
+          "zh": "不晚于2023-04-05的商品页买家评论可证实已销售；2023是目前确认的最晚存在界限，不代表首发年。",
+          "en": "A buyer comment dated 2023-04-05 proves sales by then; 2023 is the documented existence bound, not an established launch year."
+        },
+        "sourceIds": [
+          "r3-cubezz-ds-luminous"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 2.99,
+          "currency": "USD",
+          "region": "CN",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-cubezz-ds-luminous"
+        }
+      ],
+      "specs": {
+        "size": "56 mm",
+        "weight": "75 g",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "独立命名的夜光收藏三阶；商家提供56 mm、75 g产品参数。",
+          "en": "Separately named glow-in-the-dark collectible 3x3 with retailer specifications of 56 mm and 75 g."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "商品评论最迟在2023-04-05已出现，能确认当时已有实物销售；准确首发仍不明。",
+          "en": "A dated customer comment establishes physical sales by 2023-04-05; exact launch timing remains unknown."
+        },
+        "tradeoffs": {
+          "zh": "技术表写Black，但原图与买家描述显示浅色夜光本体，故不采用Black配色字段。夜光效果不等于电子照明或UV涂层。",
+          "en": "The table says Black, while the original image and buyer reports show a pale luminous body; the Black color field is not adopted. Luminescence does not establish electronic lighting or UV coating."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-cubezz-ds-luminous"
+        ]
+      },
+      "variants": [],
+      "sourceIds": [
+        "r3-cubezz-ds-luminous"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "夜光",
+        "Luminous",
+        "glow in the dark"
+      ],
+      "status": "released",
+      "category": "collectible",
+      "tier": "specialty",
+      "image": {
+        "url": "https://cubezz.com/images/202204/source_img/6881_G_1649044280926.jpg",
+        "sourceId": "r3-cubezz-ds-luminous",
+        "alt": {
+          "zh": "点盛 Luminous 夜光三阶原商品图",
+          "en": "DianSheng Luminous glow-in-the-dark 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
     }
   ],
   "coverageNotes": [
@@ -13650,6 +14494,15 @@
     "第二轮用 Ziicube、Kubekings、CubeNation 和 StrefaKostek 目录查漏，补入 SengSo Pillowed 三阶，并以早期实际商品上架表补证展翅 42/50/55 mm 与 Legend 年代。Valk Power M 的 2017-12-06 日期来自同期评测。MsCube 保留独立品牌，未据点盛现目录推断其早期所有权。",
     "按年记录数（含商家上架年，不均为首发年）：{\"2010\": 2, \"2011\": 3, \"2012\": 3, \"2013\": 3, \"2015\": 4, \"2016\": 6, \"2017\": 6, \"2018\": 4, \"2019\": 12, \"2020\": 7, \"2021\": 14, \"2022\": 12, \"2023\": 25, \"2024\": 42, \"2025\": 23, \"2026\": 13, \"unknown\": 34}",
     "短轮图片补证：凌云 V1 已由藏家 2010 年入藏清单第 305 项和原始实物照补齐，注明已更换 Cubesmith 贴纸；圣手鼓面使用商家原页面实际图片服务 URL，已修复旧图 403。",
-    "This research dataset is partitioned across qiyi-other.json, qiyi-xman.json. Source IDs and family relationships resolve across the combined catalog."
+    "This research dataset is partitioned across qiyi-other.json, qiyi-xman.json. Source IDs and family relationships resolve across the combined catalog.",
+    "第三轮独立来源核查：确认圣手 Unicorn 独立教学三阶，Atoutcubes 明列2020-12-16上架并提供实物商品图。圣手 Birds 因 Fisher 类移轴结构排除；标准三阶简化教学配色则单列教育用途。",
+    "中文检索别名按对应系列原来源补充：奇艺官方风二代/风三代/风四代、马鲁商家孤鸿/腾云/展翅/小魔法，同时保留繁体别名与原始tags。别名来源仅证明名称，不用于跨代继承规格或评价。",
+    "黑曼巴跨店实物复核：原档案qiyi-3x3的商品包装明确写黑曼巴，42 mm迷你款包装明确写2代，且马鲁对应独立型号与尺寸一致。保留原ID并修正名称/建立系列关联，未重复新增初代、二代。",
+    "Legend S时间冲突已保留：2019年底（H2商家回述）、2023-11-25（CubeNation马卡龙版上架）、2024-01-23（SCS登记）、2026-09-30（TheCubicle新上架）。按较早具名证据记录年份并注明批次未证实，没有把后续补货变成新代际。",
+    "第三轮第二目录范围：Ziicube当前站点地图948个链接中筛出本组79个名称候选；Cubezz三阶分类共标示1132条、57页，本轮实际取得第1–19和57页，合计401个去重商品链接，其中121个属于本组品牌（包含需要排除的其他阶数、移轴异形与边栏推荐）。第20–39页多次20秒请求超时，后续页没有宣称已完成；不重复使用TheCubicle 4688产品扫描作本轮独立核证。",
+    "本轮确证新增8条：圣手Unicorn、Sandwich、Concavoconvex；奇艺Bubble普通六色版与Sandwich教学版；点盛Solar 3E、Solar ME、Luminous夜光三阶。每条具有对应真实原图，全部GET返回图像。Bubble六种配色合并为两个复原约束不同的产品，未人为拆成六条；纯配色、礼包、商家调校不作为新机械型号。",
+    "保留的边界与待核：ShengShou Birds为Fisher类移轴结构而排除；Cubezz的Circular、FTO、TORI、Axis、Fisher、Windmill不按普通三阶计入。本轮未证明QiYi MS存在独立2024年三阶改款，未凭关键词新增MS 2024。ShengShou SuJie可能是现存早期57mm圣手三阶的命名别称，尚未完成跨店原图核同，不重复新增。",
+    "日期区分：Solar 3E的2024-06-11为CubeNation具体商品Added日；Solar ME首发未证实而留空；Luminous在2023年的年份只是2023-04-05买家评论证明的最晚存在界限。Bubble的2026-09-03来自包含六色与Sandwich变体的共享Ziicube商品页Added日，不能证明每种配色同时首发。",
+    "旧档案保留：65条原记录的补丁只替换明确列出的字段；全部原tags、评分rating与模糊配置官网familyPrices不删除。61条增加风二/三/四代、孤鸿/孤鴻、腾云/騰雲、展翅、小魔法搜索别名；另3条黑曼巴正名及1条Legend S日期修正。"
   ]
 }
