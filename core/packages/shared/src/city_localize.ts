@@ -109,10 +109,14 @@ export function resolveCnProvince(city: string): { zh: string; en: string } | nu
 
 export function normalizeCityKey(city: string): string {
   let s = city.split(/,\s*/)[0].trim();
-  const paren = s.match(/\(([^)]+)\)\s*$/);
-  if (paren && /[A-Za-z]/.test(paren[1])) return paren[1].trim();
-  s = s.replace(/\s+\d+$/, '');
-  s = s.replace(/\s+City$/i, '');
+  const close = s.endsWith(')') ? s.length - 1 : -1;
+  const open = close > 0 ? s.indexOf('(', s.lastIndexOf(')', close - 1) + 1) : -1;
+  const paren = open >= 0 ? s.slice(open + 1, close) : '';
+  if (paren && /[A-Za-z]/.test(paren)) return paren.trim();
+  let digitStart = s.length;
+  while (digitStart > 0 && /[0-9]/.test(s[digitStart - 1])) digitStart--;
+  if (digitStart < s.length && digitStart > 0 && /\s/.test(s[digitStart - 1])) s = s.slice(0, digitStart).trimEnd();
+  if (s.toLowerCase().endsWith('city') && /\s/.test(s[s.length - 5] ?? '')) s = s.slice(0, -4).trimEnd();
   return s.trim();
 }
 
@@ -122,7 +126,7 @@ function translateSeg(seg: string, idx: number, I: string): string {
   // 瑞士等地常把州缩写写在城市后面:`La Tour-de-Peilz (VD)`。生成表存的是城市本名,
   // 查整串会变成 latourdepeilzvd 而漏掉已有的 latourdepeilz;只对 2~3 位大写行政缩写
   // 做第二次查找,不碰 `(Vicenza)` 这类真正参与地名消歧的括号内容。
-  const bare = seg.replace(/\s*\([A-Z]{2,3}\)\s*$/, '').trim();
+  const bare = seg.trimEnd().replace(/\([A-Z]{2,3}\)$/, '').trim();
   const bareKey = `${I}:${normSeg(bare)}`;
   const lookup = (key: string) => idx === 0
     ? PLACE_CITY_ZH[key]

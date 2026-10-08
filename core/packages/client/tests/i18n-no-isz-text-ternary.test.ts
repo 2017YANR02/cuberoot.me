@@ -34,7 +34,7 @@ import { join, dirname } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..'); // packages/client
 const SRC_DIRS = ['app', 'components', 'lib', 'hooks'];
-const HAS_CJK = /[㐀-鿿豈-﫿]/;
+const HAS_CJK = /[㐀-鿿\uF900-\uFAFF]/;
 
 const refsLanguage = (t: string) => /\.language\b/.test(t);
 

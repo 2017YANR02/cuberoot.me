@@ -154,7 +154,7 @@ export function parseScrambleStrict(scramble: string): { moves: ParsedMove[]; ba
   const moves: ParsedMove[] = [];
   const bad: string[] = [];
   for (const line of (scramble ?? '').split(/[\r\n]+/)) {
-    const code = line.replace(/(\/\/|#).*$/, '');
+    const code = stripTrailingLineComment(line);
     for (const t of code.split(/[\s,]+/).filter(Boolean)) {
       const parsed = parseToken(t);
       if (parsed.length === 0) { bad.push(t); continue; }
@@ -183,4 +183,12 @@ export function obtmCount(moves: ParsedMove[]): number {
     n++;
   }
   return n;
+}
+
+// JS dot excludes Unicode line separators; retain that comment boundary.
+function stripTrailingLineComment(line: string): string {
+  const start = Math.max(line.lastIndexOf('\u2028'), line.lastIndexOf('\u2029')) + 1;
+  const tail = line.slice(start);
+  const comment = tail.search(/\/\/|#/);
+  return comment < 0 ? line : line.slice(0, start + comment);
 }

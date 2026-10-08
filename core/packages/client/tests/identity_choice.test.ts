@@ -9,7 +9,20 @@ vi.mock('@/lib/auth-store', () => ({ getSessionToken: () => 'existing-canonical-
 const ticket = 'a'.repeat(43);
 const envelope = { code: 'ACCOUNT_CHOICE_REQUIRED', pending: { ticket, provider: 'apple', expiresInSeconds: 900 } };
 const choice = () => new AccountChoiceRequired({ ticket, provider: 'apple', expiresInSeconds: 900 });
-beforeEach(() => { sessionStorage.clear(); localStorage.clear(); clearIdentityChoice(); window.history.replaceState({}, '', '/account'); });
+
+const identityHandle = 'h'.repeat(43);
+const secondIdentityHandle = 'i'.repeat(43);
+function stubIdentityRequests(fallback = vi.fn(async (_input: RequestInfo | URL, _init?: RequestInit) => new Response('{}'))) {
+  vi.stubGlobal('fetch', async (input: RequestInfo | URL, init?: RequestInit) => {
+    if (String(input) === '/api/identity-choice') {
+      const body = JSON.parse(String(init?.body ?? '{}'));
+      if (body.operation === 'store') return new Response(JSON.stringify({ handle: body.ticket.startsWith('b') ? secondIdentityHandle : identityHandle }));
+      if (body.operation === 'clear') return new Response('{}');
+    }
+    return fallback(input, init);
+  });
+}
+beforeEach(async () => { stubIdentityRequests(); sessionStorage.clear(); localStorage.clear(); clearIdentityChoice(); window.history.replaceState({}, '', '/account'); });
 afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); clearIdentityChoice(); });
 
 describe('first identity account choice boundary', () => {
@@ -32,24 +45,25 @@ describe('first identity account choice boundary', () => {
   it.each([{ ticket: 'short' }, { provider: 'evil' }, { expiresInSeconds: 901 }, { expiresInSeconds: 0 }])('rejects malformed pending (%j)', (fields) => {
     expect(accountChoiceError(409, { ...envelope, pending: { ...envelope.pending, ...fields } })).toBeNull();
   });
-  it('keeps the first identity and original mobile PKCE return when a second provider is unknown', () => {
+  it('keeps the first identity and original mobile PKCE return when a second provider is unknown', async () => {
     const original = '/account?auth=mobile&provider=apple&next=%2Fauth%2Fmobile%3FcodeChallenge%3Doriginal';
-    rememberIdentityChoice(choice(), original);
-    updateIdentityChoice(ticket, { stage: 'authenticate' });
-    rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/account?next=wrong');
-    expect(getIdentityChoice()).toMatchObject({ ticket, returnPath: original, stage: 'authenticate', otherIdentityRejected: true });
+    await rememberIdentityChoice(choice(), original);
+    updateIdentityChoice(identityHandle, { stage: 'authenticate' });
+    await rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'google', expiresInSeconds: 900 }), '/account?next=wrong');
+    expect(getIdentityChoice()).toMatchObject({ ticket: identityHandle, returnPath: original, stage: 'authenticate', otherIdentityRejected: true });
     expect(existingAccountRequired()).toBe(true);
     expect(localStorage.length).toBe(0);
+    expect(sessionStorage.getItem('cuberoot_pending_identity')).not.toContain(ticket);
     expect(window.location.href).not.toContain(ticket);
   });
-  it('expires and permits a fresh attempt without retaining the old identity', () => {
+  it('expires and permits a fresh attempt without retaining the old identity', async () => {
     vi.useFakeTimers();
-    rememberIdentityChoice(choice(), '/account');
+    await rememberIdentityChoice(choice(), '/account');
     vi.advanceTimersByTime(900_001);
     expect(getIdentityChoice()).toBeNull();
-    rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'wca', expiresInSeconds: 900 }), '/recon');
-    clearIdentityChoice(ticket);
-    expect(getIdentityChoice()?.ticket).toBe('b'.repeat(43));
+    await rememberIdentityChoice(new AccountChoiceRequired({ ticket: 'b'.repeat(43), provider: 'wca', expiresInSeconds: 900 }), '/recon');
+    clearIdentityChoice(identityHandle);
+    expect(getIdentityChoice()?.ticket).toBe(secondIdentityHandle);
     clearIdentityChoice();
     expect(getIdentityChoice()).toBeNull();
   });
@@ -61,15 +75,15 @@ describe('first identity account choice boundary', () => {
     expect(getIdentityChoice()).toBeNull();
   });
   it('propagates the typed response without applying a session', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(envelope), { status: 409 })));
+    stubIdentityRequests(vi.fn().mockResolvedValue(new Response(JSON.stringify(envelope), { status: 409 })));
     await expect(loginGoogle('assertion')).rejects.toBeInstanceOf(AccountChoiceRequired);
     expect(getIdentityChoice()).toBeNull();
   });
   it('limits email, phone and mini-browser authentication to existing accounts while linking', async () => {
     const fetcher = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ token: 'c'.repeat(20), user: { uid: 42, wcaId: '', name: 'Existing', avatar: '' } })));
-    vi.stubGlobal('fetch', fetcher);
-    rememberIdentityChoice(choice(), '/account');
-    updateIdentityChoice(ticket, { stage: 'authenticate' });
+    stubIdentityRequests(fetcher);
+    await rememberIdentityChoice(choice(), '/account');
+    updateIdentityChoice(identityHandle, { stage: 'authenticate' });
     await verifyEmailCode('me@example.test', '123456');
     await verifyPhoneCode('13800138000', '123456');
     await startWechatBrowserLogin();
@@ -80,16 +94,16 @@ describe('first identity account choice boundary', () => {
   });
   it('sends expected UID and authenticated session only for explicit linking', async () => {
     const fetcher = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ token: 'c'.repeat(20), user: { uid: 42, wcaId: '', name: 'Existing', avatar: '' } })));
-    vi.stubGlobal('fetch', fetcher);
-    await completeIdentityChoice(ticket, 'link', 42);
-    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ ticket, action: 'link', expectedUid: 42 });
+    stubIdentityRequests(fetcher);
+    await completeIdentityChoice(identityHandle, 'link', 42);
+    expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ operation: 'complete', ticket: identityHandle, action: 'link', expectedUid: 42 });
     expect(fetcher.mock.calls[0][1].headers.Authorization).toBe('Bearer existing-canonical-session');
-    await completeIdentityChoice(ticket, 'create');
+    await completeIdentityChoice(identityHandle, 'create');
     expect(fetcher.mock.calls[1][1].headers.Authorization).toBeUndefined();
   });
   it('binds linking-code issuance and destructive merging to the confirmed account', async () => {
     const fetcher = vi.fn().mockImplementation(async () => new Response('{}'));
-    vi.stubGlobal('fetch', fetcher);
+    stubIdentityRequests(fetcher);
     await issueIdentityLinkCode(42);
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ expectedUid: 42 });
     await mergeAccount('99-123456', 42);
@@ -100,24 +114,24 @@ describe('first identity account choice boundary', () => {
   });
   it('uses existing-only verification for email password recovery without a pending choice', async () => {
     const fetcher = vi.fn().mockImplementation(async () => new Response(JSON.stringify({ token: 'c'.repeat(20), user: { uid: 42, wcaId: '', name: 'Existing', avatar: '' } })));
-    vi.stubGlobal('fetch', fetcher);
+    stubIdentityRequests(fetcher);
     await verifyEmailCode('existing@example.test', '123456', { existingOnly: true });
     expect(JSON.parse(fetcher.mock.calls[0][1].body)).toEqual({ email: 'existing@example.test', code: '123456', existingOnly: true });
   });
   it.each(['email', 'phone'] as const)('propagates verified unknown %s as a choice, not a session', async (provider) => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...envelope, pending: { ...envelope.pending, provider } }), { status: 409 })));
+    stubIdentityRequests(vi.fn().mockResolvedValue(new Response(JSON.stringify({ ...envelope, pending: { ...envelope.pending, provider } }), { status: 409 })));
     const request = provider === 'email' ? verifyEmailCode('new@example.test', '123456') : verifyPhoneCode('13800138000', '123456');
     await expect(request).rejects.toMatchObject({ pending: { provider } });
     expect(getIdentityChoice()).toBeNull();
   });
   it('rejects completion without a canonical UID instead of installing a legacy-shaped session', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ token: 'c'.repeat(20), user: { wcaId: '', name: 'Missing UID', avatar: '' } }))));
-    await expect(completeIdentityChoice(ticket, 'create')).rejects.toThrow('invalid account session');
+    stubIdentityRequests(vi.fn().mockResolvedValue(new Response(JSON.stringify({ token: 'c'.repeat(20), user: { wcaId: '', name: 'Missing UID', avatar: '' } }))));
+    await expect(completeIdentityChoice(identityHandle, 'create')).rejects.toThrow('invalid account session');
   });
   it('rejects a late existing-account response after the choice is canceled', async () => {
     let resolve!: (response: Response) => void;
-    vi.stubGlobal('fetch', vi.fn().mockImplementation(() => new Promise((done) => { resolve = done; })));
-    rememberIdentityChoice(choice(), '/account'); updateIdentityChoice(ticket, { stage: 'authenticate' });
+    stubIdentityRequests(vi.fn().mockImplementation(() => new Promise((done) => { resolve = done; })));
+    await rememberIdentityChoice(choice(), '/account'); updateIdentityChoice(identityHandle, { stage: 'authenticate' });
     const request = verifyEmailCode('existing@example.test', '123456');
     clearIdentityChoice(); resolve(new Response(JSON.stringify({ token: 'late', user: { uid: 42 } })));
     await expect(request).rejects.toMatchObject({ name: 'AbortError' });

@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   loadWeChatJsSdk,
 } from '@/lib/wechat-js-sdk';
@@ -204,7 +205,7 @@ export async function openMiniProgramWcaLink(sessionToken: string | null): Promi
   const miniProgram = await loadMiniProgramNavigationApi();
   if (!miniProgram || !await confirmMiniProgramEnvironment(miniProgram)) return false;
   try {
-    const response = await fetch(apiUrl('/v1/auth/wechat/wca-link/start'), {
+    const response = await sessionFetch(apiUrl('/v1/auth/wechat/wca-link/start'), {
       method: 'POST',
       cache: 'no-store',
       headers: { Authorization: `Bearer ${sessionToken}` },

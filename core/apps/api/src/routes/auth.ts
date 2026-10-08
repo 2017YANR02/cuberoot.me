@@ -8,7 +8,7 @@ import type {
 } from '@cuberoot/shared/auth/web-session';
 import { webSessionError } from '@cuberoot/shared/auth/web-session';
 import { query, sql } from '../db/connection.js';
-import { JWT_SECRET, signSession, verifySession, getActiveRolePreview } from '../utils/session.js';
+import { JWT_SECRET, signSession, signBrowserAccessSession, verifySession, getActiveRolePreview } from '../utils/session.js';
 import { requireAuth } from '../utils/recon_helpers.js';
 import { captureAccountDevice } from '../utils/account_device.js';
 import {
@@ -34,6 +34,23 @@ const ROLE_PREVIEW_TTL_SECONDS = 30 * 60;
  * GET  /v1/auth/me       — 验证 JWT，返回用户信息
  */
 export const authRoutes = new Hono();
+
+/** Browser access is a data credential, never a grant to mint durable credentials. */
+export const browserSessionGuard: MiddlewareHandler = async (c, next) => {
+  if (!c.req.path.startsWith('/v1/auth/')) return next();
+  const header = c.req.header('Authorization');
+  if (!header?.startsWith('Bearer ')) return next();
+  const token = header.slice(7);
+  const decoded = jwt.decode(token);
+  if (!decoded || typeof decoded === 'string' || decoded.browserAccess !== true) return next();
+  try { verifySession(token); }
+  catch { return c.json({ error: 'unauthorized' }, 401); }
+  c.header('Cache-Control', 'private, no-store');
+  if (c.req.method !== 'GET' || !['/v1/auth/me', '/v1/auth/profile', '/v1/auth/providers', '/v1/auth/identities'].includes(c.req.path)) {
+    return c.json({ error: 'A durable session is required' }, 401);
+  }
+  return next();
+};
 
 /** Validate the revocable test session before any route can consume its identity. */
 export const rolePreviewGuard: MiddlewareHandler = async (c, next) => {
@@ -349,6 +366,7 @@ authRoutes.post('/auth/refresh', async (c) => {
   const token = authHeader.slice(7);
   try {
     const payload = verifySession(token);
+    if (payload.browserAccess) return c.json(webSessionError('UNAUTHENTICATED', 'A durable session is required'), 401);
     // uid token 直接续;老 wca-only token 借机升级(按真实 wcaId 查库补 uid)。
     let uid = payload.uid ?? null;
     if (uid == null && payload.wcaId) {
@@ -367,4 +385,19 @@ authRoutes.post('/auth/refresh', async (c) => {
     // 过期或非法 JWT — 不续签,前端回退到重新登录。
     return c.json(webSessionError('UNAUTHENTICATED', 'unauthorized'), 401);
   }
+});
+
+// Used by the same-origin HttpOnly session bridge. Native bearer contracts stay unchanged.
+authRoutes.post('/auth/browser-access', async (c) => {
+  c.header('Cache-Control', 'private, no-store');
+  const header = c.req.header('Authorization');
+  if (!header?.startsWith('Bearer ')) return c.json({ error: 'unauthorized' }, 401);
+  try {
+    const payload = verifySession(header.slice(7));
+    if (payload.browserAccess || !payload.uid) return c.json({ error: 'unauthorized' }, 401);
+    const user = await getUserById(payload.uid);
+    if (!user || user.id !== payload.uid) return c.json({ error: 'unauthorized' }, 401);
+    const token = signBrowserAccessSession({ ...payload, wcaId: user.wca_id ?? undefined, name: user.display_name });
+    return c.json({ token, user: publicUser(user), sessionExpiresAt: payload.exp! * 1000 });
+  } catch { return c.json({ error: 'unauthorized' }, 401); }
 });

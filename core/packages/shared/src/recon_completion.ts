@@ -86,7 +86,8 @@ export function expandReconGroupRepeats(alg: string): string {
 // `R'3`). cubing.js only accepts the canonical amount-then-prime order (`U2'`,
 // `R3'`). Keep comments byte-identical so examples and stage labels are not
 // rewritten as moves.
-const PRIME_BEFORE_AMOUNT_RE = /((?:\d+(?:-\d+)?)?[RLUDFBMSExyzXYZrludfbmse]w?\d*)'(\d+)/g;
+// Consume unmatched digit runs once instead of retrying each possible numeric prefix.
+const PRIME_BEFORE_AMOUNT_RE = /((?:\d+(?:-\d+)?)?[RLUDFBMSExyzXYZrludfbmse]w?\d*)'(\d+)|\d+/g;
 
 export function normalizeReconMoveSuffixOrder(text: string): string {
   if (!text) return text;
@@ -94,7 +95,8 @@ export function normalizeReconMoveSuffixOrder(text: string): string {
     const commentIdx = line.indexOf('//');
     const moves = commentIdx >= 0 ? line.slice(0, commentIdx) : line;
     const comment = commentIdx >= 0 ? line.slice(commentIdx) : '';
-    return moves.replace(PRIME_BEFORE_AMOUNT_RE, "$1$2'") + comment;
+    return moves.replace(PRIME_BEFORE_AMOUNT_RE, (match, move: string | undefined, amount: string | undefined) =>
+      move === undefined ? match : `${move}${amount}'`) + comment;
   }).join('\n');
 }
 

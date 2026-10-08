@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /alg/progress — 公式学习进度总览。
  *
@@ -39,7 +40,7 @@ import './progress.css';
 
 /** 每套 set 的总 case 数(进度条分母)。 */
 async function fetchSetCounts(): Promise<Record<string, number>> {
-  const res = await fetch(`${API_ORIGIN}/v1/alg/sets`);
+  const res = await sessionFetch(`${API_ORIGIN}/v1/alg/sets`);
   if (!res.ok) return {};
   const rows = (await res.json()) as Array<{ puzzle: string; setSlug: string; count?: number }>;
   const out: Record<string, number> = {};

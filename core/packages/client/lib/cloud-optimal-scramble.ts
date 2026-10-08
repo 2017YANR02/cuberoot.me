@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   CloudOptimalScrambleHttpError,
   requestCloudOptimalScramble,
@@ -20,6 +21,7 @@ export function cloudOptimalScramble(
   const headers = authHeaders();
   return requestCloudOptimalScramble(scramble, {
     url: streamApiUrl('/v1/scramble/optimal-solve'),
+    fetcher: sessionFetch,
     headers,
     onPhase,
     signal,

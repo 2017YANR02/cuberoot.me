@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T01:08:51.905Z",
+  "generated_at": "2026-10-08T01:38:12.262Z",
   "notes": "Centiseconds (cs): divide by 100 for seconds. Moves: integer.",
   "events": {
     "222": {
@@ -5419,7 +5419,7 @@
           "year": 2026,
           "wr_single": 251,
           "wr_avg": 351,
-          "solves": 192880
+          "solves": 192874
         }
       ],
       "topN_single": [
@@ -6138,8 +6138,8 @@
           "sub_1200": 40167,
           "sub_1000": 21542,
           "sub_800": 8106,
-          "sub_700": 3863,
-          "sub_600": 1422,
+          "sub_700": 3862,
+          "sub_600": 1421,
           "sub_500": 357,
           "sub_400": 41,
           "sub_300": 4
@@ -6150,8 +6150,8 @@
           "sub_1200": 40167,
           "sub_1000": 21542,
           "sub_800": 8106,
-          "sub_700": 3863,
-          "sub_600": 1422,
+          "sub_700": 3862,
+          "sub_600": 1421,
           "sub_500": 357,
           "sub_400": 41,
           "sub_300": 4
@@ -6281,7 +6281,7 @@
         {
           "year": 2026,
           "cubers": 49252,
-          "solves": 192880
+          "solves": 192874
         }
       ],
       "wr_single_progression": [

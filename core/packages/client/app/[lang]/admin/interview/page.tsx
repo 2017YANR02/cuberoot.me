@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -23,7 +24,7 @@ export default function InterviewPage() {
     if (!isAdmin) return;
     const controller = new AbortController();
     // Same-origin private Next endpoint; the server verifies the live account role.
-    void fetch('/api/admin/interview', { headers: authHeaders(false), cache: 'no-store', signal: controller.signal })
+    void sessionFetch('/api/admin/interview', { headers: authHeaders(false), cache: 'no-store', signal: controller.signal })
       .then(async response => {
         if (!response.ok) throw new Error('Access verification failed');
         const data = await response.json() as InterviewDraft;

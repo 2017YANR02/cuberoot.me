@@ -16,6 +16,7 @@ import { query } from '../db/connection.js';
 import { requireAdminOrApiKey, checkRateLimit } from '../utils/recon_helpers.js';
 import { syncMirrorAndLog, syncMirrorForCase } from '../utils/alg_mirror.js';
 import { is3x3TopLayerSet } from '@cuberoot/shared';
+import { sanitizeAlgHtmlFields } from '@cuberoot/shared/alg-html';
 import {
   canonicalize3x3WideMoves, cubeOnly, findIllegalGluedCubeMoves, hasBalancedGrouping,
   startsWithYRotation,
@@ -85,12 +86,13 @@ function canonicalize3x3FormulaJson(value: unknown): unknown {
 }
 
 function canonicalize3x3CaseInput(puzzle: string, body: AlgCaseInput): AlgCaseInput {
-  if (puzzle !== '3x3') return body;
+  const algs = sanitizeAlgHtmlFields(body.algs);
+  if (puzzle !== '3x3') return { ...body, algs };
   return {
     ...body,
     ...(typeof body.setup === 'string' ? { setup: canonicalize3x3WideMoves(body.setup) } : {}),
     ...(typeof body.standard === 'string' ? { standard: canonicalize3x3WideMoves(body.standard) } : {}),
-    algs: canonicalize3x3FormulaJson(body.algs),
+    algs: canonicalize3x3FormulaJson(algs),
   };
 }
 

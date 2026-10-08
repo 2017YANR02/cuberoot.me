@@ -169,7 +169,7 @@ const MEAN_EVENTS = new Set(['666', '777', '333fm', '444bf', '555bf']);
 
 // === 名字拆分 ===
 
-const NAME_PAREN_RE = /\s*\(([^)]+)\)\s*$/;
+// The group may contain '(' but cannot contain ')', matching the WCA name convention.
 
 function hasCJK(s: string): boolean {
   // CJK Unified Ideographs 基本汉字 U+4E00-U+9FFF
@@ -177,9 +177,11 @@ function hasCJK(s: string): boolean {
 }
 
 export function splitName(fullName: string): [string, string] {
-  const m = NAME_PAREN_RE.exec(fullName);
-  const enName = fullName.replace(NAME_PAREN_RE, '');
-  if (m && hasCJK(m[1]!)) return [m[1]!, enName];
+  const end = fullName.trimEnd();
+  const open = end.endsWith(')') ? end.indexOf('(', end.lastIndexOf(')', end.length - 2) + 1) : -1;
+  const name = open >= 0 ? end.slice(open + 1, -1) : '';
+  const enName = name ? end.slice(0, open).trimEnd() : fullName;
+  if (name && hasCJK(name)) return [name, enName];
   return [enName, enName];
 }
 

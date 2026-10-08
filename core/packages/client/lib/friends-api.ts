@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -5,7 +6,7 @@ import type { FriendSearchUser, FriendsOverview, WcaFriendContact } from '@cuber
 export type { FriendRelationship, FriendUser, FriendSearchUser, FriendsOverview, WcaFriendContact } from '@cuberoot/shared/friends';
 
 async function write(path: string, method: 'POST' | 'DELETE', body?: unknown): Promise<void> {
-  const response = await fetch(apiUrl(path), {
+  const response = await sessionFetch(apiUrl(path), {
     method,
     headers: authHeaders(body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -14,7 +15,7 @@ async function write(path: string, method: 'POST' | 'DELETE', body?: unknown): P
 }
 
 export async function fetchFriends(): Promise<FriendsOverview> {
-  const response = await fetch(apiUrl('/v1/friends'), {
+  const response = await sessionFetch(apiUrl('/v1/friends'), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -22,7 +23,7 @@ export async function fetchFriends(): Promise<FriendsOverview> {
 }
 
 export async function searchFriendUsers(q: string): Promise<FriendSearchUser[]> {
-  const response = await fetch(apiUrl(`/v1/friends/search?q=${encodeURIComponent(q)}`), {
+  const response = await sessionFetch(apiUrl(`/v1/friends/search?q=${encodeURIComponent(q)}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -31,7 +32,7 @@ export async function searchFriendUsers(q: string): Promise<FriendSearchUser[]> 
 }
 
 export async function saveWcaFriendContact(contact: WcaFriendContact): Promise<'wca-contact' | 'outgoing' | 'friends'> {
-  const response = await fetch(apiUrl('/v1/friends/wca-contacts'), {
+  const response = await sessionFetch(apiUrl('/v1/friends/wca-contacts'), {
     method: 'POST',
     headers: authHeaders(true),
     body: JSON.stringify(contact),

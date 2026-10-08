@@ -6,6 +6,7 @@ import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from '@/lib/api-base';
 import { getSessionToken, useAuthUser } from '@/lib/auth-store';
 import './verify.css';
@@ -40,7 +41,7 @@ export default function FaceVerificationPage() {
   const request = useCallback(async <T,>(body?: unknown): Promise<T> => {
     const token = getSessionToken();
     if (!token) throw new Error(t('请先登录本人账号。', 'Sign in to your own account first.'));
-    const response = await fetch(apiUrl('/v1/auth/face'), {
+    const response = await sessionFetch(apiUrl('/v1/auth/face'), {
       method: body ? 'POST' : 'GET', cache: 'no-store', signal: AbortSignal.timeout(22000),
       headers: { Authorization: `Bearer ${token}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
       ...(body ? { body: JSON.stringify(body) } : {}),

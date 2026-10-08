@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // /scramble/pattern/search 示例预设 CRUD。
 // 公共 GET 无认证;写端点走 WCA OAuth Bearer(ADMIN_WCA_IDS)或 X-Admin-Key。
 import { API_ORIGIN } from './api-base';
@@ -18,27 +19,27 @@ export interface PatternExample {
 export type PatternExampleInput = Pick<PatternExample, 'nameZh' | 'nameEn' | 'q' | 'continuous'>;
 
 export async function listPatternExamples(): Promise<PatternExample[]> {
-  return handleApi<PatternExample[]>(await fetch(BASE));
+  return handleApi<PatternExample[]>(await sessionFetch(BASE));
 }
 
 export async function createPatternExample(body: PatternExampleInput): Promise<PatternExample> {
   return handleApi<PatternExample>(
-    await fetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }),
+    await sessionFetch(BASE, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }),
   );
 }
 
 export async function updatePatternExample(id: number, body: PatternExampleInput): Promise<PatternExample> {
   return handleApi<PatternExample>(
-    await fetch(`${BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }),
+    await sessionFetch(`${BASE}/${id}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }),
   );
 }
 
 export async function deletePatternExample(id: number): Promise<{ ok: boolean }> {
-  return handleApi<{ ok: boolean }>(await fetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
+  return handleApi<{ ok: boolean }>(await sessionFetch(`${BASE}/${id}`, { method: 'DELETE', headers: authHeaders() }));
 }
 
 export async function reorderPatternExamples(ids: number[]): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(
-    await fetch(`${BASE}/reorder`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) }),
+    await sessionFetch(`${BASE}/reorder`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) }),
   );
 }

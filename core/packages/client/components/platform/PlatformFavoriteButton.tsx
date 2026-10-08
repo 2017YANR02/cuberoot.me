@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useRef, useState } from 'react';
 import AppLink from '@/components/AppLink';
 import { useT } from '@/hooks/useT';
@@ -37,7 +38,7 @@ function AuthenticatedFavorite({ definition, targetType, entityId }: Props & { e
     setLoading(true); setError(''); setSignIn(false);
     void (async () => {
       try {
-        const response = await fetch(apiUrl(`/v1/platform/me/${wishlist ? 'wishlist' : 'favorites'}`), { headers: authHeaders(false), signal: controller.signal });
+        const response = await sessionFetch(apiUrl(`/v1/platform/me/${wishlist ? 'wishlist' : 'favorites'}`), { headers: authHeaders(false), signal: controller.signal });
         if (response.status === 401) { setSignIn(true); return; }
         const result = await handleApi<{ items: { id: string; targetType: string }[] }>(response);
         if (!controller.signal.aborted) setActive(result.items.some(item => item.id === entityId && item.targetType === targetType));

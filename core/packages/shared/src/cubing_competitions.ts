@@ -37,7 +37,11 @@ export function parseCubingCompetitionList(html: string): { competitions: Cubing
   const competitions: CubingCompetitionName[] = [];
   const rowPattern = /<td>(\d{4}-\d{2}-\d{2})(?:~(?:\d{4}-)?(?:\d{2}-)?\d{2})?<\/td>\s*<td>\s*<a[^>]*class="comp-type-\w+"[^>]*href="https:\/\/cubing\.com\/(?:competition|live)\/([^"?]+)"[^>]*>(.*?)<\/a>/gs;
   for (const match of html.matchAll(rowPattern)) {
-    const nameZh = match[3]!.replace(/<[^>]+>/g, '').trim();
+    const nameZh = match[3]!.split('>').map((part, index, parts) => {
+      if (index === parts.length - 1) return part;
+      const open = part.indexOf('<');
+      return open >= 0 && open < part.length - 1 ? part.slice(0, open) : part + '>';
+    }).join('').trim();
     if (nameZh.includes('WCA')) competitions.push({ alias: match[2]!, nameZh, startDate: match[1]!, name: '', wcaCompetitionId: '' });
   }
   if (!competitions.length) throw new Error('Unrecognized or empty cubing.com competition list');

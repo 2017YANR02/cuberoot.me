@@ -8,6 +8,7 @@
     "externalRuntime": {
       "axios": "mixed",
       "sql.js": "runtime-neutral",
+      "sanitize-html": "runtime-neutral",
       "cubing": "runtime-neutral",
       "react": "react-dom",
       "react-dom": "react-dom"
@@ -88,6 +89,7 @@
       "./competition-index": "runtime-neutral",
       "./alg": "mixed",
       "./alg-notation": "runtime-neutral",
+      "./alg-html": "runtime-neutral",
       "./normalize-wca-scramble": "runtime-neutral",
       "./alg-transform": "runtime-neutral",
       "./alg-mirror": "runtime-neutral",
@@ -282,6 +284,7 @@
     "./competition-index": "./src/competition_index.ts",
     "./alg": "./src/alg.ts",
     "./alg-notation": { "node": "./dist/alg_notation.js", "default": "./src/alg_notation.ts" },
+    "./alg-html": { "node": "./dist/alg-html.js", "default": "./src/alg-html.ts" },
     "./normalize-wca-scramble": { "node": "./dist/normalize_wca_scramble.js", "default": "./src/normalize_wca_scramble.ts" },
     "./alg-transform": { "node": "./dist/alg_transform.js", "default": "./src/alg_transform.ts" },
     "./alg-mirror": { "node": "./dist/alg_mirror.js", "default": "./src/alg_mirror.ts" },
@@ -409,6 +412,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/sanitize-html": "^2.16.1",
     "@types/sql.js": "^1.4.11",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -416,6 +420,7 @@
     "typescript": "~5.7.0"
   },
   "dependencies": {
+    "sanitize-html": "^2.18.0",
     "sql.js": "^1.14.2",
     "@cuberoot/puzzle-solvers": "workspace:*",
     "axios": "^1.20.0",

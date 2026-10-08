@@ -29,7 +29,7 @@ describe('recon submit video upload', () => {
     expect(form).toContain("urls.push(uploaded.url)");
     expect(form).toContain("urls.join('\\n')");
     expect(api).toContain("new Headers(authHeaders(false))");
-    expect(api).toContain("fetch(`${API_BASE}/video`");
+    expect(api).toContain("sessionFetch(`${API_BASE}/video`");
     expect(api).toContain("publicApiUrl(`/v1/recon/video/${result.id}`)");
   });
 

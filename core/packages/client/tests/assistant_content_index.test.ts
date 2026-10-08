@@ -1,5 +1,10 @@
-import {describe,it,expect} from 'vitest';
-import {indexPublicHtml,discoverPublicPages,discoverNavigationLinks,solverDestinations,metadataDestinations,platformDestinations} from '../scripts/build-assistant-index';
+import {afterEach,describe,it,expect} from 'vitest';
+import {mkdtemp,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {getRouteCacheKey} from 'next/dist/server/lib/route-cache-key';
+import type {RouteKind} from 'next/dist/server/route-kind';
+import {indexPublicHtml,discoverPublicPages,discoverNavigationLinks,solverDestinations,metadataDestinations,platformDestinations,discoverBuildArtifacts} from '../scripts/build-assistant-index';
 
 describe('assistant build-time public content index',()=>{
   it('includes concrete platform entries while excluding parameterized entity routes',()=>{
@@ -39,6 +44,42 @@ describe('assistant build-time public content index',()=>{
     expect(indexPublicHtml('/en/recognize/pll','<html><head><title>PLL</title><meta name="description" content="A timed drill for recognising all 21 PLL cases."></head><body>Loading...</body></html>')?.text).toContain('21 PLL');
   });
   const html='<html><head><title>CFOP</title></head><body><nav>navigation</nav><main>'+('Public cubing tutorial. '.repeat(8))+'<script>secret script</script><span hidden>hidden UI</span></main></body></html>';
+  const fixtureRoots: string[]=[];
+  afterEach(async()=>{await Promise.all(fixtureRoots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
+  async function fixtureRoot() {
+    const root=await mkdtemp(path.join(tmpdir(),'assistant-output-'));fixtureRoots.push(root);return root;
+  }
+  async function artifact(root:string,file:string,content:string) {
+    const target=path.join(root,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,content);return target;
+  }
+  const adapterPage=(route:string)=>`${getRouteCacheKey(route,{kind:'APP_PAGE' as RouteKind.APP_PAGE,sourceRoute:'/[lang]/wiki/page'})}.html`;
+  const adapterSitemap=()=>`${getRouteCacheKey('/sitemap.xml',{kind:'APP_ROUTE' as RouteKind.APP_ROUTE,sourceRoute:'/sitemap.xml/route'})}.body`;
+  it.each(['standalone','adapter'] as const)('reads %s build artifacts while retaining public/noindex boundaries',async(layout)=>{
+    const root=await fixtureRoot();
+    for(const route of ['/en/wiki','/zh/wiki','/en/account','/zh/admin','/zh/wca/persons/_','/en/private-example']) {
+      await artifact(root,layout==='adapter'?adapterPage(route):`app${route}.html`,route==='/en/private-example'?html.replace('<head>','<head><meta name="robots" content="noindex">'):html);
+    }
+    const xml='<urlset><url><loc>https://cuberoot.me/private-example</loc></url><url><loc>https://cuberoot.me/math/group/example</loc></url></urlset>';
+    await artifact(root,layout==='adapter'?adapterSitemap():'app/sitemap.xml.body',xml);
+    const found=await discoverBuildArtifacts(root);
+    const pages=(await Promise.all([...found.htmlFiles].map(async([route,file])=>indexPublicHtml(route,await readFile(file,'utf8'))))).filter(Boolean);
+    expect(pages.map(page=>`${page!.lang}${page!.href}`).sort()).toEqual(['en/wiki','zh/wiki']);
+    expect(await readFile(found.sitemapFile!,'utf8')).toBe(xml);
+    const discovered=discoverPublicPages(xml,new Map(),new Set(found.htmlFiles.keys()));
+    expect(discovered.some(page=>page.lang==='en' && page.href==='/private-example')).toBe(false);
+    expect(discovered.some(page=>page.href==='/math/group/example')).toBe(true);
+  });
+  it('prefers current adapter pages over cached legacy pages and ignores non-page artifacts',async()=>{
+    const root=await fixtureRoot();
+    await artifact(root,'app/en/wiki.html',html);
+    const current=await artifact(root,adapterPage('/en/wiki'),html.replace('<head>','<head><meta name="robots" content="noindex">'));
+    await artifact(root,`route-cache/APP_ROUTE/${'a'.repeat(64)}/$/en/unsafe.html`,html);
+    await artifact(root,`route-cache/PAGES/${'b'.repeat(64)}/$/en/unsafe.html`,html);
+    await artifact(root,'app/en/data.rsc',html);
+    const found=await discoverBuildArtifacts(root);
+    expect([...found.htmlFiles]).toEqual([['/en/wiki',current]]);
+    expect(indexPublicHtml('/en/wiki',await readFile(current,'utf8'))).toBeNull();
+  });
   it('indexes actual public text with language-neutral source paths',()=>{
     const result=indexPublicHtml('/zh/tutorial/lbl',html)!;
     expect(result.href).toBe('/tutorial/lbl');expect(result.lang).toBe('zh');
