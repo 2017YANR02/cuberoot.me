@@ -1,0 +1,15 @@
+.face-verify { max-width: 680px; margin: 0 auto; padding: 24px 16px 64px; color: var(--foreground); }
+.face-verify header { margin-bottom: 24px; }
+.face-verify h1 { font-size: 1.6rem; margin: 16px 0; }
+.face-verify-panel { padding: 24px; border-radius: 16px; }
+.face-verify p { line-height: 1.7; color: var(--muted-foreground); }
+.face-verify form { display: grid; gap: 20px; }
+.face-verify label { display: grid; gap: 8px; }
+.face-verify-input { position: relative; display: flex; align-items: center; }
+.face-verify-input input { width: 100%; min-width: 0; padding: 12px 44px 12px 12px; border: 1px solid var(--border-default); border-radius: 8px; background: var(--background); color: var(--foreground); font: inherit; }
+.face-verify .face-verify-consent { display: flex; align-items: flex-start; line-height: 1.6; }
+.face-verify-consent input { flex: none; margin-top: 5px; accent-color: var(--accent); }
+.face-verify button[type="submit"], .face-verify-panel > div > button { padding: 12px 20px; border: 0; border-radius: 8px; font: inherit; background: var(--accent); color: var(--accent-foreground); cursor: pointer; }
+.face-verify button:disabled { opacity: 0.5; cursor: default; }
+.face-verify :focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.face-verify .face-verify-error { color: var(--destructive); }
