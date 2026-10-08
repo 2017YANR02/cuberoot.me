@@ -4,6 +4,24 @@ Scope: all 97 open JavaScript/TypeScript CodeQL findings from the initial scan o
 
 ## Status and verification
 
+### Final verification — 2026-10-08 UTC
+
+Source commit `6f0f843c449846937b1a1191836ecda5d5eb98fa` passed [CodeQL 37734817327](https://github.com/2017YANR02/cuberoot.me/actions/runs/37734817327), [Test 37734817322](https://github.com/2017YANR02/cuberoot.me/actions/runs/37734817322), [Deploy Next 37734869062](https://github.com/2017YANR02/cuberoot.me/actions/runs/37734869062) and Vercel. API changes passed [Deploy Core 37733444801](https://github.com/2017YANR02/cuberoot.me/actions/runs/37733444801); later commits did not change API source. Dependabot and secret-scanning open counts were both zero. After the following individual post-scan reviews, CodeQL open count is also zero. The provider-required MD5 exception in #89 remains explicitly accepted, not cryptographically repaired.
+
+The scan closed the original actionable findings except #71 and #74, whose remaining flows are false positives after the fixes. It also emitted three new regex findings on the fixed linear patterns:
+
+| Alert | Final disposition and evidence on the scanned commit |
+| --- | --- |
+| #71 | False positive: SARIF traces `social_oauth_return` through `returnPath`, which is navigation metadata. Raw identity credentials are in HttpOnly cookies; the stored random handle cannot authorize an operation without its matching cookie. |
+| #74 | False positive: all four remaining SARIF flows pass paths as separate `node`/`git` argv. The conditional `shell` option is always false for those executables. Windows npm/pnpm shell calls have constant arguments. The earlier shell-source interpolation was fixed separately. |
+| #98 | False positive: the final digit alternative consumes each failed numeric run in full. Each run is revisited only as its own prefix or an adjacent dashed suffix, giving linear total work. Exact-source median timings for 10k/100k/1m zeros: 0.025/0.236/2.179 ms; a failed two-run range at 2m characters: 6.916 ms. |
+| #99 | False positive: the fallback consumes the entire failed digit/hyphen run. Once a move matches, all remaining suffixes are optional and cannot fail. Exact-source 10k/100k/1m hyphens: 0.017/0.128/1.106 ms. |
+| #100 | False positive: disjoint digit, range and move segments visit each digit run a bounded number of times; fallback consumes failed runs in full. Exact-source 10k/100k/1m zeros: 0.019/0.118/1.100 ms; a failed move suffix containing 1m zeros: 1.823 ms. |
+
+These five alerts were individually dismissed with the evidence above. Timings are local three-run medians supporting the structural complexity review, not production performance guarantees. No extra rule or path exclusions were added. The preparation record below describes the initial classification before deployment and this final scan.
+
+### Preparation record
+
 `fixed` means the owning code has been changed in the working tree; it does **not** assert that the changes are deployed or that GitHub has already closed the alert. A new scan of the eventual pushed commit remains required. No GitHub dismissal was performed while preparing this document.
 
 Classification: 37 fixed; 53 false positive; 6 used in tests; 1 protocol exception. Each numbered entry below has its own evidence. No directory or rule was excluded wholesale.
