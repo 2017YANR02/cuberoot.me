@@ -4,7 +4,7 @@ describe('Mini Program web-view bridge', () => {
   it.each(['MicroMessenger miniProgram', 'MicroMessenger'])('returns to the native Tools tab from %s', async (userAgent) => {
     const switchTab = vi.fn();
     const navigateTo = vi.fn((options: { success(): void }) => options.success());
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout, setTimeout, navigator: { userAgent },
       wx: { miniProgram: {
         navigateTo, switchTab,
@@ -20,7 +20,7 @@ describe('Mini Program web-view bridge', () => {
 
   it('keeps ordinary WeChat browser home navigation on the website', async () => {
     const switchTab = vi.fn();
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout, setTimeout, navigator: { userAgent: 'MicroMessenger' },
       wx: { miniProgram: {
         navigateTo: vi.fn(), switchTab,
@@ -34,7 +34,7 @@ describe('Mini Program web-view bridge', () => {
 
   it('opens native WeChat order checkout without forwarding credentials or an arbitrary URL', async () => {
     const navigateTo = vi.fn((options: { success(): void }) => options.success());
-    vi.stubGlobal('window', { clearTimeout, setTimeout, navigator: { userAgent: 'MicroMessenger miniProgram' }, wx: { miniProgram: { navigateTo } } });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), clearTimeout, setTimeout, navigator: { userAgent: 'MicroMessenger miniProgram' }, wx: { miniProgram: { navigateTo } } });
     const { openMiniProgramOrderPayment } = await import('@/lib/miniprogram-bridge');
     const id = '11111111-1111-4111-8111-111111111111';
     await expect(openMiniProgramOrderPayment(id)).resolves.toBe(true);
@@ -45,7 +45,7 @@ describe('Mini Program web-view bridge', () => {
 
   it.each(['toutiaomicroapp', 'MicroMessenger'])('does not invoke WeChat payment in unsupported container %s', async (userAgent) => {
     const navigateTo = vi.fn();
-    vi.stubGlobal('window', { clearTimeout, setTimeout, navigator: { userAgent }, wx: { miniProgram: { navigateTo, getEnv: (callback: (env: object) => void) => callback({ miniprogram: false }) } } });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), clearTimeout, setTimeout, navigator: { userAgent }, wx: { miniProgram: { navigateTo, getEnv: (callback: (env: object) => void) => callback({ miniprogram: false }) } } });
     const { openMiniProgramOrderPayment } = await import('@/lib/miniprogram-bridge');
     await expect(openMiniProgramOrderPayment('11111111-1111-4111-8111-111111111111')).resolves.toBe(false);
     expect(navigateTo).not.toHaveBeenCalled();
@@ -59,7 +59,7 @@ describe('Mini Program web-view bridge', () => {
   it('notifies the native session store and returns after website logout', async () => {
     const postMessage = vi.fn();
     const navigateBack = vi.fn();
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout,
       navigator: { userAgent: 'MicroMessenger miniProgram' },
       setTimeout,
@@ -85,7 +85,7 @@ describe('Mini Program web-view bridge', () => {
 
   it('does nothing in an ordinary browser', async () => {
     const postMessage = vi.fn();
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout,
       navigator: { userAgent: 'Mozilla/5.0' },
       setTimeout,
@@ -101,7 +101,7 @@ describe('Mini Program web-view bridge', () => {
     'MicroMessenger miniProgram',
     'toutiaomicroapp',
   ])('blocks external commerce in a confirmed Mini Program: %s', async (userAgent) => {
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       navigator: { userAgent },
     });
     const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
@@ -110,7 +110,7 @@ describe('Mini Program web-view bridge', () => {
   });
 
   it('keeps external commerce available in an ordinary browser', async () => {
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       navigator: { userAgent: 'Mozilla/5.0' },
     });
     const { isMiniProgramCommerceRestricted } = await import('@/lib/miniprogram-bridge');
@@ -119,7 +119,7 @@ describe('Mini Program web-view bridge', () => {
   });
 
   it('restricts a runtime-marked Mini Program even without a user-agent marker', async () => {
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       __wxjs_environment: 'miniprogram',
       navigator: { userAgent: 'MicroMessenger' },
     });
@@ -130,7 +130,7 @@ describe('Mini Program web-view bridge', () => {
   it.each([false, true])('uses getEnv instead of mistaking the iOS WeChat browser for a Mini Program (%s)', async (miniprogram) => {
     let reply!: (env: { miniprogram: boolean }) => void;
     const getEnv = vi.fn((callback: typeof reply) => { reply = callback; });
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout, setTimeout,
       navigator: { userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) MicroMessenger/8.0' },
       wx: { miniProgram: { navigateTo: vi.fn(), getEnv } },
@@ -146,7 +146,7 @@ describe('Mini Program web-view bridge', () => {
   });
 
   it('does not classify an ordinary browser as a Mini Program just because the SDK is installed', async () => {
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout, setTimeout,
       navigator: { userAgent: 'Mozilla/5.0' },
       wx: { miniProgram: { navigateTo: vi.fn(), getEnv: (cb: (env: object) => void) => cb({ miniprogram: false }) } },
@@ -157,7 +157,7 @@ describe('Mini Program web-view bridge', () => {
 
   it('does not leave checkout stuck when an unmarked SDK never responds', async () => {
     vi.useFakeTimers();
-    vi.stubGlobal('window', {
+    vi.stubGlobal('window', { addEventListener: vi.fn(),
       clearTimeout, setTimeout,
       navigator: { userAgent: 'MicroMessenger' },
       wx: { miniProgram: { navigateTo: vi.fn(), getEnv: vi.fn() } },

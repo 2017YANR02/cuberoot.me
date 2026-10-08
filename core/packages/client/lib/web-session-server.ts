@@ -1,5 +1,6 @@
 import { decodeWebSession, decodeWebSessionUserEnvelope } from '@cuberoot/shared/auth/web-session';
 import { apiUrl } from './api-base';
+import { PAGE_SESSION_COOKIE } from './home-card-access';
 
 export const WEB_SESSION_GENERATION = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export const PRIVATE_SESSION_HEADERS = { 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' };
@@ -63,7 +64,7 @@ export function writePageSessionCookie(request: Request, headers: Headers, token
   const secure = name.startsWith('__Host-');
   const embedded = secure && name.endsWith('-embedded');
   const maxAge = token ? Math.max(0, Math.min(365 * 86400, Math.floor((expiresAt - Date.now()) / 1000))) : 0;
-  headers.append('Set-Cookie', `cuberoot_page_session=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=${embedded ? 'None' : 'Lax'}; Max-Age=${maxAge}${secure ? '; Secure' : ''}${embedded ? '; Partitioned' : ''}`);
+  headers.append('Set-Cookie', `${PAGE_SESSION_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=${embedded ? 'None' : 'Lax'}; Max-Age=${maxAge}${secure ? '; Secure' : ''}${embedded ? '; Partitioned' : ''}`);
 }
 
 /** Only route selection uses this claim; API verification must precede trusting identity. */

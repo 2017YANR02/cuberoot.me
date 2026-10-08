@@ -6,7 +6,7 @@ import { mobileEmbedInitMessage, mobileEmbedAccountManageResultMessage, mobileEm
 
 const mocks = vi.hoisted(() => ({
   post: vi.fn(), alert: vi.fn(), token: vi.fn(() => 'iframe-session'),
-  applySession: vi.fn(() => false), logout: vi.fn(), exchange: vi.fn(),
+  applySession: vi.fn((_token: string, _user: unknown, _isCurrent?: () => boolean) => false), logout: vi.fn(), exchange: vi.fn(),
 }));
 vi.mock('next/navigation', () => ({ usePathname: () => '/account' }));
 vi.mock('@/lib/auth-store', () => ({
@@ -66,7 +66,8 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     await act(async () => next.resolve(sessionB));
     mocks.post.mockClear();
     await act(async () => old.resolve(sessionA));
-    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('new-B', { uid: 2 });
+    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('new-B', { uid: 2 }, expect.any(Function));
+    expect(mocks.applySession.mock.calls[0][2]?.()).toBe(true);
     expect(mocks.post).not.toHaveBeenCalled();
   });
 
@@ -80,7 +81,8 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     send(mobileEmbedWebSessionMessage(ticketB, 'request-B'));
     expect(mocks.exchange).toHaveBeenCalledTimes(2);
     await act(async () => next.resolve(sessionB));
-    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('new-B', { uid: 2 });
+    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('new-B', { uid: 2 }, expect.any(Function));
+    expect(mocks.applySession.mock.calls[0][2]?.()).toBe(true);
   });
 
   it('never applies a pending response after the bridge unmounts', async () => {
@@ -102,7 +104,8 @@ describe('session ticket lifecycle under Apple bridge reuse', () => {
     send(mobileEmbedWebSessionMessage(ticketA, 'request-A'));
     expect(mocks.exchange).toHaveBeenCalledExactlyOnceWith(ticketA);
     await act(async () => pending.resolve(sessionA));
-    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('old-A', { uid: 1 });
+    expect(mocks.applySession).toHaveBeenCalledExactlyOnceWith('old-A', { uid: 1 }, expect.any(Function));
+    expect(mocks.applySession.mock.calls[0][2]?.()).toBe(true);
   });
 });
 afterEach(async () => {
