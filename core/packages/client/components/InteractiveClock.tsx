@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 交互式 2D 魔表 —— `/scramble/solver?event=clock` 的「平面」视图 与 `/sim` 的魔表模拟器共用这一份。
@@ -18,7 +19,6 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
 import {
   ARROW_RADIUS, CLOCK_ARROW_PATH, CLOCK_OUTER_RADIUS, CLOCK_RADIUS, DEFAULT_CLOCK_COLORS,
@@ -360,13 +360,15 @@ export default function InteractiveClock({
       {!hideControls && (
         <div className="iclock-bar">
           {onModeChange && (
-            <PillToggle
-              value={mode === 'turn'}
-              onChange={(v) => onModeChange(v ? 'turn' : 'edit')}
-              offLabel={t('摆盘', 'Edit')}
-              onLabel={t('转动', 'Turn')}
-              ariaLabel={t('画板模式', 'Board mode')}
-            />
+            <select
+              value={String(mode === 'turn')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; onModeChange(v ? 'turn' : 'edit'); }}
+              aria-label={t('画板模式', 'Board mode')}
+              className="native-select"
+            >
+              <option value="true">{t('转动', 'Turn')}</option>
+              <option value="false">{t('摆盘', 'Edit')}</option>
+            </select>
           )}
           {mode === 'turn' && (
             <button type="button" className="iclock-btn" onClick={flip} title={t('把魔表翻过来(y2)', 'Turn the clock over (y2)')}>

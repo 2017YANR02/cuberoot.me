@@ -113,19 +113,6 @@
   cursor: not-allowed;
 }
 
-.timer-222-mode-toggle-label {
-  display: inline-grid;
-  justify-items: center;
-}
-
-.timer-222-mode-toggle-label > span {
-  grid-area: 1 / 1;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.timer-222-mode-toggle-ghost { visibility: hidden; }
-
 .timer-222-mode-toggle-dot {
   position: absolute;
   top: 50%;

@@ -1,6 +1,7 @@
 'use client';
 
-// Ported from packages/client-vite/src/components/PillToggle/PillToggle.tsx.
+// Internal switch primitive for BoolToggle and rows with a separate label.
+// Two-choice controls use native select menus.
 // 既能点击切换,也能拖动滑钮(圆形)横向滑过中点切换 —— 指针落点 > 容器中线 = on。
 import { useRef } from 'react';
 import './PillToggle.css';
@@ -8,16 +9,12 @@ import './PillToggle.css';
 interface Props {
   value: boolean;
   onChange: (v: boolean) => void;
-  /** 不传 on/off 标签 = 纯 iOS 风格无文字开关(滑轨 + 滑钮)。 */
-  onLabel?: string;
-  offLabel?: string;
   ariaLabel?: string;
   className?: string;
   disabled?: boolean;
 }
 
-export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLabel, className, disabled }: Props) {
-  const isSwitch = !onLabel && !offLabel;
+export default function PillToggle({ value, onChange, ariaLabel, className, disabled }: Props) {
   const ref = useRef<HTMLButtonElement>(null);
   // startX 记起手点;moved=true 表示这次是拖动(松手时不再当 tap 翻转)。
   const drag = useRef<{ startX: number; moved: boolean; next?: boolean } | null>(null);
@@ -59,7 +56,7 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
       disabled={disabled}
       aria-checked={value}
       aria-label={ariaLabel}
-      className={`pill-toggle${isSwitch ? ' pill-toggle--switch' : ''}${value ? ' is-on' : ''}${className ? ` ${className}` : ''}`}
+      className={`pill-toggle pill-toggle--switch${value ? ' is-on' : ''}${className ? ` ${className}` : ''}`}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -72,15 +69,6 @@ export default function PillToggle({ value, onChange, onLabel, offLabel, ariaLab
         if (next !== value) onChange(next);
       }}
     >
-      {!isSwitch && (
-        <span className="pill-toggle-label">
-          {/* 两个隐形 ghost 把标签区撑到「较长那个标签」的宽度,可见的 cur 叠在其上:
-              宽度贴合文字、且切换 on/off 不跳变 —— 各页直接用,无需再写死/覆盖 min-width。 */}
-          <span className="pill-toggle-label-ghost" aria-hidden="true">{onLabel}</span>
-          <span className="pill-toggle-label-ghost" aria-hidden="true">{offLabel}</span>
-          <span className="pill-toggle-label-cur">{value ? onLabel : offLabel}</span>
-        </span>
-      )}
       <span className="pill-toggle-dot" />
     </button>
   );

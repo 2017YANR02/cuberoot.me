@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 大满贯 - WC + Continental + National 领奖台 + WR(任一类型)的人.
@@ -11,7 +12,6 @@ import { useQueryStates, parseAsString } from 'nuqs';
 import { useTranslation } from 'react-i18next';
 import { WcaStatsPageHeader } from '@/components/wca-stats/WcaStatsPageHeader';
 import WcaEventSelector from '@/components/WcaEventSelector';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { RecordBadge } from '@/components/RecordBadge/RecordBadge';
 import { CompCell } from '@/components/CompCell/CompCell';
 import { Flag } from '@/components/Flag';
@@ -100,22 +100,29 @@ function GrandSlamPageInner() {
         <div className="wse-filter">
           <label>{tr({ zh: '筛选', en: 'Filter'
         })}</label>
-          <PillToggle
-            value={onlyFirst}
-            onChange={v => setParam('onlyFirst', v ? '1' : '')}
-            offLabel={tr({ zh: '全部', en: 'All' })}
-            onLabel={tr({ zh: '仅全部第一', en: 'Only all gold'
-            })}
-          />
+          <select
+            value={String(onlyFirst)}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setParam('onlyFirst', v ? '1' : ''); }}
+            aria-label={tr({ zh: '仅全部第一', en: 'Only all gold'
+            }) + ' / ' + tr({ zh: '全部', en: 'All' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '仅全部第一', en: 'Only all gold'
+            })}</option>
+            <option value="false">{tr({ zh: '全部', en: 'All' })}</option>
+          </select>
         </div>
         <div className="wse-filter">
           <label>{tr({ zh: '破 WR', en: 'Broke WR' })}</label>
-          <PillToggle
-            value={hasWr}
-            onChange={v => setParam('hasWr', v ? '1' : '')}
-            offLabel={tr({ zh: '全部', en: 'All' })}
-            onLabel={tr({ zh: '是', en: 'Yes' })}
-          />
+          <select
+            value={String(hasWr)}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setParam('hasWr', v ? '1' : ''); }}
+            aria-label={tr({ zh: '是', en: 'Yes' }) + ' / ' + tr({ zh: '全部', en: 'All' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '是', en: 'Yes' })}</option>
+            <option value="false">{tr({ zh: '全部', en: 'All' })}</option>
+          </select>
         </div>
       </div>
 

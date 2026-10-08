@@ -785,8 +785,20 @@
 .trainer-opts-row {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;   /* 开关多的行(如 打乱图/纯打乱/三条一屏/历史)超过面板宽就换行,别溢出右缘 */
+  flex-wrap: wrap;
   gap: 10px;
+}
+.trainer-opts-row.trainer-opts-toggles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-self: stretch;
+}
+.trainer-opts-toggles > .bool-toggle {
+  min-width: 0;
+}
+.trainer-opts-toggles .bool-toggle-label {
+  white-space: normal;
+  text-align: left;
 }
 /* 标签宽度贴合文字(不设 min-width 撑对齐 —— 两字标签「概率」会和控件之间留一截空) */
 .trainer-opts-label {
@@ -831,6 +843,8 @@
   /* OLL 一类一组一个形状(50+ 组),滚动看,别把设置面板顶穿 */
   max-height: 42vh;
   overflow-y: auto;
+  /* 为选中项向外扩出的 2px 边框留白，避免滚动容器裁掉首尾行。 */
+  padding: 2px;
   margin-top: -4px;
 }
 .trainer-ori-group { display: contents; }

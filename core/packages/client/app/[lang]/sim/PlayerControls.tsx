@@ -162,7 +162,7 @@ import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
 import SwatchCell, { SwatchPopup } from './SwatchCell';
-import type { PickGrain, CustomTreatment } from '@/components/sim-embed/customStickering';
+import type { PickGrain, CustomTreatment, CustomBrush } from '@/components/sim-embed/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import {
@@ -984,16 +984,18 @@ interface Props {
   /** 阶段遮罩的拿方朝向(整体转前缀,24 档),仅 NxN 引擎遮罩;默认 ''(UF,恒等)。 */
   stickeringRot?: string;
   onStickeringRotChange?: (v: string) => void;
-  /** 自定义阶段:选中的贴纸清单(mask-core DSL)+ 作图开关。状态归 SimPage。 */
+  /** 自定义阶段的贴纸样式与画笔。状态归 SimPage。 */
   stickeringMask?: string;
   onStickeringMaskClear?: () => void;
-  customEditing?: boolean;
-  onCustomEditingChange?: (v: boolean) => void;
   customGrain?: PickGrain;
   onCustomGrainChange?: (v: PickGrain) => void;
   /** 自定义阶段的画法:选中的 / 其余的各自原色、压暗还是置灰。 */
-  customPick?: CustomTreatment;
-  onCustomPickChange?: (v: CustomTreatment) => void;
+  customPick?: CustomBrush;
+  onCustomPickChange?: (v: CustomBrush) => void;
+  onCustomUndo?: () => void;
+  onCustomRedo?: () => void;
+  canCustomUndo?: boolean;
+  canCustomRedo?: boolean;
   customRest?: CustomTreatment;
   onCustomRestChange?: (v: CustomTreatment) => void;
 }
@@ -1010,10 +1012,10 @@ export default function PlayerControls({
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
-  customEditing = true, onCustomEditingChange,
   customGrain = 'sticker', onCustomGrainChange,
   customPick = 'regular', onCustomPickChange,
   customRest = 'ignored', onCustomRestChange,
+  onCustomUndo, onCustomRedo, canCustomUndo, canCustomRedo,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const squareFamilyKind: SquareFamilyKind | null = puzzleKind === 'sq2' || puzzleKind === 'sq4'
@@ -2027,6 +2029,7 @@ export default function PlayerControls({
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
+      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
       // 设置区的原生表单控件必须自行接收按键。否则 Digit2 等会命中魔方
       // keymap，applyMove 随后聚焦解法框，在 iOS 上表现为数字键盘输一位即关闭。
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -2315,7 +2318,7 @@ export default function PlayerControls({
         mask={stickeringMask} onMaskClear={onStickeringMaskClear}
         pick={customPick} onPickChange={onCustomPickChange}
         rest={customRest} onRestChange={onCustomRestChange}
-        editing={customEditing} onEditingChange={onCustomEditingChange}
+        onUndo={onCustomUndo} onRedo={onCustomRedo} canUndo={canCustomUndo} canRedo={canCustomRedo}
         grain={customGrain} onGrainChange={onCustomGrainChange}
       />
     )

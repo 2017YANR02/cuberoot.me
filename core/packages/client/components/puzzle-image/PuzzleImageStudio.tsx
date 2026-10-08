@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * PuzzleImageStudio — the puzzle-image control surface: preview + export row +
@@ -15,9 +16,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Copy, Check, Download, ChevronDown, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
 import PuzzleImage from '@/components/puzzle-image/PuzzleImage';
 import { publicApiUrl } from '@/lib/api-base';
@@ -36,6 +36,8 @@ import { renderPaintedNetSvg } from '@/lib/puzzle-image/painted-net';
 import { domRenderKindOf, renderSpecSvg } from '@/lib/puzzle-image/render';
 import { FACE_LIST, type FaceKey, type ImageSpec, type PuzzleType, type PuzzleVariant, type SpecialView, type PlanSideRule, type PlanUpRule } from '@/lib/puzzle-image/types';
 import { useT } from '@/hooks/useT';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr } from '@/i18n/tr';
 import './puzzle-image.css';
 
@@ -105,42 +107,77 @@ function CopyButton({
   );
 }
 
-/**
- * 复制图片本身(PNG)到剪贴板 —— 直接 Ctrl+V 进 Word / 微信 / 聊天框,不用先存文件。
- *
- * `getPng()` 必须**同步**调用:Safari 只认手势那一刻就构造好的 ClipboardItem,
- * 先 await 拿到 Blob 再构造就已经过期了。所以这里把 Promise 原样交给剪贴板 API。
- */
-function CopyImageButton({
-  getPng, label, disabled = false,
-}: { getPng: () => Promise<Blob>; label: string; disabled?: boolean }) {
-  const [state, setState] = useState<'idle' | 'done' | 'fail'>('idle');
-  // 能力探测只能在客户端做,但首帧必须与服务端 HTML 一致,否则 hydration 报不匹配。
-  // 所以先当作支持,挂载后再按真实结果收起来。
-  const [supported, setSupported] = useState(true);
-  useEffect(() => { setSupported(clipboardImageSupported()); }, []);
+/** Local format actions share the existing export functions and clipboard gesture. */
+function ImageExportMenu({ kind, formats, disabled }: {
+  kind: 'copy' | 'download';
+  formats: { label: string; run: () => void | Promise<void> }[];
+  disabled: boolean;
+}) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<'idle' | 'busy' | 'done' | 'fail'>('idle');
+  const [pngSupported, setPngSupported] = useState(true);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  usePanelClamp(open, panelRef);
+  usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  useEffect(() => { setPngSupported(clipboardImageSupported()); }, []);
+  useEffect(() => {
+    if (state !== 'done' && state !== 'fail') return;
+    const timer = setTimeout(() => setState('idle'), 1600);
+    return () => clearTimeout(timer);
+  }, [state]);
+
+  const label = kind === 'copy' ? t('复制', 'Copy') : t('下载', 'Download');
+  const run = async (action: () => void | Promise<void>) => {
+    setOpen(false);
+    setState('busy');
+    triggerRef.current?.focus();
+    try {
+      // Start synchronously in the menu click: Safari requires ClipboardItem
+      // construction during the gesture, before awaiting PNG rasterization.
+      await action();
+      setState('done');
+    } catch {
+      setState('fail');
+    }
+  };
+
   return (
-    <button
-      type="button"
-      className="vc-btn"
-      disabled={disabled || !supported}
-      title={disabled ? tr({
-        zh: '正在等待精确图像',
-        en: 'Waiting for the exact image',
-      }) : supported ? undefined : tr({
-          zh: '此浏览器不支持复制图片,请用下载',
-          en: 'This browser cannot copy images — use download instead',
-        })}
-      onClick={() => {
-        copyPngToClipboard(getPng())
-          .then(() => setState('done'))
-          .catch(() => setState('fail'));
-        setTimeout(() => setState('idle'), 1600);
-      }}
-    >
-      {state === 'done' ? <Check size={14} /> : <Copy size={14} />}{' '}
-      {state === 'fail' ? tr({ zh: '复制失败', en: 'Copy failed' }) : label}
-    </button>
+    <div className="vc-export-menu">
+      <button
+        ref={triggerRef}
+        type="button"
+        className="vc-btn"
+        disabled={disabled || state === 'busy'}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        onClick={() => setOpen(value => !value)}
+      >
+        {state === 'done' ? <Check size={14} /> : kind === 'copy' ? <Copy size={14} /> : <Download size={14} />}
+        {state === 'fail' ? t('操作失败', 'Failed') : label}
+        <ChevronDown size={12} />
+      </button>
+      {open && (
+        <div ref={panelRef} className="vc-export-formats" data-site-surface="popover" role="dialog" aria-label={label}>
+          {formats.map(format => {
+            const unsupported = kind === 'copy' && format.label === 'PNG' && !pngSupported;
+            return (
+              <button
+                key={format.label}
+                type="button"
+                className="vc-btn"
+                disabled={disabled || unsupported}
+                title={unsupported ? t('此浏览器不支持复制图片,请用下载', 'This browser cannot copy images — use download instead') : undefined}
+                onClick={() => void run(format.run)}
+              >
+                {format.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -458,30 +495,25 @@ export default function PuzzleImageStudio({
         {!engineOnly && staticFallbackExact && !externalImage && (
           <CopyButton label={t('API 链接', 'API URL')} getValue={() => apiSvgUrl} />
         )}
-        {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
-        <CopyImageButton
-          label="PNG"
+        <ImageExportMenu
+          kind="copy"
           disabled={!exportReady}
-          getPng={() => externalImage
-            ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
-            : svgToPngBlob(getCurrentSvg(), s.imageSize)}
+          formats={[
+            { label: 'PNG', run: () => copyPngToClipboard(externalImage
+              ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
+              : svgToPngBlob(getCurrentSvg(), s.imageSize)) },
+            { label: 'SVG', run: () => navigator.clipboard.writeText(getCurrentSvg()) },
+          ]}
         />
-        <CopyButton
-          label="SVG"
-          getValue={() => getCurrentSvg()}
+        <ImageExportMenu
+          kind="download"
           disabled={!exportReady}
+          formats={[
+            { label: 'SVG', run: downloadSvg },
+            { label: 'PNG', run: downloadPng },
+            ...(externalImage ? [{ label: 'JPG', run: downloadJpeg }] : []),
+          ]}
         />
-        <button type="button" className="vc-btn" onClick={downloadSvg} disabled={!exportReady}>
-          <Download size={14} /> SVG
-        </button>
-        <button type="button" className="vc-btn" onClick={downloadPng} disabled={!exportReady}>
-          <Download size={14} /> PNG
-        </button>
-        {externalImage && (
-          <button type="button" className="vc-btn" onClick={downloadJpeg} disabled={!exportReady}>
-            <Download size={14} /> JPG
-          </button>
-        )}
         {!engineOnly && staticFallbackExact && !externalImage && (
           <CopyButton
             label={t('<img> 标签', '<img> tag')}
@@ -704,13 +736,15 @@ export default function PuzzleImageStudio({
               {arrowEditing && (
                 <>
                   <div className="vc-row-controls">
-                    <PillToggle
-                      value={arrowCurved}
-                      onChange={(v) => { setArrowCurved(v); resetArrowPick(); }}
-                      onLabel={t('曲线', 'Curved')}
-                      offLabel={t('直线', 'Straight')}
-                      ariaLabel={t('箭头形状', 'Arrow shape')}
-                    />
+                    <select
+                      value={String(arrowCurved)}
+                      onChange={event => { const v = event.currentTarget.value === 'true'; setArrowCurved(v); resetArrowPick(); }}
+                      aria-label={t('箭头形状', 'Arrow shape')}
+                      className="native-select"
+                    >
+                      <option value="true">{t('曲线', 'Curved')}</option>
+                      <option value="false">{t('直线', 'Straight')}</option>
+                    </select>
                     <label className="vc-arrow-pick-color" title={t('箭头色', 'Arrow color')}>
                       <input
                         type="color" className="vc-color-sm" value={s.arrowColor}
@@ -771,13 +805,15 @@ export default function PuzzleImageStudio({
               {maskEditing && (
                 <>
                   <div className="vc-row-controls">
-                    <PillToggle
-                      value={maskWholePiece}
-                      onChange={setMaskWholePiece}
-                      onLabel={t('整块', 'Piece')}
-                      offLabel={t('单贴纸', 'Sticker')}
-                      ariaLabel={t('置灰粒度', 'Gray granularity')}
-                    />
+                    <select
+                      value={String(maskWholePiece)}
+                      onChange={event => setMaskWholePiece(event.currentTarget.value === 'true')}
+                      aria-label={t('置灰粒度', 'Gray granularity')}
+                      className="native-select"
+                    >
+                      <option value="true">{t('整块', 'Piece')}</option>
+                      <option value="false">{t('单贴纸', 'Sticker')}</option>
+                    </select>
                     <span className="vc-mask-hint">
                       {t('点击还原态展开图切换置灰', 'Click the solved net to toggle gray')}
                     </span>

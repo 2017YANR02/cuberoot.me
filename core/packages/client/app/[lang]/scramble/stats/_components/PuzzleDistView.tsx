@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 非 3x3 puzzle 整解最优步数分布展示(EPIC 3 新管线的消费 UI)。
 // 由难度 tab 的共享 WCA 项目选择器驱动:选中二阶/金字塔/斜转 → 传入对应 puzzleKey。
@@ -8,7 +9,6 @@ import Link from '@/components/AppLink';
 import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { Flag } from '@/components/Flag';
 import { ListSelect, type ListSelectItem } from '@/components/ListSelect';
 import { localizeCompName } from '@/lib/comp-localize';
@@ -346,13 +346,15 @@ export default function PuzzleDistView({ isZh, puzzleKey }: { isZh: boolean; puz
         {hasAlt && !isCube && (
           <div className="scramble-stats-puzzle-toggle">
             <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
-            <PillToggle
-              value={sq1Unit === 'slash'}
-              onChange={(v) => setSq1Unit(v ? 'slash' : 'wca')}
-              offLabel={tr({ zh: 'WCA 12c4', en: 'WCA 12c4' })}
-              onLabel={tr({ zh: 'slash', en: 'slash' })}
-              ariaLabel={tr({ zh: 'SQ1 度量:WCA 12c4 步数或 slash 最优 / 数', en: 'SQ1 metric: WCA-12c4 moves or slash-optimal slashes' })}
-            />
+            <select
+              value={String(sq1Unit === 'slash')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; setSq1Unit(v ? 'slash' : 'wca'); }}
+              aria-label={tr({ zh: 'SQ1 度量:WCA 12c4 步数或 slash 最优 / 数', en: 'SQ1 metric: WCA-12c4 moves or slash-optimal slashes' })}
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: 'slash', en: 'slash' })}</option>
+              <option value="false">{tr({ zh: 'WCA 12c4', en: 'WCA 12c4' })}</option>
+            </select>
           </div>
         )}
       </div>
@@ -514,15 +516,17 @@ function PuzzleExamplesPanel({
           />
         )}
         {hasOpt && (
-          <PillToggle
-            value={exView === 'opt'}
-            onChange={(v) => onExView(v ? 'opt' : 'orig')}
-            offLabel={tr({ zh: '原始', en: 'Original' })}
-            onLabel={tr({ zh: '最优', en: 'Optimal'
+          <select
+            value={String(exView === 'opt')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; onExView(v ? 'opt' : 'orig'); }}
+            aria-label={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
             })}
-            ariaLabel={tr({ zh: '原始打乱或最优等价打乱', en: 'Original scramble or optimal equivalent'
-            })}
-          />
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '最优', en: 'Optimal'
+            })}</option>
+            <option value="false">{tr({ zh: '原始', en: 'Original' })}</option>
+          </select>
         )}
       </div>
       {samples.length > 0 ? (

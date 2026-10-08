@@ -1,5 +1,6 @@
+import './compact-select.css';
+
 import type { ReactNode } from 'react';
-import { TimerPillToggle } from './TimerPillToggle';
 
 export interface TimerBattleCubeControlsProps {
   language: 'en' | 'zh';
@@ -17,7 +18,17 @@ const COPY = {
 export function TimerBattleCubeControls({ language, mode, holder, players, onModeChange, onHolderChange, deviceControl }: TimerBattleCubeControlsProps) {
   const copy = COPY[language];
   return <section className="timer-battle-cube-controls"><h3>{copy.title}</h3>
-    {onModeChange ? <TimerPillToggle ariaLabel={copy.mode} value={mode === 'shared'} onChange={(value) => onModeChange(value ? 'shared' : 'own')} onLabel={copy.shared} offLabel={copy.own} /> : <p>{copy.shared}</p>}
+    {onModeChange ? (
+      <select
+        value={String(mode === 'shared')}
+        onChange={event => { const value = event.currentTarget.value === 'true'; onModeChange(value ? 'shared' : 'own'); }}
+        aria-label={copy.mode}
+        className="native-select"
+      >
+        <option value="true">{copy.shared}</option>
+        <option value="false">{copy.own}</option>
+      </select>
+    ) : <p>{copy.shared}</p>}
     {mode === 'shared' ? <>
       <div className="timer-battle-cube-device">{deviceControl(holder)}</div>
       <div className="timer-room-actions" role="group" aria-label={copy.holder}>{players.map((player) => <button type="button" key={player.id} aria-pressed={holder === player.id} disabled={player.disabled} onClick={() => onHolderChange(player.id)}>{copy.player} {player.id + 1}</button>)}</div>

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 3BLD 公式库 (commutator library) — 角 / 棱换位子字典的字母对矩阵。
 //
@@ -32,7 +33,6 @@ import { loadAlg } from '@/lib/alg_case_alignment';
 import { useCopy } from '@/hooks/useCopy';
 import { ClearButton } from '@/components/ClearButton';
 import { Spinner } from '@/components/Spinner/Spinner';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useAlgViewMode } from '@/components/AlgViewModeToggle';
 import AlgPdfButton from '@/components/AlgPdfButton';
 import { algSheetFromCases } from '@/lib/alg_pdf/from_cases';
@@ -279,13 +279,15 @@ export default function CommLibraryPage(): JSX.Element {
 
         {/* 与全站 case 列表共用同一个偏好(alg-list-view),但这页没有图,
             所以不套 AlgViewModeToggle 的「图 / 公式」字样。 */}
-        <PillToggle
-          value={showAlgs}
-          onChange={(on) => changeView(on ? 'full' : 'cards')}
-          offLabel={tr({ zh: '编码', en: 'Letters' })}
-          onLabel={tr({ zh: '公式', en: 'Algs' })}
-          ariaLabel={tr({ zh: '切换只看编码 / 看公式', en: 'Toggle letters-only / show algs' })}
-        />
+        <select
+          value={String(showAlgs)}
+          onChange={event => { const on = event.currentTarget.value === 'true'; changeView(on ? 'full' : 'cards'); }}
+          aria-label={tr({ zh: '切换只看编码 / 看公式', en: 'Toggle letters-only / show algs' })}
+          className="native-select"
+        >
+          <option value="true">{tr({ zh: '公式', en: 'Algs' })}</option>
+          <option value="false">{tr({ zh: '编码', en: 'Letters' })}</option>
+        </select>
 
         <span className="bld-comm-count">
           {loading

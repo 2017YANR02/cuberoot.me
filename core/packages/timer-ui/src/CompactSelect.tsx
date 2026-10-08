@@ -41,6 +41,8 @@ export interface CompactSelectProps<T extends string | number> {
   /** Some icon-only triggers are self-explanatory and do not need a caret. */
   showArrow?: boolean;
   footer?: (close: () => void) => ReactNode;
+  /** Replace options with an inline editor, preserving anchoring and dismissal. */
+  panelContent?: ReactNode;
   dataNoTimer?: boolean;
   /** Mouse hover opens the menu; touch and keyboard keep click activation. */
   openOnHover?: boolean;
@@ -86,6 +88,7 @@ export function CompactSelect<T extends string | number>({
   variant = 'pill',
   showArrow = true,
   footer,
+  panelContent,
   dataNoTimer = false,
   openOnHover = false,
   dismissOnMouseLeave = openOnHover,
@@ -105,6 +108,7 @@ export function CompactSelect<T extends string | number>({
   const panelRef = useRef<HTMLDivElement>(null);
   const previousOpenRef = useRef(open);
   const close = () => setOpen(false);
+  const hasPanelContent = panelContent != null;
   usePopoverDismiss(open, close, panelRef, triggerRef);
 
   useEffect(() => {
@@ -217,7 +221,7 @@ export function CompactSelect<T extends string | number>({
       window.visualViewport?.removeEventListener('resize', positionPanel);
       window.visualViewport?.removeEventListener('scroll', positionPanel);
     };
-  }, [contentAnchorRef, items.length, open, viewportBottomInset]);
+  }, [contentAnchorRef, items.length, open, viewportBottomInset, hasPanelContent]);
 
   const panelStyle = geometry ? {
     left: geometry.left,
@@ -256,7 +260,7 @@ export function CompactSelect<T extends string | number>({
         aria-label={ariaLabel}
         aria-description={valueText}
         aria-expanded={open && !disabled}
-        aria-haspopup="listbox"
+        aria-haspopup={hasPanelContent ? 'dialog' : 'listbox'}
         title={title}
       >
         <span className="compact-select-current">{label}</span>
@@ -275,13 +279,13 @@ export function CompactSelect<T extends string | number>({
           ref={panelRef}
           className={['compact-select-popup', popupClassName].filter(Boolean).join(' ')}
           data-site-surface="popover"
-          role="listbox"
-          aria-multiselectable={selectedValues ? true : undefined}
+          role={hasPanelContent ? 'dialog' : 'listbox'}
+          aria-multiselectable={!hasPanelContent && selectedValues ? true : undefined}
           aria-label={ariaLabel}
           data-no-timer={dataNoTimer ? '' : undefined}
           style={panelStyle}
         >
-          <div className="compact-select-options">
+          {panelContent ?? <div className="compact-select-options">
             {items.map(item => {
               const active = selectedValues ? selectedValues.includes(item.value) : item.value === value;
               return (
@@ -302,7 +306,7 @@ export function CompactSelect<T extends string | number>({
                 </button>
               );
             })}
-          </div>
+          </div>}
           {footer?.(close)}
         </div>,
         // Native modal dialogs make the rest of the document inert. Keep the

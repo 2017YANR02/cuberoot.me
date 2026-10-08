@@ -273,8 +273,8 @@ export const CI_GUARDS_UI: CiGuard[] = [
   {
     id: 'pilltoggle-fit',
     test: 'pilltoggle-default-fit.test.ts',
-    zh: { title: 'PillToggle 默认宽度', desc: '锁住 PillToggle 两根支柱:基类 min-width:0(默认贴合文字)+ 两个隐形 ghost span(按更长标签预留宽度,切换不跳变),防止哪天被悄悄改回固定宽度。' },
-    en: { title: 'PillToggle default width', desc: 'Locks two pillars of PillToggle: the base class keeps min-width:0 (hugs its label by default) and renders two invisible ghost spans that reserve the longer label’s width so toggling never jumps — guards against either silently regressing.' },
+    zh: { title: '布尔开关保留', desc: '二选一改用原生菜单后，确认 BoolToggle 仍保留左侧标签与右侧纯开关，开启和关闭状态语义不变。' },
+    en: { title: 'Boolean switches preserved', desc: 'After two-choice controls move to native menus, verifies that BoolToggle still has a left label and a plain switch on the right, preserving both boolean states.' },
   },
   {
     id: 'fixed-width-dropdown',

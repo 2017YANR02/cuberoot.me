@@ -3,9 +3,7 @@ import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
 export interface TimerPillToggleProps {
   ariaLabel: string;
   disabled?: boolean;
-  offLabel?: string;
   onChange: (value: boolean) => void;
-  onLabel?: string;
   value: boolean;
 }
 
@@ -13,14 +11,11 @@ export interface TimerPillToggleProps {
 export function TimerPillToggle({
   ariaLabel,
   disabled = false,
-  offLabel,
   onChange,
-  onLabel,
   value,
 }: TimerPillToggleProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const drag = useRef<{ moved: boolean; startX: number } | null>(null);
-  const labelled = onLabel !== undefined || offLabel !== undefined;
   const valueFromX = (clientX: number): boolean => {
     const element = ref.current;
     if (!element) return value;
@@ -54,7 +49,7 @@ export function TimerPillToggle({
     <button
       aria-checked={value}
       aria-label={ariaLabel}
-      className={`timer-222-mode-toggle${labelled ? '' : ' timer-222-mode-toggle--switch'}${value ? ' is-on' : ''}`}
+      className={`timer-222-mode-toggle timer-222-mode-toggle--switch${value ? ' is-on' : ''}`}
       disabled={disabled}
       onClick={(event) => {
         if (event.detail === 0) onChange(!value);
@@ -67,13 +62,6 @@ export function TimerPillToggle({
       role="switch"
       type="button"
     >
-      {labelled && (
-        <span className="timer-222-mode-toggle-label">
-          <span aria-hidden="true" className="timer-222-mode-toggle-ghost">{onLabel}</span>
-          <span aria-hidden="true" className="timer-222-mode-toggle-ghost">{offLabel}</span>
-          <span>{value ? onLabel : offLabel}</span>
-        </span>
-      )}
       <span aria-hidden="true" className="timer-222-mode-toggle-dot" />
     </button>
   );

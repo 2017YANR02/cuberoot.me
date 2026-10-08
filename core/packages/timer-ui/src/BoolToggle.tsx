@@ -2,8 +2,8 @@
 
 // 全站统一的「布尔开关」:左边文字标签,右边一个 iOS 风滑钮(PillToggle 的无文字 switch)。
 // 用于「开/关单个东西」的场景(显示废止项 / 只看未登领奖台 / 开启动画…)。文字也可点。
-// 二选一(A/B 两态各有含义,如 选手/成绩、截至/当期)请用 PillToggle 的 onLabel/offLabel
-// 文字内嵌形态,默认态置绿;不要用本组件。复选框(☑)一律换成本组件。
+// 二选一(A/B 两态各有含义,如 选手/成绩、截至/当期)使用 浏览器原生 select 下拉。
+// 复选框(☑)一律换成本组件。
 import type { ReactNode } from 'react';
 import { TimerPillToggle } from './TimerPillToggle';
 import './bool-toggle.css';
