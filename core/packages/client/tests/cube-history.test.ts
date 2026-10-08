@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CUBE_ALIASES, CUBES, resolveCubeId, SOURCES } from '../app/[lang]/cube-history/_data/catalog';
 import { BRANDS, MECHANISMS, SNAPSHOT_DATE } from '../app/[lang]/cube-history/_data/labels';
@@ -107,6 +108,10 @@ describe('cube history research contract', () => {
     for (const cube of CUBES) {
       if (cube.image) {
         expect(new URL(cube.image.url).protocol, cube.id).toBe('https:');
+        if (cube.image.assetPath) {
+          expect(cube.image.assetPath, cube.id).toMatch(/^\/_assets\/cube-history\/[a-z0-9-]+\.(?:png|jpe?g|webp)$/);
+          expect(existsSync(new URL('../public' + cube.image.assetPath, import.meta.url)), cube.id).toBe(true);
+        }
         expect(sourceIds.has(cube.image.sourceId), cube.id).toBe(true);
         expect(['exact', 'family'], cube.id).toContain(cube.image.match);
         expectLocalized(cube.image.alt);

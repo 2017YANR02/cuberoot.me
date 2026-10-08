@@ -23,6 +23,8 @@ export type CubeTier = 'flagship' | 'mainstream' | 'budget' | 'specialty' | 'unk
 export interface CubeImage {
   /** Original image URL observed on the cited product page or its public metadata. */
   url: string;
+  /** Optional unchanged local copy, served when the original host blocks image embedding. */
+  assetPath?: string;
   sourceId: string;
   alt: LocalizedText;
   /** family is only used when the source itself shares photography across versions. */

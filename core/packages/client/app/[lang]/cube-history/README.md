@@ -10,7 +10,7 @@ Cutoff: **2026-10-07**. Prices and review pools describe that research snapshot.
 | --- | ---: |
 | Individually addressable model / configuration / named-edition records | 973 |
 | Brand / line labels, including historical trade names | 68 |
-| Unique source URLs | 1331 |
+| Unique source URLs | 1332 |
 | Records with source-linked real product photographs | 966 |
 | Exact-model photographs / explicitly shared source photographs | 959 / 7 |
 | Product-page user ratings with review counts and dates | 578 |
@@ -66,7 +66,7 @@ The ordinary GAN12 Leap retains its spring configuration; GAN13 FX retains fixed
 | `_data/qiyi-xman.json` | 97 records: QiYi and X-Man Design |
 | `../../../tests/cube-history.test.ts` | Dates, currencies, sources, photos, ratings, family relationships and query behavior |
 
-Only `lib/page-meta.ts` is changed outside the route and its dedicated tests. The existing metadata-driven homepage search and sitemap discover the route. The implementation uses the site's TypeScript/Next.js architecture, existing shared controls and nuqs URL state; it adds no backend, dependency or standalone HTML application.
+Outside the route and its dedicated tests, changes are limited to `lib/page-meta.ts` and an attributed product photograph under `public/_assets/cube-history/`. The existing metadata-driven homepage search and sitemap discover the route. The implementation uses the site's TypeScript/Next.js architecture, existing shared controls and nuqs URL state; it adds no backend, dependency or standalone HTML application.
 
 ## Browsing and review
 
@@ -84,7 +84,7 @@ Each record has a shareable `model` query parameter. Related versions can be sel
 4. Net weight is never filled from gross/package weight or Shopify shipping grams. Conflicting measurements retain version and source qualifications.
 5. Distinct spring, MagLev, ball-core, adjustable-magnet, coating, size and named-edition products receive separate records when evidence supports the distinction. Ordinary colors and packaging quantities remain variants unless independently significant. Child models do not inherit their parent's date, price, dimensions or performance claims.
 6. Each photograph uses a URL observed in its own public product metadata, original page or identified historical source. `image.match` distinguishes exact matches from photography shared by the source. Shared images are labeled in the interface. Missing or failed images have explicit text, never a generated or lookalike substitute. The decorative hero remains labeled a schematic.
-7. Image authorship and rights remain with the linked source; source attribution does not create a new reuse license. Images are loaded from their cited hosts, with loading failure handled in the page. No product image is generated with AI.
+7. Image authorship and rights remain with the linked source; source attribution does not create a new reuse license. Images normally load from their cited hosts. An optional `image.assetPath` can serve an unchanged local copy while retaining the original `image.url` and source attribution, including in exported JSON. Local copies live under the existing cached `/_assets/` route and change filename when their contents change. Loading failures remain visible. No product image is generated with AI.
 8. Advertised magnet counts, corner-cutting and auto-alignment angles remain claims by their source. Editorial assessments and first-hand reports are labeled. There is no invented standardized score, measured failure rate or overall sales ranking.
 9. Merchant user ratings retain the original product-page pool, review count and sampling date. The page may combine colors or configurations; review identities and sampling quality are not independently audited. These ratings are presented separately from the archive's assessment and are not cross-era performance measurements.
 10. A `familyId` is a one-hop pointer to an existing root record, with no cycles. Every source reference, including photograph and rating references, resolves in the combined catalog. IDs remain stable across corrections.
@@ -116,6 +116,10 @@ These gaps are visible in the public Missing photo filter. Smart-cube app compat
 A bounded archival search recovered three actual early Gans product photographs from the [archived Lightake SKU 37517 listing](https://web.archive.org/web/20130226071558/http://lightake.com:80/detail.do/sku.3x3x3_PVC_Type_A_Gans_Puzzle_Magic_Cube_Black-37517). The original HTML called it “3x3x3 PVC Type A Gans Puzzle Magic Cube Black”. The [contemporary April 2011 discussion](https://www.speedsolving.com/threads/alpha-cc-selling-on-lightake.28393/) identifies a Gans cube and rejects an Alpha CC attribution, but does not establish the numbered model GAN1. The [600 × 600 complete-cube photograph](https://web.archive.org/web/20130213014231im_/http://img.lightake.com/image201004/sku_37517_1.jpg), [disassembly photograph](https://web.archive.org/web/20130213014225im_/http://img.lightake.com/image201004/sku_37517_6_small.jpg) and [piece photograph](https://web.archive.org/web/20130213014238im_/http://img.lightake.com/image201004/sku_37517_8_small.jpg) were recovered and visually inspected. They are preserved here as identification leads and deliberately not attached to GAN1 or GAN2.
 
 The [May 2011 GAN2 discussion](https://bbs.mf8-china.com/forum.php?extra=&mod=viewthread&ordertype=2&tid=76704) supplies a contemporary research lead but did not yield a recoverable, independently identifiable photograph in this pass. The archive retains both missing-photo explanations rather than assigning later GAN product photography.
+
+### GAN17 Jurassic World photograph recovery
+
+On 2026-10-08, a targeted follow-up request to the previous Sina image URL returned HTTP 403. The [GlobalCube collaboration listing](https://globalcube.store/product/gan-x-jurassic-world-co-branded-magnetic-cube-series-gan17-magdrive%EF%BD%9Cgan356me/) supplies a separately named GAN17 product option and a poster explicitly identifying GAN17 MagDrive Jurassic World. The source-provided [700 × 1167 JPEG](https://globalcube.store/wp-content/uploads/2026/09/GAN17-3-700x1167.jpg) was downloaded, visually checked and preserved without alteration as `public/_assets/cube-history/gan17-jurassic-world-4662563b.jpg` (212,020 bytes; SHA-256 `4662563b8f261624c83d4e75a77d209277daf8f22c339b4aceea88a8fb0b733a`). Cards, details and comparisons serve that local copy to avoid another external image-host failure. A verified Taobao/Tmall direct listing was not recovered in this pass; the photograph is attributed to the actual inspected source. This photograph-only follow-up does not advance the price/review snapshot or turn the official announcement into a confirmed retail launch.
 
 ## Maintenance and verification
 

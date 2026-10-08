@@ -121,7 +121,7 @@ function BrandShortcut({ brand, selected, onSelect }: { brand: string; selected:
   return <div className={`ch-brand-card${selected ? ' is-active' : ''}`} data-site-surface="panel">
     <button type="button" className="ch-brand-button" aria-pressed={selected} onClick={() => onSelect(selected ? 'all' : brand)} aria-label={tr({ zh: `按 ${brandName(brand)} 筛选`, en: `Filter by ${brandName(brand)}` })}>
       <span className="ch-brand-copy"><strong>{brandName(brand)}</strong><span>{tr(feature.label)}</span></span>
-      <span className="ch-brand-image" aria-hidden="true">{photo && !failed ? <img src={photo.url} alt="" width={96} height={96} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} /> : <CubeGlyph />}</span>
+      <span className="ch-brand-image" aria-hidden="true">{photo && !failed ? <img src={photo.assetPath ?? photo.url} alt="" width={96} height={96} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} /> : <CubeGlyph />}</span>
       <span className="ch-brand-indicator" aria-hidden="true">{selected ? <Check size={16} /> : <ArrowUpRight size={16} />}</span>
     </button>
     {source && cube && <a className="ch-brand-credit" href={source.url} target="_blank" rel="noopener noreferrer" title={tr(cube.name)}>{tr({ zh: `图：${cube.name.zh}`, en: `Photo: ${cube.name.en}` })}<ArrowUpRight size={10} /></a>}
@@ -132,10 +132,11 @@ function CubePhoto({ cube, compact = false, onOpen }: { cube: Cube; compact?: bo
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const photo = cube.image;
   const source = photo ? SOURCE_BY_ID.get(photo.sourceId) : undefined;
-  const missing = !photo || failedUrl === photo.url;
+  const imageUrl = photo?.assetPath ?? photo?.url;
+  const missing = !photo || failedUrl === imageUrl;
   const content = missing
     ? <span className="ch-photo-missing"><ImageOff size={compact ? 20 : 32} /><span>{tr(photo ? { zh: '图片暂未载入', en: 'Photo unavailable' } : { zh: '原始图片待核', en: 'Original photo unverified' })}</span></span>
-    : <img className="ch-product-image" src={photo.url} alt={tr(photo.alt)} width={600} height={450} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailedUrl(photo.url)} />;
+    : <img className="ch-product-image" src={imageUrl} alt={tr(photo.alt)} width={600} height={450} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailedUrl(imageUrl ?? null)} />;
   return <figure className={`ch-photo${compact ? ' ch-photo--compact' : ''}`}>
     {onOpen ? <button type="button" className="ch-photo-button" onClick={() => onOpen(cube.id)} aria-label={tr({ zh: `查看 ${cube.name.zh} 的图片与资料`, en: `View photos and record for ${cube.name.en}` })}>{content}</button> : <div className="ch-photo-frame">{content}</div>}
     <figcaption className="ch-photo-caption">

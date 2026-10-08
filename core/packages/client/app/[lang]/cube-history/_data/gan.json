@@ -1184,6 +1184,13 @@
       "kind": "official"
     },
     {
+      "id": "gan-photo-jurassic-globalcube",
+      "title": "GAN × Jurassic World series — GAN17 MagDrive version and product photographs",
+      "url": "https://globalcube.store/product/gan-x-jurassic-world-co-branded-magnetic-cube-series-gan17-magdrive%EF%BD%9Cgan356me/",
+      "publisher": "GlobalCube",
+      "kind": "retailer"
+    },
+    {
       "id": "gan-audit-jurassic-me",
       "title": "GAN356 ME 侏罗纪世界官方实物图，2026-10-05",
       "url": "https://www.sina.cn/news/detail/5350719486952251.html",
@@ -15113,16 +15120,17 @@
       "tier": "flagship",
       "familyId": "gan17",
       "image": {
-        "url": "https://wx2.sinaimg.cn/middle/829ea9aagy1ihjhksh5ewj23c05k04r0.jpg",
-        "sourceId": "gan-audit-jurassic-gan17",
+        "url": "https://globalcube.store/wp-content/uploads/2026/09/GAN17-3-700x1167.jpg",
+        "assetPath": "/_assets/cube-history/gan17-jurassic-world-4662563b.jpg",
+        "sourceId": "gan-photo-jurassic-globalcube",
         "alt": {
-          "zh": "GAN17 MagDrive 侏罗纪世界联名版 实物商品图",
-          "en": "GAN17 MagDrive Jurassic World product image"
+          "zh": "GAN17 MagDrive 侏罗纪世界联名版商品宣传图，展示龙纹表面与主题配色",
+          "en": "GAN17 MagDrive Jurassic World product poster showing the textured shell and themed colors"
         },
         "match": "exact",
         "note": {
-          "zh": "GAN 官方 2026-09-28 发布的该版本商品海报，照片确指 GAN17 MagDrive 侏罗纪联名。",
-          "en": "Official GAN product poster dated 2026-09-28, explicitly identifying the Jurassic World GAN17 MagDrive edition."
+          "zh": "GlobalCube 联名系列商品页中的 GAN17 专属宣传图，图中文字明确标注该型号；已与 GAN17 商品选项及官方版本图交叉核对。",
+          "en": "GAN17-specific poster from GlobalCube’s collaboration listing, explicitly named in the image and cross-checked against its GAN17 product option and the official edition imagery."
         }
       }
     },
