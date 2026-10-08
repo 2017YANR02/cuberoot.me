@@ -98,8 +98,37 @@ export function solverDestinations() {
   });
 }
 
+/** Next adapters scope prerenders by source-route hash; standalone keeps app/.
+ * Only page HTML and the public sitemap handler are inputs, never RSC/module files. */
+export async function discoverBuildArtifacts(serverRoot: string) {
+  const htmlFiles = new Map<string, string>();
+  let sitemapFile: string | undefined;
+  async function walk(dir: string, scoped: boolean): Promise<void> {
+    const entries = await readdir(dir, { withFileTypes: true }).catch(error => {
+      if (error.code === 'ENOENT') return [];
+      throw error;
+    });
+    for (const entry of entries) {
+      const file = path.join(dir, entry.name);
+      if (entry.isDirectory()) { await walk(file, scoped); continue; }
+      const relative = path.relative(serverRoot, file).split(path.sep).join('/');
+      const page = scoped
+        ? /^route-cache\/APP_PAGE\/[a-f0-9]{64}\/\$(\/.*)\.html$/.exec(relative)
+        : /^app(\/.*)\.html$/.exec(relative);
+      if (page) htmlFiles.set(page[1], file);
+      if (scoped
+        ? /^route-cache\/APP_ROUTE\/[a-f0-9]{64}\/\$\/sitemap\.xml\.body$/.test(relative)
+        : relative === 'app/sitemap.xml.body') sitemapFile = file;
+    }
+  }
+  await walk(path.join(serverRoot, 'app'), false);
+  // The current adapter output wins over any legacy files restored from a cache.
+  await walk(path.join(serverRoot, 'route-cache'), true);
+  return { htmlFiles, sitemapFile };
+}
+
 async function main() {
-  const root=path.resolve('.next/server/app');
+  const root=path.resolve('.next/server');
   const pages: NonNullable<ReturnType<typeof indexPublicHtml>>[]=[];
   const rendered=new Set<string>();
   const labels=new Map<string,string>();
@@ -115,38 +144,31 @@ async function main() {
     if(!destinations.has(lang+href)) destinations.set(lang+href,{lang,href,title:route.split('/').join(' · ') || 'CubeRoot'});
   }
   for(const destination of platformDestinations()) destinations.set(destination.lang+destination.href,destination);
-  async function walk(dir:string): Promise<void> {
-    for (const entry of await readdir(dir,{withFileTypes:true})) {
-      const file=path.join(dir,entry.name);
-      if (entry.isDirectory()) await walk(file);
-      else if (entry.name.endsWith('.html')) {
-        const route='/'+path.relative(root,file).replace(/\.html$/,'');
-        const html=await readFile(file,'utf8');
-        rendered.add(route);
-        const page=indexPublicHtml(route,html);
-        for(const destination of discoverNavigationLinks(route,html)) {
-          const key=destination.lang+destination.href;
-          if(!destinations.has(key)) destinations.set(key,destination);
-        }
-        if (page) {
-          pages.push(page);
-          const {document}=parseHTML(html);
-          for (const link of document.querySelectorAll('a[href]')) {
-            try {
-              const url=new URL(link.getAttribute('href')!,`https://cuberoot.me${route}`);
-              if(url.origin!=='https://cuberoot.me')continue;
-              const target=/^\/(en|zh)(?:\/|$)/.test(url.pathname)?url.pathname:`/en${url.pathname}`;
-              const label=link.textContent?.replace(/\s+/g,' ').trim();
-              if(isPublicRoute(target) && label && (!labels.has(target) || label.length>labels.get(target)!.length))labels.set(target,label.slice(0,250));
-            } catch { /* Non-HTTP and malformed links are not content entries. */ }
-          }
-        }
+  const {htmlFiles,sitemapFile}=await discoverBuildArtifacts(root);
+  for (const [route,file] of htmlFiles) {
+    const html=await readFile(file,'utf8');
+    rendered.add(route);
+    const page=indexPublicHtml(route,html);
+    for(const destination of discoverNavigationLinks(route,html)) {
+      const key=destination.lang+destination.href;
+      if(!destinations.has(key)) destinations.set(key,destination);
+    }
+    if (page) {
+      pages.push(page);
+      const {document}=parseHTML(html);
+      for (const link of document.querySelectorAll('a[href]')) {
+        try {
+          const url=new URL(link.getAttribute('href')!,`https://cuberoot.me${route}`);
+          if(url.origin!=='https://cuberoot.me')continue;
+          const target=/^\/(en|zh)(?:\/|$)/.test(url.pathname)?url.pathname:`/en${url.pathname}`;
+          const label=link.textContent?.replace(/\s+/g,' ').trim();
+          if(isPublicRoute(target) && label && (!labels.has(target) || label.length>labels.get(target)!.length))labels.set(target,label.slice(0,250));
+        } catch { /* Non-HTTP and malformed links are not content entries. */ }
       }
     }
   }
-  await walk(root);
-  if (!pages.length) throw new Error('No public assistant content found');
-  const xml=await readFile(path.join(root,'sitemap.xml.body'),'utf8').catch(error=>{if(error.code==='ENOENT')return '';throw error;});
+  if (!pages.length) throw new Error(`No public assistant content found in ${htmlFiles.size} prerendered HTML files under ${root}`);
+  const xml=sitemapFile?await readFile(sitemapFile,'utf8'):'';
   const discovered=discoverPublicPages(xml,labels,rendered);
   pages.push(...discovered);
   await mkdir('public/assistant',{recursive:true});
