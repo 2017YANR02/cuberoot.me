@@ -1389,6 +1389,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         <div className="gen-view-picker">
           <PuzzlePicker
             groups={viewPickerGroups}
+            itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
             selectedEvent={activeView ?? undefined}
             onSelect={onEventIconClick}
             isZh={isZh}
@@ -1404,6 +1405,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             {/* 配置模式:复用首页项目下拉,多选时菜单保持打开。 */}
             <PuzzlePicker
               groups={configPickerGroups}
+              itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
               selectedEvents={new Set(Object.keys(events))}
               onToggle={toggleEvent}
               isZh={isZh}
@@ -1415,7 +1417,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
                 <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
                 <Scramble222ModePicker active222={!!events['222']} />
-                <ScrambleRediModePicker active={!!events['redi_cube']} />
                 {sq1FormatNode}
               </div>
               <div className="gen-tn-controls">{actionsNode}</div>

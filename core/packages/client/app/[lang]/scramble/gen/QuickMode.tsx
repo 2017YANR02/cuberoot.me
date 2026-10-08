@@ -367,6 +367,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       <div className="gen-config-toolbar">
         <PuzzlePicker
           groups={configPickerGroups}
+          itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
           selectedEvents={events}
           onToggle={toggleEvent}
           isZh={isZh}
@@ -431,7 +432,6 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
         <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
         <Scramble222ModePicker active222={events.has('222')} />
-        <ScrambleRediModePicker active={events.has('redi_cube')} />
         {events.has('sq1') && (
           <div className="gen-sq1-format">
             <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
@@ -496,6 +496,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         <div className="gen-view-picker">
           <PuzzlePicker
             groups={viewPickerGroups}
+            itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
             selectedEvent={activeView}
             onSelect={setViewedEvent}
             isZh={isZh}
