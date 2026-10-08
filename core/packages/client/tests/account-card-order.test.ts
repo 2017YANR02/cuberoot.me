@@ -57,7 +57,8 @@ describe('account shared sorting', () => {
     expect(api.reorderHomeCards).toHaveBeenCalledTimes(1);
     const sent = api.reorderHomeCards.mock.calls[0];
     expect(sent[0]).toBe('account');
-    expect(sent[1]).toEqual([...ACCOUNT_CARD_IDS.slice(1, 8), 'pet', ...ACCOUNT_CARD_IDS.slice(8)]);
+    const afterFriends = ACCOUNT_CARD_IDS.indexOf('friends') + 1;
+    expect(sent[1]).toEqual([...ACCOUNT_CARD_IDS.slice(1, afterFriends), 'pet', ...ACCOUNT_CARD_IDS.slice(afterFriends)]);
     expect(host.querySelector<HTMLButtonElement>('button')!.disabled).toBe(true);
     await act(async () => { finish(); await pending; });
   });
