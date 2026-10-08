@@ -4,6 +4,8 @@ import {
   type SmartCubeSoloTimerContext,
 } from '@cuberoot/shared/smart-cube/solo-timer';
 import type { TimerPhase } from '@cuberoot/shared/timer';
+import { applyColorNeutral } from '@cuberoot/shared/timer';
+import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { describe, expect, it } from 'vitest';
 
 function target(scramble: string): string {
@@ -67,6 +69,24 @@ function harness(initialContext: SmartCubeSoloTimerContext = {
 }
 
 describe('SmartCubeSoloTimerController', () => {
+  it('freezes the opposite-color OLL goal through settings changes and stops before PLL', () => {
+    const sune = "R U R' U R U2 R'";
+    const pll = "R U' R U R U R U' R' U' R2";
+    const scramble = applyColorNeutral(`${pll} ${sune}`, 'dual', () => 0.5);
+    const moves = invertAlg(applyColorNeutral(sune, 'dual', () => 0.5)).split(' ');
+    const context = { event: 'oll' as const, id: 1, scramble, cnMode: 'dual' as const, targetFacelets: target(scramble) };
+    const state = harness(context);
+    state.controller.syncFacelets(context.targetFacelets);
+    state.setPhase('ready');
+    for (let i = 0; i < moves.length; i++) {
+      state.controller.move({ facelets: target(`${scramble} ${moves.slice(0, i + 1).join(' ')}`), move: moves[i], timestamp: 500 + i });
+      if (i === 0) state.controller.setContext({ ...context, cnMode: 'none' });
+    }
+    expect(state.phase()).toBe('stopped');
+    expect(state.order.filter(entry => entry.startsWith('stop:'))).toEqual([`stop:${500 + moves.length - 1}`]);
+    expect(target(`${scramble} ${moves.join(' ')}`)).not.toBe(target(''));
+  });
+
   it.each(['cross', 'f2l', 'oll', 'coll', 'cmll', 'cll', 'ollcp', 'eocp', 'zbls'] as const)('%s records the finishing move before stopping with the cube still unsolved', (event) => {
     const state = harness({ event, id: 1, scramble: 'U R', orientation: '', targetFacelets: target('U R') });
     state.controller.syncFacelets(target('U R'));

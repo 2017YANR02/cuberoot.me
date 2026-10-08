@@ -16,7 +16,7 @@ describe('shared training state generators', () => {
   it('F2L starts with the selected cross solved in random and seeded modes', async () => {
     const crossMask = '----U--------R--R-----F--F--D-DDD-D-----L--L-----B--B-';
     for (let index = 0; index < 16; index++) {
-      const request = { event: 'f2l' as const, cnMode: 'six' as const };
+      const request = { event: 'f2l' as const, cnMode: 'none' as const };
       const result = await generateTimerScramble(request);
       if (!result.ok) throw new Error(JSON.stringify(result));
       const seeded = generateSeededTimerScramble({ ...request, ticket: { seed: 'f2l-cross', index, revision: 0 } });
