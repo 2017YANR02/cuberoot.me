@@ -19,3 +19,5 @@ RAM 自定义策略仅允许 `antcloudauth:InitFaceVerify`、`antcloudauth:Descr
 按负责人“不用检查”要求，未追加本地测试、编译或真人刷脸；部署状态、原生容器兼容和真实收费不能从本地实现推断。发布通过独立工作树隔离其他尚未发布的改动，数据库由现有 Deploy Core 流程迁移，前端由既有双线路流程构建。
 
 官方接入依据：[H5 集成](https://help.aliyun.com/zh/id-verification/financial-grade-id-verification/integration-by-using-pc-or-mobile-h5-pages)、[服务端集成](https://help.aliyun.com/zh/id-verification/financial-grade-id-verification/server-side-integration-2)。
+
+2026-10-08 发布：529cd3e699 的 Deploy Core（37794743420）、Deploy Next（37794743415）及 Vercel 均成功；正式 API 版本和网站入口 200 已确认。负责人截图确认 CubeRootFaceVerificationInvoke 已绑定专用账号，1 项成功、0 项失败；随后开启生产开关并重新加载 API。真实本人刷脸未验收。自动 CI 发现卡片排序清单、CSS 选择器和开发文档遗漏，随收尾修正发布；不追加本地测试。
