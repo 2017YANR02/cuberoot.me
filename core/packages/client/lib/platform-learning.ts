@@ -1,8 +1,9 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
 export async function platformLearningRequest<T>(path: string, body?: Record<string, unknown>, method = 'POST', signal?: AbortSignal): Promise<T> {
-  return handleApi<T>(await fetch(apiUrl(`/v1/platform${path}`), {
+  return handleApi<T>(await sessionFetch(apiUrl(`/v1/platform${path}`), {
     method: body === undefined ? 'GET' : method,
     headers: { ...authHeaders(), ...(body === undefined ? {} : { 'Idempotency-Key': crypto.randomUUID() }) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal,

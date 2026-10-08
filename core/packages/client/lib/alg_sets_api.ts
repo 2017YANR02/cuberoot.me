@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { duplicateAware } from './alg_duplicates';
 /**
  * Admin-only API for editing the canonical alg case database.
@@ -24,7 +25,7 @@ export interface AlgSetSummary {
 }
 
 export async function listAlgSets(fresh = false): Promise<AlgSetSummary[]> {
-  const r = await fetch(API_BASE, fresh ? { cache: 'no-cache' } : undefined);
+  const r = await sessionFetch(API_BASE, fresh ? { cache: 'no-cache' } : undefined);
   return handle<AlgSetSummary[]>(r);
 }
 
@@ -40,7 +41,7 @@ export interface AlgCaseInput {
 }
 
 export async function createCase(puzzle: string, set: string, body: AlgCaseInput): Promise<AlgCase> {
-  const r = await fetch(
+  const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases`,
     { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) },
   );
@@ -48,7 +49,7 @@ export async function createCase(puzzle: string, set: string, body: AlgCaseInput
 }
 
 export async function updateCase(puzzle: string, set: string, id: number, body: AlgCaseInput): Promise<AlgCase> {
-  const r = await fetch(
+  const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/${id}`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) },
   );
@@ -84,7 +85,7 @@ export async function rotateCaseClockwise(file: AlgFile, c: AlgCase, viewAngle: 
   }
   // Read the actual DB row for the write payload. Runtime CMLL includes imported
   // OH alternatives; saving that merged presentation would duplicate formulas.
-  const fresh = await handle<AlgFile>(await fetch(
+  const fresh = await handle<AlgFile>(await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(file.set)}?_=${Date.now()}`,
     { cache: 'no-cache' },
   ));
@@ -126,7 +127,7 @@ export async function reorderCaseAlgs(
 }
 
 export async function reorderCases(puzzle: string, set: string, ids: number[]): Promise<{ ok: boolean }> {
-  const r = await fetch(
+  const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/reorder`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ ids }) },
   );
@@ -134,7 +135,7 @@ export async function reorderCases(puzzle: string, set: string, ids: number[]): 
 }
 
 export async function getAlgCatalogOrder(puzzle: string, fresh = false): Promise<string[]> {
-  const r = await fetch(
+  const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/order`,
     fresh ? { cache: 'no-cache' } : undefined,
   );
@@ -142,7 +143,7 @@ export async function getAlgCatalogOrder(puzzle: string, fresh = false): Promise
 }
 
 export async function reorderAlgCatalog(puzzle: string, slugs: string[]): Promise<{ ok: boolean }> {
-  const r = await fetch(
+  const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/order`,
     { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ slugs }) },
   );
@@ -150,7 +151,7 @@ export async function reorderAlgCatalog(puzzle: string, slugs: string[]): Promis
 }
 
 export async function deleteCase(puzzle: string, set: string, id: number): Promise<{ ok: boolean }> {
-  const r = await fetch(
+  const r = await sessionFetch(
     `${API_BASE}/${encodeURIComponent(puzzle)}/${encodeURIComponent(set)}/cases/${id}`,
     { method: 'DELETE', headers: authHeaders() },
   );

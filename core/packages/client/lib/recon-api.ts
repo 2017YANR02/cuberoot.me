@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // Full port of packages/client-vite/src/utils/recon_api.ts to client.
 // Auth + write endpoints included.
 
@@ -21,23 +22,23 @@ async function apiGet<T>(path: string, params: Record<string, string> = {}): Pro
   for (const [k, v] of Object.entries(params)) {
     if (v) url.searchParams.set(k, v);
   }
-  return handleApi<T>(await fetch(url.toString(), { headers: authHeaders(false) }));
+  return handleApi<T>(await sessionFetch(url.toString(), { headers: authHeaders(false) }));
 }
 
 async function apiPost<T>(path: string, body: unknown): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method: 'POST', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
 async function apiPut<T>(path: string, body: unknown): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
 
 async function apiDelete<T>(path: string): Promise<T> {
-  return handleApi<T>(await fetch(`${API_BASE}${path}`, {
+  return handleApi<T>(await sessionFetch(`${API_BASE}${path}`, {
     method: 'DELETE', headers: authHeaders(false),
   }));
 }
@@ -132,7 +133,7 @@ export async function deleteRecon(id: number): Promise<{ ok: boolean }> {
 export async function uploadReconVideo(file: File): Promise<{ id: number; url: string }> {
   const headers = new Headers(authHeaders(false));
   headers.set('Content-Type', file.type || 'application/octet-stream');
-  const result = await handleApi<{ id: number }>(await fetch(`${API_BASE}/video`, {
+  const result = await handleApi<{ id: number }>(await sessionFetch(`${API_BASE}/video`, {
     method: 'POST',
     headers,
     body: file,

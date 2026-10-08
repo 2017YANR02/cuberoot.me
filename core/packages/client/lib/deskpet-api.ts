@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { isDeskPetCatalog, type DeskPetCatalog } from '@cuberoot/shared/deskpet';
@@ -5,13 +6,13 @@ import type { CareAction, PetCare } from './deskpet-care';
 
 export interface AdoptedPet { id: string; adoptedAt: string; care: PetCare }
 export function getMyPets(): Promise<AdoptedPet[]> {
-  return fetch(apiUrl('/v1/pets/mine'), { headers: authHeaders(), cache: 'no-store' }).then(handleApi<AdoptedPet[]>);
+  return sessionFetch(apiUrl('/v1/pets/mine'), { headers: authHeaders(), cache: 'no-store' }).then(handleApi<AdoptedPet[]>);
 }
 export function adoptPet(id: string): Promise<AdoptedPet> {
-  return fetch(apiUrl(`/v1/pets/${encodeURIComponent(id)}/adopt`), { method: 'POST', headers: authHeaders() }).then(handleApi<AdoptedPet>);
+  return sessionFetch(apiUrl(`/v1/pets/${encodeURIComponent(id)}/adopt`), { method: 'POST', headers: authHeaders() }).then(handleApi<AdoptedPet>);
 }
 export function careForPet(id: string, action: CareAction): Promise<{ pet: AdoptedPet; accepted: boolean; gained: boolean }> {
-  return fetch(apiUrl(`/v1/pets/${encodeURIComponent(id)}/care`), {
+  return sessionFetch(apiUrl(`/v1/pets/${encodeURIComponent(id)}/care`), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ action }),
   }).then(handleApi<{ pet: AdoptedPet; accepted: boolean; gained: boolean }>);
 }
@@ -24,7 +25,7 @@ async function fetchDeskPetCatalog(retry = true): Promise<DeskPetCatalog> {
   // Bound headers and body reads; retry this public GET once if it stalls.
   const timer = setTimeout(() => controller.abort(), 8000);
   try {
-    const value = await handleApi<unknown>(await fetch(apiUrl(PATH), { cache: 'no-store', signal: controller.signal }));
+    const value = await handleApi<unknown>(await sessionFetch(apiUrl(PATH), { cache: 'no-store', signal: controller.signal }));
     if (!isDeskPetCatalog(value)) throw new Error('Invalid pet catalog');
     return value;
   } catch (error) {
@@ -40,7 +41,7 @@ export function getDeskPetCatalog(): Promise<DeskPetCatalog> {
   return catalogRequest ??= fetchDeskPetCatalog().finally(() => { catalogRequest = undefined; });
 }
 export async function saveDeskPetCatalog(catalog: DeskPetCatalog): Promise<DeskPetCatalog> {
-  return handleApi(await fetch(apiUrl(PATH), {
+  return handleApi(await sessionFetch(apiUrl(PATH), {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(catalog),
   }));
 }

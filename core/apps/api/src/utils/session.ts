@@ -46,6 +46,8 @@ export const SESSION_TTL = '365d';
  * amr = 本次会话的认证方式(RFC 8176);重置密码授权见下方两个 fresh-grant helper。
  */
 export interface SessionPayload {
+  /** Browser access tokens cannot be exchanged for a new durable session. */
+  browserAccess?: true;
   uid?: number;
   wcaId?: string;
   name?: string;
@@ -103,4 +105,14 @@ export function hasFreshPhonePasswordResetGrant(token: string): boolean {
 /** 验证并解出载荷;非法/过期抛异常(与 jwt.verify 一致)。 */
 export function verifySession(token: string): SessionPayload {
   return jwt.verify(token, JWT_SECRET) as SessionPayload;
+}
+
+/** Preserve authentication time: renewing access must not renew password-reset grants. */
+export function signBrowserAccessSession(payload: SessionPayload): string {
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.browserAccess || !Number.isFinite(payload.exp) || !Number.isFinite(payload.iat)) {
+    throw new Error('A durable, expiring session is required');
+  }
+  return jwt.sign({ uid: payload.uid, wcaId: payload.wcaId, name: payload.name,
+    amr: payload.amr, iat: payload.iat, exp: Math.min(payload.exp!, now + 900), browserAccess: true }, JWT_SECRET);
 }

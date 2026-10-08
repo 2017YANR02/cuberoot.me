@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // /v1/page-notices 客户端封装 — 每页顶部管理员通知条。
 // 公共 GET 无认证;admin 写端点走 authHeaders(WCA OAuth Bearer / X-Admin-Key)。
 import { apiUrl } from './api-base';
@@ -50,7 +51,7 @@ let pendingNotices: Promise<PageNotice[]> | null = null;
 /** 仅合并进行中的公开请求;完成后仍使用原有浏览器缓存规则。 */
 export function fetchPageNotices(): Promise<PageNotice[]> {
   if (!pendingNotices) {
-    const request = fetch(apiUrl('/v1/page-notices'))
+    const request = sessionFetch(apiUrl('/v1/page-notices'))
       .then((r) => handleApi<PageNotice[]>(r))
       .finally(() => {
         if (pendingNotices === request) pendingNotices = null;
@@ -62,13 +63,13 @@ export function fetchPageNotices(): Promise<PageNotice[]> {
 
 /** 全部通知含 disabled(admin,行内编辑器预填用)。 */
 export async function fetchAllPageNotices(): Promise<PageNotice[]> {
-  const r = await fetch(apiUrl('/v1/page-notices/manage'), { headers: authHeaders(false), cache: 'no-store' });
+  const r = await sessionFetch(apiUrl('/v1/page-notices/manage'), { headers: authHeaders(false), cache: 'no-store' });
   return handleApi<PageNotice[]>(r);
 }
 
 /** 按 path upsert(admin)。 */
 export async function savePageNotice(body: PageNoticeInput): Promise<PageNotice> {
-  const r = await fetch(apiUrl('/v1/page-notices'), {
+  const r = await sessionFetch(apiUrl('/v1/page-notices'), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(body),
@@ -80,7 +81,7 @@ export async function savePageNotice(body: PageNoticeInput): Promise<PageNotice>
 
 /** 删除(admin)。 */
 export async function deletePageNotice(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/page-notices/${id}`), { method: 'DELETE', headers: authHeaders(false) });
+  const r = await sessionFetch(apiUrl(`/v1/page-notices/${id}`), { method: 'DELETE', headers: authHeaders(false) });
   await handleApi<{ ok: boolean }>(r);
   pendingNotices = null;
 }

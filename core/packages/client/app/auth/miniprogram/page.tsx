@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { tr } from '@/i18n/tr';
-import { applySession, getSessionToken, useAuthStore } from '@/lib/auth-store';
+import { applySession, useAuthStore } from '@/lib/auth-store';
 import {
   MINIPROGRAM_HANDOFF_FALLBACK,
   exchangeMiniProgramWebSession,
@@ -48,13 +48,13 @@ export default function MiniProgramAuthPage() {
     void (exchangedSession.current
       ? Promise.resolve(exchangedSession.current)
       : exchangeMiniProgramWebSession(handoff.ticket))
-      .then((session) => {
+      .then(async (session) => {
         if (!active) return;
         exchangedSession.current = session;
-        if (!applySession(session.token, session.user) || getSessionToken() !== session.token) {
+        if (!(await applySession(session.token, session.user, () => active))) {
           throw new Error('session persistence failed');
         }
-        window.location.replace(handoff.next);
+        if (active) window.location.replace(handoff.next);
       })
       .catch(() => {
         if (!active) return;

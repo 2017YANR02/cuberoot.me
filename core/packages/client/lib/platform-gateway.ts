@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { authHeaders, handleApi } from '@/lib/admin-api';
 import { apiUrl } from '@/lib/api-base';
 import type { PlatformOrderWrite } from '@cuberoot/shared';
@@ -245,7 +246,7 @@ export async function loadPlatformResource(
   resource: PlatformResource,
   options: PlatformLoadOptions,
 ): Promise<PlatformResourceResult> {
-  const response = await fetch(apiUrl(readPath(resource, options)), {
+  const response = await sessionFetch(apiUrl(readPath(resource, options)), {
     headers: authHeaders(false),
     ...(resource === 'membership-plans' ? {} : { cache: 'no-store' as const }),
     signal: options.signal,
@@ -265,7 +266,7 @@ export async function loadPlatformManagedQuizzes(options: {
   lessonId: string;
   signal?: AbortSignal;
 }): Promise<PlatformResourceResult> {
-  const response = await fetch(apiUrl(
+  const response = await sessionFetch(apiUrl(
     `/v1/platform/${options.scope}/courses/${encodeURIComponent(options.courseId)}/lessons/${encodeURIComponent(options.lessonId)}/quizzes`,
   ), {
     headers: authHeaders(false),
@@ -277,7 +278,7 @@ export async function loadPlatformManagedQuizzes(options: {
 }
 
 export async function loadPlatformShippingAddresses(signal?: AbortSignal): Promise<PlatformResourceResult> {
-  const response = await fetch(apiUrl('/v1/platform/me/shipping-addresses'), {
+  const response = await sessionFetch(apiUrl('/v1/platform/me/shipping-addresses'), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -287,7 +288,7 @@ export async function loadPlatformShippingAddresses(signal?: AbortSignal): Promi
 }
 
 export async function loadPlatformMembershipPlans(signal?: AbortSignal): Promise<PlatformMembershipPlan[]> {
-  const response = await fetch(apiUrl('/v1/platform/membership-plans'), {
+  const response = await sessionFetch(apiUrl('/v1/platform/membership-plans'), {
     headers: authHeaders(false),
     signal,
   });
@@ -297,7 +298,7 @@ export async function loadPlatformMembershipPlans(signal?: AbortSignal): Promise
 }
 
 export async function loadPlatformMemberships(signal?: AbortSignal): Promise<PlatformMembership[]> {
-  const response = await fetch(apiUrl('/v1/platform/me/memberships'), {
+  const response = await sessionFetch(apiUrl('/v1/platform/me/memberships'), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -308,7 +309,7 @@ export async function loadPlatformMemberships(signal?: AbortSignal): Promise<Pla
 }
 
 export async function loadPlatformLessonMedia(lessonId: string, signal?: AbortSignal): Promise<PlatformLessonMedia> {
-  const response = await fetch(apiUrl(`/v1/platform/lessons/${encodeURIComponent(lessonId)}/media`), {
+  const response = await sessionFetch(apiUrl(`/v1/platform/lessons/${encodeURIComponent(lessonId)}/media`), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -323,7 +324,7 @@ export async function loadPlatformManagedLessonMedia(
   lessonId: string,
   signal?: AbortSignal,
 ): Promise<PlatformManagedLessonMedia> {
-  const response = await fetch(apiUrl(
+  const response = await sessionFetch(apiUrl(
     `/v1/platform/${scope}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/media`,
   ), {
     headers: authHeaders(false),
@@ -340,7 +341,7 @@ export async function uploadPlatformLessonCover(
   lessonId: string,
   file: File,
 ): Promise<PlatformActionResult> {
-  const response = await fetch(apiUrl(
+  const response = await sessionFetch(apiUrl(
     `/v1/platform/${scope}/courses/${encodeURIComponent(courseId)}/lessons/${encodeURIComponent(lessonId)}/cover`,
   ), {
     method: 'PUT',
@@ -354,7 +355,7 @@ export async function uploadPlatformLessonCover(
 export const PLATFORM_PRIVACY_POLICY_VERSION = 'platform-privacy-v1';
 
 export async function loadPlatformPrivacyConsents(signal?: AbortSignal): Promise<PlatformPrivacyConsent[]> {
-  const response = await fetch(apiUrl('/v1/platform/me/privacy/consents'), {
+  const response = await sessionFetch(apiUrl('/v1/platform/me/privacy/consents'), {
     headers: authHeaders(false),
     cache: 'no-store',
     signal,
@@ -374,7 +375,7 @@ function writeHeaders(): HeadersInit {
 }
 
 async function write(path: string, method: 'POST' | 'PUT' | 'PATCH' | 'DELETE', payload?: Record<string, unknown>): Promise<PlatformActionResult> {
-  const response = await fetch(apiUrl(path), {
+  const response = await sessionFetch(apiUrl(path), {
     method,
     headers: writeHeaders(),
     body: payload === undefined ? undefined : JSON.stringify(payload),

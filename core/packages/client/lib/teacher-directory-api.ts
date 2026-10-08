@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -143,20 +144,20 @@ export function mergeTeacherDirectoryEntries(
 
 export async function fetchTeacherDirectory(): Promise<TeacherDirectoryEntry[]> {
   const data = await handleApi<{ entries: TeacherDirectoryEntryWire[] }>(
-    await fetch(apiUrl('/v1/teachers?v=4')),
+    await sessionFetch(apiUrl('/v1/teachers?v=4')),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }
 
 export async function fetchMyTeacherDirectory(): Promise<TeacherDirectoryEntry[]> {
   const data = await handleApi<{ entries: TeacherDirectoryEntryWire[] }>(
-    await fetch(apiUrl('/v1/teachers/mine'), { headers: authHeaders(false) }),
+    await sessionFetch(apiUrl('/v1/teachers/mine'), { headers: authHeaders(false) }),
   );
   return data.entries.map(normalizeTeacherDirectoryEntry);
 }
 
 export async function createTeacherDirectoryEntry(draft: TeacherDirectoryDraft): Promise<TeacherDirectoryEntry> {
-  const data = await handleApi<{ entry: TeacherDirectoryEntryWire }>(await fetch(apiUrl('/v1/teachers'), {
+  const data = await handleApi<{ entry: TeacherDirectoryEntryWire }>(await sessionFetch(apiUrl('/v1/teachers'), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(draft),
@@ -168,7 +169,7 @@ export async function updateTeacherDirectoryEntry(
   id: number,
   draft: TeacherDirectoryDraft,
 ): Promise<TeacherDirectoryEntry> {
-  const data = await handleApi<{ entry: TeacherDirectoryEntryWire }>(await fetch(apiUrl(`/v1/teachers/${id}`), {
+  const data = await handleApi<{ entry: TeacherDirectoryEntryWire }>(await sessionFetch(apiUrl(`/v1/teachers/${id}`), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(draft),
@@ -177,7 +178,7 @@ export async function updateTeacherDirectoryEntry(
 }
 
 export async function deleteTeacherDirectoryEntry(id: number): Promise<void> {
-  await handleApi(await fetch(apiUrl(`/v1/teachers/${id}`), {
+  await handleApi(await sessionFetch(apiUrl(`/v1/teachers/${id}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   }));

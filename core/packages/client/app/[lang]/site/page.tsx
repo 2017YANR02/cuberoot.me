@@ -217,7 +217,7 @@ function siteMatchesEvent(site: Site, eventId: string): boolean {
 
 function splitLangTag(s: string): { en: string; zh: string
  } {
-  const idx = s.search(/[㐀-鿿豈-﫿]/);
+  const idx = s.search(/[㐀-鿿\uF900-\uFAFF]/);
   if (idx < 0) return { en: s, zh: s };
   if (idx === 0) return { en: s, zh: s };
   return { en: s.slice(0, idx).trim(), zh: s.slice(idx).trim() };

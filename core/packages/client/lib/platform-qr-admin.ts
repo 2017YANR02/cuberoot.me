@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 import type { PlatformEntity } from './platform-types';
@@ -20,7 +21,7 @@ export interface QrStats {
   coverage: { dailySince: string | null; timeZone: string; historicalDailyUnavailable: boolean };
 }
 export async function qrAdminRequest<T>(path: string, options: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
-  return handleApi<T>(await fetch(apiUrl(`/v1/platform/admin/qr${path}`), {
+  return handleApi<T>(await sessionFetch(apiUrl(`/v1/platform/admin/qr${path}`), {
     method: options.method ?? 'GET', cache: 'no-store', signal: options.signal,
     headers: { ...authHeaders(options.body !== undefined), ...(options.method ? { 'Idempotency-Key': crypto.randomUUID() } : {}) },
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),

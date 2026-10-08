@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { authHeaders, handleApi } from '@/lib/admin-api';
@@ -16,7 +17,7 @@ type Report = {
 type Run = { runId: string; attempt: Attempt; startFacelets: string; device: Device; reported: boolean; disconnected: boolean };
 
 async function request<T>(url: string, body?: unknown, idempotencyKey?: string): Promise<T> {
-  return handleApi<T>(await fetch(apiUrl(url), {
+  return handleApi<T>(await sessionFetch(apiUrl(url), {
     method: body === undefined ? 'GET' : 'POST', cache: 'no-store',
     headers: { ...authHeaders(body !== undefined), ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}) },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),

@@ -8,7 +8,7 @@ import { startRuntimeDiagnostics } from './observability/runtime.js';
 import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { apiCors } from './api_cors.js';
-import { authRoutes, rolePreviewGuard } from './routes/auth.js';
+import { authRoutes, browserSessionGuard, rolePreviewGuard } from './routes/auth.js';
 import { accountFaceRoutes } from './routes/account_face.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
@@ -136,6 +136,7 @@ app.get('/v1/competition-access/challenge', issueCompetitionCaptcha);
 app.post('/v1/competition-access/verify', bodyLimit({ maxSize: 512 }), submitCompetitionCaptcha);
 app.use('/v1/cubing-live/*', requireCompetitionAccess);
 app.use('/v1/cubing-live-stream/*', requireCompetitionAccess);
+app.use('/v1/*', browserSessionGuard);
 app.use('/v1/*', rolePreviewGuard);
 
 // NOTE: 全局错误处理——把未捕获的 throw new Error(...) 转成 JSON 格式

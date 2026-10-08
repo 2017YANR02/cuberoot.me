@@ -738,7 +738,10 @@ export function applyReconTextOverride(
   let inspection = auto.inspection;
   let body = lines;
   if (lines.length === auto.lines.length + 1) {
-    const first = /^(.*?)\s*\/\/\s*(?:insp|inspection|观察)\s*$/i.exec(lines[0]);
+    const marker = lines[0].lastIndexOf('//');
+    const label = marker >= 0 ? lines[0].slice(marker + 2).trim() : '';
+    const first = /^(?:insp|inspection|观察)$/i.test(label) && !/[\r\n\u2028\u2029]/.test(lines[0].slice(0, marker).trimEnd())
+      ? [lines[0], lines[0].slice(0, marker).trimEnd()] : null;
     if (!first || first[1].trim() === '') return auto;
     inspection = first[1].trim();
     body = lines.slice(1);

@@ -107,6 +107,7 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/login', g: 'public', zh: '跳转 WCA OAuth 授权页', en: 'Redirect to WCA OAuth' },
   { d: 'auth', m: 'GET', p: '/v1/auth/callback', g: 'public', zh: 'OAuth 回调,建立登录态', en: 'OAuth callback, establish session' },
   { d: 'auth', m: 'POST', p: '/v1/auth/exchange', g: 'public', zh: '用授权码换取 JWT', en: 'Exchange auth code for JWT' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/browser-access', g: 'login', c: 'no-store', zh: '由长期会话换取最长 15 分钟浏览器访问令牌；保留原验证时间，短令牌不能再次换取或续签长期会话', en: 'Exchange a durable session for at most 15 minutes of browser access; preserve authentication time and prohibit short-token renewal of durable sessions' },
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
   { d: 'auth', m: 'GET', p: '/v1/auth/face', g: 'login', zh: '本人实名认证状态', en: 'Own identity verification status' },
   { d: 'auth', m: 'POST', p: '/v1/auth/face', g: 'login', zh: '本人单独同意后发起活体实名核验，或服务端查询当前认证结果', en: 'Start consented identity/liveness verification or query the current provider result' },

@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // 视频通话的客户端 API(对应 server/routes/video_rooms.ts)。两种房共用:
 //   /timer 联机对战房 —— 免登录,身份是对战房的 pid,服务端回库校验
 //   /meet  会议室      —— **必须登录**,身份和显示名都由服务端从 session token 里取;
@@ -15,7 +16,7 @@ import { getSessionToken } from './auth-store';
  */
 export * from '@cuberoot/shared/video';
 import { VideoDeniedError, isMeetCode, type VideoDenyReason, type VideoToken, createBattleVideoClient } from '@cuberoot/shared/video';
-const battleVideoClient = createBattleVideoClient({ apiUrl, fetcher: (...args) => fetch(...args) });
+const battleVideoClient = createBattleVideoClient({ apiUrl, fetcher: (...args) => sessionFetch(...args) });
 /**
  * 问一次站点视频配置。
  *
@@ -45,7 +46,7 @@ export async function getCompetitionVideoToken(registrationId: string): Promise<
  * 由服务端分配，客户端本地随机无法看见其他活跃房间。
  */
 export async function createMeetCode(): Promise<string> {
-  const res = await fetch(apiUrl('/v1/video/meet/code'), {
+  const res = await sessionFetch(apiUrl('/v1/video/meet/code'), {
     method: 'POST',
     headers: { Authorization: `Bearer ${getSessionToken()}` },
   });
@@ -65,7 +66,7 @@ async function postToken(
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...extraHeaders };
   if (authed) headers.Authorization = `Bearer ${getSessionToken()}`;
   const deadline = AbortSignal.timeout(20_000);
-  const res = await fetch(apiUrl(path), {
+  const res = await sessionFetch(apiUrl(path), {
     method: 'POST', headers, body: JSON.stringify(body),
     signal: signal ? AbortSignal.any([signal, deadline]) : deadline,
   });

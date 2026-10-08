@@ -11,6 +11,7 @@ import { workspaceFixturePath } from './workspace-fixture-path';
 type ReconUser = { wcaId: string; name?: string; isAdmin: boolean };
 type VisibilityFilter = { clause: string; params: string[] };
 type ReconHelpersModule = {
+  assertReconTextLengths: (fields: Record<string, unknown>) => void;
   jsonToRow: (json: Record<string, unknown>) => Record<string, unknown>;
   rowToJson: (row: Record<string, unknown>) => Record<string, unknown>;
   validateRow: (row: Record<string, unknown>) => string[];
@@ -20,7 +21,7 @@ type ReconHelpersModule = {
 };
 
 const {
-  jsonToRow, rowToJson, validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS,
+  jsonToRow, rowToJson, validateRow, visibilityDiscoverFilter, visibilityOwnerFilter, ADMIN_WCA_IDS, assertReconTextLengths,
 } = await import(pathToFileURL(
   workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'recon_helpers.ts'),
 ).href) as ReconHelpersModule;
@@ -28,6 +29,15 @@ const {
 const here = dirname(fileURLToPath(import.meta.url));
 const CLIENT = join(here, '..', 'lib', 'recon-alg-utils.ts');
 const SERVER = workspaceFixturePath('@cuberoot/server', 'src', 'utils', 'recon_helpers.ts');
+
+describe('recon text size before normalization', () => {
+  it('accepts the byte boundary and rejects oversized UTF-8 input', () => {
+    expect(() => assertReconTextLengths({ solution: 'R'.repeat(65_535) })).not.toThrow();
+    expect(() => assertReconTextLengths({ solution: 'R'.repeat(65_536) })).toThrow('65,535');
+    expect(() => assertReconTextLengths({ scramble: '中'.repeat(21_846) })).toThrow('65,535');
+    expect(() => assertReconTextLengths({ wca_scramble: 'R'.repeat(65_536) })).toThrow('65,535');
+  });
+});
 
 function chars(s: string): Set<string> {
   return new Set([...s]);

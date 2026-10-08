@@ -199,10 +199,11 @@ export default function MobileEmbedBridge() {
       // The shared exchange helper owns single-flight ticket consumption (also
       // across StrictMode remounts). Invalidate this consumer, not that shared
       // request: an old response may never restore a logged-out/replaced user.
-      void exchangeWebSessionTicket(webSession.ticket).then((session) => {
+      void exchangeWebSessionTicket(webSession.ticket).then(async (session) => {
         if (!current()) return;
-        const persisted = applySession(session.token, session.user);
-        const ok = persisted && getSessionToken() === session.token;
+        const persisted = await applySession(session.token, session.user, current);
+        if (!current()) return;
+        const ok = persisted && current() && Boolean(getSessionToken());
         postToParent(mobileEmbedWebSessionResultMessage(ok, webSession.requestId));
         if (ok) window.location.reload();
       }).catch(() => {

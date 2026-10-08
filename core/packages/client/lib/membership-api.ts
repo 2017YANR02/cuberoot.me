@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/membership — 会员订阅 API。
  * server 实现 routes/membership.ts。公开 GET 套餐;其余走 WCA OAuth Bearer(authHeaders)。
@@ -77,14 +78,14 @@ export interface MembershipSubscriptions {
 }
 
 export async function listMySubscriptions(signal?: AbortSignal): Promise<MembershipSubscriptions> {
-  return handleApi(await fetch(apiUrl('/v1/membership/subscriptions'), {
+  return handleApi(await sessionFetch(apiUrl('/v1/membership/subscriptions'), {
     headers: authHeaders(false), cache: 'no-store', signal,
   }));
 }
 
 /** HTTP 202 is accepted, not completed; only a verified terminated state confirms cancellation. */
 export async function cancelMySubscription(id: string, signal?: AbortSignal): Promise<{ subscription: MembershipSubscription }> {
-  return handleApi(await fetch(apiUrl(`/v1/membership/subscriptions/${encodeURIComponent(id)}/cancel`), {
+  return handleApi(await sessionFetch(apiUrl(`/v1/membership/subscriptions/${encodeURIComponent(id)}/cancel`), {
     method: 'POST', headers: authHeaders(), body: JSON.stringify({ confirm: true }), cache: 'no-store', signal,
   }));
 }
@@ -180,11 +181,11 @@ export interface AdminOrder {
 }
 
 export async function listPlans(): Promise<{ plans: MembershipPlan[]; payEnabled: boolean; channels?: PayChannels }> {
-  return handleApi(await fetch(`${BASE}/plans`));
+  return handleApi(await sessionFetch(`${BASE}/plans`));
 }
 
 export async function listPublicMembers(signal?: AbortSignal): Promise<PublicMember[]> {
-  const result = await handleApi<{ members: PublicMember[] }>(await fetch(`${BASE}/members`, { signal, cache: 'no-store' }));
+  const result = await handleApi<{ members: PublicMember[] }>(await sessionFetch(`${BASE}/members`, { signal, cache: 'no-store' }));
   // 管理员可能没有 WCA ID;公开名单和图库均只链接有效的 WCA 个人页。
   return result.members.filter((member) => typeof member.wcaId === 'string' && WCA_ID_REGEX.test(member.wcaId));
 }
@@ -202,12 +203,12 @@ export async function getMyMembership(): Promise<{
   isMember?: boolean;
   profile?: EditableMemberProfile | null;
 }> {
-  return handleApi(await fetch(`${BASE}/me`, { headers: authHeaders(false) }));
+  return handleApi(await sessionFetch(`${BASE}/me`, { headers: authHeaders(false) }));
 }
 
 export async function getPublicMemberProfile(wcaId: string): Promise<PublicMemberProfile | null> {
   const result = await handleApi<{ profile: Partial<PublicMemberProfile> | null }>(
-    await fetch(`${BASE}/profile/${encodeURIComponent(wcaId)}`),
+    await sessionFetch(`${BASE}/profile/${encodeURIComponent(wcaId)}`),
   );
   return result.profile ? {
     intro: typeof result.profile.intro === 'string' ? result.profile.intro : '',
@@ -220,7 +221,7 @@ export async function setMyProfileIntro(intro: string, imageIds: number[], showI
   profileImageIds: number[];
   showInMemberList: boolean;
 }> {
-  return handleApi(await fetch(`${BASE}/me/profile`, {
+  return handleApi(await sessionFetch(`${BASE}/me/profile`, {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ intro, imageIds, showInMemberList }),
@@ -228,7 +229,7 @@ export async function setMyProfileIntro(intro: string, imageIds: number[], showI
 }
 
 export async function setMyContact(body: { contact: string | null; contactKind: string | null; note?: string | null }): Promise<{ membership: Membership }> {
-  return handleApi(await fetch(`${BASE}/me/contact`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi(await sessionFetch(`${BASE}/me/contact`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 
 export async function createOrder(
@@ -237,7 +238,7 @@ export async function createOrder(
   clientType: 'pc' | 'wap',
   language: 'zh' | 'en',
 ): Promise<OrderInfo> {
-  return handleApi(await fetch(`${BASE}/orders`, {
+  return handleApi(await sessionFetch(`${BASE}/orders`, {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ plan, channel, clientType, language }),
@@ -245,12 +246,12 @@ export async function createOrder(
 }
 
 export async function getOrderStatus(outTradeNo: string): Promise<{ status: string; planSlug: string; payChannel: string | null }> {
-  return handleApi(await fetch(`${BASE}/orders/${encodeURIComponent(outTradeNo)}`, { headers: authHeaders(false) }));
+  return handleApi(await sessionFetch(`${BASE}/orders/${encodeURIComponent(outTradeNo)}`, { headers: authHeaders(false) }));
 }
 
 // ── admin ──
 export async function adminGrant(body: { wcaId: string; plan: string; name?: string; avatarUrl?: string | null }): Promise<{ membership: Membership }> {
-  return handleApi(await fetch(`${BASE}/admin/grant`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi(await sessionFetch(`${BASE}/admin/grant`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) }));
 }
 
 export interface AdminMembership extends Membership {
@@ -265,13 +266,13 @@ export interface AdminMembership extends Membership {
 }
 
 export async function adminList(): Promise<{ members: AdminMembership[]; plans?: MembershipPlan[]; orders: AdminOrder[] }> {
-  return handleApi(await fetch(`${BASE}/admin/list?v=2`, { headers: authHeaders(false) }));
+  return handleApi(await sessionFetch(`${BASE}/admin/list?v=2`, { headers: authHeaders(false) }));
 }
 
 export async function adminRevoke(wcaId: string): Promise<{ ok: boolean }> {
-  return handleApi(await fetch(`${BASE}/admin/member/${encodeURIComponent(wcaId)}`, { method: 'DELETE', headers: authHeaders(false) }));
+  return handleApi(await sessionFetch(`${BASE}/admin/member/${encodeURIComponent(wcaId)}`, { method: 'DELETE', headers: authHeaders(false) }));
 }
 
 export async function adminUpdatePlan(slug: string, body: Partial<{ nameZh: string; nameEn: string; priceCents: number; active: boolean; sort: number; perks: string[]; period: string; periodCount: number }>): Promise<MembershipPlan> {
-  return handleApi(await fetch(`${BASE}/admin/plans/${encodeURIComponent(slug)}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
+  return handleApi(await sessionFetch(`${BASE}/admin/plans/${encodeURIComponent(slug)}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }));
 }

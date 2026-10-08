@@ -9,6 +9,10 @@ import {
   updateDriveNode,
 } from '@/lib/drive-api';
 
+const session = vi.hoisted(() => ({ marker: '', exchange: vi.fn() }));
+vi.mock('@/lib/auth-store', () => ({ getSessionToken: () => session.marker, getWcaToken: () => '' }));
+vi.mock('@/lib/web-session', () => ({ getWebAccessToken: session.exchange }));
+
 class FakeEventTarget {
   private readonly listeners = new Map<string, EventListener[]>();
 
@@ -72,6 +76,8 @@ class FakeXMLHttpRequest extends FakeEventTarget {
 }
 
 beforeEach(() => {
+  session.marker = '';
+  session.exchange.mockReset().mockResolvedValue('short-access');
   FakeXMLHttpRequest.latest = null;
   vi.stubGlobal('XMLHttpRequest', FakeXMLHttpRequest);
 });
@@ -99,6 +105,18 @@ describe('Drive chunk upload', () => {
     expect(request.headers['Upload-Offset']).toBe('8');
     expect(request.headers['Upload-Checksum']).toMatch(/^sha256 /);
     expect(request.body).toBe(chunk);
+  });
+
+  it('pauses immediately while a session exchange is still pending', async () => {
+    session.marker = 'web-session:upload-owner';
+    session.exchange.mockReturnValue(new Promise<string>(() => {}));
+    const controller = new AbortController();
+    const upload = uploadDriveChunk('upload-id', 0, new Blob(['abcdef']), controller.signal);
+    await vi.waitFor(() => expect(session.exchange).toHaveBeenCalledOnce());
+    const rejection = expect(upload).rejects.toMatchObject({ name: 'AbortError' });
+    controller.abort();
+    await rejection;
+    expect(FakeXMLHttpRequest.latest).toBeNull();
   });
 
   it('aborts the active request when an upload is paused', async () => {

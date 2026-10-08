@@ -109,7 +109,7 @@ describe('Apple API availability and exchange', () => {
   it.each(['login', 'link'] as const)('preserves the account boundary before cross-origin %s', async (intent) => {
     const initialHref = 'https://www.cuberoot.me/zh/account?auth=mobile&provider=apple&code_challenge=challenge';
     const location = { href: initialHref };
-    vi.stubGlobal('window', { location, sessionStorage, localStorage });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), location, sessionStorage, localStorage });
     Object.assign(window, { parent: window });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ url: authorizeUrl, siteOrigin: 'https://cuberoot.me' }))));
     const { startSocialLogin } = await import('@/lib/social-auth');
@@ -125,7 +125,7 @@ describe('Apple API availability and exchange', () => {
 
   it('only saves state and leaves for Apple once the initiating site is canonical', async () => {
     const location = { href: 'https://cuberoot.me/zh/account?auth=mobile&provider=apple' };
-    vi.stubGlobal('window', { location, sessionStorage, localStorage });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), location, sessionStorage, localStorage });
     Object.assign(window, { parent: window });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ url: authorizeUrl, siteOrigin: 'https://cuberoot.me' }))));
     const { startSocialLogin } = await import('@/lib/social-auth');
@@ -142,7 +142,7 @@ describe('Apple API availability and exchange', () => {
   });
 
   it('never starts Apple authorization directly inside an iframe', async () => {
-    vi.stubGlobal('window', { parent: {}, location: { href: 'https://cuberoot.me/account' } });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), parent: {}, location: { href: 'https://cuberoot.me/account' } });
     const fetcher = vi.fn();
     vi.stubGlobal('fetch', fetcher);
     const { startSocialLogin } = await import('@/lib/social-auth');
@@ -152,7 +152,7 @@ describe('Apple API availability and exchange', () => {
 
   it('rejects an account change while the provider authorization URL is pending', async () => {
     const location = { href: 'https://cuberoot.me/account?view=signin&link_provider=apple&expected_uid=42' };
-    vi.stubGlobal('window', { location, sessionStorage, localStorage });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), location, sessionStorage, localStorage });
     Object.assign(window, { parent: window });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ url: authorizeUrl, siteOrigin: 'https://cuberoot.me' }))));
     const { useAuthStore } = await import('@/lib/auth-store');
@@ -167,7 +167,7 @@ describe('Apple API availability and exchange', () => {
   it('cannot navigate to Apple after the user canceled the pending authorization request', async () => {
     const initialHref = 'https://cuberoot.me/account?view=signin';
     const location = { href: initialHref };
-    vi.stubGlobal('window', { location, sessionStorage, localStorage });
+    vi.stubGlobal('window', { addEventListener: vi.fn(), location, sessionStorage, localStorage });
     Object.assign(window, { parent: window });
     let resolve!: (value: Response) => void;
     const fetcher = vi.fn().mockImplementation(() => new Promise((done) => { resolve = done; }));

@@ -37,17 +37,14 @@ describe('WCA callback canonical session', () => {
       name: '颜瑞民',
       avatar: 'canonical.png',
     };
-    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
-      token: 'c'.repeat(20),
-      user: canonicalUser,
-    }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async (input, init) => new Response(JSON.stringify({
+      token: 'c'.repeat(20), user: canonicalUser,
+      ...(String(input) === '/api/web-session' ? { generation: JSON.parse(String(init?.body)).generation } : {}),
+    })));
 
     vi.stubGlobal('fetch', fetcher);
     const result = await loginWca('short-lived-wca-token');
-    expect(applySession(result.token, result.user)).toBe(true);
+    expect(await applySession(result.token, result.user)).toBe(true);
 
     expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/v1/auth/exchange'), {
       method: 'POST',
@@ -55,7 +52,9 @@ describe('WCA callback canonical session', () => {
       body: JSON.stringify({ accessToken: 'short-lived-wca-token' }),
       signal: expect.any(AbortSignal),
     });
-    expect(localStorage.getItem('cuberoot_jwt')).toBe('c'.repeat(20));
+    expect(localStorage.getItem('cuberoot_jwt')).toBeNull();
+    expect(localStorage.getItem('wca_access_token')).toBeNull();
+    expect(localStorage.getItem('cuberoot_web_session_marker')).toMatch(/^web-session:/);
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual({
       ...canonicalUser,
       country: '',
@@ -82,9 +81,6 @@ describe('WCA callback canonical session', () => {
 
     expect(localStorage.getItem('cuberoot_jwt')).toBeNull();
     expect(JSON.parse(localStorage.getItem('wca_user') ?? 'null')).toEqual(provisionalUser);
-    expect(useAuthStore.getState().user).toEqual({
-      ...provisionalUser,
-      ...defaultAvatarSelection,
-    });
+    expect(useAuthStore.getState().user).toBeNull();
   });
 });

@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /v1/wiki/* client wrapper.
  *
@@ -52,14 +53,14 @@ export interface WikiSection {
 export interface WikiList { sections: WikiSection[] }
 
 export async function fetchWikiTerms(): Promise<WikiList> {
-  const r = await fetch(apiUrl('/v1/wiki/terms'), { cache: 'no-store' });
+  const r = await sessionFetch(apiUrl('/v1/wiki/terms'), { cache: 'no-store' });
   return handle<WikiList>(r);
 }
 
 export interface TermInput { headEn: string; headZh: string; bodyEn: string; bodyZh: string }
 
 export async function createTerm(body: { letter: string } & TermInput): Promise<WikiTerm> {
-  const r = await fetch(apiUrl('/v1/wiki/terms'), {
+  const r = await sessionFetch(apiUrl('/v1/wiki/terms'), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(body),
@@ -68,7 +69,7 @@ export async function createTerm(body: { letter: string } & TermInput): Promise<
 }
 
 export async function updateTerm(id: number, body: TermInput): Promise<WikiTerm> {
-  const r = await fetch(apiUrl(`/v1/wiki/terms/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/wiki/terms/${id}`), {
     method: 'PATCH',
     headers: authHeaders(),
     body: JSON.stringify(body),
@@ -77,7 +78,7 @@ export async function updateTerm(id: number, body: TermInput): Promise<WikiTerm>
 }
 
 export async function deleteTerm(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/wiki/terms/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/wiki/terms/${id}`), {
     method: 'DELETE',
     headers: authHeaders(),
   });
@@ -85,7 +86,7 @@ export async function deleteTerm(id: number): Promise<void> {
 }
 
 export async function createAddition(termId: number, body: string): Promise<WikiAddition> {
-  const r = await fetch(apiUrl(`/v1/wiki/terms/${termId}/additions`), {
+  const r = await sessionFetch(apiUrl(`/v1/wiki/terms/${termId}/additions`), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify({ body }),
@@ -94,7 +95,7 @@ export async function createAddition(termId: number, body: string): Promise<Wiki
 }
 
 export async function updateAddition(id: number, body: string): Promise<WikiAddition> {
-  const r = await fetch(apiUrl(`/v1/wiki/additions/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/wiki/additions/${id}`), {
     method: 'PATCH',
     headers: authHeaders(),
     body: JSON.stringify({ body }),
@@ -103,7 +104,7 @@ export async function updateAddition(id: number, body: string): Promise<WikiAddi
 }
 
 export async function deleteAddition(id: number): Promise<void> {
-  const r = await fetch(apiUrl(`/v1/wiki/additions/${id}`), {
+  const r = await sessionFetch(apiUrl(`/v1/wiki/additions/${id}`), {
     method: 'DELETE',
     headers: authHeaders(),
   });

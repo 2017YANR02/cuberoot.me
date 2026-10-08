@@ -1,3 +1,4 @@
+import { getWebAccessTokenBeforeAbort, sessionFetch } from '@/lib/session-fetch';
 import type { DriveCompression, DriveCompressionResolution, DriveNode, DriveSnapshot, DriveUpload } from '@cuberoot/shared/drive';
 import { apiUrl, directApiUrl, publicApiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
@@ -39,7 +40,7 @@ interface DriveChunkResponse {
 }
 
 async function write<T>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<T> {
-  const response = await fetch(apiUrl(path), {
+  const response = await sessionFetch(apiUrl(path), {
     method,
     headers: authHeaders(body !== undefined),
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -54,7 +55,7 @@ export async function fetchDrive(parentId: string | null, trash = false, members
   if (members) params.set('members', '1');
   if (all) params.set('all', '1');
   const query = params.size ? `?${params}` : '';
-  const response = await fetch(apiUrl(`/v1/drive${query}`), {
+  const response = await sessionFetch(apiUrl(`/v1/drive${query}`), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
@@ -93,18 +94,22 @@ export async function uploadDriveChunk(
   const bytes = await chunk.arrayBuffer();
   const checksum = bytesToBase64(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)));
   if (signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
+  const headers: Record<string, string> = {
+    ...authHeaders(false),
+    'Content-Type': 'application/offset+octet-stream',
+    'Upload-Offset': String(offset),
+    'Upload-Checksum': `sha256 ${checksum}`,
+  };
+  if (headers.Authorization?.startsWith('Bearer ')) {
+    headers.Authorization = `Bearer ${await getWebAccessTokenBeforeAbort(headers.Authorization.slice(7), signal)}`;
+  }
+  if (signal?.aborted) throw new DOMException('The operation was aborted.', 'AbortError');
 
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     const abort = () => request.abort();
     const cleanup = () => signal?.removeEventListener('abort', abort);
     request.open('PATCH', directApiUrl(`/v1/drive/uploads/${encodeURIComponent(uploadId)}`));
-    const headers = {
-      ...authHeaders(false),
-      'Content-Type': 'application/offset+octet-stream',
-      'Upload-Offset': String(offset),
-      'Upload-Checksum': `sha256 ${checksum}`,
-    };
     Object.entries(headers).forEach(([name, value]) => request.setRequestHeader(name, value));
     request.upload.addEventListener('progress', (event) => {
       onProgress?.(Math.min(event.loaded, chunk.size));
@@ -198,7 +203,7 @@ export async function downloadDriveFile(
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   let downloadedBytes = offset;
   try {
-    const response = await fetch(url, {
+    const response = await sessionFetch(url, {
       signal: options.signal,
       cache: 'no-store',
       headers: offset > 0 ? { Range: `bytes=${offset}-` } : undefined,
@@ -230,7 +235,7 @@ export async function downloadDriveFile(
 }
 
 export async function fetchDriveMembers(): Promise<DriveMember[]> {
-  const response = await fetch(apiUrl('/v1/drive/members'), {
+  const response = await sessionFetch(apiUrl('/v1/drive/members'), {
     headers: authHeaders(false),
     cache: 'no-store',
   });
