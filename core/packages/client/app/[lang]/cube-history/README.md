@@ -10,9 +10,9 @@ Cutoff: **2026-10-07**. Prices and review pools describe that research snapshot.
 | --- | ---: |
 | Individually addressable model / configuration / named-edition records | 973 |
 | Brand / line labels, including historical trade names | 68 |
-| Unique source URLs | 1332 |
-| Records with source-linked real product photographs | 966 |
-| Exact-model photographs / explicitly shared source photographs | 959 / 7 |
+| Unique source URLs | 1335 |
+| Records with source-linked real product photographs | 968 |
+| Exact-model photographs / explicitly shared source photographs | 961 / 7 |
 | Product-page user ratings with review counts and dates | 578 |
 | Price observations retaining currency, region and version | 1336 |
 | Records containing an original CNY quotation | 5 |
@@ -27,7 +27,7 @@ The second research pass cross-checked the 4,688-product public TheCubicle catal
 
 The third pass adds 37 independently documented records, updates 96 existing records and merges one confirmed duplicate, moving from 937 to 973 records. It checks manufacturer terminology against further Tribox, Cubezz, Ziicube and historical sources. The MoYu/YJ pass reached all 38 pages of the relevant Cubezz category; the other-brand Cubezz pass reached pages 1–19 and 57 before repeated timeouts. These are explicit audited scopes, not claims that every source catalog was fully recovered. Source notes retain the remaining candidates and exclusions.
 
-Corrections include the official GuanLong 2021 / V4 naming bridge, an earlier documentary date for ShengShou Legend S, Chinese Tornado aliases including 风四代, and independent Solar 3E / ME records. New historical context includes Cube4You Tile, Maze and Gas Assisted models plus the principal V-CUBE 3×3 branches. Source photograph recovery closes the ordinary Cube4You and YJ 35 mm pillow gaps. Three newly documented early GAN custom/limited records and C4Y Gas Assisted remain explicitly without verified images.
+Corrections include the official GuanLong 2021 / V4 naming bridge, an earlier documentary date for ShengShou Legend S, Chinese Tornado aliases including 风四代, and independent Solar 3E / ME records. New historical context includes Cube4You Tile, Maze and Gas Assisted models plus the principal V-CUBE 3×3 branches. Source photograph recovery closes the ordinary Cube4You and YJ 35 mm pillow gaps. Subsequent targeted recovery also supplies the GAN356 X INFINITY and white fifth-anniversary GAN356 i photographs; the current gaps are listed below.
 
 ## GAN11–16 navigation
 
@@ -66,7 +66,7 @@ The ordinary GAN12 Leap retains its spring configuration; GAN13 FX retains fixed
 | `_data/qiyi-xman.json` | 97 records: QiYi and X-Man Design |
 | `../../../tests/cube-history.test.ts` | Dates, currencies, sources, photos, ratings, family relationships and query behavior |
 
-Outside the route and its dedicated tests, changes are limited to `lib/page-meta.ts` and an attributed product photograph under `public/_assets/cube-history/`. The existing metadata-driven homepage search and sitemap discover the route. The implementation uses the site's TypeScript/Next.js architecture, existing shared controls and nuqs URL state; it adds no backend, dependency or standalone HTML application.
+Outside the route and its dedicated tests, changes are limited to `lib/page-meta.ts` and attributed product photographs under `public/_assets/cube-history/`. The existing metadata-driven homepage search and sitemap discover the route. The implementation uses the site's TypeScript/Next.js architecture, existing shared controls and nuqs URL state; it adds no backend, dependency or standalone HTML application.
 
 ## Browsing and review
 
@@ -106,8 +106,6 @@ Records still without an identified product photograph:
 | gan2 | GAN2 / Ganspuzzle II |
 | gan1 | GAN1（早期型号，资料待补） |
 | gan354-m-infinity | GAN INFINITY 354 M 原厂定制 |
-| gan356-x-infinity | GAN INFINITY 356 X 原厂定制 |
-| gan356-i-5th-white | GAN356 i 五周年白色限定版 |
 
 These gaps are visible in the public Missing photo filter. Smart-cube app compatibility and discontinued stock can change after the cutoff. Announcements, including AoLong V6 and any unconfirmed retail releases, remain clearly labeled.
 
@@ -120,6 +118,23 @@ The [May 2011 GAN2 discussion](https://bbs.mf8-china.com/forum.php?extra=&mod=vi
 ### GAN17 Jurassic World photograph recovery
 
 On 2026-10-08, a targeted follow-up request to the previous Sina image URL returned HTTP 403. The [GlobalCube collaboration listing](https://globalcube.store/product/gan-x-jurassic-world-co-branded-magnetic-cube-series-gan17-magdrive%EF%BD%9Cgan356me/) supplies a separately named GAN17 product option and a poster explicitly identifying GAN17 MagDrive Jurassic World. The source-provided [700 × 1167 JPEG](https://globalcube.store/wp-content/uploads/2026/09/GAN17-3-700x1167.jpg) was downloaded, visually checked and preserved without alteration as `public/_assets/cube-history/gan17-jurassic-world-4662563b.jpg` (212,020 bytes; SHA-256 `4662563b8f261624c83d4e75a77d209277daf8f22c339b4aceea88a8fb0b733a`). Cards, details and comparisons serve that local copy to avoid another external image-host failure. A verified Taobao/Tmall direct listing was not recovered in this pass; the photograph is attributed to the actual inspected source. This photograph-only follow-up does not advance the price/review snapshot or turn the official announcement into a confirmed retail launch.
+
+### Targeted missing-photo recovery and loading audit
+
+The 2026-10-07 America/Los_Angeles follow-up (2026-10-08 UTC) prioritised Taobao/Tmall names and then cross-checked manufacturer pages, contemporary reviews and surviving shop archives. It recovered two previously missing photographs and repaired two failed external image links. The archive now has photographs for **968 of 973 records (99.5%)**, comprising 961 exact-model matches and seven explicitly shared source photographs. The five remaining gaps retain visible explanations; searching an incomplete public index does not establish that Taobao has no listing.
+
+| Record | Recovery | Preserved local asset |
+| --- | --- | --- |
+| GAN356 X INFINITY | The [dedicated GAN product page](https://www.gancube.cn/ganinfinity356x/) supplies an identified black-exterior/purple-internal custom example. Orders can differ. | `gan356-x-infinity-691c34f3.png`, 418 × 411, 50,050 bytes |
+| GAN356 i White 5th Anniversary | The [archived exact WizZon listing](https://web.archive.org/web/20240621224815id_/https://wizzon.com/product/gan-356-i-gan356i-white-5th-anniversary-limited-edition/) binds SKU TYPZ02058 to the main image through both HTML and Product JSON-LD. The [successful image replay](https://web.archive.org/web/20261004104651im_/https://wizzon.com/wp-content/uploads/TYPZ02058.jpg) preserves the original JPEG. Anniversary identity comes from the listing; the artwork itself says GAN356 i. | `gan356-i-5th-white-056a5726.jpg`, 1000 × 1000, 67,715 bytes |
+| GAN356 ME Jurassic World | The existing officially identified photograph's Sina URL returned HTTP 403; its previously retrieved, visually checked original is now served locally. | `gan356-me-jurassic-world-271dbe5f.jpg`, 129,228 bytes |
+| MoYu AoLong V6 | The existing official teaser photograph's Sina URL returned HTTP 403; its previously retrieved, visually checked original is now served locally. | `moyu-aolong-v6-8a87df87.jpg`, 94,476 bytes |
+
+All four unchanged files live under `public/_assets/cube-history/`, use content-hash filenames and retain the original remote URL and source attribution in the data. Together with the previous GAN17 repair, five photos are served locally. Prices, ratings and release statuses were not advanced by this photo-only follow-up.
+
+A fresh GET check of all **962 previously recorded unique source-image URLs** returned 960 image responses and the two Sina 403 responses described above. After these repairs and the two additions, the actual rendered set contains 959 distinct external image URLs covered by the successful check and five local image paths. This is a dated loading observation, not a guarantee of future external-host availability.
+
+For the remaining gaps, the early Gans photographs still lack a reliable GAN1/GAN2 numbering link; ordinary GAN354 M pictures were excluded from the INFINITY record. Alpha V Feng now links to the [original MechaAkuma review](https://www.youtube.com/watch?v=CB5AxcdcMB8), whose description identifies Lightake SKU33524. The original [PestVic Gas Assisted review](https://www.youtube.com/watch?v=uhl_2Ljp3Lg) remains linked. Their observed thumbnail URLs returned HTML rather than inspectable images; final Lightake archive requests returned 503/429, so these candidates remain unassigned. Brand handover notes document the searches and exclusions.
 
 ## Maintenance and verification
 

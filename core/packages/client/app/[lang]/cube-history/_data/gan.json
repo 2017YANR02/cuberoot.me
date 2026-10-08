@@ -1266,6 +1266,13 @@
       "url": "https://www.monster-go.com/",
       "publisher": "Monster Go / GAN",
       "kind": "official"
+    },
+    {
+      "id": "gan-infinity-x-official-cn",
+      "title": "GAN356 X INFINITY – 炫我潮色，专享定制",
+      "url": "https://www.gancube.cn/ganinfinity356x/",
+      "publisher": "GAN",
+      "kind": "official"
     }
   ],
   "cubes": [
@@ -1334,8 +1341,8 @@
       "tier": "unknown",
       "image": null,
       "imageNote": {
-        "zh": "已核对官方历史说明与现存商家档案，尚未找到能独立确认属于此早期型号的商品图；不以相近型号替代。",
-        "en": "Official historical material and surviving retailer archives were checked, but no independently identifiable image of this early model was found. No similar model is substituted."
+        "zh": "已按淘宝/天猫旧称、官方历史、2011 年同期帖及历史商品存档复查；现存早期 Gans 商品照片没有可验证的明确代数，不能可靠归属此型号。",
+        "en": "Rechecked Taobao/Tmall historical names, official history, contemporary 2011 discussions and archived listings. The surviving early Gans product photos lack a verifiable model number and cannot reliably be assigned to this model."
       }
     },
     {
@@ -13693,8 +13700,8 @@
       "tier": "unknown",
       "image": null,
       "imageNote": {
-        "zh": "已核对官方历史说明、2021 AMA、早期商品及收藏讨论；没有找到可独立辨认且可追溯的 GAN1 商品图。",
-        "en": "Official history, the 2021 AMA, early listings and collector discussions were checked; no independently identifiable, traceable GAN1 image was found."
+        "zh": "已按淘宝/天猫旧称、官方历史、2011 年同期帖及历史商品存档复查；现存早期 Gans 商品照片没有可验证的明确代数，不能可靠归属此型号。",
+        "en": "Rechecked Taobao/Tmall historical names, official history, contemporary 2011 discussions and archived listings. The surviving early Gans product photos lack a verifiable model number and cannot reliably be assigned to this model."
       }
     },
     {
@@ -15207,6 +15214,7 @@
       "familyId": "gan356-me",
       "image": {
         "url": "https://wx4.sinaimg.cn/middle/829ea9aagy1ihknkxaxkjj22tc480kjp.jpg",
+        "assetPath": "/_assets/cube-history/gan356-me-jurassic-world-271dbe5f.jpg",
         "sourceId": "gan-audit-jurassic-me",
         "alt": {
           "zh": "GAN356 ME 侏罗纪世界联名版 实物商品图",
@@ -15462,27 +15470,24 @@
       },
       "highlights": [
         {
-          "zh": "GAN 官方 INFINITY 原厂定制支线，不是仅添加润滑油的商家调校服务。",
-          "en": "GAN’s manufacturer-exclusive INFINITY customization line, rather than a shop-only lubrication service."
-        },
-        {
-          "zh": "定制颜色和基本配置属于下单选项，不把每个用户订单统计成新型号。",
-          "en": "Custom colors and basic setups are ordering options; individual customer configurations are not counted as separate models."
+          "zh": "原厂按订单选择内外壳配色和调试配置；官网展示了黑色外壳、紫色内壳等定制示例。",
+          "en": "Factory orders select exterior/internal colors and setup options; official examples include a black exterior with purple internals."
         }
       ],
       "assessment": {
         "summary": {
-          "zh": "把原本藏在系列说明中的原厂定制发行独立呈现，便于追溯 GAN 个性化产品的发展。",
-          "en": "Separately documents the factory-custom offering previously obscured inside the model family."
+          "zh": "GAN356 X 的原厂定制分支，可组合内外壳配色、磁力、弹力与调试手感。",
+          "en": "The factory-custom GAN356 X branch offers selectable exterior and internal colors, magnetic strength, spring force and setup feel."
         },
         "tradeoffs": {
-          "zh": "订单配置不统一；未找到足以绑定具体配置的报价、净重和可正常加载的原始实物图，因此不套用普通版参数。",
-          "en": "Orders vary. No configuration-specific price, net weight or loadable original photograph was verified, so ordinary-model figures are not substituted."
+          "zh": "原厂定制订单配置不统一；官网图片为一种配色示例，未找到足以绑定具体配置的报价与净重，因此不套用普通版参数。",
+          "en": "Factory-custom orders vary. The official image shows one color configuration; configuration-specific price and net weight remain unverified, so ordinary-model figures are not substituted."
         },
         "basis": "editorial",
         "sourceIds": [
           "gan-r3-infinity-x-review",
-          "gan-audit-scs-history"
+          "gan-audit-scs-history",
+          "gan-infinity-x-official-cn"
         ]
       },
       "variants": [
@@ -15490,7 +15495,8 @@
       ],
       "sourceIds": [
         "gan-r3-infinity-x-review",
-        "gan-audit-scs-history"
+        "gan-audit-scs-history",
+        "gan-infinity-x-official-cn"
       ],
       "tags": [
         "china",
@@ -15505,10 +15511,19 @@
       "status": "released",
       "category": "speed",
       "tier": "specialty",
-      "image": null,
-      "imageNote": {
-        "zh": "已确认同期实物评测和官方型号名称；旧商品链接现已重定向，评测封面图源未成功返回图片，暂不使用普通版代图。",
-        "en": "Contemporary hands-on evidence and model naming are confirmed. The old product URL redirects, and the review thumbnail did not return an image; no ordinary-model substitute is used."
+      "image": {
+        "url": "https://www.gancube.cn/wp-content/themes/chtemp/static/GANINFINITY356X/images/img6.png",
+        "sourceId": "gan-infinity-x-official-cn",
+        "alt": {
+          "zh": "GAN356 X INFINITY 原厂定制黑色外壳、紫色内壳示例",
+          "en": "GAN356 X INFINITY factory-custom example with black exterior and purple internals"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "GAN 官方 GAN356 X INFINITY 专属产品页原图，展示黑色外壳、紫色内壳的定制示例；各原厂订单可选择不同配色与配置。",
+          "en": "Original image from GAN’s dedicated GAN356 X INFINITY product page, showing a factory-custom black-exterior/purple-interior example. Colors and configuration can differ between factory orders."
+        },
+        "assetPath": "/_assets/cube-history/gan356-x-infinity-691c34f3.png"
       }
     },
     {
@@ -15728,6 +15743,7 @@
     "GAN INFINITY 两条有原厂独立定制分支证据：官方明确命名 GAN354M INFINITY，2019 年 354 和 356 X 实物评测链接到当时官方定制商品。仅设两个基础分支，订单颜色/配置不逐一加条。2019 是已见实物的文献年份，尤其 354 不据此断言始于 2019。旧商品页重定向；Wayback available 返回 429；同期视频封面图源返回非图片或不可访问，Reddit 原帖读取被禁用。两款保留 null 图、未知具体配置报价与净重。 / Factory-custom INFINITY 354 M and 356 X are evidenced as distinct branches; individual orders are not separate models. The year denotes documented availability, not necessarily first release. Redirected official pages, an archive rate limit and inaccessible contemporary image sources prevent verified photographs; prices and net weights remain unknown.",
     "新增图片 2 张 exact（马年、山河社稷图）、1 张官方 family 共用图（真爱粉 S/SM）、3 条缺图（两款 INFINITY、五周年白色智能版）。可用图均检查实际响应类型并看过原图；无人工智能生成或普通版代图。五周年版和 Air S 真爱粉首发日期仍未知，不继承母型号日期。 / New images: two exact, one explicitly shared official family image, and three gaps. Loadable originals were checked visually and by content type. Launch dates remain unknown for the white fifth-anniversary smart cube and Air S Love Pink.",
     "未贸然新增的候选：WizZon/Cutcorner 的 GAN357 V2 尚未证实与既有透明轴心修订是否同款；MG3 AI Lite 仅见商家命名，未证实独立硬件；ZiiCube GAN356 iPlay V2 与既有 iPlay 的关系待核；收藏文章所称 GAN356 X Watermelon Red 尚缺足够原厂/同期来源。国色330与已有六种特别配色一致，补官方名称和别名而不重复增条；山河社稷图的五色盲盒仅设一条联名发行。 / Unresolved candidates include GAN357 V2, MG3 AI Lite, the retailer-named iPlay V2 and the collector-reported GAN356 X Watermelon Red. The six-color Antique Rhyme series is added as a name/alias of the existing special-color record, not a duplicate.",
-    "搜索补充正式中英文名称：萌刻/MonsterGo 与 MG3 各教学型号、花木蓝（保留旧译青花蓝）、真爱粉（保留旧译恋爱粉）、国色/Antique Rhyme、GAN Cheering。所有别名都关联本轮官方来源；未将未经核实的 V2/Lite 叫法当作确定型号别名。 / Search enrichment includes official Chinese and English naming, while preserving former translations as aliases; uncertain retailer V2/Lite labels are not promoted to confirmed aliases."
+    "搜索补充正式中英文名称：萌刻/MonsterGo 与 MG3 各教学型号、花木蓝（保留旧译青花蓝）、真爱粉（保留旧译恋爱粉）、国色/Antique Rhyme、GAN Cheering。所有别名都关联本轮官方来源；未将未经核实的 V2/Lite 叫法当作确定型号别名。 / Search enrichment includes official Chinese and English naming, while preserving former translations as aliases; uncertain retailer V2/Lite labels are not promoted to confirmed aliases.",
+    "2026-10-07（America/Los_Angeles；UTC 2026-10-08）定向补图：按淘宝/天猫旧称和中英文型号检索，并复核原厂页、同期评测与旧商品存档；GAN356 X INFINITY 恢复官方独立产品图并保存原始副本。GAN1/2 的现存早期实物图缺少明确编号，GAN354 M INFINITY 的已确认评测缩略图未返回图像，继续保留具体缺口。 / Targeted photo recovery on 2026-10-07 America/Los_Angeles: searched Taobao/Tmall historical and bilingual names and checked official pages, contemporary reviews and archived listings. Recovered an unchanged official GAN356 X INFINITY photograph. Early Gans photographs lack a verified numbered-model identity; no inspectable exact GAN354 M INFINITY image was recovered."
   ]
 }

@@ -1308,6 +1308,13 @@
       "url": "https://www.v-cubes.com/products/v-cube-store/v-classics-cubes-puzzle-cube-games/v-cube-3x3x3-puzzle-cube-toy",
       "publisher": "V-CUBE",
       "kind": "official"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=CB5AxcdcMB8",
+      "title": "Alpha V FENG 3x3x3 Video Review",
+      "publisher": "MechaAkuma",
+      "kind": "review",
+      "id": "photo-alpha-feng-contemporary-review"
     }
   ],
   "cubes": [
@@ -13306,7 +13313,8 @@
       },
       "variants": [],
       "sourceIds": [
-        "hist-alpha-vf"
+        "hist-alpha-vf",
+        "photo-alpha-feng-contemporary-review"
       ],
       "tags": [],
       "status": "released",
@@ -13314,8 +13322,8 @@
       "image": null,
       "tier": "unknown",
       "imageNote": {
-        "zh": "正在反查该历史型号的原始实物照片；目前未找到能独立确认型号与年代的图片。",
-        "en": "An identifiable original photograph is still being researched; no image has been independently matched to this exact historical model and period."
+        "zh": "已追溯至该型号同期实物评测及其原始缩略图地址；图片服务器未返回可检验图像，因此暂缺图。未用其他型号代替。",
+        "en": "Traced to a contemporary hands-on review of this exact model and its original thumbnail URLs; the image host did not return inspectable image data, so no photograph is shown. No other model is substituted."
       }
     },
     {
@@ -14505,8 +14513,8 @@
       "tier": "unknown",
       "image": null,
       "imageNote": {
-        "zh": "已确认具体型号，尚未恢复可独立核对的实物照片。",
-        "en": "The model is documented, but an independently identifiable product photograph has not been recovered."
+        "zh": "已追溯至该型号同期实物评测及其原始缩略图地址；图片服务器未返回可检验图像，因此暂缺图。未用其他型号代替。",
+        "en": "Traced to a contemporary hands-on review of this exact model and its original thumbnail URLs; the image host did not return inspectable image data, so no photograph is shown. No other model is substituted."
       }
     },
     {
@@ -14995,6 +15003,7 @@
     "Round 3: checked all 14 Cube4You Tribox brand entries. Added Tile Matte/Glossy, two Maze recognition configurations and the independently documented 2010 Gas Assisted model. Recovered the standard C4Y product photograph and item dimensions/weight. Ordinary body colors, transparent sticker options, stands, bundles and other orders were not counted as independent new mechanisms.",
     "Cube4You Chromium and Clear (Tribox 2363/2364) are Helicopter-derived edge-turning products, not standard six-face 3×3 cubes; excluded. C4Y Gas Assisted and Alpha V Feng YouTube oEmbed identify real historical reviews, but the exposed thumbnail endpoints returned HTML rather than images; those image gaps remain explicit.",
     "V-CUBE: added the main 3×3 flat, 3b pillow, both keychain shapes and Magnetic. Official category body-color and DUO bundle entries are variants/bundles. This is international historical context, not an exhaustive inventory of regional V-Collections picture/licensed editions.",
-    "V-CUBE Magnetic is already advertised in the 2025 official catalog. Its 2026 catalog appearance does not prove a 2026 launch. Current official product-route failures and copied legacy specification-grid conflicts are recorded rather than silently combining different model facts. Keychain net weights remain null because the official quoted mass includes the chain."
+    "V-CUBE Magnetic is already advertised in the 2025 official catalog. Its 2026 catalog appearance does not prove a 2026 launch. Current official product-route failures and copied legacy specification-grid conflicts are recorded rather than silently combining different model facts. Keychain net weights remain null because the official quoted mass includes the chain.",
+    "2026-10-07（America/Los_Angeles）淘宝/天猫与同期来源补图：封五追到 MechaAkuma 原评测及 Lightake SKU33524，Gas Assisted 追到 PestVic 原评测；实际缩略图地址返回 HTML 而非图像，Lightake 精确存档查询后续返回 503/429，未使用普通甲五、海燕或普通 C4Y 代图。 / Targeted Taobao/Tmall and historical-source photo search traced Alpha V Feng to its original MechaAkuma review and Lightake SKU33524, and Gas Assisted to PestVic’s original review. Published thumbnail URLs returned HTML rather than images; final Lightake archive requests returned 503/429. Standard Alpha V, Haiyan and ordinary C4Y photographs were excluded."
   ]
 }

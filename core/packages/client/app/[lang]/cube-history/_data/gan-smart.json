@@ -3347,7 +3347,8 @@
         "White 5th Anniversary — cube only"
       ],
       "sourceIds": [
-        "gan-r3-i5th-wizzon"
+        "gan-r3-i5th-wizzon",
+        "gan-photo-i5th-wizzon-archive"
       ],
       "tags": [
         "china",
@@ -3361,10 +3362,19 @@
       "status": "released",
       "category": "smart",
       "tier": "specialty",
-      "image": null,
-      "imageNote": {
-        "zh": "独立商品页已确认；图源本次返回非图片响应，尚未取得可验证的实物图，不使用其他版本替代。",
-        "en": "The separate listing is confirmed, but its image source returned a non-image response in this pass. No photograph of another version is substituted."
+      "image": {
+        "url": "https://wizzon.com/wp-content/uploads/TYPZ02058.jpg",
+        "sourceId": "gan-photo-i5th-wizzon-archive",
+        "match": "exact",
+        "alt": {
+          "zh": "WizZon 五周年白色 GAN356 i 商品页主图，展示白色正面与蓝色内件",
+          "en": "Main image from WizZon’s white fifth-anniversary GAN356 i listing, showing a white face and blue internal pieces"
+        },
+        "note": {
+          "zh": "来自白色五周年版独立商品页的主图；标题、SKU TYPZ02058、主图标签与 Product JSON-LD 对应一致。原站图片受限，本地照片从公开网页存档取回，未经修改。",
+          "en": "Main image from the separate white fifth-anniversary listing. Its title, SKU TYPZ02058, main-image tag and Product JSON-LD agree. The original host is restricted; this unchanged copy was recovered from the public web archive."
+        },
+        "assetPath": "/_assets/cube-history/gan356-i-5th-white-056a5726.jpg"
       }
     }
   ],
@@ -3690,9 +3700,17 @@
       "url": "https://wizzon.com/product/gan-356-i-gan356i-white-5th-anniversary-limited-edition/",
       "publisher": "WizZon",
       "kind": "retailer"
+    },
+    {
+      "id": "gan-photo-i5th-wizzon-archive",
+      "title": "Archived WizZon white fifth-anniversary product page (2024-06-21)",
+      "url": "https://web.archive.org/web/20240621224815id_/https://wizzon.com/product/gan-356-i-gan356i-white-5th-anniversary-limited-edition/",
+      "publisher": "WizZon via Internet Archive",
+      "kind": "archive"
     }
   ],
   "coverageNotes": [
-    "GAN and related smart 3×3 products are partitioned here for maintainability. IDs and cross-dataset family/source links remain unchanged."
+    "GAN and related smart 3×3 products are partitioned here for maintainability. IDs and cross-dataset family/source links remain unchanged.",
+    "2026-10-07（America/Los_Angeles）图片补查：GAN356 i 五周年白色版通过 WizZon 精确 SKU TYPZ02058 的 2024-06-21 商品页存档恢复主图；主图标签与 Product JSON-LD 一致。图片实际由 2026-10-04 网页存档回放取回，保存原始 JPEG，周年名称依据商品页而非图片内文字。 / Recovered the white fifth-anniversary GAN356 i main image from the exact WizZon SKU TYPZ02058 archive: its image tag and Product JSON-LD agree. The unchanged JPEG came from the 2026-10-04 archive replay; the anniversary attribution comes from the listing, not wording inside the artwork."
   ]
 }
