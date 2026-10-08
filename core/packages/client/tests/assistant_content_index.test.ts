@@ -3,7 +3,7 @@ import {mkdtemp,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {getRouteCacheKey} from 'next/dist/server/lib/route-cache-key';
-import {RouteKind} from 'next/dist/server/route-kind';
+import type {RouteKind} from 'next/dist/server/route-kind';
 import {indexPublicHtml,discoverPublicPages,discoverNavigationLinks,solverDestinations,metadataDestinations,platformDestinations,discoverBuildArtifacts} from '../scripts/build-assistant-index';
 
 describe('assistant build-time public content index',()=>{
@@ -52,8 +52,8 @@ describe('assistant build-time public content index',()=>{
   async function artifact(root:string,file:string,content:string) {
     const target=path.join(root,file);await mkdir(path.dirname(target),{recursive:true});await writeFile(target,content);return target;
   }
-  const adapterPage=(route:string)=>`${getRouteCacheKey(route,{kind:RouteKind.APP_PAGE,sourceRoute:'/[lang]/wiki/page'})}.html`;
-  const adapterSitemap=()=>`${getRouteCacheKey('/sitemap.xml',{kind:RouteKind.APP_ROUTE,sourceRoute:'/sitemap.xml/route'})}.body`;
+  const adapterPage=(route:string)=>`${getRouteCacheKey(route,{kind:'APP_PAGE' as RouteKind.APP_PAGE,sourceRoute:'/[lang]/wiki/page'})}.html`;
+  const adapterSitemap=()=>`${getRouteCacheKey('/sitemap.xml',{kind:'APP_ROUTE' as RouteKind.APP_ROUTE,sourceRoute:'/sitemap.xml/route'})}.body`;
   it.each(['standalone','adapter'] as const)('reads %s build artifacts while retaining public/noindex boundaries',async(layout)=>{
     const root=await fixtureRoot();
     for(const route of ['/en/wiki','/zh/wiki','/en/account','/zh/admin','/zh/wca/persons/_','/en/private-example']) {
