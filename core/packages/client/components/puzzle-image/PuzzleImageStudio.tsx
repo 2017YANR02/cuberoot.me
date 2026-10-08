@@ -460,14 +460,14 @@ export default function PuzzleImageStudio({
         )}
         {/* 复制图片本身,而不是链接 —— 贴进文档 / 聊天最短的一条路。 */}
         <CopyImageButton
-          label={t('复制图片', 'Copy image')}
+          label="PNG"
           disabled={!exportReady}
           getPng={() => externalImage
             ? svgToRasterBlob(getCurrentSvg(), { width: exportWidth, height: exportHeight, format: 'png' })
             : svgToPngBlob(getCurrentSvg(), s.imageSize)}
         />
         <CopyButton
-          label={t('复制 SVG', 'Copy SVG')}
+          label="SVG"
           getValue={() => getCurrentSvg()}
           disabled={!exportReady}
         />
