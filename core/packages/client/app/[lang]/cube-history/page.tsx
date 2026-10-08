@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseAsArrayOf, parseAsBoolean } from 'nuqs';
-import { ArrowUpRight, BookOpen, Check, Columns3, Download, History, Link2, Plus, X } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, Columns3, Download, History, ImageOff, Link2, Plus, X } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
@@ -13,7 +13,7 @@ import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
 import { CUBES, SOURCES, SOURCE_BY_ID } from './_data/catalog';
-import { BRANDS, CATEGORIES, EVIDENCE_LABELS, MECHANISMS, METHODOLOGY, PERIODS, PRICE_LABELS, RELEASE_LABELS, SNAPSHOT_DATE, SORT_LABELS, SOURCE_LABELS, STATUS_LABELS, TECHNOLOGIES } from './_data/labels';
+import { BRANDS, CATEGORIES, EVIDENCE_LABELS, MECHANISMS, METHODOLOGY, PERIODS, PRICE_LABELS, RELEASE_LABELS, SNAPSHOT_DATE, SORT_LABELS, SOURCE_LABELS, STATUS_LABELS, TECHNOLOGIES, TIERS } from './_data/labels';
 import { MILESTONES } from './_data/milestones';
 import { EMPTY_FILTERS, matchesCube, selectedCubes, sortCubes, sourceIdsForCube } from './_data/query';
 import type { Cube, CubePrice, LocalizedText } from './_data/types';
@@ -22,12 +22,17 @@ import './cube-history.css';
 
 type View = 'timeline' | 'catalog' | 'compare' | 'sources';
 const VIEW_OPTIONS: { id: View; label: LocalizedText; Icon: typeof History }[] = [
-  { id: 'timeline', label: { zh: '发展时间线', en: 'Timeline' }, Icon: History },
   { id: 'catalog', label: { zh: '型号图鉴', en: 'Model catalog' }, Icon: BookOpen },
+  { id: 'timeline', label: { zh: '发展时间线', en: 'Timeline' }, Icon: History },
   { id: 'compare', label: { zh: '参数对比', en: 'Compare' }, Icon: Columns3 },
   { id: 'sources', label: { zh: '来源与口径', en: 'Sources & method' }, Icon: Link2 },
 ];
 const brandKeys = [...new Set(CUBES.map(cube => cube.brand))].sort((a, b) => a.localeCompare(b, 'en'));
+const snapshotYear = Number(SNAPSHOT_DATE.slice(0, 4));
+const earliestYear = Math.min(...CUBES.flatMap(cube => cube.year === null ? [] : [cube.year]));
+const yearKeys = Array.from({ length: snapshotYear - earliestYear + 1 }, (_, index) => String(snapshotYear - index));
+const familyKeys = new Set(CUBES.flatMap(cube => cube.familyId ? [cube.familyId] : []));
+const familyRoots = CUBES.filter(cube => familyKeys.has(cube.id)).sort((a, b) => a.name.en.localeCompare(b.name.en, 'en'));
 const UNKNOWN = { zh: '待核实', en: 'Unverified' };
 const REGIONS: Record<string, LocalizedText> = {"US / international":{"zh":"美国 / 国际市场","en":"US / international"},"US":{"zh":"美国","en":"US"},"Global":{"zh":"国际市场","en":"Global"},"China":{"zh":"中国","en":"China"},"CN export":{"zh":"中国出口报价","en":"China export"},"CN":{"zh":"中国","en":"China"}};
 const brandName = (brand: string) => tr(BRANDS[brand] ?? { zh: brand, en: brand });
@@ -63,7 +68,7 @@ function CubeGlyph() {
 
 function Hero() {
   useLang();
-  const officialDates = CUBES.filter(cube => cube.release.basis === 'official').length;
+  const withImages = CUBES.filter(cube => cube.image).length;
   return <>
     <header className="ch-header">
       <HomeLink className="ch-wordmark">CubeRoot<span>{tr({ zh: '硬件档案', en: 'Hardware archive' })}</span></HomeLink>
@@ -82,10 +87,27 @@ function Hero() {
       <div><dt>{tr({ zh: '型号记录', en: 'Model entries' })}</dt><dd>{CUBES.length}</dd></div>
       <div><dt>{tr({ zh: '品牌 / 系列标签', en: 'Brand / line labels' })}</dt><dd>{brandKeys.length}</dd></div>
       <div><dt>{tr({ zh: '参考来源', en: 'Sources' })}</dt><dd>{SOURCES.length}</dd></div>
-      <div><dt>{tr({ zh: '有官方日期记录', en: 'With official date evidence' })}</dt><dd>{officialDates}</dd></div>
+      <div><dt>{tr({ zh: '附来源图片', en: 'With sourced photos' })}</dt><dd>{withImages}</dd></div>
     </dl>
-    <p className="ch-scope">{tr({ zh: '包括已发布和预告型号。涂层、限定色和礼包多归入版本；记录数不等于全部商品 SKU。未知的日期、价格和参数保留为空。', en: 'Includes released and announced models. Finishes, colors and bundles are usually grouped as variants; entries are not SKUs. Unknown dates, prices and specifications remain unknown.' })}</p>
+    <p className="ch-scope">{tr({ zh: '旗舰、入门与独立子型号分别收录。每张图片保留出处，共用图会明确标注。日期、售价、定位及缺失资料均可筛选；记录数不是全球 SKU 总数。', en: 'Flagships, budget models and distinct sub-models have individual records. Every photo has a source; shared photography is labeled. Dates, prices, positioning and evidence gaps are filterable. The entry count is not a global SKU total.' })}</p>
   </>;
+}
+
+function CubePhoto({ cube, compact = false, onOpen }: { cube: Cube; compact?: boolean; onOpen?: (id: string) => void }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const photo = cube.image;
+  const source = photo ? SOURCE_BY_ID.get(photo.sourceId) : undefined;
+  const missing = !photo || failedUrl === photo.url;
+  const content = missing
+    ? <span className="ch-photo-missing"><ImageOff size={compact ? 20 : 32} /><span>{tr(photo ? { zh: '图片暂未载入', en: 'Photo unavailable' } : { zh: '原始图片待核', en: 'Original photo unverified' })}</span></span>
+    : <img className="ch-product-image" src={photo.url} alt={tr(photo.alt)} width={600} height={450} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailedUrl(photo.url)} />;
+  return <figure className={`ch-photo${compact ? ' ch-photo--compact' : ''}`}>
+    {onOpen ? <button type="button" className="ch-photo-button" onClick={() => onOpen(cube.id)} aria-label={tr({ zh: `查看 ${cube.name.zh} 的图片与资料`, en: `View photos and record for ${cube.name.en}` })}>{content}</button> : <div className="ch-photo-frame">{content}</div>}
+    <figcaption className="ch-photo-caption">
+      {source ? <a href={source.url} target="_blank" rel="noopener noreferrer">{tr({ zh: '图片来源', en: 'Photo source' })} · {source.publisher}<ArrowUpRight size={11} /></a> : <span>{tr({ zh: '保留资料缺口', en: 'Evidence gap retained' })}</span>}
+      {photo?.match === 'family' && <span className="ch-badge">{tr({ zh: '来源页共用图', en: 'Shared source photo' })}</span>}
+    </figcaption>
+  </figure>;
 }
 
 function PriceQuote({ price, compact = false }: { price: CubePrice; compact?: boolean }) {
@@ -97,6 +119,12 @@ function PriceQuote({ price, compact = false }: { price: CubePrice; compact?: bo
     <small>{[price.variant, tr(REGIONS[price.region] ?? { zh: price.region, en: price.region }), price.asOf].filter(Boolean).join(' · ')}</small>
     {!compact && <p>{tr(price.note)}</p>}
   </div>;
+}
+
+function MerchantRating({ cube }: { cube: Cube }) {
+  const rating = cube.rating;
+  if (!rating) return <p className="ch-muted">{tr({ zh: '暂未核到该商品页的评分和评论数。', en: 'A product-page rating with a review count has not been verified.' })}</p>;
+  return <div><p><strong>{rating.value.toFixed(2)} / {rating.scale}</strong> · {tr({ zh: `${rating.count} 条商家页评价`, en: `${rating.count} merchant-page reviews` })} <ReferenceLinks ids={[rating.sourceId]} /></p><small>{rating.asOf}</small><p className="ch-muted">{tr(rating.note)}</p></div>;
 }
 
 function AddToCompare({ cube, selected, full, onToggle }: { cube: Cube; selected: boolean; full: boolean; onToggle: (id: string) => void }) {
@@ -113,9 +141,11 @@ function ModelCard({ cube, selected, full, onToggle, onOpen }: {
 }) {
   const leadPrice = cube.prices.find(price => price.currency === 'CNY') ?? cube.prices[0];
   return <article className="ch-model" data-site-surface="panel">
+    <CubePhoto cube={cube} onOpen={onOpen} />
     <div className="ch-model-kicker"><span>{brandName(cube.brand)}</span><span className={`ch-status ch-status--${cube.status}`}>{tr(STATUS_LABELS[cube.status])}</span></div>
     <h3><button type="button" className="ch-model-title-button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}<ArrowUpRight size={18} /></button></h3>
     <p className="ch-model-date"><time>{dateText(cube)}</time><span className="ch-badge">{tr(RELEASE_LABELS[cube.release.basis])}</span><ReferenceLinks ids={cube.release.sourceIds} /></p>
+    <p className="ch-model-position">{tr(TIERS[cube.tier ?? 'unknown'])}{cube.familyId && <> · {tr({ zh: '独立子型号', en: 'Distinct version' })}</>}</p>
     <p className="ch-model-summary">{tr(cube.highlights[0] ?? cube.assessment.summary)}</p>
     <dl className="ch-model-specs"><div><dt>{tr({ zh: '尺寸', en: 'Size' })}</dt><dd>{specText(cube.specs.size)}</dd></div><div><dt>{tr({ zh: '净重', en: 'Net weight' })}</dt><dd>{specText(cube.specs.weight)}</dd></div></dl>
     {leadPrice ? <PriceQuote price={leadPrice} compact /> : <p className="ch-muted">{tr({ zh: '售价待核实', en: 'Price unverified' })}</p>}
@@ -123,15 +153,19 @@ function ModelCard({ cube, selected, full, onToggle, onOpen }: {
   </article>;
 }
 
-function CubeDetails({ cube, selected, full, onToggle, onClose }: {
-  cube: Cube; selected: boolean; full: boolean; onToggle: (id: string) => void; onClose: () => void;
+function focusDetailHeading(title: HTMLElement | null) {
+  title?.focus({ preventScroll: true });
+  title?.closest('article')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+function CubeDetails({ cube, selected, full, onToggle, onClose, onOpen }: {
+  cube: Cube; selected: boolean; full: boolean; onToggle: (id: string) => void; onClose: () => void; onOpen: (id: string) => void;
 }) {
   const { copied, copy } = useCopy();
   const heading = useRef<HTMLHeadingElement>(null);
+  const related = CUBES.filter(item => (item.familyId ?? item.id) === (cube.familyId ?? cube.id));
   useEffect(() => {
-    const title = heading.current;
-    title?.focus({ preventScroll: true });
-    title?.closest('article')?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    focusDetailHeading(heading.current);
   }, [cube.id]);
   return <article className="ch-detail" data-site-surface="panel" aria-labelledby="ch-detail-title">
     <div className="ch-detail-heading">
@@ -142,9 +176,17 @@ function CubeDetails({ cube, selected, full, onToggle, onClose }: {
       <AddToCompare cube={cube} selected={selected} full={full} onToggle={onToggle} />
       <button type="button" className="ch-button" onClick={() => copy(window.location.href)}>{copied ? <Check size={15} /> : <Link2 size={15} />}{tr(copied ? { zh: '已复制', en: 'Copied' } : { zh: '复制型号链接', en: 'Copy model link' })}</button>
     </div>
+    <div className="ch-detail-photo-row">
+      <CubePhoto key={cube.id} cube={cube} />
+      <div className="ch-photo-notes"><h3>{tr({ zh: '这一个版本', en: 'This specific version' })}</h3><p>{tr(cube.image?.note ?? cube.imageNote ?? { zh: '尚未找到能够确认对应本型号的产品图片。', en: 'A product photo verified for this model has not yet been found.' })}</p><p>{tr({ zh: '产品定位', en: 'Positioning' })}：{tr(TIERS[cube.tier ?? 'unknown'])}</p>
+        {related.length > 1 && <><h4>{tr({ zh: '同系列版本', en: 'Versions in this family' })}</h4><p>{tr({ zh: '切换到具体版本，查看它自己的日期、售价、结构和图片。', en: 'Choose a specific version to inspect its own date, price, mechanism and photo.' })}</p><CompactSelect className="ch-family-select" label={tr(cube.name)} valueText={tr(cube.name)} title={tr(cube.name)} value={cube.id} onChange={onOpen} ariaLabel={tr({ zh: '查看同系列版本', en: 'Choose a family version' })} items={related.map(item => ({ value: item.id, label: tr(item.name) }))} /></>}
+      </div>
+    </div>
     <div className="ch-detail-grid">
       <section><h3>{tr({ zh: '发布时间', en: 'Release evidence' })}</h3><p className="ch-detail-date">{dateText(cube)} <span className="ch-badge">{tr(RELEASE_LABELS[cube.release.basis])}</span><ReferenceLinks ids={cube.release.sourceIds} /></p><p>{tr(cube.release.note)}</p></section>
-      <section><h3>{tr({ zh: '售价记录', en: 'Price records' })}</h3>{cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} />) : <p className="ch-muted">{tr({ zh: '尚未找到可核查的报价，未推算或填零。', en: 'No verified quote found; no estimate or zero placeholder is substituted.' })}</p>}</section>
+      <section><h3>{tr({ zh: '售价记录', en: 'Price records' })}</h3>{cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} />) : <p className="ch-muted">{tr({ zh: '尚未找到可核查的报价，未推算或填零。', en: 'No verified quote found; no estimate or zero placeholder is substituted.' })}</p>}
+        {!!cube.familyPrices?.length && <><h4>{tr({ zh: '同系列官网报价 · 配置未明确', en: 'Official family quote · configuration unspecified' })}</h4><p className="ch-muted">{tr({ zh: '官网未说明这一报价对应哪个配置，因此单独保留作系列资料，不计入本型号的人民币价格筛选或直接价格比较。', en: 'The official page does not identify the configuration for this quote. It is retained as family context and excluded from this model’s CNY-price filter and direct price comparison.' })}</p>{cube.familyPrices.map((price, index) => <PriceQuote key={index} price={price} />)}</>}
+      </section>
       <section><h3>{tr({ zh: '结构与性能参数', en: 'Mechanism and specifications' })}</h3>
         <dl className="ch-spec-list">
           <div><dt>{tr({ zh: '尺寸', en: 'Size' })}</dt><dd>{specText(cube.specs.size)}</dd></div>
@@ -155,6 +197,7 @@ function CubeDetails({ cube, selected, full, onToggle, onClose }: {
       </section>
       <section><h3>{tr({ zh: '亮点与变化', en: 'Highlights and changes' })}</h3><ul>{cube.highlights.map((item, index) => <li key={index}>{tr(item)}</li>)}</ul><ReferenceLinks ids={cube.sourceIds} /></section>
       <section className="ch-assessment"><h3>{tr({ zh: '评价', en: 'Assessment' })}<span className="ch-badge">{tr(cube.assessment.basis === 'review' ? { zh: '亲历评价摘要', en: 'First-hand review summary' } : { zh: '编辑分析', en: 'Editorial analysis' })}</span></h3><p>{tr(cube.assessment.summary)}</p><h4>{tr({ zh: '局限与待核项', en: 'Limitations and open questions' })}</h4><p>{tr(cube.assessment.tradeoffs)}</p><ReferenceLinks ids={cube.assessment.sourceIds} /></section>
+      <section><h3>{tr({ zh: '商家页用户评分', en: 'Merchant-page user rating' })}</h3><MerchantRating cube={cube} /></section>
       <section><h3>{tr({ zh: '已记录版本', en: 'Documented variants' })}</h3>{cube.variants.length ? <ul>{cube.variants.map((variant, index) => <li key={index}>{variant}</li>)}</ul> : <p className="ch-muted">{tr({ zh: '未找到足够资料进一步区分版本。', en: 'Insufficient evidence to distinguish further variants.' })}</p>}</section>
     </div>
     <footer className="ch-detail-foot">{tr({ zh: '原始来源', en: 'Original sources' })}<ReferenceLinks ids={sourceIdsForCube(cube)} /></footer>
@@ -165,7 +208,7 @@ function CatalogTable({ cubes, ids, full, onOpen, onToggle }: { cubes: Cube[]; i
   return <div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table"><caption>{tr({ zh: '三阶魔方型号及可核查参数', en: '3×3 models and sourced specifications' })}</caption><thead><tr>
     {[{ zh: '型号', en: 'Model' }, { zh: '时间及口径', en: 'Date & basis' }, { zh: '尺寸 / 净重', en: 'Size / item weight' }, { zh: '价格', en: 'Price' }, { zh: '对比', en: 'Compare' }].map(label => <th key={label.en} scope="col">{tr(label)}</th>)}
   </tr></thead><tbody>{cubes.map(cube => <tr key={cube.id}>
-    <th scope="row"><span className="ch-muted">{brandName(cube.brand)}</span><button type="button" className="ch-text-button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}</button></th>
+    <th scope="row"><CubePhoto cube={cube} compact onOpen={onOpen} /><span className="ch-muted">{brandName(cube.brand)}</span><button type="button" className="ch-text-button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}</button></th>
     <td>{dateText(cube)}<small>{tr(RELEASE_LABELS[cube.release.basis])} · {tr(STATUS_LABELS[cube.status])}</small></td>
     <td>{specText(cube.specs.size)}<small>{specText(cube.specs.weight)}</small></td>
     <td>{cube.prices.length ? <PriceQuote price={cube.prices.find(price => price.currency === 'CNY') ?? cube.prices[0]} compact /> : tr(UNKNOWN)}</td>
@@ -176,7 +219,9 @@ function CatalogTable({ cubes, ids, full, onOpen, onToggle }: { cubes: Cube[]; i
 function Comparison({ cubes, onToggle, onBrowse }: { cubes: Cube[]; onToggle: (id: string) => void; onBrowse: () => void }) {
   if (!cubes.length) return <div className="ch-empty" data-site-surface="panel"><Columns3 size={35} /><h2>{tr({ zh: '把想了解的魔方放在一起', en: 'Bring the cubes you want to understand together' })}</h2><p>{tr({ zh: '在型号图鉴中选择最多四款，比较发布时间、版本、售价、结构与评价。', en: 'Choose up to four models from the catalog to compare dates, variants, prices, mechanisms and assessments.' })}</p><button type="button" className="ch-button ch-button--primary" onClick={onBrowse}>{tr({ zh: '选择型号', en: 'Choose models' })}</button></div>;
   const rows: { label: LocalizedText; render: (cube: Cube) => ReactNode }[] = [
+    { label: { zh: '产品图片', en: 'Product photo' }, render: cube => <CubePhoto cube={cube} compact /> },
     { label: { zh: '品牌', en: 'Brand' }, render: cube => brandName(cube.brand) },
+    { label: { zh: '定位', en: 'Positioning' }, render: cube => tr(TIERS[cube.tier ?? 'unknown']) },
     { label: { zh: '时间', en: 'Date' }, render: cube => <>{dateText(cube)}<small>{tr(RELEASE_LABELS[cube.release.basis])}</small><p>{tr(cube.release.note)}</p><ReferenceLinks ids={cube.release.sourceIds} /></> },
     { label: { zh: '状态', en: 'Status' }, render: cube => tr(STATUS_LABELS[cube.status]) },
     { label: { zh: '售价记录', en: 'Price records' }, render: cube => cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} compact />) : tr(UNKNOWN) },
@@ -185,6 +230,7 @@ function Comparison({ cubes, onToggle, onBrowse }: { cubes: Cube[]; onToggle: (i
     { label: { zh: '调节', en: 'Adjustment' }, render: cube => cube.specs.adjustment ? tr(cube.specs.adjustment) : tr(UNKNOWN) },
     { label: { zh: '亮点', en: 'Highlights' }, render: cube => <ul>{cube.highlights.map((item, index) => <li key={index}>{tr(item)}</li>)}</ul> },
     { label: { zh: '评价', en: 'Assessment' }, render: cube => <><span className="ch-badge">{tr(cube.assessment.basis === 'review' ? { zh: '亲历评价', en: 'First-hand' } : { zh: '编辑分析', en: 'Editorial' })}</span><p>{tr(cube.assessment.summary)}</p><p>{tr(cube.assessment.tradeoffs)}</p><ReferenceLinks ids={cube.assessment.sourceIds} /></> },
+    { label: { zh: '商家页用户评分', en: 'Merchant-page user rating' }, render: cube => <MerchantRating cube={cube} /> },
     { label: { zh: '版本', en: 'Variants' }, render: cube => cube.variants.join(' · ') || tr(UNKNOWN) },
     { label: { zh: '来源', en: 'Sources' }, render: cube => <ReferenceLinks ids={sourceIdsForCube(cube)} /> },
   ];
@@ -206,6 +252,23 @@ function Timeline({ onOpen, onPeriod }: { onOpen: (id: string) => void; onPeriod
   </section>;
 }
 
+function AnnualLineup({ brand, onYear, onOpen }: { brand: string; onYear: (year: string) => void; onOpen: (id: string) => void }) {
+  const models = brand === 'all' ? [] : CUBES.filter(cube => cube.brand === brand);
+  const knownYears = models.flatMap(cube => cube.year === null ? [] : [cube.year]);
+  const years = knownYears.length ? Array.from({ length: snapshotYear - Math.min(...knownYears) + 1 }, (_, index) => snapshotYear - index) : [];
+  const modelList = (items: Cube[]) => items.length ? <ul className="ch-lineup-models">{sortCubes(items, 'name').map(cube => <li key={cube.id}><button type="button" className="ch-text-button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}</button></li>)}</ul> : <span className="ch-muted">{tr({ zh: '暂未核到记录', en: 'No verified record yet' })}</span>;
+  return <details className="ch-annual" data-site-surface="panel">
+    <summary className="ch-annual-summary">{tr({ zh: '按年核对产品线', en: 'Explore the annual lineup' })}{brand !== 'all' && <> · {brandName(brand)}</>}</summary>
+    {brand === 'all' ? <p className="ch-muted">{tr({ zh: '先在上方选择品牌，就能逐年查看旗舰、其他型号与定位待核的记录。', en: 'Choose a brand above to see its flagships, other models and unclassified entries year by year.' })}</p> : <>
+      <p className="ch-muted">{tr({ zh: '年份沿用各记录注明的日期证据；商家收录年份不等于全球首发。空白表示资料缺口，不能据此断言厂商当年没有新品。定位是基于来源的编辑归类。', en: 'Years retain each record’s evidence basis; a retailer listing year is not necessarily a worldwide launch. An empty cell is an evidence gap, not proof that a brand released nothing. Positioning is a source-informed editorial classification.' })}</p>
+      <div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table ch-lineup"><caption>{brandName(brand)} · {tr({ zh: '按资料年份列出的型号与独立版本', en: 'Models and distinct versions by documented year' })}</caption><thead><tr><th scope="col">{tr({ zh: '年份', en: 'Year' })}</th><th scope="col">{tr({ zh: '旗舰', en: 'Flagships' })}</th><th scope="col">{tr({ zh: '主流、入门及专门用途', en: 'Mainstream, budget & specialty' })}</th><th scope="col">{tr({ zh: '定位待核', en: 'Unclassified' })}</th></tr></thead><tbody>{years.map(year => {
+        const entries = models.filter(cube => cube.year === year);
+        return <tr key={year}><th scope="row"><button type="button" className="ch-text-button" onClick={() => onYear(String(year))}>{year}</button></th><td>{modelList(entries.filter(cube => cube.tier === 'flagship'))}</td><td>{modelList(entries.filter(cube => cube.tier && cube.tier !== 'flagship' && cube.tier !== 'unknown'))}</td><td>{modelList(entries.filter(cube => !cube.tier || cube.tier === 'unknown'))}</td></tr>;
+      })}{models.some(cube => cube.year === null) && <tr><th scope="row"><button type="button" className="ch-text-button" onClick={() => onYear('unknown')}>{tr({ zh: '年份待核', en: 'Year unknown' })}</button></th><td colSpan={3}>{modelList(models.filter(cube => cube.year === null))}</td></tr>}</tbody></table></div>
+    </>}
+  </details>;
+}
+
 function SourcesView() {
   const [query, setQuery] = useState('');
   const [kind, setKind] = useState('all');
@@ -218,6 +281,7 @@ function SourcesView() {
     { label: { zh: '预告 / 预售型号', en: 'Announced / preorder entries' }, value: CUBES.filter(cube => cube.status === 'announced').length },
   ];
   return <section><h2>{tr({ zh: '每个结论都可以追溯', en: 'Trace each claim to its evidence' })}</h2><dl className="ch-metrics ch-quality">{missing.map(item => <div key={item.label.en}><dt>{tr(item.label)}</dt><dd>{item.value}</dd></div>)}</dl><div className="ch-method-grid">{METHODOLOGY.map(item => <article key={item.title.en} data-site-surface="panel"><h3>{tr(item.title)}</h3><p>{tr(item.text)}</p></article>)}</div>
+    <details className="ch-annual" data-site-surface="panel"><summary className="ch-annual-summary">{tr({ zh: '各品牌的图片与日期覆盖', en: 'Photo and date coverage by brand' })}</summary><p className="ch-muted">{tr({ zh: '统计只反映当前收录记录的资料情况，不作为全球产品已收齐的证明。', en: 'These counts describe evidence in the current archive; they do not prove that every worldwide product has been recovered.' })}</p><div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table"><thead><tr>{[{ zh: '品牌', en: 'Brand' }, { zh: '记录', en: 'Entries' }, { zh: '附图片', en: 'With photos' }, { zh: '其中共用图', en: 'Shared photos' }, { zh: '官方日期', en: 'Official dates' }, { zh: '年份待核', en: 'Unknown years' }].map(label => <th scope="col" key={label.en}>{tr(label)}</th>)}</tr></thead><tbody>{brandKeys.map(brand => { const entries = CUBES.filter(cube => cube.brand === brand); return <tr key={brand}><th scope="row">{brandName(brand)}</th><td>{entries.length}</td><td>{entries.filter(cube => cube.image).length}</td><td>{entries.filter(cube => cube.image?.match === 'family').length}</td><td>{entries.filter(cube => cube.release.basis === 'official').length}</td><td>{entries.filter(cube => cube.year === null).length}</td></tr>; })}</tbody></table></div></details>
     <div className="ch-section-heading"><h3>{tr({ zh: '原始资料索引', en: 'Source index' })}</h3><span>{sources.length} / {SOURCES.length}</span></div>
     <div className="ch-source-controls"><SearchInput value={query} onChange={setQuery} placeholder={tr({ zh: '查来源、品牌或网站', en: 'Find a source, brand or website' })} className="ch-search" />
       <CompactSelect label={kind === 'all' ? tr({ zh: '全部来源', en: 'All sources' }) : tr(SOURCE_LABELS[kind])} valueText={kind === 'all' ? tr({ zh: '全部来源', en: 'All sources' }) : tr(SOURCE_LABELS[kind])} value={kind} onChange={setKind} ariaLabel={tr({ zh: '来源类型', en: 'Source type' })} items={[{ value: 'all', label: tr({ zh: '全部来源', en: 'All sources' }) }, ...Object.entries(SOURCE_LABELS).map(([value, label]) => ({ value, label: tr(label) }))]} />
@@ -231,7 +295,7 @@ function SourcesView() {
 
 function Explorer() {
   useLang();
-  const [view, setView] = useQueryState('view', parseAsStringEnum<View>(['timeline', 'catalog', 'compare', 'sources']).withDefault('timeline').withOptions({ history: 'push' }));
+  const [view, setView] = useQueryState('view', parseAsStringEnum<View>(['timeline', 'catalog', 'compare', 'sources']).withDefault('catalog').withOptions({ history: 'push' }));
   const [filters, setFilters] = useQueryStates({
     q: parseAsString.withDefault(''),
     brand: parseAsStringEnum(['all', ...brandKeys]).withDefault('all'),
@@ -239,6 +303,9 @@ function Explorer() {
     category: parseAsStringEnum(['all', ...Object.keys(CATEGORIES)]).withDefault('all'),
     evidence: parseAsStringEnum(Object.keys(EVIDENCE_LABELS)).withDefault('all'),
     technology: parseAsStringEnum(Object.keys(TECHNOLOGIES)).withDefault('all'),
+    year: parseAsStringEnum(['all', 'unknown', ...yearKeys]).withDefault('all'),
+    tier: parseAsStringEnum(Object.keys(TIERS)).withDefault('all'),
+    family: parseAsStringEnum(['all', ...familyRoots.map(cube => cube.id)]).withDefault('all'),
   });
   const [order, setOrder] = useQueryState('order', parseAsStringEnum(['newest', 'oldest', 'name']).withDefault('newest'));
   const [table, setTable] = useQueryState('table', parseAsBoolean.withDefault(false));
@@ -262,8 +329,11 @@ function Explorer() {
     void setCompareIds(next);
   };
   const openModel = (id: string) => {
-    if (id === model) return;
     openTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (id === model) {
+      focusDetailHeading(document.getElementById('ch-detail-title'));
+      return;
+    }
     void setModel(id);
   };
   const closeModel = () => {
@@ -295,11 +365,17 @@ function Explorer() {
     anchor.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
-  const setFilter = (key: keyof typeof EMPTY_FILTERS, value: string) => { void setFilters({ [key]: value }); };
+  const setFilter = (key: keyof typeof EMPTY_FILTERS, value: string) => {
+    if (key === 'brand') { void setFilters({ brand: value, family: 'all' }); return; }
+    void setFilters({ [key]: value });
+  };
+  const availableFamilies = familyRoots.filter(cube => filters.brand === 'all' || cube.brand === filters.brand || cube.id === filters.family);
+  const selectedFamily = familyRoots.find(cube => cube.id === filters.family);
+  const yearLabel = filters.year === 'all' ? tr({ zh: '所有年份', en: 'All years' }) : filters.year === 'unknown' ? tr({ zh: '年份待核', en: 'Year unknown' }) : filters.year;
 
   return <div id="ch-explorer" className="ch-explorer">
     <nav className="ch-tabs" aria-label={tr({ zh: '档案视图', en: 'Archive view' })}>{VIEW_OPTIONS.map(({ id, label, Icon }) => <button type="button" key={id} aria-pressed={view === id} className={`ch-tab-button${view === id ? ' is-active' : ''}`} onClick={() => navigateView(id)}><Icon size={17} />{tr(label)}</button>)}</nav>
-    {activeCube && <CubeDetails cube={activeCube} selected={chosenIds.includes(activeCube.id)} full={full} onToggle={toggleCompare} onClose={closeModel} />}
+    {activeCube && <CubeDetails cube={activeCube} selected={chosenIds.includes(activeCube.id)} full={full} onToggle={toggleCompare} onClose={closeModel} onOpen={openModel} />}
     {model && !activeCube && <div role="status" className="ch-empty" data-site-surface="panel"><p>{tr({ zh: '该型号链接未匹配到当前资料。', en: 'This model link does not match the current archive.' })}</p><button type="button" className="ch-button" onClick={closeModel}>{tr({ zh: '关闭', en: 'Close' })}</button></div>}
     {view === 'timeline' && <Timeline onOpen={openModel} onPeriod={selectPeriod} />}
     {view === 'catalog' && <section aria-labelledby="ch-catalog-heading">
@@ -308,6 +384,9 @@ function Explorer() {
         <SearchInput value={filters.q} onChange={value => setFilter('q', value)} debounceMs={150} maxLength={160} type="search" placeholder={tr({ zh: '搜索品牌、型号、别名或技术，如 GAN 12 / 孤鸿 / MagLev', en: 'Search a brand, model, alias or technology, e.g. GAN 12 / GuHong / MagLev' })} className="ch-search" />
         <div className="ch-filter-row">
           <CompactSelect label={filters.brand === 'all' ? tr({ zh: '所有品牌', en: 'All brands' }) : brandName(filters.brand)} valueText={filters.brand === 'all' ? tr({ zh: '所有品牌', en: 'All brands' }) : brandName(filters.brand)} ariaLabel={tr({ zh: '按品牌筛选', en: 'Filter by brand' })} value={filters.brand} onChange={value => setFilter('brand', value)} items={[{ value: 'all', label: tr({ zh: '所有品牌', en: 'All brands' }) }, ...brandKeys.map(value => ({ value, label: brandName(value) }))]} />
+          <CompactSelect label={yearLabel} valueText={yearLabel} ariaLabel={tr({ zh: '按具体年份筛选', en: 'Filter by year' })} value={filters.year} onChange={value => setFilter('year', value)} items={[{ value: 'all', label: tr({ zh: '所有年份', en: 'All years' }) }, ...yearKeys.map(value => ({ value, label: value })), { value: 'unknown', label: tr({ zh: '年份待核', en: 'Year unknown' }) }]} />
+          <CompactSelect label={tr(TIERS[filters.tier])} valueText={tr(TIERS[filters.tier])} ariaLabel={tr({ zh: '按产品定位筛选', en: 'Filter by positioning' })} value={filters.tier} onChange={value => setFilter('tier', value)} items={Object.entries(TIERS).map(([value, label]) => ({ value, label: tr(label) }))} />
+          <CompactSelect className="ch-family-select" label={selectedFamily ? tr(selectedFamily.name) : tr({ zh: '所有系列', en: 'All families' })} valueText={selectedFamily ? tr(selectedFamily.name) : tr({ zh: '所有系列', en: 'All families' })} title={selectedFamily ? tr(selectedFamily.name) : undefined} ariaLabel={tr({ zh: '查看同系列子型号', en: 'Filter by model family' })} value={filters.family} onChange={value => setFilter('family', value)} items={[{ value: 'all', label: tr({ zh: '所有系列', en: 'All families' }) }, ...availableFamilies.map(cube => ({ value: cube.id, label: tr(cube.name) }))]} />
           <CompactSelect label={tr(PERIODS.find(item => item.id === filters.period)!.label)} valueText={tr(PERIODS.find(item => item.id === filters.period)!.label)} ariaLabel={tr({ zh: '按年代筛选', en: 'Filter by era' })} value={filters.period} onChange={value => setFilter('period', value)} items={PERIODS.map(period => ({ value: period.id, label: tr(period.label) }))} />
           <CompactSelect label={filters.category === 'all' ? tr({ zh: '所有类型', en: 'All categories' }) : tr(CATEGORIES[filters.category])} valueText={filters.category === 'all' ? tr({ zh: '所有类型', en: 'All categories' }) : tr(CATEGORIES[filters.category])} ariaLabel={tr({ zh: '按类型筛选', en: 'Filter by category' })} value={filters.category} onChange={value => setFilter('category', value)} items={[{ value: 'all', label: tr({ zh: '所有类型', en: 'All categories' }) }, ...Object.entries(CATEGORIES).map(([value, label]) => ({ value, label: tr(label) }))]} />
           <CompactSelect label={tr(TECHNOLOGIES[filters.technology])} valueText={tr(TECHNOLOGIES[filters.technology])} ariaLabel={tr({ zh: '按技术筛选', en: 'Filter by technology' })} value={filters.technology} onChange={value => setFilter('technology', value)} items={Object.entries(TECHNOLOGIES).map(([value, label]) => ({ value, label: tr(label) }))} />
@@ -315,7 +394,8 @@ function Explorer() {
           {activeFilters && <ClearButton variant="standalone" onClick={() => { void setFilters(EMPTY_FILTERS); }} ariaLabel={tr({ zh: '清除全部筛选', en: 'Clear all filters' })} />}
         </div>
       </div>
-      <div className="ch-result-bar"><p role="status" aria-live="polite">{tr({ zh: `找到 ${filtered.length} 条型号记录`, en: `${filtered.length} model records found` })}</p><div><CompactSelect label={tr(SORT_LABELS[order])} valueText={tr(SORT_LABELS[order])} value={order} onChange={value => { void setOrder(value as typeof order); }} ariaLabel={tr({ zh: '排序方式', en: 'Sort order' })} items={[
+      <AnnualLineup brand={filters.brand} onYear={year => { void setFilters({ ...EMPTY_FILTERS, brand: filters.brand, year }); }} onOpen={openModel} />
+      <div className="ch-result-bar"><p role="status" aria-live="polite">{tr({ zh: `已显示 ${visible.length} / ${filtered.length} 条；搜索覆盖全部 ${CUBES.length} 条记录`, en: `Showing ${visible.length} of ${filtered.length}; search covers all ${CUBES.length} entries` })}</p><div>{visible.length < filtered.length && <button type="button" className="ch-text-button" onClick={() => setPageSize({ key: queryKey, count: filtered.length })}>{tr({ zh: '展开全部结果', en: 'Show all results' })}</button>}<CompactSelect label={tr(SORT_LABELS[order])} valueText={tr(SORT_LABELS[order])} value={order} onChange={value => { void setOrder(value as typeof order); }} ariaLabel={tr({ zh: '排序方式', en: 'Sort order' })} items={[
         { value: 'newest', label: tr({ zh: '由新到旧', en: 'Newest first' }) }, { value: 'oldest', label: tr({ zh: '由旧到新', en: 'Oldest first' }) }, { value: 'name', label: tr({ zh: '型号名称', en: 'Model name' }) },
       ]} /><PillToggle value={!table} onChange={value => { void setTable(!value); }} onLabel={tr({ zh: '卡片', en: 'Cards' })} offLabel={tr({ zh: '表格', en: 'Table' })} ariaLabel={tr({ zh: '图鉴布局', en: 'Catalog layout' })} /></div></div>
       {!filtered.length ? <div className="ch-empty"><h3>{tr({ zh: '没有找到匹配型号', en: 'No matching models' })}</h3><p>{tr({ zh: '试试更短的型号名称，或清除品牌、年代和技术筛选。', en: 'Try a shorter model name or clear the brand, era and technology filters.' })}</p><button type="button" className="ch-button" onClick={() => { void setFilters(EMPTY_FILTERS); }}>{tr({ zh: '重置筛选', en: 'Reset filters' })}</button></div>
