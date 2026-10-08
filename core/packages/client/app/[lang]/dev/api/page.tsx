@@ -65,7 +65,7 @@ const DOMAINS: { key: string; zh: string; en: string }[] = [
 //   equals the set mounted via app.route('/v1', …) in apps/api/src/index.ts.
 //   CI red here = a newly-mounted route is undocumented: add its endpoints below,
 //   then add the file stem to this list.
-//   account_auth admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
+//   account_auth account_face admin_disk alg alg_lsll alg_marks alg_preferred_algs alg_srs alg_sets alg_sweep alg_time_attack_order announced_comps app_boot_diagnostics article auth battle_rooms calendar cn_comp_names colpi
 //   chat comp_follows creator_gallery cube cubeopt_solve cubing_live documents drive feedback forum friends geo health historical_ranks pb private_vault
 //   membership membership_benefits membership_apple membership_google membership_subscriptions music nav_sites pets nemesizer notifications ops page_notices paint pattern_examples platform_catalog platform_commerce platform_content platform_learning platform_qr progress quiz recon recon_ground_truth scramble_555 teacher_directory teaching teaching_saas
 //   scramble_marks sim_masks sms_receipt sponsors timer_backups timer_boot_telemetry timer_presence trainer_rooms wca_format wca_fun_stats wca_person wca_proxy
@@ -108,6 +108,8 @@ const ENDPOINTS: Ep[] = [
   { d: 'auth', m: 'GET', p: '/v1/auth/callback', g: 'public', zh: 'OAuth 回调,建立登录态', en: 'OAuth callback, establish session' },
   { d: 'auth', m: 'POST', p: '/v1/auth/exchange', g: 'public', zh: '用授权码换取 JWT', en: 'Exchange auth code for JWT' },
   { d: 'auth', m: 'POST', p: '/v1/auth/refresh', g: 'login', zh: '刷新 JWT', en: 'Refresh JWT' },
+  { d: 'auth', m: 'GET', p: '/v1/auth/face', g: 'login', zh: '本人实名认证状态', en: 'Own identity verification status' },
+  { d: 'auth', m: 'POST', p: '/v1/auth/face', g: 'login', zh: '本人单独同意后发起活体实名核验，或服务端查询当前认证结果', en: 'Start consented identity/liveness verification or query the current provider result' },
   { d: 'auth', m: 'GET', p: '/v1/auth/me', g: 'login', zh: '当前登录用户信息', en: 'Current signed-in user' },
   { d: 'auth', m: 'POST', p: '/v1/auth/role-preview', g: 'admin', zh: '超级管理员创建 30 分钟独立角色测试会话', en: 'Superadmin starts a separate 30-minute role-test session' },
   { d: 'auth', m: 'DELETE', p: '/v1/auth/role-preview/:id', g: 'admin', zh: '超级管理员撤销自己的角色测试会话', en: 'Superadmin revokes their role-test session' },
