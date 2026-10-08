@@ -9,6 +9,7 @@ import { serve } from '@hono/node-server';
 import { createNodeWebSocket } from '@hono/node-ws';
 import { apiCors } from './api_cors.js';
 import { authRoutes, browserSessionGuard, rolePreviewGuard } from './routes/auth.js';
+import { accountFaceRoutes } from './routes/account_face.js';
 import { accountAuthRoutes } from './routes/account_auth.js';
 import { progressRoutes } from './routes/progress.js';
 import { healthRoutes } from './routes/health.js';
@@ -157,6 +158,7 @@ app.onError((err, c) => {
 // 注册路由 — 全部挂在 /v1 下，对外即 https://api.cuberoot.me/v1/*
 app.route('/v1', authRoutes);
 app.route('/v1', accountAuthRoutes);
+app.route('/v1', accountFaceRoutes);
 app.route('/v1', driveRoutes);
 app.route('/v1', musicRoutes);
 app.route('/v1', progressRoutes);
