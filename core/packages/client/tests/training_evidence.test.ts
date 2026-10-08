@@ -195,13 +195,13 @@ describe('training evidence delivery', () => {
     cleanup();
   });
 
-  it('defers without a bearer token and sends authenticated evidence once available', async () => {
+  it('defers without a session and passes the captured marker to the authenticated transport once available', async () => {
     enqueueTrainingEvidence(DESTINATION, timerDraft(), { now: 1_000 });
     const fetcher = vi.fn<typeof fetch>();
     expect(await flushTrainingEvidenceOutbox({ now: 1_000, fetch: fetcher })).toMatchObject({ deferred: 1, sent: 0 });
     expect(fetcher).not.toHaveBeenCalled();
 
-    localStorage.setItem('cuberoot_jwt', 'jwt-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
     fetcher.mockResolvedValue(new Response(JSON.stringify(successBody('timer:event-1')), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
@@ -211,14 +211,14 @@ describe('training evidence delivery', () => {
     expect(getTrainingEvidenceOutbox(1_000)).toEqual([]);
     const [url, request] = fetcher.mock.calls[0];
     expect(String(url)).toContain('/v1/teaching/organizations/cube-school/me/training/evidence');
-    expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer jwt-token');
+    expect(new Headers(request?.headers).get('Authorization')).toBe('Bearer web-session:training-owner');
     const body = JSON.parse(String(request?.body));
     expect(body.assignmentIds).toEqual([DESTINATION.assignmentId]);
     expect(JSON.stringify(body)).not.toMatch(/studentId|actorId|trustLevel|organizationId/i);
   });
 
   it('accepts an idempotent replay receipt', async () => {
-    localStorage.setItem('cuberoot_jwt', 'jwt-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
     enqueueTrainingEvidence(DESTINATION, timerDraft(), { now: 1_000 });
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(
       JSON.stringify(successBody('timer:event-1', true)),
@@ -229,7 +229,7 @@ describe('training evidence delivery', () => {
   });
 
   it('retries network, rate-limit, and server failures with the same event ID', async () => {
-    localStorage.setItem('cuberoot_jwt', 'jwt-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
     enqueueTrainingEvidence(DESTINATION, timerDraft(), { now: 1_000 });
     const fetcher = vi.fn<typeof fetch>()
       .mockRejectedValueOnce(new TypeError('offline'))
@@ -266,7 +266,7 @@ describe('training evidence delivery', () => {
   });
 
   it('keeps 401 retryable and discards permanent business failures', async () => {
-    localStorage.setItem('cuberoot_jwt', 'jwt-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
     enqueueTrainingEvidence(DESTINATION, timerDraft('timer:auth'), { now: 1_000 });
     enqueueTrainingEvidence(DESTINATION, timerDraft('timer:invalid'), { now: 1_000 });
     const fetcher = vi.fn<typeof fetch>()
@@ -292,7 +292,7 @@ describe('training evidence delivery', () => {
   });
 
   it('does not let permanent failures consume active outbox capacity', async () => {
-    localStorage.setItem('cuberoot_jwt', 'jwt-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
     for (let index = 0; index < TRAINING_EVIDENCE_OUTBOX_CAPACITY; index += 1) {
       enqueueTrainingEvidence(DESTINATION, timerDraft(`timer:failed-${index}`), { now: 1_000 });
     }
@@ -311,7 +311,7 @@ describe('training evidence delivery', () => {
   });
 
   it('does not discard evidence for a malformed success receipt', async () => {
-    localStorage.setItem('cuberoot_jwt', 'jwt-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
     enqueueTrainingEvidence(DESTINATION, timerDraft(), { now: 1_000 });
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ ok: true }), {
       status: 200,
@@ -337,7 +337,7 @@ describe('training evidence delivery', () => {
 
     for (const receipt of malformedReceipts) {
       localStorage.clear();
-      localStorage.setItem('cuberoot_jwt', 'jwt-token');
+      localStorage.setItem('cuberoot_web_session_marker', 'web-session:training-owner');
       enqueueTrainingEvidence(DESTINATION, timerDraft(), { now: 1_000 });
       const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify(receipt), {
         status: 200,

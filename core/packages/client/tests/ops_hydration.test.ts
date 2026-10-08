@@ -12,6 +12,7 @@ vi.mock('@/lib/ops-api', () => ({ listCommands: async () => [] }));
 
 it('keeps the server and first client render identical with a saved admin session', async () => {
   (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+  localStorage.setItem('cuberoot_web_session_marker', 'web-session:00000000-0000-4000-8000-000000000001');
   localStorage.setItem('wca_user', JSON.stringify({
     wcaId: '', name: 'Test admin', avatar: '', country: '', isAdmin: true,
   }));
@@ -34,5 +35,6 @@ it('keeps the server and first client render identical with a saved admin sessio
     await act(async () => root?.unmount());
     host.remove();
     localStorage.removeItem('wca_user');
+    localStorage.removeItem('cuberoot_web_session_marker');
   }
 });
