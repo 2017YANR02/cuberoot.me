@@ -28,6 +28,13 @@ export const TIMER_333_SCRAMBLE_TYPES = [
 
 export type Timer333ScrambleType = (typeof TIMER_333_SCRAMBLE_TYPES)[number]['id'];
 
+/** Training navigation only; each entry keeps its existing event/provider identity. */
+export const TIMER_333_TRAINING_GROUPS = [
+  { id: 'cfop', label: { en: 'CFOP', zh: 'CFOP' }, events: ['cross', 'f2l', 'll', 'oll', 'pll', 'coll', 'cll', 'ell', 'eocp', '2gll', 'ollcp'] },
+  { id: 'zb', label: { en: 'ZB', zh: 'ZB' }, events: ['zbll', 'zzll', 'zbls'] },
+  { id: 'roux', label: { en: 'Roux', zh: '桥式' }, events: ['cmll', 'lse', 'l10p'] },
+] as const satisfies readonly { id: string; label: Record<'en' | 'zh', string>; events: readonly Timer333ScrambleType[] }[];
+
 /** Project a persisted timer mode into its puzzle and optional scramble type. */
 export function timerPuzzleSelection(event: EventId): { puzzle: EventId; scrambleType: Timer333ScrambleType | null } {
   const type = TIMER_333_SCRAMBLE_TYPES.find((item) => item.event === event);

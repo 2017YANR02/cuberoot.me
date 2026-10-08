@@ -16,6 +16,10 @@ import { engineHomeSid } from '@cuberoot/puzzle-render-core/engine/nxn/netIndex'
 import { parseMask, formatMask, type StickerId } from '@/lib/puzzle-image/mask-core';
 import { FM_REGULAR, FM_DIM, FM_IGNORED, FM_OUTLINE, type FaceletMask, type StickeringMaskFn } from '@cuberoot/puzzle-render-core/engine/nxn/stickering';
 import type Cube from '@cuberoot/puzzle-render-core/engine/nxn/cube';
+import { CUSTOM_TREATMENTS, parsePaintedMask, type CustomTreatment } from '@cuberoot/shared/sim-mask-paint';
+export { CUSTOM_TREATMENTS, type CustomTreatment } from '@cuberoot/shared/sim-mask-paint';
+export const CUSTOM_BRUSHES = [...CUSTOM_TREATMENTS, 'erase'] as const;
+export type CustomBrush = (typeof CUSTOM_BRUSHES)[number];
 
 /** 阶段下拉里代表「自定义」的值(URL `?stickering=custom`)。 */
 export const CUSTOM_STICKERING = 'custom';
@@ -30,8 +34,6 @@ export type PickGrain = 'sticker' | 'piece';
  * 而又不能把它的颜色盖掉时用(见 engine/nxn/stickerOutline.ts)。
  * (FM_ORIENTED/2 是 twizzle 表示「只看朝向」的记号色,与点选语义无关,不开放。)
  */
-export const CUSTOM_TREATMENTS = ['regular', 'dim', 'ignored', 'outline'] as const;
-export type CustomTreatment = (typeof CUSTOM_TREATMENTS)[number];
 
 const TREATMENT_CODE: Record<CustomTreatment, FaceletMask> = {
   regular: FM_REGULAR,
@@ -86,19 +88,77 @@ export function pickedSids(cube: Cube, positionIndex: number, worldFace: number,
 /**
  * 贴纸清单 → 阶段遮罩函数。选中的按 pick 画、其余按 rest 画(默认 = 保原色 + 置灰,
  * 同 Cross/F2L 等阶段对无关块的处理;rest 换成 dim 即 CLL 那类预设的层次)。
- * 空清单返回 null = 不遮罩,好让用户看着真配色去点第一枚。
+ * 空清单也遵循 rest：默认全灰，第一笔只改变点中的位置。
  */
 export function customMaskFn(
   order: number,
   mask: string,
-  pick: CustomTreatment = 'regular',
+  pick: CustomBrush = 'regular',
   rest: CustomTreatment = 'ignored',
 ): StickeringMaskFn | null {
-  const ids = parseMask(mask);
-  if (ids.size === 0) return null;
-  const on = TREATMENT_CODE[pick] ?? FM_REGULAR;
+  const painted = paintedSids(mask, pick);
   const off = TREATMENT_CODE[rest] ?? FM_IGNORED;
-  return (initial, face) => (ids.has(engineHomeSid(initial, face, order)) ? on : off);
+  if (painted.size === 0) return off === FM_REGULAR ? null : () => off;
+  return (initial, face) => {
+    const treatment = painted.get(engineHomeSid(initial, face, order));
+    return treatment ? TREATMENT_CODE[treatment] ?? FM_REGULAR : off;
+  };
+}
+
+/** Old links keep their uniform pick style until first edited. */
+function paintedSids(mask: string, legacyPick: CustomBrush): Map<StickerId, CustomTreatment> {
+  const groups = parsePaintedMask(mask);
+  const result = new Map<StickerId, CustomTreatment>();
+  if (groups) {
+    for (const group of groups) for (const sid of parseMask(group.sids)) result.set(sid, group.treatment);
+  } else if (!mask.includes('=')) {
+    for (const sid of parseMask(mask)) result.set(sid, legacyPick === 'erase' ? 'regular' : legacyPick);
+  }
+  return result;
+}
+
+/** Apply only to the clicked sticker/piece. Repeated strokes are idempotent.
+ * An empty stroke freezes legacy styles before changing the active brush. */
+export function paintSids(mask: string, sids: readonly StickerId[], treatment: CustomBrush, legacyPick: CustomBrush = 'regular'): string {
+  const painted = paintedSids(mask, legacyPick);
+  for (const sid of sids) {
+    if (treatment === 'erase') painted.delete(sid);
+    else painted.set(sid, treatment);
+  }
+  return CUSTOM_TREATMENTS.flatMap(style => {
+    const ids = [...painted].filter(([, value]) => value === style).map(([sid]) => sid);
+    return ids.length ? [`${style}=${formatMask(ids)}`] : [];
+  }).join('|');
+}
+
+export interface CustomMaskSnapshot { mask: string; rest: CustomTreatment }
+/** Paint history is separate from puzzle moves; a new edit discards the undone tail. */
+export class CustomMaskHistory {
+  past: CustomMaskSnapshot[] = [];
+  future: CustomMaskSnapshot[] = [];
+  constructor(public current: CustomMaskSnapshot) {}
+  matches(next: CustomMaskSnapshot): boolean {
+    return next.mask === this.current.mask && next.rest === this.current.rest;
+  }
+  record(next: CustomMaskSnapshot): boolean {
+    if (this.matches(next)) return false;
+    this.past = [...this.past.slice(-99), this.current];
+    this.current = next;
+    this.future = [];
+    return true;
+  }
+  undo(): CustomMaskSnapshot | null {
+    const previous = this.past.pop();
+    if (!previous) return null;
+    this.future.push(this.current);
+    return this.current = previous;
+  }
+  redo(): CustomMaskSnapshot | null {
+    const next = this.future.pop();
+    if (!next) return null;
+    this.past.push(this.current);
+    return this.current = next;
+  }
 }
 
 /** 切换一组 sid:整组已全选则整组取消,否则整组选上(整块粒度下才有「半选」)。 */
@@ -115,5 +175,5 @@ export function toggleSids(mask: string, sids: readonly StickerId[]): string {
 
 /** 已选贴纸数(UI 显示用)。 */
 export function countSids(mask: string): number {
-  return parseMask(mask).size;
+  return paintedSids(mask, 'regular').size;
 }

@@ -95,6 +95,7 @@ export default function SmartCubeRow({ enabled, onEnabledChange, state, supporte
         <TimerDeviceCenter
           ariaLabel={tr({ zh: '计时设备', en: 'Timer devices' })}
           className="trainer-device-center"
+          directSingleItem
           items={[{
             active: cube.status.connected,
             disabled: busy || !!advice,

@@ -1,9 +1,10 @@
+import './compact-select.css';
+
 import { useEffect, useState } from 'react';
 import { Target } from 'lucide-react';
 import { eventInfo, formatTargetTime, parseTargetTime, parseDailySolveGoal, timerSettingFieldContract,
   type EventId, type RoundConfig, type RoundFormat, type TimerSettingCopy, type TimerSettingFieldId, type TimerTrainingSettings } from '@cuberoot/shared/timer';
 import { TimerSettingRow, TimerSettingsSection } from './TimerTimingSettingsSections';
-import { TimerPillToggle } from './TimerPillToggle';
 
 export const TIMER_TRAINING_SETTING_FIELD_IDS = [
   'settings.training.target-time', 'settings.training.daily-goal', 'settings.training.round-enabled',
@@ -128,13 +129,15 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
           title={tr({ zh: '轮次模拟', en: 'Round simulation' })}
           headerControl={
             <span data-setting-id="settings.training.round-enabled">
-              <TimerPillToggle
-                value={s.round.on}
-                onChange={(v) => onChange({ on: v })}
-                onLabel={tr({ zh: '开启', en: 'On' })}
-                offLabel={tr({ zh: '关闭', en: 'Off' })}
-                ariaLabel={settingLabel('settings.training.round-enabled')}
-              />
+              <select
+                value={String(s.round.on)}
+                onChange={event => { const v = event.currentTarget.value === 'true'; onChange({ on: v }); }}
+                aria-label={settingLabel('settings.training.round-enabled')}
+                className="native-select"
+              >
+                <option value="true">{tr({ zh: '开启', en: 'On' })}</option>
+                <option value="false">{tr({ zh: '关闭', en: 'Off' })}</option>
+              </select>
             </span>
           }
         >
@@ -176,13 +179,15 @@ export function TimerRoundSettings({ value: s, onChange, localize: tr }: Omit<Pr
               style={{ fontFamily: 'ui-monospace, monospace' }}
             />
             <span data-setting-id="settings.training.round-cumulative">
-              <TimerPillToggle
-                value={s.round.cumulative}
-                onChange={(v) => onChange({ cumulative: v })}
-                onLabel={tr({ zh: '累计', en: 'cumulative' })}
-                offLabel={tr({ zh: '每把', en: 'per attempt' })}
-                ariaLabel={settingLabel('settings.training.round-cumulative')}
-              />
+              <select
+                value={String(s.round.cumulative)}
+                onChange={event => { const v = event.currentTarget.value === 'true'; onChange({ cumulative: v }); }}
+                aria-label={settingLabel('settings.training.round-cumulative')}
+                className="native-select"
+              >
+                <option value="true">{tr({ zh: '累计', en: 'cumulative' })}</option>
+                <option value="false">{tr({ zh: '每把', en: 'per attempt' })}</option>
+              </select>
             </span>
           </TimerSettingRow>
             </>

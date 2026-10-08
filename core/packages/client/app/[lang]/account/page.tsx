@@ -797,6 +797,12 @@ export default function AccountPage() {
       },
     ]),
     {
+      key: 'identity-verification',
+      href: '/account/verify',
+      icon: <IdCard size={22} className="account-card-icon" />,
+      title: tr({ zh: '实名认证', en: 'Identity Verification' }),
+    },
+    {
       key: 'progress',
       href: '/alg/progress',
       icon: <GraduationCap size={22} className="account-card-icon" />,

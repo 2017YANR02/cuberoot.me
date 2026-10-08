@@ -1,11 +1,12 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
+
 // 成绩 tab:按项目 / 按比赛 子切换 + 项目图标条(在按项目模式下).
 
 import { useQueryStates, parseAsString } from 'nuqs';
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { EventIcon } from '@/components/EventIcon/EventIcon';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { AttemptRanksToggle } from './AttemptRanksToggle';
 import type { WcaPersonProfile, WcaResultRow, WcaCompetition } from '@/lib/wca-person-api';
 import { mergePersonLive } from '@/lib/person-live-merge';
@@ -36,7 +37,7 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
   const [showAttemptRanks, setShowAttemptRanks] = useState(true);
   // 「按比赛」视图内的子 tab:成绩(逐场详细成绩,默认)/ 赛事(紧凑比赛列表,原赛事 tab 合并进来)。
   const [compView, setCompView] = useState<'results' | 'list'>('results');
-  // 比赛视图的工具(# PR 名次)由本组件统一渲染,与上方 PillToggle 同一行;ByCompList 自带的工具行不再
+  // 比赛视图的工具(# PR 名次)由本组件统一渲染,与上方原生菜单同一行;ByCompList 自带的工具行不再
   // 渲染(不传 onToggle* 回调即隐藏)。编辑改由点成绩弹窗内做(无全局编辑模式 / 铅笔)。
   // 子 tab(按项目 / 按比赛)+ 选中项目均为页内瞬时态 → replace,不堆历史
   const [q, setQ] = useQueryStates(
@@ -88,13 +89,15 @@ export default function ResultsTab({ profile, results, comps, liveResults, liveC
 
       {sub === 'comp' && (
         <div className="wp-comp-subtoggle">
-          <PillToggle
-            value={compView === 'list'}
-            onChange={(v) => setCompView(v ? 'list' : 'results')}
-            offLabel={t('成绩', 'Results')}
-            onLabel={t('赛事', 'Competitions')}
-            ariaLabel={t('比赛视图:成绩或赛事列表', 'Competition view: results or competition list')}
-          />
+          <select
+            value={String(compView === 'list')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setCompView(v ? 'list' : 'results'); }}
+            aria-label={t('比赛视图:成绩或赛事列表', 'Competition view: results or competition list')}
+            className="native-select"
+          >
+            <option value="true">{t('赛事', 'Competitions')}</option>
+            <option value="false">{t('成绩', 'Results')}</option>
+          </select>
           {compView === 'results' && (
             <span className="wp-section-h-tools">
               <AttemptRanksToggle active={showAttemptRanks} onToggle={() => setShowAttemptRanks((v) => !v)} />

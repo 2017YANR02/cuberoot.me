@@ -166,7 +166,7 @@ import { PG_PUZZLES, isPgPuzzleId, type PgPuzzleId } from './pgCatalog';
 import { resolveCaps } from './simCaps';
 import StickeringSelect from './StickeringSelect';
 import SwatchCell, { SwatchPopup } from './SwatchCell';
-import type { PickGrain, CustomTreatment } from '@/components/sim-embed/customStickering';
+import type { PickGrain, CustomTreatment, CustomBrush } from '@/components/sim-embed/customStickering';
 import { simulateGrips, type GripName, type GripSimStep, type HandSide, type PinSpec } from './engine/hands/handsRig';
 import { flattenAlg, stm, stripGripMarks } from '@cuberoot/shared/alg-notation';
 import {
@@ -184,7 +184,7 @@ import PlaybackBar from '@/components/PlaybackBar';
 import BoolToggle from '@/components/BoolToggle';
 import NxNOrderInput from '@/components/NxNOrderInput';
 import './player-controls.css';
-import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive, supportsRoomCube } from './room-themes';
+import { ROOM_THEMES, normalizeRoomTheme, roomCubeActive } from './room-themes';
 
 /**
  * 换握记号(仅 NxN 解法框):↑ 上手(拇指起手在 U 面)、↓ 下手(D 面)、· 回 home 握。
@@ -355,12 +355,13 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
   { value: 'ghost',    iconClass: 'unofficial-ghost', labelZh: '鬼魔', labelEn: 'Ghost Cube' },
   { value: 'mirror',   iconClass: 'unofficial-333_mirror_blocks', labelZh: '镜面', labelEn: 'Mirror' },
   { value: 'mirror2',  iconClass: 'unofficial-222_mirror_blocks', labelZh: '二阶镜面', labelEn: 'Mirror 2x2' },
+  { value: 'sphere', textLabel: 'Sphere', labelZh: '球形魔方', labelEn: 'Sphere Cube' },
 ] as const;
 
 // Engine puzzles above + cubing.js PuzzleGeometry puzzles (explore set, rendered
 // via TwistyPlayer — see pgCatalog.ts). The PG entries are appended at runtime so
 // the catalog stays the single source of truth.
-const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass: string; labelZh: string; labelEn: string }[] = [
+const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass?: string; textLabel?: string; labelZh: string; labelEn: string }[] = [
   ...SIM_FIXED_PUZZLE_OPTIONS,
   ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon, labelZh: p.zh, labelEn: p.en })),
 ];
@@ -385,6 +386,7 @@ export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
       id: option.value,
       label: [option.labelEn, option.labelZh][Number(isZh)],
       iconClass: option.iconClass,
+      textLabel: option.textLabel,
     })),
   }];
 
@@ -431,7 +433,7 @@ function randomMoveScrambleNxN(N: number): string {
 }
 
 /** SimPage puzzle kind. */
-export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'clock' | 'custom' | PgPuzzleId;
+export type SimPuzzle = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'ghost' | 'pyraminx' | 'pyraminx_duo' | 'skewb' | 'megaminx' | 'fto' | 'mirror' | 'mirror2' | 'sphere' | 'clock' | 'custom' | PgPuzzleId;
 
 interface SquarePlaybackCube {
   twister: {
@@ -948,6 +950,8 @@ function collapseSameAxis(alg: string, N: number): string {
 
 interface Props {
   world: World | null;
+  /** Cube identity published after the parent completes its puzzle switch. */
+  activeCube?: World['cube'] | null;
   clearFrozen: () => void;
   alg: string;
   setup?: string;
@@ -1003,22 +1007,25 @@ interface Props {
   /** 阶段遮罩的拿方朝向(整体转前缀,24 档),仅 NxN 引擎遮罩;默认 ''(UF,恒等)。 */
   stickeringRot?: string;
   onStickeringRotChange?: (v: string) => void;
-  /** 自定义阶段:选中的贴纸清单(mask-core DSL)+ 作图开关。状态归 SimPage。 */
+  /** 自定义阶段的贴纸样式与画笔。状态归 SimPage。 */
   stickeringMask?: string;
   onStickeringMaskClear?: () => void;
-  customEditing?: boolean;
-  onCustomEditingChange?: (v: boolean) => void;
   customGrain?: PickGrain;
   onCustomGrainChange?: (v: PickGrain) => void;
   /** 自定义阶段的画法:选中的 / 其余的各自原色、压暗还是置灰。 */
-  customPick?: CustomTreatment;
-  onCustomPickChange?: (v: CustomTreatment) => void;
+  customPick?: CustomBrush;
+  onCustomPickChange?: (v: CustomBrush) => void;
+  onCustomUndo?: () => void;
+  onCustomRedo?: () => void;
+  canCustomUndo?: boolean;
+  canCustomRedo?: boolean;
   customRest?: CustomTreatment;
   onCustomRestChange?: (v: CustomTreatment) => void;
 }
 
 export default function PlayerControls({
-  world, clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
+  world, activeCube = world?.cube ?? null,
+  clearFrozen, alg, setup, onAlgChange: onAlgChangeProp, onSetupChange: onSetupChangeProp,
   order, onOrderChange, puzzleKind, onPuzzleChange,
   settings, onSettingsChange, canUseCustomLogo, transCore = null,
   keymap, onKeymapChange, onResetKeymap,
@@ -1029,10 +1036,10 @@ export default function PlayerControls({
   stickering = 'full', onStickeringChange,
   stickeringRot = '', onStickeringRotChange,
   stickeringMask = '', onStickeringMaskClear,
-  customEditing = true, onCustomEditingChange,
   customGrain = 'sticker', onCustomGrainChange,
   customPick = 'regular', onCustomPickChange,
   customRest = 'ignored', onCustomRestChange,
+  onCustomUndo, onCustomRedo, canCustomUndo, canCustomRedo,
 }: Props) {
   const isSq1 = puzzleKind === 'sq1';
   const squareFamilyKind: SquareFamilyKind | null = puzzleKind === 'sq2' || puzzleKind === 'sq4'
@@ -1058,6 +1065,8 @@ export default function PlayerControls({
   // it shares every twisty/PG branch (random-move scramble off the live player, etc.).
   const isPgMode = (typeof puzzleKind === 'string' && isPgPuzzleId(puzzleKind)) || puzzleKind === 'custom';
   const isTwistyMode = (isTwistyPuzzle(puzzleKind) || isPgMode) && !isEngineTwisty;
+  const engineReady = !isTwistyMode && !!world
+    && world.puzzleKind === puzzleKind && world.cube === activeCube;
   // Corner/edge-turn engine puzzle descriptor (Dino/Redi/Rex/Heli/Skewb/Pyraminx), or
   // null for everything else. One mapping line per puzzle; every player branch below
   // keys off `corner` instead of a per-puzzle boolean chain.
@@ -1158,6 +1167,8 @@ export default function PlayerControls({
 
   const playTimerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
+  const replayRequestRef = useRef(0);
+  const replayPendingRef = useRef(false);
   const setupElRef = useRef<HTMLTextAreaElement | null>(null);
   const algElRef = useRef<HTMLTextAreaElement | null>(null);
   useEffect(() => { stepRef.current = step; }, [step]);
@@ -1453,7 +1464,9 @@ export default function PlayerControls({
         : nxnItems.length;
 
   const jumpToStep = useCallback(async (n: number) => {
-    if (!world) return;
+    if (!world || !engineReady || world.cube !== activeCube) return;
+    const replayRequest = ++replayRequestRef.current;
+    replayPendingRef.current = false; // non-NxN replay paths below are synchronous
     // Release any held-partial (debug) turn first: an NxN frozen layer holds the
     // cube lock, which would make the replay's group.twist below spin forever.
     clearFrozen();
@@ -1530,7 +1543,17 @@ export default function PlayerControls({
     const effectiveSetup = settings.playbackMode === 'algorithm'
       ? (setupDraft + ' ' + invertAlg(stripHandMarks(algDraft))).trim()
       : setupDraft;
-    await cube.twister.setupAsync(effectiveSetup);
+    replayPendingRef.current = true;
+    try {
+      await cube.twister.setupAsync(effectiveSetup);
+    } finally {
+      if (replayRequest === replayRequestRef.current && world.cube === cube) {
+        replayPendingRef.current = false;
+      }
+    }
+    // A later seek or puzzle switch owns the UI now. Do not continue replaying on
+    // a detached cube or overwrite the active puzzle's step after an async setup.
+    if (replayRequest !== replayRequestRef.current || world.cube !== cube) return;
     const target = Math.max(0, Math.min(n, nxnItems.length));
     for (let i = 0; i < target; i++) {
       const it = nxnItems[i];
@@ -1556,7 +1579,7 @@ export default function PlayerControls({
       hands.setGrips(g.R, g.L);
     }
     setStep(target);
-  }, [world, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, cornerCanPlay, settings.playbackMode]);
+  }, [world, activeCube, engineReady, clearFrozen, setupDraft, algDraft, nxnItems, squareActions, squareFamilyAlgMoves, squareFamilySpec, squareFamilyCanPlay, ivyActions, cornerActions, corner, toEngineText, isSquarePuzzle, isSq1, isIvy, ivyCanPlay, cornerCanPlay, settings.playbackMode]);
 
   // Notation guide (engine skewb): play ONE token on the main cube from solved so the
   // user sees which corner a letter turns. It only borrows the cube — setup/alg text is
@@ -1577,8 +1600,29 @@ export default function PlayerControls({
   // 上一次驱动过魔方状态的解法文本 —— auto-reset effect 用它判断「这次变更是不是
   // 纯末尾追加」:是,且开着「动画」,就在当前状态上动画转新招,而不是整段瞬切重放。
   const prevAlgTextRef = useRef(alg);
+  const replayedCubeRef = useRef<World['cube'] | null>(null);
 
   useEffect(() => {
+    if (!engineReady || replayedCubeRef.current !== activeCube) {
+      // Child effects can run before SimPage applies the requested URL puzzle.
+      // Pause immediately, then wait for its completed-switch identity to replay
+      // setup + the current step. Text-edit shortcuts only describe the old cube.
+      if (playTimerRef.current !== null) {
+        window.clearInterval(playTimerRef.current);
+        playTimerRef.current = null;
+      }
+      setPlaying(false);
+      replayRequestRef.current++;
+      replayPendingRef.current = true;
+      scrambleReqIdRef.current++;
+      skipAutoResetRef.current = false;
+      animatingScrambleRef.current = false;
+      if (!engineReady) return;
+      replayedCubeRef.current = activeCube;
+      prevAlgTextRef.current = algDraft;
+      void jumpToStep(stepRef.current);
+      return;
+    }
     const actions = isSquarePuzzle ? squareActions : isIvy ? ivyActions : corner ? cornerActions : nxnItems;
     const prevText = prevAlgTextRef.current;
     prevAlgTextRef.current = algDraft;
@@ -1633,7 +1677,7 @@ export default function PlayerControls({
     }
     jumpToStep(stepRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setupDraft, nxnItems, squareActions, ivyActions, cornerActions, settings.playbackMode]);
+  }, [activeCube, engineReady, setupDraft, nxnItems, squareActions, ivyActions, cornerActions, settings.playbackMode]);
 
   /** 光标位置 → 光标前的完整步数(各拼图各自的 parser);解析不了返回 null。 */
   const caretStepOf = useCallback((text: string, caretIndex: number): number | null => {
@@ -1677,6 +1721,7 @@ export default function PlayerControls({
   // 目前只走 NxN(SQ1/Ivy/角转引擎仍瞬切):cube 状态恒等于 setup+前 step 项,
   // 正向 twist 第 step 项 / 反向 twist 第 step-1 项的逆,状态保持一致。
   const stepForward = useCallback(() => {
+    if (!engineReady || world?.cube !== activeCube || replayPendingRef.current) return;
     clearFrozen();
     setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
@@ -1700,9 +1745,10 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step + 1);
-  }, [clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
+  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
 
   const stepBack = useCallback(() => {
+    if (!engineReady || world?.cube !== activeCube || replayPendingRef.current) return;
     clearFrozen();
     setCaretChar(null); // hand the highlight back to the playback position
     const animate = settings.animatePlayback !== false;
@@ -1738,24 +1784,26 @@ export default function PlayerControls({
       return;
     }
     jumpToStep(step - 1);
-  }, [clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
+  }, [activeCube, engineReady, clearFrozen, jumpToStep, step, settings.animatePlayback, settings.speed, playbackFrames, isSquarePuzzle, isIvy, corner, world, nxnItems]);
 
   // Play/pause toggle for the shared PlaybackBar. Pausing is instant; starting
   // from the end first复位到第 0 步(并同步 stepRef,否则播放轮询读到 step≥total
   // 会立刻停),复位完成后再开播 — 与旧内联 handler 行为一致。
   const handleTogglePlay = useCallback(async () => {
     if (playing) { setPlaying(false); return; }
+    if (!engineReady || world?.cube !== activeCube || replayPendingRef.current) return;
     clearFrozen();
     setCaretChar(null); // playback owns the highlight from here
     if (step >= totalSteps) {
       await jumpToStep(0);
+      if (world?.cube !== activeCube) return;
       stepRef.current = 0;
     }
     setPlaying(true);
-  }, [playing, step, totalSteps, jumpToStep, clearFrozen]);
+  }, [activeCube, engineReady, world, playing, step, totalSteps, jumpToStep, clearFrozen]);
 
   useEffect(() => {
-    if (!playing) {
+    if (!playing || !engineReady) {
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       return;
     }
@@ -1778,7 +1826,7 @@ export default function PlayerControls({
     playTimerRef.current = window.setInterval(() => {
       const s = stepRef.current;
       if (s >= total) { setPlaying(false); return; }
-      if (!world) return;
+      if (!world || world.cube !== activeCube || world.puzzleKind !== puzzleKind || replayPendingRef.current) return;
       clearFrozen();
       if (!animatePlayback) {
         // 瞬切:走跟「下一步」按钮同一条 instant 落子路径(fast+force / applyMoveInstant),
@@ -1843,7 +1891,7 @@ export default function PlayerControls({
       if (playTimerRef.current) { window.clearInterval(playTimerRef.current); playTimerRef.current = null; }
       timing.frames = mapFrames(settings.speed);
     };
-  }, [playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
+  }, [activeCube, engineReady, puzzleKind, playing, nxnItems, squareActions, ivyActions, cornerActions, corner, world, clearFrozen, playbackFrames, isSquarePuzzle, isIvy, settings.animatePlayback, settings.speed]);
 
   const tool = (transform: (s: string) => string) => () => {
     // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
@@ -2051,6 +2099,7 @@ export default function PlayerControls({
     const onKey = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const target = e.target as HTMLElement | null;
+      if (target?.closest('[role="dialog"], [role="listbox"]')) return;
       // 设置区的原生表单控件必须自行接收按键。否则 Digit2 等会命中魔方
       // keymap，applyMove 随后聚焦解法框，在 iOS 上表现为数字键盘输一位即关闭。
       if (target && (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.isContentEditable)) return;
@@ -2154,7 +2203,7 @@ export default function PlayerControls({
               ? ''
               : randomMoveScrambleNxN(order);
     }
-    if (reqId !== scrambleReqIdRef.current) return;
+    if (reqId !== scrambleReqIdRef.current || world.cube !== activeCube) return;
     if (!scramble) return;
     clearFrozen(); // release any debug held-partial turn first
     // Random scramble always lands on its final state immediately. The adjacent
@@ -2166,13 +2215,14 @@ export default function PlayerControls({
     };
     if (tw.setupAsync) await tw.setupAsync(scramble);
     else tw.setup(scramble);
+    if (reqId !== scrambleReqIdRef.current || world.cube !== activeCube) return;
     if (setupElRef.current) {
       setupElRef.current.value = scramble;
       autosize(setupElRef.current);
     }
     setSetupDraft(scramble);
     onSetupChange(scramble);
-  }, [world, clearFrozen, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, onSetupChange, twistyPlayerRef]);
+  }, [world, activeCube, clearFrozen, order, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, puzzleKind, squareFormat, onSetupChange, twistyPlayerRef]);
 
   // ▶ Play button: animate the CURRENT scramble (the text already in the box) from
   // solved, on demand. This is the explicit animation entry point for a normal random scramble:
@@ -2339,7 +2389,7 @@ export default function PlayerControls({
         mask={stickeringMask} onMaskClear={onStickeringMaskClear}
         pick={customPick} onPickChange={onCustomPickChange}
         rest={customRest} onRestChange={onCustomRestChange}
-        editing={customEditing} onEditingChange={onCustomEditingChange}
+        onUndo={onCustomUndo} onRedo={onCustomRedo} canUndo={canCustomUndo} canRedo={canCustomRedo}
         grain={customGrain} onGrainChange={onCustomGrainChange}
       />
     )
@@ -3873,7 +3923,7 @@ function PuzzleSettings({
                 value={typeof puzzleKind === 'number' ? 'nxn' : String(puzzleKind)}
                 isZh={isZh}
                 onChange={(v) => {
-                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'pyraminx_duo' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'clock' || v === 'custom') onPuzzleChange(v);
+                  if (v === 'sq1' || v === 'sq2' || v === 'sq4' || v === 'ivy' || v === 'dino' || v === 'redi' || v === 'rex' || v === 'heli' || v === 'gear' || v === 'ghost' || v === 'pyraminx' || v === 'pyraminx_duo' || v === 'skewb' || v === 'megaminx' || v === 'fto' || v === 'mirror' || v === 'mirror2' || v === 'sphere' || v === 'clock' || v === 'custom') onPuzzleChange(v);
                   else if (isPgPuzzleId(v)) onPuzzleChange(v as PgPuzzleId);
                   else onPuzzleChange(order || 3);
                 }}
@@ -3978,7 +4028,8 @@ function PuzzleSettings({
               disabled={!caps.supports.faceLabels || pictureCubeActive || roomsActive}
               title={pictureCubeActive || roomsActive
                 ? t('使用图案时暂时隐藏字母', 'Letters are hidden while artwork is active')
-                : hint(caps.supports.faceLabels)}
+                : hint(caps.supports.faceLabels) ?? (puzzleKind === 'sphere'
+                  ? t('三阶逻辑面的辅助方位提示', 'Auxiliary labels for the logical 3×3 faces') : undefined)}
             />
             {/* 背景(BG)选择器已移到画布左下角浮层(见本组件顶部 bgSelector + SimPage
                 的 .sim-bg-overlay),不再占开关行。 */}
@@ -4044,7 +4095,7 @@ function PuzzleSettings({
             <Toggle label={t('全身人物', 'Full body')} value={settings.fullBody === true} onChange={(v) => set('fullBody', v)} disabled={!caps.supports.hands || settings.hands !== true} title={hint(caps.supports.hands)} />
             {/* 箭头贴片仅 NxN 引擎生效(cube.arrow),非 NxN 拼图无此属性 → 仅 NxN 显示。
                 用户指定的唯一例外。 */}
-            {isNxNLocal && (
+            {caps.supports.arrow && (
               <Toggle label={t('箭头', 'Arrows')} value={settings.arrow} onChange={(v) => set('arrow', v)} disabled={roomsActive} title={hint(!roomsActive)} />
             )}
           </div>
@@ -4185,11 +4236,12 @@ function PuzzleSettings({
               (伴图导出器的 bodyOpacity / stickerOpacity / inset)。原来只挂在图像面板里、
               只改图不改动画,现在并到内核色下面一起管。 */}
           <PercentRow
-            label={t('内核不透明度', 'Core opacity')}
+            label={puzzleKind === 'sphere' ? t('球体不透明度', 'Sphere opacity') : t('内核不透明度', 'Core opacity')}
             value={transCore ? transCore.coreOpacity : settings.coreOpacity}
             onChange={(v) => set('coreOpacity', v)}
             disabled={!caps.supports.coreOpacity || !!transCore}
-            title={transHint ?? hint(caps.supports.coreOpacity)}
+            title={transHint ?? hint(caps.supports.coreOpacity) ?? (puzzleKind === 'sphere'
+              ? t('调整整体彩色球块的不透明度', 'Opacity of the whole coloured sphere') : undefined)}
           />
           <PercentRow
             label={t('贴纸不透明度', 'Sticker opacity')}
@@ -4256,7 +4308,7 @@ function PuzzleSettings({
                 <option value="off">{t('普通色块', 'Classic colors')}</option>
                 <optgroup label={t('立体房间（二至七阶）', '3D rooms (2–7 layers)')}>
                   {ROOM_THEMES.map((theme) => <option key={theme.id} value={theme.id}
-                    disabled={!supportsRoomCube(puzzleKind)}>{t(theme.zh, theme.en)}</option>)}
+                    disabled={!caps.supports.roomCube}>{t(theme.zh, theme.en)}</option>)}
                 </optgroup>
                 <option value="pictures">{t('自选图片', 'Your pictures')}</option>
               </select>

@@ -8,9 +8,9 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const GET_PATHS = new Set(['me', 'profile', 'providers', 'identities', 'admin/users', 'social/authorize', 'apple/authorize']);
+const GET_PATHS = new Set(['face', 'me', 'profile', 'providers', 'identities', 'admin/users', 'social/authorize', 'apple/authorize']);
 const POST_PATHS = new Set([
-  'refresh', 'profile', 'password/set', 'password/remove', 'account/delete', 'account/merge', 'account/merge/code',
+  'face', 'refresh', 'profile', 'password/set', 'password/remove', 'account/delete', 'account/merge', 'account/merge/code',
   'identity/link-code', 'link/apple', 'link/google', 'link/wca', 'link/email/send', 'link/email/verify',
   'link/phone/send', 'link/phone/verify', 'email/replace', 'phone/replace', 'unlink',
   'wechat/wca-link/start', 'web-session/ticket', 'mobile-session/ticket', 'role-preview',

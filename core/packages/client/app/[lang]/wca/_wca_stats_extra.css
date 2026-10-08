@@ -296,13 +296,9 @@
 .wse-pagination .paginator-input::-webkit-outer-spin-button,
 .wse-pagination .paginator-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-/* 过滤 / 废止项 pill:贴合文字(默认 110px 是给 on/off 文案不同的开关用的);
-   flex-shrink:0 防止在 events-bar flex 里被压窄到文字钻进滑钮下面;
-   align-self:flex-start 防止在 column flex 的 .wse-filter 里被 stretch 拉满整列宽(手机端半屏长) */
-.pill-toggle.wse-pill { min-width: 0; flex-shrink: 0; align-self: flex-start; height: 26px; font-size: 12px; }
-/* 作过滤器(.wse-filter 直接子)时跟同行 select / input(34px)同高,内容已 align-items:center
-   → 与相邻控件上下居中对齐;events-bar 里的「废止项」不是 .wse-filter 直接子,仍 26px 不受影响 */
-.wse-filter > .pill-toggle.wse-pill { height: 34px; font-size: 13px; }
+/* 原生筛选菜单贴合文字，与同行输入控件等高。 */
+.native-select.wse-pill { flex-shrink: 0; align-self: flex-start; height: 26px; font-size: 12px; }
+.wse-filter > .native-select.wse-pill { height: 34px; font-size: 13px; }
 
 /* 布尔开关(BoolToggle:左文字 + 右滑钮)。作 .wse-filter 直接子(无 label)时纵向居中,
    跟相邻「label+控件」filter 对齐。 */

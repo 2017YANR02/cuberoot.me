@@ -9,12 +9,11 @@ import { useEffect, useState } from 'react';
 import Link from '@/components/AppLink';
 import type { ReconSolve } from '@cuberoot/shared';
 import { getTodayRecons } from '@/lib/recon-api';
-import { ReconCard } from '@/components/ReconCard/ReconCard';
+import { CuratedReconCard } from '@/components/ReconCard/CuratedReconCard';
 import { reconPathSeg } from '@/lib/recon-seo';
 import './today_recon.css';
 import './scroll_panel.css';
 import { tr } from '@/i18n/tr';
-import { Pin, PinOff } from 'lucide-react';
 
 interface Props {
   lang: 'zh' | 'en';
@@ -69,18 +68,9 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
       <div className="tr-cards scroll-panel scroll-panel--hover-lift">
         {visibleRecons.map((s) => {
           const pinned = pinnedRecons?.some(item => item.id === s.id) ?? false;
-          const label = pinned ? tr({ zh: '取消置顶', en: 'Unpin from homepage' }) : tr({ zh: '置顶到主页', en: 'Pin to homepage' });
           return (
-            <div key={s.id} className={isAdmin ? 'tr-card-item tr-card-item--admin' : 'tr-card-item'}>
-              <ReconCard solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false} />
-              {isAdmin && (
-                <button type="button" className="tr-pin" aria-label={label} title={label}
-                  aria-pressed={pinned} disabled={pinnedRecons === null || savingPins.has(s.id)}
-                  onClick={() => void onPin(s, !pinned)}>
-                  {pinned ? <PinOff size={16} aria-hidden="true" /> : <Pin size={16} aria-hidden="true" />}
-                </button>
-              )}
-            </div>
+            <CuratedReconCard key={s.id} solve={s} isZh={isZh} href={`/recon/${reconPathSeg(s)}`} showScrambleFallback={false}
+              pin={isAdmin ? { active: pinned, disabled: pinnedRecons === null || savingPins.has(s.id), onToggle: () => void onPin(s, !pinned) } : undefined} />
           );
         })}
       </div>

@@ -1,14 +1,13 @@
 'use client';
-// 遮罩清单管理(仅管理员可见,/sim 播放条上的齿轮)。
+// 阶段菜单内的遮罩清单编辑器(仅管理员可见)。
 //
 // 标签与显隐用条目覆盖层；分组顺序、组内顺序与跨组归属一次保存完整布局。
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Eye, EyeOff, Menu, Trash2, X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import SortableCard from '@/components/SortableCard';
 import { useT } from '@/hooks/useT';
-import { useModalDismiss } from '@/hooks/useModalDismiss';
 import {
   deleteSimMask, saveSimMaskLayout, saveSimMask, PRESET_PREFIX,
   type SimMaskRow, type SimMaskInput,
@@ -28,7 +27,7 @@ function presetKey(labelEn: string, labelZh: string, taken: Set<string>): string
 
 export default function SimMaskAdmin({
   order, groups: initialGroups, rows, onReload, onClose, groupLabel, defaultLabel,
-  pickedSids, pick, rest,
+  pickedSids, pick, rest, renderPreview, onBusyChange, onStartPicking,
 }: {
   /** 阶数(覆盖行按阶存:点选清单绑死阶数,内置条目也按阶各记一份)。 */
   order: number;
@@ -37,6 +36,9 @@ export default function SimMaskAdmin({
   rows: SimMaskRow[];
   onReload: () => Promise<void>;
   onClose: () => void;
+  onStartPicking: () => void;
+  onBusyChange: (busy: boolean) => void;
+  renderPreview: (key: string, row: SimMaskInput | SimMaskRow | undefined) => ReactNode;
   groupLabel: (group: string) => string;
   /** 代码里的默认标签(改名输入框的 placeholder,让人看得见默认是什么)。 */
   defaultLabel: (key: string, lang: 'zh' | 'en') => string;
@@ -48,7 +50,6 @@ export default function SimMaskAdmin({
   const t = useT();
   const cfg = useMemo(() => maskRowsForOrder(rows, order), [rows, order]);
   const [busy, setBusy] = useState(false);
-  const backdropProps = useModalDismiss(onClose, busy);
   const [err, setErr] = useState<string | null>(null);
   const [groups, setGroups] = useState(initialGroups);
   const [draft, setDraft] = useState<Record<string, SimMaskInput>>({});
@@ -58,6 +59,7 @@ export default function SimMaskAdmin({
   const saveAll = async () => {
     if (busy) return;
     setBusy(true);
+    onBusyChange(true);
     setErr(null);
     try {
       for (const row of Object.values(draft)) await saveSimMask(row);
@@ -69,6 +71,7 @@ export default function SimMaskAdmin({
       setErr(e instanceof Error ? e.message : String(e));
     } finally {
       setBusy(false);
+      onBusyChange(false);
     }
   };
 
@@ -160,7 +163,6 @@ export default function SimMaskAdmin({
   };
 
   return (
-    <div className="sim-mask-admin-scrim" {...backdropProps} role="dialog" aria-modal="true" aria-label={t('遮罩清单管理', 'Manage mask list')}>
       <div className="sim-mask-admin">
         <div className="sim-mask-admin-head">
           <strong>{t('遮罩清单管理', 'Manage mask list')}</strong>
@@ -171,7 +173,7 @@ export default function SimMaskAdmin({
           <button type="button" className="sim-mask-admin-btn" disabled={busy || (!Object.keys(draft).length && !deleted.length && groups === initialGroups)} onClick={saveAll}>
             {t('保存', 'Save')}
           </button>
-          <button type="button" className="sim-mask-admin-x" disabled={busy} onClick={onClose} aria-label={t('关闭', 'Close')}>
+          <button type="button" className="sim-mask-admin-x" autoFocus disabled={busy} onClick={onClose} aria-label={t('取消编辑', 'Cancel editing')}>
             <X size={16} />
           </button>
           </div>
@@ -205,16 +207,17 @@ export default function SimMaskAdmin({
               </button>
             </>
           ) : (
-            <span className="sim-mask-admin-hint">
-              {t('先在阶段下拉里选「自定义」并点几枚贴纸', 'Pick “custom” in the stage select and click some stickers first')}
-            </span>
+            <>
+              <button type="button" className="sim-mask-admin-btn" disabled={busy} onClick={onStartPicking}>
+                {t('去点选贴纸', 'Pick stickers')}
+              </button>
+              <span className="sim-mask-admin-hint">
+                {t('在魔方上点选贴纸，再打开此处保存。', 'Select stickers on the cube, then reopen this editor to save.')}
+              </span>
+            </>
           )}
         </div>
 
-        <div className="sim-mask-admin-columns" aria-hidden="true">
-          <span>{t('中文名', 'Chinese name')}</span>
-          <span>{t('英文名', 'English name')}</span>
-        </div>
         <DndContext sensors={sensors} onDragEnd={onDragEnd}
           collisionDetection={(args) => closestCenter({ ...args, droppableContainers: args.droppableContainers.filter((container) =>
             !String(args.active.id).startsWith('group:') || String(container.id).startsWith('group:')) })}>
@@ -234,8 +237,11 @@ export default function SimMaskAdmin({
                 const identifier = maskDisplayIdentifier(d.en.trim() || defaultLabel(key, 'en'));
                 return (
                   <SortableCard key={key} id={`item:${key}`} draggable disabled={busy} stretch={false} dragIcon={<Menu size={16} />} className={`sim-mask-admin-row${hidden ? ' is-hidden' : ''}`} dragLabel={t('拖动调整阶段顺序或分组', 'Drag to reorder or move stage')}>
+                    {renderPreview(key, r)}
+                    <div className="sim-mask-admin-fields">
                     <code className="sim-mask-admin-key" title={identifier}>{identifier}</code>
                     <label className="sim-mask-admin-field">
+                    <span>{t('中文名', 'Chinese name')}</span>
                     <input
                       className="sim-mask-admin-input"
                       value={d.zh}
@@ -246,6 +252,7 @@ export default function SimMaskAdmin({
                     />
                     </label>
                     <label className="sim-mask-admin-field">
+                    <span>{t('英文名', 'English name')}</span>
                     <input
                       className="sim-mask-admin-input"
                       value={d.en}
@@ -255,6 +262,8 @@ export default function SimMaskAdmin({
                       aria-label={t('英文名', 'English name')}
                     />
                     </label>
+                    </div>
+                    <div className="sim-mask-admin-row-actions">
                     <button
                       type="button" className="sim-mask-admin-icon" disabled={busy}
                       onClick={() => editRow(key, { hidden: !hidden })}
@@ -271,6 +280,7 @@ export default function SimMaskAdmin({
                     >
                       <Trash2 size={14} />
                     </button>}
+                    </div>
                   </SortableCard>
                 );
               })}
@@ -283,6 +293,5 @@ export default function SimMaskAdmin({
 
         {err && <div className="sim-mask-admin-err">{err}</div>}
       </div>
-    </div>
   );
 }

@@ -205,7 +205,7 @@ export default class Controller {
     return null;
   }
 
-  intersect(point: THREE.Vector2, plane: THREE.Plane): THREE.Vector3 | null {
+  private updatePointerRay(point: THREE.Vector2): boolean {
     if (
       !Number.isFinite(point.x) ||
       !Number.isFinite(point.y) ||
@@ -214,7 +214,7 @@ export default class Controller {
       this.world.width <= 0 ||
       this.world.height <= 0
     ) {
-      return null;
+      return false;
     }
     const x = (point.x / this.world.width) * 2 - 1;
     const y = -(point.y / this.world.height) * 2 + 1;
@@ -223,6 +223,11 @@ export default class Controller {
     this.matrix.copy(this.world.scene.matrix);
     this.matrix.invert();
     this.ray.applyMatrix4(this.matrix);
+    return true;
+  }
+
+  intersect(point: THREE.Vector2, plane: THREE.Plane): THREE.Vector3 | null {
+    if (!this.updatePointerRay(point)) return null;
     const result = this.ray.intersectPlane(plane, new THREE.Vector3());
     if (!result || !Number.isFinite(result.x) || !Number.isFinite(result.y) || !Number.isFinite(result.z)) {
       return null;
@@ -238,10 +243,18 @@ export default class Controller {
       this.handleUp();
     }
     this.dragging = true;
-    this.holder.index = -1;
+    const hit = this.hitTest(this.down);
+    this.holder.index = hit?.index ?? -1;
+    if (hit) this.holder.plane = hit.plane;
+  }
+
+  /** Same geometry as a tap, without starting a drag or changing the held target. */
+  hitTest(position: THREE.Vector2): { index: number; face: FACE; plane: THREE.Plane } | null {
+    if (this.world.puzzleKind === 'sphere') return this.hitTestSphere(position);
+    let hit: { index: number; face: FACE; plane: THREE.Plane } | null = null;
     let distance = 0;
-    this.planes.forEach((plane) => {
-      const point = this.intersect(this.down, plane);
+    this.planes.forEach((plane, planeIndex) => {
+      const point = this.intersect(position, plane);
       if (point !== null) {
         let x = point.x / Cubelet.SIZE / 3;
         let y = point.y / Cubelet.SIZE / 3;
@@ -252,17 +265,48 @@ export default class Controller {
             Math.pow(point.y - this.ray.origin.y, 2) +
             Math.pow(point.z - this.ray.origin.z, 2);
           if (distance == 0 || d < distance) {
-            this.holder.plane = plane;
             const order = this.world.cube.order;
             x = Math.max(0, Math.min(order - 1, Math.floor((x + 0.5) * order)));
             y = Math.max(0, Math.min(order - 1, Math.floor((y + 0.5) * order)));
             z = Math.max(0, Math.min(order - 1, Math.floor((z + 0.5) * order)));
-            this.holder.index = z * order * order + y * order + x;
+            hit = { index: z * order * order + y * order + x,
+              face: [FACE.R, FACE.U, FACE.F, FACE.L, FACE.D, FACE.B][planeIndex], plane };
             distance = d;
           }
         }
       }
     }, this);
+    return hit;
+  }
+
+  /** Pick the nearest actual ball, including moving instances. A ray missing all
+   *  balls remains a view drag. Snap only the hit normal to a logical face: match() needs
+   *  axis-aligned planes to choose the ordinary NxN slice. */
+  private hitTestSphere(position: THREE.Vector2): { index: number; face: FACE; plane: THREE.Plane } | null {
+    if (!this.updatePointerRay(position)) return null;
+    const cube = this.world.cube as import('./cube').default;
+    const sphere = new THREE.Sphere(new THREE.Vector3(), Cubelet.SPHERE_RADIUS * cube.scale.x);
+    const matrix = new THREE.Matrix4();
+    const point = new THREE.Vector3();
+    const normal = new THREE.Vector3();
+    const faces = [FACE.R, FACE.U, FACE.F, FACE.L, FACE.D, FACE.B];
+    let nearest = Infinity;
+    let hit: { index: number; face: FACE; plane: THREE.Plane } | null = null;
+    for (const cubelet of cube.initials.values()) {
+      if (!cube.instancedRenderer.getCubeletRenderMatrix(cubelet.initial, matrix)) continue;
+      sphere.center.setFromMatrixPosition(matrix).applyMatrix4(cube.matrix);
+      if (!this.ray.intersectSphere(sphere, point)) continue;
+      const distance = this.ray.origin.distanceToSquared(point);
+      if (distance >= nearest) continue;
+      normal.subVectors(point, sphere.center).normalize();
+      let planeIndex = 0;
+      for (let i = 1; i < this.planes.length; i++) {
+        if (this.planes[i].normal.dot(normal) > this.planes[planeIndex].normal.dot(normal)) planeIndex = i;
+      }
+      nearest = distance;
+      hit = { index: cubelet.index, face: faces[planeIndex], plane: this.planes[planeIndex] };
+    }
+    return hit;
   }
 
   handleMove(): void {

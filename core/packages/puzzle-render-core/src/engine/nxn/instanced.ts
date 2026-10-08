@@ -155,6 +155,7 @@ export default class InstancedRenderer extends THREE.Group {
   dimWhite = FM_DIM_WHITE;
   /** 描边(FM_OUTLINE)的 per-instance 开关,static / moving 共享一份(同槽序)。 */
   private outlineFlags!: THREE.InstancedBufferAttribute;
+  private previewStickers: ((initial: number, face: number) => boolean) | null = null;
   private outlineColor!: OutlineUniform;
   /** 图案魔方:每个贴纸槽绑定 HOME 图片切片。static / moving 共用属性,所以转层时
    *  图片碎片跟真实块走。纹理只是一张 3×2 atlas,不增加 mesh / draw call。 */
@@ -231,7 +232,7 @@ export default class InstancedRenderer extends THREE.Group {
     const T0 = performance.now();
     this.cube = cube;
     this.matrixAutoUpdate = false;
-    this.hasInner = cube.order < __PERF_FLAGS.superOrderThreshold;
+    this.hasInner = !cube.isSphere && cube.order < __PERF_FLAGS.superOrderThreshold;
 
     const cubelets = [...cube.initials.values()];
     const visCount = cubelets.length;
@@ -325,6 +326,8 @@ export default class InstancedRenderer extends THREE.Group {
     this.pictureAttrs = buildPictureSlotAttributes(this.stickerSlots, this.cube.order);
     this.staticSticker = this.makeStickerMesh(this.stickerSlots.length, false);
     this.movingSticker = this.makeStickerMesh(this.stickerSlots.length, true);
+    this.staticSticker.visible = !cube.isSphere;
+    this.movingSticker.visible = !cube.isSphere;
     this.movingSticker.count = 0;
 
     // 示意小面(sim_svg_export_schematic):理想晶格四边形 = 贴纸局部系 z=0 平面
@@ -439,19 +442,34 @@ export default class InstancedRenderer extends THREE.Group {
     this.add(this.movingSticker);
     this.add(this.staticHint);
     this.add(this.movingHint);
+    if (cube.isSphere) {
+      // Keep the 54 logical slots for state / colors, but render each entire ball.
+      delete this.staticSticker.userData.schematicInstancedPoly;
+      delete this.movingSticker.userData.schematicInstancedPoly;
+      this.setRawCore(true, {
+        U: COLORS.U, D: COLORS.D, L: COLORS.L,
+        R: COLORS.R, F: COLORS.F, B: COLORS.B,
+      }, COLORS.Core, false);
+    }
     const T4 = performance.now();
     if (cube.order >= 50) {
       console.log(`[InstancedRenderer ctor N=${cube.order}] init=${(T1 - T0).toFixed(0)}ms frame+inner=${(T2 - T1).toFixed(0)}ms stickerSlots=${(T3 - T2).toFixed(0)}ms stickerMesh+hint=${(T4 - T3).toFixed(0)}ms total=${(T4 - T0).toFixed(0)}ms slots=${this.stickerSlots.length}`);
     }
   }
 
+  private get frameGeometry(): THREE.BufferGeometry {
+    if (this.cube.isSphere) return Cubelet._SPHERE;
+    return this.cube.order >= __PERF_FLAGS.superOrderThreshold ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+  }
+
   private makeFrameMesh(count: number, moving: boolean): THREE.InstancedMesh {
     const isSuperOrder = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
     const mat = isSuperOrder ? Cubelet.CORE_BASIC : Cubelet.CORE;
-    const geo = isSuperOrder ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+    const geo = this.frameGeometry;
     const m = new THREE.InstancedMesh(geo, mat, count);
     m.frustumCulled = false;
     m.userData.simRole = 'body'; // structure-coloring debug overlay (debugColors.ts)
+    if (this.cube.isSphere) m.userData.simSphereCubie = true;
     // moving mesh 由我们 setSliceAngle() 设 quaternion → matrixAutoUpdate 让 three 复合 matrix
     // static mesh 永远 identity
     m.matrixAutoUpdate = moving;
@@ -1067,10 +1085,12 @@ export default class InstancedRenderer extends THREE.Group {
    *  raw + _FRAME_LOW(无 inner) —— 块身染成各面色后,贴片缝隙的深色网格消失成纯色面。
    *  faceColors 改变时 setFaceColors 会回调重建属性值。 */
   setRawCore(on: boolean, faceColors: { U: string; D: string; L: string; R: string; F: string; B: string }, coreColor: string, border: boolean): void {
+    // Shared persisted NxN settings must never turn a ball back into a box.
+    if (this.cube.isSphere) { on = true; border = false; }
     const isSuper = this.cube.order >= __PERF_FLAGS.superOrderThreshold;
     if (on) {
       // 懒建克隆几何 + 属性(超高阶克隆 _FRAME_LOW box,其余克隆圆角 _FRAME)
-      if (!this._rawFrameGeo) this._rawFrameGeo = (isSuper ? Cubelet._FRAME_LOW : Cubelet._FRAME).clone();
+      if (!this._rawFrameGeo) this._rawFrameGeo = this.frameGeometry.clone();
       this._rawAttrs = buildRawAttributes(
         this.instanceToInitial.length, this.cubeletFaceSlot, faceColors, this._rawAttrs ?? undefined,
       );
@@ -1095,7 +1115,7 @@ export default class InstancedRenderer extends THREE.Group {
       }
     } else if (this._rawCore) {
       // 恢复默认几何 + 材质(尊重当前 hollow;超高阶 unlit Basic,其余 Phong)
-      const frameGeo = isSuper ? Cubelet._FRAME_LOW : Cubelet._FRAME;
+      const frameGeo = this.frameGeometry;
       const mat = this._hollow ? Cubelet.TRANS : (isSuper ? Cubelet.CORE_BASIC : Cubelet.CORE);
       this.staticFrame.geometry = frameGeo;
       this.movingFrame.geometry = frameGeo;
@@ -1125,6 +1145,7 @@ export default class InstancedRenderer extends THREE.Group {
   get rawCore(): boolean { return this._rawCore; }
 
   set arrow(value: boolean) {
+    if (this.cube.isSphere) value = false;
     if (value === this._arrow) return;
     this._arrow = value;
     // 走 stickerGeometry():箭头几何也得是挂着 aOutline 的自用克隆,否则一开箭头描边就没了。
@@ -1231,13 +1252,25 @@ export default class InstancedRenderer extends THREE.Group {
       this.stickeringCodes = codes;
     }
     // 描边不是颜色,走 shader 的 per-instance 开关(见 stickerOutline.ts)。
-    const flags = this.outlineFlags.array as Float32Array;
-    for (let i = 0; i < flags.length; i++) {
-      flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE ? 1 : 0;
-    }
-    this.outlineFlags.needsUpdate = true;
+    this.refreshOutlineFlags();
     this.refreshPictureFlags();
     this.refreshStickerColors();
+  }
+
+  /** Transient hover outline; never changes saved mask codes or sticker colors. */
+  setStickerPreview(preview: ((initial: number, face: number) => boolean) | null): void {
+    this.previewStickers = preview;
+    this.refreshOutlineFlags();
+    this.cube.dirty = true;
+  }
+
+  private refreshOutlineFlags(): void {
+    const flags = this.outlineFlags.array as Float32Array;
+    for (let i = 0; i < flags.length; i++) {
+      const slot = this.stickerSlots[i];
+      flags[i] = this.stickeringCodes?.[i] === FM_OUTLINE || this.previewStickers?.(slot.cubeletInitial, slot.face) ? 1 : 0;
+    }
+    this.outlineFlags.needsUpdate = true;
   }
 
   private refreshPictureFlags(): void {

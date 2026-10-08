@@ -850,7 +850,7 @@ html:root[data-theme=dark]:has(.cal-page) {
 .cal-share-field { display: flex; flex-direction: column; gap: 6px; }
 /* column flex 默认 stretch,开关会被拉成整行宽;贴合内容,别钉 min-width。
    只管开关 —— 下面那段说明文字要占满宽才好换行。 */
-.cal-share-field > .pill-toggle { align-self: flex-start; }
+.cal-share-field > .native-select { align-self: flex-start; }
 
 .cal-share-cals { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 

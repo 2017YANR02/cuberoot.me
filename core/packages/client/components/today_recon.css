@@ -53,24 +53,3 @@
 }
 /* 无打乱缩略图后卡片只剩文字两行(有视频封面的卡仍带缩略图),面板相应压低 */
 .tr-cards.scroll-panel { max-height: clamp(14rem, 45vh, 24rem); }
-
-.tr-card-item { position: relative; min-width: 0; }
-.tr-card-item > .recon-card { height: 100%; }
-.tr-card-item--admin .recon-card-body { padding-right: 2.25rem; }
-.tr-pin {
-  position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 0;
-  border-radius: 6px;
-  background: var(--card);
-  color: var(--muted-foreground);
-  cursor: pointer;
-}
-.tr-pin:hover, .tr-pin[aria-pressed="true"] { color: var(--accent); }
-.tr-pin:disabled { opacity: 0.5; cursor: wait; }

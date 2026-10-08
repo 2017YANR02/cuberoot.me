@@ -47,7 +47,7 @@ import { useAuthStore } from '@/lib/auth-store';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import { useMembership } from '@/hooks/useMembership';
 import { displayCuberName } from '@/lib/cuber-name-display';
-import { compNameZh, loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
+import { loadFlagData, flagDataVersion, personFlagIso2 } from '@/lib/country-flags';
 import { fetchCompRounds, type RoundFormat } from '@/lib/comp-wcif';
 import { toWcaEventId } from '@/lib/wca-events';
 import {
@@ -719,16 +719,15 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
 
   // ── CompPicker handlers ──
   const applyPickedComp = useCallback((c: Comp) => {
-    const zh = isZh ? compNameZh(c.name) : '';
     setForm(prev => ({
       ...prev,
-      comp: zh || c.name,
+      comp: c.name,
       compWcaId: c.id,
       country: (c.country || '').toLowerCase(),
       date: c.start_date,
     }));
     pruneReused(['comp', 'date']);
-  }, [isZh, pruneReused]);
+  }, [pruneReused]);
 
   const clearPickedComp = useCallback(() => {
     setForm(prev => ({ ...prev, comp: '', compWcaId: '', country: '', date: '' }));

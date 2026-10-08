@@ -42,6 +42,7 @@ import {
   Settings as SettingsIcon,
   AlertTriangle,
   ArrowLeft,
+  Box,
   X,
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
@@ -432,6 +433,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
   const [solverBlocking, setSolverBlocking] = useState(false);
   const [historyOverlayOpen, setHistoryOverlayOpen] = useState(false);
+  const [devFakeCubeOpen, setDevFakeCubeOpen] = useState(false);
   const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
   useEffect(() => {
@@ -655,7 +657,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const randomOptimalOwner = authUser ? computeOwnerKey(authUser.uid, authUser.wcaId) : '';
   const randomOptimalKey = randomOptimalRequested
     ? `${randomOptimalOwner}|${drillTarget && drillAllowed
-      ? `drill:${drillTarget.type}:${drillTarget.id}`
+      ? `drill:${drillTarget.type}:${drillTarget.id}|cn:${settings.cnMode}`
       : trainerSigVal ? `difficulty:${trainerSigVal}` : 'normal'}`
     : '';
   const randomOptimalSource: Optimal333Source | null = randomOptimalRequested
@@ -663,7 +665,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         key: randomOptimalKey,
         generateBase: async (signal) => {
           if (drillTarget && drillAllowed) {
-            const drill = generateTimerDrillScramble(drillTarget);
+            const drill = generateTimerDrillScramble(drillTarget, Math.random, getSettings().cnMode);
             if (drill) return drill.scramble;
           }
           const spec = trainerSpecRef.current;
@@ -743,7 +745,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       );
     }
     if (drillTarget && drillAllowed) {
-      const ds = generateTimerDrillScramble(drillTarget);
+      const ds = generateTimerDrillScramble(drillTarget, Math.random, getSettings().cnMode);
       if (ds) return timerScrambleHistoryEntry(
         ds.scramble,
         null,
@@ -1841,8 +1843,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       scramble,
       targetFacelets: scrambleTarget,
       orientation: trainingOrientation,
+      cnMode: settings.cnMode,
     });
-  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController, trainingOrientation]);
+  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController, trainingOrientation, settings.cnMode]);
   useLayoutEffect(() => {
     smartCubeSoloController.setConnected(cubeConnected);
     return () => smartCubeSoloController.setConnected(false);
@@ -3004,6 +3007,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             }}
             value={settings.scrambleSource}
             trainingItems={trainingItems}
+            language={timerLanguage}
             trainingValue={trainingEvents.includes(event) ? event : event === '222' && type222 !== 'full' ? type222 : undefined}
             onTrainingChange={(id) => {
               if (selectedPuzzle === '222' && isScramble222Type(id)) {
@@ -3018,8 +3022,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               selectEvent(nextEvent);
             }}
             onChange={(scrambleSource) => {
-              if (selectedPuzzle === '222') setType222('full');
-              selectEvent(selectedPuzzle);
+              if (scrambleSource !== 'manual') {
+                if (selectedPuzzle === '222') setType222('full');
+                selectEvent(selectedPuzzle);
+              }
               updateSettings({ scrambleSource });
             }}
             realValue="wca"
@@ -3031,16 +3037,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
 
-          {/* 假魔方是 dev 调试入口,跟当前打乱相关,放在常驻计时控件末尾。 */}
-          {DEV_PANEL && settings.showDevFakeCube && (
-            <DevFakeCubePanel
-              connected={bluetoothCube.status.connected}
-              deviceName={bluetoothCube.status.deviceName ?? null}
-              onConnect={bluetoothCube.connect}
-              onDisconnect={bluetoothCube.disconnect}
-              scramble={timerSmartCubeAttemptScramble(event, scramble, settings.preScrT)}
-            />
-          )}
           </>
         ),
           actions: (
@@ -3065,7 +3061,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           />,
           devices: <TimerDeviceCenter
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
-            items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+            items={[...WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
               ? {
                   active: bluetoothCube.status.connected,
                   detail: bluetoothCube.status.connected
@@ -3096,10 +3092,29 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                     kind: device.kind,
                     label: tr(TIMER_DEVICE_CENTER_LABELS['stackmat']),
                     onSelect: connectStackmat,
-                  })}
+                  }),
+              ...(DEV_PANEL && settings.showDevFakeCube ? [{
+                id: 'dev-fake-cube',
+                icon: <Box aria-hidden="true" size={15} />,
+                label: tr({ zh: '假魔方', en: 'Fake cube' }),
+                onSelect: () => setDevFakeCubeOpen(true),
+              }] : []),
+            ]}
             menuLabel={tr(TIMER_DEVICE_CENTER_LABELS['menu'])}
             triggerLabel={tr(TIMER_DEVICE_CENTER_LABELS['trigger'])}
-          />}}
+          >
+            {DEV_PANEL && settings.showDevFakeCube && (
+              <DevFakeCubePanel
+                open={devFakeCubeOpen}
+                onClose={() => setDevFakeCubeOpen(false)}
+                connected={bluetoothCube.status.connected}
+                deviceName={bluetoothCube.status.deviceName ?? null}
+                onConnect={bluetoothCube.connect}
+                onDisconnect={bluetoothCube.disconnect}
+                scramble={timerSmartCubeAttemptScramble(event, scramble, settings.preScrT)}
+              />
+            )}
+          </TimerDeviceCenter>}}
         solver={solverHintPanel}
         timing={{
 phase: timer.phase,

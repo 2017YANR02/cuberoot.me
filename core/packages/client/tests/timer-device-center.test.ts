@@ -63,6 +63,23 @@ describe('TimerDeviceCenter', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe(disabled ? 'true' : null);
   });
 
+  it.each([false, true])('invokes the sole trainer action synchronously, disabled=%s', async (disabled) => {
+    const onSelect = vi.fn();
+    await act(async () => root.render(createElement(TimerDeviceCenter, {
+      ariaLabel: 'Timer devices', directSingleItem: true,
+      items: [{ id: 'cube', kind: 'smart-cube', label: 'Smart cube', disabled, onSelect }],
+      menuLabel: 'Available timer devices', triggerLabel: 'Devices',
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
+    expect(trigger.disabled).toBe(disabled);
+    act(() => {
+      trigger.click();
+      // The browser picker must run before this click loses user activation.
+      expect(onSelect).toHaveBeenCalledTimes(disabled ? 0 : 1);
+    });
+    expect(host.querySelector('[role="menu"]')).toBeNull();
+  });
+
   it('closes on Escape and outside pointer-down, returning focus to the trigger', async () => {
     await act(async () => root.render(createElement(TimerDeviceCenter, {
       ariaLabel: 'Timer devices',
@@ -80,5 +97,25 @@ describe('TimerDeviceCenter', () => {
     await act(async () => trigger.click());
     await act(async () => document.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
     expect(document.body.querySelector('[role="menu"]')).toBeNull();
+  });
+
+  it('keeps the fake-cube utility below Stackmat and reachable while a cube is connected', async () => {
+    const onFakeCube = vi.fn();
+    const onCube = vi.fn();
+    await act(async () => root.render(createElement(TimerDeviceCenter, {
+      ariaLabel: 'Timer devices', menuLabel: 'Available timer devices', triggerLabel: 'Devices',
+      items: [
+        { id: 'cube', kind: 'smart-cube', label: 'Smart cube', active: true, onSelect: onCube },
+        { id: 'stackmat', kind: 'stackmat', label: 'Stackmat', onSelect: vi.fn() },
+        { id: 'fake', label: 'Fake cube', onSelect: onFakeCube },
+      ],
+    })));
+    await act(async () => host.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!.click());
+    const items = [...host.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')];
+    expect(items.map(item => item.textContent)).toEqual(['Smart cube', 'Stackmat', 'Fake cube']);
+    await act(async () => items[2].click());
+    expect(onFakeCube).toHaveBeenCalledOnce();
+    expect(onCube).not.toHaveBeenCalled();
+    expect(host.querySelector('[role="menu"]')).toBeNull();
   });
 });

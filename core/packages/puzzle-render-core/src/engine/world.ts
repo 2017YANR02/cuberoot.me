@@ -41,7 +41,7 @@ export interface SmplxBodyAsset { geometry: THREE.BufferGeometry; heightM: numbe
  *  mesh-less Group; the picture comes from the DOM overlay `SimClockBoard`. It still
  *  lives here so `world.cube` / the twister contract hold and the player controls drive
  *  it unchanged. */
-export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'clock';
+export type PuzzleKind = number | 'sq1' | 'sq2' | 'sq4' | 'ivy' | 'dino' | 'redi' | 'rex' | 'heli' | 'gear' | 'skewb' | 'pyraminx' | 'pyraminx_duo' | 'megaminx' | 'fto' | 'ghost' | 'mirror' | 'mirror2' | 'sphere' | 'clock';
 
 export default class World<HandsRig extends WorldHands = WorldHands> {
   public width = 1;
@@ -82,6 +82,7 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
    *  (3 = 'mirror', 2 = 'mirror2'); separate cache so it never collides with the
    *  plain cube of the same order in cubes[order]. */
   private mirrorCubes: Record<number, Cube> = {};
+  private sphereCube: Cube | null = null;
   /** Current puzzle kind, mirrors what was last passed to setPuzzle. */
   public puzzleKind: PuzzleKind = 3;
   public callbacks: (() => void)[] = [];
@@ -370,6 +371,14 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
       // Controller 的空白拖转视角对一张平面板毫无意义 → 关掉;灯光也不必装(没东西可照)。
       if (this.controller) this.controller.disable = true;
       this._removeSq1Lights();
+    } else if (kind === 'sphere') {
+      if (this.sphereCube == null) {
+        this.sphereCube = new Cube(3, 'sphere');
+        this.sphereCube.callbacks.push(this.callback);
+      }
+      this.cube = this.sphereCube;
+      if (this.controller) this.controller.disable = false;
+      this._removeSq1Lights();
     } else if (kind === 'mirror' || kind === 'mirror2') {
       const n = kind === 'mirror2' ? 2 : 3;
       if (this.mirrorCubes[n] == null) {
@@ -422,6 +431,11 @@ export default class World<HandsRig extends WorldHands = WorldHands> {
   disposeDuoCube(): void {
     this.duoCube?.dispose();
     this.duoCube = null;
+  }
+
+  disposeSphereCube(): void {
+    this.sphereCube?.dispose();
+    this.sphereCube = null;
   }
 
   /** Legacy property — kept for back-compat. Number kinds only. */

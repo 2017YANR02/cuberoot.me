@@ -4,7 +4,8 @@ import {
 } from '../timer/event-catalog';
 import type { TimerPhase } from '../timer/machine';
 import type { EventId } from '../timer/types';
-import { timerSmartCubeTrainingComplete, timerSmartCubeTrainingStep } from '../timer/smart-cube-training';
+import { timerSmartCubeTrainingComplete, timerSmartCubeTrainingFrames, timerSmartCubeTrainingStep } from '../timer/smart-cube-training';
+import type { CnMode } from '../timer/color-neutral';
 import {
   createSmartCubeGuidanceController,
   type SmartCubeGuidanceState,
@@ -16,6 +17,7 @@ export interface SmartCubeSoloTimerContext {
   scramble: string;
   targetFacelets: string | null;
   orientation?: string;
+  cnMode?: CnMode;
 }
 
 export interface SmartCubeSoloMoveMetadata {
@@ -79,7 +81,7 @@ export class SmartCubeSoloTimerController<
   private disposed = false;
   private running = false;
   private runningEvent: EventId | null = null;
-  private runningOrientation = '';
+  private runningOrientations: readonly string[] = [''];
   private lastFacelets: string | null = null;
   private trainingComplete: boolean | null = null;
   private readonly guidance: ReturnType<typeof createSmartCubeGuidanceController>;
@@ -108,6 +110,7 @@ export class SmartCubeSoloTimerController<
       && this.context?.id === context?.id
       && this.context?.scramble === context?.scramble
       && this.context?.orientation === context?.orientation
+      && this.context?.cnMode === context?.cnMode
       && this.context?.targetFacelets === context?.targetFacelets
     )) return;
     this.context = context;
@@ -229,7 +232,9 @@ export class SmartCubeSoloTimerController<
     if (!this.running) {
       this.running = true;
       this.runningEvent = context?.event ?? null;
-      this.runningOrientation = context?.orientation ?? '';
+      this.runningOrientations = context ? timerSmartCubeTrainingFrames(
+        context.event, context.targetFacelets, context.orientation ?? '', context.cnMode ?? 'none',
+      ) : [''];
       this.trainingComplete = this.isTrainingComplete(this.lastFacelets ?? context?.targetFacelets ?? null);
     }
     this.guidance.setRunning(true);
@@ -237,7 +242,7 @@ export class SmartCubeSoloTimerController<
 
   private isTrainingComplete(facelets: string | null): boolean | null {
     return facelets && this.runningEvent && timerSmartCubeTrainingStep(this.runningEvent)
-      ? timerSmartCubeTrainingComplete(this.runningEvent, facelets, this.runningOrientation)
+      ? this.runningOrientations.some(orientation => timerSmartCubeTrainingComplete(this.runningEvent!, facelets, orientation))
       : null;
   }
 

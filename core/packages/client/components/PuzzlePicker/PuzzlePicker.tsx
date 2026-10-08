@@ -34,6 +34,7 @@ import { ALL_EVENT_IDS } from '@/lib/event-constants';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tr } from '@/i18n/tr';
 import './puzzle_picker.css';
+import '../country-pins.css';
 
 export interface PuzzlePickerItem {
   id: string;

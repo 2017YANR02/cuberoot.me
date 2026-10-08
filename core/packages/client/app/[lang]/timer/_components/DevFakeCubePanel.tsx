@@ -33,6 +33,7 @@ import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 
 import BoolToggle from '@/components/BoolToggle';
 import { usePanelClamp } from '@/hooks/usePanelClamp';
+import { usePopoverDismiss } from '@/hooks/usePopoverDismiss';
 import { tr } from '@/i18n/tr';
 import './dev_fake_cube.css';
 
@@ -59,6 +60,8 @@ function randomScramble(): string {
 }
 
 export interface DevFakeCubePanelProps {
+  open: boolean;
+  onClose: () => void;
   /** 蓝牙那头现在连着没有 —— 状态行和按钮文案跟着它走。 */
   connected: boolean;
   /** 连上的设备名,没连就 null。 */
@@ -71,16 +74,22 @@ export interface DevFakeCubePanelProps {
 }
 
 export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Element | null {
-  const { connected, deviceName, onConnect, onDisconnect, scramble } = props;
-  const [open, setOpen] = useState(false);
+  const { open, onClose, connected, deviceName, onConnect, onDisconnect, scramble } = props;
   const [alg, setAlg] = useState("R U R' U'");
   const [pose, setPose] = useState<Pose>('off');
   const [err, setErr] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   usePanelClamp(open, panelRef);
+  usePopoverDismiss(open, onClose, panelRef);
   // 贴纸串每次操作后重读一次。没必要跟着每一帧走 —— 它是给人核对用的。
   const [facelets, setFacelets] = useState<string | null>(null);
+  useEffect(() => {
+    if (open) {
+      setFacelets(window.__cuberootFakeCube?.state() ?? null);
+      panelRef.current?.focus();
+    }
+  }, [open]);
 
   useEffect(() => {
     if (pose === 'off') { window.__cuberootFakeQuat = null; return; }
@@ -128,21 +137,20 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
     }
   };
 
-  return (
-    <div className="devcube-anchor">
-      <button
-        type="button"
-        className="devcube-pill"
-        aria-expanded={open}
-        onClick={() => {
-          setOpen((value) => !value);
-          if (!open) setFacelets(api()?.state() ?? null);
+  return open ? (
+      <div
+        ref={panelRef}
+        className="devcube"
+        role="dialog"
+        tabIndex={-1}
+        aria-label={tr({ zh: '假魔方', en: 'Fake cube' })}
+        onKeyDown={(event) => {
+          if (event.key !== 'Escape') return;
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
         }}
       >
-        {tr({ zh: '假魔方', en: 'Fake cube' })}
-      </button>
-
-      {open && <div ref={panelRef} className="devcube">
       <div className="devcube-head">
         <span className="devcube-title">{tr({ zh: '假魔方', en: 'Fake cube' })}</span>
         <span className="devcube-status">
@@ -150,7 +158,7 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
             ? (deviceName ?? tr({ zh: '已连接', en: 'connected' }))
             : tr({ zh: '未连接', en: 'not connected' })}
         </span>
-        <button type="button" className="devcube-close" onClick={() => setOpen(false)}>
+        <button type="button" className="devcube-close" onClick={onClose}>
           {tr({ zh: '收起', en: 'Hide' })}
         </button>
       </div>
@@ -228,7 +236,6 @@ export default function DevFakeCubePanel(props: DevFakeCubePanelProps): JSX.Elem
 
       {err && <p className="devcube-err">{err}</p>}
       {facelets && <p className="devcube-facelets">{facelets}</p>}
-      </div>}
-    </div>
-  );
+      </div>
+  ) : null;
 }

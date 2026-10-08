@@ -2,6 +2,20 @@ import { CORNER_FACELET } from '@cuberoot/puzzle-solvers/kociemba/cube';
 import { orientCubeFacelets } from './cube-orientation';
 import { stepSolvedInFrame, type CubeStep } from './reconstruct/steps';
 import type { EventId } from './types';
+import { isCnEligible, timerColorNeutralOrientations, type CnMode } from './color-neutral';
+
+/** Freeze valid goal frames from the starting training state, before any turns. */
+export function timerSmartCubeTrainingFrames(event: EventId, target: string | null, orientation: string, mode: CnMode): readonly string[] {
+  if (!target || mode === 'none' || !isCnEligible(event)) return [orientation];
+  const prerequisite = event === 'f2l' || event === 'zbls' ? 'cross'
+    : event === 'cmll' ? 'sb' : event === 'cross' ? null : 'f2l';
+  const candidates = timerColorNeutralOrientations(mode)
+    .map(rotation => `${orientation} ${rotation}`.trim());
+  const matching = candidates.filter(frame => !prerequisite || stepSolvedInFrame(prerequisite, orientCubeFacelets(target, frame)));
+  // Some legacy case algorithms do not preserve the advertised prerequisite.
+  // They must still be able to finish; never give the controller an empty set.
+  return matching.length ? matching : candidates;
+}
 
 /** Partial finish lines only; PLL/LL/ZBLL still require a fully solved cube, including AUF. */
 export function timerSmartCubeTrainingStep(event: EventId): CubeStep | 'eocp' | null {

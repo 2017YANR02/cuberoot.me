@@ -76,6 +76,12 @@ export function simSceneSignature(world: SimSvgView): string {
     if (position) mix((position as THREE.BufferAttribute).version);
     const color = geometry.getAttribute('color');
     if (color) mix((color as THREE.BufferAttribute).version);
+    // Stickerless cubies carry their face colors in per-instance raw attributes.
+    // A palette change does not touch the instance matrices or vertex colors.
+    for (const name of ['aRawC0', 'aRawC1', 'aRawC2']) {
+      const rawColor = geometry.getAttribute(name);
+      if (rawColor) mix((rawColor as THREE.BufferAttribute).version);
+    }
   });
   return String(hash);
 }
@@ -666,6 +672,10 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
     const rawN = [geom.getAttribute('aRawN0'), geom.getAttribute('aRawN1'), geom.getAttribute('aRawN2')];
     const rawC = [geom.getAttribute('aRawC0'), geom.getAttribute('aRawC1'), geom.getAttribute('aRawC2')];
     const hasRaw = !!(inst && rawN[0] && rawC[0]);
+    // The sphere-cubie renderer guarantees equal, disjoint balls centered at each
+    // instance origin. Repeated facets are not stacked sticker planes: grouping
+    // them across balls replaces their true depths and creates stray fragments.
+    const rawSphere = hasRaw && mesh.userData.simSphereCubie === true;
 
     const localA = new THREE.Vector3(); const localB = new THREE.Vector3(); const localC = new THREE.Vector3();
 
@@ -686,6 +696,7 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
       }
       mv.multiplyMatrices(viewMat, instWorld);
       normalMat.getNormalMatrix(instWorld);
+      const firstInstancePrim = prims.length;
 
       let rawSlots: RawSlot[] | null = null;
       if (hasRaw) {
@@ -735,7 +746,7 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
           // painter 组(见 PolyPrim.plane 注释)。蒙皮网格(手/全身)是有机曲面,
           // 无共面分层问题,跳过省逐三角开销。
           let planeKey: string | undefined;
-          if (!skinned) {
+          if (!skinned && !rawSphere) {
             va.copy(localA).applyMatrix4(instWorld);
             vb.copy(localB).applyMatrix4(instWorld);
             vc.copy(localC).applyMatrix4(instWorld);
@@ -863,6 +874,14 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
           }
         }
       }
+      if (rawSphere) {
+        // Equal disjoint spheres lie on opposite sides of their center bisector.
+        // The camera is on the closer center's side, so any ray hitting both
+        // meets that ball first. Keep each ball whole in this far-to-near order;
+        // individual triangle centroids can otherwise interleave in layer turns.
+        const centerDepth = -Math.hypot(mv.elements[12], mv.elements[13], mv.elements[14]);
+        for (let p = firstInstancePrim; p < prims.length; p++) prims[p].pz = centerDepth;
+      }
     }
   }
 
@@ -966,6 +985,7 @@ export function exportSimSvg(opts: SimSvgExportOptions): string {
     }
   }
   for (const p of prims) {
+    if (p.pz !== undefined) continue;
     if (p.plane) {
       const v = pzOf.get(p.plane);
       if (v !== undefined) { p.pz = v; continue; }

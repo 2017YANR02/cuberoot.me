@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // Draggable site-wide audio center. Music and the metronome survive client-side
 // navigation because this panel is mounted next to the desk pet in root chrome.
@@ -13,7 +14,6 @@ import {
   SkipBack, SkipForward, Volume2, X,
 } from 'lucide-react';
 import Link from '@/components/AppLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import {
   useMetronome, setMetronome, subscribeBeat, tapTempo, resetTapTempo,
   bpmToTps, clampBpm, BPM_MIN, BPM_MAX, ACCENT_CHOICES,
@@ -304,13 +304,15 @@ export default function FloatingMetronome({ lang, onClose }: { lang: 'zh' | 'en'
       {!collapsed && (
         <>
           <div className="cr-audio-mode">
-            <PillToggle
-              value={mode === 'metronome'}
-              onChange={(value) => setMode(value ? 'metronome' : 'music')}
-              offLabel={t('音乐', 'Music')}
-              onLabel={t('节拍器', 'Metronome')}
-              ariaLabel={t('切换音乐与节拍器', 'Switch music and metronome')}
-            />
+            <select
+              value={String(mode === 'metronome')}
+              onChange={event => { const value = event.currentTarget.value === 'true'; setMode(value ? 'metronome' : 'music'); }}
+              aria-label={t('切换音乐与节拍器', 'Switch music and metronome')}
+              className="native-select"
+            >
+              <option value="true">{t('节拍器', 'Metronome')}</option>
+              <option value="false">{t('音乐', 'Music')}</option>
+            </select>
           </div>
 
           {mode === 'music' ? (

@@ -15,7 +15,8 @@
 import type { ReconSolve } from '@cuberoot/shared';
 import { apiUrl } from './api-base';
 import { displayCuberName } from './cuber-name-display';
-import { localizeCompName } from './comp-localize';
+import { localizeCompName, createCompNameEnResolver, type LocalizeCompOpts } from '@cuberoot/shared/comp-localize';
+import { statsUrl } from './stats-base';
 import { formatReconSingle } from './recon-utils';
 
 const REVALIDATE = 86400; // 24h
@@ -124,14 +125,31 @@ export async function fetchSameScrambleForSeo(id: string): Promise<ReconSolve[]>
   }
 }
 
-export function reconTitleParts(solve: ReconSolve, isZh: boolean): {
+/** Load server metadata names independently of the browser's async flag cache. */
+export async function fetchCompNamesForSeo(): Promise<LocalizeCompOpts> {
+  try {
+    const response = await fetch(statsUrl('/stats/comp_names_zh.json'), {
+      next: { revalidate: REVALIDATE },
+    });
+    if (!response.ok) return {};
+    const names = await response.json() as Record<string, string>;
+    return {
+      resolveNameZh: name => names[name] ?? '',
+      resolveNameEnFromZh: createCompNameEnResolver(names),
+    };
+  } catch {
+    return {};
+  }
+}
+
+export function reconTitleParts(solve: ReconSolve, isZh: boolean, names?: LocalizeCompOpts): {
   person: string; event: string; time: string; comp: string;
 } {
   return {
     person: solve.person ? displayCuberName(solve.person, isZh) : '',
     event: eventNameForSeo(solve.event, isZh),
     time: reconTimeText(solve),
-    comp: solve.comp ? localizeCompName(solve.compWcaId ?? '', solve.comp, isZh) : '',
+    comp: solve.comp ? localizeCompName(solve.compWcaId ?? '', solve.comp, isZh, names) : '',
   };
 }
 
@@ -142,8 +160,8 @@ const DESC_TAIL: Bi = {
 const DESC_DE: Bi = { en: ' ', zh: ' 的 ' };
 
 /** Page <title>. zh: "选手 项目 成绩 比赛 复盘"; en: "Person event time reconstruction — comp". */
-export function buildReconTitle(solve: ReconSolve, isZh: boolean): string {
-  const { person, event, time, comp } = reconTitleParts(solve, isZh);
+export function buildReconTitle(solve: ReconSolve, isZh: boolean, names?: LocalizeCompOpts): string {
+  const { person, event, time, comp } = reconTitleParts(solve, isZh, names);
   const reconWord = seoLabel('reconWord', isZh);
   if (!isZh) {
     const head = [person, event, time].filter(Boolean).join(' ');
@@ -158,8 +176,8 @@ export function buildReconTitle(solve: ReconSolve, isZh: boolean): string {
 }
 
 /** One-line meta description: method, time, comp, date. */
-export function buildReconDescription(solve: ReconSolve, isZh: boolean): string {
-  const { person, event, time, comp } = reconTitleParts(solve, isZh);
+export function buildReconDescription(solve: ReconSolve, isZh: boolean, names?: LocalizeCompOpts): string {
+  const { person, event, time, comp } = reconTitleParts(solve, isZh, names);
   const method = solve.method ?? '';
   const date = solve.date ? solve.date.slice(0, 10) : '';
   if (!isZh) {
@@ -266,7 +284,7 @@ function isoUploadDate(date: string | undefined): string | undefined {
  * a valid thumbnailUrl). Non-YouTube / missing video → null (Google flags
  * incomplete VideoObjects, so we don't emit a partial one).
  */
-export function buildVideoJsonLd(solve: ReconSolve, lang: string): object | null {
+export function buildVideoJsonLd(solve: ReconSolve, lang: string, names?: LocalizeCompOpts): object | null {
   if (!solve.videoUrl) return null;
   const urls = solve.videoUrl.split('\n').map((u) => u.trim()).filter(Boolean);
   let id: string | null = null;
@@ -276,10 +294,10 @@ export function buildVideoJsonLd(solve: ReconSolve, lang: string): object | null
   }
   if (!id) return null;
   const isZh = isZhLang(lang);
-  const { person, event, time } = reconTitleParts(solve, isZh);
+  const { person, event, time } = reconTitleParts(solve, isZh, names);
   const name =
     [person, event, time].filter(Boolean).join(' ') || seoLabel('reconWord', isZh);
-  const description = buildReconDescription(solve, isZh);
+  const description = buildReconDescription(solve, isZh, names);
   const uploadDate = isoUploadDate(solve.date);
   return {
     '@context': 'https://schema.org',

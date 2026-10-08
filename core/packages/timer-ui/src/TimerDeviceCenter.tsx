@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 
 import type { TimerDeviceKind } from '@cuberoot/shared/timer/device-contract';
 import { usePopoverDismiss } from './usePopoverDismiss';
+import { usePanelClamp } from './usePanelClamp';
 
 /** Canonical Web copy for every installed device-center consumer. */
 export const TIMER_DEVICE_CENTER_LABELS = {
@@ -22,7 +23,8 @@ export interface TimerDeviceCenterItem {
   disabled?: boolean;
   id: string;
   icon?: ReactNode;
-  kind: TimerDeviceKind;
+  /** Omit for host-owned utility actions, such as development tools. */
+  kind?: TimerDeviceKind;
   label: string;
   onSelect(): void;
 }
@@ -30,6 +32,10 @@ export interface TimerDeviceCenterItem {
 export interface TimerDeviceCenterProps {
   ariaLabel: string;
   className?: string;
+  /** Host-owned panels anchored to the same device trigger. */
+  children?: ReactNode;
+  /** Invoke the sole action in the click event, preserving browser user activation. */
+  directSingleItem?: boolean;
   items: readonly TimerDeviceCenterItem[];
   menuLabel: string;
   triggerLabel: string;
@@ -38,14 +44,17 @@ export interface TimerDeviceCenterProps {
 /**
  * Capability-driven device chooser for the timer chrome.
  *
- * Hosts provide only real adapter-backed items and their actions. The center
+ * Hosts provide adapter-backed devices and optional utility actions. The center
  * owns the compact trigger, focus return, dismissal and the shared list shape;
- * a connected smart cube opens its host action directly from the trigger.
+ * a connected smart cube opens its host action directly when no utility needs
+ * to remain reachable through the menu.
  * it does not know about BLE, microphones or platform permissions.
  */
 export function TimerDeviceCenter({
   ariaLabel,
   className,
+  children,
+  directSingleItem = false,
   items,
   menuLabel,
 }: TimerDeviceCenterProps) {
@@ -53,28 +62,33 @@ export function TimerDeviceCenter({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  usePanelClamp(open, panelRef);
 
   if (items.length === 0) return null;
 
   const active = items.some((item) => item.active);
-  const connectedCube = items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
+  // Host utilities must remain reachable even with a cube connected.
+  const connectedCube = items.some((item) => !item.kind) ? undefined
+    : items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
+  const directItem = directSingleItem && items.length === 1 ? items[0] : connectedCube;
   return (
     <div className={`shell-device-center${active ? ' is-active' : ''}${className ? ` ${className}` : ''}`} data-no-timer>
       <button
-        aria-expanded={connectedCube ? undefined : open}
-        aria-haspopup={connectedCube ? 'dialog' : 'menu'}
-        aria-label={ariaLabel}
+        aria-expanded={directItem ? undefined : open}
+        aria-haspopup={directItem ? 'dialog' : 'menu'}
+        aria-label={directItem?.label ?? ariaLabel}
         className="shell-device-center-trigger"
+        disabled={directItem?.disabled}
         onClick={() => {
-          if (connectedCube) {
+          if (directItem) {
             setOpen(false);
-            connectedCube.onSelect();
+            directItem.onSelect();
           } else {
             setOpen((value) => !value);
           }
         }}
         ref={triggerRef}
-        title={ariaLabel}
+        title={directItem?.label ?? ariaLabel}
         type="button"
       >
         <Bluetooth aria-hidden="true" size={16} />
@@ -100,7 +114,7 @@ export function TimerDeviceCenter({
               type="button"
             >
               <span className="shell-device-center-item-icon">
-                {item.icon ?? iconForKind(item.kind)}
+                {item.icon ?? iconForKind(item.kind ?? 'smart-cube')}
               </span>
               <span className="shell-device-center-item-copy">
                 <strong>{item.label}</strong>
@@ -110,6 +124,7 @@ export function TimerDeviceCenter({
           ))}
         </div>
       )}
+      {children}
     </div>
   );
 }

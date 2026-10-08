@@ -643,3 +643,6 @@ td[data-tip-show]:hover::after {
   color: var(--foreground);
   word-break: break-word;
 }
+
+.recon-featured { margin-bottom: 2rem; }
+.recon-featured h2 { font-size: 1.1rem; margin: 0 0 0.75rem; }

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /alg/lsll — LSLL(Last Slot and Last Layer)公式集首页。
@@ -17,7 +18,6 @@ import { tr, T } from '@/i18n/tr';
 import { SearchInput } from '@/components/SearchInput';
 import { FaceletsCube } from '@/components/FaceletsCube';
 import AlgCard from '@/components/AlgCard';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import {
   LISTED_CATEGORIES, LISTED_CASES, categoryCardFacelets, locateFromScramble, decodeKey,
   type CategoryKind, type LocateResult,
@@ -98,14 +98,15 @@ export default function LsllHubPage() {
             {tr({ zh: twoLook ? '条路线' : '个', en: twoLook ? 'routes' : 'cases' })}
           </span></span>
         </h1>
-        <PillToggle
-          className="alg-view-toggle"
-          value={twoLook}
-          onChange={(v) => setCls(v ? '3' : '2')}
-          offLabel={tr({ zh: '一步', en: 'One-look' })}
-          onLabel={tr({ zh: '两步', en: 'Two-look' })}
-          ariaLabel={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
-        />
+        <select
+          value={String(twoLook)}
+          onChange={event => { const v = event.currentTarget.value === 'true'; setCls(v ? '3' : '2'); }}
+          aria-label={tr({ zh: '一步 / 两步', en: 'One-look / two-look' })}
+          className={['native-select', "alg-view-toggle"].filter(Boolean).join(' ')}
+        >
+          <option value="true">{tr({ zh: '两步', en: 'Two-look' })}</option>
+          <option value="false">{tr({ zh: '一步', en: 'One-look' })}</option>
+        </select>
         {/* 训练走全站同一个训练器(与 /alg/3x3/zbll/run 同一个页面);不带范围 = 已收录公式那批。
             按钮样式共用 alg.css 的 `.alg-train-cta` —— 站内「训练」入口只此一款,别再自造 */}
         <Link

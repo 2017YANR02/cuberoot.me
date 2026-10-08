@@ -154,6 +154,9 @@ export default class Cubelet extends THREE.Group {
   private static readonly _EDGE_WIDTH: number = STICKER_EDGE_WIDTH;
   private static readonly _STICKER_DEPTH: number = 0.1;
   public static readonly _FRAME: Frame = new Frame(Cubelet.SIZE, Cubelet._BORDER_WIDTH);
+  /** Strictly below half the lattice pitch: disjoint even during a layer turn. */
+  public static readonly SPHERE_RADIUS = Cubelet.SIZE / 2 - 2;
+  public static readonly _SPHERE = new THREE.SphereGeometry(Cubelet.SPHERE_RADIUS, 32, 24);
   public static readonly _STICKER: Sticker = new Sticker(
     Cubelet.SIZE - 2 * Cubelet._BORDER_WIDTH - Cubelet._EDGE_WIDTH,
     Cubelet._STICKER_DEPTH,

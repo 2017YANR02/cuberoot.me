@@ -83,7 +83,7 @@ export function generateSeededTimerScramble(request: TimerSeedRequest): TimerSee
       default: throw new Error(`Unsupported seeded event: ${id}`);
     }
   };
-  const drill = request.drill ? generateTimerDrillScramble(request.drill, random) : null;
+  const drill = request.drill ? generateTimerDrillScramble(request.drill, random, request.cnMode) : null;
   const scramble = drill ? drill.scramble : generate(event);
   if (event !== 'custom' && !scramble.trim()) throw new Error('Empty seeded scramble');
   if (drill) caseId = event === request.drill?.type ? drill.targetCase : null;

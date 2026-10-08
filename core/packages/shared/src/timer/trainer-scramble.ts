@@ -6,6 +6,7 @@ import {
 } from './trainer-case-data.generated';
 import { CMLL_ALGS, COLL_ALGS, EG1_ALGS, EG2_ALGS } from './trainer-alg-data';
 import { TIMER_MORE_ACTION_COPY } from './more-actions';
+import { applyColorNeutral, type CnMode } from './color-neutral';
 
 export { CMLL_ALGS, COLL_ALGS, EG1_ALGS, EG2_ALGS } from './trainer-alg-data';
 
@@ -196,6 +197,7 @@ function pickCase(
 export function generateTimerDrillScramble(
   target: TimerDrillTarget,
   random: () => number = Math.random,
+  cnMode: CnMode = 'none',
 ): TimerDrillScramble | null {
   if (!target || (target.type !== 'oll' && target.type !== 'pll')) return null;
   const cases = target.type === 'oll' ? OLL_CASES : PLL_CASES;
@@ -205,7 +207,7 @@ export function generateTimerDrillScramble(
   if (!inverse) return null;
   const auf = TIMER_DRILL_AUFS[randomIndex(TIMER_DRILL_AUFS.length, random)];
   return {
-    scramble: auf ? `${auf} ${inverse}` : inverse,
+    scramble: applyColorNeutral(auf ? `${auf} ${inverse}` : inverse, cnMode, random),
     targetCase: item.id,
   };
 }
