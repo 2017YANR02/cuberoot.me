@@ -64,7 +64,7 @@ describe('cube history research contract', () => {
   });
 
   it('keeps currency, market, version, evidence and time attached to each quote', () => {
-    for (const cube of CUBES) for (const price of cube.prices) {
+    for (const cube of CUBES) for (const price of [...cube.prices, ...(cube.familyPrices ?? [])]) {
       expect(Number.isFinite(price.amount) && price.amount > 0, cube.id).toBe(true);
       expect(price.currency, cube.id).toMatch(/^[A-Z]{3}$/);
       expect(price.region.trim(), cube.id).not.toBe('');
@@ -79,6 +79,12 @@ describe('cube history research contract', () => {
       expect.objectContaining({ amount: 84.99, currency: 'USD', kind: 'current', asOf: SNAPSHOT_DATE }),
     ]));
     expect(byId('gan2').prices).toEqual([]);
+    // A manufacturer family quote with no configuration cannot become an exact base-SKU price.
+    const mPro = byId('qiyi-m-pro');
+    expect(mPro.familyPrices).toEqual(expect.arrayContaining([
+      expect.objectContaining({ amount: 56.8, currency: 'CNY', sourceId: 'qiyi-m-pro-official' }),
+    ]));
+    expect(matchesCube(mPro, { ...EMPTY_FILTERS, evidence: 'cny' })).toBe(false);
   });
 
   it('provides both public languages and a readable label for every mechanism', () => {
@@ -91,6 +97,59 @@ describe('cube history research contract', () => {
       for (const highlight of cube.highlights) expectLocalized(highlight);
       for (const mechanism of cube.specs.mechanism) expect(MECHANISMS[mechanism], cube.id + ': ' + mechanism).toBeDefined();
     }
+  });
+
+  it('ties each real photograph to evidence and makes historical image gaps explicit', () => {
+    for (const cube of CUBES) {
+      if (cube.image) {
+        expect(new URL(cube.image.url).protocol, cube.id).toBe('https:');
+        expect(sourceIds.has(cube.image.sourceId), cube.id).toBe(true);
+        expect(['exact', 'family'], cube.id).toContain(cube.image.match);
+        expectLocalized(cube.image.alt);
+        expectLocalized(cube.image.note);
+      } else {
+        expect(cube.image, cube.id).toBeNull();
+        expect(cube.imageNote, cube.id).toBeDefined();
+        expectLocalized(cube.imageNote!);
+      }
+    }
+  });
+
+  it('keeps merchant ratings with their sample, date and product-page scope', () => {
+    for (const cube of CUBES) {
+      if (!cube.rating) continue;
+      const rating = cube.rating;
+      expect(rating.value, cube.id).toBeGreaterThan(0);
+      expect(rating.value, cube.id).toBeLessThanOrEqual(rating.scale);
+      expect(Number.isInteger(rating.count) && rating.count > 0, cube.id).toBe(true);
+      expect(rating.scope, cube.id).toBe('product-page');
+      expect(rating.asOf <= SNAPSHOT_DATE, cube.id).toBe(true);
+      expect(sourceIds.has(rating.sourceId), cube.id).toBe(true);
+      expectLocalized(rating.note);
+      expect(sourceIdsForCube(cube), cube.id).toContain(rating.sourceId);
+    }
+  });
+
+  it('keeps distinct versions addressable without cyclic or invisible family links', () => {
+    for (const cube of CUBES) {
+      if (!cube.familyId) continue;
+      expect(cube.familyId, cube.id).not.toBe(cube.id);
+      expect(cubeIds.has(cube.familyId), cube.id).toBe(true);
+      const root = byId(cube.familyId);
+      expect(root.familyId, cube.id).toBeUndefined();
+      expect(root.brand, cube.id).toBe(cube.brand);
+    }
+    for (const id of ['gan11-m-pro', 'gan12', 'gan13', 'gan14', 'gan15', 'gan16']) {
+      const family = CUBES.filter(cube => (cube.familyId ?? cube.id) === id);
+      expect(family.length, id).toBeGreaterThan(1);
+      expect(family.every(cube => cube.image && cube.image.sourceId), id).toBe(true);
+    }
+    const leap = CUBES.find(cube => cube.familyId === 'gan12' && /leap/i.test(cube.name.en));
+    expect(leap, 'GAN12 Leap has its own record').toBeDefined();
+    expect(leap!.specs.mechanism).not.toContain('maglev');
+    const maxL = CUBES.find(cube => cube.familyId === 'gan16' && /max[ -]?l/i.test(cube.name.en));
+    expect(maxL, 'GAN16 MAX-L has its own size').toBeDefined();
+    expect(maxL!.specs.size).toContain('57');
   });
 });
 
@@ -140,5 +199,17 @@ describe('cube history exploration', () => {
     const selected = selectedCubes(CUBES, ['missing', 'gan17', 'gan17', 'gan12', 'gan11-m-pro', 'magic-cube-1977', 'alpha-i']);
     expect(selected.map(cube => cube.id)).toEqual(['gan17', 'gan12', 'gan11-m-pro', 'magic-cube-1977']);
     expect(selectedCubes(CUBES, ['missing'])).toEqual([]);
+  });
+
+  it('intersects year, family, positioning and photo-evidence filters', () => {
+    const model = byId('gan12');
+    const filters = { ...EMPTY_FILTERS, brand: 'GAN', family: 'gan12', year: String(model.year), tier: model.tier ?? 'unknown', evidence: 'with-image' };
+    expect(matchesCube(model, filters)).toBe(true);
+    expect(matchesCube(byId('gan13'), filters)).toBe(false);
+    expect(matchesCube(model, { ...filters, year: 'unknown' })).toBe(false);
+    expect(matchesCube(model, { ...filters, evidence: 'missing-image' })).toBe(false);
+    const unknown: Cube = { ...model, year: null, image: null, tier: 'unknown' };
+    expect(matchesCube(unknown, { ...EMPTY_FILTERS, year: 'unknown', tier: 'unknown', evidence: 'missing-image' })).toBe(true);
+    expect(sourceIdsForCube({ ...model, sourceIds: [], prices: [], release: { ...model.release, sourceIds: [] }, assessment: { ...model.assessment, sourceIds: [] } })).toContain(model.image!.sourceId);
   });
 });

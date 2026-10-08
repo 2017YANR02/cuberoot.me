@@ -8,9 +8,13 @@ export interface CubeFilters {
   category: string;
   evidence: string;
   technology: string;
+  year: string;
+  tier: string;
+  family: string;
 }
 export const EMPTY_FILTERS: CubeFilters = {
   q: '', brand: 'all', period: 'all', category: 'all', evidence: 'all', technology: 'all',
+  year: 'all', tier: 'all', family: 'all',
 };
 
 export function normalizeSearch(value: string): string {
@@ -19,6 +23,10 @@ export function normalizeSearch(value: string): string {
 
 export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
   if (filters.brand !== 'all' && cube.brand !== filters.brand) return false;
+  if (filters.family !== 'all' && (cube.familyId ?? cube.id) !== filters.family) return false;
+  if (filters.tier !== 'all' && (cube.tier ?? 'unknown') !== filters.tier) return false;
+  if (filters.year === 'unknown' && cube.year !== null) return false;
+  if (filters.year !== 'all' && filters.year !== 'unknown' && String(cube.year) !== filters.year) return false;
   if (filters.category !== 'all' && cube.category !== filters.category) return false;
   if (filters.period === 'unknown' && cube.year !== null) return false;
   if (filters.period !== 'all' && filters.period !== 'unknown') {
@@ -28,6 +36,8 @@ export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
   if (filters.evidence === 'official' && cube.release.basis !== 'official') return false;
   if (filters.evidence === 'cny' && !cube.prices.some(price => price.currency === 'CNY')) return false;
   if (filters.evidence === 'missing-price' && cube.prices.length > 0) return false;
+  if (filters.evidence === 'with-image' && !cube.image) return false;
+  if (filters.evidence === 'missing-image' && cube.image) return false;
   if (filters.evidence === 'announced' && cube.status !== 'announced') return false;
   if (filters.technology !== 'all' && filters.technology in TECHNOLOGIES) {
     const tokens = [...cube.specs.mechanism, ...cube.tags]
@@ -88,5 +98,8 @@ export function sourceIdsForCube(cube: Cube): string[] {
   return [...new Set([
     ...cube.sourceIds, ...cube.release.sourceIds, ...cube.assessment.sourceIds,
     ...cube.prices.map(price => price.sourceId),
+    ...(cube.familyPrices ?? []).map(price => price.sourceId),
+    ...(cube.image ? [cube.image.sourceId] : []),
+    ...(cube.rating ? [cube.rating.sourceId] : []),
   ])];
 }
