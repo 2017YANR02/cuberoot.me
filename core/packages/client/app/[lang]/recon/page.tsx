@@ -1024,7 +1024,7 @@ export default function ReconListPage() {
                       const needsTip = col.className?.includes('col-solver') || col.className?.includes('col-comp');
                       const tipText = col.key === 'person'
                         ? [solve.person, ...(solve.coPersons?.map(c => c.name) ?? [])].filter(Boolean).join(' & ')
-                        : col.key === 'comp' ? (solve.comp || '') : '';
+                        : col.key === 'comp' ? localizeCompName(solve.compWcaId ?? '', solve.comp || '', isZh, { date: solve.date }) : '';
                       return (
                         <td
                           key={col.key || col.labelKey}
