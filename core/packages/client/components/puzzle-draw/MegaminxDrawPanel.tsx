@@ -1,7 +1,7 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 import { useCallback, useRef, useState } from 'react';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useT } from '@/hooks/useT';
 import DrawCanvas from './DrawCanvas';
 import { MEGAMINX_STICKER_PALETTE } from './palettes';
@@ -46,13 +46,15 @@ export function MegaminxDrawPanel({ onDocumentChange }: MegaminxDrawPanelProps) 
 
   return (
     <div>
-      <PillToggle
-        value={view === 'expanded'}
-        onChange={(expanded) => selectView(expanded ? 'expanded' : 'top')}
-        offLabel={t('俯视图', 'Top view')}
-        onLabel={t('展开图', 'Expanded view')}
-        ariaLabel={t('五魔方绘图视图', 'Megaminx drawing view')}
-      />
+      <select
+        value={String(view === 'expanded')}
+        onChange={event => { const expanded = event.currentTarget.value === 'true'; selectView(expanded ? 'expanded' : 'top'); }}
+        aria-label={t('五魔方绘图视图', 'Megaminx drawing view')}
+        className="native-select"
+      >
+        <option value="true">{t('展开图', 'Expanded view')}</option>
+        <option value="false">{t('俯视图', 'Top view')}</option>
+      </select>
 
       {/* Keep both canvases mounted so changing layouts never discards either paint document. */}
       <div hidden={view !== 'top'}>

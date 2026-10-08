@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /*
  * 精确穷举集的「点柱看状态」—— 这一档到底是哪些状态,逐个列出来。
@@ -22,7 +23,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@/components/AppLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
 import { cubieToFacelet } from '@/lib/cube-facelet';
 import { m2pScrambleForFacelets, prewarmM2p } from '@/lib/m2p-scramble';
@@ -165,13 +165,15 @@ export default function ExactCaseList({ stage, slot, subsetKey, depth, goldenCou
                 .replace('{n}', total)}
           </span>
         </div>
-        <PillToggle
-          value={essential}
-          onChange={setEssential}
-          offLabel={tr({ zh: '全部', en: 'All' })}
-          onLabel={tr({ zh: '本质', en: 'Essential' })}
-          ariaLabel={tr({ zh: '列全部状态或去除同构后的本质状态', en: 'All states, or one per symmetry class' })}
-        />
+        <select
+          value={String(essential)}
+          onChange={event => setEssential(event.currentTarget.value === 'true')}
+          aria-label={tr({ zh: '列全部状态或去除同构后的本质状态', en: 'All states, or one per symmetry class' })}
+          className="native-select"
+        >
+          <option value="true">{tr({ zh: '本质', en: 'Essential' })}</option>
+          <option value="false">{tr({ zh: '全部', en: 'All' })}</option>
+        </select>
       </div>
       {/* 帧是任选的,但列出来的打乱只对这一帧是那个步数 —— 写清楚才核对得了。 */}
       {frameParts && (

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * 「图 / 公式」列表视图开关 —— `/alg` 下**所有 case 列表页**共用这一份。
@@ -11,7 +12,6 @@
  * 所以不进 URL。用户切换一次,全站的 case 列表都生效。
  */
 import { useCallback, useSyncExternalStore } from 'react';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { persistItem } from '@/lib/safe-storage';
 import { tr } from '@/i18n/tr';
 
@@ -90,13 +90,14 @@ export interface AlgViewModeToggleProps {
 
 export default function AlgViewModeToggle({ value, onChange, className }: AlgViewModeToggleProps) {
   return (
-    <PillToggle
-      value={value === 'full'}
-      onChange={(on) => onChange(on ? 'full' : 'cards')}
-      onLabel={tr({ zh: '公式', en: 'Algs' })}
-      offLabel={tr({ zh: '图', en: 'Images' })}
-      ariaLabel={tr({ zh: '切换只看图 / 看公式', en: 'Toggle images-only / show algs' })}
-      className={className}
-    />
+    <select
+      value={String(value === 'full')}
+      onChange={event => { const on = event.currentTarget.value === 'true'; onChange(on ? 'full' : 'cards'); }}
+      aria-label={tr({ zh: '切换只看图 / 看公式', en: 'Toggle images-only / show algs' })}
+      className={['native-select', className].filter(Boolean).join(' ')}
+    >
+      <option value="true">{tr({ zh: '公式', en: 'Algs' })}</option>
+      <option value="false">{tr({ zh: '图', en: 'Images' })}</option>
+    </select>
   );
 }

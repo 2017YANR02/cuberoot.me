@@ -118,12 +118,12 @@ export const CATALOG: UtilEntry[] = [
     en: 'Shared membership and BP benefit copy with stable SSR, optional English and post-save updates.',
   },
   {
-    name: 'pickedSids / customMaskFn',
-    sig: 'pickedSids(cube: Cube, positionIndex: number, worldFace: number, grain: PickGrain): StickerId[]; customMaskFn(order: number, mask: string, pick?: CustomTreatment, rest?: CustomTreatment): StickeringMaskFn | null',
-    imp: "import { pickedSids, customMaskFn } from '@/components/sim-embed/customStickering';",
+    name: 'pickedSids / customMaskFn / paintSids / CustomMaskHistory',
+    sig: 'pickedSids(cube, positionIndex, worldFace, grain): StickerId[]; customMaskFn(order, mask, pick?: CustomBrush, rest?): StickeringMaskFn | null; paintSids(mask, sids, brush, legacyPick?): string; new CustomMaskHistory(snapshot)',
+    imp: "import { pickedSids, customMaskFn, paintSids, CustomMaskHistory } from '@/components/sim-embed/customStickering';",
     category: 'cube',
-    zh: '将三维命中位置转换为原始贴纸身份，并生成随块移动的高亮遮罩；模拟器和图论页共用。',
-    en: 'Resolve 3D hits to original sticker identities and build piece-following highlight masks, shared by the simulator and graph page.',
+    zh: '将三维命中位置转换为原始贴纸身份，支持逐格画笔、橡皮擦及独立撤销／重做，生成随块移动的遮罩。',
+    en: 'Resolve 3D hits to original sticker identities, apply per-sticker brushes or erasing, and track separate undo/redo history for piece-following masks.',
   },
   {
     name: 'useTrainingStats',

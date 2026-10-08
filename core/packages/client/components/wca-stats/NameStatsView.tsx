@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // name_stats 专属可视化:词数 / 字符长度 双 tab。
 // 分布复用 /scramble 的 DiscreteHistogram(竖向渐变柱 + PDF/CDF + %/计数 切换),
@@ -10,7 +11,6 @@ import { Flag } from '@/components/Flag';
 import { countryToIso2, personFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { tr } from '@/i18n/tr';
 import DiscreteHistogram from '@/app/[lang]/scramble/stats/_components/DiscreteHistogram';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import StackedBar, { type StackedSeg } from '@/components/StackedBar/StackedBar';
 import { type NameMode, NAME_MODES, nameByMode, nameModeOptions, FormerNames } from './nameMode';
 import './name-stats.css';
@@ -222,7 +222,7 @@ export default function NameStatsView({ data, isZh, queryKey = 'type', nameMode:
   if (!active) return null;
   const unit = tab === 'length' ? tr({ zh: '字', en: '' }) : tr({ zh: '词', en: '' });
   const modeOptions = nameModeOptions();
-  // 指标二选一(词数 / 字符长度)→ PillToggle;标签取面板自身的本地化名
+  // 指标二选一(词数 / 字符长度)→ 原生 select;标签取面板自身的本地化名
   const partsP = baseMetrics.find(p => p.id === 'parts');
   const lengthP = baseMetrics.find(p => p.id === 'length');
 
@@ -233,13 +233,15 @@ export default function NameStatsView({ data, isZh, queryKey = 'type', nameMode:
   return (
     <div className="ns-view">
       <div className="ns-tabs">
-        <PillToggle
-          value={tab === 'length'}
-          onChange={v => setTab(v ? 'length' : 'parts')}
-          offLabel={tr({ zh: partsP?.labelZh ?? '词数', en: partsP?.labelEn ?? 'Word count' })}
-          onLabel={tr({ zh: lengthP?.labelZh ?? '字符长度', en: lengthP?.labelEn ?? 'Length' })}
-          ariaLabel={tr({ zh: '指标:词数或字符长度', en: 'Metric: word count or character length' })}
-        />
+        <select
+          value={String(tab === 'length')}
+          onChange={event => { const v = event.currentTarget.value === 'true'; setTab(v ? 'length' : 'parts'); }}
+          aria-label={tr({ zh: '指标:词数或字符长度', en: 'Metric: word count or character length' })}
+          className="native-select"
+        >
+          <option value="true">{tr({ zh: lengthP?.labelZh ?? '字符长度', en: lengthP?.labelEn ?? 'Length' })}</option>
+          <option value="false">{tr({ zh: partsP?.labelZh ?? '词数', en: partsP?.labelEn ?? 'Word count' })}</option>
+        </select>
         {hasModes && (
           <select
             className="ns-name-select"

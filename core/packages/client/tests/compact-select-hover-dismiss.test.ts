@@ -30,6 +30,33 @@ afterEach(async () => {
   host?.remove();
 });
 
+it('keeps editor fields interactive and dismisses only on an outside press or Escape', async () => {
+  const trigger = await open(false);
+  const selections: string[] = [];
+  await act(async () => root.render(createElement(CompactSelect<string>, {
+    label: 'Stage', ariaLabel: 'Edit stages', items: [{ value: 'full', label: 'Full' }],
+    onChange: value => selections.push(value),
+    panelContent: createElement('input', { 'aria-label': 'Stage name', defaultValue: 'Full' }),
+  })));
+  const editor = document.querySelector('[role="dialog"]')!;
+  const input = editor.querySelector('input')!;
+  expect(trigger.getAttribute('aria-haspopup')).toBe('dialog');
+  expect(editor.querySelector('[role="option"]')).toBeNull();
+  await act(async () => {
+    input.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    document.body.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+    input.click();
+  });
+  expect(document.querySelector('[role="dialog"]')).toBe(editor);
+  expect(selections).toEqual([]);
+  await act(async () => document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true })));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  await act(async () => trigger.click());
+  await act(async () => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  expect(document.querySelector('[role="dialog"]')).toBeNull();
+  expect(selections).toEqual([]);
+});
+
 it('immediately dismisses outside without a click, while touch moves do not dismiss', async () => {
   await open();
   await move(document.body, 500, 500, 'touch');

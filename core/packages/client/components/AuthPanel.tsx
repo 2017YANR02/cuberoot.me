@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 全站认证 UI。**没有任何弹层形态** —— 两块面板都只长在页面里,认证只有 /account 一个地址:
 //  1. LoginForm —— 只服务未登录:行业标准布局,邮箱为主凭据(验证码优先,可切密码),下方分隔线
@@ -12,7 +13,6 @@ import { SiApple, SiWechat, SiQq, SiAlipay } from 'react-icons/si';
 import { primaryHandle } from '@cuberoot/shared/account';
 import type { MobileAuthProvider } from '@cuberoot/shared/auth/web-session';
 import AppLink from '@/components/AppLink';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { PasswordInput } from '@/components/PasswordInput';
 import { ClearButton } from '@/components/ClearButton';
 import { useAuthStore, applySession } from '@/lib/auth-store';
@@ -1483,14 +1483,16 @@ export function AccountPanel({ expectedAppleUid, miniProgramLogin = false }: { e
             {t('合并后不能撤销。登录方式和个人数据会进入保留账号；遇到重复或归属不明确的数据会停止,不会改动任何账号。',
               'Merging cannot be undone. Sign-in methods and personal data move to the kept account; conflicts stop the merge without changing either account.')}
           </p>
-          <PillToggle
-            value={mergeMode === 'keep'}
+          <select
             disabled={mergeBusy}
-            onChange={(keep) => { if (!mergeBusy) { setMergeMode(keep ? 'keep' : 'move'); setConfirmMerge(false); } }}
-            onLabel={t('保留当前账号', 'Keep this account')}
-            offLabel={t('合并当前账号', 'Merge this account')}
-            ariaLabel={t('选择合并方向', 'Choose merge direction')}
-          />
+            value={String(mergeMode === 'keep')}
+            onChange={event => { const keep = event.currentTarget.value === 'true'; if (!mergeBusy) { setMergeMode(keep ? 'keep' : 'move'); setConfirmMerge(false); } }}
+            aria-label={t('选择合并方向', 'Choose merge direction')}
+            className="native-select"
+          >
+            <option value="true">{t('保留当前账号', 'Keep this account')}</option>
+            <option value="false">{t('合并当前账号', 'Merge this account')}</option>
+          </select>
           {mergeMode === 'keep' ? (
             <>
               <p className="auth-hint">{t('生成合并码,再登录另一个账号输入。合并后保留当前账号。', 'Generate a code, then sign in to the other account and enter it. This account will be kept.')}</p>

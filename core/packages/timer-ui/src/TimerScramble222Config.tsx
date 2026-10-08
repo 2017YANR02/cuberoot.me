@@ -1,10 +1,11 @@
+import './compact-select.css';
+
 import { EventIcon } from '@cuberoot/event-icon/event';
 import {
   DEFAULT_SCRAMBLE_222_TYPE,
   type Scramble222Mode,
   type Scramble222Type,
 } from '@cuberoot/shared/timer';
-import { TimerPillToggle } from './TimerPillToggle';
 
 export interface TimerScramble222Labels {
   modeAriaLabel: string;
@@ -81,14 +82,16 @@ export function TimerScramble222Config({
               {labels.modeLabel}
             </span>
           )}
-          <TimerPillToggle
-            ariaLabel={labels.modeAriaLabel}
+          <select
             disabled={disabled}
-            offLabel={labels.wca11Move}
-            onChange={(optimal) => onModeChange(optimal ? 'optimal' : 'wca')}
-            onLabel={labels.optimal}
-            value={mode === 'optimal'}
-          />
+            value={String(mode === 'optimal')}
+            onChange={event => { const optimal = event.currentTarget.value === 'true'; onModeChange(optimal ? 'optimal' : 'wca'); }}
+            aria-label={labels.modeAriaLabel}
+            className="native-select"
+          >
+            <option value="true">{labels.optimal}</option>
+            <option value="false">{labels.wca11Move}</option>
+          </select>
         </div>
       )}
     </>

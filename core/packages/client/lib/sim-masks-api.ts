@@ -23,7 +23,7 @@ export interface SimMaskRow {
   /** 空 = 沿用代码里的标签(内置条目常见)。 */
   labelEn: string;
   labelZh: string;
-  /** 自建遮罩的贴纸清单,mask-core 编码 `U:0,2;F:3-5`。 */
+  /** 自建遮罩：旧清单 U:0,2;F:3-5 或逐格样式 regular=U:0,2|dim=F:3-5。 */
   sids: string;
   pick: string;
   rest: string;

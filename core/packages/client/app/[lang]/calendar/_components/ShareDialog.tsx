@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 对外展示设置。两个要点:
 //   1. 开关默认关着 —— 日历是私人东西,链接必须是用户主动打开的;
@@ -12,7 +13,6 @@ import { useState } from 'react';
 import { Check, Copy, Link2, RefreshCw, X, ExternalLink } from 'lucide-react';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { tr } from '@/i18n/tr';
 import { icsFeedUrl } from '@/lib/calendar-api';
@@ -81,13 +81,15 @@ export default function ShareDialog({ share, calendars, lang, onSave, onRotate, 
 
           <div className="cal-share-field">
             <span className="cal-field-label">{tr({ zh: '显示内容', en: 'Detail level' })}</span>
-            <PillToggle
-              value={share.detail === 'busy'}
-              onChange={(v) => void run(() => onSave({ detail: v ? 'busy' : 'full' }))}
-              onLabel={tr({ zh: '仅忙碌时段', en: 'Busy only' })}
-              offLabel={tr({ zh: '完整内容', en: 'Full details' })}
-              ariaLabel={tr({ zh: '显示内容', en: 'Detail level' })}
-            />
+            <select
+              value={String(share.detail === 'busy')}
+              onChange={event => { const v = event.currentTarget.value === 'true'; void run(() => onSave({ detail: v ? 'busy' : 'full' })); }}
+              aria-label={tr({ zh: '显示内容', en: 'Detail level' })}
+              className="native-select"
+            >
+              <option value="true">{tr({ zh: '仅忙碌时段', en: 'Busy only' })}</option>
+              <option value="false">{tr({ zh: '完整内容', en: 'Full details' })}</option>
+            </select>
             <p className="cal-hint">
               {share.detail === 'busy'
                 ? tr({

@@ -151,7 +151,7 @@ pnpm --filter @cuberoot/client lint
 - 选择/搜索输入框非空时显示清除按钮,统一 `components/ClearButton`。
 - 所有密码输入统一复用 `components/PasswordInput`,必须带可切换明文的眼睛按钮,禁页面手写 `type="password"`。
 - 切换器默认下拉;chip 仅当选项 ≤4 且需左右对比。
-- 布尔开关用 `BoolToggle`，全项目统一内容/文字在左、开关在右（共享组件保持此 DOM 顺序，页面不得用 row-reverse/order 反转）；同组纵向设置行须占满共同宽度，开关右侧对齐，不得随标签长短错位；设置行已有独立标签时，开关也放在标签右侧。`block-toggle-side.mts` 与 `toggle-side-guard.test.ts` 共用扫描器，覆盖 client/timer-ui/app-ui；Hook 检查新增片段，CI 验证完整源码和共享 DOM 顺序。二选一用 `PillToggle`(主项置绿);禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
+- 布尔开关用 `BoolToggle`，全项目统一内容/文字在左、开关在右（共享组件保持此 DOM 顺序，页面不得用 row-reverse/order 反转）；同组纵向设置行须占满共同宽度，开关右侧对齐，不得随标签长短错位；设置行已有独立标签时，开关也放在标签右侧。`block-toggle-side.mts` 与 `toggle-side-guard.test.ts` 共用扫描器，覆盖 client/timer-ui/app-ui；Hook 检查新增片段，CI 验证完整源码和共享 DOM 顺序。二选一统一用浏览器原生 `<select>` 菜单；`PillToggle` 仅保留无文字开关底层，不再提供二选一形态;禁裸 checkbox,特例注释 `allow-checkbox: <理由>`。守卫:hook + CI ratchet。
 - 表头排序一律 `components/SortArrow`(文字右侧,仅当前列显示)。CI 守卫。
 - 下拉/菜单宽度 fit-content,column flex 加 `align-self:flex-start`;禁钉 `min-width`。
 - 锚定下拉面板(absolute + top:100%)必挂 `hooks/usePanelClamp` 钳视口,CSS 注明 `anchored-panel: clamped`;确证安全注明 `anchored-panel: safe (<理由>)`。守卫:hook + CI ratchet;实测 `audit:overflow` popup pass。

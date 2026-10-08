@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // 金字塔全空间精确枚举视图 —— 不含小角(tips)的完整状态空间 933,120 态、去重后 39,035 个本质状态
 // (与 WCA 真题采样相对)。数据来自 scripts/build_pyram_essential.py 生成的静态 JSON。
@@ -12,7 +13,6 @@ import DiscreteHistogram, { type HistSeries } from './DiscreteHistogram';
 import { SortArrow } from '@/components/SortArrow';
 import { ClearButton } from '@/components/ClearButton';
 import { ScramblePreview2D } from '@/components/ScramblePreview2D';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import {
   fetchPyramEssential, fetchPyramEssentialCases, invertPyramAlg,
   type PyramEssentialJson, type PyramCaseRow,
@@ -115,13 +115,15 @@ export default function PyraminxEssentialView({ isZh, pop }: { isZh: boolean; po
       <div className="scramble-stats-controls">
         <div className="scramble-stats-puzzle-toggle">
           <span className="scramble-stats-puzzle-toggle-label">{tr({ zh: '度量', en: 'Metric' })}</span>
-          <PillToggle
-            value={metric === 'h'}
-            onChange={(v) => setMetric(v ? 'h' : 'v')}
-            onLabel={tr({ zh: '魔方', en: 'Full solve' })}
-            offLabel={tr({ zh: 'V', en: 'V' })}
-            ariaLabel={tr({ zh: '度量:整解 H 或 V-first 首步 V', en: 'Metric: full-solve H or V-first V' })}
-          />
+          <select
+            value={String(metric === 'h')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; setMetric(v ? 'h' : 'v'); }}
+            aria-label={tr({ zh: '度量:整解 H 或 V-first 首步 V', en: 'Metric: full-solve H or V-first V' })}
+            className="native-select"
+          >
+            <option value="true">{tr({ zh: '魔方', en: 'Full solve' })}</option>
+            <option value="false">{tr({ zh: 'V', en: 'V' })}</option>
+          </select>
         </div>
       </div>
       <div className="scramble-stats-chart-wrapper">

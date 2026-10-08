@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 // NOTE: SOR(名次和)排名演化 — bar chart race
 //   展示完全复用 wr_metric:横条/坐标轴/网格走共享 <BarRaceChart>(0 锚定 + 真实值长度),
@@ -21,7 +22,6 @@ import { CONTINENT_HUE } from '@/lib/bar-race-colors';
 import { type Continent } from '@/lib/country-continents';
 import { niceAxis } from '@/lib/top10-axis';
 import { RegionPicker } from '@/components/RegionPicker';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import BarRaceChart from '@/components/wca-stats/BarRaceChart';
 import { tr } from '@/i18n/tr';
 import './top10_history.css';
@@ -213,14 +213,15 @@ export default function SorRace() {
     <div className="t10h-page t10h-embedded sor-race">
       {/* ── 顶部控制条:scope(RegionPicker)+ metric ── */}
       <div className="sor-race-bar">
-        <PillToggle
-          className="sor-race-metric"
-          value={metric === 'single'}
-          onChange={(v) => setMetric(v ? 'single' : 'average')}
-          onLabel={tr({ zh: '单次', en: 'Single' })}
-          offLabel={tr({ zh: '平均', en: 'Average' })}
-          ariaLabel={tr({ zh: '单次 / 平均', en: 'Single / Average' })}
-        />
+        <select
+          value={String(metric === 'single')}
+          onChange={event => { const v = event.currentTarget.value === 'true'; setMetric(v ? 'single' : 'average'); }}
+          aria-label={tr({ zh: '单次 / 平均', en: 'Single / Average' })}
+          className={['native-select', "sor-race-metric"].filter(Boolean).join(' ')}
+        >
+          <option value="true">{tr({ zh: '单次', en: 'Single' })}</option>
+          <option value="false">{tr({ zh: '平均', en: 'Average' })}</option>
+        </select>
         <RegionPicker
           isZh={isZh}
           value={region}

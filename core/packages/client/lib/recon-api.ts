@@ -309,3 +309,11 @@ export async function getDouyinCover(url: string): Promise<{ pic: string }> {
 export async function resolveShortUrl(url: string): Promise<{ url: string }> {
   return apiGet('/resolve-shorturl', { url });
 }
+
+export async function getFeaturedRecons(): Promise<ReconSolve[]> {
+  return apiGet<ReconSolve[]>('/featured');
+}
+
+export async function setReconFeatured(id: number, featured: boolean): Promise<{ ok: boolean }> {
+  return apiPut<{ ok: boolean }>(`/${id}/featured`, { featured });
+}

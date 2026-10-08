@@ -1,22 +1,25 @@
+import '@cuberoot/timer-ui/compact-select.css';
+
 // 按阶段展示色块下拉(twizzle edit 的 Stickering select,issue #27)。
 // 住在魔方下方播放条最左侧;显隐由 simCaps.supports.stickering 决定(隐藏而非置灰)。
 // NxN 清单来自 engine/nxn/stickering.ts(引擎遮罩);megaminx / fto(cubing.js 渲染)
 // 用 cubing.js 原生 experimentalStickering,清单与 cubing.js puzzle-stickerings.ts 对齐。
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Settings } from 'lucide-react';
+import { Settings, Undo2, Redo2 } from 'lucide-react';
 import { useT } from '@/hooks/useT';
 import { useIsAdmin } from '@/lib/auth-store';
 import CubeOrientationSelect from '@/components/CubeOrientationSelect';
-import type { StickeringGroup } from './engine/nxn/stickering';
-import { CUSTOM_STICKERING, countSids, type PickGrain, type CustomTreatment } from '@/components/sim-embed/customStickering';
-import { stickeringSelectGroupsFor, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
-import { applyMaskConfig, maskLabelOverride, maskRowsForOrder, PRESET_GROUP } from './engine/nxn/maskConfig';
+import { stickeringMaskFn, type StickeringGroup, type StickeringMaskFn } from './engine/nxn/stickering';
+import { CompactSelect } from '@/components/CompactSelect';
+import LazyVisible from '@/components/LazyVisible';
+import { renderStageThumbnail } from '@/lib/sim-stage-thumbnail';
+import { CUSTOM_STICKERING, customMaskFn, countSids, type PickGrain, type CustomTreatment, type CustomBrush } from '@/components/sim-embed/customStickering';
+import { resolveStageMaskFn, stickeringSelectGroupsFor, VC_MASK_LABEL } from './engine/nxn/vcStageMask';
+import { applyMaskConfig, presetMaskFn, maskLabelOverride, maskRowsForOrder, PRESET_GROUP } from './engine/nxn/maskConfig';
 import { PRESET_PREFIX } from '@/lib/sim-masks-api';
 import { useSimMasks } from './useSimMasks';
 import SimMaskAdmin from './SimMaskAdmin';
-import PillToggle from '@/components/PillToggle/PillToggle';
-import BoolToggle from '@/components/BoolToggle';
 import CubeColorChip from '@/components/CubeColorChip/CubeColorChip';
 import type { SimPuzzle } from './PlayerControls';
 import { SwatchPopup } from './SwatchCell';
@@ -44,18 +47,18 @@ const SQ1_GROUPS: StickeringGroup[] = [
   { group: 'Square-1', items: [...SQ1_STAGE_ITEMS] },
 ];
 
-// 自定义阶段的画法。选项文字自带主语(选中 / 其余),两只下拉并排也不会看混,
-// 省掉一条前缀标签。默认值排第一位。
-const PICK_OPTIONS: { v: CustomTreatment; zh: string; en: string }[] = [
-  { v: 'regular', zh: '选中 原色', en: 'Picked: color' },
-  { v: 'outline', zh: '选中 原色 + 描边', en: 'Picked: color + outline' },
-  { v: 'dim', zh: '选中 压暗', en: 'Picked: dim' },
-  { v: 'ignored', zh: '选中 变灰', en: 'Picked: gray' },
+// 当前画笔只影响下一次点击；未设置的贴纸由 rest 决定。
+const PICK_OPTIONS: { v: CustomBrush; zh: string; en: string }[] = [
+  { v: 'regular', zh: '画笔 原色', en: 'Brush: color' },
+  { v: 'outline', zh: '画笔 原色 + 描边', en: 'Brush: color + outline' },
+  { v: 'dim', zh: '画笔 压暗', en: 'Brush: dim' },
+  { v: 'ignored', zh: '画笔 变灰', en: 'Brush: gray' },
+  { v: 'erase', zh: '橡皮擦', en: 'Eraser' },
 ];
 const REST_OPTIONS: { v: CustomTreatment; zh: string; en: string }[] = [
-  { v: 'ignored', zh: '其余 变灰', en: 'Rest: gray' },
-  { v: 'dim', zh: '其余 压暗', en: 'Rest: dim' },
-  { v: 'regular', zh: '其余 原色', en: 'Rest: color' },
+  { v: 'ignored', zh: '未设置 变灰', en: 'Unset: gray' },
+  { v: 'dim', zh: '未设置 压暗', en: 'Unset: dim' },
+  { v: 'regular', zh: '未设置 原色', en: 'Unset: color' },
 ];
 
 /** 选项显示文本:阶段名本身是通用缩写原样展示,少数长名 / 前缀名换短标签。 */
@@ -92,11 +95,19 @@ function groupLabel(group: string, t: (zh: string, en: string) => string): strin
   }
 }
 
+function StageThumbnail({ order, getMask, faceColors }: {
+  order: number; getMask: () => StickeringMaskFn | null; faceColors: Record<CubeFace, string>;
+}) {
+  const svg = useMemo(() => renderStageThumbnail(order, getMask(), faceColors), [order, getMask, faceColors]);
+  return <span className="puzzle-art" aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
 export default function StickeringSelect({
   puzzleKind, value, onChange, orientation = '', onOrientationChange,
   faceColors = CUBE_FILL,
-  mask = '', onMaskClear, editing = true, onEditingChange, grain = 'sticker', onGrainChange,
+  mask = '', onMaskClear, grain = 'sticker', onGrainChange,
   pick = 'regular', onPickChange, rest = 'ignored', onRestChange,
+  onUndo, onRedo, canUndo = false, canRedo = false,
 }: {
   puzzleKind: SimPuzzle;
   value: string;
@@ -106,16 +117,18 @@ export default function StickeringSelect({
   orientation?: string;
   onOrientationChange?: (v: string) => void;
   faceColors?: Record<CubeFace, string>;
-  /** 自定义阶段:选中的贴纸清单 + 作图开关(仅 value==='custom' 时显示)。 */
+  /** 自定义阶段的贴纸样式与画笔(仅 value==='custom' 时显示)。 */
   mask?: string;
   onMaskClear?: () => void;
-  editing?: boolean;
-  onEditingChange?: (v: boolean) => void;
   grain?: PickGrain;
   onGrainChange?: (v: PickGrain) => void;
   /** 画法:选中的贴纸 / 其余贴纸各自保原色、压暗还是置灰(预设阶段也是这三档在混用)。 */
-  pick?: CustomTreatment;
-  onPickChange?: (v: CustomTreatment) => void;
+  pick?: CustomBrush;
+  onPickChange?: (v: CustomBrush) => void;
+  onUndo?: () => void;
+  onRedo?: () => void;
+  canUndo?: boolean;
+  canRedo?: boolean;
   rest?: CustomTreatment;
   onRestChange?: (v: CustomTreatment) => void;
 }) {
@@ -125,6 +138,8 @@ export default function StickeringSelect({
   const isAdmin = useIsAdmin();
   const { rows, layouts, reload } = useSimMasks();
   const [adminOpen, setAdminOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [adminBusy, setAdminBusy] = useState(false);
   // 代码里的默认清单(单一源);管理员的覆盖层再叠上去。
   const baseGroups = useMemo<StickeringGroup[]>(() => {
     // NxN:引擎自带阶段(方法学 CFOP/ZZ/Roux/…)+ visualcube 整套 MASK 清单(去重)。
@@ -143,6 +158,8 @@ export default function StickeringSelect({
     [baseGroups, rows, order, layout],
   );
   const cfg = useMemo(() => maskRowsForOrder(rows, order), [rows, order]);
+  const adminGroups = useMemo(() => applyMaskConfig(baseGroups, rows, order, { includeHidden: true, layout }),
+    [baseGroups, rows, order, layout]);
   const label = (name: string): string => maskLabelOverride(cfg, name, isZh) || itemLabel(name, t);
   if (groups.length === 0) return null;
   // URL 带了本拼图清单外的阶段名(换拼图残留):补一项占位让 select 不显示成空白;
@@ -155,22 +172,86 @@ export default function StickeringSelect({
   const picked = isCustom ? countSids(mask) : 0;
   return (
     <>
-      <select
-        className="sim-player-mode sim-player-stickering"
+      <CompactSelect
+        className="sim-stage-select"
+        triggerClassName="sim-player-mode sim-player-stickering"
+        popupClassName={adminOpen ? 'sim-stage-options sim-stage-editor' : 'sim-stage-options'}
+        open={menuOpen}
+        onOpenChange={(open) => {
+          if (adminBusy) return;
+          setMenuOpen(open);
+          if (!open) setAdminOpen(false);
+        }}
+        label={label(value)}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
         title={t('按阶段展示色块:所选阶段相关的贴纸保持彩色,其余变暗或置灰', 'Stage stickering: keep the stickers of the chosen stage colored, dim or gray out the rest')}
-        aria-label={t('按阶段展示色块', 'Stage stickering')}
-      >
-        {groups.map((g) => (
-          <optgroup key={g.group} label={groupLabel(g.group, t)}>
-            {g.items.map((name) => (
-              <option key={name} value={name}>{label(name)}</option>
-            ))}
-          </optgroup>
-        ))}
-        {!known && <option value={value}>{value}</option>}
-      </select>
+        ariaLabel={adminOpen ? t('遮罩清单管理', 'Manage mask list') : t('按阶段展示色块', 'Stage stickering')}
+        footer={isAdmin && order > 0 && !adminOpen ? () => (
+          <div className="sim-stage-menu-heading">
+            <span className="sim-stage-group">{t('阶段', 'Stickering')}</span>
+            <button type="button" className="sim-stage-edit-button" onClick={() => setAdminOpen(true)}
+              title={t('编辑', 'Edit')} aria-label={t('编辑', 'Edit')}>
+              <Settings size={14} />
+            </button>
+          </div>
+        ) : undefined}
+        panelContent={isAdmin && adminOpen && order > 0 ? (
+          <SimMaskAdmin
+            key={order}
+            order={order}
+            groups={adminGroups}
+            rows={rows}
+            onReload={reload}
+            onClose={() => setAdminOpen(false)}
+            onStartPicking={() => {
+              setAdminOpen(false);
+              setMenuOpen(false);
+              onChange(CUSTOM_STICKERING);
+            }}
+            onBusyChange={setAdminBusy}
+            groupLabel={(g) => groupLabel(g, t)}
+            defaultLabel={(name, lang) => itemLabel(name, lang === 'zh' ? (zh) => zh : (_zh, en) => en)}
+            pickedSids={isCustom ? mask : ''}
+            pick={pick === 'erase' ? 'regular' : pick}
+            rest={rest}
+            renderPreview={(name, row) => (
+              <LazyVisible className="sim-stage-thumb" minHeight={64} rootMargin="64px">
+                <StageThumbnail order={order} faceColors={faceColors}
+                  getMask={() => name === CUSTOM_STICKERING ? customMaskFn(order, mask, pick, rest)
+                    : row?.kind === 'custom' ? customMaskFn(order, row.sids, row.pick as CustomTreatment, row.rest as CustomTreatment)
+                    : stickeringMaskFn(order, name) ?? resolveStageMaskFn(order, name)} />
+              </LazyVisible>
+            )}
+          />
+        ) : undefined}
+        items={[
+          ...groups.flatMap(g => [
+            ...(isAdmin && order > 0 && g.group === 'Stickering' ? [] : [
+              { value: `group:${g.group}`, disabled: true, label: <span className="sim-stage-group">{groupLabel(g.group, t)}</span> },
+            ]),
+            ...g.items.map(name => ({
+              value: name,
+              label: (
+                <span className="sim-stage-option">
+                  {order > 0 && (
+                    <LazyVisible className="sim-stage-thumb" minHeight={64} rootMargin="64px">
+                      <StageThumbnail
+                        order={order}
+                        faceColors={faceColors}
+                        getMask={() => name === CUSTOM_STICKERING ? customMaskFn(order, mask, pick, rest)
+                          : presetMaskFn(order, name, rows) ?? stickeringMaskFn(order, name) ?? resolveStageMaskFn(order, name)}
+                      />
+                    </LazyVisible>
+                  )}
+                  <span>{label(name)}</span>
+                </span>
+              ),
+            })),
+          ]),
+          ...(!known ? [{ value, label: value }] : []),
+        ]}
+      />
       {showOrientation && (value === 'Cross' || value === 'Daisy' || value === 'F2L' || value === 'fl' ? (
         <SwatchPopup
           className="sim-stage-color-select"
@@ -204,55 +285,23 @@ export default function StickeringSelect({
           ariaLabel={t('配色朝向', 'Color orientation')}
         />
       ))}
-      {isAdmin && order > 0 && (
-        <button
-          type="button"
-          className="sim-stickering-admin"
-          onClick={() => setAdminOpen(true)}
-          title={t('遮罩清单管理(管理员):改名 / 排序 / 隐藏 / 把点选存成遮罩',
-            'Manage mask list (admin): rename, reorder, hide, save a pick as a mask')}
-          aria-label={t('遮罩清单管理', 'Manage mask list')}
-        >
-          <Settings size={14} />
-        </button>
-      )}
-      {adminOpen && order > 0 && (
-        <SimMaskAdmin
-          order={order}
-          groups={applyMaskConfig(baseGroups, rows, order, { includeHidden: true, layout })}
-          rows={rows}
-          onReload={reload}
-          onClose={() => setAdminOpen(false)}
-          groupLabel={(g) => groupLabel(g, t)}
-          defaultLabel={(name, lang) => itemLabel(name, lang === 'zh' ? (zh) => zh : (_zh, en) => en)}
-          pickedSids={isCustom ? mask : ''}
-          pick={pick}
-          rest={rest}
-        />
-      )}
       {isCustom && (
         <span className="sim-stickering-custom">
-          <BoolToggle
-            value={editing}
-            onChange={(v) => onEditingChange?.(v)}
-            label={t('点选', 'Pick')}
-            ariaLabel={t('点选贴纸(开着时点魔方 = 选贴纸,不拧层)', 'Pick stickers (while on, clicking the cube selects instead of turning)')}
-          />
-          <PillToggle
-            value={grain === 'sticker'}
-            onChange={(v) => onGrainChange?.(v ? 'sticker' : 'piece')}
-            onLabel={t('贴纸', 'Sticker')}
-            offLabel={t('整块', 'Piece')}
-            ariaLabel={t('选取粒度', 'Pick granularity')}
-          />
-          {picked > 0 && (
-            <>
+          <select
+            value={String(grain === 'sticker')}
+            onChange={event => { const v = event.currentTarget.value === 'true'; onGrainChange?.(v ? 'sticker' : 'piece'); }}
+            aria-label={t('选取粒度', 'Pick granularity')}
+            className="native-select"
+          >
+            <option value="true">{t('格', 'sticker')}</option>
+            <option value="false">{t('块', 'piece')}</option>
+          </select>
               <select
                 className="sim-player-mode sim-player-stickering"
                 value={pick}
-                onChange={(e) => onPickChange?.(e.target.value as CustomTreatment)}
-                title={t('选中的贴纸怎么显示', 'How the picked stickers are drawn')}
-                aria-label={t('选中的贴纸怎么显示', 'How the picked stickers are drawn')}
+                onChange={(e) => onPickChange?.(e.target.value as CustomBrush)}
+                title={t('选择样式后点击贴纸或整块，已设置的位置保持原样', 'Choose a style, then click a sticker or piece; existing styles stay unchanged')}
+                aria-label={t('画笔样式', 'Brush style')}
               >
                 {PICK_OPTIONS.map((o) => <option key={o.v} value={o.v}>{t(o.zh, o.en)}</option>)}
               </select>
@@ -260,18 +309,16 @@ export default function StickeringSelect({
                 className="sim-player-mode sim-player-stickering"
                 value={rest}
                 onChange={(e) => onRestChange?.(e.target.value as CustomTreatment)}
-                title={t('其余贴纸怎么显示(压暗 = CLL 那类预设的画法)', 'How the rest are drawn (dim = what presets like CLL do)')}
-                aria-label={t('其余贴纸怎么显示', 'How the rest are drawn')}
+                title={t('尚未设置样式的贴纸怎么显示', 'How stickers without an applied style are drawn')}
+                aria-label={t('未设置的贴纸', 'Unset stickers')}
               >
                 {REST_OPTIONS.map((o) => <option key={o.v} value={o.v}>{t(o.zh, o.en)}</option>)}
               </select>
-            </>
-          )}
-          <span className="sim-stickering-count" aria-live="polite">
-            {picked > 0
-              ? t(`已选 ${picked}`, `${picked} picked`)
-              : t('点魔方选贴纸', 'Click a sticker')}
-          </span>
+          {picked === 0 && <span className="sim-stickering-count">{t('点魔方选贴纸', 'Click a sticker')}</span>}
+          <button type="button" className="sim-stickering-clear sim-stickering-history" disabled={!canUndo} onClick={onUndo}
+            title={t('撤销画笔操作', 'Undo brush edit')} aria-label={t('撤销画笔操作', 'Undo brush edit')}><Undo2 size={14} /></button>
+          <button type="button" className="sim-stickering-clear sim-stickering-history" disabled={!canRedo} onClick={onRedo}
+            title={t('重做画笔操作', 'Redo brush edit')} aria-label={t('重做画笔操作', 'Redo brush edit')}><Redo2 size={14} /></button>
           {picked > 0 && (
             <button
               type="button"

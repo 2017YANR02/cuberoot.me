@@ -745,7 +745,6 @@ export const PAGE_META: Record<string, PageMetaEntry> = {
       en: 'Practice with fresh or historical competition scrambles, track a target, note mistakes, and review every attempt.',
     },
   },
-  'sim/stages': { title: { zh: '阶段遮罩速查', en: 'Stage Masks' } },
   'sim/agents': {
     title: { zh: 'AI 解魔方对比', en: 'AI Cube Challenge' },
     description: {

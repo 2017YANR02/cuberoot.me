@@ -1,4 +1,6 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
+
 /**
  * /scramble/gen — "Comp" mode: unified competition scramble sheet UX.
  * Single tab merges 模拟 + WCA paths:
@@ -1530,13 +1532,15 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
               />
               {showCross && roundIdxsInEvent.length > 1 && (
-                <PillToggle
-                  value={analysisAll}
-                  onChange={setAnalysisAll}
-                  onLabel={t('全部', 'All')}
-                  offLabel={t('本轮', 'This round')}
-                  ariaLabel={t('分析范围', 'Analysis scope')}
-                />
+                <select
+                  value={String(analysisAll)}
+                  onChange={event => setAnalysisAll(event.currentTarget.value === 'true')}
+                  aria-label={t('分析范围', 'Analysis scope')}
+                  className="native-select"
+                >
+                  <option value="true">{t('全部', 'All')}</option>
+                  <option value="false">{t('本轮', 'This round')}</option>
+                </select>
               )}
               {showCross && (
                 <BoolToggle

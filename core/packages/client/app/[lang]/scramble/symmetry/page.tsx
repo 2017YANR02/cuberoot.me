@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /scramble/symmetry —— 三阶魔方对称型工作台。
@@ -19,7 +20,6 @@ import { Search, Square as StopIcon, Copy, Check, Eraser, ArrowRight } from 'luc
 import { renderCubeSVG } from '@cuberoot/visualcube';
 import Link from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { ClearButton } from '@/components/ClearButton';
 import { useT } from '@/hooks/useT';
 import { cubieToFacelet, normalizeFacelet, validateFacelet, faceletToCubie } from '@/lib/cube-facelet';
@@ -411,13 +411,16 @@ function SearchView({ t, typeIdx, setTypeIdx }: {
       <section className="sym-block">
         <div className="sym-row">
           <span className="sym-label">{t('对称元素', 'Symmetry elements')}</span>
-          <PillToggle
-            value={antiMode}
-            onChange={setAntiMode}
-            onLabel={t('反对称', 'Antisym')}
-            offLabel={t('对称', 'Symmetry')}
+          <select
             disabled={running}
-          />
+            value={String(antiMode)}
+            onChange={event => setAntiMode(event.currentTarget.value === 'true')}
+            aria-label={t('反对称', 'Antisym') + ' / ' + t('对称', 'Symmetry')}
+            className="native-select"
+          >
+            <option value="true">{t('反对称', 'Antisym')}</option>
+            <option value="false">{t('对称', 'Symmetry')}</option>
+          </select>
           <BoolToggle
             value={selfInverse}
             onChange={setSelfInverse}

@@ -1,4 +1,5 @@
 'use client';
+import '@cuberoot/timer-ui/compact-select.css';
 
 /**
  * /scramble/solver — cubeopt-wasm 最优解 (Next.js 16 port).
@@ -43,7 +44,6 @@ import { CUBE3_PAINT } from './_paint-shared';
 import { useT } from "@/hooks/useT";
 import BoolToggle from '@/components/BoolToggle';
 import { ListSelect } from '@/components/ListSelect';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { InfoTooltip } from '@/components/InfoTooltip/InfoTooltip';
 import { ClearButton } from '@/components/ClearButton';
 import AppLink from '@/components/AppLink';
@@ -884,14 +884,16 @@ export default function Cube3Solver() {
   const busy = cloudMode ? cloudBusy : readyState === 'busy';
   const solveSourceControl = paintOptimal ? (
     <span className="solve-source-control">
-      <PillToggle
-        value={cloudMode}
-        onChange={(value) => setSolveSource(value ? 'cloud' : 'local')}
-        onLabel={t('云端', 'Cloud')}
-        offLabel={t('本地', 'Local')}
-        ariaLabel={t('求解来源', 'Solve via')}
+      <select
         disabled={busy}
-      />
+        value={String(cloudMode)}
+        onChange={event => { const value = event.currentTarget.value === 'true'; setSolveSource(value ? 'cloud' : 'local'); }}
+        aria-label={t('求解来源', 'Solve via')}
+        className="native-select"
+      >
+        <option value="true">{t('云端', 'Cloud')}</option>
+        <option value="false">{t('本地', 'Local')}</option>
+      </select>
       <InfoTooltip
         icon={HelpCircle}
         content={cloudMode ? t(
