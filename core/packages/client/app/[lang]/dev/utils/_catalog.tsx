@@ -525,6 +525,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Competition name: strip the WCA prefix and fall back to the Chinese name. opts.date is the comp date/year already shown on the page — pass it and the duplicated year is stripped from the name (single implementation: stripCompYear); omit it where no year is shown.',
   },
   {
+    name: 'createCompNameEnResolver',
+    sig: 'createCompNameEnResolver(names: Readonly<Record<string, string>>): (name: string) => string',
+    imp: "import { createCompNameEnResolver } from '@cuberoot/shared/comp-localize';",
+    category: 'wca',
+    zh: '从比赛名称映射反查英文，兼容完整中文名与展示简称，保留年份以区分不同届比赛。',
+    en: 'Resolve English competition names from official or shortened Chinese names, retaining years to distinguish editions.',
+  },
+  {
     name: 'unofficialAoN',
     sig: 'unofficialAoN(attempts: number[], opts?: { min?: number }): { value: number; n: number; trim: number } | null',
     imp: "import { unofficialAoN } from '@/lib/unofficial-average';",
