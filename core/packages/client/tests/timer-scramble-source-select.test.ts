@@ -6,6 +6,7 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TIMER_OVERLAY_IDS, TimerScrambleSourceSelect } from '@cuberoot/timer-ui';
+import { TIMER_333_SCRAMBLE_TYPES, TIMER_333_TRAINING_GROUPS } from '@cuberoot/shared/timer';
 
 const LABELS = {
   ariaLabel: 'Scramble source',
@@ -344,14 +345,42 @@ describe('shared timer scramble-source select', () => {
     expect(trigger.textContent).toBe('Cross');
     act(() => trigger.click());
     const options = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')];
-    expect(options.map((item) => item.textContent)).toEqual(['WCA real', 'Random state', 'Manual input', 'Cross', 'F2L']);
-    expect(options.map((item) => item.getAttribute('aria-selected'))).toEqual(['false', 'false', 'false', 'true', 'false']);
+    expect(options.map((item) => item.textContent)).toEqual(['WCA real', 'Random state', 'Manual input', 'CFOP']);
+    expect(options.map((item) => item.getAttribute('aria-selected'))).toEqual(['false', 'false', 'false', 'true']);
     expect(document.body.style.overflow).toBe('hidden');
-    act(() => options[4].click());
+    act(() => options[3].click());
+    expect(onTrainingChange).not.toHaveBeenCalled();
+    const children = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+    expect(children.map(item => item.textContent)).toEqual(['Cross', 'F2L']);
+    act(() => children[1].click());
     expect(onTrainingChange).toHaveBeenCalledWith('f2l');
     expect(onChange).not.toHaveBeenCalled();
     expect(document.body.style.overflow).toBe('auto');
     document.body.style.overflow = '';
+  });
+
+  it('covers every training type once and supports all groups, back and dismissal', () => {
+    const allEvents = TIMER_333_TRAINING_GROUPS.flatMap(group => [...group.events]);
+    expect([...allEvents].sort()).toEqual(TIMER_333_SCRAMBLE_TYPES.filter(type => type.event !== '333').map(type => type.event).sort());
+    expect(new Set(allEvents).size).toBe(allEvents.length);
+    const onTrainingChange = vi.fn();
+    act(() => root.render(createElement(TimerScrambleSourceSelect<'wca'>, {
+      labels: LABELS, onChange: vi.fn(), realValue: 'wca', value: 'random', language: 'zh',
+      trainingItems: allEvents.map(value => ({ value, label: value })), onTrainingChange,
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.timer-scramble-source-trigger')!;
+    act(() => trigger.click());
+    for (const group of TIMER_333_TRAINING_GROUPS) {
+      const parent = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')].find(item => item.textContent === group.label.zh)!;
+      act(() => parent.click());
+      expect([...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')].map(item => item.textContent)).toEqual(group.events);
+      expect(document.activeElement?.getAttribute('aria-label')).toBe('返回打乱类型');
+      act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+      expect(document.body.querySelector('.timer-scramble-source-popup')).not.toBeNull();
+    }
+    expect(onTrainingChange).not.toHaveBeenCalled();
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(document.body.querySelector('.timer-scramble-source-popup')).toBeNull();
   });
 
 });
