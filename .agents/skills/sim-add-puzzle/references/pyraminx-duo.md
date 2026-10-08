@@ -42,4 +42,10 @@ pnpm --filter @cuberoot/client exec vitest run tests/pyraminx-duo-engine.test.ts
 
 严格分类器同时保护 setup 和 alg。非法输入保持上次合法盘面并标红；打乱播放和跳步也检查 validity。撤销/重做必须先结束当前动画，再读写 history，避免未入栈的当前招式在重放时插回。
 
-生成页两种模式通过 `client/lib/native-scramble.ts` 调用同一个生成器；Timer 的普通和种子路径也复用它。Web/PDF/Timer 用共享 `pyraminx-duo-svg`。csTimer 没有对应 scrambler，导出使用真实的 `input` 类型并携带 `cuberootEvent`，导入凭元数据恢复，不依赖用户可改的组名。
+生成页有三个用户模式：比赛用 `TNoodleMode`，批量与输入分别用 `QuickMode(subMode="batch"|"paste")`，没有独立的 `InputMode.tsx`。两个生成入口通过 `core/packages/client/lib/native-scramble.ts` 调用同一个生成器；输入模式复用项目目录与图示渲染，验收时也要选择 Duo 并粘贴合法公式。
+
+Timer 的普通和种子路径也复用该生成器；项目语义在 `shared/src/timer/types.ts` 属于 `nonwca`，picker 在 `event-catalog.ts` 属于 `other` 并显示 `textLabel: 'Duo'`，两种分组不要混用。运行能力登记为 `kind: 'shared'`、`provider: 'small-puzzle-random-state'`，不依赖 csTimer key。
+
+Web/PDF/Timer 用共享 `pyraminx-duo-svg`，二维图示不依赖 WebGL；其正常显示不代表浏览器中的 3D 拖拽与动画已经通过。csTimer 没有对应 scrambler，导出使用真实的 `input` 类型并携带 `cuberootEvent`，导入凭元数据恢复，不依赖用户可改的组名。
+
+跨页面路径、公开出口/架构契约与预览验收遵循 [通用接入清单](integration-and-verification.md)，按当前代码核验，不把本次验证状态固化成未来任务的通过记录。
