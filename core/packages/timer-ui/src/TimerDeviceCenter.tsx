@@ -34,6 +34,8 @@ export interface TimerDeviceCenterProps {
   className?: string;
   /** Host-owned panels anchored to the same device trigger. */
   children?: ReactNode;
+  /** Invoke the sole action in the click event, preserving browser user activation. */
+  directSingleItem?: boolean;
   items: readonly TimerDeviceCenterItem[];
   menuLabel: string;
   triggerLabel: string;
@@ -52,6 +54,7 @@ export function TimerDeviceCenter({
   ariaLabel,
   className,
   children,
+  directSingleItem = false,
   items,
   menuLabel,
 }: TimerDeviceCenterProps) {
@@ -67,23 +70,25 @@ export function TimerDeviceCenter({
   // Host utilities must remain reachable even with a cube connected.
   const connectedCube = items.some((item) => !item.kind) ? undefined
     : items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
+  const directItem = directSingleItem && items.length === 1 ? items[0] : connectedCube;
   return (
     <div className={`shell-device-center${active ? ' is-active' : ''}${className ? ` ${className}` : ''}`} data-no-timer>
       <button
-        aria-expanded={connectedCube ? undefined : open}
-        aria-haspopup={connectedCube ? 'dialog' : 'menu'}
-        aria-label={ariaLabel}
+        aria-expanded={directItem ? undefined : open}
+        aria-haspopup={directItem ? 'dialog' : 'menu'}
+        aria-label={directItem?.label ?? ariaLabel}
         className="shell-device-center-trigger"
+        disabled={directItem?.disabled}
         onClick={() => {
-          if (connectedCube) {
+          if (directItem) {
             setOpen(false);
-            connectedCube.onSelect();
+            directItem.onSelect();
           } else {
             setOpen((value) => !value);
           }
         }}
         ref={triggerRef}
-        title={ariaLabel}
+        title={directItem?.label ?? ariaLabel}
         type="button"
       >
         <Bluetooth aria-hidden="true" size={16} />

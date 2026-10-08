@@ -63,6 +63,23 @@ describe('TimerDeviceCenter', () => {
     expect(trigger.getAttribute('aria-expanded')).toBe(disabled ? 'true' : null);
   });
 
+  it.each([false, true])('invokes the sole trainer action synchronously, disabled=%s', async (disabled) => {
+    const onSelect = vi.fn();
+    await act(async () => root.render(createElement(TimerDeviceCenter, {
+      ariaLabel: 'Timer devices', directSingleItem: true,
+      items: [{ id: 'cube', kind: 'smart-cube', label: 'Smart cube', disabled, onSelect }],
+      menuLabel: 'Available timer devices', triggerLabel: 'Devices',
+    })));
+    const trigger = host.querySelector<HTMLButtonElement>('.shell-device-center-trigger')!;
+    expect(trigger.disabled).toBe(disabled);
+    act(() => {
+      trigger.click();
+      // The browser picker must run before this click loses user activation.
+      expect(onSelect).toHaveBeenCalledTimes(disabled ? 0 : 1);
+    });
+    expect(host.querySelector('[role="menu"]')).toBeNull();
+  });
+
   it('closes on Escape and outside pointer-down, returning focus to the trigger', async () => {
     await act(async () => root.render(createElement(TimerDeviceCenter, {
       ariaLabel: 'Timer devices',
