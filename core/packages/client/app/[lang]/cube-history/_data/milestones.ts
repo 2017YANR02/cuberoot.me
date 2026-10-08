@@ -328,8 +328,8 @@ export const MILESTONES: Milestone[] = [
       "en": "GAN17, Tornado V5, PB WR and products still at the teaser stage"
     },
     "description": {
-      "zh": "GAN17 于 8 月 10 日开售，官方中国首发价为 439 元；国际官网标价单独记录。风 V5、PB WR 也已进入 2026 年产品线。更多磁铁、更细的调节和更高的标称自复位角度，是可记录的结构选择，不是统一性能分数。傲龙 V6 截止日仅确认官方预告，不能与已开售型号混为一谈。",
-      "en": "GAN17 went on sale on August 10 with an announced Chinese launch price of CNY 439; its international quote is recorded separately. Tornado V5 and PB WR also joined the 2026 lineup. More magnets, adjustment choices and advertised alignment angles are design specifications, not a standardized score. AoLong V6 remained a confirmed teaser at the cutoff."
+      "zh": "GAN17 于 8 月 10 日开售，官方中国首发价为 439 元。风 V5、PB WR 也已进入 2026 年产品线。更多磁铁、更细的调节和更高的标称自复位角度，是可记录的结构选择，不是统一性能分数。傲龙 V6 截止日仅确认官方预告，不能与已开售型号混为一谈。",
+      "en": "GAN17 went on sale on August 10 with an announced Chinese launch price of CNY 439. Tornado V5 and PB WR also joined the 2026 lineup. More magnets, adjustment choices and advertised alignment angles are design specifications, not a standardized score. AoLong V6 remained a confirmed teaser at the cutoff."
     },
     "sourceIds": [
       "gan-17-sina",

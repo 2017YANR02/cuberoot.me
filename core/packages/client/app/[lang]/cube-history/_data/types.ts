@@ -1,7 +1,7 @@
 /** Research snapshot. Unknown is a value: never replace missing facts with estimates. */
 export interface LocalizedText { zh: string; en: string }
 export type ReleaseBasis = 'official' | 'retailer' | 'documented' | 'approximate' | 'unknown';
-export type PriceKind = 'current' | 'launch' | 'historical';
+export type PriceKind = 'launch';
 export interface Source {
   id: string;
   title: string;
@@ -11,8 +11,9 @@ export interface Source {
 }
 export interface CubePrice {
   amount: number;
-  currency: string;
-  region: string;
+  /** Only a verified mainland-China launch quote for this exact configuration. */
+  currency: 'CNY';
+  region: 'CN';
   kind: PriceKind;
   asOf: string | null;
   variant: string | null;
@@ -62,8 +63,6 @@ export interface Cube {
     sourceIds: string[];
   };
   prices: CubePrice[];
-  /** Context-only family quotes whose configuration is unspecified; excluded from exact-model price filters. */
-  familyPrices?: CubePrice[];
   specs: {
     /** Explicitly retain units and version qualification; never parse gross weight as item weight. */
     size: string | null;

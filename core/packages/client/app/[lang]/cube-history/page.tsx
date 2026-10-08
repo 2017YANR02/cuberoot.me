@@ -2,13 +2,14 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useQueryState, useQueryStates, parseAsString, parseAsStringEnum, parseAsArrayOf, parseAsBoolean } from 'nuqs';
-import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUpRight, BookOpen, Check, ChevronDown, Columns3, Crown, Download, History, ImageOff, Link2, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
 import AppLink from '@/components/AppLink';
 import HeaderToggles from '@/components/HeaderToggles';
 import { ClearButton } from '@/components/ClearButton';
 import SearchInput from '@/components/SearchInput';
 import { CompactSelect } from '@/components/CompactSelect';
+import BoolToggle from '@/components/BoolToggle';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
@@ -42,19 +43,7 @@ const yearKeys = Array.from({ length: snapshotYear - earliestYear + 1 }, (_, ind
 const familyKeys = new Set(CUBES.flatMap(cube => cube.familyId ? [cube.familyId] : []));
 const familyRoots = CUBES.filter(cube => familyKeys.has(cube.id)).sort((a, b) => a.name.en.localeCompare(b.name.en, 'en', { numeric: true }));
 const UNKNOWN = { zh: '待核实', en: 'Unverified' };
-const REGIONS: Record<string, LocalizedText> = {
-  'US / international': { zh: '美国 / 国际市场', en: 'US / international' },
-  US: { zh: '美国', en: 'US' }, Global: { zh: '国际市场', en: 'Global' },
-  China: { zh: '中国', en: 'China' }, 'CN export': { zh: '中国出口报价', en: 'China export' }, CN: { zh: '中国', en: 'China' },
-  JP: { zh: '日本', en: 'Japan' }, EU: { zh: '欧洲市场', en: 'European market' },
-  FR: { zh: '法国', en: 'France' }, PL: { zh: '波兰', en: 'Poland' }, IN: { zh: '印度', en: 'India' }, UK: { zh: '英国', en: 'UK' },
-  International: { zh: '国际市场', en: 'International' },
-  'International retailer': { zh: '国际商家报价', en: 'International retailer' },
-  BN: { zh: '文莱', en: 'Brunei' }, ES: { zh: '西班牙', en: 'Spain' }, GB: { zh: '英国', en: 'UK' },
-  Germany: { zh: '德国', en: 'Germany' }, 'CN / export': { zh: '中国出口报价', en: 'China export' },
-  'Global / China-channel edition': { zh: '国际报价 / 中国渠道版本', en: 'Global / China-channel edition' },
-  'Slovenia / Europe': { zh: '斯洛文尼亚 / 欧洲市场', en: 'Slovenia / Europe' },
-};
+const UNKNOWN_LAUNCH_PRICE = { zh: '首发价待核实', en: 'Launch price unverified' };
 const brandName = (brand: string) => tr(BRANDS[brand] ?? { zh: brand, en: brand });
 const dateText = (cube: Cube) => cube.release.date ?? tr(UNKNOWN);
 const SPEC_QUALIFIERS: Record<string, string> = {"official manual":"官方手册","official":"官方","retailer variation":"商家资料存在差异","nonmagnetic":"无磁","non-magnetic":"无磁","standard":"标准版","Standard":"标准版","Magnetic":"磁力版","spring":"弹簧版","matte":"磨砂版","listing":"商品页","original dealer":"早期经销商","original":"初版","dual-adjustment":"双调版","unstickered listing":"无贴纸版本商品页","review sample":"测评样品","Flagship":"旗舰版","Pioneer":"先锋版","Ultimate":"至尊版","UK listing":"英国商家","UK retailer":"英国商家","Enhanced":"增强版","non-magnetic tiled":"无磁色片版","20-magnet MagLev UV":"20 磁轴磁悬浮 UV 版","8-magnet MagLev":"8 磁轴磁悬浮版","standard AI":"标准 AI 版",stickered:'贴纸款',stickerless:'无贴纸款',nominal:'标称'};
@@ -140,7 +129,7 @@ function CubePhoto({ cube, compact = false, onOpen }: { cube: Cube; compact?: bo
   return <figure className={`ch-photo${compact ? ' ch-photo--compact' : ''}`}>
     {onOpen ? <button type="button" className="ch-photo-button" onClick={() => onOpen(cube.id)} aria-label={tr({ zh: `查看 ${cube.name.zh} 的图片与资料`, en: `View photos and record for ${cube.name.en}` })}>{content}</button> : <div className="ch-photo-frame">{content}</div>}
     <figcaption className="ch-photo-caption">
-      {source ? <a href={source.url} target="_blank" rel="noopener noreferrer">{tr({ zh: '图片来源', en: 'Photo source' })} · {source.publisher}<ArrowUpRight size={11} /></a> : <span>{tr({ zh: '保留资料缺口', en: 'Evidence gap retained' })}</span>}
+      {source ? <a href={source.url} target="_blank" rel="noopener noreferrer">{source.publisher}<ArrowUpRight size={11} /></a> : <span>{tr({ zh: '保留资料缺口', en: 'Evidence gap retained' })}</span>}
       {photo?.match === 'family' && <span className="ch-badge">{tr({ zh: '来源页共用图', en: 'Shared source photo' })}</span>}
     </figcaption>
   </figure>;
@@ -148,11 +137,11 @@ function CubePhoto({ cube, compact = false, onOpen }: { cube: Cube; compact?: bo
 
 function PriceQuote({ price, compact = false }: { price: CubePrice; compact?: boolean }) {
   return <div className={compact ? 'ch-price ch-price--compact' : 'ch-price'}>
-    <span><strong>{price.currency} {price.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+    <span><strong>¥{price.amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong>
       <span className="ch-badge">{tr(PRICE_LABELS[price.kind])}</span>
       <ReferenceLinks ids={[price.sourceId]} />
     </span>
-    <small>{[price.variant, tr(REGIONS[price.region] ?? { zh: price.region, en: price.region }), price.asOf].filter(Boolean).join(' · ')}</small>
+    <small>{[price.variant ? specText(price.variant) : null, price.asOf].filter(Boolean).join(' · ')}</small>
     {!compact && <p>{tr(price.note)}</p>}
   </div>;
 }
@@ -175,7 +164,7 @@ function AddToCompare({ cube, selected, full, onToggle }: { cube: Cube; selected
 function ModelCard({ cube, selected, full, onToggle, onOpen }: {
   cube: Cube; selected: boolean; full: boolean; onToggle: (id: string) => void; onOpen: (id: string) => void;
 }) {
-  const leadPrice = cube.prices.find(price => price.currency === 'CNY') ?? cube.prices[0];
+  const leadPrice = cube.prices[0];
   const mechanisms = ['bluetooth', 'maglev', 'ball-core', 'core-magnets', 'uv', 'adjustable', 'magnet', 'magnetic', 'non-magnetic', 'tactile']
     .filter(key => cube.specs.mechanism.includes(key))
     .filter(key => !(key === 'core-magnets' && cube.specs.mechanism.includes('ball-core')) && !(key === 'magnetic' && cube.specs.mechanism.includes('magnet')))
@@ -189,7 +178,7 @@ function ModelCard({ cube, selected, full, onToggle, onOpen }: {
     {!!mechanisms.length && <div className="ch-mechanism-tags">{mechanisms.map(key => <span key={key}>{tr(MECHANISMS[key])}</span>)}</div>}
     <p className="ch-model-summary">{tr(cube.highlights[0] ?? cube.assessment.summary)}</p>
     <dl className="ch-model-specs"><div><dt>{tr({ zh: '尺寸', en: 'Size' })}</dt><dd>{specText(cube.specs.size)}</dd></div><div><dt>{tr({ zh: '净重', en: 'Net weight' })}</dt><dd>{specText(cube.specs.weight)}</dd></div></dl>
-    {leadPrice ? <PriceQuote price={leadPrice} compact /> : <p className="ch-muted">{tr({ zh: '售价待核实', en: 'Price unverified' })}</p>}
+    {leadPrice ? <PriceQuote price={leadPrice} compact /> : <p className="ch-muted">{tr(UNKNOWN_LAUNCH_PRICE)}</p>}
     <div className="ch-model-bottom"><button type="button" className="ch-text-button" onClick={() => onOpen(cube.id)}>{tr({ zh: '查看完整资料', en: 'View full record' })}<ArrowUpRight size={15} /></button><AddToCompare cube={cube} selected={selected} full={full} onToggle={onToggle} /></div>
   </article>;
 }
@@ -225,8 +214,7 @@ function CubeDetails({ cube, selected, full, onToggle, onClose, onOpen }: {
     </div>
     <div className="ch-detail-grid">
       <section><h3>{tr({ zh: '发布时间', en: 'Release evidence' })}</h3><p className="ch-detail-date">{dateText(cube)} <span className="ch-badge">{tr(RELEASE_LABELS[cube.release.basis])}</span><ReferenceLinks ids={cube.release.sourceIds} /></p><p>{tr(cube.release.note)}</p></section>
-      <section><h3>{tr({ zh: '售价记录', en: 'Price records' })}</h3>{cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} />) : <p className="ch-muted">{tr({ zh: '尚未找到可核查的报价，未推算或填零。', en: 'No verified quote found; no estimate or zero placeholder is substituted.' })}</p>}
-        {!!cube.familyPrices?.length && <><h4>{tr({ zh: '同系列官网报价 · 配置未明确', en: 'Official family quote · configuration unspecified' })}</h4><p className="ch-muted">{tr({ zh: '官网未说明这一报价对应哪个配置，因此单独保留作系列资料，不计入本型号的人民币价格筛选或直接价格比较。', en: 'The official page does not identify the configuration for this quote. It is retained as family context and excluded from this model’s CNY-price filter and direct price comparison.' })}</p>{cube.familyPrices.map((price, index) => <PriceQuote key={index} price={price} />)}</>}
+      <section><h3>{tr({ zh: '中国首发价', en: 'China launch price' })}</h3>{cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} />) : <p className="ch-muted">{tr({ zh: '首发价待核实：尚未找到可核查的中国大陆首发价格。', en: 'Launch price unverified: no verifiable mainland-China launch quote has been found.' })}</p>}
       </section>
       <section><h3>{tr({ zh: '结构与性能参数', en: 'Mechanism and specifications' })}</h3>
         <dl className="ch-spec-list">
@@ -247,12 +235,12 @@ function CubeDetails({ cube, selected, full, onToggle, onClose, onOpen }: {
 
 function CatalogTable({ cubes, ids, full, onOpen, onToggle }: { cubes: Cube[]; ids: string[]; full: boolean; onOpen: (id: string) => void; onToggle: (id: string) => void }) {
   return <div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table"><caption>{tr({ zh: '三阶魔方型号及可核查参数', en: '3×3 models and sourced specifications' })}</caption><thead><tr>
-    {[{ zh: '型号', en: 'Model' }, { zh: '时间及口径', en: 'Date & basis' }, { zh: '尺寸 / 净重', en: 'Size / item weight' }, { zh: '价格', en: 'Price' }, { zh: '对比', en: 'Compare' }].map(label => <th key={label.en} scope="col">{tr(label)}</th>)}
+    {[{ zh: '型号', en: 'Model' }, { zh: '时间及口径', en: 'Date & basis' }, { zh: '尺寸 / 净重', en: 'Size / item weight' }, { zh: '中国首发价', en: 'China launch price' }, { zh: '对比', en: 'Compare' }].map(label => <th key={label.en} scope="col">{tr(label)}</th>)}
   </tr></thead><tbody>{cubes.map(cube => <tr key={cube.id}>
     <th scope="row"><CubePhoto cube={cube} compact onOpen={onOpen} /><span className="ch-muted">{brandName(cube.brand)}</span><button type="button" className="ch-text-button" onClick={() => onOpen(cube.id)}>{tr(cube.name)}</button></th>
     <td>{dateText(cube)}<small>{tr(RELEASE_LABELS[cube.release.basis])} · {tr(STATUS_LABELS[cube.status])}</small></td>
     <td>{specText(cube.specs.size)}<small>{specText(cube.specs.weight)}</small></td>
-    <td>{cube.prices.length ? <PriceQuote price={cube.prices.find(price => price.currency === 'CNY') ?? cube.prices[0]} compact /> : tr(UNKNOWN)}</td>
+    <td>{cube.prices.length ? <PriceQuote price={cube.prices[0]} compact /> : tr(UNKNOWN_LAUNCH_PRICE)}</td>
     <td><AddToCompare cube={cube} selected={ids.includes(cube.id)} full={full} onToggle={onToggle} /></td>
   </tr>)}</tbody></table></div>;
 }
@@ -265,7 +253,7 @@ function Comparison({ cubes, onToggle, onBrowse }: { cubes: Cube[]; onToggle: (i
     { label: { zh: '定位', en: 'Positioning' }, render: cube => tr(TIERS[cube.tier ?? 'unknown']) },
     { label: { zh: '时间', en: 'Date' }, render: cube => <>{dateText(cube)}<small>{tr(RELEASE_LABELS[cube.release.basis])}</small><p>{tr(cube.release.note)}</p><ReferenceLinks ids={cube.release.sourceIds} /></> },
     { label: { zh: '状态', en: 'Status' }, render: cube => tr(STATUS_LABELS[cube.status]) },
-    { label: { zh: '售价记录', en: 'Price records' }, render: cube => cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} compact />) : tr(UNKNOWN) },
+    { label: { zh: '中国首发价', en: 'China launch price' }, render: cube => cube.prices.length ? cube.prices.map((price, index) => <PriceQuote key={index} price={price} compact />) : tr(UNKNOWN_LAUNCH_PRICE) },
     { label: { zh: '尺寸 / 净重', en: 'Size / item weight' }, render: cube => <>{specText(cube.specs.size)}<small>{specText(cube.specs.weight)}</small></> },
     { label: { zh: '机制', en: 'Mechanism' }, render: cube => cube.specs.mechanism.length ? cube.specs.mechanism.map(value => tr(MECHANISMS[value] ?? { zh: value, en: value })).join(' · ') : tr(UNKNOWN) },
     { label: { zh: '调节', en: 'Adjustment' }, render: cube => cube.specs.adjustment ? tr(cube.specs.adjustment) : tr(UNKNOWN) },
@@ -275,7 +263,7 @@ function Comparison({ cubes, onToggle, onBrowse }: { cubes: Cube[]; onToggle: (i
     { label: { zh: '版本', en: 'Variants' }, render: cube => cube.variants.join(' · ') || tr(UNKNOWN) },
     { label: { zh: '来源', en: 'Sources' }, render: cube => <ReferenceLinks ids={sourceIdsForCube(cube)} /> },
   ];
-  return <section><h2>{tr({ zh: '逐项比较', en: 'Compare field by field' })}</h2><p className="ch-muted">{tr({ zh: '币种、市场和版本保留原样；价格的高低不能直接代表性能。', en: 'Currency, market and version remain explicit; a higher price does not by itself establish better performance.' })}</p><div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table ch-comparison">
+  return <section><h2>{tr({ zh: '逐项比较', en: 'Compare field by field' })}</h2><p className="ch-muted">{tr({ zh: '中国首发价按具体版本记录，价格高低不能直接代表性能。', en: 'China launch prices are tied to the exact configuration; a higher price does not by itself establish better performance.' })}</p><div className="sticky-scroll ch-table-wrap"><table className="sticky-thead ch-table ch-comparison">
     <caption>{tr({ zh: '所选型号的参数与来源对比', en: 'Specifications and sources for the selected models' })}</caption><thead><tr><th scope="col">{tr({ zh: '项目', en: 'Field' })}</th>{cubes.map(cube => <th scope="col" key={cube.id}>{tr(cube.name)}<button type="button" className="ch-text-button" onClick={() => onToggle(cube.id)}><X size={13} />{tr({ zh: '移除', en: 'Remove' })}</button></th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.label.en}><th scope="row">{tr(row.label)}</th>{cubes.map(cube => <td key={cube.id}>{row.render(cube)}</td>)}</tr>)}</tbody>
   </table></div></section>;
 }
@@ -317,7 +305,7 @@ function SourcesView() {
   const sources = SOURCES.filter(source => (kind === 'all' || source.kind === kind) && (!q || `${source.title} ${source.publisher} ${source.url}`.toLowerCase().includes(q)));
   const missing = [
     { label: { zh: '年份待核', en: 'Missing year' }, value: CUBES.filter(cube => cube.year === null).length },
-    { label: { zh: '暂无可信价格', en: 'Without a verified price' }, value: CUBES.filter(cube => !cube.prices.length).length },
+    { label: { zh: '首发价待核实', en: 'Launch price unverified' }, value: CUBES.filter(cube => !cube.prices.length).length },
     { label: { zh: '暂无明确净重', en: 'Without item weight' }, value: CUBES.filter(cube => !cube.specs.weight).length },
     { label: { zh: '预告 / 预售型号', en: 'Announced / preorder entries' }, value: CUBES.filter(cube => cube.status === 'announced').length },
   ];
@@ -451,6 +439,13 @@ function Explorer() {
         <div className="ch-search-heading"><strong>{tr({ zh: '找到你想了解的那一款', en: 'Find the model you have in mind' })}</strong><span>{tr({ zh: '中文 · 英文 · 型号别名', en: 'Chinese · English · Model aliases' })}</span></div>
         <div className="ch-search-field"><Search size={21} aria-hidden="true" /><SearchInput value={filters.q} onChange={value => setFilter('q', value)} debounceMs={150} maxLength={160} type="search" ariaLabel={tr({ zh: '搜索魔方型号、品牌或别名', en: 'Search cube models, brands or aliases' })} placeholder={tr({ zh: '搜索型号、品牌或别名', en: 'Search a model, brand or alias' })} className="ch-search" inputClassName="ch-model-search-input" autoComplete="off" spellCheck={false} /></div>
         <div className="ch-search-examples"><span>{tr({ zh: '试试', en: 'Try' })}</span>{[{ zh: 'GAN 12 UV', en: 'GAN 12 UV' }, { zh: '威龙 V11', en: 'WeiLong V11' }, { zh: '风四代', en: 'Tornado V4' }].map(example => <button type="button" key={example.en} className="ch-text-button" onClick={() => { void setFilters({ ...EMPTY_FILTERS, q: tr(example) }); void setOrder('relevance'); }}>{tr(example)}<ArrowUpRight size={11} /></button>)}</div>
+        <BoolToggle
+          className={`ch-flagship-filter${filters.tier === 'flagship' ? ' is-active' : ''}`}
+          value={filters.tier === 'flagship'}
+          onChange={enabled => setFilter('tier', enabled ? 'flagship' : 'all')}
+          label={<><span className="ch-flagship-label"><Crown size={17} aria-hidden="true" /><strong>{tr({ zh: '仅看旗舰款', en: 'Flagships only' })}</strong></span><span className="ch-flagship-hint">{tr({ zh: '按档案中的产品定位，包含历代旗舰', en: 'Uses catalog positioning, including past flagships.' })}</span></>}
+          ariaLabel={tr({ zh: '仅看旗舰款，包含历代旗舰', en: 'Flagships only, including past flagships' })}
+        />
         <div className="ch-brand-shortcuts" role="group" aria-label={tr({ zh: '重点品牌快捷筛选', en: 'Featured brand filters' })}>{PRIORITY_BRANDS.map(brand => <BrandShortcut key={brand} brand={brand} selected={filters.brand === brand} onSelect={value => setFilter('brand', value)} />)}</div>
         <div className="ch-filter-row ch-primary-filters">
           <CompactSelect className="ch-filter-select" label={filters.brand === 'all' ? tr({ zh: '所有品牌', en: 'All brands' }) : brandName(filters.brand)} valueText={filters.brand === 'all' ? tr({ zh: '所有品牌', en: 'All brands' }) : brandName(filters.brand)} ariaLabel={tr({ zh: '按品牌筛选', en: 'Filter by brand' })} value={filters.brand} onChange={value => setFilter('brand', value)} items={[{ value: 'all', label: tr({ zh: '所有品牌', en: 'All brands' }) }, ...brandKeys.map(value => ({ value, label: brandName(value) }))]} />
@@ -470,7 +465,7 @@ function Explorer() {
         </details>
         {activeEntries.length > 0 && <div className="ch-active-filters" aria-label={tr({ zh: '正在使用的筛选', en: 'Active filters' })}>{activeEntries.map(([key, value]) => <span className="ch-active-filter" key={key}><span title={filterLabel(key, value)}>{filterLabel(key, value)}</span><ClearButton variant="standalone" onClick={() => setFilter(key, EMPTY_FILTERS[key])} ariaLabel={tr({ zh: `移除筛选：${filterLabel(key, value)}`, en: `Remove filter: ${filterLabel(key, value)}` })} /></span>)}<span className="ch-clear-all"><span>{tr({ zh: '清除全部', en: 'Clear all' })}</span><ClearButton variant="standalone" onClick={() => { void setFilters(EMPTY_FILTERS); }} ariaLabel={tr({ zh: '清除全部筛选', en: 'Clear all filters' })} /></span></div>}
       </div>
-      <AnnualLineup brand={filters.brand} onYear={year => { void setFilters({ ...EMPTY_FILTERS, brand: filters.brand, year }); }} onOpen={openModel} />
+      <AnnualLineup brand={filters.brand} onYear={year => setFilter('year', year)} onOpen={openModel} />
       <div className="ch-result-bar"><p role="status" aria-live="polite"><strong>{filtered.length}</strong> {tr({ zh: '条匹配记录', en: 'matching entries' })}<span>{tr({ zh: `已显示 ${visible.length} 条 · 检索全部 ${CUBES.length} 条档案`, en: `${visible.length} shown · Searching all ${CUBES.length} records` })}</span></p><div><CompactSelect label={sortLabel} valueText={sortLabel} value={order} onChange={value => { void setOrder(value as typeof order); }} ariaLabel={tr({ zh: '排序方式', en: 'Sort order' })} items={[
         { value: 'relevance', label: relevanceLabel }, { value: 'newest', label: tr(SORT_LABELS.newest) }, { value: 'oldest', label: tr(SORT_LABELS.oldest) }, { value: 'name', label: tr(SORT_LABELS.name) },
       ]} /><PillToggle value={!table} onChange={value => { void setTable(!value); }} onLabel={tr({ zh: '卡片', en: 'Cards' })} offLabel={tr({ zh: '表格', en: 'Table' })} ariaLabel={tr({ zh: '图鉴布局', en: 'Catalog layout' })} /></div></div>

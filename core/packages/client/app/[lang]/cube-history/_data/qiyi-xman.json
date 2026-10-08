@@ -1093,21 +1093,7 @@
           "qo-product-qiyi-wuwei-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-wuwei-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "90.0 g",
@@ -1196,21 +1182,7 @@
           "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv-20-m-ball-core-saocube-se"
         ]
       },
-      "prices": [
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv-20-m-ball-core-saocube-se"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1304,21 +1276,7 @@
           "qo-product-qiyi-big-sail-3x3-6-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.5,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-big-sail-3x3-6-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "68.0 mm",
         "weight": "117.1 g",
@@ -1405,34 +1363,7 @@
           "xman-tornado-v4-ai-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-ai-3x3-uv-with-charging-base"
-        },
-        {
-          "amount": 79.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "With power-bank charging case",
-          "note": {
-            "zh": "含移动电源充电盒的整套标价，非普通充电底座套装价格。",
-            "en": "Complete package with a power-bank charging case, distinct from the ordinary charging-base package."
-          },
-          "sourceId": "xman-tornado-v4-ai-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": null,
@@ -1499,21 +1430,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 348,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "xman-tornado-ai-official"
-        }
-      ],
       "rating": {
         "value": 3.5,
         "scale": 5,
@@ -1547,21 +1463,7 @@
           "qiyi-official-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 32.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-magnetic-core"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -1635,21 +1537,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 218,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "xman-tornado-v3-official"
-        }
-      ],
       "rating": {
         "value": 4.54,
         "scale": 5,
@@ -1683,21 +1570,7 @@
           "qo-product-qiyi-mini-3x3-keychain-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-mini-3x3-keychain-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30.0 mm",
         "weight": "25.0 g",
@@ -1751,7 +1624,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 10,
         "asOf": "2026-10-07",
@@ -1783,21 +1656,7 @@
           "qo-product-qiyi-magnetic-3x3-fluorescent-stickers"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-magnetic-3x3-fluorescent-stickers"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1853,7 +1712,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 9,
         "asOf": "2026-10-07",
@@ -1885,21 +1744,7 @@
           "qo-product-qiyi-m-pro-3x3-v3-pioneer-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-v3-pioneer-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "67.22 g (SpeedCubeShop)",
@@ -1964,7 +1809,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -1996,21 +1841,7 @@
           "qiyi-official-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "xman-tornado-v2-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -2110,21 +1941,7 @@
           "qo-product-x-man-tornado-v3-m-standard"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-standard"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "69.0 g",
@@ -2222,21 +2039,7 @@
           "qo-product-qiyi-m-pro-v2-3x3-pioneer-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-v2-3x3-pioneer-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "76.0 g",
@@ -2334,21 +2137,7 @@
           "qo-product-qiyi-warrior-plus-3x3-m-18-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-plus-3x3-m-18-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "188.0 mm",
         "weight": "1012.0 g",
@@ -2424,21 +2213,7 @@
           "qo-product-qiyi-m-pro-3x3-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "80.0 g",
@@ -2529,21 +2304,7 @@
           "qo-product-x-man-tornado-v4-3x3-flagship-picube-special-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-3x3-flagship-picube-special-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -2642,21 +2403,7 @@
           "qiyi-warrior-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-m-3x3-magnetic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "58.0 g",
@@ -2748,21 +2495,7 @@
           "qo-product-qiyi-carbon-fiber-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Phantom)",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-carbon-fiber-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "80.0 g",
@@ -2818,7 +2551,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 7,
         "asOf": "2026-10-07",
@@ -2850,21 +2583,7 @@
           "qo-product-qiyi-qimeng-v2-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-qimeng-v2-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0 g",
@@ -2921,7 +2640,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -2953,21 +2672,7 @@
           "qiyi-thunderclap-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-thunderclap-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "84.0 g",
@@ -3059,21 +2764,7 @@
           "qo-product-x-man-tornado-v4-ai-3x3-uv-zephyr-le"
         ]
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-ai-3x3-uv-zephyr-le"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -3167,21 +2858,7 @@
           "qo-product-x-man-tornado-v3-m-pioneer-firefly-2024-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-pioneer-firefly-2024-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "82.0 g",
@@ -3246,7 +2923,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 6,
         "asOf": "2026-10-07",
@@ -3278,21 +2955,7 @@
           "qo-product-x-man-xt3-v1-3x3-pioneer-maglev-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 28.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-xt3-v1-3x3-pioneer-maglev-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -3387,21 +3050,7 @@
           "qo-product-qiyi-sandwich-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-sandwich-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.0 g",
@@ -3453,7 +3102,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -3485,21 +3134,7 @@
           "qo-product-qiyi-qimeng-v3-3x3-tiled-sandwich"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-qimeng-v3-3x3-tiled-sandwich"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "82.0 g",
@@ -3557,7 +3192,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -3589,21 +3224,7 @@
           "qiyi-official-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 20.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / stickerless",
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-valk3-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "82.3 g",
@@ -3697,21 +3318,7 @@
           "qo-product-qiyi-dna-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-dna-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "81.0 g",
@@ -3797,21 +3404,7 @@
           "xman-tornado-v4-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 35.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "xman-tornado-v4-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -3883,21 +3476,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 238,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "xman-tornado-v4-official"
-        }
-      ],
       "rating": {
         "value": 4.6,
         "scale": 5,
@@ -3931,21 +3509,7 @@
           "qo-product-x-man-tornado-v5-3x3-pioneer-uv-le"
         ]
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v5-3x3-pioneer-uv-le"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4043,21 +3607,7 @@
           "qo-product-qiyi-qimeng-plus-3x3-m-9cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-qimeng-plus-3x3-m-9cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "90.0 mm",
         "weight": "262.0 g",
@@ -4113,7 +3663,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -4145,21 +3695,7 @@
           "qo-product-qiyi-warrior-plus-max-box-3x3-38cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 349.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-plus-max-box-3x3-38cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "380.0 mm",
         "weight": null,
@@ -4235,21 +3771,7 @@
           "xman-tornado-early-review"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "xman-tornado-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.1 mm",
         "weight": null,
@@ -4340,21 +3862,7 @@
           "qo-product-x-man-tornado-v3-m-pioneer-uv-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-pioneer-uv-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "82.0 g",
@@ -4454,21 +3962,7 @@
           "qo-product-qiyi-dna-cube-concave"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-dna-cube-concave"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "65.0 g",
@@ -4554,21 +4048,7 @@
           "qo-product-qiyi-3x3-fluorescent-stickers"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-3x3-fluorescent-stickers"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4644,21 +4124,7 @@
           "xman-tornado-v5-official"
         ]
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "xman-tornado-v5-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4728,7 +4194,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -4760,21 +4226,7 @@
           "qo-product-x-man-tornado-v4-m-3x3-flagship-blue-core-special-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-m-3x3-flagship-blue-core-special-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4873,21 +4325,7 @@
           "qiyi-m-pro-v2-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-v2-3x3-flagship"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "68.0 g",
@@ -4956,21 +4394,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 29.8,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "qiyi-m-pro-v2-official"
-        }
-      ],
       "rating": {
         "value": 1.5,
         "scale": 5,
@@ -5004,21 +4427,7 @@
           "qo-product-qiyi-warrior-plus-max-3x3-38cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 339.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-plus-max-3x3-38cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "380.0 mm",
         "weight": null,
@@ -5072,7 +4481,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -5104,21 +4513,7 @@
           "qo-product-mini-qiyi-3x3-42mm"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-mini-qiyi-3x3-42mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "42.0 mm",
         "weight": null,
@@ -5212,21 +4607,7 @@
           "qo-product-x-man-tornado-v4-m-3x3-flagship-red-core-special-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-m-3x3-flagship-red-core-special-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "74.0 g",
@@ -5325,21 +4706,7 @@
           "qiyi-valk3-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-valk3-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "85.0 g",
@@ -5430,21 +4797,7 @@
           "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5546,21 +4899,7 @@
           "qo-product-qiyi-qimeng-plus-3x3-9-0cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-qimeng-plus-3x3-9-0cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "90.0 mm",
         "weight": "245.0 g",
@@ -5648,21 +4987,7 @@
           "qo-product-x-man-tornado-v5-3x3-pioneer-uv-picube-se"
         ]
       },
-      "prices": [
-        {
-          "amount": 59.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v5-3x3-pioneer-uv-picube-se"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5732,7 +5057,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -5764,21 +5089,7 @@
           "xman-xt3-v1-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 20.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "xman-xt3-v1-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "65.0 g",
@@ -5844,21 +5155,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 148,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "xman-xt3-official"
-        }
-      ],
       "rating": {
         "value": 4.5,
         "scale": 5,
@@ -5892,21 +5188,7 @@
           "qo-product-qiyi-mini-3x3-3-0cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 0.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-mini-3x3-3-0cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30.0 mm",
         "weight": "12.0 g",
@@ -5992,21 +5274,7 @@
           "qo-product-qiyi-warrior-m-3x3-magnetic-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-m-3x3-magnetic-uv-coated"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "59.0 g",
@@ -6097,34 +5365,7 @@
           "qiyi-official-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-valk-3-power"
-        },
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-valk-3-power"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "87.4 g",
@@ -6219,21 +5460,7 @@
           "qo-product-qiyi-mini-pillowed-3x3-keychain-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-mini-pillowed-3x3-keychain-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "35.0 mm",
         "weight": "29.5 g",
@@ -6321,21 +5548,7 @@
           "qo-product-x-man-tornado-v3-3x3-premium-pioneer-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 42.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-pioneer-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -6405,7 +5618,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 9,
         "asOf": "2026-10-07",
@@ -6437,21 +5650,7 @@
           "qo-product-qiyi-sail-3x3-6-0"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-sail-3x3-6-0"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "60.0 mm",
         "weight": "107.5 g",
@@ -6540,21 +5739,7 @@
           "qo-product-x-man-tornado-v3-m-pioneer-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-pioneer-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "81.0 g",
@@ -6619,7 +5804,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -6651,21 +5836,7 @@
           "qiyi-thunderclap-v2-video"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.5,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": "2016-07-21",
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-thunderclap-v2-video"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "88.5 g",
@@ -6759,34 +5930,7 @@
           "qiyi-warrior-m-pro-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.8,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "官网目录标价；非首发或最低成交价。",
-            "en": "Official catalog list price, not a launch price or lowest transaction price."
-          },
-          "sourceId": "qiyi-warrior-m-pro-official"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "qiyi-warrior-m-pro-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "74.0 g",
@@ -6879,21 +6023,7 @@
           "qo-product-x-man-tornado-v3-3x3-premium-standard-2"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-standard-2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -6981,21 +6111,7 @@
           "qo-product-qiyi-mosaic-3x3-cube-set-of-100-10x10-2-8cm-cubes"
         ]
       },
-      "prices": [
-        {
-          "amount": 119.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "100-cube set with backboard",
-          "note": {
-            "zh": "100 颗魔方与背板整套标价，不能视为单颗价格。",
-            "en": "Price for 100 cubes plus display board; not a per-cube price."
-          },
-          "sourceId": "qo-product-qiyi-mosaic-3x3-cube-set-of-100-10x10-2-8cm-cubes"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "28 mm per cube",
         "weight": null,
@@ -7069,21 +6185,7 @@
           "qiyi-sail-iqboosters"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-sail-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": null,
@@ -7175,21 +6277,7 @@
           "qo-product-qiyi-dimension-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-dimension-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.0 g",
@@ -7275,21 +6363,7 @@
           "qo-product-qiyi-qimeng-v3-3x3-tiled"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-qimeng-v3-3x3-tiled"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "82.0 g",
@@ -7349,7 +6423,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -7381,21 +6455,7 @@
           "qo-product-qiyi-warrior-w-3x3-jelly-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-w-3x3-jelly-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "81.0 g",
@@ -7451,7 +6511,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 6,
         "asOf": "2026-10-07",
@@ -7483,21 +6543,7 @@
           "qo-product-qiyi-m-pro-3x3-elite"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-elite"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.0 g",
@@ -7561,7 +6607,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -7593,34 +6639,7 @@
           "qiyi-sail-w-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.8,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "官网目录标价。",
-            "en": "Official catalog list price."
-          },
-          "sourceId": "qiyi-sail-w-official"
-        },
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "qiyi-sail-w-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "79.5 g",
@@ -7713,21 +6732,7 @@
           "qo-product-qiyi-m-pro-3x3-art-version"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-art-version"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "74.0 g",
@@ -7821,21 +6826,7 @@
           "qo-product-qiyi-mp-3x3-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-mp-3x3-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -7923,21 +6914,7 @@
           "qiyi-m-pro-v3-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-v3-flagship"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "62.82 g (SpeedCubeShop / Atoutcubes)",
@@ -8025,21 +7002,7 @@
           "qo-product-qiyi-m-pro-3x3-elite-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-elite-uv-coated"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.0 g",
@@ -8104,7 +7067,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -8136,21 +7099,7 @@
           "qo-product-qiyi-qimeng-v3-3x3-tiled-bumpy"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-qimeng-v3-3x3-tiled-bumpy"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "82.0 g",
@@ -8228,21 +7177,7 @@
           "qo-product-x-man-tornado-v3-m-magnetic-core-maglev"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-magnetic-core-maglev"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "81.0 g",
@@ -8341,21 +7276,7 @@
           "qo-product-x-man-tornado-v4-10th-anniversary-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 94.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-10th-anniversary-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8446,34 +7367,7 @@
           "qo-product-valk-3-mini-4-74cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-valk-3-mini-4-74cm"
-        },
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-valk-3-mini-4-74cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "47.4 mm",
         "weight": "59.9 g",
@@ -8567,21 +7461,7 @@
           "qiyi-2015-comparison"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-bullfight-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8673,21 +7553,7 @@
           "qo-product-x-man-tornado-v3-m-pioneer-3x3-revived-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-m-pioneer-3x3-revived-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8786,21 +7652,7 @@
           "qiyi-valk3-elite-m-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 45.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-valk3-elite-m-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "76.0 g",
@@ -8898,21 +7750,7 @@
           "qiyi-ms-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-ms-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "81.8 g",
@@ -9003,21 +7841,7 @@
           "xman-tornado-v4-pioneer"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "xman-tornado-v4-pioneer"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9117,21 +7941,7 @@
           "qiyi-warrior-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产商品档案标价；快照原始日期未知，不代表现货价格。",
-            "en": "Archived listing price for a discontinued product; original snapshot date unknown, not a live offer."
-          },
-          "sourceId": "qiyi-warrior-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9190,7 +8000,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 16,
         "asOf": "2026-10-07",
@@ -9222,21 +8032,7 @@
           "qiyi-official-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qiyi-smart-sc-s-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9300,21 +8096,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 108,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "qiyi-smart-official"
-        }
-      ],
       "rating": {
         "value": 4.05,
         "scale": 5,
@@ -9348,21 +8129,7 @@
           "qo-product-x-man-tornado-v2-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Primary Internals",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v2-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -9432,7 +8199,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -9464,21 +8231,7 @@
           "qiyi-warrior-w-cubenation"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "qiyi-warrior-w-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "81.7 g",
@@ -9571,21 +8324,7 @@
           "qiyi-m-pro-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "76.0 g",
@@ -9652,21 +8391,6 @@
           "en": "Image published on the matching model/version product page; pictured colors and included accessories follow that source."
         }
       },
-      "familyPrices": [
-        {
-          "amount": 56.8,
-          "currency": "CNY",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Official family catalog; configuration unspecified",
-          "note": {
-            "zh": "保留自同系列官网商品页的人民币标价，页面未明确报价对应的配置；不作为此独立型号或任何子型号的首发价。",
-            "en": "CNY amount retained from the official family listing, which does not identify the quoted configuration; it is not assigned as the launch price of this record or a sibling version."
-          },
-          "sourceId": "qiyi-m-pro-official"
-        }
-      ],
       "rating": {
         "value": 4.77,
         "scale": 5,
@@ -9700,21 +8424,7 @@
           "qo-product-qiyi-black-mamba-3x3-v3"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-black-mamba-3x3-v3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0 g",
@@ -9780,7 +8490,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9813,21 +8523,7 @@
           "qo-product-x-man-tornado-v2-le-infinity-stone"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": null,
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v2-le-infinity-stone"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -9886,7 +8582,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9918,21 +8614,7 @@
           "qo-product-qiyi-thunderclap-v3-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black / White",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-thunderclap-v3-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "92.0 g",
@@ -10025,21 +8707,7 @@
           "qo-product-qiyi-smart-cube-3x3-uv-coated"
         ]
       },
-      "prices": [
-        {
-          "amount": 26.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-smart-cube-3x3-uv-coated"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "83.0 g",
@@ -10100,7 +8768,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -10132,21 +8800,7 @@
           "qo-product-qiyi-warrior-plus-3x3-18-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-qiyi-warrior-plus-3x3-18-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "188.0 mm",
         "weight": "981.0 g",
@@ -10200,7 +8854,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -10232,21 +8886,7 @@
           "qo-product-qiyi-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": null,
@@ -10341,21 +8981,7 @@
           "qiyi-warrior-s-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "查询时商品页标价；不含运费/进口税，非首发定价。",
-            "en": "Listed price observed during research; excludes shipping/import taxes and is not a launch price."
-          },
-          "sourceId": "qiyi-warrior-s-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "77.0 g",
@@ -10446,21 +9072,7 @@
           "qo-product-x-man-tornado-v4-m-3x3-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 109.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-m-3x3-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10521,7 +9133,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 4,
         "asOf": "2026-10-07",
@@ -10553,21 +9165,7 @@
           "qo-valk-power-launch"
         ]
       },
-      "prices": [
-        {
-          "amount": 38.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless / Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-valk-3-power-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "94.4 g",
@@ -10664,21 +9262,7 @@
           "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv-saocube-se"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv-saocube-se"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -10784,34 +9368,7 @@
           "qiyi-thunderclap-v3-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qiyi-thunderclap-v3-retail"
-        },
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Black / White",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qiyi-thunderclap-v3-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "89.0 g",
@@ -10904,21 +9461,7 @@
           "qo-product-x-man-xt-3-v1-3x3-flagship-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-xt-3-v1-3x3-flagship-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "65.0 g",
@@ -11013,21 +9556,7 @@
           "qo-product-x-man-tornado-v5-3x3-pioneer"
         ]
       },
-      "prices": [
-        {
-          "amount": 54.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qo-product-x-man-tornado-v5-3x3-pioneer"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11125,21 +9654,7 @@
           "qo-product-qiyi-m-pro-3x3-ball-core-uv"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-qiyi-m-pro-3x3-ball-core-uv"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "85.0 g",
@@ -11239,21 +9754,7 @@
           "qo-product-x-man-tornado-v4-m-3x3-flagship-special-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "Stickerless",
-          "note": {
-            "zh": "停产档案所示标价，原始定价日期未知；非首发价格或库存保证。",
-            "en": "Displayed discontinued-archive price; original pricing date unknown, not a launch price or stock guarantee."
-          },
-          "sourceId": "qo-product-x-man-tornado-v4-m-3x3-flagship-special-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "72.0 g",
@@ -11352,21 +9853,7 @@
           "qiyi-smart-sc-s-retail"
         ]
       },
-      "prices": [
-        {
-          "amount": 22.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "此具体版本在美国商家的查询标价；不含运费、税费，非首发定价。",
-            "en": "Observed US retailer price for this exact version; excludes shipping/tax and is not a launch price."
-          },
-          "sourceId": "qiyi-smart-sc-s-retail"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11465,34 +9952,7 @@
           "r3-ziicube-qiyi-bubble"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "PLN",
-          "region": "PL",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-strefa-qiyi-bubble"
-        },
-        {
-          "amount": 1.22,
-          "currency": "USD",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "QY3280 / QY3281",
-          "note": {
-            "zh": "Ziicube对应配色配置的折后批发零售标价，不含国际运费。",
-            "en": "Ziicube discounted listing price for the corresponding color configurations, excluding international shipping."
-          },
-          "sourceId": "r3-ziicube-qiyi-bubble"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "58 mm",
         "weight": "57 g",
@@ -11572,34 +10032,7 @@
           "r3-ziicube-qiyi-bubble"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "PLN",
-          "region": "PL",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
-            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
-          },
-          "sourceId": "r3-strefa-qiyi-bubble-sandwich"
-        },
-        {
-          "amount": 1.43,
-          "currency": "USD",
-          "region": "CN",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "QY3283 / QY3284 / QY3285",
-          "note": {
-            "zh": "Ziicube对应配色配置的折后批发零售标价，不含国际运费。",
-            "en": "Ziicube discounted listing price for the corresponding color configurations, excluding international shipping."
-          },
-          "sourceId": "r3-ziicube-qiyi-bubble"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11664,6 +10097,7 @@
     }
   ],
   "coverageNotes": [
-    "Companion to qiyi-other.json; retain the combined source index and stable model IDs."
+    "Companion to qiyi-other.json; retain the combined source index and stable model IDs.",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
   ]
 }

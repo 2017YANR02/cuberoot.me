@@ -1338,21 +1338,7 @@
           "hist2-tc-rubiks-official-3x3-next-gen"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-official-3x3-next-gen"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1405,7 +1391,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -1437,21 +1423,7 @@
           "hist2-tc-saocube-v56-3x3-20-magnet-ball-core"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-saocube-v56-3x3-20-magnet-ball-core"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1513,7 +1485,7 @@
       },
       "familyId": "archive-saocube-v56-3x3-magnetic",
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -1545,21 +1517,7 @@
           "hist2-tc-saocube-v56-3x3-magnetic"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-saocube-v56-3x3-magnetic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1634,21 +1592,7 @@
           "hist2-tc-rubiks-classic-3x3-tiled"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-classic-3x3-tiled"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -1703,7 +1647,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -1735,21 +1679,7 @@
           "hist2-tc-heykube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-heykube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "131.0g",
@@ -1838,21 +1768,7 @@
           "hist2-tc-eastsheen-3x3x3-cube-with-wall-stickers"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-eastsheen-3x3x3-cube-with-wall-stickers"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "98.5g",
@@ -1925,21 +1841,7 @@
           "hist2-tc-super-big-cube-3x3-30cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-super-big-cube-3x3-30cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "300.0 mm",
         "weight": "2382.0g",
@@ -2028,47 +1930,7 @@
           "hist2-tc-cube-lab-mini-3x3-1-0cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cube-lab-mini-3x3-1-0cm"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cube-lab-mini-3x3-1-0cm"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cube-lab-mini-3x3-1-0cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "10.0 mm",
         "weight": null,
@@ -2131,7 +1993,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 35,
         "asOf": "2026-10-07",
@@ -2163,47 +2025,7 @@
           "hist2-tc-lefun-christmas-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-christmas-3x3"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-christmas-3x3"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Green",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-christmas-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "67.0g",
@@ -2290,21 +2112,7 @@
           "hist2-tc-lefun-formula-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-formula-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.5 mm",
         "weight": "65.3g",
@@ -2357,7 +2165,7 @@
         }
       },
       "rating": {
-        "value": 2.0,
+        "value": 2,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -2389,21 +2197,7 @@
           "hist2-tc-lefun-sudoku-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-sudoku-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "66.3g",
@@ -2456,7 +2250,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -2488,21 +2282,7 @@
           "hist2-tc-rubiks-impossible-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 25.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-impossible-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "108.0g",
@@ -2591,21 +2371,7 @@
           "hist2-tc-rubiks-speed-magnetic-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 27.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-speed-magnetic-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "100.0g",
@@ -2692,21 +2458,7 @@
           "hist-gocube-2019"
         ]
       },
-      "prices": [
-        {
-          "amount": 79.95,
-          "sourceId": "hist-gocube-prices",
-          "kind": "current",
-          "variant": "Edge Full Pack",
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": "2026-10-07",
-          "note": {
-            "zh": "查阅时页面标价；以具体版本与结算页为准。",
-            "en": "Displayed page price at consultation; version and checkout may differ."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "60.0 mm",
         "weight": "125.0g",
@@ -2796,21 +2548,7 @@
           "hist-connected"
         ]
       },
-      "prices": [
-        {
-          "amount": 49.95,
-          "sourceId": "hist-gocube-prices",
-          "kind": "current",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": "2026-10-07",
-          "note": {
-            "zh": "查阅时页面标价；以具体版本与结算页为准。",
-            "en": "Displayed page price at consultation; version and checkout may differ."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "112.0g",
@@ -2897,21 +2635,7 @@
           "hist2-tc-mini-3x3-cube-2-7cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 0.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-mini-3x3-cube-2-7cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "27.0 mm",
         "weight": "14.0g",
@@ -3000,21 +2724,7 @@
           "hist2-tc-fanxin-magnetic-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-magnetic-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "92.0g",
@@ -3105,34 +2815,7 @@
           "hist2-tc-fanxin-color-brick-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-color-brick-3x3"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-color-brick-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "87.5g",
@@ -3218,21 +2901,7 @@
           "en": "The current page describes the fourth batch; its Added date of 2020-06-01 belongs to the continuing eX-Mars listing and does not independently date that batch."
         }
       },
-      "prices": [
-        {
-          "amount": 99.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-ex-mars-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -3322,21 +2991,7 @@
           "hist2-tc-tao-cube-light-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 23.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-tao-cube-light-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "70.7g",
@@ -3431,34 +3086,7 @@
           "hist2-tc-mefferts-hollow-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-mefferts-hollow-cube-3x3"
-        },
-        {
-          "amount": 34.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-mefferts-hollow-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -3535,21 +3163,7 @@
           "hist2-tc-chemistry-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-chemistry-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "73.9g",
@@ -3632,21 +3246,7 @@
           "hist2-tc-math-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-math-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.1g",
@@ -3729,21 +3329,7 @@
           "hist2-tc-dollar-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-dollar-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "73.7g",
@@ -3826,34 +3412,7 @@
           "hist-giiker-i3s-shop"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "sourceId": "hist-giiker-i3s",
-          "kind": "current",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": "2026-10-07",
-          "note": {
-            "zh": "查阅时页面标价；以具体版本与结算页为准。",
-            "en": "Displayed page price at consultation; version and checkout may differ."
-          }
-        },
-        {
-          "amount": 49.99,
-          "sourceId": "hist-giiker-i3s-shop",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "104.6 g",
@@ -3879,8 +3438,8 @@
           "en": "Owner reports praise the mechanical feel but differ on Bluetooth synchronization."
         },
         "tradeoffs": {
-          "zh": "官网显示缺货；$39.99 是留存页面标价，不保证可购买。",
-          "en": "The official store shows sold out; $39.99 is a displayed price, not guaranteed availability."
+          "zh": "官网留存页面显示缺货，不能据此确认目前有现货。",
+          "en": "The retained official store page shows sold out and does not confirm present stock."
         },
         "basis": "review",
         "sourceIds": [
@@ -3943,21 +3502,7 @@
           "hist2-tc-giiker-m3-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-giiker-m3-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "99.0g",
@@ -4016,7 +3561,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -4048,21 +3593,7 @@
           "hist2-tc-zhichen-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-zhichen-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -4115,7 +3646,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -4147,60 +3678,7 @@
           "hist2-tc-yancheng-yan3"
         ]
       },
-      "prices": [
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yancheng-yan3"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yancheng-yan3"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yancheng-yan3"
-        },
-        {
-          "amount": 12.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yancheng-yan3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "76.6g",
@@ -4292,21 +3770,7 @@
           "hist-giiker-history"
         ]
       },
-      "prices": [
-        {
-          "amount": 41.99,
-          "sourceId": "hist-giiker-i3",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "102.8 g",
@@ -4390,21 +3854,7 @@
         },
         "sourceIds": []
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "sourceId": "hist-wityou",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4486,21 +3936,7 @@
           "hist-wit-bundle"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "sourceId": "hist-wityou",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4584,34 +4020,7 @@
           "hist2-tc-type-c-mini-3x3-keychain-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-type-c-mini-3x3-keychain-cube"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-type-c-mini-3x3-keychain-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4697,47 +4106,7 @@
           "hist2-tc-type-c-mini-3x3-30mm"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-type-c-mini-3x3-30mm"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-type-c-mini-3x3-30mm"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-type-c-mini-3x3-30mm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30 mm",
         "weight": null,
@@ -4796,7 +4165,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 7,
         "asOf": "2026-10-07",
@@ -4828,21 +4197,7 @@
           "hist-wit-bundle"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "sourceId": "hist-witlong",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -4893,7 +4248,7 @@
       },
       "tier": "unknown",
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 5,
         "asOf": "2026-10-07",
@@ -4925,21 +4280,7 @@
           "hist2-tc-rephael-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rephael-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5024,34 +4365,7 @@
           "hist2-tc-qj-pillowed-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-qj-pillowed-3x3"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-qj-pillowed-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -5139,34 +4453,7 @@
           "hist2-tc-qj-candy-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-qj-candy-3x3"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-qj-candy-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -5252,47 +4539,7 @@
           "hist2-tc-newisland-phoenix"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-newisland-phoenix"
-        },
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-newisland-phoenix"
-        },
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-newisland-phoenix"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -5379,21 +4626,7 @@
           "hist2-tc-newisland-lightning-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 16.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-newisland-lightning-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": "85.6g",
@@ -5479,34 +4712,7 @@
           "hist2-tc-newisland-lightning"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-newisland-lightning"
-        },
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Primary",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-newisland-lightning"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": null,
@@ -5592,21 +4798,7 @@
           "hist-fangshi-mini"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "sourceId": "hist-fangshi-catalog",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54.6 mm",
         "weight": null,
@@ -5688,21 +4880,7 @@
         },
         "sourceIds": []
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "sourceId": "hist-fangshi-jie-mini",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "54.6 mm",
         "weight": null,
@@ -5783,34 +4961,7 @@
           "hist2-tc-mf8-legend-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-mf8-legend-v2"
-        },
-        {
-          "amount": 13.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-mf8-legend-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": null,
@@ -5870,7 +5021,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -5902,47 +5053,7 @@
           "hist2-tc-kungfu-qinghong-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-kungfu-qinghong-3x3"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-kungfu-qinghong-3x3"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-kungfu-qinghong-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.7g",
@@ -6029,21 +5140,7 @@
           "hist2-tc-kungfu-longyuan-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 3.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-kungfu-longyuan-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "70.2g",
@@ -6128,34 +5225,7 @@
           "hist2-tc-kungfu-dot-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-kungfu-dot-cube-3x3"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Teal",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-kungfu-dot-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "79.3g",
@@ -6247,21 +5317,7 @@
           "hist2-tc-heshu-super-big-3x3-18cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-heshu-super-big-3x3-18cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "180.0 mm",
         "weight": "946.0g",
@@ -6350,21 +5406,7 @@
           "en": "The preserved TheCubicle legacy page explicitly states Release Date 06 June 2017; this is the retailer’s date, not a verified official worldwide launch."
         }
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-ghost-hand-phoenix-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": null,
@@ -6422,7 +5464,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -6454,34 +5496,7 @@
           "hist2-tc-formula-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-formula-cube-3x3"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-formula-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": null,
@@ -6567,21 +5582,7 @@
           "hist2-tc-fanxin-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Pink)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -6666,21 +5667,7 @@
           "hist-fangshi-sample"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "sourceId": "hist-fangshi-v2",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -6769,21 +5756,7 @@
           "hist-fangshi-sample"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "sourceId": "hist-fangshi-sr",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": null,
@@ -6867,21 +5840,7 @@
           "hist-fangshi-jie"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "sourceId": "hist-fangshi-jie",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": null,
@@ -6961,21 +5920,7 @@
         },
         "sourceIds": []
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "sourceId": "hist-fangshi-guang",
-          "kind": "historical",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": null,
-          "note": {
-            "zh": "旧目录留存标价，价格时间未明确，不代表首发或今日成交价。",
-            "en": "Retained catalog price; price date unknown, not a launch or transaction price."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": null,
@@ -7065,21 +6010,7 @@
           "hist2-tc-fangcun-freshman-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fangcun-freshman-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -7164,47 +6095,7 @@
           "hist2-tc-fangcun-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Dark)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fangcun-3x3"
-        },
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fangcun-3x3"
-        },
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fangcun-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -7341,7 +6232,7 @@
       },
       "tier": "unknown",
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -7373,34 +6264,7 @@
           "hist2-tc-cubestyle-hollow-sticker-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless Pink (Phantom)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cubestyle-hollow-sticker-3x3"
-        },
-        {
-          "amount": 6.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Phantom)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cubestyle-hollow-sticker-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "66.2g",
@@ -7454,7 +6318,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -7486,34 +6350,7 @@
           "hist2-tc-cubestyle-carbon-fiber-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless (Phantom)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cubestyle-carbon-fiber-3x3"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless Pink (Phantom)",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cubestyle-carbon-fiber-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "66.9g",
@@ -7599,21 +6436,7 @@
           "hist2-tc-cubestyle-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-cubestyle-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "73.6g",
@@ -7698,21 +6521,7 @@
           "hist2-tc-blind-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-blind-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "75.8g",
@@ -7804,34 +6613,7 @@
           "hist-alpha-v"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-alpha-v"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-alpha-v"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -7853,8 +6635,8 @@
           "en": "The retailer describes a fast, crunchy feel, characteristic of its era."
         },
         "tradeoffs": {
-          "zh": "旧页 $0.00 是缺失或停售占位，未计作真实售价。",
-          "en": "The old page's $0.00 is not treated as a genuine selling price."
+          "zh": "旧商品页未保留可核实的中国首发价。",
+          "en": "The old product page does not preserve a verifiable China launch price."
         },
         "basis": "editorial",
         "sourceIds": [
@@ -7888,7 +6670,7 @@
       },
       "tier": "unknown",
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 3,
         "asOf": "2026-10-07",
@@ -7920,34 +6702,7 @@
           "hist2-tc-alpha-cc3"
         ]
       },
-      "prices": [
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-alpha-cc3"
-        },
-        {
-          "amount": 8.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-alpha-cc3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8022,34 +6777,7 @@
           "hist2-tc-alpha-cc1"
         ]
       },
-      "prices": [
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-alpha-cc1"
-        },
-        {
-          "amount": 7.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-alpha-cc1"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8123,21 +6851,7 @@
           "hist2-tc-rubiks-x-disney-cubers-3x3-minnie-mouse"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-disney-cubers-3x3-minnie-mouse"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8208,21 +6922,7 @@
           "hist2-tc-rubiks-cuber-mickey-mouse"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-cuber-mickey-mouse"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8293,21 +6993,7 @@
           "hist2-tc-rubiks-pulse-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-pulse-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8392,21 +7078,7 @@
           "hist2-tc-fanxin-3x3-18-8cm"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-3x3-18-8cm"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "188 mm",
         "weight": null,
@@ -8463,7 +7135,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -8495,21 +7167,7 @@
           "hist-rubiks-sensory"
         ]
       },
-      "prices": [
-        {
-          "amount": 17.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-sensory-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -8561,7 +7219,7 @@
       },
       "tier": "unknown",
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -8593,21 +7251,7 @@
           "hist2-tc-rubiks-squish-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-squish-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "76.0g",
@@ -8664,7 +7308,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -8696,21 +7340,7 @@
           "hist2-tc-rubiks-timer-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-timer-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -8769,7 +7399,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -8801,21 +7431,7 @@
           "hist2-tc-rubiks-x-star-wars-cubers-3x3-mandalorian"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-star-wars-cubers-3x3-mandalorian"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -8890,21 +7506,7 @@
           "hist2-tc-rubiks-x-star-wars-cubers-3x3-grogu"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-star-wars-cubers-3x3-grogu"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -8959,7 +7561,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -8991,21 +7593,7 @@
           "hist2-tc-lefun-hundred-dollar-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-hundred-dollar-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "78.0g",
@@ -9056,7 +7644,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9088,21 +7676,7 @@
           "hist2-tc-fanxin-sandwich-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-sandwich-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "73.0 mm",
         "weight": "56.0g",
@@ -9173,21 +7747,7 @@
           "hist2-tc-lefun-dollar-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-dollar-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "70.0g",
@@ -9238,7 +7798,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9270,34 +7830,7 @@
           "hist2-tc-lefun-calendar-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Blue",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-calendar-cube-3x3"
-        },
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Pink",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-calendar-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "70.0g",
@@ -9383,21 +7916,7 @@
           "hist2-tc-rubiks-cubers-3x3-stitch"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-cubers-3x3-stitch"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -9448,7 +7967,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -9480,21 +7999,7 @@
           "hist2-tc-rubiks-cube-3x3-mercedes-amg-petronas-f1-team-carbon-fiber-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-cube-3x3-mercedes-amg-petronas-f1-team-carbon-fiber-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "86.0g",
@@ -9583,21 +8088,7 @@
           "hist2-tc-mini-keychain-case-3x3-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 4.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-mini-keychain-case-3x3-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "35.0 mm",
         "weight": "26.0g",
@@ -9650,7 +8141,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -9682,21 +8173,7 @@
           "hist2-tc-rubiks-cubers-3x3-cubehead"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-cubers-3x3-cubehead"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -9783,21 +8260,7 @@
           "hist2-tc-erno-80th-birthday-celebration-cuber-limited-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.44,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-erno-80th-birthday-celebration-cuber-limited-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "87.0g",
@@ -9872,21 +8335,7 @@
           "hist2-tc-rubiks-x-disney-100th-anniversary-metallic-platinum-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-disney-100th-anniversary-metallic-platinum-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "93.0g",
@@ -9971,21 +8420,7 @@
           "hist2-tc-rubiks-cubers-3x3-hello-kitty"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-cubers-3x3-hello-kitty"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -10040,7 +8475,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10072,21 +8507,7 @@
           "hist-rubiks-magnetic"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "sourceId": "hist-rubiks-catalog",
-          "kind": "current",
-          "variant": null,
-          "currency": "USD",
-          "region": "US / international",
-          "asOf": "2026-10-07",
-          "note": {
-            "zh": "查阅时页面标价；以具体版本与结算页为准。",
-            "en": "Displayed page price at consultation; version and checkout may differ."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55 mm",
         "weight": "86 g",
@@ -10175,21 +8596,7 @@
           "hist2-tc-rubiks-x-marvel-cubers-3x3-hulk"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-marvel-cubers-3x3-hulk"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -10264,21 +8671,7 @@
           "hist2-tc-rubiks-black-panther-cuber-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-black-panther-cuber-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -10333,7 +8726,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10365,21 +8758,7 @@
           "hist2-tc-rubiks-x-marvel-cubers-3x3-spider-man"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-marvel-cubers-3x3-spider-man"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -10434,7 +8813,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10466,21 +8845,7 @@
           "hist2-tc-rubiks-x-marvel-cubers-3x3-iron-man"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-marvel-cubers-3x3-iron-man"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -10555,21 +8920,7 @@
           "hist2-tc-rubiks-x-marvel-cuber-3x3-batman"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-x-marvel-cuber-3x3-batman"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "88.0g",
@@ -10624,7 +8975,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10656,21 +9007,7 @@
           "hist2-tc-rubiks-greyscale-wednesday-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-greyscale-wednesday-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "90.0g",
@@ -10755,21 +9092,7 @@
           "hist2-tc-rubiks-cube-3x3-special-retro-50th-anniversary-edition"
         ]
       },
-      "prices": [
-        {
-          "amount": 19.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-cube-3x3-special-retro-50th-anniversary-edition"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "100.0g",
@@ -10826,7 +9149,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10858,21 +9181,7 @@
           "hist2-tc-fanxin-hollow-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-hollow-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "55.0 mm",
         "weight": "74.0g",
@@ -10932,7 +9241,7 @@
         }
       },
       "rating": {
-        "value": 5.0,
+        "value": 5,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -10964,21 +9273,7 @@
           "hist2-tc-fanxin-hollow-3x3-concave"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-fanxin-hollow-3x3-concave"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "78.0g",
@@ -11038,7 +9333,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -11070,21 +9365,7 @@
           "hist2-tc-lefun-respect-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-respect-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0g",
@@ -11135,7 +9416,7 @@
         }
       },
       "rating": {
-        "value": 3.0,
+        "value": 3,
         "scale": 5,
         "count": 1,
         "asOf": "2026-10-07",
@@ -11167,21 +9448,7 @@
           "hist2-tc-lefun-blue-sudoku-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-blue-sudoku-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0g",
@@ -11232,7 +9499,7 @@
         }
       },
       "rating": {
-        "value": 4.0,
+        "value": 4,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -11264,21 +9531,7 @@
           "hist2-tc-lefun-gradient-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-gradient-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0g",
@@ -11361,34 +9614,7 @@
           "hist2-tc-toktok-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 98.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "White",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-toktok-cube-3x3"
-        },
-        {
-          "amount": 74.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-toktok-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "129.0g",
@@ -11474,21 +9700,7 @@
           "hist2-tc-rubiks-3x3-coach-cube"
         ]
       },
-      "prices": [
-        {
-          "amount": 21.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-3x3-coach-cube"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -11573,21 +9785,7 @@
           "hist2-tc-lefun-periodic-table-3x3-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-periodic-table-3x3-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "70.0g",
@@ -11672,21 +9870,7 @@
           "hist2-tc-lefun-number-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-number-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "70.0g",
@@ -11759,21 +9943,7 @@
           "hist2-tc-blind-dice-cube-v1"
         ]
       },
-      "prices": [
-        {
-          "amount": 15.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-blind-dice-cube-v1"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0g",
@@ -11849,21 +10019,7 @@
           "hist2-tc-rubiks-re-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-re-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "57.0g",
@@ -11948,21 +10104,7 @@
           "hist2-tc-rubiks-crystal-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 18.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Transparent",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-crystal-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "94.0g",
@@ -12051,21 +10193,7 @@
           "hist2-tc-rubiks-keychain-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-keychain-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "30.0 mm",
         "weight": "25.0g",
@@ -12118,7 +10246,7 @@
         }
       },
       "rating": {
-        "value": 1.0,
+        "value": 1,
         "scale": 5,
         "count": 2,
         "asOf": "2026-10-07",
@@ -12150,21 +10278,7 @@
           "hist2-tc-rubiks-phantom-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 24.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-rubiks-phantom-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57.0 mm",
         "weight": "92.0g",
@@ -12253,21 +10367,7 @@
           "hist2-tc-lefun-christmas-3x3-v2"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-christmas-3x3-v2"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12340,21 +10440,7 @@
           "hist2-tc-lefun-periodic-table-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-periodic-table-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12425,21 +10511,7 @@
           "hist2-tc-lefun-halloween-cube-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 5.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-lefun-halloween-cube-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12510,21 +10582,7 @@
           "hist2-tc-yisheng-3x3-m"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yisheng-3x3-m"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12603,21 +10661,7 @@
           "hist2-tc-gocube-x-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-gocube-x-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -12694,21 +10738,7 @@
           "en": "TheCubicle’s explicit Added date, not a verified global launch date."
         }
       },
-      "prices": [
-        {
-          "amount": 44.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Stickerless / Black Internals",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-peak-cube-s3r-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.0 mm",
         "weight": "68.0 g",
@@ -12788,60 +10818,7 @@
           "hist2-tc-yz-electroplated-metal-alloy-3x3"
         ]
       },
-      "prices": [
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Black",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yz-electroplated-metal-alloy-3x3"
-        },
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Red",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yz-electroplated-metal-alloy-3x3"
-        },
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Gold",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yz-electroplated-metal-alloy-3x3"
-        },
-        {
-          "amount": 29.99,
-          "currency": "USD",
-          "region": "US",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "Silver",
-          "note": {
-            "zh": "该商品页所列美元价格；配色见版本字段。留档商品可能无库存，不作为中国首发价。",
-            "en": "USD price displayed for this listing and colorway; retained listings may be unavailable and are not Chinese launch prices."
-          },
-          "sourceId": "hist2-tc-yz-electroplated-metal-alloy-3x3"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -13563,21 +11540,7 @@
           "hist-c4u"
         ]
       },
-      "prices": [
-        {
-          "amount": 1500,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
-            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
-          },
-          "sourceId": "r3-c4y-basic"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "~100 g",
@@ -13733,21 +11696,7 @@
           "early-haiyan-norway-receipt"
         ]
       },
-      "prices": [
-        {
-          "amount": 25,
-          "currency": "USD",
-          "region": "Global",
-          "kind": "historical",
-          "asOf": "2010-09-17",
-          "variant": null,
-          "note": {
-            "zh": "2010-09-17 原创评测记录海燕网店售价 25 美元，含当时全球邮寄；不是现价。",
-            "en": "The 2010-09-17 original review reports USD 25 at Haiyan’s shop including worldwide shipping at the time; not a current offer."
-          },
-          "sourceId": "early-haiyan-memory-review"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -13827,21 +11776,7 @@
           "early-haiyan-norway-receipt"
         ]
       },
-      "prices": [
-        {
-          "amount": 10.5,
-          "currency": "USD",
-          "region": "Global",
-          "kind": "historical",
-          "asOf": null,
-          "variant": "White DIY kit",
-          "note": {
-            "zh": "缺货历史商品页展示价 10.50 美元，原划线价 13.65 美元；无原始快照日期，非现货报价。",
-            "en": "An out-of-stock historical listing displays USD 10.50, reduced from USD 13.65; original snapshot date unknown, not a live-stock offer."
-          },
-          "sourceId": "early-haiyan-cubezz"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -13926,21 +11861,7 @@
           "en": "GiiKER and European distributor Koch Media announced 25 October 2019 availability in a 24 September press release; this dates the European release, not the Chinese launch."
         }
       },
-      "prices": [
-        {
-          "amount": 39.99,
-          "currency": "EUR",
-          "region": "Slovenia / Europe",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "EAN 4020628733896",
-          "sourceId": "hist-review-giiker-i3se-shop",
-          "note": {
-            "zh": "igabiba 商品页含税标价，页面显示售罄；不作为首发价或可购买承诺。",
-            "en": "VAT-inclusive igabiba display price on a sold-out listing; not launch MSRP or a guarantee of stock."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "56.5 mm",
         "weight": null,
@@ -14028,21 +11949,7 @@
           "en": "The UK retailer explicitly lists 1 December 2021 as Release Date and uses Lite in the title and Light in its description; these are recorded as aliases for one product."
         }
       },
-      "prices": [
-        {
-          "amount": 29.95,
-          "currency": "GBP",
-          "region": "UK",
-          "kind": "current",
-          "asOf": "2026-10-07",
-          "variant": "EAN 4020628690854",
-          "sourceId": "hist-review-giiker-i3s-light-shop",
-          "note": {
-            "zh": "The Chelsea Gamer 留存商品页标价，页面售罄；不作为首发价。",
-            "en": "Displayed price on The Chelsea Gamer’s sold-out product page, not launch MSRP."
-          }
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14122,21 +12029,7 @@
           "r3-c4y-tile-matte"
         ]
       },
-      "prices": [
-        {
-          "amount": 1350,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
-            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
-          },
-          "sourceId": "r3-c4y-tile-matte"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "102 g",
@@ -14207,21 +12100,7 @@
           "r3-c4y-tile-gloss"
         ]
       },
-      "prices": [
-        {
-          "amount": 1350,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
-            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
-          },
-          "sourceId": "r3-c4y-tile-gloss"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "102 g",
@@ -14293,21 +12172,7 @@
           "r3-c4y-maze"
         ]
       },
-      "prices": [
-        {
-          "amount": 1500,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Maze — Black Body / White Tiles",
-          "note": {
-            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
-            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
-          },
-          "sourceId": "r3-c4y-maze"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "102 g",
@@ -14383,21 +12248,7 @@
           "r3-c4y-maze"
         ]
       },
-      "prices": [
-        {
-          "amount": 1500,
-          "currency": "JPY",
-          "region": "JP",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": "Maze — White Body / Colored Tiles",
-          "note": {
-            "zh": "停产商品页保留的日元标价，检索于资料截止日；未确认历史调价时间，也不代表现货或首发价。",
-            "en": "Retained JPY price on a discontinued listing, observed at the cutoff; price-change date, stock and launch price are unverified."
-          },
-          "sourceId": "r3-c4y-maze"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "102 g",
@@ -14539,21 +12390,7 @@
           "r3-v3-line"
         ]
       },
-      "prices": [
-        {
-          "amount": 9.99,
-          "currency": "EUR",
-          "region": "EU",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
-            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
-          },
-          "sourceId": "r3-v3-flat"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "57 mm",
         "weight": "98 g",
@@ -14631,21 +12468,7 @@
           "r3-v3-line"
         ]
       },
-      "prices": [
-        {
-          "amount": 11.99,
-          "currency": "EUR",
-          "region": "EU",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
-            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
-          },
-          "sourceId": "r3-v3-pillow"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": "64 mm",
         "weight": "98 g",
@@ -14725,21 +12548,7 @@
           "r3-v3-key-catalog"
         ]
       },
-      "prices": [
-        {
-          "amount": 8,
-          "currency": "EUR",
-          "region": "EU",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
-            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
-          },
-          "sourceId": "r3-v3-key-flat"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14811,21 +12620,7 @@
           "r3-v3-key-catalog"
         ]
       },
-      "prices": [
-        {
-          "amount": 8,
-          "currency": "EUR",
-          "region": "EU",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "官网检索缓存中的欧元标价；原商品路由现已失效，未确认当前库存或首次定价。",
-            "en": "EUR quote retained in the indexed official page; the product route is unavailable, and current stock and initial pricing are unverified."
-          },
-          "sourceId": "r3-v3-key-pillow"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": null,
@@ -14902,34 +12697,7 @@
           "r3-v3-line"
         ]
       },
-      "prices": [
-        {
-          "amount": 14.99,
-          "currency": "EUR",
-          "region": "EU",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "2026 官方目录建议零售价，非已核实成交价或首发价。",
-            "en": "Suggested retail price in the 2026 official catalog, not a verified transaction or launch price."
-          },
-          "sourceId": "r3-v3-catalog-2026"
-        },
-        {
-          "amount": 14.99,
-          "currency": "USD",
-          "region": "Global",
-          "kind": "historical",
-          "asOf": "2026-10-07",
-          "variant": null,
-          "note": {
-            "zh": "2026 官方目录美元建议零售价，未换算为人民币。",
-            "en": "USD suggested retail price from the 2026 catalog; not converted to CNY."
-          },
-          "sourceId": "r3-v3-catalog-2026"
-        }
-      ],
+      "prices": [],
       "specs": {
         "size": null,
         "weight": "75 g",
@@ -15004,6 +12772,7 @@
     "Cube4You Chromium and Clear (Tribox 2363/2364) are Helicopter-derived edge-turning products, not standard six-face 3×3 cubes; excluded. C4Y Gas Assisted and Alpha V Feng YouTube oEmbed identify real historical reviews, but the exposed thumbnail endpoints returned HTML rather than images; those image gaps remain explicit.",
     "V-CUBE: added the main 3×3 flat, 3b pillow, both keychain shapes and Magnetic. Official category body-color and DUO bundle entries are variants/bundles. This is international historical context, not an exhaustive inventory of regional V-Collections picture/licensed editions.",
     "V-CUBE Magnetic is already advertised in the 2025 official catalog. Its 2026 catalog appearance does not prove a 2026 launch. Current official product-route failures and copied legacy specification-grid conflicts are recorded rather than silently combining different model facts. Keychain net weights remain null because the official quoted mass includes the chain.",
-    "2026-10-07（America/Los_Angeles）淘宝/天猫与同期来源补图：封五追到 MechaAkuma 原评测及 Lightake SKU33524，Gas Assisted 追到 PestVic 原评测；实际缩略图地址返回 HTML 而非图像，Lightake 精确存档查询后续返回 503/429，未使用普通甲五、海燕或普通 C4Y 代图。 / Targeted Taobao/Tmall and historical-source photo search traced Alpha V Feng to its original MechaAkuma review and Lightake SKU33524, and Gas Assisted to PestVic’s original review. Published thumbnail URLs returned HTML rather than images; final Lightake archive requests returned 503/429. Standard Alpha V, Haiyan and ordinary C4Y photographs were excluded."
+    "2026-10-07（America/Los_Angeles）淘宝/天猫与同期来源补图：封五追到 MechaAkuma 原评测及 Lightake SKU33524，Gas Assisted 追到 PestVic 原评测；实际缩略图地址返回 HTML 而非图像，Lightake 精确存档查询后续返回 503/429，未使用普通甲五、海燕或普通 C4Y 代图。 / Targeted Taobao/Tmall and historical-source photo search traced Alpha V Feng to its original MechaAkuma review and Lightake SKU33524, and Gas Assisted to PestVic’s original review. Published thumbnail URLs returned HTML rather than images; final Lightake archive requests returned 503/429. Standard Alpha V, Haiyan and ordinary C4Y photographs were excluded.",
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
   ]
 }

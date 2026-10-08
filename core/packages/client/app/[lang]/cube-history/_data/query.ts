@@ -142,7 +142,7 @@ export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
     if (period && (cube.year === null || cube.year < period.from || cube.year > period.to)) return false;
   }
   if (filters.evidence === 'official' && cube.release.basis !== 'official') return false;
-  if (filters.evidence === 'cny' && !cube.prices.some(price => price.currency === 'CNY')) return false;
+  if (filters.evidence === 'cny' && cube.prices.length === 0) return false;
   if (filters.evidence === 'missing-price' && cube.prices.length > 0) return false;
   if (filters.evidence === 'with-image' && !cube.image) return false;
   if (filters.evidence === 'missing-image' && cube.image) return false;
@@ -197,7 +197,6 @@ export function sourceIdsForCube(cube: Cube): string[] {
   return [...new Set([
     ...cube.sourceIds, ...cube.release.sourceIds, ...cube.assessment.sourceIds,
     ...cube.prices.map(price => price.sourceId),
-    ...(cube.familyPrices ?? []).map(price => price.sourceId),
     ...(cube.image ? [cube.image.sourceId] : []),
     ...(cube.rating ? [cube.rating.sourceId] : []),
   ])];
