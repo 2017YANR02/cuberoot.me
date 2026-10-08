@@ -1431,3 +1431,20 @@ html[data-theme=dark] .gen-page {
     --gen-border-strong: var(--border-strong);
   }
 }
+
+/* 每个项目的打乱设置放在该项目右侧，避免双列菜单挤压控件。 */
+.gen-config-toolbar .pp-group-items,
+.gen-view-picker .pp-group-items {
+    grid-template-columns: 1fr;
+}
+.gen-event-options {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+}
+.gen-event-options .scramble-mode-row {
+    flex-wrap: nowrap;
+}

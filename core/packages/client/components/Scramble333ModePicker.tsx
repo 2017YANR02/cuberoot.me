@@ -10,16 +10,17 @@ import ScrambleModePickerRow from './ScrambleModePickerRow';
 interface Props {
   active333: boolean;
   isZh: boolean;
+  showLabel?: boolean;
 }
 
-export default function Scramble333ModePicker({ active333, isZh }: Props) {
+export default function Scramble333ModePicker({ active333, isZh, showLabel = true }: Props) {
   const [mode, setMode] = use333Mode();
   if (!active333) return null;
   const t = (zh: string, en: string) => (isZh ? zh : en);
   return (
     <ScrambleModePickerRow
-      iconEvent="333"
-      label={t('引擎', 'engine')}
+      iconEvent={showLabel ? '333' : undefined}
+      label={showLabel ? t('引擎', 'engine') : undefined}
       value={mode === 'm2p'}
       onChange={(v) => setMode(v ? 'm2p' : 'wca')}
       onLabel="min2phase"

@@ -9,13 +9,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, Download, Image as ImageIcon, ImageOff, ChevronDown, Check } from 'lucide-react';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
-import Scramble555ModePicker from '@/components/Scramble555ModePicker';
-import Scramble333ModePicker from '@/components/Scramble333ModePicker';
-import Scramble222ModePicker from '@/components/Scramble222ModePicker';
-import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';
 import { useRediMode } from '@/lib/scramble-redi-mode';
-import HighOrderNxNInput from '@/components/HighOrderNxNInput';
 import { EventIcon } from '@/components/EventIcon';
 import { ScramblePreview2D, eventHasScramblePreview } from '@/components/ScramblePreview2D';
 import { eventDisplayName } from '@/lib/wca-events';
@@ -28,7 +24,6 @@ import ProgressButton from './ProgressButton';
 import CopyAllScramblesButton from './CopyAllScramblesButton';
 import { scrambleEventPickerGroups } from './_event-picker';
 import ScrambleLines from './ScrambleLines';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
 
 const GENERATOR_TAG = 'TNoodle-WCA-1.2.3-port';
@@ -367,12 +362,20 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
       <div className="gen-config-toolbar">
         <PuzzlePicker
           groups={configPickerGroups}
-          itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
+          itemAction={(item) => (
+            <EventScrambleOptions
+              event={item.id}
+              isZh={isZh}
+              onAddOrder={addHighNxN}
+              sq1Compact={sq1Compact}
+              onSq1CompactChange={onSq1CompactChange}
+            />
+          )}
           selectedEvents={events}
           onToggle={toggleEvent}
           isZh={isZh}
-          popupFooter={(
-            <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN}>
+          popupFooter={customNxN.length > 0 ? (
+            <div className="gen-tn-config-group">
               {customNxN.map((id) => (
                 <button
                   key={id}
@@ -384,8 +387,8 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                   {eventDisplayName(id, isZh)}
                 </button>
               ))}
-            </HighOrderNxNInput>
-          )}
+            </div>
+          ) : null}
         />
         {subMode === 'batch' && (
           <div className="gen-count-row">
@@ -426,25 +429,6 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
           </div>
         )}
         <div className="gen-config-toolbar-scroll">
-
-      {/* 配置条:各项目打乱模式(选中对应项目才显示) */}
-      <div className="gen-tn-config-row">
-        <Scramble555ModePicker active555={events.has('555')} isZh={isZh} />
-        <Scramble333ModePicker active333={events.has('333')} isZh={isZh} />
-        <Scramble222ModePicker active222={events.has('222')} />
-        {events.has('sq1') && (
-          <div className="gen-sq1-format">
-            <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
-            <PillToggle
-              value={sq1Compact}
-              onChange={onSq1CompactChange}
-              onLabel={t('简写', 'Compact')}
-              offLabel={t('完整', 'Full')}
-              ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
-            />
-          </div>
-        )}
-      </div>
 
       <div className="gen-tn-controls">
         <div className="gen-control-group gen-control-actions">
@@ -496,7 +480,15 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
         <div className="gen-view-picker">
           <PuzzlePicker
             groups={viewPickerGroups}
-            itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
+            itemAction={(item) => (
+              <EventScrambleOptions
+                event={item.id}
+                isZh={isZh}
+                onAddOrder={addHighNxN}
+                sq1Compact={sq1Compact}
+                onSq1CompactChange={onSq1CompactChange}
+              />
+            )}
             selectedEvent={activeView}
             onSelect={setViewedEvent}
             isZh={isZh}

@@ -14,16 +14,12 @@ import { RefreshCw, Download, X, Edit3, Image as ImageIcon, ImageOff, Dices } fr
 import { Spinner } from '@/components/Spinner/Spinner';
 import { EventIcon } from '@/components/EventIcon';
 import PuzzlePicker from '@/components/PuzzlePicker/PuzzlePicker';
+import EventScrambleOptions from './EventScrambleOptions';
 import NumberCommitInput from '@/components/NumberCommitInput';
-import Scramble555ModePicker from '@/components/Scramble555ModePicker';
-import Scramble333ModePicker from '@/components/Scramble333ModePicker';
-import Scramble222ModePicker from '@/components/Scramble222ModePicker';
-import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';
 import { onRediModeChange } from '@/lib/scramble-redi-mode';
 import { on222ModeChange } from '@/lib/scramble-222-mode';
 import { on333ModeChange } from '@/lib/scramble-333-mode';
 import { on555ModeChange } from '@/lib/scramble-555-mode';
-import HighOrderNxNInput from '@/components/HighOrderNxNInput';
 import { activeEventOf } from './_active-view';
 import { CompPicker } from '@/components/CompPicker';
 import { CompCell } from '@/components/CompCell/CompCell';
@@ -1158,28 +1154,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   const loaded = sheets && sheets.length > 0;
 
-  // 是否涉及 sq1 → 显示记号开关:未生成/加载前看配置是否选中 sq1;已加载后只在用户切到 sq1 视图时才显示,
-  // 不因「比赛里有 sq1 项目」就常驻(避免看别的项目时也挂着一条不相关的 sq1 开关)。
-  const sq1Involved = loaded ? activeView === 'sq1' : !!events['sq1'];
-  // 简写(全站默认)/ 完整(WCA 官方打乱纸风格)。
-  const sq1Toggle = sq1Involved ? (
-    <PillToggle
-      value={sq1Compact}
-      onChange={onSq1CompactChange}
-      onLabel={t('简写', 'Compact')}
-      offLabel={t('完整', 'Full')}
-      ariaLabel={t('SQ1 打乱记号:简写或完整', 'SQ1 scramble notation: compact or full')}
-    />
-  ) : null;
-  // 未加载(配置态,可能多项目同屏)单独一行 + 显式标「SQ1」;已加载后随每张 sq1 sheet 卡片的
-  // 标题一起出现(见下方 SheetView headerExtra),图标 + "SQ1 第N轮" 已经说明白了,不用再标一次。
-  const sq1FormatNode = sq1Toggle && !loaded ? (
-    <div className="gen-sq1-format">
-      <span className="gen-sq1-format-label">{t('SQ1', 'SQ1')}</span>
-      {sq1Toggle}
-    </div>
-  ) : null;
-
   // 「分析」打开 + 333 比赛已加载时,后台预热 StageSolver 共享池(拉 WASM + ~70MB 表)。
   // 与预计算数据并行加载 —— 用户点开某把行内解法时池已就绪,免去「加载求解器与数据表」首次等待。
   // need 跟随当前变体(std→cross / f2leo / 其余→variant),与行内解法器实际用的池一致。
@@ -1389,7 +1363,14 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
         <div className="gen-view-picker">
           <PuzzlePicker
             groups={viewPickerGroups}
-            itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
+            itemAction={(item) => (
+              <EventScrambleOptions
+                event={item.id}
+                isZh={isZh}
+                sq1Compact={sq1Compact}
+                onSq1CompactChange={onSq1CompactChange}
+              />
+            )}
             selectedEvent={activeView ?? undefined}
             onSelect={onEventIconClick}
             isZh={isZh}
@@ -1405,20 +1386,21 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             {/* 配置模式:复用首页项目下拉,多选时菜单保持打开。 */}
             <PuzzlePicker
               groups={configPickerGroups}
-              itemAction={(item) => item.id === 'redi_cube' ? <ScrambleRediModePicker active /> : null}
+              itemAction={(item) => (
+                <EventScrambleOptions
+                  event={item.id}
+                  isZh={isZh}
+                  onAddOrder={addHighNxN}
+                  sq1Compact={sq1Compact}
+                  onSq1CompactChange={onSq1CompactChange}
+                />
+              )}
               selectedEvents={new Set(Object.keys(events))}
               onToggle={toggleEvent}
               isZh={isZh}
               showTriggerIcon={false}
             />
             <div className="gen-config-toolbar-scroll">
-              <div className="gen-tn-config-row">
-                <HighOrderNxNInput isZh={isZh} onAdd={addHighNxN} />
-                <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
-                <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
-                <Scramble222ModePicker active222={!!events['222']} />
-                {sq1FormatNode}
-              </div>
               <div className="gen-tn-controls">{actionsNode}</div>
             </div>
           </div>
@@ -1624,7 +1606,6 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 clockColors={!loadedCompId && sh.event === 'clock' ? events[sh.event]?.colors : undefined}
                 sq1Colors={!loadedCompId && sh.event === 'sq1' ? events[sh.event]?.colors : undefined}
                 megaColors={!loadedCompId && sh.event === 'minx' ? events[sh.event]?.colors : undefined}
-                headerExtra={sh.event === 'sq1' ? sq1Toggle : undefined}
               />
             ))}
           </div>
