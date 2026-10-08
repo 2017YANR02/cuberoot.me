@@ -9,6 +9,7 @@ export default function ScrambleRediModePicker({ active }: { active: boolean }) 
   if (!active) return null;
   return (
     <BoolToggle
+      className="scramble-redi-rotation-toggle"
       value={mode === 'rotations'}
       onChange={(value) => setMode(value ? 'rotations' : 'timer')}
       label={tr({ zh: '转体', en: 'Rotations' })}
