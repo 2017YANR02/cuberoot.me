@@ -14,7 +14,7 @@
 
 服务端环境变量：`CUBEROOT_FACE_ENABLED=true`、`CUBEROOT_FACE_CONSENT_APPROVED=true`、`CUBEROOT_FACE_SCENE_ID=1000021659`、`CUBEROOT_FACE_ACCESS_KEY_ID`、`CUBEROOT_FACE_ACCESS_KEY_SECRET`、`CUBEROOT_FACE_IDENTITY_PEPPER`（独立随机密钥至少 32 字符）、`CUBEROOT_FACE_APP_ORIGIN=https://cuberoot.me`。关闭启用开关可停止新发起和查询，不改写历史认证。
 
-RAM 自定义策略仅允许 `antcloudauth:InitFaceVerify`、`antcloudauth:DescribeFaceVerify`，资源为 `acs:antcloudauth:*:1964361522100427:*`（账号粒度，非场景粒度）。不授予场景管理、RAM 管理、OSS 或全产品权限。
+RAM 自定义策略仅允许 `antcloudauth:InitFaceVerify`、`antcloudauth:DescribeFaceVerify`，当前生效的 v2 使用 `Resource: "*"`。原账号 ARN 未匹配通过授权诊断，已在负责人确认后修正；操作范围仍限于发起和查询，不授予场景管理、RAM 管理、OSS 或全产品权限。
 
 按负责人“不用检查”要求，未追加本地测试、编译或真人刷脸；部署状态、原生容器兼容和真实收费不能从本地实现推断。发布通过独立工作树隔离其他尚未发布的改动，数据库由现有 Deploy Core 流程迁移，前端由既有双线路流程构建。
 
@@ -27,6 +27,10 @@ RAM 自定义策略仅允许 `antcloudauth:InitFaceVerify`、`antcloudauth:Descr
 
 ## 2026-10-08 首次验收失败处理
 
-线上只有一次初始化失败记录，未取得认证流水；紧接着的重试被一分钟冷却限制拦截，旧提示将其混同为待完成/每日限额。无身份资料的 DescribeFaceVerify 授权诊断返回 411，定位到专用 RAM 授权仍不可用；原资源 ARN 的策略需要修正，当前等待负责人确认保存资源匹配调整，仍仅允许原两项操作。
+线上只有一次初始化失败记录，未取得认证流水；紧接着的重试被一分钟冷却限制拦截，旧提示将其混同为待完成/每日限额。无身份资料的 DescribeFaceVerify 授权诊断返回 411，定位到专用 RAM 授权仍不可用。负责人确认修正后，控制台显示 v2 已生效，仍仅允许原两项操作；同一无身份资料诊断不再返回 411，而是缺少认证流水参数的 400。该诊断不等同于真实本人认证通过。
 
 代码已拆分进行中、重试冷却、滚动 24 小时个人限额、全站限额、服务授权与欠费提示；发起错误后刷新本人状态。日志仅保存固定事件、接口名、HTTP 状态、三位错误码和格式受限的请求编号，不保存身份信息、密钥、原始结果或供应商消息。原限额和同意规则保持不变。本次没有重新提交用户身份资料；代码提交、部署与真人验收分别记录。
+
+后续负责人要求提交全部现有改动并使 CI 全绿。首批改动及远端安全修复合并推送后，CI 暴露旧控件接口、训练手动来源回归、集成测试契约和退役组件遗漏；分别以 e79dc21d1c、606fc54949 修复。负责人提醒有其他 AI 并行工作后，后续修复全部移至独立工作树，不更新其他 AI 的主工作区。相关定向测试 52 项、客户端类型检查、认证文档校验与 Knip 均通过；移动端和桌面 UI 在 e79dc21d1c 的 CI 通过，606fc54949 的 Test（37803508103）通过，未受最后组件清理影响的任务由路径规则跳过。
+
+发布确认：API 修复 a74bc701ad 的 Deploy Core（37801096307）成功，服务器实际 release 指向该提交，健康接口返回 200。前端 606fc54949 的 Deploy Next（37803507854）和 Vercel 均成功，自建前端服务 active。真实本人刷脸、原生容器及收费结果仍由负责人验收，不能从授权诊断或 CI 推断。
