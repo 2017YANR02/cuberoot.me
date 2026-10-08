@@ -20,6 +20,10 @@ export const REDI_CUBE_GROUP: PuzzleGroup = {
     edges: { size: 12, ori: 2 },
   },
   gens: {
+    x: {
+      corners: { cycles: [[0,4,7,1], [2,3,5,6]], twist: { 0: 2, 1: 1, 2: 2, 3: 1, 4: 1, 5: 2, 6: 1, 7: 2 } },
+      edges: { cycles: [[0,4,6,2], [1,8,5,10], [3,9,7,11]], twist: { 0: 1, 2: 1, 4: 1, 6: 1 } },
+    },
     B: {
       corners: { cycles: [], twist: { 6: 1 } },
       edges: { cycles: [[6,7,11]], twist: { 6: 1, 7: 1 } },

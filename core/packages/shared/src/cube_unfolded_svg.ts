@@ -74,7 +74,7 @@ const EVENT_TO_PUZZLE: Record<string, string> = {
   crz3a: '3x3x3',
 };
 
-/** Synthetic id for high-order NxN (N ≥ 8) without a WCA event: `nxn8`..`nxn300`. */
+/** Synthetic NxN event id, including the rotation-only 1×1. */
 const NXN_HIGH_RE = /^nxn(\d+)$/;
 export function eventToCubeSize(event: string): number | null {
   const p = EVENT_TO_PUZZLE[event];
@@ -82,7 +82,7 @@ export function eventToCubeSize(event: string): number | null {
   const m = NXN_HIGH_RE.exec(event);
   if (m) {
     const n = parseInt(m[1], 10);
-    if (n >= 2 && n <= 300) return n;
+    if (n >= 1 && n <= 300) return n;
   }
   return null;
 }

@@ -114,7 +114,11 @@ export function applyScrambleTo(size: number, scramble: string, posit: PositArra
   const tokens = scramble.trim().split(/\s+/);
   for (const tok of tokens) {
     if (!tok) continue;
-    const m = TOKEN_RE.exec(tok);
+    // A 1×1 has only whole-cube rotations; each is its single outer slice.
+    const move = size === 1 && /^[xyz][2']?$/.test(tok)
+      ? tok.replace(/^[xyz]/, (axis) => ({ x: 'R', y: 'U', z: 'F' })[axis]!)
+      : tok;
+    const m = TOKEN_RE.exec(move);
     if (!m) continue;
     const face = MOVE_TO_FACE[m[2]];
     const widthPrefix = m[1] ? parseInt(m[1], 10) : 0;
