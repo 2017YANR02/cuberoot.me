@@ -655,7 +655,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const randomOptimalOwner = authUser ? computeOwnerKey(authUser.uid, authUser.wcaId) : '';
   const randomOptimalKey = randomOptimalRequested
     ? `${randomOptimalOwner}|${drillTarget && drillAllowed
-      ? `drill:${drillTarget.type}:${drillTarget.id}`
+      ? `drill:${drillTarget.type}:${drillTarget.id}|cn:${settings.cnMode}`
       : trainerSigVal ? `difficulty:${trainerSigVal}` : 'normal'}`
     : '';
   const randomOptimalSource: Optimal333Source | null = randomOptimalRequested
@@ -663,7 +663,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         key: randomOptimalKey,
         generateBase: async (signal) => {
           if (drillTarget && drillAllowed) {
-            const drill = generateTimerDrillScramble(drillTarget);
+            const drill = generateTimerDrillScramble(drillTarget, Math.random, getSettings().cnMode);
             if (drill) return drill.scramble;
           }
           const spec = trainerSpecRef.current;
@@ -743,7 +743,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       );
     }
     if (drillTarget && drillAllowed) {
-      const ds = generateTimerDrillScramble(drillTarget);
+      const ds = generateTimerDrillScramble(drillTarget, Math.random, getSettings().cnMode);
       if (ds) return timerScrambleHistoryEntry(
         ds.scramble,
         null,
@@ -1841,8 +1841,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
       scramble,
       targetFacelets: scrambleTarget,
       orientation: trainingOrientation,
+      cnMode: settings.cnMode,
     });
-  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController, trainingOrientation]);
+  }, [currentScrambleEntry.id, event, scramble, scrambleTarget, smartCubeSoloController, trainingOrientation, settings.cnMode]);
   useLayoutEffect(() => {
     smartCubeSoloController.setConnected(cubeConnected);
     return () => smartCubeSoloController.setConnected(false);

@@ -3,7 +3,7 @@ import { invertAlg } from '@cuberoot/shared/alg-transform';
 import { normalizeWcaScramble } from '@cuberoot/shared/normalize-wca-scramble';
 import { smartCubeTargetFacelets } from '@cuberoot/shared/smart-cube/cubie';
 import { hintSmartCubeScramble, verifySmartCubeScramble } from '@cuberoot/shared/smart-cube/scramble-hint';
-import { CUBE_ORIENTATIONS, orientCubeFacelets, timerTrainerCases, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
+import { applyColorNeutral, CUBE_ORIENTATIONS, orientCubeFacelets, timerTrainerCases, timerSmartCubeTrainingOrientation, timerSmartCubeAttemptScramble } from '@cuberoot/shared/timer';
 import { applyMoves, applyScramble, solved, toFaceletString, type CubeFaces } from '@cuberoot/shared/timer/reconstruct/state';
 import { parseScramble } from '@cuberoot/puzzle-solvers/cube-moves';
 
@@ -109,13 +109,14 @@ describe('smart cube training notation', () => {
     expect(hintSmartCubeScramble('R x', after('R'))?.complete).toBe(true);
   });
 
-  for (const event of ['oll', 'pll', 'coll', 'cmll', 'zbll'] as const) {
+  for (const event of ['oll', 'pll', 'coll', 'cmll', 'zbll', 'eg1', 'eg2'] as const) {
     it(`${event}: every case target and displayed prefix stay on the guidance path`, () => {
       for (const item of timerTrainerCases(event)) {
         const scramble = invertAlg(item.solutionAlg);
         const target = after(scramble);
         expect(smartCubeTargetFacelets(scramble), `${event}/${item.id}`).toBe(target);
-        for (const { value: orientation } of CUBE_ORIENTATIONS) {
+        for (const [index, { value: orientation }] of CUBE_ORIENTATIONS.entries()) {
+          expect(after(applyColorNeutral(scramble, 'six', () => index / 24)), `${event}/${item.id}/${orientation}`).toBe(after(`${orientation} ${scramble}`));
           expect(smartCubeTargetFacelets(scramble, orientation), `${event}/${item.id}/${orientation}`).toBe(after(`${orientation} ${scramble}`));
         }
         let state = solved(3);

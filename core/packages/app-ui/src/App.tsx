@@ -95,6 +95,7 @@ import {
   formatMs,
   formatTimerTimingDisplay,
   generateTimerDrillScramble,
+  isCnEligible,
   generateTimerScramble,
   histBack,
   histForward,
@@ -677,7 +678,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     && (auth.loading || auth.busy);
   const randomOptimalKey = randomOptimalRequested
     ? `${randomOptimalOwner}|${effectiveDrillTarget
-      ? `drill:${effectiveDrillTarget.type}:${effectiveDrillTarget.id}`
+      ? `drill:${effectiveDrillTarget.type}:${effectiveDrillTarget.id}|cn:${store?.settings.cnMode ?? 'none'}`
       : randomDifficultySignature
         ? `difficulty:${randomDifficultySignature}`
         : 'normal'}`
@@ -689,7 +690,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       key: randomOptimalKey,
       generateBase: async (signal) => {
         if (target) {
-          const generated = generateTimerDrillScramble(target);
+          const generated = generateTimerDrillScramble(target, Math.random, storeRef.current?.settings.cnMode);
           if (generated) return generated.scramble;
           throw new Error('could not generate optimal drill base state');
         }
@@ -995,6 +996,7 @@ export function App({ host }: { host: InstalledAppHost }) {
       const difficultyIdentity = timerModeRef.current === 1 && source === 'random' && !target
         ? trainerSig(event, randomDifficultySettingsRef.current)
         : '';
+      if (target || (isCnEligible(event) && !difficultyIdentity)) identity += `|cn:${seed?.cnMode ?? 'none'}`;
       const drillIdentity = target
         ? `${identity}|drill:${target.type}:${target.id}`
         : difficultyIdentity
@@ -1407,7 +1409,7 @@ export function App({ host }: { host: InstalledAppHost }) {
     }
     const target = timerEventSupportsDrill(event) ? drillTargetRef.current : null;
     if (target) {
-      const generated = generateTimerDrillScramble(target);
+      const generated = generateTimerDrillScramble(target, Math.random, storeRef.current?.settings.cnMode);
       replaceScrambleHistoryEntry(liveEntry.id, sourceIdentity, generated ? {
         availability: 'ready',
         caseId: event === target.type ? generated.targetCase : null,
@@ -2620,9 +2622,10 @@ export function App({ host }: { host: InstalledAppHost }) {
           scramble,
           targetFacelets: smartCubeTarget,
           orientation: trainingOrientation,
+          cnMode: store?.settings.cnMode,
         }
       : null);
-  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode, trainingOrientation]);
+  }, [currentScrambleEntry, scramble, smartCubeSoloController, smartCubeTarget, timerMode, trainingOrientation, store?.settings.cnMode]);
 
   useLayoutEffect(() => {
     const connected = smartCube.phase === 'connected';
