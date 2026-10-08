@@ -22,7 +22,8 @@ export interface TimerDeviceCenterItem {
   disabled?: boolean;
   id: string;
   icon?: ReactNode;
-  kind: TimerDeviceKind;
+  /** Omit for host-owned utility actions, such as development tools. */
+  kind?: TimerDeviceKind;
   label: string;
   onSelect(): void;
 }
@@ -30,6 +31,8 @@ export interface TimerDeviceCenterItem {
 export interface TimerDeviceCenterProps {
   ariaLabel: string;
   className?: string;
+  /** Host-owned panels anchored to the same device trigger. */
+  children?: ReactNode;
   items: readonly TimerDeviceCenterItem[];
   menuLabel: string;
   triggerLabel: string;
@@ -38,14 +41,16 @@ export interface TimerDeviceCenterProps {
 /**
  * Capability-driven device chooser for the timer chrome.
  *
- * Hosts provide only real adapter-backed items and their actions. The center
+ * Hosts provide adapter-backed devices and optional utility actions. The center
  * owns the compact trigger, focus return, dismissal and the shared list shape;
- * a connected smart cube opens its host action directly from the trigger.
+ * a connected smart cube opens its host action directly when no utility needs
+ * to remain reachable through the menu.
  * it does not know about BLE, microphones or platform permissions.
  */
 export function TimerDeviceCenter({
   ariaLabel,
   className,
+  children,
   items,
   menuLabel,
 }: TimerDeviceCenterProps) {
@@ -57,7 +62,9 @@ export function TimerDeviceCenter({
   if (items.length === 0) return null;
 
   const active = items.some((item) => item.active);
-  const connectedCube = items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
+  // Host utilities must remain reachable even with a cube connected.
+  const connectedCube = items.some((item) => !item.kind) ? undefined
+    : items.find((item) => item.kind === 'smart-cube' && item.active && !item.disabled);
   return (
     <div className={`shell-device-center${active ? ' is-active' : ''}${className ? ` ${className}` : ''}`} data-no-timer>
       <button
@@ -100,7 +107,7 @@ export function TimerDeviceCenter({
               type="button"
             >
               <span className="shell-device-center-item-icon">
-                {item.icon ?? iconForKind(item.kind)}
+                {item.icon ?? iconForKind(item.kind ?? 'smart-cube')}
               </span>
               <span className="shell-device-center-item-copy">
                 <strong>{item.label}</strong>
@@ -110,6 +117,7 @@ export function TimerDeviceCenter({
           ))}
         </div>
       )}
+      {children}
     </div>
   );
 }

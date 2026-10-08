@@ -1588,8 +1588,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerDeviceCenter',
     import: "import { TimerDeviceCenter } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web 与五端 App 共用的设备中心触发器和能力列表；只显示宿主真实 adapter 注册的设备。已连接智能魔方时，点击入口直接打开操作窗口；未连接时显示设备列表。统一活动态、设备详情、键盘 Escape、点外关闭和焦点恢复。连接、权限和协议动作仍由宿主注入。',
-    en: 'The device-center trigger and capability list shared by Web and all five installed clients. It only shows devices registered by a real host adapter. When a smart cube is connected, the trigger opens its controls directly; otherwise it shows the device list. Active state, device detail, Escape/outside dismissal, and focus return are shared. Hosts still inject connection, permission, and protocol actions.',
+    zh: 'Web 与五端 App 共用的设备中心；宿主注入真实设备及可选辅助入口。Web 开发环境的假魔方排在麦克风下方，面板锚定同一入口。无辅助入口且智能魔方已连接时直接打开设备操作；否则显示菜单。统一活动态、设备详情、Escape、点外关闭和焦点恢复。',
+    en: 'Shared device center for Web and installed clients, with host-provided devices and optional utility actions. The Web development fake cube follows the microphone and anchors its panel to the same trigger. Connected cubes open directly when no utility needs menu access; otherwise the menu remains available. Active state, details, Escape/outside dismissal and focus return are shared.',
   },
   {
     name: 'TimerScramble222Config',
@@ -2028,6 +2028,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'toggle',
     zh: `5x5 打乱模式切换(随机状态与随机转动),仅当选中 5x5 时显示,带说明帮助链接,选择持久化到 localStorage。`,
     en: `5x5 scramble-mode toggle (random-state vs random-move), shown only when 5x5 is selected, with an about/help link, persisting the choice to localStorage.`,
+  },
+  {
+    name: 'ScrambleRediModePicker',
+    import: "import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';",
+    category: 'toggle',
+    zh: 'Redi「转体」BoolToggle，默认关闭并使用计时器同款打乱；开启生成有转体打乱，持久化选择并同步比赛模式缓存。',
+    en: 'Redi Rotations BoolToggle, off by default for timer-style scrambles; persists the rotation preference and invalidates the competition cache.',
   },
   {
     name: 'ScrambleModePickerRow',

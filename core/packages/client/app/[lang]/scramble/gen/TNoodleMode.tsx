@@ -18,6 +18,8 @@ import NumberCommitInput from '@/components/NumberCommitInput';
 import Scramble555ModePicker from '@/components/Scramble555ModePicker';
 import Scramble333ModePicker from '@/components/Scramble333ModePicker';
 import Scramble222ModePicker from '@/components/Scramble222ModePicker';
+import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';
+import { onRediModeChange } from '@/lib/scramble-redi-mode';
 import { on222ModeChange } from '@/lib/scramble-222-mode';
 import { on333ModeChange } from '@/lib/scramble-333-mode';
 import { on555ModeChange } from '@/lib/scramble-555-mode';
@@ -368,7 +370,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
       cacheTargetRef.current = {};
       setScrambleModeVer((v) => v + 1);
     };
-    const uns = [on222ModeChange(invalidate), on333ModeChange(invalidate), on555ModeChange(invalidate)];
+    const uns = [on222ModeChange(invalidate), on333ModeChange(invalidate), on555ModeChange(invalidate), onRediModeChange(invalidate)];
     return () => uns.forEach((un) => un());
   }, []);
 
@@ -377,7 +379,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
     loadFlagData().then((v) => { if (v !== flagVer) setFlagVer(v); });
   }, [flagVer]);
 
-  // 高阶 NxN(nxn8..nxn300)按 N 升序排,接在 WCA 21 项之后。
+  // 非 WCA 阶数(nxn1、nxn8..nxn300)按 N 升序排，接在 WCA 项目之后。
   const customNxN = useMemo(
     () => Object.keys(events)
       .filter((id) => /^nxn\d+$/.test(id))
@@ -410,7 +412,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
 
   // 高阶 NxN 入选 → defaultEventConfig 兜底。
   const addHighNxN = (n: number) => {
-    const id = `nxn${n}`;
+    const id = n >= 2 && n <= 7 ? String(n).repeat(3) : `nxn${n}`;
     setEvents((prev) => {
       if (prev[id]) return prev;
       return { ...prev, [id]: defaultEventConfig(id) };
@@ -482,7 +484,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
   // Generate one scramble. Routed by type: cstimer ids → worker bridge;
   // everything else → cubing.js / TNoodle pool.
   const generateOne = async (type: string): Promise<string> => {
-    if (isCstimerEvent(type)) return cstimerScramble(type);
+    if (isCstimerEvent(type) && type !== 'redi_cube') return cstimerScramble(type);
     return (await tnoodleRandomScramble(type)) ?? '';
   };
 
@@ -1413,6 +1415,7 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
                 <Scramble555ModePicker active555={!!events['555']} isZh={isZh} />
                 <Scramble333ModePicker active333={!!events['333']} isZh={isZh} />
                 <Scramble222ModePicker active222={!!events['222']} />
+                <ScrambleRediModePicker active={!!events['redi_cube']} />
                 {sq1FormatNode}
               </div>
               <div className="gen-tn-controls">{actionsNode}</div>

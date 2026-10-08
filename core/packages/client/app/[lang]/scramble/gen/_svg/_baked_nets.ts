@@ -14,6 +14,7 @@ import { BABY_FTO } from './_nets/baby_fto';
 import { MASTER_TETRAMINX } from './_nets/master_tetraminx';
 import { KILOMINX } from './_nets/kilominx';
 import { REDI_CUBE } from './_nets/redi_cube';
+import { rediScrambleForCubing } from '@cuberoot/shared/timer';
 
 const REGISTRY: Record<string, PuzzleNetDef> = {
   fto: FTO,
@@ -29,5 +30,5 @@ export const BAKED_NET_EVENTS: readonly string[] = Object.keys(REGISTRY);
 /** Render a baked-net puzzle's scramble preview, or null if the event has none. */
 export function renderBakedNet(event: string, scramble: string): string | null {
   const def = REGISTRY[event];
-  return def ? renderNet(def, scramble) : null;
+  return def ? renderNet(def, event === 'redi_cube' ? rediScrambleForCubing(scramble) : scramble) : null;
 }

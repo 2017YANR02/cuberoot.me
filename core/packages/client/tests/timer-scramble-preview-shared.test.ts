@@ -48,6 +48,16 @@ describe('shared timer scramble preview', () => {
   });
 
   it.each([
+    ["UR D F L R'", "UR D F L R'"],
+    ["R L' x R'", "F UL' x F'"],
+  ])('renders Redi instead of no-preview: %s', async (scramble, canonical) => {
+    await act(async () => root.render(createElement(TimerCubePreview, { event: 'redi', scramble })));
+    await vi.waitFor(() => expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.scramble).toBe(canonical));
+    expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.puzzle).toBe('redi_cube');
+    expect(host.textContent).not.toContain('no preview');
+  });
+
+  it.each([
     ['sq1', '(1,0) / (0,-1)'],
     ['mega', "R++ D-- U'"],
   ] as const)('renders %s from the canonical installed-client component', async (event, scramble) => {

@@ -42,6 +42,7 @@ import {
   Settings as SettingsIcon,
   AlertTriangle,
   ArrowLeft,
+  Box,
   X,
 } from 'lucide-react';
 import HomeLink from '@/components/HomeLink';
@@ -432,6 +433,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const [solverOpenRequest, setSolverOpenRequest] = useState(0);
   const [solverBlocking, setSolverBlocking] = useState(false);
   const [historyOverlayOpen, setHistoryOverlayOpen] = useState(false);
+  const [devFakeCubeOpen, setDevFakeCubeOpen] = useState(false);
   const [sessionSwitcherOpen, setSessionSwitcherOpen] = useState(false);
   const closeResultsPanel = useCallback(() => setPanelTab(null), []);
   useEffect(() => {
@@ -3033,16 +3035,6 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           {/* 解法提示(手机形态)。桌面同一个组件挂在左侧 .shell-rail 里(见下),
               这里是二选一 —— 两处同时挂就有两个实例抢同一个 ?hints。 */}
 
-          {/* 假魔方是 dev 调试入口,跟当前打乱相关,放在常驻计时控件末尾。 */}
-          {DEV_PANEL && settings.showDevFakeCube && (
-            <DevFakeCubePanel
-              connected={bluetoothCube.status.connected}
-              deviceName={bluetoothCube.status.deviceName ?? null}
-              onConnect={bluetoothCube.connect}
-              onDisconnect={bluetoothCube.disconnect}
-              scramble={timerSmartCubeAttemptScramble(event, scramble, settings.preScrT)}
-            />
-          )}
           </>
         ),
           actions: (
@@ -3067,7 +3059,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
           />,
           devices: <TimerDeviceCenter
             ariaLabel={tr(TIMER_DEVICE_CENTER_LABELS['title'])}
-            items={WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
+            items={[...WEB_TIMER_DEVICE_REGISTRY.list().map((device) => device.kind === 'smart-cube'
               ? {
                   active: bluetoothCube.status.connected,
                   detail: bluetoothCube.status.connected
@@ -3098,10 +3090,29 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
                     kind: device.kind,
                     label: tr(TIMER_DEVICE_CENTER_LABELS['stackmat']),
                     onSelect: connectStackmat,
-                  })}
+                  }),
+              ...(DEV_PANEL && settings.showDevFakeCube ? [{
+                id: 'dev-fake-cube',
+                icon: <Box aria-hidden="true" size={15} />,
+                label: tr({ zh: '假魔方', en: 'Fake cube' }),
+                onSelect: () => setDevFakeCubeOpen(true),
+              }] : []),
+            ]}
             menuLabel={tr(TIMER_DEVICE_CENTER_LABELS['menu'])}
             triggerLabel={tr(TIMER_DEVICE_CENTER_LABELS['trigger'])}
-          />}}
+          >
+            {DEV_PANEL && settings.showDevFakeCube && (
+              <DevFakeCubePanel
+                open={devFakeCubeOpen}
+                onClose={() => setDevFakeCubeOpen(false)}
+                connected={bluetoothCube.status.connected}
+                deviceName={bluetoothCube.status.deviceName ?? null}
+                onConnect={bluetoothCube.connect}
+                onDisconnect={bluetoothCube.disconnect}
+                scramble={timerSmartCubeAttemptScramble(event, scramble, settings.preScrT)}
+              />
+            )}
+          </TimerDeviceCenter>}}
         solver={solverHintPanel}
         timing={{
 phase: timer.phase,
