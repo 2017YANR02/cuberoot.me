@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type CSSProperties,
+  type KeyboardEvent,
   type PointerEvent,
 } from 'react';
 import { persistItem } from '@/lib/safe-storage';
@@ -116,12 +117,18 @@ export function renderDrawSvg(options: RenderDrawSvgOptions): string {
   const cellIdByKey = new Map(options.elements.map((element) => [element.key, element.cellId ?? element.key]));
 
   const body = options.elements.map((element) => {
+    if (element.toggle && !element.toggle.selected && !options.interactive) return '';
     const kind = elementKind(element);
     if (!kind) return '';
     const cellId = element.cellId ?? element.key;
     const fill = colors[cellId] ?? defaultFill(element);
     const transform = buildTransform(element);
     const attrs: string[] = [`data-draw-key="${escapeAttr(element.key)}"`];
+    if (element.toggle && options.interactive) {
+      attrs.push(`data-draw-toggle="${escapeAttr(element.key)}"`, 'role="button"', 'tabindex="0"',
+        `aria-label="${escapeAttr(element.toggle.label)}"`, `aria-pressed="${element.toggle.selected}"`);
+      if (!element.toggle.selected) attrs.push('opacity="0.22"');
+    }
     if (!element.disableDrawing) {
       attrs.push(`data-draw-cell="${escapeAttr(cellId)}"`);
       if (element.unColorBindKey) {
@@ -234,6 +241,7 @@ export function DrawCanvas({
   defaultColors,
   onColorsChange,
   onDocumentChange,
+  onElementToggle,
   controls,
   strokeWidthScale = 1,
   className,
@@ -280,6 +288,10 @@ export function DrawCanvas({
     strokeWidthScale,
   }), [elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale]);
 
+  const previewSvg = useMemo(() => onElementToggle ? renderDrawSvg({
+    elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, interactive: true,
+  }) : svg, [onElementToggle, elements, colors, viewBox, width, height, strokeWidth, strokeWidthScale, svg]);
+
   useEffect(() => {
     onDocumentChange?.({ svg, width, height, filenameBase: resolvedFilenameBase });
   }, [svg, width, height, resolvedFilenameBase, onDocumentChange]);
@@ -304,6 +316,7 @@ export function DrawCanvas({
   const handlePaint = (event: PointerEvent<HTMLDivElement>) => {
     const target = findPaintTarget(event.target);
     if (!target) return;
+    if (target.hasAttribute('data-draw-toggle')) return;
     const cellId = target.getAttribute('data-draw-cell');
     if (!cellId) return;
     if (event.button === 2) event.preventDefault();
@@ -312,6 +325,25 @@ export function DrawCanvas({
       event.button === 2 ? DRAW_TRANSPARENT : selectedColor,
       target.getAttribute('data-draw-unbind'),
     );
+  };
+
+  const toggleElement = (target: EventTarget | null) => {
+    if (!(target instanceof Element)) return;
+    const shape = target.closest('[data-draw-toggle]');
+    const key = shape?.getAttribute('data-draw-toggle');
+    if (!shape || !key || !onElementToggle) return;
+    if (shape.getAttribute('aria-pressed') === 'false') {
+      const cellId = shape.getAttribute('data-draw-cell');
+      if (cellId) paintCell(cellId, selectedColor, shape.getAttribute('data-draw-unbind'));
+    }
+    onElementToggle(key);
+  };
+
+  const handleToggleKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    if (!(event.target instanceof Element) || !event.target.closest('[data-draw-toggle]')) return;
+    event.preventDefault();
+    toggleElement(event.target);
   };
 
   const rememberCustomColor = () => {
@@ -346,8 +378,11 @@ export function DrawCanvas({
         <div
           className="draw-canvas-preview"
           onPointerDown={handlePaint}
+          // allow-static-onclick: delegated SVG buttons carry role, tabindex and keyboard handling.
+          onClick={(event) => toggleElement(event.target)}
+          onKeyDown={handleToggleKey}
           onContextMenu={(event) => event.preventDefault()}
-          dangerouslySetInnerHTML={{ __html: svg }}
+          dangerouslySetInnerHTML={{ __html: previewSvg }}
         />
         {controls && <div className="draw-canvas-controls">{controls}</div>}
       </div>
