@@ -62,6 +62,7 @@
       "./cross-trainer/xcross": "runtime-neutral",
       "./cross-trainer/xpair": "runtime-neutral",
       "./pyra": "runtime-neutral",
+      "./pyraminx-duo": "runtime-neutral",
       "./sia123": "runtime-neutral",
       "./sia222": "runtime-neutral",
       "./ssq1": "runtime-neutral",
@@ -74,6 +75,11 @@
   },
   "sideEffects": false,
   "exports": {
+    "./pyraminx-duo": {
+      "types": "./src/pyraminx-duo.ts",
+      "node": "./dist/pyraminx-duo.js",
+      "default": "./src/pyraminx-duo.ts"
+    },
     "./bicube": {
       "types": "./src/bicube.ts",
       "node": "./dist/bicube.js",

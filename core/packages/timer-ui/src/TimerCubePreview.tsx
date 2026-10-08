@@ -4,7 +4,7 @@
  * Top-level scramble preview dispatcher.
  *
  * All puzzles route through TimerScramblePreview. It uses cubing.js for the
- * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx.
+ * supported 2D/3D puzzles and the canonical SVG renderers for SQ1/Megaminx/Duo.
  * NxN-class events (333oh / 333bld / 333fm / 444bld / 555bld / etc.) reuse
  * their base size's scrambler. Relays show only the 3x3 sub-scramble.
  *
@@ -121,6 +121,7 @@ export function TimerCubePreview(props: TimerCubePreviewProps): JSX.Element {
     case 'sq1':
     case 'mega':
     case 'clock':
+    case 'pyraminx_duo':
     // FTO is the one non-WCA puzzle where csTimer's scramble notation is also
     // valid cubing.js notation (verified in tests/timer_nonwca_scramble.test.ts,
     // which applies every generated scramble to cubing.js's `fto` KPuzzle).

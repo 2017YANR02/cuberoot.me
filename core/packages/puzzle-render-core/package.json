@@ -10,6 +10,11 @@
       "three": "runtime-neutral"
     },
     "runtime": {
+      "./engine/duo/duoGeometry": "runtime-neutral",
+      "./engine/duo/DuoCube": "mixed",
+      "./engine/duo/DuoTwister": "mixed",
+      "./duo-face": "runtime-neutral",
+      "./pyraminx-duo-svg": "runtime-neutral",
       "./iso-svg": "mixed",
       "./mega-svg": "runtime-neutral",
       "./sq1-svg": "runtime-neutral",
@@ -121,6 +126,11 @@
   },
   "sideEffects": false,
   "exports": {
+    "./engine/duo/duoGeometry": "./src/engine/duo/duoGeometry.ts",
+    "./engine/duo/DuoCube": "./src/engine/duo/DuoCube.ts",
+    "./engine/duo/DuoTwister": "./src/engine/duo/DuoTwister.ts",
+    "./duo-face": "./src/duo-face.ts",
+    "./pyraminx-duo-svg": "./src/pyraminx-duo-svg.ts",
     "./iso-svg": {
       "types": "./src/iso-svg.ts",
       "node": "./dist/iso-svg.js",

@@ -1,4 +1,7 @@
 import DinoCube from './dino/DinoCube';
+import DuoCube from '@cuberoot/puzzle-render-core/engine/duo/DuoCube';
+import { duoMoveToString, type DuoMove } from '@cuberoot/puzzle-solvers/pyraminx-duo';
+import { duoPickHit, duoResolveLive, duoResolveMove, type DuoPickHit } from '@/components/puzzle-models/gestures/duoDrag';
 import { dinoPickHit, dinoResolveLive, dinoResolveMove, type DinoPickHit } from './dino/dinoDrag';
 import { dinoMoveToString, type DinoMove } from './dino/dinoState';
 import FtoCube from './fto/FtoCube';
@@ -155,6 +158,12 @@ export function createCornerGestureResolver(
   };
 
   const gestures = {
+    pyraminx_duo: new CornerTurnGesture<DuoCube, DuoMove, DuoPickHit>({
+      match: (cube): cube is DuoCube => cube instanceof DuoCube,
+      pickHit: duoPickHit, resolveLive: duoResolveLive, resolveMove: duoResolveMove,
+      beginMove: (cube, move) => cube.beginMove(move), moveToString: duoMoveToString,
+      fullPx: 150, threshold: 6,
+    }, ctx),
     ghost: new CornerTurnGesture<GhostCube, GhostMove, GhostPickHit>({
       match: (cube): cube is GhostCube => cube instanceof GhostCube,
       pickHit: ghostPickHit, resolveLive: ghostResolveLive, resolveMove: ghostResolveMove,

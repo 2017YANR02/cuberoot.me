@@ -331,6 +331,7 @@ export default function SimPage() {
     if (raw === 'heli') return 'heli';
     if (raw === 'gear') return 'gear';
     if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
+    if (raw === 'pyraminx_duo') return raw;
     if (raw === 'fto') return 'fto';
     if (raw === 'ghost') return 'ghost';
     if (raw === 'custom') return 'custom';
@@ -1260,7 +1261,7 @@ export default function SimPage() {
             : world.puzzleKind === 'rex' ? world.rexHints
               : world.puzzleKind === 'heli' ? world.heliHints
                 : world.puzzleKind === 'skewb' ? world.skewbHints
-                  : world.puzzleKind === 'pyraminx' ? world.pyraHints
+                  : world.puzzleKind === 'pyraminx' || world.puzzleKind === 'pyraminx_duo' ? world.pyraHints
                     : world.puzzleKind === 'megaminx' ? world.megaHints
                       : world.puzzleKind === 'fto' ? world.ftoHints
                         : world.puzzleKind === 'ghost' ? world.ghostHints
@@ -1302,6 +1303,7 @@ export default function SimPage() {
         cancelAnimationFrame(raf);
         world.disposeSquareFamilyCubes();
         world.disposeGhostCube();
+        world.disposeDuoCube();
         window.removeEventListener('resize', resize);
         ro.disconnect();
         renderer.domElement.removeEventListener('wheel', onWheel);

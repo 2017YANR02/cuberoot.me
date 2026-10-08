@@ -25,6 +25,7 @@ import { FONT_MONO, FONT_SANS, FONT_CJK, loadPdfFonts, ensureCjkFont } from '@/l
 import { svgStringToElement, embedSvg } from '@/lib/pdf-svg';
 import { eventToCubeSize, renderUnfoldedSvgForEvent } from '@cuberoot/shared/cube-unfolded-svg';
 import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
+import { DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { groupLetter, type WcaFormat } from './_wca-round';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tFmc, fontForLocale, type TnoodleLocale } from './_tnoodle-translate';
@@ -296,6 +297,7 @@ function tnoodleEventTitle(event: string): string | null {
 function nonCubeAspect(event: string): number | null {
   if (eventToCubeSize(event)) return 4 / 3;
   switch (event) {
+    case 'pyraminx_duo': return DUO_SVG_ASPECT;
     case 'pyram': return 1.16;   // tnoodle PyraminxPuzzleImageInfo
     case 'minx': return 2.087;   // tnoodle MegaminxPuzzle 304.8/146.1 ≈ 2.087
     case 'sq1': return 0.5;     // sq1_svg native viewBox W:H ≈ 122:244 (portrait)

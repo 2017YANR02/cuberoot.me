@@ -74,6 +74,7 @@ description: "用户说造魔方模拟器、给 /sim 加魔方、新魔方类型
 - 复用 `engine/stickerGeom.ts`(`arcPts`/`circleIntersect`/`offsetInward`/`polyArea2`/`roundCorners`/`cubeFaceBasis`/`extrudeOntoFace`)+ `engine/csgCut.ts`(`alignedSphereGeo`/`cutCell`);别再抄定向球/手写贴面挤出/各写弧采样。
 - 贴片要圆角 + 有厚度:直边片用 `quadraticCurveTo` 圆角 + `ExtrudeGeometry` depth 做软垫(别用平 `ShapeGeometry`);范本 NxN `makeStickerShape` / dino `roundedTriSticker`。
 - 直边片开缝 = `offsetInward(roundCorners(poly, ROUND), INSET)`,`ROUND` 留 ≈2× `INSET` 余量(否则内弧翻负半径扎尖刺);加粗缝(调大 INSET)同步调大 ROUND。
+- 制作 Pyraminx Duo 时复用共享 `duo-face` 轮廓与 `pyraminx-duo` 状态模型；对其尖角/凹角直线轮廓先平行内缩再加小圆角，并用实际网格包络和连续转动分离检查验收，见 [二重奏几何与接线](references/pyraminx-duo.md)。
 - 曲边片开缝 = 沿原曲线同心等距偏移(圆弧改半径、缝 = 两条同心真圆的等宽环带),解析生成新尖 = 两圆交点用 SVG `A` 弧发出;直边片才可朝质心缩。
 - body 与色贴片共用同一条轮廓点(同形抬 `LIFT`),body 永不超出自己颜色;真 CSG body 除外(零穿模构造性保证,贴片改用内缩 grooved 轮廓盖上、黑缝=露出的 body)。
 - 给实心体倒圆角用 Minkowski opening(各面内移 r 求 eroded 顶点 → 绕每个顶点 `fibonacciSphere` 采样 → `ConvexGeometry` → 删 normal/uv 后 `mergeVertices`+`computeVertexNormals`),别单刀 chamfer;范本 `roundedTetraBody`。

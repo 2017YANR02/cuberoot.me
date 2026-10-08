@@ -4,6 +4,7 @@ import { renderMegaScrambleSvg as webMega } from '@/app/[lang]/scramble/gen/_svg
 import { renderSq1ScrambleSvg as webSq1 } from '@/lib/sq1-svg';
 import { renderMegaScrambleSvg as sharedMega } from '@cuberoot/puzzle-render-core/mega-svg';
 import { renderSq1ScrambleSvg as sharedSq1 } from '@cuberoot/puzzle-render-core/sq1-svg';
+import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { TimerCubePreview } from '@cuberoot/timer-ui';
 import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -50,6 +51,7 @@ describe('shared timer scramble preview', () => {
   it.each([
     ['sq1', '(1,0) / (0,-1)'],
     ['mega', "R++ D-- U'"],
+    ['pyraminx_duo', "R U'"],
   ] as const)('renders %s from the canonical installed-client component', async (event, scramble) => {
     await act(async () => root.render(createElement(TimerCubePreview, {
       ariaLabel: 'Cube state',
@@ -99,7 +101,7 @@ describe('shared timer scramble preview', () => {
     expect(host.querySelector<HTMLElement>('mock-twisty-player')?.dataset.scramble).toBe("R U' L");
   });
 
-  it('rebuilds the same shared player for 2D/3D while SQ1 and Megaminx stay on SVG', async () => {
+  it('rebuilds the same shared player for 2D/3D while inline puzzles stay on SVG', async () => {
     await act(async () => root.render(createElement(TimerCubePreview, {
       event: '333',
       scramble: 'R',
@@ -118,7 +120,7 @@ describe('shared timer scramble preview', () => {
     expect(threeD).not.toBe(twoD);
     expect(threeD.dataset.visualization).toBe('3D');
 
-    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++']] as const) {
+    for (const [event, scramble] of [['sq1', '(1,0) /'], ['mega', 'R++'], ['pyraminx_duo', "R U'"]] as const) {
       await act(async () => root.render(createElement(TimerCubePreview, {
         event,
         scramble,
@@ -126,6 +128,52 @@ describe('shared timer scramble preview', () => {
       })));
       expect(host.querySelector('mock-twisty-player')).toBeNull();
       expect(host.querySelector('svg')).not.toBeNull();
+    }
+  });
+
+  it('renders the canonical Duo state at its own aspect and recovers from invalid input', async () => {
+    const render = async (scramble: string) => act(async () => root.render(createElement(TimerCubePreview, {
+      event: 'pyraminx_duo', scramble, height: 240, ariaLabel: 'Duo state',
+    })));
+    await render("R U'");
+    const expected = document.createElement('div');
+    expected.innerHTML = renderPyraminxDuoSvg("R U'");
+    const preview = host.querySelector<HTMLElement>('[aria-label="Duo state"]');
+    expect(preview?.innerHTML).toBe(expected.innerHTML);
+    expect(preview?.style.aspectRatio).toBe(`${10 * DUO_SVG_ASPECT} / 10`);
+    expect(renderPyraminxDuoSvg("R U'")).not.toBe(renderPyraminxDuoSvg(''));
+    expect(host.querySelector('mock-twisty-player')).toBeNull();
+
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await render('invalid');
+      expect(host.querySelector('svg')).toBeNull();
+      expect(host.querySelector('[role="img"]')).toBeNull();
+      await render('');
+      expected.innerHTML = renderPyraminxDuoSvg('');
+      expect(host.querySelector('[role="img"]')?.innerHTML).toBe(expected.innerHTML);
+    } finally {
+      warning.mockRestore();
+    }
+  });
+
+  it('shows a valid Duo SVG after a failed cubing preview hid the same host', async () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      await act(async () => root.render(createElement(TimerCubePreview, {
+        event: '333', scramble: 'invalid',
+      })));
+      await vi.waitFor(() => expect(host.querySelector('mock-twisty-player')).not.toBeNull());
+      expect(host.querySelector<HTMLElement>('[role="img"]')?.style.visibility).toBe('hidden');
+
+      await act(async () => root.render(createElement(TimerCubePreview, {
+        event: 'pyraminx_duo', scramble: 'R',
+      })));
+      expect(host.querySelector('mock-twisty-player')).toBeNull();
+      expect(host.querySelector('svg')).not.toBeNull();
+      expect(host.querySelector<HTMLElement>('[role="img"]')?.style.visibility).toBe('visible');
+    } finally {
+      warning.mockRestore();
     }
   });
 });
