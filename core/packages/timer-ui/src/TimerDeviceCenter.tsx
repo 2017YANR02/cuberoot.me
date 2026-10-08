@@ -3,6 +3,7 @@ import { useRef, useState, type ReactNode } from 'react';
 
 import type { TimerDeviceKind } from '@cuberoot/shared/timer/device-contract';
 import { usePopoverDismiss } from './usePopoverDismiss';
+import { usePanelClamp } from './usePanelClamp';
 
 /** Canonical Web copy for every installed device-center consumer. */
 export const TIMER_DEVICE_CENTER_LABELS = {
@@ -58,6 +59,7 @@ export function TimerDeviceCenter({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   usePopoverDismiss(open, () => setOpen(false), panelRef, triggerRef);
+  usePanelClamp(open, panelRef);
 
   if (items.length === 0) return null;
 
