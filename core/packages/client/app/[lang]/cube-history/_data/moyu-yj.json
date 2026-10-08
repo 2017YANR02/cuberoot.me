@@ -1378,6 +1378,118 @@
       "title": "Stellar Core / Ultra contemporary unboxing and structural comparison",
       "publisher": "MackeeCube",
       "kind": "review"
+    },
+    {
+      "id": "r3-myj-cubezz-7181",
+      "title": "MoYu Cubing Classroom LOVE U 3x3 — MF8942",
+      "url": "https://www.cubezz.com/goods.php?id=7181",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-2548",
+      "title": "Cubing Classroom Black Crystal 3x3x3 (Heart)",
+      "url": "https://store.tribox.com/products/detail.php?product_id=2548",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-2545",
+      "title": "Cubing Classroom Black Crystal 3x3x3 (Circle)",
+      "url": "https://store.tribox.com/products/detail.php?product_id=2545",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-2584",
+      "title": "YiLong 3x3",
+      "url": "https://store.tribox.com/products/detail.php?product_id=2584",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-2940",
+      "title": "Teaching 3x3 - Aotu",
+      "url": "https://store.tribox.com/products/detail.php?product_id=2940",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-cubezz-category-25",
+      "title": "YJ / MoYu historical product catalog — page 25",
+      "url": "https://www.cubezz.com/Wholesale-358-b0-min0-max0-attr0-25-goods_id-DESC.html",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-2094",
+      "title": "Mars S 3x3 — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=2094",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1659",
+      "title": "TangLong — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1659",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1557",
+      "title": "HuaLong — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1557",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1596",
+      "title": "Cong's Design MeiYing — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1596",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1553",
+      "title": "Cong's Design YueYing — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1553",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1248",
+      "title": "WeiLong V2 — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1248",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1081",
+      "title": "WeiLong — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1081",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-tribox-1706",
+      "title": "AoLong GT — product weight",
+      "url": "https://store.tribox.com/products/detail.php?product_id=1706",
+      "publisher": "Tribox",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-cubezz-category-23",
+      "title": "YJ / MoYu historical product catalog — page 23",
+      "url": "https://www.cubezz.com/Wholesale-358-b0-min0-max0-attr0-23-goods_id-DESC.html",
+      "publisher": "Cubezz",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-myj-yj-en-new-guanlong",
+      "title": "New GuanLong 2021 / GuanLong V4, YJ8305 — manufacturer identity bridge",
+      "url": "https://www.youngjoecube.com/3x3x3-cube/new-guanlong-3x3",
+      "publisher": "YJ / YongJun",
+      "kind": "official"
     }
   ],
   "cubes": [
@@ -4424,7 +4536,7 @@
       ],
       "specs": {
         "size": "57.0 mm",
-        "weight": null,
+        "weight": "87.0 g (Tribox, stickered)",
         "mechanism": [
           "spring"
         ],
@@ -4464,7 +4576,8 @@
       ],
       "sourceIds": [
         "moyu-hualong-legacy",
-        "myj-tc-moyu-hualong"
+        "myj-tc-moyu-hualong",
+        "r3-myj-tribox-1557"
       ],
       "tags": [
         "spring"
@@ -5932,7 +6045,7 @@
       "year": 2017,
       "specs": {
         "size": "56.5 mm",
-        "weight": null,
+        "weight": "87 g (Tribox, stickerless)",
         "mechanism": [
           "spring"
         ],
@@ -6010,7 +6123,8 @@
       ],
       "sourceIds": [
         "myj-tc-senhuan-mars-s-3x3",
-        "myj-kubekings-2017-announcements"
+        "myj-kubekings-2017-announcements",
+        "r3-myj-tribox-2094"
       ],
       "tags": [
         "spring"
@@ -6313,7 +6427,7 @@
       ],
       "specs": {
         "size": "57.0 mm",
-        "weight": null,
+        "weight": "94 g (Tribox, stickered)",
         "mechanism": [
           "spring"
         ],
@@ -6354,7 +6468,8 @@
       ],
       "sourceIds": [
         "moyu-aolong-2014-review",
-        "moyu-weilong-v2-tc"
+        "moyu-weilong-v2-tc",
+        "r3-myj-tribox-1248"
       ],
       "tags": [
         "spring"
@@ -6987,7 +7102,7 @@
       ],
       "specs": {
         "size": "57.0 mm",
-        "weight": null,
+        "weight": "88 g (Tribox)",
         "mechanism": [
           "spring"
         ],
@@ -7032,7 +7147,8 @@
       ],
       "sourceIds": [
         "moyu-weilong-diy",
-        "moyu-weilong-tc"
+        "moyu-weilong-tc",
+        "r3-myj-tribox-1081"
       ],
       "tags": [
         "spring"
@@ -7207,7 +7323,7 @@
       ],
       "specs": {
         "size": "56.5 mm",
-        "weight": null,
+        "weight": "~93 g (Tribox)",
         "mechanism": [
           "spring"
         ],
@@ -7252,7 +7368,8 @@
       "sourceIds": [
         "moyu-tanglong-review",
         "moyu-tanglong-legacy",
-        "myj-tc-moyu-tanglong"
+        "myj-tc-moyu-tanglong",
+        "r3-myj-tribox-1659"
       ],
       "tags": [
         "spring"
@@ -7748,12 +7865,29 @@
             "en": "US listing price for this exact SKU observed October 7, 2026; stock, tax and shipping vary; not a Chinese launch price."
           },
           "sourceId": "myj-tc-moyu-crystal-3x3-ring"
+        },
+        {
+          "amount": 700,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": "Black Crystal Circle",
+          "note": {
+            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
+            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
+          },
+          "sourceId": "r3-myj-tribox-2545"
         }
       ],
       "highlights": [
         {
           "zh": "透明机身配环形面片，56 mm、86.6 g；保留标准三阶转层。",
           "en": "Transparent body with ring-shaped tiles, 56 mm and 86.6 g, retaining standard 3x3 turning."
+        },
+        {
+          "zh": "同系列还有黑色 Black Crystal Circle 圆环面片款，Tribox 标注约 56.2 mm、84 g；透明版原规格另保留。",
+          "en": "The series also includes the black Black Crystal Circle tile version, listed by Tribox at approximately 56.2 mm and 84 g; the transparent version retains its own specifications."
         }
       ],
       "assessment": {
@@ -7771,10 +7905,12 @@
         ]
       },
       "variants": [
-        "Transparent"
+        "Transparent",
+        "Black Crystal Circle"
       ],
       "sourceIds": [
-        "myj-tc-moyu-crystal-3x3-ring"
+        "myj-tc-moyu-crystal-3x3-ring",
+        "r3-myj-tribox-2545"
       ],
       "tags": [],
       "status": "released",
@@ -8127,7 +8263,7 @@
       ],
       "specs": {
         "size": "57.0 mm",
-        "weight": null,
+        "weight": "~102.3 g (Tribox)",
         "mechanism": [
           "spring"
         ],
@@ -8170,7 +8306,8 @@
       ],
       "sourceIds": [
         "moyu-aolong-gt-legacy",
-        "moyu-aolong-gt-tc"
+        "moyu-aolong-gt-tc",
+        "r3-myj-tribox-1706"
       ],
       "tags": [
         "spring"
@@ -10112,7 +10249,7 @@
       "year": 2015,
       "specs": {
         "size": "56.0 mm",
-        "weight": null,
+        "weight": "86 g (Tribox)",
         "mechanism": [
           "spring"
         ],
@@ -10177,7 +10314,8 @@
       ],
       "sourceIds": [
         "myj-tc-congs-design-yueying",
-        "myj-review-meiying-2015"
+        "myj-review-meiying-2015",
+        "r3-myj-tribox-1553"
       ],
       "tags": [
         "spring"
@@ -10221,7 +10359,7 @@
       "year": 2015,
       "specs": {
         "size": "56.0 mm",
-        "weight": null,
+        "weight": "81 g (Tribox, stickered)",
         "mechanism": [
           "spring"
         ],
@@ -10342,7 +10480,8 @@
       ],
       "sourceIds": [
         "myj-tc-congs-design-meiying",
-        "myj-review-meiying-2015"
+        "myj-review-meiying-2015",
+        "r3-myj-tribox-1596"
       ],
       "tags": [
         "spring"
@@ -13843,24 +13982,25 @@
       "id": "yj-guanlong-v4-3x3",
       "brand": "YJ",
       "name": {
-        "zh": "冠龙 V4 三阶",
-        "en": "GuanLong V4 3x3"
+        "zh": "冠龙 V4 / 2021 款（YJ8305）",
+        "en": "GuanLong V4 / New GuanLong 2021 (YJ8305)"
       },
       "release": {
         "date": "2022-05-11",
         "precision": "day",
         "basis": "retailer",
         "note": {
-          "zh": "商品页明示的 Added 建档日期，不等同于全球首发；未采用 Shopify published_at 代替首发。",
-          "en": "The product page’s explicit Added date, not a worldwide launch; Shopify published_at is not used as a launch date."
+          "zh": "2022-05-11 是 TheCubicle 商品页明确列出的 Added 建档日期，非全球首发。永骏官网用 New Guanlong 2021 / YJ8305 命名，并在同页正文明确称 Guanlong V4；2021 保留为型号年份，不能据此改写精确上市日。",
+          "en": "2022-05-11 is TheCubicle’s explicit Added/catalog date, not a worldwide launch. The manufacturer labels the product New Guanlong 2021 / YJ8305 and explicitly calls it Guanlong V4 on the same page; 2021 is retained as a model-year label, not an exact launch date."
         },
         "sourceIds": [
-          "myj-tc-yj-guanlong-v4-3x3"
+          "myj-tc-yj-guanlong-v4-3x3",
+          "r3-myj-yj-en-new-guanlong"
         ]
       },
       "year": 2022,
       "specs": {
-        "size": "56.5 mm",
+        "size": "56 mm (official); 56.5 mm (TheCubicle)",
         "weight": "64.0 g",
         "mechanism": [
           "spring"
@@ -13903,6 +14043,10 @@
         {
           "zh": "本版本配置：弹簧回弹。",
           "en": "This version: spring elasticity."
+        },
+        {
+          "zh": "永骏英文官网表格写 New Guanlong 2021、YJ8305，同页正文明确将结构称为 Guanlong V4；2021 是型号年份，不是已证实首发日。",
+          "en": "The manufacturer lists New Guanlong 2021 / YJ8305 and explicitly calls its mechanism Guanlong V4 on the same page; 2021 is the model label, not a verified launch date."
         }
       ],
       "assessment": {
@@ -13921,10 +14065,16 @@
       },
       "variants": [
         "Stickerless",
-        "Black"
+        "Black",
+        "New GuanLong 2021 / YJ8305",
+        "冠龙 2021 新款（YJ8305）",
+        "New GuanLong 2021 (YJ8305)",
+        "yj-guanlong-2021"
       ],
       "sourceIds": [
-        "myj-tc-yj-guanlong-v4-3x3"
+        "myj-tc-yj-guanlong-v4-3x3",
+        "myj-yj-official-new-guanlong-3x3",
+        "r3-myj-yj-en-new-guanlong"
       ],
       "tags": [
         "spring"
@@ -14669,6 +14819,392 @@
           "en": "Product photograph corresponding to this model on the cited page; rights remain with the original owner."
         }
       }
+    },
+    {
+      "id": "mfjs-love-u-mf8942",
+      "brand": "MoFangJiaoShi",
+      "name": {
+        "zh": "LOVE U 爱心文字三阶（MF8942）",
+        "en": "LOVE U 3x3 (MF8942)"
+      },
+      "tier": "specialty",
+      "image": {
+        "url": "https://www.cubezz.com/images/202303/goods_img/7181_G_1678504530454.jpg",
+        "sourceId": "r3-myj-cubezz-7181",
+        "alt": {
+          "zh": "魔方教室 MF8942 LOVE U 三阶黑色款",
+          "en": "Cubing Classroom MF8942 LOVE U 3x3 in black"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "商品页实拍明确对应 MF8942 黑色款。",
+          "en": "Actual listing photograph for the black MF8942 SKU."
+        }
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "原始上市日期尚未核实。",
+          "en": "Original release timing remains unverified."
+        },
+        "sourceIds": [
+          "r3-myj-cubezz-7181"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 3.99,
+          "currency": "USD",
+          "region": "International retailer",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "MF8942 / Black / OPP packing",
+          "note": {
+            "zh": "商家目录报价，未核实为首发价；运费及税费以结算为准。",
+            "en": "Retailer listing quote, not a verified launch price; shipping and taxes depend on checkout."
+          },
+          "sourceId": "r3-myj-cubezz-7181"
+        },
+        {
+          "amount": 700,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": "Black Crystal Heart",
+          "note": {
+            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
+            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
+          },
+          "sourceId": "r3-myj-tribox-2548"
+        },
+        {
+          "amount": 5.55,
+          "currency": "USD",
+          "region": "International",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Transparent Crystal Heart",
+          "note": {
+            "zh": "目录列售透明机身外观款；不复制黑色版的净重或尺寸。",
+            "en": "Catalog quote for the transparent-body appearance variant; black-version weight and dimensions are not copied."
+          },
+          "sourceId": "r3-myj-cubezz-category-23"
+        }
+      ],
+      "specs": {
+        "size": "56.5 mm",
+        "weight": "85 g (Cubezz)",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "黑底方块配六色爱心与 LOVE U 字样，厂商货号 MF8942。",
+          "en": "Black pieces feature colored hearts and LOVE U lettering; manufacturer item MF8942."
+        },
+        {
+          "zh": "商家将其作为独立商品销售，标注 56.5 mm、85 g，采用 OPP 包装。",
+          "en": "Sold as a separately named item with 56.5 mm size, 85 g specified item weight and OPP packaging."
+        },
+        {
+          "zh": "Tribox 以 Black Crystal Heart 名称出售相同心形与 LOVE U 面片设计；该页标注约 56.2 mm、84 g，Cubezz MF8942 页标注 56.5 mm、85 g。",
+          "en": "Tribox lists the same heart and LOVE U tile design as Black Crystal Heart, approximately 56.2 mm and 84 g; Cubezz lists MF8942 at 56.5 mm and 85 g."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "以爱心和文字装饰形成独立主题，适合礼赠和图案三阶收藏。",
+          "en": "A distinct heart-and-lettering theme aimed at gifts and picture-cube collecting."
+        },
+        "tradeoffs": {
+          "zh": "商品页没有提供容错、磁体或调节参数；文字方向也需要辨认，不能据外观推断竞速性能。",
+          "en": "The listing gives no corner-cutting, magnet or adjustment specification. Letter orientation adds visual identification, and appearance alone does not establish speed performance."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-myj-cubezz-7181"
+        ]
+      },
+      "variants": [
+        "Black / OPP packing",
+        "Black Crystal Heart / LOVE U",
+        "Transparent Crystal Heart"
+      ],
+      "sourceIds": [
+        "r3-myj-cubezz-7181",
+        "r3-myj-tribox-2548",
+        "r3-myj-cubezz-category-23"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "collectible"
+    },
+    {
+      "id": "yj-yilong",
+      "brand": "YJ",
+      "name": {
+        "zh": "YiLong 三阶",
+        "en": "YiLong 3x3"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "已核实独立商业商品页，但未找到原始首发日期；图片文件时间不作为首发证据。",
+          "en": "A distinct commercial listing is verified, but the original launch date is unverified; image file dates are not launch evidence."
+        },
+        "sourceIds": [
+          "r3-myj-tribox-2584"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 500,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": "Stickerless",
+          "note": {
+            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
+            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
+          },
+          "sourceId": "r3-myj-tribox-2584"
+        }
+      ],
+      "specs": {
+        "size": "~56.1 mm (Tribox)",
+        "weight": "~65.2 g (Tribox)",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "彩色无贴纸机身；商家标注约 56.1 mm、65.2 g。",
+          "en": "Stickerless colored body, listed at approximately 56.1 mm and 65.2 g."
+        },
+        {
+          "zh": "中文正式型号尚未取得原厂依据，保留商家英文名 YiLong。",
+          "en": "The manufacturer’s Chinese name is unverified, so the documented English name YiLong is retained."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "永骏的低价无贴纸三阶；商家明确以 YiLong 独立列售，未将其与 YuLong 合并。",
+          "en": "An inexpensive stickerless YJ 3x3, independently listed as YiLong rather than YuLong."
+        },
+        "tradeoffs": {
+          "zh": "Tribox 指出面板较薄、转动有廉价感；这属于商家主观描述，未取得独立实测。",
+          "en": "Tribox describes thin panels and a cheap turning feel; this is retailer opinion, not an independent test."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-myj-tribox-2584"
+        ]
+      },
+      "variants": [
+        "Stickerless"
+      ],
+      "sourceIds": [
+        "r3-myj-tribox-2584"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "speed",
+      "tier": "budget",
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/01061926_5c31d7e99ba95.png",
+        "sourceId": "r3-myj-tribox-2584",
+        "alt": {
+          "zh": "YiLong 三阶实物图",
+          "en": "YiLong 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应独立商品页的实拍主图；图片归原权利人。",
+          "en": "Photographed main image from the exact product listing; image rights remain with the original owner."
+        }
+      }
+    },
+    {
+      "id": "moyu-teaching-aotu",
+      "brand": "MoYu",
+      "name": {
+        "zh": "教学三阶 · 凹凸",
+        "en": "Teaching 3x3 - Aotu"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "已核实独立商业商品页，但未找到原始首发日期；图片文件时间不作为首发证据。",
+          "en": "A distinct commercial listing is verified, but the original launch date is unverified; image file dates are not launch evidence."
+        },
+        "sourceIds": [
+          "r3-myj-tribox-2940"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 700,
+          "currency": "JPY",
+          "region": "JP",
+          "kind": "historical",
+          "asOf": "2026-10-07",
+          "variant": "Stickerless",
+          "note": {
+            "zh": "日本商家停产/售罄目录保留报价，非首发价；税运费按商店规定。",
+            "en": "Retained Japanese retailer listing price for a discontinued/out-of-stock item, not a launch price; tax and shipping follow store terms."
+          },
+          "sourceId": "r3-myj-tribox-2940"
+        }
+      ],
+      "specs": {
+        "size": "~55.6 mm (Tribox)",
+        "weight": "~64.8 g (Tribox)",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "独立具名教学商品，商家单独列售并提供对应实物图。",
+          "en": "An individually named teaching product with its own retailer listing and photograph."
+        },
+        {
+          "zh": "此款商品页标注约 55.6 mm、64.8 g。",
+          "en": "This exact listing specifies approximately 55.6 mm and 64.8 g."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "保留一面及其相邻侧色的入门训练配色，其他部分大量使用黄色。",
+          "en": "An introductory color layout retaining a complete face and adjacent side colors, with much of the remainder yellow."
+        },
+        "tradeoffs": {
+          "zh": "保留三阶转层，但配色专为局部识别和教学设计；不能按普通六色三阶理解复原目标。首发日期与弹力调节资料未核实。",
+          "en": "Retains 3x3 turning with colors designed for focused recognition and teaching; its solved target differs from a regular six-color cube. Launch timing and elasticity adjustment remain unverified."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-myj-tribox-2940"
+        ]
+      },
+      "variants": [
+        "Aotu"
+      ],
+      "sourceIds": [
+        "r3-myj-tribox-2940"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "educational",
+      "tier": "specialty",
+      "image": {
+        "url": "https://store.tribox.com/upload/save_image/05192111_5ec3cd01e4f75.png",
+        "sourceId": "r3-myj-tribox-2940",
+        "alt": {
+          "zh": "教学三阶 · 凹凸实物图",
+          "en": "Teaching 3x3 - Aotu product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应独立商品页的实拍主图；图片归原权利人。",
+          "en": "Photographed main image from the exact product listing; image rights remain with the original owner."
+        }
+      }
+    },
+    {
+      "id": "yj-numeral-style-3x3",
+      "brand": "YJ",
+      "name": {
+        "zh": "数字图案三阶",
+        "en": "Numeral Style 3x3"
+      },
+      "year": null,
+      "release": {
+        "date": null,
+        "precision": "unknown",
+        "basis": "unknown",
+        "note": {
+          "zh": "商家完整目录可核此具名商品；商品页暂未成功读取，首发时间保持未知。",
+          "en": "The retailer catalog verifies this named commercial listing; the detail page could not be read, so launch timing remains unknown."
+        },
+        "sourceIds": [
+          "r3-myj-cubezz-category-25"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 3.99,
+          "currency": "USD",
+          "region": "International",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "Black",
+          "note": {
+            "zh": "商家目录此具体商品显示的现价；库存和产品规格未由详情页复核。",
+            "en": "Current price displayed for this exact catalog listing; stock and specifications could not be verified on the detail page."
+          },
+          "sourceId": "r3-myj-cubezz-category-25"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "在历史产品目录有独立具名条目、对应商品缩略图及单品价格。",
+          "en": "Has an independently named historical catalog entry, matching product thumbnail and individual price."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "黑色机身配数字面片，方向和数字位置会增加视觉识别要求。",
+          "en": "Black body with numeral tiles; numeral position and orientation add visual recognition requirements."
+        },
+        "tradeoffs": {
+          "zh": "仅确认商品身份、照片和目录价格；不据此推断容错、磁力、净重或首发年。",
+          "en": "Only identity, photograph and catalog price are verified; corner cutting, magnetism, weight and launch year are not inferred."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-myj-cubezz-category-25"
+        ]
+      },
+      "variants": [
+        "Black"
+      ],
+      "sourceIds": [
+        "r3-myj-cubezz-category-25"
+      ],
+      "tags": [],
+      "status": "released",
+      "category": "collectible",
+      "tier": "specialty",
+      "image": {
+        "url": "https://www.cubezz.com/images/201709/thumb_img/5454_thumb_G_1505891435845.jpg",
+        "sourceId": "r3-myj-cubezz-category-25",
+        "alt": {
+          "zh": "数字图案三阶商品图",
+          "en": "Numeral Style 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "历史目录中与该具体商品链接绑定的 150 px 原缩略图；详情页未读取成功，未猜测更大图链。",
+          "en": "The original 150 px thumbnail bound to this exact catalog entry; the detail page is unavailable and no larger URL was guessed."
+        }
+      }
     }
   ],
   "coverageNotes": [
@@ -14683,6 +15219,15 @@
     "傲龙 V6 截止日只核到 2026-10-02 官方预告及海报，状态为 announced，上市日和售价留空。早期丛氏/森幻、部分迷你外观款和永骏官方未注明日期款仍有首发或参数缺口；冠龙 V2=Plus、V3=Plus V3 已按厂商货号合并。 / AoLong V6 has only an October 2, 2026 official teaser and poster verified by the cutoff, so retail date and price remain blank. Early subsidiary models, some mini/styled cubes and undated YJ official listings retain launch/spec gaps; GuanLong V2=Plus and V3=Plus V3 are merged using item codes.",
     "二轮复核修正 Meta3 基础款的跨店命名冲突：将 TheCubicle Magnetic 与图示 Wing Standard 合并，不虚构第四配置；YJ Beta 限定版、Super RS V2 球轴版、TG 灵珠版和 Ferrocore V2 的磁悬浮/弹簧/磁轴分别用第二来源校正。千机及滚珠三阶作为明确命名特殊产品保留；未把所有异形三阶全面纳入主竞速史。 / Second-pass review merges TheCubicle Meta3 Magnetic with the photographed Wing Standard instead of inventing a fourth trim, and corroborates hardware for Beta LE, Super RS V2 ball-core, TG Spirit Pearl and Ferrocore V2. QianJi and Magic Bead are retained as named specialty products; this is not an exhaustive catalog of all shape-mod puzzles.",
     "补核 2026 年 9 月星耀 Stellar Core 与 Ultra：有独立商业选项、15/30 美元价格及各自包装产品图；不把 Ultra 的 124 磁和侧翼配置复制给说明缺失的 Core，也不自动认定为永骏旗下。 / Additional September 2026 Stellar Core and Ultra records have separate commercial options, $15/$30 prices and distinct product photos. Ultra’s 124-magnet wing configuration is not copied to undocumented Core specifications, and YJ brand ownership is not inferred.",
-    "This research dataset is partitioned across moyu-yj.json, moyu-yj-variants.json. Source IDs and family relationships resolve across the combined catalog."
+    "This research dataset is partitioned across moyu-yj.json, moyu-yj-variants.json. Source IDs and family relationships resolve across the combined catalog.",
+    "Round 3: independently checked all 38 pages of the Cubezz YJ/MoYu category (745 listings across every puzzle size, colors, accessories and bundles), all 310 Tribox MoYu entries, all 207 Tribox Cubing Classroom entries, and all 174 Tribox YJ entries. Catalog totals are not counts of distinct 3x3 models. Also cross-checked YJ Chinese standard/MGC catalogs (19 product pages), the broader official English classic catalog, and the MoYu JD flagship catalog. The standalone MoYu manufacturer site returned HTTP 502. Research cutoff remains 2026-10-07.",
+    "New independent second-source additions include MF8942 LOVE U / Black Crystal Heart, three other named Black Crystal tile molds, YJ YiLong, GTS2 M 2019 refresh, five named MoYu Teaching layouts, ChiLong V2 and the YJ Numeral Style. Black Crystal Heart equals the LOVE U design and is not duplicated. Black Circle is retained as an appearance variant of the existing Crystal Ring; transparent Heart and Clover are appearance variants. Robot cases, mosaic multipacks and normal plastic colors do not establish separate mechanical models.",
+    "ChiLong V2 and YJ Numeral Style are verified commercial catalog listings with exact image-link binding and individual prices. Their detail pages repeatedly timed out; release dates, dimensions, weights and mechanical features remain unknown. Exact 150 px catalog thumbnails are retained rather than guessing larger URLs. Cubezz sometimes names the 2025 YuLong V3 family V2; that alias is not counted twice.",
+    "YJ8351 35 mm image gap resolved with the exact SpeedCubeShop 3.5 cm SKU photograph; Tribox independently lists approximately 21.3 g and 35.3 mm. Shopify shipping weight 34 g was not used. Delete imageNote when applying the non-null image update.",
+    "IMPORTANT identity correction: the official English New Guanlong page gives New Guanlong 2021 / YJ8305 and explicitly says its EVO core is applied on Guanlong V4. Merge duplicate yj-guanlong-2021 into the existing fuller yj-guanlong-v4-3x3 record; preserve the latter stable ID, rating, price and retail-added date, and keep the former as an alias if routing supports it. This patch updates V4 and includes an explicit mergedIds mapping for integration and preservation of the former deep link. Original c3 and actual c14 manufacturer images both return 403; the existing exact V4 merchant image is valid once identity is merged.",
+    "Additional official catalog ambiguity remains: an English Guanlong V3 page uses item YJ8393 at 56.5 mm, while the independently verified Plus V3/2018 page uses YJ8358 at 56 mm. No explicit manufacturer identity bridge or distinct release evidence was found, so this has not been silently relabeled or counted as another generation. Verify the exact item number with the manufacturer before merging or adding it.",
+    "Unknown first-release dates remain unknown; image folder timestamps, site migrations and undated current availability are not launch evidence. The GTS2 M 2019 page explicitly dates its color/packaging refresh to 2019 and its later matte panels to around March 2020; its embedded 2017/2018 reviews are not treated as an independent 2019-version test.",
+    "Checked all current records in this brand group for the misspellings 关龙 and 玉龙: none found. Official Chinese labels are 冠龙 and 御龙. Unverified Chinese transliterations such as YiLong remain in documented English rather than being invented.",
+    "Black Crystal Diamond/Clover/Apple use the verified MoFangJiaoShi Black Crystal Heart / LOVE U record mfjs-love-u-mf8942 as their family root. Tribox identifies all four as Cubing Classroom Black Crystal series; the separately retained MoYu-labelled Crystal Ring record is not used as a cross-brand family root."
   ]
 }

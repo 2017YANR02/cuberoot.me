@@ -8,22 +8,26 @@ Cutoff: **2026-10-07**. Prices and review pools describe that research snapshot.
 
 | Measure | Current archive |
 | --- | ---: |
-| Individually addressable model / configuration / named-edition records | 937 |
-| Brand / line labels, including historical trade names | 67 |
-| Unique source URLs | 1248 |
-| Records with source-linked real product photographs | 931 |
-| Exact-model photographs / explicitly shared source photographs | 925 / 6 |
-| Product-page user ratings with review counts and dates | 577 |
-| Price observations retaining currency, region and version | 1290 |
+| Individually addressable model / configuration / named-edition records | 973 |
+| Brand / line labels, including historical trade names | 68 |
+| Unique source URLs | 1331 |
+| Records with source-linked real product photographs | 966 |
+| Exact-model photographs / explicitly shared source photographs | 959 / 7 |
+| Product-page user ratings with review counts and dates | 578 |
+| Price observations retaining currency, region and version | 1336 |
 | Records containing an original CNY quotation | 5 |
 | Additional official family quotes with unspecified configuration | 7 |
 | Records with an official date, including announcements | 31 |
-| Records without a verified sorting year | 168 |
-| Records without a verified price / identifiable item weight | 32 / 321 |
+| Records without a verified sorting year | 188 |
+| Records without a verified price / identifiable item weight | 31 / 321 |
 
-The first edition had 249 entries. Every original model ID is preserved so existing links continue to work. Heterogeneous family records now name a specific configuration and link their separately documented siblings through `familyId`. This record count includes distinct coatings and named commercial editions; it is not a count of unique mechanical designs or proof that every worldwide SKU has been recovered.
+The first edition had 249 entries. Original shared links remain usable. A manufacturer-confirmed duplicate, GuanLong 2021 / GuanLong V4, now resolves through an evidence-linked alias to one canonical record. Heterogeneous family records now name a specific configuration and link their separately documented siblings through `familyId`. This record count includes distinct coatings and named commercial editions; it is not a count of unique mechanical designs or proof that every worldwide SKU has been recovered.
 
 The second research pass cross-checked the 4,688-product public TheCubicle catalog, including discontinued listings, against manufacturer catalogs, other retailers, dated announcements and surviving historical records. TheCubicle catalog's product-type label was treated as a lead, with individual product evidence determining inclusion. Brand-specific handover notes are retained in each dataset's `coverageNotes`.
+
+The third pass adds 37 independently documented records, updates 96 existing records and merges one confirmed duplicate, moving from 937 to 973 records. It checks manufacturer terminology against further Tribox, Cubezz, Ziicube and historical sources. The MoYu/YJ pass reached all 38 pages of the relevant Cubezz category; the other-brand Cubezz pass reached pages 1–19 and 57 before repeated timeouts. These are explicit audited scopes, not claims that every source catalog was fully recovered. Source notes retain the remaining candidates and exclusions.
+
+Corrections include the official GuanLong 2021 / V4 naming bridge, an earlier documentary date for ShengShou Legend S, Chinese Tornado aliases including 风四代, and independent Solar 3E / ME records. New historical context includes Cube4You Tile, Maze and Gas Assisted models plus the principal V-CUBE 3×3 branches. Source photograph recovery closes the ordinary Cube4You and YJ 35 mm pillow gaps. Three newly documented early GAN custom/limited records and C4Y Gas Assisted remain explicitly without verified images.
 
 ## GAN11–16 navigation
 
@@ -50,21 +54,23 @@ The ordinary GAN12 Leap retains its spring configuration; GAN13 FX retains fixed
 | `_data/query.ts` | Search, intersecting filters, sorting, comparison and evidence references |
 | `_data/catalog.ts` | Combines datasets and builds the source index |
 | `_data/milestones.ts` | Thirteen evidence-linked narrative milestones from 1974 to 2026 |
-| `_data/historical.json` | 128 records: origins, early Chinese DIY brands, early smart cubes, teaching and miniature products |
+| `_data/historical.json` | 138 records: origins, early Chinese DIY brands, early smart cubes, teaching and miniature products |
 | `_data/historical-brands.json` | 80 records: MoreTry, Maru, Cyclone Boys, HaiTun, ESCube, HuDong, VIN and Cuber’s Home |
 | `_data/historical-collectibles.json` | 136 records: Calvin’s Puzzle, Ziina, ZCube and TheCubicle picture and collectible lines |
-| `_data/gan.json` | 166 records: GAN, Monster Go, Swift Block and Rubik’s × GAN |
-| `_data/moyu-yj.json` | 105 root or standalone records: MoYu, MFJS, GuoGuan, YJ, HuaMeng and related smaller lines |
+| `_data/gan.json` | 140 records: mechanical GAN, Monster Go, Swift Block and Rubik’s × GAN |
+| `_data/gan-smart.json` | 32 smart GAN and related records, preserving their original model IDs |
+| `_data/aliases.json` | Evidence-linked canonical redirects for merged duplicate records |
+| `_data/moyu-yj.json` | 109 root or standalone records: MoYu, MFJS, GuoGuan, YJ, HuaMeng and related smaller lines |
 | `_data/moyu-yj-variants.json` | 109 individually documented family configurations and named editions |
-| `_data/qiyi-other.json` | 118 records: DaYan, YuXin, ShengShou, DianSheng and MsCube |
-| `_data/qiyi-xman.json` | 95 records: QiYi and X-Man Design |
+| `_data/qiyi-other.json` | 124 records: DaYan, YuXin, ShengShou, DianSheng and MsCube |
+| `_data/qiyi-xman.json` | 97 records: QiYi and X-Man Design |
 | `../../../tests/cube-history.test.ts` | Dates, currencies, sources, photos, ratings, family relationships and query behavior |
 
 Only `lib/page-meta.ts` is changed outside the route and its dedicated tests. The existing metadata-driven homepage search and sitemap discover the route. The implementation uses the site's TypeScript/Next.js architecture, existing shared controls and nuqs URL state; it adds no backend, dependency or standalone HTML application.
 
 ## Browsing and review
 
-The default view is the photo catalog. Brand, calendar year, era, family, positioning, category, technology and evidence filters intersect. Search examines every record; the result bar states how many are currently rendered and provides a Show all action. Cards, the table, details and comparisons all display the source-linked product photo.
+The default view is the photo catalog. Brand, calendar year, era, family, positioning, category, technology and evidence filters intersect. GAN, MoYu, QiYi and YJ lead both the image shortcuts and brand dropdown. Search is the primary entry; brand, family, year and position remain immediately visible, with secondary facets under More filters and individual active-filter removal. Search examines every record and defaults to model-name relevance; explicit chronological and natural model-name sorting remain available. Compact, full-width and bilingual queries retain generation-number boundaries and configuration names. The result bar distinguishes the complete match count from the currently rendered page, with Show all and Back to search actions below the results. Cards, the table, details and comparisons all display the source-linked product photo.
 
 After selecting a brand, the annual-lineup section shows every year from that brand's earliest documented year through the cutoff, with columns for flagships, other positions and unclassified records. Empty years remain visible as evidence gaps. They do not establish that the manufacturer released nothing that year. Clicking a year retains the brand and clears the other filters.
 
@@ -96,11 +102,12 @@ Records still without an identified product photograph:
 | Stable ID | Model |
 | --- | --- |
 | alpha-v-feng | 国甲 封五（Alpha V Feng） |
-| cube4you-3x3 | Cube4You 三阶（C4Y） |
+| cube4you-gas-assisted | Cube4You Gas Assisted 三阶 |
 | gan2 | GAN2 / Ganspuzzle II |
 | gan1 | GAN1（早期型号，资料待补） |
-| yj-guanlong-2021 | 冠龙 2021 新款（YJ8305） |
-| yj-mini-pillowed-35mm | 枕形迷你三阶 35 mm（YJ8351） |
+| gan354-m-infinity | GAN INFINITY 354 M 原厂定制 |
+| gan356-x-infinity | GAN INFINITY 356 X 原厂定制 |
+| gan356-i-5th-white | GAN356 i 五周年白色限定版 |
 
 These gaps are visible in the public Missing photo filter. Smart-cube app compatibility and discontinued stock can change after the cutoff. Announcements, including AoLong V6 and any unconfirmed retail releases, remain clearly labeled.
 
@@ -122,7 +129,7 @@ pnpm --filter @cuberoot/client typecheck
 pnpm --filter @cuberoot/client exec vitest run tests/cube-history.test.ts tests/page-metadata-coverage.test.ts tests/component-reuse-guard.test.ts tests/site-material-guard.test.ts tests/url-state-no-raw-history.test.ts
 ```
 
-PR CI checks the wider client suite and repository contracts; Vercel builds the preview for the exact branch commit. Research validation also checks photo HTTP status and content type, source resolution, valid date precision, positive currency-qualified prices, merchant-rating sample bounds, preserved original IDs and explicit independent GAN11–16 versions.
+PR CI checks the wider client suite and repository contracts; Vercel builds the preview for the exact branch commit. Research validation also checks photo HTTP status and content type, source resolution, valid date precision, positive currency-qualified prices, merchant-rating sample bounds, original links through stable IDs or documented aliases, every full Chinese/English model name matching itself, precise MAX-L queries, natural numeric ordering and explicit independent GAN11–16 versions.
 
 The revision has been served through the local Next.js route in Chinese and English, including a direct GAN12 model/family URL. Browser transport was unavailable during this revision, so desktop/mobile screenshots, real touch interaction and the four theme combinations still require review in the linked preview. Automated checks and HTTP responses do not substitute for that visual inspection.
 

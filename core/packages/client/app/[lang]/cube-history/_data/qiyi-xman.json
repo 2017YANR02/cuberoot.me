@@ -1028,6 +1028,48 @@
       "url": "https://www.thecubicle.com/products/valk-3-power-m-le-lilac-purple",
       "publisher": "TheCubicle",
       "kind": "retailer"
+    },
+    {
+      "id": "r3-ziicube-qiyi-bubble",
+      "title": "QY Bubble 3x3x3 Cube — six color schemes, QY3280/3281/3283/3284/3285",
+      "url": "https://www.ziicube.com/QY-Bubble-3x3",
+      "publisher": "Ziicube",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-strefa-qiyi-bubble",
+      "title": "QiYi Bubble 3x3",
+      "url": "https://strefa-kostek.pl/qiyi-bubble-3x3-8294.html",
+      "publisher": "StrefaKostek",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-strefa-qiyi-bubble-sandwich",
+      "title": "QiYi Bubble 3x3 Sandwich",
+      "url": "https://strefa-kostek.pl/qiyi-bubble-3x3-sandwich-8295.html",
+      "publisher": "StrefaKostek",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-maru-qiyi-blackmamba-v1",
+      "title": "奇藝黑曼巴初代 — 56.5 mm",
+      "url": "https://store.maru.tw/index.php?route=product/product&product_id=948",
+      "publisher": "Maru Cube",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-maru-qiyi-blackmamba-v2",
+      "title": "奇藝黑曼巴二代 — 42 mm",
+      "url": "https://store.maru.tw/qiyi?order=DESC&page=14&product_id=949&sort=pd.name",
+      "publisher": "Maru Cube",
+      "kind": "retailer"
+    },
+    {
+      "id": "r3-cubezz-qiyi-blackmamba-v3",
+      "title": "QiYi Black Mamba V3 — QY3096C, five-level elasticity",
+      "url": "https://cubezz.com/goods.php?id=6863",
+      "publisher": "Cubezz",
+      "kind": "retailer"
     }
   ],
   "cubes": [
@@ -1214,11 +1256,15 @@
       ],
       "sourceIds": [
         "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv-20-m-ball-core-saocube-se",
-        "qo-tornado-premium-config"
+        "qo-tornado-premium-config",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -1425,13 +1471,17 @@
       "sourceIds": [
         "xman-tornado-v4-ai-retail",
         "xman-tornado-ai-official",
-        "qo-product-x-man-tornado-v4-ai-3x3-uv-with-charging-base"
+        "qo-product-x-man-tornado-v4-ai-3x3-uv-with-charging-base",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "magnet",
         "bluetooth",
         "gyroscope",
-        "uv"
+        "uv",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "smart",
@@ -1564,7 +1614,10 @@
         "maglev",
         "adjustable",
         "uv-optional",
-        "uv"
+        "uv",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -2003,7 +2056,10 @@
       "tags": [
         "spring",
         "magnet",
-        "adjustable"
+        "adjustable",
+        "风三阶二代",
+        "风二代",
+        "Tornado V2"
       ],
       "status": "released",
       "category": "speed",
@@ -2106,11 +2162,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v3-m-standard"
+        "qo-product-x-man-tornado-v3-m-standard",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -2522,11 +2582,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-3x3-flagship-picube-special-edition"
+        "qo-product-x-man-tornado-v4-3x3-flagship-picube-special-edition",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -3043,11 +3107,15 @@
       },
       "variants": [],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-ai-3x3-uv-zephyr-le"
+        "qo-product-x-man-tornado-v4-ai-3x3-uv-zephyr-le",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "smart",
@@ -3150,11 +3218,15 @@
       },
       "variants": [],
       "sourceIds": [
-        "qo-product-x-man-tornado-v3-m-pioneer-firefly-2024-limited-edition"
+        "qo-product-x-man-tornado-v3-m-pioneer-firefly-2024-limited-edition",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -3790,7 +3862,10 @@
         "maglev",
         "adjustable",
         "uv-optional",
-        "uv"
+        "uv",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -4319,11 +4394,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v3-m-pioneer-uv-3x3"
+        "qo-product-x-man-tornado-v3-m-pioneer-uv-3x3",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -4734,11 +4813,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-m-3x3-flagship-blue-core-special-edition"
+        "qo-product-x-man-tornado-v4-m-3x3-flagship-blue-core-special-edition",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -5005,8 +5088,8 @@
       "id": "qiyi-mini-42",
       "brand": "QiYi",
       "name": {
-        "en": "Mini 3x3 42mm",
-        "zh": "迷你 奇艺 三阶 42mm"
+        "zh": "奇艺 黑曼巴二代 42 mm",
+        "en": "QiYi Black Mamba V2 42 mm (Mini QiYi)"
       },
       "year": null,
       "release": {
@@ -5068,11 +5151,16 @@
         "Stickerless (Dark)"
       ],
       "sourceIds": [
-        "qo-product-mini-qiyi-3x3-42mm"
+        "qo-product-mini-qiyi-3x3-42mm",
+        "r3-maru-qiyi-blackmamba-v2"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "黑曼巴",
+        "黑曼巴二代",
+        "Black Mamba V2",
+        "HeiManBa V2"
       ],
       "status": "released",
       "category": "mini",
@@ -5101,7 +5189,8 @@
           "zh": "TheCubicle 此商品页的用户评分与评论数；页面可能合并配色或配置的评价，未进行独立样本审计，也不代表本档案的性能打分。",
           "en": "TheCubicle’s product-page rating and review count; the page may pool colorways or configurations. The sample is not independently audited and this is not an archive performance score."
         }
-      }
+      },
+      "familyId": "qiyi-3x3"
     },
     {
       "id": "xman-tornado-v4-m-3x3-flagship-red-core-special-edition",
@@ -5176,11 +5265,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-m-3x3-flagship-red-core-special-edition"
+        "qo-product-x-man-tornado-v4-m-3x3-flagship-red-core-special-edition",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -5393,11 +5486,15 @@
       ],
       "sourceIds": [
         "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv",
-        "qo-tornado-premium-config"
+        "qo-tornado-premium-config",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -6280,11 +6377,15 @@
       ],
       "sourceIds": [
         "qo-product-x-man-tornado-v3-3x3-premium-pioneer-uv",
-        "qo-tornado-premium-config"
+        "qo-tornado-premium-config",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -6490,11 +6591,15 @@
       },
       "variants": [],
       "sourceIds": [
-        "qo-product-x-man-tornado-v3-m-pioneer-limited-edition"
+        "qo-product-x-man-tornado-v3-m-pioneer-limited-edition",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -6828,11 +6933,15 @@
       ],
       "sourceIds": [
         "qo-product-x-man-tornado-v3-3x3-premium-standard-2",
-        "qo-tornado-premium-config"
+        "qo-tornado-premium-config",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -8172,11 +8281,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v3-m-magnetic-core-maglev"
+        "qo-product-x-man-tornado-v3-m-magnetic-core-maglev",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -8273,11 +8386,15 @@
       },
       "variants": [],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-10th-anniversary-limited-edition"
+        "qo-product-x-man-tornado-v4-10th-anniversary-limited-edition",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -8609,11 +8726,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v3-m-pioneer-3x3-revived-limited-edition"
+        "qo-product-x-man-tornado-v3-m-pioneer-3x3-revived-limited-edition",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -8936,11 +9057,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "xman-tornado-v4-pioneer"
+        "xman-tornado-v4-pioneer",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -9279,11 +9404,15 @@
         "Stickerless / Primary Internals"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v2-limited-edition"
+        "qo-product-x-man-tornado-v2-limited-edition",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶二代",
+        "风二代",
+        "Tornado V2"
       ],
       "status": "released",
       "category": "speed",
@@ -9555,8 +9684,8 @@
       "id": "qiyi-black-mamba-3x3-v3",
       "brand": "QiYi",
       "name": {
-        "en": "Black Mamba 3x3 V3",
-        "zh": "奇艺 Black Mamba 三阶 V3"
+        "zh": "奇艺 黑曼巴三代 V3",
+        "en": "QiYi Black Mamba V3"
       },
       "year": 2022,
       "release": {
@@ -9591,9 +9720,13 @@
         "weight": "71.0 g",
         "mechanism": [
           "non-magnetic",
-          "spring"
+          "spring",
+          "adjustable"
         ],
-        "adjustment": null
+        "adjustment": {
+          "zh": "商家列五档弹力调节；仍为无磁角棱定位。",
+          "en": "Retailer lists five elasticity settings; corner-edge alignment remains non-magnetic."
+        }
       },
       "highlights": [
         {
@@ -9619,11 +9752,16 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-qiyi-black-mamba-3x3-v3"
+        "qo-product-qiyi-black-mamba-3x3-v3",
+        "r3-cubezz-qiyi-blackmamba-v3"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "黑曼巴",
+        "黑曼巴三代",
+        "Black Mamba V3",
+        "HeiManBa V3"
       ],
       "status": "released",
       "category": "speed",
@@ -9652,7 +9790,8 @@
           "zh": "TheCubicle 此商品页的用户评分与评论数；页面可能合并配色或配置的评价，未进行独立样本审计，也不代表本档案的性能打分。",
           "en": "TheCubicle’s product-page rating and review count; the page may pool colorways or configurations. The sample is not independently audited and this is not an archive performance score."
         }
-      }
+      },
+      "familyId": "qiyi-3x3"
     },
     {
       "id": "xman-tornado-v2-le-infinity-stone",
@@ -9719,11 +9858,15 @@
       },
       "variants": [],
       "sourceIds": [
-        "qo-product-x-man-tornado-v2-le-infinity-stone"
+        "qo-product-x-man-tornado-v2-le-infinity-stone",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶二代",
+        "风二代",
+        "Tornado V2"
       ],
       "status": "released",
       "category": "speed",
@@ -10073,8 +10216,8 @@
       "id": "qiyi-3x3",
       "brand": "QiYi",
       "name": {
-        "en": "3x3",
-        "zh": "奇艺 三阶"
+        "zh": "奇艺 黑曼巴初代",
+        "en": "QiYi Black Mamba V1 (original QiYi 3x3)"
       },
       "year": null,
       "release": {
@@ -10105,7 +10248,7 @@
         }
       ],
       "specs": {
-        "size": null,
+        "size": "56.5 mm",
         "weight": null,
         "mechanism": [
           "non-magnetic",
@@ -10138,11 +10281,16 @@
         "Stickerless (Dark)"
       ],
       "sourceIds": [
-        "qo-product-qiyi-3x3"
+        "qo-product-qiyi-3x3",
+        "r3-maru-qiyi-blackmamba-v1"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "黑曼巴",
+        "黑曼巴一代",
+        "Black Mamba",
+        "HeiManBa"
       ],
       "status": "released",
       "category": "speed",
@@ -10345,11 +10493,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-m-3x3-limited-edition"
+        "qo-product-x-man-tornado-v4-m-3x3-limited-edition",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -10572,11 +10724,15 @@
       ],
       "sourceIds": [
         "qo-product-x-man-tornado-v3-3x3-premium-flagship-uv-saocube-se",
-        "qo-tornado-premium-config"
+        "qo-tornado-premium-config",
+        "qiyi-official-history"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶三代",
+        "风三代",
+        "Tornado V3"
       ],
       "status": "released",
       "category": "speed",
@@ -11136,11 +11292,15 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "qo-product-x-man-tornado-v4-m-3x3-flagship-special-edition"
+        "qo-product-x-man-tornado-v4-m-3x3-flagship-special-edition",
+        "xman-tornado-v4-official"
       ],
       "tags": [
         "archive-expanded",
-        "version-specific"
+        "version-specific",
+        "风三阶四代",
+        "风四代",
+        "Tornado V4"
       ],
       "status": "released",
       "category": "speed",
@@ -11284,6 +11444,223 @@
           "en": "TheCubicle’s product-page rating and review count; the page may pool colorways or configurations. The sample is not independently audited and this is not an archive performance score."
         }
       }
+    },
+    {
+      "id": "qiyi-bubble-3x3",
+      "brand": "QiYi",
+      "name": {
+        "zh": "奇艺 Bubble 泡泡三阶",
+        "en": "QiYi Bubble 3x3"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-09-03",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "Ziicube包含普通六色与三明治配色的共同商品页列Added 2026-09-03；此为共享页面上架日，无法证明每种配色均在当天首发。",
+          "en": "Ziicube’s shared page for ordinary six-color and Sandwich schemes lists Added 2026-09-03. This is a shared-page listing date, not proof that every color configuration launched on that day."
+        },
+        "sourceIds": [
+          "r3-ziicube-qiyi-bubble"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "currency": "PLN",
+          "region": "PL",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-strefa-qiyi-bubble"
+        },
+        {
+          "amount": 1.22,
+          "currency": "USD",
+          "region": "CN",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "QY3280 / QY3281",
+          "note": {
+            "zh": "Ziicube对应配色配置的折后批发零售标价，不含国际运费。",
+            "en": "Ziicube discounted listing price for the corresponding color configurations, excluding international shipping."
+          },
+          "sourceId": "r3-ziicube-qiyi-bubble"
+        }
+      ],
+      "specs": {
+        "size": "58 mm",
+        "weight": "57 g",
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "球状外表面保持三阶分层结构；基础款提供标准六色、马卡龙与透明六色。",
+          "en": "Spherical outer surfaces retain a 3x3 layer structure; the base model offers standard, macaron and transparent six-color schemes."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "重视造型和抓握体验，非已证实的竞速旗舰。",
+          "en": "Emphasizes appearance and grip rather than documented flagship speed performance."
+        },
+        "tradeoffs": {
+          "zh": "球状突起改变抓握；没有独立容错或耐用性实测。纯配色列为变体，透明材质不等于UV涂层。",
+          "en": "Raised spherical surfaces alter grip; independent corner-cutting or durability tests are unavailable. Color-only versions remain variants; transparent material does not imply UV coating."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-strefa-qiyi-bubble",
+          "r3-ziicube-qiyi-bubble"
+        ]
+      },
+      "variants": [
+        "Standard Color / QY3280",
+        "Macaron / QY3280",
+        "Crystal Transparent / QY3281"
+      ],
+      "sourceIds": [
+        "r3-strefa-qiyi-bubble",
+        "r3-ziicube-qiyi-bubble"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "泡泡魔方",
+        "Bubble"
+      ],
+      "status": "released",
+      "category": "classic",
+      "tier": "specialty",
+      "image": {
+        "url": "https://strefa-kostek.pl/37638-large_default/qiyi-bubble-3x3.jpg",
+        "sourceId": "r3-strefa-qiyi-bubble",
+        "alt": {
+          "zh": "奇艺 Bubble 泡泡三阶商品图",
+          "en": "QiYi Bubble 3x3 product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      }
+    },
+    {
+      "id": "qiyi-bubble-3x3-sandwich",
+      "brand": "QiYi",
+      "name": {
+        "zh": "奇艺 Bubble 泡泡三阶 三明治教学版",
+        "en": "QiYi Bubble 3x3 Sandwich"
+      },
+      "year": 2026,
+      "release": {
+        "date": "2026-09-03",
+        "precision": "day",
+        "basis": "retailer",
+        "note": {
+          "zh": "Ziicube包含普通六色与三明治配色的共同商品页列Added 2026-09-03；此为共享页面上架日，无法证明每种配色均在当天首发。",
+          "en": "Ziicube’s shared page for ordinary six-color and Sandwich schemes lists Added 2026-09-03. This is a shared-page listing date, not proof that every color configuration launched on that day."
+        },
+        "sourceIds": [
+          "r3-ziicube-qiyi-bubble"
+        ]
+      },
+      "prices": [
+        {
+          "amount": 14.99,
+          "currency": "PLN",
+          "region": "PL",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": null,
+          "note": {
+            "zh": "研究快照中的商家标价，不是首发价；库存、税费与运费以原页面为准。",
+            "en": "Retailer price in the research snapshot, not a launch price; stock, tax and shipping follow the original page."
+          },
+          "sourceId": "r3-strefa-qiyi-bubble-sandwich"
+        },
+        {
+          "amount": 1.43,
+          "currency": "USD",
+          "region": "CN",
+          "kind": "current",
+          "asOf": "2026-10-07",
+          "variant": "QY3283 / QY3284 / QY3285",
+          "note": {
+            "zh": "Ziicube对应配色配置的折后批发零售标价，不含国际运费。",
+            "en": "Ziicube discounted listing price for the corresponding color configurations, excluding international shipping."
+          },
+          "sourceId": "r3-ziicube-qiyi-bubble"
+        }
+      ],
+      "specs": {
+        "size": null,
+        "weight": null,
+        "mechanism": [],
+        "adjustment": null
+      },
+      "highlights": [
+        {
+          "zh": "球状外形配合三层简化配色；StrefaKostek将Sandwich单独命名销售。",
+          "en": "Spherical contours with simplified layer colors; StrefaKostek sells Sandwich under its own named product listing."
+        }
+      ],
+      "assessment": {
+        "summary": {
+          "zh": "三明治版减少复原的配色约束，可用于分层练习。",
+          "en": "The Sandwich version reduces color constraints for layer-based practice."
+        },
+        "tradeoffs": {
+          "zh": "本配置的独立净重与尺寸尚未证实；没有把普通六色版参数直接复制。透明配色不等于UV涂层。",
+          "en": "Separate size and net weight for this configuration are unverified and are not copied from the ordinary six-color version. Transparent colors do not establish UV coating."
+        },
+        "basis": "editorial",
+        "sourceIds": [
+          "r3-strefa-qiyi-bubble-sandwich",
+          "r3-ziicube-qiyi-bubble"
+        ]
+      },
+      "variants": [
+        "Gradient Blue / QY3283",
+        "Gelato / QY3284",
+        "Transparent Blue / QY3285"
+      ],
+      "sourceIds": [
+        "r3-strefa-qiyi-bubble-sandwich",
+        "r3-ziicube-qiyi-bubble"
+      ],
+      "tags": [
+        "round3-second-source-audit",
+        "independently-sold",
+        "泡泡魔方",
+        "Bubble",
+        "三明治",
+        "教学三阶"
+      ],
+      "status": "released",
+      "category": "educational",
+      "tier": "specialty",
+      "image": {
+        "url": "https://strefa-kostek.pl/37647-large_default/qiyi-bubble-3x3-sandwich.jpg",
+        "sourceId": "r3-strefa-qiyi-bubble-sandwich",
+        "alt": {
+          "zh": "奇艺 Bubble 泡泡三阶 三明治教学版商品图",
+          "en": "QiYi Bubble 3x3 Sandwich product photograph"
+        },
+        "match": "exact",
+        "note": {
+          "zh": "对应型号原商品页实际图片，已核对型号与图像可访问性。",
+          "en": "Actual image from the matching model product page; identity and image accessibility verified."
+        }
+      },
+      "familyId": "qiyi-bubble-3x3"
     }
   ],
   "coverageNotes": [
