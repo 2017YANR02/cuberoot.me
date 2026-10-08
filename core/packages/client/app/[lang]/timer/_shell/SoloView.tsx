@@ -3022,8 +3022,10 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               selectEvent(nextEvent);
             }}
             onChange={(scrambleSource) => {
-              if (selectedPuzzle === '222') setType222('full');
-              selectEvent(selectedPuzzle);
+              if (scrambleSource !== 'manual') {
+                if (selectedPuzzle === '222') setType222('full');
+                selectEvent(selectedPuzzle);
+              }
               updateSettings({ scrambleSource });
             }}
             realValue="wca"

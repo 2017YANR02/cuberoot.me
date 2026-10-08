@@ -3894,7 +3894,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                         return;
                       }
                       const selection = timerPuzzleSelection(activeEvent);
-                      const leavingTraining = selection.puzzle === '333' && activeEvent !== '333';
+                      const leavingTraining = source !== 'manual' && selection.puzzle === '333' && activeEvent !== '333';
                       if (source === scrambleSourceRef.current && !leavingTraining) return;
                       invalidateCurrentScramble();
                       setScrambleSource(source);
