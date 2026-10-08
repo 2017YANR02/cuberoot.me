@@ -239,7 +239,9 @@ export interface TimerWcaScrambleMarksHttp {
 }
 
 function marksEndpoint(apiBase: string): string {
-  return `${apiBase.replace(/\/+$/, '')}/v1/scramble-marks`;
+  let end = apiBase.length;
+  while (end > 0 && apiBase[end - 1] === '/') end--;
+  return `${apiBase.slice(0, end)}/v1/scramble-marks`;
 }
 
 function markQuery(key: TimerWcaScrambleMarkKey): string {

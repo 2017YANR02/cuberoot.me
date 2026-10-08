@@ -15,6 +15,11 @@ import { act, createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('@/lib/web-session', async original => ({
+  ...await original<typeof import('@/lib/web-session')>(),
+  getWebAccessToken: vi.fn(async () => 'test-token'),
+}));
+
 const labels: TimerWcaScrambleProgressLabels = timerWcaScrambleProgressLabels('en');
 
 describe('shared TimerWcaScrambleProgress', () => {
@@ -349,7 +354,7 @@ describe('shared TimerWcaScrambleProgress', () => {
 
   it('keeps the Web marks adapter URL, auth and response behavior', async () => {
     vi.resetModules();
-    localStorage.setItem('cuberoot_jwt', 'test-token');
+    localStorage.setItem('cuberoot_web_session_marker', 'web-session:marks-owner');
     const fetcher = vi.fn();
     vi.stubGlobal('fetch', fetcher);
     const {
@@ -376,9 +381,10 @@ describe('shared TimerWcaScrambleProgress', () => {
       json: async () => ({ ok: true, createdAt: 2 }),
     });
     await expect(addMark(key, 812, 'CN')).resolves.toBeUndefined();
+    expect(new Headers(fetcher.mock.calls[1]?.[1]?.headers).get('Authorization')).toBe('Bearer test-token');
+    expect(new Headers(fetcher.mock.calls[1]?.[1]?.headers).get('Content-Type')).toBe('application/json');
     expect(fetcher.mock.calls[1]?.[1]).toMatchObject({
       method: 'POST',
-      headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
     });
 
     fetcher.mockResolvedValueOnce({
@@ -387,9 +393,10 @@ describe('shared TimerWcaScrambleProgress', () => {
       json: async () => ({ ok: true, updated: false, createdAt: null }),
     });
     await expect(updateMarkIfExists(key, 812, '')).resolves.toBe(false);
+    expect(new Headers(fetcher.mock.calls[2]?.[1]?.headers).get('Authorization')).toBe('Bearer test-token');
+    expect(new Headers(fetcher.mock.calls[2]?.[1]?.headers).get('Content-Type')).toBe('application/json');
     expect(fetcher.mock.calls[2]?.[1]).toMatchObject({
       method: 'PATCH',
-      headers: { Authorization: 'Bearer test-token', 'Content-Type': 'application/json' },
     });
     expect(JSON.parse(String(fetcher.mock.calls[2]?.[1]?.body))).toMatchObject({
       ...key,

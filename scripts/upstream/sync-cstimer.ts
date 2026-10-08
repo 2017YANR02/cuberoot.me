@@ -10,7 +10,9 @@ export function syncCstimer({ root, upstream, skipPull = false }: Input): void {
   if (!skipPull) command('git', ['-C', upstream, 'pull', '--ff-only', 'origin', 'master']);
   if (process.platform === 'win32') {
     const bash = process.env.CUBE_GIT_BASH ?? 'bash';
-    const prefix = process.env.CUBE_MINGW_BIN ? `export PATH="${process.env.CUBE_MINGW_BIN}:$PATH" && ` : '';
+    // Keep the environment value out of shell source. Shell parameter expansion
+    // does not re-interpret quotes, backticks or $() inside the resulting value.
+    const prefix = process.env.CUBE_MINGW_BIN ? 'export PATH="$CUBE_MINGW_BIN:$PATH" && ' : '';
     command(bash, ['-c', `${prefix}mingw32-make local`], { cwd: upstream });
     command(bash, ['-c', `${prefix}mingw32-make battle_module`], { cwd: upstream });
   } else {

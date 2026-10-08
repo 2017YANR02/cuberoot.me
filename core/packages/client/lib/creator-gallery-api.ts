@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { API_ORIGIN } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -14,7 +15,7 @@ interface CreatorGalleryCaptionResponse {
 }
 
 export async function getCreatorGalleryCaptions(): Promise<CreatorGalleryCaption[]> {
-  const response = await handleApi<CreatorGalleryCaptionResponse>(await fetch(BASE));
+  const response = await handleApi<CreatorGalleryCaptionResponse>(await sessionFetch(BASE));
   return response.captions;
 }
 
@@ -22,7 +23,7 @@ export async function saveCreatorGalleryCaptions(
   captions: CreatorGalleryCaption[],
 ): Promise<CreatorGalleryCaption[]> {
   const response = await handleApi<CreatorGalleryCaptionResponse>(
-    await fetch(BASE, {
+    await sessionFetch(BASE, {
       method: 'PUT',
       headers: authHeaders(),
       body: JSON.stringify({ captions }),

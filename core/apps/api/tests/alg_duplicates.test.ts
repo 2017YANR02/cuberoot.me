@@ -126,4 +126,18 @@ describe('standard and community formula duplicate enforcement', () => {
     expect(() => assertUniqueCaseAlgs([[{ alg: 'R U' }], [{ alg: '(R U)' }]])).not.toThrow();
     expect(() => assertUniqueCaseAlgs([{}])).toThrow('invalid algs');
   });
+
+  it.each(['3x3', 'pyraminx'])('cleans stored markup on %s without changing the algorithm', async puzzle => {
+    mocks.query.mockImplementation(async (sql: string, params: unknown[]) => {
+      if (sql.startsWith('UPDATE alg_cases')) return [{ id: 7, puzzle, set_slug: 'test', name: 'A', setup: '', standard: null, algs: params[5] }];
+      return [];
+    });
+    const response = await send(`sets/${puzzle}/test/cases/7`, 'PUT', {
+      caseName: 'A', sticker: {},
+      algs: [[{ alg: 'R U', algHtml: '<u class="wavy" onclick="bad()">R</u> U <<x>img src=x onerror=alert(1)>' }]],
+    });
+    expect(response.status).toBe(200);
+    const update = mocks.query.mock.calls.find(([sql]) => sql.startsWith('UPDATE alg_cases'));
+    expect(update?.[1][5]).toEqual([[{ alg: 'R U', algHtml: '<u class="wavy">R</u> U &lt;img src=x onerror=alert(1)&gt;' }]]);
+  });
 });

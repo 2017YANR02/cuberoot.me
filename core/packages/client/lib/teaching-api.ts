@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from './api-base';
 import { authHeaders, handleApi } from './admin-api';
 
@@ -51,14 +52,14 @@ export interface TrialLessonDraft {
 }
 
 export async function fetchTrialLessonOverrides(): Promise<TrialLessonOverride[]> {
-  return handleApi(await fetch(apiUrl('/v1/teaching/trial'), { cache: 'no-store' }));
+  return handleApi(await sessionFetch(apiUrl('/v1/teaching/trial'), { cache: 'no-store' }));
 }
 
 export async function updateTrialLessonOverride(
   lessonId: string,
   draft: TrialLessonDraft,
 ): Promise<TrialLessonOverride> {
-  return handleApi(await fetch(apiUrl(`/v1/teaching/trial/${encodeURIComponent(lessonId)}`), {
+  return handleApi(await sessionFetch(apiUrl(`/v1/teaching/trial/${encodeURIComponent(lessonId)}`), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(draft),
@@ -66,11 +67,11 @@ export async function updateTrialLessonOverride(
 }
 
 export async function fetchAdvancedCourseLessons(): Promise<AdvancedCourseLesson[]> {
-  return handleApi(await fetch(apiUrl('/v1/teaching/advanced'), { cache: 'no-store' }));
+  return handleApi(await sessionFetch(apiUrl('/v1/teaching/advanced'), { cache: 'no-store' }));
 }
 
 export async function createAdvancedCourseLesson(draft: AdvancedCourseDraft): Promise<AdvancedCourseLesson> {
-  return handleApi(await fetch(apiUrl('/v1/teaching/advanced'), {
+  return handleApi(await sessionFetch(apiUrl('/v1/teaching/advanced'), {
     method: 'POST',
     headers: authHeaders(),
     body: JSON.stringify(draft),
@@ -81,7 +82,7 @@ export async function updateAdvancedCourseLesson(
   id: number,
   draft: AdvancedCourseDraft,
 ): Promise<AdvancedCourseLesson> {
-  return handleApi(await fetch(apiUrl(`/v1/teaching/advanced/${id}`), {
+  return handleApi(await sessionFetch(apiUrl(`/v1/teaching/advanced/${id}`), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify(draft),
@@ -92,7 +93,7 @@ export async function reorderAdvancedCourseLessons(
   track: AdvancedCourseTrack,
   ids: number[],
 ): Promise<void> {
-  await handleApi(await fetch(apiUrl('/v1/teaching/advanced/reorder'), {
+  await handleApi(await sessionFetch(apiUrl('/v1/teaching/advanced/reorder'), {
     method: 'PUT',
     headers: authHeaders(),
     body: JSON.stringify({ track, ids }),
@@ -100,7 +101,7 @@ export async function reorderAdvancedCourseLessons(
 }
 
 export async function deleteAdvancedCourseLesson(id: number): Promise<void> {
-  await handleApi(await fetch(apiUrl(`/v1/teaching/advanced/${id}`), {
+  await handleApi(await sessionFetch(apiUrl(`/v1/teaching/advanced/${id}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   }));

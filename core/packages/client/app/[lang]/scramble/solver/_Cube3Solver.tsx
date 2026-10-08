@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * /scramble/solver — cubeopt-wasm 最优解 (Next.js 16 port).
  *
@@ -728,7 +729,7 @@ export default function Cube3Solver() {
     try {
       // streamApiUrl (not apiUrl): SSE must bypass the Next dev proxy, which
       // buffers the whole stream and would trip the no-response timeout in dev.
-      const res = await fetch(streamApiUrl('/v1/scramble/optimal-solve'), {
+      const res = await sessionFetch(streamApiUrl('/v1/scramble/optimal-solve'), {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ scrambles: lines }),

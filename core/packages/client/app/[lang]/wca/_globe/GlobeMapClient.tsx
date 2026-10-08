@@ -1055,11 +1055,8 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
   const userMarkerRef = useRef<maplibregl.Marker | null>(null);
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('globe.userPos.v1');
-      if (raw) {
-        const p = JSON.parse(raw) as { lat: number; lng: number };
-        if (Number.isFinite(p?.lat) && Number.isFinite(p?.lng)) setUserPos(p);
-      }
+      // Precise location stays in memory; remove the cache written by older versions.
+      localStorage.removeItem('globe.userPos.v1');
     } catch { /* */ }
   }, []);
   const locate = useCallback(() => {
@@ -1075,7 +1072,6 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setUserPos(p);
         setLocState('idle');
-        persistItem('globe.userPos.v1', JSON.stringify(p));
         const map = mapRef.current;
         if (map) map.easeTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 4), duration: 900 });
       },

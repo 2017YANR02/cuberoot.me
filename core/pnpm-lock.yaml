@@ -972,6 +972,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      sanitize-html:
+        specifier: ^2.18.0
+        version: 2.18.0
       sql.js:
         specifier: ^1.14.2
         version: 1.14.2
@@ -982,6 +985,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.0.0
         version: 19.2.3(@types/react@19.2.14)
+      '@types/sanitize-html':
+        specifier: ^2.16.1
+        version: 2.16.1
       '@types/sql.js':
         specifier: ^1.4.11
         version: 1.4.11

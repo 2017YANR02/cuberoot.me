@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 // /sim 阶段遮罩下拉的管理员自定义 CRUD(/v1/sim-masks)。
 // 公共 GET 无认证;写端点走 WCA OAuth Bearer(ADMIN_WCA_IDS)或 X-Admin-Key。
 //
@@ -35,11 +36,11 @@ export interface SimMaskLayout {
 }
 
 export async function listSimMaskLayouts(): Promise<SimMaskLayout[]> {
-  return handleApi<SimMaskLayout[]>(await fetch(`${BASE}/layout`, { cache: 'no-store' }));
+  return handleApi<SimMaskLayout[]>(await sessionFetch(`${BASE}/layout`, { cache: 'no-store' }));
 }
 
 export async function saveSimMaskLayout(body: SimMaskLayout): Promise<{ ok: boolean }> {
-  return handleApi<{ ok: boolean }>(await fetch(`${BASE}/layout`, {
+  return handleApi<{ ok: boolean }>(await sessionFetch(`${BASE}/layout`, {
     method: 'PUT', headers: authHeaders(), body: JSON.stringify(body),
   }));
 }
@@ -48,26 +49,26 @@ export type SimMaskInput = Pick<SimMaskRow,
   'maskKey' | 'kind' | 'cubeSize' | 'hidden' | 'labelEn' | 'labelZh' | 'sids' | 'pick' | 'rest'>;
 
 export async function listSimMasks(): Promise<SimMaskRow[]> {
-  return handleApi<SimMaskRow[]>(await fetch(BASE, { cache: 'no-store' }));
+  return handleApi<SimMaskRow[]>(await sessionFetch(BASE, { cache: 'no-store' }));
 }
 
 /** 按 maskKey upsert(admin)。 */
 export async function saveSimMask(body: SimMaskInput): Promise<SimMaskRow> {
   return handleApi<SimMaskRow>(
-    await fetch(BASE, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }),
+    await sessionFetch(BASE, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(body) }),
   );
 }
 
 /** 某阶数的全量顺序(admin)。keys 必须是该阶下拉里的全部条目,顺序即显示顺序。 */
 export async function reorderSimMasks(cubeSize: number, keys: string[]): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(
-    await fetch(`${BASE}/reorder`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ cubeSize, keys }) }),
+    await sessionFetch(`${BASE}/reorder`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify({ cubeSize, keys }) }),
   );
 }
 
 /** 删一行:内置条目 = 恢复代码默认,自建 = 删掉这条遮罩(admin)。 */
 export async function deleteSimMask(maskKey: string): Promise<{ ok: boolean }> {
   return handleApi<{ ok: boolean }>(
-    await fetch(`${BASE}/${encodeURIComponent(maskKey)}`, { method: 'DELETE', headers: authHeaders() }),
+    await sessionFetch(`${BASE}/${encodeURIComponent(maskKey)}`, { method: 'DELETE', headers: authHeaders() }),
   );
 }

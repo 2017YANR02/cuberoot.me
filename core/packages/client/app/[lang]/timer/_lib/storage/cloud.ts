@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 import { createTimerBackupClient, countTimerBackupSolves, type TimerCloudBackupMeta } from '@cuberoot/shared/timer/backup-client';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
@@ -5,7 +6,7 @@ import { getSessionToken } from '@/lib/auth-store';
 import { exportJson, importJson } from './db';
 export type CloudBackupMeta = TimerCloudBackupMeta;
 export const countSolves = countTimerBackupSolves;
-const client = () => { const headers = authHeaders(); return createTimerBackupClient({ apiUrl, headers: () => headers, fetcher: fetch }); };
+const client = () => { const headers = authHeaders(); return createTimerBackupClient({ apiUrl, headers: () => headers, fetcher: sessionFetch }); };
 export const uploadBackup = () => client().upload(exportJson());
 export const downloadBackup = () => client().download();
 export const fetchBackupMeta = () => client().meta();

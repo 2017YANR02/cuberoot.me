@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useRef, useState } from 'react';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders } from '@/lib/admin-api';
@@ -93,7 +94,7 @@ export async function sendTimerPresenceHeartbeat(
   id: string,
   report: TimerPresenceReport,
   offline = false,
-  request: PresenceFetch = fetch,
+  request: PresenceFetch = sessionFetch,
 ): Promise<void> {
   const post = (body: object) => request(apiUrl(ENDPOINT), {
     method: 'POST',
@@ -146,7 +147,7 @@ export function useTimerPresence(
 
     const read = async () => {
       if (!canView) return;
-      const res = await fetch(apiUrl(ENDPOINT), {
+      const res = await sessionFetch(apiUrl(ENDPOINT), {
         headers: authHeaders(false),
         cache: 'no-store',
         credentials: 'omit',

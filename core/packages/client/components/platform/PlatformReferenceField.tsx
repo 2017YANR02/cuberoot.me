@@ -1,4 +1,6 @@
 'use client';
+
+import { sessionFetch } from '@/lib/session-fetch';
 import { useEffect, useMemo, useState } from 'react';
 import BoolToggle from '@/components/BoolToggle';
 import SearchInput from '@/components/SearchInput';
@@ -11,7 +13,7 @@ type Entry=Record<string,unknown>;
 const SOURCES:Record<string,string>={courseIds:'admin/courses',productIds:'admin/products',productVariantIds:'admin/products',eventIds:'admin/events',eventTicketTypeIds:'admin/events',membershipPlanIds:'membership-plans',instructorId:'admin/instructors'};
 export function PlatformReferenceField({source,label,selected,onChange,multiple=true}:{source:string;label:string;selected:string[];onChange:(values:string[])=>void;multiple?:boolean}) {
  const t=useT();const [entries,setEntries]=useState<Entry[]|null>(null);const [error,setError]=useState('');const [query,setQuery]=useState('');
- useEffect(()=>{const controller=new AbortController();setEntries(null);void(async()=>{try{const all:Entry[]=[];for(let page=1;page<=100;page++){const response=await fetch(apiUrl(`/v1/platform/${SOURCES[source]}?page=${page}&pageSize=100`),{headers:authHeaders(false),signal:controller.signal});const envelope=await handleApi<Record<string,unknown>>(response);const raw=Object.values(envelope).find(Array.isArray) as unknown[]|undefined;const rows=(raw??[]).map(commerceRecord);all.push(...rows);if(rows.length<100||(typeof envelope.total==='number'&&all.length>=envelope.total))break;}setEntries(all);setError('');}catch(reason){if(!controller.signal.aborted)setError(reason instanceof Error?reason.message:String(reason));}})();return()=>controller.abort();},[source]);
+ useEffect(()=>{const controller=new AbortController();setEntries(null);void(async()=>{try{const all:Entry[]=[];for(let page=1;page<=100;page++){const response=await sessionFetch(apiUrl(`/v1/platform/${SOURCES[source]}?page=${page}&pageSize=100`),{headers:authHeaders(false),signal:controller.signal});const envelope=await handleApi<Record<string,unknown>>(response);const raw=Object.values(envelope).find(Array.isArray) as unknown[]|undefined;const rows=(raw??[]).map(commerceRecord);all.push(...rows);if(rows.length<100||(typeof envelope.total==='number'&&all.length>=envelope.total))break;}setEntries(all);setError('');}catch(reason){if(!controller.signal.aborted)setError(reason instanceof Error?reason.message:String(reason));}})();return()=>controller.abort();},[source]);
  const options=useMemo(()=>{const nested=source==='productVariantIds'?'variants':source==='eventTicketTypeIds'?'tickets':null;return (entries??[]).flatMap(entry=>nested?(Array.isArray(entry[nested])?entry[nested] as unknown[]:[]).map(raw=>{const item=commerceRecord(raw);return {...item,parentTitle:commerceText(entry,'title',t)};}):[entry]);},[entries,source,t]);
  const name=(entry:Entry)=>String(entry.parentTitle?`${entry.parentTitle} · `:'')+(commerceText(entry,'title',t)||commerceText(entry,'name',t)||String(entry.displayName??entry.id));
  const filtered=options.filter(entry=>name(entry).toLocaleLowerCase().includes(query.toLocaleLowerCase()));

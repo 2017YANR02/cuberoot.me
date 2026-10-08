@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiUrl } from '@/lib/api-base';
+import { sessionFetch } from '@/lib/session-fetch';
 import {
   applySession,
   getRolePreview,
@@ -80,7 +81,7 @@ export default function AuthCallbackPage() {
         return;
       }
       try {
-        const response = await fetch(apiUrl('/v1/auth/wechat/wca-link/complete'), {
+        const response = await sessionFetch(apiUrl('/v1/auth/wechat/wca-link/complete'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ticket, accessToken }),
@@ -106,14 +107,14 @@ export default function AuthCallbackPage() {
     try {
       const result = await loginWca(accessToken, signal);
       if (!mounted.current || signal.aborted) return;
-      if (!applySession(result.token, result.user)) throw new Error(tr({ zh: '无法保存登录状态，请检查浏览器存储后重试。', en: 'Could not save your session. Check browser storage and retry.' }));
+      if (!(await applySession(result.token, result.user, () => mounted.current && !signal.aborted))) throw new Error(tr({ zh: '无法保存登录状态，请检查浏览器存储后重试。', en: 'Could not save your session. Check browser storage and retry.' }));
       const pending = getIdentityChoice();
       if (pending?.stage === 'authenticate' && result.user.uid) updateIdentityChoice(pending.ticket, { stage: 'confirm', expectedUid: result.user.uid, otherIdentityRejected: false });
       router.replace(pending ? identityChoiceEntryPath() : identityReturnPath(returnUrl || '/recon'));
     } catch (err) {
       if (!mounted.current || signal.aborted) return;
       if (err instanceof AccountChoiceRequired) {
-        try { rememberIdentityChoice(err, returnUrl || '/recon'); router.replace(identityChoiceEntryPath()); }
+        try { await rememberIdentityChoice(err, returnUrl || '/recon'); router.replace(identityChoiceEntryPath()); }
         catch { setErrorMsg(tr({ zh: '无法保存登录步骤，请允许浏览器使用存储后重试。', en: 'Could not save the sign-in step. Allow browser storage and retry.' })); }
         return;
       }
@@ -126,7 +127,7 @@ export default function AuthCallbackPage() {
       const jwt = getSessionToken();
       if (!jwt) throw new Error('Sign in before linking');
       if (jwt) {
-        const r = await fetch(apiUrl('/v1/auth/link/wca'), {
+        const r = await sessionFetch(apiUrl('/v1/auth/link/wca'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwt}` },
           body: JSON.stringify({ accessToken }),
@@ -135,7 +136,7 @@ export default function AuthCallbackPage() {
         if (r.ok) {
           const d = await r.json();
           if (!mounted.current || signal.aborted) return;
-          if (d.token && d.user) applySession(d.token, d.user);
+          if (d.token && d.user && !(await applySession(d.token, d.user, () => mounted.current && !signal.aborted))) throw new Error('session persistence failed');
         } else {
           const d = await r.json().catch(() => ({}));
           setErrorMsg(tr({ zh: `绑定失败:${d.error ?? r.status}`, en: `Link failed: ${d.error ?? r.status}` }));

@@ -1,5 +1,6 @@
 'use client';
 
+import { sessionFetch } from '@/lib/session-fetch';
 import { useQueryState, parseAsInteger } from 'nuqs';
 import { apiUrl } from '@/lib/api-base';
 import { authHeaders, handleApi } from '@/lib/admin-api';
@@ -55,7 +56,7 @@ export function PlatformCommerceContent({ definition, entity }: { definition: Pl
   const [overviewError,setOverviewError]=useState('');
   const analytics=definition.id==='admin'||definition.id==='admin-event-analytics';
   useEffect(()=>{if(!analytics)return;const controller=new AbortController();setOverviewError('');setOverview(null);
-    void fetch(apiUrl(`/v1/platform/admin/analytics?days=${[7,30,90].includes(days)?days:30}`),{headers:authHeaders(false),signal:controller.signal}).then(response=>handleApi<{item:Record<string,unknown>}>(response)).then(result=>setOverview(result.item)).catch(reason=>{if(!controller.signal.aborted)setOverviewError(reason instanceof Error?reason.message:String(reason));});return()=>controller.abort();
+    void sessionFetch(apiUrl(`/v1/platform/admin/analytics?days=${[7,30,90].includes(days)?days:30}`),{headers:authHeaders(false),signal:controller.signal}).then(response=>handleApi<{item:Record<string,unknown>}>(response)).then(result=>setOverview(result.item)).catch(reason=>{if(!controller.signal.aborted)setOverviewError(reason instanceof Error?reason.message:String(reason));});return()=>controller.abort();
   },[analytics,days]);
   const data = (analytics?overview:null) ?? entity?.data ?? {};
   const [now, setNow] = useState(0);

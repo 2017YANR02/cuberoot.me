@@ -1,3 +1,4 @@
+import { sessionFetch } from '@/lib/session-fetch';
 /**
  * Scramble marks client — 公开「打卡」:登录用户给做过的 WCA 真实打乱做标记,
  * 所有人可见(打乱条下「N 人做过」+ /timer/marks 最近标记 feed)。
@@ -45,7 +46,7 @@ function marksHttp(write = false): TimerWcaScrambleMarksHttp {
   const authorization = write ? authHeaders(false).Authorization : undefined;
   return {
     apiBase: apiUrl(''),
-    fetcher: (input, init) => fetch(input, init),
+    fetcher: (input, init) => sessionFetch(input, init),
     token: authorization?.slice('Bearer '.length),
   };
 }
@@ -77,7 +78,7 @@ export async function updateMarkIfExists(
 
 /** 取消自己的标记(按自然键,timer 弹层用)。 */
 export async function removeMark(k: ScrambleKey): Promise<void> {
-  const res = await fetch(apiUrl(`${ENDPOINT}?${keyQs(k)}`), {
+  const res = await sessionFetch(apiUrl(`${ENDPOINT}?${keyQs(k)}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   });
@@ -86,7 +87,7 @@ export async function removeMark(k: ScrambleKey): Promise<void> {
 
 /** 按 id 删一条标记(feed 行内删除);本人删自己,管理员删任何人。 */
 export async function deleteMarkById(id: number): Promise<void> {
-  const res = await fetch(apiUrl(`${ENDPOINT}/${id}`), {
+  const res = await sessionFetch(apiUrl(`${ENDPOINT}/${id}`), {
     method: 'DELETE',
     headers: authHeaders(false),
   });
@@ -103,7 +104,7 @@ export async function fetchRecentMarks(opts: {
   if (opts.q) qs.set('q', opts.q);
   if (opts.before) qs.set('before', String(opts.before));
   if (opts.limit) qs.set('limit', String(opts.limit));
-  const res = await fetch(apiUrl(`${ENDPOINT}/recent${qs.size > 0 ? `?${qs}` : ''}`));
+  const res = await sessionFetch(apiUrl(`${ENDPOINT}/recent${qs.size > 0 ? `?${qs}` : ''}`));
   const data = await handleApi<{ marks: RecentMark[] }>(res);
   return data.marks ?? [];
 }

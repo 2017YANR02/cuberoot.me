@@ -13,7 +13,8 @@ const ROOTS = [
   'packages/app-ui/src', 'packages/shared/src', 'packages/client/lib',
   'packages/client/components', 'packages/client/hooks', 'packages/client/app/auth',
   'packages/client/app/[lang]/account', 'packages/client/app/api/google-verify',
-  'packages/client/app/api/page-access',
+  'packages/client/app/api/page-access', 'packages/client/app/api/web-session',
+  'packages/client/app/api/identity-choice',
 ];
 const EXACT = new Set([
   'packages/client/app/[lang]/admin/page.tsx',
@@ -65,6 +66,8 @@ export function isAuthDocSource(path) {
     || normalized.startsWith('packages/client/app/[lang]/account/')
     || normalized.startsWith('packages/client/app/api/google-verify/')
     || normalized.startsWith('packages/client/app/api/page-access/')
+    || normalized.startsWith('packages/client/app/api/web-session/')
+    || normalized.startsWith('packages/client/app/api/identity-choice/')
     || normalized.startsWith('apps/miniprogram/src/pages/account/')
     || normalized.startsWith('packages/shared/src/auth/')
     || normalized.startsWith('packages/app-ui/src/auth/')) return true;
