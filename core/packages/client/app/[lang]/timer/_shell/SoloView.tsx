@@ -3005,6 +3005,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
             }}
             value={settings.scrambleSource}
             trainingItems={trainingItems}
+            language={timerLanguage}
             trainingValue={trainingEvents.includes(event) ? event : event === '222' && type222 !== 'full' ? type222 : undefined}
             onTrainingChange={(id) => {
               if (selectedPuzzle === '222' && isScramble222Type(id)) {

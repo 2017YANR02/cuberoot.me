@@ -96,6 +96,8 @@ import {
   formatTimerTimingDisplay,
   generateTimerDrillScramble,
   isCnEligible,
+  TIMER_333_TRAINING_GROUPS,
+  timerPuzzleSelection,
   generateTimerScramble,
   histBack,
   histForward,
@@ -3850,6 +3852,7 @@ export function App({ host }: { host: InstalledAppHost }) {
                     value={1}
                   />
                   <TimerPuzzlePicker
+                    combineScrambleTypes={timerPuzzleSelection(activeEvent).puzzle === '333'}
                     dataNoTimer
                     disabled={timer.machine.phase === 'running' || timerContextMutationBusy}
                     groups={eventPickerGroups}
@@ -3861,6 +3864,19 @@ export function App({ host }: { host: InstalledAppHost }) {
                     selectedEvent={activeEvent}
                   />
                   <TimerScrambleSourceSelect
+                    language={language}
+                    trainingItems={timerPuzzleSelection(activeEvent).puzzle === '333'
+                      ? eventPickerGroups.flatMap(group => group.items)
+                        .filter(item => TIMER_333_TRAINING_GROUPS.some(group => (group.events as readonly string[]).includes(item.id)))
+                        .map(item => ({ value: item.id, label: item.label }))
+                      : []}
+                    trainingValue={timerPuzzleSelection(activeEvent).puzzle === '333' && activeEvent !== '333' ? activeEvent : undefined}
+                    onTrainingChange={id => {
+                      if (!sourceControlsEnabled) return;
+                      invalidateCurrentScramble();
+                      setScrambleSource('random');
+                      selectTimerEvent(id);
+                    }}
                     className="shell-scramble-source-select"
                     disabled={!sourceControlsEnabled}
                     labels={{
@@ -3877,9 +3893,12 @@ export function App({ host }: { host: InstalledAppHost }) {
                         announce(copy.finishAttemptFirst);
                         return;
                       }
-                      if (source === scrambleSourceRef.current) return;
+                      const selection = timerPuzzleSelection(activeEvent);
+                      const leavingTraining = selection.puzzle === '333' && activeEvent !== '333';
+                      if (source === scrambleSourceRef.current && !leavingTraining) return;
                       invalidateCurrentScramble();
                       setScrambleSource(source);
+                      if (leavingTraining) selectTimerEvent('333');
                     }}
                     onOpenChange={handleTimerOverlayOpenChange}
                     open={openOverlay === TIMER_OVERLAY_IDS.scrambleSource}

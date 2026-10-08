@@ -30,8 +30,6 @@ export interface TimerTimingSettingsSectionsProps {
 }
 
 const TIMER_TIMING_SECTION_COPY = {
-  untimedMode: { en: 'Untimed mode', zh: '不计时模式' },
-  untimedHint: { en: 'Hide the time and practice without recording solves. Press Space or tap the timer area for the next scramble.', zh: '隐藏时间，不记录成绩。按空格或点击计时区切换下一条打乱。' },
   eventsAndSessions: { en: 'Events and sessions', zh: '项目与分组' },
   timingDisplay: { en: 'Timing display', zh: '计时显示' },
 } as const satisfies Record<string, TimerSettingCopy>;
@@ -196,19 +194,14 @@ export function TimerTimingSettingsSections({
 
   return (
     <>
-      <TimerSettingsSection
-        headerControl={(
-          <span data-setting-id={TIMING_FIELDS.timingEnabled.id}>
-            {renderBooleanControl({
-              label: localize(TIMER_TIMING_SECTION_COPY.untimedMode),
-              onChange: (untimed) => onChange({ timingEnabled: !untimed }),
-              settingId: TIMING_FIELDS.timingEnabled.id as TimerSettingFieldId,
-              value: !settings.timingEnabled,
-            })}
-          </span>
-        )}
-      >
-        <p className="hint">{localize(TIMER_TIMING_SECTION_COPY.untimedHint)}</p>
+      <TimerSettingsSection>
+        <TimerBooleanSettingRow
+          field={TIMING_FIELDS.timingEnabled}
+          label={label(TIMING_FIELDS.timingEnabled)}
+          onChange={(timingEnabled) => onChange({ timingEnabled })}
+          renderBooleanControl={renderBooleanControl}
+          value={settings.timingEnabled}
+        />
         <TimerBooleanSettingRow
           field={TIMING_FIELDS.inspectionSec}
           label={label(TIMING_FIELDS.inspectionSec)}

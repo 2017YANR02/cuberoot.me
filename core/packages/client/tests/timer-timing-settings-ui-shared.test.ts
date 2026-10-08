@@ -106,11 +106,14 @@ describe('shared Timer Timing settings UI', () => {
       ]);
 
     const enabled = host.querySelector<HTMLElement>('[data-setting-id="settings.timer.enabled"]')!;
-    expect(enabled.matches('.settings-row')).toBe(false);
-    expect(enabled.parentElement?.className).toBe('settings-section-head');
+    expect(enabled.matches('.settings-row-boolean')).toBe(true);
+    expect(enabled.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('true');
+    expect(host.querySelector('.settings-section-note')).toBeNull();
+    expect(enabled.parentElement?.className).toBe('settings-section');
     expect(enabled.querySelector('.bool-toggle > .pill-toggle.pill-toggle--switch')).not.toBeNull();
 
     const expectedBooleanRows = [
+      'settings.timer.enabled',
       'settings.timer.inspection',
       'settings.timer.auto-session-for-event',
       'settings.timer.auto-event-for-session',
@@ -121,7 +124,7 @@ describe('shared Timer Timing settings UI', () => {
 
     for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => entry.category === 'timer')) {
       const setting = host.querySelector<HTMLElement>(`[data-setting-id="${field.id}"]`)!;
-      expect(setting.textContent).toContain(field.id === 'settings.timer.enabled' ? 'Untimed mode' : field.copy.en);
+      expect(setting.textContent).toContain(field.copy.en);
       expect(setting.querySelector<HTMLElement>('[role="switch"]')?.getAttribute('aria-label')
         ?? setting.querySelector<HTMLElement>('.settings-row-control')?.getAttribute('aria-labelledby'))
         .toBeTruthy();
@@ -157,7 +160,7 @@ describe('shared Timer Timing settings UI', () => {
       .map((heading) => heading.textContent)).toEqual(['项目与分组', '计时显示', '成绩精度']);
     for (const field of TIMER_SETTING_FIELD_CONTRACTS.filter((entry) => entry.category === 'timer')) {
       expect(host.querySelector(`[data-setting-id="${field.id}"]`)?.textContent)
-        .toContain(field.id === 'settings.timer.enabled' ? '不计时模式' : field.copy.zh);
+        .toContain(field.copy.zh);
     }
   });
 
@@ -216,10 +219,10 @@ describe('shared Timer Timing settings UI', () => {
     expect(host.querySelector('[data-setting-id]')).toBeNull();
   });
 
-  it('shows untimed mode as on when timing is disabled and can restore timing', async () => {
+  it('shows timing mode as off when timing is disabled and can restore timing', async () => {
     const onChange = await render({ value: { ...DEFAULT_TIMER_TIMING_SETTINGS, timingEnabled: false } });
-    const control = host.querySelector<HTMLButtonElement>('[aria-label="Untimed mode"][role="switch"]')!;
-    expect(control.getAttribute('aria-checked')).toBe('true');
+    const control = host.querySelector<HTMLButtonElement>('[aria-label="Timing mode"][role="switch"]')!;
+    expect(control.getAttribute('aria-checked')).toBe('false');
     await act(async () => control.click());
     expect(onChange).toHaveBeenCalledWith({ timingEnabled: true });
   });

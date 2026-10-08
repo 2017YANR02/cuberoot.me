@@ -1,10 +1,12 @@
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TIMER_333_TRAINING_GROUPS } from '@cuberoot/shared/timer';
 import {
   useCallback,
   useEffect,
   useId,
   useLayoutEffect,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -35,6 +37,7 @@ export interface TimerScrambleSourceLabels {
 export interface TimerScrambleSourceSelectProps<
   TReal extends TimerScrambleSourceRealValue = TimerScrambleSourceRealValue,
 > extends TimerOverlayControlProps {
+  language?: 'en' | 'zh';
   trainingItems?: readonly { value: string; label: ReactNode }[];
   trainingValue?: string;
   onTrainingChange?: (value: string) => void;
@@ -62,6 +65,7 @@ const POPUP_GAP_PX = 6;
 export function TimerScrambleSourceSelect<
   TReal extends TimerScrambleSourceRealValue,
 >({
+  language = 'en',
   trainingItems = [],
   trainingValue,
   onTrainingChange,
@@ -85,13 +89,39 @@ export function TimerScrambleSourceSelect<
   const panelRef = useRef<HTMLDivElement>(null);
   const previousOpenRef = useRef(open);
   const popupId = useId();
+  const [groupId, setGroupId] = useState<string | null>(null);
+  const backRef = useRef<HTMLButtonElement>(null);
+  const groupTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
+  const groups = TIMER_333_TRAINING_GROUPS.map(group => ({
+    ...group,
+    items: trainingItems.filter(item => (group.events as readonly string[]).includes(item.value)),
+  })).filter(group => group.items.length > 0);
+  const activeGroup = groups.find(group => group.id === groupId);
+  const ungroupedItems = trainingItems.filter(item => !groups.some(group => group.items.includes(item)));
   const canonicalValue: CanonicalSource = value === 'real' || value === 'wca'
     ? 'real'
     : value;
   const close = useCallback((reason: TimerOverlayOpenReason, restoreFocus = false) => {
+    setGroupId(null);
     changeOpen(false, reason);
     if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
   }, [changeOpen]);
+
+  const returnToGroups = useCallback(() => {
+    const previousGroup = groupId;
+    setGroupId(null);
+    requestAnimationFrame(() => {
+      if (previousGroup) groupTriggerRefs.current.get(previousGroup)?.focus();
+    });
+  }, [groupId]);
+
+  useEffect(() => {
+    if (!open) setGroupId(null);
+  }, [open]);
+
+  useLayoutEffect(() => {
+    if (activeGroup) backRef.current?.focus();
+  }, [activeGroup?.id]);
 
   const items: ReadonlyArray<{ value: CanonicalSource; label: ReactNode }> = [
     { value: 'real', label: labels.realOption },
@@ -140,7 +170,10 @@ export function TimerScrambleSourceSelect<
       if (!inside(event.target as Node)) close('outside');
     };
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close('escape', true);
+      if (event.key === 'Escape') {
+        if (activeGroup) returnToGroups();
+        else close('escape', true);
+      }
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -148,7 +181,7 @@ export function TimerScrambleSourceSelect<
       document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [close, disabled, open]);
+  }, [activeGroup?.id, close, disabled, open, returnToGroups]);
 
   useLayoutEffect(() => {
     if (!open || disabled) return;
@@ -182,7 +215,7 @@ export function TimerScrambleSourceSelect<
       window.removeEventListener('resize', positionPanel);
       window.removeEventListener('scroll', positionPanel, true);
     };
-  }, [disabled, open]);
+  }, [disabled, open, activeGroup?.id]);
 
   return (
     <div
@@ -223,7 +256,15 @@ export function TimerScrambleSourceSelect<
           onWheel={(event) => event.stopPropagation()}
         >
           <div className="timer-scramble-source-options">
-            {items.map((item) => {
+            {activeGroup && <button
+              ref={backRef}
+              className="timer-scramble-source-option timer-scramble-source-group"
+              aria-label={{ en: 'Back to scramble types', zh: '返回打乱类型' }[language]}
+              onClick={returnToGroups}
+              onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); returnToGroups(); } }}
+              type="button"
+            ><ChevronLeft size={14} aria-hidden="true" />{activeGroup.label[language]}</button>}
+            {!activeGroup && items.map((item) => {
               const active = !trainingValue && item.value === canonicalValue;
               return (
                 <button
@@ -243,7 +284,20 @@ export function TimerScrambleSourceSelect<
                 </button>
               );
             })}
-            {trainingItems.map((item) => (
+            {!activeGroup && groups.map(group => (
+              <button
+                aria-selected={group.items.some(item => item.value === trainingValue)}
+                aria-haspopup="listbox"
+                className={`timer-scramble-source-option timer-scramble-source-group${group.items.some(item => item.value === trainingValue) ? ' active' : ''}`}
+                key={group.id}
+                ref={element => { if (element) groupTriggerRefs.current.set(group.id, element); else groupTriggerRefs.current.delete(group.id); }}
+                onClick={() => setGroupId(group.id)}
+                onKeyDown={event => { if (event.key === 'ArrowRight') { event.preventDefault(); setGroupId(group.id); } }}
+                role="option"
+                type="button"
+              >{group.label[language]}<ChevronRight size={14} aria-hidden="true" /></button>
+            ))}
+            {(activeGroup?.items ?? ungroupedItems).map((item) => (
               <button
                 aria-selected={item.value === trainingValue}
                 className={`timer-scramble-source-option${item.value === trainingValue ? ' active' : ''}`}
