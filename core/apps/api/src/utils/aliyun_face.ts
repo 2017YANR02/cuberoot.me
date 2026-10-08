@@ -1,7 +1,8 @@
 import { createHmac, randomUUID } from "node:crypto";
 
+export type FaceErrorCode = "FACE_UNAVAILABLE" | "FACE_PENDING" | "FACE_RETRY_SOON" | "FACE_DAILY_LIMIT" | "FACE_SITE_LIMIT" | "FACE_PROVIDER_PERMISSION" | "FACE_PROVIDER_BALANCE";
 export class FaceVerificationError extends Error {
-  constructor(message: string, public readonly status = 400) { super(message); }
+  constructor(message: string, public readonly status = 400, public readonly code: FaceErrorCode = "FACE_UNAVAILABLE") { super(message); }
 }
 
 export function faceVerificationEnabled() {
@@ -40,9 +41,20 @@ async function rpc(action: "InitFaceVerify" | "DescribeFaceVerify", parameters: 
       body: `${canonical}&Signature=${encode(signature)}`, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(15_000),
     });
     const data = await response.json();
-    if (!response.ok || String(data.Code) !== "200" || !data.ResultObject) throw new Error("provider failure");
+    if (!response.ok || String(data.Code) !== "200" || !data.ResultObject) {
+      // Only bounded diagnostic codes/UUIDs; never log provider messages, request bodies or results.
+      const providerCode = String(data?.Code ?? "");
+      console.error(JSON.stringify({ event: "face_provider_failure", action, httpStatus: response.status,
+        code: /^\d{3}$/u.test(providerCode) ? providerCode : "unknown",
+        requestId: typeof data?.RequestId === "string" && /^[a-f0-9-]{36}$/iu.test(data.RequestId) ? data.RequestId : undefined }));
+      if (providerCode === "411") throw new FaceVerificationError("Provider permissions unavailable.", 503, "FACE_PROVIDER_PERMISSION");
+      if (providerCode === "412") throw new FaceVerificationError("Provider balance unavailable.", 503, "FACE_PROVIDER_BALANCE");
+      throw new FaceVerificationError("Provider unavailable.", 503);
+    }
     return data.ResultObject as Record<string, unknown>;
-  } catch {
+  } catch (error) {
+    if (error instanceof FaceVerificationError) throw error;
+    console.error(JSON.stringify({ event: "face_provider_transport_failure", action }));
     throw new FaceVerificationError("认证服务暂时不可用，请稍后重试", 503);
   }
 }

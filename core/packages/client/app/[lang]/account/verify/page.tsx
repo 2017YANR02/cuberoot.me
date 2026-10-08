@@ -47,8 +47,18 @@ export default function FaceVerificationPage() {
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     if (!response.ok) {
+      const failure = await response.json().catch(() => null) as { error?: string } | null;
+      const messages: Record<string, string> = {
+        FACE_PENDING: t('已有认证正在进行，请完成刷脸后查询结果。', 'An attempt is in progress. Complete it, then check the result.'),
+        FACE_RETRY_SOON: t('上次发起未成功，请间隔 1 分钟后重试。', 'The previous attempt did not start. Wait one minute before retrying.'),
+        FACE_DAILY_LIMIT: t('最近 24 小时已发起 3 次认证，请稍后再试。', 'You have started 3 attempts in the past 24 hours. Try again later.'),
+        FACE_SITE_LIMIT: t('本站今日认证额度已用完，请稍后再试。', 'The site verification quota has been reached. Try again later.'),
+        FACE_PROVIDER_PERMISSION: t('网站实名认证服务授权异常，请联系管理员处理后再试。', 'The site verification service has a permission problem. Contact the administrator before retrying.'),
+        FACE_PROVIDER_BALANCE: t('网站实名认证服务暂时停用，请联系管理员。', 'The site verification service is temporarily suspended. Contact the administrator.'),
+      };
+      if (failure?.error && Object.hasOwn(messages, failure.error)) throw new Error(messages[failure.error]);
       if (response.status === 401 || response.status === 403) throw new Error(t('请重新登录本人账号后认证。', 'Sign in to your own account again.'));
-      if (response.status === 429) throw new Error(t('请先完成当前认证。每个账号每天最多发起 3 次，请勿频繁查询。', 'Complete your current attempt first. Up to 3 attempts per day; avoid frequent queries.'));
+      if (response.status === 429) throw new Error(t('请求过于频繁，请稍后再试。', 'Too many requests. Try again later.'));
       if (response.status === 400) throw new Error(t('请检查姓名、18 位身份证号码与同意选项。', 'Check your name, 18-character identity number and consent.'));
       if (response.status === 409) throw new Error(t('当前认证无法继续。请稍后查询；登录已变更时需等待认证过期后重新发起。', 'This attempt cannot continue. Query again later; after changing sessions, wait for expiry before restarting.'));
       throw new Error(t('认证服务暂时不可用，请稍后重试。', 'Verification is temporarily unavailable. Try again later.'));
@@ -81,7 +91,13 @@ export default function FaceVerificationPage() {
       const url = new URL(result.certifyUrl);
       if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Invalid verification URL');
       window.location.assign(url.href);
-    } catch (e) { setError(e instanceof Error ? e.message : t('认证未能发起。', 'Unable to start verification.')); setBusy(false); }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('认证未能发起。', 'Unable to start verification.'));
+      if (getSessionToken() === startingToken) {
+        try { const current = await request<Status>(); if (getSessionToken() === startingToken) setStatus(current); } catch { /* Keep the original start error. */ }
+      }
+      setBusy(false);
+    }
   };
   const check = async () => {
     setBusy(true); setError('');
