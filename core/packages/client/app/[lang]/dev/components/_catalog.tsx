@@ -2005,33 +2005,11 @@ export const CATALOG: ComponentEntry[] = [
     en: `Thin Web persistence adapter for 2x2: localStorage and cross-tab synchronization stay in the client, while all visible UI delegates to TimerScramble222Config and the type/style contract comes from @cuberoot/shared/timer.`,
   },
   {
-    name: 'Scramble333ModePicker',
-    import: "import Scramble333ModePicker from '@/components/Scramble333ModePicker';",
-    category: 'toggle',
-    zh: `3x3 打乱引擎切换(WCA cubing.js 与 min2phase-rust),仅当选中 3x3 时显示,选择持久化到 localStorage。`,
-    en: `3x3 scramble-engine toggle (WCA cubing.js vs min2phase-rust), shown only when 3x3 is selected, with the choice persisted to localStorage.`,
-  },
-  {
-    name: 'Scramble555ModePicker',
-    import: "import Scramble555ModePicker from '@/components/Scramble555ModePicker';",
-    category: 'toggle',
-    zh: `5x5 打乱模式切换(随机状态与随机转动),仅当选中 5x5 时显示,带说明帮助链接,选择持久化到 localStorage。`,
-    en: `5x5 scramble-mode toggle (random-state vs random-move), shown only when 5x5 is selected, with an about/help link, persisting the choice to localStorage.`,
-  },
-  {
     name: 'ScrambleRediModePicker',
     import: "import ScrambleRediModePicker from '@/components/ScrambleRediModePicker';",
     category: 'toggle',
     zh: 'Redi「转体」BoolToggle，默认关闭并使用计时器同款打乱；开启生成有转体打乱，持久化选择并同步比赛模式缓存。',
     en: 'Redi Rotations BoolToggle, off by default for timer-style scrambles; persists the rotation preference and invalidates the competition cache.',
-  },
-  {
-    name: 'ScrambleModePickerRow',
-    import: "import ScrambleModePickerRow from '@/components/ScrambleModePickerRow';",
-    category: 'toggle',
-    zh: `打乱引擎 / 模式切换的共享行布局,标签 + 原生 select + 可选帮助问号;被各项目专用 picker 包装复用。`,
-    en: `Shared row layout for scramble engine/mode toggles, pairing a label with a native select and optional help icon; wrapped by the per-event pickers.`,
-    note: { zh: `底层使用浏览器原生 select,按需传 helpHref。`, en: `Built on the browser’s native select; pass helpHref to add a help link.` },
   },
 
   // ── 按钮 ────────────────────────────────────────────────────────────────
