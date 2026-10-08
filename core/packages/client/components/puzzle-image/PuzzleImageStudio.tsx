@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Copy, Check, Download, ImageDown, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
+import { Copy, Check, Download, MousePointerClick, RotateCcw, Plus, Trash2 } from 'lucide-react';
 import SimCaptureGroup, { type SimBridge } from '@/components/puzzle-image/SimCaptureGroup';
 import PillToggle from '@/components/PillToggle/PillToggle';
 import BoolToggle from '@/components/BoolToggle';
@@ -138,7 +138,7 @@ function CopyImageButton({
         setTimeout(() => setState('idle'), 1600);
       }}
     >
-      {state === 'done' ? <Check size={14} /> : <ImageDown size={14} />}{' '}
+      {state === 'done' ? <Check size={14} /> : <Copy size={14} />}{' '}
       {state === 'fail' ? tr({ zh: '复制失败', en: 'Copy failed' }) : label}
     </button>
   );
