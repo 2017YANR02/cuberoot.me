@@ -16,6 +16,24 @@ export default function CropStage() {
   const imgRef = useRef<HTMLImageElement>(null);
   const cropperRef = useRef<Cropper | null>(null);
   const [working, setWorking] = useState(false);
+  const [dimensionDrafts, setDimensionDrafts] = useState<Partial<Record<'cubeWidth' | 'cubeHeight', string>>>({});
+
+  const editDimension = (key: 'cubeWidth' | 'cubeHeight', value: string) => {
+    setDimensionDrafts(drafts => ({ ...drafts, [key]: value }));
+    const n = Number(value);
+    if (value.trim() !== '' && Number.isInteger(n) && n >= 2 && n <= 999) {
+      setCropConfig({ [key]: n });
+    }
+  };
+
+  const commitDimension = (key: 'cubeWidth' | 'cubeHeight', value: string) => {
+    const n = Number(value);
+    const next = value.trim() !== '' && Number.isFinite(n)
+      ? Math.max(2, Math.min(999, Math.trunc(n)))
+      : cropConfig[key];
+    setCropConfig({ [key]: next });
+    setDimensionDrafts(drafts => ({ ...drafts, [key]: undefined }));
+  };
 
   useEffect(() => {
     if (!imgRef.current || !origImgSrc) return;
@@ -72,8 +90,9 @@ export default function CropStage() {
           type="number"
           min={2}
           max={999}
-          value={cropConfig.cubeWidth}
-          onChange={e => setCropConfig({ cubeWidth: Math.max(2, Math.min(999, Number(e.target.value) || 2)) })}
+          value={dimensionDrafts.cubeWidth ?? cropConfig.cubeWidth}
+          onChange={e => editDimension('cubeWidth', e.target.value)}
+          onBlur={e => commitDimension('cubeWidth', e.target.value)}
         />
         <span>×</span>
         <label>{t('mosaic.crop.height')}</label>
@@ -81,8 +100,9 @@ export default function CropStage() {
           type="number"
           min={2}
           max={999}
-          value={cropConfig.cubeHeight}
-          onChange={e => setCropConfig({ cubeHeight: Math.max(2, Math.min(999, Number(e.target.value) || 2)) })}
+          value={dimensionDrafts.cubeHeight ?? cropConfig.cubeHeight}
+          onChange={e => editDimension('cubeHeight', e.target.value)}
+          onBlur={e => commitDimension('cubeHeight', e.target.value)}
         />
         <span>= <strong>{total}</strong> {cropConfig.cubeDimen === 1 ? t('mosaic.crop.pixels') : t('mosaic.crop.cubes')}</span>
 
