@@ -42,6 +42,7 @@ const DOMAINS: { key: DomainKey; dot: string; name: Bi; sub: Bi }[] = [
 ];
 
 const TABLES: Table[] = [
+  { name: 'account_face_attempts', domain: 'account', origin: '0264', purpose: { zh: '实名活体流水、会话绑定、独立同意与证件摘要；账号注销级联删除，不随合并转移', en: 'Identity/liveness attempts, session binding, consent and identity digests; cascade on account deletion, never transfer on merge' } },
   { name: 'google_membership_accounts', domain: 'commerce', origin: '0256', purpose: { zh: 'Google 随机账号标识；合并保留，注销置空', en: 'Google obfuscated account identifiers, preserved on merge and tombstoned on deletion' } },
   { name: 'google_membership_subscriptions', domain: 'commerce', origin: '0256', purpose: { zh: 'Google 服务端核验的订阅状态、替换关系及权益', en: 'Server-verified Google subscription state, replacement chains and grants' } },
   { name: 'apple_membership_accounts', domain: 'commerce', origin: '0254', purpose: { zh: 'Apple 随机账号 token 与 CubeRoot 用户绑定；合并保留 token，注销解除关联', en: 'Apple account tokens linked to CubeRoot users; merging preserves tokens and deletion clears ownership' } },
@@ -816,6 +817,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 259, slug: 'platform_learning_completion', desc: { zh: '课程结构化介绍、证书加密验证凭据和学习奖励防重。', en: 'Structured course presentation, encrypted certificate verification credentials and unique learning rewards.' } },
   { n: 260, slug: 'platform_commerce_completion', desc: { zh: '商品分类、会员专享和展示资料，活动日程及新闻分类摘要。', en: 'Product categories, member exclusivity and presentation; event programs and news excerpts.' } },
   { n: 262, slug: 'recon_home_pins', desc: { zh: '首页多条复盘置顶，复盘删除时级联清理。', en: 'Multiple homepage reconstruction pins, cascading on reconstruction deletion.' } },
+  { n: 264, slug: 'face_verification', desc: { zh: '独立实名认证流水，保存同意与服务端核验结果，不留存明文证件及人脸。', en: 'Separate identity verification attempts with consent and provider results; no raw identity number or facial data.' } },
   { n: 261, slug: 'recon_comment_votes', desc: { zh: '复盘评论与回复支持互斥的点赞和点踩，按账号持久保存。', en: 'Persistent, mutually exclusive likes and dislikes on reconstruction comments and replies.' } },
 ];
 
