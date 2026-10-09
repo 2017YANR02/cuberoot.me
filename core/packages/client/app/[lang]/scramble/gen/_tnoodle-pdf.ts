@@ -298,7 +298,7 @@ function tnoodleEventTitle(event: string): string | null {
 function nonCubeAspect(event: string): number | null {
   if (eventToCubeSize(event)) return 4 / 3;
   switch (event) {
-    case 'sphere': return 1;
+    case 'sphere': return 4 / 3;
     case 'pyraminx_duo': return DUO_SVG_ASPECT;
     // The rectangle is the wider practice start. Reserve that column width;
     // embedSvg fits each Forward/Backward SVG using its own actual viewBox.
