@@ -5,7 +5,7 @@ description: "渲染 WCA 项目名、图标或选择器时用。图标复用 Eve
 
 # 项目图标 + 选择器
 
-## 图标渲染（内联 SVG，源 `components/EventIcon/svg/`）
+## 图标渲染（内联 SVG，源 `core/packages/event-icon/svg/`）
 
 ```tsx
 import { EventIcon, CubingIcon } from '../../components/EventIcon/EventIcon';
@@ -31,10 +31,15 @@ CSS 用 `font-size`(SVG=1em) + `color`(SVG fill=currentColor) — 现存规则�
 菜单只列可用项目，废止项和非 WCA 项目分别分组；多选菜单保留清空、全选、分类和废止项开关。
 师生编辑与双人计时浮层显式传 `presentation="inline"` 保留展开图标行；比赛列表保留项目表头，筛选使用菜单；`EventSelect` 仅作旧调用的菜单适配入口。
 
-## 加新 unofficial 图标
+## 项目图标事实源与维护
 
-1. 拷 `D:\cube\icons\src\svg\unofficial\<name>.svg` 到 `components/EventIcon/svg/unofficial/`
-2. `utils/cubingScramble.ts` 的 `TWIZZLE_NONWCA_APPEND` 加 `{ id, iconClass: 'unofficial-<name>' }`
+唯一 SVG 源在 `core/packages/event-icon/svg/`，Web / App 的 `CubingIcon` 都从 `@cuberoot/event-icon` 消费；旧 `components/EventIcon/svg/` 路径已迁出。
+
+- `event/`、`unofficial/`、`penalty/` 保留 cubing/icons 上游原稿；本站设计放 `puzzle/`，不要改上游图来冒充另一个项目。
+- `/sim` 的 PG 图标必须对应当前项目的形状、切割和阶数，禁止拿五魔图标代替二十面体、拿 FTO 代替所有八面体，或不同阶数共用一个图标。
+- PG 图标从 `sim/pgCatalog.ts` 的同一切割定义生成：在 `core/` 运行 `pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts`，加 `--check` 可只读核对。曲面直升机保留曲线原稿，因为平面切割不能表达真实曲线。
+- 修改 SVG 后运行 `pnpm --filter @cuberoot/event-icon generate`。`/icon` 自动枚举同一份 SVG；项目名称复用目录数据，菜单显示和下载必须一致。
+- 新图标同时检查菜单小尺寸与图标库；可见切缝相同的拼图不编造多余切缝，几何相似不意味着转动机制相同。
 
 ## 项目菜单短名
 

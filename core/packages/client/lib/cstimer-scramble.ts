@@ -91,13 +91,13 @@ export const CSTIMER_REDI_KEY = 'redim';
 export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
   // Random-state (length ignored by solver), plus csTimer's MoYu Redi mode.
   { id: 'redi_cube', key: CSTIMER_REDI_KEY, length: 8, zh: '热帝', en: 'Redi Cube', iconClass: 'unofficial-redi', family: 'twist', solvable: true },
-  { id: 'gear',    key: 'gearso',  zh: '齿轮',         en: 'Gear Cube',         iconClass: 'unofficial-gear', family: 'twist',  solvable: true
+  { id: 'gear',    key: 'gearso',  zh: '齿轮',         en: 'Gear Cube',         iconClass: 'puzzle-gear', family: 'twist',  solvable: true
 },
   { id: 'ivy',     key: 'ivyso',   zh: '枫叶',         en: 'Ivy Cube',          textLabel: 'Ivy',    family: 'twist',  solvable: true
 },
   { id: 'dino',    key: 'dinoso',  zh: '恐龙',         en: 'Dino Cube',         textLabel: 'Dino',   family: 'twist',  solvable: true
 },
-  { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'unofficial-mpyram', family: 'twist',  solvable: true
+  { id: 'mpyrso',  key: 'mpyrso',  zh: '大金字塔(随态)',   en: 'Master Pyra (RS)',  iconClass: 'puzzle-masterpyraminx', family: 'twist',  solvable: true
 },
   { id: '223',     key: '223',     zh: '223',            en: '223',             textLabel: '223',  family: 'cuboid', solvable: true },
   { id: '133',     key: '133',     zh: '133 花型',       en: '133 Floppy',      textLabel: '133',  family: 'cuboid', solvable: true },

@@ -70,6 +70,7 @@ function gitBlobSha(buf) {
 function localSvgs() {
   const out = new Map(); // 'event/333.svg' -> sha
   for (const kind of fs.readdirSync(SVG_DIR)) {
+    if (kind === 'puzzle') continue; // CubeRoot originals are not vendored upstream files.
     const dir = path.join(SVG_DIR, kind);
     if (!fs.statSync(dir).isDirectory()) continue;
     for (const f of fs.readdirSync(dir)) {

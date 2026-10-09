@@ -21,6 +21,7 @@ import {
   ICON_GROUPS, CATEGORY_LABEL, svgHref,
   type IconEntry, type IconCategory,
 } from './_catalog';
+import { PUZZLE_ICON_NAMES } from './_site-icons';
 import './icon.css';
 
 // Display-name overrides for non-event icons whose upstream slug reads
@@ -32,6 +33,8 @@ const NAME_OVERRIDES: Record<string, string> = {
 
 function friendlyName(entry: IconEntry, isZh: boolean): string {
   if (entry.category === 'event') return eventDisplayName(entry.slug, isZh);
+  const puzzleName = PUZZLE_ICON_NAMES[entry.key];
+  if (puzzleName) return [puzzleName.en, puzzleName.zh][Number(isZh)];
   return NAME_OVERRIDES[entry.key] ?? entry.slug.replace(/_/g, ' ');
 }
 
@@ -85,9 +88,11 @@ export default function IconGalleryPage() {
         <h1>{tr({ zh: '魔方图标库', en: 'Cube Icons' })}</h1>
         <a className="icon-credit" href="https://github.com/cubing/icons" target="_blank" rel="noopener noreferrer">
           <ExternalLink size={13} aria-hidden="true" />
-          <span>cubing/icons</span>
+          <span>{tr({ zh: '上游图标：cubing/icons', en: 'Upstream icons: cubing/icons' })}</span>
         </a>
       </header>
+
+      <p>{tr({ zh: '魔方根项目图标与模拟器菜单共用同一套 SVG，按实际形状和切割结构绘制。', en: 'CubeRoot puzzle icons share the simulator’s SVG artwork, drawn from each puzzle’s shape and cut structure.' })}</p>
 
       <div className="icon-toolbar">
         <div className="icon-search">
@@ -111,7 +116,7 @@ export default function IconGalleryPage() {
         <div className="icon-empty">{tr({ zh: '没有匹配的图标', en: 'No matching icons' })}</div>
       ) : (
         groups.map((g) => (
-          <section key={g.category} className="icon-section">
+          <section id={`icons-${g.category}`} key={g.category} className="icon-section">
             <h2 className="icon-section-title">
               {tr(CATEGORY_LABEL[g.category as IconCategory])}
               <span className="icon-section-count">{g.entries.length}</span>

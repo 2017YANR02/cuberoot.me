@@ -418,6 +418,21 @@
       "driftPolicy": "regulation_drift.yml may open or update an issue but never generates this authored explanation; do not describe it as automatic output."
     },
     {
+      "id": "event-icon.puzzle-glyphs",
+      "kind": "checked-in-generated",
+      "source": {
+        "locator": "Simulator PG cut definitions and CubeRoot projection/gap design",
+        "paths": ["core/packages/client/app/[lang]/sim/pgCatalog.ts", "core/packages/client/scripts/generate-puzzle-icons.mts"]
+      },
+      "license": { "spdx": "LicenseRef-CubeRoot", "evidence": "LICENSE; existing cubing.js PG definitions and original projection design" },
+      "owner": "core/packages/client/scripts/generate-puzzle-icons.mts",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client exec node scripts/generate-puzzle-icons.mts",
+      "outputs": ["core/packages/event-icon/svg/puzzle/*.svg"],
+      "verification": ["Run the command with --check", "Review every glyph in /zh/icon and at menu size in /zh/sim"],
+      "driftPolicy": "Regenerate from the exact /sim definitions, then run event-icon generate. Never use a generic family icon to stand in for different cuts. Curvy Copter retains curved upstream artwork; gear.svg is authored artwork."
+    },
+    {
       "id": "event-icon.maps",
       "kind": "checked-in-generated",
       "source": {
@@ -431,10 +446,11 @@
       "outputs": [
         "core/packages/event-icon/src/svg-map-event.ts",
         "core/packages/event-icon/src/svg-map-unofficial.ts",
-        "core/packages/event-icon/src/svg-map-penalty.ts"
+        "core/packages/event-icon/src/svg-map-penalty.ts",
+        "core/packages/event-icon/src/svg-map-puzzle.ts"
       ],
       "verification": ["pnpm --filter @cuberoot/event-icon generate and review the generated map diff", ".github/workflows/icons_drift.yml compares upstream and local SVGs"],
-      "driftPolicy": "icons_drift.yml does not prove SVG-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review all three category maps after SVG changes."
+      "driftPolicy": "icons_drift.yml does not prove SVG-map freshness. Until a cheap generator-diff guard is added, explicitly regenerate and review all category maps after SVG changes."
     },
     {
       "id": "shared.place-zh",
