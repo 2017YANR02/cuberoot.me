@@ -33,16 +33,28 @@ export function mergePersonLive(
 
 /**
  * Fill the mirror/live hand-off gap with the competition-scoped official endpoint.
- * Matching competition/event/round rows from the competition endpoint win.
+ * Matching competition/event/round rows from the competition endpoint win, but its
+ * cached payload can lack record tags already present in official person results.
  */
 export function mergePersonCompetitionResults(
   existing: WcaResultRow[],
   competitionRows: WcaResultRow[],
 ): WcaResultRow[] {
   if (competitionRows.length === 0) return existing;
+  const existingByKey = new Map(existing.map((row) => [wcaResultRowKey(row), row]));
   const replacementKeys = new Set(competitionRows.map(wcaResultRowKey));
   return [
     ...existing.filter((row) => !replacementKeys.has(wcaResultRowKey(row))),
-    ...competitionRows,
+    ...competitionRows.map((row) => {
+      const previous = existingByKey.get(wcaResultRowKey(row));
+      if (!previous || previous.live) return row;
+      return {
+        ...row,
+        regional_single_record: row.regional_single_record ||
+          (row.best > 0 && row.best === previous.best ? previous.regional_single_record : null),
+        regional_average_record: row.regional_average_record ||
+          (row.average > 0 && row.average === previous.average ? previous.regional_average_record : null),
+      };
+    }),
   ];
 }

@@ -272,6 +272,8 @@ export default function ReconDetailClient({ initialSolve, initialSameScramble }:
               </Fragment>
             ))}
             {' '}
+            {solve.method && <span className="detail-method-badge" title={t('recon.method')}>{solve.method}</span>}
+            {' '}
             {solutionText && <button type="button" className="recon-btn detail-title-edit" aria-haspopup="dialog" onClick={() => setShareOpen(true)}>
               <Share2 size={15} aria-hidden="true" />
               {tr({ zh: '分享', en: 'Share' })}
@@ -654,9 +656,7 @@ function StatsGrid({ solve }: { solve: ReconSolve }) {
   const isBld = isBldEvent(solve.event);
   // SQ1 没有 CFOP 分步概念(Cross/F2L/顶层/OLL/PLL 等),这些字段对它没有意义,全隐藏。
   const isSq1 = solve.event === 'sq1';
-  const methodItem: [string, React.ReactNode | undefined] = [t('recon.method'), solve.method];
-  const items: [string, React.ReactNode | undefined][] = methodOnly ? [methodItem] : [
-    methodItem,
+  const items: [string, React.ReactNode | undefined][] = methodOnly ? [] : [
     [t('recon.memo'), isBld && solve.memoTime != null ? Number(solve.memoTime).toFixed(2) : undefined],
     [t('recon.exec'), isBld && solve.execTime != null ? Number(solve.execTime).toFixed(2) : undefined],
     ['Cross', !isBld && !isSq1 && crossStm != null ? `${crossStm}` : undefined],
