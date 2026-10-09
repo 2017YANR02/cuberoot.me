@@ -67,6 +67,17 @@ beforeEach(() => {
 });
 
 describe('WCA pool strict external-slot boundaries', () => {
+  it('preserves a difficulty-matched official scramble when its optimal text is unavailable', async () => {
+    fetchByDifficultyMock.mockResolvedValue({ total: 1, page: 1, pageSize: 200, scrambles: [valid333] });
+    const { startWcaScrambleRetry } = await freshPool();
+    const outcome = await startWcaScrambleRetry({ ...competitionSpec, optimal: true }).result;
+    expect(outcome).toMatchObject({
+      kind: 'ready', attemptIndex: 0,
+      value: { scramble: valid333.scramble, meta: { ci: valid333.ci, n: valid333.n, nonOptimal: true } },
+    });
+    expect(fetchByDifficultyMock).toHaveBeenCalledOnce();
+  });
+
   it('skips a strict-invalid random-live row and keeps a later valid row', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({
       ok: true,

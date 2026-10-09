@@ -59,6 +59,27 @@
 .wca-src-config {
   margin: 4px 0 10px;
 }
+.wca-src-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+.wca-src-filters > .country-input {
+  flex: 1 1 110px;
+  min-width: 0;
+  max-width: 100%;
+}
+.wca-src-filters .timer-wca-source-select,
+.wca-src-filters .country-input-field {
+  height: 36px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
 .date-range-input.wca-src-dates {
   flex: 0 1 auto;
   width: fit-content;

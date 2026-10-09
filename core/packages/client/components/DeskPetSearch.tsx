@@ -100,10 +100,12 @@ const CSS = `
 .deskpet-toolbar .header-toggles{gap:0;}
 .deskpet-toolbar .lang-menu:not(.appearance-menu){top:auto;bottom:calc(100% + 6px);}
 /* anchored-panel: safe (search-box anchor, viewport-bounded width and available height) */
-.deskpet-toolbar .appearance-menu:has(.site-background-control){
+.deskpet-toolbar .appearance-menu[data-backgrounds]{
+  position:fixed;
   top:auto;bottom:var(--deskpet-appearance-bottom);left:var(--deskpet-appearance-center);right:auto;
   transform:translateX(-50%);width:min(580px,calc(100% - 32px));
   max-height:var(--deskpet-appearance-height);}
+.deskpet-toolbar .appearance-menu[data-backgrounds='false']{width:max-content;max-width:calc(100% - 32px);}
 @media (max-width:768px){
   .deskpet-toolbar>*{flex:0 0 auto;}
   .deskpet-toolbar .sep{display:none;}
@@ -383,8 +385,8 @@ export default function DeskPetSearch({
               <div className="deskpet-character-settings">
                 <BoolToggle className="deskpet-character-setting"
                   value={petVisible} onChange={setPetVisible}
-                  label={tr({ zh: '显示桌宠', en: 'Show desk pet' })} />
-                <p className="deskpet-character-hint">{tr({ zh: '关闭后可在顶部的外观-显示桌宠再次开启', en: 'After hiding your pet, turn it back on from Appearance → Show desk pet at the top.' })}</p>
+                  label={tr({ zh: '桌宠', en: 'Desk pet' })} />
+                <p className="deskpet-character-hint">{tr({ zh: '关闭后可在顶部的外观-桌宠再次开启', en: 'After hiding your pet, turn it back on from Appearance → Desk pet at the top.' })}</p>
                 <div className="deskpet-character-setting">
                   <span className="deskpet-character-option">
                     <span className="deskpet-character-thumb" aria-hidden><Maximize2 size={18} /></span>

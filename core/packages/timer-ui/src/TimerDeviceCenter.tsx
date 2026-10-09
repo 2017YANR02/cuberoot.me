@@ -97,6 +97,7 @@ export function TimerDeviceCenter({
         <div
           aria-label={menuLabel}
           className="shell-device-center-menu"
+          data-site-surface="popover"
           ref={panelRef}
           role="menu"
         >

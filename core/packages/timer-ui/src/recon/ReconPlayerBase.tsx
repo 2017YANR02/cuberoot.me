@@ -33,7 +33,7 @@ const PLAY_INTERVAL_MS = 520;
 export interface ReconPlayerHandle {
   __kind: string;
   /** 跳到「已走 n 步」的那一帧并停下(复盘表单的光标同步、换解法时回到开头)。 */
-  jumpToMoveCount(n: number): void;
+  jumpToMoveCount(n: number, autoplay?: boolean): void;
   /** 从当前位置自动播下去;已在结尾则先回开头(与画面里那颗播放键同一套语义)。 */
   play(): void;
 }
@@ -105,6 +105,7 @@ export default function ReconPlayerBase<M>({
   const [step, setStepState] = useState(0);
   const [total, setTotal] = useState(movesRef.current.length);
   const [playing, setPlaying] = useState(false);
+  const [playbackRun, setPlaybackRun] = useState(0);
 
   const setStep = useCallback((n: number) => {
     stepRef.current = n;
@@ -271,7 +272,7 @@ export default function ReconPlayerBase<M>({
       cancelled = true;
       if (timer != null) window.clearTimeout(timer);
     };
-  }, [playing, setStep]);
+  }, [playing, playbackRun, setStep]);
 
   // ── Expose imperative handle for caret-driven scrubbing / list-driven playback ──
   useEffect(() => {
@@ -279,7 +280,13 @@ export default function ReconPlayerBase<M>({
     const { kind } = adapterRef.current;
     const handle: ReconPlayerHandle = {
       __kind: kind,
-      jumpToMoveCount: (n: number) => jumpToStep(n),
+      jumpToMoveCount: (n: number, autoplay = false) => {
+        jumpToStep(n);
+        if (autoplay) {
+          setPlaybackRun(run => run + 1);
+          setPlaying(n < movesRef.current.length);
+        }
+      },
       play: () => {
         if (stepRef.current >= movesRef.current.length) jumpToStep(0);
         setPlaying(true);

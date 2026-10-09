@@ -17,7 +17,7 @@ import {
   getUserById,
   publicUser,
   isValidCountryIso2,
-  normalizeCountryIso2,
+  normalizeWcaBasicProfile, normalizeCountryIso2,
 } from '../utils/account.js';
 import { beginIdentityLogin } from '../utils/identity_choice.js';
 
@@ -213,7 +213,7 @@ authRoutes.get('/auth/callback', async (c) => {
   }
 
   const meData = await meRes.json() as {
-    me: { id: number; wca_id: string; name: string; country_iso2?: string; avatar: { url: string } };
+    me: { id: number; wca_id: string; name: string; country_iso2?: string; gender?: unknown; avatar: { url: string } };
   };
 
   const user = meData.me;
@@ -243,6 +243,7 @@ authRoutes.get('/auth/callback', async (c) => {
     avatar: user.avatar?.url ?? null,
     wcaId,
     countryIso2: verifiedCountryIso2,
+    ...normalizeWcaBasicProfile(user),
   } });
   if ('pending' in result) return c.json(result, 409);
   const { user: account } = result;
@@ -312,7 +313,7 @@ authRoutes.post('/auth/exchange', async (c) => {
     }
 
     const data = await res.json() as {
-      me: { id: number; wca_id: string; name: string; country_iso2?: string; avatar: { url: string } };
+      me: { id: number; wca_id: string; name: string; country_iso2?: string; gender?: unknown; avatar: { url: string } };
     };
     const user = data.me;
     if (!user?.wca_id) {
@@ -342,6 +343,7 @@ authRoutes.post('/auth/exchange', async (c) => {
       avatar: user.avatar?.url ?? null,
       wcaId: user.wca_id,
       countryIso2: verifiedCountryIso2,
+      ...normalizeWcaBasicProfile(user),
     } });
     if ('pending' in result) return c.json(result, 409);
     const { user: account } = result;

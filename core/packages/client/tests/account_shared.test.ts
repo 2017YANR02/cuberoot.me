@@ -144,7 +144,7 @@ describe('站内用户名规范化 + 校验', () => {
 });
 
 describe('forum reply profile completeness', () => {
-  it('has Chinese display labels for every Chinese account city without changing saved identifiers', () => {
+  it('has province-scoped current Chinese administrative options and legacy labels', () => {
     const regions: Array<{ code: string; cities: string[]; cityNamesZh: Record<string, string> }> = JSON.parse(readFileSync(join(__dirname, '../public/account-locations/CN.json'), 'utf8'));
     for (const region of regions) {
       expect(Object.keys(region.cityNamesZh).sort()).toEqual([...region.cities].sort());
@@ -152,8 +152,13 @@ describe('forum reply profile completeness', () => {
     }
     const shanghai = regions.find(region => region.code === 'SH')!;
     expect(shanghai.cityNamesZh['Pudong New Area']).toBe('浦东新区');
-    expect(shanghai.cityNamesZh.Zhujiajiao).toBe('朱家角');
-    const label = (code: string, city: string) => regions.find(region => region.code === code)!.cityNamesZh[city];
+    expect([...shanghai.cities].sort()).toEqual([
+      'Baoshan', 'Changning', 'Chongming', 'Fengxian', 'Hongkou', 'Huangpu',
+      'Jiading', "Jing'an", 'Jinshan', 'Minhang', 'Pudong New Area', 'Putuo',
+      'Qingpu', 'Songjiang', 'Xuhui', 'Yangpu',
+    ]);
+    const legacyLabels = JSON.parse(readFileSync(join(__dirname, '../scripts/account-location-cn-zh.json'), 'utf8'));
+    const label = (code: string, city: string) => legacyLabels[code][city];
     expect(label('AH', 'Suzhou')).toBe('宿州');
     // Administrative entities must not become their seats, aliases or homophones.
     for (const [code, city, expected] of [
@@ -167,6 +172,40 @@ describe('forum reply profile completeness', () => {
       ['TJ', 'Caodian', '糙甸'], ['TJ', 'Liuzikou', '柳子口'], ['GZ', 'Qinglang', '清浪'],
       ['TJ', 'Mengquan', '蒙酄'], ['CQ', 'Zhong', '忠县'],
     ]) expect(label(code, city), `${code}/${city}`).toBe(expected);
+  });
+  it('covers all reviewed CN groups without mixing historical places into new choices', () => {
+    const source = JSON.parse(readFileSync(join(__dirname, '../scripts/account-location-cn-current.json'), 'utf8'));
+    const actual = JSON.parse(readFileSync(join(__dirname, '../public/account-locations/CN.json'), 'utf8'));
+    const counts: Record<string, number> = { BJ:16, TJ:16, HE:11, SX:11, NM:12, LN:14, JL:9, HL:13, SH:16, JS:13, ZJ:11, AH:16, FJ:9, JX:11, SD:16, HA:18, HB:17, HN:14, GD:21, GX:14, HI:19, CQ:37, SC:21, GZ:9, YN:16, XZ:7, SN:10, GS:14, QH:8, NX:5, XJ:27, HK:18, MO:0, TW:22 };
+    expect(actual).toHaveLength(34);
+    expect(source.regions).toHaveLength(34);
+    for (const region of source.regions) {
+      const result = actual.find((r: {code: string}) => r.code === region.code);
+      expect(result.nameZh).toBe(region.nameZh);
+      expect(region.cities.length, region.code).toBe(counts[region.code]);
+      expect(result.cities, region.code).toEqual(region.cities.map((c: {value: string}) => c.value));
+      expect(new Set(result.cities).size).toBe(result.cities.length);
+      expect(result.cityNamesZh).toEqual(Object.fromEntries(region.cities.map((c: {value: string; name: string}) => [c.value, c.name])));
+      for (const value of Object.keys(result.legacyCityNamesZh)) expect(result.cities).not.toContain(value);
+      if (region.administrativeCode) for (const city of region.cities) expect(city.code.slice(0, 2)).toBe(region.administrativeCode.slice(0, 2));
+    }
+    const names = (code: string): string[] => Object.values(actual.find((r: {code: string}) => r.code === code).cityNamesZh);
+    expect(names('SH')).not.toContain('闸北区');
+    expect(names('SH')).not.toContain('朱家角镇');
+    expect(names('BJ')).not.toContain('崇文区');
+    expect(names('TJ')).toContain('滨海新区');
+    expect(names('CQ')).toContain('两江新区');
+    expect(names('CQ')).not.toContain('江北区');
+    expect(names('CQ')).not.toContain('渝北区');
+    expect(names('XJ')).toContain('草湖市');
+    expect(names('XJ')).not.toContain('岑岭县');
+    expect(names('TW')).toContain('新竹市');
+    expect(names('TW')).toContain('新竹县');
+    expect(names('TW')).toContain('嘉义市');
+    expect(names('TW')).toContain('嘉义县');
+    expect(names('TW')).not.toContain('常州市');
+    expect(names('TW')).not.toContain('苏州市');
+    expect(actual.find((r: {code: string}) => r.code === 'TW').nameZh).toBe('台湾省');
   });
   const profile: AccountBasicProfile = { fullName: 'Test User', birthDate: '2000-01-01', gender: 'male', countryIso2: 'CN', regionCode: 'GD', cityName: 'Shenzhen', countrySource: 'self' };
   const complete = (patch: Partial<AccountBasicProfile>) => isForumReplyProfileComplete({ ...profile, ...patch }, '2026-09-11');

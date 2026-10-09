@@ -59,6 +59,7 @@
 .shell-topbar .shell-topbar-left .shell-players-select,
 .shell-topbar .shell-topbar-left .pp-trigger,
 .shell-topbar .shell-topbar-left .compact-select-trigger,
+.shell-topbar .shell-topbar-left .timer-difficulty-trigger,
 .shell-topbar .shell-topbar-left .devcube-pill {
   height: 32px;
   padding-block: 0;
@@ -189,6 +190,7 @@
   padding: 0;
   box-sizing: border-box;
   border: 0;
+  border-radius: inherit;
   background: transparent;
   color: inherit;
   cursor: pointer;

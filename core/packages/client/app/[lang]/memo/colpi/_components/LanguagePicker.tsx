@@ -29,6 +29,7 @@ export function LangPopup({
   return (
     <div
       className={`colpi-langpicker-popup ${popupClassName ?? ''}`}
+      data-site-surface="popover"
       role="dialog"
       aria-label={tr({ zh: '选择语言', en: 'Select language'
     })}

@@ -105,127 +105,88 @@ describe('shared WCA difficulty UI', () => {
     host.remove();
   });
 
-  it('keeps method, stage, colors, range and merge in one controlled interaction flow', async () => {
+  const open = async () => {
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-difficulty-trigger')!.click());
+  };
+  const apply = async () => {
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions [data-primary]')!.click());
+  };
+
+  it('edits colors, stage and range as a draft, including the last range input', async () => {
     await act(async () => root.render(createElement(Harness, { sourceAdapter: adapter() })));
-    await vi.waitFor(() => expect(
-      host.querySelector<HTMLSelectElement>('select[aria-label="Method"]'),
-    ).not.toBeNull());
-
-    const method = host.querySelector<HTMLSelectElement>('select[aria-label="Method"]')!;
-    expect([...method.options].map((option) => option.value)).toContain('length');
-    expect(host.querySelector('select[aria-label="Stage"]')).not.toBeNull();
-    const colors = host.querySelector<HTMLButtonElement>('button.subset-picker-mode')!;
-    expect(colors.getAttribute('aria-label')).toBe('Color subset: CN Color-neutral, all six');
-    expect(host.querySelector('select[aria-label="Color subset"]')).toBeNull();
-    const stage = host.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
-    const merge = host.querySelector<HTMLButtonElement>(
-      '[role="switch"][aria-label="Merge switch"]',
-    )!;
-
+    expect(host.querySelector('select[aria-label="Difficulty switch"]')).toBeNull();
+    expect(document.querySelector('select[aria-label="Method"]')).toBeNull();
+    await open();
+    const colors = document.querySelector<HTMLButtonElement>('.subset-picker-mode')!;
+    await act(async () => colors.click());
+    await act(async () => document.querySelector<HTMLButtonElement>('.subset-picker-panel button[aria-label="White+Yellow"]')!.click());
+    const stage = document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
     await act(async () => {
-      colors.click();
+      stage.value = 'xcross'; stage.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    const whiteYellow = host.querySelector<HTMLButtonElement>(
-      '.subset-picker-panel button[aria-label="White+Yellow"]',
-    )!;
+    expect(JSON.parse(host.querySelector('output')!.textContent!).wcaDiffStage).toBe('cross');
+    await apply();
+    expect(JSON.parse(host.querySelector('output')!.textContent!)).toMatchObject({ wcaDiffColors: 'WY', wcaDiffStage: 'xcross' });
+    await open();
+    const method = document.querySelector<HTMLSelectElement>('select[aria-label="Method"]')!;
     await act(async () => {
-      whiteYellow.click();
-      stage.value = 'xcross';
-      stage.dispatchEvent(new Event('change', { bubbles: true }));
-      merge.click();
+      method.value = 'length'; method.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    await vi.waitFor(() => expect(
-      JSON.parse(host.querySelector('output')!.textContent!),
-    ).toMatchObject({
-      wcaDiffColors: 'WY',
-      wcaDiffMerged: false,
-      wcaDiffStage: 'xcross',
-    }));
-    expect(colors.getAttribute('aria-label')).toBe('Color subset: Dual White+Yellow');
-
-    await act(async () => {
-      method.value = 'length';
-      method.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    await vi.waitFor(() => expect(
-      JSON.parse(host.querySelector('output')!.textContent!).wcaDiffVariant,
-    ).toBe('length'));
-    expect(host.querySelector('select[aria-label="Stage"]')).toBeNull();
-    expect(host.querySelector('button.subset-picker-mode')).toBeNull();
-
-    const min = host.querySelector<HTMLInputElement>(
-      'input[aria-label="Scramble length range — min"]',
-    )!;
-    const max = host.querySelector<HTMLInputElement>(
-      'input[aria-label="Scramble length range — max"]',
-    )!;
-    expect(min.type).toBe('range');
-    expect(max.type).toBe('range');
-    await act(async () => {
-      setRangeValue(min, '19');
-    });
-    await new Promise((resolve) => setTimeout(resolve, 370));
-    await vi.waitFor(() => expect(
-      JSON.parse(host.querySelector('output')!.textContent!).wcaDiffSteps,
-    ).toEqual([19, 20]));
+    expect(document.querySelector('select[aria-label="Stage"]')).toBeNull();
+    const min = document.querySelector<HTMLInputElement>('input[aria-label="Scramble length range — min"]')!;
+    await act(async () => setRangeValue(min, '19'));
+    await apply();
+    expect(JSON.parse(host.querySelector('output')!.textContent!).wcaDiffSteps).toEqual([19, 20]);
   });
 
-  it('explains an unindexed competition without mutating persisted difficulty', async () => {
-    const sourceAdapter = adapter(false);
+  it('explains an unindexed competition inside the dialog without changing settings', async () => {
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerWcaDifficultyConfig, {
-      adapter: sourceAdapter,
-      language: 'en',
-      labels,
-      onChange,
-      settings: {
-        ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
-        wcaComp: 'Unindexed2026',
-        wcaCompName: 'Unindexed Open 2026',
-        wcaDifficultyOn: true,
-        wcaDiffSteps: [4, 5, 6],
-      },
+      adapter: adapter(false), language: 'en', labels, onChange,
+      settings: { ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS, wcaComp: 'Unindexed2026', wcaCompName: 'Unindexed', wcaDifficultyOn: true, wcaDiffSteps: [4, 5, 6] },
       wcaEventId: '333',
     })));
-    await vi.waitFor(() => expect(
-      host.querySelector('[role="switch"][aria-label="Difficulty switch"]'),
-    ).not.toBeNull());
-    expect(host.querySelector('.timer-wca-difficulty-body')).toBeNull();
-
+    onChange.mockClear();
+    await open();
+    expect(document.querySelector('[role="status"]')?.textContent).toBe('This competition is not indexed.');
+    expect(document.querySelector<HTMLButtonElement>('[data-primary]')!.disabled).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+    const method = document.querySelector<HTMLSelectElement>('select[aria-label="Method"]')!;
+    expect(method.disabled).toBe(false);
+    expect(document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!.disabled).toBe(true);
+    expect(document.querySelector('input[aria-label="Difficulty range — min"]')).toBeNull();
     await act(async () => {
-      host.querySelector<HTMLButtonElement>(
-        '[role="switch"][aria-label="Difficulty switch"]',
-      )!.click();
+      method.value = 'length'; method.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    expect(host.querySelector('[role="status"]')?.textContent)
-      .toBe('This competition is not indexed.');
-    expect(onChange).not.toHaveBeenCalledWith({ wcaDifficultyOn: false });
+    expect(document.querySelector('[role="status"]')).toBeNull();
+    expect(document.querySelector('input[aria-label="Scramble length range — min"]')).not.toBeNull();
+    expect(document.querySelector<HTMLButtonElement>('[data-primary]')!.disabled).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+    await apply();
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ wcaDifficultyOn: true, wcaDiffVariant: 'length' }));
   });
 
-  it('flushes a pending range change on unmount instead of losing the last keyboard input', async () => {
+  it('discards pending edits on close and unmount; applies only an explicit clear', async () => {
+    await act(async () => root.render(createElement(Harness, { sourceAdapter: adapter() })));
+    const before = host.querySelector('output')!.textContent;
+    await open();
+    await act(async () => setRangeValue(document.querySelector<HTMLInputElement>('input[aria-label="Difficulty range — max"]')!, '7'));
+    await act(async () => document.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!.click());
+    expect(host.querySelector('output')!.textContent).toBe(before);
+    await open();
+    expect(document.querySelector<HTMLInputElement>('input[aria-label="Difficulty range — max"]')!.value).toBe('6');
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions button')!.click());
+    expect(JSON.parse(host.querySelector('output')!.textContent!).wcaDifficultyOn).toBe(false);
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerWcaDifficultyConfig, {
-      adapter: adapter(),
-      language: 'en',
-      labels,
-      onChange,
-      settings: {
-        ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS,
-        wcaScrambleMode: 'date',
-        wcaDifficultyOn: true,
-        wcaDiffSteps: [4, 5, 6],
-      },
-      wcaEventId: '333',
+      adapter: adapter(), language: 'en', labels, onChange,
+      settings: { ...DEFAULT_TIMER_WCA_SOURCE_SETTINGS, wcaScrambleMode: 'date', wcaDifficultyOn: true, wcaDiffSteps: [4, 5, 6] }, wcaEventId: '333',
     })));
-    await vi.waitFor(() => expect(
-      host.querySelector<HTMLInputElement>('input[aria-label="Difficulty range — max"]'),
-    ).not.toBeNull());
-    const max = host.querySelector<HTMLInputElement>('input[aria-label="Difficulty range — max"]')!;
-    await act(async () => {
-      setRangeValue(max, '7');
-    });
+    onChange.mockClear();
+    await open();
+    await act(async () => setRangeValue(document.querySelector<HTMLInputElement>('input[aria-label="Difficulty range — max"]')!, '7'));
     await act(async () => root.unmount());
-    expect(onChange).toHaveBeenCalledWith({ wcaDiffSteps: [4, 5, 6, 7] });
+    expect(onChange).not.toHaveBeenCalled();
     root = createRoot(host);
   });
 });

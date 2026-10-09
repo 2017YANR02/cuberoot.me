@@ -64,6 +64,11 @@
   padding-right: 8px;
 }
 
+.timer-wca-competition-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 .timer-wca-competition-input:focus {
   border-color: var(--ring);
   outline: none;
@@ -171,6 +176,22 @@
   font-size: 13px;
   -webkit-overflow-scrolling: touch;
   box-shadow: 0 12px 28px color-mix(in srgb, var(--foreground) 18%, transparent);
+}
+
+.timer-wca-competition-popup.timer-wca-competition-popup--inline {
+  position: static;
+  inset: auto;
+  transform: none;
+  translate: none;
+  visibility: visible;
+  width: 100%;
+  max-width: 100%;
+  max-height: 40vh;
+  margin-top: 6px;
+}
+
+.timer-wca-competition-popup--inline .timer-wca-competition-option {
+  flex-shrink: 0;
 }
 
 .timer-wca-competition-option {

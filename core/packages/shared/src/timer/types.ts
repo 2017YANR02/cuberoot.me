@@ -149,7 +149,7 @@ export function isBldEvent(id: EventId): boolean {
 }
 
 /** Effective time after penalty (Infinity for DNS / DNF). */
-export function effectiveMs(s: Solve): number {
+export function effectiveMs(s: Pick<Solve, 'timeMs' | 'penalty'>): number {
   // DNS first: it must never fall through to the +2 / raw branches. Returning
   // Infinity here is what makes DNS behave as DNF in every stat — stats.ts
   // only ever looks at effective times, never at `penalty` itself.
@@ -224,9 +224,9 @@ export const EVENTS: EventInfo[] = [
   // trimmed of the generic 「魔方」 suffix the way the WCA entries above are.
   { id: 'fto',      nameEn: 'FTO',             nameZh: '转面八面体', group: 'nonwca', icon: 'unofficial-fto' },
   { id: 'kilominx', nameEn: 'Kilominx',        nameZh: '二阶五魔',   group: 'nonwca', icon: 'unofficial-kilominx' },
-  { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮魔方',   group: 'nonwca', icon: 'unofficial-gear' },
+  { id: 'gear',     nameEn: 'Gear Cube',       nameZh: '齿轮',       group: 'nonwca', icon: 'unofficial-gear' },
   { id: 'ivy',      nameEn: 'Ivy Cube',        nameZh: '枫叶',       group: 'nonwca', icon: 'unofficial-ivy' },
-  { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝魔方',   group: 'nonwca', icon: 'unofficial-redi' },
+  { id: 'redi',     nameEn: 'Redi Cube',       nameZh: '热帝',       group: 'nonwca', icon: 'unofficial-redi' },
   { id: 'mpyram',   nameEn: 'Master Pyraminx', nameZh: '四阶金字塔', group: 'nonwca', icon: 'unofficial-mpyram' },
 
   // CFOP step training

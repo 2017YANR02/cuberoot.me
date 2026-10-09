@@ -80,7 +80,7 @@ interface Props {
   /** 已从姿态流确认、并排除了中层/宽层的整体转体。关闭陀螺仪时用它驱动离散姿态。 */
   rotations?: readonly HumanRotation[];
   /** 右栏。拿得到游标和 seek,所以是渲染 prop 而不是普通 children。 */
-  side?: (ctx: { idx: number; seek: (i: number) => void }) => ReactNode;
+  side?: (ctx: { idx: number; seek: (i: number) => void; playFrom: (i: number, atMs?: number) => void }) => ReactNode;
   /** 这把录到的姿态流(base64,见 `_lib/bluetooth/gyro_track.ts`)。有才给开关。 */
   gyro?: string | null;
   /** 录这把的魔方型号,用来挑传感器基。 */
@@ -111,6 +111,8 @@ export default function PlaybackPanel({
   const total = moves.length;
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [playbackRun, setPlaybackRun] = useState(0);
+  const [seekIdx, setSeekIdx] = useState(0);
   const [speedMult, setSpeedMult] = useState(1);
   const [gyroOn, setGyroOn] = useState(false);
   /** 播放头(ms):从这里接着播。播放中由每帧的时钟推,暂停 / 拖动时跟着 idx 走。 */
@@ -211,18 +213,27 @@ export default function PlaybackPanel({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, speedMult, total, moves, lastTs, poseAt]);
+  }, [playing, playbackRun, speedMult, total, moves, lastTs, poseAt]);
 
   // 暂停时**不**把游标交还给 idx:两手之间按下暂停,时间确实走到了那儿,而下一下
   // 播放也正是从那儿接着走(playFromRef 就停在那)。倒回「最后落下那一手」看着像
   // 卡了一下,而且和继续播的位置对不上。交还只发生在拖动 / 单步(见 seek / step)。
-  const seek = (i: number) => {
+  const seek = (i: number, atMs?: number) => {
     setPlaying(false);
     const j = Math.max(0, Math.min(total, i));
-    playFromRef.current = tsOf(j);
+    playFromRef.current = atMs === undefined ? tsOf(j) : Math.max(0, Math.min(lastTs, atMs));
     playbackQuatRef.current = poseAt(playFromRef.current);
     setIdx(j);
+    setSeekIdx(j);
     timelineRef.current?.setPlayhead(null);
+    if (counterRef.current) counterRef.current.textContent = formatSec(playFromRef.current);
+  };
+  // A notation row starts playback, unlike scrubbing/stepping. Restart the
+  // wall clock even when already playing or clicking the same row again.
+  const playFrom = (i: number, atMs?: number) => {
+    seek(i, atMs);
+    setPlaybackRun(run => run + 1);
+    setPlaying(total > 0 && i < total);
   };
   // 上一步 / 下一步走**函数式**更新,不能写成 `seek(idx + 1)`:idx 是这一帧闭包里的
   // 值,连点五下会算出同一个目标,只前进一步。绝对跳转(时间轴、点某一步)没有这
@@ -314,7 +325,7 @@ export default function PlaybackPanel({
               sensorBasis={posed ? sensorBasisForBrand(deviceModel) : 'identity'}
               mirror={posed ? mirrorForBrand(deviceModel) : false}
               // 播放 / 下一步是纯追加,那几手会转给你看;拖时间轴、上一步是跳,瞬切。
-              animate
+              animate={idx !== seekIdx}
               moveDurationTicks={moveDurationTicks}
               ariaLabel={tr({
                 zh: '这把的三维回放',
@@ -389,7 +400,7 @@ export default function PlaybackPanel({
         </div>
       </div>
 
-      {side && <div className="reconstruct-playback-side">{side({ idx, seek })}</div>}
+      {side && <div className="reconstruct-playback-side">{side({ idx, seek, playFrom })}</div>}
     </div>
   );
 }

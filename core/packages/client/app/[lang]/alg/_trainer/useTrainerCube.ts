@@ -32,10 +32,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 
-import { useBluetoothCube, type BluetoothCubeHandle } from '../../timer/_lib/bluetooth';
-import { installFakeCube } from '../../timer/_lib/bluetooth/fake_cube';
-import type { CubeStep } from '../../timer/_lib/cube/steps';
-import type { Quat } from '../../timer/_lib/bluetooth/orientation';
+import { useBluetoothCube, type BluetoothCubeHandle } from '@/lib/bluetooth';
+import { installFakeCube } from '@/lib/bluetooth/fake_cube';
+import type { CubeStep } from '@cuberoot/shared/timer/reconstruct/steps';
+import type { Quat } from '@cuberoot/shared/smart-cube/orientation';
 import { persistItem } from '@/lib/safe-storage';
 import { TimerState, useTrainerStore } from '@/lib/trainer-store';
 import { autoStopStep, caseTargetFacelets, puzzleHasSmartCube } from './smartcube';

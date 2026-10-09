@@ -1,3 +1,36 @@
+# Current Chinese account location options
+
+As of review 2026-10-09, account-location-cn-current.json is the sole source of
+new CN choices: 34 province-level groups and 491 options. Ordinary provinces
+expose prefecture-level cities, autonomous prefectures, leagues and prefectures,
+plus directly administered county-level units. Municipalities expose districts
+and counties. Hong Kong has 18 districts; Taiwan has 22 cities/counties (Hsinchu
+and Chiayi city/county are distinct). Macao has no lower administrative level in
+this contract; do not invent cities from statistical or historic parishes.
+
+The mainland baseline is the archived MCA 2025-12-31 hierarchy (333 prefecture
+units), with Caohu added from the 2026-04-17 Xinjiang government announcement.
+Cenling remains under Kashgar, not a province-direct choice. Chongqing's 37 units
+include Liangjiang and exclude Jiangbei/Yubei. Sources, archive commit and SHA-256
+are recorded in the JSON. The official MCA host refused connections during this
+review, so the baseline was obtained from a pinned archive, not a live official
+fetch. This is not a guarantee against unpublished changes. Do not advance the
+review date without checking sources.
+
+English saved identifiers are retained for matching entities where possible.
+New values distinguish ambiguous city/county or autonomous-prefecture entities.
+account-location-cn-zh.json is now ONLY a historical saved-value label source,
+exported as legacyCityNamesZh, never used for new choices. The UI explicitly marks
+out-of-list saved values and never silently migrates them. No database rewrite
+or eligibility-rule change is part of this update. Other countries are unchanged.
+
+Maintenance: update the reviewed source using official evidence, run the existing
+build/check commands, review the full generated diff, and update per-group count
+and semantic fixtures for real source changes. Bump the account resource version.
+The build fails on missing labels, duplicates or mismatched administrative parents.
+
+## Historical translation audit (superseded as an option contract)
+
 # Chinese account location labels
 
 `account-location-cn-zh.json` is the display-label source for the existing
@@ -55,3 +88,13 @@ Additional source checks:
 - 新疆藏桂: [自治区财政厅](https://czt.xinjiang.gov.cn/xjczt/c115025/202512/c6c5a02670fd457cb9f6036019ad8785.shtml).
 - 西蒙 / Simong: [中国人民大学清史研究所](https://iqh.ruc.edu.cn/old/qdzwgxyj/zwgx_yjqy/js/601d9fe56bd94100a54e8107b145bcd6.htm); upstream supplies zero coordinates, which are not used to infer a different location.
 - Tanbei is an upstream historical alias of 沁阳: [Getty TGN identity and coordinates](https://www.getty.edu/vow/TGNFullDisplay?english=Y&find=&nation=&place=&subjectid=1071122), [沁阳政府](https://www.qinyang.gov.cn/2026/05-06/602569.html). The suspicious variant 覃杯 is not used as the modern city label.
+
+## Shanghai current district options (reviewed 2026-10-09)
+
+Shanghai is an exception to the upstream-preservation rule above: the SH keys in
+`account-location-cn-zh.json` define its complete current 16-district option list.
+Verified against the [Shanghai Civil Affairs Bureau district table, published 2026-01-05](https://mzj.sh.gov.cn/MZ_zhuzhan1539_0-2-8-1459/20250701/13c356554a0a4634b311b7aeb10d1918.html).
+Remove obsolete Zhabei and lower-level Zhujiajiao (a town within Qingpu) from new
+choices. Keep the existing English identifiers for the 16 retained districts.
+Historical saved profile values are not migrated by this data build. Other
+province lists still follow upstream and are not certified current by this review.

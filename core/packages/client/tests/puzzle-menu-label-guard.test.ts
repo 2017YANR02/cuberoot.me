@@ -11,13 +11,25 @@ it('checks every menu catalog and rejects long names without banning prose', () 
     expect(puzzleMenuLabelViolations(path, "zh: '二重奏魔方'")).toHaveLength(1);
     expect(puzzleMenuLabelViolations(path.replaceAll('/', '\\'), 'labelZh:\n"枫叶魔方"')).toHaveLength(1);
     expect(puzzleMenuLabelViolations(path, "zh: '二重奏', description: '魔方介绍'")).toEqual([]);
-    for (const field of ['zh', 'en', 'labelZh', 'labelEn', 'textLabel']) {
+    for (const field of ['zh', 'en', 'labelZh', 'labelEn', 'nameZh', 'nameEn', 'textLabel']) {
+      expect(puzzleMenuLabelViolations(path, `${field}: '齿轮魔方'`)).toHaveLength(1);
       expect(puzzleMenuLabelViolations(path, `${field}: '2×3×3'`)).toHaveLength(1);
       expect(puzzleMenuLabelViolations(path, `${field}: '3x3x4'`)).toHaveLength(1);
       expect(puzzleMenuLabelViolations(path, `${field}: '334'`)).toEqual([]);
     }
   }
   expect(puzzleMenuLabelViolations('article.tsx', "zh: '魔方介绍'")).toEqual([]);
+});
+
+it('checks event-keyed WCA names as well as timer group labels', () => {
+  const dictionary = puzzleMenuCatalogs.find(path => path.endsWith('/wca_events.ts'))!;
+  const groups = puzzleMenuCatalogs.find(path => path.endsWith('/timer/event-catalog.ts'))!;
+  expect(dictionary).toBeDefined();
+  expect(groups).toBeDefined();
+  expect(puzzleMenuLabelViolations(dictionary, "'333': '三阶魔方'")).toHaveLength(1);
+  expect(puzzleMenuLabelViolations(dictionary, '"333": "3x3x3"')).toHaveLength(1);
+  expect(puzzleMenuLabelViolations(dictionary, "'333': '三阶', '222': '2×2'")).toEqual([]);
+  expect(puzzleMenuLabelViolations(groups, "nameZh: '其他魔方'")).toHaveLength(1);
 });
 
 it('keeps supplied menu labels, headings and accessible names short', () => {

@@ -11,7 +11,7 @@ import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@cuberoot/timer-ui';
 import { TimerState } from '@/lib/trainer-store';
 import type { TrainerSolve, TrainerPenalty, TrainerHistEntry } from '@/lib/trainer-store';
-import type { ScrambleHist } from '@cuberoot/shared/timer';
+import { effectiveMs, type ScrambleHist } from '@cuberoot/shared/timer';
 import {
   useTrainerMarks, markStatus, MARK_STATUS_LABEL,
   type CaseMarks, type TrainerMarkBrush, type CaseMarkStatus,
@@ -32,8 +32,8 @@ export function formatMs(ms: number, precision = 2): string {
 /** A solve's displayed time, accounting for its penalty (DNF / +2). */
 export function formatSolveTime(solve: { ms: number; penalty?: TrainerPenalty }): string {
   if (solve.penalty === 'DNF') return 'DNF';
-  if (solve.penalty === '+2') return formatMs(solve.ms + 2000) + '+';
-  return formatMs(solve.ms);
+  const ms = effectiveMs({ timeMs: solve.ms, penalty: solve.penalty ?? 'ok' });
+  return formatMs(ms) + (solve.penalty === '+2' ? '+' : '');
 }
 
 export function TimerDisplay({
@@ -48,10 +48,7 @@ export function TimerDisplay({
   // Penalty applies only to a finished solve being shown (idle / just-stopped).
   const showResult = state === TimerState.NOT_RUNNING || state === TimerState.STOPPING;
   const isDnf = showResult && penalty === 'DNF';
-  const text =
-    isDnf ? 'DNF' :
-    showResult && penalty === '+2' ? formatMs(ms + 2000) + '+' :
-    formatMs(ms);
+  const text = showResult ? formatSolveTime({ ms, penalty }) : formatMs(ms);
   // 分钟冒号统一走 SegmentTime(Segment7 的 ':' 是横杠,换成 CSS 两点),与 /timer 共用。
   return (
     <div className={`trainer-timer tf-${font} ${cls}${isDnf ? ' is-dnf' : ''}`}>

@@ -411,7 +411,7 @@ export default function QuickMode({ t, subMode, showPreview, onTogglePreview, sq
                 <ChevronDown size={14} />
               </button>
               {countOpen && (
-                <ul className="gen-count-combo-list" role="listbox">
+                <ul className="gen-count-combo-list" data-site-surface="popover" role="listbox">
                   {COUNT_PRESETS.map((n) => (
                     <li
                       key={n}

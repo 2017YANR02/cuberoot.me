@@ -46,74 +46,62 @@ describe('shared random-difficulty timer UI', () => {
     vi.restoreAllMocks();
   });
 
-  it('uses visual colors, method, stage, slot and range in one controlled component', async () => {
-    await act(async () => root.render(createElement(ConfigHarness)));
-    expect(host.querySelector('[role="switch"][aria-label="Generate by difficulty"]'))
-      .not.toBeNull();
-    expect(host.querySelector('select[aria-label="Method"]')).not.toBeNull();
-    expect(host.querySelector('select[aria-label="Stage"]')).not.toBeNull();
-    expect(host.querySelectorAll('input[type="range"]')).toHaveLength(2);
-    expect(host.querySelector('.timer-random-difficulty-config')?.textContent).not.toContain('BGORWY');
-    expect(host.querySelector('select[aria-label="F2L slot"]')).toBeNull();
+  const open = async () => {
+    await act(async () => host.querySelector<HTMLButtonElement>('.timer-difficulty-trigger')!.click());
+  };
+  const apply = async () => {
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions [data-primary]')!.click());
+  };
 
-    await act(async () => host.querySelector<HTMLButtonElement>('.subset-picker-mode')!.click());
-    const white = [...host.querySelectorAll<HTMLButtonElement>('.subset-swatch')]
-      .find((button) => button.getAttribute('aria-label') === 'White')!;
+  it('opens controls in a dialog and only persists them when applied', async () => {
+    await act(async () => root.render(createElement(ConfigHarness)));
+    expect(host.querySelector('select')).toBeNull();
+    await open();
+    expect(document.querySelector('select[aria-label="Generate by difficulty"]')).toBeNull();
+    expect(document.querySelector('select[aria-label="Method"]')).not.toBeNull();
+    expect(document.querySelectorAll('input[type="range"]')).toHaveLength(2);
+    await act(async () => document.querySelector<HTMLButtonElement>('.subset-picker-mode')!.click());
+    const white = [...document.querySelectorAll<HTMLButtonElement>('.subset-swatch')]
+      .find(button => button.getAttribute('aria-label') === 'White')!;
     await act(async () => white.click());
-    const stage = host.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
+    const stage = document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
     await act(async () => {
       stage.value = 'xcross';
       stage.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    await vi.waitFor(() => expect(host.querySelector('select[aria-label="F2L slot"]')).not.toBeNull());
-    expect(JSON.parse(host.querySelector('output')!.textContent!).genDiffColors).toBe('W');
+    expect(document.querySelector('select[aria-label="F2L slot"]')).not.toBeNull();
+    expect(JSON.parse(host.querySelector('output')!.textContent!).genDiffColors).toBe('BGORWY');
+    await apply();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
+    expect(JSON.parse(host.querySelector('output')!.textContent!)).toMatchObject({ genDiffColors: 'W', genDiffStage: 'xcross' });
   });
 
-  it('disables every setting control while a solve is running', async () => {
+  it('disables the entry while a solve is running', async () => {
     const onChange = vi.fn();
     await act(async () => root.render(createElement(TimerRandomDifficultyConfig, {
-      disabled: true,
-      language: 'en',
-      onChange,
-      settings: {
-        ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
-        genDiffOn: true,
-        genDiffSteps: [4, 5, 6],
-      },
+      disabled: true, language: 'en', onChange,
+      settings: { ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS, genDiffOn: true, genDiffSteps: [4, 5, 6] },
     })));
-    const selector = '[role="switch"], .subset-picker-mode, select, input[type="range"]';
-    await vi.waitFor(() => expect(host.querySelectorAll(selector)).not.toHaveLength(0));
-    const before = onChange.mock.calls.length;
-    for (const control of host.querySelectorAll<HTMLButtonElement | HTMLSelectElement | HTMLInputElement>(
-      selector,
-    )) {
-      expect(control.disabled).toBe(true);
-      await act(async () => control.click());
-    }
-    expect(onChange).toHaveBeenCalledTimes(before);
+    expect(host.querySelector<HTMLButtonElement>('.timer-difficulty-trigger')!.disabled).toBe(true);
+    await open();
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 
-  it('returns the color picker to persisted settings after a failed write', async () => {
-    const onChange = vi.fn();
-    const settings = {
-      ...DEFAULT_TIMER_RANDOM_DIFFICULTY_SETTINGS,
-      genDiffOn: true,
-    };
-    const render = () => root.render(createElement(TimerRandomDifficultyConfig, {
-      language: 'en',
-      onChange,
-      settings,
-    }));
-    await act(async () => render());
-    await act(async () => host.querySelector<HTMLButtonElement>('.subset-picker-mode')!.click());
-    const white = [...host.querySelectorAll<HTMLButtonElement>('.subset-swatch')]
-      .find((button) => button.getAttribute('aria-label') === 'White')!;
-    await act(async () => white.click());
-    await vi.waitFor(() => expect(onChange).toHaveBeenCalledWith({ genDiffColors: 'W' }));
-
-    await act(async () => render());
-    await vi.waitFor(() => expect(host.querySelector('.subset-picker-mode')?.getAttribute('aria-label'))
-      .toContain('Color-neutral, all six'));
+  it('cancels edits on Escape and can explicitly remove the difficulty filter', async () => {
+    await act(async () => root.render(createElement(ConfigHarness)));
+    const before = host.querySelector('output')!.textContent;
+    await open();
+    const stage = document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!;
+    await act(async () => {
+      stage.value = 'xcross';
+      stage.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await act(async () => document.querySelector('[role="dialog"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(host.querySelector('output')!.textContent).toBe(before);
+    await open();
+    expect(document.querySelector<HTMLSelectElement>('select[aria-label="Stage"]')!.value).toBe('cross');
+    await act(async () => document.querySelector<HTMLButtonElement>('.timer-difficulty-actions button')!.click());
+    expect(JSON.parse(host.querySelector('output')!.textContent!).genDiffOn).toBe(false);
   });
 
   it('drops a late answer when the displayed history occurrence changes', async () => {

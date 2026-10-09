@@ -491,15 +491,31 @@
       "kind": "checked-in-generated",
       "source": {
         "url": "https://github.com/dr5hn/countrystatecity-npm",
-        "paths": ["core/packages/client/scripts/build-account-locations.mjs", "core/packages/client/scripts/account-location-cn-zh.json", "core/packages/client/scripts/account-location-cn-zh.md"]
+        "paths": [
+          "core/packages/client/scripts/build-account-locations.mjs",
+          "core/packages/client/scripts/account-location-cn-current.json",
+          "core/packages/client/scripts/account-location-cn-zh.json",
+          "core/packages/client/scripts/account-location-cn-zh.md"
+        ]
       },
-      "license": { "spdx": "ODbL-1.0", "evidence": "https://github.com/dr5hn/countrystatecity-npm/blob/master/LICENSE" },
-      "owner": ["core/packages/client/scripts/build-account-locations.mjs", "core/packages/shared/scripts/account-location-artifact.mjs"],
+      "license": {
+        "spdx": "ODbL-1.0",
+        "evidence": "https://github.com/dr5hn/countrystatecity-npm/blob/master/LICENSE"
+      },
+      "owner": [
+        "core/packages/client/scripts/build-account-locations.mjs",
+        "core/packages/shared/scripts/account-location-artifact.mjs"
+      ],
       "workingDirectory": "core/packages/client",
       "command": "pnpm build:account-locations",
-      "outputs": ["core/packages/client/public/account-locations/*.json", "core/packages/shared/src/data/account_location_requirements.ts"],
-      "verification": ["pnpm check:account-locations"],
-      "driftPolicy": "Regenerate the compact per-country files through the pinned development dependency; never hand-edit them. CN display labels come from the province-scoped Chinese label source; regeneration fails for missing translations."
+      "outputs": [
+        "core/packages/client/public/account-locations/*.json",
+        "core/packages/shared/src/data/account_location_requirements.ts"
+      ],
+      "verification": [
+        "pnpm check:account-locations"
+      ],
+      "driftPolicy": "Regenerate through build:account-locations; never hand-edit outputs. CN choices come only from the reviewed administrative snapshot with dated sources; historical labels are saved-value compatibility only. Other countries use the pinned package. Check complete outputs, parent codes, per-group counts and semantic regression fixtures."
     },
     {
       "id": "shared.timer-trainer-case-data",
@@ -1081,6 +1097,31 @@
         "docs/1lll-migration.md"
       ],
       "driftPolicy": "The import SQL is a disposable intermediate. The published corrective migration is immutable; sheet, mapping, or metadata changes require explicit re-import review and a newly numbered migration."
+    },
+    {
+      "id": "shared.account-avatar-gallery",
+      "kind": "build-generated",
+      "source": {
+        "locator": "Existing PET_GALLERY and its canonical scene manifests",
+        "paths": [
+          "core/packages/client/lib/deskpet-gallery.ts",
+          "core/packages/client/lib/deskpet-playtime.ts",
+          "core/packages/client/lib/deskpet-rootbeast.ts",
+          "core/packages/client/lib/deskpet-originals.ts",
+          "core/packages/client/public/deskpet/**/manifest.json"
+        ]
+      },
+      "owner": "core/packages/client/scripts/build-account-avatars.ts",
+      "workingDirectory": "core",
+      "command": "pnpm --filter @cuberoot/client build:account-avatars",
+      "outputs": [
+        "core/packages/shared/src/account_avatar_gallery.generated.ts",
+        "core/packages/client/public/deskpet/avatars/*.svg"
+      ],
+      "verification": [
+        "pnpm --filter @cuberoot/client exec vitest run tests/account-avatar.test.ts"
+      ],
+      "driftPolicy": "Regenerate from the pet gallery; stable asset-path hashes preserve saved IDs. Full gallery coverage and asset existence are checked. Script-driven Cloudling scenes are frozen at 1.5 seconds with deterministic randomness into inert SVGs and content-hashed URLs. Public visibility is read from the existing runtime catalog, not frozen into this generated list."
     }
   ]
 }

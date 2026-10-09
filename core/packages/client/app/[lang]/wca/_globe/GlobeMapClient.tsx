@@ -3199,7 +3199,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
           {searchOpen && searchQuery.trim().length >= 2 && (() => {
             const empty = !searchLoading && compResults.length === 0 && personResults.length === 0 && placeResults.length === 0;
             return (
-              <div className="globe-search-results">
+              <div className="globe-search-results" data-site-surface="popover">
                 {compResults.length > 0 && (
                   <div className="globe-search-group">{tr({ zh: '比赛', en: 'Competitions'
                 })}</div>
@@ -3655,7 +3655,7 @@ export default function GlobeMapClient({ embedded = false }: { embedded?: boolea
 
       <div className="map-controls" ref={navPopoverRef}>
         {navPopoverOpen && (
-          <div className="nav-popover">
+          <div className="nav-popover" data-site-surface="popover">
             <div className="nav-popover-row">
               <label>{tr({ zh: '俯仰', en: 'Tilt' })}</label>
               <input

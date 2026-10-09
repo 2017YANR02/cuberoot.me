@@ -1,0 +1,296 @@
+{
+  "scramble": "D2 R2 D' B2 L2 R' D2 U' L2 R2 B' U' B' R' D' B' L F2",
+  "moves": [
+    {
+      "m": "L",
+      "ts": 0
+    },
+    {
+      "m": "B",
+      "ts": 130
+    },
+    {
+      "m": "R'",
+      "ts": 408
+    },
+    {
+      "m": "F'",
+      "ts": 581
+    },
+    {
+      "m": "U",
+      "ts": 1090
+    },
+    {
+      "m": "D'",
+      "ts": 2721
+    },
+    {
+      "m": "B",
+      "ts": 3305
+    },
+    {
+      "m": "D",
+      "ts": 3698
+    },
+    {
+      "m": "B'",
+      "ts": 4293
+    },
+    {
+      "m": "B'",
+      "ts": 4627
+    },
+    {
+      "m": "D'",
+      "ts": 4930
+    },
+    {
+      "m": "B",
+      "ts": 5201
+    },
+    {
+      "m": "B",
+      "ts": 7004
+    },
+    {
+      "m": "D",
+      "ts": 7126
+    },
+    {
+      "m": "B'",
+      "ts": 7264
+    },
+    {
+      "m": "D'",
+      "ts": 11461
+    },
+    {
+      "m": "F",
+      "ts": 11559
+    },
+    {
+      "m": "D",
+      "ts": 11662
+    },
+    {
+      "m": "F'",
+      "ts": 11761
+    },
+    {
+      "m": "D'",
+      "ts": 11816
+    },
+    {
+      "m": "F",
+      "ts": 11900
+    },
+    {
+      "m": "D",
+      "ts": 11974
+    },
+    {
+      "m": "F'",
+      "ts": 12087
+    },
+    {
+      "m": "F'",
+      "ts": 15042
+    },
+    {
+      "m": "D'",
+      "ts": 15116
+    },
+    {
+      "m": "F",
+      "ts": 15223
+    },
+    {
+      "m": "D",
+      "ts": 15343
+    },
+    {
+      "m": "D",
+      "ts": 15410
+    },
+    {
+      "m": "F'",
+      "ts": 15499
+    },
+    {
+      "m": "D'",
+      "ts": 15564
+    },
+    {
+      "m": "F",
+      "ts": 15659
+    },
+    {
+      "m": "D",
+      "ts": 16011
+    },
+    {
+      "m": "F'",
+      "ts": 16060
+    },
+    {
+      "m": "D'",
+      "ts": 16120
+    },
+    {
+      "m": "F",
+      "ts": 16197
+    },
+    {
+      "m": "D",
+      "ts": 17110
+    },
+    {
+      "m": "R",
+      "ts": 17196
+    },
+    {
+      "m": "D",
+      "ts": 17272
+    },
+    {
+      "m": "R'",
+      "ts": 17375
+    },
+    {
+      "m": "D",
+      "ts": 17433
+    },
+    {
+      "m": "R",
+      "ts": 17501
+    },
+    {
+      "m": "D",
+      "ts": 17563
+    },
+    {
+      "m": "R'",
+      "ts": 17661
+    },
+    {
+      "m": "D",
+      "ts": 18338
+    },
+    {
+      "m": "D",
+      "ts": 18411
+    },
+    {
+      "m": "R'",
+      "ts": 18982
+    },
+    {
+      "m": "D'",
+      "ts": 19030
+    },
+    {
+      "m": "R",
+      "ts": 19137
+    },
+    {
+      "m": "D'",
+      "ts": 19219
+    },
+    {
+      "m": "R'",
+      "ts": 19333
+    },
+    {
+      "m": "D'",
+      "ts": 19413
+    },
+    {
+      "m": "D'",
+      "ts": 19464
+    },
+    {
+      "m": "R",
+      "ts": 19538
+    },
+    {
+      "m": "D",
+      "ts": 60552
+    },
+    {
+      "m": "R",
+      "ts": 60888
+    },
+    {
+      "m": "R",
+      "ts": 60960
+    },
+    {
+      "m": "D",
+      "ts": 61030
+    },
+    {
+      "m": "R'",
+      "ts": 61174
+    },
+    {
+      "m": "D",
+      "ts": 61299
+    },
+    {
+      "m": "R'",
+      "ts": 61452
+    },
+    {
+      "m": "D'",
+      "ts": 61504
+    },
+    {
+      "m": "R",
+      "ts": 61640
+    },
+    {
+      "m": "D'",
+      "ts": 61752
+    },
+    {
+      "m": "R",
+      "ts": 61921
+    },
+    {
+      "m": "R",
+      "ts": 62008
+    },
+    {
+      "m": "D'",
+      "ts": 62123
+    },
+    {
+      "m": "U",
+      "ts": 62156
+    },
+    {
+      "m": "R'",
+      "ts": 62316
+    },
+    {
+      "m": "D",
+      "ts": 62397
+    },
+    {
+      "m": "R",
+      "ts": 62456
+    },
+    {
+      "m": "U'",
+      "ts": 62529
+    },
+    {
+      "m": "D",
+      "ts": 62960
+    }
+  ],
+  "timeMs": 62941.299999952316,
+  "gyro": "RwEAmQAfNs5kGwBYFspwEgB48sNuCAA89sVvDADS/MVwCACd8ctyAwBx9spzAgB4+8x0AQBaBslyCADSCcNvCQBa/b9tBAA8+LtqAwB4/btqCQC0+r5sCgDS+cFuBgEs/sFuBgLuAcFuAwGG+r1s/gA88blo+gEU7rln9wK08rtq+gBS+MBt/gDTAcRwAwA7HdByBwBaItJxBQEOKtdwCQAeMNduCgBaJNFwCwB4BcFuBAC0CMBtCAC0A8BuBgVG/b1sBABa97ppAwEO+r1sBAEs/r9tBQjo/sNvBADS+cpzAAA88890/AB46Nh18wBa3eF06QB52eVy4wDR1Odw3gAe2OBx5gBa29ty6wCW39Vy7gBa489x8gA858tw9QEP7clx+gAA9MNv/QB3/L9tCQBaE7dhHwBhELVjFABx88Vw+QA8ELtnFQB+H7VgDwBUC7ppAAB4Br5s/wA8Cb5sAwI6BsFuAwEOAcZxAgB4/shy/wC0+cly/AGkDMpyCwA8KMppFwBaLMpoFAB4KMpqEgBaH8tvDABaFMxyBwB4DspyCQC0DsZwCwCWCMZwCQEs9stzAwBh8dN2+gBaBcdxDQBxCL9sDgBaBcBtBwBh6c5y8gCu785y8gAWB8BsDgBhBcNvCQEy7c9z8wBV+8dx+gA7/8Rw/wHgAcJvBQB+Aate/gBUAoco/wB4BIYhAgA8BoUdAgBaI4cOAQBaKokM+QB4AIUe/wA8IYcSAgC0H4YP+gAe/4UhAADwAYQbBADwAIQbCQB5/4UfCAA7AoQbAwB4/IQaBACWAIUeAQFK+4cnBABi94svBwBZA4ckCAA1B4YgCwCe/YcmCwA06JQ8EABb9oorDgB3AYUgCwA8/IYgDgEsAYYgDQPABoUfCwB4CoYjBQB4Cogo/wA8BYksAwBaAYouBAEO/YktAUe4BIks+gB4AYou8wA8Aogq/AB4/4ouAQA8/oouBgDS/oouAkpr/o03AQA7/pZF9QB4BZRD/AA8Bo44AgB4AYkqEABa/YceFgB4/IUbEgA8AoYkAAB4/Ywz+wB4/Y44+wCW+osw+gB49owy+gC+A4kq9QAyKooV/gBhLYsR9QCXE4gi9AB5Aokr+gAV/okt/gBa8IwyAgBa+IsxAACWA4ksAgA8BogoAgC0D4ciBQBaH4kgAwC8JYobDQAXIokdBQBZGocdBgC1FocgAwAdEYgl/QA8BognBADxCIYjAw==",
+  "model": "gan-v4"
+}

@@ -1,3 +1,4 @@
+import { ACCOUNT_AVATAR_PRESETS } from '@cuberoot/shared/account-avatar';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   decodeWebSessionError,
@@ -6,6 +7,7 @@ import {
 } from '@cuberoot/shared/auth/web-session';
 
 const mocks = vi.hoisted(() => ({
+  query: vi.fn(),
   approveWechatBrowserSession: vi.fn(),
   checkRateLimit: vi.fn(),
   captureAccountDevice: vi.fn(),
@@ -33,7 +35,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('../src/db/connection.js', () => ({
-  query: vi.fn(),
+  query: mocks.query,
   // Account deletion imports the sticker repository while registering routes.
   // These wire-contract cases must never perform a real database operation.
   sql: vi.fn(() => { throw new Error('Unexpected direct database access in session contract test'); }),
@@ -388,6 +390,7 @@ describe('auth route wire contracts', () => {
   });
 
   it('returns a refreshed canonical session after choosing a Clawd preset', async () => {
+    mocks.query.mockResolvedValueOnce([{ entries: [] }]);
     const clawdUser = { ...account, avatar_source: 'clawd', avatar_preset: 'typing' };
     const clawdPublicAccount = {
       ...publicAccount,
@@ -408,6 +411,32 @@ describe('auth route wire contracts', () => {
     const body = await response.json();
     expect(decodeWebSession(body)).toEqual({ token, user: clawdPublicAccount });
     expect(mocks.updateClawdAvatar).toHaveBeenCalledWith(42, 'typing');
+  });
+
+  it.each(['rootbeast', 'clawd', 'calico', 'cloudling'])('saves a public %s avatar with a valid session', async petId => {
+    const preset = ACCOUNT_AVATAR_PRESETS.find(p => p.petId === petId)!;
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.query.mockResolvedValueOnce([{ entries: [] }]);
+    mocks.updateClawdAvatar.mockResolvedValue({ ...account, avatar_source: 'clawd', avatar_preset: preset.id });
+    mocks.publicUser.mockReturnValue({ ...publicAccount, avatarSource: 'clawd', avatarPreset: preset.id });
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar: { kind: 'clawd', preset: preset.id } }),
+    });
+    expect(response.status).toBe(200);
+    expect(decodeWebSession(await response.json())?.user.avatarPreset).toBe(preset.id);
+    expect(mocks.updateClawdAvatar).toHaveBeenCalledWith(42, preset.id);
+  });
+
+  it('rejects a preset whose pet is no longer public', async () => {
+    mocks.requireAppUserId.mockResolvedValue(42);
+    mocks.query.mockResolvedValueOnce([{ entries: [{ id: 'clawd', locked: true, removed: false }] }]);
+    const response = await accountAuthRoutes.request('/auth/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ avatar: { kind: 'clawd', preset: 'typing' } }),
+    });
+    expect(response.status).toBe(403);
+    expect(mocks.updateClawdAvatar).not.toHaveBeenCalled();
   });
 
   it('returns the authenticated account basic profile without adding it to the session', async () => {

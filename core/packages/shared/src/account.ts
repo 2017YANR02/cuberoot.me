@@ -104,6 +104,7 @@ export interface AccountBasicProfile {
   regionCode: string | null;
   cityName: string | null;
   countrySource: 'self' | 'wca';
+  genderSource?: 'self' | 'wca';
 }
 
 export const ACCOUNT_BIRTH_DATE_MIN = '1900-01-01';

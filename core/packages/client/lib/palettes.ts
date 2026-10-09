@@ -21,7 +21,7 @@ export interface PaletteMeta {
 export const PALETTE_KEY = 'palette';
 
 export const PALETTES: PaletteMeta[] = [
-  { id: 'claude', zh: '克劳德', en: 'Claude', scheme: 'light', swatch: ['#ece3d0', '#b1502f', '#2b2620'] },
+  { id: 'claude', zh: 'A\\', en: 'A\\', scheme: 'light', swatch: ['#ece3d0', '#b1502f', '#2b2620'] },
   { id: 'xinhuang', zh: '新篁', en: 'Young Bamboo', scheme: 'light', swatch: ['#eef7f2', '#277a4b', '#1f3a2e'] },
   { id: 'yanqing', zh: '砚青', en: 'Inkstone Blue', scheme: 'light', swatch: ['#f7f4ed', '#2376b7', '#1b1c1f'] },
   { id: 'danxia', zh: '丹霞', en: 'Crimson Glow', scheme: 'light', swatch: ['#faf3ec', '#cc3a52', '#3a2420'] },

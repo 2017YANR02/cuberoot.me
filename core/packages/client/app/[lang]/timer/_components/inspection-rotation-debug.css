@@ -1,0 +1,26 @@
+.inspection-rotation-debug {
+  width: min(100%, 36rem);
+  padding: 12px;
+  text-align: center;
+}
+.inspection-rotation-debug button {
+  padding: 5px 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.inspection-rotation-debug button[aria-pressed='true'] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.inspection-rotation-debug-moves {
+  font-family: var(--font-mono);
+  font-size: clamp(16px, 2vw, 22px);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

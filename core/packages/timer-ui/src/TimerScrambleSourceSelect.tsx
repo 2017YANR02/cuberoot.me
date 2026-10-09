@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { TIMER_333_TRAINING_GROUPS } from '@cuberoot/shared/timer';
 import {
   useCallback,
@@ -48,6 +48,8 @@ export interface TimerScrambleSourceSelectProps<
   popupClassName?: string;
   /** Canonical persisted source id. All active hosts pass `wca`. */
   realValue: TReal;
+  /** Optional WCA settings shown at the second menu level. */
+  realMenuContent?: ReactNode;
   triggerClassName?: string;
   value: TimerScrambleSourceValue<TReal>;
 }
@@ -77,6 +79,7 @@ export function TimerScrambleSourceSelect<
   open: controlledOpen,
   popupClassName,
   realValue,
+  realMenuContent,
   triggerClassName,
   value,
 }: TimerScrambleSourceSelectProps<TReal>) {
@@ -90,13 +93,15 @@ export function TimerScrambleSourceSelect<
   const previousOpenRef = useRef(open);
   const popupId = useId();
   const [groupId, setGroupId] = useState<string | null>(null);
-  const backRef = useRef<HTMLButtonElement>(null);
+  const submenuRef = useRef<HTMLDivElement>(null);
   const groupTriggerRefs = useRef(new Map<string, HTMLButtonElement>());
   const groups = TIMER_333_TRAINING_GROUPS.map(group => ({
     ...group,
     items: trainingItems.filter(item => (group.events as readonly string[]).includes(item.value)),
   })).filter(group => group.items.length > 0);
   const activeGroup = groups.find(group => group.id === groupId);
+  const realMenuOpen = groupId === 'real' && realMenuContent != null;
+  const submenuOpen = Boolean(activeGroup) || realMenuOpen;
   const ungroupedItems = trainingItems.filter(item => !groups.some(group => group.items.includes(item)));
   const canonicalValue: CanonicalSource = value === 'real' || value === 'wca'
     ? 'real'
@@ -120,8 +125,11 @@ export function TimerScrambleSourceSelect<
   }, [open]);
 
   useLayoutEffect(() => {
-    if (activeGroup) backRef.current?.focus();
-  }, [activeGroup?.id]);
+    if (submenuOpen) {
+      const firstOption = submenuRef.current?.querySelector<HTMLButtonElement>('[role="option"]');
+      (firstOption ?? submenuRef.current)?.focus();
+    }
+  }, [groupId, submenuOpen]);
 
   const items: ReadonlyArray<{ value: CanonicalSource; label: ReactNode }> = [
     { value: 'real', label: labels.realOption },
@@ -170,8 +178,9 @@ export function TimerScrambleSourceSelect<
       if (!inside(event.target as Node)) close('outside');
     };
     const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
       if (event.key === 'Escape') {
-        if (activeGroup) returnToGroups();
+        if (submenuOpen) returnToGroups();
         else close('escape', true);
       }
     };
@@ -181,7 +190,7 @@ export function TimerScrambleSourceSelect<
       document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [activeGroup?.id, close, disabled, open, returnToGroups]);
+  }, [submenuOpen, close, disabled, open, returnToGroups]);
 
   useLayoutEffect(() => {
     if (!open || disabled) return;
@@ -209,13 +218,16 @@ export function TimerScrambleSourceSelect<
     };
 
     positionPanel();
+    const observer = new ResizeObserver(positionPanel);
+    observer.observe(panel);
     window.addEventListener('resize', positionPanel);
     window.addEventListener('scroll', positionPanel, true);
     return () => {
+      observer.disconnect();
       window.removeEventListener('resize', positionPanel);
       window.removeEventListener('scroll', positionPanel, true);
     };
-  }, [disabled, open, activeGroup?.id]);
+  }, [disabled, open, groupId]);
 
   return (
     <div
@@ -225,7 +237,7 @@ export function TimerScrambleSourceSelect<
       <button
         aria-controls={open ? popupId : undefined}
         aria-expanded={open}
-        aria-haspopup="listbox"
+        aria-haspopup="dialog"
         aria-label={labels.ariaLabel}
         className={['timer-scramble-source-trigger', triggerClassName].filter(Boolean).join(' ')}
         disabled={disabled}
@@ -248,32 +260,35 @@ export function TimerScrambleSourceSelect<
         <div
           aria-label={labels.ariaLabel}
           className={['timer-scramble-source-popup', popupClassName].filter(Boolean).join(' ')}
+          data-site-surface="popover"
+          data-real-menu={realMenuOpen || undefined}
+          data-submenu={submenuOpen || undefined}
           data-no-timer
           id={popupId}
           ref={panelRef}
-          role="listbox"
+          role="dialog"
           onTouchMove={(event) => event.stopPropagation()}
           onWheel={(event) => event.stopPropagation()}
         >
-          <div className="timer-scramble-source-options">
-            {activeGroup && <button
-              ref={backRef}
-              className="timer-scramble-source-option timer-scramble-source-group"
-              aria-label={{ en: 'Back to scramble types', zh: '返回打乱类型' }[language]}
-              onClick={returnToGroups}
-              onKeyDown={event => { if (event.key === 'ArrowLeft') { event.preventDefault(); returnToGroups(); } }}
-              type="button"
-            ><ChevronLeft size={14} aria-hidden="true" />{activeGroup.label[language]}</button>}
-            {!activeGroup && items.map((item) => {
+          <div className="timer-scramble-source-options" role="listbox" aria-label={labels.ariaLabel}>
+            {items.map((item) => {
               const active = !trainingValue && item.value === canonicalValue;
               return (
                 <button
                   aria-selected={active}
-                  className={`timer-scramble-source-option${active ? ' active' : ''}`}
+                  aria-expanded={item.value === 'real' && realMenuContent != null ? realMenuOpen : undefined}
+                  className={`timer-scramble-source-option timer-scramble-source-group${active ? ' active' : ''}`}
                   key={item.value}
+                  ref={element => { if (item.value === 'real') { if (element) groupTriggerRefs.current.set('real', element); else groupTriggerRefs.current.delete('real'); } }}
+                  onKeyDown={event => { if (event.key === 'ArrowRight' && item.value === 'real' && realMenuContent != null) { event.preventDefault(); event.currentTarget.click(); } }}
                   onClick={() => {
                     if (disabled) return;
                     const next = item.value === 'real' ? realValue : item.value;
+                    if (item.value === 'real' && realMenuContent != null) {
+                      if (canonicalValue !== 'real' || trainingValue) onChange(next as TimerScrambleSourceValue<TReal>);
+                      setGroupId('real');
+                      return;
+                    }
                     onChange(next as TimerScrambleSourceValue<TReal>);
                     close('select', true);
                   }}
@@ -281,13 +296,15 @@ export function TimerScrambleSourceSelect<
                   type="button"
                 >
                   {item.label}
+                  {item.value === 'real' && realMenuContent != null && <ChevronRight size={14} aria-hidden="true" />}
                 </button>
               );
             })}
-            {!activeGroup && groups.map(group => (
+            {groups.map(group => (
               <button
                 aria-selected={group.items.some(item => item.value === trainingValue)}
                 aria-haspopup="listbox"
+                aria-expanded={group.id === groupId}
                 className={`timer-scramble-source-option timer-scramble-source-group${group.items.some(item => item.value === trainingValue) ? ' active' : ''}`}
                 key={group.id}
                 ref={element => { if (element) groupTriggerRefs.current.set(group.id, element); else groupTriggerRefs.current.delete(group.id); }}
@@ -297,7 +314,7 @@ export function TimerScrambleSourceSelect<
                 type="button"
               >{group.label[language]}<ChevronRight size={14} aria-hidden="true" /></button>
             ))}
-            {(activeGroup?.items ?? ungroupedItems).map((item) => (
+            {ungroupedItems.map((item) => (
               <button
                 aria-selected={item.value === trainingValue}
                 className={`timer-scramble-source-option${item.value === trainingValue ? ' active' : ''}`}
@@ -308,6 +325,29 @@ export function TimerScrambleSourceSelect<
               >{item.label}</button>
             ))}
           </div>
+          {submenuOpen && <div
+            className="timer-scramble-source-secondary"
+            ref={submenuRef}
+            tabIndex={-1}
+            role={realMenuOpen ? 'group' : 'listbox'}
+            aria-label={realMenuOpen ? labels.ariaLabel : activeGroup?.label[language]}
+            onKeyDown={event => {
+              if (event.key === 'ArrowLeft' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLSelectElement)) {
+                event.preventDefault(); returnToGroups();
+              }
+            }}
+          >
+            {realMenuOpen ? <div className="timer-scramble-source-details">{realMenuContent}</div> : activeGroup?.items.map(item => (
+              <button
+                aria-selected={item.value === trainingValue}
+                className={`timer-scramble-source-option${item.value === trainingValue ? ' active' : ''}`}
+                key={item.value}
+                onClick={() => { onTrainingChange?.(item.value); close('select', true); }}
+                role="option"
+                type="button"
+              >{item.label}</button>
+            ))}
+          </div>}
         </div>,
         document.body,
       )}

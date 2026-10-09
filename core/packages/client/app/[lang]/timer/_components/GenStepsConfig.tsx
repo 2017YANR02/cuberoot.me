@@ -30,6 +30,8 @@ export default function GenStepsConfig({
   extraToprow,
 }: Props) {
   const labels = useMemo<TimerByStepsLabels>(() => ({
+    on: tr({ zh: '开启', en: 'On' }),
+    off: tr({ zh: '关闭', en: 'Off' }),
     bySteps: tr(TIMER_BY_STEPS_UI_LABELS.bySteps),
     byStepsAriaLabel: tr(TIMER_BY_STEPS_UI_LABELS.byStepsAriaLabel),
     metricAriaLabel: tr(TIMER_BY_STEPS_UI_LABELS.metricAriaLabel),

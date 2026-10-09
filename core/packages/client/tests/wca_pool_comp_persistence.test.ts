@@ -68,6 +68,60 @@ afterEach(() => {
 });
 
 describe('WCA competition pool persistence', () => {
+  it('uses the original official slot when optimal data is missing, without retrying', async () => {
+    fetchWcaScramblesMock.mockResolvedValue(competitionRows(1, () => "R U R'"));
+    const { startWcaScrambleRetry, isWcaSourceEmpty } = await freshPool();
+    const spec = { ...baseSpec, optimal: true };
+    const result = await startWcaScrambleRetry(spec).result;
+    expect(result).toMatchObject({
+      kind: 'ready', attemptIndex: 0,
+      value: { scramble: "R U R'", meta: { ci: baseSpec.comp, e: '333', n: 1, nonOptimal: true } },
+    });
+    expect(isWcaSourceEmpty(spec)).toBe(false);
+    expect(fetchWcaScramblesMock).toHaveBeenCalledOnce();
+  });
+
+  it('keeps both optimized and original occurrences in competition order', async () => {
+    fetchWcaScramblesMock.mockResolvedValue([
+      { ...competitionRows(1, () => 'R U')[0], optimal_scramble: 'F2' },
+      { ...competitionRows(1, () => 'F R U')[0], scramble_num: 2 },
+    ]);
+    const { nextWcaRow } = await freshPool();
+    const spec = { ...baseSpec, optimal: true };
+    const first = await nextWcaRow(spec);
+    const second = await nextWcaRow(spec);
+    expect(first?.scramble).toBe('F2');
+    expect(first?.meta?.nonOptimal).toBeUndefined();
+    expect(second).toMatchObject({ scramble: 'F R U', meta: { n: 2, nonOptimal: true } });
+  });
+
+  it('filters new competition lengths from official rows, respecting family, round and group', async () => {
+    const transport = vi.fn();
+    vi.stubGlobal('fetch', transport);
+    fetchWcaScramblesMock.mockResolvedValue([
+      ...competitionRows(2, i => i ? 'R U F' : 'R U'),
+      { ...competitionRows(1, () => 'R U')[0], event_id: '333oh' },
+      { ...competitionRows(1, () => 'R U')[0], event_id: '222' },
+      { ...competitionRows(1, () => 'R U')[0], round_type_id: 'f' },
+      { ...competitionRows(1, () => 'R U')[0], group_id: 'B' },
+    ]);
+    const { nextWcaRow, isWcaSourceEmpty, isWcaCompUnindexed } = await freshPool();
+    const spec: WcaSourceSpec = { ...baseSpec, optimal: true, round: '1', group: 'A',
+      diff: { variant: 'length', stage: 'length', colors: 'BGORWY', merged: true, steps: [2] } };
+    const rows = [await nextWcaRow(spec), await nextWcaRow(spec), await nextWcaRow(spec)];
+    expect(rows.map(r => r?.scramble)).toEqual(['R U', 'R U', 'R U']);
+    expect(rows.map(r => r?.meta?.e)).toEqual(['333', '333oh', '333']);
+    expect(rows.every(r => !r?.meta?.nonOptimal)).toBe(true);
+    const separate = { ...spec, diff: { ...spec.diff!, merged: false } };
+    expect((await nextWcaRow(separate))?.meta?.e).toBe('333');
+    expect((await nextWcaRow(separate))?.meta?.e).toBe('333');
+    const empty = { ...spec, diff: { ...spec.diff!, steps: [99] } };
+    expect(await nextWcaRow(empty)).toBeNull();
+    expect(isWcaSourceEmpty(empty)).toBe(true);
+    expect(isWcaCompUnindexed(empty)).toBe(false);
+    expect(transport).not.toHaveBeenCalled();
+  });
+
   it('keeps a failed competition fetch transient and retries the next request', async () => {
     fetchWcaScramblesMock
       .mockResolvedValueOnce(null)

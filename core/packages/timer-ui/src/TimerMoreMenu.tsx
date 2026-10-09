@@ -239,6 +239,7 @@ export function TimerMoreMenu({
     <div
       aria-label={triggerLabel}
       className="more-menu-panel"
+      data-site-surface="popover"
       data-no-timer
       id={panelId}
       onKeyDown={handlePanelKeyDown}

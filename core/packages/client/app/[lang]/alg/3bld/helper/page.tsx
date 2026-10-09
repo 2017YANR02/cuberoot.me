@@ -43,7 +43,7 @@ import { posChichu, globalState } from '../_lib/lettering';
 import { codeTrans } from '../_lib/state-gen';
 import { m2pSolve, mover2scr, prewarm } from '../_lib/m2p-bridge';
 import { commutator } from '@/app/[lang]/alg/commutator/engine';
-import { scramble333 } from '@/app/[lang]/timer/_lib/scramble/nxnxn';
+import { scramble333 } from '@cuberoot/shared/timer/seeded/nxnxn';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';
 

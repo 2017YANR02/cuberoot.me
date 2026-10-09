@@ -49,7 +49,7 @@ import {
   useBldConfigHydrated,
 } from '../_store/bld-config-store';
 import { codereader } from '../_lib/read-engine';
-import { scramble333 } from '@/app/[lang]/timer/_lib/scramble/nxnxn';
+import { scramble333 } from '@cuberoot/shared/timer/seeded/nxnxn';
 import type { LetterCell } from '../_lib/types';
 import '../3bld.css';
 import { tr } from '@/i18n/tr';

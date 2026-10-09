@@ -231,6 +231,7 @@ export function TimerWcaScrambleProgress({
             <div
               aria-label={labels.marksTitle}
               className="scramble-marks-pop"
+              data-site-surface="popover"
               data-no-timer
               id={panelId}
               onClick={(event) => event.stopPropagation()}

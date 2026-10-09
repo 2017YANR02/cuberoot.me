@@ -79,7 +79,7 @@ describe('reconstruction ground truth', () => {
         preferredRotation: initialPoseRotation(samples, replay.device?.model),
       });
       const core = replay.device && samples.length > 0
-        ? buildCoreTrack(samples, { brand: replay.device.model })
+        ? buildCoreTrack(samples, { brand: replay.device.model, moves: replay.moves })
         : null;
       const result = await buildReconText({
         scramble: view.scramble,
