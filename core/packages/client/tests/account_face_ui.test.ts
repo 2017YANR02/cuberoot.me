@@ -22,18 +22,18 @@ it('explains another device and lets the owner end that exact attempt before res
   await render();
   expect(button('Check result').disabled).toBe(true);
   expect(host.textContent).toContain('another device or session');
-  await act(async () => button('End attempt and start again').click());
+  await act(async () => button('Restart').click());
   expect(JSON.parse(mocks.fetch.mock.calls[1][1].body)).toEqual({ action: 'cancel', attemptId: pending.attemptId });
-  expect(host.textContent).toContain('previous attempt failed or was ended');
-  expect(button('Start face verification').disabled).toBe(true);
+  expect(host.textContent).toContain('Verification failed or ended');
+  expect(button('Start verification').disabled).toBe(true);
 });
 it('refreshes an expired attempt after a check error instead of trapping the owner', async () => {
   mocks.fetch.mockResolvedValueOnce(Response.json({ ...pending, canCheck: true, sessionChanged: false }))
     .mockResolvedValueOnce(Response.json({ error: 'FACE_CHECK_TOO_SOON' }, { status: 429 }))
     .mockResolvedValueOnce(Response.json({ ...pending, status: 'expired', attemptId: null }));
   await render(); await act(async () => button('Check result').click());
-  expect(host.textContent).toContain('previous attempt expired');
-  expect(button('Start face verification')).toBeTruthy();
+  expect(host.textContent).toContain('Verification expired');
+  expect(button('Start verification')).toBeTruthy();
 });
 it('does not show the old account result after the login token changes in flight', async () => {
   let resolve!: (response: Response) => void;
@@ -57,7 +57,7 @@ it('prefills the WCA local name even in English and follows a late profile refre
   mocks.user = { ...mocks.user, name: 'Ming Lin (林明)' };
   await render();
   expect(legalNameInput().value).toBe('林明');
-  expect(button('Start face verification').disabled).toBe(true);
+  expect(button('Start verification').disabled).toBe(true);
 });
 it('preserves manual edits and an explicitly cleared name across profile refreshes', async () => {
   mocks.fetch.mockImplementation(async () => Response.json({ ...pending, status: 'none' }));
