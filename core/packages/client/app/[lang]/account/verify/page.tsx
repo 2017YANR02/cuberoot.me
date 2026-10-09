@@ -11,7 +11,7 @@ import { apiUrl } from '@/lib/api-base';
 import { getSessionToken, useAuthUser } from '@/lib/auth-store';
 import './verify.css';
 
-type Status = { enabled: boolean; consentVersion: string; status: string; verifiedAt: string | null; idLast4: string | null };
+type Status = { attemptId: string | null; expiresAt: string | null; canCheck: boolean; sessionChanged: boolean; enabled: boolean; consentVersion: string; status: string; verifiedAt: string | null; idLast4: string | null };
 type DeviceWindow = Window & { getMetaInfo?: () => unknown };
 let deviceScript: Promise<void> | undefined;
 function loadDeviceScript() {
@@ -49,6 +49,8 @@ export default function FaceVerificationPage() {
     if (!response.ok) {
       const failure = await response.json().catch(() => null) as { error?: string } | null;
       const messages: Record<string, string> = {
+        FACE_SESSION_CHANGED: t('这次认证由另一设备或登录会话发起。请回到原浏览器查询，或结束此次认证后在这里重新开始。', 'This attempt started in another device or session. Check in the original browser, or end it and start again here.'),
+        FACE_CHECK_TOO_SOON: t('请间隔 5 秒后再查询。', 'Wait five seconds before checking again.'),
         FACE_PENDING: t('已有认证正在进行，请完成刷脸后查询结果。', 'An attempt is in progress. Complete it, then check the result.'),
         FACE_RETRY_SOON: t('上次发起未成功，请间隔 1 分钟后重试。', 'The previous attempt did not start. Wait one minute before retrying.'),
         FACE_DAILY_LIMIT: t('最近 24 小时已发起 3 次认证，请稍后再试。', 'You have started 3 attempts in the past 24 hours. Try again later.'),
@@ -60,7 +62,7 @@ export default function FaceVerificationPage() {
       if (response.status === 401 || response.status === 403) throw new Error(t('请重新登录本人账号后认证。', 'Sign in to your own account again.'));
       if (response.status === 429) throw new Error(t('请求过于频繁，请稍后再试。', 'Too many requests. Try again later.'));
       if (response.status === 400) throw new Error(t('请检查姓名、18 位身份证号码与同意选项。', 'Check your name, 18-character identity number and consent.'));
-      if (response.status === 409) throw new Error(t('当前认证无法继续。请稍后查询；登录已变更时需等待认证过期后重新发起。', 'This attempt cannot continue. Query again later; after changing sessions, wait for expiry before restarting.'));
+      if (response.status === 409) throw new Error(t('认证状态已更新，请刷新后重试。', 'The verification status changed. Refresh and try again.'));
       throw new Error(t('认证服务暂时不可用，请稍后重试。', 'Verification is temporarily unavailable. Try again later.'));
     }
     return response.json() as Promise<T>;
@@ -99,12 +101,28 @@ export default function FaceVerificationPage() {
       setBusy(false);
     }
   };
-  const check = async () => {
+  const updateAttempt = async (action: 'check' | 'cancel') => {
+    if (busy) return;
+    const token = getSessionToken();
     setBusy(true); setError('');
-    try { setStatus(await request<Status>({ action: 'check' })); }
-    catch (e) { setError(e instanceof Error ? e.message : t('查询失败，请稍后重试。', 'Unable to check. Try again later.')); }
-    finally { setBusy(false); }
+    try {
+      const next = await request<Status>({ action, ...(action === 'cancel' ? { attemptId: status?.attemptId } : {}) });
+      if (getSessionToken() === token) { setStatus(next); if (action === 'cancel') setConsent(false); }
+    } catch (e) {
+      if (getSessionToken() === token) {
+        setError(e instanceof Error ? e.message : t('查询失败，请稍后重试。', 'Unable to check. Try again later.'));
+        try { const next = await request<Status>(); if (getSessionToken() === token) setStatus(next); } catch { /* Keep the actionable error. */ }
+      }
+    } finally { setBusy(false); }
   };
+  useEffect(() => {
+    if (!status?.expiresAt) return;
+    const token = getSessionToken();
+    const timer = setTimeout(() => {
+      void request<Status>().then(next => { if (getSessionToken() === token) { setStatus(next); setError(''); } }).catch(() => {});
+    }, Math.max(1000, new Date(status.expiresAt).getTime() - Date.now() + 1000));
+    return () => clearTimeout(timer);
+  }, [status?.expiresAt, request]);
   const pending = status?.status === 'pending' || status?.status === 'initializing';
   return <main className="face-verify">
     <header><HomeLink>{t('首页', 'Home')}</HomeLink><h1>{t('实名认证', 'Identity Verification')}</h1></header>
@@ -112,9 +130,14 @@ export default function FaceVerificationPage() {
       <p>{t('通过阿里云完成姓名、身份证与本人活体核验。目前支持中国大陆居民身份证。', 'Verify your name, identity card and liveness through Alibaba Cloud. Mainland China resident identity cards are supported.')}</p>
       <p>{t('实名认证独立于 WCA 账号绑定，不会修改你的 WCA 身份或公开展示身份证信息。', 'This is separate from linking a WCA account. It does not change your WCA identity or publish your identity details.')}</p>
       {status?.status === 'passed' ? <p role="status">{t('已通过实名认证，证件尾号：', 'Identity verified. ID ending in: ')}{status.idLast4}</p> : pending ? <div>
-        <p>{t('认证已发起。完成阿里云刷脸并返回后，点击下方按钮查询结果。认证有效期为 30 分钟；未通过的结果可在有效期内重新查询。', 'An attempt is in progress. After completing verification with Alibaba Cloud, return here and check the result. Attempts expire after 30 minutes; pending results can be checked again before expiry.')}</p>
-        <button className="face-verify-action" disabled={busy || !status?.enabled} onClick={() => void check()}>{busy ? t('查询中…', 'Checking…') : t('查询认证结果', 'Check result')}</button>
+        <p>{t('认证已发起。完成阿里云刷脸并返回后，点击下方按钮查询结果。认证有效期为 30 分钟；尚未完成时可以稍后查询。', 'An attempt is in progress. After completing verification with Alibaba Cloud, return here and check the result. Attempts expire after 30 minutes; pending results can be checked again before expiry.')}</p>
+        {status?.sessionChanged && <p role="status">{t('这次认证由另一设备或登录会话发起。请回原浏览器查询，或结束此次认证后在本机重新开始。', 'This attempt started in another device or session. Check in the original browser, or end it to start again here.')}</p>}
+        <button className="face-verify-action" disabled={busy || !status?.enabled || !status.canCheck} onClick={() => void updateAttempt('check')}>{busy ? t('查询中…', 'Checking…') : t('查询认证结果', 'Check result')}</button>
+        <p>{t('若已失败或无法继续，可结束此次认证。结束后不会采用该次结果，已用次数不退回。', 'If verification failed or cannot continue, end this attempt. Its result will no longer be accepted and the attempt still counts toward your limit.')}</p>
+        <button className="face-verify-action" disabled={busy || !status?.enabled} onClick={() => void updateAttempt('cancel')}>{t('结束此次认证并重新开始', 'End attempt and start again')}</button>
       </div> : status?.enabled ? <form onSubmit={e => { e.preventDefault(); void start(); }}>
+        {status.status === 'failed' && <p role="status">{t('上次认证未通过或已结束，请重新发起。', 'The previous attempt failed or was ended. Start a new attempt.')}</p>}
+        {status.status === 'expired' && <p role="status">{t('上次认证已过期，请重新发起。', 'The previous attempt expired. Start a new attempt.')}</p>}
         <label>{t('真实姓名', 'Legal name')}<span className="face-verify-input"><input className="face-verify-field" required autoComplete="off" maxLength={60} minLength={2} value={realName} onChange={e => setRealName(e.target.value)} disabled={busy} />{realName && !busy && <ClearButton onClick={() => setRealName('')} />}</span></label>
         <label>{t('身份证号码', 'Identity card number')}<span className="face-verify-input"><input className="face-verify-field" required autoComplete="off" maxLength={18} pattern="[0-9]{17}[0-9xX]" value={idCard} onChange={e => setIdCard(e.target.value)} disabled={busy} />{idCard && !busy && <ClearButton onClick={() => setIdCard('')} />}</span></label>
         <p>{t('你提供的姓名、身份证号码以及认证设备信息将提交阿里云，阿里云将采集人脸并进行实名比对与活体检测。CubeRoot 不保存原始身份证号码、人脸照片或视频，仅保存证件摘要、尾号、同意记录及认证结果；注销账号时删除站内认证记录。每个账号每天最多发起 3 次。', 'Your name, identity number and device information are sent to Alibaba Cloud, which collects your face for identity comparison and liveness detection. CubeRoot stores only an identity digest, last four characters, consent and verification results, not your full ID number, face photos or video. Verification records are deleted when you delete your account. Up to 3 attempts per account per day.')}</p>
