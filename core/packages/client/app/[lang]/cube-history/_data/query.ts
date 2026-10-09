@@ -1,5 +1,9 @@
-import type { Cube } from './types';
+import type { Cube, LocalizedText } from './types';
+import { CUBES } from './catalog';
 import { BRANDS, CATEGORIES, MECHANISMS, PERIODS, TECHNOLOGIES, TIERS } from './labels';
+import { getCubeModelId, getCubeModelName, getCubeVersionPreference } from './models';
+
+export { getCubeModelId, getCubeModelName, getCubeVersionLabel } from './models';
 
 export const PRIORITY_BRANDS = ['GAN', 'MoYu', 'QiYi', 'YJ'] as const;
 
@@ -142,7 +146,10 @@ export function matchesCube(cube: Cube, filters: CubeFilters): boolean {
     if (period && (cube.year === null || cube.year < period.from || cube.year > period.to)) return false;
   }
   if (filters.evidence === 'official' && cube.release.basis !== 'official') return false;
-  if (filters.evidence === 'cny' && cube.prices.length === 0) return false;
+  if (filters.evidence === 'cny' && !cube.prices.some(price => price.currency === 'CNY' && price.region === 'CN')) return false;
+  if (filters.evidence === 'launch-price' && !cube.prices.some(price => price.kind === 'launch')) return false;
+  if (filters.evidence === 'current-price' && !cube.prices.some(price => price.kind === 'current')) return false;
+  if (filters.evidence === 'has-price' && cube.prices.length === 0) return false;
   if (filters.evidence === 'missing-price' && cube.prices.length > 0) return false;
   if (filters.evidence === 'with-image' && !cube.image) return false;
   if (filters.evidence === 'missing-image' && cube.image) return false;
@@ -184,19 +191,84 @@ export function sortCubes(cubes: readonly Cube[], order: string, query = ''): Cu
 
 export interface CubeModelGroup {
   id: string;
+  /** Stable reviewed identity, independent of the displayed version and filters. */
+  name: LocalizedText;
   variants: Cube[];
+  /** Preferred matching version; selecting it never restores excluded versions. */
+  representative: Cube;
+  /** Earliest documented evidence across this model, not necessarily its launch. */
+  firstRelease: Cube['release'] | null;
+  /** Latest evidence among the matching versions, for the explicit version sort. */
+  latestRelease: Cube['release'] | null;
 }
 
-/** Group an already filtered and sorted list without restoring excluded versions. */
-export function groupCubesByModel(cubes: readonly Cube[]): CubeModelGroup[] {
-  const groups = new Map<string, CubeModelGroup>();
-  for (const cube of cubes) {
-    const id = cube.familyId ?? cube.id;
-    const group = groups.get(id);
-    if (group) group.variants.push(cube);
-    else groups.set(id, { id, variants: [cube] });
+function datedReleases(cubes: readonly Cube[]): Cube['release'][] {
+  return cubes.map(cube => cube.release).filter(release => release.date !== null)
+    .sort((a, b) => a.date!.localeCompare(b.date!, 'en'));
+}
+
+function isModelQuery(cube: Cube, query: string): boolean {
+  const name = getCubeModelName(cube);
+  const brand = BRANDS[cube.brand];
+  return matchesText(textFor([name.zh, name.en, cube.brand, brand?.zh ?? '', brand?.en ?? '']), queryFor(query));
+}
+
+/**
+ * Group matching versions by reviewed model identity. Full-catalog dates stay
+ * separate from the filtered choices, so a later special edition cannot rewrite
+ * the model's earliest evidence. The original evidence precision/basis is kept.
+ */
+export function groupCubesByModel(cubes: readonly Cube[], allCubes: readonly Cube[] = CUBES, query = ''): CubeModelGroup[] {
+  const matching = new Map<string, Cube[]>();
+  const complete = new Map<string, Cube[]>();
+  for (const cube of allCubes) {
+    const id = getCubeModelId(cube);
+    const group = complete.get(id);
+    if (group) group.push(cube);
+    else complete.set(id, [cube]);
   }
-  return [...groups.values()];
+  for (const cube of cubes) {
+    const id = getCubeModelId(cube);
+    const group = matching.get(id);
+    if (group) group.push(cube);
+    else matching.set(id, [cube]);
+  }
+  return [...matching].map(([id, matches]) => {
+    const variants = [...matches].sort((a, b) => getCubeVersionPreference(a) - getCubeVersionPreference(b)
+      || a.id.localeCompare(b.id, 'en'));
+    const firstRelease = datedReleases(complete.get(id) ?? variants)[0] ?? null;
+    const releases = datedReleases(variants);
+    let representative = variants[0];
+    // A query for the model/brand itself keeps its base version. A query naming
+    // a configuration or edition prefers that exact matching version instead.
+    if (query.trim() && !isModelQuery(representative, query)) {
+      representative = [...variants].sort((a, b) => searchRank(b, query) - searchRank(a, query)
+        || getCubeVersionPreference(a) - getCubeVersionPreference(b))[0];
+    }
+    return {
+      id, name: getCubeModelName(representative), variants, representative,
+      firstRelease, latestRelease: releases.at(-1) ?? null,
+    };
+  });
+}
+
+/** Model chronology and version chronology are explicit, separate choices. */
+export function sortModelGroups(groups: readonly CubeModelGroup[], order: string, query = ''): CubeModelGroup[] {
+  const ranks = order === 'relevance' && query.trim()
+    ? new Map(groups.map(group => [group.id, Math.max(...group.variants.map(cube => searchRank(cube, query)))])) : null;
+  return [...groups].sort((a, b) => {
+    if (ranks) {
+      const difference = (ranks.get(b.id) ?? 0) - (ranks.get(a.id) ?? 0);
+      if (difference) return difference;
+    }
+    if (order === 'name') return a.name.en.localeCompare(b.name.en, 'en', { numeric: true }) || a.id.localeCompare(b.id, 'en');
+    const aDate = (order === 'latest-version' ? a.latestRelease : a.firstRelease)?.date ?? null;
+    const bDate = (order === 'latest-version' ? b.latestRelease : b.firstRelease)?.date ?? null;
+    if (aDate === null && bDate !== null) return 1;
+    if (bDate === null && aDate !== null) return -1;
+    const direction = order === 'oldest' ? 1 : -1;
+    return direction * (aDate ?? '').localeCompare(bDate ?? '', 'en') || a.id.localeCompare(b.id, 'en');
+  });
 }
 
 export function selectedCubes(cubes: readonly Cube[], ids: readonly string[]): Cube[] {
@@ -216,5 +288,14 @@ export function sourceIdsForCube(cube: Cube): string[] {
     ...cube.prices.map(price => price.sourceId),
     ...(cube.image ? [cube.image.sourceId] : []),
     ...(cube.rating ? [cube.rating.sourceId] : []),
+  ])];
+}
+
+/** Include the model's earliest evidence even when its original version is filtered out. */
+export function sourceIdsForModelGroup(group: CubeModelGroup): string[] {
+  return [...new Set([
+    ...group.variants.flatMap(sourceIdsForCube),
+    ...(group.firstRelease?.sourceIds ?? []),
+    ...(group.latestRelease?.sourceIds ?? []),
   ])];
 }

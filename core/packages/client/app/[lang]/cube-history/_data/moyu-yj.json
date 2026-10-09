@@ -219,8 +219,8 @@
     },
     {
       "id": "moyu-v11-launch-official",
-      "title": "MoYu official dated V11 launch references",
-      "url": "https://www.sina.cn/news/detail/5332123630439536.html",
+      "title": "MoYu official V11 launch announcement — June 3, 2025; sales begin June 6",
+      "url": "https://www.sina.cn/news/detail/5173455877833924.html",
       "publisher": "MoYu official Weibo via Sina",
       "kind": "official"
     },
@@ -1490,6 +1490,20 @@
       "url": "https://www.youngjoecube.com/3x3x3-cube/new-guanlong-3x3",
       "publisher": "YJ / YongJun",
       "kind": "official"
+    },
+    {
+      "id": "r4-scdb-rs3m-v5",
+      "title": "RS3 M V5 hands-on review — Basilio Noris, November 23, 2023 (SpeedCubeShop-supplied sample)",
+      "url": "https://speedcubedb.com/reviews/Moyu_RS3M_v5",
+      "publisher": "Basilio Noris / SpeedCubeDB",
+      "kind": "review"
+    },
+    {
+      "id": "r4-scdb-mgc-evo",
+      "title": "YJ MGC Evo hands-on review — Basilio Noris, October 22, 2022",
+      "url": "https://www.speedcubedb.com/reviews/YJ_MGC_Evo",
+      "publisher": "Basilio Noris / SpeedCubeDB",
+      "kind": "review"
     }
   ],
   "cubes": [
@@ -1623,7 +1637,21 @@
           "moyu-aolong-v5-official"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong V5 3x3 (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-aolong-v5-3x3-magnetic"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "64 g",
@@ -1828,7 +1856,21 @@
           "moyu-rs32021-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 13.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M 2021 3x3 (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-rs32021-tc"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "92.0 g",
@@ -2020,7 +2062,25 @@
           "moyu-wrm2021-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 26.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WR M 2021 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-wrm2021-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "78.0 g",
@@ -2674,7 +2734,21 @@
           "moyu-rs32020-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 8.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M 2020 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-rs32020-tc"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "86.0 g",
@@ -2864,7 +2938,25 @@
           "yj-mgcelite-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC3 Elite 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-mgcelite-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "87.0 g",
@@ -2969,7 +3061,21 @@
           "mfjs-meilong3c-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 3.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MFJS MeiLong 3C 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "mfjs-meilong3c-tc"
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "64.0 g",
@@ -3341,7 +3447,21 @@
           "yj-yulong2-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 8.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ YuLong 3x3 V2 M — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-yulong2-tc"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "88.9 g",
@@ -4352,7 +4472,21 @@
           "yj-official-history"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC 3x3 — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-mgc-tc"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "85.8 g",
@@ -5110,7 +5244,25 @@
           "moyu-aolong-2014-review"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V2 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-weilong-v2-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": "94 g (Tribox, stickered)",
@@ -5209,7 +5361,25 @@
           "moyu-gts3-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 30.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS3 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-gts3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "84.0 g",
@@ -5295,7 +5465,25 @@
           "moyu-gts2-zii"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS2 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-gts2",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "80.2 g",
@@ -5380,7 +5568,25 @@
           "moyu-gts-legacy"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-gts",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.5 mm",
         "weight": "83.1 g",
@@ -5572,7 +5778,25 @@
           "moyu-tanglong-review"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu TangLong — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-tanglong",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.5 mm",
         "weight": "~93 g (Tribox)",
@@ -6016,7 +6240,25 @@
           "moyu-aolong-2014-review"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong V2 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-aolong-v2-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -6116,7 +6358,25 @@
           "moyu-aolong-gt-legacy"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong GT — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-aolong-gt-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": "~102.3 g (Tribox)",
@@ -6217,7 +6477,25 @@
           "moyu-aolong-zii"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-aolong-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": "94 g (ZiiCube)",
@@ -7840,7 +8118,21 @@
           "moyu-super-aolong-zii"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 69.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super AoLong 3x3 (20-Magnet Ball-Core + MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-aolong-3x3-20-magnet-ball-core-maglev"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "69 g",
@@ -8263,7 +8555,21 @@
           "moyu-v11-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V11 3x3 (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-v11-base-tc"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "60.0 g",
@@ -8562,7 +8868,21 @@
           "yj-beta-zii"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC3 Beta 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-yj-mgc3-beta"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "71.0 g",
@@ -8776,7 +9096,21 @@
           "moyu-super-wlv2-zii"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 81.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 V2 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-weilong-3x3-v2-20-magnet-ball-core-maglev-uv"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "70 g",
@@ -9362,7 +9696,21 @@
           "moyu-wrmv10-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V10 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-wrmv10-tc"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "64.0 g",
@@ -9573,7 +9921,25 @@
           "moyu-super-wl-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 76.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 (8-Core Magnetic + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-super-wl-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "73.0 g",
@@ -9758,7 +10124,21 @@
           "moyu-rs3v5-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 8.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 3x3 (Standard) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-rs3v5-tc"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "65.0 g (TheCubicle); 69 g (ZiiCube)",
@@ -9788,18 +10168,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "标准版降低入门成本，进阶版本增加调校和磁力定位。",
-          "en": "The base lowers entry cost; higher trims add adjustment and magnetic guidance."
+          "zh": "Noris 上手认为转动轻快顺滑、容错宽容；标准版保留主要手感，但没有球轴版的自动归位。",
+          "en": "Noris found light, smooth turning and forgiving corner cutting. The standard version retains the main feel without the ball-core version’s auto-alignment."
         },
         "tradeoffs": {
-          "zh": "标准版没有独立弹力拨盘；PiCube 与 SAOCube 为明确标注的商家改装。",
-          "en": "The base lacks an independent compression dial; PiCube and SAOCube are labeled retailer modifications."
+          "zh": "声音不算安静，强行大角度容错可能卡死；评测样品由 SpeedCubeShop 提供。",
+          "en": "It is not especially quiet and can hard-lock under forced extreme corner cutting. SpeedCubeShop supplied the review samples."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "moyu-rs3v5-tc",
-          "moyu-rs3v5-dual-tc",
-          "myj-zii-moyu-rs3m-v5"
+          "r4-scdb-rs3m-v5"
         ]
       },
       "variants": [
@@ -9808,7 +10186,8 @@
       "sourceIds": [
         "moyu-rs3v5-tc",
         "moyu-rs3v5-dual-tc",
-        "myj-zii-moyu-rs3m-v5"
+        "myj-zii-moyu-rs3m-v5",
+        "r4-scdb-rs3m-v5"
       ],
       "tags": [
         "magnet",
@@ -10051,7 +10430,21 @@
           "moyu-superrs3v2-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 26.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super RS3 M V2 Magnetic UV 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-superrs3v2-tc"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "72.0 g",
@@ -10153,7 +10546,21 @@
           "moyu-wrmv9-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V9 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-wrmv9-tc"
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "68.0 g",
@@ -10246,7 +10653,25 @@
           "yj-evo2-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC Evo II 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-evo2-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "70.0 g",
@@ -10454,7 +10879,21 @@
           "moyu-superrs3-tc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 7.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super RS3 M 2022 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-superrs3-tc"
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "77.0 g",
@@ -10650,7 +11089,25 @@
           "yj-evo-zii"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC Evo 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-evo-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "79.0 g",
@@ -10673,17 +11130,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "以多档调节提供更多手感选择。",
-          "en": "Uses stepped adjustment to provide more feel choices."
+          "zh": "Noris 实测认为转动省力、纸感安静，容错顺滑；中层转动表现适合其 Roux 练习。",
+          "en": "Noris reported effortless turning, a quiet papery feel, smooth corner cutting and comfortable slices during Roux solves."
         },
         "tradeoffs": {
-          "zh": "调节多不等于自动更快，需要个人匹配。",
-          "en": "More settings do not automatically mean faster solves; individual matching matters."
+          "zh": "他认为磁力各档差别不明显；轴距无法单独调节，主要通过十档弹力匹配手感。",
+          "en": "He found little perceptible difference between magnet settings. Travel cannot be adjusted independently; ten compression settings provide most of the tuning range."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "yj-evo-tc",
-          "yj-evo-zii"
+          "r4-scdb-mgc-evo"
         ]
       },
       "variants": [
@@ -10692,7 +11148,8 @@
       ],
       "sourceIds": [
         "yj-evo-zii",
-        "yj-evo-tc"
+        "yj-evo-tc",
+        "r4-scdb-mgc-evo"
       ],
       "tags": [
         "magnet",
@@ -11547,6 +12004,8 @@
     "Unknown first-release dates remain unknown; image folder timestamps, site migrations and undated current availability are not launch evidence. The GTS2 M 2019 page explicitly dates its color/packaging refresh to 2019 and its later matte panels to around March 2020; its embedded 2017/2018 reviews are not treated as an independent 2019-version test.",
     "Checked all current records in this brand group for the misspellings 关龙 and 玉龙: none found. Official Chinese labels are 冠龙 and 御龙. Unverified Chinese transliterations such as YiLong remain in documented English rather than being invented.",
     "Black Crystal Diamond/Clover/Apple use the verified MoFangJiaoShi Black Crystal Heart / LOVE U record mfjs-love-u-mf8942 as their family root. Tribox identifies all four as Cubing Classroom Black Crystal series; the separately retained MoYu-labelled Crystal Ring record is not used as a cross-brand family root.",
-    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope.",
+    "2026-10-09 现价补充：核对 TheCubicle 美国站 28 个重点配置的公开商品数据，逐一记录具体配置与配色的单件 USD 原币列示价、来源和采集日；其中 13 条不可购买选项明确标为已售罄列示价。保留有据的大陆人民币首发价，不使用汇率换算、阶梯批发价或跨版本起价。此范围更新取代此前仅收录首发价的限制。 / October 9, 2026 update: checked public TheCubicle US product data for 28 priority configurations, recording exact configuration/color, single-unit USD price, source and observation date. 13 unavailable options are explicitly marked as sold-out listings. Verified mainland CNY launch quotes remain; no currency conversion, quantity-tier prices or cross-version starting prices are used. This supersedes the earlier launch-only price scope.",
+    "2026-10-09 体验评价补充：2 条重点配置增加具名上手评测或该商品页买家反馈，标明个人体验来源；赠测样品和品牌选录反馈明确披露。未将主观手感、个人成绩或单个故障推成统一性能或可靠性结论。 / October 9, 2026 assessment update: 2 priority configurations now cite identified hands-on reviews or buyers on the exact product page. Supplied samples and brand-selected impressions are disclosed; subjective feel, individual times and isolated faults are not treated as universal performance or reliability findings."
   ]
 }

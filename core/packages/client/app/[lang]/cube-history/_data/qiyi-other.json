@@ -1522,7 +1522,21 @@
           "qo-product-dayan-guhong-pro-m-3x3-54mm-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro M 3x3 54mm (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-54mm-maglev"
+        }
+      ],
       "specs": {
         "size": "54.0 mm",
         "weight": "74.0 g",
@@ -1797,7 +1811,21 @@
           "dayan-guhong-pro-plus-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro+ 3x3 55mm (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "dayan-guhong-pro-plus-maglev"
+        }
+      ],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -1820,14 +1848,14 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "Pro+ 更新重点是可调角轴磁力与更清楚的调校刻度；三种尺寸分别提供弹簧、磁悬浮版本。",
-          "en": "Pro+ adds adjustable core magnet strength and clearer tuning scales; each of its three sizes comes in spring and MagLev forms."
+          "zh": "TheCubicle 本商品页买家常提到顺滑、安静和纸感轻转；有用户认可容错与中层转动。",
+          "en": "Buyers on this TheCubicle product page often describe smooth, quiet, papery turning; some also praise corner cutting and slices."
         },
         "tradeoffs": {
-          "zh": "未核得此具体尺寸的净重；不以包装重量代替。",
-          "en": "Net weight for this exact size was not verified; package weight is not substituted."
+          "zh": "部分用户觉得块感明显，偏控制的手法需要调校；也有买家认为调节刻度小、难看清。",
+          "en": "Some find it blocky or need setup for a more controlled feel; one reviewer found the small adjustment markings difficult to read."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
           "dayan-guhong-pro-plus-maglev"
         ]
@@ -3002,7 +3030,25 @@
           "qo-product-dayan-guhong-pro-m-3x3-56mm-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro M 3x3 56mm (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-56mm-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "78.0 g",
@@ -4117,7 +4163,25 @@
           "dayan-guhong-v3-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong V3 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-v3-m",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "54.0 mm",
         "weight": "77.3 g",
@@ -4213,7 +4277,25 @@
           "dayan-guhong-pro-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro M 3x3 55mm (Standard) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "dayan-guhong-pro-m-retail",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "70.0 g",
@@ -4319,7 +4401,25 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -4416,7 +4516,25 @@
           "qo-product-dayan-guhong-pro-m-3x3-55mm-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro M 3x3 55mm (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-55mm-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "76.0 g",
@@ -5681,7 +5799,21 @@
           "dayan-guhong-pro-plus-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro+ 3x3 56mm (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "dayan-guhong-pro-plus-retail"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6259,7 +6391,25 @@
           "qo-product-dayan-guhong-pro-m-3x3-54mm-standard"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro M 3x3 54mm (Standard) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-54mm-standard",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "54.0 mm",
         "weight": "67.0 g",
@@ -6361,7 +6511,21 @@
           "dayan-tengyun-v3-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan TengYun V3 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-tengyun-v3-m-3x3"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "79.0 g",
@@ -6550,7 +6714,21 @@
           "dayan-tengyun-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan TengYun M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-tengyun-m-3x3"
+        }
+      ],
       "specs": {
         "size": "55.0 mm",
         "weight": "77.3 g",
@@ -6655,7 +6833,25 @@
           "dayan-guhong-v4-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong V4 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-3x3-v4-m",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "65.5 g",
@@ -7022,7 +7218,25 @@
           "qo-product-dayan-guhong-pro-m-3x3-56mm-standard"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro M 3x3 56mm (Standard) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-m-3x3-56mm-standard",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "56.0 mm",
         "weight": "71.0 g",
@@ -7299,7 +7513,25 @@
           "dayan-zhanchi-launch-history"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 12.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan ZhanChi — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "dayan-zhanchi-retail",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -7863,7 +8095,21 @@
           "qo-product-dayan-guhong-pro-3x3-56mm-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro+ 3x3 56mm (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-3x3-56mm-maglev"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -8414,7 +8660,21 @@
           "dayan-tengyun-v2-m-retail"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 32.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan TengYun V2 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-tengyun-v2-m-3x3"
+        }
+      ],
       "specs": {
         "size": "55.5 mm",
         "weight": "83.0 g",
@@ -8862,7 +9122,25 @@
           "dayan-historical-guide"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong V2 — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-v2",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "specs": {
         "size": "57.0 mm",
         "weight": null,
@@ -10729,7 +11007,21 @@
           "qo-product-dayan-guhong-pro-3x3-55mm-magnetic"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro+ 3x3 55mm (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-3x3-55mm-magnetic"
+        }
+      ],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -11012,7 +11304,21 @@
           "qo-product-dayan-guhong-pro-3x3-54mm-magnetic"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro+ 3x3 54mm (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-3x3-54mm-magnetic"
+        }
+      ],
       "specs": {
         "size": "54 mm",
         "weight": null,
@@ -11290,7 +11596,21 @@
           "qo-product-dayan-guhong-pro-3x3-54mm-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "DaYan GuHong Pro+ 3x3 54mm (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "qo-product-dayan-guhong-pro-3x3-54mm-maglev"
+        }
+      ],
       "specs": {
         "size": "54 mm",
         "weight": null,
@@ -12747,6 +13067,8 @@
     "保留的边界与待核：ShengShou Birds为Fisher类移轴结构而排除；Cubezz的Circular、FTO、TORI、Axis、Fisher、Windmill不按普通三阶计入。本轮未证明QiYi MS存在独立2024年三阶改款，未凭关键词新增MS 2024。ShengShou SuJie可能是现存早期57mm圣手三阶的命名别称，尚未完成跨店原图核同，不重复新增。",
     "日期区分：Solar 3E的2024-06-11为CubeNation具体商品Added日；Solar ME首发未证实而留空；Luminous在2023年的年份只是2023-04-05买家评论证明的最晚存在界限。Bubble的2026-09-03来自包含六色与Sandwich变体的共享Ziicube商品页Added日，不能证明每种配色同时首发。",
     "旧档案保留：65条原记录的补丁只替换明确列出的字段；全部原tags、评分rating与模糊配置官网familyPrices不删除。61条增加风二/三/四代、孤鸿/孤鴻、腾云/騰雲、展翅、小魔法搜索别名；另3条黑曼巴正名及1条Legend S日期修正。",
-    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope.",
+    "2026-10-09 现价补充：核对 TheCubicle 美国站 20 个重点配置的公开商品数据，逐一记录具体配置与配色的单件 USD 原币列示价、来源和采集日；其中 10 条不可购买选项明确标为已售罄列示价。保留有据的大陆人民币首发价，不使用汇率换算、阶梯批发价或跨版本起价。此范围更新取代此前仅收录首发价的限制。 / October 9, 2026 update: checked public TheCubicle US product data for 20 priority configurations, recording exact configuration/color, single-unit USD price, source and observation date. 10 unavailable options are explicitly marked as sold-out listings. Verified mainland CNY launch quotes remain; no currency conversion, quantity-tier prices or cross-version starting prices are used. This supersedes the earlier launch-only price scope.",
+    "2026-10-09 体验评价补充：1 条重点配置增加具名上手评测或该商品页买家反馈，标明个人体验来源；赠测样品和品牌选录反馈明确披露。未将主观手感、个人成绩或单个故障推成统一性能或可靠性结论。 / October 9, 2026 assessment update: 1 priority configurations now cite identified hands-on reviews or buyers on the exact product page. Supplied samples and brand-selected impressions are disclosed; subjective feel, individual times and isolated faults are not treated as universal performance or reliability findings."
   ]
 }

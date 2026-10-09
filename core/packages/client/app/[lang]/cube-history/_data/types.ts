@@ -1,7 +1,9 @@
 /** Research snapshot. Unknown is a value: never replace missing facts with estimates. */
 export interface LocalizedText { zh: string; en: string }
 export type ReleaseBasis = 'official' | 'retailer' | 'documented' | 'approximate' | 'unknown';
-export type PriceKind = 'launch';
+export type PriceKind = 'launch' | 'current';
+export type PriceCurrency = 'CNY' | 'USD' | 'EUR' | 'GBP';
+export type PriceMarket = 'CN' | 'US' | 'UK' | 'EU' | 'INTL';
 export interface Source {
   id: string;
   title: string;
@@ -9,17 +11,20 @@ export interface Source {
   publisher: string;
   kind: 'official' | 'retailer' | 'review' | 'archive';
 }
-export interface CubePrice {
+interface PriceQuoteDetails {
   amount: number;
-  /** Only a verified mainland-China launch quote for this exact configuration. */
-  currency: 'CNY';
-  region: 'CN';
-  kind: PriceKind;
+  /** Announcement date for a launch quote; actual observation date for a current quote. */
   asOf: string | null;
   variant: string | null;
   note: LocalizedText;
   sourceId: string;
+  /** Material conditions, such as sold-out or wholesale pricing, visible even on compact cards. */
+  qualifier?: LocalizedText;
 }
+export type CubePrice = PriceQuoteDetails & (
+  | { kind: 'launch'; currency: 'CNY'; region: 'CN' }
+  | { kind: 'current'; currency: PriceCurrency; region: PriceMarket }
+);
 export type CubeTier = 'flagship' | 'mainstream' | 'budget' | 'specialty' | 'unknown';
 export interface CubeImage {
   /** Original image URL observed on the cited product page or its public metadata. */

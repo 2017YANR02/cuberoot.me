@@ -1,6 +1,7 @@
 import type { LocalizedText, PriceKind } from './types';
 
 export const SNAPSHOT_DATE = '2026-10-07';
+export const PRICE_SNAPSHOT_DATE = '2026-10-09';
 export const BRANDS: Record<string, LocalizedText> = {
   "Calvin's Puzzle": { zh: "Calvin's Puzzle", en: "Calvin's Puzzle" },
   "Cong's Design": { zh: "丛氏 Cong's Design", en: "Cong's Design" },
@@ -96,6 +97,7 @@ export const RELEASE_LABELS: Record<string, LocalizedText> = {
 };
 export const PRICE_LABELS: Record<PriceKind, LocalizedText> = {
   launch: { zh: '中国首发价', en: 'China launch price' },
+  current: { zh: '当前参考价', en: 'Current reference price' },
 };
 export const SOURCE_LABELS: Record<string, LocalizedText> = {
   official: { zh: '官方', en: 'Official' },
@@ -160,10 +162,10 @@ export const PERIODS = [
   { id: 'unknown', from: 0, to: 0, label: { zh: '年份待核', en: 'Year unverified' } },
 ];
 export const METHODOLOGY: { title: LocalizedText; text: LocalizedText }[] = [
-  { title: { zh: '型号与子版本', en: 'Models and distinct versions' }, text: { zh: '名称、结构或成品配置明确、可单独购买的子型号分别入档，关联到同一系列，保留各自的日期、价格、参数和图片。涂层、限定版与智能型号也独立核查；只有未进一步区分的纯颜色与礼包留在版本说明中。商家调油服务不冒充原厂型号。记录数不等于全球全部 SKU。', en: 'Separately sold models with distinct names, mechanisms or finished configurations receive individual records, linked by family and retaining their own dates, prices, specifications and photos. Finishes, special editions and smart models are checked separately; undifferentiated colors and bundles remain in variant notes. Retailer setup services are not presented as factory models. The count is not a worldwide SKU total.' } },
+  {"title":{"zh":"型号与子版本","en":"Models and distinct versions"},"text":{"zh":"同一型号的涂层、磁力配置和明确的限定版放在一张卡片内切换；不同代际或独立命名产品分别展示。标题保持型号名，各版本保留自己的日期、价格、参数和图片。系列筛选用于查看更宽的产品线，不决定卡片分组；记录数不等于全球全部 SKU。","en":"Finishes, magnetic configurations and documented special editions of the same model share a card. Distinct generations and independently named products have separate cards. The model title stays fixed, while every version retains its own dates, prices, specifications and photo. Family filters browse broader product lines and do not determine card grouping; record counts are not a worldwide SKU total."}},
   { title: { zh: '图片的对应关系', en: 'Photo provenance' }, text: { zh: '产品图取自可核查的原始商品页、品牌资料及其公开图片信息，并保留出处。来源本身为多个版本共用图片时明确标注；无法确认旧型号图片时保留缺口，不拿相似的新型号照片替代。图片展示和资料核对不代表取得图片的额外使用授权。', en: 'Product photos come from verifiable product pages, brand material and their public image metadata, with attribution retained. Shared source photography is labeled. Missing historical photos remain a gap instead of being replaced by a similar newer cube. Display and attribution do not imply an additional image-use license.' } },
-  { title: { zh: '日期的证据', en: 'Date evidence' }, text: { zh: '官方日期、商家开售或上架日、当年资料出现时间分别标注。精确到天不代表证据更权威。旧商店“2018-09-11”等集中迁移日期不当作历史首发；样品、预售和地区差异写在备注中。', en: 'Official dates, retailer dates and contemporary documentary evidence are labeled separately. Day-level precision does not imply greater authority. Mass store migration dates are excluded as launch dates; samples, preorders and regional differences are explained.' } },
-  { title: { zh: '中国首发价', en: 'China launch prices' }, text: { zh: '只记录可核实的中国大陆首发人民币价格，并注明具体版本、时间和来源。官方首发预售或首发优惠价会在备注中说明；缺少首发依据或无法对应具体配置时，标为首发价待核实。', en: 'Only verified mainland-China launch prices in CNY are recorded, with the exact configuration, date and source. Official launch preorder or introductory offers are qualified in the note. Missing launch evidence or an unspecified configuration remains unverified.' } },
+  {"title":{"zh":"日期的证据","en":"Date evidence"},"text":{"zh":"型号年代按该型号全部版本中最早的有据记录排序；筛选或切换新版不会改写它。所选版本日期另行展示，也可选择按最新版本排序。官方、商家上架和当年资料分别标注；精确到天不代表官方首发。旧商店集中迁移日期不当作首发，样品、预售和地区差异保留说明。","en":"Model chronology uses the earliest evidenced record across all of its versions and stays fixed when filters or versions change. The selected version has its own date, and latest-version sorting is available separately. Official, retailer and contemporary records retain their evidence labels; day-level precision does not imply an official launch. Store migration dates are excluded as launches, and sample, preorder and regional qualifications are preserved."}},
+  { title: { zh: '首发价与当前参考价', en: 'Launch and current prices' }, text: { zh: '优先展示可核实的中国大陆首发人民币价格；缺少首发价时，展示对应版本的当前参考价。每条报价保留价格类型、原币种、市场、日期和来源，海外价格显式标注。预售、批发或售罄列示价会说明条件；跨配置起价不套用于具体版本，运费及税费以商家结算为准。', en: 'A verified mainland-China launch price is shown first; otherwise an observed current quote for the exact version is used. Every quote keeps its type, original currency, market, date and source, with overseas prices labeled. Preorder, wholesale or sold-out listing conditions are shown. A family starting price is not assigned to individual versions; shipping and taxes follow the merchant checkout.' } },
   { title: { zh: '参数与评价', en: 'Specifications and opinions' }, text: { zh: '重量只记录可确认的本体净重；包装毛重不填入净重。厂商的磁铁数、容错或自复位角度属于标称参数。亲历测评、编辑分析和商家页用户评分分别注明。商家评分保留评论数、采样日期及合并配置的可能性，不作为统一性能分数。', en: 'Only identifiable item weights are recorded as net weight. Manufacturer magnet counts and corner-cutting or alignment angles remain advertised specifications. First-hand reports, editorial analysis and merchant-page ratings are labeled separately. Merchant ratings retain the sample count, date and possible pooling of configurations; they are not standardized performance scores.' } },
   { title: { zh: '品牌与时间', en: 'Brands over time' }, text: { zh: '品牌、子系列、设计者和经销商不是同一概念。不同年代的归属可能变化，早期 Type A / Type C 等代号还可能指不同模具。当前目录中的厂商标签不能倒推全部历史。', en: 'Brands, sub-lines, designers and distributors are different concepts. Ownership and naming change; early Type A / Type C labels may denote different molds. Present catalog labels do not establish every historical relationship.' } },
   { title: { zh: '逐年核查与缺口', en: 'Annual checks and remaining gaps' }, text: { zh: '用品牌资料、现售目录与停产档案互相查漏，同时展示每个品牌的日期与图片覆盖情况。年度表按有证据的资料年份排列；空白不代表当年没有新品。早期地区批次、国产模具修订、OEM 换标、中国历史成交价与旧实物照片仍可能缺失，不能用目录数量证明全球已经收齐。', en: 'Brand material, current catalogs and discontinued archives are cross-checked, with date and photo coverage shown by brand. Annual tables use evidenced dates; an empty cell does not establish that no product was released. Early regional batches, mold revisions, OEM rebadges, historical Chinese transaction prices and old photographs may still be missing. Catalog counts cannot prove worldwide completeness.' } },
@@ -204,12 +206,15 @@ export const EVIDENCE_LABELS: Record<string, LocalizedText> = {
     "en": "Official date evidence"
   },
   "cny": {
-    "zh": "有中国首发价",
-    "en": "Has a China launch price"
+    "zh": "有人民币价格",
+    "en": "Has a mainland CNY price"
   },
+  "launch-price": { "zh": "有首发价", "en": "Has a launch price" },
+  "current-price": { "zh": "有当前参考价", "en": "Has a current price" },
+  "has-price": { "zh": "有价格", "en": "Has a price" },
   "missing-price": {
-    "zh": "首发价待核实",
-    "en": "Launch price unverified"
+    "zh": "价格待补",
+    "en": "Price missing"
   },
   "announced": {
     "zh": "预告 / 预售",
@@ -219,13 +224,14 @@ export const EVIDENCE_LABELS: Record<string, LocalizedText> = {
 
 export const SORT_LABELS: Record<string, LocalizedText> = {
   relevance: { zh: '相关度优先', en: 'Most relevant' },
+  'latest-version': { zh: '最近推出的版本', en: 'Latest versions first' },
   "newest": {
-    "zh": "由新到旧",
-    "en": "Newest first"
+    "zh": "型号由新到旧",
+    "en": "Newest models first"
   },
   "oldest": {
-    "zh": "由旧到新",
-    "en": "Oldest first"
+    "zh": "型号由旧到新",
+    "en": "Oldest models first"
   },
   "name": {
     "zh": "型号名称",
