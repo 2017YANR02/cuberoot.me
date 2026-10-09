@@ -134,6 +134,8 @@ import {
 import { deriveScrambleFromSolution } from '@/lib/scramble-from-solution';
 import { tnoodleRandomScramble } from '@/lib/cubing-scramble';
 import { pgRandomScramble } from '@/lib/pg-scramble';
+import { generateNativePuzzleScramble, isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
+import { parseNativePuzzleAlg, simplifyNativePuzzleAlg } from '@cuberoot/puzzle-solvers/native-puzzle-model';
 import { cloudOptimalScramble } from '@/lib/cloud-optimal-scramble';
 import { useAuthStore } from '@/lib/auth-store';
 import {
@@ -376,7 +378,7 @@ export const SIM_FIXED_PUZZLE_OPTIONS = [
 // the catalog stays the single source of truth.
 const ALL_PUZZLE_TYPE_OPTIONS: { value: string; iconClass?: string; textLabel?: string; labelZh: string; labelEn: string }[] = [
   ...SIM_FIXED_PUZZLE_OPTIONS,
-  ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon, labelZh: p.zh, labelEn: p.en })),
+  ...PG_PUZZLES.map((p) => ({ value: p.id, iconClass: p.icon || undefined, textLabel: 'textLabel' in p ? p.textLabel : undefined, labelZh: p.zh, labelEn: p.en })),
 ];
 
 export function PuzzleTypeSelect({ value, onChange, isZh, allowedValues }: {
@@ -999,7 +1001,7 @@ interface Props {
   keymap: Record<string, KeyMove>;
   onKeymapChange: (km: Record<string, KeyMove>) => void;
   onResetKeymap: () => void;
-  userMoveRef?: RefObject<((action: TwistAction | string) => void) | null>;
+  userMoveRef?: RefObject<((action: TwistAction | string, anchoredSetup?: { setup: string }) => string | void) | null>;
   /** TwistyPlayer instance for pyraminx/skewb/megaminx — used by the explicit
    *  scramble play button to drive jumpToStart + play after the alg is set. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1150,7 +1152,7 @@ export default function PlayerControls({
   // ("UFR"/"UF"/"BL" …) that auto-spacing would split mid-token. Gear's tokens are
   // single-letter too, but the WCA rules misfire on its grammar (UD/FB glue exemption,
   // suffix digits 3-6) — it gets the 'simple' variant instead of the full WCA one.
-  const algAutoSpaceSafe = puzzleKind !== 'kilominx'
+  const algAutoSpaceSafe = puzzleKind !== 'kilominx' && !isPgMode
     && (!corner || cornerKind === 'redi' || cornerKind === 'pyraminx' || cornerKind === 'pyraminx_duo');
   const algAutoSpace: boolean | 'simple' =
     algAutoSpaceSafe ? true : cornerKind === 'gear' ? 'simple' : false;
@@ -1359,14 +1361,23 @@ export default function PlayerControls({
 
   // NxN 播放项 = move + 换握记号(↑/↓/·,占一步驱动手部,不动魔方)。
   const nxnItems = useMemo<NxnPlayItem[]>(() => {
-    if (isSquarePuzzle || isIvy || corner) return [];
+    if (isSquarePuzzle || isIvy || corner || isTwistyMode) return [];
     if (!algDraft.trim()) return [];
     try {
       return parseNxnItems(algDraft);
     } catch {
       return [];
     }
-  }, [algDraft, isSquarePuzzle, isIvy, corner]);
+  }, [algDraft, isSquarePuzzle, isIvy, corner, isTwistyMode]);
+
+  const nativeSetupValid = useMemo(() => {
+    if (!isNativePuzzleId(puzzleKind)) return true;
+    try { parseNativePuzzleAlg(puzzleKind, setupDraft); return true; } catch { return false; }
+  }, [puzzleKind, setupDraft]);
+  const nativeAlgValid = useMemo(() => {
+    if (!isNativePuzzleId(puzzleKind)) return true;
+    try { parseNativePuzzleAlg(puzzleKind, algDraft); return true; } catch { return false; }
+  }, [puzzleKind, algDraft]);
 
   const squareFamilyAlgMoves = useMemo<SquareFamilyMove[] | null>(() => {
     if (!squareFamilySpec) return null;
@@ -1422,11 +1433,11 @@ export default function PlayerControls({
   // A token can be spelled correctly yet leave the legal route (F' at its
   // start, or too many F steps). Preserve precise lexical errors, otherwise
   // highlight the invalid sequence instead of hiding it behind valid spans.
-  const setupValidationSpans = ivySetupSpans ?? squareSetupSpans ?? (
+  const setupValidationSpans = (!nativeSetupValid ? [{ text: setupDraft, bad: true }] : null) ?? ivySetupSpans ?? squareSetupSpans ?? (
     !cornerSetupValid && !cornerSetupSpans?.some(span => span.bad)
       ? [{ text: setupDraft, bad: true }] : cornerSetupSpans
   );
-  const algValidationSpans = ivyAlgSpans ?? squareAlgSpans ?? (
+  const algValidationSpans = (!nativeAlgValid ? [{ text: algDraft, bad: true }] : null) ?? ivyAlgSpans ?? squareAlgSpans ?? (
     cornerSetupValid && !cornerCanPlay && !cornerAlgSpans?.some(span => span.bad)
       ? [{ text: algDraft, bad: true }] : cornerAlgSpans
   );
@@ -1645,6 +1656,11 @@ export default function PlayerControls({
 
   const animatingScrambleRef = useRef(false);
   const scrambleReqIdRef = useRef(0);
+  const twistyReplayReqIdRef = useRef(0);
+  useEffect(() => {
+    ++twistyReplayReqIdRef.current;
+    return () => { ++twistyReplayReqIdRef.current; };
+  }, [puzzleKind, renderer]);
   // 上一次驱动过魔方状态的解法文本 —— auto-reset effect 用它判断「这次变更是不是
   // 纯末尾追加」:是,且开着「动画」,就在当前状态上动画转新招,而不是整段瞬切重放。
   const prevAlgTextRef = useRef(alg);
@@ -1729,6 +1745,7 @@ export default function PlayerControls({
 
   /** 光标位置 → 光标前的完整步数(各拼图各自的 parser);解析不了返回 null。 */
   const caretStepOf = useCallback((text: string, caretIndex: number): number | null => {
+    if (isTwistyMode) return null; // The native player owns its timeline and bounded parser.
     const before = text.slice(0, caretIndex);
     if (!isSquarePuzzle && !isIvy && !corner) {
       // NxN 直接喂原文(parseNxnItems 自己剥注释):extractAlgFromText 会把
@@ -1748,7 +1765,7 @@ export default function PlayerControls({
       try { return parseCornerGroups(corner, algBefore).length; } catch { return null; }
     }
     return null;
-  }, [isSquarePuzzle, isSq1, squareFamilySpec, isIvy, corner]);
+  }, [isSquarePuzzle, isSq1, squareFamilySpec, isIvy, corner, isTwistyMode]);
 
   const handleCaretSync = useCallback((text: string, caretIndex: number) => {
     // Remember the caret so the highlight can follow the move it sits on (twizzle
@@ -1943,7 +1960,9 @@ export default function PlayerControls({
 
   const tool = (transform: (s: string) => string) => () => {
     // 镜像/转体变换先剥手部记号(cubing.js Alg 解析不了会 catch 返 '',静默清空解法框)。
-    const combined = stripHandMarks(setupDraft + ' ' + algDraft).trim();
+    // Keep a trailing setup comment from swallowing the first solution move.
+    const separator = /\/\/[^\n\r]*$/.test(setupDraft) ? '\n' : ' ';
+    const combined = stripHandMarks(setupDraft + separator + algDraft).trim();
     const next = transform(combined);
     setSetupDraft('');
     onSetupChange('');
@@ -1957,6 +1976,9 @@ export default function PlayerControls({
   // model; pyraminx/skewb/megaminx (cubing.js) can't use the cube's mod-4 fold.
   // Corner-turn engine puzzles fold via their descriptor.
   const simplifyForPuzzle = useCallback((s: string): string => {
+    if (isNativePuzzleId(puzzleKind)) {
+      try { return simplifyNativePuzzleAlg(puzzleKind, s); } catch { return s; }
+    }
     if (isSq1) return simplifySq1Alg(s, squareFormat);
     if (squareFamilySpec) return simplifySquareFamilyAlg(s, squareFamilySpec, squareFormat);
     if (isIvy) return s; // ivy R R = R' (not R2) — NxN fold doesn't apply
@@ -1982,9 +2004,12 @@ export default function PlayerControls({
         .join(' ');
     }
     return fold(s);
-  }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, squareFormat, order]);
+  }, [isSq1, squareFamilySpec, isIvy, corner, isTwistyMode, squareFormat, order, puzzleKind]);
 
   const invertForPuzzle = useCallback((s: string): string => {
+    if (isNativePuzzleId(puzzleKind)) {
+      try { return parseNativePuzzleAlg(puzzleKind, s).invert().toString(); } catch { return s; }
+    }
     if (corner) {
       try {
         return corner.invertText?.(s) ?? corner.toString(corner.invert(corner.parse(s)));
@@ -2004,7 +2029,7 @@ export default function PlayerControls({
       );
     }
     return invertAlg(stripHandMarks(s)); // 倒序后换握/推法位点失义,直接剥
-  }, [isSq1, squareFamilySpec, corner, squareFormat]);
+  }, [isSq1, squareFamilySpec, corner, squareFormat, puzzleKind]);
 
   // 消步 = 实时消步开关(settings.liveReduce);开启时手势 / 键盘追加自动消步。
   // 拨到开还顺手把当前解法消一次步(兼顾原一次性按钮:手敲 / 粘贴后开开关即整理)。
@@ -2038,7 +2063,7 @@ export default function PlayerControls({
     }).catch(() => { /* clipboard denied */ });
   }, [flushAlgCommit, onCopyLink, setupDraft, algDraft]);
 
-  const appendUserMove = useCallback((action: TwistAction | string) => {
+  const appendUserMove = useCallback((action: TwistAction | string, anchoredSetup?: { setup: string }) => {
     let moveText = typeof action === 'string' ? action : action.value;
     if (typeof action !== 'string' && !isSquarePuzzle && !isTwistyMode && world && world.cube.order === 1) {
       const norm = normalizeTo1x1(action);
@@ -2088,13 +2113,33 @@ export default function PlayerControls({
     autosize(algEl);
     skipAutoResetRef.current = true;
     setAlgDraft(next);
+    if (anchoredSetup) {
+      // An end-anchored manual move advances the endpoint as well as the record.
+      // Publish both drafts together so the next render and an immediate share
+      // retain that endpoint, even if an earlier move still has a deferred URL write.
+      const nextSetup = anchoredSetup.setup;
+      const setupEl = setupElRef.current;
+      if (setupEl) {
+        setupEl.value = nextSetup;
+        setupEl.selectionStart = setupEl.selectionEnd = nextSetup.length;
+        autosize(setupEl);
+      }
+      onSetupChange(nextSetup);
+      setupDraftRef.current = nextSetup;
+      setSetupDraft(nextSetup);
+      onAlgChange(next);
+      return next;
+    }
     // Defer only the URL write (nuqs setQuery). Synchronously it re-renders SimPage
     // (query changed) right as the snap animation starts — the dominant per-move frame
     // drop (the "开始转动掉帧"). The cube, textarea DOM and React alg state are already
     // current above; the URL can lag, so land it once the turn animation has settled
     // (idle-gated) and coalesce rapid turns into one write.
     commitAlgDebounced(next);
-  }, [commitAlgDebounced, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions]);
+    // The native player uses the exact editor spelling to recognize its later
+    // URL echo, including a batch of turns or a live-reduction setting change.
+    return next;
+  }, [commitAlgDebounced, onSetupChange, onAlgChange, isSquarePuzzle, isSq1, squareFamilySpec, isIvy, isTwistyMode, world, settings.liveReduce, simplifyForPuzzle, squareFormat, puzzleKind, cornerActions]);
 
   useEffect(() => {
     if (!userMoveRef) return;
@@ -2169,6 +2214,7 @@ export default function PlayerControls({
   }, [kbVariant, keymap, applyMove, isTwistyMode]);
 
   const handleScramble = useCallback(async () => {
+    ++twistyReplayReqIdRef.current;
     const reqId = ++scrambleReqIdRef.current;
     // Twisty puzzles (pyraminx/skewb/megaminx) — no cuber world. Route to
     // tnoodleRandomScramble (cubing.js + pool), then write setup so the player
@@ -2179,7 +2225,9 @@ export default function PlayerControls({
       try {
         // PuzzleGeometry explore puzzles have no tnoodle event — generate a random
         // move sequence from the live player's own move set instead.
-        twistyScramble = (isPgPuzzleId(puzzleKind as string) || puzzleKind === 'custom')
+        twistyScramble = isNativePuzzleId(puzzleKind)
+          ? generateNativePuzzleScramble(puzzleKind)
+          : (isPgPuzzleId(puzzleKind as string) || puzzleKind === 'custom')
           ? await pgRandomScramble(twistyPlayerRef?.current)
           : ((await tnoodleRandomScramble(puzzleKind as string)) ?? '');
       } catch (err) {
@@ -2296,8 +2344,10 @@ export default function PlayerControls({
   // alg track and jumpToStart + play.
   const handlePlayScramble = useCallback(async () => {
     const scramble = setupDraft.trim();
-    if (!scramble || !squareFamilySetupValid || !cornerSetupValid) return;
+    if (!scramble || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid) return;
     if (isTwistyMode) {
+      const reqId = ++twistyReplayReqIdRef.current;
+      const requestedPlayer = twistyPlayerRef?.current;
       // This action explicitly plays solved → scramble, regardless of the editor anchor.
       if (settings.playbackMode !== 'moves') onSettingsChange({ ...settings, playbackMode: 'moves' });
       if (setupElRef.current) { setupElRef.current.value = ''; autosize(setupElRef.current); }
@@ -2309,6 +2359,14 @@ export default function PlayerControls({
       onAlgChange(scramble);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
+          // A new puzzle, scramble or editor change cancels this queued replay.
+          // Recheck the live inputs before touching the native animation model.
+          if (reqId !== twistyReplayReqIdRef.current || twistyPlayerRef?.current !== requestedPlayer) return;
+          if ((setupElRef.current?.value ?? setupDraftRef.current).trim()
+            || (algElRef.current?.value ?? algDraftRef.current) !== scramble) return;
+          if (isNativePuzzleId(puzzleKind)) {
+            try { parseNativePuzzleAlg(puzzleKind, scramble); } catch { return; }
+          }
           const p = twistyPlayerRef?.current as unknown as {
             experimentalSetupAnchor?: string;
             jumpToStart?: (opts?: unknown) => void;
@@ -2346,7 +2404,7 @@ export default function PlayerControls({
     clearFrozen();
     tw.setup('');
     tw.push(engScramble);
-  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, isTwistyMode, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText, settings, onSettingsChange]);
+  }, [setupDraft, squareFamilySetupValid, cornerSetupValid, nativeSetupValid, nativeAlgValid, isTwistyMode, puzzleKind, world, clearFrozen, corner, onSetupChange, onAlgChange, twistyPlayerRef, toEngineText, settings, onSettingsChange]);
 
   // 点解法框时,若打乱动画仍在逐步播放(高阶打乱可达 400+ 步 ≈ 分钟级),立即落到完整打乱态,
   // 让用户马上能在打乱好的魔方上输解法。走快速整体应用 setup(打乱文本):它清空待播队列后用
@@ -2486,7 +2544,7 @@ export default function PlayerControls({
             rows={1}
             spellCheck={false}
             className={setupValidationSpans ? 'sim-player-input sim-player-input--hl' : 'sim-player-input'}
-            aria-invalid={squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined}
+            aria-invalid={!nativeSetupValid || (squareFamilySpec ? !squareFamilySetupValid : corner ? !cornerSetupValid : undefined)}
             placeholder={t('打乱', 'Scramble')}
             onInput={(e) => {
               const el = e.currentTarget;
@@ -2521,7 +2579,7 @@ export default function PlayerControls({
           type="button"
           className="sim-player-scramble"
           onClick={handlePlayScramble}
-          disabled={corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid}
+          disabled={corner?.endAnchor === false || !setupDraft.trim() || !squareFamilySetupValid || !cornerSetupValid || !nativeSetupValid || !nativeAlgValid}
           title={t('动画展示打乱', 'Animate scramble')}
           aria-label={t('动画展示打乱', 'Animate scramble')}
         >

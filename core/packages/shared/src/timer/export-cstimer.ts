@@ -13,10 +13,14 @@ import { EVENTS, eventInfo } from './types';
 export const CSTIMER_TRAINING_FALLBACKS = { eocp: 'll', ollcp: 'll', l10p: 'cmll' } as const;
 
 /** Events without their own csTimer type retain their identity in metadata.
- * Duo uses manual input; Sphere Cube shares the ordinary 3x3 generator. */
+ * Native puzzles use manual input; Sphere Cube shares the ordinary 3x3 generator. */
 export const CSTIMER_EVENT_FALLBACKS = {
   ...CSTIMER_TRAINING_FALLBACKS,
   pyraminx_duo: 'input',
+  superz: 'input',
+  dogic: 'input',
+  octahedron4: 'input',
+  dinoskewb: 'input',
   sphere: '333',
 } as const;
 
@@ -65,6 +69,10 @@ const EVENT_TO_CSTIMER_SCRTYPE: Record<EventId, string> = {
   redi: 'redim',
   mpyram: 'mpyrso',
   pyraminx_duo: CSTIMER_EVENT_FALLBACKS.pyraminx_duo,
+  superz: CSTIMER_EVENT_FALLBACKS.superz,
+  dogic: CSTIMER_EVENT_FALLBACKS.dogic,
+  octahedron4: CSTIMER_EVENT_FALLBACKS.octahedron4,
+  dinoskewb: CSTIMER_EVENT_FALLBACKS.dinoskewb,
   r3: 'r3',
   r4: 'r4',
   r5: 'r5',
