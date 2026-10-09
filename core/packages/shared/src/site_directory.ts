@@ -6,8 +6,8 @@ export const HOME_MEMBER_SECTION_IDS = { enterprise: 'enterprise-members', indiv
 // Complete account directory, including entries hidden by account permissions.
 export const ACCOUNT_CARD_GROUP_ID = 'account';
 export const ACCOUNT_CARD_IDS = [
-  'pet', 'wca', 'recon', 'link-wca', 'identity-verification', 'progress', 'learning-center', 'enterprise',
-  'onboarding', 'friends', 'vault', 'notifications', 'mcp', 'users-admin', 'submissions',
+  'pet', 'onboarding', 'wca', 'recon', 'link-wca', 'identity-verification', 'progress', 'learning-center', 'enterprise',
+  'friends', 'vault', 'notifications', 'mcp', 'users-admin', 'submissions',
 ] as const;
 
 export interface SiteDirectoryText {
