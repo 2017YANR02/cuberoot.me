@@ -247,6 +247,7 @@
       "rationale": "Integration guards currently verify cross-layer behavior from the client test suite.",
       "replacement": "Move reusable contract fixtures to a neutral test boundary when the corresponding domain is refactored.",
       "evidence": [
+        {"file":"core/packages/client/tests/auth-doc-sync.test.ts","contains":"tracks account tour state and its homepage trigger"},
         {"file":"core/packages/client/tests/teaching_message_notification_contract.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"},
         {"file":"core/packages/client/tests/timer_presence.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"},
         {"file":"core/packages/client/tests/wca-calculators-port.test.ts","contains":"workspaceFixturePath('@cuberoot/server'"},
@@ -320,6 +321,22 @@
     }
   ],
   "legacyFindings": [
+    {
+      "file": "packages/client/tests/auth-doc-sync.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "apps/api/migrations/0265_home_onboarding.sql",
+      "target": "server"
+    },
+    {
+      "file": "packages/client/tests/auth-doc-sync.test.ts",
+      "mechanism": "path-literal",
+      "rule": "cross-package-path",
+      "sourceKind": "test",
+      "specifier": "apps/api/src/routes/onboarding.ts",
+      "target": "server"
+    },
     {
       "file": "apps/api/src/calc/live_relay.ts",
       "importKind": "runtime",
