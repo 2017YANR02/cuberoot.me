@@ -803,12 +803,6 @@ export default function AccountPage() {
       },
     ]),
     {
-      key: 'identity-verification',
-      href: '/account/verify',
-      icon: <IdCard size={22} className="account-card-icon" />,
-      title: tr({ zh: '实名认证', en: 'Identity Verification' }),
-    },
-    {
       key: 'progress',
       href: '/alg/progress',
       icon: <GraduationCap size={22} className="account-card-icon" />,
@@ -948,6 +942,10 @@ export default function AccountPage() {
           {view === 'signin' ? (
             <section className="account-creds">
               <DisplayNameEditor />
+              <AppLink href="/account/verify" className="account-card account-profile-editor" prefetch={false}>
+                <IdCard size={22} className="account-card-icon" />
+                <span className="account-card-title">{t('实名认证', 'Identity Verification')}</span>
+              </AppLink>
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
               <AccountPanel
                 expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined}
