@@ -34,6 +34,7 @@ const CUBING_EVENTS: Readonly<Partial<Record<EventId, TimerCubingScrambleEventId
   '333ni': '333bf',
   '333fm': '333fm',
   '333mr': '333',
+  sphere: '333',
   '444bld': '444bf',
   '555bld': '555bf',
   pyra: 'pyram',
@@ -201,7 +202,14 @@ describe('shared timer scramble runtime', () => {
       });
       expect(generate).toHaveBeenLastCalledWith(cubingEventId, event);
     }
-    expect(generate).toHaveBeenCalledTimes(20);
+    expect(generate).toHaveBeenCalledTimes(21);
+  });
+
+  it('generates a real 3x3 scramble while preserving the Sphere event', async () => {
+    const result = await generateTimerScramble({ event: 'sphere' });
+    expect(result).toMatchObject({ ok: true, event: 'sphere', kind: 'generated', provider: 'cubing' });
+    if (!result.ok || result.kind !== 'generated') throw new Error('Sphere generation failed');
+    expect(result.scramble).toMatch(/^[URFDLB][2']?(?: [URFDLB][2']?)+$/);
   });
 
   it('routes 222 through the shared TNoodle WCA provider, never cubing.js', async () => {

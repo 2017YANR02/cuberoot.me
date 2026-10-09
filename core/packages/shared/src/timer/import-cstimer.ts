@@ -37,6 +37,7 @@ const CSTIMER_EVENT_MAP: Record<string, EventId> = {
   '333mbld': '333mbld', '3mbld': '333mbld', 'mbld': '333mbld', 'mbo': '333mbld',
   '333ni': '333ni', '3ni': '333ni', 'ni': '333ni',
   '333mr': '333mr', 'mirror': '333mr', 'mirrorblocks': '333mr', 'mirblocks': '333mr',
+  'sphere': 'sphere', 'spherecube': 'sphere', '球形魔方': 'sphere', '球形三阶': 'sphere',
   '444bld': '444bld', '4bld': '444bld', '4ni': '444bld',
   '555bld': '555bld', '5bld': '555bld', '5ni': '555bld',
   '666bld': '666bld', '6bld': '666bld',
