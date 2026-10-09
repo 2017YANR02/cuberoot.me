@@ -29,6 +29,7 @@ interface Props {
   round: string;
   solveNum?: number;          // 当前第几把(1..5);对照就取这一把,缺省按第 1 把
   currentGroup?: string;      // 当前已选分组,高亮
+  selectableGroups?: readonly string[];
   onPick: (group: string) => void;
   onClose: () => void;
 }
@@ -37,7 +38,7 @@ interface Props {
 const ROUND_IDX: Record<string, number> = { '1': 0, '2': 1, '3': 2, 'f': 3 };
 
 export default function GroupScramblePicker({
-  compWcaId, event, round, solveNum, currentGroup, onPick, onClose,
+  compWcaId, event, round, solveNum, currentGroup, selectableGroups, onPick, onClose,
 }: Props) {
   const { i18n } = useTranslation();
   const isZh = i18n.language.startsWith('zh');
@@ -45,7 +46,7 @@ export default function GroupScramblePicker({
   const [groups, setGroups] = useState<GroupScrambles[] | null>(null);
   const [failed, setFailed] = useState(false);
 
-  useModalDismiss(onClose);
+  const backdropProps = useModalDismiss(onClose);
 
   useEffect(() => {
     let alive = true;
@@ -83,7 +84,7 @@ export default function GroupScramblePicker({
       className="rr-overlay"
       role="dialog"
       aria-modal="true"
-      onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
+      {...backdropProps}
     >
       <div className="rr-modal">
         <div className="rr-head gsp-head">
@@ -100,6 +101,10 @@ export default function GroupScramblePicker({
           ) : (
             /* .gen-page 供 SheetView 表格的 --gen-* 变量 + 明暗主题(定义在 gen.css 的 .gen-page 作用域) */
             <div className="gen-page">
+              {selectableGroups?.length === 1 && <p className="submit-hint">{tr({
+                zh: `已有打乱对应 ${selectableGroups[0]} 组，其他分组仅供查看`,
+                en: `The existing scramble matches group ${selectableGroups[0]}. Other groups are view-only.`,
+              })}</p>}
               <SheetView
                 sheet={sheet}
                 isZh={isZh}
@@ -108,10 +113,12 @@ export default function GroupScramblePicker({
                 analyzable={false}
                 titleSuffix={tr({ zh: `第 ${solveLabel} 把`, en: ` · scramble #${solveLabel}` })}
                 selectedLabel={currentGroup ?? null}
+                selectableLabels={selectableGroups}
                 onSelectScramble={label => {
                   // analyzable 关 → 点行只「选中」,回传该行 label(=组号);
                   // 再点当前已选组时 label 为 null,退回 currentGroup。
                   const picked = label ?? currentGroup;
+                  if (selectableGroups && (!picked || !selectableGroups.includes(picked))) return;
                   if (picked) onPick(picked);
                   onClose();
                 }}

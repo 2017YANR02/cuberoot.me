@@ -834,17 +834,30 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [form.compWcaId, form.event, form.round]);
 
   const groupMatchScramble = getReconScramble(form);
+  const groupMatchKey = JSON.stringify([form.compWcaId, form.event, form.round, form.solveNum, groupMatchScramble]);
+  const [groupMatch, setGroupMatch] = useState<{ key: string; group: string | null } | null>(null);
+  const needsGroupMatch = !!(form.compWcaId && form.event && form.round && form.solveNum
+    && groupMatchScramble.trim() && groupOptions && groupOptions.length > 1);
+  const groupMatchPending = needsGroupMatch && groupMatch?.key !== groupMatchKey;
+  const matchedGroup = needsGroupMatch && groupMatch?.key === groupMatchKey ? groupMatch.group : null;
+  const selectableGroups = groupMatchPending ? [] : matchedGroup ? [matchedGroup] : undefined;
+  const selectGroup = (group: string) => {
+    if (groupMatchPending || (matchedGroup && group !== matchedGroup)) return;
+    setField('groupId', group);
+  };
   useEffect(() => {
-    const { compWcaId, event, round, solveNum, groupId } = form;
-    if (!compWcaId || !event || !round || !solveNum || groupId
-      || !groupMatchScramble.trim() || !groupOptions || groupOptions.length < 2) return;
+    const { compWcaId, event, round, solveNum } = form;
+    if (!needsGroupMatch || !compWcaId || !event || !round || !solveNum) return;
     let cancelled = false;
     const timer = setTimeout(() => {
       void fetchMatchingScrambleGroup(compWcaId, event, round, solveNum, groupMatchScramble).then(group => {
-        if (cancelled || !group || !groupOptions.includes(group)) return;
+        if (cancelled) return;
+        setGroupMatch({ key: groupMatchKey, group });
+        if (!group) return;
         setForm(prev => {
-          // A slow lookup must not overwrite a manual choice or a newer solve.
-          if (prev.groupId || prev.compWcaId !== compWcaId || prev.event !== event
+          // Existing selections must agree with the scramble, but stale lookups
+          // must never update a newer solve or scramble.
+          if (prev.groupId === group || prev.compWcaId !== compWcaId || prev.event !== event
             || prev.round !== round || prev.solveNum !== solveNum
             || getReconScramble(prev) !== groupMatchScramble) return prev;
           return { ...prev, groupId: group };
@@ -852,7 +865,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       });
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [form.compWcaId, form.event, form.round, form.solveNum, form.groupId, groupMatchScramble, groupOptions]);
+  }, [form.compWcaId, form.event, form.round, form.solveNum, groupMatchScramble, groupMatchKey, needsGroupMatch]);
 
   const eventRoundFormats = useMemo<RoundFormat[] | null>(() => {
     if (!compRounds || !form.event) return null;
@@ -1107,6 +1120,9 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   // own. 多分组的轮次必须先选分组,否则不自动给打乱(避免误填到错的组)。
   useEffect(() => {
     if (scrambleUserTouched) return;
+    // Resolve the existing scramble before a saved or manually selected group
+    // can replace it with that group's official scramble.
+    if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     if (!form.compWcaId || !form.event || !form.round || form.solveNum == null) return;
 
     // Keep loaded / URL-provided scrambles as evidence for group matching.
@@ -1173,7 +1189,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(timer); setScrambleLoading(false); };
-  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, scrambleUserTouched, optimalUserTouched, setField, isZh]);
+  }, [form.compWcaId, form.event, form.round, form.groupId, form.solveNum, groupOptions, groupMatchPending, matchedGroup, scrambleUserTouched, optimalUserTouched, setField, isZh]);
 
   // Resize the visible scramble textarea when its source or value changes programmatically.
   useEffect(() => {
@@ -1486,6 +1502,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   };
 
   const handleSubmit = async () => {
+    if (groupMatchPending || (matchedGroup && form.groupId !== matchedGroup)) return;
     setSubmitError(null);
     const person = form.person?.trim() ?? '';
     if (!person) {
@@ -1761,7 +1778,8 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                 round={form.round}
                 solveNum={form.solveNum}
                 currentGroup={form.groupId || undefined}
-                onPick={g => setField('groupId', g)}
+                selectableGroups={selectableGroups}
+                onPick={selectGroup}
                 onClose={() => setGroupCompareOpen(false)}
               />
             )}
@@ -2039,12 +2057,17 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
                       <>
                         <select
                           value={form.groupId || ''}
-                          onChange={e => setField('groupId', e.target.value)}
+                          onChange={e => selectGroup(e.target.value)}
+                          disabled={groupMatchPending}
                           className={`submit-field-select${needPick ? ' submit-input-invalid' : ''}`}
                         >
-                          {withPlaceholder && <option value="">{tr({ zh: '请选择', en: 'Select…' })}</option>}
-                          {opts.map(g => <option key={g} value={g}>{g}</option>)}
+                          {withPlaceholder && <option value="" disabled={!!matchedGroup}>{tr({ zh: '请选择', en: 'Select…' })}</option>}
+                          {opts.map(g => <option key={g} value={g} disabled={!!matchedGroup && g !== matchedGroup}>{g}</option>)}
                         </select>
+                        {matchedGroup && <span className="submit-hint">{tr({
+                          zh: `已有打乱对应 ${matchedGroup} 组，不能选择其他分组`,
+                          en: `The existing scramble matches group ${matchedGroup}; other groups cannot be selected.`,
+                        })}</span>}
                         {needPick &&
                           <span className="submit-hint submit-hint-warn">{tr({ zh: '请先选择分组', en: 'Select a group first' })}</span>}
                         {published && groupOptions!.length > 1 && (
@@ -2533,7 +2556,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
             {/* Submit buttons */}
             {renderSubmitError('submit')}
             <div className="submit-actions">
-              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading}>
+              <button className="submit-btn submit-btn-primary" onClick={handleSubmit} disabled={saving || videoUploading || groupMatchPending}>
                 {saving
                   ? t('recon.submitting')
                   : isEditing
