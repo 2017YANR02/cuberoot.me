@@ -6,7 +6,8 @@
   "cuberoot": {
     "kind": "library",
     "externalRuntime": {
-      "cstimer_module": "runtime-neutral"
+      "cstimer_module": "runtime-neutral",
+      "cubing": "runtime-neutral"
     },
     "runtime": {
       "./bicube": "runtime-neutral",
@@ -71,7 +72,9 @@
       "./stm-cube": "runtime-neutral",
       "./timer-mega-state": "runtime-neutral",
       "./timer-mega-hints": "runtime-neutral",
-      "./magic": "runtime-neutral"
+      "./magic": "runtime-neutral",
+      "./native-puzzles": "runtime-neutral",
+      "./native-puzzle-model": "runtime-neutral"
     }
   },
   "sideEffects": false,
@@ -390,10 +393,20 @@
       "types": "./src/magic.ts",
       "node": "./dist/magic.js",
       "default": "./src/magic.ts"
+    },
+    "./native-puzzles": {
+      "types": "./src/native-puzzles.ts",
+      "node": "./dist/native-puzzles.js",
+      "default": "./src/native-puzzles.ts"
+    },
+    "./native-puzzle-model": {
+      "types": "./src/native-puzzle-model.ts",
+      "node": "./dist/native-puzzle-model.js",
+      "default": "./src/native-puzzle-model.ts"
     }
   },
   "scripts": {
-    "build": "tsc -b && esbuild src/magic.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic.js",
+    "build": "tsc -b && esbuild src/magic.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/magic.js && esbuild src/native-puzzle-model.ts --bundle --packages=external --platform=node --target=node20 --format=esm --outfile=dist/native-puzzle-model.js",
     "typecheck": "tsc --noEmit",
     "test": "pnpm run build && vitest run"
   },
@@ -403,6 +416,7 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
-    "cstimer_module": "^0.1.5"
+    "cstimer_module": "^0.1.5",
+    "cubing": "^0.63.3"
   }
 }

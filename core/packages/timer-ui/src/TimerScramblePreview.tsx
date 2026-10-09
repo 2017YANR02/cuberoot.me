@@ -17,6 +17,8 @@ import { renderSq1ScrambleSvg, DEFAULT_SQ1_COLORS } from '@cuberoot/puzzle-rende
 import { renderPyraminxDuoSvg, DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
 import { renderMagicSvg, magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 import { renderSphereScrambleSvg } from '@cuberoot/puzzle-render-core/sphere-svg';
+import { renderNativePuzzleSvg, nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { isNativePuzzleId, type NativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { rediScrambleForCubing, toCubingKilominx } from '@cuberoot/shared/timer';
 
 export interface TimerScramblePreviewProps {
@@ -33,7 +35,7 @@ export interface TimerScramblePreviewProps {
   height?: number | string;
   className?: string;
   /** TwistyPlayer visualization mode. Defaults to '2D'. Inline-SVG puzzles
-   *  (sq1 / mega / pyraminx_duo / magic / mmagic / sphere) ignore this and always render SVG. */
+   *  (native puzzles, sq1 / mega / pyraminx_duo / magic / mmagic / sphere) ignore this and always render SVG. */
   visualization?: '2D' | '3D';
   ariaLabel?: string;
   /** Fill a host-owned responsive box instead of setting puzzle pixel dimensions. */
@@ -65,7 +67,7 @@ interface PuzzleSpec {
   /** cubing.js puzzle id (only used when we go through TwistyPlayer). */
   cubingPuzzle: string | null;
   /** Inline SVG renderer; overrides TwistyPlayer when present. */
-  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere';
+  inlineSvg?: 'sq1' | 'mega' | 'pyraminx_duo' | 'magic' | 'mmagic' | 'sphere' | NativePuzzleId;
   /** Unit multipliers for width/height (units of `size`). */
   w: number;
   h: number;
@@ -77,6 +79,9 @@ interface PuzzleSpec {
  * through to the underlying NxN cube — the scramble alg is identical.
  */
 function planFor(event: string): PuzzleSpec | null {
+  if (isNativePuzzleId(event)) {
+    return { cubingPuzzle: null, inlineSvg: event, w: 9 * nativePuzzleSvgAspect(event), h: 9 };
+  }
   switch (event) {
     case '222':                                  return { cubingPuzzle: '2x2x2',     w: 8,  h: 6 };
     case '333': case '333oh': case '333fm':
@@ -144,6 +149,7 @@ export function TimerScramblePreview({
       if (plan.inlineSvg === 'pyraminx_duo') return renderPyraminxDuoSvg(scramble ?? '');
       if (plan.inlineSvg === 'magic' || plan.inlineSvg === 'mmagic') return renderMagicSvg(plan.inlineSvg, scramble ?? '');
       if (plan.inlineSvg === 'sphere') return renderSphereScrambleSvg(scramble ?? '');
+      if (isNativePuzzleId(plan.inlineSvg)) return renderNativePuzzleSvg(plan.inlineSvg, scramble ?? '');
     } catch (err) {
       console.warn(`[CubingPreview] ${plan.inlineSvg} render failed`, err);
     }

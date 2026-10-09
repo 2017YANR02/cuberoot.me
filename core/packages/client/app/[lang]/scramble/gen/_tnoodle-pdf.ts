@@ -27,6 +27,8 @@ import { eventToCubeSize, renderUnfoldedSvgForEvent } from '@cuberoot/shared/cub
 import { renderScramblePreviewSvg } from '@/components/scramble-preview-svg';
 import { magicSvgAspect } from '@cuberoot/puzzle-render-core/magic-svg';
 import { DUO_SVG_ASPECT } from '@cuberoot/puzzle-render-core/pyraminx-duo-svg';
+import { nativePuzzleSvgAspect } from '@cuberoot/puzzle-render-core/native-puzzle-svg';
+import { isNativePuzzleId } from '@cuberoot/puzzle-solvers/native-puzzles';
 import { groupLetter, type WcaFormat } from './_wca-round';
 import { eventDisplayName } from '@/lib/wca-events';
 import { tFmc, fontForLocale, type TnoodleLocale } from './_tnoodle-translate';
@@ -296,6 +298,7 @@ function tnoodleEventTitle(event: string): string | null {
 // in tnoodle-lib (rough; only used to compute column proportions). NxN
 // cubes always 4:3 — handled by cube_unfolded_svg's own viewBox.
 function nonCubeAspect(event: string): number | null {
+  if (isNativePuzzleId(event)) return nativePuzzleSvgAspect(event);
   if (eventToCubeSize(event)) return 4 / 3;
   switch (event) {
     case 'sphere': return 4 / 3;
