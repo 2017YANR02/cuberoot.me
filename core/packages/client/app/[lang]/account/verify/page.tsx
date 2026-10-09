@@ -9,6 +9,7 @@ import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 import { sessionFetch } from '@/lib/session-fetch';
 import { apiUrl } from '@/lib/api-base';
 import { getSessionToken, useAuthUser } from '@/lib/auth-store';
+import { extractChineseName } from '@/lib/cuber-name-display';
 import './verify.css';
 
 type Status = { attemptId: string | null; expiresAt: string | null; canCheck: boolean; sessionChanged: boolean; enabled: boolean; consentVersion: string; status: string; verifiedAt: string | null; idLast4: string | null };
@@ -33,7 +34,13 @@ export default function FaceVerificationPage() {
   useDocumentTitle('实名认证', 'Identity Verification');
   const user = useAuthUser();
   const [status, setStatus] = useState<Status | null>(null);
-  const [realName, setRealName] = useState('');
+  const owner = user ? String(user.uid ?? user.wcaId) : '';
+  const [nameDraft, setNameDraft] = useState<{ owner: string; value: string } | null>(null);
+  // Mainland ID names prefer the WCA local name in either UI language.
+  // An explicit edit (including clearing the field) wins over later profile refreshes.
+  const suggestedName = user?.wcaId ? (extractChineseName(user.name) ?? user.name).trim() : '';
+  const realName = nameDraft?.owner === owner ? nameDraft.value : suggestedName;
+  const setRealName = (value: string) => setNameDraft({ owner, value });
   const [idCard, setIdCard] = useState('');
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -68,13 +75,16 @@ export default function FaceVerificationPage() {
     return response.json() as Promise<T>;
   }, [t]);
   useEffect(() => {
+    setNameDraft(null); setIdCard(''); setConsent(false);
+  }, [owner]);
+  useEffect(() => {
     let cancelled = false;
-    setStatus(null); setError(''); setRealName(''); setIdCard(''); setConsent(false);
+    setStatus(null); setError('');
     if (user) void request<Status>().then(s => { if (!cancelled) setStatus(s); }).catch(() => {
       if (!cancelled) setError(t('暂时无法读取认证状态，请刷新重试。', 'Unable to load verification status. Refresh to retry.'));
     });
     return () => { cancelled = true; };
-  }, [user?.uid, request, t]); // Account changes clear all identity fields.
+  }, [owner, request, t]);
 
   const start = async () => {
     if (!consent || !status?.enabled || busy) return;
