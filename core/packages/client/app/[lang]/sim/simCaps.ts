@@ -97,6 +97,7 @@ const CAPS: Record<string, SimPuzzleCaps> = {
   pyraminx: { engine: 'engineMode', carve: 'corner' },
   pyraminx_duo: { engine: 'always', carve: 'corner' },
   megaminx: { engine: 'engineMode', carve: 'face' },
+  kilominx: TWISTY_CAPS,
   fto: { engine: 'engineMode', carve: 'face' },
   ghost: { engine: 'always', carve: 'face', faceColors: true },
   // Mirror Cube — NxN engine (uniform logic, non-uniform geometry), order 3 / order 2.

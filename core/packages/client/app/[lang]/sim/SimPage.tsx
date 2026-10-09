@@ -84,6 +84,7 @@ import type { CornerGestureCtx } from './engine/cornerTurnGesture';
 import { createCornerGestureResolver } from './engine/cornerGestureRegistry';
 import { FACE } from './engine/define';
 import { toWca as toWcaSkewb, type SkewbNotation } from '@cuberoot/shared/skewb-notation';
+import { toCubingKilominx, fromCubingKilominx, type KilominxNotation } from '@/lib/kilominx-notation';
 import TwistySection from '@/components/TwistySection';
 import CutEditor from './CutEditor';
 import {
@@ -95,6 +96,7 @@ import PlayerControls, { stripHandMarks, type SimPuzzle } from './PlayerControls
 import AppLink from '@/components/AppLink';
 import { reconEventForSim, buildReconSubmitQuery } from '@/lib/sim-recon-link';
 import { PG_DEF_BY_ID, isPgPuzzleId } from './pgCatalog';
+import { isTwistyPuzzle } from './twistyPuzzles';
 import { EXPLORE_BOUND } from './engine/exploreBound';
 import AlgsPanel from './AlgsPanel';
 import PuzzleImageStudio, { type SimBridge } from '@/components/puzzle-image/PuzzleImageStudio';
@@ -135,12 +137,8 @@ const BACKVIEW_MARGIN = 8;
 
 const PuzzleDrawWorkspace = dynamic(() => import('./PuzzleDrawWorkspace'), { ssr: false });
 
-/** Twisty puzzles rendered by cubing.js (not the local cuber engine). */
-export const TWISTY_PUZZLES = ['pyraminx', 'skewb', 'megaminx', 'fto'] as const;
-export type TwistyPuzzle = typeof TWISTY_PUZZLES[number];
-export function isTwistyPuzzle(p: SimPuzzle): p is TwistyPuzzle {
-  return p === 'pyraminx' || p === 'skewb' || p === 'megaminx' || p === 'fto';
-}
+export { TWISTY_PUZZLES, isTwistyPuzzle } from './twistyPuzzles';
+export type { TwistyPuzzle } from './twistyPuzzles';
 
 /** Twisty puzzles (cubing.js by default) that ALSO have an in-house Three.js engine
  *  renderer — the user picks which one via the `renderer` toggle (skill: keep both). */
@@ -158,7 +156,7 @@ const ENGINE_TWISTY_DEF: Record<string, string> = { fto: 'o f 0.333333333333333'
  *  在引擎 ±90°(系数 1.8);上下两渲染器都是 ±90°(系数 1.8)。同一 viewAngle 字段在两渲染器
  *  下含义不同,所以换拼图 / 换渲染器时必须按目标重算这两值,不能跨拼图沿用。 */
 function defaultViewFor(kind: SimPuzzle, twisty: boolean): { viewAngle: number; viewGradient: number } {
-  const yawDeg = kind === 'megaminx' ? 0 : 30;
+  const yawDeg = kind === 'megaminx' || kind === 'kilominx' ? 0 : 30;
   const pitchDeg = kind === 'fto' ? 0 : 30;
   const yawFactor = twisty ? 3.6 : 1.8;
   return { viewAngle: 50 - yawDeg / yawFactor, viewGradient: 50 - pitchDeg / 1.8 };
@@ -287,6 +285,9 @@ export default function SimPage() {
       cuts: parseAsString,
       alg: parseAsString,
       setup: parseAsString,
+      // The timer uses csTimer's face names. Share the convention with the text:
+      // DR/DL already exist in cubing.js but denote different faces there.
+      kiloNotation: parseAsStringEnum(['cstimer', 'cubing'] as const).withDefault('cstimer'),
       // Playback setup anchor. Written when the selector changes so copied links
       // reproduce whether the alg starts at setup or finishes at setup.
       anchor: parseAsStringEnum(['start', 'end'] as const),
@@ -331,9 +332,8 @@ export default function SimPage() {
     if (raw === 'rex') return 'rex';
     if (raw === 'heli') return 'heli';
     if (raw === 'gear') return 'gear';
-    if (raw === 'pyraminx' || raw === 'skewb' || raw === 'megaminx') return raw;
+    if (isTwistyPuzzle(raw)) return raw;
     if (raw === 'pyraminx_duo') return raw;
-    if (raw === 'fto') return 'fto';
     if (raw === 'ghost') return 'ghost';
     if (raw === 'custom') return 'custom';
     if (raw === 'mirror' || raw === 'mirror2' || raw === 'sphere') return raw;
@@ -480,6 +480,14 @@ export default function SimPage() {
     setSkewbNotationState(n);
     persistItem('sim.skewb.notation', n);
   }, []);
+  const toPlayerText = useCallback((text: string) => {
+    if (puzzleParam === 'skewb') return toWcaSkewb(text, skewbNotation);
+    if (puzzleParam === 'kilominx') return toCubingKilominx(text, query.kiloNotation);
+    return text;
+  }, [puzzleParam, skewbNotation, query.kiloNotation]);
+  const setKilominxNotation = useCallback((next: KilominxNotation, setup: string, alg: string) => {
+    setQuery({ kiloNotation: next, setup: setup || null, alg: alg || null });
+  }, [setQuery]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     persistItem('sim.fullscreen', fullscreen ? '1' : '0');
@@ -624,7 +632,7 @@ export default function SimPage() {
     // mis-split Sarah's UL/UR into U+L; toWcaSkewb is identity for the default WCA notation, so this
     // only changes anything for Sarah users. (No chirality translation is needed — sr and cubing.js
     // agree on R/U/L/B move semantics, verified.)
-    const applied = puzzleParam === 'skewb' ? toWcaSkewb(raw, skewbNotation) : raw;
+    const applied = toPlayerText(raw);
     const stageMask = imgPuzzle.puzzleType === 'cube'
       ? visualcubeMaskForStickering(imgPuzzle.cubeSize, query.stickering)
       : '';
@@ -638,7 +646,7 @@ export default function SimPage() {
       faceU: stageColors.U, faceR: stageColors.R, faceF: stageColors.F,
       faceD: stageColors.D, faceL: stageColors.L, faceB: stageColors.B,
     };
-  }, [settings.faceColors, setupParam, algParam, puzzleParam, skewbNotation,
+  }, [settings.faceColors, setupParam, algParam, toPlayerText,
       imgPuzzle, query.stickering, query.stickeringRot]);
   const [imgSpec, setImgSpec] = useImageSpec('img_', { puzzle: imgPuzzle, inherit: imgInherit });
   // Static/spec rendering is an exact fallback only when it can encode every visible
@@ -1717,6 +1725,17 @@ export default function SimPage() {
     setQuery({ setup: setup || null });
   }, [setQuery]);
 
+  const copySimLink = useCallback(async (setup: string, alg: string) => {
+    const url = new URL(window.location.href);
+    // nuqs updates React before flushing browser history. Merge its current state
+    // and the immediate drafts so a copy after a turn / notation switch is complete.
+    for (const [key, value] of Object.entries({ ...query, setup, alg })) {
+      if (value == null || value === '') url.searchParams.delete(key);
+      else url.searchParams.set(key, value);
+    }
+    await navigator.clipboard.writeText(url.toString());
+  }, [query]);
+
   const onStickeringChange = useCallback((stickering: string) => {
     let setup: string | null | undefined;
     if (stickering === 'Daisy' && !setupParam.trim() && !algParam.trim()) setup = DAISY_SETUP;
@@ -2210,11 +2229,9 @@ export default function SimPage() {
             <TwistySection
               puzzle={String(puzzleParam)}
               puzzleDescription={pgDef}
-              // Skewb-only: translate Sarah → WCA so cubing.js plays the alg the
-              // user intended. URL stays in original notation; TwistyPlayer sees
-              // WCA. For pyraminx/megaminx, pass through.
-              scramble={puzzleParam === 'skewb' ? toWcaSkewb(setupParam, skewbNotation) : setupParam}
-              alg={puzzleParam === 'skewb' ? toWcaSkewb(algParam, skewbNotation) : algParam}
+              // Keep editor / URL notation intact; translate at the player boundary.
+              scramble={toPlayerText(setupParam)}
+              alg={toPlayerText(algParam)}
               fillPane
               twistOnClick
               playerRef={twistyPlayerRef}
@@ -2225,7 +2242,9 @@ export default function SimPage() {
               onUserMove={(moveText) => {
                 // moveText is already cubing.js canonical (`Uv`/`BL2`); pass raw
                 // to skip TwistAction parsing which would eat multi-char families.
-                userMoveRef.current?.(moveText);
+                userMoveRef.current?.(puzzleParam === 'kilominx'
+                  ? fromCubingKilominx(moveText, query.kiloNotation)
+                  : moveText);
               }}
               // wheel / pinch zoom on twisty → persist as settings.scale (the settings
               // effect re-applies cameraDistance; mirrors the NxN syncScaleToSettings).
@@ -2352,6 +2371,9 @@ export default function SimPage() {
             twistyPlayerRef={twistyPlayerRef}
             skewbNotation={skewbNotation}
             onSkewbNotationChange={setSkewbNotation}
+            kilominxNotation={query.kiloNotation}
+            onKilominxNotationChange={setKilominxNotation}
+            onCopyLink={copySimLink}
             renderer={query.renderer}
             onRendererChange={handleRendererChange}
             playbackSlot={playbackSlot}
