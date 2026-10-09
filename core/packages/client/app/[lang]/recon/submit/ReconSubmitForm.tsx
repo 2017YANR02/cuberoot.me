@@ -57,7 +57,7 @@ import {
 import { computeAllStats } from '@/lib/recon-stats';
 import { normalizeIsoDate, toLocalIsoDate } from '@/lib/iso-date';
 import { revalidateRecon } from '../revalidate-action';
-import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchCubingLiveResultInfo, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, matchRoundType } from '@/lib/wca-results-api';
+import { fetchAttempts, fetchCubingAttempts, fetchResultRow, fetchCubingPrRanks, fetchCubingLiveResultInfo, fetchScrambles, fetchOptimalScrambles, fetchScrambleGroups, fetchMatchingScrambleGroup, matchRoundType } from '@/lib/wca-results-api';
 import { fetchAttemptPrRank } from '@/lib/recon-attempt-pr-rank';
 import { fetchPb, type PbByEvent } from '@/lib/wca-pb';
 import {
@@ -815,7 +815,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
   }, [form.compWcaId]);
 
   // ── Comp / event / round change → resolve scramble groups ──
-  // 多分组 → 下拉强制选择(边框变红提醒);单分组 → 自动填入。
+  // 单分组自动填入;多分组可由已有打乱反查,无法唯一匹配时手选。
   useEffect(() => {
     if (!form.compWcaId || !form.event || !form.round) { setGroupOptions(null); return; }
     let cancelled = false;
@@ -832,6 +832,27 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     });
     return () => { cancelled = true; };
   }, [form.compWcaId, form.event, form.round]);
+
+  const groupMatchScramble = getReconScramble(form);
+  useEffect(() => {
+    const { compWcaId, event, round, solveNum, groupId } = form;
+    if (!compWcaId || !event || !round || !solveNum || groupId
+      || !groupMatchScramble.trim() || !groupOptions || groupOptions.length < 2) return;
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void fetchMatchingScrambleGroup(compWcaId, event, round, solveNum, groupMatchScramble).then(group => {
+        if (cancelled || !group || !groupOptions.includes(group)) return;
+        setForm(prev => {
+          // A slow lookup must not overwrite a manual choice or a newer solve.
+          if (prev.groupId || prev.compWcaId !== compWcaId || prev.event !== event
+            || prev.round !== round || prev.solveNum !== solveNum
+            || getReconScramble(prev) !== groupMatchScramble) return prev;
+          return { ...prev, groupId: group };
+        });
+      });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [form.compWcaId, form.event, form.round, form.solveNum, form.groupId, groupMatchScramble, groupOptions]);
 
   const eventRoundFormats = useMemo<RoundFormat[] | null>(() => {
     if (!compRounds || !form.event) return null;
@@ -1088,11 +1109,11 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
     if (scrambleUserTouched) return;
     if (!form.compWcaId || !form.event || !form.round || form.solveNum == null) return;
 
-    // 分组尚未解析 → 等加载;多分组且未选 → 留空等用户选(清掉自动/URL 带入的猜测打乱;
-    // 此处已过 scrambleUserTouched 守卫,wcaScramble 必非用户手输,可安全清空)。
+    // Keep loaded / URL-provided scrambles as evidence for group matching.
+    // Only discard a previous automatic fill while the new group is unresolved.
     if (groupOptions === null) return;
     if (groupOptions.length > 1 && !form.groupId) {
-      setForm(prev => prev.wcaScramble ? { ...prev, wcaScramble: '' } : prev);
+      if (scrambleAutoFilledRef.current) setForm(prev => prev.wcaScramble ? { ...prev, wcaScramble: '' } : prev);
       setScrambleAutoSource(null);
       scrambleAutoFilledRef.current = false;
       loadedScrambleKeySnapshot.current = null;
