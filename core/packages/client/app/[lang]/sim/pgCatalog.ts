@@ -30,6 +30,26 @@ export interface PgPuzzleDef {
 // (see EventIcon/svg-map.ts), else a shape-appropriate fallback so the picker
 // never renders a blank slot (icosa has no dedicated icon → reuse minx).
 // Def strings ⟵ cubing.js pgPuzzles.ts, verbatim.
+// Chinese name review (2026-10-08): use wiki/glossary.json for the minx family,
+// Pentultimate and Starminx. Keep IDs/geometry untouched when localizing labels.
+// Tetraminx = 截顶金字塔: https://lib.xmu.edu.cn/puzzles/puzzles_list/6
+// Higher Tetraminx labels describe the corresponding Pyraminx order without tips;
+// compare the paired cut definitions below (not a new claimed commercial name).
+// Jing = 晶氏金字塔: https://www.bilibili.com/video/BV1yJ411X7tA/
+// Diamond: https://www.bilibili.com/video/BV1kt411c7BD/
+// Master FTO has four layers: https://cubingcontests.com/rankings/mfto/single
+// Crystal = 菊花五魔: https://bkso.baidu.com/item/菊花五魔方/4607481
+// IMPORTANT: PG's two morphix entries have different cuts and differ from the
+// ordinary shape-changing retail Mastermorphix. Do not translate both as 魔粽
+// merely because retail sources call Master Pyramorphix a synonym:
+// https://github.com/cs0x7f/cstimer/wiki/Number-of-states-for-twisty-puzzles
+// Unverified rare proper names remain in English instead of fabricated Chinese.
+// Pending Chinese-name evidence: Compy, Master Pyramorphix, Christopher's Jewel,
+// Octastar, Trajber, Master/Elite Pentultimate, Chopasaurus, Radio Chop,
+// Icosamate, Redicosahedron, Icosaminx and Eitan's Star.
+// Astrominx: glossary's generic 正二十面体 cannot distinguish the variants;
+// this exact cut is Regular Astrominx, not every retail puzzle called Astrominx.
+// https://twisty-puzzles.weebly.com/single-cut.html
 export const PG_PUZZLES = [
   // cube (c)
   { id: 'littlechop',       def: 'c e 0',                  zh: '小切',       en: 'Little Chop',       icon: 'event-333' },
@@ -41,37 +61,37 @@ export const PG_PUZZLES = [
   { id: 'pyramorphix',      def: 't e 0',                  zh: '魔金',       en: 'Pyramorphix',       icon: 'unofficial-pyramorphix' },
   { id: 'mastermorphix',    def: 't e 0.346184634065199',  zh: '大魔金',     en: 'Mastermorphix',     icon: 'event-pyram' },
   { id: 'masterpyramorphix', def: 't e 0.866025403784437', zh: 'Master Pyramorphix', en: 'Master Pyramorphix', icon: 'unofficial-pyramorphix' },
-  { id: 'tetraminx',        def: 't v 0.333333333333333',  zh: 'Tetraminx',  en: 'Tetraminx',         icon: 'unofficial-mtetram' },
-  { id: 'masterpyraminx',   def: 't v 0 v 1 v 2',          zh: '大金字塔',   en: 'Master Pyraminx',   icon: 'unofficial-mpyram' },
-  { id: 'mastertetraminx',  def: 't v 0 v 1',              zh: 'Master Tetraminx', en: 'Master Tetraminx', icon: 'unofficial-mtetram' },
-  { id: 'professorpyraminx', def: 't v -0.2 v 0.6 v 1.4 v 2.2', zh: '教授金字塔', en: 'Professor Pyraminx', icon: 'unofficial-mpyram' },
-  { id: 'professortetraminx', def: 't v -0.2 v 0.6 v 1.4', zh: 'Professor Tetraminx', en: 'Professor Tetraminx', icon: 'unofficial-mtetram' },
-  { id: 'royalpyraminx',    def: 't v -0.333333333333333 v 0.333333333333333 v 1 v 1.66666666666667 v 2.33333333333333', zh: '皇家金字塔', en: 'Royal Pyraminx', icon: 'unofficial-mpyram' },
-  { id: 'royaltetraminx',   def: 't v -0.333333333333333 v 0.333333333333333 v 1 v 1.66666666666667', zh: 'Royal Tetraminx', en: 'Royal Tetraminx', icon: 'unofficial-mtetram' },
-  { id: 'emperorpyraminx',  def: 't v -0.428571428571429 v 0.142857142857143 v 0.714285714285714 v 1.28571428571429 v 1.85714285714286 v 2.42857142857143', zh: '帝王金字塔', en: 'Emperor Pyraminx', icon: 'unofficial-mpyram' },
-  { id: 'emperortetraminx', def: 't v -0.428571428571429 v 0.142857142857143 v 0.714285714285714 v 1.28571428571429 v 1.85714285714286', zh: 'Emperor Tetraminx', en: 'Emperor Tetraminx', icon: 'unofficial-mtetram' },
-  { id: 'jingpyraminx',     def: 't f 0',                  zh: 'Jing Pyraminx', en: 'Jing Pyraminx',  icon: 'event-pyram' },
+  { id: 'tetraminx',        def: 't v 0.333333333333333',  zh: '截顶金字塔',  en: 'Tetraminx',         icon: 'unofficial-mtetram' },
+  { id: 'masterpyraminx',   def: 't v 0 v 1 v 2',          zh: '四阶金字塔',   en: 'Master Pyraminx',   icon: 'unofficial-mpyram' },
+  { id: 'mastertetraminx',  def: 't v 0 v 1',              zh: '四阶截顶金字塔', en: 'Master Tetraminx', icon: 'unofficial-mtetram' },
+  { id: 'professorpyraminx', def: 't v -0.2 v 0.6 v 1.4 v 2.2', zh: '五阶金字塔', en: 'Professor Pyraminx', icon: 'unofficial-mpyram' },
+  { id: 'professortetraminx', def: 't v -0.2 v 0.6 v 1.4', zh: '五阶截顶金字塔', en: 'Professor Tetraminx', icon: 'unofficial-mtetram' },
+  { id: 'royalpyraminx',    def: 't v -0.333333333333333 v 0.333333333333333 v 1 v 1.66666666666667 v 2.33333333333333', zh: '六阶金字塔', en: 'Royal Pyraminx', icon: 'unofficial-mpyram' },
+  { id: 'royaltetraminx',   def: 't v -0.333333333333333 v 0.333333333333333 v 1 v 1.66666666666667', zh: '六阶截顶金字塔', en: 'Royal Tetraminx', icon: 'unofficial-mtetram' },
+  { id: 'emperorpyraminx',  def: 't v -0.428571428571429 v 0.142857142857143 v 0.714285714285714 v 1.28571428571429 v 1.85714285714286 v 2.42857142857143', zh: '七阶金字塔', en: 'Emperor Pyraminx', icon: 'unofficial-mpyram' },
+  { id: 'emperortetraminx', def: 't v -0.428571428571429 v 0.142857142857143 v 0.714285714285714 v 1.28571428571429 v 1.85714285714286', zh: '七阶截顶金字塔', en: 'Emperor Tetraminx', icon: 'unofficial-mtetram' },
+  { id: 'jingpyraminx',     def: 't f 0',                  zh: '晶氏金字塔', en: 'Jing Pyraminx',  icon: 'event-pyram' },
   // octa (o) — FTO is promoted to a first-class /sim engine kind (dual renderer); see
   // PlayerControls SimPuzzle + ENGINE_TWISTY. Its cubing.js `def` lives in SimPage's
   // ENGINE_TWISTY_DEF, fed to TwistyPlayer.experimentalPuzzleDescription as before.
-  { id: 'masterfto',        def: 'o f 0.5 f 0',            zh: 'Master FTO', en: 'Master FTO',        icon: 'unofficial-fto' },
-  { id: 'skewbdiamond',     def: 'o f 0',                  zh: 'Skewb Diamond', en: 'Skewb Diamond',  icon: 'unofficial-fto' },
+  { id: 'masterfto',        def: 'o f 0.5 f 0',            zh: '四阶 FTO', en: 'Master FTO',        icon: 'unofficial-fto' },
+  { id: 'skewbdiamond',     def: 'o f 0',                  zh: '钻石', en: 'Skewb Diamond',  icon: 'unofficial-fto' },
   { id: 'christophersjewel', def: 'o v 0.577350269189626', zh: "Christopher's Jewel", en: "Christopher's Jewel", icon: 'unofficial-fto' },
   { id: 'octastar',         def: 'o e 0',                  zh: 'Octastar',   en: 'Octastar',          icon: 'unofficial-fto' },
   { id: 'trajbersoctahedron', def: 'o v 0.433012701892219', zh: "Trajber 八面体", en: "Trajber's Octahedron", icon: 'unofficial-fto' },
   // dodeca (d) — megaminx itself is in /sim via its own loader
-  { id: 'gigaminx',         def: 'd f 0.64 f 0.82',        zh: 'Gigaminx',   en: 'Gigaminx',          icon: 'unofficial-gigaminx' },
-  { id: 'teraminx',         def: 'd f 0.64 f 0.76 f 0.88', zh: 'Teraminx',   en: 'Teraminx',          icon: 'unofficial-gigaminx' },
-  { id: 'petaminx',         def: 'd f 0.64 f 0.73 f 0.82 f 0.91', zh: 'Petaminx', en: 'Petaminx',     icon: 'unofficial-gigaminx' },
-  { id: 'examinx',          def: 'd f 0.64 f 0.712 f 0.784 f 0.856 f 0.928', zh: 'Examinx', en: 'Examinx', icon: 'unofficial-gigaminx' },
-  { id: 'zetaminx',         def: 'd f 0.64 f 0.7 f 0.76 f 0.82 f 0.88 f 0.94', zh: 'Zetaminx', en: 'Zetaminx', icon: 'unofficial-gigaminx' },
-  { id: 'yottaminx',        def: 'd f 0.64 f 0.6914 f 0.7429 f 0.7943 f 0.8457 f 0.8971 f 0.9486', zh: 'Yottaminx', en: 'Yottaminx', icon: 'unofficial-gigaminx' },
-  { id: 'pentultimate',     def: 'd f 0',                  zh: 'Pentultimate', en: 'Pentultimate',    icon: 'event-minx' },
+  { id: 'gigaminx',         def: 'd f 0.64 f 0.82',        zh: '五阶五魔',   en: 'Gigaminx',          icon: 'unofficial-gigaminx' },
+  { id: 'teraminx',         def: 'd f 0.64 f 0.76 f 0.88', zh: '七阶五魔',   en: 'Teraminx',          icon: 'unofficial-gigaminx' },
+  { id: 'petaminx',         def: 'd f 0.64 f 0.73 f 0.82 f 0.91', zh: '九阶五魔', en: 'Petaminx',     icon: 'unofficial-gigaminx' },
+  { id: 'examinx',          def: 'd f 0.64 f 0.712 f 0.784 f 0.856 f 0.928', zh: '十一阶五魔', en: 'Examinx', icon: 'unofficial-gigaminx' },
+  { id: 'zetaminx',         def: 'd f 0.64 f 0.7 f 0.76 f 0.82 f 0.88 f 0.94', zh: '十三阶五魔', en: 'Zetaminx', icon: 'unofficial-gigaminx' },
+  { id: 'yottaminx',        def: 'd f 0.64 f 0.6914 f 0.7429 f 0.7943 f 0.8457 f 0.8971 f 0.9486', zh: '十五阶五魔', en: 'Yottaminx', icon: 'unofficial-gigaminx' },
+  { id: 'pentultimate',     def: 'd f 0',                  zh: '斜转五魔', en: 'Pentultimate',    icon: 'event-minx' },
   { id: 'masterpentultimate', def: 'd f 0.1',              zh: 'Master Pentultimate', en: 'Master Pentultimate', icon: 'event-minx' },
   { id: 'elitepentultimate', def: 'd f 0 f 0.145905',      zh: 'Elite Pentultimate', en: 'Elite Pentultimate', icon: 'event-minx' },
-  { id: 'starminx',         def: 'd v 0.937962370425399',  zh: 'Starminx',   en: 'Starminx',          icon: 'event-minx' },
-  { id: 'starminx2',        def: 'd f 0.23606797749979',   zh: 'Starminx 2', en: 'Starminx 2',        icon: 'event-minx' },
-  { id: 'pyraminxcrystal',  def: 'd f 0.447213595499989',  zh: 'Pyraminx Crystal', en: 'Pyraminx Crystal', icon: 'event-minx' },
+  { id: 'starminx',         def: 'd v 0.937962370425399',  zh: '五星五魔',   en: 'Starminx',          icon: 'event-minx' },
+  { id: 'starminx2',        def: 'd f 0.23606797749979',   zh: '五星五魔二代', en: 'Starminx 2',        icon: 'event-minx' },
+  { id: 'pyraminxcrystal',  def: 'd f 0.447213595499989',  zh: '菊花五魔', en: 'Pyraminx Crystal', icon: 'event-minx' },
   { id: 'chopasaurus',      def: 'd v 0',                  zh: 'Chopasaurus', en: 'Chopasaurus',      icon: 'event-minx' },
   { id: 'bigchop',          def: 'd e 0',                  zh: '大切',       en: 'Big Chop',          icon: 'event-minx' },
   // icosa (i) — no dedicated icon, fall back to the round minx glyph
@@ -84,12 +104,12 @@ export const PG_PUZZLES = [
   { id: 'icosaminx',        def: 'i v 0.73',               zh: 'Icosaminx',  en: 'Icosaminx',         icon: 'event-minx' },
   { id: 'eitansstar',       def: 'i f 0.61803398874989',   zh: "Eitan's Star", en: "Eitan's Star",    icon: 'event-minx' },
   // multi-cut combos
-  { id: 'cube2dino',        def: 'c f 0 v 0.577350269189626', zh: '2x2 + Dino', en: '2x2 + Dino',     icon: 'event-333' },
-  { id: 'cube2littlechop',  def: 'c f 0 e 0',              zh: '2x2 + 小切', en: '2x2 + Little Chop', icon: 'event-333' },
-  { id: 'dinolittlechop',   def: 'c v 0.577350269189626 e 0', zh: 'Dino + 小切', en: 'Dino + Little Chop', icon: 'event-333' },
-  { id: 'cube2dinolittlechop', def: 'c f 0 v 0.577350269189626 e 0', zh: '2x2 + Dino + 小切', en: '2x2 + Dino + Little Chop', icon: 'event-333' },
-  { id: 'megaminxchopasaurus', def: 'd f 0.61803398875 v 0', zh: 'Megaminx + Chopasaurus', en: 'Megaminx + Chopasaurus', icon: 'event-minx' },
-  { id: 'starminxcombo',    def: 'd f 0.23606797749979 v 0.937962370425399', zh: 'Starminx Combo', en: 'Starminx Combo', icon: 'event-minx' },
+  { id: 'cube2dino',        def: 'c f 0 v 0.577350269189626', zh: '二阶 + 恐龙', en: '2x2 + Dino',     icon: 'event-333' },
+  { id: 'cube2littlechop',  def: 'c f 0 e 0',              zh: '二阶 + 小切', en: '2x2 + Little Chop', icon: 'event-333' },
+  { id: 'dinolittlechop',   def: 'c v 0.577350269189626 e 0', zh: '恐龙 + 小切', en: 'Dino + Little Chop', icon: 'event-333' },
+  { id: 'cube2dinolittlechop', def: 'c f 0 v 0.577350269189626 e 0', zh: '二阶 + 恐龙 + 小切', en: '2x2 + Dino + Little Chop', icon: 'event-333' },
+  { id: 'megaminxchopasaurus', def: 'd f 0.61803398875 v 0', zh: '五魔 + Chopasaurus', en: 'Megaminx + Chopasaurus', icon: 'event-minx' },
+  { id: 'starminxcombo',    def: 'd f 0.23606797749979 v 0.937962370425399', zh: '五星五魔组合', en: 'Starminx Combo', icon: 'event-minx' },
 ] as const satisfies readonly PgPuzzleDef[];
 
 export type PgPuzzleId = typeof PG_PUZZLES[number]['id'];

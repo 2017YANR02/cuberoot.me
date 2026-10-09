@@ -113,9 +113,9 @@ export const CSTIMER_EVENTS: ReadonlyArray<CstimerEvent> = [
 },
   { id: 'ssq1',    key: 'ssq1t',   length: 10, zh: '超 Sq-1',          en: 'Super Sq-1',        textLabel: 'SSq1', family: 'sq', solvable: true },
   { id: 'bsq',     key: 'bsq',     length: 10, zh: '受限 Sq-1',        en: 'Bandaged Sq-1',     textLabel: 'BSq1', family: 'sq', solvable: true },
-  { id: 'giga',    key: 'giga',    length: 30, zh: '六阶五魔',         en: 'Gigaminx',          textLabel: 'Giga', family: 'twist'
+  { id: 'giga',    key: 'giga',    length: 30, zh: '五阶五魔',         en: 'Gigaminx',          textLabel: 'Giga', family: 'twist'
 },
-  { id: 'prcp',    key: 'prcp',    length: 70, zh: '五魔金字塔',       en: 'Pyra Crystal',      textLabel: 'PrC',  family: 'twist' },
+  { id: 'prcp',    key: 'prcp',    length: 70, zh: '菊花五魔',       en: 'Pyra Crystal',      textLabel: 'PrC',  family: 'twist' },
   { id: '233',     key: '233',     length: 25, zh: '多米诺 233',     en: '233 Domino',      textLabel: '233', family: 'cuboid', solvable: true
 },
   { id: '334',     key: '334',     length: 40, zh: '334',            en: '334',             textLabel: '334', family: 'cuboid', solvable: true },
