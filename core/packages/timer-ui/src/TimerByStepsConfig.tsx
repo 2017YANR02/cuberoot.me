@@ -1,3 +1,4 @@
+import './compact-select.css';
 import {
   stepMetricsFor,
   timerByStepsNormalizationPatch,
@@ -6,10 +7,11 @@ import {
   type TimerByStepsSource,
 } from '@cuberoot/shared/timer';
 import { useEffect, type ReactNode } from 'react';
-import { TimerPillToggle } from './TimerPillToggle';
 import { TimerRangeSlider } from './TimerRangeSlider';
 
 export interface TimerByStepsLabels {
+  on: string;
+  off: string;
   bySteps: string;
   byStepsAriaLabel: string;
   metricAriaLabel: string;
@@ -58,12 +60,10 @@ export function TimerByStepsConfig({
         {extraTopRow}
         <span className="timer-by-steps-toggle-group settings-row-tight-group">
           <span className="timer-by-steps-label settings-row-label">{labels.bySteps}</span>
-          <TimerPillToggle
-            ariaLabel={labels.byStepsAriaLabel}
-            disabled={disabled}
-            onChange={(genByStepsOn) => onChange({ genByStepsOn })}
-            value={settings.genByStepsOn}
-          />
+          <select className="native-select" value={String(settings.genByStepsOn)} onChange={event => { const genByStepsOn = event.currentTarget.value === 'true'; onChange({ genByStepsOn }); }} aria-label={labels.byStepsAriaLabel} disabled={disabled}>
+            <option value="true">{labels.on}</option>
+            <option value="false">{labels.off}</option>
+          </select>
         </span>
         {settings.genByStepsOn && (
           <select

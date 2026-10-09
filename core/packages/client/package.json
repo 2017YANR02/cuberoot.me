@@ -32,7 +32,8 @@
     "verify:clock-distribution": "pnpm --filter @cuberoot/puzzle-solvers build && tsx scripts/clock/verify_distribution.mts",
     "audit:overflow": "node scripts/mobile-overflow-audit.cjs",
     "audit:svg": "node scripts/audit-sim-svg.mjs",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:account-avatars": "node --import tsx scripts/build-account-avatars.ts"
   },
   "dependencies": {
     "@airwallex/components-sdk": "^1.35.1",
@@ -156,6 +157,8 @@
     "globals": "^17.7.0",
     "jsdom": "^30.0.1",
     "linkedom": "0.18.12",
+    "svg-path-properties": "^2.1.0",
+    "svgpath": "^2.6.0",
     "tailwindcss": "^4.2.2",
     "typescript": "^5",
     "vitest": "^4.1.11"

@@ -155,7 +155,8 @@ import { formatScrambleForEvent } from '@cuberoot/shared/sq1-notation';
 import { compFlagIso2, loadFlagData, flagDataVersion } from '@/lib/country-flags';
 import { localizeCompName } from '@/lib/comp-localize';
 import { compSourceLine } from '@/lib/comp-schedule';
-import { useAuthStore } from '@/lib/auth-store';
+import { useAuthStore, useIsAdmin } from '@/lib/auth-store';
+import { InspectionRotationDebug } from '../_components/InspectionRotationDebug';
 import AppLink from '@/components/AppLink';
 import { CompetitionVideoRoom } from '@/components/platform/CompetitionVideoRoom';
 import { useCompetitionAttempt } from './competition-attempt';
@@ -406,6 +407,9 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const printControllerRef = useRef<TimerPrintControllerHandle>(null);
   const settings = useSettings();
   const authUser = useAuthStore((st) => st.user);
+  const isAdmin = useIsAdmin();
+  const [inspectionDebugOn, setInspectionDebugOn] = useState(false);
+  const inspectionDebugEnabled = isAdmin && inspectionDebugOn;
   const competition = useCompetitionAttempt();
   const competitionRef = useRef(competition);
   competitionRef.current = competition;
@@ -1354,6 +1358,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const caseIdAtStartRef = useRef<string | null>(null);
   const smartCubeAttemptProducerRef = useRef(new SmartCubeAttemptProducer());
   const [liveSolve, setLiveSolve] = useState<Solve | null>(null);
+  const [liveStageTarget, setLiveStageTarget] = useState<HTMLDivElement | null>(null);
   const autoRecapDismissGestureRef = useRef(new AutoRecapDismissGesture());
   const autoRecapInputBlockedRef = useRef(false);
   /** The smart cube connected when the attempt STARTED. Snapshotted with the
@@ -1648,8 +1653,8 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   const bluetoothCube = useBluetoothCube({
     allowSimulated: !competition.enabled,
     // Passing onGyro is what turns the stream on at all (MoYu32 has an explicit
-    // enable opcode), so only ask for it when the live view or replay recording uses it.
-    onGyro: (settings.gyroEnabled || settings.recordGyro)
+    // enable opcode), so ask for it when the live view, replay, or admin debug uses it.
+    onGyro: (settings.gyroEnabled || settings.recordGyro || inspectionDebugEnabled)
       ? (q) => {
         gyroQuatRef.current = q;
         // 只在真的在计时的时候录:观察阶段和拧完之后的姿态不属于这一把。
@@ -2715,6 +2720,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
   // 比赛能不能按难度筛),但它属于顶栏这排常驻控件 —— 所以状态留在原处,DOM 用 portal 送上来。
   // 用 state 而非 ref:portal 的目标必须在子组件渲染时已存在,ref.current 那一帧还是 null。
   const [diffSlot, setDiffSlot] = useState<HTMLSpanElement | null>(null);
+  const [wcaSourceSlot, setWcaSourceSlot] = useState<HTMLDivElement | null>(null);
   const [mergeSlot, setMergeSlot] = useState<HTMLDivElement | null>(null);
 
   const distractionFree = timer.phase === 'running' && !prefersReducedMotion;
@@ -2789,7 +2795,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         {tr({ zh: '实时解法', en: 'Live solution' })}
       </div>
       <div className="shell-recap-body">
-        <LiveReconstructReport key={liveSolve.id} solve={liveSolve} isZh={isZh} live />
+        <LiveReconstructReport key={liveSolve.id} solve={liveSolve} isZh={isZh} live liveStageTarget={liveStageTarget} />
       </div>
     </section>
   ) : null;
@@ -3027,6 +3033,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
               updateSettings({ scrambleSource });
             }}
             realValue="wca"
+            realMenuContent={<div ref={setWcaSourceSlot} />}
           />
           {/* 「难度」开关的落点(内容由 ScrambleSourceBar 里的两个配置组件 portal 过来)。
               摆在「解法」左边,和来源下拉同一组:难度讲的就是这条打乱怎么来的。
@@ -3050,7 +3057,7 @@ export default function SoloView({ playersControl, presenceControl, onPresenceCh
         stage={{
           className: "shell-main",
           fullscreen: fullscreen,
-          source: <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} />,
+          source: <ScrambleSourceBar disabled={!sourceControlsEnabled} event={event} isZh={isZh} diffSlot={diffSlot} mergeSlot={mergeSlot} wcaSourceSlot={wcaSourceSlot} />,
           statistics: <TimerStatRail
             ariaExpanded={panelTab != null}
             language={timerLanguage}
@@ -3219,6 +3226,17 @@ scrambleSlot: <TimerScrambleStrip
               )}
             </TimerScrambleStrip>,
 cornerSlot: centerCubeSlot,
+cubeFooter: <>
+  {isAdmin && cubeConnected && <InspectionRotationDebug
+    enabled={inspectionDebugEnabled}
+    onToggle={() => setInspectionDebugOn(value => !value)}
+    quatRef={gyroQuatRef}
+    brand={bluetoothCube.status.brand}
+    phase={timer.phase}
+    resetKey={`${bluetoothCube.status.deviceId}:${currentScrambleEntry.id}`}
+  />}
+  {timer.phase === 'running' && liveSolve && <div ref={setLiveStageTarget} className="timer-live-stage" data-no-timer />}
+</>,
 digitsCorner: settings.rankScopes.length > 0 && rankBadgePhase && solves.length > 0 ? (
             <RankBadge eventId={event} centis={rankCentis} type="single" country={rankCountry} isZh={isZh} scopes={settings.rankScopes} wcaId={authUser?.wcaId} />
           ) : undefined,

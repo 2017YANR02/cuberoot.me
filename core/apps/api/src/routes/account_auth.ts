@@ -1,3 +1,4 @@
+import { DEFAULT_OPEN_PETS, type DeskPetEntry } from '@cuberoot/shared/deskpet';
 import { registrationReport, membershipSummaryReport } from '../utils/admin_reports.js';
 /**
  * 内部账号认证路由 —— 邮箱/手机验证码登录 + 多身份绑定(WCA / email / phone),挂在 /v1 下。
@@ -11,7 +12,7 @@ import { registrationReport, membershipSummaryReport } from '../utils/admin_repo
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
 import type { Context } from 'hono';
-import { isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
+import { getAccountAvatarPreset, isClawdAvatarPreset } from '@cuberoot/shared/account-avatar';
 import { isAdminWcaId } from '@cuberoot/shared/admin';
 import {
   isMobileAuthCodeChallenge,
@@ -31,7 +32,7 @@ import {
   migrateIdentityProviderUid,
   normalizeEmail, isValidEmail, normalizePhone, isValidPhone, isValidPassword,
   normalizeDisplayName, isValidDisplayName, updateDisplayName,
-  getAccountBasicProfile, updateAccountBasicProfile,
+  getAccountBasicProfile, updateAccountBasicProfile, normalizeWcaBasicProfile,
   isAccountGender, isValidBirthDate, normalizeCountryIso2, isValidCountryIso2,
   normalizeAccountRegionCode, isValidAccountRegionCode,
   normalizeAccountCityName, isValidAccountCityName, isValidAccountLocation,
@@ -945,7 +946,7 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
   const uid = await requireAppUserId(c);
   const { accessToken } = await c.req.json<{ accessToken?: string }>().catch(() => ({ accessToken: undefined }));
   if (!accessToken) return c.json({ error: 'accessToken required' }, 400);
-  let me: { wca_id?: string; name?: string; country_iso2?: string; avatar?: { url?: string } };
+  let me: { wca_id?: string; name?: string; country_iso2?: string; gender?: unknown; avatar?: { url?: string } };
   try {
     const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -972,6 +973,7 @@ accountAuthRoutes.post('/auth/link/wca', async (c) => {
     verifiedName,
     me.avatar?.url ?? null,
     verifiedCountryIso2,
+    undefined, undefined, normalizeWcaBasicProfile(me),
   );
   if (r === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
   // 同步 wca_users 缓存(供其它路径复用),与 /auth/exchange 一致。
@@ -1009,7 +1011,7 @@ accountAuthRoutes.post('/auth/wechat/wca-link/complete', async (c) => {
   const accessToken = typeof body.accessToken === 'string' ? body.accessToken.trim() : '';
   if (!ticket || !accessToken) return c.json({ error: 'ticket and accessToken are required' }, 400);
 
-  let me: { wca_id?: string; name?: string; country_iso2?: string; avatar?: { url?: string } };
+  let me: { wca_id?: string; name?: string; country_iso2?: string; gender?: unknown; avatar?: { url?: string } };
   try {
     const res = await fetch('https://www.worldcubeassociation.org/api/v0/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -1030,7 +1032,7 @@ accountAuthRoutes.post('/auth/wechat/wca-link/complete', async (c) => {
     ? normalizeCountryIso2(me.country_iso2)
     : null;
   const verifiedCountryIso2 = countryIso2 && isValidCountryIso2(countryIso2) ? countryIso2 : null;
-  const result = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null, verifiedCountryIso2);
+  const result = await addIdentity(uid, 'wca', me.wca_id, me.wca_id, verifiedName, me.avatar?.url ?? null, verifiedCountryIso2, undefined, undefined, normalizeWcaBasicProfile(me));
   if (result === 'conflict') return c.json({ error: 'WCA account already linked elsewhere' }, 409);
   await query(
     `INSERT INTO wca_users (wca_id, name, avatar_url, access_token, token_expires_at)
@@ -1225,6 +1227,12 @@ accountAuthRoutes.post('/auth/profile', async (c) => {
 
     if (avatar.kind === 'clawd') {
       if (!isClawdAvatarPreset(avatar.preset)) return c.json({ error: 'invalid Clawd avatar preset' }, 400);
+      const petId = getAccountAvatarPreset(avatar.preset)!.petId;
+      const [catalog] = await query<{ entries: DeskPetEntry[] }>('SELECT entries FROM deskpet_catalog WHERE id = 1');
+      const pet = catalog?.entries.find(entry => entry.id === petId);
+      if (!catalog || (pet ? pet.locked || pet.removed : !DEFAULT_OPEN_PETS.includes(petId))) {
+        return c.json({ error: 'avatar character is not public' }, 403);
+      }
       user = await updateClawdAvatar(uid, avatar.preset);
     } else if (avatar.kind === 'upload') {
       if (typeof avatar.imageId !== 'number'

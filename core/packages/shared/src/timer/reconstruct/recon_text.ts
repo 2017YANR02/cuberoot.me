@@ -58,7 +58,7 @@ import { buildCommentSuggestions, crossFamilyCancelInto } from '../../recon/popu
 import { sliceSplitTable } from '../../recon_slice';
 import { detectStage } from '../../recon/stage_detect';
 
-import { conjugateCoreTrack, CORE_EVENT_SLACK_MS } from './core_track';
+import { conjugateCoreTrack, coreTurnsIn } from './core_track';
 import type { CoreTrack } from './core_track';
 import { htmMoves, quarterMoves } from './htm';
 import { humanizeStream } from './humanize';
@@ -80,6 +80,8 @@ export interface ReconTextLine {
   key: string;
   /** 这一行的动作,已按 HTM 合并(和表里的步数格同一口径)。 */
   moves: string[];
+  /** Display gestures mapped to lossless encoder ranges/timestamps for playback. */
+  moveRanges?: RangeMoveItem[];
   /** 在原始动作流里的闭区间。 */
   fromIdx: number;
   toIdx: number;
@@ -375,19 +377,20 @@ function markWideCoreEvents(
   const slicePairs = sliceSplitTable();
   const candidates: number[] = [];
   const wideTokens = new Map<number, string>();
+  const wideMoveTimes = new Map<number, number>();
+  const belongsToSlice = (idx: number): boolean => counted.some((move, moveIdx) => {
+    const next = counted[moveIdx + 1];
+    const split = next ? slicePairs.get(`${move.m} ${next.m}`) : undefined;
+    return !!next && !!split
+      && coreTurnsIn(core, move.ts, next.endTs, split.rotation).includes(idx);
+  });
   core.events.forEach((event, idx) => {
     const inverse = inverseRotationToken(event.token);
     if (!inverse) return;
     const eventMs = event.startMs !== undefined && event.tMs - event.startMs <= 1200
       ? event.startMs
       : event.tMs;
-    const belongsToSlice = counted.some((move, moveIdx) => {
-      const next = counted[moveIdx + 1];
-      return !!next && slicePairs.has(`${move.m} ${next.m}`)
-        && event.tMs >= move.ts - CORE_EVENT_SLACK_MS
-        && event.tMs <= next.endTs + CORE_EVENT_SLACK_MS;
-    });
-    if (belongsToSlice) return;
+    if (belongsToSlice(idx)) return;
 
     // A lone wide turn has no later inverse event to close the frame. In that
     // case require much stronger evidence: the core must settle at virtually
@@ -408,6 +411,14 @@ function markWideCoreEvents(
       return close && (WIDE_PAIRS.has(`${move.m} ${inverse}`) || WIDE_PAIRS.has(`${inverse} ${move.m}`));
     });
     if (!outer) return;
+    // A slice can be closed by a wide move rather than another adjacent pair.
+    // Use the encoder time so a delayed gyro sample cannot move that closing
+    // gesture into the next stage and rename the entire following algorithm.
+    if (idx > 0 && core.events[idx - 1].token === inverse && belongsToSlice(idx - 1)) {
+      wideTokens.set(idx, inverse);
+      wideMoveTimes.set(idx, outer.ts);
+      return;
+    }
     candidates.push(idx);
   });
   for (let i = 0; i + 1 < candidates.length; i += 1) {
@@ -423,7 +434,7 @@ function markWideCoreEvents(
   return {
     events: core.events.map((event, idx) => {
       const wideToken = wideTokens.get(idx);
-      return wideToken ? { ...event, wide: true, wideToken } : event;
+      return wideToken ? { ...event, startMs: wideMoveTimes.get(idx) ?? event.startMs, wide: true, wideToken } : event;
     }),
   };
 }
@@ -463,7 +474,8 @@ function compactNotation(items: WovenItem[], absorbedRotations: Set<number>): Wo
         out.push({
           token: wide,
           ts: Math.min(a.ts, b.ts), endTs: Math.max(a.endTs, b.endTs),
-          startIdx: Math.min(a.startIdx, b.startIdx), endIdx: Math.max(a.endIdx, b.endIdx),
+          startIdx: Math.min(...[a.startIdx, b.startIdx].filter(idx => idx >= 0)),
+          endIdx: Math.max(a.endIdx, b.endIdx),
         });
         i += 1;
         continue;
@@ -496,7 +508,7 @@ function weaveRotations(
   lineMoves: RangeMoveItem[],
   rots: readonly HumanRotation[],
   absorbedRotations: Set<number>,
-): string[] {
+): WovenItem[] {
   const out: WovenItem[] = [];
   let cursor = 0;
   const placed = rots.map((r) => {
@@ -517,7 +529,7 @@ function weaveRotations(
     });
   }
   while (cursor < lineMoves.length) out.push(lineMoves[cursor++]);
-  return compactNotation(out, absorbedRotations).map(item => item.token);
+  return compactNotation(out, absorbedRotations);
 }
 
 /**
@@ -545,7 +557,10 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   // First pass discovers the physical gesture spans without stage cuts. The
   // second pass below restores the stage-level centre invariant after those
   // cuts have been moved out of the middle of any discovered gesture.
-  const roughHumanized = humanizeStream(quarterMoves(moves), { core });
+  const f2lEndMs = segs.f2lEndIdx == null ? Infinity : (moves[segs.f2lEndIdx]?.ts ?? -Infinity);
+  const roughHumanized = humanizeStream(quarterMoves(moves), {
+    core, suppressZRotationsThroughMs: f2lEndMs,
+  });
   // A slice/wide gesture reaches the protocol as multiple outer-face events.
   // Stage detection can therefore fire after the first event, in the middle of
   // one physical gesture. Keep that gesture on one line and evaluate the stage
@@ -572,12 +587,22 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
   const humanized = humanizeStream(quarterMoves(moves), {
     core,
     boundaries: new Set(spans.map(span => span.endIdx)),
+    suppressZRotationsThroughMs: segs.f2lEndIdx == null ? Infinity
+      : (moves[spans.filter(span => span.kind === 'cross' || span.kind === 'f2l').at(-1)?.endIdx ?? -1]?.ts ?? f2lEndMs),
   });
   const rotations = humanized.rotations;
   const absorbedRotations = new Set<number>();
   const shownFor = (from: number, to: number): RangeMoveItem[] => (
     moveItemsForRange(moves, humanized.moves, from, to)
   );
+  const playbackRanges = (items: WovenItem[]): RangeMoveItem[] => items.map(item => {
+    if (item.startIdx >= 0) return item;
+    // Rotations do not consume encoder moves. Preserve their own time while
+    // locating the raw cube state at that instant.
+    const next = moves.findIndex(move => move.ts > item.ts);
+    const count = next < 0 ? moves.length : next;
+    return { ...item, startIdx: count, endIdx: count - 1 };
+  });
 
   // 识别走真颜色那一份(见 `physical`);显示走换过名的 `moves`。两者一一对应,
   // 下标通用 —— 换名不增不减记号。
@@ -659,7 +684,8 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     lines.push({
       kind: span.kind,
       key: span.key,
-      moves: lineMoves,
+      moves: lineMoves.map(item => item.token),
+      moveRanges: playbackRanges(lineMoves),
       fromIdx: from,
       toIdx: span.endIdx,
       label,
@@ -682,7 +708,8 @@ export async function buildReconText(input: ReconTextInput): Promise<ReconTextRe
     );
     if (tail.length > 0) {
       lines.push({
-        kind: 'pll', key: 'tail', moves: tail,
+        kind: 'pll', key: 'tail', moves: tail.map(item => item.token),
+        moveRanges: playbackRanges(tail),
         fromIdx: prevEnd + 1, toIdx: moves.length - 1,
         label: null, recognitionMs: null, executionMs: null, stepMs: null,
       });

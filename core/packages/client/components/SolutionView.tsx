@@ -21,63 +21,9 @@ import CubeColorChip, {
   cubeColorGroups,
   f2lDisplayColors,
 } from '@/components/CubeColorChip/CubeColorChip';
-import { findTokenPositions, extractAlgFromText, syncPlayerToMoveCount, countMovesExpanded, type TokenPosition } from '@/lib/recon-alg-utils';
-import { parseSq1Tokens } from '@cuberoot/shared/sq1-notation';
+import { findTokenPositions, syncReconPlayerCursorFromText } from '@/lib/recon-alg-utils';
+import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';
 import './solution_view.css';
-
-/** 获取点击在 DOM 元素纯文本中的绝对偏移 */
-function sourceTextLength(node: Node): number {
-  if (node instanceof HTMLElement) {
-    const replacedLength = node.dataset.reconTextLength;
-    if (replacedLength != null) return Number(replacedLength);
-  }
-  if (node.nodeType === Node.TEXT_NODE) return (node.textContent || '').length;
-  let length = 0;
-  for (const child of node.childNodes) length += sourceTextLength(child);
-  return length;
-}
-
-function getTextOffsetInElement(el: HTMLElement): number {
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) return -1;
-  const node = sel.anchorNode;
-  let offset = sel.anchorOffset;
-  if (!node || !el.contains(node)) return -1;
-  let current: Node | null = node;
-  while (current && current !== el) {
-    let prev = current.previousSibling;
-    while (prev) {
-      offset += sourceTextLength(prev);
-      prev = prev.previousSibling;
-    }
-    current = current.parentNode;
-  }
-  return offset;
-}
-
-/** 把点击偏移磁吸到「本行」的招式边界——保证光标落在点击那一行(不像旧的
- *  snapToTokenBoundary 会退回上一行末招)。规则:落在本行首招之前 → 行首列 0(此时
- *  textBefore 干净、不含半个 `(` 分组,player 计步不受污染);落在本行末招之后 → 末招
- *  结尾;行内 → 最近的招式边界。无招式的行(纯注释 / 空行)→ 行首列 0。 */
-function snapCaretToLine(raw: number, plainText: string, positions: TokenPosition[]): number {
-  const lineStart = plainText.lastIndexOf('\n', Math.max(0, raw - 1)) + 1;
-  let lineEnd = plainText.indexOf('\n', raw);
-  if (lineEnd === -1) lineEnd = plainText.length;
-  const onLine = positions.filter(t => t.start >= lineStart && t.end <= lineEnd);
-  if (onLine.length === 0) return lineStart;
-  const first = onLine[0];
-  const last = onLine[onLine.length - 1];
-  if (raw <= first.start) return lineStart;
-  if (raw >= last.end) return last.end;
-  let best = first.start, bestD = Math.abs(first.start - raw);
-  for (const t of onLine) {
-    for (const b of [t.start, t.end]) {
-      const d = Math.abs(b - raw);
-      if (d < bestD) { bestD = d; best = b; }
-    }
-  }
-  return best;
-}
 
 /** 光标位置该高亮哪一个招式 token 的字符区间(与 /sim highlightRange 同规则):
  *  优先本行光标前的招式,否则本行第一个招式,否则退回光标前最后一个招式。 */
@@ -161,32 +107,15 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
     setHlRange(null);
   }, [text]);
 
-  // Scrub the player to the caret. SQ1 uses the cuber-engine player
-  // (Sq1ReconPlayer, `__kind: 'sq1'`): count tuple/slice tokens directly —
-  // extractAlgFromText would strip the `(t,b)` parens SQ1 depends on.
-  const syncToOffset = useCallback((text: string, offset: number) => {
-    const player = playerRef.current;
-    if (!player) return;
-    const textBefore = text.substring(0, offset);
-    if (player.__kind === 'sq1') {
-      player.jumpToMoveCount?.(parseSq1Tokens(textBefore).length);
-      return;
-    }
-    // cuber NxN engine (CuberReconPlayer) scrubs by whitespace move count, same
-    // as the submit form's caret handler — it has no cubing.js indexer.
-    if (player.__kind === 'nxn-cuber') {
-      const moves = extractAlgFromText(textBefore).trim().split(/\s+/).filter(Boolean);
-      player.jumpToMoveCount?.(moves.length);
-      return;
-    }
-    syncPlayerToMoveCount(player, countMovesExpanded(extractAlgFromText(textBefore)));
+  const syncToOffset = useCallback((text: string, offset: number, autoplay = false) => {
+    syncReconPlayerCursorFromText(playerRef.current, text.substring(0, offset), autoplay);
   }, [playerRef]);
 
-  const moveCaret = useCallback((plainText: string, offset: number) => {
+  const moveCaret = useCallback((plainText: string, offset: number, autoplay = false) => {
     cursorOffsetRef.current = offset;
     setCursorOffset(offset);
     setHlRange(computeHighlightRange(plainText, offset));
-    syncToOffset(plainText, offset);
+    syncToOffset(plainText, offset, autoplay);
   }, [syncToOffset]);
 
   // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 更新光标 + 高亮 + 同步 player
@@ -194,11 +123,11 @@ export default function SolutionView({ text, event, scramble = '', sourceText = 
     if ((e.target as Element).closest('a, button')) return;
     const el = preRef.current;
     if (!el) return;
-    let offset = getTextOffsetInElement(el);
+    let offset = getTextOffsetInElement(el, { x: e.clientX, y: e.clientY });
     if (offset < 0) return;
     const result = findTokenPositions(plainText);
     offset = snapCaretToLine(offset, plainText, result);
-    moveCaret(plainText, offset);
+    moveCaret(plainText, offset, true);
   }, [moveCaret, plainText]);
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转

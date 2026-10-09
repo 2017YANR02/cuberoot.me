@@ -1,0 +1,59 @@
+@import './timer-room.css';
+
+.timer-difficulty-trigger {
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+.timer-difficulty-trigger[data-active] {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.timer-difficulty-trigger:focus-visible {
+  outline: 2px solid var(--ring, var(--accent));
+  outline-offset: 2px;
+}
+.timer-difficulty-trigger:disabled,
+.timer-difficulty-actions button:disabled { opacity: .5; cursor: default; }
+.timer-room-dialog.timer-difficulty-dialog { width: min(100%, 460px); }
+.timer-difficulty-dialog .timer-random-difficulty-body,
+.timer-difficulty-dialog .timer-wca-difficulty-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  margin: 0;
+}
+.timer-difficulty-dialog .timer-random-difficulty-range,
+.timer-difficulty-dialog .timer-wca-difficulty-range {
+  flex: none;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.timer-difficulty-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+.timer-difficulty-actions button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  cursor: pointer;
+}
+.timer-difficulty-actions button[data-primary] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}

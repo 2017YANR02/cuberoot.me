@@ -830,6 +830,8 @@ export function App({ host }: { host: InstalledAppHost }) {
     wca11Move: SCRAMBLE_222_UI_LABELS.wca11Move[language],
   }), [language]);
   const byStepsLabels = useMemo<TimerByStepsLabels>(() => ({
+    on: { zh: '开启', en: 'On' }[language],
+    off: { zh: '关闭', en: 'Off' }[language],
     bySteps: TIMER_BY_STEPS_UI_LABELS.bySteps[language],
     byStepsAriaLabel: TIMER_BY_STEPS_UI_LABELS.byStepsAriaLabel[language],
     metricAriaLabel: TIMER_BY_STEPS_UI_LABELS.metricAriaLabel[language],

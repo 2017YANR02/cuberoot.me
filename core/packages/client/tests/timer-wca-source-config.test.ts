@@ -38,17 +38,21 @@ function Harness({
   onOpenChange,
   open,
   sourceAdapter = adapter,
+  competitionFilters,
 }: {
   initialSettings?: TimerWcaSourceCoreSettings;
   onOpenChange?: Parameters<typeof TimerWcaSourceConfig>[0]['onOpenChange'];
   open?: boolean;
   sourceAdapter?: TimerWcaSourceDataAdapter;
+  competitionFilters?: Parameters<typeof TimerWcaSourceConfig>[0]['competitionFilters'];
 }) {
   const [settings, setSettings] = useState<TimerWcaSourceCoreSettings>(
     initialSettings,
   );
   return createElement(TimerWcaSourceConfig, {
       adapter: sourceAdapter,
+      competitionFilters,
+      popupContainer: competitionFilters ? document.body : undefined,
       competitionDisplayName: (_id, name) => name,
       labels: {
         all: 'All',
@@ -143,6 +147,56 @@ describe('shared controlled WCA source UI', () => {
   afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
+  });
+
+  it('browses recent competitions by country before searching, including overlapping dates', async () => {
+    const sourceAdapter = {
+      ...adapter,
+      loadCompetitions: vi.fn(async () => [
+        { ...competition('Old'), startDate: '2026-08-20', endDate: '2026-08-23' },
+        { ...competition('Boundary'), startDate: '2026-08-23', endDate: '2026-08-24' },
+        { ...competition('Recent'), country: 'us', startDate: '2026-08-29', endDate: '2026-08-30' },
+        { ...competition('OtherCountry'), country: 'CN' },
+        { ...competition('Future'), startDate: '2026-08-31', endDate: '2026-08-31' },
+      ]),
+    };
+    const competitionFilters = { from: '2026-08-24', country: 'US', render: () => null };
+    await act(async () => root.render(createElement(Harness, { sourceAdapter, competitionFilters })));
+    expect([...document.querySelectorAll('[role="option"]')].map((el) => el.textContent))
+      .toEqual(['usRecent Open · 2026-08-29~30', 'USBoundary Open · 2026-08-23~24']);
+    expect(host.querySelector('select[aria-label="Real-scramble range"]')).toBeNull();
+    const input = host.querySelector<HTMLInputElement>('input[aria-label="Search competition"]')!;
+    await act(async () => setSearchValue(input, 'OtherCountry'));
+    expect(document.querySelectorAll('[role="option"]')).toHaveLength(0);
+    expect(host.textContent).toContain('No matching competitions');
+    await act(async () => setSearchValue(input, 'Boundary'));
+    await act(async () => (document.querySelector('[role="option"]') as HTMLButtonElement).click());
+    expect(host.querySelector('.timer-wca-competition-selected')?.textContent).toContain('Boundary Open');
+  });
+
+  it('keeps all filtered matches reachable in batches without refetching', async () => {
+    const rows = Array.from({ length: 90 }, (_, index) => competition(`Open${String(index).padStart(2, '0')}`));
+    const sourceAdapter = { ...adapter, loadCompetitions: vi.fn(async () => rows) };
+    const competitionFilters = { from: '2025-08-30', country: 'US', render: () => null };
+    await act(async () => root.render(createElement(Harness, { sourceAdapter, competitionFilters })));
+    const options = () => [...document.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+    expect(options()).toHaveLength(40);
+    expect(options()[0].getAttribute('aria-setsize')).toBe('90');
+    const panel = document.querySelector<HTMLElement>('[role="listbox"]')!;
+    await act(async () => panel.dispatchEvent(new Event('scroll')));
+    expect(options()).toHaveLength(80);
+    await act(async () => panel.dispatchEvent(new Event('scroll')));
+    expect(options()).toHaveLength(90);
+    const search = host.querySelector<HTMLInputElement>('[role="combobox"]')!;
+    await act(async () => setSearchValue(search, 'Open'));
+    expect(options()).toHaveLength(40);
+    expect(options()[0].getAttribute('aria-setsize')).toBe('90');
+    await act(async () => search.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'ArrowUp' })));
+    expect(options()).toHaveLength(90);
+    expect(search.getAttribute('aria-activedescendant')).toBe(options()[89].id);
+    await act(async () => search.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })));
+    expect(host.querySelector('.timer-wca-competition-selected')?.textContent).toContain('Open89');
+    expect(sourceAdapter.loadCompetitions).toHaveBeenCalledOnce();
   });
 
   it('closes competition, round, group, and date as one controlled flow', async () => {

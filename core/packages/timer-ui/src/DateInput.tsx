@@ -253,6 +253,7 @@ export function DateInput({
         <div
           ref={panelRef}
           className="date-input__calendar"
+          data-site-surface="popover"
           role="dialog"
           aria-label={labels.chooseDate}
         >

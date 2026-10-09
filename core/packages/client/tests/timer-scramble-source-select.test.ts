@@ -28,6 +28,7 @@ describe('shared timer scramble-source select', () => {
   let root: Root;
 
   beforeEach(() => {
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
     (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
     vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
       callback(0);
@@ -42,6 +43,25 @@ describe('shared timer scramble-source select', () => {
     await act(async () => root.unmount());
     host.remove();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('opens WCA settings at a second level and returns without changing an active source', () => {
+    const onChange = vi.fn();
+    act(() => root.render(createElement(TimerScrambleSourceSelect<'wca'>, {
+      labels: LABELS, realValue: 'wca', value: 'wca', onChange,
+      realMenuContent: createElement('input', { 'aria-label': 'Competition search' }),
+    })));
+    act(() => host.querySelector('button')!.click());
+    act(() => document.querySelector<HTMLButtonElement>('[role="option"]')!.click());
+    expect(document.querySelector('.timer-scramble-source-secondary input')).not.toBeNull();
+    expect(document.querySelectorAll('[role="option"]')).toHaveLength(3);
+    expect(onChange).not.toHaveBeenCalled();
+    act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    expect(document.querySelector('.timer-scramble-source-secondary')).toBeNull();
+    expect(document.querySelectorAll('[role="option"]')).toHaveLength(3);
+    act(() => document.body.dispatchEvent(new Event('pointerdown', { bubbles: true })));
+    expect(document.querySelector('[role="listbox"]')).toBeNull();
   });
 
   it('applies the shared topbar hooks without keeping duplicate rules in the Web shell', () => {
@@ -138,7 +158,8 @@ describe('shared timer scramble-source select', () => {
     const popup = document.body.querySelector<HTMLElement>('.timer-scramble-source-popup');
     const options = [...document.body.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-option')];
     expect(trigger?.getAttribute('aria-controls')).toBe(popup?.id);
-    expect(popup?.getAttribute('role')).toBe('listbox');
+    expect(popup?.getAttribute('role')).toBe('dialog');
+    expect(popup?.querySelector('[role="listbox"]')?.getAttribute('aria-label')).toBe(LABELS.ariaLabel);
     expect(popup?.getAttribute('aria-label')).toBe(LABELS.ariaLabel);
     expect(options).toHaveLength(3);
     expect(options.map((option) => option.type)).toEqual(['button', 'button', 'button']);
@@ -350,7 +371,7 @@ describe('shared timer scramble-source select', () => {
     expect(document.body.style.overflow).toBe('hidden');
     act(() => options[3].click());
     expect(onTrainingChange).not.toHaveBeenCalled();
-    const children = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')];
+    const children = [...document.body.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-secondary [role="option"]')];
     expect(children.map(item => item.textContent)).toEqual(['Cross', 'F2L']);
     act(() => children[1].click());
     expect(onTrainingChange).toHaveBeenCalledWith('f2l');
@@ -373,8 +394,9 @@ describe('shared timer scramble-source select', () => {
     for (const group of TIMER_333_TRAINING_GROUPS) {
       const parent = [...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')].find(item => item.textContent === group.label.zh)!;
       act(() => parent.click());
-      expect([...document.body.querySelectorAll<HTMLButtonElement>('[role="option"]')].map(item => item.textContent)).toEqual(group.events);
-      expect(document.activeElement?.getAttribute('aria-label')).toBe('返回打乱类型');
+      expect([...document.body.querySelectorAll<HTMLButtonElement>('.timer-scramble-source-secondary [role="option"]')].map(item => item.textContent)).toEqual(group.events);
+      expect(document.activeElement?.textContent).toBe(group.events[0]);
+      expect(document.body.querySelector('.timer-scramble-source-options')?.textContent).toContain('WCA real');
       act(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
       expect(document.body.querySelector('.timer-scramble-source-popup')).not.toBeNull();
     }

@@ -226,6 +226,26 @@ body[data-site-scenery] .wca-stats-event-selector .event-btn-remove:not(:hover) 
   box-shadow: var(--glass-shadow);
 }
 
+/* These legacy menus used fixed light/dark ink; follow the shared surface tint. */
+body[data-site-scenery] .vkb-popup-item:not(.active),
+body[data-site-scenery] .fc-export-menu-item,
+body[data-site-scenery] .globe-page :is(.nav-popover, .globe-search-item, .globe-search-item-main) {
+  color: var(--foreground);
+}
+body[data-site-scenery] .globe-page :is(.globe-search-empty, .globe-search-group, .globe-search-item-sub, .nav-popover-val) {
+  color: var(--muted-foreground);
+}
+body[data-site-scenery] .globe-page .globe-search-item:hover {
+  background: var(--accent-soft);
+}
+body[data-site-scenery] .fc-export-menu-item:hover {
+  color: var(--foreground);
+  background: var(--accent-soft);
+}
+body[data-site-scenery] .vkb-popup::after {
+  border-top-color: var(--glass-popover-bg);
+}
+
 /* Dense site filters need stronger separation from the card text beneath them. */
 body[data-site-scenery] .sites-filter-row .pp-popup {
   background: var(--glass-menu-bg);
@@ -336,7 +356,26 @@ body[data-site-scenery] .solver-sheet {
   backdrop-filter: var(--glass-filter);
 }
 
-body[data-site-scenery] .timer-shell .shell-topbar,
+/* Keep toolbar glass on a sibling paint layer: filtering the toolbar itself
+   creates a backdrop root that prevents its dropdowns from blurring the page. */
+body[data-site-scenery] .timer-shell .shell-topbar {
+  background: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+body[data-site-scenery] .timer-shell .shell-topbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--glass-popover-bg);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
 body[data-site-scenery] .timer-history-columns-head,
 body[data-site-scenery] .case-stats-table th {
   background: var(--glass-popover-bg);

@@ -11,7 +11,7 @@ import Link from '@/components/AppLink';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useQueryState, parseAsBoolean, parseAsStringEnum } from 'nuqs';
-import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2 } from 'lucide-react';
+import { Plus, HelpCircle, TriangleAlert, LayoutGrid, List, TestTube2, Check } from 'lucide-react';
 import type { ReconSolve } from '@cuberoot/shared';
 import { useReconStore, type SortKey, type SortDir } from '@/lib/recon-store';
 import {
@@ -40,7 +40,6 @@ import { isWcaEvent, eventDisplayName } from '@/lib/wca-events';
 import './recon.css';
 import { tr } from '@/i18n/tr';
 import { useIsAdmin } from '@/lib/auth-store';
-import BoolToggle from '@/components/BoolToggle';
 import { CompactSelect } from '@/components/CompactSelect';
 import { ReconCompletionBadge } from '@/components/recon/ReconCompletionBadge';
 
@@ -263,7 +262,6 @@ export default function ReconListPage() {
   const recordKindItems = [
     { value: 'reconstruction', label: tr({ zh: '复盘', en: 'Reconstructions' }) },
     { value: 'timing', label: tr({ zh: '仅起拍表', en: 'Timing only' }) },
-    { value: 'all', label: tr({ zh: '全部', en: 'All' }) },
   ] as const;
   const {
     loading, error, filters,
@@ -700,31 +698,57 @@ export default function ReconListPage() {
     }
   };
 
-  // ── WCA / non-WCA toggle 状态 ──
-  // NOTE: 原版逻辑——两个按钮都激活=显示全部；只激活一个=筛选对应类型
-  const [showWca, setShowWca] = useState(true);
-  const [showNonWca, setShowNonWca] = useState(true);
+  const selectedOfficialValues = filters.official ? [filters.official] : ['1', '0'];
+  const officialItems = [
+    { value: '1', label: 'WCA' },
+    { value: '0', label: 'non-WCA' },
+  ];
 
-  // NOTE: 同步 toggle 状态到 store filter
-  useEffect(() => {
-    if (showWca && showNonWca) {
-      setFilter('official', '');
-    } else if (showWca) {
-      setFilter('official', '1');
-    } else if (showNonWca) {
-      setFilter('official', '0');
-    }
-  }, [showWca, showNonWca, setFilter]);
-
-  const handleToggleWca = useCallback(() => {
-    if (showWca && !showNonWca) return;
-    setShowWca(!showWca);
-  }, [showWca, showNonWca]);
-
-  const handleToggleNonWca = useCallback(() => {
-    if (!showWca && showNonWca) return;
-    setShowNonWca(!showNonWca);
-  }, [showWca, showNonWca]);
+  const selectedRecordKinds = recordKind === 'all'
+    ? recordKindItems.map(item => item.value)
+    : [recordKind];
+  const filterLabel = [
+    filters.official ? officialItems.find(item => item.value === filters.official)?.label : '',
+    recordKind !== 'all' ? recordKindItems.find(item => item.value === recordKind)?.label : '',
+    unsolvedOnly ? tr({ zh: '未还原', en: 'Unsolved' }) : '',
+  ].filter(Boolean).join(' · ') || tr({ zh: '所有', en: 'All' });
+  const filterGroups = [
+    {
+      label: tr({ zh: '比赛类型', en: 'Competition type' }),
+      items: officialItems.map(item => ({
+        ...item,
+        selected: selectedOfficialValues.includes(item.value),
+        toggle: () => {
+          if (!selectedOfficialValues.includes(item.value)) setFilter('official', '');
+          else if (selectedOfficialValues.length > 1) {
+            setFilter('official', selectedOfficialValues.find(value => value !== item.value)!);
+          }
+        },
+      })),
+    },
+    {
+      label: tr({ zh: '记录内容', en: 'Record content' }),
+      items: [...recordKindItems.map(item => ({
+        ...item,
+        selected: selectedRecordKinds.includes(item.value),
+        toggle: () => {
+          if (!selectedRecordKinds.includes(item.value)) void setRecordKind('all');
+          else if (selectedRecordKinds.length > 1) {
+            void setRecordKind(selectedRecordKinds.find(value => value !== item.value)!);
+          }
+        },
+      })), {
+        value: 'unsolved',
+        label: tr({ zh: '仅看未还原', en: 'Unsolved only' }),
+        selected: unsolvedOnly,
+        toggle: () => {
+          const value = !unsolvedOnly;
+          setFilter('unsolvedOnly', value);
+          void setUnsolvedOnly(value);
+        },
+      }],
+    },
+  ];
 
   // ── 列标签（需要响应语言切换） ──
 
@@ -748,7 +772,7 @@ export default function ReconListPage() {
                 <RecordBadge record={solve.regionalSingleRecord} variant="inline" iso2={solve.personCountry} />
               )}
             </span>
-            <ReconCompletionBadge recordType={solve.recordType} status={solve.completionStatus} />
+            <ReconCompletionBadge recordType={solve.recordType} status={solve.completionStatus} iconOnly />
           </span>
         );
       case 'person': {
@@ -892,7 +916,7 @@ export default function ReconListPage() {
       {curationError && <p role="alert">{curationError}</p>}
       {(isAdmin || !!featuredRecons?.length) && (
         <section className="recon-featured" aria-labelledby="recon-featured-title">
-          <h2 id="recon-featured-title">{tr({ zh: '精选复盘', en: 'Featured solves' })}</h2>
+          <h2 id="recon-featured-title">{tr({ zh: '复盘', en: 'Reconstructions' })}</h2>
           <div className="recon-grid">
             {featuredRecons?.map(solve => <CuratedReconCard key={solve.id} solve={solve} isZh={isZh}
               href={getDetailUrl(solve)} {...curationActions(solve)} />)}
@@ -901,22 +925,38 @@ export default function ReconListPage() {
         </section>
       )}
 
-      {/* 工具栏：WCA toggle + 计数 + 登录；filter 全在表头 popover */}
+      {/* 工具栏：WCA 筛选 + 计数 + 登录；filter 全在表头 popover */}
       <div className="recon-toolbar">
-        <div className="recon-type-toggle">
-          <button
-            className={`toggle-btn${showWca ? ' active' : ''}`}
-            onClick={handleToggleWca}
-          >
-            WCA
-          </button>
-          <button
-            className={`toggle-btn${showNonWca ? ' active' : ''}`}
-            onClick={handleToggleNonWca}
-          >
-            non-WCA
-          </button>
-        </div>
+        <CompactSelect
+          label={filterLabel}
+          items={[]}
+          onChange={() => {}}
+          ariaLabel={tr({ zh: '筛选', en: 'Filters' })}
+          valueText={filterLabel}
+          panelContent={<div className="recon-filter-groups">
+            {filterGroups.map(group => (
+              <div key={group.label} role="group" aria-label={group.label}>
+                <div className="recon-filter-heading">{group.label}</div>
+                <div className="compact-select-options">
+                  {group.items.map(item => (
+                    <button
+                      key={item.value}
+                      type="button"
+                      className={'compact-select-option' + (item.selected ? ' active' : '')}
+                      aria-pressed={item.selected}
+                      onClick={item.toggle}
+                    >
+                      <span className="recon-filter-option">
+                        <Check size={14} aria-hidden="true" style={{ visibility: item.selected ? 'visible' : 'hidden' }} />
+                        {item.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>}
+        />
         <div className="recon-view-toggle">
           <button
             className={`toggle-btn${viewMode === 'list' ? ' active' : ''}`}
@@ -937,21 +977,6 @@ export default function ReconListPage() {
             <LayoutGrid size={16} />
           </button>
         </div>
-        <CompactSelect
-          value={recordKind}
-          label={recordKindItems.find(item => item.value === recordKind)?.label}
-          items={recordKindItems}
-          onChange={value => { void setRecordKind(value); }}
-          ariaLabel={tr({ zh: '录入内容', en: 'Record content' })}
-        />
-        <BoolToggle
-          value={unsolvedOnly}
-          onChange={(value) => {
-            setFilter('unsolvedOnly', value);
-            void setUnsolvedOnly(value);
-          }}
-          label={tr({ zh: '仅看未还原', en: 'Unsolved only' })}
-        />
         <div className="recon-actions">
           <span className="recon-stats-count">
             {t('recon.count', { count: filtered.length })}

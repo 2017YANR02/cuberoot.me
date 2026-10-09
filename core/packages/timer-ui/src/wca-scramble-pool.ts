@@ -1,4 +1,5 @@
 import { cube222StateTypeMatchesScramble, type Cube222StateType } from '@cuberoot/puzzle-solvers/cube222';
+import { scrambleMoveLengths } from '@cuberoot/shared/scramble-length';
 import {
   compareTimerWcaCompetitionScrambleOrder,
   decodeTimerWcaCompetitionScrambleSlot,
@@ -9,6 +10,8 @@ import {
   timerWcaRandomRequestQuery,
   timerWcaScrambleEventId,
   timerWcaSourceIdentity,
+  LENGTH_VARIANT,
+  TIMER_WCA_MERGE_EVENTS,
   type TimerWcaSourceSettings,
 } from '@cuberoot/shared/timer';
 import { cube222MetricOfScramble } from '@cuberoot/puzzle-solvers/cube222';
@@ -446,25 +449,28 @@ async function compRowsAll(spec: WcaSourceSpec, w: string, useOptimal: boolean, 
   const all = await deps.loadCompetition(spec.comp, signal);
   assertActive(signal);
   if (all === null) throw new Error('competition scrambles unavailable');
-  const matching = all.filter(r => r.eventId === w && (!spec.round || r.roundTypeId === spec.round) && (!spec.group || r.groupId === spec.group));
-  if (useOptimal && matching.length && matching.every(r => !r.optimalScramble)) throw new Error('competition optimal unavailable');
+  const lengthFilter = spec.diff?.variant === LENGTH_VARIANT ? spec.diff : undefined;
+  const events: readonly string[] = lengthFilter?.merged ? TIMER_WCA_MERGE_EVENTS : [w];
   const rows = all
-    .filter((r) => r.eventId === w
+    .filter((r) => events.includes(r.eventId)
       && (!spec.round || r.roundTypeId === spec.round)
       && (!spec.group || r.groupId === spec.group)
-      // 最优模式:只留有最优等态的真题,不再静默回退原打乱(无则该比赛队列空 -> 回退随机生成)。
-      && (!useOptimal || !!r.optimalScramble))
+      && (!lengthFilter || scrambleMoveLengths(r.eventId, r.scramble)
+        .some((length) => lengthFilter.steps.includes(length))))
     .map((r) => {
       // 最优模式且该打乱有最优等态(同态项目)→ 用最优打乱,否则原打乱。
       const scramble = normalize(useOptimal && r.optimalScramble ? r.optimalScramble : r.scramble);
       const meta: WcaScrambleMeta = {
         ci: spec.comp,
         cn: spec.compName || spec.comp,
-        e: w,
+        e: r.eventId,
         r: r.roundTypeId,
         g: r.groupId,
         n: r.scrambleNumber,
         x: (r.isExtra ? 1 : 0) as 0 | 1,
+        // Missing derived data is not a transport failure. Keep the official
+        // occurrence and explicitly label its original text in every host.
+        ...(useOptimal && !r.optimalScramble ? { nonOptimal: true } : {}),
       };
       return decodeCompRow(scramble, meta);
     });
@@ -488,13 +494,11 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
   if (results.some((r) => r == null)) throw new Error('by-difficulty unavailable');
   const seen = new Set<string>();
   const out: CompRow[] = [];
-  let missingOptimal = false;
   for (const res of results) {
     for (const row of res?.scrambles ?? []) {
       if (row.ci !== spec.comp) continue;                    // 精确到本场(names 可能撞号)
       if (spec.round && row.r !== spec.round) continue;
       if (spec.group && row.g !== spec.group) continue;
-      if (useOptimal && !row.o) { missingOptimal = true; continue; }                    // 最优模式:只留有最优等态的
       // 合并口径下同一 (轮次,组,序号) 在不同项目里各有一条,去重键必须带 event,否则会互相吞掉。
       const meta: WcaScrambleMeta = {
         ci: spec.comp,
@@ -504,6 +508,7 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
         g: row.g,
         n: row.n,
         x: row.x,
+        ...(useOptimal && !row.o ? { nonOptimal: true } : {}),
       };
       // e 取真实来源项目(合并时可能不是当前练习的项目),来源角标才不会张冠李戴。
       const decoded = decodeCompRow(
@@ -515,7 +520,6 @@ async function compRowsByDifficulty(spec: WcaSourceSpec, w: string, useOptimal: 
       out.push(decoded);
     }
   }
-  if (useOptimal && !out.length && missingOptimal) throw new Error('competition optimal unavailable');
   return (await localFilterRows(spec, out, signal)).sort((A, B) => compOrder(A.meta, B.meta));
 }
 
@@ -537,12 +541,12 @@ async function fillComp(spec: WcaSourceSpec, key: string, signal: AbortSignal): 
   if (spec.diff?.steps.length && usesStepsIndex(spec.diff.variant)) {
     const coverage = getCompCoverage(spec.comp, w) ?? await probeCompCoverage(spec.comp, spec.compName, w);
     assertActive(signal);
-    if (coverage === false) spec = { ...spec, diff: undefined, optimal: false };
+    if (coverage === false) spec = { ...spec, diff: undefined };
   }
   const useOptimal = wantOptimal(spec, w);
   let rows = compRows[key];
   if (!rows) {
-    rows = spec.diff && spec.diff.steps.length > 0
+    rows = spec.diff && spec.diff.steps.length > 0 && spec.diff.variant !== LENGTH_VARIANT
       ? await compRowsByDifficulty(spec, w, useOptimal, signal)
       : await compRowsAll(spec, w, useOptimal, signal);
     assertActive(signal);
@@ -551,7 +555,7 @@ async function fillComp(spec: WcaSourceSpec, key: string, signal: AbortSignal): 
   if (rows.length === 0) {
     // comp + 难度为空:探测该场在难度库有无任何步数数据,区分「已入库但此难度无匹配」vs「新赛未入库」。
     // 覆盖按 (comp, event) 缓存(与步数/方法档无关),与 UI 的主动探测共用结论,只做一次。
-    if (spec.diff && spec.diff.steps.length > 0) await probeCompCoverage(spec.comp, spec.compName, w);
+    if (spec.diff && spec.diff.steps.length > 0 && spec.diff.variant !== LENGTH_VARIANT) await probeCompCoverage(spec.comp, spec.compName, w);
     assertActive(signal);
     knownEmpty.add(key); return; // 该比赛没有此 event / 该难度无匹配 → 显式提示,不伪造生成
   }
@@ -794,6 +798,7 @@ function isWcaSourceEmpty(spec: WcaSourceSpec): boolean {
 function isWcaCompUnindexed(spec: WcaSourceSpec): boolean {
   const w = wev(spec);
   if (!w || spec.mode !== 'comp' || !spec.comp) return false;
+  if (spec.diff?.variant === LENGTH_VARIANT) return false;
   return difficultyAdapter.getCompetitionCoverage(spec.comp, w) === false;
 }
 

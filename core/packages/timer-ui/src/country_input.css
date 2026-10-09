@@ -16,6 +16,12 @@
   z-index: 1;
 }
 
+/* The flag library also sets .fi to relative; keep the selected flag inside
+ * the input regardless of stylesheet load order. */
+.country-input > .country-input-flag {
+  position: absolute;
+}
+
 /* NOTE: 旧名 --surface/--text/--border 优先(landing.css 把它们映射到真 token,/dev 那批
    art-directed 暗色页自定义了值),没定义的页面回退站点 token —— 别写死暗色回退值,否则在
    浅色页面上会变成「白底 + 12% 白边框」的隐形输入框(/timer 跟站点主题后踩过)。 */

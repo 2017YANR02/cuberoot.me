@@ -219,7 +219,7 @@ export default function SpacePage() {
         <div ref={host} className="space-canvas" role="region" aria-label={tr({ zh: '三维魔方空间', en: '3D cube space' })} />
         <div className="space-top-tools">
           <div className="space-row">
-            <PuzzlePicker selectedEvent={kind} onSelect={id => { if (isPuzzleKind(id)) setKind(id); }} groups={[{ id: 'space', label: tr({ zh: '选择魔方', en: 'Choose a puzzle' }), items: Object.entries(PUZZLES).map(([id, p]) => ({ id, label: tr(p), iconClass: p.icon })) }]} />
+            <PuzzlePicker selectedEvent={kind} onSelect={id => { if (isPuzzleKind(id)) setKind(id); }} groups={[{ id: 'space', label: tr({ zh: '选择项目', en: 'Choose a puzzle' }), items: Object.entries(PUZZLES).map(([id, p]) => ({ id, label: tr(p), iconClass: p.icon })) }]} />
             <button className="space-control space-add" disabled={!ready || unavailable || objects.length >= MAX_OBJECTS} onClick={() => { cancel(); pending.current = kind; setPlacing(true); setSelected(null); setMessage(null); }}><Plus size={16} />{tr({ zh: '放入空间', en: 'Place a cube' })}</button>
           </div>
           <div className="space-row">

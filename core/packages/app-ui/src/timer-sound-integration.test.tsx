@@ -63,10 +63,14 @@ describe('shared timer sound', () => {
     try {
       await act(async () => root.render(<Harness />));
       expect(container.querySelector('input')!.disabled).toBe(true);
-      await act(async () => container.querySelector<HTMLButtonElement>('[data-setting-id="settings.sound.enabled"] button')!.click());
+      await act(async () => {
+        const enabled = container.querySelector<HTMLSelectElement>('[data-setting-id="settings.sound.enabled"] select')!;
+        enabled.value = 'true';
+        enabled.dispatchEvent(new Event('change', { bubbles: true }));
+      });
       expect(warm).toHaveBeenCalledOnce();
       expect(container.querySelector('input')!.disabled).toBe(false);
-      expect(container.querySelector('select')!.disabled).toBe(true);
+      expect(container.querySelector<HTMLSelectElement>('[data-setting-id="settings.sound.voice-inspection"] select')!.disabled).toBe(true);
       await act(async () => container.querySelector<HTMLButtonElement>('[aria-label="Test"]')!.click());
       expect(preview).toHaveBeenCalledOnce();
     } finally { await act(async () => root.unmount()); container.remove(); }

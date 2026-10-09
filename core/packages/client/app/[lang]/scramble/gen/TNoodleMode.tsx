@@ -59,7 +59,6 @@ import SheetView, { type AttemptScramble, type RoundSheet } from './SheetView';
 import CompCrossAnalysis, { type CrossFilter, type Metric, METRIC_OFFSET } from './CompCrossAnalysis';
 import { useStepMap, type StepMetric, type StepMapState } from './useStepMap';
 import { SubsetColorPicker, useSubsetSelection } from '@/components/SubsetColorPicker/SubsetColorPicker';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCrossMap } from './useCrossMap';
 import { useCompSteps, normScramble } from './useCompSteps';
 import { displaySq1ForEvent } from '@cuberoot/shared/sq1-notation';
@@ -1526,11 +1525,10 @@ export default function TNoodleMode({ t, isZh, showPreview, onTogglePreview, com
             <div className="gen-cx-switchrow">
               {forcedCompId && <div className="gen-cx-actions-inline">{actionsNode}</div>}
               <span className="gen-sq1-format-label">{t('分析', 'Analysis')}</span>
-              <PillToggle
-                value={showCross}
-                onChange={setShowCross}
-                ariaLabel={t('显示十字步数分析', 'Show cross analysis')}
-              />
+              <select className="native-select" value={String(showCross)} onChange={event => { setShowCross(event.currentTarget.value === 'true'); }} aria-label={t('显示十字步数分析', 'Show cross analysis')}>
+                <option value="true">{t('开启', 'On')}</option>
+                <option value="false">{t('关闭', 'Off')}</option>
+              </select>
               {showCross && roundIdxsInEvent.length > 1 && (
                 <select
                   value={String(analysisAll)}

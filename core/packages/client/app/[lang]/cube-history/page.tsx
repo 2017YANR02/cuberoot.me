@@ -10,7 +10,6 @@ import { ClearButton } from '@/components/ClearButton';
 import SearchInput from '@/components/SearchInput';
 import { CompactSelect } from '@/components/CompactSelect';
 import BoolToggle from '@/components/BoolToggle';
-import PillToggle from '@/components/PillToggle/PillToggle';
 import { useCopy } from '@/hooks/useCopy';
 import { tr, useLang } from '@/i18n/tr';
 import { CUBES, SOURCES, SOURCE_BY_ID, resolveCubeId } from './_data/catalog';
@@ -19,6 +18,7 @@ import { MILESTONES } from './_data/milestones';
 import { EMPTY_FILTERS, PRIORITY_BRANDS, matchesCube, selectedCubes, sortBrandKeys, sortCubes, sourceIdsForCube } from './_data/query';
 import type { Cube, CubePrice, LocalizedText } from './_data/types';
 import '@/components/sticky-table.css';
+import '@cuberoot/timer-ui/compact-select.css';
 import './cube-history.css';
 
 type View = 'timeline' | 'catalog' | 'compare' | 'sources';
@@ -468,7 +468,10 @@ function Explorer() {
       <AnnualLineup brand={filters.brand} onYear={year => setFilter('year', year)} onOpen={openModel} />
       <div className="ch-result-bar"><p role="status" aria-live="polite"><strong>{filtered.length}</strong> {tr({ zh: '条匹配记录', en: 'matching entries' })}<span>{tr({ zh: `已显示 ${visible.length} 条 · 检索全部 ${CUBES.length} 条档案`, en: `${visible.length} shown · Searching all ${CUBES.length} records` })}</span></p><div><CompactSelect label={sortLabel} valueText={sortLabel} value={order} onChange={value => { void setOrder(value as typeof order); }} ariaLabel={tr({ zh: '排序方式', en: 'Sort order' })} items={[
         { value: 'relevance', label: relevanceLabel }, { value: 'newest', label: tr(SORT_LABELS.newest) }, { value: 'oldest', label: tr(SORT_LABELS.oldest) }, { value: 'name', label: tr(SORT_LABELS.name) },
-      ]} /><PillToggle value={!table} onChange={value => { void setTable(!value); }} onLabel={tr({ zh: '卡片', en: 'Cards' })} offLabel={tr({ zh: '表格', en: 'Table' })} ariaLabel={tr({ zh: '图鉴布局', en: 'Catalog layout' })} /></div></div>
+      ]} /><select className="native-select" value={table ? 'table' : 'cards'} onChange={event => { void setTable(event.currentTarget.value === 'table'); }} aria-label={tr({ zh: '图鉴布局', en: 'Catalog layout' })}>
+        <option value="cards">{tr({ zh: '卡片', en: 'Cards' })}</option>
+        <option value="table">{tr({ zh: '表格', en: 'Table' })}</option>
+      </select></div></div>
       {!filtered.length ? <div className="ch-empty" data-site-surface="panel"><Search size={32} /><h3>{tr({ zh: '没有找到匹配型号', en: 'No matching models' })}</h3><p>{tr(unrestrictedCount > 0 ? { zh: `全部档案中有 ${unrestrictedCount} 条符合这个关键词的记录，可移除其他筛选继续查看。`, en: `${unrestrictedCount} records across the archive match this search. Remove the other filters to see them.` } : { zh: '试试更短的型号名称、中英文别名，或减少筛选条件。', en: 'Try a shorter model name, a Chinese or English alias, or fewer filters.' })}</p><div className="ch-empty-actions">{hasFacetFilters && <button type="button" className="ch-button ch-button--primary" onClick={() => { void setFilters({ ...EMPTY_FILTERS, q: filters.q }); }}>{tr({ zh: '移除其他筛选', en: 'Remove other filters' })}</button>}<button type="button" className="ch-button" onClick={focusSearch}>{tr({ zh: '修改搜索词', en: 'Edit search' })}</button></div></div>
         : table ? <CatalogTable cubes={visible} ids={chosenIds} full={full} onOpen={openModel} onToggle={toggleCompare} />
           : <div className="ch-model-grid">{visible.map(cube => <ModelCard key={cube.id} cube={cube} selected={chosenIds.includes(cube.id)} full={full} onOpen={openModel} onToggle={toggleCompare} />)}</div>}

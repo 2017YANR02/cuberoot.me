@@ -33,6 +33,7 @@
 
 import { Copy, Check } from 'lucide-react';
 import { useState } from 'react';
+import { getTextOffsetInElement, snapCaretToLine } from '../recon/text-cursor';
 
 import CubeColorChip, {
   crossColorFromLabels,
@@ -55,7 +56,7 @@ export interface StepMoveListProps {
   /** 回放游标 = 已经播了几手。省略则不做高亮。 */
   currentIdx?: number | null;
   /** 点某一步跳到它开头。省略则标题不是按钮。 */
-  onSeek?: (idx: number) => void;
+  onSeek?: (idx: number, atMs?: number) => void;
   /** 谱子底下的一句提醒(如「这把没录姿态」)。省略则不显示。 */
   notice?: React.ReactNode;
   /** 「复盘对不对」那一行。省略则不显示。 */
@@ -199,8 +200,25 @@ export default function StepMoveList({
                       <button
                         type="button"
                         className="sml-moves is-seek"
-                        onClick={() => onSeek(line.fromIdx)}
-                        title={tr({ zh: '跳到这一步开头', en: 'Jump to the start of this step' })}
+                        onClick={(event) => {
+                          if (!line.moveRanges || event.detail === 0) { onSeek(line.fromIdx); return; }
+                          const text = line.moves.join(' ');
+                          let start = 0;
+                          const positions = line.moves.map(token => {
+                            const position = { start, end: start + token.length, text: token };
+                            start = position.end + 1;
+                            return position;
+                          });
+                          const raw = getTextOffsetInElement(event.currentTarget, { x: event.clientX, y: event.clientY });
+                          if (raw < 0) { onSeek(line.fromIdx); return; }
+                          const offset = snapCaretToLine(raw, text, positions);
+                          const index = positions.findIndex(position => position.end >= offset);
+                          const range = line.moveRanges[index];
+                          if (!range) { onSeek(line.fromIdx); return; }
+                          if (offset <= positions[index].start) onSeek(range.startIdx);
+                          else onSeek(range.endIdx + 1, range.endTs);
+                        }}
+                        title={tr({ zh: '从点击的动作开始播放', en: 'Play from the clicked move' })}
                       >
                         {line.moves.join(' ')}
                       </button>

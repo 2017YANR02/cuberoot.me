@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { installedPetAvailable } from '@/lib/installed-content';
 import { useRouter } from 'next/navigation';
 import { useQueryState, parseAsInteger, parseAsStringEnum } from 'nuqs';
-import { Bell, BookOpen, Building2, ChevronLeft, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Upload, UserRound, Users, UserCog } from 'lucide-react';
+import { Bell, BookOpen, Building2, ChevronLeft, ChevronRight, Crown, LockKeyhole, LogOut, Settings, Rewind, IdCard, GraduationCap, Inbox, Lightbulb, Loader2, Pencil, Upload, X, UserRound, Users, UserCog } from 'lucide-react';
 import AppLink from '@/components/AppLink';
 import HomeLink from '@/components/HomeLink';
 import { ClearButton } from '@/components/ClearButton';
@@ -37,7 +37,7 @@ import {
   type AccountBasicProfile,
   type AccountGender,
 } from '@cuberoot/shared/account';
-import { CLAWD_AVATAR_PRESETS, DEFAULT_CLAWD_AVATAR_PRESET, type ClawdAvatarPresetId } from '@cuberoot/shared/account-avatar';
+import { ACCOUNT_AVATAR_PRESETS, getAccountAvatarPreset, DEFAULT_CLAWD_AVATAR_PRESET } from '@cuberoot/shared/account-avatar';
 import {
   isMobileAuthProvider,
   type MobileAuthProvider,
@@ -52,7 +52,12 @@ import {
   type AvatarChoice,
   type SessionUser,
 } from '@/lib/account-api';
+import { useModalDismiss } from '@/hooks/useModalDismiss';
+import { fetchPersonCard } from '@/lib/wca-api';
 import { clawdAvatarUrl } from '@/lib/account-avatar';
+import { getDeskPetCatalog } from '@/lib/deskpet-api';
+import { resolveDeskPets, type DeskPetEntry } from '@cuberoot/shared/deskpet';
+import { THEMES, type ThemeId } from '@/lib/deskpet-themes';
 import { displayCuberName } from '@/lib/cuber-name-display';
 import { loadFlagData, personFlagIso2 } from '@/lib/country-flags';
 import { countryName } from '@/lib/country-name';
@@ -95,113 +100,164 @@ function AccountName({ name, wcaId }: { name: string; wcaId?: string | null }) {
 
 function AvatarEditor() {
   const t = useT();
-  const user = useAuthStore((s) => s.user);
+  const user = useAuthStore(s => s.user);
+  const [open, setOpen] = useState(false);
+  if (!user) return null;
+  const preset = getAccountAvatarPreset(user.avatarPreset ?? DEFAULT_CLAWD_AVATAR_PRESET);
+  const isClawd = (user.avatarSource === 'clawd' || !user.avatar) && preset?.petId === 'clawd';
+  return <div className="account-avatar-editor">
+    <button type="button" className={`account-avatar-preview account-avatar-edit-button${isClawd ? ' is-clawd' : ''}`}
+      aria-label={t('更换头像', 'Change avatar')} title={t('更换头像', 'Change avatar')} onClick={() => setOpen(true)}>
+      <img src={user.avatar} alt="" />
+    </button>
+    <button type="button" className="account-avatar-pencil" aria-label={t('编辑头像', 'Edit avatar')}
+      title={t('编辑头像', 'Edit avatar')} onClick={() => setOpen(true)}>
+      <Pencil size={13} aria-hidden="true" />
+    </button>
+    {open && <AvatarChooser onClose={() => setOpen(false)} />}
+  </div>;
+}
+
+function AvatarChooser({ onClose }: { onClose: () => void }) {
+  const t = useT();
+  const user = useAuthStore(s => s.user);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileRequest = useRef(0);
+  const [source, setSource] = useState<'wca' | 'upload' | 'pet'>(() => user?.avatarSource === 'clawd' ? 'pet' : user?.wcaId && user.avatarSource === 'auto' ? 'wca' : user?.avatarSource === 'upload' ? 'upload' : 'pet');
+  const [preset, setPreset] = useState(user?.avatarPreset ?? DEFAULT_CLAWD_AVATAR_PRESET);
+  const [avatarPet, setAvatarPet] = useState(getAccountAvatarPreset(preset)?.petId ?? 'clawd');
+  const [avatarPets, setAvatarPets] = useState<DeskPetEntry[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState(false);
+  const [catalogRetry, setCatalogRetry] = useState(0);
+  const [prepared, setPrepared] = useState<Awaited<ReturnType<typeof prepareImageUpload>> | null>(null);
+  const [preparing, setPreparing] = useState(false);
+  const [wcaAvatar, setWcaAvatar] = useState(user?.avatarSource === 'auto' && user.wcaId ? user.avatar : '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const backdropProps = useModalDismiss(onClose, saving);
+  useEffect(() => { dialogRef.current?.showModal(); }, []);
+  useEffect(() => {
+    let live = true;
+    setCatalogLoading(true);
+    setCatalogError(false);
+    getDeskPetCatalog().then(catalog => {
+      if (!live) return;
+      const pets = resolveDeskPets([...new Set(ACCOUNT_AVATAR_PRESETS.map(p => p.petId))], catalog.entries)
+        .filter(p => !p.locked && !p.removed && installedPetAvailable(p.id));
+      setAvatarPets(pets);
+      setAvatarPet(current => pets.some(p => p.id === current) ? current : pets[0]?.id ?? '');
+    }).catch(() => { if (live) setCatalogError(true); })
+      .finally(() => { if (live) setCatalogLoading(false); });
+    return () => { live = false; };
+  }, [catalogRetry]);
+  useEffect(() => {
+    let live = true;
+    if (user?.wcaId && !wcaAvatar) void fetchPersonCard(user.wcaId).then(card => {
+      if (live && card?.avatar) setWcaAvatar(card.avatar);
+    });
+    return () => { live = false; };
+  }, [user?.wcaId, wcaAvatar]);
+  useEffect(() => {
+    if (source !== 'pet' || catalogLoading) return;
+    dialogRef.current?.querySelector('[data-avatar-selected="true"]')?.scrollIntoView({ block: 'nearest' });
+  }, [source, avatarPet, catalogLoading]);
 
-  const saveChoice = async (choice: AvatarChoice) => {
+  const prepareUpload = async (file: File | undefined) => {
+    if (!file) return;
+    const request = ++fileRequest.current;
+    setPreparing(true);
+    setPrepared(null);
+    setError(null);
+    try {
+      const next = await prepareImageUpload(file, 512);
+      if (request === fileRequest.current) setPrepared(next);
+    } catch {
+      if (request === fileRequest.current) setError(t('图片读取失败，请选择 PNG、JPEG 或 WebP 图片。', 'Could not read the image. Choose a PNG, JPEG, or WebP image.'));
+    } finally {
+      if (request === fileRequest.current) setPreparing(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+  const selectedPet = getAccountAvatarPreset(preset);
+  const petAvailable = avatarPets.some(p => p.id === selectedPet?.petId);
+  const preview = source === 'pet' ? clawdAvatarUrl(preset)
+    : source === 'wca' ? wcaAvatar
+      : prepared?.previewUrl ?? (user?.avatarSource === 'upload' ? user.avatar : '');
+  const canSave = source === 'pet' ? petAvailable : source === 'wca' ? Boolean(wcaAvatar) : Boolean(prepared);
+  const save = async () => {
+    if (!canSave || saving || preparing) return;
     setSaving(true);
     setError(null);
     try {
+      let choice: AvatarChoice;
+      if (source === 'upload' && prepared) {
+        const image = await uploadImageBlob(prepared.dataB64, prepared.mime);
+        choice = { kind: 'upload', imageId: image.id };
+      } else if (source === 'wca') choice = { kind: 'wca' };
+      else choice = { kind: 'clawd', preset };
       const session = await updateAvatar(choice);
       if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
+      onClose();
     } catch {
       setError(t('头像保存失败，请稍后重试。', 'Could not save the avatar. Try again later.'));
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
-
-  const upload = async (file: File | undefined) => {
-    if (!file) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const prepared = await prepareImageUpload(file, 512);
-      const image = await uploadImageBlob(prepared.dataB64, prepared.mime);
-      const session = await updateAvatar({ kind: 'upload', imageId: image.id });
-      if (!(await applySession(session.token, session.user))) throw new Error('session persistence failed');
-    } catch (uploadError) {
-      setError((uploadError as Error).message === 'unsupported_image_type'
-        ? t('请选择 PNG、JPEG 或 WebP 图片。', 'Choose a PNG, JPEG, or WebP image.')
-        : t('头像上传失败，请稍后重试。', 'Could not upload the avatar. Try again later.'));
-    } finally {
-      if (fileRef.current) fileRef.current.value = '';
-      setSaving(false);
-    }
-  };
-
   if (!user) return null;
-  const selectedPreset = user.avatarPreset ?? DEFAULT_CLAWD_AVATAR_PRESET;
-  const usingWcaAvatar = user.avatarSource === 'auto' && Boolean(user.wcaId);
-  const usingDefaultClawd = user.avatarSource === 'clawd'
-    || (user.avatarSource === 'auto' && !user.wcaId);
-
-  return (
-    <div className="account-avatar-editor">
-      <div className={`account-avatar-preview${usingDefaultClawd ? ' is-clawd' : ''}`}>
-        <img src={user.avatar} alt="" />
+  return <dialog ref={dialogRef} className="account-avatar-dialog" aria-labelledby="account-avatar-title"
+    {...backdropProps} onCancel={event => event.preventDefault()}>
+    <section className="account-avatar-modal" data-site-surface="popover">
+      <header className="account-avatar-modal-header">
+        <h2 id="account-avatar-title">{t('更换头像', 'Change avatar')}</h2>
+        <button type="button" className="auth-link" aria-label={t('关闭', 'Close')} disabled={saving} onClick={onClose}><X size={18} /></button>
+      </header>
+      <div className="account-avatar-sources" role="group" aria-label={t('头像来源', 'Avatar source')}>
+        {(['wca', 'upload', 'pet'] as const).filter(kind => kind !== 'wca' || user.wcaId).map(kind =>
+          <button key={kind} type="button" className="auth-link" aria-pressed={source === kind} disabled={saving}
+            onClick={() => { setSource(kind); setError(null); }}>
+            {kind === 'wca' ? t('WCA 头像', 'WCA avatar') : kind === 'upload' ? t('上传图片', 'Upload image') : t('宠物头像', 'Pet avatar')}
+          </button>)}
       </div>
-      <div className="account-avatar-controls">
-        <span className="account-avatar-label">{t('头像', 'Avatar')}</span>
-        <div className="account-avatar-actions">
-          <button
-            type="button"
-            className="auth-link"
-            aria-label={t('上传图片', 'Upload image')}
-            disabled={saving}
-            onClick={() => fileRef.current?.click()}
-          >
-            <Upload size={13} aria-hidden="true" />
-          </button>
-          <input
-            ref={fileRef}
-            className="account-avatar-file"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={(event) => void upload(event.target.files?.[0])}
-          />
-          {saving && <Loader2 size={14} className="auth-spin" aria-label={t('正在保存', 'Saving')} />}
+      <div className="account-avatar-modal-preview">
+        <div className={`account-avatar-preview${source === 'pet' && selectedPet?.petId === 'clawd' ? ' is-clawd' : ''}`}>
+          {preview && <img src={preview} alt={t('头像预览', 'Avatar preview')} />}
         </div>
+        <span className="auth-hint">{t('预览', 'Preview')}</span>
       </div>
-      {installedPetAvailable('clawd') && <details className="account-avatar-picker">
-        <summary>{t('选择 Clawd 头像', 'Choose a Clawd avatar')}</summary>
-        {user.wcaId && (
-          <button
-            type="button"
-            className={`account-wca-avatar-choice${usingWcaAvatar ? ' is-selected' : ''}`}
-            aria-pressed={usingWcaAvatar}
-            disabled={saving}
-            onClick={() => void saveChoice({ kind: 'wca' })}
-          >
-            {t('使用 WCA 官方头像', 'Use official WCA avatar')}
-          </button>
-        )}
+      {source === 'wca' && !wcaAvatar && <p className="auth-hint">{t('WCA 头像暂时无法预览。', 'WCA avatar preview is currently unavailable.')}</p>}
+      {source === 'upload' && <div className="account-avatar-upload">
+        <button type="button" className="auth-link" disabled={saving || preparing} onClick={() => fileRef.current?.click()}><Upload size={14} /> {t('选择图片', 'Choose image')}</button>
+        <input ref={fileRef} className="account-avatar-file" type="file" accept="image/png,image/jpeg,image/webp" onChange={event => void prepareUpload(event.target.files?.[0])} />
+        {preparing && <Loader2 size={14} className="auth-spin" aria-label={t('正在读取图片', 'Reading image')} />}
+      </div>}
+      {source === 'pet' && <>
+        {catalogLoading ? <p className="auth-hint">{t('正在加载…', 'Loading…')}</p> : catalogError
+          ? <button type="button" className="auth-link" onClick={() => setCatalogRetry(n => n + 1)}>{t('加载失败，点击重试', 'Could not load. Retry')}</button>
+          : avatarPets.length === 0 ? <p className="auth-hint">{t('暂无可用形象', 'No avatars available')}</p>
+          : <select className="auth-input account-avatar-pet-select" aria-label={t('头像形象', 'Avatar character')}
+              value={avatarPet} disabled={saving} onChange={event => setAvatarPet(event.target.value)}>
+              {avatarPets.map(p => <option key={p.id} value={p.id}>{t((p.label ?? THEMES[p.id as ThemeId]?.label)?.zh ?? p.id, (p.label ?? THEMES[p.id as ThemeId]?.label)?.en ?? p.id)}</option>)}
+            </select>}
         <div className="account-clawd-grid">
-          {CLAWD_AVATAR_PRESETS.map((preset) => {
-            const selected = usingDefaultClawd && selectedPreset === preset.id;
-            return (
-              <button
-                key={preset.id}
-                type="button"
-                className={`account-clawd-choice${selected ? ' is-selected' : ''}`}
-                aria-label={t(preset.zh, preset.en)}
-                aria-pressed={selected}
-                title={t(preset.zh, preset.en)}
-                disabled={saving}
-                onClick={() => void saveChoice({ kind: 'clawd', preset: preset.id as ClawdAvatarPresetId })}
-              >
-                <span className="account-clawd-image"><img src={clawdAvatarUrl(preset.id)} alt="" /></span>
-                <span>{t(preset.zh, preset.en)}</span>
-              </button>
-            );
-          })}
+          {ACCOUNT_AVATAR_PRESETS.filter(p => p.petId === avatarPet && avatarPets.some(pet => pet.id === p.petId)).map(p =>
+            <button key={p.id} type="button" className={`account-clawd-choice${preset === p.id ? ' is-selected' : ''}`}
+              aria-label={t(p.zh, p.en)} aria-pressed={preset === p.id} data-avatar-selected={preset === p.id}
+              disabled={saving} onClick={() => setPreset(p.id)}>
+              <span className="account-clawd-image"><img src={clawdAvatarUrl(p.id)} alt="" loading="lazy" /></span>
+              <span>{t(p.zh, p.en)}</span>
+            </button>)}
         </div>
-      </details>}
+      </>}
       {error && <p className="auth-error" role="alert">{error}</p>}
-    </div>
-  );
+      <footer className="account-avatar-modal-footer">
+        <button type="button" className="auth-link" disabled={saving} onClick={onClose}>{t('取消', 'Cancel')}</button>
+        <button type="button" className="auth-primary" disabled={saving || preparing || !canSave} onClick={() => void save()}>
+          {saving && <Loader2 size={14} className="auth-spin" />}{t('使用此头像', 'Use this avatar')}
+        </button>
+      </footer>
+    </section>
+  </dialog>;
 }
 
 function DisplayNameField({
@@ -218,6 +274,7 @@ function DisplayNameField({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const wcaLocked = Boolean(profile.wcaId);
+  const isZh = useLang() !== 'en';
 
   useEffect(() => {
     if (!editing) setName(profile.name);
@@ -261,12 +318,12 @@ function DisplayNameField({
     }
   };
 
-  return (
+  return wcaLocked ? null : (
     <>
       <div className="auth-idrow">
         <span className="auth-idicon"><UserRound size={16} /></span>
-        <span className="auth-idprov">{t('用户名', 'Username')}</span>
-        <span className="auth-iduid">{profile.name || t('未设置', 'Not set')}</span>
+        <span className="auth-idprov">{wcaLocked ? t('姓名', 'Name') : t('用户名', 'Username')}</span>
+        <span className="auth-iduid">{(wcaLocked ? displayCuberName(profile.name, isZh) : profile.name) || t('未设置', 'Not set')}</span>
         {!editing && !wcaLocked && (
           <div className="auth-idactions">
             <button type="button" className="auth-link" onClick={() => { setError(null); setEditing(true); }}>
@@ -277,7 +334,7 @@ function DisplayNameField({
       </div>
       {wcaLocked && (
         <p className="auth-hint account-name-lock-hint">
-          {t('已绑定 WCA，用户名使用 WCA 实名。', 'WCA is linked, so your username uses your verified WCA name.')}
+          {t('取自 WCA', 'From WCA')}
         </p>
       )}
       {editing && !wcaLocked && (
@@ -329,7 +386,6 @@ function DisplayNameEditor() {
   return (
     <div className="account-profile-editor">
       <h2 className="account-creds-title">{t('个人资料', 'Profile')}</h2>
-      <AvatarEditor />
       <DisplayNameField
         profile={{ name: user.name, wcaId: user.wcaId || null }}
         onSave={save}
@@ -340,7 +396,7 @@ function DisplayNameEditor() {
 }
 
 type EditableBasicProfile = Pick<AccountBasicProfile, 'fullName' | 'birthDate' | 'gender' | 'countryIso2' | 'regionCode' | 'cityName'>;
-type AccountRegion = { code: string; name: string; cities: string[]; cityNamesZh?: Record<string, string> };
+type AccountRegion = { code: string; name: string; nameZh?: string; cities: string[]; cityNamesZh?: Record<string, string>; legacyCityNamesZh?: Record<string, string> };
 
 function BasicProfileEditor() {
   const t = useT();
@@ -354,6 +410,8 @@ function BasicProfileEditor() {
   const [regions, setRegions] = useState<AccountRegion[]>([]);
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locationsError, setLocationsError] = useState(false);
+  const [locationMenuOpen, setLocationMenuOpen] = useState(false);
+  const [locationMenuRegion, setLocationMenuRegion] = useState<string | null>(null);
   const today = toLocalIsoDate();
 
   useEffect(() => {
@@ -387,7 +445,7 @@ function BasicProfileEditor() {
     }
     let cancelled = false;
     setLocationsLoading(true);
-    fetch(`/account-locations/${countryIso2}.json?v=3`, { cache: 'force-cache' })
+    fetch(`/account-locations/${countryIso2}.json?v=6`, { cache: 'force-cache' })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const next = await response.json() as AccountRegion[];
@@ -458,22 +516,25 @@ function BasicProfileEditor() {
     { value: 'female', label: t('女', 'Female') },
   ];
   const selectedRegion = regions.find((region) => region.code === draft.regionCode);
+  const regionLabel = (region: AccountRegion) => t(region.nameZh ?? localizeCity(region.name, true, draft.countryIso2), region.name);
+  const menuRegion = regions.find((region) => region.code === locationMenuRegion);
+  const cityLabel = (city: string) => {
+    const label = t(selectedRegion?.cityNamesZh?.[city] ?? selectedRegion?.legacyCityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2));
+    return !locationsLoading && !locationsError && selectedRegion && !selectedRegion.cities.includes(city)
+      ? t(`${label}（已保存的旧资料）`, `${label} (previously saved)`)
+      : label;
+  };
 
   return (
     <form className="account-basic-profile" onSubmit={(event) => { event.preventDefault(); void save(); }}>
-      <p className="auth-hint account-basic-profile-privacy">
-        {t('以下资料默认不公开，用于账户归属、认领核验和论坛评论资格校验。', 'These details are private by default and are used for account ownership, claim verification and forum comment eligibility.')}
-      </p>
-      <p className="auth-hint" role="status">
+      {(profile.forumBanned || !profile.forumProfileExempt) && <p className="auth-hint" role="status">
         {profile.forumBanned
           ? t('你的账号已被禁止在论坛发帖和评论。', 'Your account is banned from posting and commenting in the forum.')
-          : profile.forumProfileExempt
-          ? t('你在新规前已参与论坛，可继续评论，无需补填资料。', 'You participated before the new rule and can continue commenting without completing these details.')
           : isForumReplyProfileComplete(profile, today)
           ? t('已保存的资料完整，可以在论坛评论。', 'Your saved profile is complete. You can comment in the forum.')
           : t('论坛评论前请填写并保存姓名、出生日期、性别、国家、省份和城市；没有可选省市的地区无需填写对应项。', 'Before commenting, save your name, birth date, gender, country, state and city. Location fields without available options are exempt.')}
-      </p>
-      <div className="account-basic-profile-field">
+      </p>}
+      {!nameLocked && <div className="account-basic-profile-field">
         <label className="auth-label" htmlFor="account-full-name">{t('姓名', 'Name')}</label>
         <div className="account-name-field">
           <input
@@ -489,11 +550,12 @@ function BasicProfileEditor() {
         </div>
         <p id="account-full-name-hint" className="auth-hint">
           {nameLocked
-            ? t('已绑定 WCA，姓名使用 WCA 实名，无需填写。', 'WCA is linked, so your name comes from WCA and cannot be edited here.')
+            ? t('取自 WCA', 'From WCA')
             : t(`最多 ${DISPLAY_NAME_MAX_LENGTH} 个字符，不会替代公开显示的用户名。`, `Up to ${DISPLAY_NAME_MAX_LENGTH} characters. This does not replace your public username.`)}
         </p>
-      </div>
-      <div className="account-basic-profile-field">
+      </div>}
+      <div className="account-profile-demographics">
+      <div className="account-basic-profile-field account-birth-date-field">
         <label className="auth-label" htmlFor="account-birth-date">{t('出生日期', 'Birth date')}</label>
         <DateInput
           id="account-birth-date"
@@ -506,7 +568,7 @@ function BasicProfileEditor() {
           onChange={(value) => updateDraft({ birthDate: value || null })}
         />
       </div>
-      <div className="account-basic-profile-field">
+      <div className="account-basic-profile-field account-gender-field">
         <label className="auth-label" htmlFor="account-gender">{t('性别', 'Gender')}</label>
         <select
           id="account-gender"
@@ -518,15 +580,19 @@ function BasicProfileEditor() {
           <option value="" hidden>{t('未填写', 'Not set')}</option>
           {genderOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
+        {profile.genderSource === 'wca' && draft.gender === profile.gender && <p className="auth-hint">{t('取自 WCA', 'From WCA')}</p>}
       </div>
-      <div className="account-basic-profile-field">
+      </div>
+      <div className="account-basic-profile-field account-location-field">
         <label
           className="auth-label"
           id="account-country-label"
           htmlFor={countryLocked ? undefined : 'account-country'}
         >
-          {t('国家', 'Country')}
+          {t('国家 / 地区', 'Country / location')}
         </label>
+        <div className="account-location-controls">
+        <div className="account-location-country">
         {countryLocked ? (
           <div className="account-basic-profile-country" aria-labelledby="account-country-label">
             {profile.countryIso2 ? (
@@ -551,66 +617,71 @@ function BasicProfileEditor() {
         )}
         {countryLocked && (
           <p className="auth-hint account-basic-profile-lock">
-            {t('已绑定 WCA，国家由 WCA 资料同步。', 'WCA is linked, so country is synced from your WCA profile.')}
+            {t('取自 WCA', 'From WCA')}
           </p>
         )}
       </div>
       {draft.countryIso2 && (
-        <div className="account-basic-profile-field">
-          <label className="auth-label" htmlFor="account-region">{t('省份', 'State or province')}</label>
+        <div className="account-location-region">
           <CompactSelect
-            id="account-region"
-            ariaLabel={t('省份', 'State or province')}
+            id="account-location"
+            ariaLabel={t('地区', 'Location')}
             label={draft.regionCode
-              ? (selectedRegion ? localizeCity(selectedRegion.name, isZh, draft.countryIso2) : draft.regionCode)
-              : locationsLoading
-                ? t('正在加载…', 'Loading…')
-                : locationsError
-                  ? t('省份加载失败', 'Could not load states')
-                  : regions.length === 0
-                    ? t('暂无省份', 'No states or provinces')
-                    : t('请选择省份', 'Select a state or province')}
-            value={draft.regionCode ?? ''}
+              ? [selectedRegion ? regionLabel(selectedRegion) : draft.regionCode, draft.cityName ? cityLabel(draft.cityName) : null].filter(Boolean).join(' / ')
+              : locationsLoading ? t('正在加载…', 'Loading…')
+                : locationsError ? t('地区加载失败', 'Could not load locations')
+                  : regions.length === 0 ? t('暂无地区', 'No locations')
+                    : t('请选择地区', 'Select a location')}
             disabled={saving || locationsLoading || locationsError || regions.length === 0}
-            onChange={(value) => updateDraft({ regionCode: value || null, cityName: null })}
-            items={[
-              ...(draft.regionCode && !selectedRegion ? [{ value: draft.regionCode, label: draft.regionCode }] : []),
-              ...regions.map((region) => ({ value: region.code, label: localizeCity(region.name, isZh, draft.countryIso2) })),
-            ]}
+            items={[]}
+            onChange={() => {}}
+            open={locationMenuOpen}
+            onOpenChange={(open) => {
+              setLocationMenuOpen(open);
+              if (open) setLocationMenuRegion(draft.regionCode);
+            }}
+            popupClassName="account-location-popup"
+            panelContent={
+              <div className="account-location-menu">
+                <div className="account-location-level" role="group" aria-label={t('省份', 'State or province')}>
+                  {regions.map((region) => (
+                    <button type="button" key={region.code}
+                      className={'compact-select-option account-location-option' + (locationMenuRegion === region.code ? ' active' : '')}
+                      aria-expanded={region.cities.length ? locationMenuRegion === region.code : undefined}
+                      onClick={() => {
+                        if (region.cities.length) setLocationMenuRegion(region.code);
+                        else {
+                          updateDraft({ regionCode: region.code, cityName: null });
+                          setLocationMenuOpen(false);
+                        }
+                      }}>
+                      <span>{regionLabel(region)}</span>
+                      {region.cities.length > 0 && <ChevronRight size={14} aria-hidden="true" />}
+                    </button>
+                  ))}
+                </div>
+                {menuRegion && menuRegion.cities.length > 0 && (
+                  <div className="account-location-level" role="group" aria-label={t('城市／地区', 'City / district')} key={menuRegion.code}>
+                    {menuRegion.cities.map((city) => (
+                      <button type="button" key={city}
+                        className={'compact-select-option account-location-option' + (draft.regionCode === menuRegion.code && draft.cityName === city ? ' active' : '')}
+                        aria-pressed={draft.regionCode === menuRegion.code && draft.cityName === city}
+                        onClick={() => {
+                          updateDraft({ regionCode: menuRegion.code, cityName: city });
+                          setLocationMenuOpen(false);
+                        }}>
+                        {t(menuRegion.cityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2))}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            }
           />
         </div>
       )}
-      {draft.regionCode && (
-        <div className="account-basic-profile-field">
-          <label className="auth-label" htmlFor="account-city">{t('城市', 'City')}</label>
-          <CompactSelect
-            id="account-city"
-            ariaLabel={t('城市', 'City')}
-            label={draft.cityName
-              ? t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2))
-              : locationsLoading
-                ? t('正在加载…', 'Loading…')
-                : locationsError
-                  ? t('城市加载失败', 'Could not load cities')
-                  : selectedRegion?.cities.length === 0
-                    ? t('暂无城市', 'No cities')
-                    : t('请选择城市', 'Select a city')}
-            value={draft.cityName ?? ''}
-            disabled={saving || locationsLoading || locationsError || !selectedRegion || selectedRegion.cities.length === 0}
-            onChange={(value) => updateDraft({ cityName: value || null })}
-            items={[
-              ...(draft.cityName && !selectedRegion?.cities.includes(draft.cityName) ? [{
-                value: draft.cityName,
-                label: t(selectedRegion?.cityNamesZh?.[draft.cityName] ?? localizeCity(draft.cityName, true, draft.countryIso2), localizeCity(draft.cityName, false, draft.countryIso2)),
-              }] : []),
-              ...(selectedRegion?.cities.map((city) => ({
-                value: city,
-                label: t(selectedRegion.cityNamesZh?.[city] ?? localizeCity(city, true, draft.countryIso2), localizeCity(city, false, draft.countryIso2)),
-              })) ?? []),
-            ]}
-          />
         </div>
-      )}
+      </div>
       {error && <p className="auth-error" role="alert">{error}</p>}
       {saved && <p className="auth-hint" role="status">{t('基本资料已保存。', 'Basic profile saved.')}</p>}
       <button type="submit" className="auth-primary account-basic-profile-save" disabled={saving || !dirty}>
@@ -860,7 +931,7 @@ export default function AccountPage() {
   ];
 
   return (
-    <div className="account-page">
+    <div className={`account-page${mode === 'me' && !pendingIdentity ? view === 'signin' ? ' account-page-settings' : view === 'main' ? ' account-page-main' : '' : ''}`}>
       <header className="account-header">
         {/* 面包屑往上一层:设置视图回「我的」,主视图回首页。设置视图里**不再放齿轮** ——
             人已经在里面了,亮着的齿轮长得像入口却干着出口的活,没人读得出来。
@@ -887,17 +958,7 @@ export default function AccountPage() {
             <span>{t('返回', 'Back')}</span>
           </HomeLink>
         )}
-        {mode === 'me' && view === 'main' && (
-          <AppLink
-            href={accountHref('signin')}
-            className="account-gear"
-            title={t('账号设置', 'Account settings')}
-            aria-label={t('账号设置', 'Account settings')}
-            prefetch={false}
-          >
-            <Settings size={28} />
-          </AppLink>
-        )}
+
       </header>
 
       {pendingIdentity ? <IdentityChoicePanel pending={pendingIdentity} firstPartyOnly={mobileAuth && !mobileAuthProvider} onCancel={() => setMode(useAuthStore.getState().user ? 'me' : 'login')} onDone={(info, returnPath) => {
@@ -926,26 +987,45 @@ export default function AccountPage() {
           : <p className="auth-error" role="alert">{t('只有管理员可以编辑用户资料。', 'Only administrators can edit user profiles.')}</p>
       ) : (
         <>
-          <div className="account-id-row">
+          <div className="account-id-row account-identity-heading">
+            <AvatarEditor />
+            <div className="account-identity-details">
             <div className="account-name-row">
               <AccountName name={user?.name || ''} wcaId={wcaId} />
-              {view !== 'signin' && !commerceRestricted && (
-                <AppLink href="/membership" className="account-subscribe" prefetch={false}>
-                  <Crown size={20} aria-hidden="true" />
-                  <span>{t('订阅会员', 'Subscribe to membership')}</span>
-                </AppLink>
-              )}
+              <div className="account-name-actions-row">
+                {view !== 'signin' && !commerceRestricted && (
+                  <AppLink href="/membership" className="account-subscribe" prefetch={false}>
+                    <Crown size={20} aria-hidden="true" />
+                    <span>{t('订阅会员', 'Subscribe to membership')}</span>
+                  </AppLink>
+                )}
+                {mode === 'me' && view === 'main' && (
+                  <AppLink
+                    href={accountHref('signin')}
+                    className="account-gear"
+                    title={t('账号设置', 'Account settings')}
+                    aria-label={t('账号设置', 'Account settings')}
+                    prefetch={false}
+                  >
+                    <Settings size={28} />
+                  </AppLink>
+                )}
+              </div>
             </div>
             <UserIdLabel userId={user?.uid} full />
+            </div>
           </div>
 
           {view === 'signin' ? (
-            <section className="account-creds">
+            <div className="account-settings-layout">
+              <section className="account-settings-profile">
               <DisplayNameEditor />
               <AppLink href="/account/verify" className="account-card account-profile-editor" prefetch={false}>
                 <IdCard size={22} className="account-card-icon" />
                 <span className="account-card-title">{t('实名认证', 'Identity Verification')}</span>
               </AppLink>
+              </section>
+              <section className="account-creds">
               <h2 className="account-creds-title">{t('登录方式', 'Sign-in methods')}</h2>
               <AccountPanel
                 expectedAppleUid={linkProvider === 'apple' ? expectedLinkUid : undefined}
@@ -962,6 +1042,7 @@ export default function AccountPage() {
                 {t('注销账号', 'Delete account')}
               </AppLink>
             </section>
+            </div>
           ) : (
             <>
               <AccountCardGrid cards={[

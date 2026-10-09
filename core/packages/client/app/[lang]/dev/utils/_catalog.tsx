@@ -81,6 +81,14 @@ export const CATALOG: UtilEntry[] = [
     en: 'Refresh read effects on return without polling; pause while editing or a dialog is open.',
   },
   {
+    name: 'Web smart cube / browser solver',
+    sig: 'useBluetoothCube(opts: UseBluetoothCubeOpts = {}): BluetoothCubeHandle; randomState333(): Promise<string>',
+    imp: "import { useBluetoothCube } from '@/lib/bluetooth'; import { randomState333, solve333 } from '@/lib/kociemba/random_state';",
+    category: 'cube',
+    zh: '计时器与训练器共用的 Web 蓝牙连接和浏览器求解器入口。连接租约、虚拟摆题和 Worker 缓存各只有一份；页面分别编排训练与计时。',
+    en: 'Page-independent Web Bluetooth and browser solver entries for timer and trainer, sharing connection leases, virtual case setup and one worker cache while keeping page flows separate.',
+  },
+  {
     name: 'useTimerSoloCompactLayout / timerSoloModalState / useBldConfigStore / useBldConfigHydrated',
     sig: 'useTimerSoloCompactLayout(): boolean; timerSoloModalState(blocking: boolean, solverSheet: boolean)',
     imp: "import { useTimerSoloCompactLayout, timerSoloModalState } from '@cuberoot/timer-ui/TimerSoloPage'; import { useBldConfigStore, useBldConfigHydrated } from '@cuberoot/timer-ui/bld-config-store';",
@@ -175,11 +183,11 @@ export const CATALOG: UtilEntry[] = [
   },
   {
     name: 'useHomeBackgroundChoice',
-    sig: 'useHomeBackgroundChoice(theme: EffectiveTheme): readonly [HomeBackgroundChoice, (value: HomeBackgroundChoice) => void]',
+    sig: 'useHomeBackgroundChoice(theme: EffectiveTheme): readonly [choice, setChoice, transparent, setTransparent, backgroundEnabled, setBackgroundEnabled]',
     imp: "import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';",
     category: 'hook',
-    zh: '主页背景偏好的唯一读写入口，同步外观画廊、主页菜单与其他标签页，服务端快照固定为自动模式。',
-    en: 'Shared homepage background preference for the gallery, homepage picker and other tabs, with a stable automatic server snapshot.',
+    zh: '按深浅主题保存背景与透明偏好；关闭背景保留选图，开启恢复。同步外观菜单和其他标签页，服务端快照固定为透明无背景。',
+    en: 'Per-theme background and transparency preferences. Disabling the background keeps the last image for re-enabling. Synced across menus and tabs, with a stable transparent, image-free server snapshot.',
   },
   {
     name: 'useAlgTextField',
@@ -568,6 +576,14 @@ export const CATALOG: UtilEntry[] = [
     category: 'cube',
     zh: '顶层朝向:按「顶层哪些格是顶色」把 case 按翻色形状分组(ZBLL 正好 7 组),并算出补哪个收尾 AUF 能摆成指定朝向。训练器的朝向偏好靠它出题。',
     en: 'Last-layer orientation: groups cases by the top-layer “is it the U colour” mask (ZBLL lands on exactly 7 shapes) and says which trailing AUF aims a case a given way. Drives the trainer’s orientation preference.',
+  },
+  {
+    name: 'getTextOffsetInElement / snapCaretToLine',
+    sig: 'getTextOffsetInElement(el: HTMLElement, point?: { x: number; y: number }): number\nsnapCaretToLine(raw: number, plainText: string, positions: TokenPosition[]): number',
+    imp: "import { getTextOffsetInElement, snapCaretToLine } from '@cuberoot/timer-ui/recon/text-cursor';",
+    category: 'cube',
+    zh: '复盘详情与计时器共用的文字点击定位：读取点击字符偏移，吸附到本行动作边界。播放器使用自身原始动作映射定位。',
+    en: 'Shared reconstruction text hit testing: resolve a clicked character and snap to a move boundary on that line; each player maps it to its original move stream.',
   },
   {
     name: 'classifyScan / sampleGridColors',

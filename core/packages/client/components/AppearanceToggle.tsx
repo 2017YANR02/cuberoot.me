@@ -33,6 +33,8 @@ import { SiteBackgroundControl } from '@/components/SiteBackground';
 import AppLink from '@/components/AppLink';
 import BoolToggle from '@/components/BoolToggle';
 import { useDeskPetVisible } from '@/hooks/useDeskPetVisible';
+import { useHomeBackgroundChoice } from '@/hooks/useHomeBackgroundChoice';
+import { usePanelClamp } from '@/hooks/usePanelClamp';
 import { useT } from '@/hooks/useT';
 import { tr } from '@/i18n/tr';
 
@@ -61,11 +63,14 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
   const [contrast, setContrast] = useState<ContrastLevel>('normal');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  usePanelClamp(open, panelRef);
   const previewingRef = useRef(false);
   const hoverCloseTimerRef = useRef<number | null>(null);
   const pointerTypeRef = useRef('mouse');
   const eff = useEffectiveTheme();
   const [petVisible, setPetVisible] = useDeskPetVisible();
+  const [, , transparent, setTransparent, showBackgrounds, setBackgroundEnabled] = useHomeBackgroundChoice(eff);
 
   const cancelHoverClose = () => {
     if (hoverCloseTimerRef.current === null) return;
@@ -213,6 +218,8 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
       {open && (
         <div
           className="lang-menu palette-menu appearance-menu"
+          ref={panelRef}
+          data-backgrounds={showBackgrounds}
           role="menu"
           onPointerEnter={cancelHoverClose}
           onPointerLeave={(event) => {
@@ -239,7 +246,9 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                     className={`lang-menu-item appearance-scheme${active ? ' is-active' : ''}`}
                     style={{ flex: '0 0 32px', width: 32, padding: 0, justifyContent: 'center' }}
                     onPointerEnter={() => showThemePreview(choice)}
+                    onPointerLeave={endPreview}
                     onFocus={() => showThemePreview(choice)}
+                    onBlur={endPreview}
                     onClick={() => pickTheme(choice)}
                   >
                     <Icon size={18} aria-hidden="true" />
@@ -258,7 +267,9 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
                   aria-checked={on}
                   className={`lang-menu-item${on ? ' is-active' : ''}`}
                   onPointerEnter={() => showPalettePreview(p.id)}
+                  onPointerLeave={endPreview}
                   onFocus={() => showPalettePreview(p.id)}
+                  onBlur={endPreview}
                   onClick={() => pickPalette(p.id)}
                 >
                   <span className="lang-menu-check">{on && <Check size={13} />}</span>
@@ -270,14 +281,24 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
 
             <div className="appearance-sec-label appearance-sec-div" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <BoolToggle
+                value={petVisible}
+                onChange={setPetVisible}
+                label={t('桌宠', 'Desk pet')}
+              />
+              <BoolToggle
+                value={transparent}
+                onChange={setTransparent}
+                label={t('透明', 'Transparency')}
+              />
+              <BoolToggle
+                value={showBackgrounds}
+                onChange={setBackgroundEnabled}
+                label={t('背景', 'Background')}
+              />
+              <BoolToggle
                 value={contrast === 'soft'}
                 onChange={(enabled) => pickContrast(enabled ? 'soft' : 'normal')}
                 label={L.lowContrast}
-              />
-              <BoolToggle
-                value={petVisible}
-                onChange={setPetVisible}
-                label={t('显示桌宠', 'Show desk pet')}
               />
             </div>
           </div>
@@ -296,7 +317,7 @@ export default function AppearanceToggle({ className, showLabel = false, menuCon
             className="appearance-extra"
             onPointerEnter={endPreview}
             onFocus={endPreview}
-          ><SiteBackgroundControl />{menuContent}</div>}
+          >{showBackgrounds && <SiteBackgroundControl />}{menuContent}</div>}
         </div>
       )}
     </div>

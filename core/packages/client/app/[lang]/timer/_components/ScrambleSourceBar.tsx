@@ -32,9 +32,10 @@ interface Props {
   /** 顶栏里「难度」开关的落点(SoloView 提供)。给了就把开关 portal 上去,不给就留在本条里。 */
   diffSlot?: HTMLElement | null;
   mergeSlot?: HTMLElement | null;
+  wcaSourceSlot?: HTMLElement | null;
 }
 
-export default function ScrambleSourceBar({ disabled = false, event, isZh, diffSlot, mergeSlot }: Props) {
+export default function ScrambleSourceBar({ disabled = false, event, isZh, diffSlot, mergeSlot, wcaSourceSlot }: Props) {
   const s = useSettings();
   const hasSteps = !!stepPuzzleOf(event);
   const src = s.scrambleSource;
@@ -54,7 +55,7 @@ export default function ScrambleSourceBar({ disabled = false, event, isZh, diffS
   return (
     <fieldset className="scramble-src-bar surface-chrome" data-no-timer disabled={disabled}>
       {src === 'wca' && (
-        <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} mergeSlot={mergeSlot} />
+        <WcaSourceConfig disabled={disabled} isZh={isZh} event={event} settings={s} updateSettings={updateSettings} toggleSlot={diffSlot} mergeSlot={mergeSlot} sourceSlot={wcaSourceSlot} />
       )}
 
       {src === 'manual' && (

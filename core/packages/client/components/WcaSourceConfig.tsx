@@ -1,9 +1,11 @@
 'use client';
 
 /** Thin Web host for the shared WCA source + difficulty controls. */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { DateRangeInput } from '@/components/DateRangeInput';
 import { Flag } from '@/components/Flag';
+import { CountryInput } from '@/components/CountryInput/CountryInput';
 import { localizeCompName } from '@/lib/comp-localize';
 import { loadComps } from '@/lib/comp-search';
 import { localizeCity } from '@/lib/city-localize';
@@ -36,6 +38,8 @@ interface Props {
   settings: WcaSourceSettings;
   toggleSlot?: HTMLElement | null;
   mergeSlot?: HTMLElement | null;
+  /** undefined renders inline; null waits for the WCA submenu to open. */
+  sourceSlot?: HTMLElement | null;
   updateSettings: (patch: Partial<WcaSourceSettings>) => void;
 }
 
@@ -46,10 +50,22 @@ export default function WcaSourceConfig({
   settings,
   toggleSlot,
   mergeSlot,
+  sourceSlot,
   updateSettings,
 }: Props) {
   const wcaEventId = timerWcaScrambleEventId(event);
-  const today = useMemo(() => toLocalIsoDate(), []);
+  const [today, setToday] = useState('');
+  useEffect(() => setToday(toLocalIsoDate()), []);
+  const [period, setPeriod] = useState('all');
+  const [country, setCountry] = useState('');
+  const periodFrom = useMemo(() => {
+    if (!today || period === 'all') return '';
+    const [year, month, day] = today.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    // Inclusive calendar-day ranges; local fields avoid timezone/DST shifts.
+    date.setDate(date.getDate() - Number(period) + 1);
+    return toLocalIsoDate(date);
+  }, [period, today]);
   const [topControlsSlot, setTopControlsSlot] = useState<HTMLSpanElement | null>(null);
   const sourceAdapter = useMemo<TimerWcaSourceDataAdapter>(() => ({
     async loadCompetitions() {
@@ -80,9 +96,36 @@ export default function WcaSourceConfig({
     },
   }), [isZh]);
 
-  return (
-    <div className="wca-src-config">
+  const sourceControls = (
       <TimerWcaSourceConfig
+        popupContainer={sourceSlot ?? undefined}
+        competitionFilters={{
+          from: periodFrom,
+          country,
+          render: (countries) => (
+            <fieldset className="wca-src-filters" disabled={disabled} aria-label={tr({ zh: '筛选比赛', en: 'Filter competitions' })}>
+              <select
+                className="timer-wca-source-select"
+                aria-label={tr({ zh: '时间范围', en: 'Time range' })}
+                value={period}
+                onChange={(event) => setPeriod(event.target.value)}
+              >
+                <option value="all">{tr({ zh: '全部时间', en: 'All time' })}</option>
+                <option value="7">{tr({ zh: '近一周', en: 'Past week' })}</option>
+                <option value="30">{tr({ zh: '近一个月', en: 'Past month' })}</option>
+                <option value="365">{tr({ zh: '近一年', en: 'Past year' })}</option>
+              </select>
+              <CountryInput
+                ariaLabel={tr({ zh: '国家', en: 'Country' })}
+                placeholder={tr({ zh: '全部国家', en: 'All countries' })}
+                allLabel={tr({ zh: '全部国家', en: 'All countries' })}
+                restrictTo={country ? [...new Set([...countries, country])] : countries}
+                value={country}
+                onChange={(iso2) => setCountry(iso2.toUpperCase())}
+              />
+            </fieldset>
+          ),
+        }}
         adapter={sourceAdapter}
         disabled={disabled}
         competitionDisplayName={(competitionId, canonicalName) => (
@@ -138,6 +181,10 @@ export default function WcaSourceConfig({
         trailingControls={<span className="wca-src-shared-controls" ref={setTopControlsSlot} />}
         wcaEventId={wcaEventId}
       />
+  );
+  return (
+    <div className="wca-src-config">
+      {sourceSlot === undefined ? sourceControls : sourceSlot && createPortal(sourceControls, sourceSlot)}
       <TimerWcaDifficultyConfig
         adapter={webTimerWcaDifficultyAdapter}
         disabled={disabled}
@@ -159,8 +206,8 @@ export default function WcaSourceConfig({
           stageAriaLabel: tr({ zh: '阶段', en: 'Stage' }),
           stageLabel: (key) => stageLabel(key, isZh),
           unindexedCompetition: tr({
-            zh: '该比赛的阶段难度库尚未更新；整体与打乱长度仍可使用。',
-            en: 'This competition is not in the stage-difficulty index yet; Full and Length remain available.',
+            zh: '该比赛阶段难度数据待更新。可将方法改为「打乱」，或选「不限难度」；也可关闭窗口，在「真题」中更换比赛。',
+            en: 'Stage difficulty data is not ready for this competition. Choose Length or Any difficulty, or close this window and select another competition in the Real menu.',
           }),
         }}
         onChange={updateSettings}

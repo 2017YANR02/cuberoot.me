@@ -11,7 +11,8 @@
  * 不是同一个槽,没有共同含义 → 直接隐掉,按「四槽取最优」算(= /scramble/stats 的 XCross 口径)。
  */
 
-import { useEffect, useMemo, useRef } from 'react';
+import './compact-select.css';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   dataVariantOfStage,
@@ -35,16 +36,16 @@ import {
   trainerDepthBounds,
 } from '@cuberoot/puzzle-solvers/cross-trainer/reach';
 import { SubsetColorPicker, useSubsetSelection, type TimerUiLanguage } from './TimerColorSubsetPicker';
-import { TimerPillToggle } from './TimerPillToggle';
 import { TimerRangeSlider } from './TimerRangeSlider';
 import { TimerDifficultyHelp } from './TimerDifficultyHelp';
+import { TimerDifficultyDialog } from './TimerDifficultyDialog';
 
 export interface TimerRandomDifficultyConfigProps {
   disabled?: boolean;
   language: TimerUiLanguage;
   settings: TimerRandomDifficultySettings;
   onChange: (patch: Partial<TimerRandomDifficultySettings>) => void;
-  /** 「难度」开关的落点(计时器顶栏)。同 WcaSourceConfig 的 toggleSlot,不传就留在本组件顶行。 */
+  /** 「难度」按钮的落点(计时器顶栏)。同 WcaSourceConfig 的 toggleSlot,不传就留在本组件顶行。 */
   toggleSlot?: HTMLElement | null;
 }
 
@@ -102,10 +103,16 @@ const COPY = {
 export function TimerRandomDifficultyConfig({
   disabled = false,
   language,
-  onChange,
-  settings,
+  onChange: persist,
+  settings: savedSettings,
   toggleSlot,
 }: TimerRandomDifficultyConfigProps) {
+  const [draft, setDraft] = useState<Partial<TimerRandomDifficultySettings> | null>(null);
+  const settings = { ...savedSettings, ...draft };
+  const onChange = (patch: Partial<TimerRandomDifficultySettings>) => {
+    if (draft !== null) setDraft(current => current === null ? null : { ...current, ...patch });
+    else persist(patch);
+  };
   const text = (copy: Readonly<Record<TimerUiLanguage, string>>) => copy[language];
   // 方法有没有阶段,判据只有一个:**下拉真能列出来的**阶段数。用引擎侧的 trainerStagesOf 判会留
   // 一个缺口 —— 阶段键没登记进 VARIANT_STAGES 的话,方法照样出现、阶段下拉却是空的,于是 caps
@@ -188,17 +195,12 @@ export function TimerRandomDifficultyConfig({
   }, [settings.genDiffOn, variant, stage, mMin, mMax, allowed.length]);
 
   const diffToggle = (
-    <span className="timer-random-difficulty-toggle">
-      <span className="timer-random-difficulty-label">{text(COPY.difficulty)}</span>
-      <TimerPillToggle
-        value={settings.genDiffOn}
-        onChange={(value) => onChange({ genDiffOn: value })}
-        ariaLabel={text(COPY.difficultyAria)}
-        disabled={disabled}
-      />
-    </span>
+    <button type="button" className="timer-difficulty-trigger" aria-haspopup="dialog"
+      aria-expanded={draft !== null} data-active={savedSettings.genDiffOn || undefined}
+      onClick={() => setDraft({ genDiffOn: true })} disabled={disabled}>
+      {text(COPY.difficulty)}
+    </button>
   );
-
   const body = !!(settings.genDiffOn && caps);
   // 置灰刻度的说明。刻度画得比可选的深是有意的(那些难度真的存在),但用户看到的是「拖不过去」
   // —— 不写一句原因就只是个坏掉的滑块。空档不一定连着最后一格(六色底 XCross 缺的是 9,10 反而
@@ -208,98 +210,100 @@ export function TimerRandomDifficultyConfig({
 
   return (
     <>
-      {/* 开关搬去顶栏(toggleSlot)时,本组件在原处就只剩难度细项 —— 难度关着连 wrapper 都不渲染,
-          否则来源条里留下一个空 div,:empty 收不起来,计时读数上方白挂 16px。 */}
+      {/* 设置仅在弹窗中显示，来源条不留空的内联面板。 */}
       {toggleSlot && createPortal(diffToggle, toggleSlot)}
-      {(!toggleSlot || body) && (
-        <div className="timer-random-difficulty-config">
-          {!toggleSlot && <div className="timer-random-difficulty-top-row">{diffToggle}</div>}
-
-          {body && (
-            <div className="timer-random-difficulty-body">
-              <div className="timer-random-difficulty-options">
-                <SubsetColorPicker disabled={disabled} sel={sel} language={language} />
-                {methods.length > 1 && (
+      {!toggleSlot && diffToggle}
+      {draft !== null && (
+        <TimerDifficultyDialog language={language} disabled={disabled} onClose={() => setDraft(null)}
+          onApply={() => { persist(draft); setDraft(null); }}
+          onClear={() => { persist({ genDiffOn: false }); setDraft(null); }}>
+          <div className="timer-random-difficulty-config">
+            {body && (
+              <div className="timer-random-difficulty-body">
+                <div className="timer-random-difficulty-options">
+                  <SubsetColorPicker disabled={disabled} sel={sel} language={language} />
+                  {methods.length > 1 && (
+                    <select
+                      aria-label={text(COPY.method)}
+                      className="timer-random-difficulty-select"
+                      disabled={disabled}
+                      value={method}
+                      onChange={(event) => {
+                        const m = event.target.value;
+                        const first = stagesOfMethod(m)[0];
+                        onChange({
+                          genDiffVariant: dataVariantOfStage(m, first), genDiffStage: first, ...RESET,
+                        });
+                      }}
+                    >
+                      {methods.map((option) => (
+                        <option key={option} value={option}>{variantLabel(option, language === 'zh')}</option>
+                      ))}
+                    </select>
+                  )}
                   <select
-                    aria-label={text(COPY.method)}
+                    aria-label={text(COPY.stage)}
                     className="timer-random-difficulty-select"
                     disabled={disabled}
-                    value={method}
-                    onChange={(event) => {
-                      const m = event.target.value;
-                      const first = stagesOfMethod(m)[0];
-                      onChange({
-                        genDiffVariant: dataVariantOfStage(m, first), genDiffStage: first, ...RESET,
-                      });
-                    }}
+                    value={stage}
+                    onChange={(event) => onChange({
+                      genDiffVariant: dataVariantOfStage(method, event.target.value),
+                      genDiffStage: event.target.value,
+                      ...RESET,
+                    })}
                   >
-                    {methods.map((option) => (
-                      <option key={option} value={option}>{variantLabel(option, language === 'zh')}</option>
+                    {stages.map((option) => (
+                      <option key={option} value={option}>{stageLabel(option, language === 'zh')}</option>
                     ))}
                   </select>
-                )}
-                <select
-                  aria-label={text(COPY.stage)}
-                  className="timer-random-difficulty-select"
-                  disabled={disabled}
-                  value={stage}
-                  onChange={(event) => onChange({
-                    genDiffVariant: dataVariantOfStage(method, event.target.value),
-                    genDiffStage: event.target.value,
-                    ...RESET,
-                  })}
-                >
-                  {stages.map((option) => (
-                    <option key={option} value={option}>{stageLabel(option, language === 'zh')}</option>
-                  ))}
-                </select>
-                {showSlots && (
-                  <select
-                    className="timer-random-difficulty-select"
+                  {showSlots && (
+                    <select
+                      className="timer-random-difficulty-select"
+                      disabled={disabled}
+                      value={slot}
+                      onChange={(event) => onChange({ genDiffSlot: Number(event.target.value) })}
+                      // 砖挑的是块(角),不是 F2L 槽 —— 名字同形(FR/FL/BL/BR),含义不同。
+                      aria-label={stage === 'block222'
+                        ? text(COPY.block)
+                        : text(COPY.f2lSlot)}
+                    >
+                      <option value={TIMER_RANDOM_DIFFICULTY_BEST_SLOT}>
+                        {stage === 'block222' ? text(COPY.bestBlock) : text(COPY.bestSlot)}
+                      </option>
+                      {slotNames.map((name, i) => (
+                        <option key={name} value={i}>{name}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className="timer-random-difficulty-range">
+                  <TimerRangeSlider
+                    min={mMin}
+                    max={bounds.god}
+                    allowed={allowed}
+                    value={[lo, hi]}
+                    onChange={([a, b]) => onChange({ genDiffSteps: range(a, b) })}
+                    marks={range(mMin, bounds.god)}
+                    ariaLabel={text(COPY.steps)}
                     disabled={disabled}
-                    value={slot}
-                    onChange={(event) => onChange({ genDiffSlot: Number(event.target.value) })}
-                    // 砖挑的是块(角),不是 F2L 槽 —— 名字同形(FR/FL/BL/BR),含义不同。
-                    aria-label={stage === 'block222'
-                      ? text(COPY.block)
-                      : text(COPY.f2lSlot)}
-                  >
-                    <option value={TIMER_RANDOM_DIFFICULTY_BEST_SLOT}>
-                      {stage === 'block222' ? text(COPY.bestBlock) : text(COPY.bestSlot)}
-                    </option>
-                    {slotNames.map((name, i) => (
-                      <option key={name} value={i}>{name}</option>
-                    ))}
-                  </select>
-                )}
+                  />
+                </div>
               </div>
-              <div className="timer-random-difficulty-range">
-                <TimerRangeSlider
-                  min={mMin}
-                  max={bounds.god}
-                  allowed={allowed}
-                  value={[lo, hi]}
-                  onChange={([a, b]) => onChange({ genDiffSteps: range(a, b) })}
-                  marks={range(mMin, bounds.god)}
-                  ariaLabel={text(COPY.steps)}
-                  disabled={disabled}
+            )}
+
+            {/* div 而非 p:InfoTooltip 展开的气泡是 div,套在 p 里是非法嵌套(浏览器会自动闭合 p,
+                服务端与客户端的 DOM 因此对不上 → hydration 报错)。 */}
+            {gaps.length > 0 && (
+              <div className="timer-random-difficulty-hint">
+                {text(COPY.rare).replace('{gaps}', gapText)}
+                <TimerDifficultyHelp
+                  content={text(COPY.answerWhy).replace('{god}', String(bounds.god))}
+                  label={text(COPY.moreInfo)}
                 />
               </div>
-            </div>
-          )}
-
-          {/* div 而非 p:InfoTooltip 展开的气泡是 div,套在 p 里是非法嵌套(浏览器会自动闭合 p,
-              服务端与客户端的 DOM 因此对不上 → hydration 报错)。 */}
-          {gaps.length > 0 && (
-            <div className="timer-random-difficulty-hint">
-              {text(COPY.rare).replace('{gaps}', gapText)}
-              <TimerDifficultyHelp
-                content={text(COPY.answerWhy).replace('{god}', String(bounds.god))}
-                label={text(COPY.moreInfo)}
-              />
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </TimerDifficultyDialog>
       )}
     </>
   );

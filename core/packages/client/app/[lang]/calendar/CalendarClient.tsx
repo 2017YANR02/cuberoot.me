@@ -639,7 +639,7 @@ export default function CalendarClient() {
       </div>
 
       {tzOpen && (
-        <div className="cal-pop cal-pop-tz" ref={tzPopRef}>
+        <div className="cal-pop cal-pop-tz" data-site-surface="popover" ref={tzPopRef}>
           <div className="cal-pop-head">
             <span className="cal-field-label">{tr({ zh: '显示时区', en: 'Display time zone' })}</span>
             <button
@@ -843,7 +843,7 @@ export default function CalendarClient() {
           )}
 
           {query.trim() && (
-            <div className="cal-results">
+            <div className="cal-results" data-site-surface="popover">
               <div className="cal-results-head">
                 <span>{tr({ zh: `搜索结果 ${results.length}`, en: `${results.length} results` })}</span>
                 <button type="button" className="cal-icon-btn" onClick={() => setQuery('')} aria-label={tr({ zh: '关闭', en: 'Close' })}>

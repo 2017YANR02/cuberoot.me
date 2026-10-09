@@ -223,14 +223,12 @@ describe('转体织进谱子(Sprint 28)', () => {
     expect(all).not.toContain('d');
   });
 
-  it('多个转体各就各位,顺序按时刻', async () => {
+  it('按当前视角禁用 F2L z，保留其它转体的顺序', async () => {
     const r = await buildWithRotations([rot(400, 'y'), rot(2400, "x'"), rot(2600, 'z2')]);
     const all = r.lines.flatMap(l => l.moves).filter(m => /^[xyz]/.test(m));
-    expect(all).toHaveLength(3);
-    // 第一个原样(此时还没换过视角);后面两个按前面那些换过名 —— 姿态流报的是
-    // 魔方自己那个系里的转动,而谱子写在人的系里。下面那条「照着拧还是复原」是
-    // 这件事的判据,这里只钉住个数和顺序。
-    expect(all[0]).toBe('y');
+    // y 之后，物理 x' 在书写视角是 z，禁用时不得推进面名变换；
+    // 后面的物理 z2 则仍按只发生过 y 的视角写成 x2'。
+    expect(all).toEqual(['y', "x2'"]);
   });
 
   it('带转体的谱子照着拧,魔方还是复原的 —— 这正是以前错的地方', async () => {
@@ -482,7 +480,7 @@ describe('用户那把 15.214s:长 y 区间跨过整组中层', () => {
     const view = normalizeSolve(replay.scramble, replay.moves, {
       preferredRotation: initialPoseRotation(samples, replay.device?.model),
     });
-    const core = buildCoreTrack(samples, { brand: replay.device?.model });
+    const core = buildCoreTrack(samples, { brand: replay.device?.model, moves: replay.moves });
     const result = await buildReconText({
       scramble: view.scramble,
       moves: view.moves,

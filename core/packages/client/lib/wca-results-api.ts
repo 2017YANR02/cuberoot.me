@@ -192,6 +192,9 @@ export function fetchWcaScrambles(
     .then((payload) => {
       const rows = parse(payload);
       if (rows === null) throw new Error('invalid competition scramble response');
+      // A new competition can be published by WCA before our mirror/cache
+      // catches up. Only a non-empty server result completes this lookup.
+      if (rows.length === 0) throw new Error('competition scrambles not yet mirrored');
       return rows;
     })
     .catch((error: unknown) => {
@@ -212,7 +215,8 @@ export function fetchWcaScrambles(
   if (cacheable) {
     scrambleCache.set(compId, p);
     void p.then((rows) => {
-      if (rows === null && scrambleCache.get(compId) === p) scrambleCache.delete(compId);
+      // Empty official responses are temporary too: retry on the next lookup.
+      if (!rows?.length && scrambleCache.get(compId) === p) scrambleCache.delete(compId);
     }, () => {
       if (scrambleCache.get(compId) === p) scrambleCache.delete(compId);
     });

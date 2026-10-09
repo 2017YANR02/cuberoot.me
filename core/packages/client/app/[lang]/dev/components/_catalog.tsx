@@ -1543,8 +1543,8 @@ export const CATALOG: ComponentEntry[] = [
     name: 'TimerScrambleSourceSelect',
     import: "import { TimerScrambleSourceSelect } from '@cuberoot/timer-ui';",
     category: 'more',
-    zh: 'Web、Android 与 iOS 计时器共用的打乱来源选择器；真题、随机状态、手动输入三项及其弹层、键盘、焦点、点外关闭和视口 clamp 只维护这一份。所有端都传入规范值 realValue="wca"；默认非受控，也可用 open/onOpenChange 接入 Android Back。',
-    en: 'The scramble-source selector shared by the Web, Android, and iOS timers. Its fixed Real, Random state, and Manual input options plus popup, keyboard, focus, outside-dismiss, and viewport-clamp behavior live in one implementation. Every host passes the canonical realValue="wca". It remains uncontrolled by default and accepts open/onOpenChange for Android Back.',
+    zh: 'Web、Android 与 iOS 共用的打乱来源菜单，一级选项与展开的二级内容分两列显示，统一焦点、返回、点外关闭和视口钳制。realMenuContent 可接真题设置，Web 单人计时器已接入。所有端传 realValue="wca"，open/onOpenChange 可接系统返回。',
+    en: 'Shared scramble-source menu with primary choices and expanded settings in two columns, plus focus, back navigation, outside dismissal and viewport clamping. Optional realMenuContent supplies WCA settings, used by the Web solo timer. Hosts pass realValue="wca"; open/onOpenChange supports system Back.',
   },
   {
     name: 'TimerDifficultyHelp',
@@ -1587,6 +1587,13 @@ export const CATALOG: ComponentEntry[] = [
     category: 'more',
     zh: 'Web 与五端 App 共用的设备中心；宿主注入真实设备及可选辅助入口。Web 开发环境的假魔方排在麦克风下方，面板锚定同一入口。无辅助入口且智能魔方已连接时直接打开设备操作；否则显示菜单。统一活动态、设备详情、Escape、点外关闭和焦点恢复。',
     en: 'Shared device center for Web and installed clients, with host-provided devices and optional utility actions. The Web development fake cube follows the microphone and anchors its panel to the same trigger. Connected cubes open directly when no utility needs menu access; otherwise the menu remains available. Active state, details, Escape/outside dismissal and focus return are shared.',
+  },
+  {
+    name: 'TimerDifficultyDialog',
+    import: "import { TimerDifficultyDialog } from '@cuberoot/timer-ui';",
+    category: 'more',
+    zh: '计时器随机生成与真题筛选共用的难度弹窗；复用 TimerRoomDialog，应用草稿或取消难度限制，关闭时丢弃草稿。',
+    en: 'Shared difficulty dialog for generated and competition scrambles. Reuses TimerRoomDialog, applies drafts or clears the filter; dismissal discards edits.',
   },
   {
     name: 'TimerScramble222Config',
