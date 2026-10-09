@@ -6,7 +6,8 @@ import { Trash2, ChevronDown, ChevronRight, Check, Star } from 'lucide-react';
 import type { AlgCase, AlgPuzzle } from '@cuberoot/shared';
 import Link from '@/components/AppLink';
 import { CaseThumb } from '@/components/CaseThumb';
-import { LEVEL2_PICKER_MASK } from '@/lib/alg_thumb_plan';
+import { LEVEL2_PICKER_MASK, DEFAULT_ALG_CUBE_ORIENTATION } from '@/lib/alg_thumb_plan';
+import { visualCubeSchemeForOrientation } from '@/lib/cube-orientation';
 import { VisualCube } from '@/components/VisualCube';
 import { SegmentTime } from '@cuberoot/timer-ui';
 import { TimerState } from '@/lib/trainer-store';
@@ -112,15 +113,31 @@ export function CaseThumbAction({
   return <div className={cls}>{children}</div>;
 }
 
+/** Both views come from the exact combined state; x2 brings the bottom to the top. */
+export function DoubleZbllThumb({ top, bottom, scramble, size = 112, compact = false }: { top: AlgCase; bottom: AlgCase; scramble: string; size?: number; compact?: boolean }) {
+  return <div className="trainer-double-thumbs">
+    {[{ c: top, setup: scramble, label: tr({ zh: '顶层', en: 'Top' }) },
+      { c: bottom, setup: `${scramble} x2`, label: tr({ zh: '底层 · 翻转后', en: 'Bottom · after flipping' }) }].map(({ c, setup, label }) => (
+      <figure key={label}>
+        {/* Full-state plan view: a single-layer LL mask would hide all bottom pieces after x2. */}
+        <VisualCube view="plan" setup={setup} scheme={visualCubeSchemeForOrientation(DEFAULT_ALG_CUBE_ORIENTATION)} size={size} local alt={label} />
+        {!compact && <figcaption>{label}</figcaption>}
+        {!compact && <CaseMarkBar k={caseKey(c)} />}
+      </figure>
+    ))}
+  </div>;
+}
+
 export function SolveCard({
   puzzle, set, scramble, c, header, markSlot, onShowCase, showThumb = true, localThumb,
-  font = 'sans',
+  font = 'sans', bottomCase,
 }: {
   puzzle: AlgPuzzle;
   set: string;
   /** 展示的打乱(计时模式 = 所观察那条成绩的;不计时 = 当前题的)。 */
   scramble: string | null;
   c: AlgCase | null;
+  bottomCase?: AlgCase;
   isZh: boolean;
   /** 卡片标题(如 `#3`)。省略 = 不渲染标题行(跟随当前题时无需「当前」字样)。 */
   header?: ReactNode;
@@ -159,7 +176,7 @@ export function SolveCard({
         ) : (
           <>
             {/* 开图时标记图标一左一右夹着图；关图时标记与下方公式共用一行。 */}
-            {showThumb && (
+            {showThumb && bottomCase ? <DoubleZbllThumb top={c} bottom={bottomCase} scramble={scramble} /> : showThumb && (
               <div className="trainer-figure">
                 {markSlot}
                 <CaseThumbAction
@@ -219,7 +236,8 @@ export function StatsList({
               `s.i` 是这条在会话里的原始序号(高亮 / 点击回看都按它),倒序只换呈现。 */}
           {solves.slice().reverse().map((s, shownIndex) => {
             const c = findCaseByKey(cases, s.caseKey);
-            const name = c ? primaryCaseName(puzzle, set, c) : s.caseName;
+            const bottom = s.bottomKey ? findCaseByKey(cases, s.bottomKey) : undefined;
+            const name = [c ? primaryCaseName(puzzle, set, c) : s.caseName, bottom ? primaryCaseName(puzzle, set, bottom) : ''].filter(Boolean).join(' / ');
             const time = formatSolveTime(s);
             return (
               <button
@@ -230,7 +248,7 @@ export function StatsList({
                 title={`${name} ${time}`}
                 aria-label={`${name} ${time}`}
               >
-                {c && (
+                {c && bottom ? <DoubleZbllThumb top={c} bottom={bottom} scramble={s.scramble} size={40} compact /> : c && (
                   <CaseThumb
                     puzzle={puzzle}
                     set={set}
@@ -332,7 +350,8 @@ export function HistoryList({
       <div className="trainer-hist-grid">
         {shown.map(([e, i]) => {
           const c = findCaseByKey(cases, e.key);
-          const name = (c ? primaryCaseName(puzzle, set, c) : e.name).replace(setPrefix, '');
+          const bottom = e.bottomKey ? findCaseByKey(cases, e.bottomKey) : undefined;
+          const name = [c ? primaryCaseName(puzzle, set, c) : e.name, bottom ? primaryCaseName(puzzle, set, bottom) : ''].filter(Boolean).join(' / ').replace(setPrefix, '');
           const alg = c ? (c.algs.flat()[0]?.alg ?? c.standard ?? '') : '';
           return (
             // 真 <button>:iOS Safari 的 tap 只在原生可交互元素上可靠(与 solve 卡同一理由)
@@ -342,11 +361,11 @@ export function HistoryList({
               className="trainer-hist-item"
               // 回看那条打乱 + 摊开这个 case:一次点击两件事,因为它们是同一个意图
               // (「这题我看看」)。没有 meta 的集(虚拟集等)照弹 —— 弹窗里还有图和全部公式。
-              onClick={() => { onPick(i); if (c) onShowCase?.(c); }}
+              onClick={() => { onPick(i); if (c && !bottom) onShowCase?.(c); }}
               title={`${name} ${e.scramble}`}
               aria-label={name}
             >
-              {c ? (
+              {c && bottom ? <DoubleZbllThumb top={c} bottom={bottom} scramble={e.scramble} size={40} compact /> : c ? (
                 <CaseThumb
                   puzzle={puzzle}
                   set={set}
@@ -537,7 +556,7 @@ export function CaseTreePicker({
     if (hasSubLevel && puzzle === '3x3') {
       const firstAlg = g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? '';
       // setup 优先:公式带起手转体 / 收尾 AUF 时,inverse(alg) 会把图整体转一格。
-      return <VisualCube setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides />;
+      return <VisualCube setup={g.sample.setup} algorithm={firstAlg} view="oll" size={44} hideGreySides local={set === 'zbll'} />;
     }
     return (
       <CaseThumb
@@ -546,6 +565,7 @@ export function CaseTreePicker({
         sticker={g.sample.sticker}
         alg={g.sample.algs.flat()[0]?.alg ?? g.sample.standard ?? ''}
         setup={g.sample.setup}
+        local={set === 'zbll'}
         size={44}
       />
     );
@@ -631,7 +651,7 @@ export function CaseTreePicker({
                             >
                               <TriCheckbox checked={subAll} indeterminate={!subAll && !subNone} />
                               <CaseThumb puzzle={puzzle} set={set} sticker={subCases[0].sticker}
-                                alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} />
+                                alg={subSampleAlg} setup={subCases[0].setup} size={36} mask={pickerMask} local={set === 'zbll'} />
                               <span>{set === 'zbll' ? displayZbllToken(subLabel) : subLabel}</span>
                               <span style={{ color: 'var(--muted-foreground)', fontWeight: 400, fontSize: '0.85rem' }}>
                                 ({subSelectedCount}/{subCases.length})
@@ -695,6 +715,7 @@ function CaseCell({
           sticker={c.sticker}
           alg={c.algs.flat()[0]?.alg ?? c.standard ?? ''}
           setup={c.setup}
+          local={set === 'zbll'}
           size={64}
         />
         {marks && <CaseMarkBadges marks={marks} k={k} />}

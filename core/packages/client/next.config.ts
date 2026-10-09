@@ -44,6 +44,9 @@ const nextConfig: NextConfig = {
   // to rewrite imports per-symbol so unused branches drop.
   experimental: {
     optimizePackageImports: ["three", "maplibre-gl", "katex"],
+    // Cached trainer documents must hydrate without a live dev-server WebSocket.
+    // Next's split React debug channel otherwise leaves offline Flight decoding pending.
+    reactDebugChannel: false,
   },
 
   // Keep trailing slashes intact so /tools/cstimer/ stays as-is and the
@@ -85,6 +88,9 @@ const nextConfig: NextConfig = {
         headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }],
       },
       { source: "/assistant/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=300, s-maxage=3600" }] },
+      { source: "/double-zbll-sw.js", headers: [{ key: "Cache-Control", value: "no-cache" }] },
+      { source: "/data/double-zbll/manifest.json", headers: [{ key: "Cache-Control", value: "public, max-age=300" }] },
+      { source: "/data/double-zbll/:file((?:pairs|cases)-[a-f0-9]+\\.(?:bin|json))", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       { source: "/maplibre/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // Long-cache bare public/ assets. Next only auto-immutables hashed
       // /_next/static/*; files served straight from public/ default to

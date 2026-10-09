@@ -2270,6 +2270,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `画公式案例缩略图统一用它,别手拼 VisualCube / PuzzleSVG 选择逻辑。`, en: `Use this for alg-case thumbnails; don't hand-wire the VisualCube/PuzzleSVG selection logic yourself.` },
   },
   {
+    name: 'DoubleZbllThumb',
+    import: "import { DoubleZbllThumb } from '@/app/[lang]/alg/_trainer/trainer-components';",
+    category: 'display',
+    zh: '双底训练主屏与历史卡片共用的顶底识别图，从同一条完整打乱本地渲染，底层按 x2 翻转。',
+    en: 'Top and bottom recognition views shared by Double ZBLL exercises and history, rendered locally from one full scramble with x2 for the bottom.',
+  },
+  {
     name: 'AlgCaseRelationCards',
     import: "import { AlgCaseRelationCards } from '@/components/AlgCaseRelationCards';",
     category: 'more',

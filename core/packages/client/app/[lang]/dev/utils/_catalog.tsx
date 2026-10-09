@@ -73,6 +73,14 @@ export const UCATS: { id: UtilCat; zh: string; en: string }[] = [
 
 export const CATALOG: UtilEntry[] = [
   {
+    name: 'Double ZBLL corpus',
+    sig: 'decodeDoubleZbll(data: Uint8Array, caseCount: number, top: number, bottom: number): string',
+    imp: "import { decodeDoubleZbll } from '@cuberoot/shared/double-zbll';",
+    category: 'cube',
+    zh: '双底离线题库的固定记录格式与最优 HTM 打乱解码，生成任务与浏览器共用。',
+    en: 'Fixed-record corpus format and optimal HTM scramble decoding shared by the offline builder and browser.',
+  },
+  {
     name: 'useContentRefreshKey',
     sig: 'useContentRefreshKey(enabled = true): number',
     imp: "import { useContentRefreshKey } from '@/hooks/useContentRefreshKey';",

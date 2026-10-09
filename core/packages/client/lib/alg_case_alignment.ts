@@ -1,4 +1,4 @@
-import { loadAlg as loadSourceAlg, isMergedOhCmllEntry, type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
+import { loadAlg as loadSourceAlg, canonicalize3x3AlgFile, isMergedOhCmllEntry, type AlgCase, type AlgEntry, type AlgFile, type AlgPuzzle } from '@cuberoot/shared/alg';
 import { duplicateAlgKey } from '@cuberoot/shared/alg-notation';
 import { adjacentUEdits, applyAlgTextEdits, displayCaseAlg, displayCaseScramble, oriAdjustSetup, uTurnOrder } from '@/lib/alg_display';
 import { CUBE_ORIENTATIONS } from '@/lib/alg_goals';
@@ -229,7 +229,14 @@ export async function loadAlg(puzzle: AlgPuzzle, set: string, opts?: { fresh?: b
 
 /** Unmatched source rows stay visible in the library but cannot become exercises. */
 export async function loadTrainingAlg(puzzle: AlgPuzzle, set: string): Promise<AlgFile> {
-  const file = await loadAlg(puzzle, set);
+  let file: AlgFile;
+  try { file = await loadAlg(puzzle, set); }
+  catch (error) {
+    const cached = puzzle === '3x3' && set === 'zbll'
+      ? await (await import('./double-zbll')).cachedDoubleZbllCases() : undefined;
+    if (!cached) throw error;
+    file = await alignAlgFile(canonicalize3x3AlgFile(cached));
+  }
   return { ...file, cases: file.cases.map(c => ({
     ...c, algs: c.algs.map(entries => entries.filter(entry => !caseAlgIssue(entry))),
   })).filter(c => c.algs.every(entries => entries.length > 0)) };

@@ -205,12 +205,14 @@
       "./country-name": "runtime-neutral",
       "./pinned-countries": "runtime-neutral",
       "./country-search": "runtime-neutral",
-      "./timer/rank-client": "runtime-neutral"
+      "./timer/rank-client": "runtime-neutral",
+      "./double-zbll": "runtime-neutral"
     }
   },
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
+    "./double-zbll": { "node": "./dist/double_zbll.js", "default": "./src/double_zbll.ts" },
     "./bld/read-engine": { "types": "./src/bld/read-engine.ts", "node": "./dist/bld/read-engine.js", "default": "./src/bld/read-engine.ts" },
     "./bld/lettering": { "types": "./src/bld/lettering.ts", "node": "./dist/bld/lettering.js", "default": "./src/bld/lettering.ts" },
     "./bld/facelet-model": { "types": "./src/bld/facelet-model.ts", "node": "./dist/bld/facelet-model.js", "default": "./src/bld/facelet-model.ts" },

@@ -19,6 +19,61 @@
   },
   "manualContracts": [
     {
+      "id": "alg-build-double-zbll-native",
+      "from": "jobs/alg-build Double ZBLL offline builder",
+      "to": "existing native H48 h10 runner and read-only macOS memory diagnostics",
+      "phase": "subprocess-native",
+      "mechanism": "One fixed process.execPath runner plus vm_stat, sysctl and ps with literal diagnostic arguments; no shell or request-supplied commands",
+      "owner": "alg-build",
+      "rationale": "Compute the user-requested 222784 globally optimal pairs with checkpoint recovery, a 2 GiB headroom guard and no additional swap writes.",
+      "replacement": "Keep this offline. Export a verified artifact consumed by the client-owned installer; never run the solver in HTTP or browser code.",
+      "subprocessCalls": [
+        {
+          "file": "jobs/alg-build/src/double-zbll.ts",
+          "mechanism": "spawn",
+          "target": "<dynamic>",
+          "count": 1
+        },
+        {
+          "file": "jobs/alg-build/src/double-zbll.ts",
+          "mechanism": "execFileSync",
+          "target": "vm_stat",
+          "count": 1
+        },
+        {
+          "file": "jobs/alg-build/src/double-zbll.ts",
+          "mechanism": "execFileSync",
+          "target": "sysctl",
+          "count": 1
+        },
+        {
+          "file": "jobs/alg-build/src/double-zbll.ts",
+          "mechanism": "execFileSync",
+          "target": "ps",
+          "count": 1
+        }
+      ],
+      "evidence": [
+        {
+          "file": "core/jobs/alg-build/src/double-zbll.ts",
+          "contains": "const output = resolve(work, 'export');"
+        },
+        {
+          "file": "core/jobs/alg-build/src/double-zbll.ts",
+          "contains": "m.available-rss<2*2**30"
+        },
+        {
+          "file": "solver/333opt/solve_h10.mts"
+        },
+        {
+          "file": "core/packages/client/scripts/install-double-zbll.mts"
+        },
+        {
+          "file": "docs/double-zbll-trainer.md"
+        }
+      ]
+    },
+    {
       "id": "client-account-avatar-and-puzzle-icon-generation",
       "from": "packages/client build scripts and icon regression fixtures",
       "to": "shared avatar manifest and event-icon SVG sources",

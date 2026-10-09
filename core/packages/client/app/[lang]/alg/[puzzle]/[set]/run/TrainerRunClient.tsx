@@ -42,10 +42,12 @@ import { virtualAlgSet } from '@/lib/alg-virtual-sets';
 import { useTrainerMarks, markStatus, type CaseMarkStatus } from '@/lib/trainer-marks';
 import { ALG_SET_UNIVERSE } from '@/lib/alg_probability';
 import {
-  TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar,
+  TimerDisplay, ScrambleHeader, SolveCard, StatsList, HistoryList, CaseMarkBar, DoubleZbllThumb,
 } from '@/app/[lang]/alg/_trainer/trainer-components';
 import { RoomQrModal } from '@/components/RoomQrModal';
 import { RoomCodeInput } from '@/components/RoomCodeInput';
+import DoubleZbllOptions from '@/app/[lang]/alg/_trainer/DoubleZbllOptions';
+import { loadDoubleZbll } from '@/lib/double-zbll';
 import MemoryTrainer from '@/app/[lang]/alg/_trainer/MemoryTrainer';
 import MixSetPicker from '@/app/[lang]/alg/_trainer/MixSetPicker';
 import SmartCubeRow from '@/app/[lang]/alg/_trainer/SmartCubeRow';
@@ -303,6 +305,8 @@ export default function TrainerRunClient() {
   const previousTrainingSolveCountRef = useRef(solves.length);
   const observingIdx = useTrainerStore(s => s.observingIdx);
   const scrambleKind = useTrainerStore(s => s.scrambleKind);
+  const doubleZbll = useTrainerStore(s => s.doubleZbll);
+  const [doubleRestoreError, setDoubleRestoreError] = useState(false);
   const setScrambleKind = useTrainerStore(s => s.setScrambleKind);
   const storePuzzle = useTrainerStore(s => s.puzzle);
   const storeSet = useTrainerStore(s => s.set);
@@ -423,7 +427,7 @@ export default function TrainerRunClient() {
     if (previousTimerState !== TimerState.RUNNING || timerState !== TimerState.STOPPING) return;
     if (solves.length !== previousSolveCount + 1) return;
     const solve = solves.at(-1);
-    if (!puzzle || !solve || solve.i !== previousSolveCount || !Number.isFinite(solve.ms)) return;
+    if (!puzzle || !solve || solve.bottomKey || solve.i !== previousSolveCount || !Number.isFinite(solve.ms)) return;
     submitTrainingEvidence(trainingDestinationRef.current, {
       schemaVersion: 1,
       source: 'alg-trainer',
@@ -507,6 +511,20 @@ export default function TrainerRunClient() {
       .catch(e => console.error('[trainer] loadAlg failed', e));
   }, [puzzle, setSlug, sessionId, meta, isMix, mixKey, virtual, virtualScope, isVirtualDrill,
       storePuzzle, storeSet, cases.length, loadSession, loadMixSession]);
+
+  useEffect(() => {
+    if (storePuzzle !== '3x3' || storeSet !== 'zbll' || puzzle !== '3x3' || setSlug !== 'zbll' || !cases.length || doubleZbll || roomParam) return;
+    let active = true;
+    try {
+      if (localStorage.getItem('trainer:double-zbll') === '1') {
+        void loadDoubleZbll().then(() => {
+          if (!active) return;
+          useTrainerStore.getState().setDoubleZbll(true); setDoubleRestoreError(false);
+        }).catch(() => { if (active) setDoubleRestoreError(true); });
+      }
+    } catch { /* storage disabled: remain in the explicitly selected mode */ }
+    return () => { active = false; };
+  }, [storePuzzle, storeSet, puzzle, setSlug, cases, doubleZbll, roomParam]);
 
   // 双槽位基态在 loadSession 前已准备；增强 PSF2L 的后缀还要按真实魔方状态筛选,
   // 放到后台继续准备。候选到位后立即重出当前题。
@@ -660,8 +678,8 @@ export default function TrainerRunClient() {
     {
       // 三条一屏:走掉的是屏上那三条(当前 + 预抽的 peek / peek2),三条一起标。
       markPassedAsMastered(multiRef.current
-        ? [st.currentKey, st.peek?.key, st.peek2?.key]
-        : [st.currentKey]);
+        ? [st.currentKey, st.hist.list[st.hist.idx]?.bottomKey, st.peek?.key, st.peek?.bottomKey, st.peek2?.key, st.peek2?.bottomKey]
+        : [st.currentKey, st.hist.list[st.hist.idx]?.bottomKey]);
     }
     // 房间协同:领取是异步网络往返,连调 nextScramble 会被 roomBusy 串行化吞掉后两次 ——
     // 交给单一 roomAdvance(n) 内部按序 await 领 n 步(三条一屏 = 切下一屏三条)。
@@ -687,7 +705,7 @@ export default function TrainerRunClient() {
   const isMemo = mode === 'memo';
   const isMemoRef = useRef(false);
   isMemoRef.current = isMemo;
-  const splitEligible = splitParam === '1' && splitScreenAvailable && !room && pool.length >= 2;
+  const splitEligible = splitParam === '1' && splitScreenAvailable && !doubleZbll && !room && pool.length >= 2;
   const splitActive = splitEligible && !isMemo;
   const splitActiveRef = useRef(false);
   splitActiveRef.current = splitActive;
@@ -956,13 +974,13 @@ export default function TrainerRunClient() {
     // 排期既过不完一轮、也永远抽不全,只会把每用户 20,000 条的记录额度白白吃掉。
     // 指针照常前进 —— 否则中途切到复习模式会把之前随机刷的那一串补记一遍。
     const skip = mode === 'train';
-    const okMs = solves.filter(s => s.penalty === 'ok').map(s => s.ms).sort((a, b) => a - b);
+    const okMs = solves.filter(s => !s.bottomKey && s.penalty === 'ok').map(s => s.ms).sort((a, b) => a - b);
     const median = okMs.length >= 3 ? okMs[Math.floor(okMs.length / 2)] : null;
     const now = Date.now();
     for (let i = Math.max(0, lastGradedSolve.current + 1); i < solves.length; i++) {
       const sv = solves[i];
       lastGradedSolve.current = i;
-      if (skip) continue;
+      if (skip || sv.bottomKey) continue;
       const rec = useAlgSrs.getState().recs[sv.caseKey];
       if (rec && rec.n > 0 && rec.d > now) continue;   // 这张卡今天已经排过期了
       const g = gradeFromSolve(sv.ms, sv.penalty, median);
@@ -1067,7 +1085,7 @@ export default function TrainerRunClient() {
    */
   const cubeCase = currentKey ? findCaseByKey(cases, currentKey) ?? null : null;
   const trainerCube = useTrainerCube({
-    enabled: smartCube && !isMemo && !splitActive,
+    enabled: smartCube && !isMemo && !splitActive && !doubleZbll,
     timing,
     puzzle: puzzle ?? null,
     sessionSet: storeSet,
@@ -1252,6 +1270,9 @@ export default function TrainerRunClient() {
   const prevKey = pinnedSolve?.caseKey ?? prevHistEntry?.key ?? null;
   const prevCase = prevKey ? findCaseByKey(cases, prevKey) ?? null : null;
   const prevSolveScramble = pinnedSolve?.scramble ?? prevHistEntry?.scramble ?? null;
+  const prevBottomKey = pinnedSolve?.bottomKey ?? prevHistEntry?.bottomKey;
+  const currentBottomKey = hist.list[hist.idx]?.bottomKey;
+  const currentBottomCase = currentBottomKey ? findCaseByKey(cases, currentBottomKey) : undefined;
   const prevHeader = pinnedSolve
     ? `#${pinnedSolve.i + 1}`
     : tr({ zh: '上一个', en: 'Previous' });
@@ -1290,7 +1311,7 @@ export default function TrainerRunClient() {
   // `aufOpts`),开关留着就是个拨了不动的死开关。
   // LSLL 曾单独关掉 post-AUF(怕对子转离展示相位),2026-07-28 放开:图从实际打乱渲染、
   // 跟着一起转,而收尾 AUF 恰恰是 LSLL 真解里要先补的那一下。
-  const aufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo
+  const aufSupported = (puzzle === '3x3' || puzzle === '2x2') && !isMemo && !doubleZbll
     && !cases.some(c => c.sticker.kind === 'f2l');
   // F2L 系的随机 D / 末尾调整由公式集显式声明,不拿 sticker.kind 猜 —— 其它同样使用
   // f2l 贴纸模板的集不会因此凭空多开关。合练也不继承单集的特化设置。
@@ -1341,7 +1362,7 @@ export default function TrainerRunClient() {
             /* 打印和进度紧凑贴在齿轮左侧:absolute 脱流,齿轮仍精确居中。
                合练的 case 来自不同 set,不能拿一个 set 契约渲染整份 PDF,先不露错误入口。 */
             <div className="trainer-top-actions">
-              {!isMix && printableCases.length > 0 && (
+              {!isMix && !doubleZbll && printableCases.length > 0 && (
                 <AlgPdfButton
                   build={buildPdfSheet}
                   title={tr({ zh: '下载可打印的训练打乱', en: 'Download printable training scrambles' })}
@@ -1429,7 +1450,7 @@ export default function TrainerRunClient() {
                     </select>
                     </>
                   )}
-                  {kinds.length > 1 && (
+                  {!doubleZbll && kinds.length > 1 && (
                     <>
                       <span className="trainer-opts-label">{tr({ zh: '打乱', en: 'Scramble' })}</span>
                       <select
@@ -1453,12 +1474,13 @@ export default function TrainerRunClient() {
                   })}
                 </div>
               )}
+              {puzzle === '3x3' && setSlug === 'zbll' && !isMix && <DoubleZbllOptions incompatible={!!room || isMemo || splitActive} />}
               <div className="trainer-opts-row">
                 <select
                   className="trainer-scramble-kind trainer-mode-select"
                   value={isMemo ? 'memo' : 'train'}
                   onChange={e => setMode(e.target.value === 'memo' ? 'memo' : lastTrainingMode.current)}
-                  disabled={!!room || splitActive}
+                  disabled={!!room || splitActive || doubleZbll}
                   aria-label={tr({ zh: '训练模式', en: 'Training mode' })}
                 >
                   {PRIMARY_MODES.map(m => (
@@ -1529,7 +1551,7 @@ export default function TrainerRunClient() {
                     : tr({ zh: '随机:每题独立抽取,同一 case 可能连续出现', en: 'Random: draw each case independently, so the same case may repeat' })}
                 </div>
               )}
-              {!isMemo && splitScreenAvailable && (
+              {!isMemo && !doubleZbll && splitScreenAvailable && (
                 <>
                   <div className="trainer-opts-row trainer-split-setting">
                     <BoolToggle
@@ -1561,9 +1583,9 @@ export default function TrainerRunClient() {
                 </>
               )}
               {/* 智能魔方:接上就不用照打乱拧了,魔方本身变成当前 case */}
-              {!isMemo && (
+              {!isMemo && !doubleZbll && (
                 <SmartCubeRow
-                  enabled={smartCube}
+                  enabled={smartCube && !doubleZbll}
                   onEnabledChange={setSmartCube}
                   state={trainerCube}
                   supported={!splitActive && puzzleHasSmartCube(puzzle)}
@@ -1622,7 +1644,7 @@ export default function TrainerRunClient() {
                 </>
               )}
               {/* 在线房间:后端共享队列,多设备原子领取 —— 不重不漏、动态均衡、真·合并进度 */}
-              {mode === 'recap' && !splitActive && (
+              {mode === 'recap' && !splitActive && !doubleZbll && (
                 <>
                   <div className="trainer-opts-row trainer-room-row">
                     {room ? (
@@ -1926,21 +1948,21 @@ export default function TrainerRunClient() {
           {multi && (scramblePending ? scrambleLoading : (
             <div className="trainer-scramble-multi">
               {[
-                { s: currentScramble, c: currentCase },
-                { s: nextEntry?.scramble ?? null, c: nextCase },
-                { s: next2Entry?.scramble ?? null, c: next2Case },
+                { s: currentScramble, c: currentCase, bottom: currentBottomCase },
+                { s: nextEntry?.scramble ?? null, c: nextCase, bottom: nextEntry?.bottomKey ? findCaseByKey(cases, nextEntry.bottomKey) : undefined },
+                { s: next2Entry?.scramble ?? null, c: next2Case, bottom: next2Entry?.bottomKey ? findCaseByKey(cases, next2Entry.bottomKey) : undefined },
               ]
                 .filter(row => !!row.s)
                 .map((row, i) => (
                   <div className="trainer-scramble-row" key={i}>
                     {/* 每条自带标记条(与左边「上三个」那三张卡片一一对应):
                         屏上三题各是各的,一条公共标记条指谁都不对。 */}
-                    {showStageThumb && row.c && (
+                    {showStageThumb && row.c && !row.bottom && (
                       <div className="trainer-stage-marks">
                         <CaseMarkBar k={caseKey(row.c)} />
                       </div>
                     )}
-                    {showStageThumb && row.c && (
+                    {showStageThumb && row.c && row.bottom && row.s ? <DoubleZbllThumb top={row.c} bottom={row.bottom} scramble={row.s} /> : showStageThumb && row.c && (
                       <CaseThumb
                         puzzle={puzzle}
                         set={setSlug}
@@ -1974,6 +1996,8 @@ export default function TrainerRunClient() {
           </div>
 
           <div className="trainer-stage-body">
+          {doubleRestoreError && !doubleZbll && <p className="trainer-double-notice" role="alert">{tr({ zh: '双底题库未能加载。请在训练设置中重新下载；当前为单层训练。', en: 'Double ZBLL could not load. Download it again in settings; single-layer training is currently active.' })}</p>}
+          {doubleZbll && <div className="trainer-double-notice">{tr({ zh: '双底 · 先顶层，再翻转 · 最优 HTM', en: 'Double ZBLL · solve, flip, solve · optimal HTM' })}</div>}
           {/* 当前这道题的 case 图 + 一左一右夹着它的标记条(与「上一个」卡片同一个排法):
               图从「实际打乱」渲染(含 pre/post-AUF),与下方打乱公式朝向一致。
               标记条只出两个图标、不带 case 名:训练模式下答案还不能露。数字键 1、2、4 打的仍是
@@ -1982,7 +2006,7 @@ export default function TrainerRunClient() {
               打乱还没算出来时(虚拟集)不出图 —— 空 setup 会渲染成一个已还原的方块,那是假的。 */}
           {!multi && (scramblePending ? scrambleLoading : (
             <>
-              {showStageThumb && currentCase && (
+              {showStageThumb && currentCase && currentBottomCase && currentScramble ? <DoubleZbllThumb top={currentCase} bottom={currentBottomCase} scramble={currentScramble} /> : showStageThumb && currentCase && (
                 <div className="trainer-figure">
                   <CaseMarkBar k={caseKey(currentCase)} />
                   {/* 出题时出识别图,动手之后才换实时那颗 —— 换的时机归 TrainerLiveCube 管,
@@ -2074,6 +2098,7 @@ export default function TrainerRunClient() {
                   set={setSlug}
                   scramble={shownScramble(e.scramble)}
                   c={c}
+                  bottomCase={e.bottomKey ? findCaseByKey(cases, e.bottomKey) : undefined}
                   isZh={isZh}
                   showThumb={showStageThumb}
                   onShowCase={setMetaCase}
@@ -2092,6 +2117,8 @@ export default function TrainerRunClient() {
                 set={setSlug}
                 scramble={shownScramble(prevSolveScramble)}
                 c={prevCase}
+                bottomCase={prevBottomKey ? findCaseByKey(cases, prevBottomKey) : undefined}
+                localThumb={doubleZbll}
                 isZh={isZh}
                 showThumb={showStageThumb}
                 onShowCase={setMetaCase}
