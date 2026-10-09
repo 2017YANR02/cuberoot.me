@@ -891,7 +891,21 @@
           "en": "6 compression × 5 travel levels, for 30 center settings."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 17.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC3 Beta 3x3 Aero (MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-yj-mgc3-beta-3x3-aero-maglev-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "Aero 采用中空减料内构，72 g，磁悬浮与 UV；保留传统轴心，未使用球轴磁力。",
@@ -1299,7 +1313,21 @@
           "en": "8 tension × 8 elasticity settings, 64 combinations."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 44.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong V5 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-aolong-v5-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "碳纤维轴心与直角防转角外形；8 × 8 中心双调。",
@@ -1408,7 +1436,21 @@
           "en": "8 tension × 8 elasticity settings, 64 combinations."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 37.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong V5 3x3 (8-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-aolong-v5-8-magnet-ball-core-maglev-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "碳纤维轴心与直角防转角外形；8 × 8 中心双调。",
@@ -1517,7 +1559,21 @@
           "en": "8 tension × 8 elasticity settings, 64 combinations."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 23.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong V5 3x3 (Magnetic + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-aolong-v5-3x3-magnetic-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "碳纤维轴心与直角防转角外形；8 × 8 中心双调。",
@@ -2017,7 +2073,21 @@
           "en": "Adjustable piece magnets plus tension/compression adjustment."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WR M MagLev 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-wrm2021-maglev-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "55 mm 机身，块间磁力与轴距、弹力可以分开设置。",
@@ -2116,7 +2186,25 @@
           "en": "Adjustable piece magnets plus tension/compression adjustment."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WR M 2021 Lite 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wr-m-2021-lite-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "55 mm 机身，块间磁力与轴距、弹力可以分开设置。",
@@ -2597,7 +2685,25 @@
           "en": "Separate screw tension and geared spring compression."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 38.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS3 M (LE) — Pink",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-gts3-m-le",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "外表防滑凸棱；螺丝轴距和齿轮弹簧压缩分别调节。",
@@ -2700,7 +2806,25 @@
           "en": "Separate screw tension and geared spring compression."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 35.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS3 LM 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-gts3-lm",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "外表防滑凸棱；螺丝轴距和齿轮弹簧压缩分别调节。",
@@ -3069,7 +3193,25 @@
           "en": "Separate screw tension and geared spring compression."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 35.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS3 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-gts3-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "外表防滑凸棱；螺丝轴距和齿轮弹簧压缩分别调节。",
@@ -3165,7 +3307,25 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 26.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS2 M 3x3 (LE) — Emerald Green",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-gts2-m-le",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 机身与可拼接三色角块；本记录区分工厂非磁与工厂磁力配置。",
@@ -3254,7 +3414,25 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong GTS2 M 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-gts2m-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 机身与可拼接三色角块；本记录区分工厂非磁与工厂磁力配置。",
@@ -3349,7 +3527,25 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu AoLong V2 (LE) — Transparent Green",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-aolong-v2-le",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "减少角块圆润程度、扩大角块凹槽以降低意外转角。",
@@ -3433,7 +3629,25 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 13.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "Mini MoYu WeiLong V2 (54.5mm) — Black",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-mini-moyu-weilong-v2-54-5mm",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "分块拼装改动使六色免贴纸版本成为可能。",
@@ -3518,7 +3732,25 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "Mini MoYu AoLong (54.5mm) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-mini-moyu-aolong-54-5mm",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "圆润角棱结构强调顺畅容错。",
@@ -4111,7 +4343,21 @@
           "en": "8 travel and 8 spring-compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 54.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong Ferrocore V2 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-ferrocorev2-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "基于威龙 V11；采用可柔性形变的轴心、较强磁力及定制弹簧，由 MoYu、CubeHead 和 TheCubicle 合作。",
@@ -4219,7 +4465,21 @@
           "en": "8 travel and 8 spring-compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 59.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong Ferrocore V2 3x3 (UV Coated) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-ferrocore-v2-3x3-uv-coated"
+        }
+      ],
       "highlights": [
         {
           "zh": "基于威龙 V11；采用可柔性形变的轴心、较强磁力及定制弹簧，由 MoYu、CubeHead 和 TheCubicle 合作。",
@@ -4531,7 +4791,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC Sigma 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-yj-mgc-sigma-3x3"
+        }
+      ],
       "highlights": [
         {
           "zh": "永骏与 TheCubicle 合作的 Beta 改版：更大的轴磁、较轻的块间磁力，以及更尖的角帽。",
@@ -4734,7 +5008,21 @@
           "en": "Digital tension, elasticity and magnet adjustment."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 79.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super AoLong 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-aolong-3x3-20-magnet-ball-core-maglev-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "20 磁球轴定位 3.0 与磁悬浮，采用防转角几何。",
@@ -4842,7 +5130,21 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 27.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 SE 3x3 (8-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-v5-se-3x3-8-magnet-ball-core-maglev-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -4947,7 +5249,21 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 59.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V11 SE 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless / Black Internals",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-v11-se-3x3-20-magnet-ball-core-maglev-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -5050,7 +5366,21 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 12.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 SE 3x3 (Magnetic + Spring Tension) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-v5-se-3x3-magnetic-spring-tension"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -5136,7 +5466,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 9.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 SE 3x3 (Magnetic) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-se-magnetic"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -5237,7 +5581,21 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V11 SE 3x3 (Magnetic) — Stickerless / Black Internals",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-v11-se-3x3-magnetic"
+        }
+      ],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -6225,7 +6583,21 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V11 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-v11-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -6242,17 +6614,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "以低阻、轻快和多档调校为主要取向。",
-          "en": "Prioritizes low resistance, a light turning feel and repeatable adjustment."
+          "zh": "TheCubicle 本商品页买家反复提到转动很快、阻力轻；多位反馈调校后更顺滑、更容易控制。",
+          "en": "Buyers on this TheCubicle product page repeatedly describe very fast, light turning; several report smoother, more controllable behavior after setup."
         },
         "tradeoffs": {
-          "zh": "基础磁力、球轴、SE 与 PiCube 的内构和磁力配置不同。",
-          "en": "Basic, ball-core, SE and PiCube versions differ in internals and magnet layout."
+          "zh": "部分买家觉得出厂速度偏快；磁力强弱与卡顿反馈有分歧，受设置和手法影响。",
+          "en": "Some buyers find the factory setup too fast. Reports of magnet strength and catching differ with settings and turning style."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "moyu-v11-tc",
-          "myj-zii-weilong-v11"
+          "moyu-v11-tc"
         ]
       },
       "variants": [
@@ -6334,7 +6705,21 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 41.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V11 3x3 (8-Magnet Ball-Core + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-v11-3x3-8-magnet-ball-core-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -6446,7 +6831,21 @@
           "en": "8 tension levels × 8 compression levels."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong V11 3x3 (Magnetic + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-v11-3x3-magnetic-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "采用 8 档轴距与 8 档弹力，共 64 种中心设置组合。",
@@ -7085,7 +7484,21 @@
           "en": "Simultaneously adjusts the magnets within each corner."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 63.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 V2 (20-Magnet Ball-Core + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-super-wlv2-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "单个角块中的磁力设置可以同步调节，提高重复调校效率。",
@@ -7184,7 +7597,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC3 Beta 3x3 (8-Magnet Ball-Core + UV Coated + MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-beta-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "全新 Beta 结构平台，采用不同的块间/球轴和弹力组合。",
@@ -7292,7 +7719,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 21.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC3 Beta 3x3 (8-Magnet Ball-Core + UV Coated) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-yj-mgc3-beta-8-magnet-ball-core-uv-coated"
+        }
+      ],
       "highlights": [
         {
           "zh": "全新 Beta 结构平台，采用不同的块间/球轴和弹力组合。",
@@ -8232,7 +8673,25 @@
           "en": "Hand-adjustable elasticity and tool-adjustable magnets."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC Evo II 3x3 (UV Coated) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-yj-mgc-evo-ii-3x3-uv-coated",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "徒手调弹力，使用工具调磁；中心盖只有两个正确装入方向。",
@@ -8436,7 +8895,21 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V10 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-20-core-magnetic-maglev-ball-core-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -8549,7 +9022,21 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 32.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V10 3x3 (20-Magnet Ball-Core + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-20-core-magnetic-ball-core-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -8661,7 +9148,21 @@
           "en": "New tension and compression adjustment mechanism."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V10 3x3 (UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wrm-v10-3x3-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm，更新块形与轴距/弹力调节机构。",
@@ -9102,7 +9603,25 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 74.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 Lite (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-weilong-3x3-lite-20-core-magnetic-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -9209,7 +9728,25 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 61.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 Lite (8-Core Magnetic + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-weilong-3x3-lite-8-core-magnetic-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -9304,7 +9841,25 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 53.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 Lite (8-Core Magnetic + Spring Tension + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-weilong-3x3-lite-8-core-magnetic-spring-tension",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -9395,7 +9950,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 47.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V9 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-20-core-magnetic-maglev-ball-core-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -9497,7 +10066,21 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 (20-Magnet Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-weilong-3x3-20-core-magnetic-maglev"
+        }
+      ],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -9600,7 +10183,25 @@
           "en": "Adjustable corner-foot magnetism and elasticity."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 68.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super WeiLong 3x3 (8-Core Magnetic + Spring Tension + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-weilong-3x3-8-core-magnetic-spring-tension",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "高阶威龙平台，角轴磁力可调；本记录对应标题所列的实际磁轴和弹力组合。",
@@ -9702,7 +10303,21 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 3x3 (Ball Core UV + Robot Cube Stand) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-ball-core-uv-robot-cube-stand"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -9723,17 +10338,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "标准版降低入门成本，进阶版本增加调校和磁力定位。",
-          "en": "The base lowers entry cost; higher trims add adjustment and magnetic guidance."
+          "zh": "Noris 上手认为转动轻快、易控制；球轴版有更明显的定位反馈，并带来自动归位。",
+          "en": "Noris found light, controllable turning; the ball-core version adds more pronounced magnetic feedback and auto-alignment."
         },
         "tradeoffs": {
-          "zh": "标准版没有独立弹力拨盘；PiCube 与 SAOCube 为明确标注的商家改装。",
-          "en": "The base lacks an independent compression dial; PiCube and SAOCube are labeled retailer modifications."
+          "zh": "仍有明显转动声，强行大角度容错可能卡死；评测样品由 SpeedCubeShop 提供。",
+          "en": "Turning remains audible and forced extreme corner cutting can hard-lock. SpeedCubeShop supplied the review samples."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "myj-tc-moyu-rs3-m-v5-3x3-ball-core-uv-robot-cube-stand",
-          "myj-zii-moyu-rs3m-v5"
+          "r4-scdb-rs3m-v5"
         ]
       },
       "variants": [
@@ -9741,7 +10355,8 @@
       ],
       "sourceIds": [
         "myj-tc-moyu-rs3-m-v5-3x3-ball-core-uv-robot-cube-stand",
-        "myj-zii-moyu-rs3m-v5"
+        "myj-zii-moyu-rs3m-v5",
+        "r4-scdb-rs3m-v5"
       ],
       "tags": [
         "magnet",
@@ -9812,7 +10427,21 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 3x3 (MagLev + Robot Cube Stand) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-maglev-robot-cube-stand"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -9921,7 +10550,21 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 12.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 3x3 (Spring Tension + Robot Cube Stand) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-v5-3x3-spring-tension-robot-cube-stand"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -10020,7 +10663,21 @@
           "en": "Separate travel and compression adjustment, using the elasticity components of this SKU."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 9.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M V5 3x3 (Spring Tension) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-rs3v5-dual-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 轻量 RS 平台，独立双调、磁悬浮和球轴按版本提供。",
@@ -10116,7 +10773,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 17.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu RS3 M 2020 3x3 (UV Coated) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-rs3-m-2020-3x3-uv-coated"
+        }
+      ],
       "highlights": [
         {
           "zh": "工厂块间磁力与独立弹簧压缩调节进入低价位。",
@@ -10313,7 +10984,21 @@
           "en": "9 compression settings with separate screw-based travel."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super RS3 M V2 MagLev UV 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "moyu-superrs3v2-maglev-tc"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 机身与 UV 表面，内部接触面不再采用明显纹理。",
@@ -10416,7 +11101,21 @@
           "en": "9 compression settings with separate screw-based travel."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 47.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super RS3 M V2 Ball-Core UV 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-rs3-m-v2-ball-core-uv-3x3"
+        }
+      ],
       "highlights": [
         {
           "zh": "55.5 mm 机身与 UV 表面，内部接触面不再采用明显纹理。",
@@ -10610,7 +11309,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 42.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V9 3x3 (Ball-Core + MagLev + UV) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-ball-core-uv"
+        }
+      ],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -10706,7 +11419,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu WeiLong WRM V9 3x3 (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-weilong-wrm-v9-3x3-maglev"
+        }
+      ],
       "highlights": [
         {
           "zh": "55 mm 威龙旗舰平台，磁力、弹力配置随独立商品版本变化。",
@@ -11128,7 +11855,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super RS3 M 2022 3x3 Ball-Core (Magnetic Core + MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-rs3-m-2022-3x3-ball-core-magnetic-core-maglev"
+        }
+      ],
       "highlights": [
         {
           "zh": "RS 产品线分成普通弹簧、磁悬浮及球轴磁悬浮配置。",
@@ -11223,7 +11964,21 @@
         ],
         "adjustment": null
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "MoYu Super RS3 M 2022 3x3 (MagLev) — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "myj-tc-moyu-super-rs3-m-2022-3x3-maglev"
+        }
+      ],
       "highlights": [
         {
           "zh": "RS 产品线分成普通弹簧、磁悬浮及球轴磁悬浮配置。",
@@ -11321,7 +12076,25 @@
           "en": "Separate magnet strength, compression and conventional screw tension."
         }
       },
-      "prices": [],
+      "prices": [
+        {
+          "kind": "current",
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "asOf": "2026-10-09",
+          "variant": "YJ MGC3 Elite V2 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国站该配置与配色的单件列示价，2026-10-09 核对；不含另购调校服务、运费及进口税费。",
+            "en": "Single-unit listed price for this configuration and color at TheCubicle US, checked October 9, 2026; excludes optional setup, shipping and import charges."
+          },
+          "sourceId": "yj-mgcelitev2-tc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Listed price · sold out"
+          }
+        }
+      ],
       "highlights": [
         {
           "zh": "块间磁力与中心弹力可调，另有后续磨砂 V2 表面版。",
@@ -12528,6 +13301,8 @@
   ],
   "coverageNotes": [
     "Companion to moyu-yj.json; retain the combined source index and stable model IDs.",
-    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope."
+    "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope.",
+    "2026-10-09 现价补充：核对 TheCubicle 美国站 51 个重点配置的公开商品数据，逐一记录具体配置与配色的单件 USD 原币列示价、来源和采集日；其中 15 条不可购买选项明确标为已售罄列示价。保留有据的大陆人民币首发价，不使用汇率换算、阶梯批发价或跨版本起价。此范围更新取代此前仅收录首发价的限制。 / October 9, 2026 update: checked public TheCubicle US product data for 51 priority configurations, recording exact configuration/color, single-unit USD price, source and observation date. 15 unavailable options are explicitly marked as sold-out listings. Verified mainland CNY launch quotes remain; no currency conversion, quantity-tier prices or cross-version starting prices are used. This supersedes the earlier launch-only price scope.",
+    "2026-10-09 体验评价补充：2 条重点配置增加具名上手评测或该商品页买家反馈，标明个人体验来源；赠测样品和品牌选录反馈明确披露。未将主观手感、个人成绩或单个故障推成统一性能或可靠性结论。 / October 9, 2026 assessment update: 2 priority configurations now cite identified hands-on reviews or buyers on the exact product page. Supplied samples and brand-selected impressions are disclosed; subjective feel, individual times and isolated faults are not treated as universal performance or reliability findings."
   ]
 }

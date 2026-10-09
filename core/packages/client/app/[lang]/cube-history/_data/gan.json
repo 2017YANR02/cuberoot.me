@@ -1379,7 +1379,25 @@
           "gan-tension-cn"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN3 / Ganspuzzle III — Stickerless (Dark)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-iii",
+          "qualifier": {
+            "zh": "深色彩色款 · 已售罄列示价",
+            "en": "Stickerless dark · sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -1468,7 +1486,25 @@
           "gan-357-archive"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN357 — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-357",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "57 mm",
         "weight": null,
@@ -1557,7 +1593,25 @@
           "gan-356-archive"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356S — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gans-356s",
+          "qualifier": {
+            "zh": "黑色款 · 已售罄列示价",
+            "en": "Black · sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -1647,7 +1701,25 @@
           "gan-356sv2-archive"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 23.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356S V2 Advanced — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gans-356s-v2-advanced",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "87.9 g",
@@ -1731,7 +1803,25 @@
           "gan-air-official"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air Advanced — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-air-advanced",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "≈73 g",
@@ -1819,7 +1909,25 @@
           "gan-maxpark-archive"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 41.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air U / Ultimate — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-air-u",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "68.3 g",
@@ -1907,7 +2015,25 @@
           "gan-magnetic-cn"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 47.37,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air UM — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-air-um",
+          "qualifier": {
+            "zh": "黑色款 · 已售罄列示价",
+            "en": "Black · sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "75.7 g",
@@ -1994,7 +2120,25 @@
           "gan-air-s-official"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 28.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air S — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-air-s",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "≈68 g (official); 69.3 g (retailer)",
@@ -2084,7 +2228,25 @@
           "gan-air-sm-official"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air SM — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-air-sm",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "≈76 g; 2019 edition 75 g",
@@ -2176,7 +2338,25 @@
           "gan-records"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN354 M — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-354",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "54 mm",
         "weight": "79.4 g",
@@ -2266,7 +2446,25 @@
           "gan-r"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 R — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-r",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -2353,7 +2551,25 @@
           "gan-magnetic-cn"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 X Numerical IPG — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-x",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "77–80 g",
@@ -2448,7 +2664,25 @@
           "gan-air-pro"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 33.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air Pro — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-air-pro",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "69.1 g",
@@ -2627,7 +2861,21 @@
           "gan-rs"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 RS — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-rs"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "72 g",
@@ -2711,7 +2959,25 @@
           "gan-354v2"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 22.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN354 M V2 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-354v2",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "54 mm",
         "weight": "77 g",
@@ -2798,7 +3064,25 @@
           "gan-xv2"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 X V2 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-xv2",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "80 g",
@@ -2888,7 +3172,21 @@
           "gan-m"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 M — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-m"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "74 g",
@@ -2975,7 +3273,25 @@
           "gan-air-m"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air M — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-air-m",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "68 g",
@@ -3060,7 +3376,25 @@
           "gan-11-pro"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Frosted / Primary Internals — Stickerless / Primary Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的雾面原色内核单颗价；该配置已售罄，价格仅供参考。配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store price for one frosted cube with primary internals on this date. This variant was sold out; the listing price is for reference only. Shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-11-pro",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "63 g (Frosted)",
@@ -3166,7 +3500,25 @@
           "gan-11-duo"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 36.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Duo — Stickerless / Primary Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-11-duo",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "59 g (official); 60 g (retailer)",
@@ -3257,7 +3609,25 @@
           "gan-11-m"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M — Stickerless / Primary Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-11-m",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "56 g",
@@ -3346,7 +3716,21 @@
           "gan-11-air"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 Air — Stickerless / Primary Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-11-air"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "50 g",
@@ -3433,7 +3817,25 @@
           "gan-mini"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 41.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN Mini M Pro Frosted — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-mini",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "53 mm",
         "weight": "54 g; UV 57 g",
@@ -3524,7 +3926,21 @@
           "gan-12"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 58.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 MagLev UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-12"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "66 g",
@@ -3548,20 +3964,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "本条专指 GAN12 磁悬浮 UV 版；弹簧 Leap 与雾面版已分开入档。",
-          "en": "This record is specifically the GAN12 MagLev UV; the spring-based Leap and matte versions have separate records."
+          "zh": "商家页面中，有用户喜欢轻快转动和明显的磁力归位感，也有人觉得速度过快。",
+          "en": "Product-page users describe light, fast turning and noticeable magnetic alignment; some find the speed difficult to control."
         },
         "tradeoffs": {
-          "zh": "MagLev 只替代弹簧相关作用，不意味着整颗魔方零摩擦。",
-          "en": "MagLev replaces the spring function; it does not make the whole cube frictionless."
+          "zh": "部分评论反映卡顿或磁杆损坏，另一些使用者未遇到；这些个体反馈不代表故障率。",
+          "en": "Some comments report catches or broken magnet stalks, while others report no such issue. These individual reports do not establish a failure rate."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "gan-12",
-          "gan-12-leap",
-          "gan-15-official",
-          "gan-catalog",
-          "gan-limited"
+          "gan-12"
         ]
       },
       "variants": [
@@ -3632,7 +4044,25 @@
           "gan-13"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 58.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN13 MagLev Matte — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-13",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g",
@@ -3736,7 +4166,25 @@
           "gan-14"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 55.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN14 MagLev UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-14",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "70–71 g",
@@ -3838,7 +4286,21 @@
           "gan-14-pro"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 68.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN14 MagLev Pro Matte — Frosted",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-14-pro-official"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g",
@@ -3929,7 +4391,21 @@
           "gan-15"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN15 MagLev UV — Maglev_UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-15-official"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "≈58.6 g",
@@ -3952,19 +4428,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "相对 14 更强调减重和简化调节。",
-          "en": "Prioritizes weight reduction and simpler tuning compared with the 14."
+          "zh": "用户反馈提到轻量、快速且触感清晰；有用户调紧后觉得兼顾速度与稳定性。",
+          "en": "Users describe a light, fast and tactile feel; one reports a useful balance of speed and stability after tightening the settings."
         },
         "tradeoffs": {
-          "zh": "换磁力杆需要拆换零件；低重量不自动等于更好控制。",
-          "en": "Changing rods requires parts handling; low weight does not automatically improve control."
+          "zh": "也有用户报告卡顿、难找合适松紧及拆中心盖麻烦；商家提醒中心盖应使用随附工具拆卸。",
+          "en": "Other users report catches, difficulty finding suitable settings and awkward center-cap removal. The retailer advises using the included cap-removal tool."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "gan-15",
-          "gan-15-official",
-          "gan-catalog",
-          "gan-limited"
+          "gan-15"
         ]
       },
       "variants": [
@@ -4045,7 +4518,24 @@
             "zh": "官方新品预售海报公布预售价 ¥399；黑核 UV 配置由同型号官方产品页交叉核对。日期为预售报价公告日。",
             "en": "The official new-product preorder poster states a ¥399 preorder price. The black-core UV configuration is cross-checked with its separate official product page. The date is the preorder price announcement date."
           },
-          "sourceId": "gan-cnlaunch-newblack-20250227"
+          "sourceId": "gan-cnlaunch-newblack-20250227",
+          "qualifier": {
+            "zh": "首发预售价",
+            "en": "Launch preorder price"
+          }
+        },
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN15 NewBlack — GAN15 NewBlack UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-15-black-official"
         }
       ],
       "specs": {
@@ -4137,7 +4627,21 @@
           "gan-16"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 84.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN16 MagLev MAX UV — Maglev MAX_UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-16-official"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "64 g (MAX)",
@@ -4160,21 +4664,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "本条专指 MAX 版；标准版磁铁布置不同，MAX-L 的外部尺寸更大，均已单列。",
-          "en": "This record covers MAX specifically. The standard version uses a different magnetic layout, while MAX-L has a larger exterior; both are separately catalogued."
+          "zh": "页面试用者描述其手感清脆、触感偏硬，同时带有圆润的块接触感；磨合后转动很快。",
+          "en": "A hands-on reviewer describes a clacky, hard-plastic feel with rounded piece contact and very fast turning after break-in."
         },
         "tradeoffs": {
-          "zh": "MAX 是磁力配置，MAX-L 才是加大尺寸；不同版不能合并重量。",
-          "en": "MAX denotes a magnetic specification; MAX-L is larger. Their weights must not be conflated."
+          "zh": "该试用者建议用较厚润滑油和更高弹力增加控制感，并指出仍需要较轻、准确的转动。",
+          "en": "The reviewer recommends thicker lubricant and a higher MagLev tension for control, and still emphasizes light, accurate turning."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "gan-16",
-          "gan-16-official",
-          "gan-16-max",
-          "gan-16-maxl",
-          "gan-17-comparison",
-          "gan-limited"
+          "gan-16"
         ]
       },
       "variants": [
@@ -4259,6 +4758,19 @@
             "zh": "GANCUBE 官方微博宣布的中国首发价；不代表后续成交价。",
             "en": "Chinese launch price announced by GAN's official Weibo; not a later transaction price."
           }
+        },
+        {
+          "amount": 84.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN17 MagDrive — UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-17-official"
         }
       ],
       "specs": {
@@ -4356,7 +4868,21 @@
           "gan-me"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME Frosted — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-me"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -4378,18 +4904,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "适合基础竞速配置的入门比较。",
-          "en": "An entry option with the main basic speedcube features."
+          "zh": "反馈里既有喜欢紧致、偏块状手感的用户，也有人在润滑调试后觉得顺滑、适合日常练习。",
+          "en": "Some users enjoy its tight, blocky feel; others find it smooth and useful for regular practice after lubrication and tuning."
         },
         "tradeoffs": {
-          "zh": "不具备旗舰核磁或磁悬浮；后续 UV 与限定配色归为版本。",
-          "en": "Does not provide flagship core magnets or MagLev; later UV and limited colors are variants."
+          "zh": "部分用户报告反容错卡顿或磁铁异响；调节松紧时也需要注意工具操作。这些反馈来自个体使用体验。",
+          "en": "Some users report catches during reverse corner-cutting or clicking magnets, and advise care with the adjustment tool. These are individual user experiences."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "gan-me",
-          "gan-me-uv",
-          "gan-17-sina"
+          "gan-me"
         ]
       },
       "variants": [
@@ -4444,7 +4968,21 @@
           "gan-mev2"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 26.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME V2 UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-mev2"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -4529,7 +5067,25 @@
           "gan-356-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 MagLev Frosted — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-356-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "81 g; UV 82 g",
@@ -4623,7 +5179,25 @@
           "gan-rs2"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 RS2 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-rs2",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "70 g",
@@ -4709,7 +5283,21 @@
           "gan-v100"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN V100 MagLev UV — Stickerless / Black Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-v100"
+        }
+      ],
       "specs": {
         "size": "55 mm",
         "weight": "64 g",
@@ -4733,18 +5321,16 @@
       ],
       "assessment": {
         "summary": {
-          "zh": "相比只追年度代号，更强调尺寸与价格配置的组合。",
-          "en": "Adds another combination of size, price and features beyond annual flagship numbering."
+          "zh": "用户反馈提到轻快、顺滑、带弹性的转动感；有 GAN12 使用者在调试后将它换成主力。",
+          "en": "Users describe light, smooth and springy turning; one GAN12 owner reports adopting it as a main after tuning."
         },
         "tradeoffs": {
-          "zh": "Leap 为弹簧版，不能沿用 MagLev 的磁铁数量。",
-          "en": "Leap uses springs, so the MagLev magnet count does not apply."
+          "zh": "磁力不能调节；有用户觉得较松设置下略晃、容易转过头，倾向用较高弹力或更厚润滑油控制。",
+          "en": "Magnetic strength is fixed. Some users report wobble at looser settings or overturning, and prefer higher tension or thicker lubricant for control."
         },
-        "basis": "editorial",
+        "basis": "review",
         "sourceIds": [
-          "gan-v100",
-          "gan-v100-official",
-          "gan-catalog"
+          "gan-v100"
         ]
       },
       "variants": [
@@ -4801,7 +5387,21 @@
           "gan-330"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 6.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN330 Keychain — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-330"
+        }
+      ],
       "specs": {
         "size": "30 mm",
         "weight": "25.5 g",
@@ -4882,7 +5482,21 @@
           "gan-328"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 7.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN328 Mini — Grey",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-328"
+        }
+      ],
       "specs": {
         "size": "28 mm",
         "weight": "15 g",
@@ -4962,7 +5576,21 @@
           "gan-monstergo"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go Magnetic 3x3 — Basic Package",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-monstergo-official"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "85 g",
@@ -5057,7 +5685,21 @@
           "gan-swift"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 12.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Swift Block 355S — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-swift"
+        }
+      ],
       "specs": {
         "size": "55 mm",
         "weight": null,
@@ -5143,7 +5785,21 @@
           "gan-swift-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 23.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Swift Block Super MagLev UV — UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-swift-official"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -5231,7 +5887,25 @@
           "gan-rsc"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 20.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Rubik's × GAN RSC — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-rsc",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56.5 mm (RSC)",
         "weight": "84.6 g (RSC)",
@@ -5333,7 +6007,25 @@
           "gan-iii-v2"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 14.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN3 V2 / Ganspuzzle III V2 — Stickerless (Dark)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-iii-v2",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -5415,7 +6107,25 @@
           "gan-audit-gan-357-ultimate"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN357 Ultimate — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-357-ultimate",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "57 mm",
         "weight": "90.8 g (retailer item-weight label)",
@@ -5500,7 +6210,25 @@
           "gan-core-cn"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 38.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Original — Transparent Purple",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gans-356-master-unstickered",
+          "qualifier": {
+            "zh": "透明紫未贴纸款 · 已售罄列示价",
+            "en": "Transparent purple, unstickered · sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "94.2 g (retailer item-weight label)",
@@ -5583,7 +6311,25 @@
           "gan-audit-gan356-x-ipg-v5"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 46.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 X IPG V5 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-x-ipg-v5",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "81.1 g (retailer item-weight label)",
@@ -5672,7 +6418,25 @@
           "gan-xs"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 XS Lite — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-xs",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "68 g (retailer item-weight label)",
@@ -5761,7 +6525,25 @@
           "gan-audit-gan-356-xs-3x3-special-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 XS Special / Primary Internals — Stickerless / Primary Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-xs-3x3-special-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "69 g (retailer item-weight label)",
@@ -5846,7 +6628,21 @@
           "gan-11-pro"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 40.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Frosted / Black Internals — Frosted Stickerless (Black)",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-official-gan11-m-pro-flagship-3x3-magnetic-cube"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -5951,7 +6747,25 @@
           "gan-11-pro"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 39.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Black / Stickered — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-11-pro",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6055,7 +6869,21 @@
           "gan-audit-gan-11-m-pro-3x3-uv-coated"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 45.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro UV — UV Coated Stickerless",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-official-gan11-m-pro-flagship-3x3-magnetic-cube"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "63 g (retailer item-weight label)",
@@ -6093,7 +6921,8 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "gan-audit-gan-11-m-pro-3x3-uv-coated"
+        "gan-audit-gan-11-m-pro-3x3-uv-coated",
+        "gan-audit-official-gan11-m-pro-flagship-3x3-magnetic-cube"
       ],
       "tags": [
         "china",
@@ -6144,7 +6973,25 @@
           "gan-audit-gan-11-m-pro-3x3-soft-texture-coated"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 59.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Soft Texture — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-11-m-pro-3x3-soft-texture-coated",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "63 g (retailer item-weight label)",
@@ -6234,7 +7081,25 @@
           "gan-audit-gan-11-m-pro-3x3-ambition-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 79.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Ambition Summer Edition — Transparent Pink",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-11-m-pro-3x3-ambition-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6321,7 +7186,25 @@
           "gan-audit-gan-11-m-pro-3x3-glimmer-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 79.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Glimmer Summer Edition — Transparent Pink",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-11-m-pro-3x3-glimmer-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6408,7 +7291,25 @@
           "gan-audit-gan-11-m-pro-3x3-chaser-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 79.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Chaser Summer Edition — Transparent Pink",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-11-m-pro-3x3-chaser-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6495,7 +7396,25 @@
           "gan-audit-gan-11-m-pro-3x3-zenith-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 79.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Zenith Summer Edition — Transparent Yellow",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-11-m-pro-3x3-zenith-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6582,7 +7501,25 @@
           "gan-audit-gan-11-m-pro-3x3-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 79.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN11 M Pro Kun Winter Edition — Purple",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-11-m-pro-3x3-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "64 g (retailer item-weight label)",
@@ -6669,7 +7606,25 @@
           "gan-mini-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 47.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN Mini M Pro UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-mini-uv",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "53 mm",
         "weight": "57 g (retailer item-weight label)",
@@ -6761,7 +7716,21 @@
           "gan-audit-gan12-m-maglev-matte-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 51.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 MagLev Matte — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan12-m-maglev-matte-3x3"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -6850,7 +7819,25 @@
           "gan-audit-gan12-m-maglev-matte-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 51.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 MagLev Black / Stickered — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan12-m-maglev-matte-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -6939,7 +7926,25 @@
           "gan-12-leap"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 45.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 M Leap — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-12-leap",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "61 g (retailer item-weight label)",
@@ -7027,7 +8032,25 @@
           "gan-audit-gan13-m-maglev-uv-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 62.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN13 MagLev UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan13-m-maglev-uv-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -7117,7 +8140,25 @@
           "gan-13fx"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 51.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN13 MagLev FX — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-13fx",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "65 g (retailer item-weight label)",
@@ -7205,7 +8246,25 @@
           "gan-audit-gan14-m-maglev-matte-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN14 MagLev Matte — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan14-m-maglev-matte-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -7290,7 +8349,21 @@
           "gan-audit-gan14-maglev-pro-uv-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 77.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN14 MagLev Pro UV — UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-14-pro-official"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -7327,7 +8400,8 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "gan-audit-gan14-maglev-pro-uv-3x3"
+        "gan-audit-gan14-maglev-pro-uv-3x3",
+        "gan-14-pro-official"
       ],
       "tags": [
         "china",
@@ -7377,7 +8451,21 @@
           "gan-audit-gan15-maglev-3x3-frosted"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 44.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN15 MagLev Frosted — Maglev_Matte Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-15-official"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "60 g (retailer item-weight label)",
@@ -7416,7 +8504,8 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "gan-audit-gan15-maglev-3x3-frosted"
+        "gan-audit-gan15-maglev-3x3-frosted",
+        "gan-15-official"
       ],
       "tags": [
         "china",
@@ -7465,7 +8554,21 @@
           "gan-audit-gan16-maglev-uv-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 69.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN16 MagLev Standard UV — Maglev_UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-16-official"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -7554,7 +8657,21 @@
           "gan-audit-gan16-maglev-maxl-uv-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 84.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN16 MagLev MAX-L UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan16-maglev-maxl-uv-3x3"
+        }
+      ],
       "specs": {
         "size": "57 mm (retailer)",
         "weight": "≈68.3 g (tribox)",
@@ -7645,7 +8762,21 @@
           "gan-audit-gan16-maglev-max-uv-3x3-dual-wr-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 84.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN16 MAX Geng Xuanyi Dual-WR Edition — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan16-maglev-max-uv-3x3-dual-wr-limited-edition"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -7732,7 +8863,25 @@
           "gan-audit-gan-12-m-maglev-3x3-peacock-emerald-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 MagLev Peacock Emerald — Green",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-12-m-maglev-3x3-peacock-emerald-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -7820,7 +8969,25 @@
           "gan-audit-gan12-m-maglev-3x3-chan-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 MagLev CHAN Green — Transparent Green",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan12-m-maglev-3x3-chan-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -7906,7 +9073,25 @@
           "gan-audit-gan12-m-maglev-3x3-chan-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN12 MagLev CHAN Red — Transparent Red",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan12-m-maglev-3x3-chan-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "66 g (retailer item-weight label)",
@@ -7992,7 +9177,25 @@
           "gan-audit-gan13-m-maglev-kunlun-limited-edition-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN13 MagLev Kunlun — Gold",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan13-m-maglev-kunlun-limited-edition-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8077,7 +9280,25 @@
           "gan-audit-gan13-m-maglev-colore-limited-edition-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 94.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN13 MagLev Coloré — Transparent Blue",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan13-m-maglev-colore-limited-edition-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8162,7 +9383,25 @@
           "gan-audit-gan14-m-maglev-galaxy-limited-edition-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 94.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN14 MagLev Galaxy — GAN14 M MagLev \"Galaxy\" Limited Edition 3x3",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan14-m-maglev-galaxy-limited-edition-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8247,7 +9486,25 @@
           "gan-audit-gan14-maglev-pro-aurora-3x3-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 99.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN14 MagLev Pro Aurora — GAN14 MagLev Pro Aurora 3x3 (Limited Edition)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan14-maglev-pro-aurora-3x3-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "71 g (retailer item-weight label)",
@@ -8345,6 +9602,23 @@
             "en": "The official launch announcement states a ¥449 price for the Zenith winter edition and announces a Double 12 launch. The date shown is the price announcement date."
           },
           "sourceId": "gan-cnlaunch-zenith-20241129"
+        },
+        {
+          "amount": 74.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN15 MagLev Zenith — GAN15 MagLev Zenith 3x3 (Limited Edition)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan15-maglev-zenith-3x3-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
         }
       ],
       "specs": {
@@ -8432,7 +9706,25 @@
           "gan-audit-gan15-maglev-emeraldox-3x3-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN15 MagLev EmeraldoX — GAN15 MagLev EmeraldoX 3x3 (Limited Edition)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan15-maglev-emeraldox-3x3-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -8517,7 +9809,25 @@
           "gan-audit-gan16-maglev-max-3x3-amyth-le"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 89.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN16 MAX Amyth Winter Edition — GAN16 MagLev MAX 3x3 AMYTH (LE)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan16-maglev-max-3x3-amyth-le",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -8602,7 +9912,21 @@
           "gan-audit-gan16-maglev-max-3x3-aqualis-summer-le"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 99.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN16 MAX AQUALIS Summer Edition — GAN16 MagLev MAX 3x3 AQUALIS (Summer LE)",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan16-maglev-max-3x3-aqualis-summer-le"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -8687,7 +10011,25 @@
           "gan-audit-gan356-m-3x3-uv-coated"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 32.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 M UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-m-3x3-uv-coated",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -8775,7 +10117,21 @@
           "gan-audit-gan356-m-lite"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 26.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 M Lite — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan356-m-lite"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "74 g (retailer item-weight label)",
@@ -8861,7 +10217,25 @@
           "gan-audit-gan-356-m-niu-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 32.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 M Niu / Year of the Ox — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-m-niu-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "74 g (retailer item-weight label)",
@@ -8944,7 +10318,25 @@
           "gan-me-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-me-uv",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -9029,7 +10421,25 @@
           "gan-audit-gan356-me-v2-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 16.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME V2 Frosted — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-me-v2-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "77.5 g (retailer item-weight label)",
@@ -9112,7 +10522,21 @@
           "gan-356-maglev-uv"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 42.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 MagLev UV — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-356-maglev-uv"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "82 g (retailer item-weight label)",
@@ -9199,7 +10623,21 @@
           "gan-audit-gan-v100-maglev-3x3-frosted"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 34.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN V100 MagLev Frosted — Stickerless / Black Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan-v100-maglev-3x3-frosted"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9284,7 +10722,21 @@
           "gan-audit-gan-v100-leap-3x3-frosted"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 21.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN V100 Leap Frosted — Stickerless / Black Internals",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan-v100-leap-3x3-frosted"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9372,7 +10824,25 @@
           "gan-audit-gan15-maglev-uv-3x3-10th-anniversary-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 54.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN15 MagLev UV 10th Anniversary — Maglev_10 Years Grand Gift Set_UV Coated",
+          "note": {
+            "zh": "GAN 官方国际商城十周年 UV 礼盒现价，含一颗对应纪念版魔方及盒内配件；配送和税费以结算为准。",
+            "en": "GAN official international store price for the tenth-anniversary UV gift set, containing one matching anniversary cube and its included accessories; shipping and taxes are determined at checkout."
+          },
+          "sourceId": "gan-15-official",
+          "qualifier": {
+            "zh": "十周年礼盒",
+            "en": "10th-anniversary gift set"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9411,7 +10881,8 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "gan-audit-gan15-maglev-uv-3x3-10th-anniversary-edition"
+        "gan-audit-gan15-maglev-uv-3x3-10th-anniversary-edition",
+        "gan-15-official"
       ],
       "tags": [
         "china",
@@ -9460,7 +10931,25 @@
           "gan-audit-gan356-me-uv-3x3-10th-anniversary-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME UV 10th Anniversary — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-me-uv-3x3-10th-anniversary-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9543,7 +11032,25 @@
           "gan-audit-gan-356-m-e-lunar-new-year-limited-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 25.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME Lunar New Year Edition — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-m-e-lunar-new-year-limited-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "77 g (retailer item-weight label)",
@@ -9626,7 +11133,25 @@
           "gan-audit-gan356-me-3x3-2025-lunar-new-year-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME 2025 Lunar New Year — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-me-3x3-2025-lunar-new-year-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9709,7 +11234,25 @@
           "gan-audit-gan356-me-christmas-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 24.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME Christmas Edition — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-me-christmas-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9795,7 +11338,25 @@
           "gan-audit-gan356-me-brainstorm-voyage-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME Brainstorm Voyage — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan356-me-brainstorm-voyage-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "78 g (retailer item-weight label)",
@@ -9878,7 +11439,21 @@
           "gan-audit-gan356-me-3x3-minions-edition-frosted"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 ME Minions Frosted — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan356-me-3x3-minions-edition-frosted"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -9961,7 +11536,21 @@
           "gan-audit-gan-v100-leap-3x3-2026-year-of-the-horse-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 29.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN V100 Leap Year of the Horse — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan-v100-leap-3x3-2026-year-of-the-horse-edition"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -10049,7 +11638,21 @@
           "gan-audit-gan-v100-maglev-uv-3x3-minions-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 49.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN V100 MagLev UV Minions — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan-v100-maglev-uv-3x3-minions-edition"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -10136,7 +11739,21 @@
           "gan-audit-gan330-keychain-cube-3x3-10th-anniversary-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 9.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN330 10th Anniversary — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-gan330-keychain-cube-3x3-10th-anniversary-edition"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -10215,7 +11832,25 @@
           "gan-audit-gan330-keychain-cube-3x3-special-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 6.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN330 Antique Rhyme / Special Color Editions — Blue",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan330-keychain-cube-3x3-special-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "30 mm",
         "weight": "20 g (retailer item-weight label)",
@@ -10304,7 +11939,21 @@
           "gan-audit-monstergo-3x3-traditional"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 10.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go Traditional 3x3 — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-monstergo-3x3-traditional"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -10394,7 +12043,21 @@
           "gan-audit-monstergo-3x3-cloud"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go Cloud — Pink",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-audit-monstergo-3x3-cloud"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -10482,7 +12145,21 @@
           "gan-monstergo-ut"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go UT — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-monstergo-ut"
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -10568,7 +12245,25 @@
           "gan-audit-monstergo-3x3-rainbow"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go Rainbow — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-monstergo-3x3-rainbow",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "81 g (retailer item-weight label)",
@@ -10655,7 +12350,25 @@
           "gan-audit-monstergo-3x3-m-edu"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go M EDU — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-monstergo-3x3-m-edu",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "91 g (retailer item-weight label)",
@@ -10740,7 +12453,25 @@
           "gan-audit-monstergo-352m-3x3"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 11.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Monster Go 352M 52 mm — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-monstergo-352m-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "52 mm (product description; retailer dimension tag conflicts)",
         "weight": "52 g (retailer item-weight label)",
@@ -10909,7 +12640,25 @@
           "gan-audit-swift-block-3x3-maglev"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 18.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Swift Block MagLev Original — Stickerless",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-swift-block-3x3-maglev",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "55 mm",
         "weight": "92 g (retailer item-weight label)",
@@ -10997,7 +12746,21 @@
           "gan-swift-frosted"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 19.99,
+          "currency": "USD",
+          "region": "INTL",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "Swift Block Super MagLev Frosted — Frost Coated",
+          "note": {
+            "zh": "GAN 官方国际商城在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。",
+            "en": "GAN official international store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout."
+          },
+          "sourceId": "gan-swift-official"
+        }
+      ],
       "specs": {
         "size": null,
         "weight": null,
@@ -11032,7 +12795,8 @@
         "Stickerless"
       ],
       "sourceIds": [
-        "gan-swift-frosted"
+        "gan-swift-frosted",
+        "gan-swift-official"
       ],
       "tags": [
         "china",
@@ -11080,7 +12844,25 @@
           "gan-gsc-review"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 15.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN GSC / GAN Speed Cube — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-speed-cube-3x3",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": null,
@@ -11165,7 +12947,25 @@
           "gan-audit-gan-356-air-sm-2019-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 23.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air SM 2019 Edition — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-air-sm-2019-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "75 g (retailer item-weight label)",
@@ -11251,7 +13051,25 @@
           "gan-audit-gan-356-air-master-2019-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 20.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air Master 2019 Edition — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-air-master-2019-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "74 g (retailer item-weight label)",
@@ -11337,7 +13155,25 @@
           "gan-audit-gans-356-air-grand-master"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 36.99,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air Grand Master Limited Colors — Blue",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gans-356-air-grand-master",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "73 g (retailer item-weight label)",
@@ -11426,7 +13262,25 @@
           "gan-audit-gan-356-air-um-max-park-signature-edition"
         ]
       },
-      "prices": [],
+      "prices": [
+        {
+          "amount": 46.39,
+          "currency": "USD",
+          "region": "US",
+          "kind": "current",
+          "asOf": "2026-10-09",
+          "variant": "GAN356 Air UM Max Park Signature — Black",
+          "note": {
+            "zh": "TheCubicle 美国商店在核验日展示的单颗基础商品价；配送和可能产生的税费以结算为准。该配置核验时已售罄，价格仅供参考。",
+            "en": "TheCubicle US store single-cube base listing price observed on this date; shipping and any applicable taxes are determined at checkout. This variant was sold out when checked; the displayed price is for reference only."
+          },
+          "sourceId": "gan-audit-gan-356-air-um-max-park-signature-edition",
+          "qualifier": {
+            "zh": "已售罄列示价",
+            "en": "Sold-out listing price"
+          }
+        }
+      ],
       "specs": {
         "size": "56 mm",
         "weight": "75.7 g (retailer item-weight label)",
@@ -13649,6 +15503,8 @@
     "搜索补充正式中英文名称：萌刻/MonsterGo 与 MG3 各教学型号、花木蓝（保留旧译青花蓝）、真爱粉（保留旧译恋爱粉）、国色/Antique Rhyme、GAN Cheering。所有别名都关联本轮官方来源；未将未经核实的 V2/Lite 叫法当作确定型号别名。 / Search enrichment includes official Chinese and English naming, while preserving former translations as aliases; uncertain retailer V2/Lite labels are not promoted to confirmed aliases.",
     "2026-10-07（America/Los_Angeles；UTC 2026-10-08）定向补图：按淘宝/天猫旧称和中英文型号检索，并复核原厂页、同期评测与旧商品存档；GAN356 X INFINITY 恢复官方独立产品图并保存原始副本。GAN1/2 的现存早期实物图缺少明确编号，GAN354 M INFINITY 的已确认评测缩略图未返回图像，继续保留具体缺口。 / Targeted photo recovery on 2026-10-07 America/Los_Angeles: searched Taobao/Tmall historical and bilingual names and checked official pages, contemporary reviews and archived listings. Recovered an unchanged official GAN356 X INFINITY photograph. Early Gans photographs lack a verified numbered-model identity; no inspectable exact GAN354 M INFINITY image was recovered.",
     "2026-10-08 价格范围调整：按用户要求只保留有首发依据、配置明确的中国大陆人民币首发价；其他市场报价、后续零售或批发价、配置不明确的系列标价已移除。此前研究笔记描述的是早期采集过程，不代表当前价格收录范围。 / Price scope narrowed to verified mainland-China launch prices in CNY for exact configurations. Other markets, subsequent retail/wholesale quotes and unspecified family prices were removed. Earlier handover notes describe prior collection passes, not the current price scope.",
-    "2026-10-08 中国首发价补查：复核 47 页 GANCUBE 官方微博公开存档及原始海报，新增 GAN15 NewBlack 黑核 UV 的官方新品预售价 399 元（2025-02-27 公告）与 GAN15 MagLev「峰芒」冬季限定上市定价 449 元（2024-11-29 公告）；日期为报价公告日期，保留原有型号的日期依据。NewBlack 的 UV 配置由同型号官方独立产品页交叉核对。未采纳配置不明确的起价、老款促销及无法核对原文的聚合报价。 / Reviewed 47 public archive pages of GAN official Weibo and original posters. Added the official new-product preorder price of CNY 399 for GAN15 NewBlack UV (announced 2025-02-27) and launch-announcement price of CNY 449 for the GAN15 MagLev Zenith winter edition (2024-11-29). These are price announcement dates; existing model release-date evidence is unchanged. NewBlack UV is cross-checked against its separate official product page. Unspecified starting prices, later promotions and aggregation-only quotes were excluded."
+    "2026-10-08 中国首发价补查：复核 47 页 GANCUBE 官方微博公开存档及原始海报，新增 GAN15 NewBlack 黑核 UV 的官方新品预售价 399 元（2025-02-27 公告）与 GAN15 MagLev「峰芒」冬季限定上市定价 449 元（2024-11-29 公告）；日期为报价公告日期，保留原有型号的日期依据。NewBlack 的 UV 配置由同型号官方独立产品页交叉核对。未采纳配置不明确的起价、老款促销及无法核对原文的聚合报价。 / Reviewed 47 public archive pages of GAN official Weibo and original posters. Added the official new-product preorder price of CNY 399 for GAN15 NewBlack UV (announced 2025-02-27) and launch-announcement price of CNY 449 for the GAN15 MagLev Zenith winter edition (2024-11-29). These are price announcement dates; existing model release-date evidence is unchanged. NewBlack UV is cross-checked against its separate official product page. Unspecified starting prices, later promotions and aggregation-only quotes were excluded.",
+    "2026-10-09 current-price follow-up: 112 exact-configuration USD observations were re-read from live public GANCUBE/TheCubicle product records (73 explicitly sold-out listing prices). Existing verified mainland-China launch quotes are preserved. International and US market labels, capture date, source, exact variant, shipping/tax scope and sold-out qualifiers accompany each quote. Original GAN356 XS was not assigned the current XS Lite listing price; zero-price display-only products and the 9-cube Monster Go mosaic pack were not treated as single-cube prices.",
+    "2026-10-09 assessment follow-up: the GAN12 MagLev UV, GAN15 MagLev UV, GAN16 MagLev MAX UV, GAN V100 MagLev UV and GAN356 ME Frosted summaries now paraphrase the named product pages’ visible first-hand customer comments. Positive and negative experiences remain attributed to users; no universal ranking, standardized test result or failure rate is inferred. Existing rating snapshots were not redated."
   ]
 }

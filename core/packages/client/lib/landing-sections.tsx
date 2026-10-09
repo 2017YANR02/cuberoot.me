@@ -7,7 +7,7 @@ import {
   Brain, Box, Sigma, Scale, Sprout, Brush, MessageCircle, MessagesSquare, Shapes, Blocks, Eye, Palette,
   CircleQuestionMark, Globe2, CalendarDays, Video, GraduationCap, School, Building2,
   FileText, Table2, Award, Radio, PanelsTopLeft, UserRound, UsersRound, HardDrive, ListOrdered,
-  Images, Music2, Gamepad2,
+  Images, Music2, Gamepad2, History,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -98,6 +98,7 @@ const CARD_VISUALS: Partial<Record<SiteDirectoryEntry['id'], CardVisual>> = {
   alg: { Icon: Library },
   quiz: { Icon: CircleQuestionMark },
   wiki: { Icon: BookA },
+  'cube-history': { Icon: History },
   regulation: { Icon: Scale },
   notation: { Icon: FileText },
   'math-hub': { Icon: Sigma },

@@ -1,75 +1,76 @@
 import type { LocalizedText, PriceKind } from './types';
 
 export const SNAPSHOT_DATE = '2026-10-07';
+export const PRICE_SNAPSHOT_DATE = '2026-10-09';
 export const BRANDS: Record<string, LocalizedText> = {
   "Calvin's Puzzle": { zh: "Calvin's Puzzle", en: "Calvin's Puzzle" },
-  "Cong's Design": { zh: "丛氏 Cong's Design", en: "Cong's Design" },
+  "Cong's Design": { zh: "丛氏", en: "Cong's Design" },
   'Cube Lab': { zh: 'Cube Lab', en: 'Cube Lab' },
   CubeStyle: { zh: 'CubeStyle', en: 'CubeStyle' },
   "Cuber's Home": { zh: "Cuber's Home 加磁成品", en: "Cuber's Home" },
   ESCube: { zh: 'ESCube', en: 'ESCube' },
-  Eastsheen: { zh: '东贤 Eastsheen', en: 'Eastsheen' },
-  FanXin: { zh: '樊鑫 FanXin', en: 'FanXin' },
-  FangCun: { zh: '方寸 FangCun', en: 'FangCun' },
+  Eastsheen: { zh: '东贤', en: 'Eastsheen' },
+  FanXin: { zh: '樊鑫', en: 'FanXin' },
+  FangCun: { zh: '方寸', en: 'FangCun' },
   Formula: { zh: 'Formula', en: 'Formula' },
-  'Ghost Hand': { zh: 'Ghost Hand 鬼手', en: 'Ghost Hand' },
+  'Ghost Hand': { zh: '鬼手', en: 'Ghost Hand' },
   HeShu: { zh: 'HeShu', en: 'HeShu' },
   HeyKube: { zh: 'HeyKube', en: 'HeyKube' },
   HuDong: { zh: 'HuDong', en: 'HuDong' },
-  HuaMeng: { zh: '华梦 HuaMeng', en: 'HuaMeng' },
-  KungFu: { zh: '功夫 KungFu', en: 'KungFu' },
-  LeFun: { zh: '乐方 LeFun', en: 'LeFun' },
+  HuaMeng: { zh: '华梦', en: 'HuaMeng' },
+  KungFu: { zh: '功夫', en: 'KungFu' },
+  LeFun: { zh: '乐方', en: 'LeFun' },
   MF8: { zh: 'MF8', en: 'MF8' },
-  Maru: { zh: '小丸号 Maru', en: 'Maru' },
+  Maru: { zh: '小丸号', en: 'Maru' },
   "Meffert's": { zh: "Meffert's", en: "Meffert's" },
   'MoHuan ShouSu': { zh: '魔幻手速', en: 'MoHuan ShouSu' },
-  MoJue: { zh: '魔爵 MoJue', en: 'MoJue' },
+  MoJue: { zh: '魔爵', en: 'MoJue' },
   MsCube: { zh: 'MsCube', en: 'MsCube' },
   Newisland: { zh: 'Newisland', en: 'Newisland' },
   Other: { zh: '厂牌待核', en: 'Unverified manufacturer' },
   'Peak Cube': { zh: 'Peak Cube', en: 'Peak Cube' },
-  QJ: { zh: '奇积 QJ', en: 'QJ' },
+  QJ: { zh: '奇积', en: 'QJ' },
   Rephael: { zh: 'Rephael', en: 'Rephael' },
   SAOCube: { zh: 'SAOCube', en: 'SAOCube' },
-  'Stellar Cube': { zh: '星耀 Stellar Cube', en: 'Stellar Cube' },
-  SenHuan: { zh: '森幻 SenHuan', en: 'SenHuan' },
+  'Stellar Cube': { zh: '星耀', en: 'Stellar Cube' },
+  SenHuan: { zh: '森幻', en: 'SenHuan' },
   'Smart Cube Labs': { zh: 'Smart Cube Labs', en: 'Smart Cube Labs' },
   'Tao Cube': { zh: 'Tao Cube', en: 'Tao Cube' },
   TheCubicle: { zh: 'TheCubicle 商家定制', en: 'TheCubicle editions' },
   YZ: { zh: 'YZ', en: 'YZ' },
-  YanCheng: { zh: '燕成 YanCheng', en: 'YanCheng' },
+  YanCheng: { zh: '燕成', en: 'YanCheng' },
   YiSheng: { zh: 'YiSheng', en: 'YiSheng' },
   ZCube: { zh: 'ZCube', en: 'ZCube' },
   ZhiChen: { zh: 'ZhiChen', en: 'ZhiChen' },
   Ziina: { zh: 'Ziina', en: 'Ziina' },
   "Type D": {"zh":"Type D（历史称谓）","en":"Type D (historical label)"},
-  "HaiYan": {"zh":"海燕 HaiYan","en":"HaiYan"},
-  "MoreTry": {"zh":"梦图 MoreTry","en":"MoreTry"},
+  "HaiYan": {"zh":"海燕","en":"HaiYan"},
+  "MoreTry": {"zh":"梦图","en":"MoreTry"},
   "VIN": {"zh":"VIN","en":"VIN"},
-  "HaiTun": {"zh":"海豚 HaiTun","en":"HaiTun"},
+  "HaiTun": {"zh":"海豚","en":"HaiTun"},
   GAN: { zh: 'GAN', en: 'GAN' },
   'Monster Go': { zh: 'Monster Go', en: 'Monster Go' },
   'Swift Block': { zh: 'Swift Block', en: 'Swift Block' },
-  MoYu: { zh: '魔域 MoYu', en: 'MoYu' },
-  MoFangJiaoShi: { zh: '魔方教室 MFJS', en: 'MoFangJiaoShi' },
-  GuoGuan: { zh: '国冠 GuoGuan', en: 'GuoGuan' },
-  YJ: { zh: '永骏 YJ', en: 'YJ' },
-  QiYi: { zh: '奇艺 QiYi', en: 'QiYi' },
-  'X-Man Design': { zh: '魔侠 X-Man Design', en: 'X-Man Design' },
-  DaYan: { zh: '大雁 DaYan', en: 'DaYan' },
-  YuXin: { zh: '裕鑫 YuXin', en: 'YuXin' },
-  ShengShou: { zh: '圣手 ShengShou', en: 'ShengShou' },
-  DianSheng: { zh: '点盛 DianSheng', en: 'DianSheng' },
-  Alpha: { zh: '国甲 Alpha', en: 'Alpha / GuoJia' },
-  WitEden: { zh: '智胜 / 国丙 WitEden', en: 'WitEden / Type C' },
-  ShengEn: { zh: '圣恩 ShengEn', en: 'ShengEn / Type F' },
-  FangShi: { zh: '方是 FangShi', en: 'FangShi / Funs Puzzle' },
-  'Cyclone Boys': { zh: '旋风小子 Cyclone Boys', en: 'Cyclone Boys' },
+  MoYu: { zh: '魔域', en: 'MoYu' },
+  MoFangJiaoShi: { zh: '魔方教室', en: 'MoFangJiaoShi' },
+  GuoGuan: { zh: '国冠', en: 'GuoGuan' },
+  YJ: { zh: '永骏', en: 'YJ' },
+  QiYi: { zh: '奇艺', en: 'QiYi' },
+  'X-Man Design': { zh: '魔侠', en: 'X-Man Design' },
+  DaYan: { zh: '大雁', en: 'DaYan' },
+  YuXin: { zh: '裕鑫', en: 'YuXin' },
+  ShengShou: { zh: '圣手', en: 'ShengShou' },
+  DianSheng: { zh: '点盛', en: 'DianSheng' },
+  Alpha: { zh: '国甲', en: 'Alpha / GuoJia' },
+  WitEden: { zh: '智胜 / 国丙', en: 'WitEden / Type C' },
+  ShengEn: { zh: '圣恩', en: 'ShengEn / Type F' },
+  FangShi: { zh: '方是', en: 'FangShi / Funs Puzzle' },
+  'Cyclone Boys': { zh: '旋风小子', en: 'Cyclone Boys' },
   Cube4You: { zh: 'Cube4You', en: 'Cube4You' },
   'V-CUBE': { zh: 'V-CUBE', en: 'V-CUBE' },
-  GiiKER: { zh: '计客 GiiKER', en: 'GiiKER' },
+  GiiKER: { zh: '计客', en: 'GiiKER' },
   Particula: { zh: 'Particula / GoCube', en: 'Particula / GoCube' },
-  "Rubik's": { zh: "Rubik's 鲁比克", en: "Rubik's" },
+  "Rubik's": { zh: "鲁比克", en: "Rubik's" },
 };
 export const CATEGORIES: Record<string, LocalizedText> = {
   speed: { zh: '速拧三阶', en: 'Speed cube' },
@@ -96,6 +97,7 @@ export const RELEASE_LABELS: Record<string, LocalizedText> = {
 };
 export const PRICE_LABELS: Record<PriceKind, LocalizedText> = {
   launch: { zh: '中国首发价', en: 'China launch price' },
+  current: { zh: '当前参考价', en: 'Current reference price' },
 };
 export const SOURCE_LABELS: Record<string, LocalizedText> = {
   official: { zh: '官方', en: 'Official' },
@@ -160,10 +162,10 @@ export const PERIODS = [
   { id: 'unknown', from: 0, to: 0, label: { zh: '年份待核', en: 'Year unverified' } },
 ];
 export const METHODOLOGY: { title: LocalizedText; text: LocalizedText }[] = [
-  { title: { zh: '型号与子版本', en: 'Models and distinct versions' }, text: { zh: '名称、结构或成品配置明确、可单独购买的子型号分别入档，关联到同一系列，保留各自的日期、价格、参数和图片。涂层、限定版与智能型号也独立核查；只有未进一步区分的纯颜色与礼包留在版本说明中。商家调油服务不冒充原厂型号。记录数不等于全球全部 SKU。', en: 'Separately sold models with distinct names, mechanisms or finished configurations receive individual records, linked by family and retaining their own dates, prices, specifications and photos. Finishes, special editions and smart models are checked separately; undifferentiated colors and bundles remain in variant notes. Retailer setup services are not presented as factory models. The count is not a worldwide SKU total.' } },
+  {"title":{"zh":"型号与子版本","en":"Models and distinct versions"},"text":{"zh":"同一型号的涂层、磁力配置和明确的限定版放在一张卡片内切换；不同代际或独立命名产品分别展示。标题保持型号名，各版本保留自己的日期、价格、参数和图片。系列筛选用于查看更宽的产品线，不决定卡片分组；记录数不等于全球全部 SKU。","en":"Finishes, magnetic configurations and documented special editions of the same model share a card. Distinct generations and independently named products have separate cards. The model title stays fixed, while every version retains its own dates, prices, specifications and photo. Family filters browse broader product lines and do not determine card grouping; record counts are not a worldwide SKU total."}},
   { title: { zh: '图片的对应关系', en: 'Photo provenance' }, text: { zh: '产品图取自可核查的原始商品页、品牌资料及其公开图片信息，并保留出处。来源本身为多个版本共用图片时明确标注；无法确认旧型号图片时保留缺口，不拿相似的新型号照片替代。图片展示和资料核对不代表取得图片的额外使用授权。', en: 'Product photos come from verifiable product pages, brand material and their public image metadata, with attribution retained. Shared source photography is labeled. Missing historical photos remain a gap instead of being replaced by a similar newer cube. Display and attribution do not imply an additional image-use license.' } },
-  { title: { zh: '日期的证据', en: 'Date evidence' }, text: { zh: '官方日期、商家开售或上架日、当年资料出现时间分别标注。精确到天不代表证据更权威。旧商店“2018-09-11”等集中迁移日期不当作历史首发；样品、预售和地区差异写在备注中。', en: 'Official dates, retailer dates and contemporary documentary evidence are labeled separately. Day-level precision does not imply greater authority. Mass store migration dates are excluded as launch dates; samples, preorders and regional differences are explained.' } },
-  { title: { zh: '中国首发价', en: 'China launch prices' }, text: { zh: '只记录可核实的中国大陆首发人民币价格，并注明具体版本、时间和来源。官方首发预售或首发优惠价会在备注中说明；缺少首发依据或无法对应具体配置时，标为首发价待核实。', en: 'Only verified mainland-China launch prices in CNY are recorded, with the exact configuration, date and source. Official launch preorder or introductory offers are qualified in the note. Missing launch evidence or an unspecified configuration remains unverified.' } },
+  {"title":{"zh":"日期的证据","en":"Date evidence"},"text":{"zh":"型号年代按该型号全部版本中最早的有据记录排序；筛选或切换新版不会改写它。所选版本日期另行展示，也可选择按最新版本排序。官方、商家上架和当年资料分别标注；精确到天不代表官方首发。旧商店集中迁移日期不当作首发，样品、预售和地区差异保留说明。","en":"Model chronology uses the earliest evidenced record across all of its versions and stays fixed when filters or versions change. The selected version has its own date, and latest-version sorting is available separately. Official, retailer and contemporary records retain their evidence labels; day-level precision does not imply an official launch. Store migration dates are excluded as launches, and sample, preorder and regional qualifications are preserved."}},
+  { title: { zh: '首发价与当前参考价', en: 'Launch and current prices' }, text: { zh: '中英文页面均只展示中国大陆人民币报价。优先使用对应版本的已核实首发价；没有首发价时，使用已核实的国内当前参考价。每条价格保留类型、日期、具体配置和来源，预售、用券或售罄等条件单独注明。国内价格未核实时留空，不使用海外报价、汇率换算或跨配置起价填补。', en: 'Both language editions show only mainland-China prices in CNY. A verified launch price for the exact version is preferred; otherwise a verified current domestic quote is used. Every quote retains its type, date, configuration and source, with preorder, coupon or sold-out conditions stated. Unverified domestic prices remain missing: overseas quotes, currency conversions and starting prices for other configurations are not substitutes.' } },
   { title: { zh: '参数与评价', en: 'Specifications and opinions' }, text: { zh: '重量只记录可确认的本体净重；包装毛重不填入净重。厂商的磁铁数、容错或自复位角度属于标称参数。亲历测评、编辑分析和商家页用户评分分别注明。商家评分保留评论数、采样日期及合并配置的可能性，不作为统一性能分数。', en: 'Only identifiable item weights are recorded as net weight. Manufacturer magnet counts and corner-cutting or alignment angles remain advertised specifications. First-hand reports, editorial analysis and merchant-page ratings are labeled separately. Merchant ratings retain the sample count, date and possible pooling of configurations; they are not standardized performance scores.' } },
   { title: { zh: '品牌与时间', en: 'Brands over time' }, text: { zh: '品牌、子系列、设计者和经销商不是同一概念。不同年代的归属可能变化，早期 Type A / Type C 等代号还可能指不同模具。当前目录中的厂商标签不能倒推全部历史。', en: 'Brands, sub-lines, designers and distributors are different concepts. Ownership and naming change; early Type A / Type C labels may denote different molds. Present catalog labels do not establish every historical relationship.' } },
   { title: { zh: '逐年核查与缺口', en: 'Annual checks and remaining gaps' }, text: { zh: '用品牌资料、现售目录与停产档案互相查漏，同时展示每个品牌的日期与图片覆盖情况。年度表按有证据的资料年份排列；空白不代表当年没有新品。早期地区批次、国产模具修订、OEM 换标、中国历史成交价与旧实物照片仍可能缺失，不能用目录数量证明全球已经收齐。', en: 'Brand material, current catalogs and discontinued archives are cross-checked, with date and photo coverage shown by brand. Annual tables use evidenced dates; an empty cell does not establish that no product was released. Early regional batches, mold revisions, OEM rebadges, historical Chinese transaction prices and old photographs may still be missing. Catalog counts cannot prove worldwide completeness.' } },
@@ -204,12 +206,15 @@ export const EVIDENCE_LABELS: Record<string, LocalizedText> = {
     "en": "Official date evidence"
   },
   "cny": {
-    "zh": "有中国首发价",
-    "en": "Has a China launch price"
+    "zh": "有人民币价格",
+    "en": "Has a mainland CNY price"
   },
+  "launch-price": { "zh": "有首发价", "en": "Has a launch price" },
+  "current-price": { "zh": "有当前参考价", "en": "Has a current price" },
+  "has-price": { "zh": "有价格", "en": "Has a price" },
   "missing-price": {
-    "zh": "首发价待核实",
-    "en": "Launch price unverified"
+    "zh": "价格待补",
+    "en": "Price missing"
   },
   "announced": {
     "zh": "预告 / 预售",
@@ -219,13 +224,14 @@ export const EVIDENCE_LABELS: Record<string, LocalizedText> = {
 
 export const SORT_LABELS: Record<string, LocalizedText> = {
   relevance: { zh: '相关度优先', en: 'Most relevant' },
+  'latest-version': { zh: '最近推出的版本', en: 'Latest versions first' },
   "newest": {
-    "zh": "由新到旧",
-    "en": "Newest first"
+    "zh": "型号由新到旧",
+    "en": "Newest models first"
   },
   "oldest": {
-    "zh": "由旧到新",
-    "en": "Oldest first"
+    "zh": "型号由旧到新",
+    "en": "Oldest models first"
   },
   "name": {
     "zh": "型号名称",
