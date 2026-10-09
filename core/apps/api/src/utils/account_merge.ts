@@ -171,6 +171,7 @@ export async function mergeAccounts(sourceUserId: number, targetUserId: number, 
             ELSE target.avatar_url
           END,
           forum_banned = target.forum_banned OR source.forum_banned,
+          home_onboarding_seen = target.home_onboarding_seen OR source.home_onboarding_seen,
           full_name = COALESCE(target.full_name, source.full_name),
           birth_date = COALESCE(target.birth_date, source.birth_date),
           gender = COALESCE(target.gender, source.gender),

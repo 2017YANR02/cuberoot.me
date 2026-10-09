@@ -8,7 +8,7 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const GET_PATHS = new Set(['face', 'me', 'profile', 'providers', 'identities', 'admin/users', 'social/authorize', 'apple/authorize']);
+const GET_PATHS = new Set(['onboarding', 'face', 'me', 'profile', 'providers', 'identities', 'admin/users', 'social/authorize', 'apple/authorize']);
 const POST_PATHS = new Set([
   'face', 'refresh', 'profile', 'password/set', 'password/remove', 'account/delete', 'account/merge', 'account/merge/code',
   'identity/link-code', 'link/apple', 'link/google', 'link/wca', 'link/email/send', 'link/email/verify',
@@ -19,6 +19,7 @@ function allowed(method: string, path: string): boolean {
   if (method === 'GET') return GET_PATHS.has(path) || /^admin\/users\/[1-9]\d*$/.test(path);
   if (method === 'POST') return POST_PATHS.has(path) || /^admin\/users\/[1-9]\d*\/(profile|impersonation)$/.test(path)
     || /^link\/social\/(wechat|qq|alipay|douyin)$/.test(path);
+  if (method === 'PUT') return path === 'onboarding';
   if (method === 'PATCH') return /^admin\/users\/[1-9]\d*\/admin$/.test(path);
   return method === 'DELETE' && /^role-preview\/[0-9a-f-]{36}$/i.test(path);
 }
@@ -67,4 +68,4 @@ async function account(request: Request, context: { params: Promise<{ path: stri
     return result({ error: 'account operation unavailable' }, cause instanceof SessionRequestBodyError ? cause.status : 503);
   }
 }
-export { account as GET, account as POST, account as PATCH, account as DELETE };
+export { account as GET, account as PUT, account as POST, account as PATCH, account as DELETE };

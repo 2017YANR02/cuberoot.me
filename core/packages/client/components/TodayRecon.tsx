@@ -54,11 +54,11 @@ export default function TodayRecon({ lang, pinnedRecons, pinnedOnly = false, isA
 
   const visibleRecons = pinnedOnly ? pinnedRecons : recons;
   if (pinnedOnly && !visibleRecons?.length) return null;
-  if (visibleRecons === null) return <div className="today-recon today-recon--loading" aria-hidden="true" />;
+  if (visibleRecons === null) return <div className="today-recon today-recon--loading" data-tour="today-replay" aria-hidden="true" />;
   if (visibleRecons.length === 0) return null;
 
   return (
-    <div className="today-recon">
+    <div className="today-recon" data-tour="today-replay">
       <div className="tr-head">
         <span className="tr-title">{pinnedOnly ? tr({ zh: '置顶复盘', en: 'Pinned recons' }) : tr({ zh: '今日复盘', en: 'Recon of the Day' })}</span>
         <Link href="/recon" prefetch={false} className="tr-all">{tr({ zh: '全部', en: 'All recons' })}</Link>

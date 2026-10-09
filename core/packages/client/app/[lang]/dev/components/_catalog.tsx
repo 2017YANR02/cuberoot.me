@@ -2681,6 +2681,13 @@ export const CATALOG: ComponentEntry[] = [
     note: { zh: `pending 来自短期 identity-choice store；完成后 onDone(info, returnPath) 延续原路径，取消不创建或绑定账号。`, en: `pending comes from the short-lived identity-choice store; onDone(info, returnPath) resumes the original destination. Cancellation does not create or link an account.` },
   },
   {
+    name: 'OnboardingGuideModal',
+    import: "import OnboardingGuideModal from '@/components/OnboardingGuideModal';",
+    category: 'more',
+    zh: '首页功能导览，直接从第一步开始；账号页可手动重看。',
+    en: 'Homepage feature tour starting at step one, replayable from My account.',
+  },
+  {
     name: 'AuthPanel',
     import: "import { LoginForm, AccountPanel } from '@/components/AuthPanel';",
     category: 'more',

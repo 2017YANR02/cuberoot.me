@@ -1,7 +1,7 @@
 'use client';
 
 /* auth-doc-review
-{"fingerprint": "83dbc18c193722775ef26e47eff5b8307ee0788789ccedf84d779a1de62871b6", "reason": "2026-10-09 计时器预览尺寸复核：App.tsx 仅新增 timerCubePreviewAspect 导入及 TimingSurface 的 cornerAspect 数值，读取已有项目和打乱以约束图示宽度；智能魔方实况沿用原框。已核对 useInstalledAuth、系统浏览器回跳、票据交换、安全存储、账号切换、绑定合并、退出和注销调用均未改变，保留现有双语账号生命周期节点。合入 main 的刷脸失败恢复说明和既有复核记录完整保留；本次尺寸与源码复核不代表原生登录真机验收。 2026-10-08 修复刷脸失败与跨设备恢复：区分供应商未完成和失败，保留原会话查询要求，新增同账号按流水结束认证，次数不退回且并发旧结果不能再通过；同步双语认证流程。 2026-10-08 阿里云刷脸协议抽取为 app-foundation 固定版本包；账号、会话、同意、限次、取消和结果落库仍由原 API 负责，用户流程不变，保留本次主线其他功能与说明。 2026-10-08 实名表单预填已绑定 WCA 姓名，优先中文；手动编辑和清空优先于资料刷新，切换账号清空旧草稿。单独同意、服务端核验与 WCA 绑定独立性不变，双语步骤已同步。 2026-10-09 个人认证限额由滚动 24 小时 3 次改为 50 次，全站 100 次及重试间隔不变。超限错误不含实际次数，前端不再虚报已用次数；仅调整额度与双语文案，本人会话、单独同意、失败计次、取消及结果核验流程不变。此次发布仅包括刷脸额度和提示，不包含本地其他任务。"}
+{"fingerprint":"d303f7fe65ae4c10d42363a120df8132412b9b6fae91509f8ba43974a9bddb92","reason":"2026-10-09 导览接入复核：已看标记复用 persistItem 容错存储，保留原键值和服务端同步；按钮仅增加专属样式类，账号卡片顺序与页面对齐，登录、会话、合并与注销语义不变。 导览高亮改为贴合实际卡片尺寸与圆角，移除外扩间距；仅展示定位变化，账号状态与流程不变。导览改为紧凑提示卡，移除重复圆点导航，保留上一步、下一步、关闭与完成；首次目标就绪后定位，聚焦不滚动页面。账号已看标记、读取与保存时机、手动重看入口及登录生命周期不变。移除导览欢迎页，自动触发与我的页重看均直接从第一步开始；账号已看标记、会话鉴权与保存时机不变。复核首页游客与账号独立的导览状态、鉴权读写、账号切换和失败重试；我的页新入口只回到首页重看，不改变登录、绑定或回跳。账号合并以 OR 保留已看标记，注销随 app_users 删除。新增双语流程节点并明确本地实现与部署边界。 2026-10-09 计时器预览尺寸复核：App.tsx 仅新增 timerCubePreviewAspect 导入及 TimingSurface 的 cornerAspect 数值，读取已有项目和打乱以约束图示宽度；智能魔方实况沿用原框。已核对 useInstalledAuth、系统浏览器回跳、票据交换、安全存储、账号切换、绑定合并、退出和注销调用均未改变，保留现有双语账号生命周期节点。合入 main 的刷脸失败恢复说明和既有复核记录完整保留；本次尺寸与源码复核不代表原生登录真机验收。 2026-10-08 修复刷脸失败与跨设备恢复：区分供应商未完成和失败，保留原会话查询要求，新增同账号按流水结束认证，次数不退回且并发旧结果不能再通过；同步双语认证流程。 2026-10-08 阿里云刷脸协议抽取为 app-foundation 固定版本包；账号、会话、同意、限次、取消和结果落库仍由原 API 负责，用户流程不变，保留本次主线其他功能与说明。 2026-10-08 实名表单预填已绑定 WCA 姓名，优先中文；手动编辑和清空优先于资料刷新，切换账号清空旧草稿。单独同意、服务端核验与 WCA 绑定独立性不变，双语步骤已同步。 2026-10-09 个人认证限额由滚动 24 小时 3 次改为 50 次，全站 100 次及重试间隔不变。超限错误不含实际次数，前端不再虚报已用次数；仅调整额度与双语文案，本人会话、单独同意、失败计次、取消及结果核验流程不变。此次发布仅包括刷脸额度和提示，不包含本地其他任务。"}
 */
 
 import type { ReactNode } from 'react';
@@ -162,6 +162,17 @@ export default function AuthFlowPage() {
         ]} /><p className="auth-map-note">{t('iOS 推送通道已接入源码；APNs 凭据、签名和真机送达仍需单独验证。', 'The iOS push channel is wired in source; APNs credentials, signing, and device delivery still require separate verification.')}</p><figcaption>{t('浏览器、App 安全存储、内嵌账号页是三个会话容器，不是三个账号。回跳失败时回 App 重试，不重复注册；长期登录凭据不放进网址。', 'The browser, App secure storage, and embedded account page are three session containers, not three accounts. Retry a failed handoff without registering again; long-lived credentials never enter URLs.')}</figcaption></figure>
       </section>
       <p className="auth-map-note">{t('登录成功 ≠ 计时记录已云同步。App 的计时记录、备注和设置仍在本机；账号合并也不自动收集各台设备的本地记录。', 'Successful sign-in does not mean timer data is cloud-synced. App solves, notes, and settings remain local; account merging does not gather local records from every device.')}</p>
+    </section>
+
+    <section id="home-guide" className="auth-map-section">
+      <h2>{t('首页新手指南', 'Homepage beginner guide')}</h2>
+      <Steps items={[
+        t('游客首次进入首页 → 按当前浏览器记录显示；不将游客记录当作账号记录', 'A guest’s first homepage visit → use browser-local status; guest status never substitutes for account status'),
+        t('登录后进入首页 → 查询当前账号；未看过才直接进入第一步，不显示欢迎页；查询失败不自动弹出', 'Visit the homepage signed in → read the current account’s status; start at step one without a welcome screen only if unseen, and do not auto-open after a failed lookup'),
+        t('关闭、跳过或完成 → 保存账号已看标记；同一账号换设备也不再自动显示。保存失败按账号暂存，下次进入首页重试', 'Close, skip, or finish → save the account’s seen status; other devices no longer auto-open it. Failed saves remain pending for that account and retry on the next homepage visit'),
+        t('头像 → 我的 → 新手指南 → 回到首页手动重看；合并账号时保留任一账号的已看标记', 'Avatar → My account → Beginner guide → return to the homepage to replay; merging retains either account’s seen status'),
+      ]} />
+      <p>{t('本地实现；账号跨设备同步须部署 API 与数据库迁移后生效。登录、绑定和回跳流程不变。', 'Implemented locally; cross-device account sync requires the API and database migration to be deployed. Sign-in, linking, and handoff flows are unchanged.')}</p>
     </section>
 
     <section id="mini" className="auth-map-section" aria-labelledby="mini-current-title">

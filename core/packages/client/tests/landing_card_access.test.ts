@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { act, createElement, type AnchorHTMLAttributes, type ReactNode } from 'react';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
@@ -15,6 +16,7 @@ vi.mock('@/lib/home-card-order-api', () => ({ ...lockApi, getHomeCardOrders: asy
 vi.mock('@/lib/page-notices-api', () => ({ fetchPageNotices: async () => [] }));
 const memberApi = vi.hoisted(() => ({ listPublicMembers: vi.fn(async (): Promise<PublicMember[]> => []) }));
 vi.mock('@/lib/membership-api', () => memberApi);
+vi.mock('@/lib/onboarding', () => ({ isOnboardingGuided: async () => true, markOnboardingGuided: vi.fn() }));
 vi.mock('@/components/LazyVisible', () => ({ default: () => null }));
 vi.mock('@/lib/auth-store', () => ({ useAuthUser: () => auth.user, nextQuery: () => '' }));
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
@@ -38,12 +40,14 @@ import LandingPage from '@/app/[lang]/LandingClient';
 import { changeAppLanguage } from '@/i18n/i18n-client';
 import { PRIMARY_CARDS, WCA_CARDS, SECTIONS } from '@/lib/landing-sections';
 
+const renderLanding = () => createElement(NuqsTestingAdapter, { children: createElement(LandingPage) });
+
 describe('homepage development cards', () => {
   it('shows the shared upcoming competition cards only for a logged-in WCA account', () => {
     changeAppLanguage('zh');
     const render = () => {
       const host = document.createElement('div');
-      host.innerHTML = renderToStaticMarkup(createElement(LandingPage));
+      host.innerHTML = renderToStaticMarkup(renderLanding());
       return host.querySelector('[data-testid="home-upcoming-comps"]');
     };
 
@@ -59,7 +63,7 @@ describe('homepage development cards', () => {
     auth.user = user;
     changeAppLanguage('zh');
     const host = document.createElement('div');
-    host.innerHTML = renderToStaticMarkup(createElement(LandingPage));
+    host.innerHTML = renderToStaticMarkup(renderLanding());
     const admin = user?.wcaId === ADMIN_WCA_IDS[0];
     for (const [id, href] of [['platform', '/zh/platform'], ['teaching-management', '/zh/org'], ['learning-center', '/zh/learn']]) {
       const card = host.querySelector(`#card-${id}`)!;
@@ -114,7 +118,7 @@ describe('homepage development cards', () => {
     const card = () => host.querySelector(`#card-${id}`)!;
     const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
     try {
-      await act(async () => root.render(createElement(LandingPage)));
+      await act(async () => root.render(renderLanding()));
       expect(card().classList.contains('is-disabled')).toBe(true);
       expect(card().closest('#landing-admin-content')).not.toBeNull();
       expect(button().disabled).toBe(false);
@@ -143,7 +147,7 @@ describe('homepage development cards', () => {
     const root = createRoot(host);
     const alert = vi.spyOn(window, 'alert').mockImplementation(() => {});
     try {
-      await act(async () => root.render(createElement(LandingPage)));
+      await act(async () => root.render(renderLanding()));
       const card = () => host.querySelector('#card-teaching')!;
       const button = () => card().parentElement!.querySelector<HTMLButtonElement>('.landing-card-lock')!;
       expect(card().closest('#landing-admin-content')).toBeNull();
@@ -183,7 +187,7 @@ describe('homepage development cards', () => {
     const section = (id: string) => host.querySelector(`[aria-labelledby="${id}-members-title"]`);
     const button = (id: string) => section(id)!.querySelector<HTMLButtonElement>('button')!;
     try {
-      await act(async () => root.render(createElement(LandingPage)));
+      await act(async () => root.render(renderLanding()));
       expect(button('enterprise').getAttribute('aria-pressed')).toBe('true');
       expect(button('individual').getAttribute('aria-pressed')).toBe('true');
       expect(section('enterprise')?.closest('#landing-admin-content')).not.toBeNull();
@@ -231,7 +235,7 @@ describe('homepage development cards', () => {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     try {
-      await act(async () => root.render(createElement(LandingPage)));
+      await act(async () => root.render(renderLanding()));
       const expected = ['ONE', 'TWO', 'TEN', 'BIG1', 'BIG2', 'NONE', 'INVALID'];
       expect(ids('individual')).toEqual(expected);
       for (const query of ['测试二', 'two', ' vip2 ', 'VIP000002']) {
@@ -259,7 +263,7 @@ describe('homepage development cards', () => {
     const host = document.createElement('div');
     const root = createRoot(host);
     try {
-      await act(async () => root.render(createElement(LandingPage)));
+      await act(async () => root.render(renderLanding()));
       expect(host.querySelector('[id^="card-"]')).toBeNull();
       expect(host.querySelector('#enterprise-members-title')).toBeNull();
       expect(host.querySelector('#individual-members-title')).toBeNull();

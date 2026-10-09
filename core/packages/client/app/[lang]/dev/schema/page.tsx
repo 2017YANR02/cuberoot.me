@@ -795,6 +795,7 @@ const MIGRATIONS: { n: number; slug: string; desc: Bi }[] = [
   { n: 237, slug: 'nav_topics', desc: { zh: '管理员管理导航话题，同步站点标签。', en: 'Administrator topic management with synchronized site tags.' } },
   { n: 238, slug: 'record_notifications', desc: { zh: '纪录订阅、首次同步基线及持久化投递去重。', en: 'Record subscriptions, initial snapshot baselines, and persistent delivery deduplication.' } },
   { n: 239, slug: 'record_push', desc: { zh: 'Android 推送设备绑定、退出撤销及持久化投递队列。', en: 'Android device bindings, logout revocation, and a durable push queue.' } },
+  { n: 265, slug: 'home_onboarding', desc: { zh: '按账号保存首页导览已看标记，跨设备读取。', en: 'Account-owned homepage tour status across devices.' } },
   { n: 240, slug: 'mcp_oauth', desc: { zh: '管理员只读 MCP 的单次授权码、短效访问令牌、刷新轮换与撤销。', en: 'Single-use codes, short-lived access tokens, refresh rotation and revocation for administrator read-only MCP.' } },
   { n: 241, slug: 'fix_alg_grouping_parentheses', desc: { zh: '修正两条公式及关联打乱中缺失或多余的分组括号。', en: 'Fix missing or extra grouping parentheses in two algorithms and a related scramble.' } },
   { n: 241, slug: 'wechat_wca_link', desc: { zh: '增加微信内浏览器绑定 WCA 账号的专用会话票据用途。', en: 'Add a dedicated session-ticket purpose for linking WCA accounts inside WeChat.' } },
