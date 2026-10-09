@@ -137,7 +137,7 @@ export default function ReconAltViewClient() {
                   <span className="submit-label-stats"> ({stats.stm} STM)</span>
                 )}
               </span>
-              <SolutionView text={alt.solution} playerRef={playerRef} />
+              <SolutionView text={alt.solution} event={parent.event} playerRef={playerRef} />
             </div>
           </div>
         </div>

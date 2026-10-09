@@ -12,6 +12,10 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
+import Link from '@/components/AppLink';
+import { loadAlg } from '@cuberoot/shared/alg';
+import { reconCommentCaseIndex, reconCommentLinks, type ReconCommentCases } from '@/lib/recon-comment-links';
+import { tr } from '@/i18n/tr';
 import CubeColorChip, {
   crossColorFromReconText,
   cubeColorGroups,
@@ -100,8 +104,9 @@ function computeHighlightRange(plainText: string, offset: number): [number, numb
   return [p.start, p.end];
 }
 
-export default function SolutionView({ text, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
+export default function SolutionView({ text, event, playerRef, crossLineIdx = -1, crossNormalized = false, onToggleCross }: {
   text: string;
+  event?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   playerRef: MutableRefObject<any>;
   /** cross 行索引;>=0 时该行末尾渲染内联切换按钮。-1 表示不渲染 */
@@ -116,6 +121,21 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   const [hlRange, setHlRange] = useState<[number, number] | null>(null);
   const plainText = useMemo(() => text.replace(/\r\n?/g, '\n'), [text]);
   const crossColor = useMemo(() => crossColorFromReconText(plainText), [plainText]);
+  const linkComments = event === '3x3' || event === '333' || event === 'oh' || event === '333oh';
+  const [commentCases, setCommentCases] = useState<ReconCommentCases>(new Map());
+  const commentSets = useMemo(() => linkComments
+    ? [...new Set(plainText.split('\n').flatMap(line => reconCommentLinks(line).map(link => link.href.split('/').pop()!)))].sort().join(',')
+    : '', [plainText, linkComments]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setCommentCases(new Map());
+    if (commentSets) void Promise.all(commentSets.split(',').map(async set => {
+      try { return [set, reconCommentCaseIndex(set, (await loadAlg('3x3', set)).cases)] as const; }
+      catch { return [set, new Map<string, string>()] as const; }
+    })).then(entries => { if (!cancelled) setCommentCases(new Map(entries)); });
+    return () => { cancelled = true; };
+  }, [commentSets]);
 
   useEffect(() => {
     cursorOffsetRef.current = null;
@@ -152,7 +172,8 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
   }, [syncToOffset]);
 
   // NOTE: 点击解法文本——计算偏移 → 磁吸到 token 边界 → 更新光标 + 高亮 + 同步 player
-  const handleClick = useCallback(() => {
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    if ((e.target as Element).closest('a, button')) return;
     const el = preRef.current;
     if (!el) return;
     let offset = getTextOffsetInElement(el);
@@ -164,6 +185,7 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
 
   // NOTE: 方向键导航——左右按 token 跳转,上下按行跳转
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if ((e.target as Element).closest('a, button')) return;
     if (!['ArrowRight', 'ArrowLeft', 'ArrowUp', 'ArrowDown'].includes(e.key)) return;
     const el = preRef.current;
     if (!el || !playerRef.current) return;
@@ -265,6 +287,7 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
             }))
           : [];
         const colorsAt = new Map(labelColorGroups.map(group => [group.start, group.colors]));
+        const links = linkComments ? reconCommentLinks(line, commentCases) : [];
 
         // 切点:0 / 行尾 / 光标 / 高亮起止 / 色块位置 → 分段渲染。
         const cuts = new Set<number>([0, line.length]);
@@ -274,15 +297,19 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
           cuts.add(group.start);
           cuts.add(group.end);
         }
+        for (const link of links) { cuts.add(link.start); cuts.add(link.end); }
         const sorted = [...cuts].sort((a, b) => a - b);
         const parts: React.ReactNode[] = [];
         for (let s = 0; s < sorted.length - 1; s++) {
           const a = sorted[s], b = sorted[s + 1];
           const colors = colorsAt.get(a);
           if (colors) {
+            const chip = <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />;
             parts.push(
               <span key={`color${a}`} data-recon-text-length={colors.length}>
-                <CubeColorChip colors={f2lDisplayColors(colors, crossColor)} className="recon-label-chip" />
+                {linkComments && colors.length === 2
+                  ? <Link href="/alg/3x3/f2l" prefetch={false} className="recon-comment-link" title={tr({ en: 'Learn F2L', zh: '学习 F2L' })}>{chip}</Link>
+                  : chip}
               </span>,
             );
           }
@@ -295,7 +322,9 @@ export default function SolutionView({ text, playerRef, crossLineIdx = -1, cross
             continue;
           }
           const inHl = hasHl && a >= Math.max(0, hlS) && b <= Math.min(line.length, hlE);
+          const link = links.find(link => a >= link.start && b <= link.end);
           if (inHl) parts.push(<span key={`h${a}`} className="recon-move-current">{seg}</span>);
+          else if (link) parts.push(<Link key={`link${a}`} href={link.href} prefetch={false} className="recon-comment-link">{seg}</Link>);
           else parts.push(seg);
         }
         if (localCursor === line.length) parts.push(<span key="cend" className="detail-cursor" />);

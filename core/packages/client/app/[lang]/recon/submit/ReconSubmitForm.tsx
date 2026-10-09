@@ -2300,6 +2300,7 @@ export default function ReconSubmitForm({ editId }: { editId?: string } = {}) {
               {normalized ? (
                 <SolutionView
                   text={displaySolution}
+                  event={form.event}
                   playerRef={playerRef}
                   crossNormalized={true}
                 />
